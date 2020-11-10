@@ -42,7 +42,7 @@ The apk is in app\build\outputs\apk
 
 # Download
 
-[下载](https://github.com/seven332/EhViewer/releases)
+[下载](https://github.com/shuaixiaojie/Ehviewer_CN_SXJ/releases)
 
 
 
