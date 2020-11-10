@@ -1,3 +1,9 @@
+
+2020/11/09 -----log:
+  创建项目完毕，代码正在进行本地调试，由于app源代码注释很少而且全是英文，所以起步阶段较慢，等我代码看的差不多了就把中文注释添上然后发出来
+2020/11/10
+  -----log-------
+  修复了评论显示不了的bug，正在修改相关信息，预计11月13号发布一个小版本
 # DEPRECATED
 
 [![Telegram](https://img.shields.io/badge/chat-Telegram-blue.svg)](https://t.me/ehviewer)
@@ -39,7 +45,7 @@ The apk is in app\build\outputs\apk
 
 [下载](https://github.com/seven332/EhViewer/releases)
 
-[Download](https://github.com/seven332/EhViewer/releases)
+
 
 
 # Thanks
