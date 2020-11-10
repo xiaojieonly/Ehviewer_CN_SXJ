@@ -23,6 +23,11 @@ import com.hippo.ehviewer.R;
 
 public class ReadFragment extends PreferenceFragment {
 
+    /**
+     * 设置->阅读界面
+     * xml/read_settings.xml
+     * @param savedInstanceState
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

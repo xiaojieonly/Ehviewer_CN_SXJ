@@ -23,6 +23,9 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import com.hippo.scene.SceneFragment;
 import java.util.Locale;
 
+/**
+ * google监控
+ */
 public final class Analytics {
 
     private static final String DEVICE_LANGUAGE = "device_language";
