@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<resources>
+
+    <drawable name="grey_200">@color/grey_200</drawable>
+    <drawable name="grey_800">@color/grey_800</drawable>
+    <drawable name="grey_900">@color/grey_900</drawable>
+    <drawable name="transparent">@android:color/transparent</drawable>
+    <drawable name="tile_background_activated">#7f9c27b0</drawable>
+    <drawable name="sadpanda_low_poly">@color/colorPrimary</drawable>
+
+</resources>

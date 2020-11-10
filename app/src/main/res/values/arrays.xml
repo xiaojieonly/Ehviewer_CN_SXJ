@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <string-array name="theme_entries" translatable="false">
+        <item>@string/settings_eh_theme_light</item>
+        <item>@string/settings_eh_theme_dark</item>
+        <item>@string/settings_eh_theme_black</item>
+    </string-array>
+
+    <string-array name="theme_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="list_mode_entries" translatable="false">
+        <item>@string/settings_eh_list_mode_detail</item>
+        <item>@string/settings_eh_list_mode_thumb</item>
+    </string-array>
+
+    <string-array name="list_mode_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string-array name="gallery_site_entries" translatable="false">
+        <item>@string/site_e</item>
+        <item>@string/site_ex</item>
+    </string-array>
+
+    <string-array name="gallery_site_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string-array name="launch_page_entries" translatable="false">
+        <item>@string/homepage</item>
+        <item>@string/subscription</item>
+        <item>@string/whats_hot</item>
+    </string-array>
+
+    <string-array name="launch_page_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="detail_size_entries" translatable="false">
+        <item>@string/settings_eh_detail_size_long</item>
+        <item>@string/settings_eh_detail_size_short</item>
+    </string-array>
+
+    <string-array name="detail_size_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string-array name="thumb_size_entries" translatable="false">
+        <item>@string/settings_eh_thumb_size_large</item>
+        <item>@string/settings_eh_thumb_size_middle</item>
+        <item>@string/settings_eh_thumb_size_small</item>
+    </string-array>
+
+    <string-array name="thumb_size_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="thumb_resolution_entries" translatable="false">
+        <item>@string/settings_eh_thumb_resolution_auto</item>
+        <item>250x</item>
+        <item>300x</item>
+    </string-array>
+
+    <string-array name="thumb_resolution_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="search_min_rating">
+        <item>@string/star_2</item>
+        <item>@string/star_3</item>
+        <item>@string/star_4</item>
+        <item>@string/star_5</item>
+    </string-array>
+
+    <string-array name="multi_thread_download_entries" translatable="false">
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
+        <item>7</item>
+    </string-array>
+
+    <string-array name="multi_thread_download_entry_values" translatable="false">
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
+        <item>7</item>
+    </string-array>
+
+    <string-array name="preload_image_entries" translatable="false">
+        <item>3</item>
+        <item>5</item>
+        <item>7</item>
+        <item>11</item>
+        <item>13</item>
+        <item>17</item>
+    </string-array>
+
+    <string-array name="preload_image_entry_values" translatable="false">
+        <item>3</item>
+        <item>5</item>
+        <item>7</item>
+        <item>11</item>
+        <item>13</item>
+        <item>17</item>
+    </string-array>
+
+    <string-array name="image_resolution_entries" translatable="false">
+        <item>@string/settings_download_image_resolution_auto</item>
+        <item>780x</item>
+        <item>980x</item>
+        <item>1280x</item>
+        <item>1600x</item>
+        <item>2400x</item>
+    </string-array>
+
+    <string-array name="image_resolution_entry_values" translatable="false">
+        <item>a</item>
+        <item>780</item>
+        <item>980</item>
+        <item>1280</item>
+        <item>1600</item>
+        <item>2400</item>
+    </string-array>
+
+    <string-array name="screen_rotation_entries">
+        <item>@string/settings_read_screen_rotation_default</item>
+        <item>@string/settings_read_screen_rotation_portrait</item>
+        <item>@string/settings_read_screen_rotation_landscape</item>
+        <item>@string/settings_read_screen_rotation_sensor</item>
+    </string-array>
+
+    <string-array name="screen_rotation_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="reading_direction_entries">
+        <item>@string/settings_read_reading_direction_left_to_right</item>
+        <item>@string/settings_read_reading_direction_right_to_Left</item>
+        <item>@string/settings_read_reading_direction_top_to_bottom</item>
+    </string-array>
+
+    <string-array name="reading_direction_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="page_scaling_entries">
+        <item>@string/settings_read_page_scaling_actual_size</item>
+        <item>@string/settings_read_page_scaling_fit_to_width</item>
+        <item>@string/settings_read_page_scaling_fit_to_height</item>
+        <item>@string/settings_read_page_scaling_fit_to_screen</item>
+        <item>@string/settings_read_page_scaling_fixed_scale</item>
+    </string-array>
+
+    <string-array name="page_scaling_entry_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="start_position_entries">
+        <item>@string/settings_read_start_position_top_left</item>
+        <item>@string/settings_read_start_position_top_right</item>
+        <item>@string/settings_read_start_position_bottom_left</item>
+        <item>@string/settings_read_start_position_bottom_right</item>
+        <item>@string/settings_read_start_position_center</item>
+    </string-array>
+
+    <string-array name="start_position_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="read_cache_size_entries" translatable="false">
+        <item>40 MB</item>
+        <item>80 MB</item>
+        <item>160 MB</item>
+        <item>320 MB</item>
+        <item>640 MB</item>
+    </string-array>
+
+    <string-array name="read_cache_size_entry_values" translatable="false">
+        <item>40</item>
+        <item>80</item>
+        <item>160</item>
+        <item>320</item>
+        <item>640</item>
+    </string-array>
+
+    <string-array name="gallery_list_menu_entries">
+        <item>@string/download</item>
+        <item>@string/add_to_favourites</item>
+    </string-array>
+
+    <string-array name="filter_entries">
+        <item>@string/filter_title</item>
+        <item>@string/filter_uploader</item>
+        <item>@string/filter_tag</item>
+        <item>@string/filter_tag_namespace</item>
+    </string-array>
+
+    <string-array name="tag_menu_entries">
+        <item>@string/show_definition</item>
+        <item>@string/add_filter</item>
+    </string-array>
+
+    <string-array name="app_language_entries">
+        <item>@string/app_language_system</item>
+        <item>@string/app_language_de</item>
+        <item>@string/app_language_en</item>
+        <item>@string/app_language_es</item>
+        <item>@string/app_language_fr</item>
+        <item>@string/app_language_ja</item>
+        <item>@string/app_language_ko</item>
+        <item>@string/app_language_th</item>
+        <item>@string/app_language_zh_cn</item>
+        <item>@string/app_language_zh_hk</item>
+        <item>@string/app_language_zh_tw</item>
+    </string-array>
+
+    <string-array name="app_language_entry_values">
+        <item>system</item>
+        <item>de</item>
+        <item>en</item>
+        <item>es</item>
+        <item>fr</item>
+        <item>ja</item>
+        <item>ko</item>
+        <item>th</item>
+        <item>zh-CN</item>
+        <item>zh-HK</item>
+        <item>zh-TW</item>
+    </string-array>
+
+    <string-array name="tag_translation_metadata" tools:ignore="InconsistentArrays">
+        <item>@null</item>
+    </string-array>
+
+    <string-array name="proxy_types">
+        <item>@string/proxy_direct</item>
+        <item>@string/proxy_system</item>
+        <item>HTTP</item>
+        <item>SOCKS</item>
+    </string-array>
+
+</resources>

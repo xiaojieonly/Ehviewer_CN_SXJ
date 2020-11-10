@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+
+    <!-- primary_drawable_light     54% -->
+    <!-- secondary_drawable_light   26% -->
+    <!-- primary_drawable_dark     100% -->
+    <!-- secondary_drawable_dark    30% -->
+    <!-- primary_drawable_black     80% -->
+    <!-- secondary_drawable_black   24% -->
+    <color name="primary_drawable_light">#8a000000</color>
+    <color name="secondary_drawable_light">#42000000</color>
+    <color name="primary_drawable_dark">#ffffffff</color>
+    <color name="secondary_drawable_dark">#4dffffff</color>
+    <color name="primary_drawable_black">#ccffffff</color>
+    <color name="secondary_drawable_black">#3dffffff</color>
+
+    <color name="primary_text_default_material_black">#d9ffffff</color>
+    <color name="primary_text_disabled_material_black">#4dffffff</color>
+
+    <color name="background_dark">#ff303030</color>
+    <color name="background_light">#fffafafa</color>
+
+    <color name="content_light">@color/grey_100</color>
+    <color name="content_dark">@color/grey_825</color>
+    <color name="content_black">@color/grey_925</color>
+
+    <color name="content_activated_light">@color/grey_300</color>
+    <color name="content_activated_dark">@color/grey_600</color>
+    <color name="content_activated_black">@color/grey_700</color>
+
+    <color name="widget_light">@color/grey_200</color>
+    <color name="widget_dark">@color/grey_700</color>
+    <color name="widget_black">@color/grey_850</color>
+
+    <color name="progress_light">@color/colorAccent</color>
+    <color name="progress_dark">@color/grey_600</color>
+    <color name="progress_black">@color/grey_700</color>
+
+    <color name="tag_group_background_light">@color/colorAccent</color>
+    <color name="tag_group_background_dark">@color/grey_775</color>
+    <color name="tag_group_background_black">@color/grey_875</color>
+
+    <color name="tag_background_light">@color/colorPrimary</color>
+    <color name="tag_background_dark">@color/grey_775</color>
+    <color name="tag_background_black">@color/grey_875</color>
+
+    <color name="gallery_detail_button_background_light">@color/grey_100</color>
+    <color name="gallery_detail_button_background_dark">@color/grey_800</color>
+    <color name="gallery_detail_button_background_black">@color/grey_900</color>
+
+    <color name="red_500">#fff44336</color>
+    <color name="teal_500">#ff009688</color>
+    <color name="teal_700">#ff00796b</color>
+    <color name="purple_500">#ff9c27b0</color>
+    <color name="purple_a200">#ffe040fb</color>
+    <color name="purple_a400">#ffd500f9</color>
+    <color name="purple_a700">#ffaa00ff</color>
+    <color name="cyan_600">#ff00acc1</color>
+    <color name="light_green_600">#ff7cb342</color>
+    <color name="yellow_800">#fff9a825</color>
+    <color name="deep_orange_400">#ffff7043</color>
+    <color name="grey_975">#ff080808</color>
+    <color name="grey_950">#ff111111</color>
+    <color name="grey_925">#ff191919</color>
+    <color name="grey_900">#ff212121</color>
+    <color name="grey_875">#ff292929</color>
+    <color name="grey_850">#ff323232</color>
+    <color name="grey_825">#ff3a3a3a</color>
+    <color name="grey_800">#ff424242</color>
+    <color name="grey_775">#ff4a4a4a</color>
+    <color name="grey_750">#ff525252</color>
+    <color name="grey_725">#ff595959</color>
+    <color name="grey_700">#ff616161</color>
+    <color name="grey_675">#ff666666</color>
+    <color name="grey_650">#ff6b6b6b</color>
+    <color name="grey_625">#ff707070</color>
+    <color name="grey_600">#ff757575</color>
+    <color name="grey_575">#ff7f7f7f</color>
+    <color name="grey_550">#ff8a8a8a</color>
+    <color name="grey_525">#ff949494</color>
+    <color name="grey_500">#ff9e9e9e</color>
+    <color name="grey_475">#ffa6a6a6</color>
+    <color name="grey_450">#ffaeaeae</color>
+    <color name="grey_425">#ffb5b5b5</color>
+    <color name="grey_400">#ffbdbdbd</color>
+    <color name="grey_375">#ffc6c6c6</color>
+    <color name="grey_350">#ffcfcfcf</color>
+    <color name="grey_325">#ffd7d7d7</color>
+    <color name="grey_300">#ffe0e0e0</color>
+    <color name="grey_275">#ffe4e4e4</color>
+    <color name="grey_250">#ffe7e7e7</color>
+    <color name="grey_225">#ffebebeb</color>
+    <color name="grey_200">#ffeeeeee</color>
+    <color name="grey_175">#fff0f0f0</color>
+    <color name="grey_150">#fff2f2f2</color>
+    <color name="grey_125">#fff3f3f3</color>
+    <color name="grey_100">#fff5f5f5</color>
+    <color name="brown_500">#ff795548</color>
+
+    <color name="colorPrimary">@color/teal_500</color>
+    <color name="colorPrimaryDark">@color/teal_700</color>
+    <color name="colorAccent">@color/purple_a200</color>
+
+    <color name="translucent_bg">#80ffffff</color>
+
+    <color name="loading_indicator_red">#ffe53935</color>
+    <color name="loading_indicator_purple">@color/purple_a700</color>
+    <color name="loading_indicator_blue">#ff1d87e4</color>
+    <color name="loading_indicator_cyan">@color/cyan_600</color>
+    <color name="loading_indicator_green">@color/light_green_600</color>
+    <color name="loading_indicator_yellow">@color/yellow_800</color>
+    <color name="loading_indicator_orange">@color/deep_orange_400</color>
+
+    <color name="check_text_view_mask">#8a000000</color>
+
+    <!-- Red -->
+    <color name="doujinshi">#fff44336</color>
+    <!-- Orange -->
+    <color name="manga">#ffff9800</color>
+    <!-- Yellow 700 -->
+    <color name="artist_cg">#ffFbc02d</color>
+    <!-- Green -->
+    <color name="game_cg">#ff4caf50</color>
+    <!-- Light Green -->
+    <color name="western">#ff8bc34a</color>
+    <!-- Blue -->
+    <color name="non_h">#ff2196f3</color>
+    <!-- Indigo -->
+    <color name="image_set">#ff3f51b5</color>
+    <!-- Purple -->
+    <color name="cosplay">#ff9c27b0</color>
+    <!-- Deep Purple 300 -->
+    <color name="asian_porn">#ff9575cd</color>
+    <!-- Pink 300 -->
+    <color name="misc">#fff06292</color>
+    <color name="unknown_bg">@android:color/black</color>
+
+    <!-- divider -->
+    <color name="divider_light">#20000000</color>
+    <color name="divider_dark">#20ffffff</color>
+
+    <!-- shadow -->
+    <color name="shadow_light">#38000000</color>
+
+    <!-- Gallery Activity -->
+    <color name="gallery_slider_background_dark">@color/grey_800</color>
+    <color name="gallery_slider_background_black">@color/grey_900</color>
+
+    <color name="big_icon">#1f000000</color>
+
+    <color name="guide_bg">#e5009688</color>
+
+    <!-- Lock pattern view -->
+    <color name="lock_pattern_view_regular_color_light">#8a000000</color>
+    <color name="lock_pattern_view_regular_color_dark">#8affffff</color>
+    <color name="lock_pattern_view_success_color">@color/colorPrimary</color>
+    <color name="lock_pattern_view_error_color">@color/red_500</color>
+
+    <!--Shortcut background-->
+    <color name="shortcut_bg">#F5F5F5</color>
+</resources>

@@ -1,0 +1,695 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<!-- French translations by UShimamura -->
+<resources>
+
+    <string name="app_name">EhViewer</string>
+
+    <!-- Category -->
+
+    <string name="homepage">Page d\'acceuil</string>
+    <string name="subscription">Tags suivis</string>
+    <string name="whats_hot">Plus vus</string>
+    <string name="favourite">Favoris</string>
+    <string name="history">Historique</string>
+    <string name="downloads">Téléchargement</string>
+    <string name="settings">Paramétres</string>
+
+    <string name="username">Nom d\'utilisateur</string>
+    <string name="password">Mot de passe</string>
+    <string name="recaptcha">Recaptcha (Optionale)</string>
+
+    <string name="recaptcha_none">Appuyez ici</string>
+    <string name="recaptcha_loading">Chargement…</string>
+    <string name="recaptcha_failure">Échec</string>
+
+    <string name="sign_in">Se connecter</string>
+    <string name="register">Créer un compte</string>
+    <string name="sign_in_via_webview">Se connecter via WebView</string>
+    <string name="sign_in_via_cookies">Se connecter à l\'aide de cookies</string>
+    <string name="display_name_dialog_title">Entrer un nickname</string>
+    <string name="display_name">Nickname</string>
+    <string name="display_name_is_empty">Veuillez entrer un nickname</string>
+    <string name="sign_in_first">Connectez-vous pour continuer</string>
+
+    <string name="default_display_name">Pétit Hippo</string>
+
+    <string name="cookie_explain">Les cookies gardent des informations dans un navigateur Web. Cherchez-en les informations si vous ignorez ce qui c\'est ou où vous pouvez les obtenir.\n\nEntrez le cookie spéciale pour vous connecter.</string>
+    <string name="text_is_empty">Entrez le texte.</string>
+    <string name="waring">Attention</string>
+    <string name="wrong_cookie_warning">Les cookies entrés n\'ont pas l\'air corrects. Vérifiez-les.</string>
+    <string name="i_will_check_it">Je les vérifie tout le suite.</string>
+    <string name="i_dont_think_so">Ils sont corrects !</string>
+    <string name="found_cookies">Cookies trouvés</string>
+
+    <string name="invalid_download_location">La location de téléchargement actuelle n\'est pas disponible. Choissez-en une à nouveau dans les Paramétres.</string>
+
+    <string name="cellular_network_warning">Vous utilisez les données mobiles</string>
+
+    <string name="error_bad_status_code">Code d\'état inconnu : %d</string>
+    <string name="error_timeout">Time-out</string>
+    <string name="error_unknown_host">Hôte inconnu</string>
+    <string name="error_redirection">Trop de redirections</string>
+    <string name="error_socket">Erreur de network</string>
+    <string name="error_unknown">Erreur inconnue</string>
+    <string name="error_cant_find_activity">Impossible de trouver l\'application</string>
+    <string name="error_cannot_parse_the_url">Impossible de parser le lien URL</string>
+    <string name="error_not_folder_path">Chemin de dossier invalide</string>
+    <string name="error_no_provider">Aucun fournisseur</string>
+    <string name="error_decoding_failed">Échec de décodage</string>
+    <string name="error_not_found">Introuvable</string>
+    <string name="error_empty">Vide</string>
+    <string name="error_reading_failed">Échec de lecture</string>
+    <string name="error_invalid_archive">Fiche d\'achives invalide</string>
+    <string name="error_out_of_range">Hors de portée</string>
+    <string name="error_write_failed">Échec d\'écriture</string>
+    <string name="error_parse_error">Échec d\'analyse syntaxique</string>
+    <string name="error_509">509</string>
+    <string name="error_invalid_url">URL invalide</string>
+    <string name="error_get_ptoken_error">Échec d\'obtention de pToken</string>
+    <string name="error_cant_create_temp_file">Impossible de créer un fiche temporaire</string>
+    <string name="error_cant_save_image">Impossible d\'enregistrer l\'image</string>
+    <string name="error_invalid_number">Nombre invalide</string>
+    <string name="error_please_login_first">Vous devez d\'abord vous connecter</string>
+
+    <string name="app_waring">Le contenu de l\'application provient de l\'Internet, dont quelque chose peut vous causer le dommage physique ou mentale. Vous l\'avez bien compris et voulez continuer quand même.</string>
+    <string name="error_username_cannot_empty">Nom d\'ultilisateur ne doit pas être une chaîne vide</string>
+    <string name="error_password_cannot_empty">Mot de passe ne doit pas être une chaîne vide</string>
+    <string name="skip_signing_in">Continuer sans se connecter</string>
+    <string name="sign_in_failed">Impossible de se connecter</string>
+    <string name="sign_in_failed_plain">Il se peut que ce soit une erreur causée par la mise à jour du site Web ou d\'autre chose. Vous pouvez essayer de vous connecter via WebView, à l\'aide de cookies, ou continuer sans vous connecter. Mais si vous ne vous connectez pas, vous pouvez devenir un panda triste. Essayez de vous connecter à l\'aide de cookies si vous vous êtes connecté(e) dans la version 0.6.x.</string>
+    <string name="press_twice_exit">Appuyez encore une fois pour quitter</string>
+    <string name="content_layout_restore_tip">Appuyez pour réessayer</string>
+    <string name="write_rationale">EhViewer réquêrir la permission WRITE_EXTERNAL_STORAGE pour télécharger les galeries. Voulez-vous l\'accorder ?</string>
+    <string name="you_rejected_me">C\'est pas sympa T_T</string>
+    <string name="analytics_explain">Ça vous derange si le développeur rassemble vos informations de l\'appareil et votre usage de l\'application ? Les informations sont très utiles pour le développeur.&lt;br&gt;&lt;br&gt;L\'analyse de données est fournie par Google Analytics for Firebase. Sa politique de confidencialité se trouve à &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt;.&lt;br&gt;&lt;br&gt;Si vous acceptez d\'aider l\'analyse données, vos informations de l\'appareil seront rassemblées, y compris, mais sans s\'y limiter, votre version API Android, modéle de l\'appareil, les durées de sessions et usages.&lt;br&gt;&lt;br&gt;Le développeur vous promet à ne rassembler AUCUNE donnée à moins que vous ne l\'acceptiez.&lt;br&gt;&lt;br&gt;Les données rassemblées seront analysées à l\'aide de  Google Analytics for Firebase. Le rapport d\'analyse ne peut être lu que par le développeur de l\'application.</string>
+    <string name="get_it">Compris</string>
+    <string name="accept">Accepter</string>
+    <string name="reject">Rejéter</string>
+
+    <string name="help_route">Paramètres->À propos de l\'application->Aide</string>
+
+    <!-- Select scene -->
+    <string name="select_scene">Sélectionnez un site galerie.</string>
+    <string name="select_scene_explain">e-hentai : disponible pour tout le monde\nexhentai : disponible pour ce qui s\'est connecté(e)</string>
+    <string name="no_select">Sélectionnez un site</string>
+
+    <!-- Update -->
+    <string name="update">Mettre à jour</string>
+    <string name="update_plain">Version : %1$s\nTaille : %2$s\n\n%3$s</string>
+    <string name="update_to_date">EhViewer est à jour.</string>
+    <string name="update_ignore">Ignorer</string>
+
+    <!-- Gallery List -->
+    <string name="gallery_list_search_bar_hint_exhentai">Chercher sur ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Chercher sur E-Hentai</string>
+    <string name="gallery_list_search_bar_open_gallery">Ouvrir la galerie spécifiée</string>
+    <string name="gallery_list_empty_hit">Le monde est grand et le panda s\'assied tout seul.</string>
+	<string name="gallery_list_empty_hit_subscription">Vous pouvez suivre des tags à Paramètres -> EH -> Mes tags.</string>
+
+    <string name="search">Chercher</string>
+
+    <string name="keyword_search">Recherche du mot-clé</string>
+    <string name="image_search">Recherche d\'une image</string>
+
+    <string name="search_normal">Recherche normale</string>
+    <string name="search_advance">Options avancées</string>
+    <string name="search_image">Recherche d\'une image</string>
+    <string name="search_subscription_search">Recherche dans les tags suivis</string>
+    <string name="search_normal_search">Chercher</string>
+    <string name="search_specify_uploader">Spécifier un uploader</string>
+    <string name="search_specify_tag">Spécifier un tag</string>
+    <string name="search_enable_advance">Activer options avancées</string>
+
+    <string name="search_tip">Recherche normale : faire recherche.\n\nRecherche dans les tags suivis : seulement rechercher dans les tags suivis.\n\nSpécifer un uploader : faire la liste des galeries mises en ligne par l\'uploader spécifié. Autres options sont ignorées.\n\nSpécifier un tag : faire la liste des galeries qui contiennent le tag spécifié. Vous ne pouvez spécifier qu\'un tag. Autres options sont ignorées.</string>
+
+    <string name="search_sname">Chercher une galerie</string>
+    <string name="search_stags">Chercher tags galerie</string>
+    <string name="search_sdesc">Chercher la description galerie</string>
+    <string name="search_storr">Chercher un nom de fiche torrent</string>
+    <string name="search_sto">Seulement montrer galeries avec des fiches torrent</string>
+    <string name="search_sdt1">Chercher des tags faibles</string>
+    <string name="search_sdt2">Chercher des tags peu acceptés</string>
+    <string name="search_sh">Montrer les galeries supprimées</string>
+    <string name="search_sr">Minimum note :</string>
+    <string name="search_sp">Pages : </string>
+    <string name="search_sp_to">à</string>
+    <string name="search_sf">Désactiver le filtre par défaut pour les items suivants :</string>
+    <string name="search_sfl">Langue</string>
+    <string name="search_sfu">Uploader</string>
+    <string name="search_sft">Tag</string>
+
+    <string name="select_image">Sélectionner une image</string>
+    <string name="search_uss">Activer le scannage de similarité</string>
+    <string name="search_osc">Chercher seulement les couverture</string>
+    <string name="search_se">Montrer les galeries supprimées</string>
+    <string name="select_image_first">Sélectionnez une image</string>
+
+    <string name="add_to_favourites">Ajouter à favori</string>
+    <string name="remove_from_favourites">Retirer de favori</string>
+
+    <string name="stop_downloading">Arrêter le téléchargement</string>
+
+    <string name="quick_search">Recherche rapide</string>
+    <string name="quick_search_tip">Appuyez sur \"+\" pour ajouter une Recherche rapide</string>
+    <string name="add_quick_search_dialog_title">Ajouter la Recherche rapide</string>
+    <string name="name_is_empty">Entrez un nom</string>
+    <string name="delete">Supprimer</string>
+    <string name="delete_quick_search_title">Supprimer les Recherches rapides</string>
+    <string name="delete_quick_search_message">Supprimer \"%s\" ?</string>
+    <string name="no_quick_search">Recherches rapides s\'afficheront ici.</string>
+    <string name="add_quick_search_tip">Le resultat de la liste de galerie sera sauvegardé comme une Recherche rapide. Cherchez d\'abord pour sauvegarder l\'état du panneau recherche.</string>
+    <string name="readme">README</string>
+    <string name="image_search_not_quick_search">Impossible d\'ajouter recherche d\'une image comme une Recherche rapide.</string>
+    <string name="duplicate_quick_search">Une Recherche rapide avec le nom \"%s\" déjà existe.</string>
+    <string name="duplicate_name">Ce nom déjà existe</string>
+
+    <string name="go_to_hint">Page %1$d, avec un totale de %2$d pages</string>
+
+    <!-- search_min_rating -->
+    <string name="star_2">2 étoiles</string>
+    <string name="star_3">3 étoiles</string>
+    <string name="star_4">4 étoiles</string>
+    <string name="star_5">5 étoiles</string>
+
+    <!-- Gallery detail -->
+    <string name="error_cannot_find_gallery">La galerie introuvable</string>
+    <string name="download">Télécharger</string>
+    <string name="read">Lire</string>
+    <string name="more_information">Voir plus d\'informations</string>
+    <plurals name="page_count">
+        <item quantity="one">%d page</item>
+        <item quantity="other">%d pages</item>
+    </plurals>
+    <string name="favored_times">\u2665 %d</string>
+    <string name="rating_text">%1$s (%2$.2f, %3$d)</string>
+    <string name="favorites">Favoris</string>
+    <string name="torrent_count">Torrent (%d)</string>
+    <string name="share">Partager</string>
+    <string name="rate">Noter</string>
+    <string name="similar_gallery">Similaire(s)</string>
+    <string name="search_cover">Chercher le couverture</string>
+    <string name="no_tags">Aucun tag</string>
+    <string name="no_comments">Aucun commentaire</string>
+    <string name="no_more_comments">Pas d\'autres commentaires</string>
+    <string name="more_comment">Voir plus de commentaires</string>
+    <string name="no_previews">Aucun aperçu</string>
+    <string name="no_more_previews">Pas d\'autres aperçus</string>
+    <string name="more_previews">Voir plus d\'aperçus</string>
+    <string name="refresh">Rafraîchir</string>
+    <string name="open_in_other_app">Ouvrir avec une autre appli</string>
+    <string name="rate_successfully">Noté avec succès</string>
+    <string name="rate_failed">Échec de notation</string>
+    <string name="no_torrents">Aucun fiche torrent</string>
+    <string name="torrents">Fiches torrent</string>
+    <string name="favorited">Ajoutée à favoris</string>
+    <string name="not_favorited">Non ajoutée à favoris</string>
+    <string name="add_favorites_dialog_title">Ajouter à favoris</string>
+    <string name="remember_favorite_collection">Enrégistrer la collection favoris</string>
+    <string name="add_to_favorite_success">Ajouté à favoris</string>
+    <string name="remove_from_favorite_success">Retirer de favoris</string>
+    <string name="add_to_favorite_failure">Impossible de l\'ajouter à favoris</string>
+    <string name="remove_from_favorite_failure">Impossible de la retirer de favoris</string>
+    <string name="filter_the_uploader">Bloquer l\'uploader \"%s\" ?</string>
+    <string name="filter_the_tag">Bloquer le tag \"%s\" ?</string>
+    <string name="filter_added">Bloqué(e)</string>
+
+    <!-- Rating -->
+    <string name="rating10">CHEF-D\'ŒUVRE</string>
+    <string name="rating9">IRRÉSISTABLE</string>
+    <string name="rating8">TRÈS BIEN</string>
+    <string name="rating7">AGRÉABLE</string>
+    <string name="rating6">PAS MAL</string>
+    <string name="rating5">COMME SI COMME ÇA</string>
+    <string name="rating4">MAL</string>
+    <string name="rating3">TRÈS MAL</string>
+    <string name="rating2">PEINE</string>
+    <string name="rating1">INSUPPORTABLE</string>
+    <string name="rating0">FUYEZ !</string>
+
+    <!-- Gallery Info -->
+    <string name="gallery_info">Infos de la galerie</string>
+    <string name="copied_to_clipboard">Copié à presse-papiers</string>
+    <string name="header_key">Clé</string>
+    <string name="header_value">Valeur</string>
+    <string name="key_gid">Gid</string>
+    <string name="key_token">Token</string>
+    <string name="key_url">URL</string>
+    <string name="key_title">Titre</string>
+    <string name="key_title_jpn">Titre en japonais</string>
+    <string name="key_thumb">Aperçu</string>
+    <string name="key_category">Catégorie</string>
+    <string name="key_uploader">Uploader</string>
+    <string name="key_posted">Mise en ligne</string>
+    <string name="key_parent">Parent</string>
+    <string name="key_visible">Visibile ?</string>
+    <string name="key_language">Langue</string>
+    <string name="key_pages">Pages</string>
+    <string name="key_size">Taille</string>
+    <string name="key_favorite_count">Nombre d\'additions à favoris</string>
+    <string name="key_favorited">Ajouté à favoris</string>
+    <string name="key_rating_count">Nombre de notations</string>
+    <string name="key_rating">Notation</string>
+    <string name="key_torrents">Nombre de torrents</string>
+    <string name="key_torrent_url">URL du fiche torrent</string>
+
+    <!-- Gallery Comments -->
+    <string name="gallery_comments">Commentaires de la galerie</string>
+    <string name="no_one_comments_gallery">Personne n\'a commenté sur la galerie</string>
+    <string name="comment_successfully">Commentaire posté</string>
+    <string name="comment_failed">Impossible de commenter</string>
+    <string name="copy_comment_text">Copier le texte du commentaire</string>
+    <string name="vote_up">Donner \"J\'aime\"</string>
+    <string name="cancel_vote_up">Annuler \"J\'aime\"</string>
+    <string name="vote_down">Donner \"Je hais\"</string>
+    <string name="cancel_vote_down">Donner \"Je hais\"</string>
+    <string name="vote_up_successfully">\"J\'aime\" donné avec succès</string>
+    <string name="cancel_vote_up_successfully">\"J\'aime\" retiré avec succès</string>
+    <string name="vote_down_successfully">\"Je hais\" donné avec succès</string>
+    <string name="cancel_vote_down_successfully">\"Je hais\" retiré avec succès</string>
+    <string name="vote_failed">Échec du vote</string>
+    <string name="check_vote_status">Voir les détails des votes</string>
+
+    <!-- Gallery Previews -->
+    <string name="gallery_previews">Aperçus de la galerie</string>
+    <string name="go_to">Aller à</string>
+
+    <!-- Download -->
+    <string name="scene_download_title">Téléchargement - %s</string>
+    <string name="no_download_info">Vos téléchargements s\'afficheront ici</string>
+    <string name="download_state_none">En veille</string>
+    <string name="download_state_wait">En attente</string>
+    <string name="download_state_downloading">Téléchargement en cours</string>
+    <string name="download_state_downloaded">Téléchargement completé</string>
+    <string name="download_state_failed">Échec</string>
+    <string name="download_state_failed_2">%d non complet</string>
+    <string name="download_state_finish">Complet</string>
+    <string name="stat_509_alert_title">Erreur 509</string>
+    <string name="stat_509_alert_text">Votre limite d\'obtention d\'images est atteinte. Arrêtez le téléchargement et réessayez plus tard.</string>
+    <string name="stat_download_done_title">Téléchargement completé</string>
+    <string name="stat_download_done_text_succeeded">%d avec succés</string>
+    <string name="stat_download_done_text_failed">%d échoué(s)</string>
+    <string name="stat_download_done_text_mix">%1$d avec succés, %2$d échoué(s)</string>
+    <string name="stat_download_done_line_succeeded">Complété(s) : %s</string>
+    <string name="stat_download_done_line_failed">Échoué(s) : %s</string>
+    <string name="download_remove_dialog_title">Retire téléchargement</string>
+    <string name="download_remove_dialog_message">Retirer %s de la liste de téléchargement ?</string>
+    <string name="download_remove_dialog_message_2">Retirer %d articles de la liste de téléchargement ?</string>
+    <string name="download_remove_dialog_check_text">Supprimer fiches d\'image</string>
+    <string name="stat_download_action_stop_all">Arrêter tout</string>
+    <string name="drawer_download_label_title">Label</string>
+    <string name="default_download_label_name">Défaut</string>
+    <string name="download_move_dialog_title">Déplacer</string>
+    <string name="download_labels">Labels de téléchargement</string>
+    <string name="download_start_all">Commencer tout</string>
+    <string name="download_stop_all">Arrêter tout</string>
+    <string name="download_reset_reading_progress">Réinitialiser les progrès de lecture</string>
+    <string name="reset_reading_progress_message">Réinitialiser les progrès de lecture de toutes galéries téléchargées ?</string>
+    <string name="download_service_label">Service du téléchargement EhViewer</string>
+    <string name="download_speed_text">%s</string>
+    <string name="download_speed_text_2">%1$s, encore %2$s</string>
+    <string name="remember_download_label">Enregistrer le label de téléchargement</string>
+    <string name="default_download_label">Label de téléchargement par défaut</string>
+    <string name="added_to_download_list">Ajouté à la liste de téléchargement</string>
+
+    <!-- Download label -->
+    <string name="no_download_label">Vos labels de téléchargement s\'affichera ici</string>
+    <string name="add">Ajouter</string>
+    <string name="new_label_title">Nouveau label</string>
+    <string name="label_text_is_empty">Entrez le texte du label</string>
+    <string name="label_text_is_invalid">\"Default\" n\'est pas un label valide</string>
+    <string name="label_text_exist">Ce label déjà existe</string>
+    <string name="rename_label_title">Renommer le label</string>
+    <string name="delete_label_title">Supprimer le label</string>
+    <string name="delete_label_message">Supprimer \"%s\" ?</string>
+
+    <!-- History -->
+    <string name="no_history">Votre historique de les lectures de galerie s\'affichera ici</string>
+    <string name="clear_all">Tout effacer</string>
+    <string name="clear_all_history">Effacer toute l\'historique ?</string>
+
+    <!-- Filter -->
+	<string name="filter">Bloqueur des galeries</string>
+    <string name="filter_title">Titre</string>
+    <string name="filter_uploader">Uploader</string>
+    <string name="filter_tag">Tag</string>
+    <string name="filter_tag_namespace">Espace de nom de tag</string>
+    <string name="tip">Astuce</string>
+	<string name="delete_filter">Supprimer le bloqueur bloqueur \"%s\" ?</string>
+    <string name="show_definition">Montrer les expliques</string>
+	<string name="add_filter">Ajouter un bloqueur</string>
+    <string name="filter_text">Texte du bloqueur</string>
+    <string name="filter_tip">Les galeries non désirées qui satisfont les critères des bloqueurs ne sont pas affichées.\n\nBloqueur du titre : exclure les galeries dont le titre contient le mot.\n\nBloqueur d\'uploader : exclure les galerie mises en ligne par cet uploader.\n\nBloqueur de tag : exclure les galeries qui ont ce tag. Il vas prendre plus de temps pour charger la liste.\n\nBloqueur d\'espace de nom de tag : exclure les galeries qui ont cette espace de nom de tag. Il vas prendre plus de temps pour charger la liste.</string>
+
+
+    <!-- Set Security -->
+    <string name="set_pattern_protection">Définir le modéle de déverrouillage</string>
+    <string name="set_pattern_protection_tip">Déssinez un modéle pour définir le modéle de déverrouillage\nContinuer sans rien déssiner pour effacer le modéle</string>
+    <string name="set">Définir</string>
+    <string name="enable_fingerprint">Permettre le déverrouillage avec l\'empreinte digitale</string>
+
+    <!-- UConfig Activity -->
+    <string name="u_config">Paramètres EHentai</string>
+    <string name="apply">Appliquer</string>
+    <string name="apply_tip">Appuyez sur la coche pour sauvegarder les changements</string>
+
+    <!-- Gallery Activity -->
+    <string name="page_menu_title">Page %d</string>
+    <string name="page_menu_refresh">@string/refresh</string>
+    <string name="page_menu_share">@string/share</string>
+    <string name="page_menu_save">Enregistrer</string>
+    <string name="page_menu_add_bookmark">Ajouter un signet</string>
+    <string name="gallery_menu_title">Menu</string>
+    <string name="share_image">Partager l\'image</string>
+    <string name="image_saved">Image sauvegardée à %s</string>
+
+    <string name="settings_eh">EH</string>
+    <string name="settings_eh_sign_out">Se déconnecter</string>
+    <string name="settings_eh_sign_out_summary">Redémarrez l\'appli pour vous connecter à nouveau</string>
+    <string name="settings_eh_sign_out_warning">Voulez-vous vous déconnecter ?</string>
+    <string name="settings_eh_sign_out_yes">@android:string/ok</string>
+    <string name="settings_eh_sign_out_tip">Vous vous êtes déconnecté. Redémarrez l\'application pour vous connecter</string>
+    <string name="settings_u_config">Paramètres EHentai</string>
+    <string name="settings_u_config_summary">Paramètres sur le site Web EHentai</string>
+    <string name="settings_my_tags">Tags suivis</string>
+    <string name="settings_my_tags_summary">Gérer les tags suivis sur le site Web EHentai</string>
+    <string name="settings_eh_gallery_site">Site de galerie</string>
+    <string name="settings_eh_launch_page">Écran par défaut après le lancement</string>
+    <string name="settings_eh_list_mode">Mode de liste</string>
+    <string name="settings_eh_list_mode_detail">Avec détails</string>
+    <string name="settings_eh_list_mode_thumb">Miniatures uniquement</string>
+    <string name="settings_eh_detail_size">Taille des détails</string>
+    <string name="settings_eh_detail_size_long">Long</string>
+    <string name="settings_eh_detail_size_short">Court</string>
+    <string name="settings_eh_thumb_size">Taille des mimniatures</string>
+    <string name="settings_eh_thumb_size_large">Large</string>
+    <string name="settings_eh_thumb_size_middle">Moyenne</string>
+    <string name="settings_eh_thumb_size_small">Pétite</string>
+    <string name="settings_eh_thumb_resolution">Résolution des miniatures</string>
+    <string name="settings_eh_thumb_resolution_summary">Auctuellement %s. Certaines résolutions spéciales êmpechent de les charger correctement.</string>
+    <string name="settings_eh_thumb_resolution_auto">Auto</string>
+    <string name="settings_eh_fix_thumb_url">Réparer l\'URL de la miniature</string>
+    <string name="settings_eh_default_categories">Catégoriques sur la page d\'accueil</string>
+    <string name="settings_eh_default_categories_summary">Les catégoriques par défaut à afficher sur la page d\'accueil</string>
+    <string name="settings_eh_excluded_languages">Langues exclues</string>
+    <string name="settings_eh_excluded_languages_summary">Ne pas afficher les galerie des langues spécifiées sur la liste de galerie et le résultat de recherche</string>
+    <string name="settings_eh_excluded_tag_namespaces">Espaces de nom de tag exclues</string>
+    <string name="settings_eh_excluded_tag_namespaces_summary">Exclure espaces de nom spécifiées de une recherche de tag par défaut</string>
+    <string name="settings_eh_show_jpn_title">Montrer les titres japonais</string>
+    <string name="settings_eh_filter">Bloqueur des galeries</string>
+    <string name="settings_eh_filter_summary">Filtrer les galerie par les titres, les uploaders ou les tags</string>
+    <string name="settings_eh_cellular_network_warning">Avertissement de données mobiles</string>
+
+    <string name="settings_read">Lecture</string>
+    <string name="settings_read_screen_rotation">Rotation d\'écran</string>
+    <string name="settings_read_screen_rotation_default">Par défaut</string>
+    <string name="settings_read_screen_rotation_portrait">Portrait</string>
+    <string name="settings_read_screen_rotation_landscape">Landscape</string>
+    <string name="settings_read_reading_direction">Direction de lecture</string>
+    <string name="settings_read_reading_direction_left_to_right">De gauche à droit</string>
+    <string name="settings_read_reading_direction_right_to_Left">De droit à gauche</string>
+    <string name="settings_read_reading_direction_top_to_bottom">De haut à fond</string>
+    <string name="settings_read_page_scaling">Écaillage de page</string>
+    <string name="settings_read_page_scaling_actual_size">Taille actuelle</string>
+    <string name="settings_read_page_scaling_fit_to_width">S\'adapter à la largueur</string>
+    <string name="settings_read_page_scaling_fit_to_height">S\'adapter à la hauteur</string>
+    <string name="settings_read_page_scaling_fit_to_screen">S\'adapter à l\'écran</string>
+    <string name="settings_read_page_scaling_fixed_scale">Taille fixée</string>
+    <string name="settings_read_start_position">Position de début</string>
+    <string name="settings_read_start_position_top_left">En haut à gauche</string>
+    <string name="settings_read_start_position_top_right">En haut à droit</string>
+    <string name="settings_read_start_position_bottom_left">En bas à gauche</string>
+    <string name="settings_read_start_position_bottom_right">En bas à droit</string>
+    <string name="settings_read_start_position_center">Centre</string>
+    <string name="settings_read_keep_screen_on">Maintenir l\'écran allumé</string>
+    <string name="settings_read_show_clock">Montrer l\'heure</string>
+    <string name="settings_read_show_progress">Montrer le progrès</string>
+    <string name="settings_read_show_battery">Montrer le niveau de batterie</string>
+    <string name="settings_read_show_page_interval">Montrer l\'intervalle des pages</string>
+    <string name="settings_read_volume_page">Tourner la page avec les Volumes</string>
+    <string name="settings_read_reading_fullscreen">Plein d\'écran</string>
+    <string name="settings_read_custom_screen_lightness">Personaliser la luminosité d\'écran</string>
+    <string name="settings_read_screen_lightness">Luminosité d\'écran</string>
+
+    <!-- My Tags Activity -->
+    <string name="my_tags">Tags suivis</string>
+
+    <string name="settings_download">Téléchargement</string>
+    <string name="settings_download_download_location">Destination de téléchargement</string>
+    <string name="settings_download_invalid_download_location">Destination de téléchargement invalide</string>
+    <string name="settings_download_cant_get_download_location">Impossible d\'obtenir la destination de téléchargement</string>
+    <string name="settings_download_pick_dir_kk">Une application ne peut écrire aucune donnée dans la carte SD à moins que vous ne roote et modifie votre appareil, à l\'exception du chemin /Android/data/com.hippo.ehviewer, dans lequel EhViewer a la permission d\'écriture.</string>
+    <string name="settings_download_pick_dir_l">Android 5.0+ a implémenté un nouveau API, qui permet les applications à écrire dans la carte SD. Appuyez sur \"DOCUMENT\" pour définir la carte SD comme la destination de téléchargement</string>
+    <string name="settings_download_document">Document</string>
+    <string name="settings_download_continue">Continuer</string>
+    <string name="settings_download_media_scan">Permettre le scannage multimédia</string>
+    <string name="settings_download_media_scan_summary_on">Ne montrez jamais vos applications galerie à personne</string>
+    <string name="settings_download_media_scan_summary_off">La plupart d\'applications galerie ignorent les images dans le chemin de téléchargement</string>
+    <string name="settings_download_multi_thread_download">Téléchargement multi-thread</string>
+    <string name="settings_download_multi_thread_download_summary">Jusqu\'à %s image(s)</string>
+    <string name="settings_download_preload_image">Charger les images d\'avance</string>
+    <string name="settings_download_preload_image_summary">Charger les prochaine %s images</string>
+    <string name="settings_download_image_resolution">Resolution d\'image</string>
+    <string name="settings_download_image_resolution_summary">%s, résolutions mieux que 1280x riquent de ne pas fonctionner</string>
+    <string name="settings_download_image_resolution_auto">Auto</string>
+    <string name="settings_download_download_origin_image">Télécharger l\'images originales</string>
+    <string name="settings_download_download_origin_image_summary">Vous allez obtenir l\'erreur 509 plus facilement</string>
+    <string name="settings_download_restore_download_items">Rétablir les galeries téléchargées</string>
+    <string name="settings_download_restore_download_items_summary">Rétablir tous objets déjà téléchargés dans la destination de téléchargement</string>
+    <string name="settings_download_restoring">Rétablissement en cours</string>
+    <string name="settings_download_restore_not_found">Aucun objet trouvé à rétablir</string>
+    <string name="settings_download_restore_failed">Échec de rétablissement</string>
+    <string name="settings_download_restore_successfully">%d objets rétablis avec succès</string>
+    <string name="settings_download_clean_redundancy">Effacer fiches inutiles de téléchargement</string>
+    <string name="settings_download_clean_redundancy_summary">Effacer les fiches des galeries qui ne sont pas dans la liste de téléchargement mais se trouvent dans la destination de téléchargement</string>
+    <string name="settings_download_clean_redundancy_no_redundancy">Rien à effacer</string>
+    <string name="settings_download_clean_redundancy_done">Nettoyage complété avec succès, %d objets effacés</string>
+
+    <string name="settings_advanced">Avancé</string>
+    <string name="settings_advanced_save_parse_error_body">Enrég. les HTMLs avec erreurs</string>
+    <string name="settings_advanced_save_parse_error_body_summary">Le fiche HTML pouvait contenir les informations personnelles</string>
+    <string name="settings_advanced_save_crash_log">Enrégistrer le rapport crash</string>
+    <string name="settings_advanced_save_crash_log_summary">Les rapports crash aident le développeur à correcter les bugs</string>
+    <string name="settings_advanced_dump_logcat">Sauvegarder le journal logcat</string>
+    <string name="settings_advanced_dump_logcat_summary">Sauvegarder le journal logcat au stockage externe</string>
+    <string name="settings_advanced_dump_logcat_failed">Echec de sauvegarde</string>
+    <string name="settings_advanced_dump_logcat_to">Fiche sauvegardé à %s</string>
+    <string name="settings_advanced_clear_download_path_cache">Vider le cache de la destination de téléchargement</string>
+    <string name="settings_advanced_clear_download_path_cache_summary">Quand il y a une erreur et vous devez télécharger quelque chose à nouveau, vider le cache là-dedans pouvait résoudre le problème.</string>
+    <string name="clipboard_gallery_url_snack_message">Un lien d\'un galerie est détecté dans les presse-papiers. </string>
+    <string name="clipboard_gallery_url_snack_action">Aller</string>
+    <string name="settings_advanced_clear_download_path_cache_message">Vider le cache ?</string>
+    <string name="settings_advanced_clear_memory_cache">Vider le cache du stockage</string>
+    <string name="settings_advanced_clear_memory_cache_summary">Effacer le cache des miniatures et des informations galeries</string>
+    <string name="settings_advanced_read_cache_size">Taille du cache pour la lecture</string>
+    <string name="settings_privacy_pattern_protection_title">Modéle de déverrouillage</string>
+    <string name="settings_privacy_pattern_protection_not_set">Aucun modéle de déverrouillage</string>
+    <string name="settings_privacy_pattern_protection_set">Modéle de déverrouillage défini</string>
+    <string name="settings_advanced_export_data">Exporter les données</string>
+    <string name="settings_advanced_export_data_summary">Sauvegarder les données au stockage externe, y compris la liste de téléchargement, la liste de recherche rapide</string>
+    <string name="settings_advanced_export_data_to">Données exportées à %s</string>
+    <string name="settings_advanced_export_data_failed">Échec d\'exportation de données</string>
+    <string name="settings_advanced_import_data">Importer les données</string>
+    <string name="settings_advanced_import_data_summary">Charger les données exportées</string>
+    <string name="settings_advanced_import_data_successfully">Importation complète avec succès</string>
+
+    <string name="settings_about">À propos de l\'application</string>
+    <string name="settings_about_declaration_summary">EhViewer ne s\'affilie à E-Hentai de aucune manière.</string>
+    <string name="settings_about_author">Développeur</string>
+    <string name="settings_about_latest_release">Dernière version</string>
+    <string name="settings_about_telegram">Telegram</string>
+    <string name="settings_about_website">Site</string>
+    <string name="settings_about_source">Source</string>
+    <string name="settings_about_changelog">Historique de changements</string>
+    <string name="settings_about_help">Aide</string>
+    <string name="settings_about_license">Licence</string>
+    <string name="settings_about_license_summary">EhViewer ne peut être né qu\'à grâce de beaucoup de projets Open Source.</string>
+    <string name="settings_about_donate">Faire un don</string>
+    <string name="settings_privacy_enable_analytics">Activer l\'analyse</string>
+    <string name="settings_privacy_about_analytics">A propos de l\'analyse</string>
+    <string name="settings_about_version">Numéro de version</string>
+    <string name="settings_about_check_for_updates">Chercher mise à jour</string>
+    <string name="settings_about_beta_update_channel">Chaîne de mises à jour beta</string>
+    <string name="settings_about_beta_update_channel_summary">Versions beta riquent de ne pas fonctionner correctement sur votre appareil</string>
+
+    <string name="proxy_enable">Activer</string>
+    <string name="proxy_enabled">Activé</string>
+    <string name="proxy_disabled">Non activé</string>
+    <string name="proxy_direct">Directement</string>
+    <string name="proxy_system">Déterminé par le systéme</string>
+    <string name="proxy_host_or_ip">Nom d\'hôte ou IP</string>
+    <string name="proxy_port">Port</string>
+    <string name="proxy_domain_not_supported">Le domaine n\'est pas compatible</string>
+    <string name="proxy_invalid_port">Port invalide</string>
+
+    <string name="cant_get_data_dir">Échec d\'obtention du répertoire données</string>
+    <string name="cant_find_any_data">Aucune donnée trouvée</string>
+    <string name="cant_read_the_file">Impossible de lire le fiche</string>
+
+    <!-- ExcludedLanguagesScene -->
+    <string name="excluded_languages">Langues exlues</string>
+    <string name="select_all">Toute</string>
+    <string name="deselect_all">Aucune</string>
+    <string name="invert_selection">Inverter</string>
+    <string name="language">Langue</string>
+    <string name="original">Originale</string>
+    <string name="translated">Traduction</string>
+    <string name="rewrite">Rewrite</string>
+    <string name="language_japanese">Japonais</string>
+    <string name="language_english">Anglais</string>
+    <string name="language_chinese">Chinois</string>
+    <string name="language_dutch">Néerlandais</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Allemand</string>
+    <string name="language_hungarian">Hongrois</string>
+    <string name="language_italian">Italien</string>
+    <string name="language_korean">Coréen</string>
+    <string name="language_polish">Polonais</string>
+    <string name="language_portuguese">Portugais</string>
+    <string name="language_russian">Russe</string>
+    <string name="language_spanish">Espanol</string>
+    <string name="language_thai">Thaï</string>
+    <string name="language_vietnamese">Vietnamien</string>
+    <string name="language_na">N/A</string>
+    <string name="language_other">Autres</string>
+
+    <string name="please_wait">Merci de patienter</string>
+
+    <!-- License -->
+    <string name="license">Licence</string>
+
+    <!-- Dir Picker-->
+    <string name="dir_picker">Sélectionner le répertoire</string>
+    <string name="directory_not_writable">Impossible d\'écrire dans le répertoire</string>
+
+    <!-- Favorites -->
+    <string name="cloud_favorites">Favoris de cloud</string>
+    <string name="local_favorites">Favoris locales</string>
+    <string name="favorites_search_bar_hint">Chercher dans %s</string>
+    <string name="favorites_title">%s</string>
+    <string name="favorites_title_2">%1$s - %2$s</string>
+    <string name="delete_favorites_dialog_title">Effacer de favoris</string>
+    <string name="delete_favorites_dialog_message">Effacer %d objets de favoris ?</string>
+    <string name="move_favorites_dialog_title">Déplacer favoris</string>
+    <string name="default_favorites_collection">Collection favoris par défaut</string>
+    <string name="let_me_select">Sélectionner manuellement</string>
+    <string name="favorites_info">Infos de favoris</string>
+    <string name="collections">Collections</string>
+    <string name="count">Total</string>
+    <string name="need_sign_in">Vous devez vous connecter</string>
+
+    <!-- Progress Scene -->
+    <string name="error_something_wrong_happened">Une erreur s\'est produite</string>
+
+    <!-- Guide -->
+    <string name="guide_quick_search_title">Recherche rapide</string>
+    <string name="guide_quick_search_text">Faites glisser à droit pour ouvrir le panneau de recherche rapide</string>
+    <string name="guide_collections_title">Collections</string>
+    <string name="guide_collections_text">Faites glisser à droit pour sélectionner les collections</string>
+    <string name="guide_download_labels_title">Labels de téléchargements</string>
+    <string name="guide_download_labels_text">Faites glisser à droit pour ouvrir le panneau de labels de téléchargements</string>
+    <string name="guide_download_thumb_title">Détails de la galerie</string>
+    <string name="guide_download_thumb_text">Appuyez sur la miniature pour voir les détails de la galerie</string>
+    <string name="guide_gallery_left">Tourner la page</string>
+    <string name="guide_gallery_right">Tourner la page</string>
+    <string name="guide_gallery_menu">Menu</string>
+    <string name="guide_gallery_progress">Progrès</string>
+    <string name="guide_gallery_long_click">Maintenez pour ouvrir le menu de page</string>
+
+    <!-- Readable Time -->
+    <string name="from_the_future">Du futur</string>
+    <string name="just_now">En ce moment</string>
+    <plurals name="some_minutes_ago">
+        <item quantity="one">Il y a %d minute</item>
+        <item quantity="other">Il y a %d minutes</item>
+    </plurals>
+    <plurals name="some_hours_ago">
+        <item quantity="one">Il y a %d heure</item>
+        <item quantity="other">Il y a %d heures</item>
+    </plurals>
+    <string name="yesterday">Hier</string>
+    <string name="some_days_ago">Il y a %d jours</string>
+    <plurals name="second">
+        <item quantity="one">%d sec</item>
+        <item quantity="other">secs</item>
+    </plurals>
+    <plurals name="minute">
+        <item quantity="one">%d min</item>
+        <item quantity="other">mins</item>
+    </plurals>
+    <plurals name="hour">
+        <item quantity="one">%d heure</item>
+        <item quantity="other">heures</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="one">%d jour</item>
+        <item quantity="other">jours</item>
+    </plurals>
+    <plurals name="year">
+        <item quantity="one">%d an</item>
+        <item quantity="other">ans</item>
+    </plurals>
+    <string name="dialog_archive_title">H@H Downloader</string>
+    <string name="no_archives">Aucun fiche archives</string>
+    <string name="download_archive_started">Téléchargement du fiche archives a commencé</string>
+    <string name="download_archive_failure">Téléchargement du fiche archives a échoué</string>
+    <string name="archive">Fiches archives</string>
+    <string name="download_archive_failure_no_hath">Client H@H est nécessaire pour le téléchargement de fiches archives</string>
+    <string name="settings_privacy">Confidentialité</string>
+    <string name="settings_privacy_secure">Empêcher les captures d\'ecran</string>
+    <string name="settings_privacy_secure_summary">Quand cette option est activée, vous ne pouvez prendre aucune capture d\'écran de l\'application, et le systéme n\'affiche pas le contenu d\'écran dans le sélecteur de tâches.\n\nRedémarrage de l\'application est nécessaire pour appliquer le changement</string>
+    <string name="hosts">Personnalisé hosts.txt</string>
+    <string name="hosts_tip">hosts.txt</string>
+    <string name="hosts_host">Hôte</string>
+    <string name="hosts_ip">IP</string>
+    <string name="add_host">Ajouter hôte</string>
+    <string name="add_host_add">Ajouter</string>
+    <string name="edit_host">Modifier hôte</string>
+    <string name="edit_host_confirm">Appliquer</string>
+    <string name="edit_host_delete">Supprimer</string>
+    <string name="invalid_host">Hôte invalide</string>
+    <string name="invalid_ip">IP invalide</string>
+    <string name="page_menu_save_to">Enregistrer sous…</string>
+    <string name="settings_advanced_app_language_title">Langue de l\'app (Language)</string>
+    <string name="settings_advanced_built_in_hosts_title">hosts.txt integré</string>
+    <string name="settings_advanced_proxy">Serveur proxy</string>
+    <string name="settings_advanced_proxy_summary_1">%1$s %2$s：%3$d</string>
+    <string name="settings_advanced_proxy_summary_2">%1$s</string>
+    <string name="settings_advanced_built_in_hosts_summary">Mapper l\'hôte à l\'adresse IP selon les règles de l\'app\nIls pouvent être redéfinits par hosts.txt personnalisé</string>
+    <string name="settings_advanced_custom_hosts_title">hosts.txt personalisé</string>
+    <string name="settings_advanced_custom_hosts_summary">Mapper l\'hôte à l\'adresse IP\nIls pouvent redéfinir l\'hosts.txt de l\'app</string>
+    <string name="app_language_system">Langue du système (défaut)</string>
+    <string name="settings_eh_theme">Thème</string>
+    <string name="settings_eh_theme_light">Blanc</string>
+    <string name="settings_eh_theme_dark">Gris</string>
+    <string name="settings_eh_theme_black">Noir</string>
+    <string name="settings_eh_apply_nav_bar_theme_color">Appli. la couleur du théme à la barre de navi.</string>
+    <string name="settings_about_donate_message">Faire un don ne verrouille aucune fonction cachée, mais vous m\'aiderez à maintenir cette application.</string>
+    <string name="settings_about_donate_alipay">Alipay</string>
+    <string name="settings_about_donate_paypal">PayPal</string>
+    <string name="settings_about_donate_open">Ouvrir</string>
+    <string name="settings_about_donate_copy">Copier</string>
+    <string name="settings_about_donate_copied">Copiée</string>
+    <string name="settings_eh_identity_cookies">Voir les cookies</string>
+    <string name="settings_eh_identity_cookies_summary">Les cookies qui sont utilisés pour vous identifier</string>
+    <string name="settings_eh_identity_cookies_signed">Tout le monde peut utiliser les cookies de ce compte pour s\'y connecter.&lt;br&gt;&lt;b&gt;GARDEZ-LES BIEN !&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
+    <string name="settings_eh_identity_cookies_tourist">Vous ne vous êtes pas connecté.</string>
+    <string name="settings_eh_identity_cookies_copy">Copier</string>
+    <string name="settings_eh_show_gallery_pages">Montrer les nombres des pages des galeries</string>
+    <string name="settings_eh_show_gallery_pages_summary">Montrer le nombre des pages des galerie dans la liste des galeries</string>
+    <string name="settings_about_donate_guide">guide</string>
+
+</resources>

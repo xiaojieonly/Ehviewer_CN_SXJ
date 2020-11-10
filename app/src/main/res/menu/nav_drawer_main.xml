@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_homepage"
+            android:title="@string/homepage"
+            android:icon="@drawable/v_homepage_black_x24"/>
+
+        <item
+            android:id="@+id/nav_subscription"
+            android:title="@string/subscription"
+            android:icon="@drawable/v_eh_subscription_black_x24"/>
+
+        <item
+            android:id="@+id/nav_whats_hot"
+            android:title="@string/whats_hot"
+            android:icon="@drawable/v_fire_black_x24"/>
+
+        <item
+            android:id="@+id/nav_favourite"
+            android:title="@string/favourite"
+            android:icon="@drawable/v_heart_black_x24"/>
+
+        <item
+            android:id="@+id/nav_history"
+            android:title="@string/history"
+            android:icon="@drawable/v_history_black_x24"/>
+
+        <item
+            android:id="@+id/nav_downloads"
+            android:title="@string/downloads"
+            android:icon="@drawable/v_download_black_x24"/>
+
+        <item
+            android:id="@+id/nav_settings"
+            android:title="@string/settings"
+            android:icon="@drawable/v_settings_black_x24"/>
+
+        <item
+            android:id="@+id/nav_stub"
+            android:title="@string/stub"
+            android:visible="false"/>
+
+    </group>
+
+</menu>

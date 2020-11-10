@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.hippo.preference.ActivityPreference
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:key="pattern_protection"
+        android:title="@string/settings_privacy_pattern_protection_title"
+        app:activity="com.hippo.ehviewer.ui.SetSecurityActivity"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="enable_secure"
+        android:title="@string/settings_privacy_secure"
+        app:summaryOn="@string/settings_privacy_secure_summary"
+        app:summaryOff="@string/settings_privacy_secure_summary"
+        android:defaultValue="false"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="enable_analytics"
+        android:title="@string/settings_privacy_enable_analytics"
+        android:defaultValue="true"/>
+
+    <com.hippo.preference.MessagePreference
+        android:key="about_analytics"
+        android:title="@string/settings_privacy_about_analytics"
+        app:dialogMessage="@string/analytics_explain"
+        app:dialogMessageHtml="true"
+        app:dialogMessageLinkify="true"/>
+</PreferenceScreen>

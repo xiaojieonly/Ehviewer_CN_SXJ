@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <shortcut
+        android:shortcutId="start_all"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_start"
+        android:shortcutShortLabel="@string/download_start_all"
+        android:shortcutLongLabel="@string/download_start_all"
+        android:shortcutDisabledMessage="@string/download_start_all">
+        <intent
+            android:action="start_all"
+            android:targetPackage="com.hippo.ehviewer"
+            android:targetClass="com.hippo.ehviewer.shortcuts.ShortcutsActivity"/>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="stop_all"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_stop"
+        android:shortcutShortLabel="@string/download_stop_all"
+        android:shortcutLongLabel="@string/download_stop_all"
+        android:shortcutDisabledMessage="@string/download_stop_all">
+        <intent
+            android:action="stop_all"
+            android:targetPackage="com.hippo.ehviewer"
+            android:targetClass="com.hippo.ehviewer.shortcuts.ShortcutsActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+</shortcuts>

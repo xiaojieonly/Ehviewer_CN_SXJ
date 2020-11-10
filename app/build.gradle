@@ -1,0 +1,122 @@
+apply plugin: 'com.android.application'
+
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+    apply plugin: 'io.fabric'
+}
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId "com.hippo.ehviewer"
+        minSdkVersion 14
+        targetSdkVersion 28
+        versionCode 104
+        versionName "1.7.3"
+        vectorDrawables.useSupportLibrary = true
+        resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
+                "es", "ja", "ko", "fr", "de", "th"
+        testOptions.unitTests.includeAndroidResources = true
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        disable 'MissingTranslation'
+        abortOnError true
+        checkReleaseBuilds true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += 'src/main/java-gen'
+        }
+    }
+}
+
+task copyNotice(type: Copy) {
+    from '../NOTICE.html'
+    into './src/main/assets'
+    finalizedBy ":daogenerator:executeDaoGenerator"
+}
+
+tasks.withType(JavaCompile) {
+    task -> task.dependsOn copyNotice
+}
+
+clean {
+    delete file('src/main/assets/NOTICE.html').absolutePath
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.firebase:firebase-core:16.0.9'
+    //noinspection OutdatedLibrary
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
+    implementation 'com.getkeepsafe.relinker:relinker:1.3.1'
+    implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
+    implementation 'com.github.seven332.a7zip:extract-lite:d4ddec5793'
+    implementation 'com.github.seven332:android-recaptcha:2bbb3459a8'
+    implementation 'com.github.seven332:android-resource:0.1.0'
+    implementation 'com.github.seven332:animator:0.1.0'
+    implementation 'com.github.seven332:beerbelly:0.1.4'
+    implementation 'com.github.seven332:conaco:0.1.5-eh'
+    implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
+    implementation 'com.github.seven332:easyrecyclerview:0.1.1'
+    implementation 'com.github.seven332:glgallery:0.1.2'
+    implementation 'com.github.seven332:glview:0.1.0'
+    implementation 'com.github.seven332:glview-image:0.1.0'
+    implementation 'com.github.seven332:hotspot:0.1.0'
+    implementation 'com.github.seven332:image:0.1.12'
+    implementation 'com.github.seven332:refreshlayout:0.1.0'
+    implementation 'com.github.seven332:ripple:0.1.2'
+    implementation 'com.github.seven332:streampipe:0.1.0'
+    implementation 'com.github.seven332:tuxiang:0.1.6'
+    implementation 'com.github.seven332:unifile:9ec57bcd8f'
+    implementation 'com.github.seven332:yorozuya:0.1.2'
+    implementation 'com.github.seven332:yorozuya-thread:0.1.1'
+    implementation 'com.github.seven332:yorozuya-collect:0.1.4'
+    implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
+    implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
+    implementation 'org.greenrobot:greendao:2.2.1'
+    implementation 'org.jsoup:jsoup:1.12.1'
+    // https://mvnrepository.com/artifact/junit/junit
+//    testImplementation group: 'junit', name: 'junit', version: '4.13.1'
+    testImplementation 'junit:junit:4.8.2'
+    testImplementation 'org.robolectric:robolectric:4.2.1'
+    testImplementation 'org.jooq:joor:0.9.6'
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'com.github.seven332:glgallery:25893283ca'
+        force 'com.github.seven332:glview:ba6aee61d7'
+        force 'com.github.seven332:glview-image:68d94b0fc2'
+        force 'com.github.seven332:image:09b43c0c68'
+
+        exclude group: 'com.github.seven332', module: 'okhttp'
+    }
+}

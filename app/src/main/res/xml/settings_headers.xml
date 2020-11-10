@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<preference-headers
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <header
+        android:fragment="com.hippo.ehviewer.ui.fragment.EhFragment"
+        android:title="@string/settings_eh"
+        android:icon="@drawable/v_sad_panda_primary_x24"/>
+
+    <header
+        android:fragment="com.hippo.ehviewer.ui.fragment.ReadFragment"
+        android:title="@string/settings_read"
+        android:icon="@drawable/v_book_open_primary_x24"/>
+
+    <header
+        android:fragment="com.hippo.ehviewer.ui.fragment.DownloadFragment"
+        android:title="@string/settings_download"
+        android:icon="@drawable/v_download_primary_x24"/>
+
+    <header
+        android:fragment="com.hippo.ehviewer.ui.fragment.PrivacyFragment"
+        android:title="@string/settings_privacy"
+        android:icon="@drawable/v_sec_primary_x24"/>
+
+    <header
+        android:fragment="com.hippo.ehviewer.ui.fragment.AdvancedFragment"
+        android:title="@string/settings_advanced"
+        android:icon="@drawable/v_adb_primary_x24"/>
+
+    <header
+        android:fragment="com.hippo.ehviewer.ui.fragment.AboutFragment"
+        android:title="@string/settings_about"
+        android:icon="@drawable/v_info_primary_x24"/>
+
+</preference-headers>

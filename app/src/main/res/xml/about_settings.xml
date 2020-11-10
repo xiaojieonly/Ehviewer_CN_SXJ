@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="declaration"
+        android:title="@string/settings_about_declaration"
+        android:summary="@string/settings_about_declaration_summary"/>
+
+    <Preference
+        android:key="author"
+        android:title="@string/settings_about_author"/>
+
+    <com.hippo.preference.UrlPreference
+      android:key="telegram"
+      android:title="@string/settings_about_telegram"
+      app:url="https://t.me/ehviewer"/>
+
+    <com.hippo.preference.UrlPreference
+        android:key="latest_release"
+        android:title="@string/settings_about_latest_release"
+        app:url="https://github.com/seven332/EhViewer/releases/latest"/>
+
+    <com.hippo.preference.UrlPreference
+        android:key="website"
+        android:title="@string/settings_about_website"
+        app:url="http://www.ehviewer.com"/>
+
+    <com.hippo.preference.UrlPreference
+        android:key="source"
+        android:title="@string/settings_about_source"
+        app:url="https://github.com/seven332/EhViewer"/>
+
+    <com.hippo.preference.UrlPreference
+        android:key="changelog"
+        android:title="@string/settings_about_changelog"
+        app:url="http://www.ehviewer.com/changelog"/>
+
+    <com.hippo.preference.UrlPreference
+        android:key="help"
+        android:title="@string/settings_about_help"
+        app:url="http://www.ehviewer.com/help"/>
+
+    <com.hippo.preference.ActivityPreference
+        android:key="license"
+        android:title="@string/settings_about_license"
+        android:summary="@string/settings_about_license_summary"
+        app:activity="com.hippo.ehviewer.ui.LicenseActivity"/>
+
+    <com.hippo.ehviewer.preference.VersionPreference
+        android:key="version"/>
+
+    <Preference
+        android:key="check_for_updates"
+        android:title="@string/settings_about_check_for_updates"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="beta_update_channel"
+        android:title="@string/settings_about_beta_update_channel"
+        android:summary="@string/settings_about_beta_update_channel_summary"
+        android:defaultValue="@bool/beta"/>
+
+    <Preference
+        android:key="donate"
+        android:title="@string/settings_about_donate"/>
+
+</PreferenceScreen>

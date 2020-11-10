@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="64dp"
+    android:width="64dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="@color/teal_500"
+        android:pathData="M0,12a12,12 0 1,0 24,0a12,12 0 1,0 -24,0"/>
+
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M16.5,9.9L16.1,9.6L19.1,5.9C19.2,5.8,19.4,5.8,19.5,5.9L19.5,5.9C19.6,6,19.6,6.2,19.5,6.3L16.5,9.9Z"/>
+
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M9.1,8.8L8.6,9.1L6.2,5C6.1,4.9,6.2,4.7,6.3,4.6L6.3,4.6C6.4,4.5,6.6,4.6,6.7,4.7L9.1,8.8Z"/>
+
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M1.8,14.6L22.1,16.4C21.4,11.3,17.6,7.9,12.6,7.5C7.8,7,3.4,9.7,1.8,14.6Z"/>
+
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M15.4,11.9a1.1,1.1 0 1,0 2.2,0a1.1,1.1 0 1,0 -2.2,0"/>
+
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M7.1,11.2a1.1,1.1 0 1,0 2.2,0a1.1,1.1 0 1,0 -2.2,0"/>
+
+</vector>
