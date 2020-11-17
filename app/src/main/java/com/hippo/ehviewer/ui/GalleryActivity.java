@@ -979,8 +979,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        //这个super call有待研究！！！ 不加这里对象名会标红
+//        super.onActivityResult(requestCode, resultCode, resultData);
         if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            if (resultData != null){
+            if (resultData != null) {
                 Uri uri = resultData.getData();
                 String filepath = getCacheDir() + "/" + mCacheFileName;
                 File cachefile = new File(filepath);
@@ -994,7 +996,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     os = resolver.openOutputStream(uri);
                     IOUtils.copy(is, os);
                 } catch (IOException e) {
-                        e.printStackTrace();
+                    e.printStackTrace();
                 } finally {
                     IOUtils.closeQuietly(is);
                     IOUtils.closeQuietly(os);

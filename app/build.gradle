@@ -9,11 +9,11 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        applicationId "com.hippo.ehviewer"
+        applicationId "com.sxj.ehviewer"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 104
-        versionName "1.7.3"
+        versionCode 105
+        versionName "1.7.5.06"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
