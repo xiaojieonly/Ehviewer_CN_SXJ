@@ -1027,6 +1027,7 @@ public class Settings {
     public static final String KEY_APP_LANGUAGE = "app_language";
     private static final String DEFAULT_APP_LANGUAGE = "system";
 
+    //获取系统语言
     public static String getAppLanguage() {
         return getString(KEY_APP_LANGUAGE, DEFAULT_APP_LANGUAGE);
     }
