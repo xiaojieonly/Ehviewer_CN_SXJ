@@ -367,6 +367,11 @@ public class GalleryDetailParser {
         }
     }
 
+    /**
+     * 从HTML元素中提取tag
+     * @param trs
+     * @return
+     */
     @NonNull
     public static GalleryTagGroup[] parseTagGroups(Elements trs) {
         try {

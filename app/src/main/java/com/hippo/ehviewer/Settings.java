@@ -369,8 +369,12 @@ public class Settings {
     }
 
     public static final String KEY_SHOW_TAG_TRANSLATIONS = "show_tag_translations";
-    private static final boolean DEFAULT_SHOW_TAG_TRANSLATIONS = false;
+    private static final boolean DEFAULT_SHOW_TAG_TRANSLATIONS = true;
 
+    /**
+     * 是否展示翻译的标签
+     * @return
+     */
     public static boolean getShowTagTranslations() {
         return getBoolean(KEY_SHOW_TAG_TRANSLATIONS, DEFAULT_SHOW_TAG_TRANSLATIONS);
     }

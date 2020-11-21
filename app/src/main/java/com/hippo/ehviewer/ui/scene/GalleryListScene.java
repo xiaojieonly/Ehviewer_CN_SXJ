@@ -43,12 +43,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
@@ -68,6 +70,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
+import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -92,6 +95,7 @@ import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
+import com.hippo.util.TagTranslation;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.ContentLayout;
 import com.hippo.widget.FabLayout;
@@ -102,6 +106,7 @@ import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.StringUtils;
 import com.hippo.yorozuya.ViewUtils;
+
 import java.io.File;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -800,7 +805,14 @@ public final class GalleryListScene extends BaseScene
                 builder.setError(null);
                 dialog.dismiss();
                 QuickSearch quickSearch = urlBuilder.toQuickSearch();
-                quickSearch.name = text;
+
+                //汉化or不汉化
+                if (Settings.getShowTagTranslations()) {
+                    EhTagDatabase ehTags = EhTagDatabase.getInstance(context);
+                    quickSearch.name = TagTranslation.translationIt(text,ehTags);
+                }else {
+                    quickSearch.name = text;
+                }
                 EhDB.insertQuickSearch(quickSearch);
                 list.add(quickSearch);
                 adapter.notifyDataSetChanged();
@@ -827,11 +839,37 @@ public final class GalleryListScene extends BaseScene
         Context context = getContext2();
         AssertUtils.assertNotNull(context);
 
-        final List<QuickSearch> list = EhDB.getAllQuickSearch();
+        List<QuickSearch> quickSearchList = EhDB.getAllQuickSearch();
+        //汉化标签
+        if (Settings.getShowTagTranslations() && 0 != quickSearchList.size()){
+            EhTagDatabase ehTags = EhTagDatabase.getInstance(context);
+            for (int i = 0; i < quickSearchList.size(); i++) {
+                String name = quickSearchList.get(i).getName();
+                //重设标签名称,并跳过已翻译的标签
+                if (2 == name.split(":").length) {
+                    quickSearchList.get(i).setName(TagTranslation.translationIt(name, ehTags));
+                    EhDB.updateQuickSearch(quickSearchList.get(i));
+                }
+            }
+        }else if (!Settings.getShowTagTranslations() && 0 != quickSearchList.size()){
+            for (int i = 0; i < quickSearchList.size(); i++) {
+                String name = quickSearchList.get(i).getName();
+                //重设标签名称,并跳过未翻译的标签
+                if (1 == name.split(":").length) {
+                    quickSearchList.get(i).setName(quickSearchList.get(i).getKeyword());
+                    EhDB.updateQuickSearch(quickSearchList.get(i));
+                }
+            }
+        }
+
+
+
+        final List<QuickSearch> list = quickSearchList;
+
         final ArrayAdapter<QuickSearch> adapter = new ArrayAdapter<>(context, R.layout.item_simple_list, list);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
+            @Override   //快速搜索点击tag事件监听
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (null == mHelper || null == mUrlBuilder) {
                     return;
@@ -851,7 +889,7 @@ public final class GalleryListScene extends BaseScene
         toolbar.inflateMenu(R.menu.drawer_gallery_list);
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            public boolean onMenuItemClick(MenuItem item) {  //点击增加快速搜索按钮触发
                 int id = item.getItemId();
                 switch (id) {
                     case R.id.action_add:
