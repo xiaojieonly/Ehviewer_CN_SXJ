@@ -2,8 +2,8 @@
  百度贴吧的帖子被封了。。。还没想好要去哪，难受
  希望大家能帮忙分享下(っ °Д °;)っ
  ## 新版本下载：
-  点击前往下载：[蓝奏云](https://wws.lanzous.com/igG4Tin4spi)  密码:atxz  
-  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/iGh9uind81i)  密码:hwzy  
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
  
  ## 更新内容
   对详情页标签和书签栏进行了默认汉化，如果下载之后没有显示汉化内容，请前往‘设置’->EH->下滑->点击’显示标签翻译‘按钮。  
