@@ -2,7 +2,7 @@
  百度贴吧的帖子被封了。。。还没想好要去哪，难受
  
  ## 新版本下载：
-  点击前往下载[蓝奏云](https://wws.lanzous.com/igG4Tin4spi)  密码:atxz  
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/igG4Tin4spi)  密码:atxz  
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
  
  ## 更新内容
