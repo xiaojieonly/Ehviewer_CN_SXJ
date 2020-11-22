@@ -2,7 +2,7 @@
  百度贴吧的帖子被封了。。。还没想好要去哪，难受
  希望大家能帮忙分享下(っ °Д °;)っ
  ## 新版本下载：
-  点击前往下载：[蓝奏云](https://wws.lanzous.com/iGh9uind81i)  密码:hwzy  
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/irX76inru2f)  密码:5c21
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
  
  ## 更新内容
