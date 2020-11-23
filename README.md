@@ -1,3 +1,7 @@
+# 2020/11/23 ：  
+ ## 修复了手动输入书签内容时使用了‘:’号时进行自动翻译，而翻译文件没有对应内容导致书签变为“null:null"的问题，感谢用户：keepsmilence 的反馈与支持
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/ir95Gip8qzc)  密码:d62b   
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)   
 # 2020/11/23 :
  书签栏的自动汉化还有点小问题，非英文请不要随意使用英文符号‘:’ ,这个是自动汉化标识符，如果手动输入的内容在翻译文件中没有对应内容会导致书签变为“null:null"  
 # 2020/11/22 :
