@@ -1,6 +1,6 @@
 # 2020/11/26 ：  
  ## 修复了内置host导致的略缩图无法显示的问题，将内部请求请求头修改为了最新的版本。祝大伙们使用愉快，感谢大家再我坎坷起步的这段时间里的理解与支持
-  不想挂梯子的现在用内置host也能用了因该（我自己是能用了。。。） 设置-->高级-->内置host
+  不想挂梯子的现在用内置host也能用了因该（我自己是能用了。。。） 设置-->高级-->内置host  
   点击前往下载：[蓝奏云](https://wws.lanzous.com/iSLo9it38ng)  密码:b0xs   
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
   
