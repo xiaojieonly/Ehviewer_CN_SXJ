@@ -1,3 +1,8 @@
+# 2020/11/26 ：  
+ ## 修复了内置host导致的略缩图无法显示的问题，将内部请求请求头修改为了最新的版本。祝大伙们使用愉快，感谢大家再我坎坷起步的这段时间里的理解与支持
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/iSLo9it38ng)  密码:b0xs   
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  
 # 2020/11/23 ：  
  ## 修复了手动输入书签内容时使用了‘:’号时进行自动翻译，而翻译文件没有对应内容导致书签变为“null:null"的问题，感谢用户：keepsmilence 的反馈与支持
   点击前往下载：[蓝奏云](https://wws.lanzous.com/ir95Gip8qzc)  密码:d62b   
