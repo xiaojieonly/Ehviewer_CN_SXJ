@@ -1,0 +1,9 @@
+/src/main/assets/NOTICE.html
+/build
+/src/main/java-gen
+manifest-merger-release-report.txt
+/src/main/libs
+/src/main/obj
+
+# Intellij
+*.iml

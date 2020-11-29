@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+<!--前往theames.xml中设置具体值
+    res/values/themes.xml-->
+    <declare-styleable name="Theme">
+        <attr name="colorEdgeEffect" format="color"/>
+        <attr name="dividerColor" format="color"/>
+        <attr name="toolbarColor" format="color"/>
+
+        <attr name="textColorThemePrimary" format="color"/>
+        <attr name="textColorThemePrimary2" format="color"/>
+        <attr name="textColorThemeAccent" format="color"/>
+
+        <!-- For light theme, it's primary dark color -->
+        <!-- For dark theme, it's primary light color -->
+        <!-- For black theme, it's primary light color -->
+        <attr name="drawableColorPrimary" format="color"/>
+        <!-- For light theme, it's secondary dark color -->
+        <!-- For dark theme, it's secondary light color -->
+        <!-- For black theme, it's secondary light color -->
+        <attr name="drawableColorSecondary" format="color"/>
+        <!-- For light theme, it's primary color -->
+        <!-- For dark theme, it's primary light color -->
+        <!-- For black theme, it's primary light color -->
+        <attr name="drawableColorThemePrimary" format="color"/>
+
+        <!-- Color of card background -->
+        <attr name="contentColorPrimary" format="color"/>
+        <attr name="contentColorThemePrimary" format="color"/>
+        <attr name="contentColorThemeAccent" format="color"/>
+        <attr name="contentColorReactive" format="color"/>
+
+        <attr name="widgetColorThemePrimary" format="color"/>
+        <attr name="widgetColorThemeAccent" format="color"/>
+
+        <attr name="guideBackgroundColor" format="color"/>
+        <attr name="guideTitleColor" format="color"/>
+        <attr name="guideTextColor" format="color"/>
+
+        <attr name="progressColor" format="color"/>
+
+        <attr name="tagGroupBackgroundColor" format="color"/>
+        <attr name="tagBackgroundColor" format="color"/>
+
+        <attr name="galleryDetailHeaderTitleColor" format="color"/>
+        <attr name="galleryDetailHeaderBackgroundColor" format="color"/>
+        <attr name="galleryDetailButtonBackgroundColor" format="color"/>
+
+        <attr name="gallerySliderBackgroundColor" format="color"/>
+
+        <attr name="preferenceHeaderBackground" format="reference"/>
+
+        <attr name="toolbarPopupTheme" format="reference"/>
+        <attr name="galleryDetailDivider" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ProgressView">
+        <attr name="color"/>
+        <attr name="indeterminate" format="boolean"/>
+        <attr name="progress" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="MaxSizeContainer">
+        <attr name="maxWidth" format="dimension"/>
+        <attr name="maxHeight" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="FixedAspectImageView">
+        <attr name="aspect" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="LoadImageView">
+        <attr name="retryType">
+            <enum name="none" value="0" />
+            <enum name="click" value="1" />
+            <enum name="longClick" value="2" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="FixedThumb">
+        <attr name="minAspect" format="float"/>
+        <attr name="maxAspect" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="CheckTextView">
+        <attr name="maskColor" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="DividerView">
+        <attr name="dividerWidth" format="dimension"/>
+        <attr name="dividerHeight" format="dimension"/>
+        <attr name="dividerColor"/>
+    </declare-styleable>
+
+    <declare-styleable name="AutoWrapLayout">
+        <attr name="alignment">
+            <enum name="top" value="0" />
+            <enum name="center" value="1" />
+            <enum name="bottom" value="2" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="SimpleGridLayout">
+        <attr name="columnCount" format="integer"/>
+        <attr name="itemMargin" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="Slider">
+        <attr name="start" format="integer"/>
+        <attr name="end" format="integer"/>
+        <attr name="slider_progress" format="integer"/>
+        <attr name="thickness"/>
+        <attr name="radius" format="dimension"/>
+        <attr name="color"/>
+        <attr name="textColor" format="color"/>
+        <attr name="textSize" format="dimension"/>
+        <attr name="dark" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="SwitchPreference">
+        <!-- The summary for the Preference in a PreferenceActivity screen when the
+             SwitchPreference is checked. If separate on/off summaries are not
+             needed, the summary attribute can be used instead. -->
+        <attr name="summaryOn" format="string"/>
+        <!-- The summary for the Preference in a PreferenceActivity screen when the
+             SwitchPreference is unchecked. If separate on/off summaries are not
+             needed, the summary attribute can be used instead. -->
+        <attr name="summaryOff" format="string"/>
+        <!-- The text used on the switch itself when in the "on" state.
+             This should be a very SHORT string, as it appears in a small space. -->
+        <attr name="switchTextOn" format="string"/>
+        <!-- The text used on the switch itself when in the "off" state.
+             This should be a very SHORT string, as it appears in a small space. -->
+        <attr name="switchTextOff" format="string"/>
+        <!-- The state (true for on, or false for off) that causes dependents to be disabled. By default,
+             dependents will be disabled when this is unchecked, so the value of this preference is false. -->
+        <attr name="disableDependentsState" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="BatteryView">
+        <attr name="color"/>
+        <attr name="warningColor" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="Indicating">
+        <attr name="indicatorHeight" format="dimension"/>
+        <attr name="indicatorColor" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="DialogPreference">
+        <attr name="dialogTitle" format="string"/>
+        <attr name="dialogIcon" format="reference"/>
+        <attr name="positiveButtonText" format="string"/>
+        <attr name="negativeButtonText" format="string"/>
+        <attr name="dialogLayout" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="MessagePreference">
+        <attr name="dialogMessage" format="string"/>
+        <attr name="dialogMessageHtml" format="boolean"/>
+        <attr name="dialogMessageLinkify" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="ListPreference">
+        <!-- The human-readable array to present as a list. Each entry must have a corresponding
+             index in entryValues. -->
+        <attr name="entries" format="reference"/>
+        <!-- The array to find the value to save for a preference when an entry from
+             entries is selected. If a user clicks on the second item in entries, the
+             second item in this array will be saved to the preference. -->
+        <attr name="entryValues" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ActivityPreference">
+        <attr name="activity" format="string"/>
+    </declare-styleable>
+
+    <declare-styleable name="UrlPreference">
+        <attr name="url" format="string"/>
+    </declare-styleable>
+
+    <declare-styleable name="SeekBarPreference">
+        <attr name="max" format="integer"/>
+    </declare-styleable>
+
+</resources>

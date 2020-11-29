@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2015 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.hippo.ehviewer.widget.CategoryTable
+        android:id="@+id/search_category_table"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/search_item_interval"/>
+
+    <com.hippo.widget.RadioGridGroup
+        android:id="@+id/normal_search_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/search_item_interval"
+        android:checkedButton="@+id/search_normal_search"
+        app:columnCount="2">
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/search_normal_search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/search_normal_search"/>
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/search_subscription_search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/search_subscription_search"/>
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/search_specify_uploader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/search_specify_uploader"/>
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/search_specify_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/search_specify_tag"/>
+
+    </com.hippo.widget.RadioGridGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/normal_search_mode_help"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            app:srcCompat="@drawable/v_help_circle_x24"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/search_enable_advance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:text="@string/search_enable_advance"/>
+
+    </LinearLayout>
+</LinearLayout>

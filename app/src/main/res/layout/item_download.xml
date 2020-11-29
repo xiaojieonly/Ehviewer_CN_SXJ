@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="2dp"
+    style="@style/CardView.Reactive">
+
+    <RelativeLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+        <com.hippo.ehviewer.widget.FixedThumb
+          android:id="@+id/thumb"
+          android:layout_width="@dimen/gallery_list_thumb_width"
+          android:layout_height="@dimen/gallery_list_thumb_height"
+          app:retryType="longClick"
+          app:minAspect="0.333"
+          app:maxAspect="1.333"/>
+
+        <TextView
+          android:id="@+id/title"
+          style="@style/CardTitle"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignParentTop="true"
+          android:layout_marginLeft="8dp"
+          android:layout_marginRight="8dp"
+          android:layout_marginTop="4dp"
+          android:layout_toRightOf="@id/thumb"/>
+
+        <TextView
+          android:id="@+id/uploader"
+          style="@style/CardMessage"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignLeft="@id/title"
+          android:layout_below="@id/title"
+          android:layout_marginTop="2dp"/>
+
+        <com.hippo.ehviewer.widget.SimpleRatingView
+          android:id="@+id/rating"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignLeft="@id/title"
+          android:layout_below="@id/uploader"
+          android:layout_marginTop="2dp"/>
+
+        <TextView
+          android:id="@+id/category"
+          style="@style/CardMessage"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignLeft="@id/title"
+          android:layout_alignBottom="@id/thumb"
+          android:layout_marginBottom="8dp"
+          android:paddingBottom="2dp"
+          android:paddingLeft="8dp"
+          android:paddingRight="8dp"
+          android:paddingTop="2dp"
+          android:textColor="@android:color/white"
+          android:textAllCaps="true"/>
+
+        <FrameLayout
+          android:id="@+id/actions"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignBottom="@+id/thumb"
+          android:layout_alignParentRight="true"
+          android:paddingRight="8dp">
+
+            <ImageView
+              android:id="@+id/start"
+              android:layout_width="40dp"
+              android:layout_height="40dp"
+              android:padding="8dp"
+              app:srcCompat="@drawable/v_play_x24"/>
+
+            <ImageView
+              android:id="@+id/stop"
+              android:layout_width="40dp"
+              android:layout_height="40dp"
+              android:padding="8dp"
+              app:srcCompat="@drawable/v_pause_x24"/>
+
+        </FrameLayout>
+
+        <TextView
+          android:id="@+id/state"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_above="@id/actions"
+          android:layout_marginBottom="4dp"
+          android:layout_alignParentRight="true"
+          android:paddingRight="16dp"
+          android:textColor="?attr/textColorThemeAccent"/>
+
+        <ProgressBar
+          android:id="@+id/progress_bar"
+          style="?android:attr/progressBarStyleHorizontal"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_alignLeft="@id/title"
+          android:layout_marginRight="8dp"
+          android:layout_above="@id/actions"
+          android:indeterminate="false"/>
+
+        <TextView
+          android:id="@+id/percent"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_above="@id/progress_bar"
+          android:layout_alignLeft="@id/title"
+          android:textSize="@dimen/text_super_small"/>
+
+        <TextView
+          android:id="@+id/speed"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_above="@id/progress_bar"
+          android:layout_alignParentRight="true"
+          android:layout_marginRight="8dp"
+          android:textSize="@dimen/text_super_small"/>
+
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

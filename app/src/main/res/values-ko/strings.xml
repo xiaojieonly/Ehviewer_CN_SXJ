@@ -1,0 +1,651 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+
+    <string name="app_name">EhViewer</string>
+
+    <!-- Theme -->
+    <string name="theme_light">밝은 테마</string>
+    <string name="theme_dark">어두운 테마</string>
+    <string name="theme_black">검정색 테마</string>
+
+    <string name="homepage">홈</string>
+    <string name="whats_hot">인기 갤러리</string>
+    <string name="favourite">즐겨찾기</string>
+    <string name="history">방문 기록</string>
+    <string name="downloads">다운로드</string>
+    <string name="settings">설정</string>
+
+    <string name="username">사용자 이름</string>
+    <string name="password">비밀번호</string>
+    <string name="recaptcha">Recaptcha (선택)</string>
+
+    <string name="recaptcha_none">Recaptcha 불러오기</string>
+    <string name="recaptcha_loading">불러오는 중…</string>
+    <string name="recaptcha_failure">실패</string>
+
+    <string name="sign_in">로그인</string>
+    <string name="register">회원가입</string>
+    <string name="sign_in_via_webview">WebView를 통하여 로그인</string>
+    <string name="sign_in_via_cookies">쿠키를 사용하여 로그인</string>
+    <string name="display_name_dialog_title">별명 입력</string>
+    <string name="display_name">별명</string>
+    <string name="display_name_is_empty">별명이 비어 있습니다.</string>
+    <string name="sign_in_first">먼저 로그인하세요.</string>
+
+    <string name="default_display_name">작은 하마</string>
+
+    <string name="cookie_explain">쿠키는 웹 브라우저에 저장되는 적은 양의 데이터입니다. 이게 뭐고 어떻게 찾는지 잘 모르겠으면 검색해 보세요.\n\n특정 쿠키를 입력하여 로그인하세요.</string>
+    <string name="text_is_empty">텍스트가 비어 있습니다.</string>
+    <string name="waring">경고</string>
+    <string name="wrong_cookie_warning">입력한 쿠키가 잘못된 것 같습니다. 확인해 보는 게 좋겠어요.</string>
+    <string name="i_will_check_it">확인해 볼게요</string>
+    <string name="i_dont_think_so">아닌데요</string>
+    <string name="found_cookies">쿠키를 찾았어요!</string>
+
+    <string name="invalid_download_location">다운로드 위치가 잘못되었습니다. 설정을 확인하세요.</string>
+
+    <string name="cellular_network_warning">모바일 데이터를 사용하는 중입니다.</string>
+
+    <string name="clipboard_gallery_url_snack_message">클립보드에 갤러리 주소가 있습니다.</string>
+    <string name="clipboard_gallery_url_snack_action">보기</string>
+
+    <string name="error_bad_status_code">비정상 상태 코드: %d</string>
+    <string name="error_timeout">시간 초과</string>
+    <string name="error_unknown_host">알 수 없는 호스트</string>
+    <string name="error_redirection">너무 많은 서버 리디렉션</string>
+    <string name="error_socket">네트워크 오류</string>
+    <string name="error_unknown">이상함</string>
+    <string name="error_cant_find_activity">앱을 찾을 수 없음</string>
+    <string name="error_cannot_parse_the_url">URL을 분석할 수 없음</string>
+    <string name="error_not_folder_path">폴더 경로가 아님</string>
+    <string name="error_no_provider">제공자가 없음</string>
+    <string name="error_decoding_failed">디코딩 실패</string>
+    <string name="error_not_found">찾을 수 없음</string>
+    <string name="error_empty">비어 있음</string>
+    <string name="error_invalid_archive">잘못된 압축 파일</string>
+    <string name="error_reading_failed">읽기 실패</string>
+    <string name="error_out_of_range">범위 초과</string>
+    <string name="error_write_failed">쓰기 실패</string>
+    <string name="error_parse_error">구문 분석 오류</string>
+    <string name="error_509">509</string>
+    <string name="error_invalid_url">잘못된 URL</string>
+    <string name="error_get_ptoken_error">pToken 획득 오류</string>
+    <string name="error_cant_create_temp_file">임시 파일을 만들 수 없음</string>
+    <string name="error_cant_save_image">이미지를 저장할 수 없음</string>
+    <string name="error_invalid_number">잘못된 번호</string>
+
+    <string name="app_waring">이 앱의 내용은 인터넷에서 받아옵니다. 이 앱을 사용하기 위해서는 받아온 내용 중 일부가 사용자에게 가할 수 있는 신체적 또는 정신적 피해를 감수해야 합니다.</string>
+    <string name="error_username_cannot_empty">사용자 이름은 비워둘 수 없습니다.</string>
+    <string name="error_password_cannot_empty">비밀번호는 비워둘 수 없습니다.</string>
+    <string name="skip_signing_in">로그인 없이 사용</string>
+    <string name="sign_in_failed">로그인 실패</string>
+    <string name="sign_in_failed_plain">뭔가가 잘못되었습니다. 웹사이트가 업데이트 중일 수 있습니다. WebView 또는 쿠키를 사용하여 로그인하거나 아래 버튼을 눌러 로그인을 건너뛸 수 있습니다. 그러나 로그인을 건너뛰면 "슬픈 팬더"를 보게 될 것입니다.</string>
+    <string name="press_twice_exit">한 번 더 누르면 종료됩니다.</string>
+    <string name="content_layout_restore_tip">다시 시도하려면 누르기</string>
+    <string name="write_rationale">앱이 갤러리를 다운로드하려면 WRITE_EXTERNAL_STORAGE 권한이 필요합니다. 권한을 허용하시겠습니까?</string>
+    <string name="you_rejected_me">안돼요</string>
+    <string name="analytics_explain">앱 개발자에게 기기 및 사용 정보를 보내시겠습니까? 앱 개발에 굉장한 도움이 됩니다. &lt;br&gt;&lt;br&gt;데이터 분석 서비스는 Google Analytics for Firebase를 사용하며, 개인 정보 보호 정책은 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 에서 확인하실 수 있습니다.&lt;br&gt;&lt;br&gt;데이터 분석을 허용하면 사용자의 기기 및 앱 사용 정보가 수집됩니다. 전화번호나 이메일 주소, IMEI와 같은 개인 정보는 수집하지 않습니다.&lt;br&gt;&lt;br&gt;데이터 분석을 허용하기 전까지는 정보를 수집하지 않습니다.&lt;br&gt;&lt;br&gt;수집한 정보는 Google Analytics for Firebase에 의해 분석됩니다. 분석된 정보는 이 애플리케이션의 개발자만 볼 수 있습니다.</string>
+    <string name="get_it">알겠습니다</string>
+    <string name="accept">동의</string>
+    <string name="reject">거부</string>
+
+    <string name="help_route">설정 -> 정보 -> 도움말</string>
+
+    <!-- Select scene -->
+    <string name="select_scene">어느 갤러리 사이트를 사용하시겠습니까?</string>
+    <string name="select_scene_explain">e-hentai: 모든 사람들이 사용할 수 있음\nexhentai: 로그인한 사람만 사용할 수 있음</string>
+    <string name="no_select">두 사이트 중 하나를 선택하세요.</string>
+
+    <!-- Update -->
+    <string name="update">업데이트</string>
+    <string name="update_plain">버전: %1$s\n파일 크기: %2$s\n\n%3$s</string>
+    <string name="update_to_date">최신 버전의 EhViewer를 사용 중입니다.</string>
+    <string name="update_ignore">무시</string>
+
+    <!-- Gallery List -->
+    <string name="gallery_list_search_bar_hint_exhentai">ExHentai 검색</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai 검색</string>
+    <string name="gallery_list_search_bar_open_gallery">갤러리 열기</string>
+    <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
+
+    <string name="search">검색</string>
+
+    <string name="keyword_search">키워드 검색</string>
+    <string name="image_search">이미지 검색</string>
+
+    <string name="search_normal">일반 검색</string>
+    <string name="search_advance">고급 옵션</string>
+    <string name="search_image">이미지 검색</string>
+    <string name="search_normal_search">일반 검색</string>
+    <string name="search_specify_uploader">업로더 지정</string>
+    <string name="search_specify_tag">태그 지정</string>
+    <string name="search_enable_advance">고급 옵션 사용</string>
+
+    <string name="search_tip">일반 검색: 그냥 검색합니다.\n\n업로더 지정: 해당 업로더가 업로드한 갤러리를 검색합니다. 다른 옵션은 무시됩니다.\n\n태그 지정: 해당 태그를 포함한 갤러리를 검색합니다. 하나의 태그만 지정할 수 있으며, 다른 옵션은 무시됩니다.</string>
+
+    <string name="search_sname">갤러리 검색</string>
+    <string name="search_stags">갤러래 태그 검색</string>
+    <string name="search_sdesc">갤러리 설명 검색</string>
+    <string name="search_storr">토렌트 파일 이름 검색</string>
+    <string name="search_sto">토렌트 파일이 있는 갤러리만 검색</string>
+    <string name="search_sdt1">Low-Power 태그 검색</string>
+    <string name="search_sdt2">Downvoted 태그 검색</string>
+    <string name="search_sh">Expunged 갤러리 표시</string>
+    <string name="search_sr">최소 평점:</string>
+
+    <string name="select_image">이미지 선택</string>
+    <string name="search_uss">유사한 이미지 검색</string>
+    <string name="search_osc">커버만 검색</string>
+    <string name="search_se">Expunged 이미지 표시</string>
+    <string name="select_image_first">먼저 이미지를 선택해 주세요.</string>
+
+    <string name="add_to_favourites">즐겨찾기에 추가</string>
+
+    <string name="quick_search">빠른 검색</string>
+    <string name="quick_search_tip">빠른 검색을 추가하려면 \"+\" 버튼을 누르세요.</string>
+    <string name="add_quick_search_dialog_title">빠른 검색 추가</string>
+    <string name="name_is_empty">이름이 비어 있습니다.</string>
+    <string name="delete">삭제</string>
+    <string name="delete_quick_search_title">빠른 검색 삭제</string>
+    <string name="delete_quick_search_message">\"%s\" 항목을 삭제하시겠습니까?</string>
+    <string name="no_quick_search">빠른 검색 목록이 여기에 표시됩니다.</string>
+    <string name="add_quick_search_tip">갤러리 목록의 상태가 빠른 검색으로 저장됩니다. 검색 패널의 상태를 저장하려면 먼저 검색을 해야 합니다.</string>
+    <string name="readme">README</string>
+    <string name="image_search_not_quick_search">이미지 검색은 빠른 검색에 추가할 수 없습니다.</string>
+    <string name="duplicate_quick_search">이미 같은 내용의 빠른 검색 항목이 있습니다. 이름은 \"%s\"입니다.</string>
+    <string name="duplicate_name">같은 이름의 항목이 이미 있습니다.</string>
+
+    <string name="go_to_hint">페이지 %1$d, 총 %2$d 페이지</string>
+
+    <!-- search_min_rating -->
+    <string name="star_2">2개</string>
+    <string name="star_3">3개</string>
+    <string name="star_4">4개</string>
+    <string name="star_5">5개</string>
+
+    <!-- Gallery detail -->
+    <string name="error_cannot_find_gallery">갤러리를 찾을 수 없습니다.</string>
+    <string name="download">다운로드</string>
+    <string name="read">읽기</string>
+    <string name="more_information">추가 정보</string>
+    <plurals name="page_count">
+        <item quantity="other">%d 페이지</item>
+    </plurals>
+    <string name="favorites">즐겨찾기</string>
+    <string name="torrent_count">토렌트 (%d)</string>
+    <string name="share">공유</string>
+    <string name="rate">평가</string>
+    <string name="similar_gallery">유사</string>
+    <string name="search_cover">커버 검색</string>
+    <string name="no_tags">태그 없음</string>
+    <string name="no_comments">코멘트 없음</string>
+    <string name="no_more_comments">코멘트가 더 없음</string>
+    <string name="more_comment">코멘트 더 보기</string>
+    <string name="no_previews">미리 보기 없음</string>
+    <string name="no_more_previews">미리 보기가 더 없음</string>
+    <string name="more_previews">더 불러오기</string>
+    <string name="refresh">새로고침</string>
+    <string name="open_in_other_app">다른 앱에서 열기</string>
+    <string name="rate_successfully">평가를 남겼습니다.</string>
+    <string name="rate_failed">평가에 실패했습니다.</string>
+    <string name="no_torrents">토렌트 없음</string>
+    <string name="torrents">토렌트</string>
+    <string name="favorited">즐겨찾기에 있음</string>
+    <string name="not_favorited">즐겨찾기에 없음</string>
+    <string name="add_favorites_dialog_title">즐겨찾기에 추가</string>
+    <string name="remember_favorite_collection">즐겨찾기 저장 위치 기억</string>
+    <string name="add_to_favorite_success">즐겨찾기에 추가했습니다.</string>
+    <string name="remove_from_favorite_success">즐겨찾기에서 제거했습니다.</string>
+    <string name="add_to_favorite_failure">즐겨찾기에 추가하지 못했습니다.</string>
+    <string name="remove_from_favorite_failure">즐겨찾기에서 제거하지 못했습니다.</string>
+
+    <!-- Gallery Info -->
+    <string name="gallery_info">갤러리 정보</string>
+    <string name="copied_to_clipboard">클립보드에 복사했습니다.</string>
+    <string name="header_key">키</string>
+    <string name="header_value">값</string>
+    <string name="key_gid">GID</string>
+    <string name="key_token">토큰</string>
+    <string name="key_url">주소</string>
+    <string name="key_title">제목</string>
+    <string name="key_title_jpn">일본어 제목</string>
+    <string name="key_thumb">섬네일</string>
+    <string name="key_category">카테고리</string>
+    <string name="key_uploader">업로더</string>
+    <string name="key_posted">날짜</string>
+    <string name="key_parent">부모</string>
+    <string name="key_visible">가시성</string>
+    <string name="key_language">언어</string>
+    <string name="key_pages">페이지</string>
+    <string name="key_size">크기</string>
+    <string name="key_favorite_count">즐겨찾기\n횟수</string>
+    <string name="key_favorited">즐겨찾기됨</string>
+    <string name="key_rating_count">평가 횟수</string>
+    <string name="key_rating">평가</string>
+    <string name="key_torrents">토렌트</string>
+    <string name="key_torrent_url">토렌트 주소</string>
+
+    <!-- Gallery Comments -->
+    <string name="gallery_comments">갤러리 코멘트</string>
+    <string name="no_one_comments_gallery">코멘트가 없습니다.</string>
+    <string name="comment_successfully">코멘트를 남겼습니다.</string>
+    <string name="comment_failed">코멘트를 남기지 못했습니다.</string>
+    <string name="copy_comment_text">코멘트 텍스트 복사</string>
+    <string name="vote_up">추천 (Vote up)</string>
+    <string name="cancel_vote_up">추천 취소</string>
+    <string name="vote_down">비추천 (Vote down)</string>
+    <string name="cancel_vote_down">비추천 취소</string>
+    <string name="vote_up_successfully">추천했습니다.</string>
+    <string name="cancel_vote_up_successfully">추천을 취소했습니다.</string>
+    <string name="vote_down_successfully">비추천했습니다.</string>
+    <string name="cancel_vote_down_successfully">비추천을 취소했습니다.</string>
+    <string name="vote_failed">추천/비추천에 실패했습니다.</string>
+    <string name="check_vote_status">추천/비추천 상태 보기</string>
+
+    <!-- Gallery Previews -->
+    <string name="gallery_previews">갤러리 미리 보기</string>
+    <string name="go_to">이동</string>
+
+    <!-- Download -->
+    <string name="scene_download_title">다운로드 - %s</string>
+    <string name="no_download_info">다운로드한 항목이 여기에 표시됩니다.</string>
+    <string name="download_state_none">유휴 상태</string>
+    <string name="download_state_wait">대기 중</string>
+    <string name="download_state_downloading">다운로드 중</string>
+    <string name="download_state_downloaded">다운로드함</string>
+    <string name="download_state_failed">실패함</string>
+    <string name="download_state_failed_2">%d 남아 있음</string>
+    <string name="download_state_finish">완료</string>
+    <string name="stat_509_alert_title">509 경고</string>
+    <string name="stat_509_alert_text">이미지 제한에 도달하였습니다. 다운로드를 멈추고 잠시 쉬세요.</string>
+    <string name="stat_download_done_title">다운로드 완료</string>
+    <string name="stat_download_done_text_succeeded">%d 성공</string>
+    <string name="stat_download_done_text_failed">%d 실패</string>
+    <string name="stat_download_done_text_mix">%1$d 성공, %2$d 실패</string>
+    <string name="stat_download_done_line_succeeded">성공: %s</string>
+    <string name="stat_download_done_line_failed">실패: %s</string>
+    <string name="download_remove_dialog_title">다운로드 항목 제거</string>
+    <string name="download_remove_dialog_message">%s 항목을 다운로드 목록에서 제거하시겠습니까?</string>
+    <string name="download_remove_dialog_message_2">%d개 항목을 다운로드 목록에서 제거하시겠습니까?</string>
+    <string name="download_remove_dialog_check_text">이미지 파일 삭제</string>
+    <string name="stat_download_action_stop_all">모두 중지</string>
+    <string name="drawer_download_label_title">레이블</string>
+    <string name="default_download_label_name">기본</string>
+    <string name="download_move_dialog_title">이동</string>
+    <string name="download_labels">다운로드 레이블</string>
+    <string name="download_start_all">모두 시작</string>
+    <string name="download_stop_all">모두 중지</string>
+    <string name="download_reset_reading_progress">독서 진행도 초기화</string>
+    <string name="reset_reading_progress_message">다운로드한 모든 갤러리의 독서 진행도를 초기화하시겠습니까?</string>
+    <string name="download_service_label">EhViewer 다운로드 서비스</string>
+    <string name="download_speed_text">%s</string>
+    <string name="download_speed_text_2">%1$s, %2$s 남음</string>
+    <string name="remember_download_label">다운로드 레이블 기억</string>
+    <string name="default_download_label">기본 다운로드 레이블</string>
+    <string name="added_to_download_list">다운로드 목록에 추가됨</string>
+
+    <!-- Download label -->
+    <string name="no_download_label">다운로드 레이블이 여기에 표시됩니다.</string>
+    <string name="add">추가</string>
+    <string name="new_label_title">새 레이블</string>
+    <string name="label_text_is_empty">레이블 텍스트가 비어 있습니다.</string>
+    <string name="label_text_is_invalid">\"기본\"은 레이블 이름으로 사용할 수 없습니다.</string>
+    <string name="label_text_exist">이미 있는 레이블입니다.</string>
+    <string name="rename_label_title">레이블 이름 바꾸기</string>
+    <string name="delete_label_title">레이블 삭제</string>
+    <string name="delete_label_message">\"%s\" 레이블을 삭제하시겠습니까?</string>
+
+    <!-- History -->
+    <string name="no_history">읽은 갤러리가 여기에 표시됩니다.</string>
+    <string name="clear_all">모두 지우기</string>
+    <string name="clear_all_history">모든 방문 기록을 지우시겠습니까?</string>
+
+    <!-- Filter -->
+    <string name="filter_title">제목</string>
+    <string name="filter_uploader">업로더</string>
+    <string name="filter_tag">태그</string>
+    <string name="filter_tag_namespace">태그 네임스페이스</string>
+    <string name="tip">팁</string>
+    <string name="show_definition">정의 표시</string>
+
+    <!-- Set Security -->
+    <string name="set_pattern_protection">패턴 보호 사용</string>
+    <string name="set_pattern_protection_tip">패턴 보호를 사용하려면 패턴을 그리세요.\n비워두면 패턴 보호가 해제됩니다.</string>
+    <string name="set">지정</string>
+    <string name="enable_fingerprint">지문으로 잠금 해제 허용</string>
+
+    <!-- UConfig Activity -->
+    <string name="u_config">E-Hentai 설정</string>
+    <string name="apply">적용</string>
+    <string name="apply_tip">설정을 저장하려면 체크 표시를 누르세요.</string>
+
+    <!-- Hosts Activity -->
+    <string name="hosts">사용자 지정 hosts.txt</string>
+    <string name="hosts_tip">hosts.txt</string>
+    <string name="hosts_host">호스트</string>
+    <string name="hosts_ip">IP</string>
+    <string name="add_host">호스트 추가</string>
+    <string name="add_host_add">추가</string>
+    <string name="edit_host">호스트 편집</string>
+    <string name="edit_host_confirm">확인</string>
+    <string name="edit_host_delete">삭제</string>
+    <string name="invalid_host">잘못된 호스트</string>
+    <string name="invalid_ip">잘못된 IP</string>
+
+    <!-- Gallery Activity -->
+    <string name="page_menu_title">페이지 %d</string>
+    <string name="page_menu_save">저장</string>
+    <string name="page_menu_save_to">다른 이름으로 저장</string>
+    <string name="page_menu_add_bookmark">북마크에 추가</string>
+    <string name="gallery_menu_title">메뉴</string>
+    <string name="share_image">이미지 공유</string>
+    <string name="image_saved">이미지를 %s 경로에 저장함</string>
+
+    <string name="settings_eh">EH</string>
+    <string name="settings_eh_sign_out">로그아웃</string>
+    <string name="settings_eh_sign_out_summary">다시 로그인하려면 앱을 재시작하세요.</string>
+    <string name="settings_eh_identity_cookies">식별용 쿠키</string>
+    <string name="settings_eh_identity_cookies_summary">쿠키는 로그인 시 사용할 수 있습니다.</string>
+    <string name="settings_eh_identity_cookies_signed">식별용 쿠키를 사용하여 이 계정으로 로그인할 수 있습니다.&lt;br&gt;&lt;b&gt;안전하게 보관하세요.&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
+    <string name="settings_eh_identity_cookies_tourist">로그인 상태가 아닙니다.</string>
+    <string name="settings_eh_identity_cookies_copy">복사</string>
+    <string name="settings_u_config">E-Hentai 설정</string>
+    <string name="settings_u_config_summary">E-Hentai 사이트의 설정 페이지를 엽니다.</string>
+    <string name="settings_eh_sign_out_warning">정말 로그아웃하시겠습니까?</string>
+    <string name="settings_eh_sign_out_tip">로그아웃했습니다. 다시 로그인하려면 앱을 재시작하세요.</string>
+    <string name="settings_eh_theme">테마</string>
+    <string name="settings_eh_theme_light">밝은 테마</string>
+    <string name="settings_eh_theme_dark">어두운 테마</string>
+    <string name="settings_eh_theme_black">검정색 테마</string>
+    <string name="settings_eh_apply_nav_bar_theme_color">내비게이션 바에 테마 색상 적용</string>
+    <string name="settings_eh_gallery_site">갤러리 사이트</string>
+    <string name="settings_eh_list_mode">목록 모드</string>
+    <string name="settings_eh_list_mode_detail">자세히</string>
+    <string name="settings_eh_list_mode_thumb">섬네일</string>
+    <string name="settings_eh_detail_size">상세 정보 크기</string>
+    <string name="settings_eh_detail_size_long">길게</string>
+    <string name="settings_eh_detail_size_short">짧게</string>
+    <string name="settings_eh_thumb_size">섬네일 크기</string>
+    <string name="settings_eh_thumb_size_large">크게</string>
+    <string name="settings_eh_thumb_size_middle">중간</string>
+    <string name="settings_eh_thumb_size_small">작게</string>
+    <string name="settings_eh_thumb_resolution">섬네일 해상도</string>
+    <string name="settings_eh_thumb_resolution_summary">특정 해상도로 설정하면 섬네일을 불러오지 못할 수 있습니다. 현재 설정\u003a \u005b%s\u005d</string>
+    <string name="settings_eh_thumb_resolution_auto">자동</string>
+    <string name="settings_eh_fix_thumb_url">섬네일 URL 바로잡기</string>
+    <string name="settings_eh_default_categories">홈페이지 카테고리</string>
+    <string name="settings_eh_default_categories_summary">홈페이지에 기본으로 보여질 카테고리</string>
+    <string name="settings_eh_excluded_languages">제외할 언어</string>
+    <string name="settings_eh_excluded_languages_summary">갤러리 목록과 검색에서 특정 언어 숨기기</string>
+    <string name="settings_eh_excluded_tag_namespaces">제외할 태그 네임스페이스</string>
+    <string name="settings_eh_excluded_tag_namespaces_summary">기본 태그 검색에서 특정 네임스페이스 제외</string>
+    <string name="settings_eh_show_jpn_title">일본어 제목 표시</string>
+    <string name="settings_eh_show_gallery_pages">갤러리 페이지 수 표시</string>
+    <string name="settings_eh_show_gallery_pages_summary">갤러리 목록에 해당 갤러리의 페이지 수를 표시합니다</string>
+    <string name="settings_eh_show_tag_translations">번역된 태그 표시</string>
+    <string name="settings_eh_show_tag_translations_summary">영어 태그 대신 번역된 태그를 표시합니다. 데이터 파일을 다운로드하는데 시간이 걸립 수 있습니다.</string>
+    <string name="settings_eh_tag_translations_source">Placeholder</string>
+    <string name="settings_eh_tag_translations_source_url">https://placeholder</string>
+    <string name="settings_eh_cellular_network_warning">모바일 데이터 경고</string>
+
+    <string name="settings_read">읽기</string>
+    <string name="settings_read_screen_rotation">화면 회전</string>
+    <string name="settings_read_screen_rotation_default">기본값</string>
+    <string name="settings_read_screen_rotation_portrait">세로 모드</string>
+    <string name="settings_read_screen_rotation_landscape">가로 모드</string>
+    <string name="settings_read_reading_direction">읽기 방향</string>
+    <string name="settings_read_reading_direction_left_to_right">왼쪽에서 오른쪽으로</string>
+    <string name="settings_read_reading_direction_right_to_Left">오른쪽에서 왼쪽으로</string>
+    <string name="settings_read_reading_direction_top_to_bottom">위에서 아래로</string>
+    <string name="settings_read_page_scaling">페이지 표시</string>
+    <string name="settings_read_page_scaling_actual_size">실제 크기</string>
+    <string name="settings_read_page_scaling_fit_to_width">너비에 맞춤</string>
+    <string name="settings_read_page_scaling_fit_to_height">높이에 맞춤</string>
+    <string name="settings_read_page_scaling_fit_to_screen">화면에 맞춤</string>
+    <string name="settings_read_page_scaling_fixed_scale">비율 고정</string>
+    <string name="settings_read_start_position">시작 위치</string>
+    <string name="settings_read_start_position_top_left">왼쪽 상단</string>
+    <string name="settings_read_start_position_top_right">오른쪽 상단</string>
+    <string name="settings_read_start_position_bottom_left">왼쪽 하단</string>
+    <string name="settings_read_start_position_bottom_right">오른쪽 하단</string>
+    <string name="settings_read_start_position_center">중앙</string>
+    <string name="settings_read_keep_screen_on">화면 켜짐 유지</string>
+    <string name="settings_read_show_clock">시계 표시</string>
+    <string name="settings_read_show_progress">독서 진행도 표시</string>
+    <string name="settings_read_show_battery">배터리 표시</string>
+    <string name="settings_read_show_page_interval">페이지 간격 표시</string>
+    <string name="settings_read_volume_page">볼륨 키로 페이지 넘기기</string>
+    <string name="settings_read_reading_fullscreen">전체 화면</string>
+    <string name="settings_read_custom_screen_lightness">화면 밝기 사용자 지정</string>
+    <string name="settings_read_screen_lightness">화면 밝기</string>
+
+    <string name="settings_download">다운로드</string>
+    <string name="settings_download_download_location">다운로드 위치</string>
+    <string name="settings_download_invalid_download_location">다운로드 위치가 잘못되었습니다.</string>
+    <string name="settings_download_cant_get_download_location">다운로드 위치를 가져올 수 없습니다.</string>
+    <string name="settings_download_pick_dir_kk">Android 4.4 이상에서는 루트 권한 없이 외장 SD 카드에 데이터를 쓸 수 있는 방법이 없습니다. 그러나 &lt;SD 카드&gt;/Android/data/me.loverain.fleur 폴더만은 쓸 수 있습니다.</string>
+    <string name="settings_download_pick_dir_l">Android 5.0 이상에서는 외장 SD 카드에 쓰기 작업을 할 수 있는 새 API를 제공합니다. SD 카드를 다운로드 위치로 지정하려면 \"문서\"를 누르세요.</string>
+    <string name="settings_download_document">문서</string>
+    <string name="settings_download_continue">계속</string>
+    <string name="settings_download_media_scan">미디어 스캔 허용</string>
+    <string name="settings_download_media_scan_summary_on">다른 사람들에게 갤러리 앱을 들키지 마세요.</string>
+    <string name="settings_download_media_scan_summary_off">대부분의 갤러리 앱에서 다운로드 경로에 있는 사진을 무시합니다.</string>
+    <string name="settings_download_multi_thread_download">다중 스레드 다운로드</string>
+    <string name="settings_download_multi_thread_download_summary">%s개 이미지까지</string>
+    <string name="settings_download_preload_image">이미지 미리 불러오기</string>
+    <string name="settings_download_preload_image_summary">다음 %s개 이미지를 미리 불러옴</string>
+    <string name="settings_download_image_resolution">이미지 해상도</string>
+    <string name="settings_download_image_resolution_summary">1280x 이상으로 설정하면 작동하지 않을 수 있습니다. 현재 설정\u003a \u005b%s\u005d</string>
+    <string name="settings_download_image_resolution_auto">자동</string>
+    <string name="settings_download_download_origin_image">원본 이미지 다운로드</string>
+    <string name="settings_download_download_origin_image_summary">이 옵션은 위험합니다! 509 오류가 발생할 수 있습니다.</string>
+    <string name="settings_download_restore_download_items">다운로드 항목 복구</string>
+    <string name="settings_download_restore_download_items_summary">다운로드 위치에 존재하는 모든 다운로드 항목 복구</string>
+    <string name="settings_download_restoring">복구 중</string>
+    <string name="settings_download_restore_not_found">복구할 다운로드 항목을 찾을 수 없습니다.</string>
+    <string name="settings_download_restore_failed">복구하지 못했습니다.</string>
+    <string name="settings_download_restore_successfully">%d개 항목을 복구했습니다.</string>
+    <string name="settings_download_clean_redundancy">잉여 파일 삭제</string>
+    <string name="settings_download_clean_redundancy_summary">다운로드 위치에 존재하지만 다운로드 목록에는 없는 갤러리 이미지 제거</string>
+    <string name="settings_download_clean_redundancy_no_redundancy">잉여 파일이 없습니다.</string>
+    <string name="settings_download_clean_redundancy_done">잉여 파일을 청소했습니다. 모두 %d개 항목을 지웠습니다.</string>
+
+    <string name="settings_advanced">고급</string>
+    <string name="settings_advanced_save_parse_error_body">파싱 오류 시 HTML 내용 저장</string>
+    <string name="settings_advanced_save_parse_error_body_summary">HTML 파일에는 개인 정보가 포함될 수 있습니다.</string>
+    <string name="settings_advanced_save_crash_log">앱 충돌 시 로그 저장</string>
+    <string name="settings_advanced_save_crash_log_summary">충돌 로그는 개발자가 버그를 수정하는 데 도움이 됩니다.</string>
+    <string name="settings_advanced_dump_logcat">로그캣 덤프</string>
+    <string name="settings_advanced_dump_logcat_summary">외부 저장소에 로그캣 저장</string>
+    <string name="settings_advanced_dump_logcat_failed">로그캣을 덤프하지 못했습니다.</string>
+    <string name="settings_advanced_dump_logcat_to">%s 경로에 로그캣을 저장했습니다.</string>
+    <string name="settings_advanced_clear_download_path_cache">다운로드 경로 캐시 삭제</string>
+    <string name="settings_advanced_clear_download_path_cache_summary">갤러리 다운로드 경로가 잘못되었을 때 다운로드 경로 캐시를 삭제하면 문제를 해결할 수 있습니다.</string>
+    <string name="settings_advanced_clear_download_path_cache_message">다운로드 경로 캐시를 지우시겠습니까?</string>
+    <string name="settings_advanced_clear_memory_cache">메모리 캐시 삭제</string>
+    <string name="settings_advanced_clear_memory_cache_summary">섬네일, 갤러리 정보 메모리 캐시 삭제</string>
+    <string name="settings_advanced_read_cache_size">읽기 캐시 크기</string>
+    <string name="settings_advanced_app_language_title">앱 언어 (Language)</string>
+    <string name="settings_advanced_proxy">프록시</string>
+    <string name="settings_advanced_proxy_summary_1">%1$s %2$s:%3$d</string>
+    <string name="settings_advanced_proxy_summary_2">%1$s</string>
+    <string name="settings_advanced_built_in_hosts_title">앱 내장 hosts.txt</string>
+    <string name="settings_advanced_built_in_hosts_summary">앱에 내장된 호스트-IP 지정 규칙을 사용합니다.\n대신 사용자 지정 hosts.txt 파일을 사용할 수도 있습니다.</string>
+    <string name="settings_advanced_custom_hosts_title">사용자 지정 hosts.txt</string>
+    <string name="settings_advanced_custom_hosts_summary">호스트 이름을 IP 주소에 지정합니다.\n앱에 내장된 규칙은 무시됩니다.</string>
+    <string name="settings_privacy_pattern_protection_title">패턴 보호</string>
+    <string name="settings_privacy_pattern_protection_not_set">패턴 보호가 설정되어 있지 않음</string>
+    <string name="settings_privacy_pattern_protection_set">패턴 보호가 설정됨</string>
+    <string name="settings_advanced_export_data">데이터 내보내기</string>
+    <string name="settings_advanced_export_data_summary">다운로드 목록, 빠른 검색 목록 등의 데이터를 외부 저장소에 저장</string>
+    <string name="settings_advanced_export_data_to">%s 경로에 데이터를 내보냈습니다.</string>
+    <string name="settings_advanced_export_data_failed">데이터를 내보내지 못했습니다.</string>
+    <string name="settings_advanced_import_data">데이터 가져오기</string>
+    <string name="settings_advanced_import_data_summary">이전에 저장한 데이터 불러오기</string>
+    <string name="settings_advanced_import_data_successfully">데이터를 가져왔습니다.</string>
+
+    <string name="settings_about">앱 정보</string>
+    <string name="settings_about_declaration_summary">EhViewer는 E-Hentai.org 사이트와 아무런 관계가 없습니다.</string>
+    <string name="settings_about_author">개발자</string>
+    <string name="settings_about_website">웹사이트</string>
+    <string name="settings_about_source">소스 코드</string>
+    <string name="settings_about_changelog">변경 사항</string>
+    <string name="settings_about_help">도움말</string>
+    <string name="settings_about_license">라이선스</string>
+    <string name="settings_about_license_summary">EhViewer는 많은 오픈 소스 프로젝트 덕분에 만들 수 있었습니다.</string>
+    <string name="settings_about_donate">후원</string>
+    <string name="settings_about_donate_message">후원 특전은 따로 없습니다만, 제가 이 앱을 관리하는 데 도움이 됩니다.</string>
+    <string name="settings_about_donate_alipay">Alipay</string>
+    <string name="settings_about_donate_paypal">PayPal</string>
+    <string name="settings_about_donate_open">열기</string>
+    <string name="settings_about_donate_copy">복사</string>
+    <string name="settings_about_donate_copied">클립보드에 복사했습니다.</string>
+    <string name="settings_privacy_enable_analytics">데이터 분석 사용</string>
+    <string name="settings_privacy_about_analytics">데이터 분석 정보</string>
+    <string name="settings_about_version">빌드 버전</string>
+    <string name="settings_about_check_for_updates">업데이트 확인</string>
+    <string name="settings_about_beta_update_channel">베타 업데이트 채널</string>
+    <string name="settings_about_beta_update_channel_summary">베타 버전은 해결되지 않은 문제가 발생할 수 있습니다.</string>
+
+    <string name="proxy_enable">사용</string>
+    <string name="proxy_enabled">사용함</string>
+    <string name="proxy_disabled">사용 안 함</string>
+    <string name="proxy_direct">다이렉트</string>
+    <string name="proxy_system">시스템 프록시</string>
+    <string name="proxy_host_or_ip">호스트 또는 IP</string>
+    <string name="proxy_port">포트</string>
+    <string name="proxy_domain_not_supported">지원하지 않는 도메인입니다.</string>
+    <string name="proxy_invalid_port">잘못된 포트입니다.</string>
+
+    <string name="cant_get_data_dir">데이터 디렉터리를 찾을 수 없습니다.</string>
+    <string name="cant_find_any_data">데이터를 가져올 수 없습니다.</string>
+    <string name="cant_read_the_file">파일을 읽을 수 없습니다.</string>
+
+    <string name="app_language_system">시스템 언어 (기본값)</string>
+
+    <!-- ExcludedLanguagesScene -->
+    <string name="excluded_languages">제외할 언어</string>
+    <string name="select_all">모두 선택</string>
+    <string name="deselect_all">모두 선택 해제</string>
+    <string name="invert_selection">선택 반전</string>
+    <string name="language">언어</string>
+    <string name="original">원어</string>
+    <string name="translated">역본</string>
+    <string name="rewrite">재필</string>
+    <string name="language_japanese">일본어</string>
+    <string name="language_english">영어</string>
+    <string name="language_chinese">중국어</string>
+    <string name="language_dutch">네덜란드어</string>
+    <string name="language_french">프랑스어</string>
+    <string name="language_german">독일어</string>
+    <string name="language_hungarian">헝가리어</string>
+    <string name="language_italian">이탈리아어</string>
+    <string name="language_korean">한국어</string>
+    <string name="language_polish">폴란드어</string>
+    <string name="language_portuguese">포르투갈어</string>
+    <string name="language_russian">러시아어</string>
+    <string name="language_spanish">스페인어</string>
+    <string name="language_thai">타이어</string>
+    <string name="language_vietnamese">베트남어</string>
+    <string name="language_na">없음</string>
+    <string name="language_other">기타</string>
+
+    <string name="please_wait">잠시만 기다려 주세요.</string>
+
+    <!-- License -->
+    <string name="license">라이선스</string>
+
+    <!-- Dir Picker-->
+    <string name="dir_picker">디렉터리 선택기</string>
+    <string name="directory_not_writable">쓸 수 있는 디렉터리가 아닙니다.</string>
+
+    <!-- Favorites -->
+    <string name="cloud_favorites">클라우드 즐겨찾기</string>
+    <string name="local_favorites">로컬 즐겨찾기</string>
+    <string name="favorites_search_bar_hint">%s 검색</string>
+    <string name="favorites_title">%s</string>
+    <string name="favorites_title_2">%1$s - %2$s</string>
+    <string name="delete_favorites_dialog_title">즐겨찾기에서 삭제</string>
+    <string name="delete_favorites_dialog_message">%d개 항목을 즐겨찾기에서 삭제하시겠습니까?</string>
+    <string name="move_favorites_dialog_title">즐겨찾기 이동</string>
+    <string name="default_favorites_collection">기본 즐겨찾기 컬렉션</string>
+    <string name="let_me_select">직접 선택</string>
+    <string name="favorites_info">즐겨찾기 정보</string>
+    <string name="collections">컬렉션</string>
+    <string name="count">개수</string>
+    <string name="need_sign_in">로그인 필요</string>
+
+    <!-- Progress Scene -->
+    <string name="error_something_wrong_happened">뭔가 잘못되었습니다.</string>
+
+    <!-- Guide -->
+    <string name="guide_quick_search_title">빠른 검색</string>
+    <string name="guide_quick_search_text">오른쪽에서 스와이프하면 빠른 검색 패널이 열립니다.</string>
+    <string name="guide_collections_title">컬렉션</string>
+    <string name="guide_collections_text">오른쪽에서 스와이프하면 컬렉션을 선택할 수 있습니다.</string>
+    <string name="guide_download_labels_title">다운로드 레이블</string>
+    <string name="guide_download_labels_text">오른쪽에서 스와이프하면 다운로드 레이블 패널이 열립니다.</string>
+    <string name="guide_download_thumb_title">갤러리 자세히 보기</string>
+    <string name="guide_download_thumb_text">섬네일을 누르면 갤러리를 자세히 볼 수 있습니다.</string>
+    <string name="guide_gallery_left">페이지 넘기기</string>
+    <string name="guide_gallery_right">페이지 넘기기</string>
+    <string name="guide_gallery_menu">메뉴</string>
+    <string name="guide_gallery_progress">독서 진행도</string>
+    <string name="guide_gallery_long_click">페이지 메뉴를 열려면 길게 누르세요.</string>
+
+    <!-- Readable Time -->
+    <string name="from_the_future">미래에</string>
+    <string name="just_now">방금</string>
+    <plurals name="some_minutes_ago">
+        <item quantity="other">%d분 전</item>
+    </plurals>
+    <plurals name="some_hours_ago">
+        <item quantity="other">%d시간 전</item>
+    </plurals>
+    <string name="yesterday">어제</string>
+    <string name="some_days_ago">%d일 전</string>
+    <plurals name="second">
+        <item quantity="other">초</item>
+    </plurals>
+    <plurals name="minute">
+        <item quantity="other">분</item>
+    </plurals>
+    <plurals name="hour">
+        <item quantity="other">시간</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="other">일</item>
+    </plurals>
+    <plurals name="year">
+        <item quantity="other">년</item>
+    </plurals>
+    <string name="dialog_archive_title">H@H 다운로더</string>
+    <string name="no_archives">아카이브 없음</string>
+    <string name="download_archive_started">아카이브 다운로드가 시작되었습니다.</string>
+    <string name="download_archive_failure">아카이브 다운로드에 실패했습니다.</string>
+    <string name="archive">아카이브</string>
+    <string name="download_archive_failure_no_hath">아카이브를 다운로드하려면 H@H 클라이언트가 필요합니다.</string>
+    <string name="settings_privacy">개인 정보</string>
+    <string name="settings_privacy_secure">화면 캡처 허용 안 함</string>
+    <string name="settings_privacy_secure_summary">이 앱에서 스크린샷을 찍을 수 없게 하며, \"최근 앱\" 화면에서 앱의 내용을 보이지 않게 합니다.</string>
+
+    <string name="download_service">다운로드 서비스</string>
+    <string name="favorite_name">즐겨찾기</string>
+    <string name="settings_about_donate_guide">지원 매 뉴 얼</string>
+</resources>

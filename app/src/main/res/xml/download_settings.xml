@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="download_location"
+        android:title="@string/settings_download_download_location"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="media_scan"
+        android:title="@string/settings_download_media_scan"
+        app:summaryOn="@string/settings_download_media_scan_summary_on"
+        app:summaryOff="@string/settings_download_media_scan_summary_off"
+        android:defaultValue="false"/>
+
+    <com.hippo.preference.ListPreference
+        android:key="download_thread"
+        android:title="@string/settings_download_multi_thread_download"
+        android:summary="@string/settings_download_multi_thread_download_summary"
+        app:entries="@array/multi_thread_download_entries"
+        app:entryValues="@array/multi_thread_download_entry_values"
+        android:defaultValue="3"/>
+
+    <com.hippo.preference.ListPreference
+        android:key="preload_image"
+        android:title="@string/settings_download_preload_image"
+        android:summary="@string/settings_download_preload_image_summary"
+        app:entries="@array/preload_image_entries"
+        app:entryValues="@array/preload_image_entry_values"
+        android:defaultValue="5"/>
+
+    <com.hippo.preference.ListPreference
+        android:key="image_size"
+        android:title="@string/settings_download_image_resolution"
+        android:summary="@string/settings_download_image_resolution_summary"
+        app:entries="@array/image_resolution_entries"
+        app:entryValues="@array/image_resolution_entry_values"
+        android:defaultValue="a"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="download_origin_image"
+        android:title="@string/settings_download_download_origin_image"
+        android:summary="@string/settings_download_download_origin_image_summary"
+        android:defaultValue="false"/>
+
+    <com.hippo.ehviewer.preference.RestoreDownloadPreference
+        android:key="restore_download_items"
+        android:title="@string/settings_download_restore_download_items"
+        android:summary="@string/settings_download_restore_download_items_summary"/>
+
+    <com.hippo.ehviewer.preference.CleanRedundancyPreference
+        android:key="clean_redundancy"
+        android:title="@string/settings_download_clean_redundancy"
+        android:summary="@string/settings_download_clean_redundancy_summary"/>
+
+</PreferenceScreen>

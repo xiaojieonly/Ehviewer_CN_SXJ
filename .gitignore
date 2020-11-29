@@ -1,0 +1,11 @@
+.gradle
+/local.properties
+.DS_Store
+/build
+/src
+*.iml
+.idea
+/captures
+release
+google-services.json
+java_pid10692.hprof

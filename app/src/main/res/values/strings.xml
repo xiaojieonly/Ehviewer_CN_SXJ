@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+
+    <string name="app_name">EhViewer</string>
+
+    <string name="error_status_code_400" translatable="false">Bad Request</string>
+    <string name="error_status_code_401" translatable="false">Unauthorized</string>
+    <string name="error_status_code_402" translatable="false">Payment Required</string>
+    <string name="error_status_code_403" translatable="false">Forbidden</string>
+    <string name="error_status_code_404" translatable="false">Not Found</string>
+    <string name="error_status_code_405" translatable="false">Method Not Allowed</string>
+    <string name="error_status_code_406" translatable="false">Not Acceptable</string>
+    <string name="error_status_code_407" translatable="false">Proxy Authentication Required</string>
+    <string name="error_status_code_408" translatable="false">Request Timeout</string>
+    <string name="error_status_code_409" translatable="false">Conflict</string>
+    <string name="error_status_code_410" translatable="false">Gone</string>
+    <string name="error_status_code_411" translatable="false">Length Required</string>
+    <string name="error_status_code_412" translatable="false">Precondition Failed</string>
+    <string name="error_status_code_413" translatable="false">Request Entity Too Large</string>
+    <string name="error_status_code_414" translatable="false">Request-URI Too Long</string>
+    <string name="error_status_code_415" translatable="false">Unsupported Media Type</string>
+    <string name="error_status_code_416" translatable="false">Requested Range Not Satisfiable</string>
+    <string name="error_status_code_417" translatable="false">Expectation Failed</string>
+
+    <string name="error_status_code_500" translatable="false">Internal Server Error</string>
+    <string name="error_status_code_501" translatable="false">Not Implemented</string>
+    <string name="error_status_code_502" translatable="false">Bad Gateway</string>
+    <string name="error_status_code_503" translatable="false">Service Unavailable</string>
+    <string name="error_status_code_504" translatable="false">Gateway Timeout</string>
+    <string name="error_status_code_505" translatable="false">HTTP Version Not Supported</string>
+
+    <string name="site_e" translatable="false">e-hentai</string>
+    <string name="site_ex" translatable="false">exhentai</string>
+
+
+    <!-- Category -->
+    <string name="doujinshi" translatable="false">DOUJINSHI</string>
+    <string name="manga" translatable="false">MANGA</string>
+    <string name="artist_cg" translatable="false">ARTIST CG</string>
+    <string name="game_cg" translatable="false">GAME CG</string>
+    <string name="western" translatable="false">WESTERN</string>
+    <string name="non_h" translatable="false">NON-H</string>
+    <string name="image_set" translatable="false">IMAGE SET</string>
+    <string name="cosplay" translatable="false">COSPLAY</string>
+    <string name="asian_porn" translatable="false">ASIAN PORN</string>
+    <string name="misc" translatable="false">MISC</string>
+    <string name="stub" translatable="false">Stub</string>
+
+    <!-- Theme -->
+    <string name="theme_light">亮色主题</string>
+    <string name="theme_dark">暗色主题</string>
+    <string name="theme_black">黑色主题</string>
+
+    <string name="homepage">主页</string>
+    <string name="subscription">订阅</string>
+    <string name="whats_hot">热门</string>
+    <string name="favourite">收藏</string>
+    <string name="history">历史</string>
+    <string name="downloads">下载</string>
+    <string name="settings">设置</string>
+
+    <string name="username">用户名</string>
+    <string name="password">密码</string>
+    <string name="recaptcha">验证码（非必需）</string>
+
+    <string name="recaptcha_none">点我</string>
+    <string name="recaptcha_loading">加载中…</string>
+    <string name="recaptcha_failure">失败</string>
+
+    <string name="sign_in">登录</string>
+    <string name="register">注册</string>
+    <string name="sign_in_via_webview">通过网页登录</string>
+    <string name="sign_in_via_cookies">通过 Cookie 登录</string>
+    <string name="display_name_dialog_title">输入昵称</string>
+    <string name="display_name">昵称</string>
+    <string name="display_name_is_empty">昵称为空</string>
+    <string name="sign_in_first">请先登录</string>
+
+    <string name="default_display_name">Little Hippo</string>
+
+    <string name="cookie_explain">Cookie 是存储在浏览器里的一小块数据。如果您不清楚 Cookie 什么或者怎么获取 Cookie，最好搜索一下。\n\n请输入特定的 Cookie 来登录。</string>
+    <string name="text_is_empty">文本为空</string>
+    <string name="waring">警告</string>
+    <string name="wrong_cookie_warning">看起来您输入的 Cookie 是错误的，最好检查一下。</string>
+    <string name="i_will_check_it">好的</string>
+    <string name="i_dont_think_so">我没输错</string>
+    <string name="found_cookies">找到旧版 Cookie</string>
+
+    <string name="invalid_download_location">似乎下载路径不可用。请到重新设置下载路径。</string>
+
+    <string name="cellular_network_warning">正在使用移动网络</string>
+
+    <string name="clipboard_gallery_url_snack_message">剪切板里有画廊链接</string>
+    <string name="clipboard_gallery_url_snack_action">查看</string>
+
+    <string name="error_bad_status_code">错误状态码：%d</string>
+    <string name="error_timeout">超时</string>
+    <string name="error_unknown_host">未知主机</string>
+    <string name="error_redirection">太多重定向</string>
+    <string name="error_socket">网络错误</string>
+    <string name="error_unknown">奇怪的错误</string>
+    <string name="error_cant_find_activity">找不到相应的应用</string>
+    <string name="error_cannot_parse_the_url">无法解析链接</string>
+    <string name="error_not_folder_path">非文件夹路径</string>
+    <string name="error_no_provider">无 provider</string>
+    <string name="error_decoding_failed">解码失败</string>
+    <string name="error_not_found">未找到</string>
+    <string name="error_empty">空</string>
+    <string name="error_invalid_archive">无效的压缩包</string>
+    <string name="error_reading_failed">读取失败</string>
+    <string name="error_out_of_range">越界</string>
+    <string name="error_write_failed">写入失败</string>
+    <string name="error_parse_error">解析失败</string>
+    <string name="error_509">509</string>
+    <string name="error_invalid_url">无效链接</string>
+    <string name="error_get_ptoken_error">获取 pToken 错误</string>
+    <string name="error_cant_create_temp_file">无法创建临时文件</string>
+    <string name="error_cant_save_image">无法保存图片</string>
+    <string name="error_invalid_number">非法数字</string>
+    <string name="error_please_login_first">请先登陆</string>
+    <string name="error_empty_html">页面内容为空</string>
+    <string name="error_cant_get_image">无法获取图片</string>
+
+    <string name="kokomade_tip">设置->Eh->画廊站点->e-hentai</string>
+
+    <string name="app_waring">本应用中内容来自互联网，部分内容可能对您的生理及心理造成难以恢复的伤害。本应用作者不会对由本应用造成的任何后果负责。\n\n未成年人应在监护人指导下使用本应用。</string>
+    <string name="error_username_cannot_empty">用户名不可为空</string>
+    <string name="error_password_cannot_empty">密码不可为空</string>
+    <string name="skip_signing_in">跳过登录</string>
+    <string name="sign_in_failed">登录失败</string>
+    <string name="sign_in_failed_tip">若持续出错，请尝试“通过网页登录”或“通过 Cookie 登录”。</string>
+    <string name="sign_in_failed_plain">这可能是网站更新导致的，也有可能是发生了奇怪的事情。您可以选择在登录按钮下方通过网页登录或者输入 cookie，或者跳过登录。跳过登录可能导致无法正常使用应用。如果你已经在 0.6.x 版登录过了，请优先尝试选择“通过 Cookie 登录”。</string>
+    <string name="press_twice_exit">再按一次退出</string>
+    <string name="content_layout_restore_tip">点击重试</string>
+    <string name="write_rationale">EhViewer 将申请设备存储空间访问权限以便下载画廊。您愿意授权吗？</string>
+    <string name="you_rejected_me">好痛</string>
+    <string name="analytics_explain">您同意让开发者收集您的设备信息与使用情况吗？这将对开发有很大帮助。&lt;br&gt;&lt;br&gt;数据统计服务由 Google Analytics for Firebase 提供，其隐私政策可在 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 查看。&lt;br&gt;&lt;br&gt;若您同意参与数据统计，您的设备信息与应用使用情况将会被记录，其包括但不限于：Android API 版本、设备型号、语言所在地、本应用版本号、会话时长、应用功能使用次数。开发者承诺以下信息并不会被记录：电话号码、电子邮件地址、IMEI。&lt;br&gt;&lt;br&gt;在您同意参与数据统计之前，您的信息不会被记录。&lt;br&gt;&lt;br&gt;被记录的数据会由 Google Analytics for Firebase 进行分析，分析报表仅可被本应用开发者访问。</string>
+    <string name="get_it">知道了</string>
+    <string name="accept">接受</string>
+    <string name="reject">拒绝</string>
+
+    <string name="help_route">设置->关于->帮助</string>
+
+    <!-- Select scene -->
+    <string name="select_scene">你想选择哪个画廊站点？</string>
+    <string name="select_scene_explain">e-hentai：对任何人开放\nexhentai：仅对登录用户开放</string>
+    <string name="no_select">请选择一个站点</string>
+
+    <!-- Update -->
+    <string name="update">更新</string>
+    <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>
+    <string name="update_to_date">EhViewer 自动更新暂时无法使用请点击最新版本进行查看</string>
+    <string name="update_ignore">忽略</string>
+
+    <!-- Gallery List -->
+    <string name="gallery_list_search_bar_hint_exhentai">搜索 ExHentai</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">搜索 E-Hentai</string>
+    <string name="gallery_list_search_bar_open_gallery">打开画廊</string>
+    <string name="gallery_list_empty_hit">什么都没有找到</string>
+    <string name="gallery_list_empty_hit_subscription">请至 设置->EH->我的标签 订阅标签</string>
+
+    <string name="search">搜索</string>
+
+    <string name="keyword_search">关键字搜索</string>
+    <string name="image_search">图片搜索</string>
+
+    <string name="search_normal">普通搜索</string>
+    <string name="search_advance">高级选项</string>
+    <string name="search_image">图片搜索</string>
+    <string name="search_normal_search">一般搜索</string>
+    <string name="search_subscription_search">订阅搜索</string>
+    <string name="search_specify_uploader">指定上传者</string>
+    <string name="search_specify_tag">指定标签</string>
+    <string name="search_enable_advance">启用高级选项</string>
+
+    <string name="search_tip">一般搜索：就是搜索。\n\n订阅搜素：在订阅中搜索。\n\n指定上传者：列出该上传者上传的画廊。其他选项会被忽略。\n\n指定标签：列出含有该标签的画廊。其他选项会被忽略。</string>
+
+    <string name="search_sname">搜索画廊</string>
+    <string name="search_stags">搜索画廊标签</string>
+    <string name="search_sdesc">搜索画廊描述</string>
+    <string name="search_storr">搜索种子文件名</string>
+    <string name="search_sto">仅显示有种子的画廊</string>
+    <string name="search_sdt1">搜索低愿力标签</string>
+    <string name="search_sdt2">搜索差评标签</string>
+    <string name="search_sh">显示被删除的画廊</string>
+    <string name="search_sr">最低评分：</string>
+    <string name="search_sp">页数：</string>
+    <string name="search_sp_to">到</string>
+    <string name="search_sp_suffix"/>
+    <string name="search_sf">禁用排除项：</string>
+    <string name="search_sfl">语言</string>
+    <string name="search_sfu">上传者</string>
+    <string name="search_sft">标签</string>
+
+    <string name="select_image">选择图片</string>
+    <string name="search_uss">使用相似搜索</string>
+    <string name="search_osc">只搜索封面</string>
+    <string name="search_se">显示被删除的画廊</string>
+    <string name="select_image_first">请先选择图片</string>
+
+    <string name="add_to_favourites">收藏</string>
+    <string name="remove_from_favourites">移除收藏</string>
+
+    <string name="stop_downloading">停止下载</string>
+    <string name="delete_downloads">删除下载</string>
+
+    <string name="quick_search">书签栏</string>
+    <string name="quick_search_tip">点击“+”来添加书签</string>
+    <string name="add_quick_search_dialog_title">添加书签</string>
+    <string name="name_is_empty">名称为空</string>
+    <string name="delete">删除</string>
+    <string name="delete_quick_search_title">删除书签</string>
+    <string name="delete_quick_search_message">删除“%s”？</string>
+    <string name="no_quick_search">这里是书签栏</string>
+    <string name="add_quick_search_tip">画廊列表的状态将被保存为书签。如果你想保存搜索面板的状态，请先执行搜索。</string>
+    <string name="readme">提示</string>
+    <string name="image_search_not_quick_search">无法添加图片搜索为书签</string>
+    <string name="duplicate_quick_search">已存在相同的书签，名称为“%s”。</string>
+    <string name="duplicate_name">已存在相同名称</string>
+
+    <string name="go_to_hint">第 %1$d 页，共 %2$d 页</string>
+
+    <!-- search_min_rating -->
+    <string name="star_2">2 星</string>
+    <string name="star_3">3 星</string>
+    <string name="star_4">4 星</string>
+    <string name="star_5">5 星</string>
+
+    <!-- Gallery detail -->
+    <string name="error_cannot_find_gallery">找不到画廊</string>
+    <string name="download">下载</string>
+    <string name="read">阅读</string>
+    <string name="more_information">查看更多信息</string>
+    <plurals name="page_count">
+        <item quantity="other">%d 页</item>
+    </plurals>
+    <string name="favored_times">\u2665 %d</string>
+    <string name="rating_text">%1$s (%2$.2f, %3$d)</string>
+    <string name="favorites">收藏</string>
+    <string name="torrent_count">种子 (%d)</string>
+    <string name="share">分享</string>
+    <string name="rate">评分</string>
+    <string name="similar_gallery">相似画廊</string>
+    <string name="search_cover">搜索封面</string>
+    <string name="no_tags">暂无标签</string>
+    <string name="no_comments">暂无评论</string>
+    <string name="no_more_comments">已显示所有评论</string>
+    <string name="more_comment">查看更多评论</string>
+    <string name="no_previews">没有预览</string>
+    <string name="no_more_previews">已显示所有预览</string>
+    <string name="more_previews">查看更多预览</string>
+    <string name="refresh">刷新</string>
+    <string name="open_in_other_app">在其他应用中打开</string>
+    <string name="rate_successfully">评分成功</string>
+    <string name="rate_failed">评分失败</string>
+    <string name="no_torrents">没有种子</string>
+    <string name="torrents">种子</string>
+    <string name="favorited">已收藏</string>
+    <string name="not_favorited">未收藏</string>
+    <string name="add_favorites_dialog_title">添加收藏</string>
+    <string name="remember_favorite_collection">记住收藏夹</string>
+    <string name="add_to_favorite_success">已添加至收藏</string>
+    <string name="remove_from_favorite_success">移除收藏</string>
+    <string name="add_to_favorite_failure">添加收藏失败</string>
+    <string name="remove_from_favorite_failure">移除收藏失败</string>
+    <string name="filter_the_uploader">屏蔽上传者“%s”？</string>
+    <string name="filter_the_tag">屏蔽标签“%s”？</string>
+    <string name="filter_added">已添加屏蔽项</string>
+
+    <!-- Rating -->
+    <string name="rating10">根本把持不住</string>
+    <string name="rating9">好极了</string>
+    <string name="rating8">很棒</string>
+    <string name="rating7">不错</string>
+    <string name="rating6">还行</string>
+    <string name="rating5">一般般</string>
+    <string name="rating4">不行</string>
+    <string name="rating3">糟糕</string>
+    <string name="rating2">瞎眼</string>
+    <string name="rating1">快要窒息了</string>
+    <string name="rating0">…</string>
+    <string name="rating_none" translatable="false">(´_ゝ`)</string>
+
+    <!-- Gallery Info -->
+    <string name="gallery_info">画廊信息</string>
+    <string name="copied_to_clipboard">已复制到剪切板</string>
+    <string name="header_key">键</string>
+    <string name="header_value">值</string>
+    <string name="key_gid">Gid</string>
+    <string name="key_token">Token</string>
+    <string name="key_url">链接</string>
+    <string name="key_title">标题</string>
+    <string name="key_title_jpn">日文标题</string>
+    <string name="key_thumb">缩略图</string>
+    <string name="key_category">分类</string>
+    <string name="key_uploader">上传者</string>
+    <string name="key_posted">上传时间</string>
+    <string name="key_parent">父画廊</string>
+    <string name="key_visible">可见性</string>
+    <string name="key_language">语言</string>
+    <string name="key_pages">页数</string>
+    <string name="key_size">大小</string>
+    <string name="key_favorite_count">收藏次数</string>
+    <string name="key_favorited">收藏</string>
+    <string name="key_rating_count">评价次数</string>
+    <string name="key_rating">评分</string>
+    <string name="key_torrents">种子个数</string>
+    <string name="key_torrent_url">种子</string>
+
+    <!-- Gallery Comments -->
+    <string name="gallery_comments">画廊评论</string>
+    <string name="no_one_comments_gallery">暂时没有评论</string>
+    <string name="comment_successfully">评论成功</string>
+    <string name="comment_failed">评论失败</string>
+    <string name="copy_comment_text">复制评论文字</string>
+    <string name="edit_comment">修改评论</string>
+    <string name="edit_comment_successfully">评论已被修改</string>
+    <string name="edit_comment_failed">修改评论失败</string>
+    <string name="vote_up">深表赞同</string>
+    <string name="cancel_vote_up">不再深表赞同</string>
+    <string name="vote_down">垃圾评论</string>
+    <string name="cancel_vote_down">不是垃圾评论</string>
+    <string name="vote_up_successfully">已深表赞同</string>
+    <string name="cancel_vote_up_successfully">已不再深表赞同</string>
+    <string name="vote_down_successfully">已钦定为垃圾评论</string>
+    <string name="cancel_vote_down_successfully">已不再钦定为垃圾评论</string>
+    <string name="vote_failed">投票失败</string>
+    <string name="check_vote_status">查看投票情况</string>
+    <string name="click_more_comments">点击加载更多评论</string>
+    <string name="last_edited">上次修改时间：%s</string>
+
+    <!-- Gallery Previews -->
+    <string name="gallery_previews">画廊预览</string>
+    <string name="go_to">跳页</string>
+
+    <!-- Download -->
+    <string name="scene_download_title">下载 - %s</string>
+    <string name="no_download_info">这里是下载项目</string>
+    <string name="download_state_none">未启动</string>
+    <string name="download_state_wait">等待中</string>
+    <string name="download_state_downloading">下载中</string>
+    <string name="download_state_downloaded">已下载</string>
+    <string name="download_state_failed">失败</string>
+    <string name="download_state_failed_2">%d 未完成</string>
+    <string name="download_state_finish">已完成</string>
+    <string name="stat_509_alert_title">509 警告</string>
+    <string name="stat_509_alert_text">图片配额已用尽。请停止下载，休息一下。</string>
+    <string name="stat_download_done_title">下载结束</string>
+    <string name="stat_download_done_text_succeeded">%d 项下载成功</string>
+    <string name="stat_download_done_text_failed">%d 项下载失败</string>
+    <string name="stat_download_done_text_mix">%1$d 项下载成功，%2$d 项下载失败</string>
+    <string name="stat_download_done_line_succeeded">下载成功：%s</string>
+    <string name="stat_download_done_line_failed">下载失败：%s</string>
+    <string name="download_remove_dialog_title">移除下载项</string>
+    <string name="download_remove_dialog_message">从下载列表移除 %s ？</string>
+    <string name="download_remove_dialog_message_2">从下载列表移除 %d 项？</string>
+    <string name="download_remove_dialog_check_text">删除图片文件</string>
+    <string name="stat_download_action_stop_all">全部停止</string>
+    <string name="drawer_download_label_title">标签</string>
+    <string name="default_download_label_name">默认</string>
+    <string name="download_move_dialog_title">移动</string>
+    <string name="download_labels">下载标签</string>
+    <string name="download_start_all">全部开始</string>
+    <string name="download_stop_all">全部停止</string>
+    <string name="download_reset_reading_progress">重置阅读进度</string>
+    <string name="reset_reading_progress_message">重置所有已下载画廊的阅读进度？</string>
+    <string name="download_service_label">EhViewer 下载服务</string>
+    <string name="download_speed_text">%s</string>
+    <string name="download_speed_text_2">%1$s，剩余 %2$s</string>
+    <string name="remember_download_label">记住下载标签</string>
+    <string name="default_download_label">默认下载标签</string>
+    <string name="added_to_download_list">已添加至下载列表</string>
+
+    <!-- Download label -->
+    <string name="no_download_label">这里是下载标签</string>
+    <string name="add">添加</string>
+    <string name="new_label_title">新标签</string>
+    <string name="label_text_is_empty">标签文本为空</string>
+    <string name="label_text_is_invalid">“默认”是无效标签</string>
+    <string name="label_text_exist">标签已存在</string>
+    <string name="rename_label_title">重命名标签</string>
+    <string name="delete_label_title">删除标签</string>
+    <string name="delete_label_message">删除“%s”？</string>
+
+    <!-- History -->
+    <string name="no_history">这里是阅读历史</string>
+    <string name="clear_all">全部清除</string>
+    <string name="clear_all_history">清除所有阅读历史？</string>
+
+    <!-- Filter -->
+    <string name="filter">屏蔽画廊</string>
+    <string name="no_filter">这里是屏蔽列表</string>
+    <string name="filter_title">标题</string>
+    <string name="filter_uploader">上传者</string>
+    <string name="filter_tag">标签</string>
+    <string name="filter_tag_namespace">标签组</string>
+    <string name="delete_filter">删除屏蔽项“%s”？</string>
+    <string name="tip">提示</string>
+    <string name="add_filter">添加屏蔽项</string>
+    <string name="show_definition">查看定义</string>
+    <string name="filter_text">屏蔽项文本</string>
+    <string name="filter_tip">该屏蔽系统会在 EHentai 网站屏蔽系统的基础上继续屏蔽画廊。\n\n标题屏蔽项：排除标题含有该关键字的画廊。\n\n上传者屏蔽项：排除该上传者上传的画廊。\n\n标签屏蔽项：排除包含该标签的画廊，这会使获取画廊列表花费更多时间。\n\n标签组屏蔽项：排除包含该标签组的画廊，这会使获取画廊列表花费更多时间。</string>
+
+    <!-- Set Security -->
+    <string name="set_pattern_protection">设置图案保护</string>
+    <string name="set_pattern_protection_tip">绘制图案来设置图案保护\n留空来取消图案保护</string>
+    <string name="set">设置</string>
+    <string name="enable_fingerprint">允许使用指纹解锁</string>
+
+    <!-- UConfig Activity -->
+    <string name="u_config">EHentai 设置</string>
+    <string name="apply">应用</string>
+    <string name="apply_tip">点击右上角的对勾来保存设置</string>
+
+    <!-- My Tags Activity -->
+    <string name="my_tags">我的标签</string>
+
+    <!-- Hosts Activity -->
+    <string name="hosts">自定义 hosts.txt</string>
+    <string name="hosts_tip">hosts.txt</string>
+    <string name="hosts_host">Host</string>
+    <string name="hosts_ip">IP</string>
+    <string name="add_host">添加 host</string>
+    <string name="add_host_add">添加</string>
+    <string name="edit_host">编辑 host</string>
+    <string name="edit_host_confirm">确认</string>
+    <string name="edit_host_delete">删除</string>
+    <string name="invalid_host">无效的 host</string>
+    <string name="invalid_ip">无效的 IP</string>
+
+    <!-- DirPickerActivity -->
+    <string name="preset">预设</string>
+    <string name="default_directory">默认目录</string>
+    <string name="application_file_directory">应用文件目录 %d （应用卸载后会被删除）</string>
+
+    <!-- Gallery Activity -->
+    <string name="page_menu_title">第 %d 页</string>
+    <string name="page_menu_refresh">@string/refresh</string>
+    <string name="page_menu_share">@string/share</string>
+    <string name="page_menu_save">保存</string>
+    <string name="page_menu_save_to">保存到...</string>
+    <string name="page_menu_add_bookmark">添加书签</string>
+    <string name="gallery_menu_title">菜单</string>
+    <string name="share_image">分享图片</string>
+    <string name="image_saved">图片已保存至 %s</string>
+
+    <!-- Settings -->
+    <string name="settings_eh">EH</string>
+    <string name="settings_eh_sign_out">退出登录</string>
+    <string name="settings_eh_sign_out_summary">退出登录后重启应用以便再次登录</string>
+    <string name="settings_eh_sign_out_warning">天哪，我的老伙计，你要退出登录吗？我是说，你真的要退出登录吗？</string>
+    <string name="settings_eh_sign_out_yes">是的，我是说，真的</string>
+    <string name="settings_eh_sign_out_tip">已退出登录，重启应用以便再次登录</string>
+    <string name="settings_eh_identity_cookies">身份 Cookie</string>
+    <string name="settings_eh_identity_cookies_summary">可用于登录</string>
+    <string name="settings_eh_identity_cookies_signed">身份 Cookie 可用于登录该账号。&lt;br&gt;&lt;b&gt;注意数据安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
+    <string name="settings_eh_identity_cookies_tourist">未登录</string>
+    <string name="settings_eh_identity_cookies_copy">复制</string>
+    <string name="settings_u_config">EHentai 设置</string>
+    <string name="settings_u_config_summary">EHentai 网站上的设置</string>
+    <string name="settings_my_tags">我的标签</string>
+    <string name="settings_my_tags_summary">EHentai 网站上的我的标签</string>
+    <string name="settings_eh_theme">主题</string>
+    <string name="settings_eh_theme_light">亮色</string>
+    <string name="settings_eh_theme_dark">暗色</string>
+    <string name="settings_eh_theme_black">黑色</string>
+    <string name="settings_eh_apply_nav_bar_theme_color">导航栏应用主题配色</string>
+    <string name="settings_eh_gallery_site">画廊站点</string>
+    <string name="settings_eh_launch_page">启动页</string>
+    <string name="settings_eh_list_mode">列表模式</string>
+    <string name="settings_eh_list_mode_detail">详情</string>
+    <string name="settings_eh_list_mode_thumb">缩略图</string>
+    <string name="settings_eh_detail_size">详情大小</string>
+    <string name="settings_eh_detail_size_long">长</string>
+    <string name="settings_eh_detail_size_short">短</string>
+    <string name="settings_eh_thumb_size">缩略图大小</string>
+    <string name="settings_eh_thumb_size_large">大</string>
+    <string name="settings_eh_thumb_size_middle">中</string>
+    <string name="settings_eh_thumb_size_small">小</string>
+    <string name="settings_eh_thumb_resolution">缩略图分辨率</string>
+    <string name="settings_eh_thumb_resolution_summary">%s，指定分辨率可能使获取缩略图失败</string>
+    <string name="settings_eh_thumb_resolution_auto">自动</string>
+    <string name="settings_eh_fix_thumb_url">修正缩略图链接</string>
+    <string name="settings_eh_default_categories">主页分类显示</string>
+    <string name="settings_eh_default_categories_summary">默认在主页所显示的分类</string>
+    <string name="settings_eh_excluded_tag_namespaces">排除标签组</string>
+    <string name="settings_eh_excluded_tag_namespaces_summary">在默认搜索中排除指定标签组</string>
+    <string name="settings_eh_excluded_languages">排除语言</string>
+    <string name="settings_eh_excluded_languages_summary">在主页与搜索中隐藏指定语言的画廊</string>
+    <string name="settings_eh_show_jpn_title">显示日文标题</string>
+    <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
+    <string name="settings_eh_show_gallery_pages">显示画廊页数</string>
+    <string name="settings_eh_show_gallery_pages_summary">在画廊列表中显示页数</string>
+    <string name="settings_eh_show_tag_translations">显示标签翻译</string>
+    <string name="settings_eh_show_tag_translations_summary">显示翻译后的标签而非原始文字（需花费时间来下载数据文件）</string>
+    <string name="settings_eh_tag_translations_source">补充翻译（由 EhTagTranslator 提供）</string>
+    <string name="settings_eh_tag_translations_source_url">https://github.com/Mapaler/EhTagTranslator/wiki</string>
+    <string name="settings_eh_filter">屏蔽画廊</string>
+    <string name="settings_eh_filter_summary">根据标题、上传者、标签屏蔽画廊</string>
+    <string name="settings_eh_cellular_network_warning">移动网络警告</string>
+
+    <string name="settings_read">阅读</string>
+    <string name="settings_read_screen_rotation">屏幕方向</string>
+    <string name="settings_read_screen_rotation_default">系统默认</string>
+    <string name="settings_read_screen_rotation_portrait">竖屏</string>
+    <string name="settings_read_screen_rotation_landscape">横屏</string>
+    <string name="settings_read_screen_rotation_sensor">自动旋转</string>
+    <string name="settings_read_reading_direction">阅读方向</string>
+    <string name="settings_read_reading_direction_left_to_right">从左至右</string>
+    <string name="settings_read_reading_direction_right_to_Left">从右至左</string>
+    <string name="settings_read_reading_direction_top_to_bottom">从上至下</string>
+    <string name="settings_read_page_scaling">页面缩放</string>
+    <string name="settings_read_page_scaling_actual_size">原始尺寸</string>
+    <string name="settings_read_page_scaling_fit_to_width">匹配宽度</string>
+    <string name="settings_read_page_scaling_fit_to_height">匹配长度</string>
+    <string name="settings_read_page_scaling_fit_to_screen">匹配屏幕</string>
+    <string name="settings_read_page_scaling_fixed_scale">固定缩放</string>
+    <string name="settings_read_start_position">开页位置</string>
+    <string name="settings_read_start_position_top_left">左上角</string>
+    <string name="settings_read_start_position_top_right">右上角</string>
+    <string name="settings_read_start_position_bottom_left">左下角</string>
+    <string name="settings_read_start_position_bottom_right">右下角</string>
+    <string name="settings_read_start_position_center">中心</string>
+    <string name="settings_read_keep_screen_on">屏幕常亮</string>
+    <string name="settings_read_show_clock">显示时钟</string>
+    <string name="settings_read_show_progress">显示进度</string>
+    <string name="settings_read_show_battery">显示电量</string>
+    <string name="settings_read_show_page_interval">显示页面间隔</string>
+    <string name="settings_read_volume_page">使用音量键翻页</string>
+    <string name="settings_read_reading_fullscreen">全屏</string>
+    <string name="settings_read_custom_screen_lightness">自定义屏幕亮度</string>
+    <string name="settings_read_screen_lightness">屏幕亮度</string>
+
+    <string name="settings_download">下载</string>
+    <string name="settings_download_download_location">下载路径</string>
+    <string name="settings_download_invalid_download_location">无效的下载路径</string>
+    <string name="settings_download_cant_get_download_location">无法获取下载路径</string>
+    <string name="settings_download_pick_dir_kk">在 KitKat 中您无法把数据写入外置 SD 卡，除非您做了奇怪的事情。不过 &lt;SD card&gt;/Android/data/com.hippo.ehviewer 这个路径比较特殊，是可以写入的。</string>
+    <string name="settings_download_pick_dir_l">Lollipop 提供了新的写入外置 SD 卡的 API。如果您想把下载路径设置到外置 SD 卡上，点击“文档”按钮</string>
+    <string name="settings_download_document">文档</string>
+    <string name="settings_download_continue">继续</string>
+    <string name="settings_download_multi_thread_download">下载线程数</string>
+    <string name="settings_download_multi_thread_download_summary">最多同时下载 %s 张图片</string>
+    <string name="settings_download_preload_image">预载图片</string>
+    <string name="settings_download_preload_image_summary">向后预载 %s 张图片</string>
+    <string name="settings_download_image_resolution">图片分辨率</string>
+    <string name="settings_download_image_resolution_summary">%s，大于 1280x 的分辨率可能不好使</string>
+    <string name="settings_download_image_resolution_auto">自动</string>
+    <string name="settings_download_download_origin_image">下载原图</string>
+    <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额迅速流失</string>
+    <string name="settings_download_media_scan">允许媒体扫描</string>
+    <string name="settings_download_media_scan_summary_on">请避免他人翻看你的图库应用</string>
+    <string name="settings_download_media_scan_summary_off">大多数图库应用将不会显示下载目录中的图片</string>
+    <string name="settings_download_restore_download_items">恢复下载项</string>
+    <string name="settings_download_restore_download_items_summary">恢复下载目录里的所有下载项</string>
+    <string name="settings_download_restoring">恢复中</string>
+    <string name="settings_download_restore_not_found">未找到可恢复下载项</string>
+    <string name="settings_download_restore_failed">恢复失败</string>
+    <string name="settings_download_restore_successfully">成功恢复 %d 项</string>
+    <string name="settings_download_clean_redundancy">清理下载冗余</string>
+    <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
+    <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
+    <string name="settings_download_clean_redundancy_done">完成冗余清理，共清理 %d 项</string>
+
+    <string name="settings_advanced">高级</string>
+    <string name="settings_advanced_save_parse_error_body">解析失败时保存页面内容</string>
+    <string name="settings_advanced_save_parse_error_body_summary">页面内容可能含有隐私敏感信息</string>
+    <string name="settings_advanced_save_crash_log">应用崩溃时保存错误日志</string>
+    <string name="settings_advanced_save_crash_log_summary">错误日志可以帮助开发者修正问题</string>
+    <string name="settings_advanced_dump_logcat">导出日志</string>
+    <string name="settings_advanced_dump_logcat_summary">保存日志至外置存储器</string>
+    <string name="settings_advanced_dump_logcat_failed">导出日志失败</string>
+    <string name="settings_advanced_dump_logcat_to">已保存日志至 %s</string>
+    <string name="settings_advanced_clear_download_path_cache">清除画廊下载路径缓存</string>
+    <string name="settings_advanced_clear_download_path_cache_summary">画廊下载路径可能出错了，导致重新下载。清除画廊下载路径缓存可能解决这个问题。</string>
+    <string name="settings_advanced_clear_download_path_cache_message">清除画廊下载路径缓存？</string>
+    <string name="settings_advanced_clear_memory_cache">清理内存缓存</string>
+    <string name="settings_advanced_clear_memory_cache_summary">清理缩略图、画廊信息的内存缓存</string>
+    <string name="settings_advanced_read_cache_size">阅读缓存大小</string>
+    <string name="settings_advanced_app_language_title">App 界面语言</string>
+    <string name="settings_advanced_proxy">代理</string>
+    <string name="settings_advanced_proxy_summary_1">%1$s %2$s:%3$d</string>
+    <string name="settings_advanced_proxy_summary_2">%1$s</string>
+    <string name="settings_advanced_built_in_hosts_title">内置 hosts.txt</string>
+    <string name="settings_advanced_built_in_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
+    <string name="settings_advanced_custom_hosts_title">自定义 hosts.txt</string>
+    <string name="settings_advanced_custom_hosts_summary">将主机名称映射到相应的IP地址\n可覆盖内置 hosts.txt</string>
+    <string name="settings_privacy_pattern_protection_title">图案保护</string>
+    <string name="settings_privacy_pattern_protection_not_set">未设置图案保护</string>
+    <string name="settings_privacy_pattern_protection_set">已设置图案保护</string>
+    <string name="settings_advanced_export_data">导出数据</string>
+    <string name="settings_advanced_export_data_summary">保存数据至外置存储器，例如下载列表，书签列表</string>
+    <string name="settings_advanced_export_data_to">已导出数据至 %s</string>
+    <string name="settings_advanced_export_data_failed">导出数据失败</string>
+    <string name="settings_advanced_import_data">导入数据</string>
+    <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
+    <string name="settings_advanced_import_data_successfully">导入数据成功</string>
+
+    <string name="settings_about">关于</string>
+    <string name="settings_about_declaration" translatable="false">EhViewer</string>
+    <string name="settings_about_author_summary" translatable="false">Hippo &lt;ehviewersu$gmail.com&gt;</string>
+    <string name="settings_about_telegram">Telegram</string>
+    <string name="settings_about_declaration_summary">EhViewer 与 E-Hentai.org 无任何联系</string>
+    <string name="settings_about_author">作者</string>
+    <string name="settings_about_latest_release">最新版本</string>
+    <string name="settings_about_website">网站</string>
+    <string name="settings_about_source">源码</string>
+    <string name="settings_about_changelog">更新日志</string>
+    <string name="settings_about_help">帮助</string>
+    <string name="settings_about_license">开源许可</string>
+    <string name="settings_about_license_summary">EhViewer 的诞生离不开许多开源项目</string>
+    <string name="settings_about_donate">捐赠</string>
+    <string name="settings_about_donate_message">你的捐赠不能为你带来特权，但能帮助我继续维护这个应用。</string>
+    <string name="settings_about_donate_alipay">支付宝</string>
+    <string name="settings_about_donate_paypal">PayPal</string>
+    <string name="settings_about_donate_guide">支持指南</string>
+    <string name="settings_about_donate_open">打开</string>
+    <string name="settings_about_donate_copy">复制</string>
+    <string name="settings_about_donate_copied">已复制</string>
+    <string name="settings_privacy_enable_analytics">启用数据统计</string>
+    <string name="settings_privacy_about_analytics">关于数据统计</string>
+    <string name="settings_about_version">版本号</string>
+    <string name="settings_about_check_for_updates">检查更新</string>
+    <string name="settings_about_beta_update_channel">更新测试版</string>
+    <string name="settings_about_beta_update_channel_summary">测试版可能在你的设备上出现不可预知的错误</string>
+
+    <!-- ExcludedLanguagesScene -->
+    <string name="excluded_languages">排除语言</string>
+    <string name="select_all">全选</string>
+    <string name="deselect_all">全取消</string>
+    <string name="invert_selection">反选</string>
+    <string name="language">语言</string>
+    <string name="original">原作</string>
+    <string name="translated">翻译</string>
+    <string name="rewrite">改写</string>
+    <string name="language_japanese">日语</string>
+    <string name="language_english">英语</string>
+    <string name="language_chinese">汉语</string>
+    <string name="language_dutch">荷兰语</string>
+    <string name="language_french">法语</string>
+    <string name="language_german">德语</string>
+    <string name="language_hungarian">匈牙利语</string>
+    <string name="language_italian">意大利语</string>
+    <string name="language_korean">韩语</string>
+    <string name="language_polish">波兰语</string>
+    <string name="language_portuguese">葡萄牙语</string>
+    <string name="language_russian">俄语</string>
+    <string name="language_spanish">西班牙语</string>
+    <string name="language_thai">泰语</string>
+    <string name="language_vietnamese">越南语</string>
+    <string name="language_na">N/A</string>
+    <string name="language_other">其他</string>
+
+    <string name="please_wait">请稍候</string>
+
+    <string name="proxy_enable">启用</string>
+    <string name="proxy_enabled">已启用</string>
+    <string name="proxy_disabled">未启用</string>
+    <string name="proxy_direct">直接连接</string>
+    <string name="proxy_system">系统代理</string>
+    <string name="proxy_host_or_ip">主机或 IP</string>
+    <string name="proxy_port">端口</string>
+    <string name="proxy_domain_not_supported">不支持域名</string>
+    <string name="proxy_invalid_port">无效的端口</string>
+
+    <string name="cant_get_data_dir">无法获取数据文件夹</string>
+    <string name="cant_find_any_data">找不到任何数据</string>
+    <string name="cant_read_the_file">无法读取文件</string>
+
+    <string name="app_language_system">系统语言（默认）</string>
+    <string name="app_language_de">Deutsch</string>
+    <string name="app_language_en" translatable="false">English</string>
+    <string name="app_language_es" translatable="false">Español</string>
+    <string name="app_language_fr" translatable="false">Français</string>
+    <string name="app_language_ja" translatable="false">日本語</string>
+    <string name="app_language_ko" translatable="false">한국어</string>
+    <string name="app_language_th" translatable="false">ไทย</string>
+    <string name="app_language_zh_cn" translatable="false">中文（大陆）</string>
+    <string name="app_language_zh_hk" translatable="false">中文（香港）</string>
+    <string name="app_language_zh_tw" translatable="false">國文（臺灣）</string>
+    <!-- License -->
+    <string name="license">开源许可</string>
+
+    <!-- Dir Picker-->
+    <string name="dir_picker">选择文件夹</string>
+    <string name="directory_not_writable">该文件夹不可写</string>
+
+    <!-- Favorites -->
+    <string name="cloud_favorites">云端收藏</string>
+    <string name="local_favorites">本地收藏</string>
+    <string name="favorites_search_bar_hint">搜索 %s</string>
+    <string name="favorites_title">%s</string>
+    <string name="favorites_title_2">%1$s - %2$s</string>
+    <string name="delete_favorites_dialog_title">删除收藏</string>
+    <string name="delete_favorites_dialog_message">删除 %d 项收藏？</string>
+    <string name="move_favorites_dialog_title">移动收藏</string>
+    <string name="default_favorites_collection">默认收藏夹</string>
+    <string name="let_me_select">让我选择</string>
+    <string name="favorites_info">收藏信息</string>
+    <string name="collections">收藏夹</string>
+    <string name="count">数量</string>
+    <string name="need_sign_in">需要登录</string>
+
+    <!-- Progress Scene -->
+    <string name="error_something_wrong_happened">被玩坏了</string>
+
+    <!-- Guide -->
+    <string name="guide_quick_search_title">书签栏</string>
+    <string name="guide_quick_search_text">从右侧滑动打开书签面板</string>
+    <string name="guide_collections_title">收藏夹</string>
+    <string name="guide_collections_text">从右侧滑动来选择收藏夹</string>
+    <string name="guide_download_labels_title">下载标签</string>
+    <string name="guide_download_labels_text">从右侧滑动打开下载标签面板</string>
+    <string name="guide_download_thumb_title">画廊详情</string>
+    <string name="guide_download_thumb_text">点击缩略图查看画廊详情</string>
+    <string name="guide_gallery_left">翻页</string>
+    <string name="guide_gallery_right">翻页</string>
+    <string name="guide_gallery_menu">菜单</string>
+    <string name="guide_gallery_progress">进度条</string>
+    <string name="guide_gallery_long_click">长按打开页面菜单</string>
+
+    <!-- Readable Time -->
+    <string name="from_the_future">来自未来</string>
+    <string name="just_now">刚刚</string>
+    <plurals name="some_minutes_ago">
+        <item quantity="other">%d 分钟前</item>
+    </plurals>
+    <plurals name="some_hours_ago">
+        <item quantity="other">%d 小时前</item>
+    </plurals>
+    <string name="yesterday">昨天</string>
+    <string name="some_days_ago">%d 天前</string>
+
+    <plurals name="second">
+        <item quantity="other">秒</item>
+    </plurals>
+    <plurals name="minute">
+        <item quantity="other">分钟</item>
+    </plurals>
+    <plurals name="hour">
+        <item quantity="other">小时</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="other">天</item>
+    </plurals>
+    <plurals name="year">
+        <item quantity="other">年</item>
+    </plurals>
+    <string name="dialog_archive_title">通过 H@H 下载</string>
+    <string name="no_archives">没有压缩包</string>
+    <string name="download_archive_started">开始下载压缩包</string>
+    <string name="download_archive_failure">无法下载压缩包</string>
+    <string name="archive">压缩包</string>
+    <string name="download_archive_failure_no_hath">下载压缩包需要 H@H 客户端</string>
+    <string name="settings_privacy">隐私</string>
+    <string name="settings_privacy_secure">不允许屏幕抓取</string>
+    <string name="settings_privacy_secure_summary">启用后，将不能截取该应用的屏幕截图，同时，将不会在系统任务切换器中显示该应用的内容预览\n\n重新启动应用以生效此更改</string>
+    <!-- Preference framework strings. -->
+    <string name="download_service">下载服务</string>
+    <string name="favorite_name">收藏画廊</string>
+
+</resources>

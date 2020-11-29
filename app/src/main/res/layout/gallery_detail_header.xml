@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/header"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.hippo.reveal.RevealView
+            android:id="@+id/color_bg"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?attr/galleryDetailHeaderBackgroundColor"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@drawable/shadow_bottom"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.hippo.widget.LoadImageView
+                android:id="@+id/thumb"
+                android:layout_width="@dimen/gallery_detail_thumb_width"
+                android:layout_height="@dimen/gallery_detail_thumb_height"
+                android:layout_marginTop="@dimen/keyline_margin"
+                android:layout_marginLeft="@dimen/keyline_margin"
+                android:layout_marginBottom="@dimen/keyline_margin"/>
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/thumb"
+                android:layout_alignTop="@id/thumb"
+                android:layout_marginLeft="@dimen/keyline_margin"
+                android:layout_marginRight="@dimen/keyline_margin"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_little_large"
+                android:maxLines="5"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/uploader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@id/title"
+                android:layout_below="@id/title"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="@dimen/keyline_margin"
+                android:textColor="?attr/galleryDetailHeaderTitleColor"
+                android:textSize="@dimen/text_little_small"
+                android:singleLine="true"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@id/title"
+                android:layout_below="@id/uploader"
+                android:layout_marginTop="12dp"
+                android:layout_marginRight="@dimen/keyline_margin"
+                android:background="@android:color/white"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textAllCaps="true"
+                android:textStyle="bold"/>
+
+            <ImageView
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/other_actions"
+                android:layout_width="48dp"
+                android:layout_height="56dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                app:srcCompat="@drawable/v_dots_vertical_secondary_dark_x24"/>
+
+        </RelativeLayout>
+
+        <androidx.cardview.widget.CardView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/action_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/keyline_margin"
+            android:layout_marginRight="@dimen/keyline_margin"
+            app:cardBackgroundColor="?attr/galleryDetailButtonBackgroundColor"
+            style="@style/CardView.Normal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/download"
+                    style="@style/ButtonInCard"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?attr/textColorThemePrimary"/>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/dividerColor"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/read"
+                    style="@style/ButtonInCard"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?attr/textColorThemeAccent"
+                    android:text="@string/read"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+
+    <!-- ========== -->
+    <!-- Base Theme -->
+    <!-- ========== -->
+    <style name="BaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="actionBarStyle">@style/ActionBarStyle</item>
+
+        <item name="colorEdgeEffect">@color/colorPrimary</item>
+        <item name="dividerColor">@color/divider_light</item>
+        <item name="toolbarColor">@color/colorPrimary</item>
+        <item name="textColorThemePrimary">@color/colorPrimary</item>
+        <item name="textColorThemePrimary2">@color/loading_indicator_blue</item>
+        <item name="textColorThemeAccent">@color/colorAccent</item>
+        <item name="drawableColorPrimary">@color/primary_drawable_light</item>
+        <item name="drawableColorSecondary">@color/secondary_drawable_light</item>
+        <item name="drawableColorThemePrimary">@color/colorPrimary</item>
+        <item name="contentColorPrimary">@color/content_light</item>
+        <item name="contentColorThemePrimary">@color/colorPrimary</item>
+        <item name="contentColorThemeAccent">@color/colorAccent</item>
+        <item name="contentColorReactive">@color/content_reactive_light</item>
+        <item name="widgetColorThemePrimary">@color/colorPrimary</item>
+        <item name="widgetColorThemeAccent">@color/colorAccent</item>
+        <item name="progressColor">@color/progress_light</item>
+        <item name="guideBackgroundColor">@color/guide_bg</item>
+        <item name="guideTitleColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="guideTextColor">?android:attr/textColorSecondaryInverse</item>
+        <item name="tagGroupBackgroundColor">@color/tag_group_background_light</item>
+        <item name="tagBackgroundColor">@color/tag_background_light</item>
+        <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="galleryDetailHeaderBackgroundColor">?attr/contentColorThemePrimary</item>
+        <item name="galleryDetailButtonBackgroundColor">@color/gallery_detail_button_background_light</item>
+
+        <item name="preferenceHeaderBackground">@drawable/preference_header_background_light</item>
+        <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+        <item name="galleryDetailDivider">@drawable/divider_gallery_detail_light</item>
+    </style>
+
+    <style name="AppTheme" parent="BaseTheme">
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar.Translucent"/>
+
+    <!-- =============== -->
+    <!-- Base Dark Theme -->
+    <!-- =============== -->
+    <style name="BaseTheme.Dark" parent="Theme.AppCompat">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/grey_900</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorControlActivated">@color/colorPrimary</item>
+        <item name="actionBarStyle">@style/ActionBarStyle</item>
+
+        <item name="android:windowBackground">@color/grey_850</item>
+        <item name="android:colorBackground">@color/grey_850</item>
+        <item name="colorBackgroundFloating">@color/grey_850</item>
+
+        <item name="colorEdgeEffect">@color/grey_500</item>
+        <item name="dividerColor">@color/divider_dark</item>
+        <item name="toolbarColor">?android:attr/colorBackground</item>
+        <item name="textColorThemePrimary">?android:attr/textColorSecondary</item>
+        <item name="textColorThemeAccent">?android:attr/textColorSecondary</item>
+        <item name="drawableColorPrimary">@color/primary_drawable_dark</item>
+        <item name="drawableColorSecondary">@color/secondary_drawable_dark</item>
+        <item name="drawableColorThemePrimary">@color/primary_drawable_dark</item>
+        <item name="contentColorPrimary">@color/content_dark</item>
+        <item name="contentColorThemePrimary">?attr/contentColorPrimary</item>
+        <item name="contentColorThemeAccent">?attr/contentColorPrimary</item>
+        <item name="contentColorReactive">@color/content_reactive_dark</item>
+        <item name="widgetColorThemePrimary">@color/widget_dark</item>
+        <item name="widgetColorThemeAccent">@color/widget_dark</item>
+        <item name="progressColor">@color/progress_dark</item>
+        <item name="guideBackgroundColor">#e5303030</item>
+        <item name="guideTitleColor">?android:attr/textColorPrimary</item>
+        <item name="guideTextColor">?android:attr/textColorSecondary</item>
+        <item name="tagGroupBackgroundColor">@color/tag_group_background_dark</item>
+        <item name="tagBackgroundColor">@color/tag_background_dark</item>
+        <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimary</item>
+        <item name="galleryDetailHeaderBackgroundColor">?attr/contentColorThemePrimary</item>
+        <item name="galleryDetailButtonBackgroundColor">@color/gallery_detail_button_background_dark</item>
+
+        <item name="preferenceHeaderBackground">@drawable/preference_header_background_dark</item>
+        <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
+        <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
+    </style>
+
+    <style name="AppTheme.Dark" parent="BaseTheme.Dark">
+    </style>
+
+    <style name="AppTheme.Dark.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.Dark.NoActionBar.Translucent"/>
+
+    <!-- =============== -->
+    <!-- Base Black Theme -->
+    <!-- =============== -->
+    <style name="BaseTheme.Black" parent="Theme.AppCompat">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorControlActivated">@color/colorPrimary</item>
+        <item name="actionBarStyle">@style/ActionBarStyle</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorBackgroundFloating">@android:color/black</item>
+        <item name="android:textColorPrimary">@color/primary_text_material_black</item>
+        <item name="colorEdgeEffect">@color/grey_500</item>
+        <item name="dividerColor">@color/divider_dark</item>
+        <item name="toolbarColor">@android:color/black</item>
+        <item name="textColorThemePrimary">?android:attr/textColorSecondary</item>
+        <item name="textColorThemeAccent">?android:attr/textColorSecondary</item>
+        <item name="drawableColorPrimary">@color/primary_drawable_black</item>
+        <item name="drawableColorSecondary">@color/secondary_drawable_black</item>
+        <item name="drawableColorThemePrimary">@color/primary_drawable_black</item>
+        <item name="contentColorPrimary">@color/content_black</item>
+        <item name="contentColorThemePrimary">?attr/contentColorPrimary</item>
+        <item name="contentColorThemeAccent">?attr/contentColorPrimary</item>
+        <item name="contentColorReactive">@color/content_reactive_black</item>
+        <item name="widgetColorThemePrimary">@color/widget_black</item>
+        <item name="widgetColorThemeAccent">@color/widget_black</item>
+        <item name="progressColor">@color/progress_black</item>
+        <item name="guideBackgroundColor">#e5000000</item>
+        <item name="guideTitleColor">?android:attr/textColorPrimary</item>
+        <item name="guideTextColor">?android:attr/textColorSecondary</item>
+        <item name="tagGroupBackgroundColor">@color/tag_group_background_black</item>
+        <item name="tagBackgroundColor">@color/tag_background_black</item>
+        <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimary</item>
+        <item name="galleryDetailHeaderBackgroundColor">@android:color/black</item>
+        <item name="galleryDetailButtonBackgroundColor">@color/gallery_detail_button_background_black</item>
+        <item name="preferenceHeaderBackground">@drawable/preference_header_background_black</item>
+        <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
+        <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
+    </style>
+
+    <style name="AppTheme.Black" parent="BaseTheme.Black">
+    </style>
+
+    <style name="AppTheme.Black.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.Black.NoActionBar.Translucent"/>
+
+    <!-- ========= -->
+    <!-- App Theme -->
+    <!-- ========= -->
+    <style name="AppTheme.Main" parent="AppTheme.NoActionBar.Translucent"/>
+
+    <style name="AppTheme.Main.Dark" parent="AppTheme.Dark.NoActionBar.Translucent"/>
+
+    <style name="AppTheme.Main.Black" parent="AppTheme.Black.NoActionBar.Translucent"/>
+
+    <style name="AppTheme.Toolbar" parent="AppTheme.NoActionBar"/>
+
+    <style name="AppTheme.Toolbar.Dark" parent="AppTheme.Dark.NoActionBar"/>
+
+    <style name="AppTheme.Toolbar.Black" parent="AppTheme.Black.NoActionBar"/>
+
+    <style name="AppTheme.Gallery" parent="AppTheme.Dark.NoActionBar">
+        <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_dark</item>
+    </style>
+
+    <style name="AppTheme.Gallery.Dark"/>
+
+    <style name="AppTheme.Gallery.Black" parent="AppTheme.Black.NoActionBar">
+        <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_black</item>
+    </style>
+
+    <style name="AppTheme.Settings" parent="AppTheme"/>
+
+    <style name="AppTheme.Settings.Dark" parent="AppTheme.Dark"/>
+
+    <style name="AppTheme.Settings.Black" parent="AppTheme.Black"/>
+
+    <!-- ============ -->
+    <!-- Widget Theme -->
+    <!-- ============ -->
+    <style name="CommentEditText" parent="ThemeOverlay.AppCompat">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@android:color/white</item>
+    </style>
+
+    <style name="RatingBarTheme" parent="ThemeOverlay.AppCompat">
+        <item name="colorControlNormal">@color/yellow_800</item>
+        <item name="colorControlActivated">@color/yellow_800</item>
+    </style>
+
+</resources>
