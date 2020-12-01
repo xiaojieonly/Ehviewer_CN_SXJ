@@ -64,6 +64,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 
 public class EhApplication extends RecordingApplication {
@@ -86,6 +88,7 @@ public class EhApplication extends RecordingApplication {
     private EhClient mEhClient;
     private EhProxySelector mEhProxySelector;
     private OkHttpClient mOkHttpClient;
+    private Cache mOkHttpCache;
     private ImageBitmapHelper mImageBitmapHelper;
     private Conaco<ImageBitmap> mConaco;
     private LruCache<Long, GalleryDetail> mGalleryDetailCache;
@@ -101,6 +104,7 @@ public class EhApplication extends RecordingApplication {
     public static EhApplication getInstance() {
         return instance;
     }
+
 
     @SuppressLint("StaticFieldLeak")
     @Override
@@ -425,6 +429,15 @@ public class EhApplication extends RecordingApplication {
         } else {
             return null;
         }
+    }
+
+    @NonNull
+    public static Cache getOkHttpCache(@NonNull Context context) {
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+        if (application.mOkHttpCache == null) {
+            application.mOkHttpCache = new Cache(new File(application.getCacheDir(), "http_cache"), 50L * 1024L * 1024L);
+        }
+        return application.mOkHttpCache;
     }
 
     // Avoid crash on some "energy saving" devices

@@ -601,6 +601,9 @@
     <string name="settings_advanced_built_in_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
     <string name="settings_advanced_custom_hosts_title">自定义 hosts.txt</string>
     <string name="settings_advanced_custom_hosts_summary">将主机名称映射到相应的IP地址\n可覆盖内置 hosts.txt</string>
+    <string name="settings_advanced_dns_over_http_title">安全 DNS（DoH）</string>
+    <string name="settings_advanced_dns_over_http_summary">解决某些地区的 DNS 污染问题</string>
+
     <string name="settings_privacy_pattern_protection_title">图案保护</string>
     <string name="settings_privacy_pattern_protection_not_set">未设置图案保护</string>
     <string name="settings_privacy_pattern_protection_set">已设置图案保护</string>

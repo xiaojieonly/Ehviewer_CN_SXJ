@@ -80,6 +80,12 @@
         android:summary="@string/settings_advanced_custom_hosts_summary"
         app:activity="com.hippo.ehviewer.ui.HostsActivity"/>
 
+    <com.hippo.preference.SwitchPreference
+        android:key="dns_over_https"
+        android:title="@string/settings_advanced_dns_over_http_title"
+        android:summary="@string/settings_advanced_dns_over_http_summary"
+        android:defaultValue="false"/>
+
     <com.hippo.ehviewer.preference.ExportDataPreference
         android:key="export_data"
         android:title="@string/settings_advanced_export_data"
