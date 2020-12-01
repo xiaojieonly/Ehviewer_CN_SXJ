@@ -41,6 +41,7 @@ public class EhDaoGenerator {
     private static final String LOCAL_FAVORITE_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/LocalFavoriteInfo.java";
     private static final String BOOKMARK_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
     private static final String FILTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
+    private static final String BLACKLIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
 
     public static void generate() throws Exception {
         Utilities.deleteContents(new File(DELETE_DIR));
@@ -66,6 +67,47 @@ public class EhDaoGenerator {
         adjustBookmarkInfo();
         adjustFilter();
     }
+
+    //待完成
+    private static void addBlackList(Schema schema) {
+        Entity entity = schema.addEntity("BlackList");
+        entity.setTableName("Black_List");
+        entity.setClassNameDao("BlackListDao");
+
+        entity.addIdProperty();
+        entity.addStringProperty("badgayname").primaryKey().notNull();
+        entity.addStringProperty("reason");
+        entity.addStringProperty("angrywith");
+        entity.addDateProperty("add_time");
+
+    }
+
+    //待完成
+    private static void adjustBlackList() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(QUICK_SEARCH_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("mode").setPublic();
+        javaClass.getField("category").setPublic();
+        javaClass.getField("keyword").setPublic();
+        javaClass.getField("advanceSearch").setPublic();
+        javaClass.getField("minRating").setPublic();
+        javaClass.getField("pageFrom").setPublic();
+        javaClass.getField("pageTo").setPublic();
+        javaClass.getField("time").setPublic();
+
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+
+        FileWriter fileWriter = new FileWriter(QUICK_SEARCH_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
 
     private static void addDownloads(Schema schema) {
         Entity entity = schema.addEntity("DownloadInfo");

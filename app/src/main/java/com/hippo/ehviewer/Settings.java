@@ -61,6 +61,11 @@ public class Settings {
                 putBuiltInHosts(true);
             }
         }
+        if (!sSettingsPre.contains(KEY_DOH)) {
+            if ("CN".equals(Locale.getDefault().getCountry())) {
+                putDoH(true);
+            }
+        }
     }
 
     private static EhConfig loadEhConfig() {
@@ -1140,5 +1145,21 @@ public class Settings {
 
     public static void putClipboardTextHashCode(int value) {
         putInt(KEY_CLIPBOARD_TEXT_HASH_CODE, value);
+    }
+
+
+    public static final String KEY_DOH = "dns_over_https";
+    private static final boolean DEFAULT_DOH = false;
+
+    /**
+     * dns开关
+     * @return
+     */
+    public static boolean getDoH() {
+        return getBoolean(KEY_DOH, DEFAULT_DOH);
+    }
+
+    public static void putDoH(boolean value) {
+        putBoolean(KEY_DOH, value);
     }
 }
