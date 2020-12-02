@@ -84,26 +84,21 @@ public class EhDaoGenerator {
 
     //待完成
     private static void adjustBlackList() throws Exception {
-        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(QUICK_SEARCH_PATH));
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(BLACKLIST_PATH));
 
         // Set all field public
         javaClass.getField("id").setPublic();
-        javaClass.getField("name").setPublic();
-        javaClass.getField("mode").setPublic();
-        javaClass.getField("category").setPublic();
-        javaClass.getField("keyword").setPublic();
-        javaClass.getField("advanceSearch").setPublic();
-        javaClass.getField("minRating").setPublic();
-        javaClass.getField("pageFrom").setPublic();
-        javaClass.getField("pageTo").setPublic();
-        javaClass.getField("time").setPublic();
+        javaClass.getField("badgayname").setPublic();
+        javaClass.getField("reason").setPublic();
+        javaClass.getField("angrywith").setPublic();
+        javaClass.getField("add_time").setPublic();
 
         javaClass.addMethod("\t@Override\n" +
                 "\tpublic String toString() {\n" +
                 "\t\treturn name;\n" +
                 "\t}");
 
-        FileWriter fileWriter = new FileWriter(QUICK_SEARCH_PATH);
+        FileWriter fileWriter = new FileWriter(BLACKLIST_PATH);
         fileWriter.write(javaClass.toString());
         fileWriter.close();
     }
