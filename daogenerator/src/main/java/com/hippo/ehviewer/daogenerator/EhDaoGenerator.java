@@ -55,6 +55,7 @@ public class EhDaoGenerator {
         addDownloadDirname(schema);
         addHistoryInfo(schema);
         addQuickSearch(schema);
+        addBlackList(schema);
         addLocalFavorites(schema);
         addBookmarks(schema);
         addFilter(schema);
@@ -63,6 +64,7 @@ public class EhDaoGenerator {
         adjustDownloadInfo();
         adjustHistoryInfo();
         adjustQuickSearch();
+        adjustBlackList();
         adjustLocalFavoriteInfo();
         adjustBookmarkInfo();
         adjustFilter();
@@ -95,7 +97,7 @@ public class EhDaoGenerator {
 
         javaClass.addMethod("\t@Override\n" +
                 "\tpublic String toString() {\n" +
-                "\t\treturn name;\n" +
+                "\t\treturn badgayname;\n" +
                 "\t}");
 
         FileWriter fileWriter = new FileWriter(BLACKLIST_PATH);
