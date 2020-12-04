@@ -1,6 +1,6 @@
 # 2020/12/04 ：  
  ## 添加了内置dns,现在里站不挂梯子也能上了（我用的电信wifi，我手机移动网用不了）。祝大伙们使用愉快，感谢用户VoidxHoshi的支持与反馈
-  不想挂梯子的现在用内置DNS也能用了因该（我自己是能用了。。。） 设置-->高级-->安全DNS 
+  不想挂梯子的现在用内置DNS也能用了因该（我自己是能用了。。。） 设置-->高级-->安全DNS  
   点击前往下载：[蓝奏云](https://wws.lanzous.com/iWIJJj1xx9a)  密码:dby2   
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
 
