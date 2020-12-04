@@ -77,10 +77,10 @@ public class EhDaoGenerator {
         entity.setClassNameDao("BlackListDao");
 
         entity.addIdProperty();
-        entity.addStringProperty("badgayname").primaryKey().notNull();
+        entity.addStringProperty("badgayname").index();
         entity.addStringProperty("reason");
         entity.addStringProperty("angrywith");
-        entity.addDateProperty("add_time");
+        entity.addLongProperty("add_time");
 
     }
 

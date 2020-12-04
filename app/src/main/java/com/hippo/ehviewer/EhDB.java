@@ -25,6 +25,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
+import com.hippo.ehviewer.dao.BlackList;
+import com.hippo.ehviewer.dao.BlackListDao;
 import com.hippo.ehviewer.dao.DaoMaster;
 import com.hippo.ehviewer.dao.DaoSession;
 import com.hippo.ehviewer.dao.DownloadDirname;
@@ -534,6 +536,28 @@ public class EhDB {
         for (GalleryInfo gi: galleryInfoList) {
             putLocalFavorites(gi);
         }
+    }
+
+    public static synchronized List<BlackList> getAllBlackList(){
+        BlackListDao dao = sDaoSession.getBlackListDao();
+        return dao.queryBuilder().orderAsc(BlackListDao.Properties.Add_time).list();
+    }
+
+    public static synchronized void insertBlackList(BlackList blackList){
+        BlackListDao dao = sDaoSession.getBlackListDao();
+        blackList.id = null;
+        blackList.add_time = System.currentTimeMillis();
+        blackList.id = dao.insert(blackList);
+    }
+
+    public static synchronized void updateBlackList(BlackList blackList){
+        BlackListDao dao = sDaoSession.getBlackListDao();
+        dao.update(blackList);
+    }
+
+    public static synchronized void deleteBlackList(BlackList blackList){
+        BlackListDao dao = sDaoSession.getBlackListDao();
+        dao.delete(blackList);
     }
 
     public static synchronized List<QuickSearch> getAllQuickSearch() {
