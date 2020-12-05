@@ -78,7 +78,6 @@
                 android:padding="16dp"/>
 
         </LinearLayout>
-
     </com.hippo.reveal.RevealLinearLayout>
 
     <com.hippo.widget.FabLayout
@@ -98,5 +97,4 @@
             style="@style/Widget.Design.FloatingActionButton"/>
 
     </com.hippo.widget.FabLayout>
-
 </FrameLayout>
