@@ -11,8 +11,13 @@ public class TagTranslationutil {
             String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
             String tagstr = ehTags.getTranslation(prefix != null ? prefix + tags[1] : "" + tags[1]);
 
-            if (group != null && tagstr != null) {
+
+            if (group != null && tagstr != null){
                 return group + "：" + tagstr;
+            }else if (group != null && tagstr == null) {
+                return group + "：" + tags[1];
+            }else if (group == null && tagstr != null) {
+                return tags[0] + "：" + tagstr;
             }else {
                 return tags[0]+":"+tags[1];
             }
