@@ -132,8 +132,8 @@ public class BlackListActivity extends ToolbarActivity {
 
     private void showTipDialog() {
         new AlertDialog.Builder(this)
-                .setTitle(R.string.blicklist)
-                .setMessage(R.string.filter_tip)
+                .setTitle(R.string.blacklist)
+                .setMessage(R.string.blacklist_tip)
                 .show();
     }
 

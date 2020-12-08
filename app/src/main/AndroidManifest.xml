@@ -163,7 +163,7 @@
             android:name="com.hippo.ehviewer.ui.BlackListActivity"
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Toolbar"
-            android:label="@string/blicklist"/>
+            android:label="@string/blacklist"/>
         <activity
             android:name="com.hippo.ehviewer.ui.SetSecurityActivity"
             android:configChanges="screenSize|uiMode"
