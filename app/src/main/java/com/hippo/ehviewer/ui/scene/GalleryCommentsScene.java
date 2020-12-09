@@ -56,6 +56,7 @@ import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.LinearDividerItemDecoration;
 import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.client.EhClient;
@@ -65,6 +66,7 @@ import com.hippo.ehviewer.client.data.GalleryComment;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.parser.VoteCommentParser;
+import com.hippo.ehviewer.dao.BlackList;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.reveal.ViewAnimationUtils;
 import com.hippo.ripple.Ripple;
@@ -75,6 +77,7 @@ import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.ReadableTime;
 import com.hippo.util.TextUrl;
+import com.hippo.util.TimeUtils;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.FabLayout;
 import com.hippo.widget.LinkifyTextView;
@@ -302,6 +305,18 @@ public final class GalleryCommentsScene extends ToolbarScene
         EhApplication.getEhClient(context).execute(request);
     }
 
+    private void addInBlackList(GalleryComment comment){
+        BlackList blackList = new BlackList();
+
+        blackList.add_time = TimeUtils.getTimeNow();
+        blackList.badgayname = comment.user;
+        blackList.reason = comment.comment;
+
+        EhDB.insertBlackList(blackList);
+    }
+
+
+
     private class InfoHolder extends RecyclerView.ViewHolder {
 
         private final TextView key;
@@ -378,6 +393,8 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         menu.add(resources.getString(R.string.copy_comment_text));
         menuId.add(R.id.copy);
+        menu.add(resources.getString(R.string.join_in_blacklist));
+        menuId.add(R.id.join_blacklist);
         if (comment.editable) {
             menu.add(resources.getString(R.string.edit_comment));
             menuId.add(R.id.edit_comment);
@@ -423,6 +440,9 @@ public final class GalleryCommentsScene extends ToolbarScene
                                 if (!mInAnimation && mEditPanel != null && mEditPanel.getVisibility() != View.VISIBLE) {
                                     showEditPanel(true);
                                 }
+                                break;
+                            case R.id.join_blacklist:
+
                                 break;
                         }
                     }

@@ -80,7 +80,7 @@ public class EhDaoGenerator {
         entity.addStringProperty("badgayname").index();
         entity.addStringProperty("reason");
         entity.addStringProperty("angrywith");
-        entity.addLongProperty("add_time");
+        entity.addStringProperty("add_time");
 
     }
 

@@ -543,10 +543,16 @@ public class EhDB {
         return dao.queryBuilder().orderAsc(BlackListDao.Properties.Add_time).list();
     }
 
+    public static synchronized boolean inBlackList(String Badgayname){
+        BlackListDao dao = sDaoSession.getBlackListDao();
+        dao.queryRaw("where Badgayname =",Badgayname);
+        return dao.queryRaw("where Badgayname =",Badgayname) != null ;
+    }
+
     public static synchronized void insertBlackList(BlackList blackList){
         BlackListDao dao = sDaoSession.getBlackListDao();
         blackList.id = null;
-        blackList.add_time = System.currentTimeMillis();
+//        blackList.add_time = System.currentTimeMillis();
         blackList.id = dao.insert(blackList);
     }
 

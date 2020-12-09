@@ -329,6 +329,7 @@
     <string name="comment_successfully">评论成功</string>
     <string name="comment_failed">评论失败</string>
     <string name="copy_comment_text">复制评论文字</string>
+    <string name="join_in_blacklist">加入黑名单</string>
     <string name="edit_comment">修改评论</string>
     <string name="edit_comment_successfully">评论已被修改</string>
     <string name="edit_comment_failed">修改评论失败</string>

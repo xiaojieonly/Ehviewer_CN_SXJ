@@ -16,6 +16,7 @@
 
 package com.hippo.widget;
 
+
 final class DateUtils {
 
     public  static final char QUOTE = '\'';
@@ -75,4 +76,5 @@ final class DateUtils {
 
         return count;
     }
+
 }
