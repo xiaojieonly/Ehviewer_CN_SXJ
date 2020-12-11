@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
-        minSdkVersion 14
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 107
         versionName "1.7.6.09"
