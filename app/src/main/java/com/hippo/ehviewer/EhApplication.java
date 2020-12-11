@@ -25,7 +25,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.SSLCertificateSocketFactory;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Debug;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -48,6 +50,7 @@ import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.image.Image;
 import com.hippo.image.ImageBitmap;
 import com.hippo.network.StatusCodeException;
+import com.hippo.network.Tls12SocketFactory;
 import com.hippo.text.Html;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
@@ -65,8 +68,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLContext;
+
 import okhttp3.Cache;
+import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
+import okhttp3.TlsVersion;
 
 public class EhApplication extends RecordingApplication {
 
@@ -303,14 +310,17 @@ public class EhApplication extends RecordingApplication {
     public static OkHttpClient getOkHttpClient(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mOkHttpClient == null) {
-            application.mOkHttpClient = new OkHttpClient.Builder()
+            application.mOkHttpClient = enableTls120nPreLollipop(new OkHttpClient.Builder()
+                    .followRedirects(true)
+                    .followSslRedirects(true)
+                    .retryOnConnectionFailure(true)
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
                     .writeTimeout(10, TimeUnit.SECONDS)
                     .cookieJar(getEhCookieStore(application))
                     .dns(new EhDns(application))
                     .proxySelector(getEhProxySelector(application))
-                    .build();
+                    ).build();
         }
         return application.mOkHttpClient;
     }
@@ -470,5 +480,31 @@ public class EhApplication extends RecordingApplication {
         } catch (Throwable t) {
             ExceptionUtils.throwIfFatal(t);
         }
+    }
+
+    public static OkHttpClient.Builder enableTls120nPreLollipop(OkHttpClient.Builder client){
+        //
+        if (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT <= 22){
+            try{
+                SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+                sslContext.init(null,null,null);
+                client.sslSocketFactory(new Tls12SocketFactory(sslContext.getSocketFactory()));
+
+                ConnectionSpec cs = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                        .tlsVersions(TlsVersion.TLS_1_2)
+                        .build();
+
+                List<ConnectionSpec> specs = new ArrayList<>();
+                specs.add(cs);
+                specs.add(ConnectionSpec.COMPATIBLE_TLS);
+                specs.add(ConnectionSpec.CLEARTEXT);
+
+                client.connectionSpecs(specs);
+            }catch (Exception exc){
+                Log.e("OkHttpTLSCompat","Error while setting TLS 1.2", exc);
+            }
+        }
+
+        return client;
     }
 }
