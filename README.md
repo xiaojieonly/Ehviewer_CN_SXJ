@@ -1,3 +1,9 @@
+# 2020/12/11 ：  
+ ## 设置了虚假的url请求，现在又能裸连了,顺带修复了之前种子获取失败的问题。祝大伙们使用愉快，感谢用户My kokoro is itai的支持与反馈  
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/ihZPRj9teja)  密码:8b3g   
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+  
 # 2020/12/04 ：  
  ## 添加了内置dns,现在里站不挂梯子也能上了（我用的电信wifi，我手机移动网用不了）。祝大伙们使用愉快，感谢用户VoidxHoshi的支持与反馈
   不想挂梯子的现在用内置DNS也能用了因该（我自己是能用了。。。） 设置-->高级-->安全DNS  
