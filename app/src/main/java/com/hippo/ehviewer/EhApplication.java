@@ -68,7 +68,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 
 import okhttp3.Cache;
 import okhttp3.ConnectionSpec;
@@ -319,6 +321,13 @@ public class EhApplication extends RecordingApplication {
                     .writeTimeout(10, TimeUnit.SECONDS)
                     .cookieJar(getEhCookieStore(application))
                     .dns(new EhDns(application))
+                    .hostnameVerifier(new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String hostname, SSLSession session) {
+                            //强行返回true 即验证成功
+                            return true;
+                        }
+                    })
                     .proxySelector(getEhProxySelector(application))
                     ).build();
         }
@@ -508,3 +517,4 @@ public class EhApplication extends RecordingApplication {
         return client;
     }
 }
+
