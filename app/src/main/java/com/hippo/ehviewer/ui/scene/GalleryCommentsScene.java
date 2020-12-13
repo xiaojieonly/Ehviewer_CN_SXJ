@@ -393,8 +393,8 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         menu.add(resources.getString(R.string.copy_comment_text));
         menuId.add(R.id.copy);
-        menu.add(resources.getString(R.string.join_in_blacklist));
-        menuId.add(R.id.join_blacklist);
+//        menu.add(resources.getString(R.string.join_in_blacklist));
+//        menuId.add(R.id.join_blacklist);
         if (comment.editable) {
             menu.add(resources.getString(R.string.edit_comment));
             menuId.add(R.id.edit_comment);
@@ -441,9 +441,9 @@ public final class GalleryCommentsScene extends ToolbarScene
                                     showEditPanel(true);
                                 }
                                 break;
-                            case R.id.join_blacklist:
-
-                                break;
+//                            case R.id.join_blacklist:
+//
+//                                break;
                         }
                     }
                 }).show();

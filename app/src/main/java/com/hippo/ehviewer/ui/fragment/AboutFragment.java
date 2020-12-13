@@ -79,7 +79,7 @@ public class AboutFragment extends PreferenceFragment
                 .show();
 
 //        String alipayStr = base64Decode("c2V2ZW4zMzJAMTYzLmNvbQ==");
-        String alipayStr = base64Decode("MTAzMTA4MjA5MUBxcS5jb20=");
+        String alipayStr = base64Decode("aHR0cHM6Ly9naXRodWIuY29tL3hpYW9qaWVvbmx5L0Vodmlld2VyX0NOX1NYSi9ibG9iL0JpTGlfUENfR2FtZXIvZmVlZGF1dGhvci9zdXBwb3J0Lm1k");
         TextView alipayText = dialog.findViewById(R.id.alipay_text);
         alipayText.setText(alipayStr);
         dialog.findViewById(R.id.alipay_copy).setOnClickListener(v -> copyToClipboard(alipayStr));
