@@ -1,4 +1,9 @@
 # 2020/12/11 ：  
+ ## 修复了里站解析失败的问题（粗暴修复（暂时），有待后续优化），但是里站得挂梯子才行，表站正常直连  
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/iWlzgj9zamf)  密码:5yug   
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+# 2020/12/11 ：  
  ## 设置了虚假的url请求，现在又能裸连了,顺带修复了之前种子获取失败的问题。祝大伙们使用愉快，感谢用户My kokoro is itai的支持与反馈  
   点击前往下载：[蓝奏云](https://wws.lanzous.com/ihZPRj9teja)  密码:8b3g   
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
