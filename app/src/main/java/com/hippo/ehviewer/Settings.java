@@ -62,11 +62,16 @@ public class Settings {
                 putBuiltInHosts(true);
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
+        if (!sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
             if ("CN".equals(Locale.getDefault().getCountry())) {
                 putDF(true);
             }
         }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
+//            if ("CN".equals(Locale.getDefault().getCountry())) {
+//                putDF(true);
+//            }
+//        }
         if (!sSettingsPre.contains(KEY_DOH)) {
             if ("CN".equals(Locale.getDefault().getCountry())) {
                 putDoH(true);
