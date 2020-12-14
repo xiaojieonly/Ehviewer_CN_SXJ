@@ -1,8 +1,8 @@
 # 2020/12/14 ：
  ##  废弃虚假url以绕过审查的方法，使用SSL最新协议直接穿透，（本来就是第一种方案，但是当初打包的时候忘了更改打包使用的版本，老血给吐出来了）-----------------请谨慎更新，安卓5及以下版本的手机将无法使用该功能。
-  点击前往下载：[蓝奏云](https://wws.lanzous.com/iTtyEjd8eih)  密码:d73y
-  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/iTtyEjd8eih)  密码:d73y  
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
 # 2020/12/11 ：
  ## 修复了里站解析失败的问题（粗暴修复（暂时），有待后续优化），但是里站得挂梯子才行，表站正常直连  
   点击前往下载：[蓝奏云](https://wws.lanzous.com/iWlzgj9zamf)  密码:5yug   
