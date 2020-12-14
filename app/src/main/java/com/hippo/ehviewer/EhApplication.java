@@ -524,8 +524,8 @@ public class EhApplication extends RecordingApplication {
     }
 
     public static OkHttpClient.Builder enableTls120nPreLollipop(OkHttpClient.Builder client){
-        //
-        if (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT <= 22){
+        //&& Build.VERSION.SDK_INT <= 22
+        if (Build.VERSION.SDK_INT >= 16 ){
             try{
                 SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
                 sslContext.init(null,null,null);

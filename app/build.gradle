@@ -6,14 +6,14 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 29
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
-        minSdkVersion 16
-        targetSdkVersion 28
+        minSdkVersion 23
+        targetSdkVersion 29
         versionCode 107
-        versionName "1.7.6.13"
+        versionName "1.7.6.15"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
