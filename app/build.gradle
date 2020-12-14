@@ -6,7 +6,7 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"

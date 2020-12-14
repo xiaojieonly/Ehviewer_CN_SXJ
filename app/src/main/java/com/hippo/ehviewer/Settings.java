@@ -19,6 +19,7 @@ package com.hippo.ehviewer;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import androidx.annotation.DimenRes;
@@ -59,6 +60,11 @@ public class Settings {
         if (!sSettingsPre.contains(KEY_BUILT_IN_HOSTS)) {
             if ("CN".equals(Locale.getDefault().getCountry())) {
                 putBuiltInHosts(true);
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
+            if ("CN".equals(Locale.getDefault().getCountry())) {
+                putDF(true);
             }
         }
         if (!sSettingsPre.contains(KEY_DOH)) {
@@ -1161,5 +1167,18 @@ public class Settings {
 
     public static void putDoH(boolean value) {
         putBoolean(KEY_DOH, value);
+    }
+
+
+    private static final boolean DEFAULT_FRONTING = false;
+    public static final String KEY_DOMAIN_FRONTING = "domain_fronting";
+
+
+    public static boolean getDF() {
+        return getBoolean(KEY_DOMAIN_FRONTING, DEFAULT_FRONTING);
+    }
+
+    public static void putDF(boolean value) {
+        putBoolean(KEY_DOMAIN_FRONTING, value);
     }
 }

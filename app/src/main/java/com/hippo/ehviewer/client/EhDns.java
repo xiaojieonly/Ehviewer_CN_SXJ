@@ -91,7 +91,7 @@ public class EhDns implements Dns {
   @NonNull
   @Override
   public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
-    hostname = hostname.replaceFirst("h.github.io", "e-hentai.org"); // domain fronting
+//    hostname = hostname.replaceFirst("h.github.io", "e-hentai.org"); // domain fronting
     List<InetAddress> inetAddresses = (List<InetAddress>) hosts.get(hostname);
     if (inetAddresses != null) {
       return inetAddresses;

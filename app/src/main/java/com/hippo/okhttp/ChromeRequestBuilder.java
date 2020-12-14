@@ -22,19 +22,20 @@ public class ChromeRequestBuilder extends Request.Builder {
 
     private static final String CHROME_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36";
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36";
 
     private static final String CHROME_ACCEPT =
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;" +
+                    "q=0.8,application/signed-exchange;v=b3;q=0.9";
 
     private static final String CHROME_ACCEPT_LANGUAGE =
-            "en-US,en;q=0.5";
+            "en-US,en;q=0.9";
 
     public ChromeRequestBuilder(String url) {
         String host = url.split("/")[2];
-        if (host.endsWith("e-hentai.org")) {
-            url = url.replaceFirst("e-hentai.org", "h.github.io");
-        } // domain fronting
+//        if (host.endsWith("e-hentai.org")) {
+//            url = url.replaceFirst("e-hentai.org", "h.github.io");
+//        } // domain fronting
         url(url);
         addHeader("Host", host);
         addHeader("User-Agent", CHROME_USER_AGENT);

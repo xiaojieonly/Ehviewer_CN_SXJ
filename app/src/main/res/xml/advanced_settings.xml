@@ -86,6 +86,12 @@
         android:summary="@string/settings_advanced_dns_over_http_summary"
         android:defaultValue="false"/>
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="domain_fronting"
+        android:summary="@string/settings_advanced_domain_fronting_summary"
+        android:title="@string/settings_advanced_domain_fronting_title" />
+
     <com.hippo.ehviewer.preference.ExportDataPreference
         android:key="export_data"
         android:title="@string/settings_advanced_export_data"

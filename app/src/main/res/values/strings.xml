@@ -610,6 +610,8 @@
     <string name="settings_advanced_custom_hosts_summary">将主机名称映射到相应的IP地址\n可覆盖内置 hosts.txt</string>
     <string name="settings_advanced_dns_over_http_title">安全 DNS（DoH）</string>
     <string name="settings_advanced_dns_over_http_summary">解决某些地区的 DNS 污染问题</string>
+    <string name="settings_advanced_domain_fronting_title">域名前置</string>
+    <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁</string>
 
     <string name="settings_privacy_pattern_protection_title">图案保护</string>
     <string name="settings_privacy_pattern_protection_not_set">未设置图案保护</string>
@@ -785,5 +787,6 @@
     <string name="download_service">下载服务</string>
     <string name="favorite_name">收藏画廊</string>
     <string name="no_blicklist">这里是黑名单</string>
+
 
 </resources>
