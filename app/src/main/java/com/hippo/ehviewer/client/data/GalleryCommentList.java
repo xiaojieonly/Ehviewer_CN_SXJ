@@ -41,6 +41,18 @@ public class GalleryCommentList implements Parcelable {
     this.hasMore = hasMore;
   }
 
+  public void DeleteComment(int num){
+    GalleryComment[] commentarry = new GalleryComment[comments.length-1];
+    int j=0;
+    for (int i = 0; i < comments.length; i++) {
+      if (i != num){
+        commentarry[j] = comments[i];
+        j++;
+      }
+    }
+    comments = commentarry;
+  }
+
   protected GalleryCommentList(Parcel in) {
     Parcelable[] array = in.readParcelableArray(getClass().getClassLoader());
     if (array != null) {

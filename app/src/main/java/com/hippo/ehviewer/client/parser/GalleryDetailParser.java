@@ -19,6 +19,7 @@ package com.hippo.ehviewer.client.parser;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
@@ -493,7 +494,7 @@ public class GalleryDetailParser {
             List<GalleryComment> list = new ArrayList<>(c1s.size());
             for (int i = 0, n = c1s.size(); i < n; i++) {
                 GalleryComment comment = parseComment(c1s.get(i));
-                if (null != comment) {
+                if (null != comment && !EhDB.inBlackList(comment.user)) {
                     list.add(comment);
                 }
             }

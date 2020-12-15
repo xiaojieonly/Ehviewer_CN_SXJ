@@ -545,8 +545,7 @@ public class EhDB {
 
     public static synchronized boolean inBlackList(String Badgayname){
         BlackListDao dao = sDaoSession.getBlackListDao();
-        dao.queryRaw("where Badgayname =",Badgayname);
-        return dao.queryRaw("where Badgayname =",Badgayname) != null ;
+        return  dao.queryRaw("where Badgayname =\'"+Badgayname+"\'").size() == 0 ? false : true;
     }
 
     public static synchronized void insertBlackList(BlackList blackList){

@@ -73,6 +73,7 @@ import com.hippo.ripple.Ripple;
 import com.hippo.scene.SceneFragment;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
+import com.hippo.util.BlackListUtils;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.ReadableTime;
@@ -393,8 +394,8 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         menu.add(resources.getString(R.string.copy_comment_text));
         menuId.add(R.id.copy);
-//        menu.add(resources.getString(R.string.join_in_blacklist));
-//        menuId.add(R.id.join_blacklist);
+        menu.add(resources.getString(R.string.join_in_blacklist));
+        menuId.add(R.id.join_blacklist);
         if (comment.editable) {
             menu.add(resources.getString(R.string.edit_comment));
             menuId.add(R.id.edit_comment);
@@ -441,9 +442,10 @@ public final class GalleryCommentsScene extends ToolbarScene
                                     showEditPanel(true);
                                 }
                                 break;
-//                            case R.id.join_blacklist:
-//
-//                                break;
+                            case R.id.join_blacklist:
+                                EhDB.insertBlackList(BlackListUtils.parseBlacklist(comment));
+                                mCommentList.DeleteComment(position);
+                                break;
                         }
                     }
                 }).show();
