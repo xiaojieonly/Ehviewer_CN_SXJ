@@ -37,10 +37,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputLayout;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.client.EhFilter;
+import com.hippo.ehviewer.dao.BlackList;
 import com.hippo.ehviewer.dao.Filter;
 import com.hippo.util.DrawableManager;
+import com.hippo.util.TimeUtils;
 import com.hippo.view.ViewTransition;
 import com.hippo.yorozuya.ViewUtils;
 
@@ -55,7 +57,9 @@ public class BlackListActivity extends ToolbarActivity {
     @Nullable
     private FilterAdapter mAdapter;
     @Nullable
-    private FilterList mFilterList;
+    private BlackListArray mBlackListArray;
+
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,7 +67,7 @@ public class BlackListActivity extends ToolbarActivity {
         setContentView(R.layout.activity_black_list);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
 
-        mFilterList = new FilterList();
+        mBlackListArray = new BlackListArray();
 
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(this, R.id.recycler_view);
         TextView tip = (TextView) ViewUtils.$$(this, R.id.tip);
@@ -89,7 +93,7 @@ public class BlackListActivity extends ToolbarActivity {
             return;
         }
 
-        if (null == mFilterList || 0 == mFilterList.size()) {
+        if (null == mBlackListArray || 0 == mBlackListArray.size()) {
             mViewTransition.showView(1, animation);
         } else {
             mViewTransition.showView(0, animation);
@@ -103,7 +107,7 @@ public class BlackListActivity extends ToolbarActivity {
         mRecyclerView = null;
         mViewTransition = null;
         mAdapter = null;
-        mFilterList = null;
+        mBlackListArray = null;
     }
 
     @Override
@@ -147,15 +151,15 @@ public class BlackListActivity extends ToolbarActivity {
         helper.setDialog(dialog);
     }
 
-    private void showDeleteBlackListDialog(final Filter filter) { //filter没改
-        String message = getString(R.string.delete_filter, filter.text);
+    private void showDeleteBlackListDialog(final BlackList blackList) { //filter没改
+        String message = getString(R.string.delete_blacklist, blackList.badgayname);
         new AlertDialog.Builder(this)
                 .setMessage(message)
                 .setPositiveButton(R.string.delete, (dialog, which) -> {
-                    if (DialogInterface.BUTTON_POSITIVE != which || null == mFilterList) {
+                    if (DialogInterface.BUTTON_POSITIVE != which || null == mBlackListArray) {
                         return;
                     }
-                    mFilterList.delete(filter);
+                    mBlackListArray.delete(blackList);
                     if (null != mAdapter) {
                         mAdapter.notifyDataSetChanged();
                     }
@@ -167,18 +171,24 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Nullable
         private AlertDialog mDialog;
+//        @Nullable
+//        private Spinner mSpinner;
         @Nullable
-        private Spinner mSpinner;
+        private TextInputLayout mBlackNameInputLayout;
         @Nullable
-        private TextInputLayout mInputLayout;
+        private TextInputLayout mReasonInputLayout;
         @Nullable
-        private EditText mEditText;
+        private EditText mBlackNameEditText;
+        @Nullable
+        private EditText mReasonEditText;
 
         public void setDialog(AlertDialog dialog) {
             mDialog = dialog;
-            mSpinner = (Spinner) ViewUtils.$$(dialog, R.id.spinner);
-            mInputLayout = (TextInputLayout) ViewUtils.$$(dialog, R.id.text_input_layout);
-            mEditText = mInputLayout.getEditText();
+//            mSpinner = (Spinner) ViewUtils.$$(dialog, R.id.spinner);
+            mBlackNameInputLayout = (TextInputLayout) ViewUtils.$$(dialog, R.id.text_input_layout);
+            mReasonInputLayout = (TextInputLayout) ViewUtils.$$(dialog,R.id.text_inputreason_layout);
+            mBlackNameEditText = mBlackNameInputLayout.getEditText();
+            mReasonEditText = mReasonInputLayout.getEditText();
             View button = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (null != button) {
                 button.setOnClickListener(this);
@@ -187,24 +197,30 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Override
         public void onClick(View v) {
-            if (null == mFilterList || null == mDialog || null == mSpinner ||
-                    null == mInputLayout || null == mEditText) {
+            if (null == mBlackListArray || null == mDialog || null == mReasonInputLayout ||
+                    null == mBlackNameInputLayout || null == mBlackNameEditText || null == mReasonEditText) {
                 return;
             }
 
-            String text = mEditText.getText().toString().trim();
-            if (TextUtils.isEmpty(text)) {
-                mInputLayout.setError(getString(R.string.text_is_empty));
+            String badgayname = mBlackNameEditText.getText().toString().trim();
+
+            if (TextUtils.isEmpty(badgayname)) {
+                mBlackNameInputLayout.setError(getString(R.string.text_is_empty));
                 return;
             } else {
-                mInputLayout.setError(null);
+                mBlackNameInputLayout.setError(null);
             }
-            int mode = mSpinner.getSelectedItemPosition();
 
-            Filter filter = new Filter();
-            filter.mode = mode;
-            filter.text = text;
-            mFilterList.add(filter);
+            String reason = mReasonEditText.getText().toString().trim();
+
+//            int mode = mSpinner.getSelectedItemPosition();
+
+            BlackList blackList = new BlackList();
+            blackList.reason = reason;
+            blackList.badgayname = badgayname;
+            blackList.add_time = TimeUtils.getTimeNow();
+
+            mBlackListArray.add(blackList);
 
             if (null != mAdapter) {
                 mAdapter.notifyDataSetChanged();
@@ -213,9 +229,11 @@ public class BlackListActivity extends ToolbarActivity {
 
             mDialog.dismiss();
             mDialog = null;
-            mSpinner = null;
-            mInputLayout = null;
-            mEditText = null;
+//            mSpinner = null;
+            mBlackNameInputLayout = null;
+            mBlackNameEditText = null;
+            mReasonInputLayout = null;
+            mReasonEditText = null;
         }
     }
 
@@ -239,15 +257,15 @@ public class BlackListActivity extends ToolbarActivity {
         @Override
         public void onClick(View v) {
             int position = getAdapterPosition();
-            if (position < 0 || null == mFilterList) {
+            if (position < 0 || null == mBlackListArray) {
                 return;
             }
-            Filter filter = mFilterList.get(position);
-            if (FilterList.MODE_HEADER != filter.mode) {
+            Filter filter = mBlackListArray.get(position);
+            if (BlackListArray.MODE_HEADER != filter.mode) {
                 if (v instanceof ImageView) {
                     showDeleteBlackListDialog(filter);
                 } else if (v instanceof TextView) {
-                    mFilterList.trigger(filter);
+                    mBlackListArray.trigger(filter);
 
                     //for updating delete line on filter text
                     mAdapter.notifyItemChanged(getAdapterPosition());
@@ -264,11 +282,11 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (null == mFilterList) {
+            if (null == mBlackListArray) {
                 return TYPE_ITEM;
             }
 
-            if (mFilterList.get(position).mode == FilterList.MODE_HEADER) {
+            if (mBlackListArray.get(position).mode == BlackListArray.MODE_HEADER) {
                 return TYPE_HEADER;
             } else {
                 return TYPE_ITEM;
@@ -300,12 +318,12 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Override
         public void onBindViewHolder(FilterHolder holder, int position) {
-            if (null == mFilterList) {
+            if (null == mBlackListArray) {
                 return;
             }
 
-            Filter filter = mFilterList.get(position);
-            if (FilterList.MODE_HEADER == filter.mode) {
+            Filter filter = mBlackListArray.get(position);
+            if (BlackListArray.MODE_HEADER == filter.mode) {
                 holder.text.setText(filter.text);
             } else {
                 holder.text.setText(filter.text);
@@ -320,52 +338,52 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Override
         public int getItemCount() {
-            return null != mFilterList ? mFilterList.size() : 0;
+            return null != mBlackListArray ? mBlackListArray.size() : 0;
         }
     }
 
-    private class FilterList {
+    private class BlackListArray {
 
         public static final int MODE_HEADER = -1;
 
-        private final EhFilter mEhFilter;
-        private final List<Filter> mTitleFilterList;
+
+        private final List<BlackList> mBlackListArray;
 
 
-        private Filter mTitleHeader;
+        private BlackList mBlackName;
 
 
-        public FilterList() {
-            mEhFilter = EhFilter.getInstance();
-            mTitleFilterList = mEhFilter.getTitleFilterList();
+        public BlackListArray() {
+
+            mBlackListArray = EhDB.getAllBlackList();
 
         }
 
         public int size() {
             int count = 0;
-            int size = mTitleFilterList.size();
+            int size = mBlackListArray.size();
             count += 0 == size ? 0 : size + 1;
             return count;
         }
 
-        private Filter getTitleHeader() {
-            if (null == mTitleHeader) {
-                mTitleHeader = new Filter();
-                mTitleHeader.mode = MODE_HEADER;
-                mTitleHeader.text = getString(R.string.blacklist_id);
+        private BlackList getTitleHeader() {
+            if (null == mBlackName) {
+                mBlackName = new BlackList();
+                mBlackName.mode = MODE_HEADER;
+                mBlackName.text = getString(R.string.blacklist_id);
             }
-            return mTitleHeader;
+            return mBlackName;
         }
 
 
 
-        public Filter get(int index) {
-            int size = mTitleFilterList.size();
+        public BlackList get(int index) {
+            int size = mBlackListArray.size();
             if (0 != size) {
                 if (index == 0) {
                     return getTitleHeader();
                 } else if (index <= size) {
-                    return mTitleFilterList.get(index - 1);
+                    return mBlackListArray.get(index - 1);
                 } else {
                     index -= size + 1;
                 }
@@ -374,16 +392,16 @@ public class BlackListActivity extends ToolbarActivity {
             throw new IndexOutOfBoundsException();
         }
 
-        public void add(Filter filter) {
-            mEhFilter.addFilter(filter);
+        public void add(BlackList blackList) {
+            EhDB.insertBlackList(blackList);
         }
 
-        public void delete(Filter filter) {
-            mEhFilter.deleteFilter(filter);
+        public void delete(BlackList blackList) {
+            EhDB.deleteBlackList(blackList);
         }
 
-        public void trigger(Filter filter) {
-            mEhFilter.triggerFilter(filter);
+        public void trigger(BlackList blackList) {
+            EhDB.updateBlackList(blackList);
         }
     }
 }

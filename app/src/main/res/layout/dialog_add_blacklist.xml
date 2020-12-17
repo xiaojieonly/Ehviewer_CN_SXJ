@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             android:imeOptions="actionDone"
             android:inputType="text"
-            android:maxLines="1"
+            android:maxLines="2"
             android:singleLine="true"/>
 
     </com.google.android.material.textfield.TextInputLayout>

@@ -306,15 +306,6 @@ public final class GalleryCommentsScene extends ToolbarScene
         EhApplication.getEhClient(context).execute(request);
     }
 
-    private void addInBlackList(GalleryComment comment){
-        BlackList blackList = new BlackList();
-
-        blackList.add_time = TimeUtils.getTimeNow();
-        blackList.badgayname = comment.user;
-        blackList.reason = comment.comment;
-
-        EhDB.insertBlackList(blackList);
-    }
 
 
 
@@ -445,6 +436,7 @@ public final class GalleryCommentsScene extends ToolbarScene
                             case R.id.join_blacklist:
                                 EhDB.insertBlackList(BlackListUtils.parseBlacklist(comment));
                                 mCommentList.DeleteComment(position);
+                                updateView(true);
                                 break;
                         }
                     }
