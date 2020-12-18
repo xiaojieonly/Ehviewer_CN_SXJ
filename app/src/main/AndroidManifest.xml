@@ -159,11 +159,11 @@
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Toolbar"
             android:label="@string/filter"/>
-<!--        <activity-->
-<!--            android:name="com.hippo.ehviewer.ui.BlackListActivity"-->
-<!--            android:configChanges="screenSize|uiMode"-->
-<!--            android:theme="@style/AppTheme.Toolbar"-->
-<!--            android:label="@string/blacklist"/>-->
+        <activity
+            android:name="com.hippo.ehviewer.ui.BlackListActivity"
+            android:configChanges="screenSize|uiMode"
+            android:theme="@style/AppTheme.Toolbar"
+            android:label="@string/blacklist"/>
         <activity
             android:name="com.hippo.ehviewer.ui.SetSecurityActivity"
             android:configChanges="screenSize|uiMode"

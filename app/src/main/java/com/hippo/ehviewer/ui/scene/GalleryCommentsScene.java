@@ -436,7 +436,7 @@ public final class GalleryCommentsScene extends ToolbarScene
                             case R.id.join_blacklist:
                                 EhDB.insertBlackList(BlackListUtils.parseBlacklist(comment));
                                 mCommentList.DeleteComment(position);
-                                updateView(true);
+                                mRecyclerView.invalidate();
                                 break;
                         }
                     }

@@ -16,6 +16,10 @@
 
 package com.hippo.ehviewer.daogenerator;
 
+
+//import org.greenrobot.greendao.generator.DaoGenerator;
+//import org.greenrobot.greendao.generator.Entity;
+//import org.greenrobot.greendao.generator.Schema;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 

@@ -260,17 +260,15 @@ public class BlackListActivity extends ToolbarActivity {
             if (position < 0 || null == mBlackListArray) {
                 return;
             }
-            Filter filter = mBlackListArray.get(position);
-            if (BlackListArray.MODE_HEADER != filter.mode) {
-                if (v instanceof ImageView) {
-                    showDeleteBlackListDialog(filter);
-                } else if (v instanceof TextView) {
-                    mBlackListArray.trigger(filter);
+            BlackList blackList = mBlackListArray.get(position);
 
-                    //for updating delete line on filter text
-                    mAdapter.notifyItemChanged(getAdapterPosition());
-                }
+            if (v instanceof ImageView) {
+                showDeleteBlackListDialog(blackList);
+            } else if (v instanceof TextView) {
+                mBlackListArray.trigger(blackList);
 
+                //for updating delete line on filter text
+                mAdapter.notifyItemChanged(getAdapterPosition());
             }
         }
     }
@@ -280,18 +278,18 @@ public class BlackListActivity extends ToolbarActivity {
         private static final int TYPE_ITEM = 0;
         private static final int TYPE_HEADER = 1;
 
-        @Override
-        public int getItemViewType(int position) {
-            if (null == mBlackListArray) {
-                return TYPE_ITEM;
-            }
-
-            if (mBlackListArray.get(position).mode == BlackListArray.MODE_HEADER) {
-                return TYPE_HEADER;
-            } else {
-                return TYPE_ITEM;
-            }
-        }
+//        @Override
+//        public int getItemViewType(int position) {
+//            if (null == mBlackListArray) {
+//                return TYPE_ITEM;
+//            }
+//
+//            if (mBlackListArray.get(position).mode == BlackListArray.MODE_HEADER) {
+//                return TYPE_HEADER;
+//            } else {
+//                return TYPE_ITEM;
+//            }
+//        }
 
         @Override
         public FilterHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -322,18 +320,22 @@ public class BlackListActivity extends ToolbarActivity {
                 return;
             }
 
-            Filter filter = mBlackListArray.get(position);
-            if (BlackListArray.MODE_HEADER == filter.mode) {
-                holder.text.setText(filter.text);
-            } else {
-                holder.text.setText(filter.text);
-                // add a delete line if the filter is disabled
-                if (!filter.enable) {
-                    holder.text.setPaintFlags(holder.text.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                } else {
-                    holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-                }
-            }
+//            Filter filter = mBlackListArray.get(position);
+//            if (BlackListArray.MODE_HEADER == filter.mode) {
+//                holder.text.setText(filter.text);
+//            } else {
+//                holder.text.setText(filter.text);
+//                // add a delete line if the filter is disabled
+//                if (!filter.enable) {
+//                    holder.text.setPaintFlags(holder.text.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+//                } else {
+//                    holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+//                }
+//            }
+            BlackList blackList = mBlackListArray.get(position);
+
+            holder.text.setText(blackList.badgayname);
+
         }
 
         @Override
@@ -343,8 +345,6 @@ public class BlackListActivity extends ToolbarActivity {
     }
 
     private class BlackListArray {
-
-        public static final int MODE_HEADER = -1;
 
 
         private final List<BlackList> mBlackListArray;
@@ -369,8 +369,10 @@ public class BlackListActivity extends ToolbarActivity {
         private BlackList getTitleHeader() {
             if (null == mBlackName) {
                 mBlackName = new BlackList();
-                mBlackName.mode = MODE_HEADER;
-                mBlackName.text = getString(R.string.blacklist_id);
+//                mBlackName.mode = MODE_HEADER;
+//                mBlackName.text = getString(R.string.blacklist_id);
+
+                mBlackName.badgayname = getString(R.string.blacklist_id);
             }
             return mBlackName;
         }
