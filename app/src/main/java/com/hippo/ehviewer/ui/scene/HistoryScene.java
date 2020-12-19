@@ -68,7 +68,9 @@ import com.hippo.widget.LoadImageView;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ViewUtils;
-import de.greenrobot.dao.query.LazyList;
+
+import org.greenrobot.greendao.query.LazyList;
+
 
 public class HistoryScene extends ToolbarScene
         implements EasyRecyclerView.OnItemClickListener,

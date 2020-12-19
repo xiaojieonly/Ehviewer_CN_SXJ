@@ -17,18 +17,17 @@
 package com.hippo.ehviewer.daogenerator;
 
 
-//import org.greenrobot.greendao.generator.DaoGenerator;
-//import org.greenrobot.greendao.generator.Entity;
-//import org.greenrobot.greendao.generator.Schema;
+
+import org.greenrobot.greendao.generator.DaoGenerator;
+import org.greenrobot.greendao.generator.Entity;
+import org.greenrobot.greendao.generator.Schema;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 
 import java.io.File;
 import java.io.FileWriter;
 
-import de.greenrobot.daogenerator.DaoGenerator;
-import de.greenrobot.daogenerator.Entity;
-import de.greenrobot.daogenerator.Schema;
+
 
 
 public class EhDaoGenerator {
@@ -74,13 +73,12 @@ public class EhDaoGenerator {
         adjustFilter();
     }
 
-    //待完成
+
     private static void addBlackList(Schema schema) {
         Entity entity = schema.addEntity("BlackList");
         entity.setTableName("Black_List");
         entity.setClassNameDao("BlackListDao");
-
-        entity.addIdProperty();
+        entity.addIdProperty().primaryKey().autoincrement();
         entity.addStringProperty("badgayname").index();
         entity.addStringProperty("reason");
         entity.addStringProperty("angrywith");
@@ -88,7 +86,7 @@ public class EhDaoGenerator {
 
     }
 
-    //待完成
+
     private static void adjustBlackList() throws Exception {
         JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(BLACKLIST_PATH));
 

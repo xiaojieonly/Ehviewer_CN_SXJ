@@ -49,9 +49,11 @@ import com.hippo.util.SqlUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.collect.SparseJLArray;
-import de.greenrobot.dao.AbstractDao;
-import de.greenrobot.dao.query.CloseableListIterator;
-import de.greenrobot.dao.query.LazyList;
+
+import org.greenrobot.greendao.AbstractDao;
+import org.greenrobot.greendao.query.CloseableListIterator;
+import org.greenrobot.greendao.query.LazyList;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -92,8 +94,8 @@ public class EhDB {
 
     private static void upgradeDB(SQLiteDatabase db, int oldVersion) {
         switch (oldVersion) {
-            case 1: // 1 to 2, add FILTER
-                FilterDao.createTable(db, true);
+//            case 1: // 1 to 2, add FILTER
+//                FilterDao.createTable(db, true);
             case 2: // 2 to 3, add ENABLE column to table FILTER
                 db.execSQL("CREATE TABLE " + "\"FILTER2\" (" +
                     "\"_id\" INTEGER PRIMARY KEY ," +
