@@ -26,9 +26,11 @@ import android.graphics.drawable.TransitionDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
+
 import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.DataContainer;
@@ -40,58 +42,48 @@ import com.hippo.image.ImageBitmap;
 import com.hippo.image.ImageDrawable;
 import com.hippo.image.RecycledException;
 import com.hippo.util.DrawableManager;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 public class LoadImageView extends FixedAspectImageView implements Unikery<ImageBitmap>,
         View.OnClickListener, View.OnLongClickListener, Animatable {
 
-    private static final String TAG = LoadImageView.class.getSimpleName();
-
-    @IntDef({RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK})
-    @Retention(RetentionPolicy.SOURCE)
-    private @interface RetryType {}
-
     public static final int RETRY_TYPE_NONE = 0;
     public static final int RETRY_TYPE_CLICK = 1;
     public static final int RETRY_TYPE_LONG_CLICK = 2;
-
+    private static final String TAG = LoadImageView.class.getSimpleName();
     private int mTaskId = Unikery.INVALID_ID;
-
     private Conaco<ImageBitmap> mConaco;
-
     private String mKey;
     private String mUrl;
     private DataContainer mContainer;
     private boolean mUseNetwork;
-
     private int mOffsetX = Integer.MIN_VALUE;
     private int mOffsetY = Integer.MIN_VALUE;
     private int mClipWidth = Integer.MIN_VALUE;
     private int mClipHeight = Integer.MIN_VALUE;
-
     private int mRetryType;
-
     private boolean mFailed;
+    private boolean mLoadFromDrawable;
 
     public LoadImageView(Context context) {
         super(context);
-        init(context, null, 0, 0);
+        init(context, null, 0);
     }
 
     public LoadImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs, 0, 0);
+        init(context, attrs, 0);
     }
 
     public LoadImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init(context, attrs, defStyle, 0);
+        init(context, attrs, defStyle);
     }
 
-    @SuppressWarnings("WrongConstant")
-    private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.LoadImageView, defStyleAttr, defStyleRes);
+    private void init(Context context, AttributeSet attrs, int defStyleAttr) {
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.LoadImageView, defStyleAttr, 0);
         setRetryType(a.getInt(R.styleable.LoadImageView_retryType, 0));
         a.recycle();
 
@@ -101,23 +93,25 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     }
 
     @Override
-    public void setTaskId(int id) {
-        mTaskId = id;
+    public int getTaskId() {
+        return mTaskId;
     }
 
     @Override
-    public int getTaskId() {
-        return mTaskId;
+    public void setTaskId(int id) {
+        mTaskId = id;
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        if (mFailed) {
-            onFailure();
-        } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */ {
-            load(mKey, mUrl, mContainer, mUseNetwork);
+        if (!mLoadFromDrawable) {
+            if (mFailed) {
+                onFailure();
+            } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */ {
+                load(mKey, mUrl, mContainer, mUseNetwork);
+            }
         }
     }
 
@@ -125,10 +119,16 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
-        // Cancel
-        mConaco.cancel(this);
-        // Clear drawable
-        clearDrawable();
+        if (!mLoadFromDrawable) {
+            try {
+                // Cancel
+                mConaco.cancel(this);
+            } catch (Exception e) {
+                // Ignore
+            }
+            // Clear drawable
+            clearDrawable();
+        }
     }
 
     private ImageDrawable getImageDrawable() {
@@ -220,6 +220,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             return;
         }
 
+        mLoadFromDrawable = false;
         mFailed = false;
         clearRetry();
 
@@ -239,12 +240,14 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
     public void load(Drawable drawable) {
         unload();
+        mLoadFromDrawable = true;
         onPreSetImageDrawable(drawable, true);
         setImageDrawable(drawable);
     }
 
     public void load(@DrawableRes int id) {
         unload();
+        mLoadFromDrawable = true;
         onPreSetImageResource(id, true);
         setImageResource(id);
     }
@@ -265,10 +268,12 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     }
 
     @Override
-    public void onRequest() {}
+    public void onRequest() {
+    }
 
     @Override
-    public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {}
+    public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {
+    }
 
     @Override
     public void onWait() {
@@ -368,7 +373,14 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         return true;
     }
 
-    public void onPreSetImageDrawable(Drawable drawable, boolean isTarget) { }
+    public void onPreSetImageDrawable(Drawable drawable, boolean isTarget) {
+    }
 
-    public void onPreSetImageResource(int resId, boolean isTarget) { }
+    public void onPreSetImageResource(int resId, boolean isTarget) {
+    }
+
+    @IntDef({RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK})
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface RetryType {
+    }
 }

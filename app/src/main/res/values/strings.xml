@@ -420,7 +420,7 @@
 
     <!--  black list  -->
     <string name="blacklist_id">用户ID</string>
-    <string name="blacklist">评论黑名单</string>
+    <string name="blacklist">黑名单</string>
     <string name="blacklist_tip">该屏蔽系统会在 EHentai 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
     <string name="blacklist_text">屏蔽用户</string>
     <string name="delete_blacklist">取消屏蔽用户“%s”？</string>
@@ -522,7 +522,8 @@
     <string name="settings_eh_tag_translations_source_url">https://github.com/Mapaler/EhTagTranslator/wiki</string>
     <string name="settings_eh_filter">屏蔽画廊</string>
     <string name="settings_eh_filter_summary">根据标题、上传者、标签屏蔽画廊</string>
-    <string name="settings_eh_blacklist">黑名单</string>
+    <string name="settings_eh_blacklist">评论黑名单</string>
+    <string name="settings_eh_blacklist_summary">根据账号名称屏蔽他人评论</string>
     <string name="settings_eh_cellular_network_warning">移动网络警告</string>
 
     <string name="settings_read">阅读</string>

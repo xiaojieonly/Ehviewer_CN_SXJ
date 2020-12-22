@@ -1,6 +1,8 @@
-package com.hippo.ehviewer;
+package com.hippo.network;
 
 import android.util.Log;
+
+import com.hippo.ehviewer.Settings;
 
 import java.io.IOException;
 import java.net.InetAddress;

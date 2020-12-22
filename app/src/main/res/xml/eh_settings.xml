@@ -138,8 +138,8 @@
 
     <com.hippo.preference.ActivityPreference
         android:key="blickList"
-        android:title="@string/settings_eh_filter"
-        android:summary="@string/settings_eh_filter_summary"
+        android:title="@string/settings_eh_blacklist"
+        android:summary="@string/settings_eh_blacklist_summary"
         app:activity="com.hippo.ehviewer.ui.BlackListActivity"/>
 
     <com.hippo.preference.SwitchPreference

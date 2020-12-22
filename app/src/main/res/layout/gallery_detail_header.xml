@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2015 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +14,7 @@
   ~ limitations under the License.
   -->
 
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -26,21 +24,17 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <com.hippo.reveal.RevealView
+        <View
             android:id="@+id/color_bg"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="?attr/galleryDetailHeaderBackgroundColor"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:background="@drawable/shadow_bottom"/>
+            android:background="?attr/galleryDetailHeaderBackgroundColor"
+            android:elevation="4dp" />
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="24dp"/>
+            android:layout_height="24dp" />
 
     </LinearLayout>
 
@@ -51,84 +45,87 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent">
 
             <com.hippo.widget.LoadImageView
                 android:id="@+id/thumb"
                 android:layout_width="@dimen/gallery_detail_thumb_width"
                 android:layout_height="@dimen/gallery_detail_thumb_height"
-                android:layout_marginTop="@dimen/keyline_margin"
                 android:layout_marginLeft="@dimen/keyline_margin"
-                android:layout_marginBottom="@dimen/keyline_margin"/>
+                android:layout_marginTop="@dimen/keyline_margin"
+                android:layout_marginBottom="@dimen/keyline_margin" />
 
             <TextView
                 android:id="@+id/title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@id/thumb"
                 android:layout_alignTop="@id/thumb"
                 android:layout_marginLeft="@dimen/keyline_margin"
                 android:layout_marginRight="@dimen/keyline_margin"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_little_large"
+                android:layout_toRightOf="@id/thumb"
+                android:ellipsize="end"
                 android:maxLines="5"
-                android:ellipsize="end"/>
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_little_large" />
 
             <TextView
                 android:id="@+id/uploader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignLeft="@id/title"
                 android:layout_below="@id/title"
+                android:layout_alignLeft="@id/title"
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="@dimen/keyline_margin"
-                android:textColor="?attr/galleryDetailHeaderTitleColor"
-                android:textSize="@dimen/text_little_small"
+                android:background="?selectableItemBackgroundBorderless"
+                android:ellipsize="end"
                 android:singleLine="true"
-                android:ellipsize="end"/>
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_little_small" />
 
             <TextView
                 android:id="@+id/category"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignLeft="@id/title"
                 android:layout_below="@id/uploader"
+                android:layout_alignLeft="@id/title"
                 android:layout_marginTop="12dp"
                 android:layout_marginRight="@dimen/keyline_margin"
-                android:background="@android:color/white"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp"
                 android:ellipsize="end"
+                android:paddingLeft="8dp"
+                android:paddingTop="2dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="2dp"
                 android:singleLine="true"
                 android:textAllCaps="true"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
 
-            <ImageView
-                xmlns:app="http://schemas.android.com/apk/res-auto"
+            <ImageView xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/other_actions"
                 android:layout_width="48dp"
                 android:layout_height="56dp"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="true"
+                android:background="?selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
                 android:paddingLeft="12dp"
-                android:paddingRight="12dp"
                 android:paddingTop="16dp"
+                android:paddingRight="12dp"
                 android:paddingBottom="16dp"
-                app:srcCompat="@drawable/v_dots_vertical_secondary_dark_x24"/>
+                app:srcCompat="@drawable/v_dots_vertical_secondary_dark_x24" />
 
         </RelativeLayout>
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/action_card"
+            style="@style/CardView.Normal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="@dimen/keyline_margin"
             android:layout_marginRight="@dimen/keyline_margin"
-            app:cardBackgroundColor="?attr/galleryDetailButtonBackgroundColor"
-            style="@style/CardView.Normal">
+            app:cardUseCompatPadding="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -141,14 +138,17 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="?attr/textColorThemePrimary"/>
+                    android:background="?selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:textColor="?attr/textColorThemePrimary" />
 
                 <View
                     android:layout_width="1dp"
                     android:layout_height="match_parent"
-                    android:background="?attr/dividerColor"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="8dp"
+                    android:background="?attr/dividerColor" />
 
                 <TextView
                     android:id="@+id/read"
@@ -156,10 +156,13 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="?attr/textColorThemeAccent"
-                    android:text="@string/read"/>
+                    android:background="?selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="@string/read"
+                    android:textColor="?attr/textColorThemeAccent" />
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </FrameLayout>

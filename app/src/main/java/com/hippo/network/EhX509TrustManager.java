@@ -1,4 +1,4 @@
-package com.hippo.ehviewer;
+package com.hippo.network;
 
 import android.annotation.SuppressLint;
 

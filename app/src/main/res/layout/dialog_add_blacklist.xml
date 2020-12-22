@@ -34,14 +34,11 @@
         android:layout_marginTop="16dp"
         android:hint="@string/blacklist_text">
 
-        <com.hippo.widget.HackyTextInputEditText
-            android:id="@+id/edit_text"
+        <com.hippo.widget.CuteSpinner
+            android:id="@+id/spinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:imeOptions="actionDone"
-            android:inputType="text"
-            android:maxLines="1"
-            android:singleLine="true"/>
+            android:entries="@array/filter_entries"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 

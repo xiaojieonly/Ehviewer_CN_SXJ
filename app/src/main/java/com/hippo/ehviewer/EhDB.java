@@ -45,6 +45,7 @@ import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.dao.QuickSearchDao;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.util.ExceptionUtils;
+import com.hippo.util.LogCat;
 import com.hippo.util.SqlUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
@@ -553,8 +554,11 @@ public class EhDB {
     public static synchronized void insertBlackList(BlackList blackList){
         BlackListDao dao = sDaoSession.getBlackListDao();
         blackList.id = null;
-//        blackList.add_time = System.currentTimeMillis();
-        blackList.id = dao.insert(blackList);
+        if (blackList.badgayname == null){
+
+        }else {
+            dao.insert(blackList);
+        }
     }
 
     public static synchronized void updateBlackList(BlackList blackList){
