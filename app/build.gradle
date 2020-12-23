@@ -51,6 +51,8 @@ android {
             java.srcDirs += 'src/main/java-gen'
         }
     }
+    ndkVersion '22.0.6917172 rc1'
+    buildToolsVersion '30.0.3'
 }
 
 task copyNotice(type: Copy) {

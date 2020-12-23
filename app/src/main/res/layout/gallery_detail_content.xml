@@ -21,8 +21,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <include
-        layout="@layout/gallery_detail_header"/>
+
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -36,6 +35,9 @@
             android:divider="?attr/galleryDetailDivider"
             android:showDividers="middle"
             android:dividerPadding="@dimen/keyline_margin">
+
+            <include
+                layout="@layout/gallery_detail_header"/>
 
             <include
                 layout="@layout/gallery_detail_info"/>

@@ -283,13 +283,15 @@ public class BlackListActivity extends ToolbarActivity {
         public int getItemViewType(int position) {
             if (null == mFilterList) {
                 return TYPE_ITEM;
+            }else {
+                return TYPE_HEADER;
             }
 
-            if (mFilterList.get(position).mode == FilterList.MODE_HEADER) {
-                return TYPE_HEADER;
-            } else {
-                return TYPE_ITEM;
-            }
+//            if (mFilterList.get(position).mode == FilterList.MODE_HEADER) {
+//                return TYPE_HEADER;
+//            } else {
+//                return TYPE_ITEM;
+//            }
         }
 
         @Override
@@ -321,16 +323,16 @@ public class BlackListActivity extends ToolbarActivity {
                 return;
             }
             BlackList blackList = mFilterList.get(position);
-//            holder.text.setText(blackList.badgayname);
-//            holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-            if (FilterList.MODE_HEADER == blackList.mode) {
-                holder.text.setText(blackList.badgayname);
-            } else {
-                holder.text.setText(blackList.badgayname);
-                // add a delete line if the filter is disabled
-                holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-
-            }
+            holder.text.setText(blackList.badgayname);
+            holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+//            if (FilterList.MODE_HEADER == blackList.mode) {
+//                holder.text.setText(blackList.badgayname);
+//            } else {
+//                holder.text.setText(blackList.badgayname);
+//                // add a delete line if the filter is disabled
+//                holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+//
+//            }
 //            Filter filter = mFilterList.get(position);
 //            if (FilterList.MODE_HEADER == filter.mode) {
 //                holder.text.setText(filter.text);
@@ -375,7 +377,7 @@ public class BlackListActivity extends ToolbarActivity {
         private BlackList getTitleHeader() {
             if (null == mTitleHeader) {
                 mTitleHeader = new BlackList();
-                mTitleHeader.mode = MODE_HEADER;
+//                mTitleHeader.mode = MODE_HEADER;
                 mTitleHeader.badgayname = getString(R.string.blacklist_id);
             }
             return mTitleHeader;
