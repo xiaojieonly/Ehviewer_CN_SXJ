@@ -238,6 +238,10 @@
         <item>@string/filter_tag_namespace</item>
     </string-array>
 
+    <string-array name="blacklist_entries">
+        <item>@string/blacklist_id</item>
+    </string-array>
+
     <string-array name="tag_menu_entries">
         <item>@string/show_definition</item>
         <item>@string/add_filter</item>

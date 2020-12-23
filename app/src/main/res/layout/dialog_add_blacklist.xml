@@ -38,7 +38,7 @@
             android:id="@+id/spinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/filter_entries"/>
+            android:entries="@array/blacklist_entries"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 

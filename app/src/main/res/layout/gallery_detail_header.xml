@@ -54,7 +54,10 @@
                 android:layout_height="@dimen/gallery_detail_thumb_height"
                 android:layout_marginLeft="@dimen/keyline_margin"
                 android:layout_marginTop="@dimen/keyline_margin"
-                android:layout_marginBottom="@dimen/keyline_margin" />
+                android:layout_marginBottom="@dimen/keyline_margin"
+                android:layout_alignParentLeft="true"
+                android:layout_alignWithParentIfMissing="true"
+                android:scaleType="fitCenter" />
 
             <TextView
                 android:id="@+id/title"
