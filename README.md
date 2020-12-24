@@ -8,6 +8,7 @@
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
   [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
  ##  祝大家平安夜快乐  <(￣︶￣)↗[GO!]
+ ##  下次更新争取把详情页剩下的一半问题解决，然后更新下书签/收藏分享功能
 # 2020/12/23 ：
  ##  详情页图片显示异常的问题修好了，明天晚上连同评论黑名单功能一起发布(ง •_•)ง  
  
