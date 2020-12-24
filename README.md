@@ -3,7 +3,7 @@
   ### 感谢 xxx 的无私支持  ————这位朋友没有备注但是仍然很感谢  
 
 # 2020/12/23 ：
- ##  详情页图片显示异常的问题修复了一半（o(￣┰￣*)ゞ）。。。。。。。。添加了评论黑名单功能。
+ ##  详情页图片显示异常的问题修复了一半（o(￣┰￣*)ゞ）。。。。。。。。添加了评论黑名单功能，现在可以把不想看到的人全给屏蔽了。
   点击前往下载：[蓝奏云](https://wws.lanzous.com/iN3YPjoio5a)  密码:2duu  
   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
   [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
