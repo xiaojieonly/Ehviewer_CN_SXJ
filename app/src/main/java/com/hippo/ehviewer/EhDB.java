@@ -125,6 +125,15 @@ public class EhDB {
                     "SELECT _id, NAME, MODE, CATEGORY, KEYWORD, ADVANCE_SEARCH, MIN_RATING, -1, -1, TIME FROM QUICK_SEARCH;");
                 db.execSQL("DROP TABLE QUICK_SEARCH");
                 db.execSQL("ALTER TABLE QUICK_SEARCH2 RENAME TO QUICK_SEARCH");
+            case 4 :
+                db.execSQL("DROP TABLE Black_List");
+                db.execSQL("CREATE TABLE " + "\"Black_List\" (" + //
+                        "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
+                        "\"BADGAYNAME\" TEXT," + // 1: badgayname
+                        "\"REASON\" TEXT," + // 2: reason
+                        "\"ANGRYWITH\" TEXT," + // 3: angrywith
+                        "\"ADD_TIME\" TEXT," + // 4: add_time
+                        "\"MODE\" INTEGER);");
         }
     }
 

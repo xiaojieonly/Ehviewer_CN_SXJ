@@ -21,7 +21,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
+    <com.hippo.widget.MyScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -31,7 +31,7 @@
         <include
             layout="@layout/gallery_detail_content"/>
 
-    </ScrollView>
+    </com.hippo.widget.MyScrollView>
 
     <com.hippo.widget.ProgressView
         android:id="@+id/progress_view"

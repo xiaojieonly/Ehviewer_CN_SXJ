@@ -463,8 +463,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mTip.setCompoundDrawables(null, drawable, null, null);
         mTip.setOnClickListener(this);
 
+        mBelowHeader = mainView.findViewById(R.id.below_header);
+        View belowHeader = mBelowHeader;
+
         boolean isDarkTheme = !AttrResources.getAttrBoolean(context, R.attr.isLightTheme);
-        mHeader = ViewUtils.$$(mainView, R.id.header);
+        mHeader = ViewUtils.$$(belowHeader, R.id.header);
         mColorBg = ViewUtils.$$(mHeader, R.id.color_bg);
         mThumb = (LoadImageView) ViewUtils.$$(mHeader, R.id.thumb);
         mTitle = (TextView) ViewUtils.$$(mHeader, R.id.title);
@@ -486,8 +489,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mUploader.setOnLongClickListener(this);
 
-        mBelowHeader = mainView.findViewById(R.id.below_header);
-        View belowHeader = mBelowHeader;
+
 
         mInfo = ViewUtils.$$(belowHeader, R.id.info);
         mLanguage = (TextView) ViewUtils.$$(mInfo, R.id.language);
