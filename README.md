@@ -1,7 +1,14 @@
 # 感谢名单：
   ### 感谢 有ex看弟弟很高兴 的无私支持  
   ### 感谢 xxx 的无私支持  ————这位朋友没有备注但是仍然很感谢  
-  
+
+# 2020/12/23 ：
+ ##  详情页图片显示异常的问题修复了一半（o(￣┰￣*)ゞ）。。。。。。。。添加了评论黑名单功能，现在可以把不想看到的人全给屏蔽了。
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/iN3YPjoio5a)  密码:2duu  
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+ ##  祝大家平安夜快乐  <(￣︶￣)↗[GO!]
+ ##  下次更新争取把详情页剩下的一半问题解决，然后更新下书签/收藏分享功能
 # 2020/12/23 ：
  ##  详情页图片显示异常的问题修好了，明天晚上连同评论黑名单功能一起发布(ง •_•)ง  
  
