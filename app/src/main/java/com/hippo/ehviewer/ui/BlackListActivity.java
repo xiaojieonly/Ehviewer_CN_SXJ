@@ -68,7 +68,7 @@ public class BlackListActivity extends ToolbarActivity {
 
         mFilterList = new FilterList();
 
-        mRecyclerView = (EasyRecyclerView) ViewUtils.$$(this, R.id.recycler_view);
+        mRecyclerView = (EasyRecyclerView) ViewUtils.$$(this, R.id.recycler_view1);
         TextView tip = (TextView) ViewUtils.$$(this, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 
@@ -94,7 +94,7 @@ public class BlackListActivity extends ToolbarActivity {
 
         if (null == mFilterList || 0 == mFilterList.size()) {
             mViewTransition.showView(1, animation);
-        } else {
+        }else {
             mViewTransition.showView(0, animation);
         }
     }
@@ -208,6 +208,7 @@ public class BlackListActivity extends ToolbarActivity {
             blackList.badgayname = text;
             blackList.add_time = TimeUtils.getTimeNow();
             blackList.angrywith = "/手动添加/";
+            blackList.mode=1;
 
             mFilterList.add(blackList);
 
@@ -283,20 +284,18 @@ public class BlackListActivity extends ToolbarActivity {
         public int getItemViewType(int position) {
             if (null == mFilterList) {
                 return TYPE_ITEM;
-            }else {
-                return TYPE_HEADER;
             }
 
-//            if (mFilterList.get(position).mode == FilterList.MODE_HEADER) {
-//                return TYPE_HEADER;
-//            } else {
-//                return TYPE_ITEM;
-//            }
+            if (mFilterList.get(position).mode == FilterList.MODE_HEADER) {
+                return TYPE_HEADER;
+            } else {
+                return TYPE_ITEM;
+            }
         }
 
         @Override
         public FilterHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            int layoutId;
+            int layoutId ;
             switch (viewType) {
                 default:
                 case TYPE_ITEM:
@@ -323,16 +322,16 @@ public class BlackListActivity extends ToolbarActivity {
                 return;
             }
             BlackList blackList = mFilterList.get(position);
-            holder.text.setText(blackList.badgayname);
-            holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-//            if (FilterList.MODE_HEADER == blackList.mode) {
-//                holder.text.setText(blackList.badgayname);
-//            } else {
-//                holder.text.setText(blackList.badgayname);
-//                // add a delete line if the filter is disabled
-//                holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-//
-//            }
+//            holder.text.setText(blackList.badgayname);
+//            holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+            if (FilterList.MODE_HEADER == blackList.mode) {
+                holder.text.setText(blackList.badgayname);
+            } else {
+                holder.text.setText(blackList.badgayname);
+                // add a delete line if the filter is disabled
+                holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+
+            }
 //            Filter filter = mFilterList.get(position);
 //            if (FilterList.MODE_HEADER == filter.mode) {
 //                holder.text.setText(filter.text);
@@ -358,7 +357,7 @@ public class BlackListActivity extends ToolbarActivity {
         public static final int MODE_HEADER = -1;
 
 
-        private final List<BlackList> mTitleBlackList;
+        private List<BlackList> mTitleBlackList;
 
         private BlackList mTitleHeader;
 
@@ -377,7 +376,7 @@ public class BlackListActivity extends ToolbarActivity {
         private BlackList getTitleHeader() {
             if (null == mTitleHeader) {
                 mTitleHeader = new BlackList();
-//                mTitleHeader.mode = MODE_HEADER;
+                mTitleHeader.mode = MODE_HEADER;
                 mTitleHeader.badgayname = getString(R.string.blacklist_id);
             }
             return mTitleHeader;
@@ -403,10 +402,12 @@ public class BlackListActivity extends ToolbarActivity {
 
         public void add(BlackList blackList) {
             EhDB.insertBlackList(blackList);
+            mTitleBlackList.add(blackList);
         }
 
         public void delete(BlackList blackList) {
             EhDB.deleteBlackList(blackList);
+            mTitleBlackList.remove(blackList);
         }
 
 //        public void trigger(Filter filter) {

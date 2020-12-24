@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        android:hint="@string/blacklist_reason_text">
+        android:hint="@string/blacklist_text">
 
         <com.hippo.widget.HackyTextInputEditText
             android:id="@+id/reason_text"

@@ -21,7 +21,7 @@
     android:layout_height="match_parent">
 
     <com.hippo.easyrecyclerview.EasyRecyclerView
-        android:id="@+id/recycler_view"
+        android:id="@+id/recycler_view1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="@dimen/keyline_margin"/>

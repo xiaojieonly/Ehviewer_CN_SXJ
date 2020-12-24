@@ -9,6 +9,7 @@ public class BlackListUtils {
 
         blackList.badgayname = comment.user;
         blackList.angrywith = comment.comment;
+        blackList.mode = 1;
         blackList.add_time = TimeUtils.getTimeNow();
 
         return  blackList;

@@ -83,7 +83,7 @@ public class EhDaoGenerator {
         entity.addStringProperty("reason");
         entity.addStringProperty("angrywith");
         entity.addStringProperty("add_time");
-
+        entity.addIntProperty("mode");
     }
 
 
@@ -96,7 +96,7 @@ public class EhDaoGenerator {
         javaClass.getField("reason").setPublic();
         javaClass.getField("angrywith").setPublic();
         javaClass.getField("add_time").setPublic();
-
+        javaClass.getField("mode").setPublic();
         javaClass.addMethod("\t@Override\n" +
                 "\tpublic String toString() {\n" +
                 "\t\treturn badgayname;\n" +
