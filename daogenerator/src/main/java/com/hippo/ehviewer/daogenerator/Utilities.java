@@ -16,7 +16,13 @@
 
 package com.hippo.ehviewer.daogenerator;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+
 
 public final class Utilities {
 
@@ -35,4 +41,31 @@ public final class Utilities {
         }
         return success;
     }
+
+
+//    public static String fileReader(){
+//        String reader="";
+//        File file = new File("daogenerator/src/main/java/com/hippo/ehviewer/daogenerator/database/artist.txt");
+//        String encoding = System.getProperty("file.encoding");
+//        try {
+//            if (file.isFile() && file.exists()){
+//                InputStreamReader textReader = new InputStreamReader(new FileInputStream(file),encoding);
+//                BufferedReader bufferedReader = new BufferedReader(textReader);
+//                String line;
+//                while ((line = bufferedReader.readLine()) != null){
+//                    reader = reader+line;
+//                }
+//            }else {
+//                System.out.println("路径有误");
+//            }
+//        }catch (IOException e){
+//            System.err.println("????????");
+//        }
+//        return reader;
+//    }
+//
+//
+//    public static void main(String[] args) {
+//        System.out.println(fileReader());
+//    }
 }

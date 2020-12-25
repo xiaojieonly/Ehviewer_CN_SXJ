@@ -24,10 +24,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.webkit.MimeTypeMap;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
+
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
@@ -61,6 +63,7 @@ import com.hippo.yorozuya.Utilities;
 import com.hippo.yorozuya.collect.SparseJLArray;
 import com.hippo.yorozuya.thread.PriorityThread;
 import com.hippo.yorozuya.thread.PriorityThreadFactory;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,6 +81,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -87,38 +91,23 @@ import okhttp3.ResponseBody;
 
 public final class SpiderQueen implements Runnable {
 
-    private static final String TAG = SpiderQueen.class.getSimpleName();
-    private static final AtomicInteger sIdGenerator = new AtomicInteger();
-    private static final boolean DEBUG_LOG = false;
-    private static final boolean DEBUG_PTOKEN = true;
-
-    @IntDef({MODE_READ, MODE_DOWNLOAD})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Mode {}
-
-    @IntDef({STATE_NONE, STATE_DOWNLOADING, STATE_FINISHED, STATE_FAILED})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface State {}
-
     public static final int MODE_READ = 0;
     public static final int MODE_DOWNLOAD = 1;
-
     public static final int STATE_NONE = 0;
     public static final int STATE_DOWNLOADING = 1;
     public static final int STATE_FINISHED = 2;
     public static final int STATE_FAILED = 3;
-
-    public static final int DECODE_THREAD_NUM = 1;
-
+    public static final int DECODE_THREAD_NUM = 2;
     public static final String SPIDER_INFO_FILENAME = ".ehviewer";
-
+    private static final String TAG = SpiderQueen.class.getSimpleName();
+    private static final AtomicInteger sIdGenerator = new AtomicInteger();
+    private static final boolean DEBUG_LOG = false;
+    private static final boolean DEBUG_PTOKEN = true;
     private static final String[] URL_509_SUFFIX_ARRAY = {
             "/509.gif",
             "/509s.gif"
     };
-
     private static final SparseJLArray<SpiderQueen> sQueenMap = new SparseJLArray<>();
-
     @NonNull
     private final OkHttpClient mHttpClient;
     @NonNull
@@ -127,54 +116,43 @@ public final class SpiderQueen implements Runnable {
     private final GalleryInfo mGalleryInfo;
     @NonNull
     private final SpiderDen mSpiderDen;
-
-    private int mReadReference = 0;
-    private int mDownloadReference = 0;
-
-    // It mQueenThread is null, failed or stopped
-    @Nullable
-    private volatile Thread mQueenThread;
     private final Object mQueenLock = new Object();
-
     private final Thread[] mDecodeThreadArray = new Thread[DECODE_THREAD_NUM];
     private final int[] mDecodeIndexArray = new int[DECODE_THREAD_NUM];
     private final Queue<Integer> mDecodeRequestQueue = new LinkedList<>();
-
     private final Object mWorkerLock = new Object();
-    private ThreadPoolExecutor mWorkerPoolExecutor;
-    private int mWorkerCount;
-
     private final Object mPTokenLock = new Object();
     private final AtomicReference<SpiderInfo> mSpiderInfo = new AtomicReference<>();
     private final Queue<Integer> mRequestPTokenQueue = new ConcurrentLinkedQueue<>();
-
     private final Object mPageStateLock = new Object();
-    private volatile int[] mPageStateArray;
-
     // Store request page. The index may be invalid
     private final Queue<Integer> mRequestPageQueue = new LinkedList<>();
     // Store preload page. The index may be invalid
     private final Queue<Integer> mRequestPageQueue2 = new LinkedList<>();
     // Store force request page. The index may be invalid
     private final Queue<Integer> mForceRequestPageQueue = new LinkedList<>();
-    // For download, when it go to mPageStateArray.size(), done
-    private volatile int mDownloadPage = -1;
-
     private final AtomicInteger mDownloadedPages = new AtomicInteger(0);
     private final AtomicInteger mFinishedPages = new AtomicInteger(0);
-
-    private AtomicReference<String> showKey = new AtomicReference<>();
     private final Object showKeyLock = new Object();
-
     // Store page error
     private final ConcurrentHashMap<Integer, String> mPageErrorMap = new ConcurrentHashMap<>();
     // Store page download percent
     private final ConcurrentHashMap<Integer, Float> mPagePercentMap = new ConcurrentHashMap<>();
-
     private final List<OnSpiderListener> mSpiderListeners = new ArrayList<>();
-
     private final int mWorkerMaxCount;
     private final int mPreloadNumber;
+    private final int mDownloadDelay;
+    private int mReadReference = 0;
+    private int mDownloadReference = 0;
+    // It mQueenThread is null, failed or stopped
+    @Nullable
+    private volatile Thread mQueenThread;
+    private ThreadPoolExecutor mWorkerPoolExecutor;
+    private int mWorkerCount;
+    private volatile int[] mPageStateArray;
+    // For download, when it go to mPageStateArray.size(), done
+    private volatile int mDownloadPage = -1;
+    private AtomicReference<String> showKey = new AtomicReference<>();
 
     private SpiderQueen(EhApplication application, @NonNull GalleryInfo galleryInfo) {
         mHttpClient = EhApplication.getOkHttpClient(application);
@@ -190,8 +168,52 @@ public final class SpiderQueen implements Runnable {
         }
 
         mWorkerPoolExecutor = new ThreadPoolExecutor(mWorkerMaxCount, mWorkerMaxCount,
-                0, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(),
+                0, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
                 new PriorityThreadFactory(SpiderWorker.class.getSimpleName(), Process.THREAD_PRIORITY_BACKGROUND));
+        mDownloadDelay = Settings.getDownloadDelay();
+    }
+
+    @UiThread
+    public static SpiderQueen obtainSpiderQueen(@NonNull Context context,
+                                                @NonNull GalleryInfo galleryInfo, @Mode int mode) {
+        OSUtils.checkMainLoop();
+
+        SpiderQueen queen = sQueenMap.get(galleryInfo.gid);
+        if (queen == null) {
+            EhApplication application = (EhApplication) context.getApplicationContext();
+            queen = new SpiderQueen(application, galleryInfo);
+            sQueenMap.put(galleryInfo.gid, queen);
+            // Set mode
+            queen.setMode(mode);
+            queen.start();
+        } else {
+            // Set mode
+            queen.setMode(mode);
+        }
+        return queen;
+    }
+
+    @UiThread
+    public static void releaseSpiderQueen(@NonNull SpiderQueen queen, @Mode int mode) {
+        OSUtils.checkMainLoop();
+
+        // Clear mode
+        queen.clearMode(mode);
+
+        if (queen.mReadReference == 0 && queen.mDownloadReference == 0) {
+            // Stop and remove if there is no reference
+            queen.stop();
+            sQueenMap.remove(queen.mGalleryInfo.gid);
+        }
+    }
+
+    public static boolean contain(int[] array, int value) {
+        for (int v : array) {
+            if (v == value) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addOnSpiderListener(OnSpiderListener listener) {
@@ -285,40 +307,6 @@ public final class SpiderQueen implements Runnable {
             for (OnSpiderListener listener : mSpiderListeners) {
                 listener.onGetImageFailure(index, error);
             }
-        }
-    }
-
-    @UiThread
-    public static SpiderQueen obtainSpiderQueen(@NonNull Context context,
-            @NonNull GalleryInfo galleryInfo, @Mode int mode) {
-        OSUtils.checkMainLoop();
-
-        SpiderQueen queen = sQueenMap.get(galleryInfo.gid);
-        if (queen == null) {
-            EhApplication application = (EhApplication) context.getApplicationContext();
-            queen = new SpiderQueen(application, galleryInfo);
-            sQueenMap.put(galleryInfo.gid, queen);
-            // Set mode
-            queen.setMode(mode);
-            queen.start();
-        } else {
-            // Set mode
-            queen.setMode(mode);
-        }
-        return queen;
-    }
-
-    @UiThread
-    public static void releaseSpiderQueen(@NonNull SpiderQueen queen, @Mode int mode) {
-        OSUtils.checkMainLoop();
-
-        // Clear mode
-        queen.clearMode(mode);
-
-        if (queen.mReadReference == 0 && queen.mDownloadReference == 0) {
-            // Stop and remove if there is no reference
-            queen.stop();
-            sQueenMap.remove(queen.mGalleryInfo.gid);
         }
     }
 
@@ -481,8 +469,7 @@ public final class SpiderQueen implements Runnable {
     }
 
     /**
-     * @return
-     * String for error<br>
+     * @return String for error<br>
      * Float for download percent<br>
      * null for wait
      */
@@ -496,7 +483,7 @@ public final class SpiderQueen implements Runnable {
 
         // Fix state for force
         if ((force && (state == STATE_FINISHED || state == STATE_FAILED)) ||
-            (ignoreError && state == STATE_FAILED)) {
+                (ignoreError && state == STATE_FAILED)) {
             // Update state to none at once
             updatePageState(index, STATE_NONE);
             state = STATE_NONE;
@@ -561,15 +548,6 @@ public final class SpiderQueen implements Runnable {
         tryToEnsureWorkers();
 
         return result;
-    }
-
-    public static boolean contain(int[] array, int value) {
-        for (int v: array) {
-            if (v == value) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void ensureWorkers() {
@@ -642,6 +620,39 @@ public final class SpiderQueen implements Runnable {
             os = dst.openOutputStream();
             IOUtils.copy(pipe.open(), os);
             return dst;
+        } catch (IOException e) {
+            return null;
+        } finally {
+            pipe.close();
+            pipe.release();
+            IOUtils.closeQuietly(os);
+        }
+    }
+
+
+    @Nullable
+    public String getExtension(int index) {
+        int state = getPageState(index);
+        if (STATE_FINISHED != state) {
+            return null;
+        }
+
+        InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
+        if (null == pipe) {
+            return null;
+        }
+
+        OutputStream os = null;
+        try {
+            pipe.obtain();
+
+            // Get dst file
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(pipe.open(), null, options);
+            pipe.close();
+
+            return MimeTypeMap.getSingleton().getExtensionFromMimeType(options.outMimeType);
         } catch (IOException e) {
             return null;
         } finally {
@@ -780,7 +791,7 @@ public final class SpiderQueen implements Runnable {
             String referer = EhUrl.getReferer();
             if (DEBUG_PTOKEN) {
                 Log.d(TAG, "index " + index + ", previewIndex " + previewIndex +
-                        ", previewPerPage " + spiderInfo.previewPerPage+ ", url " + url);
+                        ", previewPerPage " + spiderInfo.previewPerPage + ", url " + url);
             }
             Request request = new EhRequestBuilder(url, referer).build();
             Response response = mHttpClient.newCall(request).execute();
@@ -1008,6 +1019,68 @@ public final class SpiderQueen implements Runnable {
         }
     }
 
+    @IntDef({MODE_READ, MODE_DOWNLOAD})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Mode {
+    }
+
+    @IntDef({STATE_NONE, STATE_DOWNLOADING, STATE_FINISHED, STATE_FAILED})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface State {
+    }
+
+    public interface OnSpiderListener {
+
+        void onGetPages(int pages);
+
+        void onGet509(int index);
+
+        /**
+         * @param contentLength -1 for unknown
+         */
+        void onPageDownload(int index, long contentLength, long receivedSize, int bytesRead);
+
+        void onPageSuccess(int index, int finished, int downloaded, int total);
+
+        void onPageFailure(int index, String error, int finished, int downloaded, int total);
+
+        /**
+         * All workers end
+         */
+        void onFinish(int finished, int downloaded, int total);
+
+        void onGetImageSuccess(int index, Image image);
+
+        void onGetImageFailure(int index, String error);
+    }
+
+    private static class AutoCloseInputStream extends InputStream {
+
+        private final InputStreamPipe mPipe;
+        private final InputStream mIs;
+
+        public AutoCloseInputStream(InputStreamPipe pipe, InputStream is) {
+            mPipe = pipe;
+            mIs = is;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return mIs.read();
+        }
+
+        @Override
+        public int read(@NonNull byte[] buffer, int byteOffset, int byteCount) throws IOException {
+            return mIs.read(buffer, byteOffset, byteCount);
+        }
+
+        @Override
+        public void close() throws IOException {
+            mPipe.close();
+            mPipe.release();
+        }
+    }
+
     private class SpiderWorker implements Runnable {
 
         private final long mGid;
@@ -1017,7 +1090,7 @@ public final class SpiderQueen implements Runnable {
         }
 
         private String getPageUrl(long gid, int index, String pToken,
-                String oldPageUrl, String skipHathKey) {
+                                  String oldPageUrl, String skipHathKey) {
             String pageUrl;
             if (oldPageUrl != null) {
                 pageUrl = oldPageUrl;
@@ -1179,7 +1252,10 @@ public final class SpiderQueen implements Runnable {
                         Log.d(TAG, "Start download image " + index);
                     }
 
-                    Call call = mHttpClient.newCall(new EhRequestBuilder(targetImageUrl, referer).build());
+                    // disable Call Timeout for image-downloading requests
+                    Call call = mHttpClient.newBuilder()
+                            .callTimeout(0, TimeUnit.SECONDS).build()
+                            .newCall(new EhRequestBuilder(targetImageUrl, referer).build());
                     Response response = call.execute();
                     ResponseBody responseBody = response.body();
 
@@ -1276,7 +1352,7 @@ public final class SpiderQueen implements Runnable {
                         isPipe.obtain();
                         InputStream inputStream = new BufferedInputStream(isPipe.open());
                         boolean isPlainTxt = true;
-                        for (;;) {
+                        for (; ; ) {
                             int b = inputStream.read();
                             if (b == -1) {
                                 break;
@@ -1311,6 +1387,11 @@ public final class SpiderQueen implements Runnable {
 
                     // Download finished
                     updatePageState(index, STATE_FINISHED);
+                    try {
+                        Thread.sleep(mDownloadDelay);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     return true;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -1381,7 +1462,7 @@ public final class SpiderQueen implements Runnable {
 
             // Check exist for not force request
             if (!force && mSpiderDen.contain(index)) {
-                updatePageState(index , STATE_FINISHED);
+                updatePageState(index, STATE_FINISHED);
                 return true;
             }
 
@@ -1481,7 +1562,8 @@ public final class SpiderQueen implements Runnable {
                 Log.i(TAG, Thread.currentThread().getName() + ": start");
             }
 
-            while (mSpiderDen.isReady() && !Thread.currentThread().isInterrupted() && runInternal());
+            while (mSpiderDen.isReady() && !Thread.currentThread().isInterrupted() && runInternal())
+                ;
 
             boolean finish;
             // Clear in spider worker array
@@ -1593,57 +1675,5 @@ public final class SpiderQueen implements Runnable {
                 Log.i(TAG, Thread.currentThread().getName() + ": end");
             }
         }
-    }
-
-    private class AutoCloseInputStream extends InputStream {
-
-        private final InputStreamPipe mPipe;
-        private final InputStream mIs;
-
-        public AutoCloseInputStream(InputStreamPipe pipe, InputStream is) {
-            mPipe = pipe;
-            mIs = is;
-        }
-
-        @Override
-        public int read() throws IOException {
-            return mIs.read();
-        }
-
-        @Override
-        public int read(@NonNull byte[] buffer, int byteOffset, int byteCount) throws IOException {
-            return mIs.read(buffer, byteOffset, byteCount);
-        }
-
-        @Override
-        public void close() throws IOException {
-            mPipe.close();
-            mPipe.release();
-        }
-    }
-
-    public interface OnSpiderListener {
-
-        void onGetPages(int pages);
-
-        void onGet509(int index);
-
-        /**
-         * @param contentLength -1 for unknown
-         */
-        void onPageDownload(int index, long contentLength, long receivedSize, int bytesRead);
-
-        void onPageSuccess(int index, int finished, int downloaded, int total);
-
-        void onPageFailure(int index, String error, int finished, int downloaded, int total);
-
-        /**
-         * All workers end
-         */
-        void onFinish(int finished, int downloaded, int total);
-
-        void onGetImageSuccess(int index, Image image);
-
-        void onGetImageFailure(int index, String error);
     }
 }

@@ -6,12 +6,14 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 28
+    buildToolsVersion "30.0.2"
+    ndkVersion '22.0.6917172 rc1'
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 107
         versionName "1.7.7.0"
         vectorDrawables.useSupportLibrary = true
@@ -51,8 +53,7 @@ android {
             java.srcDirs += 'src/main/java-gen'
         }
     }
-    ndkVersion '22.0.6917172 rc1'
-    buildToolsVersion '30.0.3'
+
 }
 
 task copyNotice(type: Copy) {

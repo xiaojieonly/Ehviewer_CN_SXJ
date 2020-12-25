@@ -834,10 +834,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             return;
         }
 
+//        if (mThumb == null || mTitle == null || mUploader == null || mCategory == null) {
+//            return;
+//        }
         Resources resources = getResources2();
         AssertUtils.assertNotNull(resources);
 
-        mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
+        mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb,false);
         mTitle.setText(EhUtils.getSuitableTitle(gd));
         mUploader.setText(gd.uploader);
         mCategory.setText(EhUtils.getCategory(gd.category));
