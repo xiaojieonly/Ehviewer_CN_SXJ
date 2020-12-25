@@ -1,7 +1,14 @@
 # 感谢名单：
   ### 感谢 有ex看弟弟很高兴 的无私支持  
   ### 感谢 xxx 的无私支持  ————这位朋友没有备注但是仍然很感谢  
-
+  
+# 2020/12/25 ：
+ ##  修复了一些恼人的bug，包括无法下载和详情页略缩图显示异常的问题，修改了下载线程池，下载速度应该会比以前快一点。  
+ ##  1.7.7.0更新了1.7.6.15的数据库，越过1.7.6.15版本更新可能会导致闪退，遇到的朋友可以尝试使用最新版本或先更新为1.7.6.15再更新为1.7.7.1。    
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/iHHC2jppewf)  密码:d80w  
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+  
 # 2020/12/23 ：
  ##  详情页图片显示异常的问题修复了一半（o(￣┰￣*)ゞ）。。。。。。。。添加了评论黑名单功能，现在可以把不想看到的人全给屏蔽了。
   点击前往下载：[蓝奏云](https://wws.lanzous.com/iN3YPjoio5a)  密码:2duu  
