@@ -126,7 +126,7 @@ public class EhDB {
                 db.execSQL("DROP TABLE QUICK_SEARCH");
                 db.execSQL("ALTER TABLE QUICK_SEARCH2 RENAME TO QUICK_SEARCH");
             case 4 :
-                db.execSQL("DROP TABLE Black_List");
+                db.execSQL("DROP TABLE IF EXISTS \"Black_List\"");
                 db.execSQL("CREATE TABLE " + "\"Black_List\" (" + //
                         "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                         "\"BADGAYNAME\" TEXT," + // 1: badgayname

@@ -45,6 +45,16 @@ public class EhDaoGenerator {
     private static final String BOOKMARK_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
     private static final String FILTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
     private static final String BLACKLIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
+    private static final String ARTIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/ArtistTag.java";
+    private static final String CHARACTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/CharacterTag.java";
+    private static final String FEMALE_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/FemaleTag.java";
+    private static final String GROUP_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/GroupTag.java";
+    private static final String LANGUAGE_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/LanguageTag.java";
+    private static final String MALE_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/MaleTag.java";
+    private static final String MISC_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/MiscTag.java";
+    private static final String PARODY_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/ParodyTag.java";
+    private static final String RECLASS_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/ReclassTag.java";
+    private static final String ROWS_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/RowsTag.java";
 
     public static void generate() throws Exception {
         Utilities.deleteContents(new File(DELETE_DIR));
@@ -62,6 +72,16 @@ public class EhDaoGenerator {
         addLocalFavorites(schema);
         addBookmarks(schema);
         addFilter(schema);
+        addArtistTag(schema);
+        addCharacterTag(schema);
+        addFemaleTag(schema);
+        addGroupTag(schema);
+        addLanguageTag(schema);
+        addMaleTag(schema);
+        addMiscTag(schema);
+        addParodyTag(schema);
+        addReclassTag(schema);
+        addRowsTag(schema);
         new DaoGenerator().generateAll(schema, OUT_DIR);
 
         adjustDownloadInfo();
@@ -71,8 +91,317 @@ public class EhDaoGenerator {
         adjustLocalFavoriteInfo();
         adjustBookmarkInfo();
         adjustFilter();
+        adjustArtistTag();
+        adjustCharacterTag();
+        adjustFemaleTag();
+        adjustGroupTag();
+        adjustLanguageTag();
+        adjustMaleTag();
+        adjustMiscTag();
+        adjustParodyTag();
+        adjustReclassTag();
+        adjustRowsTag();
     }
 
+    private static void addRowsTag(Schema schema) {
+        Entity entity = schema.addEntity("RowsTag");
+        entity.setTableName("ROWS");
+        entity.setClassNameDao("RowsTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustRowsTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(ROWS_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(ROWS_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addReclassTag(Schema schema) {
+        Entity entity = schema.addEntity("ReclassTag");
+        entity.setTableName("RECLASS");
+        entity.setClassNameDao("ReclassTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustReclassTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(RECLASS_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(RECLASS_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addParodyTag(Schema schema) {
+        Entity entity = schema.addEntity("ParodyTag");
+        entity.setTableName("PARODY");
+        entity.setClassNameDao("ParodyTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustParodyTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(PARODY_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(PARODY_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addMiscTag(Schema schema) {
+        Entity entity = schema.addEntity("MiscTag");
+        entity.setTableName("MISC");
+        entity.setClassNameDao("MiscTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustMiscTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(MISC_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(MISC_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addMaleTag(Schema schema) {
+        Entity entity = schema.addEntity("MaleTag");
+        entity.setTableName("MALE");
+        entity.setClassNameDao("MaleTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustMaleTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(MALE_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(MALE_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addLanguageTag(Schema schema) {
+        Entity entity = schema.addEntity("LanguageTag");
+        entity.setTableName("LANGUAGE");
+        entity.setClassNameDao("LanguageTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustLanguageTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(LANGUAGE_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(LANGUAGE_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addGroupTag(Schema schema) {
+        Entity entity = schema.addEntity("GroupTag");
+        entity.setTableName("TAGGROUP");
+        entity.setClassNameDao("GroupTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustGroupTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(GROUP_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(GROUP_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addFemaleTag(Schema schema) {
+        Entity entity = schema.addEntity("FemaleTag");
+        entity.setTableName("FEMALE");
+        entity.setClassNameDao("FemaleTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustFemaleTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(FEMALE_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(FEMALE_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addCharacterTag(Schema schema) {
+        Entity entity = schema.addEntity("CharacterTag");
+        entity.setTableName("CHARACTER");
+        entity.setClassNameDao("CharacterTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustCharacterTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(CHARACTER_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(CHARACTER_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
+
+    private static void addArtistTag(Schema schema) {
+        Entity entity = schema.addEntity("ArtistTag");
+        entity.setTableName("ARTIST");
+        entity.setClassNameDao("ArtistTagDao");
+        entity.addIdProperty().primaryKey().autoincrement();
+        entity.addStringProperty("originalLabel").index();
+        entity.addStringProperty("name");
+        entity.addStringProperty("description");
+        entity.addStringProperty("externalLink");
+    }
+
+
+    private static void adjustArtistTag() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(ARTIST_PATH));
+
+        // Set all field public
+        javaClass.getField("id").setPublic();
+        javaClass.getField("originalLabel").setPublic();
+        javaClass.getField("name").setPublic();
+        javaClass.getField("description").setPublic();
+        javaClass.getField("externalLink").setPublic();
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\treturn name;\n" +
+                "\t}");
+        FileWriter fileWriter = new FileWriter(ARTIST_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
 
     private static void addBlackList(Schema schema) {
         Entity entity = schema.addEntity("BlackList");
