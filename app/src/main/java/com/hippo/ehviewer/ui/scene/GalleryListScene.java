@@ -95,7 +95,7 @@ import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
-import com.hippo.util.TagTranslationutil;
+import com.hippo.ehviewer.util.TagTranslationutil;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.ContentLayout;
 import com.hippo.widget.FabLayout;
@@ -811,13 +811,7 @@ public final class GalleryListScene extends BaseScene
                     EhTagDatabase ehTags = EhTagDatabase.getInstance(context);
                     //根据‘：’分割字符串为组名和标签名
                     String[] tags = text.split(":");
-//                    quickSearch.name = TagTranslation.translationIt(text,ehTags);
-                    //翻译组名
-//                    String group = ehTags.getTranslation("n:" + tags[0]);
-//                    //翻译标签名
-//                    String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
-//                    String tagstr = ehTags.getTranslation( prefix != null ? prefix+tags[1] : ""+tags[1] );
-                    //重设标签名称
+
                     quickSearch.name = TagTranslationutil.getTagCN(tags,ehTags);
                 }else {
                     quickSearch.name = text;

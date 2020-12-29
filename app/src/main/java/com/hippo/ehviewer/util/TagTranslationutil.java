@@ -1,14 +1,21 @@
-package com.hippo.util;
+package com.hippo.ehviewer.util;
 
+import android.content.res.AssetManager;
+
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.client.EhTagDatabase;
+import com.hippo.ehviewer.dao.TagTranslation;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TagTranslationutil {
 
@@ -44,37 +51,5 @@ public class TagTranslationutil {
     }
 
 
-    private List<Object> tagsList(String path,String transRow){
-        List<String> readlist = fileReader(path);
-        List<Object> daoList = new ArrayList<>();
-        for (int i = 0; i < readlist.size(); i++) {
-            String[] line = readlist.get(i).split("\\|");
 
-        }
-
-        return daoList;
-
-    }
-
-    private List<String> fileReader(String path){
-        List<String> readlist = new ArrayList<>();
-//        File file = new File("daogenerator/src/main/java/com/hippo/ehviewer/daogenerator/database/artist.txt");
-        File file = new File(path);
-        String encoding = System.getProperty("file.encoding");
-        try {
-            if (file.isFile() && file.exists()){
-                InputStreamReader textReader = new InputStreamReader(new FileInputStream(file),encoding);
-                BufferedReader bufferedReader = new BufferedReader(textReader);
-                String line;
-                while ((line = bufferedReader.readLine()) != null){
-                    readlist.add(line);
-                }
-            }else {
-                System.out.println("路径有误");
-            }
-        }catch (IOException e){
-            System.err.println("????????");
-        }
-        return readlist;
-    }
 }

@@ -36,16 +36,17 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.DownloadLabelDao;
 import com.hippo.ehviewer.dao.DownloadsDao;
 import com.hippo.ehviewer.dao.Filter;
-import com.hippo.ehviewer.dao.FilterDao;
 import com.hippo.ehviewer.dao.HistoryDao;
 import com.hippo.ehviewer.dao.HistoryInfo;
 import com.hippo.ehviewer.dao.LocalFavoriteInfo;
 import com.hippo.ehviewer.dao.LocalFavoritesDao;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.dao.QuickSearchDao;
+import com.hippo.ehviewer.dao.TagTranslation;
+import com.hippo.ehviewer.dao.TagTranslationDao;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.util.TagTranslationutil;
 import com.hippo.util.ExceptionUtils;
-import com.hippo.util.LogCat;
 import com.hippo.util.SqlUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
@@ -549,6 +550,30 @@ public class EhDB {
             putLocalFavorites(gi);
         }
     }
+
+    public static synchronized void insertTagTranslation(TagTranslation tagTranslation){
+        TagTranslationDao dao = sDaoSession.getTagTranslationDao();
+        tagTranslation.id = null;
+        if (tagTranslation != null){
+            dao.insert(tagTranslation);
+        }
+    }
+    public static synchronized void updateTagTranslation(TagTranslation tagTranslation){
+        TagTranslationDao dao = sDaoSession.getTagTranslationDao();
+        dao.update(tagTranslation);
+    }
+
+    public static synchronized String searchTagTranslation(String EnString){
+        TagTranslationDao dao = sDaoSession.getTagTranslationDao();
+        List<TagTranslation> tagTranslationList = dao.queryRaw("where ORIGINAL_LABEL =\'"+EnString+"\'");
+        if (tagTranslationList.size() >= 1) {
+            return tagTranslationList.get(0).name;
+        }else {
+            return null;
+        }
+    }
+
+
 
     public static synchronized List<BlackList> getAllBlackList(){
         BlackListDao dao = sDaoSession.getBlackListDao();
