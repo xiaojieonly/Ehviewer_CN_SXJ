@@ -277,9 +277,9 @@
 
     <string-array name="tag_translation_metadata" tools:ignore="InconsistentArrays">
         <item>tag-translations-zh-rCN.sha1</item>
-        <item>https://github.com/seven332/EhViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN.sha1</item>
+        <item>https://github.com/Mapaler/EhViewer/tree/tag-translations/tag-translations/tag-translations-zh-rCN.sha1</item>
         <item>tag-translations-zh-rCN</item>
-        <item>https://github.com/seven332/EhViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN</item>
+        <item>https://github.com/Mapaler/EhViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN</item>
     </string-array>
 
     <string-array name="proxy_types">
