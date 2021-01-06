@@ -45,7 +45,7 @@ public class EhDaoGenerator {
     private static final String BOOKMARK_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
     private static final String FILTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
     private static final String BLACKLIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
-    private static final String TRANSLATION_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/TagTranslation.java";
+
 
     public static void generate() throws Exception {
         Utilities.deleteContents(new File(DELETE_DIR));
@@ -63,7 +63,6 @@ public class EhDaoGenerator {
         addLocalFavorites(schema);
         addBookmarks(schema);
         addFilter(schema);
-        addTagTranslation(schema);
         new DaoGenerator().generateAll(schema, OUT_DIR);
 
         adjustDownloadInfo();
@@ -73,38 +72,9 @@ public class EhDaoGenerator {
         adjustLocalFavoriteInfo();
         adjustBookmarkInfo();
         adjustFilter();
-        adjustTagTranslation();
-    }
-
-    private static void addTagTranslation(Schema schema) {
-        Entity entity = schema.addEntity("TagTranslation");
-        entity.setTableName("TagTranslation");
-        entity.setClassNameDao("TagTranslationDao");
-        entity.addIdProperty().primaryKey().autoincrement();
-        entity.addStringProperty("originalLabel").index().unique();
-        entity.addStringProperty("name");
-        entity.addStringProperty("description");
-        entity.addStringProperty("externalLink");
     }
 
 
-    private static void adjustTagTranslation() throws Exception {
-        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(TRANSLATION_PATH));
-
-        // Set all field public
-        javaClass.getField("id").setPublic();
-        javaClass.getField("originalLabel").setPublic();
-        javaClass.getField("name").setPublic();
-        javaClass.getField("description").setPublic();
-        javaClass.getField("externalLink").setPublic();
-        javaClass.addMethod("\t@Override\n" +
-                "\tpublic String toString() {\n" +
-                "\t\treturn name;\n" +
-                "\t}");
-        FileWriter fileWriter = new FileWriter(TRANSLATION_PATH);
-        fileWriter.write(javaClass.toString());
-        fileWriter.close();
-    }
 
 
     private static void addBlackList(Schema schema) {

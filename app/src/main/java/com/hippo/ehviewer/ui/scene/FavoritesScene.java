@@ -877,6 +877,16 @@ public class FavoritesScene extends BaseScene implements
                         .show();
                 break;
             }
+            case 5: { // share
+//                DeleteDialogHelper helper = new DeleteDialogHelper();
+                new AlertDialog.Builder(context)
+                        .setTitle(R.string.share_favorites_dialog_title)
+                        .setMessage(getString(R.string.share_favorites_dialog_message, mModifyGiList.size()))
+//                        .setPositiveButton(android.R.string.ok, helper)
+//                        .setOnCancelListener(helper)
+                        .show();
+                break;
+            }
         }
     }
 

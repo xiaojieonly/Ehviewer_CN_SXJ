@@ -725,7 +725,9 @@
     <string name="favorites_title">%s</string>
     <string name="favorites_title_2">%1$s - %2$s</string>
     <string name="delete_favorites_dialog_title">删除收藏</string>
+    <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="delete_favorites_dialog_message">删除 %d 项收藏？</string>
+    <string name="share_favorites_dialog_message">分享 %d 项收藏？</string>
     <string name="move_favorites_dialog_title">移动收藏</string>
     <string name="default_favorites_collection">默认收藏夹</string>
     <string name="let_me_select">让我选择</string>
