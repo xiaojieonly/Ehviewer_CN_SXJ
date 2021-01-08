@@ -24,6 +24,6 @@
 <!--    "@string/pd_folder_share"-->
     <path
         android:fillColor="@color/primary_drawable_dark"
-        android:pathData="@string/pd_folder_share"/>
+        android:pathData="@string/pd_folder_add"/>
 
 </vector>

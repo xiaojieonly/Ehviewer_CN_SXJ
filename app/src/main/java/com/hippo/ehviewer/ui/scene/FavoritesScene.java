@@ -899,6 +899,8 @@ public class FavoritesScene extends BaseScene implements
                 mFabLayout.setSecondaryFabVisibilityAt(2, false);
                 mFabLayout.setSecondaryFabVisibilityAt(3, false);
                 mFabLayout.setSecondaryFabVisibilityAt(4, false);
+                mFabLayout.setSecondaryFabVisibilityAt(5, true);
+                mFabLayout.setSecondaryFabVisibilityAt(6, false);
             }
         }
     };
@@ -918,6 +920,8 @@ public class FavoritesScene extends BaseScene implements
             mFabLayout.setSecondaryFabVisibilityAt(2, true);
             mFabLayout.setSecondaryFabVisibilityAt(3, true);
             mFabLayout.setSecondaryFabVisibilityAt(4, true);
+            mFabLayout.setSecondaryFabVisibilityAt(5, false);
+            mFabLayout.setSecondaryFabVisibilityAt(6, true);
         }
     }
 
