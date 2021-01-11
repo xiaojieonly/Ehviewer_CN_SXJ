@@ -515,6 +515,16 @@ public class EhDB {
         return result;
     }
 
+    public static synchronized GalleryInfo searchLocalFavorites(long query) {
+        //        query = SqlUtils.sqlEscapeString("%" + query+ "%");
+        LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
+        List<LocalFavoriteInfo> list = dao.queryBuilder().orderDesc(LocalFavoritesDao.Properties.Time)
+                .where(LocalFavoritesDao.Properties.Gid.eq(query)).list();
+        GalleryInfo result = new GalleryInfo();
+        result = list.get(0);
+        return result;
+    }
+
     public static synchronized void removeLocalFavorites(long gid) {
         sDaoSession.getLocalFavoritesDao().deleteByKey(gid);
     }
@@ -550,29 +560,6 @@ public class EhDB {
             putLocalFavorites(gi);
         }
     }
-
-    public static synchronized void insertTagTranslation(TagTranslation tagTranslation){
-        TagTranslationDao dao = sDaoSession.getTagTranslationDao();
-        tagTranslation.id = null;
-        if (tagTranslation != null){
-            dao.insert(tagTranslation);
-        }
-    }
-    public static synchronized void updateTagTranslation(TagTranslation tagTranslation){
-        TagTranslationDao dao = sDaoSession.getTagTranslationDao();
-        dao.update(tagTranslation);
-    }
-
-    public static synchronized String searchTagTranslation(String EnString){
-        TagTranslationDao dao = sDaoSession.getTagTranslationDao();
-        List<TagTranslation> tagTranslationList = dao.queryRaw("where ORIGINAL_LABEL =\'"+EnString+"\'");
-        if (tagTranslationList.size() >= 1) {
-            return tagTranslationList.get(0).name;
-        }else {
-            return null;
-        }
-    }
-
 
 
     public static synchronized List<BlackList> getAllBlackList(){

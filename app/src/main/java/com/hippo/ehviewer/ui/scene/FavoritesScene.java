@@ -73,6 +73,7 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.DrawerLifeCircle;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
+import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.ehviewer.widget.SearchBar;
@@ -826,6 +827,9 @@ public class FavoritesScene extends BaseScene implements
                 case 1: // Refresh
                     mHelper.refresh();
                     break;
+                case 6: // add share
+//                    mHelper.refresh();
+                    break;
             }
             view.setExpanded(false);
             return;
@@ -877,13 +881,13 @@ public class FavoritesScene extends BaseScene implements
                         .show();
                 break;
             }
-            case 5: { // share
-//                DeleteDialogHelper helper = new DeleteDialogHelper();
+            case 6: { // share
+                ShareDialogHelper share = new ShareDialogHelper();
                 new AlertDialog.Builder(context)
                         .setTitle(R.string.share_favorites_dialog_title)
-                        .setMessage(getString(R.string.share_favorites_dialog_message, mModifyGiList.size()))
-//                        .setPositiveButton(android.R.string.ok, helper)
-//                        .setOnCancelListener(helper)
+                        .setMessage(getString(R.string.share_favorites_dialog_message, mModifyGiList.get(0).title))
+                        .setPositiveButton(android.R.string.ok, share)
+                        .setOnCancelListener(share)
                         .show();
                 break;
             }
@@ -1042,6 +1046,34 @@ public class FavoritesScene extends BaseScene implements
                     mDrawerAdapter.notifyDataSetChanged();
                 }
             }
+        }
+    }
+
+    private class ShareDialogHelper implements DialogInterface.OnClickListener,
+            DialogInterface.OnCancelListener {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            if (which != DialogInterface.BUTTON_POSITIVE) {
+                return;
+            }
+            if (mRecyclerView == null || mHelper == null || mUrlBuilder == null) {
+                return;
+            }
+
+            mRecyclerView.outOfCustomChoiceMode();
+            long[] gidArray = new long[mModifyGiList.size()];
+            for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
+                gidArray[i] = mModifyGiList.get(i).gid;
+            }
+            GalleryInfo galleryInfo = EhDB.searchLocalFavorites(gidArray[0]);
+            ClipboardUtil.copy(galleryInfo);
+
+        }
+
+        @Override
+        public void onCancel(DialogInterface dialog) {
+            mModifyGiList.clear();
         }
     }
 
