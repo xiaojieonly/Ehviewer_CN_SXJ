@@ -629,7 +629,7 @@
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
     <string name="settings_advanced_import_data_successfully">导入数据成功</string>
 
-    <string name="settings_about">关于</string>
+    <string name="settings_about">更新与支持</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_author_summary" translatable="false">Hippo &lt;ehviewersu$gmail.com&gt;</string>
     <string name="settings_about_telegram">Telegram</string>
@@ -728,6 +728,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="delete_favorites_dialog_message">删除 %d 项收藏？</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
+    <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
     <string name="move_favorites_dialog_title">移动收藏</string>
     <string name="default_favorites_collection">默认收藏夹</string>
     <string name="let_me_select">让我选择</string>

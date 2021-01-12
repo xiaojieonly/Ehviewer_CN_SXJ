@@ -828,7 +828,19 @@ public class FavoritesScene extends BaseScene implements
                     mHelper.refresh();
                     break;
                 case 6: // add share
-//                    mHelper.refresh();
+                    mModifyGiList.clear();
+
+                    AddDialogHelper add = new AddDialogHelper();
+
+                    mModifyGiList.add(ClipboardUtil.getGalleryInfoFromClip());
+
+                    new AlertDialog.Builder(context)
+                            .setTitle(R.string.share_favorites_dialog_title)
+                            .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
+                            .setPositiveButton(android.R.string.ok, add)
+                            .setOnCancelListener(add)
+                            .show();
+                    mHelper.refresh();
                     break;
             }
             view.setExpanded(false);
@@ -1046,6 +1058,32 @@ public class FavoritesScene extends BaseScene implements
                     mDrawerAdapter.notifyDataSetChanged();
                 }
             }
+        }
+    }
+
+    private class AddDialogHelper implements DialogInterface.OnClickListener,
+            DialogInterface.OnCancelListener {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            if (which != DialogInterface.BUTTON_POSITIVE) {
+                return;
+            }
+            if (mRecyclerView == null || mHelper == null || mUrlBuilder == null || mModifyGiList == null) {
+                return;
+            }
+
+            mRecyclerView.outOfCustomChoiceMode();
+
+
+            EhDB.putLocalFavorites(mModifyGiList);
+
+
+        }
+
+        @Override
+        public void onCancel(DialogInterface dialog) {
+            mModifyGiList.clear();
         }
     }
 

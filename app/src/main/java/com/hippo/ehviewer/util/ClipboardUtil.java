@@ -29,22 +29,6 @@ public class ClipboardUtil {
     }
 
     /**
-     * 获取系统剪贴板内容
-     */
-    public static String getClipContent() {
-        ClipboardManager manager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
-        if (manager != null) {
-            if (manager.hasPrimaryClip() && manager.getPrimaryClip().getItemCount() > 0) {
-                CharSequence addedText = manager.getPrimaryClip().getItemAt(0).getText();
-                String addedTextString = String.valueOf(addedText);
-                if (!TextUtils.isEmpty(addedTextString)) {
-                    return addedTextString;
-                }
-            }
-        }
-        return "";
-    }
-    /**
      * 清空剪贴板内容
      */
     public static void clearClipboard() {
@@ -59,6 +43,14 @@ public class ClipboardUtil {
         }
     }
 
+    public static GalleryInfo getGalleryInfoFromClip(){
+        GalleryInfo galleryInfo = new GalleryInfo();
+
+        String galleryString = getClipContent();
+        clearClipboard();
+
+        return galleryInfo;
+    }
 
     private static String reduceString(GalleryInfo galleryInfo){
         String s = "hello world!";
@@ -66,4 +58,20 @@ public class ClipboardUtil {
         return s;
     }
 
+    /**
+     * 获取系统剪贴板内容
+     */
+    private static String getClipContent() {
+        ClipboardManager manager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
+        if (manager != null) {
+            if (manager.hasPrimaryClip() && manager.getPrimaryClip().getItemCount() > 0) {
+                CharSequence addedText = manager.getPrimaryClip().getItemAt(0).getText();
+                String addedTextString = String.valueOf(addedText);
+                if (!TextUtils.isEmpty(addedTextString)) {
+                    return addedTextString;
+                }
+            }
+        }
+        return "";
+    }
 }
