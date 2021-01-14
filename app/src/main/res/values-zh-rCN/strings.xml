@@ -567,7 +567,7 @@
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
     <string name="settings_advanced_import_data_successfully">导入数据成功</string>
 
-    <string name="settings_about">关于</string>
+    <string name="settings_about">更新与支持</string>
     <string name="settings_about_declaration_summary">EhViewer 与 E-Hentai.org 无任何联系</string>
     <string name="settings_about_author">作者</string>
     <string name="settings_about_latest_release">最新版本</string>
@@ -579,7 +579,7 @@
     <string name="settings_about_license_summary">EhViewer 的诞生离不开许多开源项目</string>
     <string name="settings_about_donate">捐赠</string>
     <string name="settings_about_donate_message">你的捐赠不能为你带来特权，但能帮助我继续维护这个应用。</string>
-    <string name="settings_about_donate_alipay">支付宝</string>
+    <string name="settings_about_donate_alipay">邮箱</string>
     <string name="settings_about_donate_paypal">PayPal</string>
     <string name="settings_about_donate_guide">支持指南</string>
     <string name="settings_about_donate_open">打开</string>

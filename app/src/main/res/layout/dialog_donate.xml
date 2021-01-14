@@ -17,6 +17,7 @@
 
 <!--linkpackage com.hippo.ehviewer.ui.fragment.AboutFragment-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -30,6 +31,50 @@
   <Space
       android:layout_width="wrap_content"
       android:layout_height="@dimen/keyline_margin" />
+
+
+
+
+  <RelativeLayout
+      android:id="@+id/RelativeLayout1"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" >
+  <ImageView
+      android:layout_weight="1"
+      android:layout_width="wrap_content"
+      android:layout_height="230dp"
+      android:layout_toLeftOf="@+id/image_center"
+      android:background="@drawable/zhifubao" />
+
+    <View
+        android:id="@+id/image_center"
+        android:layout_width="10dp"
+        android:layout_height="220dp"
+        android:layout_centerInParent="true"
+        android:layout_centerVertical="true"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="?attr/dividerColor" />
+
+    <ImageView
+      android:layout_weight="1"
+      android:layout_width="wrap_content"
+      android:layout_height="230dp"
+      android:layout_toRightOf="@+id/image_center"
+      android:background="@drawable/weixin" />
+  </RelativeLayout>
+
+
+
+
+
+
+
+
+
+
+
+
 
   <TextView
       android:layout_width="match_parent"
