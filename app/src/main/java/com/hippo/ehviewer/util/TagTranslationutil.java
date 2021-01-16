@@ -2,20 +2,9 @@ package com.hippo.ehviewer.util;
 
 import android.content.res.AssetManager;
 
-import com.hippo.ehviewer.EhDB;
-import com.hippo.ehviewer.client.EhTagDatabase;
-import com.hippo.ehviewer.dao.TagTranslation;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.hippo.ehviewer.client.EhTagDatabase;
+
 
 public class TagTranslationutil {
 

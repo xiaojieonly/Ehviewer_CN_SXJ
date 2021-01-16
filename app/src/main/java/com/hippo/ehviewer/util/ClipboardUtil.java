@@ -9,6 +9,8 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.util.ExceptionUtils;
 
+import org.json.JSONObject;
+
 public class ClipboardUtil {
     /**
      * 实现文本复制功能
@@ -31,7 +33,7 @@ public class ClipboardUtil {
     /**
      * 清空剪贴板内容
      */
-    public static void clearClipboard() {
+    private static void clearClipboard() {
         ClipboardManager manager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
         if (manager != null) {
             try {
