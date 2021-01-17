@@ -18,7 +18,7 @@ public class ClipboardUtil {
      * @param galleryInfo 复制的对象
      */
     public static void copy(GalleryInfo galleryInfo) {
-        String content = reduceString(galleryInfo);
+        String content = JsonClipUtil.Encryption(galleryInfo);
         if (!TextUtils.isEmpty(content)) {
             // 得到剪贴板管理器
             ClipboardManager cmb = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
@@ -28,6 +28,17 @@ public class ClipboardUtil {
             // 把数据集设置（复制）到剪贴板
             cmb.setPrimaryClip(clipData);
         }
+    }
+
+
+
+    public static GalleryInfo getGalleryInfoFromClip(){
+        GalleryInfo galleryInfo = new GalleryInfo();
+
+        String galleryString = getClipContent();
+        clearClipboard();
+
+        return galleryInfo;
     }
 
     /**
@@ -45,20 +56,6 @@ public class ClipboardUtil {
         }
     }
 
-    public static GalleryInfo getGalleryInfoFromClip(){
-        GalleryInfo galleryInfo = new GalleryInfo();
-
-        String galleryString = getClipContent();
-        clearClipboard();
-
-        return galleryInfo;
-    }
-
-    private static String reduceString(GalleryInfo galleryInfo){
-        String s = "hello world!";
-
-        return s;
-    }
 
     /**
      * 获取系统剪贴板内容

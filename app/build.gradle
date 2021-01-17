@@ -15,7 +15,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 107
-        versionName "1.7.7.0"
+        versionName "1.7.7.1"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
@@ -81,7 +81,7 @@ dependencies {
     implementation "androidx.browser:browser:1.3.0"
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation "androidx.fragment:fragment:1.3.0-rc01"
-    implementation group: 'com.alibaba', name: 'fastjson', version: '1.2.73'
+    implementation group: 'com.alibaba', name: 'fastjson', version: '1.2.75'
 
     implementation 'com.google.android.material:material:1.0.0'
 //    implementation 'com.google.firebase:firebase-core:16.0.9'
