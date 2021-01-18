@@ -827,7 +827,7 @@ public class FavoritesScene extends BaseScene implements
                 case 1: // Refresh
                     mHelper.refresh();
                     break;
-                case 6: // add share
+                case 5: // add share
                     mModifyGiList.clear();
 
                     AddDialogHelper add = new AddDialogHelper();
