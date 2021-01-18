@@ -5,45 +5,20 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.GalleryInfo;
-import com.hippo.ehviewer.dao.LocalFavoriteInfo;
 import com.hippo.util.ExceptionUtils;
 
-import java.util.zip.DataFormatException;
+import org.json.JSONObject;
 
 public class ClipboardUtil {
-
-    private static final JSONObject defaultInfo ;
-
-    static {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("favoriteName",null);
-        jsonObject.put("favoriteSlot",-2);
-        jsonObject.put("pages",0);
-        jsonObject.put("rated",false);
-        jsonObject.put("simpleTags",null);
-        jsonObject.put("thumbWidth",0);
-        jsonObject.put("thumbHeight",0);
-        jsonObject.put("spanSize",0);
-        jsonObject.put("spanIndex",0);
-        jsonObject.put("spanGroupIndex",0);
-
-        defaultInfo = jsonObject;
-    }
-
-
     /**
      * 实现文本复制功能
      *
      * @param galleryInfo 复制的对象
      */
     public static void copy(GalleryInfo galleryInfo) {
-        //对象转换
         String content = reduceString(galleryInfo);
-
         if (!TextUtils.isEmpty(content)) {
             // 得到剪贴板管理器
             ClipboardManager cmb = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
@@ -53,38 +28,6 @@ public class ClipboardUtil {
             // 把数据集设置（复制）到剪贴板
             cmb.setPrimaryClip(clipData);
         }
-    }
-
-
-    /**
-     * 从剪切板获取数据
-     * @return
-     */
-    public static GalleryInfo getGalleryInfoFromClip() {
-        GalleryInfo galleryInfo = new GalleryInfo();
-
-        String galleryString = null;
-        try {
-            galleryString = new String(GZIPUtils.uncompress(getClipContent().getBytes()));
-        } catch (DataFormatException e) {
-            e.printStackTrace();
-        }
-        clearClipboard();
-        JSONObject.parse(galleryString);
-        return galleryInfo;
-    }
-
-    private static String reduceString(GalleryInfo galleryInfo){
-//        String s = "hello world!";
-
-        String s = JSON.toJSONString((LocalFavoriteInfo)galleryInfo);
-
-
-        String zipString = new String(GZIPUtils.compress(s.getBytes()));
-        return zipString;
-
-
-
     }
 
     /**
@@ -101,6 +44,22 @@ public class ClipboardUtil {
             }
         }
     }
+
+    public static GalleryInfo getGalleryInfoFromClip(){
+        GalleryInfo galleryInfo = new GalleryInfo();
+
+        String galleryString = getClipContent();
+        clearClipboard();
+
+        return galleryInfo;
+    }
+
+    private static String reduceString(GalleryInfo galleryInfo){
+        String s = "hello world!";
+
+        return s;
+    }
+
     /**
      * 获取系统剪贴板内容
      */
