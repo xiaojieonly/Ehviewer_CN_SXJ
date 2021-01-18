@@ -502,7 +502,6 @@ public class EhDB {
         return result;
     }
 
-
     public static synchronized List<GalleryInfo> searchLocalFavorites(String query) {
         query = SqlUtils.sqlEscapeString("%" + query+ "%");
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();

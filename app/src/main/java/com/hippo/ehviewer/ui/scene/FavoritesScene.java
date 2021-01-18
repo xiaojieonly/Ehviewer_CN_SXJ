@@ -833,24 +833,14 @@ public class FavoritesScene extends BaseScene implements
                     AddDialogHelper add = new AddDialogHelper();
 
                     mModifyGiList.add(ClipboardUtil.getGalleryInfoFromClip());
-                    int judge = EhDB.searchLocalFavorites(mModifyGiList.get(0).title).size();
-                    if (judge == 0) {
-                        new AlertDialog.Builder(context)
-                                .setTitle(R.string.share_favorites_dialog_title)
-                                .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
-                                .setPositiveButton(android.R.string.ok, add)
-                                .setOnCancelListener(add)
-                                .show();
-                        mHelper.refresh();
-                    }else {
-                        new AlertDialog.Builder(context)
-                                .setTitle(R.string.share_favorites_dialog_title)
-                                .setMessage(getString(R.string.add_favorites_dialog_error))
-                                .setPositiveButton(android.R.string.ok, add)
-                                .setOnCancelListener(add)
-                                .show();
-                        mHelper.refresh();
-                    }
+
+                    new AlertDialog.Builder(context)
+                            .setTitle(R.string.share_favorites_dialog_title)
+                            .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
+                            .setPositiveButton(android.R.string.ok, add)
+                            .setOnCancelListener(add)
+                            .show();
+                    mHelper.refresh();
                     break;
             }
             view.setExpanded(false);
@@ -1085,9 +1075,9 @@ public class FavoritesScene extends BaseScene implements
 
             mRecyclerView.outOfCustomChoiceMode();
 
-            if (EhDB.searchLocalFavorites(mModifyGiList.get(0).title).size() == 0) {
-                EhDB.putLocalFavorites(mModifyGiList);
-            }
+
+            EhDB.putLocalFavorites(mModifyGiList);
+
 
         }
 

@@ -41,4 +41,30 @@ public final class Utilities {
         }
         return success;
     }
+
+
+    private static String fileReader(String path){
+        String reader="";
+//        File file = new File("daogenerator/src/main/java/com/hippo/ehviewer/daogenerator/database/artist.txt");
+        File file = new File(path);
+        String encoding = System.getProperty("file.encoding");
+        try {
+            if (file.isFile() && file.exists()){
+                InputStreamReader textReader = new InputStreamReader(new FileInputStream(file),encoding);
+                BufferedReader bufferedReader = new BufferedReader(textReader);
+                String line;
+                while ((line = bufferedReader.readLine()) != null){
+                    reader = reader+line;
+                }
+            }else {
+                System.out.println("路径有误");
+            }
+        }catch (IOException e){
+            System.err.println("????????");
+        }
+        return reader;
+    }
+
+
+
 }

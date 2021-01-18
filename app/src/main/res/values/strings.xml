@@ -729,7 +729,6 @@
     <string name="delete_favorites_dialog_message">删除 %d 项收藏？</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
-    <string name="add_favorites_dialog_error">本地已有该收藏！</string>
     <string name="move_favorites_dialog_title">移动收藏</string>
     <string name="default_favorites_collection">默认收藏夹</string>
     <string name="let_me_select">让我选择</string>
