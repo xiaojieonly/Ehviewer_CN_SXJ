@@ -517,7 +517,8 @@ public class EhDB {
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
         List<LocalFavoriteInfo> list = dao.queryBuilder().orderDesc(LocalFavoritesDao.Properties.Time)
                 .where(LocalFavoritesDao.Properties.Gid.eq(query)).list();
-        GalleryInfo result = list.get(0);
+        GalleryInfo result = new GalleryInfo();
+        result = list.get(0);
         return result;
     }
 
