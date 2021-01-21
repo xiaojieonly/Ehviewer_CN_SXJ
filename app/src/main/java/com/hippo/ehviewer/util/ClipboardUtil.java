@@ -70,14 +70,15 @@ public class ClipboardUtil {
             e.printStackTrace();
         }
         clearClipboard();
-        JSONObject.parse(galleryString);
-        return galleryInfo;
+        JSONObject object = (JSONObject) JSONObject.parse(galleryString);
+        object.putAll(defaultInfo);
+        return JSON.toJavaObject(object,GalleryInfo.class);
     }
 
     private static String reduceString(GalleryInfo galleryInfo){
 //        String s = "hello world!";
-
-        String s = JSON.toJSONString((LocalFavoriteInfo)galleryInfo);
+        LocalFavoriteInfo localFavoriteInfo = (LocalFavoriteInfo)galleryInfo;
+        String s = JSON.toJSONString(localFavoriteInfo);
 
 
         String zipString = new String(GZIPUtils.compress(s.getBytes()));
