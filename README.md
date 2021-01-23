@@ -1,15 +1,15 @@
 # 感谢名单： 
-  感谢 \*\*轩 ：Naomi 的无私支持  
-  感谢 \*\*昕 ：感谢大佬一直的付出 的无私支持,老板大气！  
-  感谢 \*\*\- 的无私支持  
-  感谢 \*策 的无私支持  
-  感谢 \*新 的无私支持  
-  感谢 \*\*龙 的无私支持  
-  感谢 \*\*枫 ：杰神单推人 的无私支持  
-  感谢 \*\*浩 ：感谢老哥重建e站精神家园 的无私支持  
-  感谢 \*\*海 ：谢谢 的无私支持  
-  感谢 有ex看弟弟很高兴 的无私支持  
-  感谢 xxx 的无私支持  ————这位朋友没有备注但是仍然很感谢  
+  感谢 \*\*轩 ：Naomi                    的无私支持  
+  感谢 \*\*昕 ：感谢大佬一直的付出        的无私支持,老板大气！  
+  感谢 \*\*\-                           的无私支持  
+  感谢 \*策                             的无私支持  
+  感谢 \*新                             的无私支持  
+  感谢 \*\*龙                           的无私支持  
+  感谢 \*\*枫 ：杰神单推人               的无私支持  
+  感谢 \*\*浩 ：感谢老哥重建e站精神家园   的无私支持  
+  感谢 \*\*海 ：谢谢                    的无私支持  
+  感谢 有ex看弟弟很高兴                  的无私支持  
+  感谢 xxx 的无私支持                   ————这位朋友没有备注/姓名但是仍然很感谢  
 
 # 2021/01/23 ：
  ##  请仔细了解个版本更新日志以防止跳过某些重要版本导致无法使用app，出于对分享数据的安全性的考虑，目前暂不提交分享功能中的加密代码，等之后功能完全成熟后再提交  
@@ -172,35 +172,4 @@ The apk is in app\build\outputs\apk
 Here is the libraries
 
 - [AOSP](http://source.android.com/)
-- [android-advancedrecyclerview](https://github.com/h6ah4i/android-advancedrecyclerview)
-- [Apache Commons Lang](https://commons.apache.org/proper/commons-lang/)
-- [apng](http://apng.sourceforge.net/)
-- [giflib](http://giflib.sourceforge.net)
-- [greenDAO](https://github.com/greenrobot/greenDAO)
-- [jsoup](https://github.com/jhy/jsoup)
-- [libjpeg-turbo](http://libjpeg-turbo.virtualgl.org/)
-- [libpng](http://www.libpng.org/pub/png/libpng.html)
-- [okhttp](https://github.com/square/okhttp)
-- [roaster](https://github.com/forge/roaster)
-- [ShowcaseView](https://github.com/amlcurran/ShowcaseView)
-- [Slabo](https://github.com/TiroTypeworks/Slabo)
-- [TagSoup](http://home.ccil.org/~cowan/tagsoup/)
-
-
-# License
-
-    Copyright (C) 2014-2019 Hippo Seven
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-
-ic_launcher 图标为 Hippo Seven 所有，所有权利保留
+- [android-advancedrecyclerview](https://github.com/h6a
