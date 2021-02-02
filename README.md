@@ -1,16 +1,31 @@
 # 感谢名单： 
-  感谢 \*\*轩 ：Naomi 的无私支持  
-  感谢 \*\*昕 ：感谢大佬一直的付出 的无私支持,老板大气！  
-  感谢 \*\*\- 的无私支持  
-  感谢 \*策 的无私支持  
-  感谢 \*新 的无私支持  
-  感谢 \*\*龙 的无私支持  
-  感谢 \*\*枫 ：杰神单推人 的无私支持  
-  感谢 \*\*浩 ：感谢老哥重建e站精神家园 的无私支持  
-  感谢 \*\*海 ：谢谢 的无私支持  
-  感谢 有ex看弟弟很高兴 的无私支持  
-  感谢 xxx 的无私支持  ————这位朋友没有备注但是仍然很感谢  
-  
+  感谢 \*翰 ：感谢你的维护                  的无私支持  
+  感谢 \*年                               的无私支持
+  感谢 \*福 ：感谢努力，加油                 的无私支持  
+  感谢 \*\*广                            的无私支持  
+  感谢 \*烁 ：感谢大佬重建e站精神家园         的无私支持  
+  感谢 \*\*轩 ：Naomi                    的无私支持  
+  感谢 \*\*昕 ：感谢大佬一直的付出        的无私支持,老板大气！  
+  感谢 \*\*\-                           的无私支持  
+  感谢 \*策                             的无私支持  
+  感谢 \*新                             的无私支持  
+  感谢 \*\*龙                           的无私支持  
+  感谢 \*\*枫 ：杰神单推人               的无私支持  
+  感谢 \*\*浩 ：感谢老哥重建e站精神家园   的无私支持  
+  感谢 \*\*海 ：谢谢                    的无私支持  
+  感谢 有ex看弟弟很高兴                  的无私支持  
+  感谢 xxx 的无私支持                   ————这位朋友没有备注/姓名但是仍然很感谢  
+# 2021/01/28 :
+ ##  新建了一个交流群，感兴趣的可以加下。qq群号:1050579343
+# 2021/01/23 ：
+ ##  请仔细了解个版本更新日志以防止跳过某些重要版本导致无法使用app，出于对分享数据的安全性的考虑，目前暂不提交分享功能中的加密代码，等之后功能完全成熟后再提交  
+ ##  1.7.8.0更新了本地收藏的分享功能以及新的汉化数据库（感谢github用户:枫谷剑仙），为防止新汉化与原有汉化中部分标签变动导致用着不习惯，因此新的数据库不会修改原有已添加了的书签名称。  
+    ### 分享：进入收藏页面（暂时只支持分享本地收藏）-->长按要分享的内容-->点击分享图标-->点击确定-->将自动加入剪切板的神秘代码发送给好友  
+    ### 添加：复制好友给你的神秘代码-->进入本地收藏-->点击右下角的加号-->点击添加按钮（也是个加号）-->点击确定-->刷新列表
+  点击前往下载：[蓝奏云](https://wws.lanzous.com/i2uUukq9tod)  密码:9pin  
+  点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+  [吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+
 # 2020/12/25 ：
  ##  修复了一些恼人的bug，包括无法下载和详情页略缩图显示异常的问题，修改了下载线程池，下载速度应该会比以前快一点。  
  ##  1.7.7.0更新了1.7.6.15的数据库，越过1.7.6.15版本更新可能会导致闪退，遇到的朋友可以尝试使用最新版本或先更新为1.7.6.15再更新为1.7.7.1。    
@@ -163,35 +178,4 @@ The apk is in app\build\outputs\apk
 Here is the libraries
 
 - [AOSP](http://source.android.com/)
-- [android-advancedrecyclerview](https://github.com/h6ah4i/android-advancedrecyclerview)
-- [Apache Commons Lang](https://commons.apache.org/proper/commons-lang/)
-- [apng](http://apng.sourceforge.net/)
-- [giflib](http://giflib.sourceforge.net)
-- [greenDAO](https://github.com/greenrobot/greenDAO)
-- [jsoup](https://github.com/jhy/jsoup)
-- [libjpeg-turbo](http://libjpeg-turbo.virtualgl.org/)
-- [libpng](http://www.libpng.org/pub/png/libpng.html)
-- [okhttp](https://github.com/square/okhttp)
-- [roaster](https://github.com/forge/roaster)
-- [ShowcaseView](https://github.com/amlcurran/ShowcaseView)
-- [Slabo](https://github.com/TiroTypeworks/Slabo)
-- [TagSoup](http://home.ccil.org/~cowan/tagsoup/)
-
-
-# License
-
-    Copyright (C) 2014-2019 Hippo Seven
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-
-ic_launcher 图标为 Hippo Seven 所有，所有权利保留
+- [android-advancedrecyclerview](https://github.com/h6a
