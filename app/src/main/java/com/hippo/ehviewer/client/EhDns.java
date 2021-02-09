@@ -40,19 +40,20 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.dnsoverhttps.DnsOverHttps;
 
+
 public class EhDns implements Dns {
 
   private static final Map<String, List<InetAddress>> builtInHosts;
 
   static {
     Map<String, List<InetAddress>> map = new HashMap<>();
-    put(map, "e-hentai.org", "104.20.26.25+104.20.27.25");
-//    put(map,"exhentai.org", "178.175.132.22+178.175.128.252+178.175.128.254+178.175.129.252+178.175.129.254+178.175.132.20");
-    put(map, "repo.e-hentai.org", "94.100.28.57");
+    put(map, "e-hentai.org", "104.20.134.21");
+//    put(map,"exhentai.org", "178.175.129.252");
+    put(map, "repo.e-hentai.org", "94.100.24.77");
     put(map, "forums.e-hentai.org", "94.100.18.243");
-    put(map, "ehgt.org", "37.48.89.44+178.162.139.24+178.162.140.212+81.171.10.48");
+    put(map, "ehgt.org", "37.48.89.44");
 //    put(map, "ehgt.org", "178.162.139.24");
-    put(map, "ul.ehgt.org", "94.100.24.82+94.100.24.72");
+    put(map, "ul.ehgt.org", "94.100.24.82");
     builtInHosts = map;
   }
 

@@ -4,6 +4,7 @@ buildscript {
     repositories {
         google()
         jcenter()
+
         maven { url "https://maven.fabric.io/public" }
         maven { url "https://jitpack.io" }
     }
@@ -23,6 +24,14 @@ allprojects {
         google()
         jcenter()
         maven { url "https://jitpack.io" }
+        
+        maven{ url 'https://maven.aliyun.com/repository/google'}
+
+        maven{ url 'https://maven.aliyun.com/repository/gradle-plugin'}
+
+        maven{ url 'https://maven.aliyun.com/repository/public'}
+
+        maven{ url 'https://maven.aliyun.com/repository/jcenter'}
     }
 }
 
