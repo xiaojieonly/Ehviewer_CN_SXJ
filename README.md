@@ -20,7 +20,10 @@
    点击前往下载：[蓝奏云](https://wws.lanzous.com/iiQcelixtof)  密码:c0yy  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
-
+ ##  修复了内置host的过期数据：1.7.6.16   安卓10以下专用，仅能看表站，登录功能均用不了
+   点击前往下载：[蓝奏云](https://wws.lanzous.com/iHF0cljssri)  密码:bb6h  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)   
+   
 # 2021/01/28 :
  ##  新建了一个交流群，感兴趣的可以加下。qq群号:1050579343
 # 2021/01/23 ：
