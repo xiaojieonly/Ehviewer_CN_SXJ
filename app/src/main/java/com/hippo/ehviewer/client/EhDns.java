@@ -47,13 +47,14 @@ public class EhDns implements Dns {
 
   static {
     Map<String, List<InetAddress>> map = new HashMap<>();
-    put(map, "e-hentai.org", "104.20.134.21");
+    put(map, "e-hentai.org", "104.20.135.21");
 //    put(map,"exhentai.org", "178.175.129.252");
-    put(map, "repo.e-hentai.org", "94.100.24.77");
+//    put(map, "exhentai.org", "178.175.132.20");
+    put(map, "repo.e-hentai.org", "94.100.24.77+94.100.24.78+94.100.24.79");
     put(map, "forums.e-hentai.org", "94.100.18.243");
-    put(map, "ehgt.org", "37.48.89.44");
+    put(map, "ehgt.org", "37.48.89.44+81.171.10.48");
 //    put(map, "ehgt.org", "178.162.139.24");
-    put(map, "ul.ehgt.org", "94.100.24.82");
+    put(map, "ul.ehgt.org", "94.100.24.82+94.100.24.72");
     builtInHosts = map;
   }
 
@@ -94,6 +95,7 @@ public class EhDns implements Dns {
   @Override
   public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
 //    hostname = hostname.replaceFirst("h.github.io", "e-hentai.org"); // domain fronting
+//    hostname = hostname.replaceFirst("github.io", "e-hentai.org"); // domain fronting
     List<InetAddress> inetAddresses = (List<InetAddress>) hosts.get(hostname);
     if (inetAddresses != null) {
       return inetAddresses;

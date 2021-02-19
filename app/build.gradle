@@ -14,7 +14,7 @@ android {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 108
+        versionCode 109
         versionName "1.7.8.4"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
@@ -114,8 +114,8 @@ dependencies {
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'
 
 //    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
-    implementation 'com.squareup.okhttp3:okhttp:3.14.7'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.9.1'
     
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
