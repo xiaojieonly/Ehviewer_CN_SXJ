@@ -64,6 +64,8 @@ import com.hippo.yorozuya.OSUtils;
 import com.hippo.yorozuya.SimpleHandler;
 import java.io.File;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -117,7 +119,6 @@ public class EhApplication extends RecordingApplication {
     public static EhApplication getInstance() {
         return instance;
     }
-
 
     @SuppressLint("StaticFieldLeak")
     @Override
@@ -343,11 +344,20 @@ public class EhApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
                     .hostnameVerifier((hostname, session) -> true)
                     .dns(new EhDns(application))
+                    .addNetworkInterceptor(sprocket ->{
+                        try{
+                            return sprocket.proceed(sprocket.request());
+                        }catch (NullPointerException e){
+                            throw new NullPointerException(e.getMessage());
+                        }
+                    })
                     .proxySelector(getEhProxySelector(application));
             if (Settings.getDF()) {
-                try {
+                try {//chain
+//                    String algorithm = TrustManagerFactory.getDefaultAlgorithm();
                     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
                             TrustManagerFactory.getDefaultAlgorithm());
+
                     trustManagerFactory.init((KeyStore) null);
                     TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
                     if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
