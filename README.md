@@ -1,26 +1,18 @@
-# 感谢名单： 
-  感谢 \*翰 ：感谢你的维护                  的无私支持  
-  感谢 \*年                               的无私支持
-  感谢 \*福 ：感谢努力，加油                 的无私支持  
-  感谢 \*\*广                            的无私支持  
-  感谢 \*烁 ：感谢大佬重建e站精神家园         的无私支持  
-  感谢 \*\*轩 ：Naomi                    的无私支持  
-  感谢 \*\*昕 ：感谢大佬一直的付出        的无私支持,老板大气！  
-  感谢 \*\*\-                           的无私支持  
-  感谢 \*策                             的无私支持  
-  感谢 \*新                             的无私支持  
-  感谢 \*\*龙                           的无私支持  
-  感谢 \*\*枫 ：杰神单推人               的无私支持  
-  感谢 \*\*浩 ：感谢老哥重建e站精神家园   的无私支持  
-  感谢 \*\*海 ：谢谢                    的无私支持  
-  感谢 有ex看弟弟很高兴                  的无私支持  
-  感谢 xxx 的无私支持                   ————这位朋友没有备注/姓名但是仍然很感谢  
+# [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
+
+
+# 2021/02/09 :
+ ##  很抱歉的告诉大家1.7.6.16版本存在低版本无法使用的情况，虽然修好的希望不是很大（貌似是e站察觉到不太对劲了，所以在请求的时候直接断开链接了），但是我仍在尝试修复。
+
 # 2021/02/09 :
  ##  修复了内置host的过期数据：1.7.8.4
    点击前往下载：[蓝奏云](https://wws.lanzous.com/iiQcelixtof)  密码:c0yy  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
-
+ ##  修复了内置host的过期数据：1.7.6.16   安卓10以下专用，仅能看表站，登录功能均用不了
+   点击前往下载：[蓝奏云](https://wws.lanzous.com/iHF0cljssri)  密码:bb6h  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)   
+   
 # 2021/01/28 :
  ##  新建了一个交流群，感兴趣的可以加下。qq群号:1050579343
 # 2021/01/23 ：
