@@ -79,7 +79,7 @@ public class EhDns implements Dns {
     } catch (UnknownHostException e) {
       e.printStackTrace();
     }
-    dnsOverHttps = builder.post(true).build();
+    dnsOverHttps = builder.post(true).includeIPv6(true).build();
   }
 
   private static void put(Map<String, List<InetAddress>> map, String host, String ip_s) {
