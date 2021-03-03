@@ -14,7 +14,7 @@ android {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 109
+        versionCode 108
         versionName "1.7.8.4"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
