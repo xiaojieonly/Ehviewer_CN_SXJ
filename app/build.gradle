@@ -4,7 +4,7 @@ if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
     apply plugin: 'io.fabric'
 }
-
+//1.7.8.4分支
 android {
     compileSdkVersion 28
     buildToolsVersion "30.0.2"
