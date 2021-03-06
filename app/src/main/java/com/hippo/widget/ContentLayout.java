@@ -299,12 +299,15 @@ public class ContentLayout extends FrameLayout {
         };
 
         private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
-                new LayoutManagerUtils.OnScrollToPositionListener() {
-                    @Override
-                    public void onScrollToPosition(int position) {
-                        ContentHelper.this.onScrollToPosition(position);
-                    }
-                };
+                opsition -> ContentHelper.this.onScrollToPosition(opsition);
+
+//        private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
+//                new LayoutManagerUtils.OnScrollToPositionListener() {
+//                    @Override
+//                    public void onScrollToPosition(int position) {
+//                        ContentHelper.this.onScrollToPosition(position);
+//                    }
+//                };
 
         private void init(ContentLayout contentLayout) {
             mNextPageScrollSize = LayoutUtils.dp2pix(contentLayout.getContext(), 48);
@@ -326,12 +329,18 @@ public class ContentLayout extends FrameLayout {
             mRecyclerView.addOnScrollListener(mOnScrollListener);
             mRefreshLayout.setOnRefreshListener(mOnRefreshListener);
 
-            mTipView.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    refresh();
-                }
-            });
+
+            mTipView.setOnClickListener(
+                    v -> refresh()  //刷新页面
+            );
+
+
+//            mTipView.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    refresh();
+//                }
+//            });
         }
 
         /**

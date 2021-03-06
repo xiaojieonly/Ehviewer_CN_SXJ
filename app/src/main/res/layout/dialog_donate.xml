@@ -49,10 +49,10 @@
     <View
         android:id="@+id/image_center"
         android:layout_width="10dp"
-        android:layout_height="220dp"
+        android:layout_height="230dp"
         android:layout_centerInParent="true"
         android:layout_centerVertical="true"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_marginBottom="10dp"
         android:background="?attr/dividerColor" />
 
@@ -63,17 +63,6 @@
       android:layout_toRightOf="@+id/image_center"
       android:background="@drawable/weixin" />
   </RelativeLayout>
-
-
-
-
-
-
-
-
-
-
-
 
 
   <TextView

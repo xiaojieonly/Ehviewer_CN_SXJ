@@ -831,16 +831,27 @@ public class FavoritesScene extends BaseScene implements
                     mModifyGiList.clear();
 
                     AddDialogHelper add = new AddDialogHelper();
+                    GalleryInfo galleryInfo = ClipboardUtil.getGalleryInfoFromClip();
 
-                    mModifyGiList.add(ClipboardUtil.getGalleryInfoFromClip());
+                    if (galleryInfo != null) {
+                        if (!EhDB.containLocalFavorites(galleryInfo.gid)) {
+                            mModifyGiList.add(galleryInfo);
+                            new AlertDialog.Builder(context)
+                                    .setTitle(R.string.share_favorites_dialog_title)
+                                    .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
+                                    .setPositiveButton(android.R.string.ok, add)
+                                    .setOnCancelListener(add)
+                                    .show();
 
-                    new AlertDialog.Builder(context)
-                            .setTitle(R.string.share_favorites_dialog_title)
-                            .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
-                            .setPositiveButton(android.R.string.ok, add)
-                            .setOnCancelListener(add)
-                            .show();
-                    mHelper.refresh();
+                            mHelper.refresh();
+                        }else {
+                            new AlertDialog.Builder(context)
+                                    .setTitle(R.string.share_favorites_dialog_title)
+                                    .setMessage("已有名为：["+galleryInfo.title+"]的本子，无需重复添加~")
+                                    .setPositiveButton(android.R.string.ok, add)
+                                    .show();
+                        }
+                    }
                     break;
             }
             view.setExpanded(false);

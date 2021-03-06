@@ -79,15 +79,14 @@ public class AboutFragment extends PreferenceFragment
                 .show();
 
 //        String alipayStr = base64Decode("c2V2ZW4zMzJAMTYzLmNvbQ==");
-        String alipayStr = base64Decode("aHR0cHM6Ly9naXRodWIuY29tL3hpYW9qaWVvbmx5L0Vodmlld2VyX0NOX1NYSi9ibG9iL0JpTGlfUENfR2FtZXIvZmVlZGF1dGhvci9zdXBwb3J0Lm1k");
+        String alipayStr = base64Decode("MTAzMTA4MjA5MUBxcS5jb20=");
         TextView alipayText = dialog.findViewById(R.id.alipay_text);
         alipayText.setText(alipayStr);
         dialog.findViewById(R.id.alipay_copy).setOnClickListener(v -> copyToClipboard(alipayStr));
 
-        String guideStr = base64Decode("5oKo55qE5pSv5oyB5piv5oiR5pu05paw55qE5pyA5aSn5Yqo5Yqb77yM5oKo5Y+v5Lul6YCa6L+H6YKu5Lu" +
-                "26I635Y+W5L2c6ICF55qE5pSv5LuY5a6d5oiW5b6u5L+h6LSm5Y+377yM5Lmf5Y+v5Lul6YCa6L+H6YKu5Lu25YWI5L2c6ICF5o+Q5Ye65oKo5oOz6Ka" +
-                "B55qE5paw5Yqf6IO95oiW55uu5YmN5piv5LiN5aW955So55qE5Yqf6IO977yM5oiR5Lya5LiA5LiA5Zue5aSN5bm25YGa5Ye65oSf6LCi44CCKCDigKL" +
-                "MgCDPiSDigKLMgSAp4pyn");
+        String guideStr = base64Decode("5oKo55qE5pSv5oyB5piv5oiR5pu05paw55qE5pyA5aSn5Yqo5Yqb77yM5oKo5Y+v5Lul5oiq5Zu+5ZCO5Zyo5b6u5L+h5oiW5p" +
+                "Sv5LuY5a6d5Lit5omr5o+P5LqM57u056CB5o+Q5L6b546w6YeR5pSv5oyB77yM5Lmf5Y+v5Lul6YCa6L+H6YKu5Lu25YWI5L2c6ICF5o+Q5Ye65oKo5oOz6KaB55qE5paw5Y" +
+                "qf6IO95oiW55uu5YmN5piv5LiN5aW955So55qE5Yqf6IO977yM5oiR5Lya5LiA5LiA5Zue5aSN5bm25YGa5Ye65oSf6LCi44CCKCDigKLMgCDPiSDigKLMgSAp4pyn");
         TextView guideText = dialog.findViewById(R.id.guide_text);
         guideText.setText(guideStr);
 
