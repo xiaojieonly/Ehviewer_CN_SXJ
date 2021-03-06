@@ -24,6 +24,6 @@
 
     <path
         android:fillColor="@color/primary_drawable_dark"
-        android:pathData="@string/pd_go_to"/>
-
+        android:pathData="M22,6L22,22L19.5,22L19.5,16Z"/>
+<!--    android:pathData="@string/pd_go_to"-->
 </vector>

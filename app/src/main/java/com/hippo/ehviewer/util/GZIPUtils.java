@@ -1,42 +1,92 @@
 package com.hippo.ehviewer.util;
 
 
+
+
+import android.util.Base64;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class GZIPUtils {
-    public static byte[] compress(byte input[]) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        Deflater compressor = new Deflater(1);
-        try {
-            compressor.setInput(input);
-            compressor.finish();
-            final byte[] buf = new byte[2048];
-            while (!compressor.finished()) {
-                int count = compressor.deflate(buf);
-                bos.write(buf, 0, count);
-            }
-        } finally {
-            compressor.end();
+
+
+    /**
+     *
+     * 使用gzip进行压缩
+     */
+    public static String compress(String primStr) {
+        if (primStr == null || primStr.length() == 0) {
+            return primStr;
         }
-        return bos.toByteArray();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        GZIPOutputStream gzip = null;
+        try {
+            gzip = new GZIPOutputStream(out);
+            gzip.write(primStr.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (gzip != null) {
+                try {
+                    gzip.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return new String(Base64.encode(out.toByteArray(),Base64.DEFAULT));
     }
 
-    public static byte[] uncompress(byte[] input) throws DataFormatException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        Inflater decompressor = new Inflater();
-        try {
-            decompressor.setInput(input);
-            final byte[] buf = new byte[2048];
-            while (!decompressor.finished()) {
-                int count = decompressor.inflate(buf);
-                bos.write(buf, 0, count);
-            }
-        } finally {
-            decompressor.end();
+    public static String uncompress(String compressedStr) {
+        if (compressedStr == null) {
+            return null;
         }
-        return bos.toByteArray();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayInputStream in = null;
+        GZIPInputStream ginzip = null;
+        byte[] compressed = null;
+        String decompressed = null;
+        try {
+            compressed = Base64.decode(compressedStr.getBytes(),Base64.DEFAULT);
+            in = new ByteArrayInputStream(compressed);
+            ginzip = new GZIPInputStream(in);
+
+            byte[] buffer = new byte[1024];
+            int offset = -1;
+            while ((offset = ginzip.read(buffer)) != -1) {
+                out.write(buffer, 0, offset);
+            }
+            decompressed = out.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (ginzip != null) {
+                try {
+                    ginzip.close();
+                } catch (IOException e) {
+                }
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        return decompressed;
     }
 }
