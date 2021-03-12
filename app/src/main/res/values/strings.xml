@@ -21,6 +21,7 @@
     <!--  black list  -->
     <string name="blacklist_id">用户ID</string>
     <string name="blacklist">黑名单</string>
+    <string name="join_in_blacklist">加入黑名单</string>
     <string name="add_blacklist">添加屏蔽用户</string>
     <string name="blacklist_tip">该屏蔽系统会在 EHentai 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
     <string name="blacklist_text">屏蔽用户</string>
@@ -804,6 +805,7 @@
 
     <string name="download_service">Download Service</string>
     <string name="favorite_name">Favorite</string>
+
 
 
 </resources>

@@ -8,7 +8,7 @@ if (file('google-services.json').exists()) {
 android {
     compileSdkVersion 28
     buildToolsVersion "30.0.2"
-    ndkVersion '22.0.6917172 rc1'
+    ndkVersion '21.3.6528147'
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
