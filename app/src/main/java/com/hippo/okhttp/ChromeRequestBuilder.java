@@ -16,6 +16,8 @@
 
 package com.hippo.okhttp;
 
+import com.hippo.ehviewer.Settings;
+
 import okhttp3.Request;
 
 public class ChromeRequestBuilder extends Request.Builder {
@@ -33,10 +35,13 @@ public class ChromeRequestBuilder extends Request.Builder {
 
     public ChromeRequestBuilder(String url) {
         String host = url.split("/")[2];
-//        if (host.endsWith("e-hentai.org")) {
-//            url = url.replaceFirst("e-hentai.org", "h.github.io");
-////            url = url.replaceFirst("e-hentai.org", "github.io");
-//        } // domain fronting
+        if (Settings.getUR()){
+            if (host.endsWith("e-hentai.org")) {
+//                url = url.replaceFirst("e-hentai.org", "github.com");
+            url = url.replaceFirst("e-hentai.org", "github.io");
+            }
+        }
+ // domain fronting
         url(url);
         addHeader("Host", host);
         addHeader("User-Agent", CHROME_USER_AGENT);

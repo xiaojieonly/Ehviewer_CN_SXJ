@@ -77,6 +77,13 @@ public class Settings {
                 putDoH(true);
             }
         }
+
+        if (!sSettingsPre.contains(KEY_URL_REPLACE)) {
+            if ("CN".equals(Locale.getDefault().getCountry())&& Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                putUR(true);
+            }
+        }
+
     }
 
     private static EhConfig loadEhConfig() {
@@ -1187,6 +1194,16 @@ public class Settings {
         putBoolean(KEY_DOMAIN_FRONTING, value);
     }
 
+    public static final String KEY_URL_REPLACE = "url_replace";
+
+
+    public static boolean getUR() {
+        return getBoolean(KEY_URL_REPLACE, DEFAULT_FRONTING);
+    }
+
+    public static void putUR(boolean value) {
+        putBoolean(KEY_URL_REPLACE, value);
+    }
 
     private static final String KEY_DOWNLOAD_DELAY = "download_delay";
     private static final int DEFAULT_DOWNLOAD_DELAY = 0;

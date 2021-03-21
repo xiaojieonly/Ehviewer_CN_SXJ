@@ -336,9 +336,9 @@ public class EhApplication extends RecordingApplication {
 //                    .proxySelector(getEhProxySelector(application))
 //                    ).build();
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(5, TimeUnit.SECONDS)
-                    .writeTimeout(5, TimeUnit.SECONDS)
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .writeTimeout(10, TimeUnit.SECONDS)
                     .callTimeout(10, TimeUnit.SECONDS)
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))

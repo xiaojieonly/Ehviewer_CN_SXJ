@@ -32,7 +32,9 @@
     <string name="settings_advanced_dns_over_http_title">安全 DNS（DoH）</string>
     <string name="settings_advanced_dns_over_http_summary">解决某些地区的 DNS 污染问题</string>
     <string name="settings_advanced_domain_fronting_title">域名前置</string>
-    <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁</string>
+    <string name="settings_advanced_domain_fronting_summary">url伪装(需重启，开启后账户功能失效)</string>
+    <string name="settings_advanced_url_replace_title">url伪装</string>
+    <string name="settings_advanced_url_replace_summary"></string>
     <string name="settings_about_donate_guide">支持指南</string>
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
