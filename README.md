@@ -2,6 +2,12 @@
 
 
 # 2021/02/09 :
+ ##  修复了合并了1.7.8.x/1.7.6.x两个版本，url伪装功能和域名前置两种解决方案全整合到一个版本里了，只要更具需求选择性开启就行：1.7.9.2
+   点击前往下载：[蓝奏云](https://wws.lanzous.com/iKUHWn7k0uf)  密码:3fhe  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+
+# 2021/02/09 :
  ##  很抱歉的告诉大家1.7.6.16版本存在低版本无法使用的情况，虽然修好的希望不是很大（貌似是e站察觉到不太对劲了，所以在请求的时候直接断开链接了），但是我仍在尝试修复。
 
 # 2021/02/09 :
