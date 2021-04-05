@@ -1,7 +1,15 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2021/04/05 :
+ ##  新版本：1.7.10.1  
+ ##  安卓10以下的版本也可以裸连了，需要开启对应host、dns、sni  
+ ##  如果出现无法下载与浏览画廊的情况，请尝试关闭dns后重启软件  
+ ##  修改了页面跳转的图标：画廊列表->加号图标->从上往下第一个图标
+   点击前往下载：[蓝奏云](https://wws.lanzous.com/ima8pnojfsj)  密码:3dmi  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
 
-# 2021/02/09 :
+# 2021/03/022 :
  ##  修复了合并了1.7.8.x/1.7.6.x两个版本，并修复部分英文文本，url伪装功能和域名前置两种解决方案全整合到一个版本里了，只要根据需求选择性开启就行：1.7.9.2
    点击前往下载：[蓝奏云](https://wws.lanzous.com/iKUHWn7k0uf)  密码:3fhe  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
