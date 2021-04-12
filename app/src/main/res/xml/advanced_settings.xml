@@ -25,18 +25,6 @@
         android:defaultValue="@bool/beta"/>
 
     <com.hippo.preference.SwitchPreference
-        android:key="built_in_hosts"
-        android:title="@string/settings_advanced_built_in_hosts_title"
-        android:summary="@string/settings_advanced_built_in_hosts_summary"
-        android:defaultValue="false"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="built_ex_hosts"
-        android:title="@string/settings_advanced_built_ex_hosts_title"
-        android:summary="@string/settings_advanced_built_ex_hosts_summary"
-        android:defaultValue="false"/>
-
-    <com.hippo.preference.SwitchPreference
         android:key="save_crash_log"
         android:title="@string/settings_advanced_save_crash_log"
         android:summary="@string/settings_advanced_save_crash_log_summary"
@@ -78,6 +66,18 @@
     <com.hippo.ehviewer.preference.ProxyPreference
         android:key="proxy"
         android:title="@string/settings_advanced_proxy"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="built_in_hosts"
+        android:title="@string/settings_advanced_built_in_hosts_title"
+        android:summary="@string/settings_advanced_built_in_hosts_summary"
+        android:defaultValue="true"/>
+
+    <com.hippo.preference.SwitchPreference
+        android:key="built_ex_hosts"
+        android:title="@string/settings_advanced_built_ex_hosts_title"
+        android:summary="@string/settings_advanced_built_ex_hosts_summary"
+        android:defaultValue="false"/>
 
     <com.hippo.preference.ActivityPreference
         xmlns:app="http://schemas.android.com/apk/res-auto"

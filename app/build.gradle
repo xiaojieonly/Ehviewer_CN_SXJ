@@ -8,14 +8,14 @@ if (file('google-services.json').exists()) {
 android {
     compileSdkVersion 28
     buildToolsVersion "30.0.2"
-    ndkVersion '21.3.6528147'
+    ndkVersion '22.0.6917172'
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 109
-        versionName "1.7.9.0"
+        versionName "1.7.10.1"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
@@ -114,8 +114,9 @@ dependencies {
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'
 
 //    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
-    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.9.1'
+    implementation 'org.conscrypt:conscrypt-android:2.5.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.7'
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
     
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'

@@ -1042,7 +1042,7 @@ public class Settings {
     }
 
     public static final String KEY_BUILT_IN_HOSTS = "built_in_hosts";
-    private static final boolean DEFAULT_BUILT_IN_HOSTS = false;
+    private static final boolean DEFAULT_BUILT_IN_HOSTS = true;
 
     public static boolean getBuiltInHosts() {
         return getBoolean(KEY_BUILT_IN_HOSTS, DEFAULT_BUILT_IN_HOSTS);
