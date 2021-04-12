@@ -29,9 +29,11 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Debug;
 import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.LruCache;
+
 import com.getkeepsafe.relinker.ReLinker;
 import com.hippo.a7zip.A7Zip;
 import com.hippo.a7zip.A7ZipExtractLite;
@@ -49,9 +51,9 @@ import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.image.Image;
 import com.hippo.image.ImageBitmap;
 import com.hippo.network.EhSSLSocketFactory;
+import com.hippo.network.EhSSLSocketFactoryLowSDK;
 import com.hippo.network.EhX509TrustManager;
 import com.hippo.network.StatusCodeException;
-import com.hippo.network.Tls12SocketFactory;
 import com.hippo.text.Html;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
@@ -62,10 +64,13 @@ import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.IntIdGenerator;
 import com.hippo.yorozuya.OSUtils;
 import com.hippo.yorozuya.SimpleHandler;
+
+import org.conscrypt.Conscrypt;
+
 import java.io.File;
+import java.io.IOException;
 import java.security.KeyStore;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,9 +84,15 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.TlsVersion;
+
+import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 public class EhApplication extends RecordingApplication {
 
@@ -132,7 +143,8 @@ public class EhApplication extends RecordingApplication {
                 if (!initialized || Settings.getSaveCrashLog()) {
                     Crash.saveCrashLog(instance, e);
                 }
-            } catch (Throwable ignored) { }
+            } catch (Throwable ignored) {
+            }
 
             if (handler != null) {
                 handler.uncaughtException(t, e);
@@ -194,7 +206,7 @@ public class EhApplication extends RecordingApplication {
 
         // Update version code
         try {
-            PackageInfo pi= getPackageManager().getPackageInfo(getPackageName(), 0);
+            PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
             Settings.putVersionCode(pi.versionCode);
         } catch (PackageManager.NameNotFoundException e) {
             // Ignore
@@ -317,24 +329,6 @@ public class EhApplication extends RecordingApplication {
     public static OkHttpClient getOkHttpClient(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mOkHttpClient == null) {
-//            application.mOkHttpClient = enableTls120nPreLollipop(new OkHttpClient.Builder()
-//                    .followRedirects(true)
-//                    .followSslRedirects(true)
-//                    .retryOnConnectionFailure(true)
-//                    .connectTimeout(10, TimeUnit.SECONDS)
-//                    .readTimeout(10, TimeUnit.SECONDS)
-//                    .writeTimeout(10, TimeUnit.SECONDS)
-//                    .cookieJar(getEhCookieStore(application))
-//                    .dns(new EhDns(application))
-//                    .hostnameVerifier(new HostnameVerifier() {
-//                        @Override
-//                        public boolean verify(String hostname, SSLSession session) {
-//                            //强行返回true 即验证成功
-//                            return true;
-//                        }
-//                    })
-//                    .proxySelector(getEhProxySelector(application))
-//                    ).build();
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
@@ -344,34 +338,55 @@ public class EhApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
                     .hostnameVerifier((hostname, session) -> true)
                     .dns(new EhDns(application))
-                    .addNetworkInterceptor(sprocket ->{
-                        try{
+                    .addNetworkInterceptor(sprocket -> {
+                        try {
                             return sprocket.proceed(sprocket.request());
-                        }catch (NullPointerException e){
+                        } catch (NullPointerException e) {
                             throw new NullPointerException(e.getMessage());
                         }
                     })
                     .proxySelector(getEhProxySelector(application));
             if (Settings.getDF()) {
-                try {//chain
-//                    String algorithm = TrustManagerFactory.getDefaultAlgorithm();
-                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                            TrustManagerFactory.getDefaultAlgorithm());
-
-                    trustManagerFactory.init((KeyStore) null);
-                    TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-                    if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-                        throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+                if (Build.VERSION.SDK_INT < 29) {
+                    Security.insertProviderAt(Conscrypt.newProvider(), 1);
+                    builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
+                    try {
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                                TrustManagerFactory.getDefaultAlgorithm());
+                        trustManagerFactory.init((KeyStore) null);
+                        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                        if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                            throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+                        }
+                        X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+//                        X509TrustManager tm = Conscrypt.getDefaultX509TrustManager();
+                        SSLContext sslContext = SSLContext.getInstance("TLS", "Conscrypt");
+                        sslContext.init(null, trustManagers, null);
+                        builder.sslSocketFactory(new EhSSLSocketFactoryLowSDK(sslContext.getSocketFactory()), trustManager);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        builder.sslSocketFactory(new EhSSLSocketFactoryLowSDK(new EhSSLSocketFactory()), new EhX509TrustManager());
                     }
-                    X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-                    builder.sslSocketFactory(new EhSSLSocketFactory(), trustManager);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    builder.sslSocketFactory(new EhSSLSocketFactory(), new EhX509TrustManager());
+                } else {
+                    try {
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                                TrustManagerFactory.getDefaultAlgorithm());
+                        trustManagerFactory.init((KeyStore) null);
+                        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                        if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                            throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+                        }
+                        X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+                        builder.sslSocketFactory(new EhSSLSocketFactory(), trustManager);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        builder.sslSocketFactory(new EhSSLSocketFactory(), new EhX509TrustManager());
+                    }
                 }
             }
             application.mOkHttpClient = builder.build();
         }
+
         return application.mOkHttpClient;
     }
 
@@ -532,30 +547,5 @@ public class EhApplication extends RecordingApplication {
         }
     }
 
-    public static OkHttpClient.Builder enableTls120nPreLollipop(OkHttpClient.Builder client){
-        //&& Build.VERSION.SDK_INT <= 22
-        if (Build.VERSION.SDK_INT >= 16 ){
-            try{
-                SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-                sslContext.init(null,null,null);
-                client.sslSocketFactory(new Tls12SocketFactory(sslContext.getSocketFactory()));
-
-                ConnectionSpec cs = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-                        .tlsVersions(TlsVersion.TLS_1_2)
-                        .build();
-
-                List<ConnectionSpec> specs = new ArrayList<>();
-                specs.add(cs);
-                specs.add(ConnectionSpec.COMPATIBLE_TLS);
-                specs.add(ConnectionSpec.CLEARTEXT);
-
-                client.connectionSpecs(specs);
-            }catch (Exception exc){
-                Log.e("OkHttpTLSCompat","Error while setting TLS 1.2", exc);
-            }
-        }
-
-        return client;
-    }
 }
 
