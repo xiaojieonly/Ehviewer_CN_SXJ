@@ -15,28 +15,8 @@
   ~ limitations under the License.
   -->
 
-<vector
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:height="24dp"
-    android:width="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+<resources>
 
-    <path
-        android:fillColor="@color/primary_drawable_dark"
-        android:pathData="
-        M22,12
-        L22,22
-        L19.5,22
-        L19.5,15
-        A1,1 0 1,1 2,12
-        Q3,6 12,2.2
-        L7,0
-        L17,1
-        L13,9
-        L13.3,4
-        Q5.5,7 4.5,12
-        C3.2,20 16,24.6 17.6,12
-        Z"/>
-<!--    android:pathData="@string/pd_go_to"-->
-</vector>
+    <string name="app_name">EhViewer Debug</string>
+    
+</resources>

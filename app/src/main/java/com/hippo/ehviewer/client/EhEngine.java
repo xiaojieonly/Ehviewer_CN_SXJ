@@ -236,6 +236,9 @@ public class EhEngine {
         String referer = EhUrl.getReferer();
         Log.d(TAG, url);
         Request request = new EhRequestBuilder(url, referer).build();
+//        Request request = new Request.Builder()
+//                .url("https://tls13.1d.pw") // You can try another TLS 1.3 capable HTTPS server
+//                .build();
         Call call = okHttpClient.newCall(request);
 
         // Put call

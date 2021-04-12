@@ -60,6 +60,7 @@ public class Settings {
         if (!sSettingsPre.contains(KEY_BUILT_IN_HOSTS)) {
             if ("CN".equals(Locale.getDefault().getCountry())) {
                 putBuiltInHosts(true);
+                putBuiltEXHosts(true);
             }
         }
         if (!sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
@@ -1050,6 +1051,18 @@ public class Settings {
     public static void putBuiltInHosts(boolean value) {
         putBoolean(KEY_BUILT_IN_HOSTS, value);
     }
+
+    public static final String KEY_BUILT_EX_HOSTS = "built_ex_hosts";
+    private static final boolean DEFAULT_BUILT_EX_HOSTS = false;
+
+    public static boolean getBuiltEXHosts() {
+        return getBoolean(KEY_BUILT_EX_HOSTS, DEFAULT_BUILT_EX_HOSTS);
+    }
+
+    public static void putBuiltEXHosts(boolean value) {
+        putBoolean(KEY_BUILT_EX_HOSTS, value);
+    }
+
 
     public static final String KEY_APP_LANGUAGE = "app_language";
     private static final String DEFAULT_APP_LANGUAGE = "system";
