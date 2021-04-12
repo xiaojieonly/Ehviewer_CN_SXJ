@@ -114,6 +114,7 @@ dependencies {
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'
 
 //    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
+    implementation 'org.conscrypt:conscrypt-android:2.5.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.9.1'
     
