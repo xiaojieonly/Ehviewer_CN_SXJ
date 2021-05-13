@@ -115,8 +115,8 @@ dependencies {
 
 //    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
     implementation 'org.conscrypt:conscrypt-android:2.5.1'
-    implementation 'com.squareup.okhttp3:okhttp:3.14.7'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.9.1'
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'

@@ -855,33 +855,69 @@ public class EhEngine {
      */
     public static GalleryListParser.Result imageSearch(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
             File image, boolean uss, boolean osc, boolean se) throws Throwable {
+//        MultipartBody.Builder builder = new MultipartBody.Builder();
+//        builder.setType(MultipartBody.FORM);
+//        builder.addPart(
+//                Headers.of("Content-Disposition", "form-data; name=\"sfile\"; filename=\"a.jpg\""),
+//                RequestBody.create(MEDIA_TYPE_JPEG, image)
+//        );
+//        if (uss) {
+//            builder.addPart(
+//                    Headers.of("Content-Disposition", "form-data; name=\"fs_similar\""),
+//                    RequestBody.create(null, "on")
+//            );
+//        }
+//        if (osc) {
+//            builder.addPart(
+//                    Headers.of("Content-Disposition", "form-data; name=\"fs_covers\""),
+//                    RequestBody.create(null, "on")
+//            );
+//        }
+//        if (se) {
+//            builder.addPart(
+//                    Headers.of("Content-Disposition", "form-data; name=\"fs_exp\""),
+//                    RequestBody.create(null, "on")
+//            );
+//        }
+//        builder.addPart(
+//                Headers.of("Content-Disposition", "form-data; name=\"f_sfile\""),
+//                RequestBody.create(null, "File Search")
+//        );
+//        String url = EhUrl.getImageSearchUrl();
+//        String referer = EhUrl.getReferer();
+//        String origin = EhUrl.getOrigin();
+//        Log.d(TAG, url);
+//        Request request = new EhRequestBuilder(url, referer, origin)
+//                .post(builder.build())
+//                .build();
+//        Call call = okHttpClient.newCall(request);
         MultipartBody.Builder builder = new MultipartBody.Builder();
         builder.setType(MultipartBody.FORM);
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"sfile\"; filename=\"a.jpg\""),
-                RequestBody.create(MEDIA_TYPE_JPEG, image)
+                RequestBody.create(image, MEDIA_TYPE_JPEG)
         );
         if (uss) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_similar\""),
-                    RequestBody.create(null, "on")
+                    RequestBody.create("on", null)
             );
         }
         if (osc) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_covers\""),
-                    RequestBody.create(null, "on")
+                    RequestBody.create("on", null)
             );
         }
         if (se) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_exp\""),
-                    RequestBody.create(null, "on")
+                    RequestBody.create("on", null)
             );
         }
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"f_sfile\""),
-                RequestBody.create(null, "File Search")
+                RequestBody.create("File Search", null)
         );
         String url = EhUrl.getImageSearchUrl();
         String referer = EhUrl.getReferer();
@@ -891,6 +927,7 @@ public class EhEngine {
                 .post(builder.build())
                 .build();
         Call call = okHttpClient.newCall(request);
+
 
         // Put call
         if (null != task) {
