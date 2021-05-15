@@ -1,12 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
 
-# 2021/05/15 :
- ##  新版本：1.7.10.5  
- ##  修复了图片搜索无法使用的bug
-   点击前往下载：[蓝奏云](https://wwe.lanzoui.com/iNKp1p5pd6j)  密码:79b6  
-   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
-   点击前往赏饭：[吃饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+
    
 # 2021/04/05 :
  ##  新版本：1.7.10.1  
