@@ -147,7 +147,7 @@ public class ListPreference extends DialogPreference {
 
     /**
      * Returns the summary of this ListPreference. If the summary
-     * has a {@linkplain java.lang.String#format String formatting}
+     * has a {@linkplain String#format String formatting}
      * marker in it (i.e. "%s" or "%1$s"), then the current entry
      * value will be substituted in its place.
      *
@@ -166,7 +166,7 @@ public class ListPreference extends DialogPreference {
     /**
      * Sets the summary for this Preference with a CharSequence.
      * If the summary has a
-     * {@linkplain java.lang.String#format String formatting}
+     * {@linkplain String#format String formatting}
      * marker in it (i.e. "%s" or "%1$s"), then the current entry
      * value will be substituted in its place when it's retrieved.
      *
@@ -326,8 +326,8 @@ public class ListPreference extends DialogPreference {
             super(superState);
         }
 
-        public static final Parcelable.Creator<SavedState> CREATOR =
-                new Parcelable.Creator<SavedState>() {
+        public static final Creator<SavedState> CREATOR =
+                new Creator<SavedState>() {
                     @Override
                     public SavedState createFromParcel(Parcel in) {
                         return new SavedState(in);

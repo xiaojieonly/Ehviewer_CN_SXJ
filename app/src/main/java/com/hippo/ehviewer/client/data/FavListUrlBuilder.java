@@ -112,7 +112,7 @@ public class FavListUrlBuilder implements Parcelable {
         this.mFavCat = in.readInt();
     }
 
-    public static final Parcelable.Creator<FavListUrlBuilder> CREATOR = new Parcelable.Creator<FavListUrlBuilder>() {
+    public static final Creator<FavListUrlBuilder> CREATOR = new Creator<FavListUrlBuilder>() {
 
         @Override
         public FavListUrlBuilder createFromParcel(Parcel source) {

@@ -206,7 +206,7 @@ public class GalleryInfo implements Parcelable {
         this.favoriteName = in.readString();
     }
 
-    public static final Parcelable.Creator<GalleryInfo> CREATOR = new Parcelable.Creator<GalleryInfo>() {
+    public static final Creator<GalleryInfo> CREATOR = new Creator<GalleryInfo>() {
 
         @Override
         public GalleryInfo createFromParcel(Parcel source) {

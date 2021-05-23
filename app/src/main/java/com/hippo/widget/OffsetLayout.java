@@ -143,7 +143,7 @@ public class OffsetLayout extends FrameLayout {
         }
 
         public LayoutParams(FrameLayout.LayoutParams source) {
-            super((ViewGroup.MarginLayoutParams) source);
+            super((MarginLayoutParams) source);
             this.gravity = source.gravity;
         }
 

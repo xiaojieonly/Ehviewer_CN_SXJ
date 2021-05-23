@@ -61,7 +61,7 @@ public final class SystemUiHelper {
 
     /**
      * When this flag is set, the
-     * {@link android.view.WindowManager.LayoutParams#FLAG_LAYOUT_IN_SCREEN}
+     * {@link WindowManager.LayoutParams#FLAG_LAYOUT_IN_SCREEN}
      * flag will be set on older devices, making the status bar "float" on top
      * of the activity layout. This is most useful when there are no controls at
      * the top of the activity layout.

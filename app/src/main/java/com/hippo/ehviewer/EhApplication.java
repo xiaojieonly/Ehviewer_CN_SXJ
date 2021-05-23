@@ -68,7 +68,6 @@ import com.hippo.yorozuya.SimpleHandler;
 import org.conscrypt.Conscrypt;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.ArrayList;
@@ -84,15 +83,8 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.TlsVersion;
-
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 public class EhApplication extends RecordingApplication {
 
@@ -114,6 +106,7 @@ public class EhApplication extends RecordingApplication {
     private EhClient mEhClient;
     private EhProxySelector mEhProxySelector;
     private OkHttpClient mOkHttpClient;
+    private OkHttpClient mImageOkHttpClient;
     private Cache mOkHttpCache;
     private ImageBitmapHelper mImageBitmapHelper;
     private Conaco<ImageBitmap> mConaco;
@@ -391,6 +384,64 @@ public class EhApplication extends RecordingApplication {
     }
 
     @NonNull
+    public static OkHttpClient getImageOkHttpClient(@NonNull Context context) {
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+        if (application.mImageOkHttpClient == null) {
+            OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                    .followRedirects(false)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .callTimeout(30, TimeUnit.SECONDS)
+                    .cookieJar(getEhCookieStore(application))
+                    .cache(getOkHttpCache(application))
+                    .hostnameVerifier((hostname, session) -> true)
+                    .dns(new EhDns(application))
+                    .proxySelector(getEhProxySelector(application));
+            if (Settings.getDF()) {
+                if (Build.VERSION.SDK_INT < 29) {
+                    Security.insertProviderAt(Conscrypt.newProvider(), 1);
+                    builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
+                    try {
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                                TrustManagerFactory.getDefaultAlgorithm());
+                        trustManagerFactory.init((KeyStore) null);
+                        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                        if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                            throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+                        }
+                        X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+                        SSLContext sslContext = SSLContext.getInstance("TLS", "Conscrypt");
+                        sslContext.init(null, trustManagers, null);
+                        builder.sslSocketFactory(new EhSSLSocketFactoryLowSDK(sslContext.getSocketFactory()), trustManager);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        builder.sslSocketFactory(new EhSSLSocketFactoryLowSDK(new EhSSLSocketFactory()), new EhX509TrustManager());
+                    }
+                } else {
+                    try {
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                                TrustManagerFactory.getDefaultAlgorithm());
+                        trustManagerFactory.init((KeyStore) null);
+                        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                        if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                            throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+                        }
+                        X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+                        builder.sslSocketFactory(new EhSSLSocketFactory(), trustManager);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        builder.sslSocketFactory(new EhSSLSocketFactory(), new EhX509TrustManager());
+                    }
+                }
+            }
+            application.mImageOkHttpClient = builder.build();
+        }
+
+        return application.mImageOkHttpClient;
+    }
+
+    @NonNull
     public static ImageBitmapHelper getImageBitmapHelper(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mImageBitmapHelper == null) {
@@ -412,7 +463,7 @@ public class EhApplication extends RecordingApplication {
             builder.memoryCacheMaxSize = getMemoryCacheMaxSize();
             builder.hasDiskCache = true;
             builder.diskCacheDir = new File(context.getCacheDir(), "thumb");
-            builder.diskCacheMaxSize = 80 * 1024 * 1024; // 80MB
+            builder.diskCacheMaxSize = 320 * 1024 * 1024; // 320MB
             builder.okHttpClient = getOkHttpClient(context);
             builder.objectHelper = getImageBitmapHelper(context);
             builder.debug = DEBUG_CONACO;
@@ -420,6 +471,7 @@ public class EhApplication extends RecordingApplication {
         }
         return application.mConaco;
     }
+
 
     @NonNull
     public static LruCache<Long, GalleryDetail> getGalleryDetailCache(@NonNull Context context) {

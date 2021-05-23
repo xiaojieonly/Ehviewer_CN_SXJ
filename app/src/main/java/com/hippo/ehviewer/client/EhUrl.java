@@ -43,6 +43,9 @@ public class EhUrl {
     public static final String API_E = HOST_E + "api.php";
     public static final String API_EX = HOST_EX + "api.php";
 
+    public static final String HOME_E = HOST_E + "home.php";
+    public static final String HOME_EX = HOST_EX + "home.php";
+
     public static final String URL_POPULAR_E = "https://e-hentai.org/popular";
     public static final String URL_POPULAR_EX = "https://exhentai.org/popular";
 

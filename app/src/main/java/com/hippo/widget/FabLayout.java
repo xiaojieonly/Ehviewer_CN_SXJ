@@ -77,7 +77,7 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
     }
 
     @Override
-    public void addView(@NonNull View child, int index, ViewGroup.LayoutParams params) {
+    public void addView(@NonNull View child, int index, LayoutParams params) {
         if (!(child instanceof FloatingActionButton)) {
             throw new IllegalStateException("FloatingActionBarLayout should only " +
                     "contain FloatingActionButton, but try to add "+ child.getClass().getName());

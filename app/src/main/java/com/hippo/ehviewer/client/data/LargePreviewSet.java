@@ -93,7 +93,7 @@ public class LargePreviewSet extends PreviewSet {
         this.mPageUrlList = in.createStringArrayList();
     }
 
-    public static final Parcelable.Creator<LargePreviewSet> CREATOR = new Parcelable.Creator<LargePreviewSet>() {
+    public static final Creator<LargePreviewSet> CREATOR = new Creator<LargePreviewSet>() {
         @Override
         public LargePreviewSet createFromParcel(Parcel source) {
             return new LargePreviewSet(source);

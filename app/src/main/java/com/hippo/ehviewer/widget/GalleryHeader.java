@@ -191,12 +191,12 @@ public class GalleryHeader extends ViewGroup {
   }
 
   @Override
-  protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
+  protected boolean checkLayoutParams(LayoutParams p) {
     return p instanceof MarginLayoutParams;
   }
 
   @Override
-  protected MarginLayoutParams generateLayoutParams(ViewGroup.LayoutParams lp) {
+  protected MarginLayoutParams generateLayoutParams(LayoutParams lp) {
     if (lp instanceof MarginLayoutParams) {
       return new MarginLayoutParams((MarginLayoutParams) lp);
     }

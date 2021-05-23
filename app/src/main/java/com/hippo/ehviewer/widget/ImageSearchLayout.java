@@ -220,8 +220,8 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
             out.writeString(imagePath);
         }
 
-        public static final Parcelable.Creator<SavedState> CREATOR
-                = new Parcelable.Creator<SavedState>() {
+        public static final Creator<SavedState> CREATOR
+                = new Creator<SavedState>() {
             @Override
             public SavedState createFromParcel(Parcel in) {
                 return new SavedState(in);
