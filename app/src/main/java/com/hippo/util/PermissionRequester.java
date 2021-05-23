@@ -26,7 +26,7 @@ public class PermissionRequester {
 
     /**
      * @return true for there no need to request, do your work it now.
-     * false for do in {@link androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
+     * false for do in {@link ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
      */
     public static boolean request(final Activity activity, final String permission, String rationale, final int requestCode) {
         if (!(activity instanceof ActivityCompat.OnRequestPermissionsResultCallback)) {

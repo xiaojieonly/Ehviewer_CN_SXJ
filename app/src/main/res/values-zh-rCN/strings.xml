@@ -552,7 +552,7 @@
     <string name="settings_advanced_proxy">代理</string>
     <string name="settings_advanced_proxy_summary_1">%1$s %2$s:%3$d</string>
     <string name="settings_advanced_proxy_summary_2">%1$s</string>
-    <string name="settings_advanced_built_in_hosts_title">内置 hosts.txt</string>
+    <string name="settings_advanced_built_in_hosts_title">内置e-hentai hosts.txt</string>
     <string name="settings_advanced_built_in_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
     <string name="settings_advanced_custom_hosts_title">自定义 hosts.txt</string>
     <string name="settings_advanced_custom_hosts_summary">将主机名称映射到相应的IP地址\n可覆盖内置 hosts.txt</string>

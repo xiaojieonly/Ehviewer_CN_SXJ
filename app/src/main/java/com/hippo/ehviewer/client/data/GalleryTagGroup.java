@@ -59,7 +59,7 @@ public class GalleryTagGroup implements Parcelable {
         this.mTagList = in.createStringArrayList();
     }
 
-    public static final Parcelable.Creator<GalleryTagGroup> CREATOR = new Parcelable.Creator<GalleryTagGroup>() {
+    public static final Creator<GalleryTagGroup> CREATOR = new Creator<GalleryTagGroup>() {
         @Override
         public GalleryTagGroup createFromParcel(Parcel source) {
             return new GalleryTagGroup(source);

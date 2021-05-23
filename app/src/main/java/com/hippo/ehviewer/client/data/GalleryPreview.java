@@ -70,7 +70,7 @@ public class GalleryPreview implements Parcelable {
         this.clipHeight = in.readInt();
     }
 
-    public static final Parcelable.Creator<GalleryPreview> CREATOR = new Parcelable.Creator<GalleryPreview>() {
+    public static final Creator<GalleryPreview> CREATOR = new Creator<GalleryPreview>() {
         @Override
         public GalleryPreview createFromParcel(Parcel source) {
             return new GalleryPreview(source);

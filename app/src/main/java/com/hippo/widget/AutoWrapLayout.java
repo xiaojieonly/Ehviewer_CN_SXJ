@@ -262,7 +262,7 @@ public class AutoWrapLayout extends ViewGroup {
     }
 
     @Override
-    protected MarginLayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+    protected MarginLayoutParams generateLayoutParams(LayoutParams p) {
         return new MarginLayoutParams(p);
     }
 }

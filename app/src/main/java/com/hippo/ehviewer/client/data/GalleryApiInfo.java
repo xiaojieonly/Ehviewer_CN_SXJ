@@ -84,7 +84,7 @@ public class GalleryApiInfo implements Parcelable {
         this.tags = in.createStringArray();
     }
 
-    public static final Parcelable.Creator<GalleryApiInfo> CREATOR = new Parcelable.Creator<GalleryApiInfo>() {
+    public static final Creator<GalleryApiInfo> CREATOR = new Creator<GalleryApiInfo>() {
         @Override
         public GalleryApiInfo createFromParcel(Parcel source) {
             return new GalleryApiInfo(source);

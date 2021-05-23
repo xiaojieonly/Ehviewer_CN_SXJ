@@ -40,7 +40,7 @@ public abstract class RecordingApplication extends SceneApplication {
     registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
       @Override
       public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-        list.add(new java.lang.ref.WeakReference<>(activity));
+        list.add(new WeakReference<>(activity));
       }
 
       @Override

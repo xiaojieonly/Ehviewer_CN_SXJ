@@ -41,15 +41,15 @@ public abstract class PrettyPreferenceActivity extends AppCompatPreferenceActivi
     }
 
     int count = adapter.getCount();
-    List<PreferenceActivity.Header> headers = new ArrayList<>(count);
+    List<Header> headers = new ArrayList<>(count);
     for (int i = 0; i < count; ++i) {
-      headers.add((PreferenceActivity.Header) adapter.getItem(i));
+      headers.add((Header) adapter.getItem(i));
     }
 
     super.setListAdapter(new HeaderAdapter(this, headers, R.layout.item_preference_header, true));
   }
 
-  private static class HeaderAdapter extends ArrayAdapter<PreferenceActivity.Header> {
+  private static class HeaderAdapter extends ArrayAdapter<Header> {
     private static class HeaderViewHolder {
       ImageView icon;
       TextView title;
@@ -60,8 +60,8 @@ public abstract class PrettyPreferenceActivity extends AppCompatPreferenceActivi
     private int mLayoutResId;
     private boolean mRemoveIconIfEmpty;
 
-    private HeaderAdapter(Context context, List<PreferenceActivity.Header> objects, int layoutResId,
-        boolean removeIconBehavior) {
+    private HeaderAdapter(Context context, List<Header> objects, int layoutResId,
+                          boolean removeIconBehavior) {
       super(context, 0, objects);
       mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
       mLayoutResId = layoutResId;
@@ -87,7 +87,7 @@ public abstract class PrettyPreferenceActivity extends AppCompatPreferenceActivi
       }
 
       // All view fields must be updated every time, because the view may be recycled
-      PreferenceActivity.Header header = getItem(position);
+      Header header = getItem(position);
       if (mRemoveIconIfEmpty) {
         if (header.iconRes == 0) {
           holder.icon.setVisibility(View.GONE);

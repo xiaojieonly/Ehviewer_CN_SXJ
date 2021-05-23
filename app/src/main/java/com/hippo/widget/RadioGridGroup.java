@@ -91,7 +91,7 @@ public class RadioGridGroup extends SimpleGridLayout {
     }
 
     @Override
-    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+    public void addView(View child, int index, LayoutParams params) {
         if (child instanceof RadioButton) {
             final RadioButton button = (RadioButton) child;
             if (button.isChecked()) {
@@ -224,8 +224,8 @@ public class RadioGridGroup extends SimpleGridLayout {
      * hierarchy change listener without preventing the user to setup his.</p>
      */
     private class PassThroughHierarchyChangeListener implements
-            ViewGroup.OnHierarchyChangeListener {
-        private ViewGroup.OnHierarchyChangeListener mOnHierarchyChangeListener;
+            OnHierarchyChangeListener {
+        private OnHierarchyChangeListener mOnHierarchyChangeListener;
 
         /**
          * {@inheritDoc}

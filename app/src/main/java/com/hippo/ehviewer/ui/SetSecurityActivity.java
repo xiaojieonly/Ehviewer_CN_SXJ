@@ -59,7 +59,7 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
                     LockPatternUtils.stringToPattern(pattern));
         }
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             FingerprintManager fingerprintManager = getSystemService(FingerprintManager.class);
             // The line below prevents the false positive inspection from Android Studio
             // noinspection ResourceType

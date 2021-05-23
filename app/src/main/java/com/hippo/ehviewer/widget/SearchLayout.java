@@ -334,13 +334,13 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         }
     }
 
-    private class SimpleHolder extends RecyclerView.ViewHolder {
+    private class SimpleHolder extends ViewHolder {
         public SimpleHolder(View itemView) {
             super(itemView);
         }
     }
 
-    private class SearchAdapter extends EasyRecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private class SearchAdapter extends Adapter<ViewHolder> {
 
         @Override
         public int getItemCount() {
@@ -361,12 +361,12 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         }
 
         @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view;
 
             if (viewType == ITEM_TYPE_ACTION) {
                 ViewUtils.removeFromParent(mActionView);
-                mActionView.setLayoutParams(new RecyclerView.LayoutParams(
+                mActionView.setLayoutParams(new LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
                 int resId;
@@ -408,7 +408,7 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         }
 
         @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(ViewHolder holder, int position) {
             // Empty, bind view in create view
         }
     }

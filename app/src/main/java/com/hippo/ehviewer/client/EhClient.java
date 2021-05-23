@@ -54,10 +54,12 @@ public class EhClient {
 
     private final ThreadPoolExecutor mRequestThreadPool;
     private final OkHttpClient mOkHttpClient;
+    private final OkHttpClient mImageOkHttpClient;
 
     public EhClient(Context context) {
         mRequestThreadPool = IoThreadPoolExecutor.getInstance();
         mOkHttpClient = EhApplication.getOkHttpClient(context);
+        mImageOkHttpClient = EhApplication.getImageOkHttpClient(context);
     }
 
     public void execute(EhRequest request) {
@@ -166,7 +168,7 @@ public class EhClient {
                     case METHOD_VOTE_COMMENT:
                         return EhEngine.voteComment(this, mOkHttpClient, (Long) params[0], (String) params[1], (Long) params[2], (String) params[3], (Long) params[4], (Integer) params[5]);
                     case METHOD_IMAGE_SEARCH:
-                        return EhEngine.imageSearch(this, mOkHttpClient, (File) params[0], (Boolean) params[1], (Boolean) params[2], (Boolean) params[3]);
+                        return EhEngine.imageSearch(this, mImageOkHttpClient, (File) params[0], (Boolean) params[1], (Boolean) params[2], (Boolean) params[3]);
                     case METHOD_ARCHIVE_LIST:
                         return EhEngine.getArchiveList(this, mOkHttpClient, (String) params[0], (Long) params[1], (String) params[2]);
                     case METHOD_DOWNLOAD_ARCHIVE:
