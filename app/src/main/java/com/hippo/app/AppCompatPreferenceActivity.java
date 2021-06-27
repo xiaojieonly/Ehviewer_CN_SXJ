@@ -567,4 +567,5 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
             super.closeOptionsMenu();
         }
     }
+
 }
