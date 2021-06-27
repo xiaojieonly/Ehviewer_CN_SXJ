@@ -108,6 +108,9 @@
     <string name="clipboard_gallery_url_snack_message">There is a gallery url in the clipboard</string>
     <string name="clipboard_gallery_url_snack_action">View</string>
 
+    <!-- Message -->
+    <string name="image_save_success">Picture saved successfully</string>
+
     <string name="error_status_code_400" translatable="false">Bad Request</string>
     <string name="error_status_code_401" translatable="false">Unauthorized</string>
     <string name="error_status_code_402" translatable="false">Payment Required</string>
@@ -157,6 +160,7 @@
     <string name="error_get_ptoken_error">Get pToken error</string>
     <string name="error_cant_create_temp_file">Couldn\'t create temp file</string>
     <string name="error_cant_save_image">Can\'t save image</string>
+    <string name="error_save_image_existed">Image already exists</string>
     <string name="error_invalid_number">Invalid number</string>
     <string name="error_please_login_first">Please login first</string>
     <string name="error_empty_html">Empty page</string>
@@ -656,7 +660,9 @@
     <string name="settings_about_donate_alipay">Alipay</string>
     <string name="settings_about_donate_paypal">PayPal</string>
     <string name="settings_about_donate_open">Open</string>
-    <string name="settings_about_donate_copy">Copy</string>
+    <string name="settings_about_donate_copy">CopyEmail</string>
+    <string name="settings_save_image_aliPay">保存支付宝二维码</string>
+    <string name="settings_save_image_weChat">保存微信二维码</string>
     <string name="settings_about_donate_copied">Copied</string>
     <string name="settings_privacy_enable_analytics">Enable analytics</string>
     <string name="settings_privacy_about_analytics">About analytics</string>

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2018 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,89 +22,123 @@
     android:orientation="vertical"
     android:padding="@dimen/keyline_margin">
 
-  <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:text="@string/settings_about_donate_message" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="@string/settings_about_donate_message" />
 
-  <Space
-      android:layout_width="wrap_content"
-      android:layout_height="@dimen/keyline_margin" />
-
-
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/keyline_margin" />
 
 
-  <RelativeLayout
-      android:id="@+id/RelativeLayout1"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent" >
-  <ImageView
-      android:layout_weight="1"
-      android:layout_width="wrap_content"
-      android:layout_height="230dp"
-      android:layout_toLeftOf="@+id/image_center"
-      android:background="@drawable/zhifubao" />
+    <RelativeLayout
+        android:id="@+id/RelativeLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <View
-        android:id="@+id/image_center"
-        android:layout_width="10dp"
-        android:layout_height="230dp"
-        android:layout_centerInParent="true"
-        android:layout_centerVertical="true"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="10dp"
-        android:background="?attr/dividerColor" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/gallery_page_min_height"
+            android:layout_toLeftOf="@+id/image_center"
+            android:layout_weight="1"
+            android:id="@+id/image_aliPay"
+            android:background="@drawable/zhifubao" />
 
-    <ImageView
-      android:layout_weight="1"
-      android:layout_width="wrap_content"
-      android:layout_height="230dp"
-      android:layout_toRightOf="@+id/image_center"
-      android:background="@drawable/weixin" />
-  </RelativeLayout>
+        <View
+            android:id="@+id/image_center"
+            android:layout_width="1dp"
+            android:layout_height="@dimen/gallery_page_min_height"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="10dp"
+            android:background="?attr/dividerColor" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/gallery_page_min_height"
+            android:layout_toRightOf="@+id/image_center"
+            android:layout_weight="1"
+            android:id="@+id/image_weChat"
+            android:background="@drawable/weixin" />
+    </RelativeLayout>
 
 
-  <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:gravity="center"
-      android:text="@string/settings_about_donate_alipay"
-      android:textColor="?attr/textColorThemePrimary"
-      android:textSize="@dimen/text_little_small"
-      android:textStyle="bold" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/settings_about_donate_alipay"
+        android:textColor="?attr/textColorThemePrimary"
+        android:textSize="@dimen/text_little_small"
+        android:textStyle="bold" />
 
-  <TextView
-      android:id="@+id/alipay_text"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:gravity="center" />
+    <TextView
+        android:id="@+id/alipay_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
 
-  <Button
-      android:id="@+id/alipay_copy"
-      style="@style/Widget.AppCompat.Button.Borderless.Colored"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_gravity="center"
-      android:text="@string/settings_about_donate_copy" />
+<TableLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TableRow
+        android:gravity="center">
+        <Button
+            android:id="@+id/save_image_aliPay"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@color/blue_FA"
+            android:padding="0dp"
+            android:layout_weight="2"
+            android:textSize="@dimen/text_small"
+            android:text="@string/settings_save_image_aliPay" />
+        <Button
+            android:id="@+id/alipay_copy"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:textSize="@dimen/text_small"
+            android:text="@string/settings_about_donate_copy" />
+        <Button
+            android:id="@+id/save_image_weChat"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@color/deep_green_600"
+            android:padding="0dp"
+            android:layout_weight="2"
+            android:textSize="@dimen/text_small"
+            android:text="@string/settings_save_image_weChat" />
+    </TableRow>
+</TableLayout>
 
-  <Space
-      android:layout_width="wrap_content"
-      android:layout_height="@dimen/keyline_margin" />
 
-  <!--      -->
-  <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:gravity="center"
-      android:text="@string/settings_about_donate_guide"
-      android:textColor="?attr/textColorThemePrimary2"
-      android:textSize="@dimen/text_little_small"
-      android:textStyle="bold" />
 
-  <TextView
-      android:id="@+id/guide_text"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:gravity="center" />
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/keyline_margin" />
+
+    <!--      -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/settings_about_donate_guide"
+        android:textColor="?attr/textColorThemePrimary2"
+        android:textSize="@dimen/text_little_small"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/guide_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
 
 </LinearLayout>

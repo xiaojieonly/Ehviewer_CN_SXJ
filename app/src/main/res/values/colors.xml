@@ -72,7 +72,9 @@
     <color name="purple_a400">#ffd500f9</color>
     <color name="purple_a700">#ffaa00ff</color>
     <color name="cyan_600">#ff00acc1</color>
+    <color name="blue_FA">#ff58ACFA</color>
     <color name="light_green_600">#ff7cb342</color>
+    <color name="deep_green_600">#ff31B404</color>
     <color name="yellow_800">#fff9a825</color>
     <color name="deep_orange_400">#ffff7043</color>
     <color name="grey_975">#ff080808</color>
