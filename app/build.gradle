@@ -15,7 +15,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 109
-        versionName "1.7.10.8"
+        versionName "1.7.11.3"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
