@@ -66,6 +66,9 @@
     <string name="clipboard_gallery_url_snack_message">剪切板里有画廊链接</string>
     <string name="clipboard_gallery_url_snack_action">查看</string>
 
+    <!-- Message -->
+    <string name="image_save_success">图片保存成功</string>
+
     <string name="error_bad_status_code">错误状态码：%d</string>
     <string name="error_timeout">超时</string>
     <string name="error_unknown_host">未知主机</string>
@@ -89,6 +92,7 @@
     <string name="error_get_ptoken_error">获取 pToken 错误</string>
     <string name="error_cant_create_temp_file">无法创建临时文件</string>
     <string name="error_cant_save_image">无法保存图片</string>
+    <string name="error_save_image_existed">图片已存在</string>
     <string name="error_invalid_number">非法数字</string>
     <string name="error_please_login_first">请先登陆</string>
     <string name="error_empty_html">页面内容为空</string>
@@ -583,7 +587,7 @@
     <string name="settings_about_donate_paypal">PayPal</string>
     <string name="settings_about_donate_guide">支持指南</string>
     <string name="settings_about_donate_open">打开</string>
-    <string name="settings_about_donate_copy">复制</string>
+    <string name="settings_about_donate_copy">复制邮箱</string>
     <string name="settings_about_donate_copied">已复制</string>
     <string name="settings_privacy_enable_analytics">启用数据统计</string>
     <string name="settings_privacy_about_analytics">关于数据统计</string>
