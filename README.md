@@ -1,6 +1,14 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
 
+
+# 2021/06/20 :
+ ##  新版本：1.7.11.3  
+ ##  修复了图片分享功能无法使用的bug，优化了部分代码方便后续的更新
+   点击前往下载：[蓝奏云](https://wwe.lanzoui.com/i43oDqj8hte)  密码:gszd  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md) 
+
 # 2021/05/15 :
  ##  新版本：1.7.10.8  
  ##  修复了图片搜索无法使用的bug
