@@ -58,8 +58,10 @@ public final class ExceptionUtils {
         } else if (e instanceof EhException) {
             return e.getMessage();
         } else {
-//            return GetText.getString(R.string.error_unknown);
-            return e.getLocalizedMessage()+"——"+e.getMessage();
+            if (e.getLocalizedMessage().equals(e.getMessage())){
+                return e.getLocalizedMessage();
+            }
+            return e.getLocalizedMessage()+"\n"+e.getMessage();
         }
     }
 

@@ -19,20 +19,31 @@ package com.hippo.ehviewer.ui.fragment;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.util.Base64;
+import android.view.Gravity;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.util.AppHelper;
+import com.hippo.util.ExceptionUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.UnsupportedEncodingException;
 
 public class AboutFragment extends PreferenceFragment
@@ -41,6 +52,9 @@ public class AboutFragment extends PreferenceFragment
     private static final String KEY_AUTHOR = "author";
     private static final String KEY_DONATE = "donate";
     private static final String KEY_CHECK_FOR_UPDATES = "check_for_updates";
+
+    private Toast errorToast;
+    private Toast successToast;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,24 +92,62 @@ public class AboutFragment extends PreferenceFragment
                 .setView(R.layout.dialog_donate)
                 .show();
 
-//        String alipayStr = base64Decode("c2V2ZW4zMzJAMTYzLmNvbQ==");
         String alipayStr = base64Decode("MTAzMTA4MjA5MUBxcS5jb20=");
         TextView alipayText = dialog.findViewById(R.id.alipay_text);
         alipayText.setText(alipayStr);
         dialog.findViewById(R.id.alipay_copy).setOnClickListener(v -> copyToClipboard(alipayStr));
+
+        ImageView aliPayImage = dialog.findViewById(R.id.image_aliPay);
+        ImageView weChatImage = dialog.findViewById(R.id.image_weChat);
+
+        dialog.findViewById(R.id.save_image_aliPay).setOnClickListener(v -> saveImage(1,aliPayImage));
+        dialog.findViewById(R.id.save_image_weChat).setOnClickListener(v -> saveImage(2,weChatImage));
 
         String guideStr = base64Decode("5oKo55qE5pSv5oyB5piv5oiR5pu05paw55qE5pyA5aSn5Yqo5Yqb77yM5oKo5Y+v5Lul5oiq5Zu+5ZCO5Zyo5b6u5L+h5oiW5p" +
                 "Sv5LuY5a6d5Lit5omr5o+P5LqM57u056CB5o+Q5L6b546w6YeR5pSv5oyB77yM5Lmf5Y+v5Lul6YCa6L+H6YKu5Lu25YWI5L2c6ICF5o+Q5Ye65oKo5oOz6KaB55qE5paw5Y" +
                 "qf6IO95oiW55uu5YmN5piv5LiN5aW955So55qE5Yqf6IO977yM5oiR5Lya5LiA5LiA5Zue5aSN5bm25YGa5Ye65oSf6LCi44CCKCDigKLMgCDPiSDigKLMgSAp4pyn");
         TextView guideText = dialog.findViewById(R.id.guide_text);
         guideText.setText(guideStr);
+    }
 
+    private void saveImage(int drawable,ImageView imageView){
+        File dir = AppConfig.getExternalImageDir();
+        File mFile;
+        FileOutputStream fileOutputStream;
+        Bitmap needSaveData;
 
-//        String paypalStr = base64Decode("aHR0cHM6Ly9wYXlwYWwubWUvc2V2ZW4zMzI=");
-//        TextView paypalText = dialog.findViewById(R.id.paypal_text);
-//        paypalText.setText(paypalStr);
-//        dialog.findViewById(R.id.paypal_open).setOnClickListener(v -> openUrl(paypalStr));
-//        dialog.findViewById(R.id.paypal_copy).setOnClickListener(v -> copyToClipboard(paypalStr));
+        errorToast = Toast.makeText(getContext(),R.string.error_save_image_existed,Toast.LENGTH_SHORT);
+        errorToast.setGravity(Gravity.CENTER,0,0);
+        successToast = Toast.makeText(getContext(),R.string.image_save_success,Toast.LENGTH_SHORT);
+        successToast.setGravity(Gravity.CENTER,0,0);
+
+        try {
+            if (drawable == 1){
+                needSaveData = BitmapFactory.decodeResource(getResources(),R.drawable.zhifubao);
+                mFile = new File(dir+"zhifubao.jpg");
+                if (mFile.exists()){
+                    errorToast.show();
+                    return;
+                }
+                fileOutputStream = new FileOutputStream(mFile);
+                needSaveData.compress(Bitmap.CompressFormat.JPEG,100,fileOutputStream);
+            }else{
+                needSaveData = BitmapFactory.decodeResource(getResources(),R.drawable.weixin);
+                mFile = new File(dir+"weixin.png");
+                if (mFile.exists()){
+                    errorToast.show();
+                    return;
+                }
+                fileOutputStream = new FileOutputStream(mFile);
+                needSaveData.compress(Bitmap.CompressFormat.PNG,100,fileOutputStream);
+            }
+            Uri uri = Uri.fromFile(mFile);
+            getContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,uri));
+            successToast.show();
+        }catch (FileNotFoundException e){
+            ExceptionUtils.throwIfFatal(e);
+            return;
+        }
     }
 
     private static String base64Decode(String encoded) {
@@ -114,6 +166,9 @@ public class AboutFragment extends PreferenceFragment
             Toast.makeText(getActivity(), R.string.settings_about_donate_copied, Toast.LENGTH_SHORT).show();
         }
     }
+
+
+
 
 //    private void openUrl(String url) {
 //        Intent intent = new Intent(Intent.ACTION_VIEW);
