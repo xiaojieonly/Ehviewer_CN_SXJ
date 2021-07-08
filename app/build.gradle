@@ -116,7 +116,7 @@ dependencies {
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
-    implementation 'org.jsoup:jsoup:1.12.1'
+    implementation 'org.jsoup:jsoup:1.13.1'
     testImplementation 'junit:junit:4.8.2'
     testImplementation 'org.robolectric:robolectric:4.2.1'
     testImplementation 'org.jooq:joor:0.9.6'
