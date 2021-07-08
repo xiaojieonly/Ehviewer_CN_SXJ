@@ -1,6 +1,8 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
 
+# 2021/06/20 :
+ ##  Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS
 
 # 2021/06/20 :
  ##  新版本：1.7.11.3  
