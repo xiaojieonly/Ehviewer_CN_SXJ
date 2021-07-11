@@ -1,6 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
 # 2021/07/11 :
+ ##  紧急修复版本：1.8.0.4  
+ ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装
+ ##  修复了潜在的闪退bug
+ ##  为列表视图添加了tag预览功能（收藏和下载页面暂不支持）——替换原列表试图中点击图片的动作，（下一版本添加略缩图列表的tag预览功能）
+   点击前往下载：[蓝奏云](https://wwe.lanzoui.com/iotiXral1pe)  密码:b9am  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS  
+   <img src="https://user-images.githubusercontent.com/49278135/125185740-1360a680-e259-11eb-9b8d-fadd75cefe43.png" width="50%"/>
+
+# 2021/07/11 :
  ##  新版本：1.8.0.2  
  ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装
  ##  为列表视图添加了tag预览功能（收藏和下载页面暂不支持）——替换原列表试图中点击图片的动作，（下一版本添加略缩图列表的tag预览功能）
