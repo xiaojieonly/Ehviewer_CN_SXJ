@@ -7,6 +7,8 @@
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md) 
    Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS
+   ![image](https://user-images.githubusercontent.com/49278135/125185662-ab11c500-e258-11eb-8678-aab7a09430fc.png)
+
    
 # 2021/06/20 :
  ##  Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS
