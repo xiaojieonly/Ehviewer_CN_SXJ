@@ -5,9 +5,10 @@
  ##  为列表视图添加了tag预览功能（收藏和下载页面暂不支持）——替换原列表试图中点击图片的动作，（下一版本添加略缩图列表的tag预览功能）
    点击前往下载：[蓝奏云](https://wwe.lanzoui.com/imZN3r9t60b)  密码:fb30  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
-   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md) 
-   Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS
-   ![image](https://user-images.githubusercontent.com/49278135/125185662-ab11c500-e258-11eb-8678-aab7a09430fc.png)
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS  
+   ![image](https://user-images.githubusercontent.com/49278135/125185740-1360a680-e259-11eb-9b8d-fadd75cefe43.png =300)
+
 
    
 # 2021/06/20 :
