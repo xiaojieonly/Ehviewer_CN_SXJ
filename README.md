@@ -20,6 +20,8 @@
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
    Telegram群:https://t.me/joinchat/Ivxcuwp-vwaJfbwS  
    <img src="https://user-images.githubusercontent.com/49278135/125578256-2a9ed70b-4c9d-4424-a814-b4b39a97434e.jpg" width="50%"/>
+   <img src="https://user-images.githubusercontent.com/49278135/125578372-020ccaa1-f5a6-4eee-8585-da7ff44017d8.jpg" width="50%"/>
+
 
 
    
