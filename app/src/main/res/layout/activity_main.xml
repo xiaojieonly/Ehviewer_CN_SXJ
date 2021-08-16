@@ -39,24 +39,55 @@
             android:layout_gravity="left"
             android:maxWidth="@dimen/drawer_max_width"
             android:orientation="vertical"
+            app:insetForeground="@android:color/transparent"
             android:background="?android:attr/windowBackground">
 
-            <com.google.android.material.navigation.NavigationView
-                android:id="@+id/nav_view"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:background="@null"
-                app:headerLayout="@layout/nav_header_main"
-                app:menu="@menu/nav_drawer_main"/>
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent">
+                    <com.google.android.material.navigation.NavigationView
+                        android:id="@+id/nav_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
 
-            <Button
-                android:id="@+id/change_theme"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"/>
+                        android:layout_weight="1"
+                        android:background="?android:navigationBarColor"
+                        app:headerLayout="@layout/nav_header_main"
+                        app:insetForeground="@android:color/transparent"
+                        app:menu="@menu/nav_drawer_main"/>
+                </FrameLayout>
 
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|center">
+                    <TextView
+                        app:insetForeground="@android:color/transparent"
+                        android:id="@+id/change_theme"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:minHeight="48dip"
+                        android:minWidth="88dip"
+                        android:focusable="true"
+                        android:clickable="true"
+                        android:gravity="center_vertical|center_horizontal"
+                        />
+                </FrameLayout>
+            </FrameLayout>
+
+<!--            android:layout_height="0dp"-->
+
+<!--            android:minHeight="48dip"-->
+<!--            android:minWidth="88dip"-->
+<!--            android:focusable="true"-->
+<!--            android:clickable="true"-->
+<!--            android:gravity="center_vertical|center_horizontal"-->
+<!--            style="?attr/buttonStyle"-->
+<!--            style="@style/Widget.AppCompat.Button.Borderless.Colored"-->
         </com.hippo.ehviewer.widget.EhNavigationView>
 
         <com.hippo.ehviewer.widget.EhDrawerView

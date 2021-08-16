@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
-  ~ Copyright 2016 Hippo Seven
+  ~ Copyright 2021 sxj
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,16 +14,12 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<vector
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:height="48dp"
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
+    android:height="48dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-
     <path
         android:fillColor="?attr/drawableColorPrimary"
-        android:pathData="@string/pd_failed_image"/>
-
+        android:pathData="@string/pd_failed_image_new" />
 </vector>

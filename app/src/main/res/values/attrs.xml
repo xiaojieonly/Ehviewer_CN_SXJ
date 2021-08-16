@@ -19,6 +19,9 @@
 <!--前往theames.xml中设置具体值
     res/values/themes.xml-->
     <declare-styleable name="Theme">
+        <attr name="android:navigationBarColor" format="color"/>
+        <attr name="buttonStyle" format="reference"/>
+
         <attr name="colorEdgeEffect" format="color"/>
         <attr name="dividerColor" format="color"/>
         <attr name="toolbarColor" format="color"/>
