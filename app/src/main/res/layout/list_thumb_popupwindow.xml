@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/popupWindowStyle"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/tab_tag_flow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:animateLayoutChanges="true"
+            android:paddingTop="5dp"
+            android:paddingLeft="5dp"
+            app:chipSpacing="@dimen/gallery_tab_layout_spacing"
+            app:singleLine="false"
+            app:singleSelection="false">
+
+        </com.google.android.material.chip.ChipGroup>
+    </ScrollView>
+
+
+</LinearLayout>

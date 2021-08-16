@@ -30,6 +30,7 @@
     <dimen name="text_little_small">16sp</dimen>
     <dimen name="text_small">14sp</dimen>
     <dimen name="text_super_small">12sp</dimen>
+    <dimen name="text_more_super_small">6sp</dimen>
 
     <!-- RatingView -->
     <dimen name="rating_size">16dp</dimen>
@@ -142,5 +143,7 @@
     <dimen name="gallery_progress_size">56dp</dimen>
     <dimen name="gallery_page_text_size">56sp</dimen>
     <dimen name="gallery_error_text_size">24sp</dimen>
+    <dimen name="gallery_tab_layout_pad">2dp</dimen>
+    <dimen name="gallery_tab_layout_spacing">3dp</dimen>
 
 </resources>

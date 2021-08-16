@@ -19,18 +19,20 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="2dp">
-
+    <!--    android:descendantFocusability="blocksDescendants"
+    android:focusable="false"-->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.hippo.ehviewer.widget.FixedThumb
-            android:id="@+id/thumb"
+
+        <com.hippo.ehviewer.widget.FixedThumbNew
+            android:id="@+id/thumb_new"
             android:layout_width="@dimen/gallery_list_thumb_width"
             android:layout_height="@dimen/gallery_list_thumb_height"
             app:maxAspect="1.333"
             app:minAspect="0.333"
-            app:retryType="click" />
+            />
 
         <TextView
             android:id="@+id/title"
@@ -41,7 +43,7 @@
             android:layout_marginLeft="8dp"
             android:layout_marginTop="4dp"
             android:layout_marginRight="8dp"
-            android:layout_toRightOf="@id/thumb" />
+            android:layout_toRightOf="@id/thumb_new" />
 
         <TextView
             android:id="@+id/uploader"
@@ -58,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignLeft="@id/title"
-            android:layout_alignBottom="@id/thumb"
+            android:layout_alignBottom="@id/thumb_new"
             android:layout_marginBottom="8dp"
             android:paddingLeft="8dp"
             android:paddingTop="2dp"
@@ -80,7 +82,7 @@
             style="@style/CardMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/thumb"
+            android:layout_alignBottom="@id/thumb_new"
             android:layout_alignParentRight="true"
             android:layout_marginRight="6dp"
             android:layout_marginBottom="4dp" />

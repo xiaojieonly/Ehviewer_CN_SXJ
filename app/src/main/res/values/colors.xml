@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +28,13 @@
     <color name="secondary_drawable_dark">#4dffffff</color>
     <color name="primary_drawable_black">#ccffffff</color>
     <color name="secondary_drawable_black">#3dffffff</color>
+
+    <color name="theme_change_light">@color/colorAccent</color>
+    <color name="theme_change_other">@color/colorPrimary</color>
+
+    <color name="popupWindow_background_light">#ffF2F2F2</color>
+    <color name="popupWindow_background_dark">#ff2E2E2E</color>
+    <color name="popupWindow_background_black">#ff151515</color>
 
     <color name="primary_text_default_material_black">#d9ffffff</color>
     <color name="primary_text_disabled_material_black">#4dffffff</color>
@@ -77,6 +83,7 @@
     <color name="deep_green_600">#ff31B404</color>
     <color name="yellow_800">#fff9a825</color>
     <color name="deep_orange_400">#ffff7043</color>
+    <color name="black">#ff000000</color>
     <color name="grey_975">#ff080808</color>
     <color name="grey_950">#ff111111</color>
     <color name="grey_925">#ff191919</color>
@@ -147,6 +154,8 @@
     <color name="image_set">#ff3f51b5</color>
     <!-- Purple -->
     <color name="cosplay">#ff9c27b0</color>
+    <!--  white  -->
+    <color name="white">#ffffffff</color>
     <!-- Deep Purple 300 -->
     <color name="asian_porn">#ff9575cd</color>
     <!-- Pink 300 -->
