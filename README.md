@@ -11,6 +11,7 @@
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
    Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
 
 # 2021/07/11 :
  ##  新版本：1.8.0.2  
