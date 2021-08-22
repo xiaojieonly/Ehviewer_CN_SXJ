@@ -1,15 +1,16 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
-# 2021/07/11 :
- ##  紧急修复版本：1.8.0.4  
+# 2021/08/22 :
+ ##  新版本：1.8.1.0  
  ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装
- ##  修复了潜在的闪退bug
- ##  为列表视图添加了tag预览功能（收藏和下载页面暂不支持）——替换原列表试图中点击图片的动作，（下一版本添加略缩图列表的tag预览功能）
-   点击前往下载：[蓝奏云](https://wwe.lanzoui.com/iotiXral1pe)  密码:b9am  
+ ##  优化了启动流程,去除了启动时的白屏
+ ##  黑夜模式下启动app，自动切换至黑色主题
+ ##  删除了高级中‘url伪装’功能（开启后体验很差）
+ ##  下一版添加排行榜功能
+   点击前往下载：[蓝奏云](https://wwe.lanzoui.com/iAzHQt0ga7c)  密码:3770  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
-   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
-   <img src="https://user-images.githubusercontent.com/49278135/125578256-2a9ed70b-4c9d-4424-a814-b4b39a97434e.jpg" width="50%"/>
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS
 
 # 2021/07/11 :
  ##  新版本：1.8.0.2  
