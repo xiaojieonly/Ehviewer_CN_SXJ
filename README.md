@@ -1,5 +1,13 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2021/09/21 :
+ ##  九月家里事情比较多，这个月的更新应该是鸽了  
+ ##  只要我还是个lsp，我肯定会一直维护下去的~
+ ##  据了解，百度贴吧中有人利用信息差，将本软件有偿的卖给别人。这里我郑重声明：我会一直用爱发电下去，绝对不会主动向任何人收取任何费用。
+ ##  大家如果发现有人在公共场合售卖此软件，希望能在大家力所能及的范围内去制止一下，以防别人上当受骗
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+   
 # 2021/08/22 :
  ##  新版本：1.8.1.0  
  ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装
