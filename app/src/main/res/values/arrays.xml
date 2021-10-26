@@ -17,6 +17,16 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <string-array name="top_list_type">
+        <item>@string/gallery_toplists</item>
+        <item>@string/uploader_toplists</item>
+        <item>@string/tagging_toplists</item>
+        <item>@string/hentai_home_toplists</item>
+        <item>@string/ehtracker_toplists</item>
+        <item>@string/cleanup_toplists</item>
+        <item>@string/rating_reviewing_toplists</item>
+    </string-array>
+
     <string-array name="theme_entries" translatable="false">
         <item>@string/settings_eh_theme_light</item>
         <item>@string/settings_eh_theme_dark</item>

@@ -68,6 +68,7 @@
     <string name="homepage">Homepage</string>
     <string name="subscription">Subscription</string>
     <string name="whats_hot">What\'s hot</string>
+    <string name="top_lists">Top Lists</string>
     <string name="favourite">Favourite</string>
     <string name="history">History</string>
     <string name="downloads">Downloads</string>
@@ -812,7 +813,16 @@
 
     <string name="download_service">Download Service</string>
     <string name="favorite_name">Favorite</string>
-
+    
+    <!--  排行榜  -->
+    <string name="gallery_toplists">Gallery Toplists</string>
+    <string name="uploader_toplists">Uploader Toplists</string>
+    <string name="tagging_toplists">tagging Toplists</string>
+    <string name="hentai_home_toplists">Hentai@Home Toplists</string>
+    <string name="ehtracker_toplists">EHTracker Toplists</string>
+    <string name="cleanup_toplists">Cleanup Toplists</string>
+    <string name="rating_reviewing_toplists">Rating&#038;Reviewing Toplists</string>
+    <string name="top_list">Top Lists</string>
 
 
 </resources>

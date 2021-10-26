@@ -17,10 +17,13 @@
 
 <!-- German translations by UShimamura -->
 <resources>
+
+
     <string name="app_name">EhViewer</string>
     <string name="homepage">Startseite</string>
     <string name="subscription">Gefolgte Etiketten</string>
-    <string name="whats_hot">Beliebt</string>
+    <string name="whats_hot">Top-Listen</string>
+    <string name="top_lists">Bestenliste</string>
     <string name="favourite">Lesezeichen</string>
     <string name="history">Verlauf</string>
     <string name="downloads">Downloads</string>
@@ -553,5 +556,15 @@
     <string name="settings_eh_show_gallery_pages">Galerieseitenzahl anzeigen</string>
     <string name="settings_eh_show_gallery_pages_summary">Die Galerieseitenzahle in der Galerieliste anzeigen</string>
     <string name="settings_about_donate_guide">guide</string>
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">Galerie Die Charts.</string>
+    <string name="uploader_toplists">Uploader Die Charts.</string>
+    <string name="tagging_toplists">identifizieren Die Charts.</string>
+    <string name="hentai_home_toplists">Hentai@Home Die Charts.</string>
+    <string name="ehtracker_toplists">EHAufspürer Die Charts.</string>
+    <string name="cleanup_toplists">Säuberungsaktion Die Charts.</string>
+    <string name="rating_reviewing_toplists">Bewertung&#038;Nachprüfend Die Charts.</string>
+    <string name="top_list">Die Charts.</string>
 
 </resources>

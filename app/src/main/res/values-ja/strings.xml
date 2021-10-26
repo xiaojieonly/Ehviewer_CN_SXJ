@@ -22,6 +22,7 @@
     <string name="homepage">ホームページ</string>
     <string name="subscription">タグの購読</string>
     <string name="whats_hot">人気</string>
+    <string name="top_lists">トップリスト</string>
     <string name="favourite">お気に入り</string>
     <string name="history">閲覧履歴</string>
     <string name="downloads">ダウンロード</string>
@@ -692,4 +693,16 @@
     <string name="settings_eh_show_gallery_pages">ギャラリーページ数を表示</string>
     <string name="settings_eh_show_gallery_pages_summary">リストにギャラリーのページの数量を表示します</string>
     <string name="settings_about_donate_guide">サポートガイド</string>
+
+    <!--  排行榜  -->
+
+    <string name="gallery_toplists">ギャラリー ランキング</string>
+    <string name="uploader_toplists">ローダー ランキング</string>
+    <string name="tagging_toplists">タグ ランキング</string>
+    <string name="hentai_home_toplists">Hentai@Home ランキング</string>
+    <string name="ehtracker_toplists">EHついせき ランキング</string>
+    <string name="cleanup_toplists">そーじ ランキング</string>
+    <string name="rating_reviewing_toplists">格付け&#038;検討 ランキング</string>
+    <string name="top_list">ランキング</string>
+
 </resources>

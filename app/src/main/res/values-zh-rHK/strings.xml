@@ -27,6 +27,7 @@
     <string name="homepage">主頁</string>
     <string name="subscription">訂閲</string>
     <string name="whats_hot">熱門</string>
+    <string name="top_lists">排行榜</string>
     <string name="favourite">收藏</string>
     <string name="history">歷史</string>
     <string name="downloads">下載</string>
@@ -714,5 +715,15 @@
     <string name="settings_privacy_secure_summary">啟用後，將不能截取該應用的螢幕截圖，同時，將不會在系統任務切換器中顯示該應用的內容預覽\n\n重新啟動應用以生效此更改</string>
     <string name="favorite_name">收藏畫廊</string>
 
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">畫廊 排行榜</string>
+    <string name="uploader_toplists">上傳 排行榜</string>
+    <string name="tagging_toplists">標簽 排行榜</string>
+    <string name="hentai_home_toplists">Hentai@Home 排行榜</string>
+    <string name="ehtracker_toplists">EH訂閲 排行榜</string>
+    <string name="cleanup_toplists">整理 排行榜</string>
+    <string name="rating_reviewing_toplists">等級&#038;審核 排行榜</string>
+    <string name="top_list">排行榜</string>
 
 </resources>
