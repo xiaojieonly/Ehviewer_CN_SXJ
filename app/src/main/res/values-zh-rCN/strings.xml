@@ -27,6 +27,7 @@
     <string name="homepage">主页</string>
     <string name="subscription">订阅</string>
     <string name="whats_hot">热门</string>
+    <string name="top_lists">排行榜</string>
     <string name="favourite">收藏</string>
     <string name="history">历史</string>
     <string name="downloads">下载</string>
@@ -722,6 +723,17 @@
     <string name="download_service">下载服务</string>
     <string name="favorite_name">收藏画廊</string>
     <string name="no_blicklist">这里是黑名单</string>
+
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">画廊 排行榜</string>
+    <string name="uploader_toplists">上传 排行榜</string>
+    <string name="tagging_toplists">标签 排行榜</string>
+    <string name="hentai_home_toplists">Hentai@Home 排行榜</string>
+    <string name="ehtracker_toplists">EH订阅 排行榜</string>
+    <string name="cleanup_toplists">整理 排行榜</string>
+    <string name="rating_reviewing_toplists">等级&#038;审核 排行榜</string>
+    <string name="top_list">排行榜</string>
 
 
 </resources>

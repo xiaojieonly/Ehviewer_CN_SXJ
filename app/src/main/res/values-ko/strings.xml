@@ -26,6 +26,7 @@
 
     <string name="homepage">홈</string>
     <string name="whats_hot">인기 갤러리</string>
+    <string name="top_lists">상위 목록</string>
     <string name="favourite">즐겨찾기</string>
     <string name="history">방문 기록</string>
     <string name="downloads">다운로드</string>
@@ -648,4 +649,15 @@
     <string name="download_service">다운로드 서비스</string>
     <string name="favorite_name">즐겨찾기</string>
     <string name="settings_about_donate_guide">지원 매 뉴 얼</string>
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">갤러리 순위표</string>
+    <string name="uploader_toplists">업로 더 순위표</string>
+    <string name="tagging_toplists">태그 순위표</string>
+    <string name="hentai_home_toplists">Hentai@Home 순위표</string>
+    <string name="ehtracker_toplists">EH트 래 커 순위표</string>
+    <string name="cleanup_toplists">정리 순위표</string>
+    <string name="rating_reviewing_toplists">등급&#038;검토 순위표</string>
+    <string name="top_list">순위표</string>
+
 </resources>

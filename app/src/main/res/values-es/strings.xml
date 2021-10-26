@@ -24,6 +24,7 @@
     <string name="homepage">Página de inicio</string>
     <string name="subscription">Suscripción</string>
     <string name="whats_hot">Destacado</string>
+    <string name="top_lists">Listas Principales</string>
     <string name="favourite">Favoritos</string>
     <string name="history">Historial</string>
     <string name="downloads">Descargas</string>
@@ -647,5 +648,15 @@
     <string name="settings_eh_theme_dark">Oscuro</string>
     <string name="settings_eh_theme_black">Negro</string>
     <string name="settings_about_donate_guide">guide</string>
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">Galería de glería Clasificar</string>
+    <string name="uploader_toplists">Carga de carga Clasificar</string>
+    <string name="tagging_toplists">etiquetado Clasificar</string>
+    <string name="hentai_home_toplists">Hentai@Home Clasificar</string>
+    <string name="ehtracker_toplists">EHTracker Clasificar</string>
+    <string name="cleanup_toplists">Limpieza Clasificar</string>
+    <string name="rating_reviewing_toplists">Clasificación&#038;Revisión Clasificar</string>
+    <string name="top_list">Clasificar</string>
 
 </resources>

@@ -26,6 +26,7 @@
 
     <string name="homepage">หน้าหลัก</string>
     <string name="whats_hot">เรื่องที่กำลังมาแรงมากๆ</string>
+    <string name="top_lists">รายการยอดนิยม</string>
     <string name="favourite">รายการโปรด</string>
     <string name="history">ประวัติเข้าชม</string>
     <string name="downloads">ดาวน์โหลด</string>
@@ -668,4 +669,15 @@
 
     <string name="download_service">บริการดาวน์โหลด</string>
     <string name="favorite_name">รายการโปรด</string>
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">แกลเลอรี อันดับ</string>
+    <string name="uploader_toplists">ตัวโหลด อันดับ</string>
+    <string name="tagging_toplists">แท็ก อันดับ</string>
+    <string name="hentai_home_toplists">Hentai@Home อันดับ</string>
+    <string name="ehtracker_toplists">EHแทร็กเกอร์ อันดับ</string>
+    <string name="cleanup_toplists">ล้างข้อมูล อันดับ</string>
+    <string name="rating_reviewing_toplists">การจัด อันดับ&#038;กำลังตรวจสอบ อันดับ</string>
+    <string name="top_list">อันดับ</string>
+
 </resources>

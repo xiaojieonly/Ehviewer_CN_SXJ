@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,18 +15,17 @@
   -->
 
 <resources>
-
     <!-- ========== -->
     <!-- Base Theme -->
     <!-- ========== -->
-    <style name="BaseTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+    <style name="BaseTheme" parent="Theme.MaterialComponents.Light">
         <item name="colorPrimary">@color/colorPrimary</item>
 
         <item name="popupWindowStyle">@color/popupWindow_background_light</item>
         <item name="android:navigationBarColor">@color/white</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleLight</item>
-<!--        <item name="button">@color/theme_change_light</item>-->
 
+        <item name="android:windowBackground">@color/white</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="actionBarStyle">@style/ActionBarStyle</item>
@@ -54,22 +52,29 @@
         <item name="tagBackgroundColor">@color/tag_background_light</item>
         <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimaryInverse</item>
         <item name="galleryDetailHeaderBackgroundColor">?attr/contentColorThemePrimary</item>
-        <item name="galleryDetailButtonBackgroundColor">@color/gallery_detail_button_background_light</item>
+        <item name="galleryDetailButtonBackgroundColor">
+            @color/gallery_detail_button_background_light
+        </item>
 
         <item name="preferenceHeaderBackground">@drawable/preference_header_background_light</item>
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_light</item>
+
     </style>
 
     <style name="AppTheme" parent="BaseTheme">
+        <item name="android:windowBackground">@color/white</item>
     </style>
+<!--    <style name="AppTheme" parent="BaseTheme"/>-->
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.Translucent"/>
+    <style name="AppTheme.NoActionBar.Translucent" parent="AppTheme">
+
+    </style>
 
     <!-- =============== -->
     <!-- Base Dark Theme -->
@@ -111,22 +116,24 @@
         <item name="tagBackgroundColor">@color/tag_background_dark</item>
         <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimary</item>
         <item name="galleryDetailHeaderBackgroundColor">?attr/contentColorThemePrimary</item>
-        <item name="galleryDetailButtonBackgroundColor">@color/gallery_detail_button_background_dark</item>
+        <item name="galleryDetailButtonBackgroundColor">
+            @color/gallery_detail_button_background_dark
+        </item>
 
         <item name="preferenceHeaderBackground">@drawable/preference_header_background_dark</item>
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
+
     </style>
 
-    <style name="AppTheme.Dark" parent="BaseTheme.Dark">
-    </style>
+    <style name="AppTheme.Dark" parent="BaseTheme.Dark"></style>
 
     <style name="AppTheme.Dark.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.Dark.NoActionBar.Translucent"/>
+    <style name="AppTheme.Dark.NoActionBar.Translucent" />
 
     <!-- =============== -->
     <!-- Base Black Theme -->
@@ -168,52 +175,63 @@
         <item name="tagBackgroundColor">@color/tag_background_black</item>
         <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimary</item>
         <item name="galleryDetailHeaderBackgroundColor">@android:color/black</item>
-        <item name="galleryDetailButtonBackgroundColor">@color/gallery_detail_button_background_black</item>
+        <item name="galleryDetailButtonBackgroundColor">
+            @color/gallery_detail_button_background_black
+        </item>
         <item name="preferenceHeaderBackground">@drawable/preference_header_background_black</item>
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
+
     </style>
 
-    <style name="AppTheme.Black" parent="BaseTheme.Black">
-    </style>
+    <style name="AppTheme.Black" parent="BaseTheme.Black"></style>
 
     <style name="AppTheme.Black.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.Black.NoActionBar.Translucent"/>
+    <style name="AppTheme.Black.NoActionBar.Translucent" />
 
     <!-- ========= -->
     <!-- App Theme -->
     <!-- ========= -->
-    <style name="AppTheme.Main" parent="AppTheme.NoActionBar.Translucent"/>
+    <style name="AppTheme.Main" parent="AppTheme.NoActionBar.Translucent" />
 
-    <style name="AppTheme.Main.Dark" parent="AppTheme.Dark.NoActionBar.Translucent"/>
+    <style name="AppTheme.Main.Dark" parent="AppTheme.Dark.NoActionBar.Translucent" />
 
-    <style name="AppTheme.Main.Black" parent="AppTheme.Black.NoActionBar.Translucent"/>
+    <style name="AppTheme.Main.Black" parent="AppTheme.Black.NoActionBar.Translucent" />
 
-    <style name="AppTheme.Toolbar" parent="AppTheme.NoActionBar"/>
+    <style name="AppTheme.Toolbar" parent="AppTheme.NoActionBar" />
 
-    <style name="AppTheme.Toolbar.Dark" parent="AppTheme.Dark.NoActionBar"/>
+    <style name="AppTheme.Toolbar.Dark" parent="AppTheme.Dark.NoActionBar" />
 
-    <style name="AppTheme.Toolbar.Black" parent="AppTheme.Black.NoActionBar"/>
+    <style name="AppTheme.Toolbar.Black" parent="AppTheme.Black.NoActionBar" />
 
     <style name="AppTheme.Gallery" parent="AppTheme.Dark.NoActionBar">
         <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_dark</item>
     </style>
 
-    <style name="AppTheme.Gallery.Dark"/>
+    <style name="AppTheme.Gallery.Dark" />
 
     <style name="AppTheme.Gallery.Black" parent="AppTheme.Black.NoActionBar">
         <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_black</item>
     </style>
 
-    <style name="AppTheme.Settings" parent="AppTheme"/>
+    <style name="AppTheme.Settings" parent="AppTheme" />
 
-    <style name="AppTheme.Settings.Dark" parent="AppTheme.Dark"/>
+    <style name="AppTheme.Settings.Dark" parent="AppTheme.Dark" />
 
-    <style name="AppTheme.Settings.Black" parent="AppTheme.Black"/>
+    <style name="AppTheme.Settings.Black" parent="AppTheme.Black" />
+
+    <style name="SplashTheme" parent="BaseTheme">
+        ==========
+        启动页属性
+        ==========
+        <item name="android:windowBackground">@color/trans</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
 
     <!-- ============ -->
     <!-- Widget Theme -->

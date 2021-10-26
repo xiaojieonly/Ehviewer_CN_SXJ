@@ -127,6 +127,7 @@
     <color name="colorAccent">@color/purple_a200</color>
 
     <color name="translucent_bg">#80ffffff</color>
+    <color name="trans">#00ffffff</color>
 
     <color name="loading_indicator_red">#ffe53935</color>
     <color name="loading_indicator_purple">@color/purple_a700</color>

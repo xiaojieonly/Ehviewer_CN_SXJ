@@ -146,4 +146,10 @@
     <dimen name="gallery_tab_layout_pad">2dp</dimen>
     <dimen name="gallery_tab_layout_spacing">3dp</dimen>
 
+    <!-- Spinner -->
+    <dimen name="top_list_spinner_height">50dp</dimen>
+    <dimen name="top_list_spinner_elevation">3dp</dimen>
+    <dimen name="top_list_spinner_margin">12dp</dimen>
+
+
 </resources>

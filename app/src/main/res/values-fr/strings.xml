@@ -23,6 +23,7 @@
     <string name="homepage">Page d\'acceuil</string>
     <string name="subscription">Tags suivis</string>
     <string name="whats_hot">Plus vus</string>
+    <string name="top_lists">Les meilleures listes</string>
     <string name="favourite">Favoris</string>
     <string name="history">Historique</string>
     <string name="downloads">Téléchargement</string>
@@ -691,5 +692,15 @@
     <string name="settings_eh_show_gallery_pages">Montrer les nombres des pages des galeries</string>
     <string name="settings_eh_show_gallery_pages_summary">Montrer le nombre des pages des galerie dans la liste des galeries</string>
     <string name="settings_about_donate_guide">guide</string>
+
+    <!--  排行榜  -->
+    <string name="gallery_toplists">Galerie Classement</string>
+    <string name="uploader_toplists">Téléchargement Classement</string>
+    <string name="tagging_toplists">Marquage Classement</string>
+    <string name="hentai_home_toplists">Hentai@Home Classement</string>
+    <string name="ehtracker_toplists">EHTraceur Classement</string>
+    <string name="cleanup_toplists">Nettoyage Classement</string>
+    <string name="rating_reviewing_toplists">Notation&#038;Révision Classement</string>
+    <string name="top_list">Classement</string>
 
 </resources>
