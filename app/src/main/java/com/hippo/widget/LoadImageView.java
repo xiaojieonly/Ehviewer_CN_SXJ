@@ -23,6 +23,7 @@ import android.graphics.drawable.Animatable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -38,6 +39,7 @@ import com.hippo.conaco.Unikery;
 import com.hippo.drawable.PreciselyClipDrawable;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.image.ImageBitmap;
 import com.hippo.image.ImageDrawable;
 import com.hippo.image.RecycledException;
@@ -64,8 +66,9 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     private int mClipWidth = Integer.MIN_VALUE;
     private int mClipHeight = Integer.MIN_VALUE;
     private int mRetryType;
-    private boolean mFailed;
+    public boolean mFailed;
     private boolean mLoadFromDrawable;
+
 
     public LoadImageView(Context context) {
         super(context);
@@ -86,7 +89,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.LoadImageView, defStyleAttr, 0);
         setRetryType(a.getInt(R.styleable.LoadImageView_retryType, 0));
         a.recycle();
-
+        setFocusable(false);
         if (!isInEditMode()) {
             mConaco = EhApplication.getConaco(context);
         }
@@ -316,7 +319,13 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public void onFailure() {
         mFailed = true;
         clearDrawable();
-        Drawable drawable = DrawableManager.getVectorDrawable(getContext(), R.drawable.image_failed);
+        Drawable drawable;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            drawable = DrawableManager.getVectorDrawable(getContext(), R.drawable.image_failed_new);
+        } else {
+            drawable = DrawableManager.getVectorDrawable(getContext(), R.drawable.image_failed);
+        }
+
         onPreSetImageDrawable(drawable, true);
         setImageDrawable(drawable);
         if (mRetryType == RETRY_TYPE_CLICK) {
