@@ -34,6 +34,11 @@
             android:icon="@drawable/v_fire_black_x24"/>
 
         <item
+            android:id="@+id/nav_top_lists"
+            android:title="@string/top_lists"
+            android:icon="@drawable/v_top_lists_x24"/>
+
+        <item
             android:id="@+id/nav_favourite"
             android:title="@string/favourite"
             android:icon="@drawable/v_heart_black_x24"/>
