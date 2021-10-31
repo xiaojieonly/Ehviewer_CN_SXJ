@@ -18,6 +18,7 @@ package com.hippo.ehviewer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -79,11 +80,6 @@ public class Settings {
             }
         }
 
-        if (!sSettingsPre.contains(KEY_URL_REPLACE)) {
-            if ("CN".equals(Locale.getDefault().getCountry())&& Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                putUR(true);
-            }
-        }
 
     }
 
@@ -277,11 +273,20 @@ public class Settings {
     public static final int THEME_BLACK = 2;
     private static final int DEFAULT_THEME = THEME_LIGHT;
 
-    public static int getTheme() {
+    private static boolean overSet = false;
+
+    public static int getTheme(Context context) {
+        if (getDarkModeStatus(context) && !overSet){
+            return THEME_BLACK;
+        }
         return getIntFromStr(KEY_THEME, DEFAULT_THEME);
     }
 
     public static void putTheme(int theme) {
+        if (!overSet){
+            overSet = true;
+            System.out.println("覆盖主题");
+        }
         putIntToStr(KEY_THEME, theme);
     }
 
@@ -1207,16 +1212,6 @@ public class Settings {
         putBoolean(KEY_DOMAIN_FRONTING, value);
     }
 
-    public static final String KEY_URL_REPLACE = "url_replace";
-
-
-    public static boolean getUR() {
-        return getBoolean(KEY_URL_REPLACE, DEFAULT_FRONTING);
-    }
-
-    public static void putUR(boolean value) {
-        putBoolean(KEY_URL_REPLACE, value);
-    }
 
     private static final String KEY_DOWNLOAD_DELAY = "download_delay";
     private static final int DEFAULT_DOWNLOAD_DELAY = 0;
@@ -1226,6 +1221,12 @@ public class Settings {
     }
     public static void putDownloadDelay(int value) {
         putIntToStr(KEY_DOWNLOAD_DELAY, value);
+    }
+
+    //检查当前系统是否已开启暗黑模式
+    public static boolean getDarkModeStatus(Context context) {
+        int mode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return mode == Configuration.UI_MODE_NIGHT_YES;
     }
 
 }
