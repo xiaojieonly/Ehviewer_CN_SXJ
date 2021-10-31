@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Spinner
+        android:id="@+id/top_list_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/top_list_spinner_height"
+        android:elevation="@dimen/top_list_spinner_elevation"
+        android:entries="@array/top_list_type"
+        android:textAlignment="center"
+        android:layout_marginLeft="@dimen/top_list_spinner_margin"
+        android:layout_marginRight="@dimen/top_list_spinner_margin"
+        android:layout_marginTop="@dimen/top_list_spinner_margin"
+        android:background="?attr/toolbarColor"
+        android:spinnerMode="dialog"/>
+
+
+</FrameLayout>
