@@ -35,12 +35,8 @@ public class ChromeRequestBuilder extends Request.Builder {
 
     public ChromeRequestBuilder(String url) {
         String host = url.split("/")[2];
-        if (Settings.getUR()&&host.endsWith("e-hentai.org")){
-//            url = url.replaceFirst("e-hentai.org", "github.com");
-            url = url.replaceFirst("e-hentai.org", "github.io");
 
-        }
- // domain fronting
+        // domain fronting
         url(url);
         addHeader("Host", host);
         addHeader("User-Agent", CHROME_USER_AGENT);
