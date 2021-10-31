@@ -44,6 +44,16 @@ public final class JsoupUtils {
     }
 
     @Nullable
+    public static Elements getElementsByClass(Element element, String className) {
+        Elements elements = element.getElementsByClass(className);
+        if (elements != null && elements.size() > 0) {
+            return elements;
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
     public static Element getElementByTag(Element element, String tagName) {
         Elements elements = element.getElementsByTag(tagName);
         if (elements != null && elements.size() > 0) {
