@@ -40,12 +40,9 @@ public abstract class EhPreferenceActivity extends PrettyPreferenceActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        setTheme(getThemeResId(Settings.getTheme()));
-
-        super.onCreate(savedInstanceState);
-
         ((EhApplication) getApplication()).registerActivity(this);
-
+        setTheme(getThemeResId(Settings.getTheme(getApplicationContext())));
+        super.onCreate(savedInstanceState);
         if (Analytics.isEnabled()) {
             FirebaseAnalytics.getInstance(this);
         }
