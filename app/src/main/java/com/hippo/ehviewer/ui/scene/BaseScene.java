@@ -235,13 +235,13 @@ public abstract class BaseScene extends SceneFragment {
     }
 
     @Nullable
-    public Context getContext2() {
+    public Context getEHContext() {
         return null != mThemeContext ? mThemeContext : super.getContext();
     }
 
     @Nullable
     public Resources getResources2() {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null != context) {
             return context.getResources();
         } else {
@@ -261,7 +261,7 @@ public abstract class BaseScene extends SceneFragment {
 
     @Nullable
     public LayoutInflater getLayoutInflater2() {
-        return LayoutInflater.from(getContext2());
+        return LayoutInflater.from(getEHContext());
     }
 
     public void hideSoftInput() {
