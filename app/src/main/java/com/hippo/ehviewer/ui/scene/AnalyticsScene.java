@@ -72,7 +72,7 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return;
         }
