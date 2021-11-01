@@ -117,7 +117,8 @@ public final class MainActivity extends StageActivity
     @Nullable
     private TextView mDisplayName;
     @Nullable
-    private Button mChangeTheme;
+//    private Button mChangeTheme;
+    private TextView mChangeTheme;
 
     private int mNavCheckedItem = 0;
 
@@ -332,7 +333,8 @@ public final class MainActivity extends StageActivity
         View headerLayout = mNavView.getHeaderView(0);
         mAvatar = (LoadImageView) ViewUtils.$$(headerLayout, R.id.avatar);
         mDisplayName = (TextView) ViewUtils.$$(headerLayout, R.id.display_name);
-        mChangeTheme = (Button) ViewUtils.$$(this, R.id.change_theme);
+//        mChangeTheme = (Button) ViewUtils.$$(this, R.id.change_theme);
+        mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
 
         mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, R.attr.colorPrimaryDark));
         // Pre-L need shadow drawable
@@ -345,6 +347,17 @@ public final class MainActivity extends StageActivity
 
         if (mNavView != null) {
             mNavView.setNavigationItemSelectedListener(this);
+        }
+        if (Settings.getTheme(getApplicationContext()) == 0){
+            mChangeTheme.setTextColor(getColor(R.color.theme_change_light));
+
+            mChangeTheme.setBackgroundColor(getColor(R.color.white));
+        }else if (Settings.getTheme(getApplicationContext()) == 1){
+            mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
+            mChangeTheme.setBackgroundColor(getColor(R.color.grey_850));
+        }else{
+            mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
+            mChangeTheme.setBackgroundColor(getColor(R.color.black));
         }
 
         mChangeTheme.setText(getThemeText());
@@ -369,7 +382,7 @@ public final class MainActivity extends StageActivity
 
     private String getThemeText() {
         int resId;
-        switch (Settings.getTheme()) {
+        switch (Settings.getTheme(getApplicationContext())) {
             default:
             case Settings.THEME_LIGHT:
                 resId = R.string.theme_light;
@@ -385,7 +398,7 @@ public final class MainActivity extends StageActivity
     }
 
     private int getNextTheme() {
-        switch (Settings.getTheme()) {
+        switch (Settings.getTheme(getApplicationContext())) {
             default:
             case Settings.THEME_LIGHT:
                 return Settings.THEME_DARK;
@@ -441,6 +454,8 @@ public final class MainActivity extends StageActivity
         mAvatar = null;
         mDisplayName = null;
     }
+
+
 
     @Override
     protected void onResume() {
@@ -715,6 +730,33 @@ public final class MainActivity extends StageActivity
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivityForResult(intent, REQUEST_CODE_SETTINGS);
         }
+//        if (id == R.id.nav_homepage) {
+//            Bundle args = new Bundle();
+//            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
+//            startSceneFirstly(new Announcer(GalleryListScene.class)
+//                    .setArgs(args));
+//        } else if (id == R.id.nav_subscription) {
+//            Bundle args = new Bundle();
+//            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
+//            startSceneFirstly(new Announcer(GalleryListScene.class)
+//                    .setArgs(args));
+//        } else if (id == R.id.nav_whats_hot) {
+//            Bundle args = new Bundle();
+//            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
+//            startSceneFirstly(new Announcer(GalleryListScene.class)
+//                    .setArgs(args));
+//        } else if (id == R.id.nav_top_lists){
+//
+//        } else if (id == R.id.nav_favourite) {
+//            startScene(new Announcer(FavoritesScene.class));
+//        } else if (id == R.id.nav_history) {
+//            startScene(new Announcer(HistoryScene.class));
+//        } else if (id == R.id.nav_downloads) {
+//            startScene(new Announcer(DownloadsScene.class));
+//        } else if (id == R.id.nav_settings) {
+//            Intent intent = new Intent(this, SettingsActivity.class);
+//            startActivityForResult(intent, REQUEST_CODE_SETTINGS);
+//        }
 
         if (id != R.id.nav_stub && mDrawerLayout != null) {
             mDrawerLayout.closeDrawers();

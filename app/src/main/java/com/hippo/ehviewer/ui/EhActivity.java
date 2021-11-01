@@ -37,10 +37,12 @@ public abstract class EhActivity extends AppCompatActivity {
     @StyleRes
     protected abstract int getThemeResId(int theme);
 
+    private Context context;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        setTheme(getThemeResId(Settings.getTheme()));
 
+        setTheme(getThemeResId(Settings.getTheme(context)));
         super.onCreate(savedInstanceState);
 
         ((EhApplication) getApplication()).registerActivity(this);
@@ -49,9 +51,9 @@ public abstract class EhActivity extends AppCompatActivity {
             FirebaseAnalytics.getInstance(this);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && Settings.getApplyNavBarThemeColor()) {
-            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && Settings.getApplyNavBarThemeColor()) {
+//            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
+//        }
     }
 
     @Override
@@ -90,7 +92,8 @@ public abstract class EhActivity extends AppCompatActivity {
         if (locale != null) {
             newBase = ContextLocalWrapper.wrap(newBase, locale);
         }
-
         super.attachBaseContext(newBase);
+
+        context = newBase;
     }
 }
