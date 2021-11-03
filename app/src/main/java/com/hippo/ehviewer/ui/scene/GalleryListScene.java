@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -35,13 +36,13 @@ import android.text.style.ImageSpan;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.IntDef;
@@ -54,6 +55,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.app.CheckBoxDialogBuilder;
@@ -95,10 +98,11 @@ import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
-import com.hippo.ehviewer.util.TagTranslationutil;
+import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.ContentLayout;
 import com.hippo.widget.FabLayout;
+import com.hippo.widget.LoadImageViewNew;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.AssertUtils;
@@ -121,7 +125,8 @@ public final class GalleryListScene extends BaseScene
 
     @IntDef({STATE_NORMAL, STATE_SIMPLE_SEARCH, STATE_SEARCH, STATE_SEARCH_SHOW_LIST})
     @Retention(RetentionPolicy.SOURCE)
-    private @interface State {}
+    private @interface State {
+    }
 
     private static final int BACK_PRESSED_INTERVAL = 2000;
 
@@ -131,6 +136,7 @@ public final class GalleryListScene extends BaseScene
     public final static String ACTION_HOMEPAGE = "action_homepage";
     public final static String ACTION_SUBSCRIPTION = "action_subscription";
     public final static String ACTION_WHATS_HOT = "action_whats_hot";
+    public final static String ACTION_TOP_LIST = "action_top_list";
     public final static String ACTION_LIST_URL_BUILDER = "action_list_url_builder";
 
     public final static String KEY_LIST_URL_BUILDER = "list_url_builder";
@@ -179,6 +185,12 @@ public final class GalleryListScene extends BaseScene
     private SearchBarMover mSearchBarMover;
     @Nullable
     private AddDeleteDrawable mActionFabDrawable;
+    @Nullable
+    private PopupWindow popupWindow;
+    @Nullable
+    private ChipGroup tagFlowLayout;
+
+    EhTagDatabase ehTags;
 
     @Nullable
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
@@ -206,10 +218,11 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     private final RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
-        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {}
+        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+        }
 
         @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             if (dy >= mHideActionFabSlop) {
                 hideActionFab();
             } else if (dy <= -mHideActionFabSlop / 2) {
@@ -227,6 +240,8 @@ public final class GalleryListScene extends BaseScene
     private boolean mHasFirstRefresh = false;
 
     private int mNavCheckedId = 0;
+
+    private int popupWindowPosition = -1;
 
     private ShowcaseView mShowcaseView;
 
@@ -279,7 +294,7 @@ public final class GalleryListScene extends BaseScene
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mClient = EhApplication.getEhClient(context);
         mDownloadManager = EhApplication.getDownloadManager(context);
@@ -292,32 +307,43 @@ public final class GalleryListScene extends BaseScene
                     mAdapter.notifyDataSetChanged();
                 }
             }
+
             @Override
-            public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list) { }
+            public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list) {
+            }
+
             @Override
-            public void onUpdateAll() { }
+            public void onUpdateAll() {
+            }
+
             @Override
             public void onReload() {
                 if (mAdapter != null) {
                     mAdapter.notifyDataSetChanged();
                 }
             }
+
             @Override
             public void onChange() {
                 if (mAdapter != null) {
                     mAdapter.notifyDataSetChanged();
                 }
             }
+
             @Override
-            public void onRenameLabel(String from, String to) { }
+            public void onRenameLabel(String from, String to) {
+            }
+
             @Override
             public void onRemove(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
                 if (mAdapter != null) {
                     mAdapter.notifyDataSetChanged();
                 }
             }
+
             @Override
-            public void onUpdateLabels() { }
+            public void onUpdateLabels() {
+            }
         };
         mDownloadManager.addDownloadInfoListener(mDownloadInfoListener);
 
@@ -327,6 +353,8 @@ public final class GalleryListScene extends BaseScene
             }
         };
         mFavouriteStatusRouter.addListener(mFavouriteStatusRouterListener);
+
+        ehTags = EhTagDatabase.getInstance(context);
 
         if (savedInstanceState == null) {
             onInit();
@@ -348,7 +376,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
         boolean hasFirstRefresh;
@@ -401,78 +429,6 @@ public final class GalleryListScene extends BaseScene
         });
     }
 
-    private abstract class UrlSuggestion extends SearchBar.Suggestion {
-        @Override
-        public CharSequence getText(float textSize) {
-            Drawable bookImage = DrawableManager.getVectorDrawable(getContext2(), R.drawable.v_book_open_x24);
-            SpannableStringBuilder ssb = new SpannableStringBuilder("    ");
-            ssb.append(getResources2().getString(R.string.gallery_list_search_bar_open_gallery));
-            int imageSize = (int) (textSize * 1.25);
-            if (bookImage != null) {
-                bookImage.setBounds(0, 0, imageSize, imageSize);
-                ssb.setSpan(new ImageSpan(bookImage), 1, 2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            return ssb;
-        }
-
-        @Override
-        public void onClick() {
-            startScene(createAnnouncer());
-
-            if (mState == STATE_SIMPLE_SEARCH) {
-                setState(STATE_NORMAL);
-            } else if (mState == STATE_SEARCH_SHOW_LIST) {
-                setState(STATE_SEARCH);
-            }
-        }
-
-        public abstract Announcer createAnnouncer();
-
-        @Override
-        public void onLongClick() { }
-    }
-
-    private class GalleryDetailUrlSuggestion extends UrlSuggestion {
-        private long mGid;
-        private String mToken;
-
-        private GalleryDetailUrlSuggestion(long gid, String token) {
-            mGid = gid;
-            mToken = token;
-        }
-
-        @Override
-        public Announcer createAnnouncer() {
-            Bundle args = new Bundle();
-            args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GID_TOKEN);
-            args.putLong(GalleryDetailScene.KEY_GID, mGid);
-            args.putString(GalleryDetailScene.KEY_TOKEN, mToken);
-            return new Announcer(GalleryDetailScene.class).setArgs(args);
-        }
-    }
-
-    private class GalleryPageUrlSuggestion extends UrlSuggestion {
-        private long mGid;
-        private String mPToken;
-        private int mPage;
-
-        private GalleryPageUrlSuggestion(long gid, String pToken, int page) {
-            mGid = gid;
-            mPToken = pToken;
-            mPage = page;
-        }
-
-        @Override
-        public Announcer createAnnouncer() {
-            Bundle args = new Bundle();
-            args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN);
-            args.putLong(ProgressScene.KEY_GID, mGid);
-            args.putString(ProgressScene.KEY_PTOKEN, mPToken);
-            args.putInt(ProgressScene.KEY_PAGE, mPage);
-            return new Announcer(ProgressScene.class).setArgs(args);
-        }
-    }
-
     @Nullable
     private static String getSuitableTitleForUrlBuilder(
             Resources resources, ListUrlBuilder urlBuilder, boolean appName) {
@@ -488,12 +444,12 @@ public final class GalleryListScene extends BaseScene
                 urlBuilder.getPageTo() == -1) {
             return resources.getString(appName ? R.string.app_name : R.string.homepage);
         } else if (ListUrlBuilder.MODE_SUBSCRIPTION == urlBuilder.getMode() &&
-            EhUtils.NONE == category &&
-            TextUtils.isEmpty(keyword) &&
-            urlBuilder.getAdvanceSearch() == -1 &&
-            urlBuilder.getMinRating() == -1 &&
-            urlBuilder.getPageFrom() == -1 &&
-            urlBuilder.getPageTo() == -1) {
+                EhUtils.NONE == category &&
+                TextUtils.isEmpty(keyword) &&
+                urlBuilder.getAdvanceSearch() == -1 &&
+                urlBuilder.getMinRating() == -1 &&
+                urlBuilder.getPageFrom() == -1 &&
+                urlBuilder.getPageTo() == -1) {
             return resources.getString(R.string.subscription);
         } else if (ListUrlBuilder.MODE_WHATS_HOT == urlBuilder.getMode()) {
             return resources.getString(R.string.whats_hot);
@@ -581,10 +537,10 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     @Override
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_gallery_list, container, false);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
 
@@ -612,6 +568,8 @@ public final class GalleryListScene extends BaseScene
 
         mAdapter = new GalleryListAdapter(inflater, resources,
                 mRecyclerView, Settings.getListMode());
+
+        mAdapter.setThumbItemClickListener(this::onThumbItemClick);
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
         mRecyclerView.setClipToPadding(false);
@@ -644,7 +602,7 @@ public final class GalleryListScene extends BaseScene
         mFabLayout.setOnExpandListener(this);
         addAboveSnackView(mFabLayout);
 
-        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark));
+        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark,null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
 
         mSearchFab.setOnClickListener(this);
@@ -668,6 +626,87 @@ public final class GalleryListScene extends BaseScene
         guideQuickSearch();
 
         return view;
+    }
+
+
+    private void onThumbItemClick(int position, View view, GalleryInfo gi) {
+        LoadImageViewNew thumb = view.findViewById(R.id.thumb_new);
+        if (thumb.mFailed){
+            thumb.load();
+            return;
+        }
+        if (popupWindowPosition == position) {
+            popupWindowPosition = -1;
+            popupWindow.dismiss();
+            tagFlowLayout = null;
+            return;
+        }
+        if (popupWindow != null){
+            popupWindowPosition = -1;
+            popupWindow.dismiss();
+            tagFlowLayout = null;
+        }
+
+        if (gi.tgList == null || gi.tgList.isEmpty()) {
+            onItemClick(view, gi);
+            return;
+        }
+        if (position != popupWindowPosition) {
+
+            LinearLayout popView = (LinearLayout) getLayoutInflater().inflate(R.layout.list_thumb_popupwindow, null);
+            tagFlowLayout = popView.findViewById(R.id.tab_tag_flow);
+            int colorTag = AttrResources.getAttrColor(getContext(), R.attr.tagBackgroundColor);
+            for (int i = 0; i < gi.tgList.size(); i++) {
+                String tagName = gi.tgList.get(i);
+                Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
+                chip.setChipBackgroundColor(ColorStateList.valueOf(colorTag));
+                chip.setTextColor(Color.WHITE);
+                if (Settings.getShowTagTranslations()) {
+                    if (ehTags == null) {
+                        ehTags = EhTagDatabase.getInstance(getContext());
+                    }
+                    chip.setText(TagTranslationUtil.getTagCNBody(tagName.split(":"), ehTags));
+                } else {
+                    chip.setText(tagName.split(":")[1]);
+                }
+                chip.setOnClickListener(l -> onTagClick(tagName));
+                tagFlowLayout.addView(chip, i);
+            }
+
+            popupWindow = new PopupWindow(popView, view.getWidth() - thumb.getWidth(), thumb.getHeight());
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.setAnimationStyle(R.style.PopupWindow);
+
+            tagFlowLayout.setOnClickListener(l -> {
+                popupWindowPosition = -1;
+                popupWindow.dismiss();
+                onItemClick(view, gi);
+            });
+            tagFlowLayout.setOnLongClickListener(l -> onItemLongClick(gi));
+            int[] location = new int[2];
+            thumb.getLocationOnScreen(location);
+            popupWindow.showAtLocation(thumb, Gravity.NO_GRAVITY, location[0] + thumb.getWidth(), location[1]);
+            popupWindowPosition = position;
+        }
+    }
+
+    private void onTagClick(String tagName) {
+        if (null == mHelper || null == mUrlBuilder) {
+            return;
+        }
+        popupWindowPosition = -1;
+        popupWindow.dismiss();
+
+        ListUrlBuilder urlBuilder = new ListUrlBuilder();
+        urlBuilder.setMode(ListUrlBuilder.MODE_TAG);
+        urlBuilder.setKeyword(tagName);
+        GalleryListScene.startScene(this,urlBuilder);
+        return;
+//        mUrlBuilder.set(tagName);
+//        mUrlBuilder.setPageIndex(0);
+//        onUpdateUrlBuilder();
+//        mHelper.refresh();
+//        setState(STATE_NORMAL);
     }
 
     private void guideQuickSearch() {
@@ -737,28 +776,25 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void showQuickSearchTipDialog(final List<QuickSearch> list,
-            final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
-        Context context = getContext2();
+                                          final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
+        Context context = getEHContext();
         if (null == context) {
             return;
         }
         final CheckBoxDialogBuilder builder = new CheckBoxDialogBuilder(
                 context, getString(R.string.add_quick_search_tip), getString(R.string.get_it), false);
         builder.setTitle(R.string.readme);
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (builder.isChecked()) {
-                    Settings.putQuickSearchTip(false);
-                }
-                showAddQuickSearchDialog(list, adapter, listView, tip);
+        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+            if (builder.isChecked()) {
+                Settings.putQuickSearchTip(false);
             }
+            showAddQuickSearchDialog(list, adapter, listView, tip);
         }).show();
     }
 
     private void showAddQuickSearchDialog(final List<QuickSearch> list,
-            final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
-        Context context = getContext2();
+                                          final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
+        Context context = getEHContext();
         final ListUrlBuilder urlBuilder = mUrlBuilder;
         if (null == context || null == urlBuilder) {
             return;
@@ -771,7 +807,7 @@ public final class GalleryListScene extends BaseScene
         }
 
         // Check duplicate
-        for (QuickSearch q: list) {
+        for (QuickSearch q : list) {
             if (urlBuilder.equalsQuickSearch(q)) {
                 showTip(getString(R.string.duplicate_quick_search, q.name), LENGTH_LONG);
                 return;
@@ -783,79 +819,78 @@ public final class GalleryListScene extends BaseScene
         builder.setTitle(R.string.add_quick_search_dialog_title);
         builder.setPositiveButton(android.R.string.ok, null);
         final AlertDialog dialog = builder.show();
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String text = builder.getText().trim();
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String text = builder.getText().trim();
 
-                // Check name empty
-                if (TextUtils.isEmpty(text)) {
-                    builder.setError(getString(R.string.name_is_empty));
+            // Check name empty
+            if (TextUtils.isEmpty(text)) {
+                builder.setError(getString(R.string.name_is_empty));
+                return;
+            }
+
+            // Check name duplicate
+            for (QuickSearch q : list) {
+                if (text.equals(q.name)) {
+                    builder.setError(getString(R.string.duplicate_name));
                     return;
                 }
+            }
 
-                // Check name duplicate
-                for (QuickSearch q: list) {
-                    if (text.equals(q.name)) {
-                        builder.setError(getString(R.string.duplicate_name));
-                        return;
-                    }
+            builder.setError(null);
+            dialog.dismiss();
+            QuickSearch quickSearch = urlBuilder.toQuickSearch();
+
+            //汉化or不汉化
+            if (Settings.getShowTagTranslations()) {
+                if (ehTags == null) {
+                    ehTags = EhTagDatabase.getInstance(context);
                 }
+                //根据‘：’分割字符串为组名和标签名
+                String[] tags = text.split(":");
 
-                builder.setError(null);
-                dialog.dismiss();
-                QuickSearch quickSearch = urlBuilder.toQuickSearch();
+                quickSearch.name = TagTranslationUtil.getTagCN(tags, ehTags);
+            } else {
+                quickSearch.name = text;
+            }
+            EhDB.insertQuickSearch(quickSearch);
+            list.add(quickSearch);
+            adapter.notifyDataSetChanged();
 
-                //汉化or不汉化
-                if (Settings.getShowTagTranslations()) {
-                    EhTagDatabase ehTags = EhTagDatabase.getInstance(context);
-                    //根据‘：’分割字符串为组名和标签名
-                    String[] tags = text.split(":");
-
-                    quickSearch.name = TagTranslationutil.getTagCN(tags,ehTags);
-                }else {
-                    quickSearch.name = text;
-                }
-                EhDB.insertQuickSearch(quickSearch);
-                list.add(quickSearch);
-                adapter.notifyDataSetChanged();
-
-                if (0 == list.size()) {
-                    tip.setVisibility(View.VISIBLE);
-                    listView.setVisibility(View.GONE);
-                } else {
-                    tip.setVisibility(View.GONE);
-                    listView.setVisibility(View.VISIBLE);
-                }
+            if (0 == list.size()) {
+                tip.setVisibility(View.VISIBLE);
+                listView.setVisibility(View.GONE);
+            } else {
+                tip.setVisibility(View.GONE);
+                listView.setVisibility(View.VISIBLE);
             }
         });
     }
 
     @Override
     public View onCreateDrawerView(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+                                   @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.drawer_list, container, false);
         Toolbar toolbar = (Toolbar) ViewUtils.$$(view, R.id.toolbar);
         final TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         final ListView listView = (ListView) ViewUtils.$$(view, R.id.list_view);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
         List<QuickSearch> quickSearchList = EhDB.getAllQuickSearch();
         //汉化标签
         final boolean judge = Settings.getShowTagTranslations();
-        if (judge && 0 != quickSearchList.size()){
+        if (judge && 0 != quickSearchList.size()) {
             EhTagDatabase ehTags = EhTagDatabase.getInstance(context);
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过已翻译的标签
-                if (2 == name.split(":").length ) {
-                    quickSearchList.get(i).setName(TagTranslationutil.getTagCN(name.split(":"),ehTags));
+                if (2 == name.split(":").length) {
+                    quickSearchList.get(i).setName(TagTranslationUtil.getTagCN(name.split(":"), ehTags));
                     EhDB.updateQuickSearch(quickSearchList.get(i));
                 }
             }
-        }else if (!judge && 0 != quickSearchList.size()){
+        } else if (!judge && 0 != quickSearchList.size()) {
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过未翻译的标签
@@ -867,48 +902,42 @@ public final class GalleryListScene extends BaseScene
         }
 
 
-
         final List<QuickSearch> list = quickSearchList;
 
         final ArrayAdapter<QuickSearch> adapter = new ArrayAdapter<>(context, R.layout.item_simple_list, list);
         listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override   //快速搜索点击tag事件监听
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (null == mHelper || null == mUrlBuilder) {
-                    return;
-                }
-
-                mUrlBuilder.set(list.get(position));
-                mUrlBuilder.setPageIndex(0);
-                onUpdateUrlBuilder();
-                mHelper.refresh();
-                setState(STATE_NORMAL);
-                closeDrawer(Gravity.RIGHT);
+        //快速搜索点击tag事件监听
+        listView.setOnItemClickListener((parent, view1, position, id) -> {
+            if (null == mHelper || null == mUrlBuilder) {
+                return;
             }
+
+            mUrlBuilder.set(list.get(position));
+            mUrlBuilder.setPageIndex(0);
+            onUpdateUrlBuilder();
+            mHelper.refresh();
+            setState(STATE_NORMAL);
+            closeDrawer(Gravity.RIGHT);
         });
 
         tip.setText(R.string.quick_search_tip);
         toolbar.setTitle(R.string.quick_search);
         toolbar.inflateMenu(R.menu.drawer_gallery_list);
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {  //点击增加快速搜索按钮触发
-                int id = item.getItemId();
-                switch (id) {
-                    case R.id.action_add:
-                        if (Settings.getQuickSearchTip()) {
-                            showQuickSearchTipDialog(list, adapter, listView, tip);
-                        } else {
-                            showAddQuickSearchDialog(list, adapter, listView, tip);
-                        }
-                        break;
-                    case R.id.action_settings:
-                        startScene(new Announcer(QuickSearchScene.class));
-                        break;
-                }
-                return true;
+        toolbar.setOnMenuItemClickListener(item -> {  //点击增加快速搜索按钮触发
+            int id = item.getItemId();
+            switch (id) {
+                case R.id.action_add:
+                    if (Settings.getQuickSearchTip()) {
+                        showQuickSearchTipDialog(list, adapter, listView, tip);
+                    } else {
+                        showAddQuickSearchDialog(list, adapter, listView, tip);
+                    }
+                    break;
+                case R.id.action_settings:
+                    startScene(new Announcer(QuickSearchScene.class));
+                    break;
             }
+            return true;
         });
 
         if (0 == list.size()) {
@@ -956,9 +985,6 @@ public final class GalleryListScene extends BaseScene
                 handle = checkDoubleClickExit();
                 break;
             case STATE_SIMPLE_SEARCH:
-                setState(STATE_NORMAL);
-                handle = true;
-                break;
             case STATE_SEARCH:
                 setState(STATE_NORMAL);
                 handle = true;
@@ -976,11 +1002,13 @@ public final class GalleryListScene extends BaseScene
 
     @Override
     public boolean onItemClick(EasyRecyclerView parent, View view, int position, long id) {
+        return onItemClick(view, mHelper.getDataAtEx(position));
+    }
+
+    public boolean onItemClick(View view, GalleryInfo gi) {
         if (null == mHelper || null == mRecyclerView) {
             return false;
         }
-
-        GalleryInfo gi = mHelper.getDataAtEx(position);
         if (gi == null) {
             return true;
         }
@@ -994,6 +1022,70 @@ public final class GalleryListScene extends BaseScene
             announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
         }
         startScene(announcer);
+        return true;
+    }
+
+    @Override
+    public boolean onItemLongClick(EasyRecyclerView parent, View view, int position, long id) {
+        return onItemLongClick(mHelper.getDataAtEx(position));
+    }
+
+    public boolean onItemLongClick(GalleryInfo gi) {
+        final Context context = getEHContext();
+        final MainActivity activity = getActivity2();
+        if (null == context || null == activity || null == mHelper) {
+            return false;
+        }
+
+        if (gi == null) {
+            return true;
+        }
+
+        boolean downloaded = mDownloadManager.getDownloadState(gi.gid) != DownloadInfo.STATE_INVALID;
+        boolean favourited = gi.favoriteSlot != -2;
+
+        CharSequence[] items = new CharSequence[]{
+                context.getString(R.string.read),
+                context.getString(downloaded ? R.string.delete_downloads : R.string.download),
+                context.getString(favourited ? R.string.remove_from_favourites : R.string.add_to_favourites),
+        };
+
+        int[] icons = new int[]{
+                R.drawable.v_book_open_x24,
+                downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24,
+                favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
+        };
+
+        new AlertDialog.Builder(context)
+                .setTitle(EhUtils.getSuitableTitle(gi))
+                .setAdapter(new SelectItemWithIconAdapter(context, items, icons), (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Read
+                            Intent intent = new Intent(activity, GalleryActivity.class);
+                            intent.setAction(GalleryActivity.ACTION_EH);
+                            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, gi);
+                            startActivity(intent);
+                            break;
+                        case 1: // Download
+                            if (downloaded) {
+                                new AlertDialog.Builder(context)
+                                        .setTitle(R.string.download_remove_dialog_title)
+                                        .setMessage(getString(R.string.download_remove_dialog_message, gi.title))
+                                        .setPositiveButton(android.R.string.ok, (dialog1, which1) -> mDownloadManager.deleteDownload(gi.gid))
+                                        .show();
+                            } else {
+                                CommonOperations.startDownload(activity, gi, false);
+                            }
+                            break;
+                        case 2: // Favorites
+                            if (favourited) {
+                                CommonOperations.removeFromFavorites(activity, gi, new RemoveFromFavoriteListener(context, activity.getStageId(), getTag()));
+                            } else {
+                                CommonOperations.addToFavorites(activity, gi, new AddToFavoriteListener(context, activity.getStageId(), getTag()));
+                            }
+                            break;
+                    }
+                }).show();
         return true;
     }
 
@@ -1013,7 +1105,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void showGoToDialog() {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context || null == mHelper) {
             return;
         }
@@ -1038,7 +1130,7 @@ public final class GalleryListScene extends BaseScene
                 int goTo;
                 try {
                     goTo = Integer.parseInt(text) - 1;
-                } catch (NumberFormatException e){
+                } catch (NumberFormatException e) {
                     builder.setError(getString(R.string.error_invalid_number));
                     return;
                 }
@@ -1089,67 +1181,6 @@ public final class GalleryListScene extends BaseScene
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
             mActionFabDrawable.setAdd(ANIMATE_TIME);
         }
-    }
-
-    @Override
-    public boolean onItemLongClick(EasyRecyclerView parent, View view, int position, long id) {
-        final Context context = getContext2();
-        final MainActivity activity = getActivity2();
-        if (null == context || null == activity || null == mHelper) {
-            return false;
-        }
-
-        final GalleryInfo gi = mHelper.getDataAtEx(position);
-        if (gi == null) {
-            return true;
-        }
-
-        boolean downloaded = mDownloadManager.getDownloadState(gi.gid) != DownloadInfo.STATE_INVALID;
-        boolean favourited = gi.favoriteSlot != -2;
-
-        CharSequence[] items = new CharSequence[] {
-            context.getString(R.string.read),
-            context.getString(downloaded ? R.string.delete_downloads : R.string.download),
-            context.getString(favourited ? R.string.remove_from_favourites : R.string.add_to_favourites),
-        };
-
-        int[] icons = new int[] {
-            R.drawable.v_book_open_x24,
-            downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24,
-            favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
-        };
-
-        new AlertDialog.Builder(context)
-                .setTitle(EhUtils.getSuitableTitle(gi))
-                .setAdapter(new SelectItemWithIconAdapter(context, items, icons), (dialog, which) -> {
-                    switch (which) {
-                        case 0: // Read
-                            Intent intent = new Intent(activity, GalleryActivity.class);
-                            intent.setAction(GalleryActivity.ACTION_EH);
-                            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, gi);
-                            startActivity(intent);
-                            break;
-                        case 1: // Download
-                            if (downloaded) {
-                                new AlertDialog.Builder(context)
-                                    .setTitle(R.string.download_remove_dialog_title)
-                                    .setMessage(getString(R.string.download_remove_dialog_message, gi.title))
-                                    .setPositiveButton(android.R.string.ok, (dialog1, which1) -> mDownloadManager.deleteDownload(gi.gid))
-                                    .show();
-                            } else {
-                                CommonOperations.startDownload(activity, gi, false);
-                            }
-                            break;
-                        case 2: // Favorites
-                            if (favourited) {
-                                CommonOperations.removeFromFavorites(activity, gi, new RemoveFromFavoriteListener(context, activity.getStageId(), getTag()));
-                            } else {
-                                CommonOperations.addToFavorites(activity, gi, new AddToFavoriteListener(context, activity.getStageId(), getTag()));
-                            }
-                            break;
-                    }
-                }).show();
-        return true;
     }
 
     private void showActionFab() {
@@ -1467,6 +1498,8 @@ public final class GalleryListScene extends BaseScene
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
+//        ActivityResultContracts.StartActivityForResult(Intent.createChooser(intent,
+//                getString(R.string.select_image)), REQUEST_CODE_SELECT_IMAGE);
         startActivityForResult(Intent.createChooser(intent,
                 getString(R.string.select_image)), REQUEST_CODE_SELECT_IMAGE);
     }
@@ -1516,10 +1549,101 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
-    private class GalleryListAdapter extends GalleryAdapter {
+    private void onGetGalleryListSuccess(GalleryListParser.Result result, int taskId) {
+        if (mHelper != null && mSearchBarMover != null &&
+                mHelper.isCurrentTask(taskId)) {
+            String emptyString = getResources2().getString(mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION && result.noWatchedTags
+                    ? R.string.gallery_list_empty_hit_subscription
+                    : R.string.gallery_list_empty_hit);
+            mHelper.setEmptyString(emptyString);
+            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
+        }
+    }
+
+    private void onGetGalleryListFailure(Exception e, int taskId) {
+        if (mHelper != null && mSearchBarMover != null &&
+                mHelper.isCurrentTask(taskId)) {
+            mHelper.onGetException(taskId, e);
+        }
+    }
+
+    private abstract class UrlSuggestion extends SearchBar.Suggestion {
+        @Override
+        public CharSequence getText(float textSize) {
+            Drawable bookImage = DrawableManager.getVectorDrawable(getEHContext(), R.drawable.v_book_open_x24);
+            SpannableStringBuilder ssb = new SpannableStringBuilder("    ");
+            ssb.append(getResources2().getString(R.string.gallery_list_search_bar_open_gallery));
+            int imageSize = (int) (textSize * 1.25);
+            if (bookImage != null) {
+                bookImage.setBounds(0, 0, imageSize, imageSize);
+                ssb.setSpan(new ImageSpan(bookImage), 1, 2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            return ssb;
+        }
+
+        @Override
+        public void onClick() {
+            startScene(createAnnouncer());
+
+            if (mState == STATE_SIMPLE_SEARCH) {
+                setState(STATE_NORMAL);
+            } else if (mState == STATE_SEARCH_SHOW_LIST) {
+                setState(STATE_SEARCH);
+            }
+        }
+
+        public abstract Announcer createAnnouncer();
+
+        @Override
+        public void onLongClick() {
+        }
+    }
+
+    private class GalleryDetailUrlSuggestion extends UrlSuggestion {
+        private long mGid;
+        private String mToken;
+
+        private GalleryDetailUrlSuggestion(long gid, String token) {
+            mGid = gid;
+            mToken = token;
+        }
+
+        @Override
+        public Announcer createAnnouncer() {
+            Bundle args = new Bundle();
+            args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GID_TOKEN);
+            args.putLong(GalleryDetailScene.KEY_GID, mGid);
+            args.putString(GalleryDetailScene.KEY_TOKEN, mToken);
+            return new Announcer(GalleryDetailScene.class).setArgs(args);
+        }
+    }
+
+    private class GalleryPageUrlSuggestion extends UrlSuggestion {
+        private long mGid;
+        private String mPToken;
+        private int mPage;
+
+        private GalleryPageUrlSuggestion(long gid, String pToken, int page) {
+            mGid = gid;
+            mPToken = pToken;
+            mPage = page;
+        }
+
+        @Override
+        public Announcer createAnnouncer() {
+            Bundle args = new Bundle();
+            args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN);
+            args.putLong(ProgressScene.KEY_GID, mGid);
+            args.putString(ProgressScene.KEY_PTOKEN, mPToken);
+            args.putInt(ProgressScene.KEY_PAGE, mPage);
+            return new Announcer(ProgressScene.class).setArgs(args);
+        }
+    }
+
+    private class GalleryListAdapter extends GalleryAdapterNew {
 
         public GalleryListAdapter(@NonNull LayoutInflater inflater,
-                @NonNull Resources resources, @NonNull RecyclerView recyclerView, int type) {
+                                  @NonNull Resources resources, @NonNull RecyclerView recyclerView, int type) {
             super(inflater, resources, recyclerView, type, true);
         }
 
@@ -1533,6 +1657,7 @@ public final class GalleryListScene extends BaseScene
         public GalleryInfo getDataAt(int position) {
             return null != mHelper ? mHelper.getDataAtEx(position) : null;
         }
+
     }
 
     private class GalleryListHelper extends GalleryInfoContentHelper {
@@ -1565,9 +1690,10 @@ public final class GalleryListScene extends BaseScene
             }
         }
 
+
         @Override
         protected Context getContext() {
-            return GalleryListScene.this.getContext2();
+            return GalleryListScene.this.getEHContext();
         }
 
         @Override
@@ -1615,24 +1741,6 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
-    private void onGetGalleryListSuccess(GalleryListParser.Result result, int taskId) {
-        if (mHelper != null && mSearchBarMover != null &&
-                mHelper.isCurrentTask(taskId)) {
-            String emptyString = getResources2().getString(mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION && result.noWatchedTags
-                    ? R.string.gallery_list_empty_hit_subscription
-                    : R.string.gallery_list_empty_hit);
-            mHelper.setEmptyString(emptyString);
-            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
-        }
-    }
-
-    private void onGetGalleryListFailure(Exception e, int taskId) {
-        if (mHelper != null && mSearchBarMover != null &&
-                mHelper.isCurrentTask(taskId)) {
-            mHelper.onGetException(taskId, e);
-        }
-    }
-
     private static class GetGalleryListListener extends EhCallback<GalleryListScene, GalleryListParser.Result> {
 
         private final int mTaskId;
@@ -1659,7 +1767,8 @@ public final class GalleryListScene extends BaseScene
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {
@@ -1684,7 +1793,8 @@ public final class GalleryListScene extends BaseScene
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {
@@ -1709,7 +1819,8 @@ public final class GalleryListScene extends BaseScene
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {

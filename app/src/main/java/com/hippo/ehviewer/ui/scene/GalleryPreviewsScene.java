@@ -87,7 +87,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mClient = EhApplication.getEhClient(context);
         if (savedInstanceState == null) {
@@ -134,7 +134,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         contentLayout.hideFastScroll();
         mRecyclerView = contentLayout.getRecyclerView();
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
 
@@ -194,7 +194,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return false;
         }
@@ -227,7 +227,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
     @Override
     public boolean onItemClick(EasyRecyclerView parent, View view, int position, long id) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null != context && null != mHelper && null != mGalleryInfo) {
             GalleryPreview p = mHelper.getDataAtEx(position);
             if (p != null) {
@@ -307,7 +307,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
         @Override
         protected Context getContext() {
-            return GalleryPreviewsScene.this.getContext2();
+            return GalleryPreviewsScene.this.getEHContext();
         }
 
         @Override

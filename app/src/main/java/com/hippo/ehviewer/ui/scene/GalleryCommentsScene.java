@@ -66,7 +66,6 @@ import com.hippo.ehviewer.client.data.GalleryComment;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.parser.VoteCommentParser;
-import com.hippo.ehviewer.dao.BlackList;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.reveal.ViewAnimationUtils;
 import com.hippo.ripple.Ripple;
@@ -78,7 +77,6 @@ import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.ReadableTime;
 import com.hippo.util.TextUrl;
-import com.hippo.util.TimeUtils;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.FabLayout;
 import com.hippo.widget.LinkifyTextView;
@@ -210,7 +208,7 @@ public final class GalleryCommentsScene extends ToolbarScene
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
         mFab = (FloatingActionButton) ViewUtils.$$(view, R.id.fab);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
         int paddingBottomFab = resources.getDimensionPixelOffset(R.dimen.gallery_padding_bottom_fab);
@@ -292,7 +290,7 @@ public final class GalleryCommentsScene extends ToolbarScene
     }
 
     private void voteComment(long id, int vote) {
-        Context context = getContext2();
+        Context context = getEHContext();
         MainActivity activity = getActivity2();
         if (null == context || null == activity) {
             return;
@@ -373,7 +371,7 @@ public final class GalleryCommentsScene extends ToolbarScene
     }
 
     private void showCommentDialog(int position) {
-        final Context context = getContext2();
+        final Context context = getEHContext();
         if (context == null || mCommentList == null || mCommentList.comments == null || position >= mCommentList.comments.length || position < 0) {
             return;
         }
@@ -632,7 +630,7 @@ public final class GalleryCommentsScene extends ToolbarScene
      */
     @Override
     public void onClick(View v) {
-        Context context = getContext2();
+        Context context = getEHContext();
         MainActivity activity = getActivity2();
         if (null == context || null == activity || null == mEditText) {
             return;
@@ -777,7 +775,7 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         @Override
         public void onBindViewHolder(@NonNull CommentHolder holder, int position) {
-            Context context = getContext2();
+            Context context = getEHContext();
             if (context == null || mCommentList == null) {
                 return;
             }

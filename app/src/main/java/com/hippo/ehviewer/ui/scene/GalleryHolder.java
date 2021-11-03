@@ -24,7 +24,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.widget.LoadImageView;
 
-class GalleryHolder extends RecyclerView.ViewHolder {
+public class GalleryHolder extends RecyclerView.ViewHolder {
 
     public final LoadImageView thumb;
     public final TextView title;
@@ -39,7 +39,6 @@ class GalleryHolder extends RecyclerView.ViewHolder {
 
     public GalleryHolder(View itemView) {
         super(itemView);
-
         thumb = itemView.findViewById(R.id.thumb);
         title = itemView.findViewById(R.id.title);
         uploader = itemView.findViewById(R.id.uploader);
@@ -51,4 +50,5 @@ class GalleryHolder extends RecyclerView.ViewHolder {
         favourited = itemView.findViewById(R.id.favourited);
         downloaded = itemView.findViewById(R.id.downloaded);
     }
+
 }

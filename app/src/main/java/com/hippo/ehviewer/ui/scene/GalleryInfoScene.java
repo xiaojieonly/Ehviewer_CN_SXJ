@@ -162,7 +162,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_gallery_info, container, false);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
@@ -201,7 +201,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
 
     @Override
     public boolean onItemClick(EasyRecyclerView parent, View view, int position, long id) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null != context && 0 != position && null != mValues) {
             if (position == INDEX_PARENT) {
                 UrlOpener.openUrl(context, mValues.get(position), true);

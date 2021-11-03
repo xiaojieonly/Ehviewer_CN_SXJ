@@ -183,7 +183,7 @@ public class FavoritesScene extends BaseScene implements
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mClient = EhApplication.getEhClient(context);
         mFavCatArray = Settings.getFavCat();
@@ -256,7 +256,7 @@ public class FavoritesScene extends BaseScene implements
         mSearchBar = (SearchBar) ViewUtils.$$(view, R.id.search_bar);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
         int paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
@@ -346,7 +346,7 @@ public class FavoritesScene extends BaseScene implements
     // keyword of mUrlBuilder, fav cat of mUrlBuilder, mFavCatArray.
     // They changed, call it
     private void updateSearchBar() {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context || null == mUrlBuilder || null == mSearchBar || null == mFavCatArray) {
             return;
         }
@@ -494,7 +494,7 @@ public class FavoritesScene extends BaseScene implements
     public View onCreateDrawerView(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.drawer_list_rv, container, false);
-        final Context context = getContext2();
+        final Context context = getEHContext();
         Toolbar toolbar = (Toolbar) ViewUtils.$$(view, R.id.toolbar);
 
         AssertUtils.assertNotNull(context);
@@ -771,7 +771,7 @@ public class FavoritesScene extends BaseScene implements
     }
 
     private void showGoToDialog() {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context || null == mHelper) {
             return;
         }
@@ -812,7 +812,7 @@ public class FavoritesScene extends BaseScene implements
     @Override
     @Implemented(FabLayout.OnClickFabListener.class)
     public void onClickSecondaryFab(FabLayout view, FloatingActionButton fab, int position) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context || null == mRecyclerView || null == mHelper) {
             return;
         }
@@ -1311,7 +1311,7 @@ public class FavoritesScene extends BaseScene implements
 
         @Override
         protected Context getContext() {
-            return FavoritesScene.this.getContext2();
+            return FavoritesScene.this.getEHContext();
         }
 
         @Override

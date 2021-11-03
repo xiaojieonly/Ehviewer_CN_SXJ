@@ -142,7 +142,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         mSignInViaCookies.setOnClickListener(this);
         mSkipSigningIn.setOnClickListener(this);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         EhApplication application = (EhApplication) context.getApplicationContext();
         if (application.containGlobalStuff(mRequestId)) {
@@ -249,7 +249,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
             return;
         }
 
-        Context context = getContext2();
+        Context context = getEHContext();
         MainActivity activity = getActivity2();
         if (null == context || null == activity || null == mUsername || null == mPassword || null == mUsernameLayout ||
                 null == mPasswordLayout) {
@@ -292,7 +292,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
     }
 
     private void getProfile() {
-        Context context = getContext2();
+        Context context = getEHContext();
         MainActivity activity = getActivity2();
         if (null == context || null == activity) {
             return;
@@ -320,7 +320,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
     }
 
     private void whetherToSkip(Exception e) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return;
         }
@@ -333,7 +333,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
     }
 
     public void onSignInEnd(Exception e) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return;
         }

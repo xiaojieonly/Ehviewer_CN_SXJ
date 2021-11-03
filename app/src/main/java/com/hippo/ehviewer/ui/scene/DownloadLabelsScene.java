@@ -70,7 +70,7 @@ public class DownloadLabelsScene extends ToolbarScene {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mList = EhApplication.getDownloadManager(getContext2()).getLabelList();
+        mList = EhApplication.getDownloadManager(getEHContext()).getLabelList();
     }
 
     @Override
@@ -90,7 +90,7 @@ public class DownloadLabelsScene extends ToolbarScene {
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_label);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
@@ -151,7 +151,7 @@ public class DownloadLabelsScene extends ToolbarScene {
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return false;
         }
@@ -195,7 +195,7 @@ public class DownloadLabelsScene extends ToolbarScene {
 
         @Override
         public void onClick(View v) {
-            Context context = getContext2();
+            Context context = getEHContext();
             if (null == context) {
                 return;
             }
@@ -246,7 +246,7 @@ public class DownloadLabelsScene extends ToolbarScene {
 
         @Override
         public void onClick(View v) {
-            Context context = getContext2();
+            Context context = getEHContext();
             if (null == context) {
                 return;
             }
@@ -290,7 +290,7 @@ public class DownloadLabelsScene extends ToolbarScene {
         @Override
         public void onClick(View v) {
             int position = getAdapterPosition();
-            Context context = getContext2();
+            Context context = getEHContext();
             if (null == context || null == mList || null == mRecyclerView) {
                 return;
             }
@@ -371,7 +371,7 @@ public class DownloadLabelsScene extends ToolbarScene {
 
         @Override
         public void onMoveItem(int fromPosition, int toPosition) {
-            Context context = getContext2();
+            Context context = getEHContext();
             if (null == context || fromPosition == toPosition) {
                 return;
             }
