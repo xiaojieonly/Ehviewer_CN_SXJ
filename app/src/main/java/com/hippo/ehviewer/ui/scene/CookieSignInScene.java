@@ -86,7 +86,7 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
         mOk.setOnClickListener(this);
 
         // Try to get old version cookie info
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         SharedPreferences sharedPreferences = context.getSharedPreferences("eh_info", 0);
         String ipbMemberId = sharedPreferences.getString("ipb_member_id", null);
@@ -173,7 +173,7 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     }
 
     public void enter() {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context || null == mIpbMemberIdLayout || null == mIpbPassHashLayout ||
                 null == mIgneousLayout || null == mIpbMemberId || null == mIpbPassHash ||
                 null == mIgneous) {
@@ -224,7 +224,7 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     }
 
     private void storeCookie(String id, String hash, String igneous) {
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return;
         }

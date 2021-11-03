@@ -84,7 +84,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     }
 
     private boolean doJobs() {
-        Context context = getContext2();
+        Context context = getEHContext();
         MainActivity activity = getActivity2();
         if (null == context || null == activity) {
             return false;
@@ -167,7 +167,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
         View progress = ViewUtils.$$(view, R.id.progress);
         mTip = (TextView) ViewUtils.$$(view, R.id.tip);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_sad_pandroid);
@@ -221,7 +221,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     private void onGetGalleryTokenFailure(Exception e) {
         mValid = false;
 
-        Context context = getContext2();
+        Context context = getEHContext();
 
         if (null != context && null != mViewTransition && null != mTip) {
             // Show tip

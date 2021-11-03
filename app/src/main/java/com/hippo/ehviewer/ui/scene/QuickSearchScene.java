@@ -86,7 +86,7 @@ public final class QuickSearchScene extends ToolbarScene {
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_search);
@@ -169,7 +169,7 @@ public final class QuickSearchScene extends ToolbarScene {
         @Override
         public void onClick(View v) {
             int position = getAdapterPosition();
-            Context context = getContext2();
+            Context context = getEHContext();
             if (position == RecyclerView.NO_POSITION || mQuickSearchList == null) {
                 return;
             }

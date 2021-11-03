@@ -104,7 +104,7 @@ public class HistoryScene extends ToolbarScene
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(content, tip);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
 
@@ -212,7 +212,7 @@ public class HistoryScene extends ToolbarScene
     }
 
     private void showClearAllDialog() {
-        new AlertDialog.Builder(getContext2())
+        new AlertDialog.Builder(getEHContext())
                 .setMessage(R.string.clear_all_history)
                 .setPositiveButton(R.string.clear_all, new DialogInterface.OnClickListener() {
                     @Override
@@ -232,7 +232,7 @@ public class HistoryScene extends ToolbarScene
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         // Skip when in choice mode
-        Context context = getContext2();
+        Context context = getEHContext();
         if (null == context) {
             return false;
         }
@@ -267,7 +267,7 @@ public class HistoryScene extends ToolbarScene
 
     @Override
     public boolean onItemLongClick(EasyRecyclerView parent, View view, int position, long id) {
-        final Context context = getContext2();
+        final Context context = getEHContext();
         final MainActivity activity = getActivity2();
         if (null == context || null == activity || null == mLazyList) {
             return false;

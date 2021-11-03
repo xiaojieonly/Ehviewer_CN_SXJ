@@ -58,7 +58,7 @@ public class WebViewSignInScene extends SolidScene {
     @SuppressLint("SetJavaScriptEnabled")
     public View onCreateView2(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
         EhUtils.signOut(context);
@@ -123,7 +123,7 @@ public class WebViewSignInScene extends SolidScene {
 
         @Override
         public void onPageFinished(WebView view, String url) {
-            Context context = getContext2();
+            Context context = getEHContext();
             if (context == null) {
                 return;
             }

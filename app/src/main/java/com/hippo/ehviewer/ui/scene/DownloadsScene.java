@@ -193,7 +193,7 @@ public class DownloadsScene extends ToolbarScene
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mDownloadManager = EhApplication.getDownloadManager(context);
         mDownloadManager.addDownloadInfoListener(this);
@@ -212,7 +212,7 @@ public class DownloadsScene extends ToolbarScene
 
         DownloadManager manager = mDownloadManager;
         if (null == manager) {
-            Context context = getContext2();
+            Context context = getEHContext();
             if (null != context) {
                 manager = EhApplication.getDownloadManager(context);
             }
@@ -286,7 +286,7 @@ public class DownloadsScene extends ToolbarScene
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(content, tip);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(content);
         Resources resources = context.getResources();
 
@@ -518,7 +518,7 @@ public class DownloadsScene extends ToolbarScene
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.drawer_list, container, false);
 
-        final Context context = getContext2();
+        final Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
         Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -681,7 +681,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onClickSecondaryFab(FabLayout view, FloatingActionButton fab, int position) {
-        Context context = getContext2();
+        Context context = getEHContext();
         Activity activity = getActivity2();
         EasyRecyclerView recyclerView = mRecyclerView;
         if (null == context || null == activity || null == recyclerView) {
@@ -1035,7 +1035,7 @@ public class DownloadsScene extends ToolbarScene
         @Override
         public void onClick(DialogInterface dialog, int which) {
             // Cancel check mode
-            Context context = getContext2();
+            Context context = getEHContext();
             if (null == context) {
                 return;
             }
@@ -1087,14 +1087,14 @@ public class DownloadsScene extends ToolbarScene
             start.setOnClickListener(this);
             stop.setOnClickListener(this);
 
-            boolean isDarkTheme = !AttrResources.getAttrBoolean(getContext2(), R.attr.isLightTheme);
+            boolean isDarkTheme = !AttrResources.getAttrBoolean(getEHContext(), R.attr.isLightTheme);
             Ripple.addRipple(start, isDarkTheme);
             Ripple.addRipple(stop, isDarkTheme);
         }
 
         @Override
         public void onClick(View v) {
-            Context context = getContext2();
+            Context context = getEHContext();
             Activity activity = getActivity2();
             EasyRecyclerView recyclerView = mRecyclerView;
             if (null == context || null == activity || null == recyclerView || recyclerView.isInCustomChoice()) {

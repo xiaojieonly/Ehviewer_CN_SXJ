@@ -72,7 +72,7 @@ public class SecurityScene extends SolidScene implements
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = getContext2();
+        Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         if (null != mSensorManager) {
