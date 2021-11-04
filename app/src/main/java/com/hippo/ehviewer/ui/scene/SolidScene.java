@@ -51,7 +51,7 @@ public class SolidScene extends BaseScene {
                     break;
                 }
             case CHECK_STEP_ANALYTICS:
-                if (EhUtils.needSignedIn(getContext2())) {
+                if (EhUtils.needSignedIn(getEHContext())) {
                     startScene(new Announcer(SignInScene.class).setArgs(args));
                     break;
                 }
