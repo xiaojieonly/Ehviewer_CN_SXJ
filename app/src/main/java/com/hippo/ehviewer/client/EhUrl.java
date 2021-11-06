@@ -35,8 +35,11 @@ public class EhUrl {
     public static final String DOMAIN_E = "e-hentai.org";
     public static final String DOMAIN_LOFI = "lofi.e-hentai.org";
 
-    public static final String HOST_EX = "https://" + DOMAIN_EX + "/";
-    public static final String HOST_E = "https://" + DOMAIN_E + "/";
+    public static final String REFERER_EX = "https://" + DOMAIN_EX;
+    public static final String REFERER_E = "https://" + DOMAIN_E;
+
+    public static final String HOST_EX = REFERER_EX + "/";
+    public static final String HOST_E = REFERER_E + "/";
 
     public static final String API_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login&CODE=01";
 
@@ -49,6 +52,9 @@ public class EhUrl {
     public static final String URL_POPULAR_E = "https://e-hentai.org/popular";
     public static final String URL_POPULAR_EX = "https://exhentai.org/popular";
 
+    public static final String URL_TOP_LIST_E = HOST_E+"toplist.php";
+    public static final String URL_TOP_LIST_EX = HOST_EX+"toplist.php";
+
     public static final String URL_IMAGE_SEARCH_E = "https://upload.e-hentai.org/image_lookup.php";
     public static final String URL_IMAGE_SEARCH_EX = "https://exhentai.org/upload/image_lookup.php";
 
@@ -57,9 +63,6 @@ public class EhUrl {
     public static final String URL_FAVORITES_E = HOST_E + "favorites.php";
     public static final String URL_FAVORITES_EX = HOST_EX + "favorites.php";
     public static final String URL_FORUMS = "https://forums.e-hentai.org/";
-
-    public static final String REFERER_EX = "https://" + DOMAIN_EX;
-    public static final String REFERER_E = "https://" + DOMAIN_E;
 
     public static final String ORIGIN_EX = REFERER_EX;
     public static final String ORIGIN_E = REFERER_E;
@@ -198,6 +201,26 @@ public class EhUrl {
             case SITE_EX:
                 return URL_POPULAR_EX;
         }
+    }
+
+    /**
+     * 获取排行榜‘top list’连接
+     * @return
+     */
+    @NonNull
+    public static String getTopListUrl() {
+        return URL_TOP_LIST_E;
+        /**
+         * 里站没排行榜入口？？？
+         * 妈的绝了
+         */
+//        switch (Settings.getGallerySite()) {
+//            default:
+//            case SITE_E:
+//                return URL_TOP_LIST_E;
+//            case SITE_EX:
+//                return URL_TOP_LIST_EX;
+//        }
     }
 
     @NonNull

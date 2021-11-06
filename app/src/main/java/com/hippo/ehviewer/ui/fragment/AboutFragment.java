@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.ui.fragment;
 
+import android.app.Application;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -111,14 +112,15 @@ public class AboutFragment extends PreferenceFragment
     }
 
     private void saveImage(int drawable,ImageView imageView){
+        Context context = getContext();
         File dir = AppConfig.getExternalImageDir();
         File mFile;
         FileOutputStream fileOutputStream;
         Bitmap needSaveData;
 
-        errorToast = Toast.makeText(getContext(),R.string.error_save_image_existed,Toast.LENGTH_SHORT);
+        errorToast = Toast.makeText(context,R.string.error_save_image_existed,Toast.LENGTH_SHORT);
         errorToast.setGravity(Gravity.CENTER,0,0);
-        successToast = Toast.makeText(getContext(),R.string.image_save_success,Toast.LENGTH_SHORT);
+        successToast = Toast.makeText(context,R.string.image_save_success,Toast.LENGTH_SHORT);
         successToast.setGravity(Gravity.CENTER,0,0);
 
         try {
@@ -142,7 +144,7 @@ public class AboutFragment extends PreferenceFragment
                 needSaveData.compress(Bitmap.CompressFormat.PNG,100,fileOutputStream);
             }
             Uri uri = Uri.fromFile(mFile);
-            getContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,uri));
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,uri));
             successToast.show();
         }catch (FileNotFoundException e){
             ExceptionUtils.throwIfFatal(e);
