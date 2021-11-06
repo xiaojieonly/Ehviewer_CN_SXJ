@@ -18,15 +18,18 @@ package com.hippo.ehviewer.client;
 
 import android.content.Context;
 import android.os.AsyncTask;
+
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.exception.CancelledException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.yorozuya.SimpleHandler;
+
 import java.io.File;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 
@@ -46,6 +49,7 @@ public class EhClient {
     public static final int METHOD_ADD_FAVORITES_RANGE = 10;
     public static final int METHOD_MODIFY_FAVORITES = 11;
     public static final int METHOD_GET_TORRENT_LIST = 12;
+    public static final int METHOD_GET_TOP_LIST = 13;
     public static final int METHOD_GET_PROFILE = 14;
     public static final int METHOD_VOTE_COMMENT = 15;
     public static final int METHOD_IMAGE_SEARCH = 16;
@@ -163,6 +167,8 @@ public class EhClient {
                         return EhEngine.modifyFavorites(this, mOkHttpClient, (String) params[0], (long[]) params[1], (Integer) params[2], (Boolean) params[3]);
                     case METHOD_GET_TORRENT_LIST:
                         return EhEngine.getTorrentList(this, mOkHttpClient, (String) params[0], (Long) params[1], (String) params[2]);
+                    case METHOD_GET_TOP_LIST:
+                        return EhEngine.getTopList(this, mOkHttpClient, (String) params[0]);
                     case METHOD_GET_PROFILE:
                         return EhEngine.getProfile(this, mOkHttpClient);
                     case METHOD_VOTE_COMMENT:
