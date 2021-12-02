@@ -228,6 +228,20 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
         mShowExpunged = false;
     }
 
+    public void set(String q) {
+        mMode = 2;
+        mCategory = -1;
+        mKeyword = q;
+        mAdvanceSearch = -1;
+        mMinRating = -1;
+        mPageFrom = -1;
+        mPageTo = -1;
+        mImagePath = null;
+        mUseSimilarityScan = false;
+        mOnlySearchCovers = false;
+        mShowExpunged = false;
+    }
+
     public QuickSearch toQuickSearch() {
         QuickSearch q = new QuickSearch();
         q.mode = mMode;

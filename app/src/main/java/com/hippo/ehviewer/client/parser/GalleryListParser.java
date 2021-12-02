@@ -175,9 +175,9 @@ public class GalleryListParser {
         }
 
         // Thumb
-        Element glthumb = JsoupUtils.getElementByClass(e, "glthumb");
-        if (glthumb != null) {
-            Element img = glthumb.select("div:nth-child(1)>img").first();
+        Element glThumb = JsoupUtils.getElementByClass(e, "glthumb");
+        if (glThumb != null) {
+            Element img = glThumb.select("div:nth-child(1)>img").first();
             if (img != null) {
                 // Thumb size
                 Matcher m = PATTERN_THUMB_SIZE.matcher(img.attr("style"));
@@ -201,7 +201,7 @@ public class GalleryListParser {
             }
 
             // Pages
-            Element div = glthumb.select("div:nth-child(2)>div:nth-child(2)>div:nth-child(2)").first();
+            Element div = glThumb.select("div:nth-child(2)>div:nth-child(2)>div:nth-child(2)").first();
             if (div != null) {
                 Matcher matcher = PATTERN_PAGES.matcher(div.text());
                 if (matcher.find()) {
@@ -242,6 +242,11 @@ public class GalleryListParser {
         }
         if (gi.favoriteSlot == -2) {
             gi.favoriteSlot = EhDB.containLocalFavorites(gi.gid) ? -1 : -2;
+        }
+
+        Elements gts = JsoupUtils.getElementsByClass(e,"gt");
+        if (gts != null){
+            gi.tgList = (ArrayList<String>) gts.eachAttr("title");
         }
 
         // Rating

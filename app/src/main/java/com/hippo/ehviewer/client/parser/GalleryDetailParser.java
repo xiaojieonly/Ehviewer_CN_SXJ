@@ -597,10 +597,21 @@ public class GalleryDetailParser {
     }
 
     public static PreviewSet parsePreviewSet(Document d, String body) throws ParseException {
+        PreviewSet previewSet;
         try {
-            return parseLargePreviewSet(d, body);
+            previewSet = parseLargePreviewSet(d, body);
+            if (previewSet == null){
+                previewSet = parseNormalPreviewSet(body);
+            }
+            if (previewSet == null){
+                throw new ParseException("加载预览图失败",body);
+            }
+            return  previewSet;
+//            return parseLargePreviewSet(d, body);
         } catch (ParseException e) {
-            return parseNormalPreviewSet(body);
+            ExceptionUtils.throwIfFatal(e);
+            return new NormalPreviewSet();
+//            return parseNormalPreviewSet(body);
         }
     }
 
@@ -622,7 +633,8 @@ public class GalleryDetailParser {
             Elements gdtls = gdt.getElementsByClass("gdtl");
             int n = gdtls.size();
             if (n <= 0) {
-                throw new ParseException("Can't parse large preview", body);
+                return null;
+//                throw new ParseException("Can't parse large preview", body);
             }
             for (int i = 0; i < n; i++) {
                 Element element = gdtls.get(i).child(0);
@@ -702,4 +714,5 @@ public class GalleryDetailParser {
 
         return normalPreviewSet;
     }
+
 }
