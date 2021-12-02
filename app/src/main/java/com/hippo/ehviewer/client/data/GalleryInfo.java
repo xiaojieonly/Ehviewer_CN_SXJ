@@ -19,6 +19,8 @@ package com.hippo.ehviewer.client.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.Nullable;
+
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class GalleryInfo implements Parcelable {
@@ -115,6 +117,7 @@ public class GalleryInfo implements Parcelable {
     public int spanSize;
     public int spanIndex;
     public int spanGroupIndex;
+    public ArrayList<String> tgList;
 
     /**
      * language from title
@@ -180,6 +183,7 @@ public class GalleryInfo implements Parcelable {
         dest.writeInt(this.spanGroupIndex);
         dest.writeInt(this.favoriteSlot);
         dest.writeString(this.favoriteName);
+        dest.writeList(this.tgList);
     }
 
     public GalleryInfo() {}
@@ -204,6 +208,7 @@ public class GalleryInfo implements Parcelable {
         this.spanGroupIndex = in.readInt();
         this.favoriteSlot = in.readInt();
         this.favoriteName = in.readString();
+        this.tgList = in.readArrayList(String.class.getClassLoader());
     }
 
     public static final Creator<GalleryInfo> CREATOR = new Creator<GalleryInfo>() {
