@@ -1,5 +1,8 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2021/11/10 :
+ ##  突发里站无法连接的情况，可能是里站ip迁移导致，晚上我排查下，争取尽快发版
+
 # 2021/11/07 :
  ##  新版本：1.8.9.1  
  ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装  
