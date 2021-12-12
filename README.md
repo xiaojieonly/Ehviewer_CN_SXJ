@@ -1,6 +1,6 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
-# 2021/11/10 :
+# 2021/12/10 :
  ##  新版本：1.8.9.2
  ##  host修复，亲测有效，仍然进不去里站的通常是应为没权限
  ![Screenshot_2021-11-01-17-04-00-963_com xjs ehview](https://user-images.githubusercontent.com/49278135/145570174-ded5f42e-00bc-425a-8da0-a57068139f4e.jpg)
@@ -10,7 +10,7 @@
    Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
-# 2021/11/10 :
+# 2021/12/10 :
 ##  突发里站无法连接的情况，可能是里站ip迁移导致，晚上我排查下，争取尽快发版
 ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装  
 ##  表站目前不受影响，急的话可以先用下表站
