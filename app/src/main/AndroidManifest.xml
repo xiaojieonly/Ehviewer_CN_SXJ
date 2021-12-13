@@ -21,6 +21,7 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
@@ -44,6 +45,22 @@
         <meta-data android:name="android.max_aspect" android:value="2.1"/>
 
         <activity
+            android:name="com.hippo.ehviewer.ui.splash.SplashActivity"
+            android:theme="@style/SplashTheme"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <!-- LAUNCHER -->
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name="com.hippo.ehviewer.ui.MainActivity"
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Main"
@@ -52,7 +69,7 @@
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+<!--                <category android:name="android.intent.category.LAUNCHER"/>-->
             </intent-filter>
 
             <meta-data android:name="android.app.shortcuts"
