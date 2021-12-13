@@ -1,5 +1,44 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2021/12/10 :
+ ##  新版本：1.8.9.5
+ ##  新增内置更新模块，每次启动软件时会自动获取最新版本资源，当有新版本时会自动通知用户更新
+   点击前往下载：[蓝奏云](https://wwe.lanzouo.com/igzhRxjlcwh)  密码:awk9  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
+# 2021/12/10 :
+ ##  新版本：1.8.9.2
+ ##  host修复，亲测有效，仍然进不去里站的通常是应为没权限
+ ![Screenshot_2021-11-01-17-04-00-963_com xjs ehview](https://user-images.githubusercontent.com/49278135/145570174-ded5f42e-00bc-425a-8da0-a57068139f4e.jpg)
+   点击前往下载：[蓝奏云](https://wwe.lanzouo.com/iDdFaxgkpqf)  密码:hwrn  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
+# 2021/12/10 :
+##  突发里站无法连接的情况，可能是里站ip迁移导致，晚上我排查下，争取尽快发版
+##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装  
+##  表站目前不受影响，急的话可以先用下表站
+ 
+# 2021/11/07 :
+ ##  新版本：1.8.9.1  
+ ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装  
+ ##  更改了长按画廊的弹窗的样式，现在的弹窗会显示更多的内容  
+   ###  点击标题会将标题复制到剪切板  
+   ###  点击标签会跳转至标签搜索页  
+   ###  点击封面图会跳转至详情页  
+   ![image](https://user-images.githubusercontent.com/49278135/145203218-7e8e3835-9312-4190-a8ee-2c5220e8ea4b.png)  
+ ##  修改了排行榜中的时间排序，现在从上到下依次为昨天、上个月、去年、有史以来，和以前相反  
+   点击前往下载：[蓝奏云](https://wwe.lanzouo.com/iHIcQxdxd5c)  密码:493b  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
 # 2021/11/07 :
  ##  新版本：1.8.8.0  
  ##  请不要越版本安装，如果出现闪退的情况请下载旧版重新安装， 或者一版版回滚安装
