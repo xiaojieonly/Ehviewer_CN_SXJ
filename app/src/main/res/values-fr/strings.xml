@@ -113,6 +113,7 @@
     <string name="update_plain">Version : %1$s\nTaille : %2$s\n\n%3$s</string>
     <string name="update_to_date">EhViewer est à jour.</string>
     <string name="update_ignore">Ignorer</string>
+    <string name="no_updates_available">Est déjà la dernière version</string>
 
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">Chercher sur ExHentai</string>

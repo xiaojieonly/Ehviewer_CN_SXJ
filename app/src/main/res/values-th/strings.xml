@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
+<!--  -->
 <resources>
 
     <string name="app_name">EhViewer</string>
@@ -118,6 +118,7 @@
     <string name="update_plain">เวอร์ชั่น: %1$s\nขนาดไฟล์: %2$s\n\n%3$s</string>
     <string name="update_to_date">คุณกำลังใช้เวอร์ชั่นล่าสุดของ EhViewer.</string>
     <string name="update_ignore">ข้ามไป</string>
+    <string name="no_updates_available">มันเป็นเวอร์ชั่นล่าสุด</string>
 
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">ค้นหาใน ExHentai</string>

@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
+<!-- 西班牙 -->
 <resources>
 
     <string name="app_name">EhViewer</string>
@@ -103,6 +103,7 @@
     <string name="update">Actualizar</string>
     <string name="update_plain">Versión: %1$s\nSize: %2$s\n\n%3$s</string>
     <string name="update_to_date">EhViewer está actualizado</string>
+    <string name="no_updates_available">Ya es la última versión</string>
 
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">Buscar ExHentai</string>

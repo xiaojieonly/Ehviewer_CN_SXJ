@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
+<!-- 韩语 -->
 <resources>
 
     <string name="app_name">EhViewer</string>
@@ -118,6 +118,7 @@
     <string name="update_plain">버전: %1$s\n파일 크기: %2$s\n\n%3$s</string>
     <string name="update_to_date">최신 버전의 EhViewer를 사용 중입니다.</string>
     <string name="update_ignore">무시</string>
+    <string name="no_updates_available">최신 버전입니다</string>
 
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">ExHentai 검색</string>

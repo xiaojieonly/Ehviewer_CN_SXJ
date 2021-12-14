@@ -124,6 +124,7 @@
     <string name="update">更新</string>
     <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>
     <string name="update_to_date">EhViewer 已是最新版本</string>
+    <string name="no_updates_available">已是最新版本</string>
     <string name="update_ignore">忽略</string>
 
     <!-- Gallery List -->
@@ -723,5 +724,10 @@
     <string name="cleanup_toplists">整理 排行榜</string>
     <string name="rating_reviewing_toplists">等級&#038;審核 排行榜</string>
     <string name="top_list">排行榜</string>
+
+    <string name="all_time_top_list">有史以來</string>
+    <string name="past_year_top_list">過去一年</string>
+    <string name="past_month_top_list">過去一個月</string>
+    <string name="yesterday_top_list">昨天</string>
 
 </resources>
