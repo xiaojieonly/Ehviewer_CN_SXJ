@@ -18,7 +18,6 @@
 <!-- German translations by UShimamura -->
 <resources>
 
-
     <string name="app_name">EhViewer</string>
     <string name="homepage">Startseite</string>
     <string name="subscription">Gefolgte Etiketten</string>
@@ -88,6 +87,7 @@
     <string name="update">Update</string>
     <string name="update_plain">Version: %1$s\nGröße: %2$s\n\n%3$s</string>
     <string name="update_to_date">EhViewer ist auf dem neusten Stand.</string>
+    <string name="no_updates_available">Da liegt das neueste raus</string>
     <string name="update_ignore">Ignorieren</string>
     <string name="gallery_list_search_bar_hint_exhentai">ExHentai durchsuchen</string>
     <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai durchsuchen</string>

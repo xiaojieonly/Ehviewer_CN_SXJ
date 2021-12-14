@@ -112,6 +112,7 @@
     <string name="update_plain">バージョン：%1$s\nサイズ：%2$s\n\n%3$s</string>
     <string name="update_to_date">EhViewerは既に最新バージョンです。</string>
     <string name="update_ignore">無視</string>
+    <string name="no_updates_available">最新バージョンです</string>
 
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">ExHentaiを検索</string>

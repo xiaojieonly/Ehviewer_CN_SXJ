@@ -194,6 +194,7 @@
 
     <!-- Update -->
     <string name="update">Update</string>
+    <string name="no_updates_available">Already the latest version</string>
     <string name="update_plain">Version: %1$s\nSize: %2$s\n\n%3$s</string>
     <string name="update_to_date">You are using the latest version of EhViewer.</string>
     <string name="update_ignore">Ignore</string>
@@ -486,7 +487,7 @@
     <string name="page_menu_refresh">@string/refresh</string>
     <string name="page_menu_share">@string/share</string>
     <string name="page_menu_save">Save</string>
-    <string name="page_menu_save_to">Save to...</string>
+    <string name="page_menu_save_to">Save to…</string>
     <string name="page_menu_add_bookmark">Add a bookmark</string>
     <string name="gallery_menu_title">Menu</string>
     <string name="share_image">Share image</string>
@@ -817,12 +818,17 @@
     <!--  排行榜  -->
     <string name="gallery_toplists">Gallery Toplists</string>
     <string name="uploader_toplists">Uploader Toplists</string>
-    <string name="tagging_toplists">tagging Toplists</string>
+    <string name="tagging_toplists">Tagging Toplists</string>
     <string name="hentai_home_toplists">Hentai@Home Toplists</string>
     <string name="ehtracker_toplists">EHTracker Toplists</string>
     <string name="cleanup_toplists">Cleanup Toplists</string>
     <string name="rating_reviewing_toplists">Rating&#038;Reviewing Toplists</string>
     <string name="top_list">Top Lists</string>
+
+    <string name="all_time_top_list">All Time TopList</string>
+    <string name="past_year_top_list">Past Year TopList</string>
+    <string name="past_month_top_list">Past Month TopList</string>
+    <string name="yesterday_top_list">Yesterday TopList</string>
 
 
 </resources>
