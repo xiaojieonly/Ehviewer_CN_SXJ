@@ -1,5 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2021/12/19 :
+ ##  新版本：1.8.10.0
+ ##  新增可视化一键式操作的多标签查询功能
+![qq_pic_merged_1639920470396](https://user-images.githubusercontent.com/49278135/146677282-61ceaed0-355a-434b-ab4c-27ecdcfeebb0.jpg)
+![qq_pic_merged_1639921442755](https://user-images.githubusercontent.com/49278135/146677296-8e7b397a-5dd0-43d1-bbb4-65caf496e35f.jpg)
+![qq_pic_merged_1639921612664](https://user-images.githubusercontent.com/49278135/146677298-92e1a4f1-5e30-45f2-9be9-2abbc647d84f.jpg)
+
+   点击前往下载：[蓝奏云](https://.lanzouy.com/iPP5Axs2bcb)  密码:3zu6  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2021/12/10 :
  ##  新版本：1.8.9.5
  ##  新增内置更新模块，每次启动软件时会自动获取最新版本资源，当有新版本时会自动通知用户更新
