@@ -7,7 +7,7 @@
 ![qq_pic_merged_1639921442755](https://user-images.githubusercontent.com/49278135/146677296-8e7b397a-5dd0-43d1-bbb4-65caf496e35f.jpg)
 ![qq_pic_merged_1639921612664](https://user-images.githubusercontent.com/49278135/146677298-92e1a4f1-5e30-45f2-9be9-2abbc647d84f.jpg)
 
-   点击前往下载：[蓝奏云](https://.lanzouy.com/iPP5Axs2bcb)  密码:3zu6  
+   点击前往下载：[蓝奏云](https://www.lanzouy.com/iPP5Axs2bcb)  密码:3zu6  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
    Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
