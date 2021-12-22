@@ -1,5 +1,14 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2021/12/10 :
+ ###  新版本：1.8.10.2
+ ###  修复点击评论内的链接后程序直接崩溃的恶性bug
+   点击前往下载：[蓝奏云](https://wwe.lanzouy.com/igyUnxvhs8h)  密码:bmfx  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2021/12/19 :
  ###  新版本：1.8.10.0
  ###  新增可视化一键式操作的多标签查询功能
