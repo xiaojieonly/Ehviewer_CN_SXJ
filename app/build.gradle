@@ -7,8 +7,8 @@ if (file('google-services.json').exists()) {
 
 android {
     compileSdkVersion 28
-    buildToolsVersion "30.0.2"
-    ndkVersion '22.0.6917172'
+    buildToolsVersion "30.0.3"
+    ndkVersion '24.0.7956693'
 
     flavorDimensions "distribute"
     productFlavors {
@@ -25,7 +25,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 109
-        versionName "1.8.10.0"
+        versionName "1.8.10.3"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"

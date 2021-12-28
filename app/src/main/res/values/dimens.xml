@@ -20,7 +20,9 @@
     <dimen name="single_max_width">260dp</dimen>
     <dimen name="drawer_max_width">280dp</dimen>
 
+    <!--  Padding  -->
     <dimen name="dialog_padding_top_material">18dp</dimen>
+    <dimen name="title_text_top_padding">6dp</dimen>
 
     <!-- Text size -->
     <dimen name="text_super_large">24sp</dimen>
@@ -146,10 +148,15 @@
     <dimen name="gallery_tab_layout_pad">2dp</dimen>
     <dimen name="gallery_tab_layout_spacing">3dp</dimen>
 
-    <!-- Spinner -->
+    <!-- TOP List -->
     <dimen name="top_list_spinner_height">50dp</dimen>
     <dimen name="top_list_spinner_elevation">3dp</dimen>
     <dimen name="top_list_spinner_margin">12dp</dimen>
+    <dimen name="top_list_scrollview_margin_top">74dp</dimen>
+    <dimen name="top_list_item_table_margin">18dp</dimen>
+    <dimen name="top_list_item_margin_bottom">7dp</dimen>
+    <dimen name="top_list_item_radius">5dp</dimen>
+    <dimen name="top_list_item_margin_width">24dp</dimen>
 
 
 </resources>

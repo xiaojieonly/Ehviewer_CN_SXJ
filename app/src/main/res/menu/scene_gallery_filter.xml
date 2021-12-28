@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
+<!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +15,14 @@
   ~ limitations under the License.
   -->
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/progress"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <!--    android:layout_gravity="center"-->
-    <com.hippo.widget.ProgressView
-        style="@style/ProgressView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="@dimen/keyline_margin" />
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-</FrameLayout>
+    <item
+        android:id="@+id/action_tag_filter"
+        android:title="@string/tag_filter"
+        android:icon="@drawable/ic_baseline_filter_none_24"
+        app:showAsAction="ifRoom"/>
+
+</menu>

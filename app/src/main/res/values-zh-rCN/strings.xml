@@ -137,7 +137,7 @@
     <string name="gallery_list_search_bar_open_gallery">打开画廊</string>
     <string name="gallery_list_empty_hit">什么都没有找到</string>
     <string name="gallery_list_empty_hit_subscription">请至 设置->EH->我的标签 订阅标签</string>
-
+    <string name="gallery_list_no_preview_tag">暂无预览标签</string>
     <string name="search">搜索</string>
 
     <string name="keyword_search">关键字搜索</string>
@@ -309,6 +309,7 @@
     <!-- Gallery Previews -->
     <string name="gallery_previews">画廊预览</string>
     <string name="go_to">跳页</string>
+    <string name="tag_filter">标签过滤</string>
 
     <!-- Download -->
     <string name="scene_download_title">下载 - %s</string>

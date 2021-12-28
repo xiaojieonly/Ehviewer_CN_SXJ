@@ -21,11 +21,12 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
-
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
+
+        <include
+            layout="@layout/gallery_detail_progress"/>
 
         <LinearLayout
             android:id="@+id/below_header"
@@ -53,12 +54,10 @@
 
             <include
                 layout="@layout/gallery_detail_previews"/>
+<!--            <include-->
+<!--                layout="@layout/gallery_detail_progress"/>-->
 
         </LinearLayout>
-
-
-        <include
-            layout="@layout/gallery_detail_progress"/>
 
     </FrameLayout>
 </LinearLayout>

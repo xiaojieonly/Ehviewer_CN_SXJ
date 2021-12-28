@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/title_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawablePadding="@dimen/keyline_margin"
+        android:ellipsize="marquee"
+        android:gravity="center_horizontal"
+        android:maxLines="3"
+        android:minHeight="?android:attr/listPreferredItemHeightSmall"
+        android:paddingLeft="?attr/listPreferredItemPaddingLeft"
+        android:paddingTop="@dimen/title_text_top_padding"
+        android:paddingRight="?attr/listPreferredItemPaddingRight"
+        android:textAppearance="?android:attr/textAppearanceListItemSmall"
+        android:textColor="?android:attr/textColorAlertDialogListItem"
+        android:textSize="@dimen/text_medium" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="?attr/listPreferredItemPaddingLeft"
+        android:paddingRight="?attr/listPreferredItemPaddingRight">
+
+        <com.hippo.ehviewer.widget.FixedThumbNew
+            android:id="@+id/dialog_thumb"
+            android:layout_width="@dimen/gallery_list_thumb_width"
+            android:layout_height="@dimen/gallery_list_thumb_height"
+            android:scaleType="centerCrop"
+            app:maxAspect="1.333"
+            app:minAspect="0.333" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/gallery_list_thumb_height">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/tab_tag_flow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:animateLayoutChanges="true"
+                android:paddingLeft="5dp"
+                android:paddingTop="5dp"
+                app:chipSpacing="@dimen/gallery_tab_layout_spacing"
+                app:singleLine="false"
+                app:singleSelection="false">
+
+            </com.google.android.material.chip.ChipGroup>
+        </ScrollView>
+    </LinearLayout>
+
+</LinearLayout>
+
