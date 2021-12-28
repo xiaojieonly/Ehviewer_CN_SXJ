@@ -5,18 +5,44 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Spinner
-        android:id="@+id/top_list_spinner"
+    <com.hippo.widget.ProgressView
+        android:id="@+id/data_loading_view"
+        style="@style/ProgressView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+
+    <FrameLayout
+        android:id="@+id/page_detail_view"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/top_list_spinner_height"
-        android:elevation="@dimen/top_list_spinner_elevation"
-        android:entries="@array/top_list_type"
-        android:textAlignment="center"
-        android:layout_marginLeft="@dimen/top_list_spinner_margin"
-        android:layout_marginRight="@dimen/top_list_spinner_margin"
-        android:layout_marginTop="@dimen/top_list_spinner_margin"
-        android:background="?attr/toolbarColor"
-        android:spinnerMode="dialog"/>
+        android:layout_height="match_parent">
+
+        <Spinner
+            android:id="@+id/top_list_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/top_list_spinner_height"
+            android:layout_marginLeft="@dimen/top_list_spinner_margin"
+            android:layout_marginTop="@dimen/top_list_spinner_margin"
+            android:layout_marginRight="@dimen/top_list_spinner_margin"
+            android:background="?attr/toolbarColor"
+            android:elevation="@dimen/top_list_spinner_elevation"
+            android:entries="@array/top_list_type"
+            android:spinnerMode="dialog"
+            android:textAlignment="center" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="@dimen/top_list_scrollview_margin_top">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/top_list_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+
+        </ScrollView>
+    </FrameLayout>
 
 
 </FrameLayout>

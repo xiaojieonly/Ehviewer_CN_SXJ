@@ -27,6 +27,7 @@
     <!-- Progress View -->
     <style name="ProgressView">
         <item name="color">?attr/progressColor</item>
+<!--        <item name="android:background">@color/purple_a400</item>-->
         <item name="indeterminate">true</item>
         <item name="android:minWidth">48dp</item>
         <item name="android:minHeight">48dp</item>
@@ -52,6 +53,35 @@
         <item name="android:ellipsize">end</item>
         <item name="android:maxLines">2</item>
         <item name="android:lineSpacingExtra">0sp</item>
+    </style>
+
+    <style name="TextAppearance.TopListTitle">
+        <item name="android:textSize">@dimen/text_little_large</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+
+    <style name="TopListTitle">
+        <item name="android:textAppearance">@style/TextAppearance.TopListTitle</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">10</item>
+        <item name="android:gravity">start</item>
+    </style>
+
+    <style name="TextAppearance.TopListItem">
+        <item name="android:textSize">@dimen/text_medium</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
+
+    <style name="TopListItem">
+        <item name="android:textAppearance">@style/TextAppearance.TopListItem</item>
+<!--        <item name="android:ellipsize">end</item>-->
+        <item name="android:maxLines">99</item>
+        <item name="android:gravity">start</item>
+        <item name="android:singleLine">false</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:paddingBottom">4dp</item>
     </style>
 
     <style name="TextAppearance.CardMessage">

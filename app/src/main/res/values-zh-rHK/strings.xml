@@ -133,6 +133,7 @@
     <string name="gallery_list_search_bar_open_gallery">打開畫廊</string>
     <string name="gallery_list_empty_hit">什麼都沒有找到</string>
     <string name="gallery_list_empty_hit_subscription">請至 設置->EH->我的標籤 訂閲標籤</string>
+    <string name="gallery_list_no_preview_tag">暫無預覽標簽</string>
 
     <string name="search">搜索</string>
 

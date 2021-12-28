@@ -102,6 +102,11 @@
         <attr name="maxAspect" format="float" />
     </declare-styleable>
 
+    <declare-styleable name="FixedThumbNew">
+<!--        <attr name="minAspect" format="float" />-->
+<!--        <attr name="maxAspect" format="float" />-->
+    </declare-styleable>
+
     <declare-styleable name="CheckTextView">
         <attr name="maskColor" format="color" />
     </declare-styleable>

@@ -205,6 +205,7 @@
     <string name="gallery_list_search_bar_open_gallery">Open the gallery</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
+    <string name="gallery_list_no_preview_tag">No preview tag</string>
 
     <string name="search">Search</string>
 
@@ -381,6 +382,7 @@
     <!-- Gallery Previews -->
     <string name="gallery_previews">Gallery Previews</string>
     <string name="go_to">Go to</string>
+    <string name="tag_filter">Filter tag</string>
 
     <!-- Download -->
     <string name="scene_download_title">Download - %s</string>
