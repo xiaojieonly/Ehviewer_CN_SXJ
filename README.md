@@ -1,6 +1,6 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
-# 2021/12/10 :
+# 2021/12/29 :
  ###  新版本：1.8.10.3
  ###  修复了长按画廊时因为空数据而导致应用崩溃的bug
  ###  修复了一个排行榜页面可能导致应用奔溃的bug
