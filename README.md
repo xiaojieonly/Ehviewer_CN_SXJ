@@ -11,7 +11,7 @@
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
    
    
-# 2021/12/10 :
+# 2021/12/23 :
  ###  新版本：1.8.10.2
  ###  修复点击评论内的链接后程序直接崩溃的恶性bug
    点击前往下载：[蓝奏云](https://wwe.lanzouy.com/igyUnxvhs8h)  密码:bmfx  
@@ -33,7 +33,7 @@
    Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
-# 2021/12/10 :
+# 2021/12/12 :
  ###  新版本：1.8.9.5
  ###  新增内置更新模块，每次启动软件时会自动获取最新版本资源，当有新版本时会自动通知用户更新
    点击前往下载：[蓝奏云](https://wwe.lanzouo.com/igzhRxjlcwh)  密码:awk9  
@@ -42,7 +42,7 @@
    Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
-# 2021/12/10 :
+# 2021/12/11 :
  ###  新版本：1.8.9.2
  ###  host修复，亲测有效，仍然进不去里站的通常是应为没权限
  ![Screenshot_2021-11-01-17-04-00-963_com xjs ehview](https://user-images.githubusercontent.com/49278135/145570174-ded5f42e-00bc-425a-8da0-a57068139f4e.jpg)
