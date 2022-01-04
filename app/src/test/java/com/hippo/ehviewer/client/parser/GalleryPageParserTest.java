@@ -34,7 +34,7 @@ public class GalleryPageParserTest {
 
   @Test
   public void testParse() throws IOException, ParseException {
-    InputStream resource = GalleryPageParserTest.class.getResourceAsStream("GalleryPageParserTest.html");
+    InputStream resource = GalleryPageParserTest.class.getResourceAsStream("GalleryPageParserTest.GalleryTopListEX.html");
     BufferedSource source = Okio.buffer(Okio.source(resource));
     String body = source.readUtf8();
 
