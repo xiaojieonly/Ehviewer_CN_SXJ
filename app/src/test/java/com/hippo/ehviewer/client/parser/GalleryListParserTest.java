@@ -34,17 +34,17 @@ import org.robolectric.ParameterizedRobolectricTestRunner;
 @RunWith(ParameterizedRobolectricTestRunner.class)
 public class GalleryListParserTest {
 
-  private static final String E_MINIMAL = "GalleryListParserTestEMinimal.html";
-  private static final String E_MINIMAL_PLUS = "GalleryListParserTestEMinimalPlus.html";
-  private static final String E_COMPAT = "GalleryListParserTestECompat.html";
-  private static final String E_EXTENDED = "GalleryListParserTestEExtended.html";
-  private static final String E_THUMBNAIL = "GalleryListParserTestEThumbnail.html";
+  private static final String E_MINIMAL = "GalleryListParserTestEMinimal.GalleryTopListEX.html";
+  private static final String E_MINIMAL_PLUS = "GalleryListParserTestEMinimalPlus.GalleryTopListEX.html";
+  private static final String E_COMPAT = "GalleryListParserTestECompat.GalleryTopListEX.html";
+  private static final String E_EXTENDED = "GalleryListParserTestEExtended.GalleryTopListEX.html";
+  private static final String E_THUMBNAIL = "GalleryListParserTestEThumbnail.GalleryTopListEX.html";
 
-  private static final String EX_MINIMAL = "GalleryListParserTestExMinimal.html";
-  private static final String EX_MINIMAL_PLUS = "GalleryListParserTestExMinimalPlus.html";
-  private static final String EX_COMPAT = "GalleryListParserTestExCompat.html";
-  private static final String EX_EXTENDED = "GalleryListParserTestExExtended.html";
-  private static final String EX_THUMBNAIL = "GalleryListParserTestExThumbnail.html";
+  private static final String EX_MINIMAL = "GalleryListParserTestExMinimal.GalleryTopListEX.html";
+  private static final String EX_MINIMAL_PLUS = "GalleryListParserTestExMinimalPlus.GalleryTopListEX.html";
+  private static final String EX_COMPAT = "GalleryListParserTestExCompat.GalleryTopListEX.html";
+  private static final String EX_EXTENDED = "GalleryListParserTestExExtended.GalleryTopListEX.html";
+  private static final String EX_THUMBNAIL = "GalleryListParserTestExThumbnail.GalleryTopListEX.html";
 
   @ParameterizedRobolectricTestRunner.Parameters(name = "{index}-{0}")
   public static List data() {
