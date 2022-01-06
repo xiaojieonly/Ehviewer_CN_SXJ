@@ -20,7 +20,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import androidx.annotation.DimenRes;
@@ -402,7 +401,7 @@ public class Settings {
 
     /**
      * 是否展示翻译的标签
-     * @return
+     * @return boolean
      */
     public static boolean getShowTagTranslations() {
         return getBoolean(KEY_SHOW_TAG_TRANSLATIONS, DEFAULT_SHOW_TAG_TRANSLATIONS);
@@ -1227,6 +1226,18 @@ public class Settings {
     public static boolean getDarkModeStatus(Context context) {
         int mode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         return mode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private static final String KEY_IS_LOGIN = "is_login";
+
+    private static boolean IS_LOGIN = false;
+
+    public static boolean isLogin() {
+        return getBoolean(KEY_IS_LOGIN, IS_LOGIN);
+    }
+
+    public static void setLoginState(boolean value) {
+        putBoolean(KEY_IS_LOGIN, value);
     }
 
 }
