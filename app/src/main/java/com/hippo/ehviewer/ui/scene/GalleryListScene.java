@@ -44,6 +44,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -71,6 +72,7 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.FavouriteStatusRouter;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhTagDatabase;
@@ -114,6 +116,7 @@ import com.hippo.yorozuya.ViewUtils;
 import java.io.File;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -150,6 +153,9 @@ public final class GalleryListScene extends BaseScene
 
     private static final long ANIMATE_TIME = 300L;
 
+    private boolean filterOpen = false;
+    private List<String> filterTagList = new ArrayList<>();
+
     /*---------------
      Whole life cycle
      ---------------*/
@@ -172,6 +178,8 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     private FabLayout mFabLayout;
     @Nullable
+    private FloatingActionButton mFloatingActionButton;
+    @Nullable
     private ViewTransition mViewTransition;
     @Nullable
     private GalleryListAdapter mAdapter;
@@ -188,7 +196,7 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     private PopupWindow popupWindow;
     @Nullable
-    private ChipGroup tagFlowLayout;
+    private AlertDialog alertDialog;
 
     EhTagDatabase ehTags;
 
@@ -274,6 +282,9 @@ public final class GalleryListScene extends BaseScene
             if (builder != null) {
                 mUrlBuilder.set(builder);
             }
+        } else if (ACTION_TOP_LIST.equals(action)) {
+            mUrlBuilder.reset();
+            mUrlBuilder.setMode(ListUrlBuilder.MODE_NORMAL);
         }
     }
 
@@ -295,6 +306,7 @@ public final class GalleryListScene extends BaseScene
         super.onCreate(savedInstanceState);
 
         Context context = getEHContext();
+        assert context != null;
         AssertUtils.assertNotNull(context);
         mClient = EhApplication.getEhClient(context);
         mDownloadManager = EhApplication.getDownloadManager(context);
@@ -534,13 +546,14 @@ public final class GalleryListScene extends BaseScene
         mNavCheckedId = checkedItemId;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
                               @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_gallery_list, container, false);
 
         Context context = getEHContext();
+        assert context != null;
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
 
@@ -555,10 +568,15 @@ public final class GalleryListScene extends BaseScene
         mSearchLayout = (SearchLayout) ViewUtils.$$(mainLayout, R.id.search_layout);
         mSearchBar = (SearchBar) ViewUtils.$$(mainLayout, R.id.search_bar);
         mFabLayout = (FabLayout) ViewUtils.$$(mainLayout, R.id.fab_layout);
+        mFloatingActionButton = (FloatingActionButton) ViewUtils.$$(mFabLayout, R.id.tag_filter);
+
+        onFilter(filterOpen, filterTagList.size());
+
         mSearchFab = ViewUtils.$$(mainLayout, R.id.search_fab);
 
         int paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
         int paddingBottomFab = resources.getDimensionPixelOffset(R.dimen.gallery_padding_bottom_fab);
+
 
         mViewTransition = new ViewTransition(contentLayout, mSearchLayout);
 
@@ -575,6 +593,7 @@ public final class GalleryListScene extends BaseScene
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setOnItemClickListener(this);
         mRecyclerView.setOnItemLongClickListener(this);
+        assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
 
         fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
@@ -602,7 +621,7 @@ public final class GalleryListScene extends BaseScene
         mFabLayout.setOnExpandListener(this);
         addAboveSnackView(mFabLayout);
 
-        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark,null));
+        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
 
         mSearchFab.setOnClickListener(this);
@@ -631,47 +650,31 @@ public final class GalleryListScene extends BaseScene
 
     private void onThumbItemClick(int position, View view, GalleryInfo gi) {
         LoadImageViewNew thumb = view.findViewById(R.id.thumb_new);
-        if (thumb.mFailed){
+        if (thumb.mFailed) {
             thumb.load();
             return;
         }
+
         if (popupWindowPosition == position) {
             popupWindowPosition = -1;
+            assert popupWindow != null;
             popupWindow.dismiss();
-            tagFlowLayout = null;
             return;
         }
-        if (popupWindow != null){
+        if (popupWindow != null) {
             popupWindowPosition = -1;
             popupWindow.dismiss();
-            tagFlowLayout = null;
         }
 
         if (gi.tgList == null || gi.tgList.isEmpty()) {
             onItemClick(view, gi);
             return;
         }
+
         if (position != popupWindowPosition) {
 
             LinearLayout popView = (LinearLayout) getLayoutInflater().inflate(R.layout.list_thumb_popupwindow, null);
-            tagFlowLayout = popView.findViewById(R.id.tab_tag_flow);
-            int colorTag = AttrResources.getAttrColor(getContext(), R.attr.tagBackgroundColor);
-            for (int i = 0; i < gi.tgList.size(); i++) {
-                String tagName = gi.tgList.get(i);
-                Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
-                chip.setChipBackgroundColor(ColorStateList.valueOf(colorTag));
-                chip.setTextColor(Color.WHITE);
-                if (Settings.getShowTagTranslations()) {
-                    if (ehTags == null) {
-                        ehTags = EhTagDatabase.getInstance(getContext());
-                    }
-                    chip.setText(TagTranslationUtil.getTagCNBody(tagName.split(":"), ehTags));
-                } else {
-                    chip.setText(tagName.split(":")[1]);
-                }
-                chip.setOnClickListener(l -> onTagClick(tagName));
-                tagFlowLayout.addView(chip, i);
-            }
+            ChipGroup tagFlowLayout = buildChipGroup(gi, popView.findViewById(R.id.tab_tag_flow));
 
             popupWindow = new PopupWindow(popView, view.getWidth() - thumb.getWidth(), thumb.getHeight());
             popupWindow.setOutsideTouchable(true);
@@ -682,7 +685,7 @@ public final class GalleryListScene extends BaseScene
                 popupWindow.dismiss();
                 onItemClick(view, gi);
             });
-            tagFlowLayout.setOnLongClickListener(l -> onItemLongClick(gi));
+            tagFlowLayout.setOnLongClickListener(l -> onItemLongClick(gi, view));
             int[] location = new int[2];
             thumb.getLocationOnScreen(location);
             popupWindow.showAtLocation(thumb, Gravity.NO_GRAVITY, location[0] + thumb.getWidth(), location[1]);
@@ -690,23 +693,97 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
+    private ChipGroup buildChipGroup(GalleryInfo gi, ChipGroup tagFlowLayout) {
+        int colorTag = AttrResources.getAttrColor(getContext(), R.attr.tagBackgroundColor);
+        if (null == gi.tgList) {
+            String tagName = "暂无预览标签";
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(colorTag));
+            chip.setTextColor(Color.WHITE);
+            if (Settings.getShowTagTranslations()) {
+                if (ehTags == null) {
+                    ehTags = EhTagDatabase.getInstance(getContext());
+                }
+                chip.setText(TagTranslationUtil.getTagCNBody(tagName.split(":"), ehTags));
+            } else {
+                chip.setText(tagName.split(":")[1]);
+            }
+            tagFlowLayout.addView(chip, 0);
+            return tagFlowLayout;
+        }
+        for (int i = 0; i < gi.tgList.size(); i++) {
+            String tagName = gi.tgList.get(i);
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(colorTag));
+            chip.setTextColor(Color.WHITE);
+            if (Settings.getShowTagTranslations()) {
+                if (ehTags == null) {
+                    ehTags = EhTagDatabase.getInstance(getContext());
+                }
+                chip.setText(TagTranslationUtil.getTagCNBody(tagName.split(":"), ehTags));
+            } else {
+                chip.setText(tagName.split(":")[1]);
+            }
+            chip.setOnClickListener(l -> onTagClick(tagName));
+            tagFlowLayout.addView(chip, i);
+        }
+
+        return tagFlowLayout;
+    }
+
     private void onTagClick(String tagName) {
         if (null == mHelper || null == mUrlBuilder) {
             return;
         }
         popupWindowPosition = -1;
-        popupWindow.dismiss();
+        if (null != popupWindow) {
+            popupWindow.dismiss();
+        }
 
-        ListUrlBuilder urlBuilder = new ListUrlBuilder();
-        urlBuilder.setMode(ListUrlBuilder.MODE_TAG);
-        urlBuilder.setKeyword(tagName);
-        GalleryListScene.startScene(this,urlBuilder);
-        return;
-//        mUrlBuilder.set(tagName);
-//        mUrlBuilder.setPageIndex(0);
-//        onUpdateUrlBuilder();
-//        mHelper.refresh();
-//        setState(STATE_NORMAL);
+        if (null != alertDialog) {
+            alertDialog.dismiss();
+        }
+
+        if (filterOpen) {
+            mUrlBuilder.set(searchTagBuild(tagName), ListUrlBuilder.MODE_FILTER);
+            onFilter(filterOpen, filterTagList.size());
+        } else {
+            mUrlBuilder.set(tagName);
+        }
+
+        mUrlBuilder.setPageIndex(0);
+        onUpdateUrlBuilder();
+        mHelper.refresh();
+        setState(STATE_NORMAL);
+    }
+
+    private String searchTagBuild(String tagName) {
+
+        String[] list = tagName.split(":");
+
+        String key;
+        if (list.length == 2) {
+            key = list[1];
+        } else {
+            key = list[0];
+        }
+
+        if (!filterTagList.contains(key)) {
+            filterTagList.add(key);
+        }
+        return listToString(filterTagList);
+    }
+
+    private String listToString(List<String> list) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            if (i == 0) {
+                result.append(list.get(i));
+            } else {
+                result.append("  ").append(list.get(i));
+            }
+        }
+        return result.toString();
     }
 
     private void guideQuickSearch() {
@@ -978,6 +1055,18 @@ public final class GalleryListScene extends BaseScene
             return;
         }
 
+        if (filterOpen && filterTagList.size() > 1) {
+            filterTagList.remove(filterTagList.size() - 1);
+            mUrlBuilder.set(listToString(filterTagList), ListUrlBuilder.MODE_FILTER);
+            onFilter(filterOpen, filterTagList.size());
+
+            mUrlBuilder.setPageIndex(0);
+            onUpdateUrlBuilder();
+            mHelper.refresh();
+            setState(STATE_NORMAL);
+            return;
+        }
+
         boolean handle;
         switch (mState) {
             default:
@@ -1012,6 +1101,9 @@ public final class GalleryListScene extends BaseScene
         if (gi == null) {
             return true;
         }
+        if (null != alertDialog) {
+            alertDialog.dismiss();
+        }
 
         Bundle args = new Bundle();
         args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
@@ -1027,10 +1119,11 @@ public final class GalleryListScene extends BaseScene
 
     @Override
     public boolean onItemLongClick(EasyRecyclerView parent, View view, int position, long id) {
-        return onItemLongClick(mHelper.getDataAtEx(position));
+        assert mHelper != null;
+        return onItemLongClick(mHelper.getDataAtEx(position), view);
     }
 
-    public boolean onItemLongClick(GalleryInfo gi) {
+    public boolean onItemLongClick(GalleryInfo gi, View view) {
         final Context context = getEHContext();
         final MainActivity activity = getActivity2();
         if (null == context || null == activity || null == mHelper) {
@@ -1056,8 +1149,33 @@ public final class GalleryListScene extends BaseScene
                 favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
         };
 
-        new AlertDialog.Builder(context)
-                .setTitle(EhUtils.getSuitableTitle(gi))
+        LinearLayout linearLayout = (LinearLayout) getLayoutInflater2().inflate(R.layout.gallery_item_dialog_coustom_title, null);
+
+        linearLayout.setOnClickListener(l -> onItemClick(view, gi));
+
+        LoadImageViewNew imageViewNew = linearLayout.findViewById(R.id.dialog_thumb);
+
+        imageViewNew.load(EhCacheKeyFactory.getThumbKey(gi.gid), gi.thumb);
+
+        imageViewNew.setOnClickListener(l -> onItemClick(view, gi));
+
+        buildChipGroup(gi, linearLayout.findViewById(R.id.tab_tag_flow));
+
+        TextView textView = linearLayout.findViewById(R.id.title_text);
+        textView.setText(EhUtils.getSuitableTitle(gi));
+        textView.setOnClickListener(l -> {
+            AppHelper.copyPlainText(EhUtils.getSuitableTitle(gi), getEHContext());
+            CharSequence text;
+            Toast toast = Toast.makeText(getEHContext(), "标题文本已复制", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+        });
+
+
+        alertDialog = new AlertDialog.Builder(context)
+//                .setTitle(EhUtils.getSuitableTitle(gi))
+//                .setView(imageViewNew)
+                .setCustomTitle(linearLayout)
                 .setAdapter(new SelectItemWithIconAdapter(context, items, icons), (dialog, which) -> {
                     switch (which) {
                         case 0: // Read
@@ -1089,6 +1207,7 @@ public final class GalleryListScene extends BaseScene
         return true;
     }
 
+
     @Override
     public void onClick(View v) {
         if (STATE_NORMAL != mState && null != mSearchBar) {
@@ -1118,31 +1237,28 @@ public final class GalleryListScene extends BaseScene
         final AlertDialog dialog = builder.setTitle(R.string.go_to)
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (null == mHelper) {
-                    dialog.dismiss();
-                    return;
-                }
-
-                String text = builder.getText().trim();
-                int goTo;
-                try {
-                    goTo = Integer.parseInt(text) - 1;
-                } catch (NumberFormatException e) {
-                    builder.setError(getString(R.string.error_invalid_number));
-                    return;
-                }
-                if (goTo < 0 || goTo >= pages) {
-                    builder.setError(getString(R.string.error_out_of_range));
-                    return;
-                }
-                builder.setError(null);
-                mHelper.goTo(goTo);
-                AppHelper.hideSoftInput(dialog);
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+            if (null == mHelper) {
                 dialog.dismiss();
+                return;
             }
+
+            String text = builder.getText().trim();
+            int goTo;
+            try {
+                goTo = Integer.parseInt(text) - 1;
+            } catch (NumberFormatException e) {
+                builder.setError(getString(R.string.error_invalid_number));
+                return;
+            }
+            if (goTo < 0 || goTo >= pages) {
+                builder.setError(getString(R.string.error_out_of_range));
+                return;
+            }
+            builder.setError(null);
+            mHelper.goTo(goTo);
+            AppHelper.hideSoftInput(dialog);
+            dialog.dismiss();
         });
     }
 
@@ -1153,17 +1269,71 @@ public final class GalleryListScene extends BaseScene
         }
 
         switch (position) {
-            case 0: // Go to
+            case 0: // 开启\关闭多标签搜索
+                filterOpen = !filterOpen;
+                onFilter(filterOpen, filterTagList.size());
+                break;
+            case 1: // Go to
                 if (mHelper.canGoTo()) {
                     showGoToDialog();
                 }
                 break;
-            case 1: // Refresh
+            case 2: // Refresh
                 mHelper.refresh();
                 break;
         }
 
         view.setExpanded(false);
+    }
+
+    public void onFilter(boolean open, int num) {
+        if (null == mFloatingActionButton) {
+            return;
+        }
+        if (!open) {
+            mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_none_24);
+            if (null != filterTagList) {
+                filterTagList.clear();
+            }
+            return;
+        }
+
+        switch (num) {
+            case 0:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_24);
+                break;
+            case 1:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_1_24);
+                break;
+            case 2:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_2_24);
+                break;
+            case 3:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_3_24);
+                break;
+            case 4:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_4_24);
+                break;
+            case 5:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_5_24);
+                break;
+            case 6:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_6_24);
+                break;
+            case 7:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_7_24);
+                break;
+            case 8:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_8_24);
+                break;
+            case 9:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_9_24);
+                break;
+            default:
+                mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_9_plus_24);
+                break;
+        }
+
     }
 
     @Override
@@ -1619,9 +1789,9 @@ public final class GalleryListScene extends BaseScene
     }
 
     private class GalleryPageUrlSuggestion extends UrlSuggestion {
-        private long mGid;
-        private String mPToken;
-        private int mPage;
+        private final long mGid;
+        private final String mPToken;
+        private final int mPage;
 
         private GalleryPageUrlSuggestion(long gid, String pToken, int page) {
             mGid = gid;

@@ -57,6 +57,7 @@ import com.hippo.android.resource.AttrResources;
 import com.hippo.beerbelly.BeerBelly;
 import com.hippo.drawable.RoundSideRectDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
@@ -85,6 +86,7 @@ import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
+import com.hippo.ehviewer.util.AppCenterAnalytics;
 import com.hippo.ehviewer.widget.GalleryRatingBar;
 import com.hippo.reveal.ViewAnimationUtils;
 import com.hippo.ripple.Ripple;
@@ -109,13 +111,20 @@ import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.IntIdGenerator;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import okhttp3.HttpUrl;
 
 public class GalleryDetailScene extends BaseScene implements View.OnClickListener,
@@ -261,6 +270,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private String mArchiveFormParamOr;
     private Pair<String, String>[] mArchiveList;
 
+    @Nullable
+    private Map<String, String> properties;
+
     @State
     private int mState = STATE_INIT;
 
@@ -369,6 +381,17 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         } else {
             onRestore(savedInstanceState);
         }
+
+        if (null == properties && mGalleryInfo != null){
+
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            properties = new HashMap<>();
+            properties.put("Title",mGalleryInfo.title);
+            properties.put("Time", dateFormat.format(date));
+            AppCenterAnalytics.trackEvent("进入画廊详情页",properties);
+        }
+
     }
 
     private void onInit() {
@@ -385,7 +408,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
         if (mAction != null) {
@@ -633,6 +656,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mViewTransition2 = null;
 
         mPopupMenu = null;
+
+        properties = null;
     }
 
     private boolean prepareData() {
@@ -839,8 +864,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 //        }
         Resources resources = getResources2();
         AssertUtils.assertNotNull(resources);
+        if (null == mGalleryInfo){
+            mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
+        }else{
+            mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb,false);
+        }
 
-        mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb,false);
         mTitle.setText(EhUtils.getSuitableTitle(gd));
         mUploader.setText(gd.uploader);
         mCategory.setText(EhUtils.getCategory(gd.category));
