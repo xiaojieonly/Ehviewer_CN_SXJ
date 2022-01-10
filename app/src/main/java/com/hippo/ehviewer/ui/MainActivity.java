@@ -32,7 +32,6 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,12 +47,15 @@ import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.EhCookieStore;
 import com.hippo.ehviewer.client.EhTagDatabase;
+import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUrlOpener;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
+import com.hippo.ehviewer.ui.dialog.EhDistributeListener;
 import com.hippo.ehviewer.ui.scene.AnalyticsScene;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.CookieSignInScene;
@@ -65,6 +67,7 @@ import com.hippo.ehviewer.ui.scene.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.GalleryInfoScene;
 import com.hippo.ehviewer.ui.scene.GalleryListScene;
 import com.hippo.ehviewer.ui.scene.GalleryPreviewsScene;
+import com.hippo.ehviewer.ui.scene.EhTopListScene;
 import com.hippo.ehviewer.ui.scene.HistoryScene;
 import com.hippo.ehviewer.ui.scene.ProgressScene;
 import com.hippo.ehviewer.ui.scene.QuickSearchScene;
@@ -80,6 +83,7 @@ import com.hippo.network.Network;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.scene.StageActivity;
+import com.hippo.text.Html;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
 import com.hippo.util.PermissionRequester;
@@ -88,10 +92,20 @@ import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ResourcesUtils;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.analytics.Analytics;
+import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.distribute.Distribute;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.LinkedList;
+import java.util.List;
+
+import okhttp3.Cookie;
+import okhttp3.HttpUrl;
 
 public final class MainActivity extends StageActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -131,6 +145,7 @@ public final class MainActivity extends StageActivity
         registerLaunchMode(CookieSignInScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(SelectSiteScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
+        registerLaunchMode(EhTopListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(QuickSearchScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryDetailScene.class, SceneFragment.LAUNCH_MODE_STANDARD);
         registerLaunchMode(GalleryInfoScene.class, SceneFragment.LAUNCH_MODE_STANDARD);
@@ -161,7 +176,7 @@ public final class MainActivity extends StageActivity
         return R.id.fragment_container;
     }
 
-    @Nullable
+    @NonNull
     @Override
     protected Announcer getLaunchAnnouncer() {
         if (!TextUtils.isEmpty(Settings.getSecurity())) {
@@ -269,19 +284,22 @@ public final class MainActivity extends StageActivity
                 builder.setKeyword(intent.getStringExtra(Intent.EXTRA_TEXT));
                 startScene(processAnnouncer(GalleryListScene.getStartAnnouncer(builder)));
                 return true;
-            } else if (type.startsWith("image/")) {
-                Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                if (null != uri) {
-                    UniFile file = UniFile.fromUri(this, uri);
-                    File temp = saveImageToTempFile(file);
-                    if (null != temp) {
-                        ListUrlBuilder builder = new ListUrlBuilder();
-                        builder.setMode(ListUrlBuilder.MODE_IMAGE_SEARCH);
-                        builder.setImagePath(temp.getPath());
-                        builder.setUseSimilarityScan(true);
-                        builder.setShowExpunged(true);
-                        startScene(processAnnouncer(GalleryListScene.getStartAnnouncer(builder)));
-                        return true;
+            } else {
+                assert type != null;
+                if (type.startsWith("image/")) {
+                    Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                    if (null != uri) {
+                        UniFile file = UniFile.fromUri(this, uri);
+                        File temp = saveImageToTempFile(file);
+                        if (null != temp) {
+                            ListUrlBuilder builder = new ListUrlBuilder();
+                            builder.setMode(ListUrlBuilder.MODE_IMAGE_SEARCH);
+                            builder.setImagePath(temp.getPath());
+                            builder.setUseSimilarityScan(true);
+                            builder.setShowExpunged(true);
+                            startScene(processAnnouncer(GalleryListScene.getStartAnnouncer(builder)));
+                            return true;
+                        }
                     }
                 }
             }
@@ -323,8 +341,14 @@ public final class MainActivity extends StageActivity
         return processAnnouncer(new Announcer(clazz).setArgs(args));
     }
 
+
+
     @Override
     protected void onCreate2(@Nullable Bundle savedInstanceState) {
+        Distribute.setListener(new EhDistributeListener());
+        AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
+                Analytics.class, Crashes.class,Distribute.class);
+        Distribute.setEnabled(true);
         setContentView(R.layout.activity_main);
 
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
@@ -432,6 +456,36 @@ public final class MainActivity extends StageActivity
         // Check permission
         PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+        EhCookieStore store = EhApplication.getEhCookieStore(getApplicationContext());
+        List<Cookie> eCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_E));
+        List<Cookie> exCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_EX));
+        List<Cookie> cookies = new LinkedList<>(eCookies);
+        cookies.addAll(exCookies);
+
+        String ipbMemberId = null;
+        String ipbPassHash = null;
+        String igneous = null;
+
+        for (int i = 0, n = cookies.size(); i < n; i++) {
+            Cookie cookie = cookies.get(i);
+            switch (cookie.name()) {
+                case EhCookieStore.KEY_IPD_MEMBER_ID:
+                    ipbMemberId = cookie.value();
+                    break;
+                case EhCookieStore.KEY_IPD_PASS_HASH:
+                    ipbPassHash = cookie.value();
+                    break;
+                case EhCookieStore.KEY_IGNEOUS:
+                    igneous = cookie.value();
+                    break;
+            }
+        }
+
+        if (ipbMemberId != null || ipbPassHash != null || igneous != null) {
+            Settings.setLoginState(true);
+        } else {
+            Settings.setLoginState(false);
+        }
     }
 
     private void onRestore(Bundle savedInstanceState) {
@@ -454,8 +508,6 @@ public final class MainActivity extends StageActivity
         mAvatar = null;
         mDisplayName = null;
     }
-
-
 
     @Override
     protected void onResume() {
@@ -705,30 +757,45 @@ public final class MainActivity extends StageActivity
 
         int id = item.getItemId();
 
-        if (id == R.id.nav_homepage) {
-            Bundle args = new Bundle();
-            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
-            startSceneFirstly(new Announcer(GalleryListScene.class)
-                    .setArgs(args));
-        } else if (id == R.id.nav_subscription) {
-            Bundle args = new Bundle();
-            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
-            startSceneFirstly(new Announcer(GalleryListScene.class)
-                    .setArgs(args));
-        } else if (id == R.id.nav_whats_hot) {
-            Bundle args = new Bundle();
-            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
-            startSceneFirstly(new Announcer(GalleryListScene.class)
-                    .setArgs(args));
-        } else if (id == R.id.nav_favourite) {
-            startScene(new Announcer(FavoritesScene.class));
-        } else if (id == R.id.nav_history) {
-            startScene(new Announcer(HistoryScene.class));
-        } else if (id == R.id.nav_downloads) {
-            startScene(new Announcer(DownloadsScene.class));
-        } else if (id == R.id.nav_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivityForResult(intent, REQUEST_CODE_SETTINGS);
+        switch (item.getItemId()){
+            case R.id.nav_homepage:
+                Bundle nav_homepage = new Bundle();
+                nav_homepage.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
+                startSceneFirstly(new Announcer(GalleryListScene.class)
+                        .setArgs(nav_homepage));
+                break;
+            case R.id.nav_subscription:
+                Bundle nav_subscription = new Bundle();
+                nav_subscription.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
+                startSceneFirstly(new Announcer(GalleryListScene.class)
+                        .setArgs(nav_subscription));
+                break;
+            case R.id.nav_whats_hot:
+                Bundle nav_whats_hot = new Bundle();
+                nav_whats_hot.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
+                startSceneFirstly(new Announcer(GalleryListScene.class)
+                        .setArgs(nav_whats_hot));
+                break;
+            case R.id.nav_top_lists:
+                System.out.println("打开排行榜");
+                Bundle nav_top_lists = new Bundle();
+                nav_top_lists.putString(EhTopListScene.KEY_ACTION, EhTopListScene.ACTION_TOP_LIST);
+                startSceneFirstly(new Announcer(EhTopListScene.class)
+                        .setArgs(nav_top_lists));
+                break;
+            case R.id.nav_favourite:
+                startScene(new Announcer(FavoritesScene.class));
+                break;
+            case  R.id.nav_history:
+                startScene(new Announcer(HistoryScene.class));
+                break;
+            case R.id.nav_downloads:
+                startScene(new Announcer(DownloadsScene.class));
+                break;
+            case R.id.nav_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivityForResult(intent, REQUEST_CODE_SETTINGS);
+                break;
         }
 //        if (id == R.id.nav_homepage) {
 //            Bundle args = new Bundle();

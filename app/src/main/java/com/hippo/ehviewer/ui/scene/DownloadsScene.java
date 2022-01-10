@@ -268,7 +268,7 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(KEY_LABEL, mLabel);
     }

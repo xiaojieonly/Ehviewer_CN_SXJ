@@ -178,7 +178,7 @@ public final class GalleryCommentsScene extends ToolbarScene
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putLong(KEY_API_UID, mApiUid);
         outState.putString(KEY_API_KEY, mApiKey);

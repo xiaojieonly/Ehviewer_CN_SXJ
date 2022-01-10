@@ -112,7 +112,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
         boolean hasFirstRefresh;

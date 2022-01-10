@@ -147,7 +147,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_VALID, mValid);
         outState.putString(KEY_ERROR, mError);

@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.ui.scene;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -81,14 +82,14 @@ public abstract class BaseScene extends SceneFragment {
         }
     }
 
-    public int getDrawerLockMode(int edgeGravity) {
-        FragmentActivity activity = getActivity();
-        if (activity instanceof MainActivity) {
-            return ((MainActivity) activity).getDrawerLockMode(edgeGravity);
-        } else {
-            return DrawerLayout.LOCK_MODE_UNLOCKED;
-        }
-    }
+//    public int getDrawerLockMode(int edgeGravity) {
+//        FragmentActivity activity = getActivity();
+//        if (activity instanceof MainActivity) {
+//            return ((MainActivity) activity).getDrawerLockMode(edgeGravity);
+//        } else {
+//            return DrawerLayout.LOCK_MODE_UNLOCKED;
+//        }
+//    }
 
     public void openDrawer(int drawerGravity) {
         FragmentActivity activity = getActivity();
@@ -197,9 +198,9 @@ public abstract class BaseScene extends SceneFragment {
 
     @Nullable
     @Override
-    public final View onCreateView(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return onCreateView2(LayoutInflater.from(getContext2()), container, savedInstanceState);
+    public final View onCreateView(@NonNull LayoutInflater inflater,
+                                   @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return onCreateView2(LayoutInflater.from(getEHContext()), container, savedInstanceState);
     }
 
     @Nullable
@@ -208,6 +209,7 @@ public abstract class BaseScene extends SceneFragment {
         return null;
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -223,7 +225,7 @@ public abstract class BaseScene extends SceneFragment {
         setNavCheckedItem(getNavCheckedItem());
 
         // Hide soft ime
-        AppHelper.hideSoftInput(getActivity());
+        AppHelper.hideSoftInput(requireActivity());
     }
 
     public void createThemeContext(@StyleRes int style) {
@@ -259,9 +261,11 @@ public abstract class BaseScene extends SceneFragment {
         }
     }
 
-    @Nullable
+    @NonNull
     public LayoutInflater getLayoutInflater2() {
-        return LayoutInflater.from(getEHContext());
+        LayoutInflater layoutInflater = LayoutInflater.from(getEHContext());
+        assert (null != layoutInflater);
+        return layoutInflater;
     }
 
     public void hideSoftInput() {

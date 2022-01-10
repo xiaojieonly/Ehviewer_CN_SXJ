@@ -149,7 +149,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putStringArrayList(KEY_KEYS, mKeys);
         outState.putStringArrayList(KEY_VALUES, mValues);
