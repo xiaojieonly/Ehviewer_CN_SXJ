@@ -706,7 +706,8 @@ public final class GalleryListScene extends BaseScene
                 }
                 chip.setText(TagTranslationUtil.getTagCNBody(tagName.split(":"), ehTags));
             } else {
-                chip.setText(tagName.split(":")[1]);
+                String[] tagSplit = tagName.split(":");
+                chip.setText(tagSplit.length > 1 ? tagSplit[1] : tagSplit[0]);
             }
             tagFlowLayout.addView(chip, 0);
             return tagFlowLayout;
