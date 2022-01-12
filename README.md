@@ -1,5 +1,14 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+# 2022/01/11 :
+ ###  新版本：1.8.10.4
+ ###  修复了画廊列表处理标签数据时出错导致软件奔溃的bug
+   点击前往下载：[蓝奏云](https://wwe.lanzouy.com/isaixynh48b)  密码:gc18  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2021/12/29 :
  ###  新版本：1.8.10.3
  ###  修复了长按画廊时因为空数据而导致应用崩溃的bug
