@@ -16,7 +16,6 @@
 
 package com.hippo.ehviewer.ui.fragment;
 
-import android.app.Application;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -38,14 +37,14 @@ import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import com.microsoft.appcenter.distribute.Distribute;
 
 public class AboutFragment extends PreferenceFragment
         implements Preference.OnPreferenceClickListener {
@@ -82,7 +81,7 @@ public class AboutFragment extends PreferenceFragment
         } else if (KEY_DONATE.equals(key)) {
             showDonationDialog();
         } else if (KEY_CHECK_FOR_UPDATES.equals(key)) {
-            CommonOperations.checkUpdate(getActivity(), true);
+            Distribute.checkForUpdate();
         }
         return true;
     }
@@ -148,17 +147,12 @@ public class AboutFragment extends PreferenceFragment
             successToast.show();
         }catch (FileNotFoundException e){
             ExceptionUtils.throwIfFatal(e);
-            return;
         }
     }
 
     private static String base64Decode(String encoded) {
         byte[] bytes = Base64.decode(encoded, Base64.DEFAULT);
-        try {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private void copyToClipboard(String text) {
