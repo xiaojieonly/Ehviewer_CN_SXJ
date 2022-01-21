@@ -26,6 +26,8 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
 
@@ -55,7 +57,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <!-- LAUNCHER -->
-                <category android:name="android.intent.category.HOME" />
+<!--                <category android:name="android.intent.category.HOME" />-->
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
