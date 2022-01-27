@@ -1,5 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 
+
+# 2022/01/28 :
+ ###  新版本：1.8.11.0
+ ###  修复了一个可能导致程序奔溃的bug  
+ ###  允许修改头像和背景了，但是只是本地修改，不能同步到E站  
+ ###  给大家拜个早年：祝大家新年快乐，万事如意
+   点击前往下载：[蓝奏云](https://wwe.lanzouy.com/iy8oZzc0w9i)  密码:14m2  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2022/01/11 :
  ###  新版本：1.8.10.4
  ###  修复了画廊列表处理标签数据时出错导致软件奔溃的bug
