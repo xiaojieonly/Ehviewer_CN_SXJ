@@ -31,6 +31,7 @@
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
 
+
     <application
         android:name="com.hippo.ehviewer.EhApplication"
         android:icon="@mipmap/ic_launcher"
@@ -49,7 +50,7 @@
         <activity
             android:name="com.hippo.ehviewer.ui.splash.SplashActivity"
             android:theme="@style/SplashTheme"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden|adjustPan">
