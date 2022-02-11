@@ -8,6 +8,11 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.EhActivity;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.dialog.EhDistributeListener;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.analytics.Analytics;
+import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.distribute.Distribute;
 
 
 public class SplashActivity extends EhActivity {
@@ -20,6 +25,10 @@ public class SplashActivity extends EhActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        Distribute.setListener(new EhDistributeListener());
+        AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
+                Analytics.class, Crashes.class, Distribute.class);
+        Distribute.setEnabled(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_layout);
         new Thread(() -> {
