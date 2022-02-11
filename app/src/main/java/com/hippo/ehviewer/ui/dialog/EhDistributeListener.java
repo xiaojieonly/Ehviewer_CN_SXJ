@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.widget.Toast;
 
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.DistributeListener;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
@@ -60,6 +61,10 @@ public class EhDistributeListener implements DistributeListener {
 
     @Override
     public void onNoReleaseAvailable(Activity activity) {
-        Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
+        if (!Settings.getCheckUpdateState()){
+            Settings.setCheckUpdate(true);
+            Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
+        }
+//        Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
     }
 }

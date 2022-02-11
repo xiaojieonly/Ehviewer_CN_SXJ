@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -1240,4 +1241,34 @@ public class Settings {
         putBoolean(KEY_IS_LOGIN, value);
     }
 
+
+    public static final String USER_BACKGROUND_IMAGE = "background_image_path";
+    public static final String USER_AVATAR_IMAGE = "avatar_image_path";
+
+    public static File getUserImageFile(String key){
+        String path = getString(key,"");
+        if (path.equals("")){
+            return null;
+        }
+        File file = new File(path);
+        if (file.exists()){
+            return file;
+        }else {
+            return null;
+        }
+    }
+
+    public static void saveFilePath(String key,String path){
+        putString(key,path);
+    }
+
+    private static boolean ALREADY_CHECK;
+
+    public static void setCheckUpdate(boolean b){
+        ALREADY_CHECK = b;
+    }
+
+    public static boolean getCheckUpdateState(){
+        return ALREADY_CHECK;
+    }
 }
