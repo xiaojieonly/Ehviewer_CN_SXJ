@@ -158,5 +158,10 @@
     <dimen name="top_list_item_radius">5dp</dimen>
     <dimen name="top_list_item_margin_width">24dp</dimen>
 
+    <!--  底部弹窗相关  -->
+    <dimen name="photo_select_margin_top">12dp</dimen>
+    <dimen name="photo_select_margin_bottom">12dp</dimen>
+    <dimen name="popup_text_padding">4dp</dimen>
+    <dimen name="popup_text_margin">12dp</dimen>
 
 </resources>

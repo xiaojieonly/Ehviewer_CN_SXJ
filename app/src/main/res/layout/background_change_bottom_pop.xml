@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/take_photo_with_camera"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/popup_text_margin"
+            android:layout_marginRight="@dimen/popup_text_margin"
+            android:layout_marginBottom="@dimen/popup_text_margin"
+            android:background="@drawable/bottom_popup_shape"
+            android:gravity="center"
+            android:padding="@dimen/popup_text_padding"
+            android:text="@string/take_a_photograph"
+            android:textSize="@dimen/text_super_large" />
+
+        <TextView
+            android:id="@+id/choose_from_the_album"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/popup_text_margin"
+            android:layout_marginRight="@dimen/popup_text_margin"
+            android:layout_marginBottom="@dimen/popup_text_margin"
+            android:background="@drawable/bottom_popup_shape"
+            android:gravity="center"
+            android:padding="@dimen/popup_text_padding"
+            android:text="@string/choose_from_the_album"
+            android:textSize="@dimen/text_super_large" />
+    </LinearLayout>
+</RelativeLayout>

@@ -15,26 +15,31 @@
   ~ limitations under the License.
   -->
 
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="160dp">
 
     <ImageView
+        android:id="@+id/header_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/sadpanda_low_poly"
         android:scaleType="centerCrop"
-        android:contentDescription="@null"/>
+        android:baseline="0dp"
+        android:contentDescription="@null" />
 
-    <com.hippo.widget.LoadImageView
+    <com.hippo.widget.AvatarImageView
         android:id="@+id/avatar"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_gravity="bottom"
         android:layout_marginLeft="16dp"
-        android:layout_marginBottom="48dp"/>
+        android:layout_marginBottom="48dp"
+        android:scaleType="centerCrop"
+        app:image_circle="true"
+        />
 
     <TextView
         android:id="@+id/display_name"

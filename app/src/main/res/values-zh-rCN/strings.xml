@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Sevenerror_please_login_first
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -743,4 +742,17 @@
     <string name="yesterday_top_list">昨天</string>
 
 
+    <!--  侧滑栏头像和背景修改  -->
+    <string name="change_background_title">您确定要更改背景吗？</string>
+    <string name="change_background_message">背景修改仅限于本软件，无法同步至E站或其他类似软件。</string>
+    <string name="change_avatar_title">您确定要更改头像吗？</string>
+    <string name="change_avatar_message">头像修改仅限于本软件，无法同步至E站或其他类似软件。</string>
+    <string name="take_a_photograph">拍照</string>
+    <string name="choose_from_the_album">从相册中选择</string>
+    <string name="request_camera_permission">EhViewer 将申请设备相机访问权限以便拍摄照片。您愿意授权吗？</string>
+    <string name="request_storage_permission">EhViewer 将申请设备相册访问权限以便获取图片。您愿意授权吗？</string>
+
+
+    <string name="yes">是</string>
+    <string name="cancel">取消</string>
 </resources>

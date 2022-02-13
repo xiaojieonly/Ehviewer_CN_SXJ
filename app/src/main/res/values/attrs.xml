@@ -90,6 +90,8 @@
     </declare-styleable>
 
     <declare-styleable name="LoadImageView">
+        <attr name="image_radius" format="dimension" />
+        <attr name="image_circle" format="boolean" />
         <attr name="retryType">
             <enum name="none" value="0" />
             <enum name="click" value="1" />

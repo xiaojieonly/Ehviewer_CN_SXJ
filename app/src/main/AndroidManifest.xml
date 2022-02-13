@@ -51,8 +51,10 @@
             android:name="com.hippo.ehviewer.ui.splash.SplashActivity"
             android:theme="@style/SplashTheme"
             android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
+            android:alwaysRetainTaskState="true"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
+            android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
