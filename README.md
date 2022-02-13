@@ -6,6 +6,7 @@
  ###  修复了一些可能导致程序奔溃的bug  
  ###  修复了部分机型自定义头像无法显示的bug  
  ###  优化了检查更新的流程，现在只会在打开程序时检查一次
+ ###  先鸽一段时间，老头环快出了，我要拾起凋零的希望重铸法环的荣光去了
    点击前往下载：[蓝奏云](https://wwe.lanzouy.com/iXt6v0016d0b)  密码:8aty  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
