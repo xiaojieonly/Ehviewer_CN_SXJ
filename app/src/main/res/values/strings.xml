@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -235,7 +234,7 @@
     <string name="search_sp">Pages:</string>
     <string name="search_sp_to">to</string>
     <!-- A placeholder for other languages -->
-    <string name="search_sp_suffix"/>
+    <string name="search_sp_suffix" />
     <string name="search_sf">Disable default filters for:</string>
     <string name="search_sfl">Language</string>
     <string name="search_sfu">Uploader</string>
@@ -816,7 +815,7 @@
 
     <string name="download_service">Download Service</string>
     <string name="favorite_name">Favorite</string>
-    
+
     <!--  排行榜  -->
     <string name="gallery_toplists">Gallery Toplists</string>
     <string name="uploader_toplists">Uploader Toplists</string>
@@ -832,5 +831,17 @@
     <string name="past_month_top_list">Past Month TopList</string>
     <string name="yesterday_top_list">Yesterday TopList</string>
 
+    <!--  侧滑栏头像和背景修改  -->
+    <string name="change_background_title">Are you sure you want to change the background?</string>
+    <string name="change_background_message">The background modification is limited to this software and cannot be synchronized to E-hentai or other similar software.</string>
+    <string name="change_avatar_title">Are you sure you want to change your avatar?</string>
+    <string name="change_avatar_message">The avatar modification is limited to this software and cannot be synchronized to E-hentai or other similar software.</string>
+    <string name="take_a_photograph">Take a photograph</string>
+    <string name="choose_from_the_album">Choose from the album</string>
+    <string name="request_camera_permission">EhViewer will request access to the device camera in order to take pictures. Would you like to authorize?</string>
+    <string name="request_storage_permission">EhViewer will request access to the device\'s photo album in order to obtain pictures. Would you like to authorize?</string>
+
+    <string name="yes">Yes</string>
+    <string name="cancel">Cancel</string>
 
 </resources>

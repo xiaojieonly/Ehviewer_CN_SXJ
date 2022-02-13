@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +16,26 @@
 
 <path xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <external-path name="temp" path="EhViewer/temp"/>
+    <root-path
+        name="root"
+        path="" />
+    <files-path
+        name="files"
+        path="EhViewer/files" />
 
+    <cache-path
+        name="cache"
+        path="EhViewer/cache" />
+
+    <external-path
+        name="temp"
+        path="EhViewer/temp" />
+
+    <external-files-path
+        name="external_file_path"
+        path="EhViewer/temp/files" />
+
+    <external-cache-path
+        name="external_cache_path"
+        path="EhViewer/temp/cache" />
 </path>

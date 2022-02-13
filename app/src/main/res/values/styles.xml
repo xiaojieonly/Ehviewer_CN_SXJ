@@ -181,12 +181,6 @@
         <item name="cardBackgroundColor">?attr/contentColorReactive</item>
     </style>
 
-    <!--  组件动画  -->
-    <style name="PopupWindow">
-        <item name="android:windowEnterAnimation">@anim/pop_enter</item>
-        <item name="android:windowExitAnimation">@anim/pop_exit</item>
-    </style>
-
     <style name="ClipTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -217,5 +211,14 @@
         <item name="backgroundColor">@color/black</item>
 
     </style>
+
+    <!--  组件动画  -->
+    <style name="PopupWindow">
+        <item name="android:windowEnterAnimation">@anim/pop_enter</item>
+        <item name="android:windowExitAnimation">@anim/pop_exit</item>
+    </style>
+
+
+
 
 </resources>
