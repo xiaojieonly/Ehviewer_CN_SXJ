@@ -30,6 +30,11 @@ android {
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
         testOptions.unitTests.includeAndroidResources = true
+        externalNativeBuild{
+            cmake {
+                cppFlags ""
+            }
+        }
         ndk {
             abiFilters "armeabi-v7a", "x86"
         }
@@ -55,6 +60,12 @@ android {
         debug {
             applicationIdSuffix ".debug"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
+        }
+    }
+
+    externalNativeBuild{
+        cmake{
+            path "CMakeLists.txt"
         }
     }
 
