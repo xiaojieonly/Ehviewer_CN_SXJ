@@ -1,0 +1,21 @@
+                Executable : I:\Android-SDK\cmake\3.10.2.4988404\bin\cmake.exe
+arguments : 
+-HD:\code\Ehviewer_CN_SXJ-master\app
+-DCMAKE_FIND_ROOT_PATH=D:\code\Ehviewer_CN_SXJ-master\app\.cxx\cmake\appCenterDebug\prefab\armeabi-v7a\prefab
+-DCMAKE_BUILD_TYPE=Debug
+-DCMAKE_TOOLCHAIN_FILE=I:\Android-SDK\ndk\24.0.7956693\build\cmake\android.toolchain.cmake
+-DANDROID_ABI=armeabi-v7a
+-DANDROID_NDK=I:\Android-SDK\ndk\24.0.7956693
+-DANDROID_PLATFORM=android-23
+-DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a
+-DCMAKE_ANDROID_NDK=I:\Android-SDK\ndk\24.0.7956693
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=D:\code\Ehviewer_CN_SXJ-master\app\build\intermediates\cmake\appCenterDebug\obj\armeabi-v7a
+-DCMAKE_MAKE_PROGRAM=I:\Android-SDK\cmake\3.10.2.4988404\bin\ninja.exe
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_SYSTEM_VERSION=23
+-BD:\code\Ehviewer_CN_SXJ-master\app\.cxx\cmake\appCenterDebug\armeabi-v7a
+-GNinja
+jvmArgs : 
+
+Build command args:
