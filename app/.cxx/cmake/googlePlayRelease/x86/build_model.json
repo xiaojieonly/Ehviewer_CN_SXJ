@@ -1,0 +1,207 @@
+{
+  "abi": "X86",
+  "abiPlatformVersion": 23,
+  "buildSettings": {
+    "environmentVariables": []
+  },
+  "cmake": {
+    "cmakeArtifactsBaseFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\x86",
+    "cmakeServerLogFile": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\x86\\cmake_server_log.txt",
+    "cmakeWrappingBaseFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cxx\\googlePlayRelease\\x86",
+    "effectiveConfiguration": {
+      "name": "traditional-android-studio-cmake-environment",
+      "description": "Composite reified CMakeSettings configuration",
+      "generator": "Ninja",
+      "inheritEnvironments": [
+        "ndk"
+      ],
+      "buildRoot": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\x86",
+      "cmakeToolchain": "I:\\Android-SDK\\ndk\\24.0.7956693\\build\\cmake\\android.toolchain.cmake",
+      "cmakeExecutable": "I:\\Android-SDK\\cmake\\3.10.2.4988404\\bin\\cmake.exe",
+      "variables": [
+        {
+          "name": "CMAKE_FIND_ROOT_PATH",
+          "value": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\prefab\\x86\\prefab"
+        },
+        {
+          "name": "CMAKE_BUILD_TYPE",
+          "value": "Release"
+        },
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "I:\\Android-SDK\\ndk\\24.0.7956693\\build\\cmake\\android.toolchain.cmake"
+        },
+        {
+          "name": "ANDROID_ABI",
+          "value": "x86"
+        },
+        {
+          "name": "ANDROID_NDK",
+          "value": "I:\\Android-SDK\\ndk\\24.0.7956693"
+        },
+        {
+          "name": "ANDROID_PLATFORM",
+          "value": "android-23"
+        },
+        {
+          "name": "CMAKE_ANDROID_ARCH_ABI",
+          "value": "x86"
+        },
+        {
+          "name": "CMAKE_ANDROID_NDK",
+          "value": "I:\\Android-SDK\\ndk\\24.0.7956693"
+        },
+        {
+          "name": "CMAKE_EXPORT_COMPILE_COMMANDS",
+          "value": "ON"
+        },
+        {
+          "name": "CMAKE_LIBRARY_OUTPUT_DIRECTORY",
+          "value": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\build\\intermediates\\cmake\\googlePlayRelease\\obj\\x86"
+        },
+        {
+          "name": "CMAKE_MAKE_PROGRAM",
+          "value": "I:\\Android-SDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe"
+        },
+        {
+          "name": "CMAKE_SYSTEM_NAME",
+          "value": "Android"
+        },
+        {
+          "name": "CMAKE_SYSTEM_VERSION",
+          "value": "23"
+        }
+      ]
+    }
+  },
+  "cxxBuildFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\x86",
+  "info": {
+    "abi": "X86",
+    "bitness": 32,
+    "deprecated": false,
+    "default": true
+  },
+  "originalCxxBuildFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\x86",
+  "variant": {
+    "buildSystemArgumentList": [],
+    "buildTargetSet": [],
+    "implicitBuildTargetSet": [],
+    "cFlagsList": [],
+    "cmakeSettingsConfiguration": "android-gradle-plugin-predetermined-name",
+    "cppFlagsList": [
+      ""
+    ],
+    "isDebuggableEnabled": false,
+    "module": {
+      "buildSystem": "CMAKE",
+      "cmake": {
+        "cmakeExe": "I:\\Android-SDK\\cmake\\3.10.2.4988404\\bin\\cmake.exe",
+        "minimumCmakeVersion": "3.10.2",
+        "ninjaExe": "I:\\Android-SDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe"
+      },
+      "cmakeToolchainFile": "I:\\Android-SDK\\ndk\\24.0.7956693\\build\\cmake\\android.toolchain.cmake",
+      "cxxFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx",
+      "gradleModulePathName": ":app",
+      "intermediatesFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\build\\intermediates",
+      "makeFile": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+      "moduleBuildFile": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\build.gradle",
+      "moduleRootFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app",
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkFolder": "I:\\Android-SDK\\ndk\\24.0.7956693",
+      "ndkMetaAbiList": [
+        {
+          "abi": "ARMEABI_V7A",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "ARM64_V8A",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86_64",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        }
+      ],
+      "ndkMetaPlatforms": {
+        "min": 19,
+        "max": 32,
+        "aliases": {
+          "20": 19,
+          "25": 24,
+          "J": 16,
+          "J-MR1": 17,
+          "J-MR2": 18,
+          "K": 19,
+          "L": 21,
+          "L-MR1": 22,
+          "M": 23,
+          "N": 24,
+          "N-MR1": 24,
+          "O": 26,
+          "O-MR1": 27,
+          "P": 28,
+          "Q": 29,
+          "R": 30,
+          "S": 31,
+          "Sv2": 32
+        }
+      },
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultStl": "LIBCXX_STATIC",
+      "ndkVersion": "24.0.7956693",
+      "project": {
+        "compilerSettingsCacheFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\.cxx",
+        "cxxFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\.cxx",
+        "isBuildOnlyTargetAbiEnabled": true,
+        "isCmakeBuildCohabitationEnabled": false,
+        "isNativeCompilerSettingsCacheEnabled": false,
+        "rootBuildGradleFolder": "D:\\code\\Ehviewer_CN_SXJ-master",
+        "sdkFolder": "I:\\Android-SDK",
+        "isPrefabEnabled": false
+      },
+      "splitsAbiFilterSet": [],
+      "stlSharedObjectMap": {
+        "LIBCXX_SHARED": {
+          "ARMEABI_V7A": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\arm-linux-androideabi\\libc++_shared.so",
+          "ARM64_V8A": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\aarch64-linux-android\\libc++_shared.so",
+          "X86": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\i686-linux-android\\libc++_shared.so",
+          "X86_64": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\x86_64-linux-android\\libc++_shared.so"
+        },
+        "LIBCXX_STATIC": {},
+        "NONE": {},
+        "SYSTEM": {}
+      }
+    },
+    "objFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\build\\intermediates\\cmake\\googlePlayRelease\\obj",
+    "variantName": "googlePlayRelease",
+    "validAbiList": [
+      "ARMEABI_V7A",
+      "X86"
+    ],
+    "prefabDirectory": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\prefab",
+    "prefabPackageDirectoryList": []
+  },
+  "prefabFolder": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\googlePlayRelease\\prefab\\x86"
+}

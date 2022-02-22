@@ -1,0 +1,7 @@
+Executable : I:\Android-SDK\cmake\3.10.2.4988404\bin\ninja.exe
+arguments : 
+-C
+D:\code\Ehviewer_CN_SXJ-master\app\.cxx\cmake\appCenterDebug\armeabi-v7a
+native-lib
+jvmArgs : 
+

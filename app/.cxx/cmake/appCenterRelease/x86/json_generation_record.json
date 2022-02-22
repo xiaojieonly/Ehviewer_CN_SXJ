@@ -1,0 +1,38 @@
+[
+  {
+    "level": "INFO",
+    "message": "Start JSON generation. Platform version: 23 min SDK version: x86",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|x86"
+  },
+  {
+    "level": "INFO",
+    "message": "No CMake version was specified in build.gradle. Using default version 3.10.2.",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|x86"
+  },
+  {
+    "level": "INFO",
+    "message": "Trying to locate CMake in local SDK repository.",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|x86"
+  },
+  {
+    "level": "INFO",
+    "message": "- CMake found in SDK at \u0027I:\\Android-SDK\\cmake\\3.10.2.4988404\u0027 had version \u00273.10.2\u0027",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|x86"
+  },
+  {
+    "level": "INFO",
+    "message": "JSON \u0027D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\x86\\android_gradle_build.json\u0027 was up-to-date",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|x86"
+  },
+  {
+    "level": "INFO",
+    "message": "JSON generation completed without problems",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|x86"
+  }
+]

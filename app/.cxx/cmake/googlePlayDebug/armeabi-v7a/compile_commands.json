@@ -1,0 +1,19 @@
+[
+{
+  "directory": "D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/googlePlayDebug/armeabi-v7a",
+  "command": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=armv7-none-linux-androideabi23 --gcc-toolchain=I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC   -o CMakeFiles\\native-lib.dir\\src\\main\\cpp\\gif\\native-lib.cpp.o -c D:\\code\\Ehviewer_CN_SXJ-master\\app\\src\\main\\cpp\\gif\\native-lib.cpp",
+  "file": "D:/code/Ehviewer_CN_SXJ-master/app/src/main/cpp/gif/native-lib.cpp"
+},
+
+{
+  "directory": "D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/googlePlayDebug/armeabi-v7a",
+  "command": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=armv7-none-linux-androideabi23 --gcc-toolchain=I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dnative_lib_EXPORTS  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC   -o CMakeFiles\\native-lib.dir\\src\\main\\cpp\\gif\\dgif_lib.c.o   -c D:\\code\\Ehviewer_CN_SXJ-master\\app\\src\\main\\cpp\\gif\\dgif_lib.c",
+  "file": "D:/code/Ehviewer_CN_SXJ-master/app/src/main/cpp/gif/dgif_lib.c"
+},
+
+{
+  "directory": "D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/googlePlayDebug/armeabi-v7a",
+  "command": "I:\\Android-SDK\\ndk\\24.0.7956693\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=armv7-none-linux-androideabi23 --gcc-toolchain=I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dnative_lib_EXPORTS  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC   -o CMakeFiles\\native-lib.dir\\src\\main\\cpp\\gif\\gifalloc.c.o   -c D:\\code\\Ehviewer_CN_SXJ-master\\app\\src\\main\\cpp\\gif\\gifalloc.c",
+  "file": "D:/code/Ehviewer_CN_SXJ-master/app/src/main/cpp/gif/gifalloc.c"
+}
+]
