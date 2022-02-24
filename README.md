@@ -1,6 +1,19 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/02/24 :
+ ###  新版本：1.8.11.4
+ ###  修复了几个可能导致程序奔溃的bug  
+ ###  导航栏头像背景现在支持自定义GIF背景  
+ ###  优化了检查更新的流程，现在不会再报‘已是最新版本了’
+ ###  明天老头环出了，开心
+   点击前往下载：[蓝奏云](https://wwe.lanzouy.com/itmNf00kkzja)  密码:hjhr  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/joinchat/WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+   qq群号:1050579343  
+
 # 2022/02/13 :
  ###  新版本：1.8.11.3
  ###  修复了一些可能导致程序奔溃的bug  
