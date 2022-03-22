@@ -188,7 +188,7 @@
         <item name="android:windowContentTransitions">true</item>
         <item name="textAllCaps">false</item>
         <item name="buttonStyle">?android:attr/borderlessButtonStyle</item>
-        <item name="android:fontFamily">@dimen/text_more_super_small</item>
+        <item name="android:textSize">@dimen/text_more_super_small</item>
     </style>
 
     <style name="CustomChipChoice" parent="@style/Widget.MaterialComponents.Chip.Action">

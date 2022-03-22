@@ -37,26 +37,21 @@
         android:layout_marginBottom="16dp"
         android:orientation="vertical">
 
-        <View
+
+        <com.hippo.widget.AvatarImageView
             android:id="@+id/avatar"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:layout_marginBottom="16dp">
-<!--            <com.hippo.widget.AvatarImageView-->
-<!--                android:layout_width="64dp"-->
-<!--                android:layout_height="64dp"-->
-<!--                android:layout_marginBottom="16dp"-->
-<!--                android:scaleType="centerCrop"-->
-<!--                app:image_circle="true" />-->
-        </View>
+            android:layout_marginBottom="16dp"
+            android:scaleType="centerCrop"
+            app:image_circle="true" />
 
         <TextView
             android:id="@+id/display_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="asdasdasd"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             android:textSize="@dimen/text_small" />
     </LinearLayout>
 
