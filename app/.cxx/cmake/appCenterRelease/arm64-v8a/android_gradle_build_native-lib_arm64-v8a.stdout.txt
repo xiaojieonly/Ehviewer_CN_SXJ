@@ -1,0 +1,5 @@
+ninja: Entering directory `D:\code\Ehviewer_CN_SXJ-master\app\.cxx\cmake\appCenterRelease\arm64-v8a'
+[1/4] Building C object CMakeFiles/native-lib.dir/src/main/cpp/gif/gifalloc.c.o
+[2/4] Building C object CMakeFiles/native-lib.dir/src/main/cpp/gif/dgif_lib.c.o
+[3/4] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/gif/native-lib.cpp.o
+[4/4] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\appCenterRelease\obj\arm64-v8a\libnative-lib.so
