@@ -1,0 +1,446 @@
+[
+  {
+    "level": "INFO",
+    "message": "Start JSON generation. Platform version: 23 min SDK version: arm64-v8a",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "No CMake version was specified in build.gradle. Using default version 3.10.2.",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Trying to locate CMake in local SDK repository.",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "- CMake found in SDK at \u0027I:\\Android-SDK\\cmake\\3.10.2.4988404\u0027 had version \u00273.10.2\u0027",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "rebuilding JSON D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\\android_gradle_build.json due to:",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "- expected json D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\\android_gradle_build.json file is not present, will remove stale json folder",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "- missing previous command file D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\\build_command.txt, will remove stale json folder",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "- command changed from previous, will remove stale json folder",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "removing stale contents from \u0027D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\u0027",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "created folder \u0027D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\u0027",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "executing cmake Executable : I:\\Android-SDK\\cmake\\3.10.2.4988404\\bin\\cmake.exe\narguments : \n-HD:\\code\\Ehviewer_CN_SXJ-master\\app\n-DCMAKE_FIND_ROOT_PATH\u003dD:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\prefab\\arm64-v8a\\prefab\n-DCMAKE_BUILD_TYPE\u003dRelease\n-DCMAKE_TOOLCHAIN_FILE\u003dI:\\Android-SDK\\ndk\\24.0.7956693\\build\\cmake\\android.toolchain.cmake\n-DANDROID_ABI\u003darm64-v8a\n-DANDROID_NDK\u003dI:\\Android-SDK\\ndk\\24.0.7956693\n-DANDROID_PLATFORM\u003dandroid-23\n-DCMAKE_ANDROID_ARCH_ABI\u003darm64-v8a\n-DCMAKE_ANDROID_NDK\u003dI:\\Android-SDK\\ndk\\24.0.7956693\n-DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON\n-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003dD:\\code\\Ehviewer_CN_SXJ-master\\app\\build\\intermediates\\cmake\\appCenterRelease\\obj\\arm64-v8a\n-DCMAKE_MAKE_PROGRAM\u003dI:\\Android-SDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe\n-DCMAKE_SYSTEM_NAME\u003dAndroid\n-DCMAKE_SYSTEM_VERSION\u003d23\n-BD:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\n-GNinja\njvmArgs : \n\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "[\u003d\u003d \"CMake Server\" \u003d\u003d[\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"supportedProtocolVersions\":[{\"isExperimental\":true,\"major\":1,\"minor\":1}],\"type\":\"hello\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "]\u003d\u003d \"CMake Server\" \u003d\u003d]\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\n  \"type\": \"handshake\",\n  \"cookie\": \"gradle-cmake-cookie\",\n  \"protocolVersion\": {\n    \"isExperimental\": true,\n    \"major\": 1,\n    \"minor\": 1\n  },\n  \"sourceDirectory\": \"D:/code/Ehviewer_CN_SXJ-master/app\",\n  \"buildDirectory\": \"D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a\",\n  \"generator\": \"Ninja\"\n}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"gradle-cmake-cookie\",\"inReplyTo\":\"handshake\",\"type\":\"reply\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\n  \"type\": \"configure\",\n  \"cacheArguments\": [\n    \"\",\n    \"-DCMAKE_FIND_ROOT_PATH\\u003dD:\\\\code\\\\Ehviewer_CN_SXJ-master\\\\app\\\\.cxx\\\\cmake\\\\appCenterRelease\\\\prefab\\\\arm64-v8a\\\\prefab\",\n    \"-DCMAKE_BUILD_TYPE\\u003dRelease\",\n    \"-DCMAKE_TOOLCHAIN_FILE\\u003dI:\\\\Android-SDK\\\\ndk\\\\24.0.7956693\\\\build\\\\cmake\\\\android.toolchain.cmake\",\n    \"-DANDROID_ABI\\u003darm64-v8a\",\n    \"-DANDROID_NDK\\u003dI:\\\\Android-SDK\\\\ndk\\\\24.0.7956693\",\n    \"-DANDROID_PLATFORM\\u003dandroid-23\",\n    \"-DCMAKE_ANDROID_ARCH_ABI\\u003darm64-v8a\",\n    \"-DCMAKE_ANDROID_NDK\\u003dI:\\\\Android-SDK\\\\ndk\\\\24.0.7956693\",\n    \"-DCMAKE_EXPORT_COMPILE_COMMANDS\\u003dON\",\n    \"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\\u003dD:\\\\code\\\\Ehviewer_CN_SXJ-master\\\\app\\\\build\\\\intermediates\\\\cmake\\\\appCenterRelease\\\\obj\\\\arm64-v8a\",\n    \"-DCMAKE_MAKE_PROGRAM\\u003dI:\\\\Android-SDK\\\\cmake\\\\3.10.2.4988404\\\\bin\\\\ninja.exe\",\n    \"-DCMAKE_SYSTEM_NAME\\u003dAndroid\",\n    \"-DCMAKE_SYSTEM_VERSION\\u003d23\"\n  ]\n}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"CMake Warning at I:/Android-SDK/ndk/24.0.7956693/build/cmake/android-legacy.toolchain.cmake:418 (message):\\n  An old version of CMake is being used that cannot automatically detect\\n  compiler attributes.  Compiler identification is being bypassed.  Some\\n  values may be wrong or missing.  Update to CMake 3.19 or newer to use\\n  CMake\u0027s built-in compiler identification.\\nCall Stack (most recent call first):\\n  I:/Android-SDK/ndk/24.0.7956693/build/cmake/android.toolchain.cmake:54 (include)\\n  I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineSystem.cmake:94 (include)\\n  CMakeLists.txt\\n\\n\",\"title\":\"Warning\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "WARN",
+    "message": "CMake Warning at I:/Android-SDK/ndk/24.0.7956693/build/cmake/android-legacy.toolchain.cmake:418 (message):\r\n  An old version of CMake is being used that cannot automatically detect\r\n  compiler attributes.  Compiler identification is being bypassed.  Some\r\n  values may be wrong or missing.  Update to CMake 3.19 or newer to use\r\n  CMake\u0027s built-in compiler identification.\r\nCall Stack (most recent call first):\r\n  I:/Android-SDK/ndk/24.0.7956693/build/cmake/android.toolchain.cmake:54 (include)\r\n  I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineSystem.cmake:94 (include)\r\n  CMakeLists.txt\r\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Check for working C compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Check for working C compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"CMake Warning at I:/Android-SDK/ndk/24.0.7956693/build/cmake/android-legacy.toolchain.cmake:418 (message):\\n  An old version of CMake is being used that cannot automatically detect\\n  compiler attributes.  Compiler identification is being bypassed.  Some\\n  values may be wrong or missing.  Update to CMake 3.19 or newer to use\\n  CMake\u0027s built-in compiler identification.\\nCall Stack (most recent call first):\\n  I:/Android-SDK/ndk/24.0.7956693/build/cmake/android.toolchain.cmake:54 (include)\\n  D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeSystem.cmake:6 (include)\\n  D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/CMakeTmp/CMakeLists.txt:2 (project)\\n\\n\",\"title\":\"Warning\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "WARN",
+    "message": "CMake Warning at I:/Android-SDK/ndk/24.0.7956693/build/cmake/android-legacy.toolchain.cmake:418 (message):\r\n  An old version of CMake is being used that cannot automatically detect\r\n  compiler attributes.  Compiler identification is being bypassed.  Some\r\n  values may be wrong or missing.  Update to CMake 3.19 or newer to use\r\n  CMake\u0027s built-in compiler identification.\r\nCall Stack (most recent call first):\r\n  I:/Android-SDK/ndk/24.0.7956693/build/cmake/android.toolchain.cmake:54 (include)\r\n  D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeSystem.cmake:6 (include)\r\n  D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/CMakeTmp/CMakeLists.txt:2 (project)\r\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":33,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Check for working C compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe -- works\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Check for working C compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe -- works",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting C compiler ABI info\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting C compiler ABI info",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":65,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting C compiler ABI info - done\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting C compiler ABI info - done",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting C compile features\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting C compile features",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":96,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":126,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":155,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting C compile features - done\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting C compile features - done",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Check for working CXX compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Check for working CXX compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":184,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Check for working CXX compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe -- works\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Check for working CXX compiler: I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe -- works",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting CXX compiler ABI info\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting CXX compiler ABI info",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":211,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting CXX compiler ABI info - done\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting CXX compiler ABI info - done",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting CXX compile features\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting CXX compile features",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":237,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":262,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":287,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":311,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Detecting CXX compile features - done\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Detecting CXX compile features - done",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"progressCurrent\":1000,\"progressMaximum\":1000,\"progressMessage\":\"Configuring\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"message\":\"Configuring done\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Configuring done",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"configure\",\"type\":\"reply\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"type\":\"compute\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"compute\",\"progressCurrent\":1000,\"progressMaximum\":1000,\"progressMessage\":\"Generating\",\"progressMinimum\":0,\"type\":\"progress\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"compute\",\"message\":\"Generating done\",\"type\":\"message\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "Generating done",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"cookie\":\"\",\"inReplyTo\":\"compute\",\"type\":\"reply\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"type\":\"cmakeInputs\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"buildFiles\":[{\"isCMake\":true,\"isTemporary\":false,\"sources\":[\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineSystem.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Determine.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeSystem.cmake.in\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeSystemSpecificInitialize.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Initialize.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCCompiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCompiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Determine-C.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android/Determine-Compiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeFindBinUtils.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-FindBinUtils.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCCompiler.cmake.in\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCXXCompiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCompiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Determine-CXX.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android/Determine-Compiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeFindBinUtils.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-FindBinUtils.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCXXCompiler.cmake.in\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeSystemSpecificInformation.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeGenericSystem.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Linux.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/UnixPaths.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCInformation.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeLanguageInformation.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-C.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/CMakeCommonCompilerMacros.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/GNU.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/CMakeCommonCompilerMacros.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Clang-C.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Clang.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCommonLanguageInclude.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeTestCCompiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeTestCompilerCommon.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCompilerABI.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeParseImplicitLinkInfo.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCCompilerABI.c\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCompileFeatures.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Internal/FeatureTesting.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-C-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-C-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-C-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCCompiler.cmake.in\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCXXInformation.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeLanguageInformation.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Clang-CXX.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Platform/Android-Clang.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCommonLanguageInclude.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeTestCXXCompiler.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeTestCompilerCommon.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCompilerABI.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeParseImplicitLinkInfo.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCXXCompilerABI.cpp\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeDetermineCompileFeatures.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Internal/FeatureTesting.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-TestableFeatures.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-TestableFeatures.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-TestableFeatures.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-FeatureTests.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/Compiler/Clang-CXX-TestableFeatures.cmake\",\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10/Modules/CMakeCXXCompiler.cmake.in\"]},{\"isCMake\":false,\"isTemporary\":false,\"sources\":[\"CMakeLists.txt\",\"I:/Android-SDK/ndk/24.0.7956693/build/cmake/android.toolchain.cmake\",\"I:/Android-SDK/ndk/24.0.7956693/build/cmake/android-legacy.toolchain.cmake\",\"I:/Android-SDK/ndk/24.0.7956693/build/cmake/platforms.cmake\",\"I:/Android-SDK/ndk/24.0.7956693/build/cmake/compiler_id.cmake\",\"I:/Android-SDK/ndk/24.0.7956693/build/cmake/android.toolchain.cmake\"]},{\"isCMake\":false,\"isTemporary\":true,\"sources\":[\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeSystem.cmake\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeCCompiler.cmake\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeCXXCompiler.cmake\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.c\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.c\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.c\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeCCompiler.cmake\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.cxx\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.cxx\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.cxx\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/feature_tests.cxx\",\".cxx/cmake/appCenterRelease/arm64-v8a/CMakeFiles/3.10.2/CMakeCXXCompiler.cmake\"]}],\"cmakeRootDirectory\":\"I:/Android-SDK/cmake/3.10.2.4988404/share/cmake-3.10\",\"cookie\":\"\",\"inReplyTo\":\"cmakeInputs\",\"sourceDirectory\":\"D:/code/Ehviewer_CN_SXJ-master/app\",\"type\":\"reply\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"type\":\"codemodel\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "{\"configurations\":[{\"name\":\"Release\",\"projects\":[{\"buildDirectory\":\"D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a\",\"name\":\"Project\",\"sourceDirectory\":\"D:/code/Ehviewer_CN_SXJ-master/app\",\"targets\":[{\"artifacts\":[\"D:/code/Ehviewer_CN_SXJ-master/app/build/intermediates/cmake/appCenterRelease/obj/arm64-v8a/libnative-lib.so\"],\"buildDirectory\":\"D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/arm64-v8a\",\"fileGroups\":[{\"compileFlags\":\"-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE\u003d2 -Wformat -Werror\u003dformat-security   -DNDEBUG  -fPIC  \",\"defines\":[\"native_lib_EXPORTS\"],\"isGenerated\":false,\"language\":\"CXX\",\"sources\":[\"src/main/cpp/gif/native-lib.cpp\"]},{\"compileFlags\":\"-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE\u003d2 -Wformat -Werror\u003dformat-security  -DNDEBUG  -fPIC  \",\"defines\":[\"native_lib_EXPORTS\"],\"isGenerated\":false,\"language\":\"C\",\"sources\":[\"src/main/cpp/gif/dgif_lib.c\",\"src/main/cpp/gif/gifalloc.c\"]}],\"fullName\":\"libnative-lib.so\",\"linkFlags\":\"-static-libstdc++ -Wl,--build-id\u003dsha1 -Wl,--no-rosegment -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments\",\"linkLibraries\":\"-llog -ljnigraphics -latomic -lm\",\"linkerLanguage\":\"CXX\",\"name\":\"native-lib\",\"sourceDirectory\":\"D:/code/Ehviewer_CN_SXJ-master/app\",\"sysroot\":\"I:/Android-SDK/ndk/24.0.7956693/toolchains/llvm/prebuilt/windows-x86_64/sysroot\",\"type\":\"SHARED_LIBRARY\"}]}]}],\"cookie\":\"\",\"inReplyTo\":\"codemodel\",\"type\":\"reply\"}\n",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "done executing cmake",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "write build output D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\\build_output.txt",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "write command file D:\\code\\Ehviewer_CN_SXJ-master\\app\\.cxx\\cmake\\appCenterRelease\\arm64-v8a\\build_command.txt",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  },
+  {
+    "level": "INFO",
+    "message": "JSON generation completed without problems",
+    "file": "D:\\code\\Ehviewer_CN_SXJ-master\\app\\CMakeLists.txt",
+    "tag": "appCenterRelease|arm64-v8a"
+  }
+]

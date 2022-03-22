@@ -1,0 +1,2 @@
+ninja: Entering directory `D:\code\Ehviewer_CN_SXJ-master\app\.cxx\cmake\appCenterDebug\x86'
+ninja: no work to do.
