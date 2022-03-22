@@ -62,6 +62,9 @@
             android:id="@+id/nav_stub"
             android:title="@string/stub"
             android:visible="false"/>
+        <item
+            android:title="@string/stub"
+            android:visible="false"/>
 
     </group>
 

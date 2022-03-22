@@ -52,11 +52,12 @@
                         android:id="@+id/nav_view"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-
                         android:layout_weight="1"
                         android:background="?android:navigationBarColor"
                         app:headerLayout="@layout/nav_header_main"
                         app:insetForeground="@android:color/transparent"
+                        android:scrollbars="vertical"
+                        android:paddingBottom="48dip"
                         app:menu="@menu/nav_drawer_main"/>
                 </FrameLayout>
 
@@ -78,16 +79,6 @@
                         />
                 </FrameLayout>
             </FrameLayout>
-
-<!--            android:layout_height="0dp"-->
-
-<!--            android:minHeight="48dip"-->
-<!--            android:minWidth="88dip"-->
-<!--            android:focusable="true"-->
-<!--            android:clickable="true"-->
-<!--            android:gravity="center_vertical|center_horizontal"-->
-<!--            style="?attr/buttonStyle"-->
-<!--            style="@style/Widget.AppCompat.Button.Borderless.Colored"-->
         </com.hippo.ehviewer.widget.EhNavigationView>
 
         <com.hippo.ehviewer.widget.EhDrawerView

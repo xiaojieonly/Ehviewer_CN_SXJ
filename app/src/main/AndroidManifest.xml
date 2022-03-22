@@ -40,6 +40,7 @@
         android:theme="@style/AppTheme"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_scheme"
+        android:hardwareAccelerated="false"
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config">
 
