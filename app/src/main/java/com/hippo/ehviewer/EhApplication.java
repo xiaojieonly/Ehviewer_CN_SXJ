@@ -326,10 +326,10 @@ public class EhApplication extends RecordingApplication {
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
                     .writeTimeout(10, TimeUnit.SECONDS)
-                    .callTimeout(10, TimeUnit.SECONDS)
+//                    .callTimeout(10, TimeUnit.SECONDS)
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
-                    .hostnameVerifier((hostname, session) -> true)
+//                    .hostnameVerifier((hostname, session) -> true)
                     .dns(new EhDns(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {

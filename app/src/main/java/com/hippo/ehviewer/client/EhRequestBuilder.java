@@ -20,6 +20,10 @@ import com.hippo.okhttp.ChromeRequestBuilder;
 
 public class EhRequestBuilder extends ChromeRequestBuilder {
 
+    public EhRequestBuilder(String url) {
+        this(url, null, null);
+    }
+
     public EhRequestBuilder(String url, String referer) {
         this(url, referer, null);
     }

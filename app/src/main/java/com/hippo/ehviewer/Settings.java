@@ -75,7 +75,7 @@ public class Settings {
 //            }
 //        }
         if (!sSettingsPre.contains(KEY_DOH)) {
-            if ("CN".equals(Locale.getDefault().getCountry())) {
+            if (!"CN".equals(Locale.getDefault().getCountry())) {
                 putDoH(true);
             }
         }
@@ -268,6 +268,7 @@ public class Settings {
      ********************/
 
     public static final String KEY_THEME = "theme";
+    public static final String KEY_THEME_DARK = "theme";
     public static final int THEME_LIGHT = 0;
     public static final int THEME_DARK = 1;
     public static final int THEME_BLACK = 2;
@@ -290,6 +291,12 @@ public class Settings {
         putIntToStr(KEY_THEME, theme);
     }
 
+    //检查当前系统是否已开启暗黑模式
+    public static boolean getDarkModeStatus(Context context) {
+        int mode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return mode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
     public static final String KEY_APPLY_NAV_BAR_THEME_COLOR = "apply_nav_bar_theme_color";
     private static final boolean DEFAULT_APPLY_NAV_BAR_THEME_COLOR = true;
 
@@ -298,7 +305,7 @@ public class Settings {
     }
 
     public static final String KEY_GALLERY_SITE = "gallery_site";
-    private static final int DEFAULT_GALLERY_SITE = 1;
+    private static final int DEFAULT_GALLERY_SITE = 0;
 
     public static int getGallerySite() {
         return getIntFromStr(KEY_GALLERY_SITE, DEFAULT_GALLERY_SITE);
@@ -1223,12 +1230,6 @@ public class Settings {
         putIntToStr(KEY_DOWNLOAD_DELAY, value);
     }
 
-    //检查当前系统是否已开启暗黑模式
-    public static boolean getDarkModeStatus(Context context) {
-        int mode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        return mode == Configuration.UI_MODE_NIGHT_YES;
-    }
-
     private static final String KEY_IS_LOGIN = "is_login";
 
     private static boolean IS_LOGIN = false;
@@ -1262,13 +1263,13 @@ public class Settings {
         putString(key,path);
     }
 
-    private static boolean ALREADY_CHECK;
-
-    public static void setCheckUpdate(boolean b){
-        ALREADY_CHECK = b;
-    }
-
-    public static boolean getCheckUpdateState(){
-        return ALREADY_CHECK;
-    }
+//    private static boolean ALREADY_CHECK;
+//
+//    public static void setCheckUpdate(boolean b){
+//        ALREADY_CHECK = b;
+//    }
+//
+//    public static boolean getCheckUpdateState(){
+//        return ALREADY_CHECK;
+//    }
 }

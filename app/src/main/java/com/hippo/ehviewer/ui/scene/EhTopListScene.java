@@ -191,8 +191,8 @@ public class EhTopListScene extends BaseScene {
 
         MainActivity activity = getActivity2();
 
-//        String url = EhUrl.getTopListUrl();
-        String url = EhUrl.getMyTag();
+        String url = EhUrl.getTopListUrl();
+//        String url = EhUrl.getMyTag();
 
         if (null == context || null == activity) {
             return false;
@@ -201,8 +201,8 @@ public class EhTopListScene extends BaseScene {
         EhClient.Callback callback = new GetTopListDetailListener(context, activity.getStageId(), getTag());
 
         mRequest = new EhRequest()
-//                .setMethod(EhClient.METHOD_GET_TOP_LIST)
-                .setMethod(EhClient.METHOD_ADD_WATCHED)
+                .setMethod(EhClient.METHOD_GET_TOP_LIST)
+//                .setMethod(EhClient.METHOD_ADD_WATCHED)
                 .setArgs(url).setCallback(callback);
 
         mClient.execute(mRequest);

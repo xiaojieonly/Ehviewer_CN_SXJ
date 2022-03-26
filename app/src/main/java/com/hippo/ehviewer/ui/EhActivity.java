@@ -17,6 +17,8 @@
 package com.hippo.ehviewer.ui;
 
 import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
@@ -50,10 +52,6 @@ public abstract class EhActivity extends AppCompatActivity {
         if (Analytics.isEnabled()) {
             FirebaseAnalytics.getInstance(this);
         }
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && Settings.getApplyNavBarThemeColor()) {
-//            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
-//        }
     }
 
     @Override
@@ -89,11 +87,11 @@ public abstract class EhActivity extends AppCompatActivity {
             }
         }
 
-        if (locale != null) {
-            newBase = ContextLocalWrapper.wrap(newBase, locale);
+        if (locale == null) {
+            locale = Resources.getSystem().getConfiguration().locale;
         }
+        newBase = ContextLocalWrapper.wrap(newBase, locale);
         super.attachBaseContext(newBase);
-
         context = newBase;
     }
 }

@@ -17,29 +17,39 @@
 package com.hippo.ehviewer.ui;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.PersistableBundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
+
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.hippo.drawerlayout.DrawerLayout;
@@ -47,6 +57,7 @@ import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.callBack.ImageChangeCallBack;
 import com.hippo.ehviewer.client.EhCookieStore;
 import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
@@ -56,6 +67,7 @@ import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.ehviewer.ui.dialog.EhDistributeListener;
+import com.hippo.ehviewer.ui.main.UserImageChange;
 import com.hippo.ehviewer.ui.scene.AnalyticsScene;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.CookieSignInScene;
@@ -83,11 +95,11 @@ import com.hippo.network.Network;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.scene.StageActivity;
-import com.hippo.text.Html;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
+import com.hippo.util.GifHandler;
 import com.hippo.util.PermissionRequester;
-import com.hippo.widget.LoadImageView;
+import com.hippo.widget.AvatarImageView;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ResourcesUtils;
 import com.hippo.yorozuya.SimpleHandler;
@@ -108,14 +120,14 @@ import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
 public final class MainActivity extends StageActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack {
 
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
 
     private static final int REQUEST_CODE_SETTINGS = 0;
 
     private static final String KEY_NAV_CHECKED_ITEM = "nav_checked_item";
-    private static final String KEY_CLIP_TEXT_HASH_CODE = "clip_text_hash_code";
+//    private static final String KEY_CLIP_TEXT_HASH_CODE = "clip_text_hash_code";
 
     /*---------------
      Whole life cycle
@@ -127,14 +139,31 @@ public final class MainActivity extends StageActivity
     @Nullable
     private FrameLayout mRightDrawer;
     @Nullable
-    private LoadImageView mAvatar;
+    private AvatarImageView mAvatar;
+    @Nullable
+    private AvatarImageView mAvatarGif;
+    @Nullable
+    private ImageView mHeaderBackground;
     @Nullable
     private TextView mDisplayName;
     @Nullable
-//    private Button mChangeTheme;
-    private TextView mChangeTheme;
+    UserImageChange userImageChange;
 
     private int mNavCheckedItem = 0;
+
+    GifHandler gifHandler;
+
+    Bitmap backgroundBit;
+
+    @SuppressLint("HandlerLeak")
+    Handler handlerB = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            int mNextFrame = gifHandler.updateFrame(backgroundBit);
+            handlerB.sendEmptyMessageDelayed(1, mNextFrame);
+            mHeaderBackground.setImageBitmap(backgroundBit);
+        }
+    };
 
     static {
         registerLaunchMode(SecurityScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
@@ -236,7 +265,8 @@ public final class MainActivity extends StageActivity
 
         Bitmap bitmap = null;
         try {
-            bitmap = BitmapUtils.decodeStream(new UniFileInputStreamPipe(file), -1, -1, 500 * 500, false, false, null);
+            bitmap = BitmapUtils.decodeStream(new UniFileInputStreamPipe(file),
+                    -1, -1, 500 * 500, false, false, null);
         } catch (OutOfMemoryError e) {
             // Ignore
         }
@@ -341,45 +371,41 @@ public final class MainActivity extends StageActivity
         return processAnnouncer(new Announcer(clazz).setArgs(args));
     }
 
-
-
     @Override
     protected void onCreate2(@Nullable Bundle savedInstanceState) {
-        Distribute.setListener(new EhDistributeListener());
-        AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
-                Analytics.class, Crashes.class,Distribute.class);
-        Distribute.setEnabled(true);
         setContentView(R.layout.activity_main);
 
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
         mNavView = (NavigationView) ViewUtils.$$(this, R.id.nav_view);
         mRightDrawer = (FrameLayout) ViewUtils.$$(this, R.id.right_drawer);
         View headerLayout = mNavView.getHeaderView(0);
-        mAvatar = (LoadImageView) ViewUtils.$$(headerLayout, R.id.avatar);
+        mAvatar = (AvatarImageView) ViewUtils.$$(headerLayout, R.id.avatar);
+        mAvatar.setOnClickListener(l -> onAvatarChange());
+        mHeaderBackground = (ImageView) ViewUtils.$$(headerLayout, R.id.header_background);
+        mHeaderBackground.setOnClickListener(l -> onBackgroundChange());
+        initUserImage();
+        updateProfile();
         mDisplayName = (TextView) ViewUtils.$$(headerLayout, R.id.display_name);
-//        mChangeTheme = (Button) ViewUtils.$$(this, R.id.change_theme);
-        mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
+        TextView mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
 
         mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, R.attr.colorPrimaryDark));
         // Pre-L need shadow drawable
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow_left, Gravity.LEFT);
-            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow_right, Gravity.RIGHT);
-        }
-
-        updateProfile();
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+//            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow_left, Gravity.LEFT);
+//            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow_right, Gravity.RIGHT);
+//        }
 
         if (mNavView != null) {
             mNavView.setNavigationItemSelectedListener(this);
         }
-        if (Settings.getTheme(getApplicationContext()) == 0){
+        if (Settings.getTheme(getApplicationContext()) == 0) {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_light));
 
             mChangeTheme.setBackgroundColor(getColor(R.color.white));
-        }else if (Settings.getTheme(getApplicationContext()) == 1){
+        } else if (Settings.getTheme(getApplicationContext()) == 1) {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
             mChangeTheme.setBackgroundColor(getColor(R.color.grey_850));
-        }else{
+        } else {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
             mChangeTheme.setBackgroundColor(getColor(R.color.black));
         }
@@ -402,6 +428,35 @@ public final class MainActivity extends StageActivity
         }
 
         EhTagDatabase.update(this);
+    }
+
+    private void initUserImage() {
+        File headerBackgroundFile = Settings.getUserImageFile(Settings.USER_BACKGROUND_IMAGE);
+        initBackgroundImageData(headerBackgroundFile);
+    }
+
+    private void initBackgroundImageData(File file) {
+        if (file != null) {
+            String name = file.getName();
+            String[] ns = name.split("\\.");
+            if (ns[1].equals("gif") || ns[1].equals("GIF")) {
+                gifHandler = new GifHandler(file.getAbsolutePath());
+                int width = gifHandler.getWidth();
+                int height = gifHandler.getHeight();
+                backgroundBit = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                int nextFrame = gifHandler.updateFrame(backgroundBit);
+                handlerB.sendEmptyMessageDelayed(1, nextFrame);
+            } else {
+                backgroundBit = BitmapFactory.decodeFile(file.getPath());
+                assert mHeaderBackground != null;
+                mHeaderBackground.setImageBitmap(backgroundBit);
+            }
+        }
+    }
+
+    @Override
+    public void backgroundSourceChange(File file) {
+        initBackgroundImageData(file);
     }
 
     private String getThemeText() {
@@ -480,12 +535,12 @@ public final class MainActivity extends StageActivity
                     break;
             }
         }
-
-        if (ipbMemberId != null || ipbPassHash != null || igneous != null) {
-            Settings.setLoginState(true);
-        } else {
-            Settings.setLoginState(false);
-        }
+//        if (ipbMemberId != null || ipbPassHash != null || igneous != null) {
+//            Settings.setLoginState(true);
+//        } else {
+//            Settings.setLoginState(false);
+//        }
+        Settings.setLoginState(ipbMemberId != null || ipbPassHash != null || igneous != null);
     }
 
     private void onRestore(Bundle savedInstanceState) {
@@ -591,7 +646,7 @@ public final class MainActivity extends StageActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-            @NonNull String[] permissions, @NonNull int[] grantResults) {
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE) {
             if (grantResults.length == 1 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, R.string.you_rejected_me, Toast.LENGTH_SHORT).show();
@@ -601,6 +656,7 @@ public final class MainActivity extends StageActivity
         }
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onSceneViewCreated(SceneFragment scene, Bundle savedInstanceState) {
         super.onSceneViewCreated(scene, savedInstanceState);
@@ -630,22 +686,31 @@ public final class MainActivity extends StageActivity
     }
 
     public void updateProfile() {
-        if (null == mAvatar || null == mDisplayName) {
-            return;
+        if (null != mAvatar) {
+            String avatarUrl = Settings.getAvatar();
+            if (TextUtils.isEmpty(avatarUrl)) {
+                File userAvatarFile = Settings.getUserImageFile(Settings.USER_AVATAR_IMAGE);
+                if (userAvatarFile != null) {
+                    Bitmap bitmap = BitmapFactory.decodeFile(userAvatarFile.getPath());
+                    Drawable drawable = new BitmapDrawable(mAvatar.getResources(), bitmap);
+                    mAvatar.load(drawable);
+                } else {
+                    mAvatar.load(R.drawable.default_avatar);
+                }
+            } else {
+                mAvatar.load(avatarUrl, avatarUrl);
+            }
         }
 
-        String avatarUrl = Settings.getAvatar();
-        if (TextUtils.isEmpty(avatarUrl)) {
-            mAvatar.load(R.drawable.default_avatar);
-        } else {
-            mAvatar.load(avatarUrl, avatarUrl);
+        if (null != mDisplayName) {
+            String displayName = Settings.getDisplayName();
+            if (TextUtils.isEmpty(displayName)) {
+                displayName = getString(R.string.default_display_name);
+            }
+            Toast.makeText(this, displayName, Toast.LENGTH_LONG).show();
+            mDisplayName.setText(displayName);
         }
 
-        String displayName = Settings.getDisplayName();
-        if (TextUtils.isEmpty(displayName)) {
-            displayName = getString(R.string.default_display_name);
-        }
-        mDisplayName.setText(displayName);
     }
 
     public void addAboveSnackView(View view) {
@@ -660,13 +725,42 @@ public final class MainActivity extends StageActivity
         }
     }
 
-    public int getDrawerLockMode(int edgeGravity) {
-        if (mDrawerLayout != null) {
-            return mDrawerLayout.getDrawerLockMode(edgeGravity);
-        } else {
-            return DrawerLayout.LOCK_MODE_UNLOCKED;
+    public void onBackgroundChange() {
+        if (userImageChange != null) {
+            userImageChange = null;
         }
+        userImageChange = new UserImageChange(MainActivity.this,
+                UserImageChange.CHANGE_BACKGROUND,
+                getLayoutInflater(),
+                LayoutInflater.from(MainActivity.this),
+                this
+        );
+        userImageChange.showImageChangeDialog();
+        System.out.println("更换壁纸");
     }
+
+    public void onAvatarChange() {
+        if (userImageChange != null) {
+            userImageChange = null;
+        }
+        userImageChange = new UserImageChange(MainActivity.this,
+                UserImageChange.CHANGE_AVATAR,
+                getLayoutInflater(),
+                LayoutInflater.from(MainActivity.this),
+                this
+        );
+
+        userImageChange.showImageChangeDialog();
+        System.out.println("更换头像");
+    }
+
+    //    public int getDrawerLockMode(int edgeGravity) {
+//        if (mDrawerLayout != null) {
+//            return mDrawerLayout.getDrawerLockMode(edgeGravity);
+//        } else {
+//            return DrawerLayout.LOCK_MODE_UNLOCKED;
+//        }
+//    }
 
     public void setDrawerLockMode(int lockMode, int edgeGravity) {
         if (mDrawerLayout != null) {
@@ -738,6 +832,7 @@ public final class MainActivity extends StageActivity
         }
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onBackPressed() {
         if (mDrawerLayout != null && (mDrawerLayout.isDrawerOpen(Gravity.LEFT) ||
@@ -748,6 +843,7 @@ public final class MainActivity extends StageActivity
         }
     }
 
+    @SuppressLint({"NonConstantResourceId", "RtlHardcoded"})
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Don't select twice
@@ -757,7 +853,7 @@ public final class MainActivity extends StageActivity
 
         int id = item.getItemId();
 
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.nav_homepage:
                 Bundle nav_homepage = new Bundle();
                 nav_homepage.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
@@ -786,7 +882,7 @@ public final class MainActivity extends StageActivity
             case R.id.nav_favourite:
                 startScene(new Announcer(FavoritesScene.class));
                 break;
-            case  R.id.nav_history:
+            case R.id.nav_history:
                 startScene(new Announcer(HistoryScene.class));
                 break;
             case R.id.nav_downloads:
@@ -796,34 +892,9 @@ public final class MainActivity extends StageActivity
                 Intent intent = new Intent(this, SettingsActivity.class);
                 startActivityForResult(intent, REQUEST_CODE_SETTINGS);
                 break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + item.getItemId());
         }
-//        if (id == R.id.nav_homepage) {
-//            Bundle args = new Bundle();
-//            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
-//            startSceneFirstly(new Announcer(GalleryListScene.class)
-//                    .setArgs(args));
-//        } else if (id == R.id.nav_subscription) {
-//            Bundle args = new Bundle();
-//            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
-//            startSceneFirstly(new Announcer(GalleryListScene.class)
-//                    .setArgs(args));
-//        } else if (id == R.id.nav_whats_hot) {
-//            Bundle args = new Bundle();
-//            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
-//            startSceneFirstly(new Announcer(GalleryListScene.class)
-//                    .setArgs(args));
-//        } else if (id == R.id.nav_top_lists){
-//
-//        } else if (id == R.id.nav_favourite) {
-//            startScene(new Announcer(FavoritesScene.class));
-//        } else if (id == R.id.nav_history) {
-//            startScene(new Announcer(HistoryScene.class));
-//        } else if (id == R.id.nav_downloads) {
-//            startScene(new Announcer(DownloadsScene.class));
-//        } else if (id == R.id.nav_settings) {
-//            Intent intent = new Intent(this, SettingsActivity.class);
-//            startActivityForResult(intent, REQUEST_CODE_SETTINGS);
-//        }
 
         if (id != R.id.nav_stub && mDrawerLayout != null) {
             mDrawerLayout.closeDrawers();
@@ -834,16 +905,18 @@ public final class MainActivity extends StageActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case REQUEST_CODE_SETTINGS:
-                if (RESULT_OK == resultCode) {
-                    refreshTopScene();
-                }
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-                break;
+        if (requestCode == REQUEST_CODE_SETTINGS) {
+            if (RESULT_OK == resultCode) {
+                refreshTopScene();
+            }
+            return;
         }
+        if (resultCode == RESULT_OK)
+            if ((requestCode == UserImageChange.TAKE_CAMERA || requestCode == UserImageChange.PICK_PHOTO) && userImageChange != null) {
+                userImageChange.saveImageForResult(requestCode, resultCode, data, mAvatar, mHeaderBackground);
+                return;
+            }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 }

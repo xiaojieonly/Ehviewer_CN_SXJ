@@ -93,6 +93,16 @@ public class EhUrl {
         }
     }
 
+    public static String getMyTag() {
+        switch (Settings.getGallerySite()) {
+            default:
+            case SITE_E:
+                return URL_MY_TAGS_E;
+            case SITE_EX:
+                return URL_MY_TAGS_EX;
+        }
+    }
+
     public static String getFavoritesUrl() {
         switch (Settings.getGallerySite()) {
             default:

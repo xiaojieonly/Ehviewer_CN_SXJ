@@ -37,6 +37,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 
@@ -81,6 +82,7 @@ public class AboutFragment extends PreferenceFragment
         } else if (KEY_DONATE.equals(key)) {
             showDonationDialog();
         } else if (KEY_CHECK_FOR_UPDATES.equals(key)) {
+//            Settings.setCheckUpdate(false);
             Distribute.checkForUpdate();
         }
         return true;

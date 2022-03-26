@@ -117,6 +117,7 @@ public class GalleryInfo implements Parcelable {
     public int spanSize;
     public int spanIndex;
     public int spanGroupIndex;
+    @Nullable
     public ArrayList<String> tgList;
 
     /**
