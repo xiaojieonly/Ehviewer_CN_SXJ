@@ -17,6 +17,7 @@ import com.microsoft.appcenter.distribute.Distribute;
 
 public class SplashActivity extends EhActivity {
 
+    private boolean CheckUpdate = false;
 
     @Override
     protected int getThemeResId(int theme) {
@@ -25,7 +26,10 @@ public class SplashActivity extends EhActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        Distribute.setListener(new EhDistributeListener());
+        if (!CheckUpdate){
+            Distribute.setListener(new EhDistributeListener());
+            CheckUpdate = true;
+        }
         AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
                 Analytics.class, Crashes.class, Distribute.class);
         Distribute.setEnabled(true);

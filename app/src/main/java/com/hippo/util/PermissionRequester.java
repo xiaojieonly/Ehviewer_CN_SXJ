@@ -19,10 +19,15 @@ package com.hippo.util;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 
+import com.hippo.ehviewer.callBack.PermissionCallBack;
+
 public class PermissionRequester {
+
+    private static PermissionCallBack callback;
 
     /**
      * @return true for there no need to request, do your work it now.
@@ -51,17 +56,53 @@ public class PermissionRequester {
         } else {
             return requestPermissions(activity, new String[]{permission}, requestCode);
         }
+        return false;
+    }
+
+    /**
+     * @return true for there no need to request, do your work it now.
+     * false for do in {@link ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
+     */
+    public static boolean request(final Activity activity, final String permission,
+                                  String rationale, final int requestCode,
+                                  PermissionCallBack permissionCallBack) {
+        if (!(activity instanceof ActivityCompat.OnRequestPermissionsResultCallback)) {
+            throw new IllegalStateException("The Activity must implement ActivityCompat.OnRequestPermissionsResultCallback");
+        }
+        PermissionRequester.callback = permissionCallBack;
+        if (ActivityCompat.checkSelfPermission(activity, permission)
+                == PackageManager.PERMISSION_GRANTED) {
+            if (callback != null)
+                callback.agree(requestCode);
+            return true;
+        }
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
+            new AlertDialog.Builder(activity)
+                    .setMessage(rationale)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            requestPermissions(activity, new String[]{permission}, requestCode);
+                        }
+                    }).setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        } else {
+            return requestPermissions(activity, new String[]{permission}, requestCode);
+        }
 
         return false;
     }
 
     private static boolean requestPermissions(
-        final Activity activity,
-        final String[] permissions,
-        int requestCode
+            final Activity activity,
+            final String[] permissions,
+            int requestCode
     ) {
         try {
             ActivityCompat.requestPermissions(activity, permissions, requestCode);
+            if (callback != null)
+                callback.agree(requestCode);
             return true;
         } catch (Throwable t) {
             ExceptionUtils.throwIfFatal(t);

@@ -27,9 +27,11 @@ public class EhSSLSocketFactory extends SSLSocketFactory {
             return ((SSLSocketFactory) getDefault()).createSocket(s, host, port, autoClose);
         }
         InetAddress address = s.getInetAddress();
-        String hostAddress = address.getHostAddress();
-        if (hostAddress != null){
-            Log.d("EhSSLSocketFactory", "Host: " + host + " Address: " + hostAddress);
+        if (address != null) {
+            String hostAddress = address.getHostAddress();
+            if (hostAddress != null) {
+                Log.d("EhSSLSocketFactory", "Host: " + host + " Address: " + hostAddress);
+            }
         }
         if (autoClose) s.close();
         return getDefault().createSocket(address, port);

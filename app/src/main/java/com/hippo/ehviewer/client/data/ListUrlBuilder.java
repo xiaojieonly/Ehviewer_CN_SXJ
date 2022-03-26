@@ -37,7 +37,7 @@ import java.net.URLEncoder;
 
 public class ListUrlBuilder implements Cloneable, Parcelable {
 
-    @IntDef({MODE_NORMAL, MODE_UPLOADER, MODE_TAG, MODE_WHATS_HOT, MODE_IMAGE_SEARCH, MODE_SUBSCRIPTION})
+    @IntDef({MODE_NORMAL, MODE_UPLOADER, MODE_TAG,MODE_FILTER,MODE_WHATS_HOT, MODE_IMAGE_SEARCH, MODE_SUBSCRIPTION})
     @Retention(RetentionPolicy.SOURCE)
     private @interface Mode {}
 
@@ -45,6 +45,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
     public static final int MODE_NORMAL = 0x0;
     public static final int MODE_UPLOADER = 0x1;
     public static final int MODE_TAG = 0x2;
+    public static final int MODE_FILTER = 0x6;
     public static final int MODE_WHATS_HOT = 0x3;
     public static final int MODE_IMAGE_SEARCH = 0x4;
     public static final int MODE_SUBSCRIPTION = 0x5;
@@ -222,6 +223,20 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
         mMinRating = q.minRating;
         mPageFrom = q.pageFrom;
         mPageTo = q.pageTo;
+        mImagePath = null;
+        mUseSimilarityScan = false;
+        mOnlySearchCovers = false;
+        mShowExpunged = false;
+    }
+
+    public void set(String q,int mode) {
+        mMode = mode;
+        mCategory = -1;
+        mKeyword = q;
+        mAdvanceSearch = -1;
+        mMinRating = -1;
+        mPageFrom = -1;
+        mPageTo = -1;
         mImagePath = null;
         mUseSimilarityScan = false;
         mOnlySearchCovers = false;
@@ -560,6 +575,21 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
                 if (mPageIndex != 0) {
                     sb.append('/').append(mPageIndex);
                 }
+                return sb.toString();
+            }
+            case MODE_FILTER: {
+                StringBuilder sb = new StringBuilder(EhUrl.getHost());
+                sb.append("?");
+                if (mPageIndex != 0) {
+                    sb.append("page=").append(mPageIndex).append('&');
+                }
+                sb.append("f_search=");
+                try {
+                    sb.append(URLEncoder.encode(mKeyword, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    // Empty
+                }
+
                 return sb.toString();
             }
             case MODE_WHATS_HOT:

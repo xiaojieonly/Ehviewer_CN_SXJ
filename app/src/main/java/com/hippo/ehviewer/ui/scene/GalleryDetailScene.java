@@ -18,6 +18,7 @@ package com.hippo.ehviewer.ui.scene;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Application;
 import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.Context;
@@ -28,6 +29,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Gravity;
@@ -44,6 +46,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -53,6 +57,7 @@ import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.transition.TransitionInflater;
+
 import com.hippo.android.resource.AttrResources;
 import com.hippo.beerbelly.BeerBelly;
 import com.hippo.drawable.RoundSideRectDrawable;
@@ -96,6 +101,7 @@ import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
 import com.hippo.util.AppHelper;
+import com.hippo.util.DownloadUtil;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.ReadableTime;
@@ -126,14 +132,16 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 
 public class GalleryDetailScene extends BaseScene implements View.OnClickListener,
         com.hippo.ehviewer.download.DownloadManager.DownloadInfoListener,
-        View.OnLongClickListener{
+        View.OnLongClickListener {
 
     @IntDef({STATE_INIT, STATE_NORMAL, STATE_REFRESH, STATE_REFRESH_HEADER, STATE_FAILED})
     @Retention(RetentionPolicy.SOURCE)
-    private @interface State {}
+    private @interface State {
+    }
 
     private static final int REQUEST_CODE_COMMENT_GALLERY = 0;
 
@@ -382,14 +390,14 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             onRestore(savedInstanceState);
         }
 
-        if (null == properties && mGalleryInfo != null){
+        if (null == properties && mGalleryInfo != null) {
 
             Date date = new Date();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             properties = new HashMap<>();
-            properties.put("Title",mGalleryInfo.title);
+            properties.put("Title", mGalleryInfo.title);
             properties.put("Time", dateFormat.format(date));
-            AppCenterAnalytics.trackEvent("进入画廊详情页",properties);
+            AppCenterAnalytics.trackEvent("进入画廊详情页", properties);
         }
 
     }
@@ -430,7 +438,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @Nullable
     @Override
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+                              @Nullable Bundle savedInstanceState) {
         // Get download state
         long gid = getGid();
         if (gid != -1) {
@@ -473,11 +481,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
             @Override
             public boolean shouldBlockGesture(MotionEvent ev) {
-                int[] point = new int[] {(int) ev.getX(), (int) ev.getY()};
+                int[] point = new int[]{(int) ev.getX(), (int) ev.getY()};
                 transformPointToViewLocal(point, actionsScrollView);
                 return !isDrawersVisible()
-                    && point[0] > 0 && point[0] < actionsScrollView.getWidth()
-                    && point[1] > 0 && point[1] < actionsScrollView.getHeight();
+                        && point[0] > 0 && point[0] < actionsScrollView.getWidth()
+                        && point[1] > 0 && point[1] < actionsScrollView.getHeight();
             }
         });
 
@@ -511,7 +519,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRead.setOnClickListener(this);
 
         mUploader.setOnLongClickListener(this);
-
 
 
         mInfo = ViewUtils.$$(belowHeader, R.id.info);
@@ -830,7 +837,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (gd == null) {
             return;
         }
-        if (mHeart == null || mHeartOutline == null ) {
+        if (mHeart == null || mHeartOutline == null) {
             return;
         }
 
@@ -864,10 +871,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 //        }
         Resources resources = getResources2();
         AssertUtils.assertNotNull(resources);
-        if (null == mGalleryInfo){
+        if (null == mGalleryInfo) {
             mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
-        }else{
-            mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb,false);
+        } else {
+            mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb, false);
         }
 
         mTitle.setText(EhUtils.getSuitableTitle(gd));
@@ -1031,29 +1038,41 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         int resId;
         switch (Math.round(rating * 2)) {
             case 0:
-                resId = R.string.rating0; break;
+                resId = R.string.rating0;
+                break;
             case 1:
-                resId = R.string.rating1; break;
+                resId = R.string.rating1;
+                break;
             case 2:
-                resId = R.string.rating2; break;
+                resId = R.string.rating2;
+                break;
             case 3:
-                resId = R.string.rating3; break;
+                resId = R.string.rating3;
+                break;
             case 4:
-                resId = R.string.rating4; break;
+                resId = R.string.rating4;
+                break;
             case 5:
-                resId = R.string.rating5; break;
+                resId = R.string.rating5;
+                break;
             case 6:
-                resId = R.string.rating6; break;
+                resId = R.string.rating6;
+                break;
             case 7:
-                resId = R.string.rating7; break;
+                resId = R.string.rating7;
+                break;
             case 8:
-                resId = R.string.rating8; break;
+                resId = R.string.rating8;
+                break;
             case 9:
-                resId = R.string.rating9; break;
+                resId = R.string.rating9;
+                break;
             case 10:
-                resId = R.string.rating10; break;
+                resId = R.string.rating10;
+                break;
             default:
-                resId = R.string.rating_none; break;
+                resId = R.string.rating_none;
+                break;
         }
 
         return resources.getString(resId);
@@ -1115,7 +1134,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (null == tagGroups) {
             return null;
         }
-        for (GalleryTagGroup tagGroup: tagGroups) {
+        for (GalleryTagGroup tagGroup : tagGroups) {
             if ("artist".equals(tagGroup.groupName) && tagGroup.size() > 0) {
                 return tagGroup.getTagAt(0);
             }
@@ -1226,10 +1245,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     CommonOperations.startDownload(activity, galleryInfo, false);
                 } else {
                     new AlertDialog.Builder(context)
-                        .setTitle(R.string.download_remove_dialog_title)
-                        .setMessage(getString(R.string.download_remove_dialog_message, galleryInfo.title))
-                        .setPositiveButton(android.R.string.ok, (dialog1, which1) -> EhApplication.getDownloadManager(context).deleteDownload(galleryInfo.gid))
-                        .show();
+                            .setTitle(R.string.download_remove_dialog_title)
+                            .setMessage(getString(R.string.download_remove_dialog_message, galleryInfo.title))
+                            .setPositiveButton(android.R.string.ok, (dialog1, which1) -> EhApplication.getDownloadManager(context).deleteDownload(galleryInfo.gid))
+                            .show();
                 }
             }
         } else if (mRead == v) {
@@ -1281,7 +1300,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         .setView(R.layout.dialog_torrent_list)
                         .setOnDismissListener(helper)
                         .show();
-                helper.setDialog(dialog, mGalleryDetail.torrentUrl);
+                helper.setDialog(dialog, mGalleryDetail.torrentUrl, EhApplication.getOkHttpClient(context));
             }
         } else if (mArchive == v) {
             if (mGalleryDetail == null) {
@@ -1480,7 +1499,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     protected void onSceneResult(int requestCode, int resultCode, Bundle data) {
         switch (requestCode) {
             case REQUEST_CODE_COMMENT_GALLERY:
-                if (resultCode != RESULT_OK || data == null){
+                if (resultCode != RESULT_OK || data == null) {
                     break;
                 }
                 GalleryCommentList comments = data.getParcelable(GalleryCommentsScene.KEY_COMMENT_LIST);
@@ -1568,10 +1587,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     @Override
-    public void onRenameLabel(String from, String to) {}
+    public void onRenameLabel(String from, String to) {
+    }
 
     @Override
-    public void onUpdateLabels() {}
+    public void onUpdateLabels() {
+    }
 
     private static class ExitTransaction implements TransitionHelper {
 
@@ -1583,7 +1604,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         @Override
         public boolean onTransition(Context context,
-                FragmentTransaction transaction, Fragment exit, Fragment enter) {
+                                    FragmentTransaction transaction, Fragment exit, Fragment enter) {
             if (!(enter instanceof GalleryListScene) && !(enter instanceof DownloadsScene) &&
                     !(enter instanceof FavoritesScene) && !(enter instanceof HistoryScene)) {
                 return false;
@@ -1718,7 +1739,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {
@@ -1838,12 +1860,15 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         @Override
-        public void onCancel() { mRequest = null; }
+        public void onCancel() {
+            mRequest = null;
+        }
     }
 
     private class TorrentListDialogHelper implements AdapterView.OnItemClickListener,
             DialogInterface.OnDismissListener, EhClient.Callback<Pair<String, String>[]> {
-
+        public static final int SITE_E = 0;
+        public static final int SITE_EX = 1;
         @Nullable
         private ProgressView mProgressView;
         @Nullable
@@ -1854,9 +1879,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         private EhRequest mRequest;
         @Nullable
         private Dialog mDialog;
+        @Nullable
+        private OkHttpClient okHttpClient;
 
-        public void setDialog(@Nullable Dialog dialog, String url) {
+        public void setDialog(@Nullable Dialog dialog, String url, OkHttpClient okHttpClient) {
             mDialog = dialog;
+            this.okHttpClient = okHttpClient;
             mProgressView = (ProgressView) ViewUtils.$$(dialog, R.id.progress);
             mErrorText = (TextView) ViewUtils.$$(dialog, R.id.text);
             mListView = (ListView) ViewUtils.$$(dialog, R.id.list_view);
@@ -1903,25 +1931,70 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             Context context = getEHContext();
             if (null != context && null != mTorrentList && position < mTorrentList.length) {
-                String url = mTorrentList[position].first;
-                String name = mTorrentList[position].second;
-                // Use system download service
-                DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url));
-                r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
-                        FileUtils.sanitizeFilename(name + ".torrent"));
-                r.allowScanningByMediaScanner();
-                r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                r.addRequestHeader("Cookie", EhApplication.getEhCookieStore(context).getCookieHeader(HttpUrl.get(url)));
-                DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-                if (dm != null) {
-                    try {
-                        dm.enqueue(r);
-                    } catch (Throwable e) {
-                        ExceptionUtils.throwIfFatal(e);
-                    }
+
+                if (Settings.getGallerySite() == SITE_E) {
+                    downLoadPlanA(parent, view, position, id, context);
+                } else {
+                    downLoadPlanB(parent, view, position, id, context);
                 }
             }
+        }
 
+        private void downLoadPlanA(AdapterView<?> parent, View view, int position, long id, Context context) {
+
+            String url = mTorrentList[position].first;
+            String name = mTorrentList[position].second;
+            // Use system download service
+            DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url));
+            r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                    FileUtils.sanitizeFilename(name + ".torrent"));
+            r.allowScanningByMediaScanner();
+            r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            r.addRequestHeader("Cookie", EhApplication.getEhCookieStore(context).getCookieHeader(HttpUrl.get(url)));
+            DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            if (dm != null) {
+                try {
+                    dm.enqueue(r);
+                } catch (Throwable e) {
+                    ExceptionUtils.throwIfFatal(e);
+                }
+            }
+            if (mDialog != null) {
+                mDialog.dismiss();
+                mDialog = null;
+            }
+        }
+
+
+        private void downLoadPlanB(AdapterView<?> parent, View view, int position, long id, Context context) {
+            try {
+                String url = mTorrentList[position].first;
+                String name = mTorrentList[position].second + ".torrent";
+
+                DownloadUtil downloadUtil = DownloadUtil.get(okHttpClient);
+
+                downloadUtil.download(url,
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath(),name,
+                        new DownloadUtil.OnDownloadListener() {
+                            @Override
+                            public void onDownloadSuccess() {
+                                System.out.println("success");
+                            }
+
+                            @Override
+                            public void onDownloading(int progress) {
+                                System.out.println(progress);
+                            }
+
+                            @Override
+                            public void onDownloadFailed() {
+                                System.out.println("failed");
+                            }
+                        });
+
+            } catch (Exception e) {
+                ExceptionUtils.throwIfFatal(e);
+            }
             if (mDialog != null) {
                 mDialog.dismiss();
                 mDialog = null;

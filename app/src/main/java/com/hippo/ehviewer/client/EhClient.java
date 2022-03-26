@@ -55,6 +55,10 @@ public class EhClient {
     public static final int METHOD_IMAGE_SEARCH = 16;
     public static final int METHOD_ARCHIVE_LIST = 17;
     public static final int METHOD_DOWNLOAD_ARCHIVE = 18;
+    public static final int METHOD_ADD_WATCHED = 20;
+    public static final int METHOD_EDIT_WATCHED = 21;
+    public static final int METHOD_DELETE_WATCHED = 22;
+    public static final int METHOD_GET_WATCHED = 23;
 
     private final ThreadPoolExecutor mRequestThreadPool;
     private final OkHttpClient mOkHttpClient;
@@ -112,12 +116,7 @@ public class EhClient {
                 if (mCallback != null) {
                     // TODO Avoid new runnable
                     final Callback finalCallback = mCallback;
-                    SimpleHandler.getInstance().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            finalCallback.onCancel();
-                        }
-                    });
+                    SimpleHandler.getInstance().post(finalCallback::onCancel);
                 }
 
                 Status status = getStatus();
@@ -139,7 +138,6 @@ public class EhClient {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         protected Object doInBackground(Object... params) {
             try {
                 switch (mMethod) {
@@ -179,6 +177,11 @@ public class EhClient {
                         return EhEngine.getArchiveList(this, mOkHttpClient, (String) params[0], (Long) params[1], (String) params[2]);
                     case METHOD_DOWNLOAD_ARCHIVE:
                         return EhEngine.downloadArchive(this, mOkHttpClient, (Long) params[0], (String) params[1], (String) params[2], (String) params[3]);
+                    case METHOD_ADD_WATCHED:
+                    case METHOD_EDIT_WATCHED:
+                    case METHOD_DELETE_WATCHED:
+                    case METHOD_GET_WATCHED:
+                        return EhEngine.getWatchedList(this, mOkHttpClient,(String) params[0]);
                     default:
                         return new IllegalStateException("Can't detect method " + mMethod);
                 }

@@ -963,7 +963,7 @@ public final class GalleryListScene extends BaseScene
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过已翻译的标签
-                if (2 == name.split(":").length) {
+                if (name != null && 2 == name.split(":").length) {
                     quickSearchList.get(i).setName(TagTranslationUtil.getTagCN(name.split(":"), ehTags));
                     EhDB.updateQuickSearch(quickSearchList.get(i));
                 }
@@ -972,7 +972,7 @@ public final class GalleryListScene extends BaseScene
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过未翻译的标签
-                if (1 == name.split(":").length) {
+                if (null!= name && 1 == name.split(":").length) {
                     quickSearchList.get(i).setName(quickSearchList.get(i).getKeyword());
                     EhDB.updateQuickSearch(quickSearchList.get(i));
                 }

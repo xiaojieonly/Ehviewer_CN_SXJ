@@ -14,6 +14,7 @@ import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.UpdateAction;
 
 public class EhDistributeListener implements DistributeListener {
+    private boolean already_show;
 
     @Override
     public boolean onReleaseAvailable(Activity activity, ReleaseDetails releaseDetails) {
@@ -61,10 +62,11 @@ public class EhDistributeListener implements DistributeListener {
 
     @Override
     public void onNoReleaseAvailable(Activity activity) {
-        if (!Settings.getCheckUpdateState()){
-            Settings.setCheckUpdate(true);
-            Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
-        }
-//        Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
+        return;
+//        if (!already_show){
+//            Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
+//            already_show = !already_show;
+//        }
+
     }
 }

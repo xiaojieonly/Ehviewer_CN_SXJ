@@ -17,6 +17,7 @@
 package com.hippo.scene;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -320,7 +321,6 @@ public abstract class StageActivity extends EhActivity {
 
                     // New arguments
                     if (args != null && fragment instanceof SceneFragment) {
-                        // TODO Call onNewArguments when view created ?
                         ((SceneFragment) fragment).onNewArguments(args);
                     }
 
@@ -470,7 +470,6 @@ public abstract class StageActivity extends EhActivity {
         onTransactScene();
 
         if (!createNewScene && args != null) {
-            // TODO Call onNewArguments when view created ?
             scene.onNewArguments(args);
         }
     }
@@ -615,5 +614,15 @@ public abstract class StageActivity extends EhActivity {
             return null;
         }
         return fragment.getClass();
+    }
+
+    @Override
+    public void applyOverrideConfiguration(Configuration overrideConfiguration) {
+        if (overrideConfiguration != null){
+            int uiMode = overrideConfiguration.uiMode;
+            overrideConfiguration.setTo(getApplicationContext().getResources().getConfiguration());
+            overrideConfiguration.uiMode = uiMode;
+        }
+        super.applyOverrideConfiguration(overrideConfiguration);
     }
 }

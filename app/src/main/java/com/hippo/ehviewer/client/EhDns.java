@@ -30,6 +30,7 @@ import com.hippo.ehviewer.Settings;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -48,16 +49,27 @@ public class EhDns implements Dns {
     static {
         Map<String, List<InetAddress>> map = new HashMap<>();
         if (Settings.getBuiltInHosts()){
-            put(map, "e-hentai.org", "104.20.135.21+104.20.134.21");
-            put(map, "repo.e-hentai.org", "94.100.24.77+94.100.24.78+94.100.24.79");
-            put(map, "upload.e-hentai.org", "94.100.24.81+94.100.24.71");
+            put(map, "e-hentai.org", "104.20.134.21", "104.20.135.21", "172.67.0.127");
+            put(map, "repo.e-hentai.org", "94.100.28.57", "94.100.29.73");
             put(map, "forums.e-hentai.org", "94.100.18.243");
-            put(map, "ehgt.org", "37.48.89.44+81.171.10.48");
-            put(map, "ul.ehgt.org", "94.100.24.82+94.100.24.72");
+            put(map, "ehgt.org", "37.48.89.44", "81.171.10.48", "178.162.139.24", "178.162.140.212"
+                    , "2001:1af8:4700:a062:8::47de", "2001:1af8:4700:a062:9::47de", "2001:1af8:4700:a0c9:4::47de", "2001:1af8:4700:a0c9:3::47de");
+            put(map, "gt0.ehgt.org", "37.48.89.44", "81.171.10.48", "178.162.139.24", "178.162.140.212"
+                    , "2001:1af8:4700:a062:8::47de", "2001:1af8:4700:a062:9::47de", "2001:1af8:4700:a0c9:4::47de", "2001:1af8:4700:a0c9:3::47de");
+            put(map, "gt1.ehgt.org", "37.48.89.44", "81.171.10.48", "178.162.139.24", "178.162.140.212"
+                    , "2001:1af8:4700:a062:8::47de", "2001:1af8:4700:a062:9::47de", "2001:1af8:4700:a0c9:4::47de", "2001:1af8:4700:a0c9:3::47de");
+            put(map, "gt2.ehgt.org", "37.48.89.44", "81.171.10.48", "178.162.139.24", "178.162.140.212"
+                    , "2001:1af8:4700:a062:8::47de", "2001:1af8:4700:a062:9::47de", "2001:1af8:4700:a0c9:4::47de", "2001:1af8:4700:a0c9:3::47de");
+            put(map, "gt3.ehgt.org", "37.48.89.44", "81.171.10.48", "178.162.139.24", "178.162.140.212"
+                    , "2001:1af8:4700:a062:8::47de", "2001:1af8:4700:a062:9::47de", "2001:1af8:4700:a0c9:4::47de", "2001:1af8:4700:a0c9:3::47de");
+            put(map, "ul.ehgt.org", "94.100.24.82", "94.100.24.72");
+            put(map, "raw.githubusercontent.com", "151.101.0.133", "151.101.64.133", "151.101.128.133", "151.101.192.133");
+
         }
 
         if (Settings.getBuiltEXHosts()){
-            put(map, "exhentai.org", "178.175.128.254+178.175.128.252+178.175.129.252+178.175.129.254+178.175.132.20+178.175.132.22");
+            put(map, "exhentai.org", "178.175.128.252", "178.175.129.252", "178.175.129.254", "178.175.128.254",
+                    "178.175.132.20", "178.175.132.22");
         }
 
         builtInHosts = map;
@@ -87,14 +99,14 @@ public class EhDns implements Dns {
         dnsOverHttps = builder.post(true).build();
     }
 
-    private static void put(Map<String, List<InetAddress>> map, String host, String ip_s) {
-        String[] ip_l = ip_s.split("\\+");
-        InetAddress[] addr_l = new InetAddress[ip_l.length];
-        for (int i = 0; i < ip_l.length; i++) {
-            addr_l[i] = Hosts.toInetAddress(host, ip_l[i]);
+    private static void put(Map<String, List<InetAddress>> map, String host, String... ips) {
+        List<InetAddress> addresses = new ArrayList<>();
+        for (String ip : ips) {
+            addresses.add(Hosts.toInetAddress(host, ip));
         }
-        map.put(host, Arrays.asList(addr_l));
+        map.put(host, addresses);
     }
+
 
     @NonNull
     @Override
