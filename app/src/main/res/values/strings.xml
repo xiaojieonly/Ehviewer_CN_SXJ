@@ -841,6 +841,15 @@
     <string name="request_camera_permission">EhViewer will request access to the device camera in order to take pictures. Would you like to authorize?</string>
     <string name="request_storage_permission">EhViewer will request access to the device\'s photo album in order to obtain pictures. Would you like to authorize?</string>
 
+    <!-- 下载通知   -->
+    <string name="download_torrent_name">torrent: %s</string>
+    <string name="download_torrent_state">state: %s</string>
+    <string name="download_torrent_path">path: %s</string>
+    <string name="sure">OK</string>
+    <string name="try_again">Try Again</string>
+    <string name="open_directory">Open Directory</string>
+    <string name="downloading">Downloading…… Please Try Later</string>
+
     <string name="yes">Yes</string>
     <string name="cancel">Cancel</string>
 
