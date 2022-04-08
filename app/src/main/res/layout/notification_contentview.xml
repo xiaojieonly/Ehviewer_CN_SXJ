@@ -1,45 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="300dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingTop="20dp"
+    android:paddingBottom="20dp"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/download_name"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:id="@+id/download_name" />
+        android:gravity="center"
+        android:maxLines="5"
+        style="@style/CardTitle"
+        />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:id="@+id/download_state" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:id="@+id/download_path" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-
-        <Button
-            android:id="@+id/pBar"
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="4dp"
-            />
+            android:layout_height="wrap_content"
+            android:id="@+id/download_detail"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/download_path"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/CardMessage" />
 
-        <Button
-            android:id="@+id/pause"
+            <TextView
+                android:id="@+id/download_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/CardMessage" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/leader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+        </LinearLayout>
+        <FrameLayout
+            android:id="@+id/progress_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="" />
+            android:layout_gravity="center">
 
-    </LinearLayout>
+            <com.hippo.widget.ProgressView
+                style="@style/ProgressView"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_gravity="center" />
+
+            <TextView
+                android:id="@+id/download_progress"
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textSize="@dimen/text_little_large" />
+        </FrameLayout>
+    </FrameLayout>
 
 </LinearLayout>
