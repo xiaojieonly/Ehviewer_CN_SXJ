@@ -1,6 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/04/08 :
+ ###  新版本：1.8.12.0
+ ###  重构了画廊种子下载功能
+ ###  修复了里站无法下载画廊种子的问题
+ ###  画廊种子下载速度有较大提升  
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/ibdvo02usnsh)  密码:d47v  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS 
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel   
+
 # 2022/02/25 :
  ###  新版本：1.8.11.5
  ###  修复了导航栏的错误文本
