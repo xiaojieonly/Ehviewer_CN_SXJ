@@ -1,3 +1,0 @@
-D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/x86/CMakeFiles/native-lib.dir
-D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/x86/CMakeFiles/edit_cache.dir
-D:/code/Ehviewer_CN_SXJ-master/app/.cxx/cmake/appCenterRelease/x86/CMakeFiles/rebuild_cache.dir
