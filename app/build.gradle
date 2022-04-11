@@ -25,7 +25,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 109
-        versionName "1.8.12.0"
+        versionName "1.8.12.1"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
@@ -36,7 +36,8 @@ android {
             }
         }
         ndk {
-            abiFilters "armeabi-v7a", "x86"
+//            abiFilters "armeabi-v7a", "x86"
+            abiFilters "armeabi-v7a" , "arm64-v8a", "x86", "x86_64"
         }
     }
 
@@ -102,18 +103,18 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.activity:activity:1.2.4"
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.biometric:biometric:1.2.0-alpha01'
-    implementation "androidx.browser:browser:1.3.0"
+    implementation 'androidx.biometric:biometric:1.2.0-alpha04'
+    implementation "androidx.browser:browser:1.4.0"
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation "androidx.fragment:fragment:1.3.0-rc01"
     implementation 'com.alibaba:fastjson:1.2.73'
-    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
-    implementation 'com.google.android.material:material:1.4.0'
-    implementation 'com.google.firebase:firebase-analytics:19.0.2'
+    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'com.google.firebase:firebase-analytics:20.1.2'
     implementation 'com.getkeepsafe.relinker:relinker:1.3.1'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
-    implementation 'com.github.seven332.a7zip:extract-lite:d4ddec5793'
+//    implementation 'com.github.seven332.a7zip:extract-lite:d4ddec5793'
     implementation 'com.github.seven332:android-recaptcha:2bbb3459a8'
     implementation 'com.github.seven332:android-resource:0.1.0'
     implementation 'com.github.seven332:animator:0.1.0'
