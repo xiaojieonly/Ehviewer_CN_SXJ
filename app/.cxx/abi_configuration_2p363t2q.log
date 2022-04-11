@@ -1,6 +1,0 @@
-[
-  {
-    "level": "INFO",
-    "message": "ABIs [arm64-v8a,armeabi-v7a,armeabi] set by \u0027android.injected.build.abi\u0027 gradle flag contained \u0027ARMEABI, ARM64_V8A\u0027 not targeted by this project."
-  }
-]

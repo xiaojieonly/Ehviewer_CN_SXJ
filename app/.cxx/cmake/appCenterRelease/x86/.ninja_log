@@ -1,5 +1,0 @@
-# ninja log v5
-12	99	667322496	CMakeFiles/native-lib.dir/src/main/cpp/gif/gifalloc.c.o	eefff454fff8e693
-0	123	667322496	CMakeFiles/native-lib.dir/src/main/cpp/gif/dgif_lib.c.o	8bd07d5e516e06f9
-23	404	667322496	CMakeFiles/native-lib.dir/src/main/cpp/gif/native-lib.cpp.o	b9052273b4256148
-405	549	667322496	../../../../build/intermediates/cmake/appCenterRelease/obj/x86/libnative-lib.so	b3c41bee7e135dde
