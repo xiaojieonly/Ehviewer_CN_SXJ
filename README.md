@@ -1,6 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/04/10 :
+ ###  紧急修复版本：1.8.12.1
+ ###  修复了因硬件加速配置导致的卡顿问题
+ ###  打包为了64位版本
+ ###  新版本因为是64位的原因，包大小为20M左右，望周知  
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/iEOkL02ycogj)  密码:ccqt  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS 
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel   
+
 # 2022/04/08 :
  ###  新版本：1.8.12.0
  ###  重构了画廊种子下载功能
