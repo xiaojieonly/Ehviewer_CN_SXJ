@@ -1,9 +1,17 @@
 package com.hippo.util;
 
+import android.content.Context;
+import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.callBack.TorrentDownloadCallBack;
+import com.hippo.ehviewer.client.data.TorrentDownloadMessage;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,6 +32,8 @@ public class DownloadUtil {
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
 
+    private Handler handler;
+
     public static DownloadUtil get(OkHttpClient okHttpClient) {
         if (downloadUtil == null) {
             downloadUtil = new DownloadUtil(okHttpClient);
@@ -40,13 +50,29 @@ public class DownloadUtil {
      * saveDir 储存下载文件的SDCard目录
      * listener 下载监听
      */
-    public void download(final String url, final String saveDir,final String name, final OnDownloadListener listener) {
+    public void download(final String url, final String saveDir, final String name, Handler handler, Context context) {
+        this.handler = handler;
         Request request = new Request.Builder().url(url).build();
+        // 储存下载文件的目录
+        String savePath = null;
+        try {
+            savePath = isExistDir(saveDir);
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        File file = new File(savePath, name);
+        if (file.exists()) {
+            sendMessage(saveDir, name, 200, false);
+            return;
+        }
+        sendMessage(url, name, 0, false);
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 // 下载失败
-                listener.onDownloadFailed();
+                EhApplication.removeDownloadTorrent(context, url);
+                sendMessage(url, name, -1, true);
+
             }
 
             @Override
@@ -55,12 +81,10 @@ public class DownloadUtil {
                 byte[] buf = new byte[2048];
                 int len;
                 FileOutputStream fos = null;
-                // 储存下载文件的目录
-                String savePath = isExistDir(saveDir);
                 try {
                     is = response.body().byteStream();
                     long total = response.body().contentLength();
-                    File file = new File(savePath, name);
+
                     fos = new FileOutputStream(file);
                     long sum = 0;
                     while ((len = is.read(buf)) != -1) {
@@ -68,13 +92,15 @@ public class DownloadUtil {
                         sum += len;
                         int progress = (int) (sum * 1.0f / total * 100);
                         // 下载中
-                        listener.onDownloading(progress);
+                        sendMessage(url, name, progress, false);
                     }
                     fos.flush();
                     // 下载完成
-                    listener.onDownloadSuccess();
+                    EhApplication.removeDownloadTorrent(context, url);
+                    sendMessage(saveDir, name, 100, false);
                 } catch (Exception e) {
-                    listener.onDownloadFailed();
+                    EhApplication.removeDownloadTorrent(context, url);
+                    sendMessage(url, name, -1, true);
                 } finally {
                     try {
                         if (is != null)
@@ -124,20 +150,29 @@ public class DownloadUtil {
         return url.substring(url.lastIndexOf("/") + 1);
     }
 
-    public interface OnDownloadListener {
-        /**
-         * 下载成功
-         */
-        void onDownloadSuccess();
-
-        /**
-         * @param progress 下载进度
-         */
-        void onDownloading(int progress);
-
-        /**
-         * 下载失败
-         */
-        void onDownloadFailed();
+    private void sendMessage(String path, String name, int progress, boolean failed) {
+        Message message = torrentDownLoadMessage(path, name, progress, failed);
+        handler.sendMessage(message);
     }
+
+
+    private Message torrentDownLoadMessage(String path, String name, int progress, boolean failed) {
+
+        Message result = handler.obtainMessage();
+        Bundle data = new Bundle();
+
+        TorrentDownloadMessage message = new TorrentDownloadMessage();
+
+        message.failed = failed;
+        message.progress = progress;
+        message.path = path;
+        message.name = name;
+
+        data.putParcelable("torrent_download_message", message);
+
+        result.setData(data);
+
+        return result;
+    }
+
 }

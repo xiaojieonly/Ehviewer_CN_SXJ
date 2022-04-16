@@ -28,6 +28,7 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.util.Base64;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +38,6 @@ import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.Settings;
 import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 
@@ -45,6 +45,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+
 import com.microsoft.appcenter.distribute.Distribute;
 
 public class AboutFragment extends PreferenceFragment
@@ -53,9 +55,6 @@ public class AboutFragment extends PreferenceFragment
     private static final String KEY_AUTHOR = "author";
     private static final String KEY_DONATE = "donate";
     private static final String KEY_CHECK_FOR_UPDATES = "check_for_updates";
-
-    private Toast errorToast;
-    private Toast successToast;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -96,19 +95,21 @@ public class AboutFragment extends PreferenceFragment
 
         String alipayStr = base64Decode("MTAzMTA4MjA5MUBxcS5jb20=");
         TextView alipayText = dialog.findViewById(R.id.alipay_text);
+        assert alipayText != null;
         alipayText.setText(alipayStr);
-        dialog.findViewById(R.id.alipay_copy).setOnClickListener(v -> copyToClipboard(alipayStr));
+        Objects.<View>requireNonNull(dialog.findViewById(R.id.alipay_copy)).setOnClickListener(v -> copyToClipboard(alipayStr));
 
         ImageView aliPayImage = dialog.findViewById(R.id.image_aliPay);
         ImageView weChatImage = dialog.findViewById(R.id.image_weChat);
 
-        dialog.findViewById(R.id.save_image_aliPay).setOnClickListener(v -> saveImage(1,aliPayImage));
-        dialog.findViewById(R.id.save_image_weChat).setOnClickListener(v -> saveImage(2,weChatImage));
+        Objects.<View>requireNonNull(dialog.findViewById(R.id.save_image_aliPay)).setOnClickListener(v -> saveImage(1,aliPayImage));
+        Objects.<View>requireNonNull(dialog.findViewById(R.id.save_image_weChat)).setOnClickListener(v -> saveImage(2,weChatImage));
 
         String guideStr = base64Decode("5oKo55qE5pSv5oyB5piv5oiR5pu05paw55qE5pyA5aSn5Yqo5Yqb77yM5oKo5Y+v5Lul5oiq5Zu+5ZCO5Zyo5b6u5L+h5oiW5p" +
                 "Sv5LuY5a6d5Lit5omr5o+P5LqM57u056CB5o+Q5L6b546w6YeR5pSv5oyB77yM5Lmf5Y+v5Lul6YCa6L+H6YKu5Lu25YWI5L2c6ICF5o+Q5Ye65oKo5oOz6KaB55qE5paw5Y" +
                 "qf6IO95oiW55uu5YmN5piv5LiN5aW955So55qE5Yqf6IO977yM5oiR5Lya5LiA5LiA5Zue5aSN5bm25YGa5Ye65oSf6LCi44CCKCDigKLMgCDPiSDigKLMgSAp4pyn");
         TextView guideText = dialog.findViewById(R.id.guide_text);
+        assert guideText != null;
         guideText.setText(guideStr);
     }
 
@@ -119,9 +120,9 @@ public class AboutFragment extends PreferenceFragment
         FileOutputStream fileOutputStream;
         Bitmap needSaveData;
 
-        errorToast = Toast.makeText(context,R.string.error_save_image_existed,Toast.LENGTH_SHORT);
+        Toast errorToast = Toast.makeText(context, R.string.error_save_image_existed, Toast.LENGTH_SHORT);
         errorToast.setGravity(Gravity.CENTER,0,0);
-        successToast = Toast.makeText(context,R.string.image_save_success,Toast.LENGTH_SHORT);
+        Toast successToast = Toast.makeText(context, R.string.image_save_success, Toast.LENGTH_SHORT);
         successToast.setGravity(Gravity.CENTER,0,0);
 
         try {

@@ -3,7 +3,6 @@ package com.hippo.ehviewer.ui.scene;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +27,7 @@ import com.hippo.ehviewer.client.data.topList.TopListInfo;
 import com.hippo.ehviewer.client.data.topList.TopListItem;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.scene.SceneFragment;
 import com.hippo.view.ViewTransition;
 

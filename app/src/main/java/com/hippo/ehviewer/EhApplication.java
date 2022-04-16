@@ -34,9 +34,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.LruCache;
 
-import com.getkeepsafe.relinker.ReLinker;
-import com.hippo.a7zip.A7Zip;
-import com.hippo.a7zip.A7ZipExtractLite;
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.conaco.Conaco;
 import com.hippo.content.RecordingApplication;
@@ -118,6 +115,8 @@ public class EhApplication extends RecordingApplication {
 
     private final List<Activity> mActivityList = new ArrayList<>();
 
+    private List<String> torrentList = new ArrayList<>();
+
     private boolean initialized = false;
 
     public static EhApplication getInstance() {
@@ -157,7 +156,8 @@ public class EhApplication extends RecordingApplication {
         EhEngine.initialize();
         BitmapUtils.initialize(this);
         Image.initialize(this);
-        A7Zip.loadLibrary(A7ZipExtractLite.LIBRARY, libname -> ReLinker.loadLibrary(EhApplication.this, libname));
+        // 实际作用不确定，但是与64位应用有冲突
+//        A7Zip.loadLibrary(A7ZipExtractLite.LIBRARY, libname -> ReLinker.loadLibrary(EhApplication.this, libname));
 
         if (EhDB.needMerge()) {
             EhDB.mergeOldDB(this);
@@ -288,8 +288,8 @@ public class EhApplication extends RecordingApplication {
         return mGlobalStuffMap.remove(id);
     }
 
-    public boolean removeGlobalStuff(Object o) {
-        return mGlobalStuffMap.values().removeAll(Collections.singleton(o));
+    public void removeGlobalStuff(Object o) {
+        mGlobalStuffMap.values().removeAll(Collections.singleton(o));
     }
 
     public static EhCookieStore getEhCookieStore(@NonNull Context context) {
@@ -597,6 +597,23 @@ public class EhApplication extends RecordingApplication {
         } catch (Throwable t) {
             ExceptionUtils.throwIfFatal(t);
         }
+    }
+
+    public static boolean addDownloadTorrent(@NonNull Context context,String url){
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+
+        if (application.torrentList.contains(url)){
+            return false;
+        }
+
+        application.torrentList.add(url);
+        return true;
+    }
+
+    public static void removeDownloadTorrent(@NonNull Context context, String url){
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+
+        application.torrentList.remove(url);
     }
 
 }

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -52,6 +53,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.ViewPager;
 
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
@@ -84,6 +86,7 @@ import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
 import com.hippo.ehviewer.client.parser.GalleryListParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
+
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
@@ -91,6 +94,12 @@ import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.dialog.SelectItemWithIconAdapter;
+import com.hippo.ehviewer.ui.scene.BaseScene;
+import com.hippo.ehviewer.ui.scene.EhCallback;
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.ehviewer.ui.scene.ProgressScene;
+import com.hippo.ehviewer.ui.scene.QuickSearchScene;
+import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SearchLayout;
@@ -100,7 +109,6 @@ import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
-import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.ContentLayout;
 import com.hippo.widget.FabLayout;
@@ -197,6 +205,8 @@ public final class GalleryListScene extends BaseScene
     private PopupWindow popupWindow;
     @Nullable
     private AlertDialog alertDialog;
+    @NonNull
+    private ViewPager drawPager;
 
     EhTagDatabase ehTags;
 
@@ -673,7 +683,7 @@ public final class GalleryListScene extends BaseScene
 
         if (position != popupWindowPosition) {
 
-            LinearLayout popView = (LinearLayout) getLayoutInflater().inflate(R.layout.list_thumb_popupwindow, null);
+            @SuppressLint("InflateParams") LinearLayout popView = (LinearLayout) getLayoutInflater().inflate(R.layout.list_thumb_popupwindow, null);
             ChipGroup tagFlowLayout = buildChipGroup(gi, popView.findViewById(R.id.tab_tag_flow));
 
             popupWindow = new PopupWindow(popView, view.getWidth() - thumb.getWidth(), thumb.getHeight());
@@ -697,7 +707,7 @@ public final class GalleryListScene extends BaseScene
         int colorTag = AttrResources.getAttrColor(getContext(), R.attr.tagBackgroundColor);
         if (null == gi.tgList) {
             String tagName = "暂无预览标签";
-            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
+            @SuppressLint("InflateParams") Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
             chip.setChipBackgroundColor(ColorStateList.valueOf(colorTag));
             chip.setTextColor(Color.WHITE);
             if (Settings.getShowTagTranslations()) {
@@ -714,7 +724,7 @@ public final class GalleryListScene extends BaseScene
         }
         for (int i = 0; i < gi.tgList.size(); i++) {
             String tagName = gi.tgList.get(i);
-            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
+            @SuppressLint("InflateParams") Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_chip_tag, null);
             chip.setChipBackgroundColor(ColorStateList.valueOf(colorTag));
             chip.setTextColor(Color.WHITE);
             if (Settings.getShowTagTranslations()) {
@@ -806,6 +816,7 @@ public final class GalleryListScene extends BaseScene
                 .setContentText(R.string.guide_quick_search_text)
                 .replaceEndButton(R.layout.button_guide)
                 .setShowcaseEventListener(new SimpleShowcaseEventListener() {
+                    @SuppressLint("RtlHardcoded")
                     @Override
                     public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
                         mShowcaseView = null;
@@ -944,15 +955,41 @@ public final class GalleryListScene extends BaseScene
         });
     }
 
+    @SuppressLint({"RtlHardcoded", "NonConstantResourceId"})
     @Override
     public View onCreateDrawerView(LayoutInflater inflater, @Nullable ViewGroup container,
                                    @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.drawer_list, container, false);
-        Toolbar toolbar = (Toolbar) ViewUtils.$$(view, R.id.toolbar);
-        final TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
-        final ListView listView = (ListView) ViewUtils.$$(view, R.id.list_view);
+
+        drawPager = view.findViewById(R.id.drawer_list_pager);
+
+        View bookmarksView = bookmarksViewBuild(inflater);
+//        View subscriptionView = subscriptionViewBuild(inflater);
+
+        List<View> views = new ArrayList<>();
+
+        views.add(bookmarksView);
+//        views.add(subscriptionView);
+
+        DrawViewPagerAdapter pagerAdapter = new DrawViewPagerAdapter(views);
+
+        drawPager.setAdapter(pagerAdapter);
+
+        return view;
+    }
+
+    @SuppressLint({"RtlHardcoded", "NonConstantResourceId"})
+    private View bookmarksViewBuild(LayoutInflater inflater){
+
+        View bookmarksView = inflater.inflate(R.layout.bookmarks_draw, null, false);
+
+        Toolbar toolbar = (Toolbar) ViewUtils.$$(bookmarksView, R.id.toolbar);
+        final TextView tip = (TextView) ViewUtils.$$(bookmarksView, R.id.tip);
+        final ListView listView = (ListView) ViewUtils.$$(bookmarksView, R.id.list_view);
 
         Context context = getEHContext();
+        assert context != null;
         AssertUtils.assertNotNull(context);
 
         List<QuickSearch> quickSearchList = EhDB.getAllQuickSearch();
@@ -972,7 +1009,7 @@ public final class GalleryListScene extends BaseScene
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过未翻译的标签
-                if (null!= name && 1 == name.split(":").length) {
+                if (null != name && 1 == name.split(":").length) {
                     quickSearchList.get(i).setName(quickSearchList.get(i).getKeyword());
                     EhDB.updateQuickSearch(quickSearchList.get(i));
                 }
@@ -999,6 +1036,7 @@ public final class GalleryListScene extends BaseScene
         });
 
         tip.setText(R.string.quick_search_tip);
+        toolbar.setLogo(R.drawable.ic_baseline_bookmarks_24);
         toolbar.setTitle(R.string.quick_search);
         toolbar.inflateMenu(R.menu.drawer_gallery_list);
         toolbar.setOnMenuItemClickListener(item -> {  //点击增加快速搜索按钮触发
@@ -1026,7 +1064,57 @@ public final class GalleryListScene extends BaseScene
             listView.setVisibility(View.VISIBLE);
         }
 
-        return view;
+        toolbar.setOnClickListener(l->{
+//            drawPager.setCurrentItem(1);
+//
+//            TestThread testThread = new TestThread();
+//
+//            testThread.start();
+
+        });
+
+
+        return bookmarksView;
+    }
+
+    private View subscriptionViewBuild(LayoutInflater inflater){
+
+        View subscriptionView = inflater.inflate(R.layout.subscription_draw, null, false);
+
+        Toolbar toolbar = (Toolbar) ViewUtils.$$(subscriptionView, R.id.toolbar);
+        final TextView tip = (TextView) ViewUtils.$$(subscriptionView, R.id.tip);
+        final ListView listView = (ListView) ViewUtils.$$(subscriptionView, R.id.list_view);
+
+        Context context = getEHContext();
+        assert context != null;
+        AssertUtils.assertNotNull(context);
+
+        tip.setText(R.string.subscription_tip);
+        toolbar.setLogo(R.drawable.ic_baseline_subscriptions_24);
+        toolbar.setTitle(R.string.subscription);
+        toolbar.inflateMenu(R.menu.drawer_gallery_list);
+        toolbar.setOnMenuItemClickListener(item -> {  //点击增加快速搜索按钮触发
+            int id = item.getItemId();
+//            switch (id) {
+//                case R.id.action_add:
+//                    if (Settings.getQuickSearchTip()) {
+//                        showQuickSearchTipDialog(list, adapter, listView, tip);
+//                    } else {
+//                        showAddQuickSearchDialog(list, adapter, listView, tip);
+//                    }
+//                    break;
+//                case R.id.action_settings:
+//                    startScene(new Announcer(QuickSearchScene.class));
+//                    break;
+//            }
+            return true;
+        });
+
+        toolbar.setOnClickListener(l->{
+            drawPager.setCurrentItem(0);
+        });
+
+        return subscriptionView;
     }
 
     private boolean checkDoubleClickExit() {
@@ -1150,7 +1238,7 @@ public final class GalleryListScene extends BaseScene
                 favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
         };
 
-        LinearLayout linearLayout = (LinearLayout) getLayoutInflater2().inflate(R.layout.gallery_item_dialog_coustom_title, null);
+        @SuppressLint("InflateParams") LinearLayout linearLayout = (LinearLayout) getLayoutInflater2().inflate(R.layout.gallery_item_dialog_coustom_title, null);
 
         linearLayout.setOnClickListener(l -> onItemClick(view, gi));
 
@@ -1166,7 +1254,6 @@ public final class GalleryListScene extends BaseScene
         textView.setText(EhUtils.getSuitableTitle(gi));
         textView.setOnClickListener(l -> {
             AppHelper.copyPlainText(EhUtils.getSuitableTitle(gi), getEHContext());
-            CharSequence text;
             Toast toast = Toast.makeText(getEHContext(), "标题文本已复制", Toast.LENGTH_SHORT);
             toast.setGravity(Gravity.CENTER, 0, 0);
             toast.show();
@@ -1225,6 +1312,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void showGoToDialog() {
+
         Context context = getEHContext();
         if (null == context || null == mHelper) {
             return;
@@ -1337,6 +1425,7 @@ public final class GalleryListScene extends BaseScene
 
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onExpand(boolean expanded) {
         if (null == mActionFabDrawable) {
@@ -1539,6 +1628,7 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onClickLeftIcon() {
         if (null == mSearchBar) {
@@ -1606,12 +1696,14 @@ public final class GalleryListScene extends BaseScene
         onBackPressed();
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onStartDragHandler() {
         // Lock right drawer
         setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onEndDragHandler() {
         // Restore right drawer
@@ -1622,6 +1714,7 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
+    @SuppressLint("RtlHardcoded")
     @Override
     public void onStateChange(SearchBar searchBar, int newState, int oldState, boolean animation) {
         if (null == mLeftDrawable || null == mRightDrawable) {
@@ -1771,8 +1864,8 @@ public final class GalleryListScene extends BaseScene
     }
 
     private class GalleryDetailUrlSuggestion extends UrlSuggestion {
-        private long mGid;
-        private String mToken;
+        private final long mGid;
+        private final String mToken;
 
         private GalleryDetailUrlSuggestion(long gid, String token) {
             mGid = gid;

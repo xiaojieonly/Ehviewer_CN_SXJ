@@ -17,16 +17,20 @@
 package com.hippo.util;
 
 import androidx.annotation.NonNull;
+
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.network.StatusCodeException;
+
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+
 import javax.net.ssl.SSLException;
+
 import org.apache.http.conn.ConnectTimeoutException;
 
 public final class ExceptionUtils {
@@ -58,10 +62,10 @@ public final class ExceptionUtils {
         } else if (e instanceof EhException) {
             return e.getMessage();
         } else {
-            if (e.getLocalizedMessage().equals(e.getMessage())){
+            if (e.getLocalizedMessage().equals(e.getMessage())) {
                 return e.getLocalizedMessage();
             }
-            return e.getLocalizedMessage()+"\n"+e.getMessage();
+            return e.getLocalizedMessage() + "\n" + e.getMessage();
         }
     }
 

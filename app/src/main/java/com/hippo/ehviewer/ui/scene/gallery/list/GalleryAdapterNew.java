@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -41,6 +41,7 @@ import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.ehviewer.widget.TileThumbNew;
 import com.hippo.widget.LoadImageViewNew;

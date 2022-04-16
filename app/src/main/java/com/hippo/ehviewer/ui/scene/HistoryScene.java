@@ -58,6 +58,8 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.HistoryInfo;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;

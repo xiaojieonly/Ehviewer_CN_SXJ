@@ -73,6 +73,8 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.DrawerLifeCircle;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
