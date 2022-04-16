@@ -195,6 +195,8 @@
     <string name="duplicate_quick_search">已存在相同的书签，名称为“%s”。</string>
     <string name="duplicate_name">已存在相同名称</string>
 
+    <string name="subscription_tip">点击“+”来添加书签</string>
+
     <string name="go_to_hint">第 %1$d 页，共 %2$d 页</string>
 
     <!-- search_min_rating -->
@@ -415,7 +417,7 @@
     <string name="page_menu_refresh">@string/refresh</string>
     <string name="page_menu_share">@string/share</string>
     <string name="page_menu_save">保存</string>
-    <string name="page_menu_save_to">保存到...</string>
+    <string name="page_menu_save_to">保存到 …</string>
     <string name="page_menu_add_bookmark">添加书签</string>
     <string name="gallery_menu_title">菜单</string>
     <string name="share_image">分享图片</string>
