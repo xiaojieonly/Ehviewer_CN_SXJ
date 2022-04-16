@@ -266,6 +266,8 @@
     <string name="duplicate_quick_search">A duplicate quick search exists. The name is \"%s\".</string>
     <string name="duplicate_name">This name is already in use.</string>
 
+    <string name="subscription_tip">Click “+” to add Subscription</string>
+
     <string name="go_to_hint">Page %1$d, total %2$d pages</string>
 
     <!-- search_min_rating -->
@@ -488,7 +490,7 @@
     <string name="page_menu_refresh">@string/refresh</string>
     <string name="page_menu_share">@string/share</string>
     <string name="page_menu_save">Save</string>
-    <string name="page_menu_save_to">Save to…</string>
+    <string name="page_menu_save_to">Save to …</string>
     <string name="page_menu_add_bookmark">Add a bookmark</string>
     <string name="gallery_menu_title">Menu</string>
     <string name="share_image">Share image</string>
