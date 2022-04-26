@@ -754,6 +754,11 @@
     <string name="request_camera_permission">EhViewer 将申请设备相机访问权限以便拍摄照片。您愿意授权吗？</string>
     <string name="request_storage_permission">EhViewer 将申请设备相册访问权限以便获取图片。您愿意授权吗？</string>
 
+    <!--  订阅服务  -->
+    <string name="subscription_watched">订阅</string>
+    <string name="subscription_hidden">排除</string>
+    <string name="delete_subscription_title">删除标签</string>
+
     <!-- 下载通知   -->
     <string name="download_torrent_name">种子: %s</string>
     <string name="download_torrent_state">状态: </string>

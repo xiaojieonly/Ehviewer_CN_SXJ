@@ -853,6 +853,11 @@
     <string name="downloading">Downloading…… Please Try Later</string>
     <string name="torrent_exist">File already exists</string>
 
+    <!--  订阅服务  -->
+    <string name="subscription_watched">Watched</string>
+    <string name="subscription_hidden">Hidden</string>
+    <string name="delete_subscription_title">Remove Tag</string>
+
     <string name="yes">Yes</string>
     <string name="cancel">Cancel</string>
 
