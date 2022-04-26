@@ -20,13 +20,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hippo.easyrecyclerview.EasyRecyclerView
-        android:id="@+id/recycler_view"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="@dimen/keyline_margin"
-        android:clipChildren="false"
-        android:clipToPadding="false"/>
+        android:layout_height="match_parent">
+        <com.hippo.easyrecyclerview.EasyRecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/keyline_margin"
+            android:clipChildren="false"
+            android:clipToPadding="false"/>
+        <com.hippo.widget.ProgressView
+            android:id="@+id/scene_label_progress"
+            android:visibility="gone"
+            style="@style/ProgressView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tip"

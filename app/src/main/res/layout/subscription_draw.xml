@@ -18,25 +18,47 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <View
+        android:layout_height="match_parent">
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="8dp"
-            android:background="@drawable/shadow_bottom"/>
+            android:layout_height="match_parent"
+            android:id="@+id/tag_list_parent"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/tip"
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:background="@drawable/shadow_bottom"/>
+
+            <TextView
+                android:id="@+id/tip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+
+            <ListView
+                android:id="@+id/list_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        </FrameLayout>
+
+        <com.hippo.widget.ProgressView
+            android:id="@+id/tag_list_view_progress"
+            style="@style/ProgressView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"/>
+            android:layout_gravity="center"/>
 
-        <ListView
-            android:id="@+id/list_view"
+        <TextView
+            android:id="@+id/not_login_text"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="@dimen/text_super_large"
+            android:visibility="gone"
+            android:text="@string/settings_eh_identity_cookies_tourist"/>
 
     </FrameLayout>
 </LinearLayout>
