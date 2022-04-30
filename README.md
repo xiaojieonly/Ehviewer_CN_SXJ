@@ -2,6 +2,16 @@
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
 # 2022/04/30 :
+ ###  新版本：1.9.0.4
+ ###  紧急修复
+ ###  修复了一个在添加订阅标签时可能导致软件奔溃的bug
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/ivoof042j1uh)  密码:5w36  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
+# 2022/04/30 :
  ###  新版本：1.9.0.3
  ###  新增标签订阅管理页面（仅限登录用户）： 点击书签栏有惊喜
  
@@ -11,7 +21,7 @@
    点击前往下载：[蓝奏云](https://wwb.lanzouy.com/iF8qX041v4ri)  密码:i8rp  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
-   Telegram群:https://t.me/+WyclP8pPlk-JfbwS 
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel   
 
 # 2022/04/10 :
