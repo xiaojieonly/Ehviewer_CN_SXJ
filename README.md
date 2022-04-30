@@ -1,6 +1,19 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/04/30 :
+ ###  新版本：1.9.0.3
+ ###  新增标签订阅管理页面（仅限登录用户）： 点击书签栏有惊喜
+ 
+![qq_pic_merged_1651311109370](https://user-images.githubusercontent.com/49278135/166100319-fac50f49-d631-4f50-89f2-af18f63ee05a.jpg)
+![Screenshot_2022-04-30-17-30-48-994_com xjs ehview](https://user-images.githubusercontent.com/49278135/166100326-582cda4e-9e6b-4679-b209-309e91b9db39.jpg)
+
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/iEOkL02ycogj)  密码:ccqt  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS 
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel   
+
 # 2022/04/10 :
  ###  紧急修复版本：1.8.12.1
  ###  修复了因硬件加速配置导致的卡顿问题
