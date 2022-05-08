@@ -852,11 +852,15 @@
     <string name="open_directory">Open Directory</string>
     <string name="downloading">Downloading…… Please Try Later</string>
     <string name="torrent_exist">File already exists</string>
+    <string name="empty_subscription">Subscription is empty</string>
 
     <!--  订阅服务  -->
     <string name="subscription_watched">Watched</string>
     <string name="subscription_hidden">Hidden</string>
     <string name="delete_subscription_title">Remove Tag</string>
+    <string name="can_not_use_this_tag">Tags are not available</string>
+    <string name="add_tag_dialog_title">Add Tag</string>
+    <string name="tag_title">Tag</string>
 
     <string name="yes">Yes</string>
     <string name="cancel">Cancel</string>
