@@ -758,6 +758,10 @@
     <string name="subscription_watched">订阅</string>
     <string name="subscription_hidden">排除</string>
     <string name="delete_subscription_title">删除标签</string>
+    <string name="can_not_use_this_tag">标签不可用</string>
+    <string name="add_tag_dialog_title">添加标签</string>
+    <string name="tag_title">标签栏</string>
+    <string name="empty_subscription">订阅内容为空</string>
 
     <!-- 下载通知   -->
     <string name="download_torrent_name">种子: %s</string>
