@@ -8,7 +8,7 @@ if (file('google-services.json').exists()) {
 android {
     compileSdkVersion 28
     buildToolsVersion "30.0.3"
-    ndkVersion '24.0.7956693'
+    ndkVersion '23.1.7779620'
 
     flavorDimensions "distribute"
     productFlavors {
@@ -30,14 +30,15 @@ android {
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
         testOptions.unitTests.includeAndroidResources = true
-        externalNativeBuild{
-            cmake {
-                cppFlags ""
-            }
-        }
         ndk {
 //            abiFilters "armeabi-v7a", "x86"
+            moduleName "native-lib"
             abiFilters "armeabi-v7a" , "arm64-v8a", "x86", "x86_64"
+        }
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
         }
     }
 
@@ -64,12 +65,12 @@ android {
         }
     }
 
-    externalNativeBuild{
-        cmake{
-            path "CMakeLists.txt"
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.18.1'
         }
     }
-
     sourceSets {
         main {
             java.srcDirs += 'src/main/java-gen'
