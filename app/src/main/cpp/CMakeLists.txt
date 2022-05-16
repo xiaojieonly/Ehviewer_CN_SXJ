@@ -5,19 +5,21 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+project("ehviewer")
+
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-             native-lib
+             ehviewer
 
              # Sets the library as a shared library.
              SHARED
-             src/main/cpp/gif/native-lib.cpp
-             src/main/cpp/gif/dgif_lib.c
-             src/main/cpp/gif/gifalloc.c)
+             gif/native-lib.cpp
+             gif/dgif_lib.c
+             gif/gifalloc.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -39,7 +41,7 @@ find_library(
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-                       native-lib
+                       ehviewer
 
                        # Links the target library to the log library
                        # included in the NDK.
