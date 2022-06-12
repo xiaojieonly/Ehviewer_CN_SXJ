@@ -31,7 +31,6 @@ android {
                 "es", "ja", "ko", "fr", "de", "th"
         testOptions.unitTests.includeAndroidResources = true
         ndk {
-//            abiFilters "armeabi-v7a", "x86"
             moduleName "native-lib"
             abiFilters "armeabi-v7a" , "arm64-v8a", "x86", "x86_64"
         }
