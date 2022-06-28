@@ -5,6 +5,8 @@
  ###  新版本：1.9.1.1
  ###  搜索功能升级：设置中设置了显示中文标签后，搜索时会显示中英文搜索提示列表，未设置时只显示英文提示列表
  ###  更换了获取中文翻译资源文件的github库
+ ![Screenshot_2022-06-28-21-32-31-310_com xjs ehview](https://user-images.githubusercontent.com/49278135/176194657-93cb01b0-561b-4e45-b1a8-a156ab97e0de.jpg)
+
    点击前往下载：[蓝奏云](https://wwb.lanzouy.com/iEoWz072nabe)  密码:g8gx  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
