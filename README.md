@@ -1,6 +1,16 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/06/28 :
+ ###  新版本：1.9.1.1
+ ###  搜索功能升级：设置中设置了显示中文标签后，搜索时会显示中英文搜索提示列表，未设置时只显示英文提示列表
+ ###  更换了获取中文翻译资源文件的github库
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/iEoWz072nabe)  密码:g8gx  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
 # 2022/04/30 :
  ###  新版本：1.9.0.4
  ###  紧急修复
