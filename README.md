@@ -1,6 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/06/28 :
+ ###  新版本：1.9.1.1
+ ###  搜索功能升级：设置中设置了显示中文标签后，搜索时会显示中英文搜索提示列表，未设置时只显示英文提示列表
+ ###  更换了获取中文翻译资源文件的github库
+ ![Screenshot_2022-06-28-21-32-31-310_com xjs ehview](https://user-images.githubusercontent.com/49278135/176194657-93cb01b0-561b-4e45-b1a8-a156ab97e0de.jpg)
+
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/iEoWz072nabe)  密码:g8gx  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
 # 2022/04/30 :
  ###  新版本：1.9.0.4
  ###  紧急修复
@@ -374,6 +386,7 @@
   修复了评论显示不了的bug，正在修改相关信息，预计11月13号发布一个小版本
 # 2020/11/09 -----log:
   创建项目完毕，代码正在进行本地调试，由于app源代码注释很少而且全是英文，所以起步阶段较慢，等我代码看的差不多了就把中文注释添上然后发出来
+  [神秘链接](https://space.bilibili.com/90130693)
 
 # DEPRECATED
 
