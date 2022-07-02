@@ -11,7 +11,7 @@ public class GifHandler {
     }
 
     static {
-        System.loadLibrary("native-lib");
+        System.loadLibrary("ehviewer");
     }
 
     private native long loadPath(String path);

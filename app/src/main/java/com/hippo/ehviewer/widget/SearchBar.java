@@ -29,25 +29,31 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.view.ViewTransition;
 import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.ViewUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,6 +100,8 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
     private boolean mInAnimation;
 
+    private boolean showTranslation;
+
     public SearchBar(Context context) {
         super(context);
         init(context);
@@ -110,6 +118,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
     }
 
     private void init(Context context) {
+        showTranslation = Settings.getShowTagTranslations();
         mSearchDatabase = SearchDatabase.getInstance(getContext());
 
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -138,18 +147,10 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mSuggestionList = new ArrayList<>();
         mSuggestionAdapter = new SuggestionAdapter(LayoutInflater.from(getContext()));
         mListView.setAdapter(mSuggestionAdapter);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mSuggestionList.get(position).onClick();
-            }
-        });
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                mSuggestionList.get(position).onLongClick();
-                return true;
-            }
+        mListView.setOnItemClickListener((parent, view, position, id) -> mSuggestionList.get(position).onClick());
+        mListView.setOnItemLongClickListener((parent, view, position, id) -> {
+            mSuggestionList.get(position).onLongClick();
+            return true;
         });
     }
 
@@ -179,7 +180,24 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
         String[] keywords = mSearchDatabase.getSuggestions(text, 128);
         for (String keyword : keywords) {
-            mSuggestionList.add(new KeywordSuggestion(keyword));
+            mSuggestionList.add(new TagSuggestion(null, keyword));
+        }
+
+        EhTagDatabase ehTagDatabase = EhTagDatabase.getInstance(getContext());
+        if (!TextUtils.isEmpty(text) && ehTagDatabase != null && !text.endsWith(" ")) {
+            String[] s = text.split(" ");
+            if (s.length > 0) {
+                String keyword = s[s.length - 1];
+                List<Pair<String, String>> searchHints = ehTagDatabase.suggest(keyword);
+
+                for (Pair<String, String> searchHint : searchHints) {
+                    if (showTranslation){
+                        mSuggestionList.add(new TagSuggestion(searchHint.first, searchHint.second));
+                    }else {
+                        mSuggestionList.add(new TagSuggestion(null, searchHint.second));
+                    }
+                }
+            }
         }
 
         if (mSuggestionList.size() == 0) {
@@ -496,10 +514,15 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
     public interface Helper {
         void onClickTitle();
+
         void onClickLeftIcon();
+
         void onClickRightIcon();
+
         void onSearchEditTextClick();
+
         void onApplySearch(String query);
+
         void onSearchEditTextBackPressed();
     }
 
@@ -513,12 +536,22 @@ public class SearchBar extends CardView implements View.OnClickListener,
         List<Suggestion> providerSuggestions(String text);
     }
 
+    public abstract static class Suggestion {
+
+        public abstract CharSequence getText(float textSize);
+
+        public abstract CharSequence getText(TextView textView);
+
+        public abstract void onClick();
+
+        public abstract void onLongClick();
+    }
+
     private class SuggestionAdapter extends BaseAdapter {
+        private final LayoutInflater inflater;
 
-        private LayoutInflater mInflater;
-
-        private SuggestionAdapter(LayoutInflater inflater) {
-            mInflater = inflater;
+        public SuggestionAdapter(LayoutInflater inflater) {
+            this.inflater = inflater;
         }
 
         @Override
@@ -538,45 +571,62 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            TextView textView;
+            LinearLayout linearLayout;
             if (convertView == null) {
-                textView = (TextView) mInflater.inflate(R.layout.item_simple_list, parent, false);
+                linearLayout = (LinearLayout) inflater.inflate(R.layout.search_suggestion_item, parent, false);
             } else {
-                textView = (TextView) convertView;
+//                return convertView;
+                linearLayout = (LinearLayout) convertView;
+            }
+            TextView hintView = linearLayout.findViewById(R.id.hintView);
+            TextView textView = linearLayout.findViewById(R.id.textView);
+
+            Suggestion suggestion = mSuggestionList.get(position);
+
+            String hint = (String) suggestion.getText(hintView);
+            String text = (String) suggestion.getText(textView);
+
+            hintView.setText(hint);
+
+            if (text == null || text.isEmpty()){
+                textView.setVisibility(GONE);
+            }else {
+                textView.setVisibility(View.VISIBLE);
+                textView.setText(text);
             }
 
-            textView.setText(mSuggestionList.get(position).getText(textView.getTextSize()));
-
-            return textView;
+            return linearLayout;
         }
     }
 
-    public abstract static class Suggestion {
+    private class TagSuggestion extends Suggestion {
+        public String show, mKeyword;
 
-        public abstract CharSequence getText(float textSize);
-
-        public abstract void onClick();
-
-        public abstract void onLongClick();
-    }
-
-    public class KeywordSuggestion extends Suggestion {
-
-        private String mKeyword;
-
-        private KeywordSuggestion(String keyword) {
-            mKeyword = keyword;
+        public TagSuggestion(String show, String mKeyword) {
+            this.show = show;
+            this.mKeyword = mKeyword;
         }
 
         @Override
         public CharSequence getText(float textSize) {
-            return mKeyword;
+            return null;
+        }
+
+        @Override
+        public CharSequence getText(TextView textView) {
+            if (textView.getId() == R.id.hintView) {
+                return mKeyword;
+            }
+            return show;
         }
 
         @Override
         public void onClick() {
-            mEditText.setText(mKeyword);
-            mEditText.setSelection(mEditText.getText().length());
+            Editable editable = mEditText.getText();
+            if (editable != null) {
+                mEditText.setText(mKeyword);
+                mEditText.setSelection(mEditText.getText().length());
+            }
         }
 
         @Override
@@ -585,4 +635,5 @@ public class SearchBar extends CardView implements View.OnClickListener,
             updateSuggestions(false);
         }
     }
+
 }
