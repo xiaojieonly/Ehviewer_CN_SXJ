@@ -51,7 +51,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.AppConfig;
-import com.hippo.ehviewer.BuildConfig;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -309,7 +308,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 .setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0)
                 .setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height))
                 .setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval))
-                .setProgressColor(ResourcesUtils.getAttrColor(this, R.attr.colorPrimary))
+                .setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary))
                 .setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size))
                 .setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary))
                 .setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size))

@@ -78,7 +78,7 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
                 LayoutUtils.dp2pix(context, 1));
         decoration.setShowLastDivider(true);
         addItemDecoration(decoration);
-        setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
+        setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         setOnItemClickListener(this);
 
         mCurrentFile = Environment.getExternalStorageDirectory();

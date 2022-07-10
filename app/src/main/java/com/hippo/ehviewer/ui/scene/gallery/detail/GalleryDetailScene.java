@@ -517,7 +517,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mBelowHeader = mainView.findViewById(R.id.below_header);
         View belowHeader = mBelowHeader;
 
-        boolean isDarkTheme = !AttrResources.getAttrBoolean(context, R.attr.isLightTheme);
+        boolean isDarkTheme = !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme);
         mHeader = ViewUtils.$$(belowHeader, R.id.header);
         mColorBg = ViewUtils.$$(mHeader, R.id.color_bg);
         mThumb = (LoadImageView) ViewUtils.$$(mHeader, R.id.thumb);
@@ -826,7 +826,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         if ((oldState == STATE_INIT || oldState == STATE_FAILED || oldState == STATE_REFRESH) &&
-                (state == STATE_NORMAL || state == STATE_REFRESH_HEADER) && AttrResources.getAttrBoolean(getEHContext(), R.attr.isLightTheme)) {
+                (state == STATE_NORMAL || state == STATE_REFRESH_HEADER) && AttrResources.getAttrBoolean(getEHContext(), androidx.appcompat.R.attr.isLightTheme)) {
             if (!createCircularReveal()) {
                 SimpleHandler.getInstance().post(this::createCircularReveal);
             }

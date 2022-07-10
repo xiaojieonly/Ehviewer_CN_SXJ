@@ -74,7 +74,7 @@ public class DirPickerActivity extends ToolbarActivity
         mDirExplorer.setCurrentFile(file);
         mDirExplorer.setOnChangeDirListener(this);
 
-        Ripple.addRipple(mOk, !AttrResources.getAttrBoolean(this, R.attr.isLightTheme));
+        Ripple.addRipple(mOk, !AttrResources.getAttrBoolean(this, androidx.appcompat.R.attr.isLightTheme));
 
         mDefault.setOnClickListener(this);
         mOk.setOnClickListener(this);

@@ -59,11 +59,11 @@ public class CuteSpinner extends AppCompatSpinner {
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
         TypedArray a = context.obtainStyledAttributes(attrs,
                 androidx.appcompat.R.styleable.Spinner, defStyleAttr, 0);
-        final CharSequence[] entries = a.getTextArray(R.styleable.Spinner_android_entries);
+        final CharSequence[] entries = a.getTextArray(androidx.appcompat.R.styleable.Spinner_android_entries);
         if (entries != null) {
             final ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(context,
                     R.layout.item_cute_spinner_item, entries);
-            adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+            adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
             setAdapter(adapter);
         }
         a.recycle();

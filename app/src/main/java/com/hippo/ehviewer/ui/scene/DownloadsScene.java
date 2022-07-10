@@ -303,7 +303,7 @@ public class DownloadsScene extends ToolbarScene
         mLayoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
         mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
+        mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setOnItemClickListener(this);
@@ -1073,24 +1073,24 @@ public class DownloadsScene extends ToolbarScene
         public DownloadHolder(View itemView) {
             super(itemView);
 
-            thumb = (LoadImageView) itemView.findViewById(R.id.thumb);
-            title = (TextView) itemView.findViewById(R.id.title);
-            uploader = (TextView) itemView.findViewById(R.id.uploader);
-            rating = (SimpleRatingView) itemView.findViewById(R.id.rating);
-            category = (TextView) itemView.findViewById(R.id.category);
+            thumb = itemView.findViewById(R.id.thumb);
+            title = itemView.findViewById(R.id.title);
+            uploader =  itemView.findViewById(R.id.uploader);
+            rating =  itemView.findViewById(R.id.rating);
+            category =  itemView.findViewById(R.id.category);
             start = itemView.findViewById(R.id.start);
             stop = itemView.findViewById(R.id.stop);
-            state = (TextView) itemView.findViewById(R.id.state);
-            progressBar = (ProgressBar) itemView.findViewById(R.id.progress_bar);
-            percent = (TextView) itemView.findViewById(R.id.percent);
-            speed = (TextView) itemView.findViewById(R.id.speed);
+            state =  itemView.findViewById(R.id.state);
+            progressBar =  itemView.findViewById(R.id.progress_bar);
+            percent =  itemView.findViewById(R.id.percent);
+            speed =  itemView.findViewById(R.id.speed);
 
             // TODO cancel on click listener when select items
             thumb.setOnClickListener(this);
             start.setOnClickListener(this);
             stop.setOnClickListener(this);
 
-            boolean isDarkTheme = !AttrResources.getAttrBoolean(getEHContext(), R.attr.isLightTheme);
+            boolean isDarkTheme = !AttrResources.getAttrBoolean(getEHContext(), androidx.appcompat.R.attr.isLightTheme);
             Ripple.addRipple(start, isDarkTheme);
             Ripple.addRipple(stop, isDarkTheme);
         }
