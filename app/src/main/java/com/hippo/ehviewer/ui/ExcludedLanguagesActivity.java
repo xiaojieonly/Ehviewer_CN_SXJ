@@ -164,7 +164,7 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
         mDeselectAll.setOnClickListener(this);
         mInvertSelection.setOnClickListener(this);
 
-        boolean isDarkTheme = !AttrResources.getAttrBoolean(this, R.attr.isLightTheme);
+        boolean isDarkTheme = !AttrResources.getAttrBoolean(this, androidx.appcompat.R.attr.isLightTheme);
         Ripple.addRipple(mCancel, isDarkTheme);
         Ripple.addRipple(mOk, isDarkTheme);
         Ripple.addRipple(mSelectAll, isDarkTheme);

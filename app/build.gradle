@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
-    apply plugin: 'io.fabric'
+//    apply plugin: 'io.fabric'
 }
 
 android {
@@ -41,12 +41,7 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    lintOptions {
+    lint {
         disable 'MissingTranslation'
         abortOnError true
         checkReleaseBuilds true
@@ -67,7 +62,6 @@ android {
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
-//            version '3.18.1'
         }
     }
     sourceSets {
@@ -75,6 +69,16 @@ android {
             java.srcDirs += 'src/main/java-gen'
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
 
 }
 
@@ -112,7 +116,9 @@ dependencies {
 
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.google.firebase:firebase-analytics:19.0.2'
-    implementation 'com.getkeepsafe.relinker:relinker:1.3.1'
+//    implementation 'com.getkeepsafe.relinker:relinker:1.3.1'
+    // https://mvnrepository.com/artifact/com.getkeepsafe.relinker/relinker
+    implementation 'com.getkeepsafe.relinker:relinker:1.4.4'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.seven332.a7zip:extract-lite:1b21783'
     implementation 'com.github.seven332:android-recaptcha:2bbb3459a8'

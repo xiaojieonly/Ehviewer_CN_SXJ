@@ -72,7 +72,8 @@
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Main"
             android:launchMode="singleTask"
-            android:windowSoftInputMode="stateHidden">
+            android:windowSoftInputMode="stateHidden"
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -111,7 +112,8 @@
             android:name="com.hippo.ehviewer.ui.GalleryActivity"
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Gallery"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

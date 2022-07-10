@@ -51,7 +51,7 @@ public abstract class EhPreferenceActivity extends PrettyPreferenceActivity {
 //            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
 //        }
         if (Settings.getApplyNavBarThemeColor()) {
-            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
+            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
         }
     }
 

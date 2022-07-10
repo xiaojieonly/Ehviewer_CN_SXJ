@@ -269,7 +269,7 @@ public class LockPatternView extends View {
         mPathPaint.setAntiAlias(true);
         mPathPaint.setDither(true);
 
-        mRegularColor = getResources().getColor(AttrResources.getAttrBoolean(context, R.attr.isLightTheme) ?
+        mRegularColor = getResources().getColor(AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme) ?
             R.color.lock_pattern_view_regular_color_light : R.color.lock_pattern_view_regular_color_dark);
         mErrorColor = getResources().getColor(R.color.lock_pattern_view_error_color);
         mSuccessColor = getResources().getColor(R.color.lock_pattern_view_success_color);
