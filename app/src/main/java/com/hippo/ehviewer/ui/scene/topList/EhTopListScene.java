@@ -1,4 +1,4 @@
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.topList;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.ViewPager;
 
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
@@ -27,6 +28,8 @@ import com.hippo.ehviewer.client.data.topList.TopListInfo;
 import com.hippo.ehviewer.client.data.topList.TopListItem;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.scene.BaseScene;
+import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.scene.SceneFragment;
 import com.hippo.view.ViewTransition;
@@ -74,6 +77,8 @@ public class EhTopListScene extends BaseScene {
     private ViewTransition mViewTransition;
     @Nullable
     private RecyclerView mRecyclerView;
+    @NonNull
+    private ViewPager drawPager;
 
 //    private ShowcaseView mShowcaseView;
 
@@ -83,12 +88,13 @@ public class EhTopListScene extends BaseScene {
 
     EhRequest mRequest;
 
+    @Nullable
+    private ListUrlBuilder mUrlBuilder = new ListUrlBuilder();
+
     private boolean mHasFirstRefresh = false;
 
     private static final boolean TRANSITION_ANIMATION_DISABLED = true;
 
-//    @Nullable
-//    private SearchBarMover mSearchBarMover;
 
 
     @Override
@@ -168,6 +174,7 @@ public class EhTopListScene extends BaseScene {
             return false;
         }
     }
+
 
     /**
      * 数据请求入口

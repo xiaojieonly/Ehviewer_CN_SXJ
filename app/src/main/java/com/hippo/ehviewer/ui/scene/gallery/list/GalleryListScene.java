@@ -74,6 +74,7 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.FavouriteStatusRouter;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.callBack.SubscriptionCallback;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
@@ -82,6 +83,8 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
+import com.hippo.ehviewer.client.data.userTag.UserTag;
+import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
 import com.hippo.ehviewer.client.parser.GalleryListParser;
@@ -98,7 +101,6 @@ import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.ProgressScene;
-import com.hippo.ehviewer.ui.scene.QuickSearchScene;
 import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.ehviewer.widget.SearchBar;
@@ -132,7 +134,7 @@ public final class GalleryListScene extends BaseScene
         implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
         SearchBar.Helper, SearchBar.OnStateChangeListener, FastScroller.OnDragHandlerListener,
         SearchLayout.Helper, SearchBarMover.Helper, View.OnClickListener, FabLayout.OnClickFabListener,
-        FabLayout.OnExpandListener {
+        FabLayout.OnExpandListener, SubscriptionCallback {
 
     @IntDef({STATE_NORMAL, STATE_SIMPLE_SEARCH, STATE_SEARCH, STATE_SEARCH_SHOW_LIST})
     @Retention(RetentionPolicy.SOURCE)
@@ -208,7 +210,9 @@ public final class GalleryListScene extends BaseScene
     @NonNull
     private ViewPager drawPager;
 
-    EhTagDatabase ehTags;
+    private  SubscriptionDraw subscriptionDraw;
+
+    private  EhTagDatabase ehTags;
 
     @Nullable
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
@@ -743,6 +747,9 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void onTagClick(String tagName) {
+        if (isDrawersVisible()){
+            closeDrawer(Gravity.RIGHT);
+        }
         if (null == mHelper || null == mUrlBuilder) {
             return;
         }
@@ -965,12 +972,12 @@ public final class GalleryListScene extends BaseScene
         drawPager = view.findViewById(R.id.drawer_list_pager);
 
         View bookmarksView = bookmarksViewBuild(inflater);
-//        View subscriptionView = subscriptionViewBuild(inflater);
+        View subscriptionView = subscriptionViewBuild(inflater);
 
         List<View> views = new ArrayList<>();
 
         views.add(bookmarksView);
-//        views.add(subscriptionView);
+        views.add(subscriptionView);
 
         DrawViewPagerAdapter pagerAdapter = new DrawViewPagerAdapter(views);
 
@@ -996,7 +1003,9 @@ public final class GalleryListScene extends BaseScene
         //汉化标签
         final boolean judge = Settings.getShowTagTranslations();
         if (judge && 0 != quickSearchList.size()) {
-            EhTagDatabase ehTags = EhTagDatabase.getInstance(context);
+            if (ehTags == null) {
+                ehTags = EhTagDatabase.getInstance(getContext());
+            }
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过已翻译的标签
@@ -1065,12 +1074,7 @@ public final class GalleryListScene extends BaseScene
         }
 
         toolbar.setOnClickListener(l->{
-//            drawPager.setCurrentItem(1);
-//
-//            TestThread testThread = new TestThread();
-//
-//            testThread.start();
-
+            drawPager.setCurrentItem(1);
         });
 
 
@@ -1078,43 +1082,44 @@ public final class GalleryListScene extends BaseScene
     }
 
     private View subscriptionViewBuild(LayoutInflater inflater){
+        subscriptionDraw = new SubscriptionDraw(getEHContext(),inflater,mClient,getTag(),ehTags);
+        return subscriptionDraw.onCreate(drawPager,getActivity2(),this);
+    }
 
-        View subscriptionView = inflater.inflate(R.layout.subscription_draw, null, false);
+    @Override
+    public void onSubscriptionItemClick(String name) {
+        onTagClick(name);
+    }
 
-        Toolbar toolbar = (Toolbar) ViewUtils.$$(subscriptionView, R.id.toolbar);
-        final TextView tip = (TextView) ViewUtils.$$(subscriptionView, R.id.tip);
-        final ListView listView = (ListView) ViewUtils.$$(subscriptionView, R.id.list_view);
-
+    @Override
+    public String getAddTagName(UserTagList userTagList) {
         Context context = getEHContext();
-        assert context != null;
-        AssertUtils.assertNotNull(context);
+        final ListUrlBuilder urlBuilder = mUrlBuilder;
+        if (null == context || null == urlBuilder) {
+            return null;
+        }
 
-        tip.setText(R.string.subscription_tip);
-        toolbar.setLogo(R.drawable.ic_baseline_subscriptions_24);
-        toolbar.setTitle(R.string.subscription);
-        toolbar.inflateMenu(R.menu.drawer_gallery_list);
-        toolbar.setOnMenuItemClickListener(item -> {  //点击增加快速搜索按钮触发
-            int id = item.getItemId();
-//            switch (id) {
-//                case R.id.action_add:
-//                    if (Settings.getQuickSearchTip()) {
-//                        showQuickSearchTipDialog(list, adapter, listView, tip);
-//                    } else {
-//                        showAddQuickSearchDialog(list, adapter, listView, tip);
-//                    }
-//                    break;
-//                case R.id.action_settings:
-//                    startScene(new Announcer(QuickSearchScene.class));
-//                    break;
-//            }
-            return true;
-        });
+        // Can't add image search as quick search
+        if (ListUrlBuilder.MODE_IMAGE_SEARCH == urlBuilder.getMode()) {
+            showTip(R.string.image_search_not_quick_search, LENGTH_LONG);
+            return null;
+        }
 
-        toolbar.setOnClickListener(l->{
-            drawPager.setCurrentItem(0);
-        });
+        if (urlBuilder.getKeyword() == null){
+            return null;
+        }
 
-        return subscriptionView;
+        if (userTagList == null || userTagList.userTags == null){
+            return getSuitableTitleForUrlBuilder(getEHContext().getResources(), urlBuilder, false);
+        }
+        // Check duplicate
+        for (UserTag q : userTagList.userTags) {
+            if (urlBuilder.equalKeyWord(q.tagName)) {
+                showTip(getString(R.string.duplicate_quick_search, q.tagName), LENGTH_LONG);
+                return null;
+            }
+        }
+        return getSuitableTitleForUrlBuilder(getEHContext().getResources(), urlBuilder, false);
     }
 
     private boolean checkDoubleClickExit() {
@@ -1880,6 +1885,11 @@ public final class GalleryListScene extends BaseScene
             args.putString(GalleryDetailScene.KEY_TOKEN, mToken);
             return new Announcer(GalleryDetailScene.class).setArgs(args);
         }
+
+        @Override
+        public CharSequence getText(TextView textView) {
+            return null;
+        }
     }
 
     private class GalleryPageUrlSuggestion extends UrlSuggestion {
@@ -1901,6 +1911,11 @@ public final class GalleryListScene extends BaseScene
             args.putString(ProgressScene.KEY_PTOKEN, mPToken);
             args.putInt(ProgressScene.KEY_PAGE, mPage);
             return new Announcer(ProgressScene.class).setArgs(args);
+        }
+
+        @Override
+        public CharSequence getText(TextView textView) {
+            return null;
         }
     }
 

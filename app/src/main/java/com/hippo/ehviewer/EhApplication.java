@@ -34,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.LruCache;
 
+import com.hippo.a7zip.A7Zip;
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.conaco.Conaco;
 import com.hippo.content.RecordingApplication;
@@ -42,6 +43,7 @@ import com.hippo.ehviewer.client.EhCookieStore;
 import com.hippo.ehviewer.client.EhDns;
 import com.hippo.ehviewer.client.EhEngine;
 import com.hippo.ehviewer.client.data.GalleryDetail;
+import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.CommonOperations;
@@ -112,6 +114,8 @@ public class EhApplication extends RecordingApplication {
     private DownloadManager mDownloadManager;
     private Hosts mHosts;
     private FavouriteStatusRouter mFavouriteStatusRouter;
+    @Nullable
+    private UserTagList userTagList;
 
     private final List<Activity> mActivityList = new ArrayList<>();
 
@@ -158,7 +162,7 @@ public class EhApplication extends RecordingApplication {
         Image.initialize(this);
         // 实际作用不确定，但是与64位应用有冲突
 //        A7Zip.loadLibrary(A7ZipExtractLite.LIBRARY, libname -> ReLinker.loadLibrary(EhApplication.this, libname));
-
+        A7Zip.initialize(this);
         if (EhDB.needMerge()) {
             EhDB.mergeOldDB(this);
         }
@@ -614,6 +618,26 @@ public class EhApplication extends RecordingApplication {
         EhApplication application = ((EhApplication) context.getApplicationContext());
 
         application.torrentList.remove(url);
+    }
+
+    /**
+     * 将用户订阅标签列表存入内存缓存
+     * @param context
+     * @param userTagList
+     */
+    public static void saveUserTagList(@NonNull Context context,UserTagList userTagList){
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+        application.userTagList = userTagList;
+    }
+
+    /**
+     * 从内存缓存中获取用户订阅标签列表
+     * @param context
+     * @return
+     */
+    public static UserTagList getUserTagList(@NonNull Context context){
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+        return application.userTagList;
     }
 
 }

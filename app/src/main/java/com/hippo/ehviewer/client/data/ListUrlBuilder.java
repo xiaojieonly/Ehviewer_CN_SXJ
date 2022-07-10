@@ -244,7 +244,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
     }
 
     public void set(String q) {
-        mMode = 2;
+        mMode = ListUrlBuilder.MODE_TAG;
         mCategory = -1;
         mKeyword = q;
         mAdvanceSearch = -1;
@@ -297,6 +297,13 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
         }
 
         return true;
+    }
+
+    public boolean equalKeyWord(String keyword){
+        if(mKeyword == null){
+            return false;
+        }
+        return  mKeyword.equals(keyword);
     }
 
     /**

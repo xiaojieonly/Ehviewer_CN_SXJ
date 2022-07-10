@@ -20,6 +20,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.client.data.userTag.TagPushParam;
+import com.hippo.ehviewer.client.data.userTag.UserTag;
 import com.hippo.ehviewer.client.exception.CancelledException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
@@ -55,7 +57,7 @@ public class EhClient {
     public static final int METHOD_IMAGE_SEARCH = 16;
     public static final int METHOD_ARCHIVE_LIST = 17;
     public static final int METHOD_DOWNLOAD_ARCHIVE = 18;
-    public static final int METHOD_ADD_WATCHED = 20;
+    public static final int METHOD_ADD_TAG = 20;
     public static final int METHOD_EDIT_WATCHED = 21;
     public static final int METHOD_DELETE_WATCHED = 22;
     public static final int METHOD_GET_WATCHED = 23;
@@ -177,9 +179,11 @@ public class EhClient {
                         return EhEngine.getArchiveList(this, mOkHttpClient, (String) params[0], (Long) params[1], (String) params[2]);
                     case METHOD_DOWNLOAD_ARCHIVE:
                         return EhEngine.downloadArchive(this, mOkHttpClient, (Long) params[0], (String) params[1], (String) params[2], (String) params[3]);
-                    case METHOD_ADD_WATCHED:
+                    case METHOD_ADD_TAG:
+                        return EhEngine.addTag(this, mOkHttpClient,(String) params[0],(TagPushParam) params[1]);
                     case METHOD_EDIT_WATCHED:
                     case METHOD_DELETE_WATCHED:
+                        return EhEngine.deleteWatchedTag(this, mOkHttpClient,(String) params[0],(UserTag) params[1]);
                     case METHOD_GET_WATCHED:
                         return EhEngine.getWatchedList(this, mOkHttpClient,(String) params[0]);
                     default:

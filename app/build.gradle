@@ -6,7 +6,7 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 32
     buildToolsVersion "30.0.3"
     ndkVersion '23.1.7779620'
 
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
-        targetSdkVersion 28
+        targetSdkVersion 32
         versionCode 109
         versionName "1.9.1.1"
         vectorDrawables.useSupportLibrary = true
@@ -67,7 +67,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
-            version '3.18.1'
+//            version '3.18.1'
         }
     }
     sourceSets {
