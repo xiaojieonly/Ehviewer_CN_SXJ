@@ -30,7 +30,9 @@ import com.hippo.ehviewer.client.data.EhTopListDetail;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
-import com.hippo.ehviewer.client.data.MyTagList;
+import com.hippo.ehviewer.client.data.userTag.TagPushParam;
+import com.hippo.ehviewer.client.data.userTag.UserTag;
+import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.exception.CancelledException;
 import com.hippo.ehviewer.client.exception.EhException;
@@ -89,6 +91,7 @@ public class EhEngine {
     private static final String KOKOMADE_URL = "https://exhentai.org/img/kokomade.jpg";
 
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+    public static final MediaType MEDIA_TYPE_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
     private static final MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
 
     private static final Pattern PATTERN_NEED_HATH_CLIENT = Pattern.compile("(You must have a H@H client assigned to your account to use this feature\\.)");
@@ -1071,17 +1074,16 @@ public class EhEngine {
         }
     }
 
-    public static MyTagList getWatchedList(@Nullable EhClient.Task task,
-                                           OkHttpClient okHttpClient, String url) throws Throwable {
+    public static UserTagList getWatchedList(@Nullable EhClient.Task task,
+                                             OkHttpClient okHttpClient, String url) throws Throwable {
         if (!Settings.isLogin()) {
             return null;
         }
         Log.d(TAG, url);
         Request request = new EhRequestBuilder(url).build();
         Call call = okHttpClient.newCall(request);
-        if (null != call) {
-            task.setCall(call);
-        }
+        assert task != null;
+        task.setCall(call);
 
         String body = null;
         Headers headers = null;
@@ -1101,22 +1103,74 @@ public class EhEngine {
         }
     }
 
-    public static Response addWatchedTag() throws Throwable {
+    public static UserTagList addTag(EhClient.Task task, OkHttpClient okHttpClient, String url, TagPushParam param) throws Throwable {
 
+        if (!Settings.isLogin()) {
+            return null;
+        }
+        Log.d(TAG, url);
 
-        return null;
+        RequestBody requestBody = RequestBody.create(MEDIA_TYPE_URLENCODED, param.addTagParam());
+
+        Request request = new EhRequestBuilder(url).post(requestBody).build();
+        Call call = okHttpClient.newCall(request);
+        assert task != null;
+        task.setCall(call);
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+
+            return MyTagLitParser.parse(body);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            return null;
+//            throw e;
+        }
+
     }
 
     public static Response editWatchedTag() throws Throwable {
-
-
         return null;
     }
 
-    public static Response deleteWatchedTag() throws Throwable {
+    public static UserTagList deleteWatchedTag(EhClient.Task task, OkHttpClient okHttpClient, String url, UserTag param) throws Throwable {
+        if (!Settings.isLogin()) {
+            return null;
+        }
+        Log.d(TAG, url);
 
+        RequestBody requestBody = RequestBody.create(MEDIA_TYPE_URLENCODED, param.deleteParam());
 
-        return null;
+        Request request = new EhRequestBuilder(url).post(requestBody).build();
+        Call call = okHttpClient.newCall(request);
+        assert task != null;
+        task.setCall(call);
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+
+            return MyTagLitParser.parse(body);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            return null;
+//            throw e;
+        }
     }
 
 }

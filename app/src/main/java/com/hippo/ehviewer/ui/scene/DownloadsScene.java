@@ -518,12 +518,13 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public View onCreateDrawerView(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.drawer_list, container, false);
+        View view = inflater.inflate(R.layout.bookmarks_draw, container, false);
 
         final Context context = getEHContext();
+        assert context != null;
         AssertUtils.assertNotNull(context);
 
-        Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        Toolbar toolbar = view.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.download_labels);
         toolbar.inflateMenu(R.menu.drawer_download);
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {

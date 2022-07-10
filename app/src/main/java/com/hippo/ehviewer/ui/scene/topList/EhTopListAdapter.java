@@ -1,14 +1,9 @@
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.topList;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
@@ -16,8 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.client.data.EhTopListDetail;
-import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.topList.TopListInfo;
 import com.hippo.ehviewer.client.data.topList.TopListItem;
 import com.hippo.ehviewer.client.data.topList.TopListItemArray;

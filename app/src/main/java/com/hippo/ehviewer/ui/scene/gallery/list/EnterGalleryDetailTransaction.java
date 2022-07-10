@@ -16,14 +16,11 @@
 
 package com.hippo.ehviewer.ui.scene.gallery.list;
 
-import android.app.UiAutomation;
 import android.content.Context;
-import android.os.Looper;
 import android.view.View;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.test.uiautomator.UiDevice;
 import androidx.transition.TransitionInflater;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;

@@ -1662,6 +1662,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
      * 2022/4/7
      * 心情不好
      * 这个方法写的跟屎一样
+     *
      * @param url
      * @param name
      * @param progress
@@ -1670,7 +1671,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @SuppressLint("SetTextI18n")
     private void showTorrentDownloadDialog(String url, String name, int progress, boolean success) {
         Context context = getEHContext();
-
+        if (!isAdded()) {
+            return;
+        }
         if (progress == 100 || !success) {
             View detail = torrentDownloadView.findViewById(R.id.download_detail);
             View progressView = torrentDownloadView.findViewById(R.id.progress_view);

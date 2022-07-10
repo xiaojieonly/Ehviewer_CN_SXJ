@@ -23,6 +23,7 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.GalleryTagGroup;
+import com.hippo.ehviewer.client.exception.EmptyGalleryException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.JsoupUtils;
@@ -351,7 +352,15 @@ public class GalleryListParser {
                 }
             }
             if (list.isEmpty()) {
-                throw new ParseException("No gallery", body);
+                try{
+                    String pageMessage = d.getElementsByClass("itg gltc").get(0).child(0).child(1).child(0).text();
+                    if (pageMessage.isEmpty()){
+                        throw new ParseException("No gallery", body);
+                    }
+                }catch (IndexOutOfBoundsException e){
+                    throw new ParseException("No gallery", body);
+                }
+//                throw new ParseException("No gallery", body);
             }
             result.galleryInfoList = list;
         } catch (Throwable e) {
@@ -362,4 +371,5 @@ public class GalleryListParser {
 
         return result;
     }
+
 }
