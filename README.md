@@ -137,7 +137,7 @@
 # 2021/12/19 :
  ###  新版本：1.8.10.0
  ###  新增可视化一键式操作的多标签查询功能
-![qq_pic_merged_1639920470396](https://user-images.githubusercontent.com/49278135/146677282-61ceaed0-355a-434b-ab4c-27ecdcfeebb0.jpg)
+![Snipaste_2022-07-20_19-41-42](https://user-images.githubusercontent.com/49278135/179973905-2a1b57b8-8956-462a-9c96-3aa9b373c197.png)
 ![qq_pic_merged_1639921442755](https://user-images.githubusercontent.com/49278135/146677296-8e7b397a-5dd0-43d1-bbb4-65caf496e35f.jpg)
 ![qq_pic_merged_1639921612664](https://user-images.githubusercontent.com/49278135/146677298-92e1a4f1-5e30-45f2-9be9-2abbc647d84f.jpg)
 
@@ -177,8 +177,8 @@
  ##  更改了长按画廊的弹窗的样式，现在的弹窗会显示更多的内容  
    ###  点击标题会将标题复制到剪切板  
    ###  点击标签会跳转至标签搜索页  
-   ###  点击封面图会跳转至详情页  
-   ![image](https://user-images.githubusercontent.com/49278135/145203218-7e8e3835-9312-4190-a8ee-2c5220e8ea4b.png)  
+   ###  点击封面图会跳转至详情页
+   ![Snipaste_2022-07-20_19-41-42](https://user-images.githubusercontent.com/49278135/179973550-3ba0e94e-2d18-423d-a12e-5159133a7310.png)  
  ##  修改了排行榜中的时间排序，现在从上到下依次为昨天、上个月、去年、有史以来，和以前相反  
    点击前往下载：[蓝奏云](https://wwe.lanzouo.com/iHIcQxdxd5c)  密码:493b  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
