@@ -17,6 +17,32 @@
 
 <resources>
 
+    <!--  black list (temporary)  -->
+    <string name="blacklist_id">用戶ID</string>
+    <string name="blacklist">黑名單</string>
+    <string name="join_in_blacklist">加入黑名單</string>
+    <string name="add_blacklist">新增封鎖用戶</string>
+    <string name="blacklist_tip">該封鎖系統會在 EHentai 網站評論系統的基礎上繼續封鎖留言。\n\n留言者封鎖項：排除該留言者上載的留言。這會增加畫廊的載入時間。</string>
+    <string name="blacklist_text">封鎖用戶</string>
+    <string name="delete_blacklist">解封用戶“%s”？</string>
+    <string name="blacklist_reason_text">封鎖原因</string>
+    <string name="settings_eh_blacklist">留言黑名單</string>
+    <string name="settings_eh_blacklist_summary">根據帳號名稱封鎖他人留言</string>
+    <string name="settings_advanced_dns_over_http_title">安全 DNS（DoH）</string>
+    <string name="settings_advanced_dns_over_http_summary">解决某些地區的 DNS 污染問題</string>
+    <string name="settings_advanced_domain_fronting_title">域名前置</string>
+    <string name="settings_advanced_domain_fronting_summary">繞過 SNI 封鎖</string>
+    <string name="settings_advanced_url_replace_title">url偽装,需關閉SNI</string>
+    <string name="settings_advanced_url_replace_summary">url偽装(需重啟，開啟後帳戶功能失效)</string>
+    <string name="share_favorites_dialog_title">分享收藏</string>
+    <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
+    <string name="add_favorites_dialog_message">新增收藏 %s ？</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_summary">應用提供的主機到IP的映射\n可被自訂 hosts.txt 覆蓋</string>
+
+    <string name="no_blicklist">這裏是黑名單</string>
+
+
     <string name="app_name">EhViewer</string>
 
     <!-- Theme -->
@@ -37,7 +63,7 @@
     <string name="password">密碼</string>
     <string name="recaptcha">驗證碼（非必需）</string>
 
-    <string name="recaptcha_none">點我</string>
+    <string name="recaptcha_none">輕觸此處</string>
     <string name="recaptcha_loading">載入中…</string>
     <string name="recaptcha_failure">失敗</string>
 
@@ -67,6 +93,9 @@
     <string name="clipboard_gallery_url_snack_message">剪貼簿裏有畫廊連結</string>
     <string name="clipboard_gallery_url_snack_action">檢視</string>
 
+    <!-- Message -->
+    <string name="image_save_success">Picture saved successfully</string>
+
     <string name="error_bad_status_code">錯誤狀態碼：%d</string>
     <string name="error_timeout">逾時</string>
     <string name="error_unknown_host">不明主機</string>
@@ -90,6 +119,7 @@
     <string name="error_get_ptoken_error">取得 pToken 時發生錯誤</string>
     <string name="error_cant_create_temp_file">無法建立暫存檔案</string>
     <string name="error_cant_save_image">無法儲存圖片</string>
+    <string name="error_save_image_existed">圖片已存在</string>
     <string name="error_invalid_number">無效的數字</string>
     <string name="error_please_login_first">請先登入</string>
     <string name="error_empty_html">空白頁面內容</string>
@@ -192,6 +222,8 @@
     <string name="image_search_not_quick_search">無法新增圖片搜尋為快速搜尋</string>
     <string name="duplicate_quick_search">已存在相同的快速搜尋，名稱為“%s”。</string>
     <string name="duplicate_name">名稱重覆</string>
+
+    <string name="subscription_tip">點擊 “+” 新增訂閱</string>
 
     <string name="go_to_hint">第 %1$d 頁，共 %2$d 頁</string>
 
@@ -306,6 +338,7 @@
     <!-- Gallery Previews -->
     <string name="gallery_previews">畫廊預覽</string>
     <string name="go_to">跳到</string>
+    <string name="tag_filter">過濾標籤</string>
 
     <!-- Download -->
     <string name="scene_download_title">下載 - %s</string>
@@ -412,6 +445,7 @@
     <string name="page_menu_refresh">@string/refresh</string>
     <string name="page_menu_share">@string/share</string>
     <string name="page_menu_save">儲存</string>
+    <string name="page_menu_save_to">另存到…</string>
     <string name="page_menu_add_bookmark">新增書籤</string>
     <string name="gallery_menu_title">選單</string>
     <string name="share_image">分享圖片</string>
@@ -477,6 +511,7 @@
     <string name="settings_read_screen_rotation_default">系統預設</string>
     <string name="settings_read_screen_rotation_portrait">直向</string>
     <string name="settings_read_screen_rotation_landscape">橫向</string>
+    <string name="settings_read_screen_rotation_sensor">自動旋轉</string>
     <string name="settings_read_reading_direction">閲讀方向</string>
     <string name="settings_read_reading_direction_left_to_right">從左至右</string>
     <string name="settings_read_reading_direction_right_to_Left">從右至左</string>
@@ -584,7 +619,9 @@
     <string name="settings_about_donate_paypal">PayPal</string>
     <string name="settings_about_donate_guide">支持指南</string>
     <string name="settings_about_donate_open">開啟</string>
-    <string name="settings_about_donate_copy">複製</string>
+    <string name="settings_about_donate_copy">複製電郵</string>
+    <string name="settings_save_image_aliPay">儲存支付寶QR Code</string>
+    <string name="settings_save_image_weChat">儲存微信QR Code</string>
     <string name="settings_about_donate_copied">已複製</string>
     <string name="settings_privacy_enable_analytics">啟用數據統計</string>
     <string name="settings_privacy_about_analytics">關於數據統計</string>
@@ -715,6 +752,8 @@
     <string name="settings_privacy">私隱</string>
     <string name="settings_privacy_secure">禁止螢幕擷取</string>
     <string name="settings_privacy_secure_summary">啟用後，將無法在本應用程式中擷取螢幕，同時，將不會在系統任務切換器中顯示本應用程式的內容預覽\n\n重新啟動應用程式以套用此設定</string>
+
+    <string name="download_service">下載服務</string>
     <string name="favorite_name">收藏畫廊</string>
 
 
@@ -732,5 +771,37 @@
     <string name="past_year_top_list">過去一年</string>
     <string name="past_month_top_list">過去一個月</string>
     <string name="yesterday_top_list">昨天</string>
+
+    <!--  侧滑栏头像和背景修改  -->
+    <string name="change_background_title">你確定要更換背景圖片嗎？</string>
+    <string name="change_background_message">更換背景圖片只會在此應用程式生效，無法與 E-hentai 或其他類似程式同步。</string>
+    <string name="change_avatar_title">你確定要更換你的頭像嗎？</string>
+    <string name="change_avatar_message">更換頭像只會在此應用程式生效，無法與 E-hentai 或其他類似程式同步。</string>
+    <string name="take_a_photograph">拍照</string>
+    <string name="choose_from_the_album">在相簿中選擇</string>
+    <string name="request_camera_permission">EhViewer 需要取得相機權限才能拍照。你願意授權嗎？</string>
+    <string name="request_storage_permission">EhViewer 需要存取裝置相簿權限以取得圖片。您願意授權嗎？</string>
+
+    <!-- 下载通知   -->
+    <string name="download_torrent_name">種子: %s</string>
+    <string name="download_torrent_state">狀態: </string>
+    <string name="download_torrent_path">路徑: %s</string>
+    <string name="sure">好</string>
+    <string name="try_again">再試一次</string>
+    <string name="open_directory">開啟檔案目錄</string>
+    <string name="downloading">下載中…… 請稍後再試</string>
+    <string name="torrent_exist">檔案已存在</string>
+    <string name="empty_subscription">沒有任何訂閱</string>
+
+    <!--  订阅服务 temporary -->
+    <string name="subscription_watched">已看過</string>
+    <string name="subscription_hidden">已隱藏</string>
+    <string name="delete_subscription_title">移除標籤</string>
+    <string name="can_not_use_this_tag">無法使用標籤</string>
+    <string name="add_tag_dialog_title">新增標籤</string>
+    <string name="tag_title">標籤欄</string>
+
+    <string name="yes">是</string>
+    <string name="cancel">取消</string>
 
 </resources>
