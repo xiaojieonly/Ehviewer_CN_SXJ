@@ -454,7 +454,7 @@
     <!-- Settings -->
     <string name="settings_eh">EH</string>
     <string name="settings_eh_sign_out">登出</string>
-    <string name="settings_eh_sign_out_summary">登出後重啟應用以便再次登入</string>
+    <string name="settings_eh_sign_out_summary">登出後重啟應用程式以便再次登入</string>
     <string name="settings_eh_sign_out_warning">你真係要登出？</string>
     <string name="settings_eh_sign_out_yes">係</string>
     <string name="settings_eh_sign_out_tip">已登出，重新啟動程式以再次登入</string>
@@ -600,7 +600,7 @@
     <string name="settings_advanced_export_data_to">已匯出數據至 %s</string>
     <string name="settings_advanced_export_data_failed">匯出數據失敗</string>
     <string name="settings_advanced_import_data">匯入數據</string>
-    <string name="settings_advanced_import_data_summary">從外置存儲器匯入數據</string>
+    <string name="settings_advanced_import_data_summary">從外置儲存裝置匯入數據</string>
     <string name="settings_advanced_import_data_successfully">匯入數據成功</string>
 
     <string name="settings_about">關於</string>
