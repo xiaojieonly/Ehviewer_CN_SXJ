@@ -164,4 +164,6 @@
     <dimen name="popup_text_padding">4dp</dimen>
     <dimen name="popup_text_margin">12dp</dimen>
 
+    <dimen name="download_search_bar_height">40dp</dimen>
+
 </resources>

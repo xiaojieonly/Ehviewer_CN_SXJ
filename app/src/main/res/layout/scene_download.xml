@@ -14,94 +14,104 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+<!--    <androidx.appcompat.widget.SearchView-->
+<!--        android:id="@+id/download_search"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="@dimen/download_search_bar_height" />-->
     <FrameLayout
-        android:id="@+id/content"
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.hippo.easyrecyclerview.EasyRecyclerView
-            android:id="@+id/recycler_view"
+        <FrameLayout
+            android:id="@+id/content"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent">
 
-        <com.hippo.easyrecyclerview.FastScroller
-            android:id="@+id/fast_scroller"
-            android:layout_width="30dp"
+            <com.hippo.easyrecyclerview.EasyRecyclerView
+                android:id="@+id/recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <com.hippo.easyrecyclerview.FastScroller
+                android:id="@+id/fast_scroller"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
+                android:paddingLeft="20dp"
+                android:paddingRight="4dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"/>
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tip"
+            android:layout_width="228dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:drawablePadding="16dp"
+            android:text="@string/no_download_info"
+            style="@style/TextAppearance.AppCompat.Medium"/>
+
+        <com.hippo.widget.FabLayout
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/fab_layout"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="right"
-            android:paddingLeft="20dp"
-            android:paddingRight="4dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"/>
+            android:paddingRight="@dimen/corner_fab_margin"
+            android:paddingBottom="@dimen/corner_fab_margin">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/v_check_all_dark_x24"
+                app:backgroundTint="?attr/widgetColorThemeAccent"
+                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/v_play_dark_x24"
+                app:backgroundTint="?attr/widgetColorThemeAccent"
+                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/v_pause_dark_x24"
+                app:backgroundTint="?attr/widgetColorThemeAccent"
+                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/v_delete_dark_x24"
+                app:backgroundTint="?attr/widgetColorThemeAccent"
+                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/v_folder_move_dark_x24"
+                app:backgroundTint="?attr/widgetColorThemeAccent"
+                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/v_close_dark_x24"
+                app:backgroundTint="?attr/widgetColorThemePrimary"
+                style="@style/Widget.Design.FloatingActionButton"/>
+
+        </com.hippo.widget.FabLayout>
 
     </FrameLayout>
+</LinearLayout>
 
-    <TextView
-        android:id="@+id/tip"
-        android:layout_width="228dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center_horizontal"
-        android:drawablePadding="16dp"
-        android:text="@string/no_download_info"
-        style="@style/TextAppearance.AppCompat.Medium"/>
-
-    <com.hippo.widget.FabLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/fab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingRight="@dimen/corner_fab_margin"
-        android:paddingBottom="@dimen/corner_fab_margin">
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_check_all_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_play_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_pause_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_delete_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_folder_move_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_close_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemePrimary"
-            style="@style/Widget.Design.FloatingActionButton"/>
-
-    </com.hippo.widget.FabLayout>
-
-</FrameLayout>
