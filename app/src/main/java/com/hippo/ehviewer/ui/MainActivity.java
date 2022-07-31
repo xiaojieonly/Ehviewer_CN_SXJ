@@ -905,7 +905,7 @@ public final class MainActivity extends StageActivity
         }
         if (resultCode == RESULT_OK)
             if ((requestCode == UserImageChange.TAKE_CAMERA || requestCode == UserImageChange.PICK_PHOTO) && userImageChange != null) {
-                userImageChange.saveImageForResult(requestCode, resultCode, data, mAvatar, mHeaderBackground);
+                userImageChange.saveImageForResult(requestCode, resultCode, data, mAvatar);
                 return;
             }
         super.onActivityResult(requestCode, resultCode, data);
