@@ -583,6 +583,7 @@
     <string name="settings_about_source">源码</string>
     <string name="settings_about_changelog">更新日志</string>
     <string name="settings_about_help">帮助</string>
+    <string name="settings_about_issue_help">问题帮助</string>
     <string name="settings_about_license">开源许可</string>
     <string name="settings_about_license_summary">EhViewer 的诞生离不开许多开源项目</string>
     <string name="settings_about_donate">捐赠</string>
@@ -767,6 +768,7 @@
     <string name="download_torrent_name">种子: %s</string>
     <string name="download_torrent_state">状态: </string>
     <string name="download_torrent_path">路径: %s</string>
+    <string name="download_search">在下载列表内搜索</string>
     <string name="sure">好的</string>
     <string name="try_again">再试一次</string>
     <string name="open_directory">打开目录</string>

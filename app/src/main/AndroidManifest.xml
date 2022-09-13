@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
 -->
-
+<!--    android:requestLegacyExternalStorage="true"-->
 <manifest xmlns:tools="http://schemas.android.com/tools"
     package="com.hippo.ehviewer"
     xmlns:android="http://schemas.android.com/apk/res/android">
@@ -42,6 +42,7 @@
         android:fullBackupContent="@xml/backup_scheme"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
+        android:requestLegacyExternalStorage="true"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="n">
 

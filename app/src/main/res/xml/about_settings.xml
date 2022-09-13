@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,40 +14,45 @@
   ~ limitations under the License.
   -->
 
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
         android:key="declaration"
-        android:title="@string/settings_about_declaration"
-        android:summary="@string/settings_about_declaration_summary"/>
+        android:summary="@string/settings_about_declaration_summary"
+        android:title="@string/settings_about_declaration" />
 
     <Preference
         android:key="author"
-        android:title="@string/settings_about_author"/>
+        android:title="@string/settings_about_author" />
 
 
     <com.hippo.preference.UrlPreference
         android:key="latest_release"
         android:title="@string/settings_about_latest_release"
-        app:url="https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases"/>
+        app:url="https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases" />
+
+    <com.hippo.preference.UrlPreference
+        android:ellipsize="end"
+        android:key="issue_help"
+        android:singleLine="true"
+        android:title="@string/settings_about_issue_help"
+        app:url="https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md" />
 
     <com.hippo.preference.ActivityPreference
         android:key="license"
-        android:title="@string/settings_about_license"
         android:summary="@string/settings_about_license_summary"
-        app:activity="com.hippo.ehviewer.ui.LicenseActivity"/>
+        android:title="@string/settings_about_license"
+        app:activity="com.hippo.ehviewer.ui.LicenseActivity" />
 
-    <com.hippo.ehviewer.preference.VersionPreference
-        android:key="version"/>
+    <com.hippo.ehviewer.preference.VersionPreference android:key="version" />
 
     <Preference
         android:key="check_for_updates"
-        android:title="@string/settings_about_check_for_updates"/>
+        android:title="@string/settings_about_check_for_updates" />
 
     <Preference
         android:key="donate"
-        android:title="@string/settings_about_donate"/>
+        android:title="@string/settings_about_donate" />
 
-</PreferenceScreen>
+</androidx.preference.PreferenceScreen>
