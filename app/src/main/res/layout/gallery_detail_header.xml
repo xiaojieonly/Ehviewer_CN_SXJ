@@ -32,7 +32,7 @@
             android:background="?attr/galleryDetailHeaderBackgroundColor"
             android:elevation="4dp" />
 
-        <Space
+        <androidx.legacy.widget.Space
             android:layout_width="match_parent"
             android:layout_height="24dp" />
 
@@ -55,10 +55,10 @@
                 android:id="@+id/thumb"
                 android:layout_width="@dimen/gallery_detail_thumb_width"
                 android:layout_height="@dimen/gallery_detail_thumb_height"
-                android:layout_marginLeft="@dimen/keyline_margin"
+                android:layout_marginStart="@dimen/keyline_margin"
                 android:layout_marginTop="@dimen/keyline_margin"
                 android:layout_marginBottom="@dimen/keyline_margin"
-                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
                 android:layout_alignWithParentIfMissing="true"
                 android:scaleType="fitCenter" />
 
@@ -69,7 +69,7 @@
                 android:layout_alignTop="@id/thumb"
                 android:layout_marginLeft="@dimen/keyline_margin"
                 android:layout_marginRight="@dimen/keyline_margin"
-                android:layout_toRightOf="@id/thumb"
+                android:layout_toEndOf="@id/thumb"
                 android:ellipsize="end"
                 android:maxLines="5"
                 android:textColor="@android:color/white"
@@ -80,9 +80,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/title"
-                android:layout_alignLeft="@id/title"
+                android:layout_alignStart="@id/title"
                 android:layout_marginTop="8dp"
-                android:layout_marginRight="@dimen/keyline_margin"
+                android:layout_marginEnd="@dimen/keyline_margin"
                 android:background="?selectableItemBackgroundBorderless"
                 android:ellipsize="end"
                 android:singleLine="true"
@@ -94,9 +94,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/uploader"
-                android:layout_alignLeft="@id/title"
+                android:layout_alignStart="@id/title"
                 android:layout_marginTop="12dp"
-                android:layout_marginRight="@dimen/keyline_margin"
+                android:layout_marginEnd="@dimen/keyline_margin"
                 android:ellipsize="end"
                 android:paddingLeft="8dp"
                 android:paddingTop="2dp"
@@ -111,7 +111,7 @@
                 android:layout_width="48dp"
                 android:layout_height="56dp"
                 android:layout_alignParentTop="true"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:background="?selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"

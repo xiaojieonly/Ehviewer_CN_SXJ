@@ -19,7 +19,7 @@
         res/values/themes.xml-->
     <declare-styleable name="Theme">
         <!--   背景颜色     -->
-        <attr name="android:windowBackground" format="color"/>
+        <attr name="android:windowBackground" format="color" />
         <attr name="android:navigationBarColor" format="color" />
         <attr name="buttonStyle" format="reference" />
 
@@ -105,8 +105,8 @@
     </declare-styleable>
 
     <declare-styleable name="FixedThumbNew">
-<!--        <attr name="minAspect" format="float" />-->
-<!--        <attr name="maxAspect" format="float" />-->
+        <!--        <attr name="minAspect" format="float" />-->
+        <!--        <attr name="maxAspect" format="float" />-->
     </declare-styleable>
 
     <declare-styleable name="CheckTextView">
@@ -204,6 +204,9 @@
 
     <declare-styleable name="UrlPreference">
         <attr name="url" format="string" />
+        <attr name="android:maxLines" format="integer" />
+        <attr name="singleLine" format="boolean" />
+        <attr name="android:ellipsize" format="string" />
     </declare-styleable>
 
     <declare-styleable name="SeekBarPreference">

@@ -16,7 +16,6 @@
 
 <!--linkpackage com.hippo.ehviewer.ui.fragment.AboutFragment-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -27,7 +26,7 @@
         android:layout_height="match_parent"
         android:text="@string/settings_about_donate_message" />
 
-    <Space
+    <androidx.legacy.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="@dimen/keyline_margin" />
 
@@ -40,8 +39,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="@dimen/gallery_page_min_height"
-            android:layout_toLeftOf="@+id/image_center"
-            android:layout_weight="1"
+            android:layout_toStartOf="@+id/image_center"
             android:id="@+id/image_aliPay"
             android:background="@drawable/zhifubao" />
 
@@ -58,8 +56,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="@dimen/gallery_page_min_height"
-            android:layout_toRightOf="@+id/image_center"
-            android:layout_weight="1"
+            android:layout_toEndOf="@+id/image_center"
             android:id="@+id/image_weChat"
             android:background="@drawable/weixin" />
     </RelativeLayout>
@@ -121,7 +118,7 @@
 
 
 
-    <Space
+    <androidx.legacy.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="@dimen/keyline_margin" />
 

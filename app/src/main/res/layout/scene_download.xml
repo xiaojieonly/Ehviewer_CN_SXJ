@@ -19,12 +19,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-<!--    <androidx.appcompat.widget.SearchView-->
-<!--        android:id="@+id/download_search"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="@dimen/download_search_bar_height" />-->
+<!--    <com.hippo.ehviewer.widget.SearchBar-->
+<!--        android:id="@+id/download_search_bar"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginLeft="@dimen/gallery_search_bar_margin_h"-->
+<!--        android:layout_marginRight="@dimen/gallery_search_bar_margin_h"-->
+<!--        android:layout_marginTop="@dimen/gallery_search_bar_margin_v"-->
+<!--        style="@style/CardView.Normal"/>-->
     <FrameLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -43,8 +46,8 @@
                 android:layout_width="30dp"
                 android:layout_height="match_parent"
                 android:layout_gravity="right"
-                android:paddingLeft="20dp"
-                android:paddingRight="4dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="4dp"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
