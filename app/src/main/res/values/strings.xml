@@ -701,7 +701,7 @@
     <string name="app_language_th" translatable="false">ไทย</string>
     <string name="app_language_zh_cn" translatable="false">中文（大陆）</string>
     <string name="app_language_zh_hk" translatable="false">中文（香港）</string>
-    <string name="app_language_zh_tw" translatable="false">國文（臺灣）</string>
+    <string name="app_language_zh_tw" translatable="false">中文（臺灣）</string>
 
     <!-- ExcludedLanguagesScene -->
     <string name="excluded_languages">Excluded languages</string>
