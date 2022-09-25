@@ -3,7 +3,7 @@
 
 # 2022/09/25 :
  ###  新版本：1.9.2.0
- ###  新增下载列表搜索功能
+ ###  新增下载列表搜索功能(目前仅支持按名称搜索)
  ###  下载->点击右上角菜单图标->搜索画廊
 ![image](https://user-images.githubusercontent.com/49278135/192130533-15d57ba6-6a02-4326-b340-c97b94d74c93.png)
 ![image](https://user-images.githubusercontent.com/49278135/192130566-5b04d2c5-0438-4f29-9212-09db723a2f94.png)
