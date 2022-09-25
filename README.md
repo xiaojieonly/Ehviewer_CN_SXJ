@@ -1,6 +1,16 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/08/22 :
+ ###  新版本：1.9.2.1
+ ###  紧急修复了1.9.2.0更新与支持页面无法进入的bug
+
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/icOi20cbnw6f)  密码:d6s8  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2022/09/25 :
  ###  新版本：1.9.2.0
  ###  新增下载列表搜索功能(目前仅支持按名称搜索)
