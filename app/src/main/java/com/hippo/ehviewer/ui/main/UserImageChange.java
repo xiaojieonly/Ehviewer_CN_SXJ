@@ -18,11 +18,11 @@ import android.transition.TransitionSet;
 import android.transition.Visibility;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -65,7 +65,7 @@ public class UserImageChange implements PermissionCallBack {
     private Uri imageUri;
     private File outputImage;
 
-    private ImageChangeCallBack imageChangeCallBack;
+    private final ImageChangeCallBack imageChangeCallBack;
 
 
     public UserImageChange(@NonNull Activity activity,
@@ -180,31 +180,30 @@ public class UserImageChange implements PermissionCallBack {
                 REQUEST_STORAGE_PERMISSION, this);
     }
 
-    public void saveImageForResult(int requestCode, int resultCode, @Nullable Intent data, AvatarImageView avatar, ImageView background) {
+    public void saveImageForResult(int requestCode, int resultCode, @Nullable Intent data, AvatarImageView avatar) {
         if (resultCode != Activity.RESULT_OK) {
             return;
         }
         if (requestCode == PICK_PHOTO) {
             assert data != null;
-            saveImageFromAlbum(data, avatar, background);
+            saveImageFromAlbum(data, avatar);
         } else {
-            saveImageFromCamera(avatar, background);
+            saveImageFromCamera(avatar);
         }
 
     }
 
-    private void saveImageFromCamera(AvatarImageView avatar, ImageView background) {
+    private void saveImageFromCamera(AvatarImageView avatar) {
         Settings.saveFilePath(key,
                 outputImage.getPath());
         if (dialogType == CHANGE_BACKGROUND) {
             imageChangeCallBack.backgroundSourceChange(new File(outputImage.getPath()));
-//            background.setImageBitmap(BitmapFactory.decodeFile(outputImage.getPath()));
         } else {
             avatar.setImageBitmap(BitmapFactory.decodeFile(outputImage.getPath()));
         }
     }
 
-    private void saveImageFromAlbum(Intent data, AvatarImageView avatar, ImageView background) {
+    private void saveImageFromAlbum(Intent data, AvatarImageView avatar) {
 
         String imagePath = null;
         Uri uri = data.getData();
@@ -218,8 +217,13 @@ public class UserImageChange implements PermissionCallBack {
                 String selection = MediaStore.Images.Media._ID + "=" + id;
                 imagePath = getImagePath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection);
             } else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
-                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content: //downloads/public_downloads"), Long.parseLong(docId));
-                imagePath = getImagePath(contentUri, null);
+                try {
+                    Uri contentUri = ContentUris.withAppendedId(Uri.parse("content: //downloads/public_downloads"), Long.parseLong(docId));
+                    imagePath = getImagePath(contentUri, null);
+                }catch (NumberFormatException e){
+                    e.printStackTrace();
+                    Toast.makeText(activity,"获取图片路径出错",Toast.LENGTH_SHORT).show();
+                }
             }
         } else {
             assert uri != null;
@@ -232,10 +236,10 @@ public class UserImageChange implements PermissionCallBack {
             }
         }
         // 根据图片路径显示图片
-        saveImage(imagePath, avatar, background);
+        saveImage(imagePath, avatar);
     }
 
-    private void saveImage(String imagePath, AvatarImageView avatar, ImageView background) {
+    private void saveImage(String imagePath, AvatarImageView avatar) {
 
         if (imagePath == null){
             return;

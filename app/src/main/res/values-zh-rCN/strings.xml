@@ -342,6 +342,8 @@
     <string name="download_start_all">全部开始</string>
     <string name="download_stop_all">全部停止</string>
     <string name="download_reset_reading_progress">重置阅读进度</string>
+    <string name="download_search_gallery">搜索画廊</string>
+    <string name="download_search_hint">输入关键字</string>
     <string name="reset_reading_progress_message">重置所有已下载画廊的阅读进度？</string>
     <string name="download_service_label">EhViewer 下载服务</string>
     <string name="download_speed_text">%s</string>

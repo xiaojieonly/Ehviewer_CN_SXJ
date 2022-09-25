@@ -146,6 +146,11 @@ public class EhUtils {
         }
     }
 
+    public static boolean judgeSuitableTitle(GalleryInfo gi,String key) {
+        String titleB = gi.titleJpn+""+gi.title;
+        return titleB.contains(key);
+    }
+
     @Nullable
     public static String extractTitle(String title) {
         if (null == title) {

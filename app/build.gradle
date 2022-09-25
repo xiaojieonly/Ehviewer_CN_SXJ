@@ -6,7 +6,7 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 30
     buildToolsVersion "30.0.3"
     ndkVersion '23.1.7779620'
 
@@ -23,9 +23,10 @@ android {
     defaultConfig {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
-        targetSdkVersion 32
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 29
         versionCode 109
-        versionName "1.9.1.2"
+        versionName "1.9.2.0"
         vectorDrawables.useSupportLibrary = true
         resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
                 "es", "ja", "ko", "fr", "de", "th"
@@ -73,6 +74,8 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildFeatures {
@@ -114,7 +117,7 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.2.73'
     implementation 'androidx.recyclerview:recyclerview:1.2.0'
 
-    // https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng
+//     https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng
     implementation 'com.fpliu.ndk.pkg.prefab.android.21:libpng:1.6.37'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.google.firebase:firebase-analytics:19.0.2'

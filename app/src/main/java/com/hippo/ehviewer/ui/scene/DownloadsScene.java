@@ -27,12 +27,12 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,9 +40,11 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -51,6 +53,7 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
@@ -79,8 +82,10 @@ import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
+import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.ripple.Ripple;
@@ -92,6 +97,7 @@ import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.FabLayout;
 import com.hippo.widget.LoadImageView;
+import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.FileUtils;
@@ -99,6 +105,7 @@ import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -110,7 +117,7 @@ public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener,
         EasyRecyclerView.OnItemClickListener,
         EasyRecyclerView.OnItemLongClickListener,
-        FabLayout.OnClickFabListener, FastScroller.OnDragHandlerListener {
+        FabLayout.OnClickFabListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
 
@@ -120,6 +127,8 @@ public class DownloadsScene extends ToolbarScene
     private static final String KEY_LABEL = "label";
 
     public static final String ACTION_CLEAR_DOWNLOAD_SERVICE = "clear_download_service";
+
+    private static final long ANIMATE_TIME = 300L;
 
     /*---------------
      Whole life cycle
@@ -146,6 +155,14 @@ public class DownloadsScene extends ToolbarScene
     private AutoStaggeredGridLayoutManager mLayoutManager;
 
     private ShowcaseView mShowcaseView;
+
+    private AlertDialog mSearchDialog;
+    private SearchBar mSearchBar;
+    @Nullable
+    @ViewLifeCircle
+    private SearchBarMover mSearchBarMover;
+    private boolean mSearchMode = false;
+    private String searchKey = null;
 
     private int mInitPosition = -1;
 
@@ -244,12 +261,29 @@ public class DownloadsScene extends ToolbarScene
             }
         }
 
+        filterBySearchKey();
+
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
 
         updateTitle();
         Settings.putRecentDownloadLabel(mLabel);
+    }
+
+    private void filterBySearchKey() {
+        if (searchKey == null || searchKey.isEmpty() || mList == null) {
+            return;
+        }
+        List<DownloadInfo> cache = new ArrayList<>();
+
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo info = mList.get(i);
+            if (EhUtils.judgeSuitableTitle(info, searchKey)) {
+                cache.add(info);
+            }
+        }
+        mList = cache;
     }
 
     private void updateTitle() {
@@ -278,7 +312,7 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     @Override
     public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_download, container, false);
 
         View content = ViewUtils.$$(view, R.id.content);
@@ -468,6 +502,7 @@ public class DownloadsScene extends ToolbarScene
         return R.menu.scene_download;
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         // Skip when in choice mode
@@ -491,7 +526,11 @@ public class DownloadsScene extends ToolbarScene
                 return true;
             }
             case R.id.action_reset_reading_progress: {
-                new AlertDialog.Builder(getContext())
+                Context context = getEHContext();
+                if (context == null) {
+                    return false;
+                }
+                new AlertDialog.Builder(context)
                         .setMessage(R.string.reset_reading_progress_message)
                         .setNegativeButton(android.R.string.cancel, null)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
@@ -501,8 +540,69 @@ public class DownloadsScene extends ToolbarScene
                         }).show();
                 return true;
             }
+            case R.id.search_download_gallery: {
+                Context context = getEHContext();
+                if (context == null) {
+                    return false;
+                }
+                gotoSearch(context);
+                return true;
+            }
         }
         return false;
+    }
+
+    private void gotoSearch(Context context) {
+        if (mSearchDialog != null) {
+            mSearchDialog.show();
+            return;
+        }
+        LayoutInflater layoutInflater = LayoutInflater.from(context);
+
+        Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_download);
+
+        LinearLayout linearLayout = (LinearLayout) layoutInflater.inflate(R.layout.download_search_dialog, null);
+        mSearchBar = linearLayout.findViewById(R.id.download_search_bar);
+        mSearchBar.setHelper(this);
+        mSearchBar.setEditTextHint(R.string.download_search_hint);
+        mSearchBar.setLeftDrawable(drawable);
+        mSearchBar.setText(searchKey);
+        if (searchKey != null && !searchKey.isEmpty()) {
+            mSearchBar.setTitle(searchKey);
+            mSearchBar.cursorToEnd();
+        } else {
+            mSearchBar.setTitle(R.string.download_search_hint);
+        }
+
+        mSearchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
+        mSearchBarMover = new SearchBarMover(this, mSearchBar, null);
+        mSearchDialog = new AlertDialog.Builder(context)
+                .setMessage(R.string.download_search_gallery)
+                .setView(linearLayout)
+                .setCancelable(false)
+                .setOnDismissListener(this::onSearchDialogDismiss)
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    mSearchBar.applySearch(true);
+                    dialog.dismiss();
+                }).show();
+    }
+
+    private void onSearchDialogDismiss(DialogInterface dialog) {
+        mSearchMode = false;
+    }
+
+    private void enterSearchMode(boolean animation) {
+        if (mSearchMode || mSearchBar == null || mSearchBarMover == null) {
+            return;
+        }
+        mSearchMode = true;
+        mSearchBar.setState(SearchBar.STATE_SEARCH_LIST, animation);
+
+        mSearchBarMover.returnSearchBarPosition(animation);
+
     }
 
     public void updateView() {
@@ -517,7 +617,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public View onCreateDrawerView(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                                   @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.bookmarks_draw, container, false);
 
         final Context context = getEHContext();
@@ -577,7 +677,7 @@ public class DownloadsScene extends ToolbarScene
         final List<String> labels = new ArrayList<>(list.size() + 1);
         // Add default label name
         labels.add(getString(R.string.default_download_label_name));
-        for (DownloadLabel raw: list) {
+        for (DownloadLabel raw : list) {
             labels.add(raw.getLabel());
         }
 
@@ -933,7 +1033,7 @@ public class DownloadsScene extends ToolbarScene
         new AsyncTask<UniFile, Void, Void>() {
             @Override
             protected Void doInBackground(UniFile... params) {
-                for (UniFile file: params) {
+                for (UniFile file : params) {
                     if (file != null) {
                         file.delete();
                     }
@@ -941,6 +1041,82 @@ public class DownloadsScene extends ToolbarScene
                 return null;
             }
         }.executeOnExecutor(IoThreadPoolExecutor.getInstance(), files);
+    }
+
+    @Override
+    public void onClickTitle() {
+        if (!mSearchMode) {
+            enterSearchMode(true);
+        }
+    }
+
+    @Override
+    public void onClickLeftIcon() {
+
+    }
+
+    @Override
+    public void onClickRightIcon() {
+        mSearchBar.applySearch(true);
+    }
+
+    @Override
+    public void onSearchEditTextClick() {
+
+    }
+
+
+    @Override
+    public void onApplySearch(String query) {
+        searchKey = query;
+        mSearchBar.hideKeyBoard();
+
+        if (mSearchMode) {
+            mSearchMode = false;
+            mSearchBar.setTitle(query);
+            mSearchBar.setState(SearchBar.STATE_NORMAL);
+        }
+
+        mSearchDialog.dismiss();
+        updateForLabel();
+        updateAdapter();
+    }
+
+    private void updateAdapter() {
+        mAdapter = new DownloadAdapter();
+        mAdapter.setHasStableIds(true);
+        if (mRecyclerView != null) {
+            mRecyclerView.setAdapter(mAdapter);
+        }
+    }
+
+    @Override
+    public void onSearchEditTextBackPressed() {
+        if (mSearchMode) {
+            mSearchMode = false;
+        }
+        mSearchBar.setState(SearchBar.STATE_NORMAL, true);
+    }
+
+    @Override
+    public void onStateChange(SearchBar searchBar, int newState, int oldState, boolean animation) {
+
+    }
+
+    @Override
+    public boolean isValidView(RecyclerView recyclerView) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public RecyclerView getValidRecyclerView() {
+        return null;
+    }
+
+    @Override
+    public boolean forceShowSearchBar() {
+        return false;
     }
 
     private class DeleteDialogHelper implements DialogInterface.OnClickListener {
@@ -984,7 +1160,7 @@ public class DownloadsScene extends ToolbarScene
         private final CheckBoxDialogBuilder mBuilder;
 
         public DeleteRangeDialogHelper(List<DownloadInfo> downloadInfoList,
-                LongList gidList, CheckBoxDialogBuilder builder) {
+                                       LongList gidList, CheckBoxDialogBuilder builder) {
             mDownloadInfoList = downloadInfoList;
             mGidList = gidList;
             mBuilder = builder;
@@ -1012,7 +1188,7 @@ public class DownloadsScene extends ToolbarScene
             if (checked) {
                 UniFile[] files = new UniFile[mDownloadInfoList.size()];
                 int i = 0;
-                for (DownloadInfo info: mDownloadInfoList) {
+                for (DownloadInfo info : mDownloadInfoList) {
                     // Remove download path
                     EhDB.removeDownloadDirname(info.gid);
                     // Put file
@@ -1075,15 +1251,15 @@ public class DownloadsScene extends ToolbarScene
 
             thumb = itemView.findViewById(R.id.thumb);
             title = itemView.findViewById(R.id.title);
-            uploader =  itemView.findViewById(R.id.uploader);
-            rating =  itemView.findViewById(R.id.rating);
-            category =  itemView.findViewById(R.id.category);
+            uploader = itemView.findViewById(R.id.uploader);
+            rating = itemView.findViewById(R.id.rating);
+            category = itemView.findViewById(R.id.category);
             start = itemView.findViewById(R.id.start);
             stop = itemView.findViewById(R.id.stop);
-            state =  itemView.findViewById(R.id.state);
-            progressBar =  itemView.findViewById(R.id.progress_bar);
-            percent =  itemView.findViewById(R.id.percent);
-            speed =  itemView.findViewById(R.id.speed);
+            state = itemView.findViewById(R.id.state);
+            progressBar = itemView.findViewById(R.id.progress_bar);
+            percent = itemView.findViewById(R.id.percent);
+            speed = itemView.findViewById(R.id.speed);
 
             // TODO cancel on click listener when select items
             thumb.setOnClickListener(this);
@@ -1174,10 +1350,12 @@ public class DownloadsScene extends ToolbarScene
             if (mList == null) {
                 return;
             }
+
             DownloadInfo info = mList.get(position);
+            String title = EhUtils.getSuitableTitle(info);
             holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                     new ThumbDataContainer(info), true);
-            holder.title.setText(EhUtils.getSuitableTitle(info));
+            holder.title.setText(title);
             holder.uploader.setText(info.uploader);
             holder.rating.setRating(info.rating);
             TextView category = holder.category;
@@ -1188,10 +1366,14 @@ public class DownloadsScene extends ToolbarScene
             }
             bindForState(holder, info);
 
-            // Update transition name
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
+            if (searchKey != null && !searchKey.isEmpty()) {
+                if (!title.contains(searchKey)) {
+                    holder.itemView.setVisibility(View.GONE);
+                }
             }
+
+            // Update transition name
+            ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         }
 
         @Override
@@ -1200,7 +1382,7 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private class DownloadChoiceListener implements  EasyRecyclerView.CustomChoiceListener {
+    private class DownloadChoiceListener implements EasyRecyclerView.CustomChoiceListener {
 
         @Override
         public void onIntoCustomChoice(EasyRecyclerView view) {
@@ -1263,7 +1445,8 @@ public class DownloadsScene extends ToolbarScene
         }
 
         @Override
-        public void onUrlMoved(String requestUrl, String responseUrl) {}
+        public void onUrlMoved(String requestUrl, String responseUrl) {
+        }
 
         @Override
         public boolean save(InputStream is, long length, String mediaType, ProgressNotifier notify) {

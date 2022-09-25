@@ -168,8 +168,12 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
     private void updateSuggestions(boolean scrollToTop) {
         mSuggestionList.clear();
+        Editable editable = mEditText.getText();
+        String text = "";
+        if (editable != null) {
+            text = editable.toString();
+        }
 
-        String text = mEditText.getText().toString();
 
         if (mSuggestionProvider != null) {
             List<Suggestion> suggestions = mSuggestionProvider.providerSuggestions(text);
@@ -191,9 +195,9 @@ public class SearchBar extends CardView implements View.OnClickListener,
                 List<Pair<String, String>> searchHints = ehTagDatabase.suggest(keyword);
 
                 for (Pair<String, String> searchHint : searchHints) {
-                    if (showTranslation){
+                    if (showTranslation) {
                         mSuggestionList.add(new TagSuggestion(searchHint.first, searchHint.second));
-                    }else {
+                    } else {
                         mSuggestionList.add(new TagSuggestion(null, searchHint.second));
                     }
                 }
@@ -224,6 +228,10 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mEditText.setHint(hint);
     }
 
+    public void setEditTextHint(int resId) {
+        mEditText.setHint(resId);
+    }
+
     public void setHelper(Helper helper) {
         mHelper = helper;
     }
@@ -237,19 +245,33 @@ public class SearchBar extends CardView implements View.OnClickListener,
     }
 
     public void setText(String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
         mEditText.setText(text);
     }
 
     public String getText() {
-        return mEditText.getText().toString();
+        Editable text = mEditText.getText();
+        if (text != null) {
+            return text.toString();
+        }
+        return null;
     }
 
     public void cursorToEnd() {
-        mEditText.setSelection(mEditText.getText().length());
+        Editable text = mEditText.getText();
+        if (text != null) {
+            mEditText.setSelection(mEditText.getText().length());
+        }
     }
 
     public void setTitle(String title) {
         mTitleTextView.setText(title);
+    }
+
+    public void setTitle(int resId) {
+        mTitleTextView.setText(resId);
     }
 
     public void setSearch(String search) {
@@ -258,7 +280,17 @@ public class SearchBar extends CardView implements View.OnClickListener,
     }
 
     public void setLeftDrawable(Drawable drawable) {
+        if (drawable == null) {
+            mMenuButton.setVisibility(View.GONE);
+        }
         mMenuButton.setImageDrawable(drawable);
+    }
+
+    public void setLeftDrawable(ImageView view) {
+        if (view == null) {
+            mMenuButton.setVisibility(View.GONE);
+        }
+        mMenuButton = view;
     }
 
     public void setRightDrawable(Drawable drawable) {
@@ -280,7 +312,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mEditText.setLayoutParams(lp);
     }
 
-    public void applySearch() {
+    private void applySearch() {
         String query = mEditText.getText().toString().trim();
 
         if (!mAllowEmptySearch && TextUtils.isEmpty(query)) {
@@ -291,6 +323,18 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mSearchDatabase.addQuery(query);
         // Callback
         mHelper.onApplySearch(query);
+    }
+
+    public void applySearch(boolean hideKeyboard) {
+        if (hideKeyboard) {
+            hideKeyBoard();
+        }
+        applySearch();
+    }
+
+    public void hideKeyBoard() {
+        InputMethodManager manager = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        manager.hideSoftInputFromWindow(this.getWindowToken(), 0);
     }
 
     @Override
@@ -314,6 +358,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
         }
         return false;
     }
+
 
     public int getState() {
         return mState;
@@ -368,6 +413,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
         showImeAndSuggestionsList(true);
     }
 
+
     public void showImeAndSuggestionsList(boolean animation) {
         // Show ime
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -391,9 +437,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
                     mInAnimation = false;
                 }
             });
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                oa.setAutoCancel(true);
-            }
+            oa.setAutoCancel(true);
             oa.start();
         } else {
             mListContainer.setVisibility(View.VISIBLE);
@@ -426,9 +470,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
                     mInAnimation = false;
                 }
             });
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                oa.setAutoCancel(true);
-            }
+            oa.setAutoCancel(true);
             oa.start();
         } else {
             setProgress(0f);
@@ -588,9 +630,9 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
             hintView.setText(hint);
 
-            if (text == null || text.isEmpty()){
+            if (text == null || text.isEmpty()) {
                 textView.setVisibility(GONE);
-            }else {
+            } else {
                 textView.setVisibility(View.VISIBLE);
                 textView.setText(text);
             }
@@ -624,7 +666,17 @@ public class SearchBar extends CardView implements View.OnClickListener,
         public void onClick() {
             Editable editable = mEditText.getText();
             if (editable != null) {
-                mEditText.setText(mKeyword);
+                String key = mKeyword;
+                if (editable.toString().contains(" ")) {
+                    StringBuilder builder = new StringBuilder(editable);
+                    char c = ' ';
+                    while (builder.charAt(builder.length() - 1) != c) {
+                        builder.deleteCharAt(builder.length() - 1);
+                    }
+                    builder.append(mKeyword);
+                    key = builder.toString();
+                }
+                mEditText.setText(key);
                 mEditText.setSelection(mEditText.getText().length());
             }
         }

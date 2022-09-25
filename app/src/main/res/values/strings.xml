@@ -415,6 +415,8 @@
     <string name="download_start_all">Start all</string>
     <string name="download_stop_all">Stop all</string>
     <string name="download_reset_reading_progress">Reset reading progress</string>
+    <string name="download_search_gallery">Search gallery</string>
+    <string name="download_search_hint">Input search key</string>
     <string name="reset_reading_progress_message">Reset the reading progress of all downloaded galleries?</string>
     <string name="download_service_label">EhViewer Download Service</string>
     <string name="download_speed_text">%s</string>
