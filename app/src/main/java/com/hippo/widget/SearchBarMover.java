@@ -37,6 +37,9 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
     public SearchBarMover(Helper helper, View searchBar, RecyclerView... recyclerViews) {
         mHelper = helper;
         mSearchBar = searchBar;
+        if (recyclerViews == null){
+            return;
+        }
         for (RecyclerView recyclerView: recyclerViews) {
             recyclerView.addOnScrollListener(this);
         }

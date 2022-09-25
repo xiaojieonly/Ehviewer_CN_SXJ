@@ -49,6 +49,7 @@ public class UrlPreference extends Preference {
         a.recycle();
     }
 
+
     @Override
     public CharSequence getSummary() {
         if (null != mUrl) {

@@ -711,7 +711,7 @@ public class FavoritesScene extends BaseScene implements
             enterSearchMode(true);
         } else {
             if (mSearchBar != null) {
-                mSearchBar.applySearch();
+                mSearchBar.applySearch(false);
             }
         }
     }

@@ -36,4 +36,9 @@
       android:title="@string/download_reset_reading_progress"
       app:showAsAction="never"/>
 
+    <item
+      android:id="@+id/search_download_gallery"
+      android:title="@string/download_search_gallery"
+      app:showAsAction="never"/>
+
 </menu>

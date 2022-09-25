@@ -28,6 +28,7 @@ import java.net.ProtocolException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 import javax.net.ssl.SSLException;
 
@@ -60,8 +61,11 @@ public final class ExceptionUtils {
         } else if (e instanceof ProtocolException || e instanceof SocketException || e instanceof SSLException) {
             return GetText.getString(R.string.error_socket);
         } else if (e instanceof EhException) {
-            return e.getMessage();
+            return ""+e.getMessage();
         } else {
+            if (e.getLocalizedMessage() == null){
+                return ""+e.getMessage();
+            }
             if (e.getLocalizedMessage().equals(e.getMessage())) {
                 return e.getLocalizedMessage();
             }

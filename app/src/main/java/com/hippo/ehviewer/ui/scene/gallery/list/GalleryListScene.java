@@ -1304,7 +1304,7 @@ public final class GalleryListScene extends BaseScene
     @Override
     public void onClick(View v) {
         if (STATE_NORMAL != mState && null != mSearchBar) {
-            mSearchBar.applySearch();
+            mSearchBar.applySearch(false);
             hideSoftInput();
         }
     }
