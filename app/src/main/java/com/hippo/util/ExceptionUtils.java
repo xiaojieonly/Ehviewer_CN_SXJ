@@ -56,15 +56,15 @@ public final class ExceptionUtils {
                 sb.append(", ").append(sce.getMessage());
             }
             return sb.toString();
-        } else if (e instanceof ProtocolException && e.getMessage().startsWith("Too many follow-up requests:")) {
+        } else if (e instanceof ProtocolException && e.getMessage() != null && e.getMessage().startsWith("Too many follow-up requests:")) {
             return GetText.getString(R.string.error_redirection);
         } else if (e instanceof ProtocolException || e instanceof SocketException || e instanceof SSLException) {
             return GetText.getString(R.string.error_socket);
         } else if (e instanceof EhException) {
-            return ""+e.getMessage();
+            return "" + e.getMessage();
         } else {
-            if (e.getLocalizedMessage() == null){
-                return ""+e.getMessage();
+            if (e.getLocalizedMessage() == null) {
+                return "" + e.getMessage();
             }
             if (e.getLocalizedMessage().equals(e.getMessage())) {
                 return e.getLocalizedMessage();
