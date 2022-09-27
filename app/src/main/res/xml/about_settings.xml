@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
@@ -55,4 +55,4 @@
         android:key="donate"
         android:title="@string/settings_about_donate" />
 
-</androidx.preference.PreferenceScreen>
+</PreferenceScreen>

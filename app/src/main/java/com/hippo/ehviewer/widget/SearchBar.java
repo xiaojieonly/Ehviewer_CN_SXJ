@@ -245,9 +245,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
     }
 
     public void setText(String text) {
-        if (text == null || text.isEmpty()) {
-            return;
-        }
         mEditText.setText(text);
     }
 

@@ -1242,6 +1242,18 @@ public class Settings {
     }
 
 
+    private static final String SHOW_GALLERY_REVIEW = "is_show_gallery_review";
+
+    private static boolean IS_SHOW_GALLERY_REVIEW = false;
+
+    public static boolean isShowGalleryReview() {
+        return getBoolean(SHOW_GALLERY_REVIEW, IS_SHOW_GALLERY_REVIEW);
+    }
+
+    public static void setShowGalleryReview(boolean value) {
+        putBoolean(SHOW_GALLERY_REVIEW, value);
+    }
+
     public static final String USER_BACKGROUND_IMAGE = "background_image_path";
     public static final String USER_AVATAR_IMAGE = "avatar_image_path";
 

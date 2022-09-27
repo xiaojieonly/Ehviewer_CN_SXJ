@@ -1366,12 +1366,6 @@ public class DownloadsScene extends ToolbarScene
             }
             bindForState(holder, info);
 
-            if (searchKey != null && !searchKey.isEmpty()) {
-                if (!title.contains(searchKey)) {
-                    holder.itemView.setVisibility(View.GONE);
-                }
-            }
-
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         }
