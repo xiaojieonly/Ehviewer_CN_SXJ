@@ -1,6 +1,11 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/10/15 : QQ群情况说明
+ ###  qq群号:1050579343 此群被人举报已被封
+ ###  新群号：295885970
+    
+
 # 2022/09/27 : 不太紧急修复
  ###  新版本：1.9.2.3
  ###  修复了1.9.2.2中搜索栏中清空搜索栏按钮无法使用的bug
