@@ -31,6 +31,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <com.hippo.widget.ProgressView
+            android:id="@+id/download_progress_view"
+            style="@style/ProgressView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
         <FrameLayout
             android:id="@+id/content"
             android:layout_width="match_parent"

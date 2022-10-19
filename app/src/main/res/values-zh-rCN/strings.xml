@@ -351,6 +351,8 @@
     <string name="remember_download_label">记住下载标签</string>
     <string name="default_download_label">默认下载标签</string>
     <string name="added_to_download_list">已添加至下载列表</string>
+    <string name="download_searching">正在搜索请稍候</string>
+    <string name="download_searching_failed">搜索失败，请尝试重启软件</string>
 
     <!-- Download label -->
     <string name="no_download_label">这里是下载标签</string>
@@ -469,6 +471,7 @@
     <string name="settings_eh_excluded_languages">排除语言</string>
     <string name="settings_eh_excluded_languages_summary">在主页与搜索中隐藏指定语言的画廊</string>
     <string name="settings_eh_show_jpn_title">显示日文标题</string>
+    <string name="settings_eh_show_gallery_comment">显示画廊评论</string>
     <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">显示画廊页数</string>
     <string name="settings_eh_show_gallery_pages_summary">在画廊列表中显示页数</string>
