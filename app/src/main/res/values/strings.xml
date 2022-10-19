@@ -424,6 +424,8 @@
     <string name="remember_download_label">Remember download label</string>
     <string name="default_download_label">Default download label</string>
     <string name="added_to_download_list">Added to download list</string>
+    <string name="download_searching">Searching please wait</string>
+    <string name="download_searching_failed">Searching failed</string>
 
     <!-- Download label -->
     <string name="no_download_label">Download labels will be shown here</string>
@@ -541,6 +543,7 @@
     <string name="settings_eh_excluded_tag_namespaces">Excluded tag namespaces</string>
     <string name="settings_eh_excluded_tag_namespaces_summary">Exclude certain namespaces from a default tag search</string>
     <string name="settings_eh_show_jpn_title">Show Japanese title</string>
+    <string name="settings_eh_show_gallery_comment">Show Gallery Comment</string>
     <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>
