@@ -1,6 +1,22 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/10/16 :  
+ ###  新版本：1.9.3.0  
+ ###  新增评论区打开关闭功能：设置->EH->显示画廊评论（开关）  
+ ###  新增下载列表标签查询（仅限新下载画廊，旧画廊需要点击详情页获取画廊标签数据）  
+ ###  本版本更新了数据库，更新后无法回滚版本，请谨慎更新  
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/inTed0dymv0b)  密码:7ro3  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
+# 2022/10/15 : QQ群情况说明
+ ###  qq群号:1050579343 此群被人举报已被封
+ ###  新群号：295885970
+    
+
 # 2022/09/27 : 不太紧急修复
  ###  新版本：1.9.2.3
  ###  修复了1.9.2.2中搜索栏中清空搜索栏按钮无法使用的bug
