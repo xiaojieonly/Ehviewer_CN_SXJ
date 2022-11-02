@@ -1,6 +1,11 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 ###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/11/03 :   
+ ###  紧急通知：里站翻页暂时无法使用，请耐心等待修复，表站能正常使用  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
 # 2022/10/16 :  
  ###  新版本：1.9.3.0  
  ###  新增评论区打开关闭功能：设置->EH->显示画廊评论（开关）  
