@@ -1,5 +1,21 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
-###### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
+# [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
+
+# 2022/10/16 : 紧急修复页面跳转问题  
+ ###  新版本：1.9.3.1  
+ ###  修复了里站页面无法跳转的问题  
+ ###  由于E站页面跳转处理逻辑转变，现在将无法跳转至指定页面  
+ ###  无法继续使用的旧功能在未来的更新中将逐步剔除  
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/i5TWg0f5ew2j)  密码:9k0n  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
+# 2022/11/03 :   
+ ###  紧急通知：里站翻页暂时无法使用，请耐心等待修复，表站能正常使用  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
 
 # 2022/10/16 :  
  ###  新版本：1.9.3.0  
