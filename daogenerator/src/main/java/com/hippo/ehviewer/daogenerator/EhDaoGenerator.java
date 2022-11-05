@@ -36,7 +36,7 @@ public class EhDaoGenerator {
     private static final String OUT_DIR = "../app/src/main/java-gen";
     private static final String DELETE_DIR = "../app/src/main/java-gen/com/hippo/ehviewer/dao";
 
-    private static final int VERSION = 5;
+    private static final int VERSION = 6;
 
     private static final String DOWNLOAD_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/DownloadInfo.java";
     private static final String HISTORY_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/HistoryInfo.java";
@@ -45,6 +45,7 @@ public class EhDaoGenerator {
     private static final String BOOKMARK_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
     private static final String FILTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
     private static final String BLACKLIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
+    private static final String GALLERY_TAG_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/GalleryTags.java";
 
 
     public static void generate() throws Exception {
@@ -54,6 +55,7 @@ public class EhDaoGenerator {
         outDir.mkdirs();
 
         Schema schema = new Schema(VERSION, PACKAGE);
+        addGalleryTags(schema);
         addDownloads(schema);
         addDownloadLabel(schema);
         addDownloadDirname(schema);
@@ -65,6 +67,7 @@ public class EhDaoGenerator {
         addFilter(schema);
         new DaoGenerator().generateAll(schema, OUT_DIR);
 
+        adjustGalleryTags();
         adjustDownloadInfo();
         adjustHistoryInfo();
         adjustQuickSearch();
@@ -76,6 +79,63 @@ public class EhDaoGenerator {
 
 
 
+
+    private static void addGalleryTags(Schema schema) {
+        Entity entity = schema.addEntity("GalleryTags");
+        entity.setTableName("Gallery_Tags");
+        entity.setClassNameDao("GalleryTagsDao");
+        entity.addLongProperty("gid").primaryKey().notNull();
+        entity.addStringProperty("rows");
+        entity.addStringProperty("artist");
+        entity.addStringProperty("cosplayer");
+        entity.addStringProperty("character");
+        entity.addStringProperty("female");
+        entity.addStringProperty("group");
+        entity.addStringProperty("language");
+        entity.addStringProperty("male");
+        entity.addStringProperty("misc");
+        entity.addStringProperty("mixed");
+        entity.addStringProperty("other");
+        entity.addStringProperty("parody");
+        entity.addStringProperty("reclass");
+        entity.addDateProperty("create_time");
+        entity.addDateProperty("update_time");
+    }
+
+
+    private static void adjustGalleryTags() throws Exception {
+        JavaClassSource javaClass = Roaster.parse(JavaClassSource.class, new File(GALLERY_TAG_PATH));
+
+        // Set all field public
+        javaClass.getField("gid").setPublic();
+        javaClass.getField("rows").setPublic();
+        javaClass.getField("artist").setPublic();
+        javaClass.getField("cosplayer").setPublic();
+        javaClass.getField("character").setPublic();
+        javaClass.getField("female").setPublic();
+        javaClass.getField("group").setPublic();
+        javaClass.getField("language").setPublic();
+        javaClass.getField("male").setPublic();
+        javaClass.getField("misc").setPublic();
+        javaClass.getField("mixed").setPublic();
+        javaClass.getField("other").setPublic();
+        javaClass.getField("parody").setPublic();
+        javaClass.getField("reclass").setPublic();
+        javaClass.getField("create_time").setPublic();
+        javaClass.getField("update_time").setPublic();
+
+        javaClass.addMethod("\t@Override\n" +
+                "\tpublic String toString() {\n" +
+                "\t\tJSONObject jsonObject = (JSONObject) JSONObject.toJSON(this);\n"+
+                "\t\treturn jsonObject.toJSONString();\n" +
+                "\t}");
+
+        javaClass.addImport("com.alibaba.fastjson.JSONObject");
+
+        FileWriter fileWriter = new FileWriter(GALLERY_TAG_PATH);
+        fileWriter.write(javaClass.toString());
+        fileWriter.close();
+    }
 
     private static void addBlackList(Schema schema) {
         Entity entity = schema.addEntity("BlackList");

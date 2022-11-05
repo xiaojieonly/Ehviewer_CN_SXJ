@@ -37,6 +37,10 @@ public class FavoritesParser {
         public int[] countArray; // Size 10
         public int pages;
         public int nextPage;
+        public String firstHref;
+        public String prevHref;
+        public String nextHref;
+        public String lastHref;
         public List<GalleryInfo> galleryInfoList;
     }
 
@@ -73,6 +77,10 @@ public class FavoritesParser {
         re.countArray = countArray;
         re.pages = result.pages;
         re.nextPage = result.nextPage;
+        re.firstHref = result.firstHref;
+        re.nextHref = result.nextHref;
+        re.prevHref = result.prevHref;
+        re.lastHref = result.lastHref;
         re.galleryInfoList = result.galleryInfoList;
 
         return re;

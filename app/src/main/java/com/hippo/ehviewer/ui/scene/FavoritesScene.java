@@ -39,6 +39,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -175,6 +177,8 @@ public class FavoritesScene extends BaseScene implements
     private boolean mModifyAdd;
 
     private ShowcaseView mShowcaseView;
+
+    private FavoritesParser.Result mResult;
 
     @Override
     public int getNavCheckedItem() {
@@ -1016,6 +1020,7 @@ public class FavoritesScene extends BaseScene implements
     }
 
     private void onGetFavoritesSuccess(FavoritesParser.Result result, int taskId) {
+        mResult = result;
         if (mHelper != null && mSearchBarMover != null &&
                 mHelper.isCurrentTask(taskId)) {
 
@@ -1301,6 +1306,89 @@ public class FavoritesScene extends BaseScene implements
             } else {
                 mUrlBuilder.setIndex(page);
                 String url = mUrlBuilder.build();
+                EhRequest request = new EhRequest();
+                request.setMethod(EhClient.METHOD_GET_FAVORITES);
+                request.setCallback(new GetFavoritesListener(getContext(),
+                        activity.getStageId(), getTag(),
+                        taskId, false, mUrlBuilder.getKeyword()));
+                request.setArgs(url, Settings.getShowJpnTitle());
+                mClient.execute(request);
+            }
+        }
+
+        @Override
+        protected void getExPageData(int pageAction, int taskId, int page) {
+            MainActivity activity = getActivity2();
+            if (null == activity || null == mUrlBuilder || null == mClient ) {
+                return;
+            }
+
+            if (mEnableModify) {
+                mEnableModify = false;
+
+                boolean local = mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL;
+
+                long[] gidArray = new long[mModifyGiList.size()];
+                if (mModifyAdd) {
+                    String[] tokenArray = new String[mModifyGiList.size()];
+                    for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
+                        GalleryInfo gi = mModifyGiList.get(i);
+                        gidArray[i] = gi.gid;
+                        tokenArray[i] = gi.token;
+                    }
+                    List<GalleryInfo> modifyGiListBackup = new ArrayList<>(mModifyGiList);
+                    mModifyGiList.clear();
+
+                    EhRequest request = new EhRequest();
+                    request.setMethod(EhClient.METHOD_ADD_FAVORITES_RANGE);
+                    request.setCallback(new AddFavoritesListener(getContext(),
+                            activity.getStageId(), getTag(),
+                            taskId, mUrlBuilder.getKeyword(), modifyGiListBackup));
+                    request.setArgs(gidArray, tokenArray, mModifyFavCat);
+                    mClient.execute(request);
+                } else {
+                    for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
+                        gidArray[i] = mModifyGiList.get(i).gid;
+                    }
+                    mModifyGiList.clear();
+
+                    String url;
+                    if (local) {
+                        // Local fav is shown now, but operation need be done for cloud fav
+                        url = EhUrl.getFavoritesUrl();
+                    } else {
+//                        url = mUrlBuilder.build();
+                        url = mResult.nextHref;
+                    }
+
+                    mUrlBuilder.setIndex(page);
+                    EhRequest request = new EhRequest();
+                    request.setMethod(EhClient.METHOD_MODIFY_FAVORITES);
+                    request.setCallback(new GetFavoritesListener(getContext(),
+                            activity.getStageId(), getTag(),
+                            taskId, local, mUrlBuilder.getKeyword()));
+                    request.setArgs(url, gidArray, mModifyFavCat, Settings.getShowJpnTitle());
+                    mClient.execute(request);
+                }
+            } else if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
+                final String keyword = mUrlBuilder.getKeyword();
+                SimpleHandler.getInstance().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onGetFavoritesLocal(keyword, taskId);
+                    }
+                });
+            } else {
+                mUrlBuilder.setIndex(page);
+//                String url = mUrlBuilder.build();
+                String url = mResult.nextHref;
+                if (url.isEmpty()) {
+                    Toast.makeText(getContext(), R.string.gallery_list_action_url_missed, Toast.LENGTH_LONG).show();
+                    if (mHelper!=null){
+                        mHelper.cancelCurrentTask();
+                    }
+                    return;
+                }
                 EhRequest request = new EhRequest();
                 request.setMethod(EhClient.METHOD_GET_FAVORITES);
                 request.setCallback(new GetFavoritesListener(getContext(),

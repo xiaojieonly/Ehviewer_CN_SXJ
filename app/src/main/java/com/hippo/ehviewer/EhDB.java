@@ -36,6 +36,8 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.DownloadLabelDao;
 import com.hippo.ehviewer.dao.DownloadsDao;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.dao.GalleryTags;
+import com.hippo.ehviewer.dao.GalleryTagsDao;
 import com.hippo.ehviewer.dao.HistoryDao;
 import com.hippo.ehviewer.dao.HistoryInfo;
 import com.hippo.ehviewer.dao.LocalFavoriteInfo;
@@ -45,6 +47,7 @@ import com.hippo.ehviewer.dao.QuickSearchDao;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.SqlUtils;
+import com.hippo.util.TimeUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.collect.SparseJLArray;
@@ -60,6 +63,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class EhDB {
@@ -132,13 +136,32 @@ public class EhDB {
                         "\"ANGRYWITH\" TEXT," + // 3: angrywith
                         "\"ADD_TIME\" TEXT," + // 4: add_time
                         "\"MODE\" INTEGER);");
+            case 5:
+                db.execSQL("DROP TABLE IF EXISTS \"Gallery_Tags\"");
+                db.execSQL("CREATE TABLE " + "\"Gallery_Tags\" (" + //
+                        "\"GID\" INTEGER PRIMARY KEY NOT NULL ," + // 0: gid
+                        "\"ROWS\" TEXT," + // 1: rows
+                        "\"ARTIST\" TEXT," + // 2: artist
+                        "\"COSPLAYER\" TEXT," + // 3: cosplayer
+                        "\"CHARACTER\" TEXT," + // 4: character
+                        "\"FEMALE\" TEXT," + // 5: female
+                        "\"GROUP\" TEXT," + // 6: group
+                        "\"LANGUAGE\" TEXT," + // 7: language
+                        "\"MALE\" TEXT," + // 8: male
+                        "\"MISC\" TEXT," + // 9: misc
+                        "\"MIXED\" TEXT," + // 10: mixed
+                        "\"OTHER\" TEXT," + // 11: other
+                        "\"PARODY\" TEXT," + // 12: parody
+                        "\"RECLASS\" TEXT," + // 13: reclass
+                        "\"CREATE_TIME\" INTEGER," + // 14: create_time
+                        "\"UPDATE_TIME\" INTEGER);"); // 15: update_time
         }
     }
 
     private static class OldDBHelper extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "data";
-        private static final int VERSION = 5;
+        private static final int VERSION = 6;
 
         private static final String TABLE_GALLERY = "gallery";
         private static final String TABLE_LOCAL_FAVOURITE = "local_favourite";
@@ -565,17 +588,16 @@ public class EhDB {
 
     public static synchronized boolean inBlackList(String Badgayname){
         BlackListDao dao = sDaoSession.getBlackListDao();
-        return  dao.queryRaw("where Badgayname =\'"+Badgayname+"\'").size() == 0 ? false : true;
+        return dao.queryRaw("where Badgayname ='" + Badgayname + "'").size() != 0;
     }
 
     public static synchronized void insertBlackList(BlackList blackList){
         BlackListDao dao = sDaoSession.getBlackListDao();
         blackList.id = null;
         if (blackList.badgayname == null){
-
-        }else {
-            dao.insert(blackList);
+            return;
         }
+        dao.insert(blackList);
     }
 
     public static synchronized void updateBlackList(BlackList blackList){
@@ -586,6 +608,43 @@ public class EhDB {
     public static synchronized void deleteBlackList(BlackList blackList){
         BlackListDao dao = sDaoSession.getBlackListDao();
         dao.delete(blackList);
+    }
+
+    public static synchronized List<GalleryTags> getAllGalleryTags(){
+        GalleryTagsDao dao = sDaoSession.getGalleryTagsDao();
+        return dao.queryBuilder().orderAsc(GalleryTagsDao.Properties.Gid).list();
+    }
+
+    public static synchronized boolean inGalleryTags(long gid){
+        GalleryTagsDao dao = sDaoSession.getGalleryTagsDao();
+        return dao.queryRaw("where gid =" + gid ).size() != 0;
+    }
+
+    public static synchronized GalleryTags queryGalleryTags(long gid){
+        GalleryTagsDao dao = sDaoSession.getGalleryTagsDao();
+        List<GalleryTags> list = dao.queryRaw("where gid =" + gid );
+        if (list.isEmpty()){
+            return null;
+        }
+        return list.get(0);
+    }
+
+    public static synchronized void insertGalleryTags(GalleryTags galleryTags){
+        GalleryTagsDao dao = sDaoSession.getGalleryTagsDao();
+        galleryTags.create_time = new Date();
+        galleryTags.update_time = galleryTags.create_time;
+        dao.insert(galleryTags);
+    }
+
+    public static synchronized void updateGalleryTags(GalleryTags galleryTags){
+        GalleryTagsDao dao = sDaoSession.getGalleryTagsDao();
+        galleryTags.update_time = new Date();
+        dao.update(galleryTags);
+    }
+
+    public static synchronized void deleteGalleryTags(GalleryTags galleryTags){
+        GalleryTagsDao dao = sDaoSession.getGalleryTagsDao();
+        dao.delete(galleryTags);
     }
 
     public static synchronized List<QuickSearch> getAllQuickSearch() {
@@ -830,6 +889,22 @@ public class EhDB {
             for (Filter filter: filterList) {
                 if (!currentFilterList.contains(filter)) {
                     addFilter(filter);
+                }
+            }
+
+            List<BlackList> blackList = session.getBlackListDao().queryBuilder().list();
+            List<BlackList> currentBlackList = sDaoSession.getBlackListDao().queryBuilder().list();
+            for (BlackList black: blackList) {
+                if (!currentBlackList.contains(black)) {
+                    insertBlackList(black);
+                }
+            }
+
+            List<GalleryTags> galleryTagsList = session.getGalleryTagsDao().queryBuilder().list();
+            List<GalleryTags> currentGalleryTags = sDaoSession.getGalleryTagsDao().queryBuilder().list();
+            for (GalleryTags tags: galleryTagsList) {
+                if (!currentGalleryTags.contains(tags)) {
+                    insertGalleryTags(tags);
                 }
             }
 

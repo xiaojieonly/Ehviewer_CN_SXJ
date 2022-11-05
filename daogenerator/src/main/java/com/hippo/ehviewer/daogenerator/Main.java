@@ -18,7 +18,11 @@ package com.hippo.ehviewer.daogenerator;
 
 public class Main {
 
-    public static void main(String args[]) throws Exception {
-        EhDaoGenerator.generate();
+    public static void main(String args[]){
+        try {
+            EhDaoGenerator.generate();
+        }catch (Throwable t){
+            System.out.println(t);
+        }
     }
 }

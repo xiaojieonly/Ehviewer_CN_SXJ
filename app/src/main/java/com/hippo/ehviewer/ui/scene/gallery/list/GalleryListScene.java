@@ -210,9 +210,11 @@ public final class GalleryListScene extends BaseScene
     @NonNull
     private ViewPager drawPager;
 
-    private  SubscriptionDraw subscriptionDraw;
+    private SubscriptionDraw subscriptionDraw;
 
-    private  EhTagDatabase ehTags;
+    private EhTagDatabase ehTags;
+
+    private GalleryListParser.Result mResult;
 
     @Nullable
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
@@ -747,7 +749,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void onTagClick(String tagName) {
-        if (isDrawersVisible()){
+        if (isDrawersVisible()) {
             closeDrawer(Gravity.RIGHT);
         }
         if (null == mHelper || null == mUrlBuilder) {
@@ -987,7 +989,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     @SuppressLint({"RtlHardcoded", "NonConstantResourceId"})
-    private View bookmarksViewBuild(LayoutInflater inflater){
+    private View bookmarksViewBuild(LayoutInflater inflater) {
 
         View bookmarksView = inflater.inflate(R.layout.bookmarks_draw, null, false);
 
@@ -1073,7 +1075,7 @@ public final class GalleryListScene extends BaseScene
             listView.setVisibility(View.VISIBLE);
         }
 
-        toolbar.setOnClickListener(l->{
+        toolbar.setOnClickListener(l -> {
             drawPager.setCurrentItem(1);
         });
 
@@ -1081,9 +1083,9 @@ public final class GalleryListScene extends BaseScene
         return bookmarksView;
     }
 
-    private View subscriptionViewBuild(LayoutInflater inflater){
-        subscriptionDraw = new SubscriptionDraw(getEHContext(),inflater,mClient,getTag(),ehTags);
-        return subscriptionDraw.onCreate(drawPager,getActivity2(),this);
+    private View subscriptionViewBuild(LayoutInflater inflater) {
+        subscriptionDraw = new SubscriptionDraw(getEHContext(), inflater, mClient, getTag(), ehTags);
+        return subscriptionDraw.onCreate(drawPager, getActivity2(), this);
     }
 
     @Override
@@ -1105,11 +1107,11 @@ public final class GalleryListScene extends BaseScene
             return null;
         }
 
-        if (urlBuilder.getKeyword() == null){
+        if (urlBuilder.getKeyword() == null) {
             return null;
         }
 
-        if (userTagList == null || userTagList.userTags == null){
+        if (userTagList == null || userTagList.userTags == null) {
             return getSuitableTitleForUrlBuilder(getEHContext().getResources(), urlBuilder, false);
         }
         // Check duplicate
@@ -1317,9 +1319,14 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void showGoToDialog() {
-
         Context context = getEHContext();
+
         if (null == context || null == mHelper) {
+            return;
+        }
+
+        if (mResult.pages<0||mResult.nextPage<0){
+            Toast.makeText(context,R.string.gallery_list_can_not_jump,Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -1819,6 +1826,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void onGetGalleryListSuccess(GalleryListParser.Result result, int taskId) {
+        mResult = result;
         if (mHelper != null && mSearchBarMover != null &&
                 mHelper.isCurrentTask(taskId)) {
             String emptyString = getResources2().getString(mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION && result.noWatchedTags
@@ -1967,6 +1975,29 @@ public final class GalleryListScene extends BaseScene
                 request.setArgs(url);
                 mClient.execute(request);
             }
+        }
+
+        @Override
+        protected void getExPageData(int pageAction, int taskId, int page) {
+            MainActivity activity = getActivity2();
+            if (null == activity || null == mClient || null == mUrlBuilder) {
+                return;
+            }
+            mUrlBuilder.setPageIndex(page);
+            String url = mUrlBuilder.build(pageAction, mResult);
+            if (url.isEmpty()) {
+                Toast.makeText(getContext(), R.string.gallery_list_action_url_missed, Toast.LENGTH_LONG).show();
+                if (mHelper!=null){
+                    mHelper.cancelCurrentTask();
+                }
+                return;
+            }
+            EhRequest request = new EhRequest();
+            request.setMethod(EhClient.METHOD_GET_GALLERY_LIST);
+            request.setCallback(new GetGalleryListListener(getContext(),
+                    activity.getStageId(), getTag(), taskId));
+            request.setArgs(url);
+            mClient.execute(request);
         }
 
 

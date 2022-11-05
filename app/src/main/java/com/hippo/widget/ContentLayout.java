@@ -28,9 +28,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.FastScroller;
@@ -45,6 +47,7 @@ import com.hippo.view.ViewTransition;
 import com.hippo.yorozuya.IntIdGenerator;
 import com.hippo.yorozuya.LayoutUtils;
 import com.hippo.yorozuya.collect.IntList;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -193,6 +196,11 @@ public class ContentLayout extends FrameLayout {
         public static final int REFRESH_TYPE_FOOTER = 1;
         public static final int REFRESH_TYPE_PROGRESS_VIEW = 2;
 
+        public static final int GOTO_FIRST_PAGE = 0;
+        public static final int GOTO_PREV_PAGE = 1;
+        public static final int GOTO_NEXT_PAGE = 2;
+        public static final int GOTO_LAST_PAGE = 3;
+
         private ProgressView mProgressView;
         private TextView mTipView;
         private ViewGroup mContentView;
@@ -214,7 +222,7 @@ public class ContentLayout extends FrameLayout {
 
         /**
          * Store the page divider index
-         *
+         * <p>
          * For example, the data contain page 3, page 4, page 5,
          * page 3 size is 7, page 4 size is 8, page 5 size is 9,
          * so <code>mPageDivider</code> contain 7, 15, 24.
@@ -249,7 +257,7 @@ public class ContentLayout extends FrameLayout {
         private final RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if (!mRefreshLayout.isRefreshing() && mRefreshLayout.isAlmostBottom() && mEndPage < mPages) {
+                if (!mRefreshLayout.isRefreshing() && mRefreshLayout.isAlmostBottom() && (mEndPage < mPages || mNextPage == -1 || mPages == -1)) {
                     // Get next page
                     mRefreshLayout.setFooterRefreshing(true);
                     mOnRefreshListener.onFooterRefresh();
@@ -272,7 +280,12 @@ public class ContentLayout extends FrameLayout {
 
             @Override
             public void onFooterRefresh() {
-                if (mEndPage < mPages) {
+                if (mEndPage == -1 || mPages == -1) {
+                    mCurrentTaskId = mIdGenerator.nextId();
+                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
+//                    mCurrentTaskPage = mPages+1;
+                    getExPageData(GOTO_NEXT_PAGE, mCurrentTaskId, mPages);
+                } else if (mEndPage < mPages) {
                     // Get next page
                     // Fill pages before NextPage with empty list
                     while (mNextPage > mEndPage && mEndPage < mPages) {
@@ -347,9 +360,11 @@ public class ContentLayout extends FrameLayout {
          * Call {@link #onGetPageData(int, int, int, List)} when get data
          *
          * @param taskId task id
-         * @param page the page to get
+         * @param page   the page to get
          */
         protected abstract void getPageData(int taskId, int type, int page);
+
+        protected abstract void getExPageData(int pageAction, int taskId, int page);
 
         protected abstract Context getContext();
 
@@ -359,10 +374,12 @@ public class ContentLayout extends FrameLayout {
 
         protected abstract void notifyItemRangeInserted(int positionStart, int itemCount);
 
-        protected void onScrollToPosition(int postion) {}
+        protected void onScrollToPosition(int postion) {
+        }
 
         @Override
-        public void onShowView(View hiddenView, View shownView) {}
+        public void onShowView(View hiddenView, View shownView) {
+        }
 
         public int getShownViewIndex() {
             return mViewTransition.getShownViewIndex();
@@ -385,8 +402,7 @@ public class ContentLayout extends FrameLayout {
         }
 
         /**
-         * @throws IndexOutOfBoundsException
-         *                if {@code location < 0 || location >= size()}
+         * @throws IndexOutOfBoundsException if {@code location < 0 || location >= size()}
          */
         public E getDataAt(int location) {
             return mData.get(location);
@@ -446,7 +462,7 @@ public class ContentLayout extends FrameLayout {
         private void removeDuplicateData(List<E> data, int start, int end) {
             start = Math.max(0, start);
             end = Math.min(mData.size(), end);
-            for (Iterator<E> iterator = data.iterator(); iterator.hasNext();) {
+            for (Iterator<E> iterator = data.iterator(); iterator.hasNext(); ) {
                 E d = iterator.next();
                 for (int i = start; i < end; i++) {
                     if (isDuplicate(d, mData.get(i))) {
@@ -457,295 +473,390 @@ public class ContentLayout extends FrameLayout {
             }
         }
 
-        protected void onAddData(E data) { }
+        protected void onAddData(E data) {
+        }
 
-        protected void onAddData(List<E> data) { }
+        protected void onAddData(List<E> data) {
+        }
 
-        protected void onRemoveData(E data) { }
+        protected void onRemoveData(E data) {
+        }
 
-        protected void onRemoveData(List<E> data) { }
+        protected void onRemoveData(List<E> data) {
+        }
 
-        protected void onClearData() { }
+        protected void onClearData() {
+        }
 
         public void onGetPageData(int taskId, int pages, int nextPage, List<E> data) {
             if (mCurrentTaskId == taskId) {
-                int dataSize;
 
                 switch (mCurrentTaskType) {
                     case TYPE_REFRESH:
-                        mStartPage = 0;
-                        mEndPage = 1;
-                        mPages = pages;
-                        mNextPage = nextPage;
-                        mPageDivider.clear();
-                        mPageDivider.add(data.size());
-
-                        if (data.isEmpty()) {
-                            mData.clear();
-                            onClearData();
-                            notifyDataSetChanged();
-
-                            if (true || mEndPage >= mPages) { // Not found
-                                // Ui change, show empty string
-                                mRefreshLayout.setHeaderRefreshing(false);
-                                mRefreshLayout.setFooterRefreshing(false);
-                                showEmptyString();
-                            } else {
-                                // Ui change, show progress bar
-                                mRefreshLayout.setHeaderRefreshing(false);
-                                mRefreshLayout.setFooterRefreshing(false);
-                                showProgressBar();
-
-                                // Get next page
-                                mCurrentTaskId = mIdGenerator.nextId();
-                                mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-                                mCurrentTaskPage = mEndPage;
-                                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-                            }
-                        } else {
-                            mData.clear();
-                            onClearData();
-                            mData.addAll(data);
-                            onAddData(data);
-                            notifyDataSetChanged();
-
-                            // Ui change, show content
-                            mRefreshLayout.setHeaderRefreshing(false);
-                            mRefreshLayout.setFooterRefreshing(false);
-                            showContent();
-
-                            // RecyclerView scroll
-                            if (mRecyclerView.isAttachedToWindow()) {
-                                mRecyclerView.stopScroll();
-                                LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
-                                onScrollToPosition(0);
-                            }
-                        }
+                        onTypeRefresh(pages,nextPage,data);
                         break;
                     case TYPE_PRE_PAGE:
                     case TYPE_PRE_PAGE_KEEP_POS:
-                        removeDuplicateData(data, 0, CHECK_DUPLICATE_RANGE);
-                        dataSize = data.size();
-                        for (int i = 0, n = mPageDivider.size(); i < n; i++) {
-                            mPageDivider.set(i, mPageDivider.get(i) + dataSize);
-                        }
-                        mPageDivider.add(0, dataSize);
-                        mStartPage--;
-                        mPages = Math.max(mEndPage, pages);
-                        // assert mStartPage >= 0
-
-                        if (data.isEmpty()) {
-                            if (true || mStartPage <= 0) { // OK, that's all
-                                if (mData.isEmpty()) {
-                                    // Ui change, show empty string
-                                    mRefreshLayout.setHeaderRefreshing(false);
-                                    mRefreshLayout.setFooterRefreshing(false);
-                                    showEmptyString();
-                                } else {
-                                    // Ui change, show content
-                                    mRefreshLayout.setHeaderRefreshing(false);
-                                    mRefreshLayout.setFooterRefreshing(false);
-                                    showContent();
-
-                                    if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
-                                        // RecyclerView scroll, to top
-                                        mRecyclerView.stopScroll();
-                                        LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
-                                        onScrollToPosition(0);
-                                    }
-                                }
-                            } else {
-                                // Keep UI
-
-                                // Get previous
-                                mCurrentTaskId = mIdGenerator.nextId();
-                                // Keep mCurrentTaskType
-                                mCurrentTaskPage = mStartPage - 1;
-                                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-                            }
-                        } else {
-                            mData.addAll(0, data);
-                            onAddData(data);
-                            notifyItemRangeInserted(0, data.size());
-
-                            // Ui change, show content
-                            mRefreshLayout.setHeaderRefreshing(false);
-                            mRefreshLayout.setFooterRefreshing(false);
-                            showContent();
-
-                            if (mRecyclerView.isAttachedToWindow()) {
-                                // RecyclerView scroll
-                                if (mCurrentTaskType == TYPE_PRE_PAGE_KEEP_POS) {
-                                    mRecyclerView.stopScroll();
-                                    LayoutManagerUtils.scrollToPositionProperly(mRecyclerView.getLayoutManager(), getContext(),
-                                            dataSize - 1, mOnScrollToPositionListener);
-                                } else {
-                                    mRecyclerView.stopScroll();
-                                    LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
-                                    onScrollToPosition(0);
-                                }
-                            }
-                        }
+                        onTypeRpePage(pages, data);
                         break;
                     case TYPE_NEXT_PAGE:
                     case TYPE_NEXT_PAGE_KEEP_POS:
-                        removeDuplicateData(data, mData.size() - CHECK_DUPLICATE_RANGE, mData.size());
-                        dataSize = data.size();
-                        int oldDataSize = mData.size();
-                        mPageDivider.add(oldDataSize + dataSize);
-                        mEndPage++;
-                        mNextPage = nextPage;
-                        mPages = Math.max(mEndPage, pages);
-
-                        if (data.isEmpty()) {
-                            if (true || mEndPage >= mPages) { // OK, that's all
-                                if (mData.isEmpty()) {
-                                    // Ui change, show empty string
-                                    mRefreshLayout.setHeaderRefreshing(false);
-                                    mRefreshLayout.setFooterRefreshing(false);
-                                    showEmptyString();
-                                } else {
-                                    // Ui change, show content
-                                    mRefreshLayout.setHeaderRefreshing(false);
-                                    mRefreshLayout.setFooterRefreshing(false);
-                                    showContent();
-
-                                    if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
-                                        // RecyclerView scroll
-                                        mRecyclerView.stopScroll();
-                                        LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), oldDataSize, 0);
-                                        onScrollToPosition(oldDataSize);
-                                    }
-                                }
-                            } else {
-                                // Keep UI
-
-                                // Get next page
-                                mCurrentTaskId = mIdGenerator.nextId();
-                                // Keep mCurrentTaskType
-                                mCurrentTaskPage = mEndPage;
-                                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-                            }
-                        } else {
-                            mData.addAll(data);
-                            onAddData(data);
-                            notifyItemRangeInserted(oldDataSize, dataSize);
-
-                            // Ui change, show content
-                            mRefreshLayout.setHeaderRefreshing(false);
-                            mRefreshLayout.setFooterRefreshing(false);
-                            showContent();
-
-                            if (mRecyclerView.isAttachedToWindow()) {
-                                if (mCurrentTaskType == TYPE_NEXT_PAGE_KEEP_POS) {
-                                    mRecyclerView.stopScroll();
-                                    mRecyclerView.smoothScrollBy(0, mNextPageScrollSize);
-                                } else {
-                                    mRecyclerView.stopScroll();
-                                    LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), oldDataSize, 0);
-                                    onScrollToPosition(oldDataSize);
-                                }
-                            }
-                        }
+                        onTypeNextPage(pages,nextPage, data);
                         break;
                     case TYPE_SOMEWHERE:
-                        mStartPage = mCurrentTaskPage;
-                        mEndPage = mCurrentTaskPage + 1;
-                        mNextPage = nextPage;
-                        mPages = pages;
-                        mPageDivider.clear();
-                        mPageDivider.add(data.size());
-
-                        if (data.isEmpty()) {
-                            mData.clear();
-                            onClearData();
-                            notifyDataSetChanged();
-
-                            if (true || mEndPage >= mPages) { // Not found
-                                // Ui change, show empty string
-                                mRefreshLayout.setHeaderRefreshing(false);
-                                mRefreshLayout.setFooterRefreshing(false);
-                                showEmptyString();
-                            } else {
-                                // Ui change, show progress bar
-                                mRefreshLayout.setHeaderRefreshing(false);
-                                mRefreshLayout.setFooterRefreshing(false);
-                                showProgressBar();
-
-                                // Get next page
-                                mCurrentTaskId = mIdGenerator.nextId();
-                                mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-                                mCurrentTaskPage = mEndPage;
-                                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-                            }
-                        } else {
-                            mData.clear();
-                            onClearData();
-                            mData.addAll(data);
-                            onAddData(data);
-                            notifyDataSetChanged();
-
-                            // Ui change, show content
-                            mRefreshLayout.setHeaderRefreshing(false);
-                            mRefreshLayout.setFooterRefreshing(false);
-                            showContent();
-
-                            if (mRecyclerView.isAttachedToWindow()) {
-                                // RecyclerView scroll
-                                mRecyclerView.stopScroll();
-                                LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
-                                onScrollToPosition(0);
-                            }
-                        }
+                       onTypeSomeWhere(pages,nextPage, data);
                         break;
                     case TYPE_REFRESH_PAGE:
-                        if (mCurrentTaskPage < mStartPage || mCurrentTaskPage >= mEndPage) {
-                            Log.e(TAG, "TYPE_REFRESH_PAGE, but mCurrentTaskPage = " + mCurrentTaskPage +
-                                    ", mStartPage = " + mStartPage + ", mEndPage = " + mEndPage);
-                            break;
-                        }
-
-                        if (mCurrentTaskPage == mEndPage - 1) {
-                            mNextPage = nextPage;
-                        }
-
-                        mPages = Math.max(mEndPage, pages);
-
-                        int oldIndexStart = mCurrentTaskPage == mStartPage ? 0 : mPageDivider.get(mCurrentTaskPage - mStartPage - 1);
-                        int oldIndexEnd = mPageDivider.get(mCurrentTaskPage - mStartPage);
-                        List<E> toRemove = mData.subList(oldIndexStart, oldIndexEnd);
-                        onRemoveData(toRemove);
-                        toRemove.clear();
-                        removeDuplicateData(data, oldIndexStart - CHECK_DUPLICATE_RANGE, oldIndexStart + CHECK_DUPLICATE_RANGE);
-                        int newIndexStart = oldIndexStart;
-                        int newIndexEnd = newIndexStart + data.size();
-                        mData.addAll(oldIndexStart, data);
-                        onAddData(data);
-                        notifyDataSetChanged();
-
-                        for (int i = mCurrentTaskPage - mStartPage, n = mPageDivider.size(); i < n; i++) {
-                            mPageDivider.set(i, mPageDivider.get(i) - oldIndexEnd + newIndexEnd);
-                        }
-
-                        if (mData.isEmpty()) {
-                            // Ui change, show empty string
-                            mRefreshLayout.setHeaderRefreshing(false);
-                            mRefreshLayout.setFooterRefreshing(false);
-                            showEmptyString();
-                        } else {
-                            // Ui change, show content
-                            mRefreshLayout.setHeaderRefreshing(false);
-                            mRefreshLayout.setFooterRefreshing(false);
-                            showContent();
-
-                            // RecyclerView scroll
-                            if (newIndexEnd > oldIndexEnd && newIndexEnd > 0 && mRecyclerView.isAttachedToWindow()) {
-                                mRecyclerView.stopScroll();
-                                LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), newIndexEnd - 1, 0);
-                                onScrollToPosition(newIndexEnd - 1);
-                            }
-                        }
+                       onTypeRefreshPage(pages,nextPage, data);
                         break;
+                }
+            }
+        }
+
+        private void onTypeRefreshPage(int pages, int nextPage, List<E> data) {
+            if (mCurrentTaskPage < mStartPage || mCurrentTaskPage >= mEndPage) {
+                Log.e(TAG, "TYPE_REFRESH_PAGE, but mCurrentTaskPage = " + mCurrentTaskPage +
+                        ", mStartPage = " + mStartPage + ", mEndPage = " + mEndPage);
+                return;
+            }
+
+            if (mCurrentTaskPage == mEndPage - 1) {
+                mNextPage = nextPage;
+            }
+
+            mPages = Math.max(mEndPage, pages);
+
+            int oldIndexStart = mCurrentTaskPage == mStartPage ? 0 : mPageDivider.get(mCurrentTaskPage - mStartPage - 1);
+            int oldIndexEnd = mPageDivider.get(mCurrentTaskPage - mStartPage);
+            List<E> toRemove = mData.subList(oldIndexStart, oldIndexEnd);
+            onRemoveData(toRemove);
+            toRemove.clear();
+            removeDuplicateData(data, oldIndexStart - CHECK_DUPLICATE_RANGE, oldIndexStart + CHECK_DUPLICATE_RANGE);
+            int newIndexEnd = oldIndexStart + data.size();
+            mData.addAll(oldIndexStart, data);
+            onAddData(data);
+            notifyDataSetChanged();
+
+            for (int i = mCurrentTaskPage - mStartPage, n = mPageDivider.size(); i < n; i++) {
+                mPageDivider.set(i, mPageDivider.get(i) - oldIndexEnd + newIndexEnd);
+            }
+
+            if (mData.isEmpty()) {
+                // Ui change, show empty string
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showEmptyString();
+            } else {
+                // Ui change, show content
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showContent();
+
+                // RecyclerView scroll
+                if (newIndexEnd > oldIndexEnd && newIndexEnd > 0 && mRecyclerView.isAttachedToWindow()) {
+                    mRecyclerView.stopScroll();
+                    RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                    if (manager==null){
+                        return;
+                    }
+                    LayoutManagerUtils.scrollToPositionWithOffset(manager, newIndexEnd - 1, 0);
+                    onScrollToPosition(newIndexEnd - 1);
+                }
+            }
+        }
+
+        private void onTypeSomeWhere(int pages, int nextPage, List<E> data) {
+            mStartPage = mCurrentTaskPage;
+            mEndPage = mCurrentTaskPage + 1;
+            mNextPage = nextPage;
+            mPages = pages;
+            mPageDivider.clear();
+            mPageDivider.add(data.size());
+
+            if (data.isEmpty()) {
+                mData.clear();
+                onClearData();
+                notifyDataSetChanged();
+
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showEmptyString();
+
+//                if (true || mEndPage >= mPages) { // Not found
+//                    // Ui change, show empty string
+//                    mRefreshLayout.setHeaderRefreshing(false);
+//                    mRefreshLayout.setFooterRefreshing(false);
+//                    showEmptyString();
+//                } else {
+//                    // Ui change, show progress bar
+//                    mRefreshLayout.setHeaderRefreshing(false);
+//                    mRefreshLayout.setFooterRefreshing(false);
+//                    showProgressBar();
+//
+//                    // Get next page
+//                    mCurrentTaskId = mIdGenerator.nextId();
+//                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
+//                    mCurrentTaskPage = mEndPage;
+//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+//                }
+            } else {
+                mData.clear();
+                onClearData();
+                mData.addAll(data);
+                onAddData(data);
+                notifyDataSetChanged();
+
+                // Ui change, show content
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showContent();
+
+                if (mRecyclerView.isAttachedToWindow()) {
+                    // RecyclerView scroll
+                    mRecyclerView.stopScroll();
+                    RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                    if (manager == null){
+                        return;
+                    }
+                    LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
+                    onScrollToPosition(0);
+                }
+            }
+        }
+
+        private void onTypeNextPage(int pages, int nextPage, List<E> data) {
+            removeDuplicateData(data, mData.size() - CHECK_DUPLICATE_RANGE, mData.size());
+            int dataSize = data.size();
+            int oldDataSize = mData.size();
+            mPageDivider.add(oldDataSize + dataSize);
+            if (nextPage > -1 || pages > -1) {
+                mEndPage++;
+                mNextPage = nextPage;
+                mPages = Math.max(mEndPage, pages);
+            }
+
+            if (data.isEmpty()) {
+                if (mData.isEmpty()) {
+                    // Ui change, show empty string
+                    mRefreshLayout.setHeaderRefreshing(false);
+                    mRefreshLayout.setFooterRefreshing(false);
+                    showEmptyString();
+                } else {
+                    // Ui change, show content
+                    mRefreshLayout.setHeaderRefreshing(false);
+                    mRefreshLayout.setFooterRefreshing(false);
+                    showContent();
+
+                    if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
+                        // RecyclerView scroll
+                        mRecyclerView.stopScroll();
+                        RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                        if (manager == null){
+                            return;
+                        }
+                        LayoutManagerUtils.scrollToPositionWithOffset(manager, oldDataSize, 0);
+                        onScrollToPosition(oldDataSize);
+                    }
+                }
+//                if (true || mEndPage >= mPages) { // OK, that's all
+//                    if (mData.isEmpty()) {
+//                        // Ui change, show empty string
+//                        mRefreshLayout.setHeaderRefreshing(false);
+//                        mRefreshLayout.setFooterRefreshing(false);
+//                        showEmptyString();
+//                    } else {
+//                        // Ui change, show content
+//                        mRefreshLayout.setHeaderRefreshing(false);
+//                        mRefreshLayout.setFooterRefreshing(false);
+//                        showContent();
+//
+//                        if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
+//                            // RecyclerView scroll
+//                            mRecyclerView.stopScroll();
+//                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), oldDataSize, 0);
+//                            onScrollToPosition(oldDataSize);
+//                        }
+//                    }
+//                } else {
+//                    // Keep UI
+//
+//                    // Get next page
+//                    mCurrentTaskId = mIdGenerator.nextId();
+//                    // Keep mCurrentTaskType
+//                    mCurrentTaskPage = mEndPage;
+//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+//                }
+            } else {
+                mData.addAll(data);
+                onAddData(data);
+                notifyItemRangeInserted(oldDataSize, dataSize);
+
+                // Ui change, show content
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showContent();
+
+                if (mRecyclerView.isAttachedToWindow()) {
+                    if (mCurrentTaskType == TYPE_NEXT_PAGE_KEEP_POS) {
+                        mRecyclerView.stopScroll();
+                        mRecyclerView.smoothScrollBy(0, mNextPageScrollSize);
+                    } else {
+                        mRecyclerView.stopScroll();
+                        RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                        if (manager == null){
+                            return;
+                        }
+                        LayoutManagerUtils.scrollToPositionWithOffset(manager, oldDataSize, 0);
+                        onScrollToPosition(oldDataSize);
+                    }
+                }
+            }
+        }
+
+        private void onTypeRpePage(int pages, List<E> data) {
+            removeDuplicateData(data, 0, CHECK_DUPLICATE_RANGE);
+            int dataSize = data.size();
+            for (int i = 0, n = mPageDivider.size(); i < n; i++) {
+                mPageDivider.set(i, mPageDivider.get(i) + dataSize);
+            }
+            mPageDivider.add(0, dataSize);
+            mStartPage--;
+            mPages = Math.max(mEndPage, pages);
+            // assert mStartPage >= 0
+
+            if (data.isEmpty()) {
+                if (mData.isEmpty()) {
+                    // Ui change, show empty string
+                    mRefreshLayout.setHeaderRefreshing(false);
+                    mRefreshLayout.setFooterRefreshing(false);
+                    showEmptyString();
+                } else {
+                    // Ui change, show content
+                    mRefreshLayout.setHeaderRefreshing(false);
+                    mRefreshLayout.setFooterRefreshing(false);
+                    showContent();
+
+                    if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
+                        // RecyclerView scroll, to top
+                        mRecyclerView.stopScroll();
+                        RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                        if (manager == null){
+                            return;
+                        }
+                        LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
+                        onScrollToPosition(0);
+                    }
+                }
+//                if (true || mStartPage <= 0) { // OK, that's all
+//                    if (mData.isEmpty()) {
+//                        // Ui change, show empty string
+//                        mRefreshLayout.setHeaderRefreshing(false);
+//                        mRefreshLayout.setFooterRefreshing(false);
+//                        showEmptyString();
+//                    } else {
+//                        // Ui change, show content
+//                        mRefreshLayout.setHeaderRefreshing(false);
+//                        mRefreshLayout.setFooterRefreshing(false);
+//                        showContent();
+//
+//                        if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
+//                            // RecyclerView scroll, to top
+//                            mRecyclerView.stopScroll();
+//                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
+//                            onScrollToPosition(0);
+//                        }
+//                    }
+//                } else {
+//                    // Keep UI
+//
+//                    // Get previous
+//                    mCurrentTaskId = mIdGenerator.nextId();
+//                    // Keep mCurrentTaskType
+//                    mCurrentTaskPage = mStartPage - 1;
+//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+//                }
+            } else {
+                mData.addAll(0, data);
+                onAddData(data);
+                notifyItemRangeInserted(0, data.size());
+
+                // Ui change, show content
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showContent();
+
+                if (mRecyclerView.isAttachedToWindow()) {
+                    // RecyclerView scroll
+                    if (mCurrentTaskType == TYPE_PRE_PAGE_KEEP_POS) {
+                        mRecyclerView.stopScroll();
+                        LayoutManagerUtils.scrollToPositionProperly(mRecyclerView.getLayoutManager(), getContext(),
+                                dataSize - 1, mOnScrollToPositionListener);
+                    } else {
+                        mRecyclerView.stopScroll();
+                        RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                        if (manager == null){
+                            return;
+                        }
+                        LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
+                        onScrollToPosition(0);
+                    }
+                }
+            }
+        }
+
+        private void onTypeRefresh(int pages, int nextPage, List<E> data) {
+            mStartPage = 0;
+            mEndPage = 1;
+            mPages = pages;
+            mNextPage = nextPage;
+            mPageDivider.clear();
+            mPageDivider.add(data.size());
+
+            if (data.isEmpty()) {
+                mData.clear();
+                onClearData();
+                notifyDataSetChanged();
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showEmptyString();
+//                if (true || mEndPage >= mPages) { // Not found
+//                    // Ui change, show empty string
+//                    mRefreshLayout.setHeaderRefreshing(false);
+//                    mRefreshLayout.setFooterRefreshing(false);
+//                    showEmptyString();
+//                } else {
+//                    // Ui change, show progress bar
+//                    mRefreshLayout.setHeaderRefreshing(false);
+//                    mRefreshLayout.setFooterRefreshing(false);
+//                    showProgressBar();
+//
+//                    // Get next page
+//                    mCurrentTaskId = mIdGenerator.nextId();
+//                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
+//                    mCurrentTaskPage = mEndPage;
+//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+//                }
+            } else {
+                mData.clear();
+                onClearData();
+                mData.addAll(data);
+                onAddData(data);
+                notifyDataSetChanged();
+
+                // Ui change, show content
+                mRefreshLayout.setHeaderRefreshing(false);
+                mRefreshLayout.setFooterRefreshing(false);
+                showContent();
+
+                // RecyclerView scroll
+                if (mRecyclerView.isAttachedToWindow()) {
+                    mRecyclerView.stopScroll();
+                    RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+                    if (manager == null){
+                        return;
+                    }
+                    LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
+                    onScrollToPosition(0);
                 }
             }
         }
@@ -848,7 +959,7 @@ public class ContentLayout extends FrameLayout {
             doRefresh();
         }
 
-        private void cancelCurrentTask() {
+        public void cancelCurrentTask() {
             mCurrentTaskId = mIdGenerator.nextId();
             mRefreshLayout.setHeaderRefreshing(false);
             mRefreshLayout.setFooterRefreshing(false);

@@ -85,6 +85,7 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.sync.GalleryDetailTagsSyncTask;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
@@ -583,6 +584,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mComments = (LinearLayout) ViewUtils.$$(belowHeader, R.id.comments);
         mCommentsText = (TextView) ViewUtils.$$(mComments, R.id.comments_text);
+        if (!Settings.getShowGalleryComment()){
+            mComments.setVisibility(View.GONE);
+            mCommentsText.setVisibility(View.GONE);
+        }
+
         Ripple.addRipple(mComments, isDarkTheme);
         mComments.setOnClickListener(this);
 
@@ -2136,6 +2142,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
             // Add history
             EhDB.putHistoryInfo(result);
+
+            // Save tags
+            GalleryDetailTagsSyncTask syncTask = new GalleryDetailTagsSyncTask(result);
+            syncTask.start();
 
             // Notify success
             GalleryDetailScene scene = getScene();

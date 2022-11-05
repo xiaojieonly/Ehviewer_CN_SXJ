@@ -162,6 +162,7 @@ public class EhApplication extends RecordingApplication {
         Image.initialize(this);
         // 实际作用不确定，但是与64位应用有冲突
 //        A7Zip.loadLibrary(A7ZipExtractLite.LIBRARY, libname -> ReLinker.loadLibrary(EhApplication.this, libname));
+        // 64位适配
         A7Zip.initialize(this);
         if (EhDB.needMerge()) {
             EhDB.mergeOldDB(this);

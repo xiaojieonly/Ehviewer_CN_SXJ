@@ -670,7 +670,13 @@ public class SearchBar extends CardView implements View.OnClickListener,
                     while (builder.charAt(builder.length() - 1) != c) {
                         builder.deleteCharAt(builder.length() - 1);
                     }
-                    builder.append(mKeyword);
+                    if (builder.length() != 0) {
+                        while (builder.charAt(builder.length() - 1) == c) {
+                            builder.deleteCharAt(builder.length() - 1);
+                        }
+                    }
+
+                    builder.append("  ").append(mKeyword);
                     key = builder.toString();
                 }
                 mEditText.setText(key);

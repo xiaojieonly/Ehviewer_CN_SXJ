@@ -16,17 +16,27 @@
 
 package com.hippo.ehviewer.client.data;
 
+import static com.hippo.ehviewer.client.EhUrl.SITE_E;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_FIRST_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_LAST_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_NEXT_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_PREV_PAGE;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
+
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.client.parser.GalleryListParser;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.widget.AdvanceSearchTable;
 import com.hippo.network.UrlBuilder;
+import com.hippo.widget.ContentLayout;
 import com.hippo.yorozuya.NumberUtils;
 import com.hippo.yorozuya.StringUtils;
 import java.io.UnsupportedEncodingException;
@@ -499,6 +509,20 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
         }
     }
 
+    public String build(int pageAction, GalleryListParser.Result result){
+        switch (pageAction){
+            default:
+            case GOTO_FIRST_PAGE:
+                return result.firstHref;
+            case GOTO_PREV_PAGE:
+                return result.prevHref;
+            case GOTO_NEXT_PAGE:
+                return result.nextHref;
+            case GOTO_LAST_PAGE:
+                return result.lastHref;
+        }
+    }
+
     public String build() {
         switch (mMode) {
             default:
@@ -588,6 +612,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
                 StringBuilder sb = new StringBuilder(EhUrl.getHost());
                 sb.append("?");
                 if (mPageIndex != 0) {
+
                     sb.append("page=").append(mPageIndex).append('&');
                 }
                 sb.append("f_search=");

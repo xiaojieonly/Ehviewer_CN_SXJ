@@ -306,6 +306,23 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         }
 
         @Override
+        protected void getExPageData(int pageAction, int taskId, int page) {
+            MainActivity activity = getActivity2();
+            if (null == activity || null == mClient || null == mGalleryInfo) {
+                onGetException(taskId, new EhException(getString(R.string.error_cannot_find_gallery)));
+                return;
+            }
+
+            String url = EhUrl.getGalleryDetailUrl(mGalleryInfo.gid, mGalleryInfo.token, page, false);
+            EhRequest request = new EhRequest();
+            request.setMethod(EhClient.METHOD_GET_PREVIEW_SET);
+            request.setCallback(new GetPreviewSetListener(getContext(),
+                    activity.getStageId(), getTag(), taskId));
+            request.setArgs(url);
+            mClient.execute(request);
+        }
+
+        @Override
         protected Context getContext() {
             return GalleryPreviewsScene.this.getEHContext();
         }
