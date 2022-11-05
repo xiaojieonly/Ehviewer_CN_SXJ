@@ -32,6 +32,8 @@ public class SplashActivity extends EhActivity {
         }
         AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
                 Analytics.class, Crashes.class, Distribute.class);
+//        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
+//                Analytics.class, Crashes.class, Distribute.class);
         Distribute.setEnabled(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_layout);

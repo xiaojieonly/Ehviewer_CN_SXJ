@@ -25,6 +25,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.GalleryTagGroup;
 import com.hippo.ehviewer.client.exception.EmptyGalleryException;
 import com.hippo.ehviewer.client.exception.ParseException;
+import com.hippo.ehviewer.sync.GalleryListTagsSyncTask;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.JsoupUtils;
 import com.hippo.yorozuya.NumberUtils;
@@ -47,6 +48,7 @@ public class GalleryListParser {
     private static final Pattern PATTERN_FAVORITE_SLOT = Pattern.compile("background-color:rgba\\((\\d+),(\\d+),(\\d+),");
     private static final Pattern PATTERN_PAGES = Pattern.compile("(\\d+) page");
     private static final Pattern PATTERN_NEXT_PAGE = Pattern.compile("page=(\\d+)");
+    private static final Pattern PATTERN_NEXT_EX_PAGE = Pattern.compile("next=(\\d+)");
 
     private static final String[][] FAVORITE_SLOT_RGB = new String[][] {
         new String[] { "0", "0", "0"},
@@ -64,6 +66,10 @@ public class GalleryListParser {
     public static class Result {
         public int pages;
         public int nextPage;
+        public String firstHref;
+        public String prevHref;
+        public String nextHref;
+        public String lastHref;
         public boolean noWatchedTags;
         public List<GalleryInfo> galleryInfoList;
     }
@@ -306,17 +312,32 @@ public class GalleryListParser {
 
         try {
             Element ptt = d.getElementsByClass("ptt").first();
-            Elements es = ptt.child(0).child(0).children();
-            result.pages = Integer.parseInt(es.get(es.size() - 2).text().trim());
+            if (ptt==null){
+                Element searchNav = d.getElementsByClass("searchnav").first();
+                result.pages = -1;
+                result.nextPage=  -1;
 
-            Element e = es.get(es.size() - 1);
-            if (e != null) {
-                e = e.children().first();
+                assert searchNav != null;
+                result.firstHref = searchNav.getElementsContainingText("First").attr("href");
+                result.prevHref = searchNav.getElementsContainingText("Prev").attr("href");
+                result.nextHref = searchNav.getElementsContainingText("Next").attr("href");
+                result.lastHref = searchNav.getElementsContainingText("Last").attr("href");
+//                Matcher matcher = PATTERN_NEXT_EX_PAGE.matcher(result.nextHref);
+//                if (matcher.find()){
+//                    result.nextPage  = NumberUtils.parseIntSafely(matcher.group(1),0);
+//                }
+            }else{
+                Elements es = ptt.child(0).child(0).children();
+                result.pages = Integer.parseInt(es.get(es.size() - 2).text().trim());
+                Element e = es.get(es.size() - 1);
                 if (e != null) {
-                    String href = e.attr("href");
-                    Matcher matcher = PATTERN_NEXT_PAGE.matcher(href);
-                    if (matcher.find()) {
-                        result.nextPage = NumberUtils.parseIntSafely(matcher.group(1), 0);
+                    e = e.children().first();
+                    if (e != null) {
+                        String href = e.attr("href");
+                        Matcher matcher = PATTERN_NEXT_PAGE.matcher(href);
+                        if (matcher.find()) {
+                            result.nextPage = NumberUtils.parseIntSafely(matcher.group(1), 0);
+                        }
                     }
                 }
             }
@@ -338,6 +359,7 @@ public class GalleryListParser {
         try {
             Element itg = d.getElementsByClass("itg").first();
             Elements es;
+            assert itg != null;
             if ("table".equalsIgnoreCase(itg.tagName())) {
                 es = itg.child(0).children();
             } else {
@@ -368,6 +390,8 @@ public class GalleryListParser {
             e.printStackTrace();
             throw new ParseException("Can't parse gallery list", body);
         }
+
+        new GalleryListTagsSyncTask(result.galleryInfoList).execute();
 
         return result;
     }

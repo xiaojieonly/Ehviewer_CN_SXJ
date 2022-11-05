@@ -206,6 +206,9 @@
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
     <string name="gallery_list_no_preview_tag">No preview tag</string>
 
+    <string name="gallery_list_action_url_missed">No corresponding link found</string>
+    <string name="gallery_list_can_not_jump">Currently unable to jump</string>
+
     <string name="search">Search</string>
 
     <string name="keyword_search">Keyword search</string>

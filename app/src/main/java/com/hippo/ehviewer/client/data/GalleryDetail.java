@@ -19,6 +19,7 @@ package com.hippo.ehviewer.client.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+
 import java.util.Arrays;
 
 /**

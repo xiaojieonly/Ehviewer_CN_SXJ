@@ -139,6 +139,9 @@
     <string name="gallery_list_no_preview_tag">暂无预览标签</string>
     <string name="search">搜索</string>
 
+    <string name="gallery_list_action_url_missed">没找到对应链接</string>
+    <string name="gallery_list_can_not_jump">当前无法跳转</string>
+
     <string name="keyword_search">关键字搜索</string>
     <string name="image_search">图片搜索</string>
 

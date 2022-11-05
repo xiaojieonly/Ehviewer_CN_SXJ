@@ -41,6 +41,7 @@ public class EhFragment extends PreferenceFragment
         Preference detailSize = findPreference(Settings.KEY_DETAIL_SIZE);
         Preference thumbSize = findPreference(Settings.KEY_THUMB_SIZE);
         Preference showTagTranslations = findPreference(Settings.KEY_SHOW_TAG_TRANSLATIONS);
+        Preference showGalleryComment = findPreference(Settings.KEY_SHOW_GALLERY_COMMENT);
         Preference tagTranslationsSource = findPreference("tag_translations_source");
 
         theme.setOnPreferenceChangeListener(this);
@@ -50,6 +51,7 @@ public class EhFragment extends PreferenceFragment
         detailSize.setOnPreferenceChangeListener(this);
         thumbSize.setOnPreferenceChangeListener(this);
         showTagTranslations.setOnPreferenceChangeListener(this);
+        showGalleryComment.setOnPreferenceChangeListener(this);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             getPreferenceScreen().removePreference(applyNavBarThemeColor);
@@ -78,12 +80,18 @@ public class EhFragment extends PreferenceFragment
             return true;
         } else if (Settings.KEY_DETAIL_SIZE.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
+            return true;
         } else if (Settings.KEY_THUMB_SIZE.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
+            return true;
         } else if (Settings.KEY_SHOW_TAG_TRANSLATIONS.equals(key)) {
             if (Boolean.TRUE.equals(newValue)) {
                 EhTagDatabase.update(getActivity());
             }
+            return true;
+        }else if(Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)){
+            getActivity().setResult(Activity.RESULT_OK);
+            return true;
         }
         return true;
     }

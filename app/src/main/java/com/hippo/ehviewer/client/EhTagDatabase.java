@@ -184,22 +184,30 @@ public class EhTagDatabase {
     private static final Map<String, String> PREFIX_TO_NAMESPACE = new HashMap<>();
 
     static {
+        NAMESPACE_TO_PREFIX.put("rows", "n:");
         NAMESPACE_TO_PREFIX.put("artist", "a:");
+        NAMESPACE_TO_PREFIX.put("cosplayer", "cos:");
         NAMESPACE_TO_PREFIX.put("character", "c:");
         NAMESPACE_TO_PREFIX.put("female", "f:");
         NAMESPACE_TO_PREFIX.put("group", "g:");
         NAMESPACE_TO_PREFIX.put("language", "l:");
         NAMESPACE_TO_PREFIX.put("male", "m:");
         NAMESPACE_TO_PREFIX.put("misc", "");
+        NAMESPACE_TO_PREFIX.put("mixed", "x");
+        NAMESPACE_TO_PREFIX.put("other", "o:");
         NAMESPACE_TO_PREFIX.put("parody", "p:");
         NAMESPACE_TO_PREFIX.put("reclass", "r:");
+        PREFIX_TO_NAMESPACE.put("n:", "rows");
         PREFIX_TO_NAMESPACE.put("a:", "artist");
+        PREFIX_TO_NAMESPACE.put("cos:", "cosplayer");
         PREFIX_TO_NAMESPACE.put("c:", "character");
         PREFIX_TO_NAMESPACE.put("f:", "female");
         PREFIX_TO_NAMESPACE.put("g:", "group");
         PREFIX_TO_NAMESPACE.put("l:", "language");
         PREFIX_TO_NAMESPACE.put("m:", "male");
         PREFIX_TO_NAMESPACE.put("", "misc");
+        PREFIX_TO_NAMESPACE.put("x", "mixed");
+        PREFIX_TO_NAMESPACE.put("o", "other");
         PREFIX_TO_NAMESPACE.put("p:", "parody");
         PREFIX_TO_NAMESPACE.put("r:", "reclass");
     }

@@ -68,17 +68,6 @@ public class Settings {
                 putDF(true);
             }
         }
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
-//            if ("CN".equals(Locale.getDefault().getCountry())) {
-//                putDF(true);
-//            }
-//        }
-        if (!sSettingsPre.contains(KEY_DOH)) {
-            if (!"CN".equals(Locale.getDefault().getCountry())) {
-                putDoH(true);
-            }
-        }
-
 
     }
 
@@ -1064,7 +1053,7 @@ public class Settings {
     }
 
     public static final String KEY_BUILT_EX_HOSTS = "built_ex_hosts";
-    private static final boolean DEFAULT_BUILT_EX_HOSTS = false;
+    private static final boolean DEFAULT_BUILT_EX_HOSTS = true;
 
     public static boolean getBuiltEXHosts() {
         return getBoolean(KEY_BUILT_EX_HOSTS, DEFAULT_BUILT_EX_HOSTS);
@@ -1206,7 +1195,7 @@ public class Settings {
     }
 
 
-    private static final boolean DEFAULT_FRONTING = false;
+    private static final boolean DEFAULT_FRONTING = true;
     public static final String KEY_DOMAIN_FRONTING = "domain_fronting";
 
 
@@ -1242,16 +1231,16 @@ public class Settings {
     }
 
 
-    private static final String SHOW_GALLERY_REVIEW = "is_show_gallery_review";
+    public static final String KEY_SHOW_GALLERY_COMMENT = "show_gallery_comment";
 
-    private static boolean IS_SHOW_GALLERY_REVIEW = false;
+    private static boolean IS_SHOW_GALLERY_COMMENT = true;
 
-    public static boolean isShowGalleryReview() {
-        return getBoolean(SHOW_GALLERY_REVIEW, IS_SHOW_GALLERY_REVIEW);
+    public static boolean getShowGalleryComment() {
+        return getBoolean(KEY_SHOW_GALLERY_COMMENT, IS_SHOW_GALLERY_COMMENT);
     }
 
-    public static void setShowGalleryReview(boolean value) {
-        putBoolean(SHOW_GALLERY_REVIEW, value);
+    public static void setShowGalleryComment(boolean value) {
+        putBoolean(KEY_SHOW_GALLERY_COMMENT, value);
     }
 
     public static final String USER_BACKGROUND_IMAGE = "background_image_path";
