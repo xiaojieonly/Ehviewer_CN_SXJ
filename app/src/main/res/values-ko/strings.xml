@@ -83,8 +83,6 @@
     <string name="error_invalid_archive">잘못된 압축 파일</string>
     <string name="error_reading_failed">읽기 실패</string>
     <string name="error_out_of_range">범위 초과</string>
-    <string name="error_write_failed">쓰기 실패</string>
-    <string name="error_parse_error">구문 분석 오류</string>
     <string name="error_write_failed">쓰기 오류</string>
     <string name="error_parse_error">분석 오류</string>
     <string name="error_509">509</string>
@@ -139,8 +137,8 @@
     <string name="gallery_list_no_preview_tag">미리보기 탭 없음</string>
     <string name="search">검색</string>
 
-    <string name="gallery_list_action_url_missed">해당 링크를 찾을 수 없음</string>
-    <string name="gallery_list_can_not_jump">현재 점프할 수 없음</string>
+    <string name="gallery_list_action_url_missed">다음 페이지를 찾을 수 없습니다</string>
+    <string name="gallery_list_no_more_data">현재 점프할 수 없음</string>
 
     <string name="keyword_search">키워드 검색</string>
     <string name="image_search">이미지 검색</string>
@@ -166,11 +164,6 @@
     <string name="search_sh">Expunged 갤러리 표시</string>
     <string name="search_sr">최소 평점:</string>
     <string name="search_sp">페이지 수:</string>
-    <string name="select_image">이미지 선택</string>
-    <string name="search_uss">유사한 이미지 검색</string>
-    <string name="search_osc">커버만 검색</string>
-    <string name="search_se">Expunged 이미지 표시</string>
-    <string name="select_image_first">먼저 이미지를 선택해 주세요.</string>
     
     <string name="select_image">이미지 선택</string>
     <string name="search_uss">유사한 검색 사용</string>
@@ -245,8 +238,8 @@
     <string name="remove_from_favorite_success">즐겨찾기에서 제거했습니다.</string>
     <string name="add_to_favorite_failure">즐겨찾기에 추가하지 못했습니다.</string>
     <string name="remove_from_favorite_failure">즐겨찾기에서 제거하지 못했습니다.</string>
-    <string name="filter_the_uploader">업로더 '%s'을(를) 차단하시겠습니까?</string>
-    <string name="filter_the_tag">태그 '%s'을(를) 차단하시겠습니까?</string>
+    <string name="filter_the_uploader">업로더 \"%s\"을(를) 차단하시겠습니까?</string>
+    <string name="filter_the_tag">태그 \"%s\"을(를) 차단하시겠습니까?</string>
     <string name="filter_added">차단 항목 추가됨</string>
 
     <!-- Rating -->
@@ -380,7 +373,7 @@
     <string name="filter_uploader">업로더</string>
     <string name="filter_tag">태그</string>
     <string name="filter_tag_namespace">태그 네임스페이스</string>
-    <string name="delete_filter">차단 항목 '%s' 을(를) 삭제하시겠습니까?</string>
+    <string name="delete_filter">차단 항목 \'%s\' 을(를) 삭제하시겠습니까?</string>
     <string name="tip">팁</string>
     <string name="add_filter">차단 항목 추가</string>
     <string name="show_definition">정의 표시</string>
@@ -399,7 +392,7 @@
     <string name="apply_tip">설정을 저장하려면 체크 표시를 누르세요.</string>
 
     <!-- My Tags Activity -->
-    <string name="my_tags">나의 태그</string
+    <string name="my_tags">나의 태그</string>
 
     <!-- Hosts Activity -->
     <string name="hosts">사용자 지정 hosts.txt</string>
@@ -734,8 +727,6 @@
 
     <string name="download_service">다운로드 서비스</string>
     <string name="favorite_name">즐겨찾기</string>
-    <string name="settings_about_donate_guide">지원 매 뉴 얼</string>
-
 
     <!--  排行榜  -->
     <string name="gallery_toplists">갤러리 순위표</string>
@@ -780,7 +771,7 @@
     <string name="sure">예</string>
     <string name="try_again">잠시후 다시 시도하십시오.</string>
     <string name="open_directory">디렉터리 열기</string>
-    <string name="downloading">다운로드 중... 나중에 다시 시도하십시오.</string>
+    <string name="downloading">다운로드 중… 나중에 다시 시도하십시오.</string>
     <string name="torrent_exist">파일이 이미 존재합니다.</string>
 
     <string name="yes">예</string>

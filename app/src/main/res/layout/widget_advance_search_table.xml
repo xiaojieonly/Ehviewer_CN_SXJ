@@ -22,6 +22,7 @@
         android:layout_marginBottom="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/search_gallery"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -31,6 +32,7 @@
             android:text="@string/search_sname"/>
 
         <CheckBox
+            android:id="@+id/search_gallery_tags"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -47,6 +49,7 @@
         android:layout_marginBottom="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/search_gallery_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -55,6 +58,7 @@
             android:text="@string/search_sdesc"/>
 
         <CheckBox
+            android:id="@+id/search_torrent_filenames"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -70,6 +74,7 @@
         android:layout_marginBottom="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/only_show_galleries_with_torrents"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -78,6 +83,7 @@
             android:text="@string/search_sto"/>
 
         <CheckBox
+            android:id="@+id/search_low_power_tags"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -93,6 +99,7 @@
         android:layout_marginBottom="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/search_downvoted_tags"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -101,6 +108,7 @@
             android:text="@string/search_sdt2"/>
 
         <CheckBox
+            android:id="@+id/search_expunged_galleries"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -116,6 +124,7 @@
         android:layout_marginBottom="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/minimum_rating"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -124,6 +133,7 @@
             android:text="@string/search_sr"/>
 
         <Spinner
+            android:id="@+id/search_min_rating"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -139,6 +149,7 @@
         android:layout_marginBottom="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/pages_setting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="@dimen/advance_search_table_item_margin"
@@ -205,6 +216,7 @@
         android:layout_marginTop="@dimen/advance_search_table_item_margin">
 
         <CheckBox
+            android:id="@+id/disable_default_filter_language"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -213,6 +225,7 @@
             android:text="@string/search_sfl"/>
 
         <CheckBox
+            android:id="@+id/disable_default_filter_uploader"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -222,6 +235,7 @@
             android:text="@string/search_sfu"/>
 
         <CheckBox
+            android:id="@+id/disable_default_filter_tags"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

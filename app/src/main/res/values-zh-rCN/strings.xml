@@ -139,8 +139,20 @@
     <string name="gallery_list_no_preview_tag">暂无预览标签</string>
     <string name="search">搜索</string>
 
-    <string name="gallery_list_action_url_missed">没找到对应链接</string>
-    <string name="gallery_list_can_not_jump">当前无法跳转</string>
+    <string name="gallery_list_action_url_missed">没找到下一页</string>
+    <string name="gallery_list_no_more_data">当前列表没有更多数据</string>
+    <string name="gallery_list_date_jump_1d">昨天</string>
+    <string name="gallery_list_date_jump_3d">三天前</string>
+    <string name="gallery_list_date_jump_1w">一周前</string>
+    <string name="gallery_list_date_jump_2w">两周前</string>
+    <string name="gallery_list_date_jump_1m">一个月前</string>
+    <string name="gallery_list_date_jump_6m">半年前</string>
+    <string name="gallery_list_date_jump_1y">一年前</string>
+    <string name="gallery_list_date_jump_2y">两年前</string>
+    <string name="gallery_list_select_jump_date">选择日期</string>
+    <string name="gallery_list_select_jump_node">选择节点</string>
+    <string name="gallery_list_jump_now">立即跳转</string>
+    <string name="gallery_list_time_jump_dialog_title">跳转选择器</string>
 
     <string name="keyword_search">关键字搜索</string>
     <string name="image_search">图片搜索</string>
@@ -163,7 +175,7 @@
     <string name="search_sto">仅显示有种子的画廊</string>
     <string name="search_sdt1">搜索低愿力标签</string>
     <string name="search_sdt2">搜索差评标签</string>
-    <string name="search_sh">显示被删除的画廊</string>
+    <string name="search_sh">只显示被删除的画廊</string>
     <string name="search_sr">最低评分：</string>
     <string name="search_sp">页数：</string>
     <string name="search_sp_to">到</string>
