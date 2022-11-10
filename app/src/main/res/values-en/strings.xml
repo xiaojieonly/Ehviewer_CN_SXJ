@@ -210,7 +210,7 @@
     <string name="search_sto">Only Show Galleries With Torrents</string>
     <string name="search_sdt1">Search Low-Power Tags</string>
     <string name="search_sdt2">Search Downvoted Tags</string>
-    <string name="search_sh">Show Expunged Galleries</string>
+    <string name="search_sh">Search Expunged Galleries</string>
     <string name="search_sr">Minimum Rating:</string>
     <string name="search_sp">Pages:</string>
     <string name="search_sp_to">to</string>

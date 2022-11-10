@@ -206,8 +206,20 @@
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
     <string name="gallery_list_no_preview_tag">No preview tag</string>
 
-    <string name="gallery_list_action_url_missed">No corresponding link found</string>
-    <string name="gallery_list_can_not_jump">Currently unable to jump</string>
+    <string name="gallery_list_action_url_missed">Next page not found</string>
+    <string name="gallery_list_no_more_data">There is no more data for the current listing</string>
+    <string name="gallery_list_date_jump_1d">Yesterday</string>
+    <string name="gallery_list_date_jump_3d">Three days ago</string>
+    <string name="gallery_list_date_jump_1w">One week ago</string>
+    <string name="gallery_list_date_jump_2w">Two weeks ago</string>
+    <string name="gallery_list_date_jump_1m">One month ago</string>
+    <string name="gallery_list_date_jump_6m">Six months ago</string>
+    <string name="gallery_list_date_jump_1y">One year ago</string>
+    <string name="gallery_list_date_jump_2y">Two years ago</string>
+    <string name="gallery_list_select_jump_date">Use date selector</string>
+    <string name="gallery_list_select_jump_node">Use node selector</string>
+    <string name="gallery_list_jump_now">Jump Now</string>
+    <string name="gallery_list_time_jump_dialog_title">Jump Selector</string>
 
     <string name="search">Search</string>
 
@@ -232,7 +244,7 @@
     <string name="search_sto">Only Show Galleries With Torrents</string>
     <string name="search_sdt1">Search Low-Power Tags</string>
     <string name="search_sdt2">Search Downvoted Tags</string>
-    <string name="search_sh">Show Expunged Galleries</string>
+    <string name="search_sh">Search Expunged Galleries</string>
     <string name="search_sr">Minimum Rating:</string>
     <string name="search_sp">Pages:</string>
     <string name="search_sp_to">to</string>

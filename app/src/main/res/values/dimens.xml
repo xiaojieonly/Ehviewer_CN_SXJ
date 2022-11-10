@@ -165,5 +165,6 @@
     <dimen name="popup_text_margin">12dp</dimen>
 
     <dimen name="download_search_bar_height">40dp</dimen>
+    <dimen name="button_space_between">20dp</dimen>
 
 </resources>
