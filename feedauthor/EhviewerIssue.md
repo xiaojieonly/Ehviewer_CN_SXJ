@@ -6,6 +6,7 @@
 ## 能看预览图但是无法下载/浏览图片：[issue199](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/199)
 ## 阅读漫画时提示“获取pToken错误”：[issue302](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/302)
 ## 如何修改默认下载标签：[issue391](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/391)
+## 如何删除屏蔽标签：[issue242](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/242)
 ## 下载列表等备份文件导出后无法导入其他软件：[issue168](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/168)
 ## 进不去里站：[issue180](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/180) [issue96](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/96)
 ## ex不显示：[issue222](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/222)
