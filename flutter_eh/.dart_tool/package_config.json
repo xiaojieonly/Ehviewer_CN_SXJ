@@ -1,0 +1,158 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "async",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/async-2.8.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "boolean_selector",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/boolean_selector-2.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "characters",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/characters-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "charcode",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/charcode-1.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "clock",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/clock-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "collection",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/collection-1.15.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "cupertino_icons",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/cupertino_icons-1.0.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "fake_async",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/fake_async-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/packages/flutter",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_lints",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/flutter_lints-1.0.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_test",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/packages/flutter_test",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "lints",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/lints-1.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "matcher",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/matcher-0.12.10",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "meta",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/meta-1.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "path",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/path-1.8.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "sky_engine",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/bin/cache/pkg/sky_engine",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "source_span",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/source_span-1.8.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "stack_trace",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/stack_trace-1.10.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "stream_channel",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/stream_channel-2.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "string_scanner",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/string_scanner-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "term_glyph",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/term_glyph-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "test_api",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/test_api-0.4.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "typed_data",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/typed_data-1.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "vector_math",
+      "rootUri": "file:///D:/Program%20Files/Flutter/flutter/.pub-cache/hosted/pub.flutter-io.cn/vector_math-2.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "simple_game",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    }
+  ],
+  "generated": "2022-07-28T12:43:12.512964Z",
+  "generator": "pub",
+  "generatorVersion": "2.14.4"
+}
