@@ -11,6 +11,7 @@
 ## 进不去里站：[issue180](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/180) [issue96](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/96)
 ## ex不显示：[issue222](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/222)
   #### 电脑上能看，手机上看不了
+## 求助 E站新注册账号 捐赠了30美金 还是无法进去里站：[issue430](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/430)
 # 一般正常裸连设置：
 ## 请注意！！！这是裸连设置，挂了梯子就别点开(一些技术含量比较高的除外)，请仔细理解“裸连”这个词的含义
 ## 所有网络问题，要么设置有问题、要么本身网不行。本人均不再主动回复（打钱的另说）
