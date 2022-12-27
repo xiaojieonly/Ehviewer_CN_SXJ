@@ -43,6 +43,8 @@ public class EhUrl {
 
     public static final String API_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login&CODE=01";
 
+    public static final String URL_NEWS_E = HOST_E+"news.php";
+
     public static final String API_E = HOST_E + "api.php";
     public static final String API_EX = HOST_EX + "api.php";
 
@@ -231,6 +233,15 @@ public class EhUrl {
 //            case SITE_EX:
 //                return URL_TOP_LIST_EX;
 //        }
+    }
+
+    /**
+     * 获取排行榜‘top list’连接
+     * @return
+     */
+    @NonNull
+    public static String getEhNewsUrl() {
+        return URL_NEWS_E;
     }
 
     @NonNull

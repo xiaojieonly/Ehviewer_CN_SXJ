@@ -562,6 +562,7 @@ public class DownloadsScene extends ToolbarScene
         LinearLayout linearLayout = (LinearLayout) layoutInflater.inflate(R.layout.download_search_dialog, null);
         mSearchBar = linearLayout.findViewById(R.id.download_search_bar);
         mSearchBar.setHelper(this);
+        mSearchBar.setIsComeFromDownload(true);
         mSearchBar.setEditTextHint(R.string.download_search_hint);
         mSearchBar.setLeftDrawable(drawable);
         mSearchBar.setText(searchKey);

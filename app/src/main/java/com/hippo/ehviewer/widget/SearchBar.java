@@ -16,6 +16,8 @@
 
 package com.hippo.ehviewer.widget;
 
+import static com.hippo.ehviewer.client.EhTagDatabase.NAMESPACE_TO_PREFIX;
+
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -101,6 +103,8 @@ public class SearchBar extends CardView implements View.OnClickListener,
     private boolean mInAnimation;
 
     private boolean showTranslation;
+
+    private boolean isComeFromDownload = false;
 
     public SearchBar(Context context) {
         super(context);
@@ -307,6 +311,10 @@ public class SearchBar extends CardView implements View.OnClickListener,
         lp.leftMargin = left;
         lp.rightMargin = right;
         mEditText.setLayoutParams(lp);
+    }
+
+    public void setIsComeFromDownload(boolean isComeFromDownload){
+        this.isComeFromDownload = isComeFromDownload;
     }
 
     private void applySearch() {
@@ -663,26 +671,47 @@ public class SearchBar extends CardView implements View.OnClickListener,
         public void onClick() {
             Editable editable = mEditText.getText();
             if (editable != null) {
-                String key = mKeyword;
+                String tagKey = rebuildKeyword(mKeyword);
+                String key = tagKey;
                 if (editable.toString().contains(" ")) {
                     StringBuilder builder = new StringBuilder(editable);
                     char c = ' ';
                     while (builder.charAt(builder.length() - 1) != c) {
                         builder.deleteCharAt(builder.length() - 1);
                     }
-                    if (builder.length() != 0) {
-                        while (builder.charAt(builder.length() - 1) == c) {
-                            builder.deleteCharAt(builder.length() - 1);
-                        }
+
+                    while (builder.length() != 0 && builder.charAt(builder.length() - 1) == c) {
+                        builder.deleteCharAt(builder.length() - 1);
                     }
 
-                    builder.append("  ").append(mKeyword);
+                    builder.append("  ").append(tagKey);
                     key = builder.toString();
                 }
                 mEditText.setText(key);
                 mEditText.setSelection(mEditText.getText().length());
             }
         }
+
+        private String rebuildKeyword(String key) {
+            String[] strings = key.split(":");
+            if (strings.length != 2) {
+                return key;
+            }
+            String groupName;
+            String tagName = strings[1];
+            if (isComeFromDownload){
+                groupName = strings[0];
+                return groupName+":"+tagName;
+            }
+            if (NAMESPACE_TO_PREFIX.containsKey(strings[0])) {
+                groupName = NAMESPACE_TO_PREFIX.get(strings[0]);
+                return groupName + "\"" + tagName + "$\"";
+            } else {
+                return key;
+            }
+        }
+
+
 
         @Override
         public void onLongClick() {

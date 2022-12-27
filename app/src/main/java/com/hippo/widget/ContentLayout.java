@@ -40,6 +40,8 @@ import com.hippo.easyrecyclerview.HandlerDrawable;
 import com.hippo.easyrecyclerview.LayoutManagerUtils;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.client.parser.FavoritesParser;
+import com.hippo.ehviewer.client.parser.GalleryListParser;
 import com.hippo.refreshlayout.RefreshLayout;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -183,6 +185,10 @@ public class ContentLayout extends FrameLayout {
         private static final String KEY_START_PAGE = "start_page";
         private static final String KEY_END_PAGE = "end_page";
         private static final String KEY_PAGES = "pages";
+        private static final String KEY_FIRST_HREF = "first_href";
+        private static final String KEY_PREV_HREF = "prev_href";
+        private static final String KEY_NEXT_HREF = "next_href";
+        private static final String KEY_LAST_HREF = "last_href";
 
         public static final int TYPE_REFRESH = 0;
         public static final int TYPE_PRE_PAGE = 1;
@@ -242,9 +248,14 @@ public class ContentLayout extends FrameLayout {
         /**
          * The available page count.
          */
-        private int mPages;
+        public int mPages;
 
         private int mNextPage;
+
+        public String firstHref;
+        public String prevHref;
+        public String nextHref;
+        public String lastHref;
 
         private int mCurrentTaskId;
         private int mCurrentTaskType;
@@ -273,6 +284,11 @@ public class ContentLayout extends FrameLayout {
                     mCurrentTaskType = TYPE_PRE_PAGE_KEEP_POS;
                     mCurrentTaskPage = mStartPage - 1;
                     getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+                } else if (prevHref != null && !prevHref.isEmpty()) {
+                    mCurrentTaskId = mIdGenerator.nextId();
+                    mCurrentTaskType = TYPE_PRE_PAGE_KEEP_POS;
+//                    mCurrentTaskPage = mStartPage - 1;
+                    getExPageData(GOTO_PREV_PAGE, mCurrentTaskId, mCurrentTaskPage);
                 } else {
                     doRefresh();
                 }
@@ -312,7 +328,7 @@ public class ContentLayout extends FrameLayout {
         };
 
         private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
-                opsition -> ContentHelper.this.onScrollToPosition(opsition);
+                ContentHelper.this::onScrollToPosition;
 
 //        private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
 //                new LayoutManagerUtils.OnScrollToPositionListener() {
@@ -342,11 +358,8 @@ public class ContentLayout extends FrameLayout {
             mRecyclerView.addOnScrollListener(mOnScrollListener);
             mRefreshLayout.setOnRefreshListener(mOnRefreshListener);
 
-
-            mTipView.setOnClickListener(
-                    v -> refresh()  //刷新页面
-            );
-
+            //点击刷新页面
+            mTipView.setOnClickListener(v -> refresh());
 
 //            mTipView.setOnClickListener(new OnClickListener() {
 //                @Override
@@ -488,12 +501,36 @@ public class ContentLayout extends FrameLayout {
         protected void onClearData() {
         }
 
+        public void onGetPageData(int taskId, GalleryListParser.Result result, List<E> data) {
+            if (mCurrentTaskType != TYPE_NEXT_PAGE_KEEP_POS && mCurrentTaskType != TYPE_NEXT_PAGE) {
+                firstHref = result.firstHref;
+                prevHref = result.prevHref;
+            }
+            if (mCurrentTaskType != TYPE_PRE_PAGE_KEEP_POS && mCurrentTaskType != TYPE_PRE_PAGE) {
+                nextHref = result.nextHref;
+                lastHref = result.lastHref;
+            }
+            onGetPageData(taskId, result.pages, result.nextPage, data);
+        }
+
+        public void onGetPageData(int taskId, FavoritesParser.Result result, List<E> data) {
+            if (mCurrentTaskType != TYPE_NEXT_PAGE_KEEP_POS && mCurrentTaskType != TYPE_NEXT_PAGE) {
+                firstHref = result.firstHref;
+                prevHref = result.prevHref;
+            }
+            if (mCurrentTaskType != TYPE_PRE_PAGE_KEEP_POS && mCurrentTaskType != TYPE_PRE_PAGE) {
+                nextHref = result.nextHref;
+                lastHref = result.lastHref;
+            }
+            onGetPageData(taskId, result.pages, result.nextPage, data);
+        }
+
         public void onGetPageData(int taskId, int pages, int nextPage, List<E> data) {
             if (mCurrentTaskId == taskId) {
 
                 switch (mCurrentTaskType) {
                     case TYPE_REFRESH:
-                        onTypeRefresh(pages,nextPage,data);
+                        onTypeRefresh(pages, nextPage, data);
                         break;
                     case TYPE_PRE_PAGE:
                     case TYPE_PRE_PAGE_KEEP_POS:
@@ -501,13 +538,13 @@ public class ContentLayout extends FrameLayout {
                         break;
                     case TYPE_NEXT_PAGE:
                     case TYPE_NEXT_PAGE_KEEP_POS:
-                        onTypeNextPage(pages,nextPage, data);
+                        onTypeNextPage(pages, nextPage, data);
                         break;
                     case TYPE_SOMEWHERE:
-                       onTypeSomeWhere(pages,nextPage, data);
+                        onTypeSomeWhere(pages, nextPage, data);
                         break;
                     case TYPE_REFRESH_PAGE:
-                       onTypeRefreshPage(pages,nextPage, data);
+                        onTypeRefreshPage(pages, nextPage, data);
                         break;
                 }
             }
@@ -556,7 +593,7 @@ public class ContentLayout extends FrameLayout {
                 if (newIndexEnd > oldIndexEnd && newIndexEnd > 0 && mRecyclerView.isAttachedToWindow()) {
                     mRecyclerView.stopScroll();
                     RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                    if (manager==null){
+                    if (manager == null) {
                         return;
                     }
                     LayoutManagerUtils.scrollToPositionWithOffset(manager, newIndexEnd - 1, 0);
@@ -615,7 +652,7 @@ public class ContentLayout extends FrameLayout {
                     // RecyclerView scroll
                     mRecyclerView.stopScroll();
                     RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                    if (manager == null){
+                    if (manager == null) {
                         return;
                     }
                     LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
@@ -651,7 +688,7 @@ public class ContentLayout extends FrameLayout {
                         // RecyclerView scroll
                         mRecyclerView.stopScroll();
                         RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                        if (manager == null){
+                        if (manager == null) {
                             return;
                         }
                         LayoutManagerUtils.scrollToPositionWithOffset(manager, oldDataSize, 0);
@@ -703,7 +740,7 @@ public class ContentLayout extends FrameLayout {
                     } else {
                         mRecyclerView.stopScroll();
                         RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                        if (manager == null){
+                        if (manager == null) {
                             return;
                         }
                         LayoutManagerUtils.scrollToPositionWithOffset(manager, oldDataSize, 0);
@@ -740,7 +777,7 @@ public class ContentLayout extends FrameLayout {
                         // RecyclerView scroll, to top
                         mRecyclerView.stopScroll();
                         RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                        if (manager == null){
+                        if (manager == null) {
                             return;
                         }
                         LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
@@ -794,7 +831,7 @@ public class ContentLayout extends FrameLayout {
                     } else {
                         mRecyclerView.stopScroll();
                         RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                        if (manager == null){
+                        if (manager == null) {
                             return;
                         }
                         LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
@@ -852,7 +889,7 @@ public class ContentLayout extends FrameLayout {
                 if (mRecyclerView.isAttachedToWindow()) {
                     mRecyclerView.stopScroll();
                     RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-                    if (manager == null){
+                    if (manager == null) {
                         return;
                     }
                     LayoutManagerUtils.scrollToPositionWithOffset(manager, 0, 0);
@@ -959,7 +996,7 @@ public class ContentLayout extends FrameLayout {
             doRefresh();
         }
 
-        public void cancelCurrentTask() {
+        protected void cancelCurrentTask() {
             mCurrentTaskId = mIdGenerator.nextId();
             mRefreshLayout.setHeaderRefreshing(false);
             mRefreshLayout.setFooterRefreshing(false);
@@ -1011,7 +1048,16 @@ public class ContentLayout extends FrameLayout {
          * @throws IndexOutOfBoundsException
          */
         public void goTo(int page) throws IndexOutOfBoundsException {
-            if (page < 0 || page >= mPages) {
+            if (page == -996) {
+                mRefreshLayout.setFooterRefreshing(false);
+                mRefreshLayout.setHeaderRefreshing(true);
+
+                mCurrentTaskId = mIdGenerator.nextId();
+                mCurrentTaskType = TYPE_SOMEWHERE;
+                mCurrentTaskPage = page;
+                getExPageData(mCurrentTaskType, mCurrentTaskId, mPages);
+//                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+            } else if (page < 0 || page >= mPages) {
                 throw new IndexOutOfBoundsException("Page count is " + mPages + ", page is " + page);
             } else if (page >= mStartPage && page < mEndPage) {
                 cancelCurrentTask();
@@ -1070,6 +1116,10 @@ public class ContentLayout extends FrameLayout {
             bundle.putInt(KEY_START_PAGE, mStartPage);
             bundle.putInt(KEY_END_PAGE, mEndPage);
             bundle.putInt(KEY_PAGES, mPages);
+            bundle.putString(KEY_FIRST_HREF, firstHref);
+            bundle.putString(KEY_PREV_HREF, prevHref);
+            bundle.putString(KEY_NEXT_HREF, nextHref);
+            bundle.putString(KEY_LAST_HREF, lastHref);
             return bundle;
         }
 
@@ -1095,6 +1145,10 @@ public class ContentLayout extends FrameLayout {
                 mStartPage = bundle.getInt(KEY_START_PAGE);
                 mEndPage = bundle.getInt(KEY_END_PAGE);
                 mPages = bundle.getInt(KEY_PAGES);
+                firstHref = bundle.getString(KEY_FIRST_HREF);
+                prevHref = bundle.getString(KEY_PREV_HREF);
+                nextHref = bundle.getString(KEY_NEXT_HREF);
+                lastHref = bundle.getString(KEY_LAST_HREF);
 
                 notifyDataSetChanged();
 

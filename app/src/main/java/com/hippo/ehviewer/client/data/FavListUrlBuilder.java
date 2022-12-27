@@ -16,20 +16,32 @@
 
 package com.hippo.ehviewer.client.data;
 
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_FIRST_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_LAST_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_NEXT_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_PREV_PAGE;
+import static com.hippo.widget.ContentLayout.ContentHelper.TYPE_SOMEWHERE;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.hippo.ehviewer.client.EhUrl;
+import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.network.UrlBuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FavListUrlBuilder implements Parcelable {
-
+    private static final Pattern PATTERN_SEEK_DATE = Pattern.compile("seek=(\\d+)-(\\d+)-(\\d+)");
+    private static final Pattern  PATTERN_JUMP_NODE = Pattern.compile("jump=(\\d)[ymwd]");
     private static final String TAG = FavListUrlBuilder.class.getSimpleName();
+
     public static final int FAV_CAT_ALL = -1;
     public static final int FAV_CAT_LOCAL = -2;
 
@@ -63,6 +75,37 @@ public class FavListUrlBuilder implements Parcelable {
 
     public boolean isLocalFavCat() {
         return mFavCat == FAV_CAT_LOCAL;
+    }
+
+
+    public String jumpHrefBuild(String urlOld,String appendParam){
+        Matcher seekM = PATTERN_SEEK_DATE.matcher(urlOld);
+        Matcher jumpM = PATTERN_JUMP_NODE.matcher(urlOld);
+
+        String urlNew;
+        if (seekM.find()){
+            urlNew = urlOld.replace(Objects.requireNonNull(seekM.group(0)),appendParam);
+        }else if (jumpM.find()){
+            urlNew = urlOld.replace(Objects.requireNonNull(jumpM.group(0)),appendParam);
+        }else{
+            urlNew = urlOld+"&"+appendParam;
+        }
+        return urlNew;
+    }
+
+    public String build(int pageAction, GalleryInfoContentHelper helper){
+        switch (pageAction){
+            default:
+            case GOTO_FIRST_PAGE:
+                return helper.firstHref;
+            case GOTO_PREV_PAGE:
+                return helper.prevHref;
+            case GOTO_NEXT_PAGE:
+            case TYPE_SOMEWHERE:
+                return helper.nextHref;
+            case GOTO_LAST_PAGE:
+                return helper.lastHref;
+        }
     }
 
     public String build() {
