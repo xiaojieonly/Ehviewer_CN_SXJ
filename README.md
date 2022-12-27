@@ -1,6 +1,27 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2022/12/06 :   
+ ###  新版本：1.9.4.2  
+ ###  修复了一些bug  
+ ###  修复了下载页面tag搜索文本错误导致的查询失败的问题
+ ###  新增了每日签到及其他事件的提示弹窗
+   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/is5xI0hzdd3c)  密码:crec  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
+# 2022/11/19 :   
+ ###  新版本：1.9.4.1  
+ ###  修复了一些bug  
+ ###  里站跳转后下滑页面从刷新页面变为加载上一页  
+   点击前往下载：[蓝奏云](https://wwb.lanzouy.com/ibt9z0gbqn9g)  密码:1ws4  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
 # 2022/11/10 :   
  ###  新版本：1.9.4.0  
  ###  新增里站日期跳转  
