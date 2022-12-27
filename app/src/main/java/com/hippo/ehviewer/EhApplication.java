@@ -28,10 +28,14 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Debug;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.collection.LruCache;
 
 import com.hippo.a7zip.A7Zip;
@@ -639,6 +643,33 @@ public class EhApplication extends RecordingApplication {
     public static UserTagList getUserTagList(@NonNull Context context){
         EhApplication application = ((EhApplication) context.getApplicationContext());
         return application.userTagList;
+    }
+
+    /**
+     * 显示eh事件
+     * @param html
+     */
+    public void showEventPane(String html) {
+        Activity activity = getTopActivity();
+        if (activity != null) {
+            activity.runOnUiThread(() -> {
+                AlertDialog dialog = new AlertDialog.Builder(activity)
+                        .setMessage(Html.fromHtml(html))
+                        .setPositiveButton(android.R.string.ok, null)
+                        .create();
+                dialog.setOnShowListener(d -> {
+                    final View messageView = dialog.findViewById(android.R.id.message);
+                    if (messageView instanceof TextView) {
+                        ((TextView) messageView).setMovementMethod(LinkMovementMethod.getInstance());
+                    }
+                });
+                try {
+                    dialog.show();
+                } catch (Throwable t) {
+                    // ignore
+                }
+            });
+        }
     }
 
 }

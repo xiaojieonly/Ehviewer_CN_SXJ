@@ -61,6 +61,7 @@ public class EhClient {
     public static final int METHOD_EDIT_WATCHED = 21;
     public static final int METHOD_DELETE_WATCHED = 22;
     public static final int METHOD_GET_WATCHED = 23;
+    public static final int METHOD_GET_NEWS = 24;
 
     private final ThreadPoolExecutor mRequestThreadPool;
     private final OkHttpClient mOkHttpClient;
@@ -186,6 +187,8 @@ public class EhClient {
                         return EhEngine.deleteWatchedTag(this, mOkHttpClient,(String) params[0],(UserTag) params[1]);
                     case METHOD_GET_WATCHED:
                         return EhEngine.getWatchedList(this, mOkHttpClient,(String) params[0]);
+                    case METHOD_GET_NEWS:
+                        return EhEngine.getEhNews(this,mOkHttpClient);
                     default:
                         return new IllegalStateException("Can't detect method " + mMethod);
                 }

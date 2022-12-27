@@ -31,6 +31,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
 import android.view.Gravity;
@@ -38,6 +39,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +51,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
@@ -80,6 +83,7 @@ import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
+import com.hippo.ehviewer.widget.JumpDateSelector;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.refreshlayout.RefreshLayout;
 import com.hippo.ripple.Ripple;
@@ -94,6 +98,7 @@ import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,6 +116,7 @@ public class FavoritesScene extends BaseScene implements
     private static final String KEY_SEARCH_MODE = "search_mode";
     private static final String KEY_HAS_FIRST_REFRESH = "has_first_refresh";
     private static final String KEY_FAV_COUNT_ARRAY = "fav_count_array";
+    private static final String TAG = "FavoritesScene";
 
     @Nullable
     @ViewLifeCircle
@@ -154,6 +160,10 @@ public class FavoritesScene extends BaseScene implements
     @Nullable
     @WholeLifeCircle
     private FavListUrlBuilder mUrlBuilder;
+
+    @Nullable
+    private AlertDialog jumpSelectorDialog;
+    private JumpDateSelector mJumpDateSelector;
 
     public int current; // -1 for error
     public int limit; // -1 for error
@@ -250,7 +260,7 @@ public class FavoritesScene extends BaseScene implements
     @Nullable
     @Override
     public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_favorites, container, false);
         ContentLayout contentLayout = (ContentLayout) view.findViewById(R.id.content_layout);
         MainActivity activity = getActivity2();
@@ -471,7 +481,7 @@ public class FavoritesScene extends BaseScene implements
                 holder.key.setText(R.string.local_favorites);
                 holder.value.setText(Integer.toString(mFavLocalCount));
                 holder.itemView.setEnabled(true);
-            } else if (1 == position){
+            } else if (1 == position) {
                 holder.key.setText(R.string.cloud_favorites);
                 holder.value.setText(Integer.toString(mFavCountSum));
                 holder.itemView.setEnabled(true);
@@ -498,7 +508,7 @@ public class FavoritesScene extends BaseScene implements
 
     @Override
     public View onCreateDrawerView(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                                   @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.drawer_list_rv, container, false);
         final Context context = getEHContext();
         Toolbar toolbar = (Toolbar) ViewUtils.$$(view, R.id.toolbar);
@@ -590,7 +600,7 @@ public class FavoritesScene extends BaseScene implements
     @Override
     @Implemented(EasyRecyclerView.OnItemClickListener.class)
     public boolean onItemClick(EasyRecyclerView parent, View view, int position, long id) {
-        if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(Gravity.RIGHT)){
+        if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(Gravity.RIGHT)) {
             // Skip if in search mode
             if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
                 return true;
@@ -778,18 +788,50 @@ public class FavoritesScene extends BaseScene implements
 
     private void showGoToDialog() {
         Context context = getEHContext();
+
         if (null == context || null == mHelper) {
             return;
         }
 
+        if (mHelper.mPages < 0) {
+            showDateJumpDialog(context);
+        } else {
+            showPageJumpDialog(context);
+        }
+//        Context context = getEHContext();
+//        if (null == context || null == mHelper) {
+//            return;
+//        }
+
+
+    }
+
+    private void showDateJumpDialog(Context context) {
+        if (mHelper == null) {
+            return;
+        }
+        if (mHelper.nextHref == null || mHelper.nextHref.isEmpty()) {
+            Toast.makeText(getEHContext(), R.string.gallery_list_no_more_data, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (jumpSelectorDialog == null) {
+            LinearLayout linearLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.gallery_list_date_jump_dialog, null);
+            mJumpDateSelector = linearLayout.findViewById(R.id.gallery_list_jump_date);
+            mJumpDateSelector.setOnTimeSelectedListener(this::onTimeSelected);
+            jumpSelectorDialog = new AlertDialog.Builder(context).setView(linearLayout).create();
+        }
+        jumpSelectorDialog.show();
+    }
+
+    private void showPageJumpDialog(Context context) {
         final int page = mHelper.getPageForTop();
         final int pages = mHelper.getPages();
         String hint = getString(R.string.go_to_hint, page + 1, pages);
         final EditTextDialogBuilder builder = new EditTextDialogBuilder(context, null, hint);
         builder.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         final AlertDialog dialog = builder.setTitle(R.string.go_to)
-            .setPositiveButton(android.R.string.ok, null)
-            .show();
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
             if (null == mHelper) {
                 dialog.dismiss();
@@ -800,7 +842,7 @@ public class FavoritesScene extends BaseScene implements
             int goTo;
             try {
                 goTo = Integer.parseInt(text) - 1;
-            } catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 builder.setError(getString(R.string.error_invalid_number));
                 return;
             }
@@ -813,6 +855,16 @@ public class FavoritesScene extends BaseScene implements
             AppHelper.hideSoftInput(dialog);
             dialog.dismiss();
         });
+    }
+
+    private void onTimeSelected(String urlAppend) {
+        Log.d(TAG, urlAppend);
+        if (urlAppend.isEmpty() || mHelper == null || jumpSelectorDialog == null || mUrlBuilder == null) {
+            return;
+        }
+        jumpSelectorDialog.dismiss();
+        mHelper.nextHref = mUrlBuilder.jumpHrefBuild(mHelper.nextHref, urlAppend);
+        mHelper.goTo(-996);
     }
 
     @Override
@@ -850,10 +902,10 @@ public class FavoritesScene extends BaseScene implements
                                     .show();
 
                             mHelper.refresh();
-                        }else {
+                        } else {
                             new AlertDialog.Builder(context)
                                     .setTitle(R.string.share_favorites_dialog_title)
-                                    .setMessage("已有名为：["+galleryInfo.title+"]的本子，无需重复添加~")
+                                    .setMessage("已有名为：[" + galleryInfo.title + "]的本子，无需重复添加~")
                                     .setPositiveButton(android.R.string.ok, add)
                                     .show();
                         }
@@ -1000,7 +1052,7 @@ public class FavoritesScene extends BaseScene implements
     }
 
     private void enterSearchMode(boolean animation) {
-        if (mSearchMode ||mSearchBar == null || mSearchBarMover == null || mLeftDrawable == null) {
+        if (mSearchMode || mSearchBar == null || mSearchBarMover == null || mLeftDrawable == null) {
             return;
         }
         mSearchMode = true;
@@ -1025,20 +1077,21 @@ public class FavoritesScene extends BaseScene implements
                 mHelper.isCurrentTask(taskId)) {
 
             if (mFavCatArray != null) {
-                System.arraycopy(result.catArray, 0, mFavCatArray, 0,10);
+                System.arraycopy(result.catArray, 0, mFavCatArray, 0, 10);
             }
 
             mFavCountArray = result.countArray;
-            if (mFavCountArray != null){
+            if (mFavCountArray != null) {
                 mFavCountSum = 0;
-                for (int i = 0; i < 10; i++ ){
+                for (int i = 0; i < 10; i++) {
                     mFavCountSum = mFavCountSum + mFavCountArray[i];
                 }
                 Settings.putFavCloudCount(mFavCountSum);
             }
 
             updateSearchBar();
-            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
+//            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
+            mHelper.onGetPageData(taskId, result, result.galleryInfoList);
 
             if (mDrawerAdapter != null) {
                 mDrawerAdapter.notifyDataSetChanged();
@@ -1223,7 +1276,7 @@ public class FavoritesScene extends BaseScene implements
     private class FavoritesAdapter extends GalleryAdapter {
 
         public FavoritesAdapter(@NonNull LayoutInflater inflater, @NonNull Resources resources,
-                @NonNull RecyclerView recyclerView, int type) {
+                                @NonNull RecyclerView recyclerView, int type) {
             super(inflater, resources, recyclerView, type, false);
         }
 
@@ -1244,7 +1297,7 @@ public class FavoritesScene extends BaseScene implements
         @Override
         protected void getPageData(final int taskId, int type, int page) {
             MainActivity activity = getActivity2();
-            if (null == activity || null == mUrlBuilder || null == mClient ) {
+            if (null == activity || null == mUrlBuilder || null == mClient) {
                 return;
             }
 
@@ -1319,7 +1372,7 @@ public class FavoritesScene extends BaseScene implements
         @Override
         protected void getExPageData(int pageAction, int taskId, int page) {
             MainActivity activity = getActivity2();
-            if (null == activity || null == mUrlBuilder || null == mClient ) {
+            if (null == activity || null == mUrlBuilder || null == mClient) {
                 return;
             }
 
@@ -1379,16 +1432,17 @@ public class FavoritesScene extends BaseScene implements
                     }
                 });
             } else {
-                mUrlBuilder.setIndex(page);
 //                String url = mUrlBuilder.build();
-                String url = mResult.nextHref;
-                if (url.isEmpty()) {
+//                String url = mResult.nextHref;
+                String url = mUrlBuilder.build(pageAction, mHelper);
+                if (url == null || url.isEmpty()) {
                     Toast.makeText(getContext(), R.string.gallery_list_action_url_missed, Toast.LENGTH_LONG).show();
-                    if (mHelper!=null){
+                    if (mHelper != null) {
                         mHelper.cancelCurrentTask();
                     }
                     return;
                 }
+                mUrlBuilder.setIndex(page);
                 EhRequest request = new EhRequest();
                 request.setMethod(EhClient.METHOD_GET_FAVORITES);
                 request.setCallback(new GetFavoritesListener(getContext(),
@@ -1459,7 +1513,7 @@ public class FavoritesScene extends BaseScene implements
         private final List<GalleryInfo> mBackup;
 
         private AddFavoritesListener(Context context, int stageId,
-                String sceneTag, int taskId, String keyword, List<GalleryInfo> backup) {
+                                     String sceneTag, int taskId, String keyword, List<GalleryInfo> backup) {
             super(context, stageId, sceneTag);
             mTaskId = taskId;
             mKeyword = keyword;
@@ -1487,7 +1541,8 @@ public class FavoritesScene extends BaseScene implements
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {
@@ -1503,7 +1558,7 @@ public class FavoritesScene extends BaseScene implements
         private final String mKeyword;
 
         private GetFavoritesListener(Context context, int stageId,
-                String sceneTag, int taskId, boolean local, String keyword) {
+                                     String sceneTag, int taskId, boolean local, String keyword) {
             super(context, stageId, sceneTag);
             mTaskId = taskId;
             mLocal = local;
@@ -1539,7 +1594,8 @@ public class FavoritesScene extends BaseScene implements
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {

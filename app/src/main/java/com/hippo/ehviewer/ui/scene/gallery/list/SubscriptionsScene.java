@@ -313,13 +313,12 @@ public final class SubscriptionsScene extends ToolbarScene {
 
         @Override
         public void onSuccess(UserTagList result) {
-            EhApplication.saveUserTagList(context,result);
-            if (result == null){
+            if (result == null || result.userTags == null){
                 userTagList.userTags = new ArrayList<>();
             }else {
                 userTagList.userTags = result.userTags;
             }
-
+            EhApplication.saveUserTagList(context,result);
             bindSecond();
         }
 

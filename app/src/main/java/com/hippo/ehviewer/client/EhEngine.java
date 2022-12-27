@@ -23,9 +23,11 @@ import android.util.Pair;
 import androidx.annotation.Nullable;
 
 import com.hippo.ehviewer.AppConfig;
+import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.data.EhNewsDetail;
 import com.hippo.ehviewer.client.data.EhTopListDetail;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
@@ -39,6 +41,8 @@ import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.ehviewer.client.parser.ArchiveParser;
+import com.hippo.ehviewer.client.parser.EhEventParse;
+import com.hippo.ehviewer.client.parser.EhNewsParse;
 import com.hippo.ehviewer.client.parser.FavoritesParser;
 import com.hippo.ehviewer.client.parser.ForumsParser;
 import com.hippo.ehviewer.client.parser.GalleryApiParser;
@@ -59,6 +63,7 @@ import com.hippo.util.ExceptionUtils;
 import com.hippo.yorozuya.AssertUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -359,6 +364,10 @@ public class EhEngine {
             headers = response.headers();
             assert response.body() != null;
             body = response.body().string();
+            String html = EhEventParse.parse(body);
+            if (html != null) {
+                EhApplication.getInstance().showEventPane(html);
+            }
             return GalleryDetailParser.parse(body);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
@@ -1173,4 +1182,33 @@ public class EhEngine {
         }
     }
 
+    public static EhNewsDetail getEhNews(EhClient.Task task, OkHttpClient mOkHttpClient) throws Throwable {
+//        return EhNewsParse.parse("");
+        String url = EhUrl.getEhNewsUrl();
+        Request request = new EhRequestBuilder(url,null).build();
+
+        Call call = mOkHttpClient.newCall(request);
+        if (null!=task){
+            task.setCall(call);
+        }
+        int code = -1;
+        String body;
+        Headers headers = null;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            if (response.body()==null){
+                return null;
+            }
+            body = response.body().string();
+            return EhNewsParse.parse(body);
+        } catch (IOException e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, null, e);
+            e.printStackTrace();
+        }
+
+        return new EhNewsDetail();
+    }
 }

@@ -180,8 +180,8 @@ public class EhTagDatabase {
     }
 
 
-    private static final Map<String, String> NAMESPACE_TO_PREFIX = new HashMap<>();
-    private static final Map<String, String> PREFIX_TO_NAMESPACE = new HashMap<>();
+    public static final Map<String, String> NAMESPACE_TO_PREFIX = new HashMap<>();
+    public static final Map<String, String> PREFIX_TO_NAMESPACE = new HashMap<>();
 
     static {
         NAMESPACE_TO_PREFIX.put("rows", "n:");

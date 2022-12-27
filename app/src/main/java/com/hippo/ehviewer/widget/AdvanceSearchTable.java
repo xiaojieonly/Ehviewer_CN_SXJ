@@ -69,49 +69,67 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public AdvanceSearchTable(Context context) {
         super(context);
-        init(context);
+        init();
     }
 
     public AdvanceSearchTable(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init();
     }
 
-    public void init(Context context) {
+    public void init() {
         setOrientation(LinearLayout.VERTICAL);
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        inflater.inflate(R.layout.widget_advance_search_table, this);
+         inflater.inflate(R.layout.widget_advance_search_table, this);
 
-        ViewGroup row0 = (ViewGroup) getChildAt(0);
-        mSname = (CheckBox) row0.getChildAt(0);
-        mStags = (CheckBox) row0.getChildAt(1);
+//        ViewGroup row0 = (ViewGroup) getChildAt(0);
+//        mSname = (CheckBox) row0.getChildAt(0);
+//        mStags = (CheckBox) row0.getChildAt(1);
+        mSname = (CheckBox)findViewById(R.id.search_gallery);
 
-        ViewGroup row1 = (ViewGroup) getChildAt(1);
-        mSdesc = (CheckBox) row1.getChildAt(0);
-        mStorr = (CheckBox) row1.getChildAt(1);
+        mStags = (CheckBox) findViewById(R.id.search_gallery_tags);
 
-        ViewGroup row2 = (ViewGroup) getChildAt(2);
-        mSto = (CheckBox) row2.getChildAt(0);
-        mSdt1 = (CheckBox) row2.getChildAt(1);
+//        ViewGroup row1 = (ViewGroup) getChildAt(1);
+//        mSdesc = (CheckBox) row1.getChildAt(0);
+//        mStorr = (CheckBox) row1.getChildAt(1);
+        mSdesc = (CheckBox) findViewById(R.id.search_gallery_description);
 
-        ViewGroup row3 = (ViewGroup) getChildAt(3);
-        mSdt2 = (CheckBox) row3.getChildAt(0);
-        mSh = (CheckBox) row3.getChildAt(1);
+        mStorr = (CheckBox) findViewById(R.id.search_torrent_filenames);
 
-        ViewGroup row4 = (ViewGroup) getChildAt(4);
-        mSr = (CheckBox) row4.getChildAt(0);
-        mMinRating = (Spinner) row4.getChildAt(1);
+//        ViewGroup row2 = (ViewGroup) getChildAt(2);
+//        mSto = (CheckBox) row2.getChildAt(0);
+//        mSdt1 = (CheckBox) row2.getChildAt(1);
+        mSto = (CheckBox) findViewById(R.id.only_show_galleries_with_torrents);
+        mSdt1 = (CheckBox) findViewById(R.id.search_low_power_tags);
 
-        ViewGroup row5 = (ViewGroup) getChildAt(5);
-        mSp = (CheckBox) row5.getChildAt(0);
-        mSpf = (EditText) row5.getChildAt(1);
-        mSpt = (EditText) row5.getChildAt(3);
+//        ViewGroup row3 = (ViewGroup) getChildAt(3);
+//        mSdt2 = (CheckBox) row3.getChildAt(0);
+//        mSh = (CheckBox) row3.getChildAt(1);
+        mSdt2 = (CheckBox) findViewById(R.id.search_downvoted_tags);
+        mSh = (CheckBox) findViewById(R.id.search_expunged_galleries);
 
-        ViewGroup row7 = (ViewGroup) getChildAt(7);
-        mSfl = (CheckBox) row7.getChildAt(0);
-        mSfu = (CheckBox) row7.getChildAt(1);
-        mSft = (CheckBox) row7.getChildAt(2);
+//        ViewGroup row4 = (ViewGroup) getChildAt(4);
+//        mSr = (CheckBox) row4.getChildAt(0);
+//        mMinRating = (Spinner) row4.getChildAt(1);
+        mSr = (CheckBox) findViewById(R.id.minimum_rating);
+        mMinRating = (Spinner)findViewById(R.id.search_min_rating);
+
+//        ViewGroup row5 = (ViewGroup) getChildAt(5);
+//        mSp = (CheckBox) row5.getChildAt(0);
+//        mSpf = (EditText) row5.getChildAt(1);
+//        mSpt = (EditText) row5.getChildAt(3);
+        mSp = (CheckBox) findViewById(R.id.pages_setting);
+        mSpf = (EditText) findViewById(R.id.spf);
+        mSpt = (EditText) findViewById(R.id.spt);
+
+//        ViewGroup row7 = (ViewGroup) getChildAt(7);
+//        mSfl = (CheckBox) row7.getChildAt(0);
+//        mSfu = (CheckBox) row7.getChildAt(1);
+//        mSft = (CheckBox) row7.getChildAt(2);
+        mSfl = (CheckBox) findViewById(R.id.disable_default_filter_language);
+        mSfu = (CheckBox) findViewById(R.id.disable_default_filter_uploader);
+        mSft = (CheckBox) findViewById(R.id.disable_default_filter_tags);
 
         // Avoid java.lang.IllegalStateException: focus search returned a view that wasn't able to take focus!
         mSpt.setOnEditorActionListener((v, actionId, event) -> {
@@ -187,7 +205,9 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public void setPageFrom(int pageFrom) {
         if (pageFrom > 0) {
-            mSpf.setText(Integer.toString(pageFrom));
+//            mSpf.setText(Integer.toString(pageFrom));
+            String setS = Integer.toString(pageFrom);
+            mSpf.setText(setS);
             mSp.setChecked(true);
         } else {
             mSp.setChecked(false);
@@ -197,7 +217,9 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public void setPageTo(int pageTo) {
         if (pageTo > 0) {
-            mSpt.setText(Integer.toString(pageTo));
+//            mSpt.setText(Integer.toString(pageTo));
+            String setS = Integer.toString(pageTo);
+            mSpt.setText(setS);
             mSp.setChecked(true);
         } else {
             mSp.setChecked(false);

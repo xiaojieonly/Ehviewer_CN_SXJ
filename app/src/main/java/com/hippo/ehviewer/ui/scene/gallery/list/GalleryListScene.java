@@ -34,6 +34,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -103,6 +104,7 @@ import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.ProgressScene;
 import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
+import com.hippo.ehviewer.widget.JumpDateSelector;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SearchLayout;
 import com.hippo.refreshlayout.RefreshLayout;
@@ -136,6 +138,8 @@ public final class GalleryListScene extends BaseScene
         SearchLayout.Helper, SearchBarMover.Helper, View.OnClickListener, FabLayout.OnClickFabListener,
         FabLayout.OnExpandListener, SubscriptionCallback {
 
+    private static final String TAG = "GalleryListScene";
+
     @IntDef({STATE_NORMAL, STATE_SIMPLE_SEARCH, STATE_SEARCH, STATE_SEARCH_SHOW_LIST})
     @Retention(RetentionPolicy.SOURCE)
     private @interface State {
@@ -164,7 +168,7 @@ public final class GalleryListScene extends BaseScene
     private static final long ANIMATE_TIME = 300L;
 
     private boolean filterOpen = false;
-    private List<String> filterTagList = new ArrayList<>();
+    private final List<String> filterTagList = new ArrayList<>();
 
     /*---------------
      Whole life cycle
@@ -207,14 +211,16 @@ public final class GalleryListScene extends BaseScene
     private PopupWindow popupWindow;
     @Nullable
     private AlertDialog alertDialog;
+    @Nullable
+    private AlertDialog jumpSelectorDialog;
     @NonNull
     private ViewPager drawPager;
+
+    private JumpDateSelector mJumpDateSelector;
 
     private SubscriptionDraw subscriptionDraw;
 
     private EhTagDatabase ehTags;
-
-    private GalleryListParser.Result mResult;
 
     @Nullable
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
@@ -671,18 +677,17 @@ public final class GalleryListScene extends BaseScene
             return;
         }
 
-        if (popupWindowPosition == position) {
-            popupWindowPosition = -1;
-            assert popupWindow != null;
-            popupWindow.dismiss();
-            return;
-        }
         if (popupWindow != null) {
+            if (popupWindowPosition == position) {
+                popupWindowPosition = -1;
+                popupWindow.dismiss();
+                return;
+            }
             popupWindowPosition = -1;
             popupWindow.dismiss();
         }
 
-        if (gi.tgList == null || gi.tgList.isEmpty()) {
+        if (gi != null && (gi.tgList == null || gi.tgList.isEmpty())) {
             onItemClick(view, gi);
             return;
         }
@@ -1325,11 +1330,31 @@ public final class GalleryListScene extends BaseScene
             return;
         }
 
-        if (mResult.pages<0||mResult.nextPage<0){
-            Toast.makeText(context,R.string.gallery_list_can_not_jump,Toast.LENGTH_LONG).show();
+        if (mHelper.mPages < 0) {
+            showDateJumpDialog(context);
+        } else {
+            showPageJumpDialog(context);
+        }
+    }
+
+    private void showDateJumpDialog(Context context) {
+        if (mHelper == null) {
             return;
         }
+        if (mHelper.nextHref == null || mHelper.nextHref.isEmpty()) {
+            Toast.makeText(getEHContext(), R.string.gallery_list_no_more_data, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (jumpSelectorDialog == null) {
+            LinearLayout linearLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.gallery_list_date_jump_dialog, null);
+            mJumpDateSelector = linearLayout.findViewById(R.id.gallery_list_jump_date);
+            mJumpDateSelector.setOnTimeSelectedListener(this::onTimeSelected);
+            jumpSelectorDialog = new AlertDialog.Builder(context).setView(linearLayout).create();
+        }
+        jumpSelectorDialog.show();
+    }
 
+    private void showPageJumpDialog(Context context) {
         final int page = mHelper.getPageForTop();
         final int pages = mHelper.getPages();
         String hint = getString(R.string.go_to_hint, page + 1, pages);
@@ -1361,6 +1386,16 @@ public final class GalleryListScene extends BaseScene
             AppHelper.hideSoftInput(dialog);
             dialog.dismiss();
         });
+    }
+
+    private void onTimeSelected(String urlAppend) {
+        Log.d(TAG, urlAppend);
+        if (urlAppend.isEmpty() || mHelper == null || jumpSelectorDialog == null || mUrlBuilder == null) {
+            return;
+        }
+        jumpSelectorDialog.dismiss();
+        mHelper.nextHref = mUrlBuilder.jumpHrefBuild(mHelper.nextHref, urlAppend);
+        mHelper.goTo(-996);
     }
 
     @Override
@@ -1826,14 +1861,14 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void onGetGalleryListSuccess(GalleryListParser.Result result, int taskId) {
-        mResult = result;
         if (mHelper != null && mSearchBarMover != null &&
                 mHelper.isCurrentTask(taskId)) {
             String emptyString = getResources2().getString(mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION && result.noWatchedTags
                     ? R.string.gallery_list_empty_hit_subscription
                     : R.string.gallery_list_empty_hit);
             mHelper.setEmptyString(emptyString);
-            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
+//            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
+            mHelper.onGetPageData(taskId, result, result.galleryInfoList);
         }
     }
 
@@ -1984,10 +2019,10 @@ public final class GalleryListScene extends BaseScene
                 return;
             }
             mUrlBuilder.setPageIndex(page);
-            String url = mUrlBuilder.build(pageAction, mResult);
-            if (url.isEmpty()) {
+            String url = mUrlBuilder.build(pageAction, mHelper);
+            if (url == null || url.isEmpty()) {
                 Toast.makeText(getContext(), R.string.gallery_list_action_url_missed, Toast.LENGTH_LONG).show();
-                if (mHelper!=null){
+                if (mHelper != null) {
                     mHelper.cancelCurrentTask();
                 }
                 return;
