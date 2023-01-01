@@ -1,7 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2023/01/01 :  住大家在新的一年里心想事成、一帆风顺~   
+# 2023/01/01 :  祝大家在新的一年里心想事成、一帆风顺~   
  ###  新版本：1.9.4.4  
  ###  修复了一些bug  
  ###  更新了页面跳转器，现在跳转器可以显示结果数量了  
