@@ -8,7 +8,7 @@
    点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/i7wau0jtpicj)  密码:i0wj  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
-   qq群：532392766
+   qq群：532392766  
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
