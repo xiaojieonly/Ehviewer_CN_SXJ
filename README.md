@@ -5,7 +5,7 @@
  ###  新版本：1.9.4.5（这是我今年前最后的波纹了~~~jojo）  
  ###  修复了部分搜索结果页跳转器无法显示结果数量的bug  
  ###  由于过多的懒人反馈，被迫向一些不安全的vpn做出让步，现在当检测到vpn开启后会自动关闭sni。  
-   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/i1nDs0lblkdc)  密码:h5jx  
+   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/iWP6d0lbnrbe)  密码:exyz  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
