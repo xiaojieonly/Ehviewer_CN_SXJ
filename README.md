@@ -1,6 +1,16 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/02/20 :   
+ ###  新版本：1.9.4.6  
+ ###  为了保护手机音量键按钮，新增了音量键翻页方向反转功能  
+ ###  现在画廊分组能显示分组内画廊数量了  
+   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/iPCfg0o4my1g)  密码:dwfr  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/01/18 :  提前住大家春节快乐，祝大家都能过个好年~   
  ###  新版本：1.9.4.5（这是我今年前最后的波纹了~~~jojo）  
  ###  修复了部分搜索结果页跳转器无法显示结果数量的bug  
