@@ -1,6 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/03/04 :   
+ ###  新版本：1.9.4.7  
+ ###  新增eh事件关闭功能：设置->eh->显示e站事件  
+ ###  新增关闭更新提示功能：设置->更新与支持->关闭自动更新  
+ ###  新增标签复制功能：标签长按即可  
+   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/ieZHW0p6lwte)  密码:cb52  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/02/20 :   
  ###  新版本：1.9.4.6  
  ###  为了保护手机音量键按钮，新增了音量键翻页方向反转功能  
