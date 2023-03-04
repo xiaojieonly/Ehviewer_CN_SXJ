@@ -23,7 +23,13 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.VpnManager;
+import android.os.Build;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -111,5 +117,29 @@ public class AppHelper {
 
         // 把数据集设置（复制）到剪贴板
         clipboard.setPrimaryClip(clipData);
+    }
+
+    public static boolean checkVPN(Context context) {
+        ConnectivityManager connectivityManager = context.getSystemService(ConnectivityManager.class);
+
+        Network network = connectivityManager.getActiveNetwork();
+        //don't know why always returns null:
+        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+        boolean result = networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_VPN;
+        if (result){
+            Toast.makeText(context,R.string.network_remind,Toast.LENGTH_LONG).show();
+        }
+        return result;
+    }
+
+    private boolean isWifiProxy(Context context) {
+        String proxyAddress;
+        int proxyPort;
+
+        proxyAddress = System.getProperty("http.proxyHost");
+        String portStr = System.getProperty("http.proxyPort");
+        proxyPort = Integer.parseInt((portStr != null ? portStr : "-1"));
+
+        return (!TextUtils.isEmpty(proxyAddress)) && (proxyPort != -1);
     }
 }

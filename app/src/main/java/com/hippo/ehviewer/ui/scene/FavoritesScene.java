@@ -811,6 +811,7 @@ public class FavoritesScene extends BaseScene implements
             return;
         }
         if (mHelper.nextHref == null || mHelper.nextHref.isEmpty()) {
+//            if ((mHelper.nextHref == null || mHelper.nextHref.isEmpty())&&(mHelper.prevHref == null || mHelper.prevHref.isEmpty())) {
             Toast.makeText(getEHContext(), R.string.gallery_list_no_more_data, Toast.LENGTH_LONG).show();
             return;
         }
@@ -820,6 +821,7 @@ public class FavoritesScene extends BaseScene implements
             mJumpDateSelector.setOnTimeSelectedListener(this::onTimeSelected);
             jumpSelectorDialog = new AlertDialog.Builder(context).setView(linearLayout).create();
         }
+        mJumpDateSelector.setFoundMessage(mHelper.resultCount);
         jumpSelectorDialog.show();
     }
 

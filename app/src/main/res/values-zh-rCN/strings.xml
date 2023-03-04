@@ -30,6 +30,7 @@
     <string name="favourite">收藏</string>
     <string name="history">历史</string>
     <string name="downloads">下载</string>
+    <string name="news">新闻</string>
     <string name="settings">设置</string>
 
     <string name="username">用户名</string>
@@ -153,6 +154,8 @@
     <string name="gallery_list_select_jump_node">选择节点</string>
     <string name="gallery_list_jump_now">立即跳转</string>
     <string name="gallery_list_time_jump_dialog_title">跳转选择器</string>
+    <string name="gallery_list_time_jump_dialog_found_message">找到 %s 个结果</string>
+    <string name="gallery_tag_copy">标签已复制</string>
 
     <string name="keyword_search">关键字搜索</string>
     <string name="image_search">图片搜索</string>
@@ -260,6 +263,7 @@
     <string name="filter_the_uploader">屏蔽上传者“%s”？</string>
     <string name="filter_the_tag">屏蔽标签“%s”？</string>
     <string name="filter_added">已添加屏蔽项</string>
+    <string name="copy_tag">复制</string>
 
     <!-- Rating -->
     <string name="rating10">根本把持不住</string>
@@ -328,7 +332,7 @@
     <string name="tag_filter">标签过滤</string>
 
     <!-- Download -->
-    <string name="scene_download_title">下载 - %s</string>
+    <string name="scene_download_title">共%s个画廊 - %s</string>
     <string name="no_download_info">这里是下载项目</string>
     <string name="download_state_none">未启动</string>
     <string name="download_state_wait">等待中</string>
@@ -487,6 +491,7 @@
     <string name="settings_eh_excluded_languages_summary">在主页与搜索中隐藏指定语言的画廊</string>
     <string name="settings_eh_show_jpn_title">显示日文标题</string>
     <string name="settings_eh_show_gallery_comment">显示画廊评论</string>
+    <string name="settings_eh_show_eh_event">显示E站事件</string>
     <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">显示画廊页数</string>
     <string name="settings_eh_show_gallery_pages_summary">在画廊列表中显示页数</string>
@@ -526,6 +531,7 @@
     <string name="settings_read_show_battery">显示电量</string>
     <string name="settings_read_show_page_interval">显示页面间隔</string>
     <string name="settings_read_volume_page">使用音量键翻页</string>
+    <string name="settings_read_reverse_volume_page">反转音量键翻页方向</string>
     <string name="settings_read_reading_fullscreen">全屏</string>
     <string name="settings_read_custom_screen_lightness">自定义屏幕亮度</string>
     <string name="settings_read_screen_lightness">屏幕亮度</string>
@@ -618,8 +624,33 @@
     <string name="settings_privacy_about_analytics">关于数据统计</string>
     <string name="settings_about_version">版本号</string>
     <string name="settings_about_check_for_updates">检查更新</string>
+    <string name="settings_close_automatic_updates">关闭自动更新</string>
     <string name="settings_about_beta_update_channel">更新测试版</string>
     <string name="settings_about_beta_update_channel_summary">测试版可能在你的设备上出现不可预知的错误</string>
+
+    <!--  black list  -->
+    <string name="blacklist_id">用户ID</string>
+    <string name="blacklist">黑名单</string>
+    <string name="join_in_blacklist">加入黑名单</string>
+    <string name="add_blacklist">添加屏蔽用户</string>
+    <string name="blacklist_tip">该屏蔽系统会在 EHentai 网站评论系统的基础上继续屏蔽评论。\n\n评论者屏蔽项：排除该评论者上传的评论。这会使加载画廊列表花费更多时间。</string>
+    <string name="blacklist_text">屏蔽用户</string>
+    <string name="delete_blacklist">取消屏蔽用户“%s”？</string>
+    <string name="blacklist_reason_text">屏蔽原因</string>
+    <string name="settings_eh_blacklist">评论黑名单</string>
+    <string name="settings_eh_blacklist_summary">根据账号名称屏蔽他人评论</string>
+    <string name="settings_advanced_dns_over_http_title">安全 DNS（DoH）</string>
+    <string name="settings_advanced_dns_over_http_summary">解决某些地区的 DNS 污染问题</string>
+    <string name="settings_advanced_domain_fronting_title">域名前置</string>
+    <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁</string>
+    <string name="settings_advanced_url_replace_title">url伪装,需关闭SNI</string>
+    <string name="settings_advanced_url_replace_summary">url伪装(需重启，开启后账户功能失效)</string>
+    <string name="share_favorites_dialog_title">分享收藏</string>
+    <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
+    <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
+    <string name="network_remind">检测到开启了vpn，请注意您的网络安全</string>
 
     <!-- ExcludedLanguagesScene -->
     <string name="excluded_languages">排除语言</string>

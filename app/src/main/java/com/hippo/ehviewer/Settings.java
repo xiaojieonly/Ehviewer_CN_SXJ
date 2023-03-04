@@ -565,6 +565,18 @@ public class Settings {
         putBoolean(KEY_VOLUME_PAGE, value);
     }
 
+
+    private static final String KEY_REVERSE_VOLUME_PAGE = "reverse_volume_page";
+    private static final boolean DEFAULT_REVERSE_VOLUME_PAGE = false;
+
+    public static boolean getReverseVolumePage() {
+        return getBoolean(KEY_REVERSE_VOLUME_PAGE, DEFAULT_REVERSE_VOLUME_PAGE);
+    }
+
+    public static void putReverseVolumePage(boolean value) {
+        putBoolean(KEY_REVERSE_VOLUME_PAGE, value);
+    }
+
     private static final String KEY_READING_FULLSCREEN = "reading_fullscreen";
     private static final boolean VALUE_READING_FULLSCREEN = true;
 
@@ -1241,6 +1253,30 @@ public class Settings {
 
     public static void setShowGalleryComment(boolean value) {
         putBoolean(KEY_SHOW_GALLERY_COMMENT, value);
+    }
+
+    public static final String KEY_CLOSE_AUTO_UPDATES = "close_auto_updates";
+
+    private static boolean IS_CLOSE_AUTO_UPDATES = false;
+
+    public static boolean getCloseAutoUpdate() {
+        return getBoolean(KEY_CLOSE_AUTO_UPDATES, IS_CLOSE_AUTO_UPDATES);
+    }
+
+    public static void setKeyCloseAutoUpdates(boolean value) {
+        putBoolean(KEY_CLOSE_AUTO_UPDATES, value);
+    }
+
+    public static final String KEY_SHOW_EH_EVENTS = "show_eh_events";
+
+    private static boolean IS_SHOW_EH_EVENTS = true;
+
+    public static boolean getShowEhEvents() {
+        return getBoolean(KEY_SHOW_EH_EVENTS, IS_SHOW_EH_EVENTS) && isLogin();
+    }
+
+    public static void setKeyShowEhEvents(boolean value) {
+        putBoolean(KEY_SHOW_EH_EVENTS, value);
     }
 
     public static final String USER_BACKGROUND_IMAGE = "background_image_path";

@@ -51,6 +51,11 @@
         android:key="check_for_updates"
         android:title="@string/settings_about_check_for_updates" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="close_auto_updates"
+        android:title="@string/settings_close_automatic_updates" />
+
     <Preference
         android:key="donate"
         android:title="@string/settings_about_donate" />

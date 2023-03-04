@@ -73,6 +73,7 @@ import com.hippo.ehviewer.ui.scene.DownloadLabelsScene;
 import com.hippo.ehviewer.ui.scene.DownloadsScene;
 import com.hippo.ehviewer.ui.scene.FavoritesScene;
 import com.hippo.ehviewer.ui.scene.GalleryCommentsScene;
+import com.hippo.ehviewer.ui.scene.ehNews.EhNewsScene;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.GalleryInfoScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
@@ -170,6 +171,7 @@ public final class MainActivity extends StageActivity
         registerLaunchMode(SelectSiteScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(EhTopListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
+        registerLaunchMode(EhNewsScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(QuickSearchScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(SubscriptionsScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryDetailScene.class, SceneFragment.LAUNCH_MODE_STANDARD);
@@ -388,6 +390,10 @@ public final class MainActivity extends StageActivity
 //        mDrawerLayout.setStatusBarColor(0);
 
         if (mNavView != null) {
+            if (Settings.isLogin()){
+                MenuItem newsItem = mNavView.getMenu().findItem(R.id.nav_eh_news);
+//                newsItem.setVisible(true);
+            }
             mNavView.setNavigationItemSelectedListener(this);
         }
         if (Settings.getTheme(getApplicationContext()) == 0) {
@@ -865,11 +871,16 @@ public final class MainActivity extends StageActivity
                         .setArgs(nav_whats_hot));
                 break;
             case R.id.nav_top_lists:
-                System.out.println("打开排行榜");
                 Bundle nav_top_lists = new Bundle();
                 nav_top_lists.putString(EhTopListScene.KEY_ACTION, EhTopListScene.ACTION_TOP_LIST);
                 startSceneFirstly(new Announcer(EhTopListScene.class)
                         .setArgs(nav_top_lists));
+                break;
+            case R.id.nav_eh_news:
+                Bundle news = new Bundle();
+                Announcer scene = new Announcer(EhNewsScene.class);
+                scene.setArgs(news);
+                startScene(scene);
                 break;
             case R.id.nav_favourite:
                 startScene(new Announcer(FavoritesScene.class));

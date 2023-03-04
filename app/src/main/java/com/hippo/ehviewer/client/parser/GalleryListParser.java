@@ -53,6 +53,7 @@ public class GalleryListParser {
     private static final Pattern PATTERN_PAGES = Pattern.compile("(\\d+) page");
     private static final Pattern PATTERN_NEXT_PAGE = Pattern.compile("page=(\\d+)");
     private static final Pattern PATTERN_NEXT_EX_PAGE = Pattern.compile("next=(\\d+)");
+    private static final Pattern PATTERN_RESULT_COUNT_PAGE = Pattern.compile("Found .* results");
 
     private static final String[][] FAVORITE_SLOT_RGB = new String[][]{
             new String[]{"0", "0", "0"},
@@ -70,6 +71,7 @@ public class GalleryListParser {
     public static class Result {
         public int pages;
         public int nextPage;
+        public String resultCount;
         public String firstHref;
         public String prevHref;
         public String nextHref;
@@ -124,6 +126,41 @@ public class GalleryListParser {
                 }else {
                     result.lastHref = "";
                 }
+
+                element = d.getElementsByClass("searchtext").first();
+
+                if (element!=null){
+                    String text = element.text();
+                    Matcher matcher = PATTERN_RESULT_COUNT_PAGE.matcher(text);
+                    if (matcher.find()){
+                        String findString = matcher.group();
+                        String[] resultArr = findString.split(" ");
+                        if (resultArr.length>3){
+                            switch (resultArr[1]){
+                                case "thousands":
+                                    result.resultCount = "1,000+";
+                                    break;
+                                case "about":
+                                    result.resultCount = resultArr[2]+"+";
+                                    break;
+                                default:
+                                    StringBuilder buffer = new StringBuilder();
+                                    for (int i=1;i<resultArr.length-1;i++){
+                                        buffer.append(resultArr[i]);
+                                    }
+                                    result.resultCount = buffer.toString();
+                                    break;
+                            }
+                        }else if(resultArr.length == 3){
+                            result.resultCount = resultArr[1];
+                        }else{
+                            result.resultCount = "";
+                        }
+                    }
+                }else {
+                    result.resultCount = "";
+                }
+
             } else {
                 Elements es = ptt.child(0).child(0).children();
                 result.pages = Integer.parseInt(es.get(es.size() - 2).text().trim());

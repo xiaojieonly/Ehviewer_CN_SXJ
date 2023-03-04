@@ -327,7 +327,7 @@ Java_com_hippo_util_GifHandler_updateFrame__JLandroid_graphics_Bitmap_2(JNIEnv *
 //    LOGE("当前帧  %d  ", gifBean->current_frame);
     if (gifBean->current_frame >= gifBean->total_frame - 1) {
         gifBean->current_frame = 0;
-        LOGE("重新过来  %d  ", gifBean->current_frame);
+//        LOGE("重新过来  %d  ", gifBean->current_frame);
     }
     AndroidBitmap_unlockPixels(env, bitmap);
     return gifBean->dealys[gifBean->current_frame];

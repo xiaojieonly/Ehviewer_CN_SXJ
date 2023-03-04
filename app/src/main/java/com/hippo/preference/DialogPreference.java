@@ -19,6 +19,7 @@ package com.hippo.preference;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;

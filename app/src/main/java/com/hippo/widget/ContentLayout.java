@@ -185,6 +185,7 @@ public class ContentLayout extends FrameLayout {
         private static final String KEY_START_PAGE = "start_page";
         private static final String KEY_END_PAGE = "end_page";
         private static final String KEY_PAGES = "pages";
+        private static final String KEY_RESULT_COUNT = "result_count";
         private static final String KEY_FIRST_HREF = "first_href";
         private static final String KEY_PREV_HREF = "prev_href";
         private static final String KEY_NEXT_HREF = "next_href";
@@ -252,6 +253,7 @@ public class ContentLayout extends FrameLayout {
 
         private int mNextPage;
 
+        public String resultCount;
         public String firstHref;
         public String prevHref;
         public String nextHref;
@@ -510,6 +512,7 @@ public class ContentLayout extends FrameLayout {
                 nextHref = result.nextHref;
                 lastHref = result.lastHref;
             }
+            resultCount = result.resultCount;
             onGetPageData(taskId, result.pages, result.nextPage, data);
         }
 
@@ -522,6 +525,7 @@ public class ContentLayout extends FrameLayout {
                 nextHref = result.nextHref;
                 lastHref = result.lastHref;
             }
+            resultCount = result.resultCount;
             onGetPageData(taskId, result.pages, result.nextPage, data);
         }
 
@@ -1116,6 +1120,7 @@ public class ContentLayout extends FrameLayout {
             bundle.putInt(KEY_START_PAGE, mStartPage);
             bundle.putInt(KEY_END_PAGE, mEndPage);
             bundle.putInt(KEY_PAGES, mPages);
+            bundle.putString(KEY_RESULT_COUNT, resultCount);
             bundle.putString(KEY_FIRST_HREF, firstHref);
             bundle.putString(KEY_PREV_HREF, prevHref);
             bundle.putString(KEY_NEXT_HREF, nextHref);
@@ -1145,6 +1150,7 @@ public class ContentLayout extends FrameLayout {
                 mStartPage = bundle.getInt(KEY_START_PAGE);
                 mEndPage = bundle.getInt(KEY_END_PAGE);
                 mPages = bundle.getInt(KEY_PAGES);
+                resultCount = bundle.getString(KEY_RESULT_COUNT);
                 firstHref = bundle.getString(KEY_FIRST_HREF);
                 prevHref = bundle.getString(KEY_PREV_HREF);
                 nextHref = bundle.getString(KEY_NEXT_HREF);

@@ -19,6 +19,8 @@ package com.hippo.ehviewer.ui.scene.gallery.detail;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -584,7 +586,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mComments = (LinearLayout) ViewUtils.$$(belowHeader, R.id.comments);
         mCommentsText = (TextView) ViewUtils.$$(mComments, R.id.comments_text);
-        if (!Settings.getShowGalleryComment()){
+        if (!Settings.getShowGalleryComment()) {
             mComments.setVisibility(View.GONE);
             mCommentsText.setVisibility(View.GONE);
         }
@@ -1475,8 +1477,18 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                             showFilterTagDialog(tag);
                             break;
                     }
-                }).show();
+                })
+                .setNegativeButton(R.string.copy_tag, (dialog, which) -> copyTag(tag))
+                .show();
     }
+
+    private void copyTag(String tag) {
+        Context context = requireContext();
+        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        manager.setPrimaryClip(ClipData.newPlainText(null, tag));
+        Toast.makeText(context, R.string.gallery_tag_copy, Toast.LENGTH_LONG).show();
+    }
+
 
     @Override
     public boolean onLongClick(View v) {

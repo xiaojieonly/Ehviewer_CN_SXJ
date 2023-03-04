@@ -46,6 +46,7 @@ import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhCookieStore;
 import com.hippo.ehviewer.client.EhDns;
 import com.hippo.ehviewer.client.EhEngine;
+import com.hippo.ehviewer.client.data.EhNewsDetail;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.download.DownloadManager;
@@ -59,6 +60,7 @@ import com.hippo.network.EhX509TrustManager;
 import com.hippo.network.StatusCodeException;
 import com.hippo.text.Html;
 import com.hippo.unifile.UniFile;
+import com.hippo.util.AppHelper;
 import com.hippo.util.BitmapUtils;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
@@ -120,6 +122,8 @@ public class EhApplication extends RecordingApplication {
     private FavouriteStatusRouter mFavouriteStatusRouter;
     @Nullable
     private UserTagList userTagList;
+    @Nullable
+    private EhNewsDetail ehNewsDetail;
 
     private final List<Activity> mActivityList = new ArrayList<>();
 
@@ -348,7 +352,7 @@ public class EhApplication extends RecordingApplication {
                         }
                     })
                     .proxySelector(getEhProxySelector(application));
-            if (Settings.getDF()) {
+            if (Settings.getDF() && !AppHelper.checkVPN(context)) {
                 if (Build.VERSION.SDK_INT < 29) {
                     Security.insertProviderAt(Conscrypt.newProvider(), 1);
                     builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
@@ -407,7 +411,7 @@ public class EhApplication extends RecordingApplication {
                     .hostnameVerifier((hostname, session) -> true)
                     .dns(new EhDns(application))
                     .proxySelector(getEhProxySelector(application));
-            if (Settings.getDF()) {
+            if (Settings.getDF() && !AppHelper.checkVPN(context)) {
                 if (Build.VERSION.SDK_INT < 29) {
                     Security.insertProviderAt(Conscrypt.newProvider(), 1);
                     builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
@@ -608,10 +612,10 @@ public class EhApplication extends RecordingApplication {
         }
     }
 
-    public static boolean addDownloadTorrent(@NonNull Context context,String url){
+    public static boolean addDownloadTorrent(@NonNull Context context, String url) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
 
-        if (application.torrentList.contains(url)){
+        if (application.torrentList.contains(url)) {
             return false;
         }
 
@@ -619,7 +623,7 @@ public class EhApplication extends RecordingApplication {
         return true;
     }
 
-    public static void removeDownloadTorrent(@NonNull Context context, String url){
+    public static void removeDownloadTorrent(@NonNull Context context, String url) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
 
         application.torrentList.remove(url);
@@ -627,29 +631,33 @@ public class EhApplication extends RecordingApplication {
 
     /**
      * 将用户订阅标签列表存入内存缓存
+     *
      * @param context
      * @param userTagList
      */
-    public static void saveUserTagList(@NonNull Context context,UserTagList userTagList){
+    public static void saveUserTagList(@NonNull Context context, UserTagList userTagList) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         application.userTagList = userTagList;
     }
 
     /**
      * 从内存缓存中获取用户订阅标签列表
+     *
      * @param context
      * @return
      */
-    public static UserTagList getUserTagList(@NonNull Context context){
+    public static UserTagList getUserTagList(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         return application.userTagList;
     }
 
-    /**
-     * 显示eh事件
-     * @param html
-     */
-    public void showEventPane(String html) {
+    public void showEventPane(String html){
+        if (!Settings.getShowEhEvents()){
+            return;
+        }
+        if (html==null){
+            return;
+        }
         Activity activity = getTopActivity();
         if (activity != null) {
             activity.runOnUiThread(() -> {
@@ -670,6 +678,21 @@ public class EhApplication extends RecordingApplication {
                 }
             });
         }
+    }
+
+    /**
+     * 显示eh事件
+     *
+     * @param result
+     */
+    public void showEventPane(EhNewsDetail result) {
+        ehNewsDetail = result;
+        String html = result.getEventPane();
+        showEventPane(html);
+    }
+
+    public EhNewsDetail getEhNewsDetail(){
+        return ehNewsDetail;
     }
 
 }

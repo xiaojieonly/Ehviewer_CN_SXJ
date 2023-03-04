@@ -65,7 +65,7 @@
     <style name="AppTheme" parent="BaseTheme">
         <item name="android:windowBackground">@color/white</item>
     </style>
-<!--    <style name="AppTheme" parent="BaseTheme"/>-->
+    <!--    <style name="AppTheme" parent="BaseTheme"/>-->
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -245,6 +245,11 @@
     <style name="RatingBarTheme" parent="ThemeOverlay.AppCompat">
         <item name="colorControlNormal">@color/yellow_800</item>
         <item name="colorControlActivated">@color/yellow_800</item>
+    </style>
+
+    <style name="ThemeOverlay.Ehviewer.FullscreenContainer" parent="">
+        <item name="fullscreenBackgroundColor">@color/light_blue_600</item>
+        <item name="fullscreenTextColor">@color/light_blue_A200</item>
     </style>
 
 </resources>

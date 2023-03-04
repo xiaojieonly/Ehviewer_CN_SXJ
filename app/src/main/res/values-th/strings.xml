@@ -280,7 +280,7 @@
     <string name="go_to">ไปที่</string>
 
     <!-- Download -->
-    <string name="scene_download_title">ดาวน์โหลด - %s</string>
+    <string name="scene_download_title">%s แกลเลอรี่- %s</string>
     <string name="no_download_info">รายการดาวน์โหลดจะอยู่ตรงนี้</string>
     <string name="download_state_none">Idle</string>
     <string name="download_state_wait">กำลังรอ</string>

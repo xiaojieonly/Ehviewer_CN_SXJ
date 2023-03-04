@@ -29,7 +29,6 @@ public class SplashActivity extends EhActivity {
 
     private boolean CheckUpdate = false;
     private boolean openNews = false;
-    private EhNewsDetail newsDetail;
 
     private Context mContext;
 
@@ -49,7 +48,7 @@ public class SplashActivity extends EhActivity {
                 Analytics.class, Crashes.class, Distribute.class);
 //        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
 //                Analytics.class, Crashes.class, Distribute.class);
-        Distribute.setEnabled(true);
+        Distribute.setEnabled(!Settings.getCloseAutoUpdate());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_layout);
         new Thread(() -> {
@@ -62,7 +61,7 @@ public class SplashActivity extends EhActivity {
                 SplashActivity.this.finish();
             });
         }).start();
-        if (Settings.isLogin() && !openNews) {
+        if (!openNews && Settings.getShowEhEvents()) {
             signInNews();
         }
     }
@@ -80,10 +79,7 @@ public class SplashActivity extends EhActivity {
         @Override
         public void onSuccess(EhNewsDetail result) {
             openNews = true;
-            newsDetail = result;
-            if (result.eventPane != null) {
-                EhApplication.getInstance().showEventPane(result.eventPane);
-            }
+            EhApplication.getInstance().showEventPane(result);
         }
 
         @Override

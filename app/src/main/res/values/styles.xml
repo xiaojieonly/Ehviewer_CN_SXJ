@@ -66,6 +66,18 @@
         <item name="android:gravity">start</item>
     </style>
 
+    <style name="GotoMessageStyle">
+        <item name="android:textAppearance">@style/TextAppearance.GotoMessageStyle</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">10</item>
+        <item name="android:gravity">start</item>
+    </style>
+
+    <style name="TextAppearance.GotoMessageStyle">
+        <item name="android:textSize">@dimen/text_small</item>
+        <item name="android:textColor">?android:attr/textColorTertiary</item>
+    </style>
+
     <style name="TextAppearance.TopListItem">
         <item name="android:textSize">@dimen/text_medium</item>
         <item name="android:textColor">?android:attr/textColorSecondary</item>
@@ -215,6 +227,11 @@
     <style name="PopupWindow">
         <item name="android:windowEnterAnimation">@anim/pop_enter</item>
         <item name="android:windowExitAnimation">@anim/pop_exit</item>
+    </style>
+
+    <style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
 
 

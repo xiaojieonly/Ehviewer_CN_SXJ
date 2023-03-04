@@ -6,9 +6,11 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
-    ndkVersion '23.1.7779620'
+    namespace 'com.hippo.ehviewer'
+    testNamespace 'com.hippo.ehviewer.debug'
+    compileSdkVersion 32
+//    buildToolsVersion "30.0.3"
+//    ndkVersion '23.1.7779620'
 
     flavorDimensions "distribute"
     productFlavors {
@@ -26,10 +28,9 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "1.9.4.2"
+        versionName "1.9.4.7"
         vectorDrawables.useSupportLibrary = true
-        resConfigs "zh", "zh-rCN", "zh-rHK", "zh-rTW",
-                "es", "ja", "ko", "fr", "de", "th"
+        resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
         testOptions.unitTests.includeAndroidResources = true
         ndk {
             moduleName "native-lib"
@@ -81,7 +82,6 @@ android {
     buildFeatures {
         viewBinding true
     }
-
 
 }
 
@@ -160,6 +160,12 @@ dependencies {
     testImplementation 'junit:junit:4.8.2'
     testImplementation 'org.robolectric:robolectric:4.2.1'
     testImplementation 'org.jooq:joor:0.9.6'
+//    implementation "androidx.core:core-ktx:1.9.0"
+//    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    // https://mvnrepository.com/artifact/androidx.webkit/webkit
+    runtimeOnly group: 'androidx.webkit', name: 'webkit', version: '1.4.0'
+
 }
 
 configurations.all {
@@ -172,3 +178,6 @@ configurations.all {
         exclude group: 'com.github.seven332', module: 'okhttp'
     }
 }
+//repositories {
+//    mavenCentral()
+//}

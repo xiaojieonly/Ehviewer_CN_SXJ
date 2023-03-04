@@ -104,8 +104,6 @@ public class EhTopListScene extends BaseScene {
         Context context = getEHContext();
 
         mClient = EhApplication.getEhClient(context);
-
-
     }
 
     @Nullable
@@ -278,7 +276,7 @@ public class EhTopListScene extends BaseScene {
     /**
      * 请求返回监听
      */
-    private static class GetTopListDetailListener extends EhCallback<EhTopListScene, EhTopListDetail> {
+    private class GetTopListDetailListener extends EhCallback<EhTopListScene, EhTopListDetail> {
 
         public GetTopListDetailListener(Context context, int stageId, String sceneTag) {
             super(context, stageId, sceneTag);
@@ -291,10 +289,7 @@ public class EhTopListScene extends BaseScene {
 
         @Override
         public void onSuccess(EhTopListDetail result) {
-            EhTopListScene scene = getScene();
-            if (null != scene) {
-                scene.onGetEhTopListDetailSuccess(result, 0);
-            }
+            onGetEhTopListDetailSuccess(result, 0);
         }
 
         @Override

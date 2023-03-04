@@ -18,6 +18,9 @@ package com.hippo.ehviewer.ui.fragment;
 
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
+import android.view.LayoutInflater;
+
+import androidx.preference.Preference;
 
 import com.hippo.ehviewer.R;
 
