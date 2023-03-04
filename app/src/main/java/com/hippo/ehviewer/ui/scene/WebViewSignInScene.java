@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.annotation.Nullable;
@@ -52,10 +53,11 @@ public class WebViewSignInScene extends SolidScene {
         return false;
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Nullable
     @Override
     @SuppressWarnings("deprecation")
-    @SuppressLint("SetJavaScriptEnabled")
+
     public View onCreateView2(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Context context = getEHContext();
@@ -65,20 +67,13 @@ public class WebViewSignInScene extends SolidScene {
 
         // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
         CookieManager cookieManager = CookieManager.getInstance();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            cookieManager.flush();
-            cookieManager.removeAllCookies(null);
-            cookieManager.removeSessionCookies(null);
-        } else {
-            CookieSyncManager cookieSyncManager = CookieSyncManager.createInstance(context);
-            cookieSyncManager.startSync();
-            cookieManager.removeAllCookie();
-            cookieManager.removeSessionCookie();
-            cookieSyncManager.stopSync();
-        }
+        cookieManager.flush();
+        cookieManager.removeAllCookies(null);
+        cookieManager.removeSessionCookies(null);
 
         mWebView = new WebView(context);
-        mWebView.getSettings().setJavaScriptEnabled(true);
+        WebSettings webSettings = mWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
         mWebView.setWebViewClient(new LoginWebViewClient());
         mWebView.loadUrl(EhUrl.URL_SIGN_IN);
         return mWebView;

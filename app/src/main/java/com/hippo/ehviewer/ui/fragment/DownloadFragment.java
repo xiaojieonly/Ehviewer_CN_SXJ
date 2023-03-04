@@ -101,26 +101,18 @@ public class DownloadFragment extends PreferenceFragment implements
 
     private void showDirPickerDialogKK() {
         new AlertDialog.Builder(getActivity()).setMessage(R.string.settings_download_pick_dir_kk)
-                .setPositiveButton(R.string.settings_download_continue, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        openDirPicker();
-                    }
-                }).show();
+                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker()).show();
     }
 
     private void showDirPickerDialogL() {
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case DialogInterface.BUTTON_POSITIVE:
-                        openDirPicker();
-                        break;
-                    case DialogInterface.BUTTON_NEUTRAL:
-                        openDirPickerL();
-                        break;
-                }
+        DialogInterface.OnClickListener listener = (dialog, which) -> {
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    openDirPicker();
+                    break;
+                case DialogInterface.BUTTON_NEUTRAL:
+                    openDirPickerL();
+                    break;
             }
         };
 
@@ -140,19 +132,21 @@ public class DownloadFragment extends PreferenceFragment implements
     }
 
     private void openDirPickerL() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            try {
-                startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE_DIR_L);
-            } catch (Throwable e) {
-                ExceptionUtils.throwIfFatal(e);
-                Toast.makeText(getActivity(), R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
-            }
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        try {
+            startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE_DIR_L);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Toast.makeText(getActivity(), R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(data == null){
+            super.onActivityResult(requestCode, resultCode, null);
+            return;
+        }
         switch (requestCode) {
             case REQUEST_CODE_PICK_IMAGE_DIR: {
                 if (resultCode == Activity.RESULT_OK) {
@@ -168,7 +162,7 @@ public class DownloadFragment extends PreferenceFragment implements
                 break;
             }
             case REQUEST_CODE_PICK_IMAGE_DIR_L: {
-                if (resultCode == Activity.RESULT_OK && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (resultCode == Activity.RESULT_OK) {
                     Uri treeUri = data.getData();
                     getActivity().getContentResolver().takePersistableUriPermission(
                             treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);

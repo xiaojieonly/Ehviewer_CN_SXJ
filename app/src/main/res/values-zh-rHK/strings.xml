@@ -341,7 +341,7 @@
     <string name="tag_filter">過濾標籤</string>
 
     <!-- Download -->
-    <string name="scene_download_title">下載 - %s</string>
+    <string name="scene_download_title">共%s个画廊 - %s</string>
     <string name="no_download_info">下載項目會顯示在此</string>
     <string name="download_state_none">閒置中</string>
     <string name="download_state_wait">等待中</string>

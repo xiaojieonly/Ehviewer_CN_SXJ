@@ -42,7 +42,6 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.ehviewer.client.parser.ArchiveParser;
 import com.hippo.ehviewer.client.parser.EhEventParse;
-import com.hippo.ehviewer.client.parser.EhNewsParse;
 import com.hippo.ehviewer.client.parser.FavoritesParser;
 import com.hippo.ehviewer.client.parser.ForumsParser;
 import com.hippo.ehviewer.client.parser.GalleryApiParser;
@@ -1202,7 +1201,7 @@ public class EhEngine {
                 return null;
             }
             body = response.body().string();
-            return EhNewsParse.parse(body);
+            return new EhNewsDetail(body);
         } catch (IOException e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, null, e);

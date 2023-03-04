@@ -309,7 +309,7 @@
     <string name="tag_filter">태그 필터링</string>
 
     <!-- Download -->
-    <string name="scene_download_title">다운로드 - %s</string>
+    <string name="scene_download_title">%s 갤러리 - %s</string>
     <string name="no_download_info">다운로드한 항목이 여기에 표시됩니다.</string>
     <string name="download_state_none">유휴 상태</string>
     <string name="download_state_wait">대기 중</string>

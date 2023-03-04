@@ -45,10 +45,12 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+
 import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
@@ -78,6 +80,7 @@ import com.hippo.yorozuya.ResourcesUtils;
 import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -235,7 +238,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private void onRestore(@NonNull Bundle savedInstanceState) {
         mAction = savedInstanceState.getString(KEY_ACTION);
         mFilename = savedInstanceState.getString(KEY_FILENAME);
-        mUri= savedInstanceState.getParcelable(KEY_URI);
+        mUri = savedInstanceState.getParcelable(KEY_URI);
         mGalleryInfo = savedInstanceState.getParcelable(KEY_GALLERY_INFO);
         mPage = savedInstanceState.getInt(KEY_PAGE, -1);
         mCurrentIndex = savedInstanceState.getInt(KEY_CURRENT_INDEX);
@@ -467,18 +470,18 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         if (mGalleryView == null) {
             return super.onKeyDown(keyCode, event);
         }
-
+        boolean unReverse = !Settings.getReverseVolumePage();
         // Check volume
         if (Settings.getVolumePage()) {
             if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT && unReverse) {
                     mGalleryView.pageRight();
                 } else {
                     mGalleryView.pageLeft();
                 }
                 return true;
             } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT && unReverse) {
                     mGalleryView.pageLeft();
                 } else {
                     mGalleryView.pageRight();
@@ -520,6 +523,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         return super.onKeyDown(keyCode, event);
     }
+
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -754,6 +758,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private final SwitchCompat mShowBattery;
         private final SwitchCompat mShowPageInterval;
         private final SwitchCompat mVolumePage;
+        private final SwitchCompat mReverseVolumePage;
         private final SwitchCompat mReadingFullscreen;
         private final SwitchCompat mCustomScreenLightness;
         private final SeekBar mScreenLightness;
@@ -771,6 +776,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mShowBattery = (SwitchCompat) mView.findViewById(R.id.show_battery);
             mShowPageInterval = (SwitchCompat) mView.findViewById(R.id.show_page_interval);
             mVolumePage = (SwitchCompat) mView.findViewById(R.id.volume_page);
+            mReverseVolumePage = (SwitchCompat) mView.findViewById(R.id.reverse_volume_page);
             mReadingFullscreen = (SwitchCompat) mView.findViewById(R.id.reading_fullscreen);
             mCustomScreenLightness = (SwitchCompat) mView.findViewById(R.id.custom_screen_lightness);
             mScreenLightness = (SeekBar) mView.findViewById(R.id.screen_lightness);
@@ -785,17 +791,30 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mShowBattery.setChecked(Settings.getShowBattery());
             mShowPageInterval.setChecked(Settings.getShowPageInterval());
             mVolumePage.setChecked(Settings.getVolumePage());
+            mReverseVolumePage.setChecked(Settings.getReverseVolumePage());
             mReadingFullscreen.setChecked(Settings.getReadingFullscreen());
             mCustomScreenLightness.setChecked(Settings.getCustomScreenLightness());
             mScreenLightness.setProgress(Settings.getScreenLightness());
             mScreenLightness.setEnabled(Settings.getCustomScreenLightness());
 
-            mCustomScreenLightness.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    mScreenLightness.setEnabled(isChecked);
-                }
-            });
+            mVolumePage.setOnCheckedChangeListener(this::onVolumePageChange);
+
+            if (Settings.getVolumePage()) {
+                mReverseVolumePage.setVisibility(View.VISIBLE);
+
+            } else {
+                mReverseVolumePage.setVisibility(View.GONE);
+            }
+
+            mCustomScreenLightness.setOnCheckedChangeListener((buttonView, isChecked) -> mScreenLightness.setEnabled(isChecked));
+        }
+
+        private void onVolumePageChange(CompoundButton compoundButton, boolean b) {
+            if (compoundButton.isChecked()) {
+                mReverseVolumePage.setVisibility(View.VISIBLE);
+            } else {
+                mReverseVolumePage.setVisibility(View.GONE);
+            }
         }
 
         public View getView() {
@@ -818,8 +837,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             boolean showBattery = mShowBattery.isChecked();
             boolean showPageInterval = mShowPageInterval.isChecked();
             boolean volumePage = mVolumePage.isChecked();
+            boolean reverseVolumePage = mReverseVolumePage.isChecked();
             boolean readingFullscreen = mReadingFullscreen.isChecked();
             boolean customScreenLightness = mCustomScreenLightness.isChecked();
+
             int screenLightness = mScreenLightness.getProgress();
 
             boolean oldReadingFullscreen = Settings.getReadingFullscreen();
@@ -837,6 +858,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             Settings.putReadingFullscreen(readingFullscreen);
             Settings.putCustomScreenLightness(customScreenLightness);
             Settings.putScreenLightness(screenLightness);
+            Settings.putReverseVolumePage(reverseVolumePage);
+            if (!volumePage) {
+                mReverseVolumePage.setVisibility(View.GONE);
+            } else {
+                mReverseVolumePage.setVisibility(View.VISIBLE);
+            }
 
             int orientation;
             switch (screenRotation) {
@@ -1016,13 +1043,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         builder.setTitle(resources.getString(R.string.page_menu_title, page + 1));
 
         final CharSequence[] items;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             items = new CharSequence[]{
                     getString(R.string.page_menu_refresh),
                     getString(R.string.page_menu_share),
                     getString(R.string.page_menu_save),
                     getString(R.string.page_menu_save_to)};
-        }else {
+        } else {
             items = new CharSequence[]{
                     getString(R.string.page_menu_refresh),
                     getString(R.string.page_menu_share),
@@ -1032,7 +1059,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         builder.show();
     }
 
-    private void pageDialogListener(AlertDialog.Builder builder, CharSequence[] items, int page){
+    private void pageDialogListener(AlertDialog.Builder builder, CharSequence[] items, int page) {
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

@@ -82,6 +82,11 @@
         android:defaultValue="false"/>
 
     <com.hippo.preference.SwitchPreference
+        android:key="reverse_volume_page"
+        android:title="@string/settings_read_reverse_volume_page"
+        android:defaultValue="false"/>
+
+    <com.hippo.preference.SwitchPreference
         android:key="reading_fullscreen"
         android:title="@string/settings_read_reading_fullscreen"
         android:defaultValue="true"/>

@@ -146,6 +146,11 @@
         app:activity="com.hippo.ehviewer.ui.BlackListActivity" />
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="show_eh_events"
+        android:title="@string/settings_eh_show_eh_event" />
+
+    <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
         android:key="cellular_network_warning"
         android:title="@string/settings_eh_cellular_network_warning" />

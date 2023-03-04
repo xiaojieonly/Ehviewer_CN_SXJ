@@ -364,7 +364,7 @@
     <string name="go_to">Go to</string>
 
     <!-- Download -->
-    <string name="scene_download_title">Download - %s</string>
+    <string name="scene_download_title">%s Galleries - %s</string>
     <string name="no_download_info">Download items will be shown here</string>
     <string name="download_state_none">Idle</string>
     <string name="download_state_wait">Waiting</string>

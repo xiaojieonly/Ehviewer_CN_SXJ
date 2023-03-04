@@ -19,6 +19,8 @@ package com.hippo.ehviewer.ui.scene.gallery.list;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -131,6 +133,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public final class GalleryListScene extends BaseScene
         implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
@@ -747,10 +750,19 @@ public final class GalleryListScene extends BaseScene
                 chip.setText(tagName.split(":")[1]);
             }
             chip.setOnClickListener(l -> onTagClick(tagName));
+            chip.setOnLongClickListener(l->onTagLongClick(tagName));
             tagFlowLayout.addView(chip, i);
         }
 
         return tagFlowLayout;
+    }
+
+    private boolean onTagLongClick(String tagName) {
+        Context context = requireContext();
+        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        manager.setPrimaryClip(ClipData.newPlainText(null,tagName));
+        Toast.makeText(context,R.string.gallery_tag_copy,Toast.LENGTH_LONG).show();
+        return true;
     }
 
     private void onTagClick(String tagName) {
@@ -1342,6 +1354,7 @@ public final class GalleryListScene extends BaseScene
             return;
         }
         if (mHelper.nextHref == null || mHelper.nextHref.isEmpty()) {
+//            if ((mHelper.nextHref == null || mHelper.nextHref.isEmpty())&&(mHelper.prevHref == null || mHelper.prevHref.isEmpty())) {
             Toast.makeText(getEHContext(), R.string.gallery_list_no_more_data, Toast.LENGTH_LONG).show();
             return;
         }
@@ -1351,6 +1364,7 @@ public final class GalleryListScene extends BaseScene
             mJumpDateSelector.setOnTimeSelectedListener(this::onTimeSelected);
             jumpSelectorDialog = new AlertDialog.Builder(context).setView(linearLayout).create();
         }
+        mJumpDateSelector.setFoundMessage(mHelper.resultCount);
         jumpSelectorDialog.show();
     }
 

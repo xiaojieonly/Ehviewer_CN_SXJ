@@ -38,6 +38,8 @@
     <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
     <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">应用提供的主机到IP的映射\n可被自定义 hosts.txt 覆盖</string>
+    <string name="network_remind">检测到开启了vpn，请注意您的网络安全</string>
+    <!--    <string name="network_remind">It has been detected that the vpn is enabled, please pay attention to network security</string>-->
 
     <string name="no_blicklist">这里是黑名单</string>
 
@@ -71,6 +73,7 @@
     <string name="favourite">Favourite</string>
     <string name="history">History</string>
     <string name="downloads">Downloads</string>
+    <string name="news">News</string>
     <string name="settings">Settings</string>
     <string name="stub" translatable="false">Stub</string>
 
@@ -220,6 +223,8 @@
     <string name="gallery_list_select_jump_node">Use node selector</string>
     <string name="gallery_list_jump_now">Jump Now</string>
     <string name="gallery_list_time_jump_dialog_title">Jump Selector</string>
+    <string name="gallery_list_time_jump_dialog_found_message">Found %s Results</string>
+    <string name="gallery_tag_copy">tag copied</string>
 
     <string name="search">Search</string>
 
@@ -332,6 +337,7 @@
     <string name="filter_the_uploader">Block the uploader \"%s\"?</string>
     <string name="filter_the_tag">Block the tag \"%s\"?</string>
     <string name="filter_added">Blocker added</string>
+    <string name="copy_tag">Copy</string>
 
     <!-- Rating -->
     <string name="rating10">MASTERPIECE</string>
@@ -401,7 +407,7 @@
     <string name="tag_filter">Filter tag</string>
 
     <!-- Download -->
-    <string name="scene_download_title">Download - %s</string>
+    <string name="scene_download_title">%s Galleries - %s</string>
     <string name="no_download_info">Download items will be shown here</string>
     <string name="download_state_none">Idle</string>
     <string name="download_state_wait">Waiting</string>
@@ -559,6 +565,7 @@
     <string name="settings_eh_excluded_tag_namespaces_summary">Exclude certain namespaces from a default tag search</string>
     <string name="settings_eh_show_jpn_title">Show Japanese title</string>
     <string name="settings_eh_show_gallery_comment">Show Gallery Comment</string>
+    <string name="settings_eh_show_eh_event">Show EH events</string>
     <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>
@@ -598,6 +605,7 @@
     <string name="settings_read_show_battery">Show battery</string>
     <string name="settings_read_show_page_interval">Show page interval</string>
     <string name="settings_read_volume_page">Use volume key to turn pages</string>
+    <string name="settings_read_reverse_volume_page">Reverse volume key translation direction</string>
     <string name="settings_read_reading_fullscreen">Fullscreen</string>
     <string name="settings_read_custom_screen_lightness">Custom screen lightness</string>
     <string name="settings_read_screen_lightness">Screen lightness</string>
@@ -694,6 +702,7 @@
     <string name="settings_privacy_about_analytics">About analytics</string>
     <string name="settings_about_version">Build version</string>
     <string name="settings_about_check_for_updates">Check for updates</string>
+    <string name="settings_close_automatic_updates">Turn off automatic updates</string>
     <string name="settings_about_beta_update_channel">Beta update channel</string>
     <string name="settings_about_beta_update_channel_summary">Beta versions may contain unsolved bugs.</string>
 
@@ -886,5 +895,7 @@
 
     <string name="yes">Yes</string>
     <string name="cancel">Cancel</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 </resources>

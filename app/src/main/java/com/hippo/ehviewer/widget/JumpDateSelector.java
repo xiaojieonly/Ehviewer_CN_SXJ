@@ -12,6 +12,7 @@ import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.Calendar;
 public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateChangedListener{
     private MyRadioGroup mRadioGroup;
     private RadioButton mSelectRadio;
+    private TextView foundMessage;
     private OnTimeSelectedListener onTimeSelectedListener;
     private Button pickDateButton;
     private Button gotoJumpButton;
@@ -81,6 +83,7 @@ public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateC
         gotoJumpButton.setOnClickListener(this::buildJumpParamAndGoto);
         mRadioGroup =  findViewById(R.id.jump_date_picker_group);
         mRadioGroup.setOnCheckedChangeListener(this::onSelectChange);
+        foundMessage = findViewById(R.id.found_message);
     }
 
     private void buildJumpParamAndGoto(View view) {
@@ -161,6 +164,15 @@ public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateC
         }
 
         mSelectRadio.setTextColor(mSelectRadio.getHighlightColor());
+    }
+
+    public void setFoundMessage(String message){
+        if (message == null || message.isEmpty()){
+            foundMessage.setVisibility(GONE);
+        }else{
+            foundMessage.setVisibility(VISIBLE);
+            foundMessage.setText(getResources().getString(R.string.gallery_list_time_jump_dialog_found_message,message));
+        }
     }
 
     public void setOnTimeSelectedListener(OnTimeSelectedListener listener) {

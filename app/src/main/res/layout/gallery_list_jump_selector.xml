@@ -12,6 +12,14 @@
         android:padding="@dimen/title_text_top_padding"
         android:text="@string/gallery_list_time_jump_dialog_title"
         />
+    <TextView
+        android:id="@+id/found_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        style="@style/GotoMessageStyle"
+        android:padding="@dimen/title_text_top_padding"
+        />
     <com.hippo.ehviewer.widget.MyRadioGroup
         android:id="@+id/jump_date_picker_group"
         android:padding="@dimen/title_text_top_padding"

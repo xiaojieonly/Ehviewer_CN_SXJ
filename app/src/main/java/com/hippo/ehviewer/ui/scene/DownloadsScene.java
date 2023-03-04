@@ -88,6 +88,7 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
+import com.hippo.ehviewer.util.AppCenterAnalytics;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.io.UniFileInputStreamPipe;
@@ -109,6 +110,7 @@ import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
+import com.microsoft.appcenter.crashes.Crashes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -279,9 +281,21 @@ public class DownloadsScene extends ToolbarScene
         Settings.putRecentDownloadLabel(mLabel);
     }
 
+    @SuppressLint("StringFormatMatches")
     private void updateTitle() {
-        setTitle(getString(R.string.scene_download_title,
+        try {
+            setTitle(getString(R.string.scene_download_title,
+                    Integer.toString(mList == null ? 0 : mList.size()),
+                    mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
+        }catch (Exception e){
+            e.printStackTrace();
+            Crashes.trackError(e);
+            setTitle(getString(R.string.scene_download_title,
                 mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
+        }
+
+//        setTitle(getString(R.string.scene_download_title,
+//                mLabel != null ? mLabel : getString(R.string.default_download_label_name));
     }
 
     private void onInit() {
@@ -700,7 +714,7 @@ public class DownloadsScene extends ToolbarScene
                 updateForLabel();
                 if (searchKey != null && !searchKey.isEmpty()) {
                     startSearching();
-                }else {
+                } else {
                     updateView();
                 }
                 closeDrawer(Gravity.RIGHT);
@@ -1155,7 +1169,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onDownloadSearchFailed(List<DownloadInfo> list) {
-        Toast.makeText(getEHContext(),R.string.download_searching_failed,Toast.LENGTH_LONG).show();
+        Toast.makeText(getEHContext(), R.string.download_searching_failed, Toast.LENGTH_LONG).show();
         mList = list;
         updateAdapter();
         mProgressView.setVisibility(View.GONE);

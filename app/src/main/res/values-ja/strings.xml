@@ -290,7 +290,7 @@
     <string name="go_to">ページに移動</string>
 
     <!-- Download -->
-    <string name="scene_download_title">ダウンロード - %s</string>
+    <string name="scene_download_title">%sギャラリー - %s</string>
     <string name="no_download_info">ダウンロードタスクはここに表示されます</string>
     <string name="download_state_none">一時停止中</string>
     <string name="download_state_wait">待機中</string>
