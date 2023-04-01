@@ -9,6 +9,7 @@
 ## 如何删除屏蔽标签：[issue242](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/242)
 ## 下载列表等备份文件导出后无法导入其他软件：[issue168](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/168)
 ## 无法下载，已经下载的内容读取失败：[issue485](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/485)
+## 允许媒体扫描开启再关闭后，图库依然能扫描到图片:[issue514](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/514)
 ## 进不去里站：[issue180](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/180) [issue96](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/96)
 ## ex不显示：[issue222](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/222)
   #### 电脑上能看，手机上看不了
