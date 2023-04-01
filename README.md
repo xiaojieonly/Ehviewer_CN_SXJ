@@ -1,11 +1,12 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+
 # 2023/04/01 :   
  ###  新打包了一个最低支持Android 5的安装包，系统比较老的用户可以安装上试试
  ###  稳定性不敢保证，系统版本在安卓6及以上的不建议安装 
-   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/iwHoU0rqykad)  密码:849y  
-   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往下载5.1：[蓝奏云](https://wwsu.lanzouy.com/iwHoU0rqykad)  密码:849y  
+   点击前往下载5.0：[蓝奏云](https://wwsu.lanzouy.com/ihsZa0rqz31i)  密码:5uxp  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
