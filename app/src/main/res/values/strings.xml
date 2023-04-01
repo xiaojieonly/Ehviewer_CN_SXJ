@@ -529,6 +529,8 @@
     <string name="settings_eh_sign_out_tip">You have signed out. Restart the application to sign in again</string>
     <string name="settings_eh_identity_cookies">Identity cookies</string>
     <string name="settings_eh_identity_cookies_summary">Cookies can be used to sign in</string>
+    <string name="settings_eh_lock_cookies_igneous">Lock the Cookie igneous field</string>
+    <string name="settings_eh_lock_cookies_igneous_summary">It is not recommended to enable it except in special circumstances.</string>
     <string name="settings_eh_identity_cookies_signed">Identity cookies can be used to sign in to this account.&lt;br&gt;&lt;b&gt;KEEP IT SAFE&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">Not signed in.</string>
     <string name="settings_eh_identity_cookies_copy">Copy</string>

@@ -455,6 +455,8 @@
     <string name="settings_eh_sign_out_tip">已退出登录，重启应用以便再次登录</string>
     <string name="settings_eh_identity_cookies">身份 Cookie</string>
     <string name="settings_eh_identity_cookies_summary">可用于登录</string>
+    <string name="settings_eh_lock_cookies_igneous">锁定Cookie igneous字段</string>
+    <string name="settings_eh_lock_cookies_igneous_summary">可能会导致账号异常，非特殊情况，不建议开启。</string>
     <string name="settings_eh_identity_cookies_signed">身份 Cookie 可用于登录该账号。&lt;br&gt;&lt;b&gt;注意数据安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">未登录</string>
     <string name="settings_eh_identity_cookies_copy">复制</string>

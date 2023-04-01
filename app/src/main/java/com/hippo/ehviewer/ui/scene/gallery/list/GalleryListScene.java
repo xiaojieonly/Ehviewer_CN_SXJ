@@ -77,6 +77,7 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.FavouriteStatusRouter;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.callBack.SubscriptionCallback;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhClient;
@@ -758,12 +759,17 @@ public final class GalleryListScene extends BaseScene
     }
 
     private boolean onTagLongClick(String tagName) {
-        Context context = requireContext();
-        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        manager.setPrimaryClip(ClipData.newPlainText(null,tagName));
-        Toast.makeText(context,R.string.gallery_tag_copy,Toast.LENGTH_LONG).show();
+       GalleryListSecenDialog dialog = new GalleryListSecenDialog(this);
+       dialog.setTagName(tagName);
+       dialog.showTagLongPressDialog();
+//        Context context = requireContext();
+//        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+//        manager.setPrimaryClip(ClipData.newPlainText(null,tagName));
+//        Toast.makeText(context,R.string.gallery_tag_copy,Toast.LENGTH_LONG).show();
         return true;
     }
+
+
 
     private void onTagClick(String tagName) {
         if (isDrawersVisible()) {

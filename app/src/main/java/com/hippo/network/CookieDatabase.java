@@ -29,6 +29,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.hippo.database.MSQLiteBuilder;
+import com.hippo.ehviewer.Settings;
 import com.hippo.util.SqlUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -192,7 +193,11 @@ class CookieDatabase {
       Log.e(LOG_TAG, "Can't get id when update the cookie");
       return;
     }
-
+    if (from.name().equals("igneous")){
+      if (Settings.getLockCookieIgneous()){
+        return;
+      }
+    }
     ContentValues values = toContentValues(to);
     String whereClause = COLUMN_ID + " = ?";
     String[] whereArgs = { id.toString() };
