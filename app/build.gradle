@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
-        minSdkVersion 23
+        minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
