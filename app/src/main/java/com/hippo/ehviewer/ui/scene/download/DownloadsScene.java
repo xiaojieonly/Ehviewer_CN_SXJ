@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.download;
+
+import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
+import static com.hippo.ehviewer.spider.SpiderQueen.SPIDER_INFO_FILENAME;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -38,8 +41,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -81,14 +82,15 @@ import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
-import com.hippo.ehviewer.spider.SpiderDen;
+import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.DownloadSearchingExecutor;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
+import com.hippo.ehviewer.ui.scene.ToolbarScene;
+import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
-import com.hippo.ehviewer.util.AppCenterAnalytics;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.io.UniFileInputStreamPipe;
@@ -116,8 +118,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
@@ -145,6 +149,8 @@ public class DownloadsScene extends ToolbarScene
     private String mLabel;
     @Nullable
     private List<DownloadInfo> mList;
+
+    private final Map<Long,SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
     /*---------------
      View life cycle
@@ -287,11 +293,11 @@ public class DownloadsScene extends ToolbarScene
             setTitle(getString(R.string.scene_download_title,
                     Integer.toString(mList == null ? 0 : mList.size()),
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             Crashes.trackError(e);
             setTitle(getString(R.string.scene_download_title,
-                mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
+                    mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         }
 
 //        setTitle(getString(R.string.scene_download_title,
@@ -687,7 +693,10 @@ public class DownloadsScene extends ToolbarScene
             return false;
         });
 
-        List<DownloadLabel> list = EhApplication.getDownloadManager(context).getLabelList();
+        final DownloadManager downloadManager = EhApplication.getDownloadManager(context);
+
+
+        List<DownloadLabel> list = downloadManager.getLabelList();
         final List<String> labels = new ArrayList<>(list.size() + 1);
         // Add default label name
         labels.add(getString(R.string.default_download_label_name));
@@ -696,8 +705,47 @@ public class DownloadsScene extends ToolbarScene
         }
 
         // TODO handle download label items update
+//        ListView listView = (ListView) view.findViewById(R.id.list_view);
+//        listView.setAdapter(new ArrayAdapter<>(context, R.layout.item_simple_list, labels));
+//        listView.setOnItemClickListener((parent, view1, position, id) -> {
+//            if (searching) {
+//                Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
+//                return;
+//            }
+//            String label;
+//            if (position == 0) {
+//                label = null;
+//            } else {
+//                label = labels.get(position);
+//            }
+//            if (!ObjectUtils.equal(label, mLabel)) {
+//                mLabel = label;
+//                updateForLabel();
+//                if (searchKey != null && !searchKey.isEmpty()) {
+//                    startSearching();
+//                } else {
+//                    updateView();
+//                }
+//                closeDrawer(Gravity.RIGHT);
+//            }
+//
+//        });
+
+        final List<DownloadLabelItem> downloadLabelList = new ArrayList<>();
+
+        for (int i=0;i<labels.size();i++){
+            String label = labels.get(i);
+            if (i==0){
+                downloadLabelList.add(new DownloadLabelItem(label,downloadManager.getDefaultDownloadInfoList().size()));
+                continue;
+            }
+            downloadLabelList.add(new DownloadLabelItem(label,downloadManager.getLabelCount(label)));
+        }
+
         ListView listView = (ListView) view.findViewById(R.id.list_view);
-        listView.setAdapter(new ArrayAdapter<>(context, R.layout.item_simple_list, labels));
+        DownloadLabelAdapter adapter = new DownloadLabelAdapter(getEHContext(),R.layout.item_download_label_list,downloadLabelList);
+        listView.setAdapter(adapter);
+
         listView.setOnItemClickListener((parent, view1, position, id) -> {
             if (searching) {
                 Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
@@ -721,7 +769,6 @@ public class DownloadsScene extends ToolbarScene
             }
 
         });
-
         return view;
     }
 
@@ -1003,6 +1050,7 @@ public class DownloadsScene extends ToolbarScene
         holder.uploader.setVisibility(View.VISIBLE);
         holder.rating.setVisibility(View.VISIBLE);
         holder.category.setVisibility(View.VISIBLE);
+//        holder.readProgress.setVisibility(View.VISIBLE);
         holder.state.setVisibility(View.VISIBLE);
         holder.progressBar.setVisibility(View.GONE);
         holder.percent.setVisibility(View.GONE);
@@ -1023,6 +1071,7 @@ public class DownloadsScene extends ToolbarScene
         holder.uploader.setVisibility(View.GONE);
         holder.rating.setVisibility(View.GONE);
         holder.category.setVisibility(View.GONE);
+//        holder.readProgress.setVisibility(View.GONE);
         holder.state.setVisibility(View.GONE);
         holder.progressBar.setVisibility(View.VISIBLE);
         holder.percent.setVisibility(View.VISIBLE);
@@ -1207,7 +1256,7 @@ public class DownloadsScene extends ToolbarScene
                 // Remove download path
                 EhDB.removeDownloadDirname(mGalleryInfo.gid);
                 // Delete file
-                UniFile file = SpiderDen.getGalleryDownloadDir(mGalleryInfo);
+                UniFile file = getGalleryDownloadDir(mGalleryInfo);
                 deleteFileAsync(file);
             }
         }
@@ -1252,7 +1301,7 @@ public class DownloadsScene extends ToolbarScene
                     // Remove download path
                     EhDB.removeDownloadDirname(info.gid);
                     // Put file
-                    files[i] = SpiderDen.getGalleryDownloadDir(info);
+                    files[i] = getGalleryDownloadDir(info);
                     i++;
                 }
                 // Delete file
@@ -1299,6 +1348,7 @@ public class DownloadsScene extends ToolbarScene
         public final TextView uploader;
         public final SimpleRatingView rating;
         public final TextView category;
+        public final TextView readProgress;
         public final View start;
         public final View stop;
         public final TextView state;
@@ -1314,6 +1364,7 @@ public class DownloadsScene extends ToolbarScene
             uploader = itemView.findViewById(R.id.uploader);
             rating = itemView.findViewById(R.id.rating);
             category = itemView.findViewById(R.id.category);
+            readProgress = itemView.findViewById(R.id.read_progress);
             start = itemView.findViewById(R.id.start);
             stop = itemView.findViewById(R.id.stop);
             state = itemView.findViewById(R.id.state);
@@ -1412,12 +1463,33 @@ public class DownloadsScene extends ToolbarScene
             }
 
             DownloadInfo info = mList.get(position);
+
             String title = EhUtils.getSuitableTitle(info);
             holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                     new ThumbDataContainer(info), true);
             holder.title.setText(title);
             holder.uploader.setText(info.uploader);
             holder.rating.setRating(info.rating);
+
+            SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
+            if (spiderInfo==null){
+                UniFile mDownloadDir = getGalleryDownloadDir(info);
+                if (mDownloadDir != null && mDownloadDir.isDirectory()) {
+                    UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
+                    spiderInfo = SpiderInfo.read(file);
+                    if (spiderInfo != null && spiderInfo.gid == info.gid &&
+                            spiderInfo.token.equals(info.token)) {
+                        mSpiderInfoMap.put(spiderInfo.gid,spiderInfo);
+                    }
+                }
+            }
+            if (spiderInfo!=null){
+                int startPage = spiderInfo.startPage +1;
+                String readText = startPage + "/" + spiderInfo.pages;
+                holder.readProgress.setText(readText);
+            }
+
+
             TextView category = holder.category;
             String newCategoryText = EhUtils.getCategory(info.category);
             if (!newCategoryText.equals(category.getText())) {
@@ -1485,7 +1557,7 @@ public class DownloadsScene extends ToolbarScene
 
         private void ensureFile() {
             if (mFile == null) {
-                UniFile dir = SpiderDen.getGalleryDownloadDir(mInfo);
+                UniFile dir = getGalleryDownloadDir(mInfo);
                 if (dir != null && dir.isDirectory()) {
                     mFile = dir.createFile(".thumb");
                 }

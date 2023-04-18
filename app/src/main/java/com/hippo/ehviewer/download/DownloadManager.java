@@ -39,6 +39,8 @@ import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.collect.LongList;
 import com.hippo.yorozuya.collect.SparseIJArray;
 import com.hippo.yorozuya.collect.SparseJLArray;
+import com.microsoft.appcenter.crashes.Crashes;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +63,8 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     private final SparseJLArray<DownloadInfo> mAllInfoMap;
     // label and info list map, without default label info list
     private final Map<String, LinkedList<DownloadInfo>> mMap;
+
+    private final Map<String, Long> mLabelCountMap;
     // All labels without default label
     private final List<DownloadLabel> mLabelList;
     // Store download info with default label
@@ -126,6 +130,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             list.add(info);
         }
 
+        mLabelCountMap = new HashMap<>();
+
+        for (Map.Entry<String, LinkedList<DownloadInfo>> entry : map.entrySet()){
+            mLabelCountMap.put(entry.getKey(), (long) entry.getValue().size());
+        }
+
         mWaitList = new LinkedList<>();
         mSpeedReminder = new SpeedReminder();
         mDownloadInfoListeners = new ArrayList<>();
@@ -161,6 +171,16 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     @NonNull
     public List<DownloadLabel> getLabelList() {
         return mLabelList;
+    }
+
+    @Nullable
+    public long getLabelCount(String label) {
+        try{
+            return mLabelCountMap.get(label);
+        }catch (NullPointerException e){
+            Crashes.trackError(e);
+            return 0;
+        }
     }
 
     @NonNull

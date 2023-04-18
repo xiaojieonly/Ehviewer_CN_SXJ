@@ -78,6 +78,20 @@
           android:textColor="@android:color/white"
           android:textAllCaps="true"/>
 
+        <TextView
+            android:id="@+id/read_progress"
+            style="@style/ReadProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/thumb"
+            android:layout_toRightOf="@id/category"
+            android:layout_marginBottom="8dp"
+            android:paddingLeft="8dp"
+            android:paddingTop="2dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="2dp"
+            android:textAllCaps="true" />
+
         <FrameLayout
           android:id="@+id/actions"
           android:layout_width="wrap_content"
