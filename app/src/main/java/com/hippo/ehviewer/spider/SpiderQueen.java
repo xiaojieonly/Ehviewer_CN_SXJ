@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.spider;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -672,6 +673,7 @@ public final class SpiderQueen implements Runnable {
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     public void putStartPage(int page) {
         final SpiderInfo spiderInfo = mSpiderInfo.get();
         if (spiderInfo != null) {

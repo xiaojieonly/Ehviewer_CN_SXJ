@@ -37,7 +37,7 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.ui.MainActivity;
-import com.hippo.ehviewer.ui.scene.DownloadsScene;
+import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.scene.StageActivity;
 import com.hippo.util.ReadableTime;
 import com.hippo.yorozuya.FileUtils;
