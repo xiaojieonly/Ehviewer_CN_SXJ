@@ -47,6 +47,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -138,6 +142,8 @@ public class DownloadsScene extends ToolbarScene
 
     public static final String ACTION_CLEAR_DOWNLOAD_SERVICE = "clear_download_service";
 
+    public static final int LOCAL_GALLERY_INFO_CHANGE = 909;
+
     private static final long ANIMATE_TIME = 300L;
 
     /*---------------
@@ -150,7 +156,7 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     private List<DownloadInfo> mList;
 
-    private final Map<Long,SpiderInfo> mSpiderInfoMap = new HashMap<>();
+    private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
     /*---------------
      View life cycle
@@ -183,6 +189,11 @@ public class DownloadsScene extends ToolbarScene
     private boolean searching = false;
 
     private Handler mHandler;
+    @NonNull
+    private ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            this::updateReadProcess
+    );
 
     @Override
     public int getNavCheckedItem() {
@@ -733,17 +744,17 @@ public class DownloadsScene extends ToolbarScene
 
         final List<DownloadLabelItem> downloadLabelList = new ArrayList<>();
 
-        for (int i=0;i<labels.size();i++){
+        for (int i = 0; i < labels.size(); i++) {
             String label = labels.get(i);
-            if (i==0){
-                downloadLabelList.add(new DownloadLabelItem(label,downloadManager.getDefaultDownloadInfoList().size()));
+            if (i == 0) {
+                downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getDefaultDownloadInfoList().size()));
                 continue;
             }
-            downloadLabelList.add(new DownloadLabelItem(label,downloadManager.getLabelCount(label)));
+            downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getLabelCount(label)));
         }
 
         ListView listView = (ListView) view.findViewById(R.id.list_view);
-        DownloadLabelAdapter adapter = new DownloadLabelAdapter(getEHContext(),R.layout.item_download_label_list,downloadLabelList);
+        DownloadLabelAdapter adapter = new DownloadLabelAdapter(getEHContext(), R.layout.item_download_label_list, downloadLabelList);
         listView.setAdapter(adapter);
 
         listView.setOnItemClickListener((parent, view1, position, id) -> {
@@ -822,7 +833,8 @@ public class DownloadsScene extends ToolbarScene
             Intent intent = new Intent(activity, GalleryActivity.class);
             intent.setAction(GalleryActivity.ACTION_EH);
             intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(position));
-            startActivity(intent);
+//            startActivity(intent);
+            galleryActivityLauncher.launch(intent);
             return true;
         }
     }
@@ -1228,6 +1240,53 @@ public class DownloadsScene extends ToolbarScene
         searching = false;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    private void updateReadProcess(ActivityResult result) {
+        if (result.getResultCode() == LOCAL_GALLERY_INFO_CHANGE) {
+            Intent data = result.getData();
+            if (data != null) {
+                GalleryInfo info =  data.getParcelableExtra("info");
+                mSpiderInfoMap.remove(info.gid);
+                SpiderInfo spiderInfo = getSpiderInfo(info);
+                if (spiderInfo != null) {
+                    mSpiderInfoMap.put(info.gid, spiderInfo);
+                    int position = -1;
+                    if (mList == null || mAdapter == null) {
+                        return;
+                    }
+                    for (int i = 0; i < mList.size(); i++) {
+                        if (mList.get(i).gid == info.gid) {
+                            position = i;
+                            break;
+                        }
+                    }
+                    if (position != -1) {
+                        mAdapter.notifyItemChanged(position);
+                    } else {
+                        mAdapter.notifyDataSetChanged();
+                    }
+
+                }
+
+            }
+        }
+    }
+
+
+    private SpiderInfo getSpiderInfo(GalleryInfo info) {
+        SpiderInfo spiderInfo;
+        UniFile mDownloadDir = getGalleryDownloadDir(info);
+        if (mDownloadDir != null && mDownloadDir.isDirectory()) {
+            UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
+            spiderInfo = SpiderInfo.read(file);
+            if (spiderInfo != null && spiderInfo.gid == info.gid &&
+                    spiderInfo.token.equals(info.token)) {
+                return spiderInfo;
+            }
+        }
+        return null;
+    }
+
     private class DeleteDialogHelper implements DialogInterface.OnClickListener {
 
         private final GalleryInfo mGalleryInfo;
@@ -1472,19 +1531,14 @@ public class DownloadsScene extends ToolbarScene
             holder.rating.setRating(info.rating);
 
             SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
-            if (spiderInfo==null){
-                UniFile mDownloadDir = getGalleryDownloadDir(info);
-                if (mDownloadDir != null && mDownloadDir.isDirectory()) {
-                    UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
-                    spiderInfo = SpiderInfo.read(file);
-                    if (spiderInfo != null && spiderInfo.gid == info.gid &&
-                            spiderInfo.token.equals(info.token)) {
-                        mSpiderInfoMap.put(spiderInfo.gid,spiderInfo);
-                    }
+            if (spiderInfo == null) {
+                spiderInfo = getSpiderInfo(info);
+                if (spiderInfo != null) {
+                    mSpiderInfoMap.put(spiderInfo.gid, spiderInfo);
                 }
             }
-            if (spiderInfo!=null){
-                int startPage = spiderInfo.startPage +1;
+            if (spiderInfo != null) {
+                int startPage = spiderInfo.startPage + 1;
                 String readText = startPage + "/" + spiderInfo.pages;
                 holder.readProgress.setText(readText);
             }

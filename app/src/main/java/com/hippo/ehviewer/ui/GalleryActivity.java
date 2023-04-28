@@ -16,6 +16,8 @@
 
 package com.hippo.ehviewer.ui;
 
+import static com.hippo.ehviewer.ui.scene.download.DownloadsScene.LOCAL_GALLERY_INFO_CHANGE;
+
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -407,7 +409,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         mGLRootView = null;
         mGalleryView = null;
         if (mGalleryAdapter != null) {
@@ -428,8 +429,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mLeftText = null;
         mRightText = null;
         mSeekBar = null;
-
+        super.onDestroy();
         SimpleHandler.getInstance().removeCallbacks(mHideSliderRunnable);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        intent.putExtra("info",mGalleryInfo);
+        setResult(LOCAL_GALLERY_INFO_CHANGE,intent);
+        super.onBackPressed();
     }
 
     @Override
@@ -1005,20 +1014,19 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        //这个super call有待研究！！！ 不加这里对象名会标红
         super.onActivityResult(requestCode, resultCode, resultData);
         if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             if (resultData != null) {
                 Uri uri = resultData.getData();
                 String filepath = getCacheDir() + "/" + mCacheFileName;
-                File cachefile = new File(filepath);
+                File cacheFile = new File(filepath);
 
                 InputStream is = null;
                 OutputStream os = null;
                 ContentResolver resolver = getContentResolver();
 
                 try {
-                    is = new FileInputStream(cachefile);
+                    is = new FileInputStream(cacheFile);
                     os = resolver.openOutputStream(uri);
                     IOUtils.copy(is, os);
                 } catch (IOException e) {
@@ -1028,7 +1036,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     IOUtils.closeQuietly(os);
                 }
 
-                cachefile.delete();
+                cacheFile.delete();
 
                 Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
                 // Sync media store
