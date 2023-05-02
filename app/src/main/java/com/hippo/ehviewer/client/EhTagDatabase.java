@@ -193,7 +193,7 @@ public class EhTagDatabase {
         NAMESPACE_TO_PREFIX.put("language", "l:");
         NAMESPACE_TO_PREFIX.put("male", "m:");
         NAMESPACE_TO_PREFIX.put("misc", "");
-        NAMESPACE_TO_PREFIX.put("mixed", "x");
+        NAMESPACE_TO_PREFIX.put("mixed", "x:");
         NAMESPACE_TO_PREFIX.put("other", "o:");
         NAMESPACE_TO_PREFIX.put("parody", "p:");
         NAMESPACE_TO_PREFIX.put("reclass", "r:");
@@ -206,8 +206,8 @@ public class EhTagDatabase {
         PREFIX_TO_NAMESPACE.put("l:", "language");
         PREFIX_TO_NAMESPACE.put("m:", "male");
         PREFIX_TO_NAMESPACE.put("", "misc");
-        PREFIX_TO_NAMESPACE.put("x", "mixed");
-        PREFIX_TO_NAMESPACE.put("o", "other");
+        PREFIX_TO_NAMESPACE.put("x:", "mixed");
+        PREFIX_TO_NAMESPACE.put("o:", "other");
         PREFIX_TO_NAMESPACE.put("p:", "parody");
         PREFIX_TO_NAMESPACE.put("r:", "reclass");
     }
