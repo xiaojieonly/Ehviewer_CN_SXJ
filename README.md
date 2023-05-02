@@ -1,6 +1,27 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+
+# 2023/04/28 :   
+ ###  提前祝大家五一劳动节快乐
+ ###  下载列表新增阅读进度 
+ ###  下载列表标签分组新增分组画廊总数 
+   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/icKs80u6arod)  密码:fbki  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   qq群：532392766  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
+# 2023/04/01 :   
+ ###  新打包了一个最低支持Android 5的安装包，系统比较老的用户可以安装上试试
+ ###  稳定性不敢保证，系统版本在安卓6及以上的不建议安装 
+   点击前往下载5.1：[蓝奏云](https://wwsu.lanzouy.com/iwHoU0rqykad)  密码:849y  
+   点击前往下载5.0：[蓝奏云](https://wwsu.lanzouy.com/ihsZa0rqz31i)  密码:5uxp  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/04/01 :   
  ###  新版本：1.9.4.8  
  ###  修改了列表页长按标签事件，从复制标签改为显示标签详情浮窗，复制功能内置在标签浮窗内  
