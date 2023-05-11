@@ -48,7 +48,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -88,6 +87,7 @@ import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.DownloadSearchingExecutor;
+import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
@@ -296,6 +296,7 @@ public class DownloadsScene extends ToolbarScene
 
         updateTitle();
         Settings.putRecentDownloadLabel(mLabel);
+        queryUnreadSpiderInfo();
     }
 
     @SuppressLint("StringFormatMatches")
@@ -1062,7 +1063,7 @@ public class DownloadsScene extends ToolbarScene
         holder.uploader.setVisibility(View.VISIBLE);
         holder.rating.setVisibility(View.VISIBLE);
         holder.category.setVisibility(View.VISIBLE);
-//        holder.readProgress.setVisibility(View.VISIBLE);
+        holder.readProgress.setVisibility(View.VISIBLE);
         holder.state.setVisibility(View.VISIBLE);
         holder.progressBar.setVisibility(View.GONE);
         holder.percent.setVisibility(View.GONE);
@@ -1083,7 +1084,7 @@ public class DownloadsScene extends ToolbarScene
         holder.uploader.setVisibility(View.GONE);
         holder.rating.setVisibility(View.GONE);
         holder.category.setVisibility(View.GONE);
-//        holder.readProgress.setVisibility(View.GONE);
+        holder.readProgress.setVisibility(View.GONE);
         holder.state.setVisibility(View.GONE);
         holder.progressBar.setVisibility(View.VISIBLE);
         holder.percent.setVisibility(View.VISIBLE);
@@ -1226,6 +1227,7 @@ public class DownloadsScene extends ToolbarScene
             mRecyclerView.setVisibility(View.VISIBLE);
         }
         searching = false;
+        queryUnreadSpiderInfo();
     }
 
     @Override
@@ -1238,6 +1240,7 @@ public class DownloadsScene extends ToolbarScene
             mRecyclerView.setVisibility(View.VISIBLE);
         }
         searching = false;
+        queryUnreadSpiderInfo();
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -1269,6 +1272,29 @@ public class DownloadsScene extends ToolbarScene
                 }
 
             }
+        }
+    }
+
+    private void queryUnreadSpiderInfo(){
+        if (mList == null){
+            return;
+        }
+        List<DownloadInfo> requestList = new ArrayList<>();
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo info = mList.get(i);
+            if (!mSpiderInfoMap.containsKey(info.gid)||mSpiderInfoMap.get(info.gid)==null){
+                requestList.add(info);
+            }
+        }
+        DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(requestList,this::spiderInfoResultCallBack);
+        executor.execute();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void spiderInfoResultCallBack(Map<Long, SpiderInfo> resultMap) {
+        mSpiderInfoMap.putAll(resultMap);
+        if (mAdapter!=null){
+            mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -1531,12 +1557,12 @@ public class DownloadsScene extends ToolbarScene
             holder.rating.setRating(info.rating);
 
             SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
-            if (spiderInfo == null) {
-                spiderInfo = getSpiderInfo(info);
-                if (spiderInfo != null) {
-                    mSpiderInfoMap.put(spiderInfo.gid, spiderInfo);
-                }
-            }
+//            if (spiderInfo == null) {
+//                spiderInfo = getSpiderInfo(info);
+//                if (spiderInfo != null) {
+//                    mSpiderInfoMap.put(spiderInfo.gid, spiderInfo);
+//                }
+//            }
             if (spiderInfo != null) {
                 int startPage = spiderInfo.startPage + 1;
                 String readText = startPage + "/" + spiderInfo.pages;
@@ -1663,6 +1689,14 @@ public class DownloadsScene extends ToolbarScene
             if (mFile != null) {
                 mFile.delete();
             }
+        }
+    }
+
+    private class SpiderInfoTask extends AsyncTask{
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            return null;
         }
     }
 }
