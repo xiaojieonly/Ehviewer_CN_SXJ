@@ -28,7 +28,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "1.9.4.9"
+        versionName "1.9.5.0"
         vectorDrawables.useSupportLibrary = true
         resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
         testOptions.unitTests.includeAndroidResources = true
@@ -130,8 +130,8 @@ dependencies {
     implementation 'com.github.seven332:android-recaptcha:2bbb3459a8'
     implementation 'com.github.seven332:android-resource:0.1.0'
     implementation 'com.github.seven332:animator:0.1.0'
-    implementation 'com.github.seven332:beerbelly:0.1.4'
-    implementation 'com.github.seven332:conaco:0.1.5-eh'
+    implementation 'com.github.seven332:beerbelly:0.2.0'
+    implementation 'com.github.seven332:conaco:0.2.0'
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
     implementation 'com.github.seven332:glgallery:0.1.2'
