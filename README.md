@@ -1,7 +1,16 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-
+# 2023/05/17 : 家人们，谁懂呀！   
+ ###  批量读取阅读进度使用单独线程进行，优化下载列表滑动操作流畅度
+ ###  修复可能看不了预览图片的问题 
+ ###  优化了图片加载逻辑，现在图片加载应该会更快一些 
+   点击前往下载：[蓝奏云](https://wwsu.lanzouy.com/i4Ml60wfygjc)  密码:4a8s  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+   
 # 2023/04/28 :   
  ###  提前祝大家五一劳动节快乐
  ###  下载列表新增阅读进度 
