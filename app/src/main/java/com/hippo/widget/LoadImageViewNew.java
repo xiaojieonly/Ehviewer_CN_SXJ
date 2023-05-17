@@ -235,12 +235,19 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         mContainer = container;
         mUseNetwork = useNetwork;
 
-        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
-                .setUnikery(this)
-                .setKey(key)
-                .setUrl(url)
-                .setDataContainer(container)
-                .setUseNetwork(useNetwork);
+//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
+//                .setUnikery(this)
+//                .setKey(key)
+//                .setUrl(url)
+//                .setDataContainer(container)
+//                .setUseNetwork(useNetwork);
+        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
+        builder.unikery = this;
+        builder.key = key;
+        builder.url = url;
+        builder.dataContainer= container;
+        builder.useNetwork= useNetwork;
+        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
         mConaco.load(builder);
     }
 
@@ -273,9 +280,9 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         }
     }
 
-    @Override
-    public void onRequest() {
-    }
+//    @Override
+//    public void onRequest() {
+//    }
 
     @Override
     public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {
@@ -287,14 +294,14 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
     }
 
     @Override
-    public boolean onGetValue(@NonNull ImageBitmap value, int source) {
+    public void onGetValue(@NonNull ImageBitmap value, int source) {
         Drawable drawable;
         try {
             drawable = new ImageDrawable(value);
         } catch (RecycledException e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);
-            return false;
+            return;
         }
 
         clearDrawable();
@@ -314,8 +321,6 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         } else {
             setImageDrawable(drawable);
         }
-
-        return true;
     }
 
     @Override

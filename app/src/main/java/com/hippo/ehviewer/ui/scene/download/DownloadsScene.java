@@ -973,6 +973,7 @@ public class DownloadsScene extends ToolbarScene
 
         int index = list.indexOf(info);
         if (index >= 0 && mAdapter != null) {
+//            mSpiderInfoMap.put(info.gid,getSpiderInfo(info));
             mAdapter.notifyItemChanged(index);
         }
     }
