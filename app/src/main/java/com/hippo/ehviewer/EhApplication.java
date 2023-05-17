@@ -89,6 +89,7 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
 import okhttp3.ConnectionSpec;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 
 public class EhApplication extends RecordingApplication {
@@ -335,6 +336,8 @@ public class EhApplication extends RecordingApplication {
     public static OkHttpClient getOkHttpClient(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mOkHttpClient == null) {
+            Dispatcher dispatcher = new Dispatcher();
+            dispatcher.setMaxRequestsPerHost(4);
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
@@ -343,6 +346,7 @@ public class EhApplication extends RecordingApplication {
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
+                    .dispatcher(dispatcher)
                     .dns(new EhDns(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
