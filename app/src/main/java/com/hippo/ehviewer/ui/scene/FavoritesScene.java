@@ -1258,7 +1258,7 @@ public class FavoritesScene extends BaseScene implements EasyRecyclerView.OnItem
 
                     @Override
                     public void run() {
-                        onGetFavoritesLocal(keyword, taskId);
+                        getFavoritesLocalTask();
                     }
                 });
             } else {
@@ -1322,7 +1322,7 @@ public class FavoritesScene extends BaseScene implements EasyRecyclerView.OnItem
 
                     @Override
                     public void run() {
-                        onGetFavoritesLocal(keyword, taskId);
+                        getFavoritesLocalTask();
                     }
                 });
             } else {
@@ -1392,6 +1392,10 @@ public class FavoritesScene extends BaseScene implements EasyRecyclerView.OnItem
             if (0 == postion && null != mSearchBarMover) {
                 mSearchBarMover.showSearchBar();
             }
+        }
+
+        public void getFavoritesLocalTask() {
+            onGetFavoritesLocal(keyword, taskId);
         }
     }
 

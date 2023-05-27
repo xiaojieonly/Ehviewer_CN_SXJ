@@ -308,12 +308,12 @@ public class DownloadService extends Service implements DownloadManager.Download
 
     @Override
     public void onDownload(DownloadInfo info) {
-        onUpdate(info);
+        updateObjectInfo(info);
     }
 
     @Override
     public void onGetPage(DownloadInfo info) {
-        onUpdate(info);
+        updateObjectInfo(info);
     }
 
     @Override
@@ -540,5 +540,9 @@ public class DownloadService extends Service implements DownloadManager.Download
                     break;
             }
         }
+    }
+
+    public void updateObjectInfo(DownloadInfo info) {
+        onUpdate(info);
     }
 }

@@ -75,10 +75,14 @@ class SystemUiHelperImplHC extends SystemUiHelper.SystemUiHelperImpl implements 
     }
 
     protected int createHideFlags() {
-        return View.STATUS_BAR_HIDDEN;
+        return hideStatusBarView();
     }
 
     protected int createTestFlags() {
+        return hideStatusBarView();
+    }
+
+    protected int hideStatusBarView() {
         return View.STATUS_BAR_HIDDEN;
     }
 }

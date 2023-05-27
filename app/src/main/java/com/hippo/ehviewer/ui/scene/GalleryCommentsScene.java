@@ -508,7 +508,7 @@ public final class GalleryCommentsScene extends ToolbarScene implements EasyRecy
 
                     @Override
                     public void onAnimationEnd(Animator a) {
-                        mInAnimation = false;
+                        reset(a);
                     }
                 });
                 animator.start();
@@ -562,7 +562,7 @@ public final class GalleryCommentsScene extends ToolbarScene implements EasyRecy
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        mInAnimation = false;
+                        reset(animation);
                     }
                 }).start();
             }
@@ -931,5 +931,9 @@ public final class GalleryCommentsScene extends ToolbarScene implements EasyRecy
         public boolean isInstance(SceneFragment scene) {
             return scene instanceof GalleryCommentsScene;
         }
+    }
+
+    public void reset(Animator a) {
+        mInAnimation = false;
     }
 }

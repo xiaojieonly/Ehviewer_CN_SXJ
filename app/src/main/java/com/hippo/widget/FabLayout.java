@@ -292,16 +292,12 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
 
             @Override
             public void onAnimationStart(Animator animation) {
-                if (expanded) {
-                    child.setVisibility(View.VISIBLE);
-                }
+                showIfExpanded(animation);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (!expanded) {
-                    child.setVisibility(View.INVISIBLE);
-                }
+                hideChildInvisible(animation);
             }
         }).start();
     }
@@ -331,16 +327,12 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
 
             @Override
             public void onAnimationStart(Animator animation) {
-                if (expanded) {
-                    child.setVisibility(View.VISIBLE);
-                }
+                showIfExpanded(animation);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (!expanded) {
-                    child.setVisibility(View.INVISIBLE);
-                }
+                hideChildInvisible(animation);
             }
         }).start();
     }
@@ -393,5 +385,17 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
         void onClickPrimaryFab(FabLayout view, FloatingActionButton fab);
 
         void onClickSecondaryFab(FabLayout view, FloatingActionButton fab, int position);
+    }
+
+    public void showIfExpanded(Animator animation) {
+        if (expanded) {
+            child.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void hideChildInvisible(Animator animation) {
+        if (!expanded) {
+            child.setVisibility(View.INVISIBLE);
+        }
     }
 }

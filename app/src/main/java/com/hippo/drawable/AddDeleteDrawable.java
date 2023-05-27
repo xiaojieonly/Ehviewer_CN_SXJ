@@ -95,12 +95,12 @@ public class AddDeleteDrawable extends Drawable {
 
     @Override
     public int getIntrinsicHeight() {
-        return mSize * 6 / 5;
+        return calculateNewSize();
     }
 
     @Override
     public int getIntrinsicWidth() {
-        return mSize * 6 / 5;
+        return calculateNewSize();
     }
 
     /**
@@ -159,5 +159,9 @@ public class AddDeleteDrawable extends Drawable {
     @Override
     public int getOpacity() {
         return PixelFormat.TRANSLUCENT;
+    }
+
+    public int calculateNewSize() {
+        return mSize * 6 / 5;
     }
 }

@@ -159,12 +159,12 @@ public class DrawerArrowDrawable extends Drawable {
 
     @Override
     public int getIntrinsicHeight() {
-        return mSize;
+        return getSize();
     }
 
     @Override
     public int getIntrinsicWidth() {
-        return mSize;
+        return getSize();
     }
 
     @Override
@@ -210,5 +210,9 @@ public class DrawerArrowDrawable extends Drawable {
                 oa.start();
             }
         }
+    }
+
+    public int getSize() {
+        return mSize;
     }
 }

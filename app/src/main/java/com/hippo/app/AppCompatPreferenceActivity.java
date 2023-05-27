@@ -222,12 +222,12 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
     }
 
     public void supportInvalidateOptionsMenu() {
-        getDelegate().invalidateOptionsMenu();
+        executeInvalidateOptionsMenu();
     }
 
     @Override
     public void invalidateOptionsMenu() {
-        getDelegate().invalidateOptionsMenu();
+        executeInvalidateOptionsMenu();
     }
 
     /**
@@ -556,5 +556,9 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
         if (getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL) && (actionBar == null || !actionBar.closeOptionsMenu())) {
             super.closeOptionsMenu();
         }
+    }
+
+    public void executeInvalidateOptionsMenu() {
+        getDelegate().invalidateOptionsMenu();
     }
 }

@@ -1501,7 +1501,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @Override
     public void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
-        updateDownloadState();
+        update(info, list, position);
     }
 
     @Override
@@ -1511,22 +1511,22 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @Override
     public void onUpdateAll() {
-        updateDownloadState();
+        Download();
     }
 
     @Override
     public void onReload() {
-        updateDownloadState();
+        Download();
     }
 
     @Override
     public void onChange() {
-        updateDownloadState();
+        Download();
     }
 
     @Override
     public void onRemove(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
-        updateDownloadState();
+        update(info, list, position);
     }
 
     @Override
@@ -1575,11 +1575,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     private void onModifyFavoritesFailure(boolean addOrRemove) {
-        mModifingFavorites = false;
+        set(addOrRemove);
     }
 
     private void onModifyFavoritesCancel(boolean addOrRemove) {
-        mModifingFavorites = false;
+        set(addOrRemove);
     }
 
     /**
@@ -2139,5 +2139,17 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         public boolean isInstance(SceneFragment scene) {
             return scene instanceof GalleryDetailScene;
         }
+    }
+
+    public void update(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
+        updateDownloadState();
+    }
+
+    public void Download() {
+        updateDownloadState();
+    }
+
+    private void set(boolean addOrRemove) {
+        mModifingFavorites = false;
     }
 }

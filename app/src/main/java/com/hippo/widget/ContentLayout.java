@@ -412,11 +412,11 @@ public class ContentLayout extends FrameLayout {
         }
 
         public void setRefreshLayoutEnable(boolean enable) {
-            mRefreshLayout.setEnabled(enable);
+            set(enable);
         }
 
         public void setEnable(boolean enable) {
-            mRefreshLayout.setEnabled(enable);
+            set(enable);
         }
 
         public void setEmptyString(String str) {
@@ -1135,6 +1135,10 @@ public class ContentLayout extends FrameLayout {
             } else {
                 return state;
             }
+        }
+
+        public void set(boolean enable) {
+            mRefreshLayout.setEnabled(enable);
         }
     }
 }

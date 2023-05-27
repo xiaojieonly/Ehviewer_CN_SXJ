@@ -42,7 +42,7 @@ public class PermissionRequester {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    requestPermissions(activity, new String[] { permission }, requestCode);
+                    permissionRequestActivity(dialog, which);
                 }
             }).setNegativeButton(android.R.string.cancel, null).show();
         } else {
@@ -70,7 +70,7 @@ public class PermissionRequester {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    requestPermissions(activity, new String[] { permission }, requestCode);
+                    permissionRequestActivity(dialog, which);
                 }
             }).setNegativeButton(android.R.string.cancel, null).show();
         } else {
@@ -89,5 +89,9 @@ public class PermissionRequester {
             ExceptionUtils.throwIfFatal(t);
             return false;
         }
+    }
+
+    public void permissionRequestActivity(DialogInterface dialog, int which) {
+        requestPermissions(activity, new String[] { permission }, requestCode);
     }
 }

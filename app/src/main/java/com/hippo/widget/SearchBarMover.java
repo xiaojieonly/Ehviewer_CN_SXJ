@@ -125,7 +125,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mSearchBarMoveAnimator = null;
+                    setNullSearchAnimator(animation);
                 }
             });
             va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -134,10 +134,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
 
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    int value = (Integer) animation.getAnimatedValue();
-                    int offsetStep = value - lastValue;
-                    lastValue = value;
-                    ViewUtils.translationYBy(mSearchBar, offsetStep);
+                    update(animation);
                 }
             });
             mSearchBarMoveAnimator = va;
@@ -182,7 +179,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mSearchBarMoveAnimator = null;
+                    setNullSearchAnimator(animation);
                 }
             });
             va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -191,10 +188,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
 
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    int value = (Integer) animation.getAnimatedValue();
-                    int offsetStep = value - lastValue;
-                    lastValue = value;
-                    ViewUtils.translationYBy(mSearchBar, offsetStep);
+                    update(animation);
                 }
             });
             mSearchBarMoveAnimator = va;
@@ -215,5 +209,16 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
         RecyclerView getValidRecyclerView();
 
         boolean forceShowSearchBar();
+    }
+
+    public void setNullSearchAnimator(Animator animation) {
+        mSearchBarMoveAnimator = null;
+    }
+
+    public void update(ValueAnimator animation) {
+        int value = (Integer) animation.getAnimatedValue();
+        int offsetStep = value - lastValue;
+        lastValue = value;
+        ViewUtils.translationYBy(mSearchBar, offsetStep);
     }
 }

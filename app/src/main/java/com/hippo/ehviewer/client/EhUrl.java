@@ -114,13 +114,8 @@ public class EhUrl {
     }
 
     public static String getMyTag() {
-        switch(Settings.getGallerySite()) {
-            default:
-            case SITE_E:
-                return URL_MY_TAGS_E;
-            case SITE_EX:
-                return URL_MY_TAGS_EX;
-        }
+        return E
+getMyTagsUrl();
     }
 
     public static String getFavoritesUrl() {
@@ -174,13 +169,8 @@ public class EhUrl {
     }
 
     public static String getMyTagsUrl() {
-        switch(Settings.getGallerySite()) {
-            default:
-            case SITE_E:
-                return URL_MY_TAGS_E;
-            case SITE_EX:
-                return URL_MY_TAGS_EX;
-        }
+        return E
+getMyTagsUrl();
     }
 
     /**
@@ -320,6 +310,17 @@ public class EhUrl {
             return getThumbUrlPrefix() + thirdLastSegment + "/" + secondLastSegment + "/" + lastSegment;
         } else {
             return originUrl;
+        }
+    }
+
+    public static String E
+getMyTagsUrl() {
+        switch(Settings.getGallerySite()) {
+            default:
+            case SITE_E:
+                return URL_MY_TAGS_E;
+            case SITE_EX:
+                return URL_MY_TAGS_EX;
         }
     }
 }

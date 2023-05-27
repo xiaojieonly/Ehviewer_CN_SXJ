@@ -623,7 +623,7 @@ public class Settings {
     }
 
     public static void putReadingFullscreen(boolean value) {
-        putBoolean(KEY_READING_FULLSCREEN, value);
+        set(value);
     }
 
     private static final String KEY_CUSTOM_SCREEN_LIGHTNESS = "custom_screen_lightness";
@@ -664,7 +664,7 @@ public class Settings {
     }
 
     public static void putEnabledSecurity(boolean value) {
-        putBoolean(KEY_READING_FULLSCREEN, value);
+        set(value);
     }
 
     /**
@@ -1402,6 +1402,10 @@ public class Settings {
 
     public static void saveFilePath(String key, String path) {
         putString(key, path);
+    }
+
+    public static void set(boolean value) {
+        putBoolean(KEY_READING_FULLSCREEN, value);
     }
     //    private static boolean ALREADY_CHECK;
     //

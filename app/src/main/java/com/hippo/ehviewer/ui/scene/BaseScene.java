@@ -174,7 +174,7 @@ public abstract class BaseScene extends SceneFragment {
     }
 
     public View onCreateDrawerView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return null;
+        return generateNullValue(inflater, container, savedInstanceState);
     }
 
     public final void destroyDrawerView() {
@@ -197,7 +197,7 @@ public abstract class BaseScene extends SceneFragment {
 
     @Nullable
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return null;
+        return generateNullValue(inflater, container, savedInstanceState);
     }
 
     @SuppressLint("RtlHardcoded")
@@ -284,5 +284,9 @@ public abstract class BaseScene extends SceneFragment {
             drawerView.saveHierarchyState(drawerViewState);
             outState.putSparseParcelableArray(KEY_DRAWER_VIEW_STATE, drawerViewState);
         }
+    }
+
+    public View generateNullValue(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return null;
     }
 }

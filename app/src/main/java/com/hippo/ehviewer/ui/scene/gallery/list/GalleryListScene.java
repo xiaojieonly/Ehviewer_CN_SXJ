@@ -365,9 +365,7 @@ public final class GalleryListScene extends BaseScene implements EasyRecyclerVie
 
             @Override
             public void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
-                if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
-                }
+                update(info, list, position);
             }
 
             @Override
@@ -380,16 +378,12 @@ public final class GalleryListScene extends BaseScene implements EasyRecyclerVie
 
             @Override
             public void onReload() {
-                if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
-                }
+                adapter();
             }
 
             @Override
             public void onChange() {
-                if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
-                }
+                adapter();
             }
 
             @Override
@@ -398,9 +392,7 @@ public final class GalleryListScene extends BaseScene implements EasyRecyclerVie
 
             @Override
             public void onRemove(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
-                if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
-                }
+                update(info, list, position);
             }
 
             @Override
@@ -2017,6 +2009,18 @@ public final class GalleryListScene extends BaseScene implements EasyRecyclerVie
         @Override
         public boolean isInstance(SceneFragment scene) {
             return scene instanceof GalleryListScene;
+        }
+    }
+
+    public void update(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    public void adapter() {
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
         }
     }
 }
