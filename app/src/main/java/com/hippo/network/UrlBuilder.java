@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.network;
 
 import java.util.HashMap;
@@ -23,6 +22,7 @@ import java.util.Map;
 public class UrlBuilder {
 
     public String mRootUrl;
+
     public Map<String, Object> mQueryMap = new HashMap<>();
 
     public UrlBuilder(String rootUrl) {
@@ -39,7 +39,6 @@ public class UrlBuilder {
         } else {
             StringBuilder sb = new StringBuilder(mRootUrl);
             sb.append("?");
-
             Iterator<String> iter = mQueryMap.keySet().iterator();
             if (iter.hasNext()) {
                 String key = iter.next();

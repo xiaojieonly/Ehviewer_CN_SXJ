@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
@@ -43,239 +42,231 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArchiveGalleryProvider extends GalleryProvider2 {
 
-  private static final AtomicInteger sIdGenerator = new AtomicInteger();
+    private static final AtomicInteger sIdGenerator = new AtomicInteger();
 
-  private final UniFile file;
+    private final UniFile file;
 
-  private Thread archiveThread;
-  private Thread decodeThread;
+    private Thread archiveThread;
 
-  private volatile int size = STATE_WAIT;
-  private String error;
+    private Thread decodeThread;
 
-  private final Stack<Integer> requests = new Stack<>();
-  private final AtomicInteger extractingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
-  private final LinkedHashMap<Integer, InputStream> streams = new LinkedHashMap<>();
-  private final AtomicInteger decodingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
+    private volatile int size = STATE_WAIT;
 
-  public ArchiveGalleryProvider(Context context, Uri uri) {
-    file = UniFile.fromUri(context, uri);
-  }
+    private String error;
 
-  @Override
-  public void start() {
-    super.start();
+    private final Stack<Integer> requests = new Stack<>();
 
-    int id = sIdGenerator.incrementAndGet();
+    private final AtomicInteger extractingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
 
-    archiveThread = new PriorityThread(
-        new ArchiveTask(), "ArchiveTask" + '-' + id, Process.THREAD_PRIORITY_BACKGROUND);
-    archiveThread.start();
+    private final LinkedHashMap<Integer, InputStream> streams = new LinkedHashMap<>();
 
-    decodeThread = new PriorityThread(
-        new DecodeTask(), "DecodeTask" + '-' + id, Process.THREAD_PRIORITY_BACKGROUND);
-    decodeThread.start();
-  }
+    private final AtomicInteger decodingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
 
-  @Override
-  public void stop() {
-    super.stop();
-
-    if (archiveThread != null) {
-      archiveThread.interrupt();
-      archiveThread = null;
-    }
-    if (decodeThread != null) {
-      decodeThread.interrupt();
-      decodeThread = null;
-    }
-  }
-
-  @Override
-  public int size() {
-    return size;
-  }
-
-  @Override
-  protected void onRequest(int index) {
-    boolean inDecodeTask;
-    synchronized (streams) {
-      inDecodeTask = streams.keySet().contains(index) || index == decodingIndex.get();
+    public ArchiveGalleryProvider(Context context, Uri uri) {
+        file = UniFile.fromUri(context, uri);
     }
 
-    synchronized (requests) {
-      boolean inArchiveTask = requests.contains(index) || index == extractingIndex.get();
-      if (!inArchiveTask && !inDecodeTask) {
-        requests.add(index);
-        requests.notify();
-      }
-    }
-    notifyPageWait(index);
-  }
-
-  @Override
-  protected void onForceRequest(int index) {
-    onRequest(index);
-  }
-
-  @Override
-  protected void onCancelRequest(int index) {
-    synchronized (requests) {
-      requests.remove(Integer.valueOf(index));
-    }
-  }
-
-  @Override
-  public String getError() {
-    return error;
-  }
-
-  @NonNull
-  @Override
-  public String getImageFilename(int index) {
-    // TODO
-    return Integer.toString(index);
-  }
-
-  @Override
-  public boolean save(int index, @NonNull UniFile file) {
-    // TODO
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public UniFile save(int index, @NonNull UniFile dir, @NonNull String filename) {
-    // TODO
-    return null;
-  }
-
-  private class ArchiveTask implements Runnable {
     @Override
-    public void run() {
-      UniRandomAccessFile uraf = null;
-      if (file != null) {
-        try {
-          uraf = file.createRandomAccessFile("r");
-        } catch (IOException e) {
-          e.printStackTrace();
+    public void start() {
+        super.start();
+        int id = sIdGenerator.incrementAndGet();
+        archiveThread = new PriorityThread(new ArchiveTask(), "ArchiveTask" + '-' + id, Process.THREAD_PRIORITY_BACKGROUND);
+        archiveThread.start();
+        decodeThread = new PriorityThread(new DecodeTask(), "DecodeTask" + '-' + id, Process.THREAD_PRIORITY_BACKGROUND);
+        decodeThread.start();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if (archiveThread != null) {
+            archiveThread.interrupt();
+            archiveThread = null;
         }
-      }
-      if (uraf == null) {
-        size = STATE_ERROR;
-        error = GetText.getString(R.string.error_reading_failed);
-        notifyDataChanged();
-        return;
-      }
+        if (decodeThread != null) {
+            decodeThread.interrupt();
+            decodeThread = null;
+        }
+    }
 
-      A7ZipArchive archive = null;
-      try {
-        archive = A7ZipArchive.create(uraf);
-      } catch (ArchiveException e) {
-        e.printStackTrace();
-      }
-      if (archive == null) {
-        size = STATE_ERROR;
-        error = GetText.getString(R.string.error_invalid_archive);
-        notifyDataChanged();
-        return;
-      }
+    @Override
+    public int size() {
+        return size;
+    }
 
-      List<A7ZipArchive.A7ZipArchiveEntry> entries = archive.getArchiveEntries();
-      Collections.sort(entries, naturalComparator);
-
-      // Update size and notify changed
-      size = entries.size();
-      notifyDataChanged();
-
-      while (!Thread.currentThread().isInterrupted()) {
-        int index;
+    @Override
+    protected void onRequest(int index) {
+        boolean inDecodeTask;
+        synchronized (streams) {
+            inDecodeTask = streams.keySet().contains(index) || index == decodingIndex.get();
+        }
         synchronized (requests) {
-          if (requests.isEmpty()) {
-            try {
-              requests.wait();
-            } catch (InterruptedException e) {
-              // Interrupted
-              break;
+            boolean inArchiveTask = requests.contains(index) || index == extractingIndex.get();
+            if (!inArchiveTask && !inDecodeTask) {
+                requests.add(index);
+                requests.notify();
             }
-            continue;
-          }
-          index = requests.pop();
-          extractingIndex.lazySet(index);
         }
-
-        // Check index valid
-        if (index < 0 || index >= entries.size()) {
-          extractingIndex.lazySet(GalleryPageView.INVALID_INDEX);
-          notifyPageFailed(index, GetText.getString(R.string.error_out_of_range));
-          continue;
-        }
-
-        Pipe pipe = new Pipe(4 * 1024);
-
-        synchronized (streams) {
-          if (streams.get(index) != null) {
-            continue;
-          }
-          streams.put(index, pipe.getInputStream());
-          streams.notify();
-        }
-
-        try {
-          entries.get(index).extract(pipe.getOutputStream());
-        } catch (ArchiveException e) {
-          e.printStackTrace();
-        } finally {
-          extractingIndex.lazySet(GalleryPageView.INVALID_INDEX);
-        }
-      }
+        notifyPageWait(index);
     }
-  }
 
-  private class DecodeTask implements Runnable {
     @Override
-    public void run() {
-      while (!Thread.currentThread().isInterrupted()) {
-        int index;
-        InputStream stream;
-        synchronized (streams) {
-          if (streams.isEmpty()) {
-            try {
-              streams.wait();
-            } catch (InterruptedException e) {
-              // Interrupted
-              break;
+    protected void onForceRequest(int index) {
+        onRequest(index);
+    }
+
+    @Override
+    protected void onCancelRequest(int index) {
+        synchronized (requests) {
+            requests.remove(Integer.valueOf(index));
+        }
+    }
+
+    @Override
+    public String getError() {
+        return error;
+    }
+
+    @NonNull
+    @Override
+    public String getImageFilename(int index) {
+        // TODO
+        return Integer.toString(index);
+    }
+
+    @Override
+    public boolean save(int index, @NonNull UniFile file) {
+        // TODO
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public UniFile save(int index, @NonNull UniFile dir, @NonNull String filename) {
+        // TODO
+        return null;
+    }
+
+    private class ArchiveTask implements Runnable {
+
+        @Override
+        public void run() {
+            UniRandomAccessFile uraf = null;
+            if (file != null) {
+                try {
+                    uraf = file.createRandomAccessFile("r");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-            continue;
-          }
-
-          Iterator<Map.Entry<Integer, InputStream>> iterator = streams.entrySet().iterator();
-          Map.Entry<Integer, InputStream> entry = iterator.next();
-          iterator.remove();
-          index = entry.getKey();
-          stream = entry.getValue();
-          decodingIndex.lazySet(index);
+            if (uraf == null) {
+                size = STATE_ERROR;
+                error = GetText.getString(R.string.error_reading_failed);
+                notifyDataChanged();
+                return;
+            }
+            A7ZipArchive archive = null;
+            try {
+                archive = A7ZipArchive.create(uraf);
+            } catch (ArchiveException e) {
+                e.printStackTrace();
+            }
+            if (archive == null) {
+                size = STATE_ERROR;
+                error = GetText.getString(R.string.error_invalid_archive);
+                notifyDataChanged();
+                return;
+            }
+            List<A7ZipArchive.A7ZipArchiveEntry> entries = archive.getArchiveEntries();
+            Collections.sort(entries, naturalComparator);
+            // Update size and notify changed
+            size = entries.size();
+            notifyDataChanged();
+            while (!Thread.currentThread().isInterrupted()) {
+                int index;
+                synchronized (requests) {
+                    if (requests.isEmpty()) {
+                        try {
+                            requests.wait();
+                        } catch (InterruptedException e) {
+                            // Interrupted
+                            break;
+                        }
+                        continue;
+                    }
+                    index = requests.pop();
+                    extractingIndex.lazySet(index);
+                }
+                // Check index valid
+                if (index < 0 || index >= entries.size()) {
+                    extractingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+                    notifyPageFailed(index, GetText.getString(R.string.error_out_of_range));
+                    continue;
+                }
+                Pipe pipe = new Pipe(4 * 1024);
+                synchronized (streams) {
+                    if (streams.get(index) != null) {
+                        continue;
+                    }
+                    streams.put(index, pipe.getInputStream());
+                    streams.notify();
+                }
+                try {
+                    entries.get(index).extract(pipe.getOutputStream());
+                } catch (ArchiveException e) {
+                    e.printStackTrace();
+                } finally {
+                    extractingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+                }
+            }
         }
+    }
 
-        try {
-          Image image = Image.decode(stream, true);
-          if (image != null) {
-            notifyPageSucceed(index, image);
-          } else {
-            notifyPageFailed(index, GetText.getString(R.string.error_decoding_failed));
-          }
-        } finally {
-          decodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+    private class DecodeTask implements Runnable {
+
+        @Override
+        public void run() {
+            while (!Thread.currentThread().isInterrupted()) {
+                int index;
+                InputStream stream;
+                synchronized (streams) {
+                    if (streams.isEmpty()) {
+                        try {
+                            streams.wait();
+                        } catch (InterruptedException e) {
+                            // Interrupted
+                            break;
+                        }
+                        continue;
+                    }
+                    Iterator<Map.Entry<Integer, InputStream>> iterator = streams.entrySet().iterator();
+                    Map.Entry<Integer, InputStream> entry = iterator.next();
+                    iterator.remove();
+                    index = entry.getKey();
+                    stream = entry.getValue();
+                    decodingIndex.lazySet(index);
+                }
+                try {
+                    Image image = Image.decode(stream, true);
+                    if (image != null) {
+                        notifyPageSucceed(index, image);
+                    } else {
+                        notifyPageFailed(index, GetText.getString(R.string.error_decoding_failed));
+                    }
+                } finally {
+                    decodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+                }
+            }
         }
-      }
     }
-  }
 
-  private static Comparator<A7ZipArchive.A7ZipArchiveEntry> naturalComparator = new Comparator<A7ZipArchive.A7ZipArchiveEntry>() {
-    private NaturalComparator comparator = new NaturalComparator();
-    @Override
-    public int compare(A7ZipArchive.A7ZipArchiveEntry o1, A7ZipArchive.A7ZipArchiveEntry o2) {
-      return comparator.compare(o1.getPath(), o2.getPath());
-    }
-  };
+    private static Comparator<A7ZipArchive.A7ZipArchiveEntry> naturalComparator = new Comparator<A7ZipArchive.A7ZipArchiveEntry>() {
+
+        private NaturalComparator comparator = new NaturalComparator();
+
+        @Override
+        public int compare(A7ZipArchive.A7ZipArchiveEntry o1, A7ZipArchive.A7ZipArchiveEntry o2) {
+            return comparator.compare(o1.getPath(), o2.getPath());
+        }
+    };
 }

@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.util.Log;
-
 import com.hippo.ehviewer.client.data.GalleryInfo;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,6 +24,7 @@ import java.util.List;
 public class ThumbSpanHelper {
 
     private static final int MIN_ARRAY_LENGTH = 50;
+
     private static final int MAX_ROW_INTERVAL = 3;
 
     private final List<GalleryInfo> mData;
@@ -35,9 +33,13 @@ public class ThumbSpanHelper {
     private boolean[] mCells = new boolean[MIN_ARRAY_LENGTH];
 
     private int mNextIndex;
+
     private int mNextGroupIndex;
+
     private int mNearSpaceIndex;
+
     private int mNearSpaceGroupIndex;
+
     private int mAttachedCount;
 
     private int mSpanCount;
@@ -53,7 +55,6 @@ public class ThumbSpanHelper {
             return;
         }
         mEnable = enable;
-
         if (!enable) {
             clear();
             mSpanCount = 0;
@@ -68,7 +69,6 @@ public class ThumbSpanHelper {
         if (!mEnable) {
             return;
         }
-
         if (spanCount == mSpanCount) {
             return;
         }
@@ -104,9 +104,7 @@ public class ThumbSpanHelper {
     }
 
     private void clear() {
-
         Log.d("TAG", "=======================clear=======================");
-
         if (mSpanCount > 0) {
             if (mNextGroupIndex > 0 || mNextIndex > 0) {
                 Arrays.fill(mCells, 0, mNextGroupIndex * mSpanCount + mNextIndex, false);
@@ -140,22 +138,17 @@ public class ThumbSpanHelper {
                 GalleryInfo gi = mData.get(i);
                 int spanSize = gi.thumbWidth <= gi.thumbHeight ? 1 : 2;
                 gi.spanSize = spanSize;
-
                 if (1 == spanSize) {
                     // Update near space
                     updateNearSpace();
-
                     Log.d("TAG", "Update mNearSpaceGroupIndex = " + mNearSpaceGroupIndex + ", mNearSpaceIndex = " + mNearSpaceIndex);
-
                     if (mNextIndex == mNearSpaceIndex && mNextGroupIndex == mNearSpaceGroupIndex) {
                         // No space, just append
                         gi.spanIndex = mNextIndex;
                         gi.spanGroupIndex = mNextGroupIndex;
-
                         // Update cell
                         int start = gi.spanGroupIndex * mSpanCount + gi.spanIndex;
                         fillCell(start, start + 1);
-
                         // Update field
                         mNextIndex++;
                         if (mSpanCount == mNextIndex) {
@@ -164,24 +157,19 @@ public class ThumbSpanHelper {
                         }
                         mNearSpaceIndex = mNextIndex;
                         mNearSpaceGroupIndex = mNextGroupIndex;
-
                         Log.d("TAG", "type 0");
                         Log.d("TAG", "i = " + i + ", spanSize = " + spanSize + ", spanGroupIndex = " + gi.spanGroupIndex + ", spanIndex = " + gi.spanIndex);
                         Log.d("TAG", "mNextGroupIndex = " + mNextGroupIndex + ", mNextIndex = " + mNextIndex);
                         Log.d("TAG", "mNearSpaceGroupIndex = " + mNearSpaceGroupIndex + ", mNearSpaceIndex = " + mNearSpaceIndex);
-
                     } else {
                         // Found space
                         gi.spanIndex = mNearSpaceIndex;
                         gi.spanGroupIndex = mNearSpaceGroupIndex;
-
                         // Update cell
                         int start = gi.spanGroupIndex * mSpanCount + gi.spanIndex;
                         fillCell(start, start + 1);
-
                         // Find near space
                         findNearSpace(start + 1);
-
                         Log.d("TAG", "type 1");
                         Log.d("TAG", "i = " + i + ", spanSize = " + spanSize + ", spanGroupIndex = " + gi.spanGroupIndex + ", spanIndex = " + gi.spanIndex);
                         Log.d("TAG", "mNextGroupIndex = " + mNextGroupIndex + ", mNextIndex = " + mNextIndex);
@@ -201,11 +189,9 @@ public class ThumbSpanHelper {
                         gi.spanGroupIndex = mNextGroupIndex + 1;
                         oldOrNew = false;
                     }
-
                     // Update cell
                     int start = gi.spanGroupIndex * mSpanCount + gi.spanIndex;
                     fillCell(start, start + 2);
-
                     // Update field
                     if (syncNear && !oldOrNew) {
                         mNearSpaceIndex = mNextIndex;
@@ -221,7 +207,6 @@ public class ThumbSpanHelper {
                         mNearSpaceIndex = mNextIndex;
                         mNearSpaceGroupIndex = mNextGroupIndex;
                     }
-
                     Log.d("TAG", "type 2");
                     Log.d("TAG", "i = " + i + ", spanSize = " + spanSize + ", spanGroupIndex = " + gi.spanGroupIndex + ", spanIndex = " + gi.spanIndex);
                     Log.d("TAG", "mNextGroupIndex = " + mNextGroupIndex + ", mNextIndex = " + mNextIndex);
@@ -237,7 +222,6 @@ public class ThumbSpanHelper {
         if (mNextGroupIndex - mNearSpaceGroupIndex <= MAX_ROW_INTERVAL) {
             return;
         }
-
         // The space is too far, find a near one
         int start = Math.max(0, mNextGroupIndex - MAX_ROW_INTERVAL) * mSpanCount;
         findNearSpace(start);

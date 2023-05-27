@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import org.json.JSONException;
@@ -22,9 +21,13 @@ import org.json.JSONObject;
 public class VoteCommentParser {
 
     public static class Result {
+
         public long id;
+
         public int score;
+
         public int vote;
+
         public int expectVote;
     }
 

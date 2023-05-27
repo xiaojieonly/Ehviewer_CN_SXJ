@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.annotation.SuppressLint;
@@ -30,80 +29,77 @@ import java.util.Map;
 
 public abstract class GalleryInfoContentHelper extends ContentLayout.ContentHelper<GalleryInfo> {
 
-  private static final String KEY_DATA_MAP = "data_map";
+    private static final String KEY_DATA_MAP = "data_map";
 
-  @SuppressLint("UseSparseArrays")
-  private Map<Long, GalleryInfo> map = new HashMap<>();
-  private FavouriteStatusRouter.Listener listener;
+    @SuppressLint("UseSparseArrays")
+    private Map<Long, GalleryInfo> map = new HashMap<>();
 
-  public GalleryInfoContentHelper() {
-    listener = (gid, slot) -> {
-      GalleryInfo info = map.get(gid);
-      if (info != null) {
-        info.favoriteSlot = slot;
-      }
-    };
-    EhApplication.getFavouriteStatusRouter().addListener(listener);
-  }
+    private FavouriteStatusRouter.Listener listener;
 
-  public void destroy() {
-    EhApplication.getFavouriteStatusRouter().removeListener(listener);
-  }
-
-  @Override
-  protected void onAddData(GalleryInfo data) {
-    map.put(data.gid, data);
-  }
-
-  @Override
-  protected void onAddData(List<GalleryInfo> data) {
-    for (GalleryInfo info : data) {
-      map.put(info.gid, info);
-    }
-  }
-
-  @Override
-  protected void onRemoveData(GalleryInfo data) {
-    map.remove(data.gid);
-  }
-
-  @Override
-  protected void onRemoveData(List<GalleryInfo> data) {
-    for (GalleryInfo info : data) {
-      map.remove(info.gid);
-    }
-  }
-
-  @Override
-  protected void onClearData() {
-    map.clear();
-  }
-
-  @Override
-  protected Parcelable saveInstanceState(Parcelable superState) {
-    Bundle bundle = (Bundle) super.saveInstanceState(superState);
-
-    // TODO It's a bad design
-    FavouriteStatusRouter router = EhApplication.getFavouriteStatusRouter();
-    int id = router.saveDataMap(map);
-    bundle.putInt(KEY_DATA_MAP, id);
-
-    return bundle;
-  }
-
-  @Override
-  protected Parcelable restoreInstanceState(Parcelable state) {
-    Bundle bundle = (Bundle) state;
-
-    int id = bundle.getInt(KEY_DATA_MAP, IntIdGenerator.INVALID_ID);
-    if (id != IntIdGenerator.INVALID_ID) {
-      FavouriteStatusRouter router = EhApplication.getFavouriteStatusRouter();
-      Map<Long, GalleryInfo> map = router.restoreDataMap(id);
-      if (map != null) {
-        this.map = map;
-      }
+    public GalleryInfoContentHelper() {
+        listener = (gid, slot) -> {
+            GalleryInfo info = map.get(gid);
+            if (info != null) {
+                info.favoriteSlot = slot;
+            }
+        };
+        EhApplication.getFavouriteStatusRouter().addListener(listener);
     }
 
-    return super.restoreInstanceState(state);
-  }
+    public void destroy() {
+        EhApplication.getFavouriteStatusRouter().removeListener(listener);
+    }
+
+    @Override
+    protected void onAddData(GalleryInfo data) {
+        map.put(data.gid, data);
+    }
+
+    @Override
+    protected void onAddData(List<GalleryInfo> data) {
+        for (GalleryInfo info : data) {
+            map.put(info.gid, info);
+        }
+    }
+
+    @Override
+    protected void onRemoveData(GalleryInfo data) {
+        map.remove(data.gid);
+    }
+
+    @Override
+    protected void onRemoveData(List<GalleryInfo> data) {
+        for (GalleryInfo info : data) {
+            map.remove(info.gid);
+        }
+    }
+
+    @Override
+    protected void onClearData() {
+        map.clear();
+    }
+
+    @Override
+    protected Parcelable saveInstanceState(Parcelable superState) {
+        Bundle bundle = (Bundle) super.saveInstanceState(superState);
+        // TODO It's a bad design
+        FavouriteStatusRouter router = EhApplication.getFavouriteStatusRouter();
+        int id = router.saveDataMap(map);
+        bundle.putInt(KEY_DATA_MAP, id);
+        return bundle;
+    }
+
+    @Override
+    protected Parcelable restoreInstanceState(Parcelable state) {
+        Bundle bundle = (Bundle) state;
+        int id = bundle.getInt(KEY_DATA_MAP, IntIdGenerator.INVALID_ID);
+        if (id != IntIdGenerator.INVALID_ID) {
+            FavouriteStatusRouter router = EhApplication.getFavouriteStatusRouter();
+            Map<Long, GalleryInfo> map = router.restoreDataMap(id);
+            if (map != null) {
+                this.map = map;
+            }
+        }
+        return super.restoreInstanceState(state);
+    }
 }

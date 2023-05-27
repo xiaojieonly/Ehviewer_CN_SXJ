@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.view.View;
@@ -27,14 +26,23 @@ import com.hippo.widget.LoadImageView;
 public class GalleryHolder extends RecyclerView.ViewHolder {
 
     public final LoadImageView thumb;
+
     public final TextView title;
+
     public final TextView uploader;
+
     public final SimpleRatingView rating;
+
     public final TextView category;
+
     public final TextView posted;
+
     public final TextView pages;
+
     public final TextView simpleLanguage;
+
     public final ImageView favourited;
+
     public final ImageView downloaded;
 
     public GalleryHolder(View itemView) {
@@ -50,5 +58,4 @@ public class GalleryHolder extends RecyclerView.ViewHolder {
         favourited = itemView.findViewById(R.id.favourited);
         downloaded = itemView.findViewById(R.id.downloaded);
     }
-
 }

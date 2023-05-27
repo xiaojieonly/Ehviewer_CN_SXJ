@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.preference.Preference;
 import android.util.AttributeSet;
-
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.UrlOpener;
 
@@ -48,7 +46,6 @@ public class UrlPreference extends Preference {
         mUrl = a.getString(R.styleable.UrlPreference_url);
         a.recycle();
     }
-
 
     @Override
     public CharSequence getSummary() {

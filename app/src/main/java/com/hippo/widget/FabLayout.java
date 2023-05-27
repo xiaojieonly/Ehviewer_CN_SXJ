@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.animation.Animator;
@@ -36,20 +35,29 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
     private static final long ANIMATE_TIME = 300L;
 
     private static final String STATE_KEY_SUPER = "super";
+
     private static final String STATE_KEY_AUTO_CANCEL = "auto_cancel";
+
     private static final String STATE_KEY_EXPANDED = "expanded";
 
     private int mFabSize;
+
     private int mFabMiniSize;
+
     private int mIntervalPrimary;
+
     private int mIntervalSecondary;
 
     private boolean mExpanded = true;
+
     private boolean mAutoCancel = true;
+
     private boolean mHidePrimaryFab = false;
+
     private float mMainFabCenterY = -1f;
 
     private OnExpandListener mOnExpandListener;
+
     private OnClickFabListener mOnClickFabListener;
 
     public FabLayout(Context context) {
@@ -79,8 +87,7 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
     @Override
     public void addView(@NonNull View child, int index, LayoutParams params) {
         if (!(child instanceof FloatingActionButton)) {
-            throw new IllegalStateException("FloatingActionBarLayout should only " +
-                    "contain FloatingActionButton, but try to add "+ child.getClass().getName());
+            throw new IllegalStateException("FloatingActionBarLayout should only " + "contain FloatingActionButton, but try to add " + child.getClass().getName());
         }
         super.addView(child, index, params);
     }
@@ -120,20 +127,13 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        AssertUtils.assertEquals("Measure mode must be MeasureSpec.EXACTLY",
-                MeasureSpec.getMode(widthMeasureSpec), MeasureSpec.EXACTLY);
-        AssertUtils.assertEquals("Measure mode must be MeasureSpec.EXACTLY",
-                MeasureSpec.getMode(heightMeasureSpec), MeasureSpec.EXACTLY);
-
+        AssertUtils.assertEquals("Measure mode must be MeasureSpec.EXACTLY", MeasureSpec.getMode(widthMeasureSpec), MeasureSpec.EXACTLY);
+        AssertUtils.assertEquals("Measure mode must be MeasureSpec.EXACTLY", MeasureSpec.getMode(heightMeasureSpec), MeasureSpec.EXACTLY);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
-
-        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
-                width - getPaddingLeft() - getPaddingRight(), MeasureSpec.AT_MOST);
-        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
-                height - getPaddingTop() - getPaddingBottom(), MeasureSpec.AT_MOST);
+        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(width - getPaddingLeft() - getPaddingRight(), MeasureSpec.AT_MOST);
+        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height - getPaddingTop() - getPaddingBottom(), MeasureSpec.AT_MOST);
         measureChildren(childWidthMeasureSpec, childHeightMeasureSpec);
-
         setMeasuredDimension(width, height);
     }
 
@@ -145,12 +145,11 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
         int bottom = getMeasuredHeight() - getPaddingBottom();
         int count = getChildCount();
         int i = count;
-        while(--i >= 0) {
+        while (--i >= 0) {
             View child = getChildAt(i);
             if (child.getVisibility() == View.GONE) {
                 continue;
             }
-
             int childWidth = child.getMeasuredWidth();
             int childHeight = child.getMeasuredHeight();
             int layoutBottom;
@@ -201,7 +200,6 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
     public void setAutoCancel(boolean autoCancel) {
         if (mAutoCancel != autoCancel) {
             mAutoCancel = autoCancel;
-
             if (mExpanded) {
                 if (autoCancel) {
                     setOnClickListener(this);
@@ -227,7 +225,6 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
     public void setExpanded(boolean expanded, boolean animation) {
         if (mExpanded != expanded) {
             mExpanded = expanded;
-
             if (mAutoCancel) {
                 if (expanded) {
                     setOnClickListener(this);
@@ -235,7 +232,6 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
                     setClickable(false);
                 }
             }
-
             final int count = getChildCount();
             if (count > 0) {
                 if (mMainFabCenterY == -1f || !animation) {
@@ -255,7 +251,6 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
                     if (mHidePrimaryFab) {
                         setPrimaryFabAnimation(getChildAt(count - 1), expanded, !expanded);
                     }
-
                     for (int i = 0; i < count - 1; i++) {
                         View child = getChildAt(i);
                         if (child.getVisibility() == GONE) {
@@ -265,13 +260,11 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
                     }
                 }
             }
-
             if (mOnExpandListener != null) {
                 mOnExpandListener.onExpand(expanded);
             }
         }
     }
-
 
     private void setPrimaryFabAnimation(final View child, final boolean expanded, boolean delay) {
         float startRotation;
@@ -288,36 +281,29 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
         } else {
             startRotation = 0.0f;
             endRotation = 0.0f;
-            startScale  = 1.0f;
+            startScale = 1.0f;
             endScale = 0.0f;
             interpolator = AnimationUtils.SLOW_FAST_INTERPOLATOR;
         }
-
         child.setScaleX(startScale);
         child.setScaleY(startScale);
         child.setRotation(startRotation);
-        child.animate()
-                .scaleX(endScale)
-                .scaleY(endScale)
-                .rotation(endRotation)
-                .setStartDelay(delay ? ANIMATE_TIME : 0L)
-                .setDuration(ANIMATE_TIME)
-                .setInterpolator(interpolator)
-                .setListener(new SimpleAnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                        if (expanded) {
-                            child.setVisibility(View.VISIBLE);
-                        }
-                    }
+        child.animate().scaleX(endScale).scaleY(endScale).rotation(endRotation).setStartDelay(delay ? ANIMATE_TIME : 0L).setDuration(ANIMATE_TIME).setInterpolator(interpolator).setListener(new SimpleAnimatorListener() {
 
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        if (!expanded) {
-                            child.setVisibility(View.INVISIBLE);
-                        }
-                    }
-                }).start();
+            @Override
+            public void onAnimationStart(Animator animation) {
+                if (expanded) {
+                    child.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (!expanded) {
+                    child.setVisibility(View.INVISIBLE);
+                }
+            }
+        }).start();
     }
 
     private void setSecondaryFabAnimation(final View child, final boolean expanded, boolean delay) {
@@ -327,44 +313,36 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
         float endAlpha;
         Interpolator interpolator;
         if (expanded) {
-            startTranslationY = mMainFabCenterY -
-                    (child.getTop() + (child.getHeight() / 2));
+            startTranslationY = mMainFabCenterY - (child.getTop() + (child.getHeight() / 2));
             endTranslationY = 0f;
             startAlpha = 0f;
             endAlpha = 1f;
             interpolator = AnimationUtils.FAST_SLOW_INTERPOLATOR;
         } else {
             startTranslationY = 0f;
-            endTranslationY = mMainFabCenterY -
-                    (child.getTop() + (child.getHeight() / 2));
+            endTranslationY = mMainFabCenterY - (child.getTop() + (child.getHeight() / 2));
             startAlpha = 1f;
             endAlpha = 0f;
             interpolator = AnimationUtils.SLOW_FAST_INTERPOLATOR;
         }
-
         child.setAlpha(startAlpha);
         child.setTranslationY(startTranslationY);
-        child.animate()
-                .alpha(endAlpha)
-                .translationY(endTranslationY)
-                .setStartDelay(delay ? ANIMATE_TIME : 0L)
-                .setDuration(ANIMATE_TIME)
-                .setInterpolator(interpolator)
-                .setListener(new SimpleAnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                        if (expanded) {
-                            child.setVisibility(View.VISIBLE);
-                        }
-                    }
+        child.animate().alpha(endAlpha).translationY(endTranslationY).setStartDelay(delay ? ANIMATE_TIME : 0L).setDuration(ANIMATE_TIME).setInterpolator(interpolator).setListener(new SimpleAnimatorListener() {
 
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        if (!expanded) {
-                            child.setVisibility(View.INVISIBLE);
-                        }
-                    }
-                }).start();
+            @Override
+            public void onAnimationStart(Animator animation) {
+                if (expanded) {
+                    child.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (!expanded) {
+                    child.setVisibility(View.INVISIBLE);
+                }
+            }
+        }).start();
     }
 
     @Override
@@ -406,6 +384,7 @@ public class FabLayout extends ViewGroup implements View.OnClickListener {
     }
 
     public interface OnExpandListener {
+
         void onExpand(boolean expanded);
     }
 

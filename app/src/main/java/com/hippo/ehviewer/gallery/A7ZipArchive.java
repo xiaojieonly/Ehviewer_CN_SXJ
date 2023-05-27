@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.gallery;
 
 import androidx.annotation.NonNull;
-
 import com.hippo.a7zip.ArchiveException;
 import com.hippo.a7zip.InArchive;
 import com.hippo.a7zip.PropID;
 import com.hippo.a7zip.PropType;
 import com.hippo.a7zip.SeekableInputStream;
 import com.hippo.unifile.UniRandomAccessFile;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -66,28 +63,21 @@ class A7ZipArchive implements Closeable {
 
     List<A7ZipArchiveEntry> getArchiveEntries() {
         List<A7ZipArchiveEntry> entries = new ArrayList<>();
-
         for (int i = 0, n = archive.getNumberOfEntries(); i < n; i++) {
-            if (!archive.getEntryBooleanProperty(i, PropID.ENCRYPTED)
-                    && !archive.getEntryBooleanProperty(i, PropID.IS_DIR)
-                    && !archive.getEntryBooleanProperty(i, PropID.IS_VOLUME)
-                    && !archive.getEntryBooleanProperty(i, PropID.SOLID)) {
+            if (!archive.getEntryBooleanProperty(i, PropID.ENCRYPTED) && !archive.getEntryBooleanProperty(i, PropID.IS_DIR) && !archive.getEntryBooleanProperty(i, PropID.IS_VOLUME) && !archive.getEntryBooleanProperty(i, PropID.SOLID)) {
                 String path = archive.getEntryPath(i);
                 if (isSupportedFilename(path.toLowerCase())) {
                     entries.add(new A7ZipArchiveEntry(archive, i, path));
                 }
             }
         }
-
         return entries;
     }
 
     static A7ZipArchive create(UniRandomAccessFile file) throws ArchiveException {
         SeekableInputStream store = new UniRandomAccessFileInStream(file);
         InArchive archive = InArchive.open(store);
-        if ((archive.getArchivePropertyType(PropID.ENCRYPTED) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.ENCRYPTED))
-                || (archive.getArchivePropertyType(PropID.SOLID) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.SOLID))
-                || (archive.getArchivePropertyType(PropID.IS_VOLUME) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.IS_VOLUME))) {
+        if ((archive.getArchivePropertyType(PropID.ENCRYPTED) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.ENCRYPTED)) || (archive.getArchivePropertyType(PropID.SOLID) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.SOLID)) || (archive.getArchivePropertyType(PropID.IS_VOLUME) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.IS_VOLUME))) {
             throw new ArchiveException("Unsupported archive");
         }
         return new A7ZipArchive(archive);
@@ -96,7 +86,9 @@ class A7ZipArchive implements Closeable {
     static class A7ZipArchiveEntry {
 
         private InArchive archive;
+
         private int index;
+
         private String path;
 
         private A7ZipArchiveEntry(InArchive archive, int index, String path) {
@@ -168,12 +160,12 @@ class A7ZipArchive implements Closeable {
             this.stream = stream;
         }
 
-      @Override
-      public void write(int b) throws IOException {
-        stream.write(b);
-      }
+        @Override
+        public void write(int b) throws IOException {
+            stream.write(b);
+        }
 
-      @Override
+        @Override
         public void write(byte[] b, int off, int len) throws IOException {
             stream.write(b, off, len);
         }

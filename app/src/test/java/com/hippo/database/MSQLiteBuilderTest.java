@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.database;
 
 /*
  * Created by Hippo on 2017/9/4.
  */
-
 import static org.junit.Assert.assertEquals;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -33,19 +30,12 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 public class MSQLiteBuilderTest {
 
-  @Test
-  public void testGetStatements() {
-    MSQLiteBuilder builder = new MSQLiteBuilder()
-        .version(1)
-        .statement("11")
-        .statement("12")
-        .version(3)
-        .statement("31")
-        .statement("32");
-
-    List<String> list = new ArrayList<>();
-    list.add("31");
-    list.add("32");
-    assertEquals(list, builder.getStatements(1, 3));
-  }
+    @Test
+    public void testGetStatements() {
+        MSQLiteBuilder builder = new MSQLiteBuilder().version(1).statement("11").statement("12").version(3).statement("31").statement("32");
+        List<String> list = new ArrayList<>();
+        list.add("31");
+        list.add("32");
+        assertEquals(list, builder.getStatements(1, 3));
+    }
 }

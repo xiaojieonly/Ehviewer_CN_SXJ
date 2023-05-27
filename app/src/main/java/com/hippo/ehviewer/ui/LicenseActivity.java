@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.os.Bundle;
@@ -30,18 +29,15 @@ public class LicenseActivity extends ToolbarActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mWebView = new WebView(this);
         mWebView.loadUrl("file:///android_asset/NOTICE.html");
         setContentView(mWebView);
-
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         if (null != mWebView) {
             mWebView.destroy();
             mWebView = null;
@@ -50,7 +46,7 @@ public class LicenseActivity extends ToolbarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;

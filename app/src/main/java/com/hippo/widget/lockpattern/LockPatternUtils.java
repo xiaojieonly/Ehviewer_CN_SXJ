@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget.lockpattern;
 
 import java.util.ArrayList;
@@ -31,7 +30,6 @@ public class LockPatternUtils {
      */
     public static List<LockPatternView.Cell> stringToPattern(String string) {
         List<LockPatternView.Cell> result = new ArrayList<>();
-
         final byte[] bytes = string.getBytes();
         for (int i = 0; i < bytes.length; i++) {
             byte b = bytes[i];
@@ -50,7 +48,6 @@ public class LockPatternUtils {
             return "";
         }
         final int patternSize = pattern.size();
-
         byte[] res = new byte[patternSize];
         for (int i = 0; i < patternSize; i++) {
             LockPatternView.Cell cell = pattern.get(i);

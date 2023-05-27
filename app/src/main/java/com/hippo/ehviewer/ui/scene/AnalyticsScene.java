@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.content.Context;
@@ -35,6 +34,7 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
 
     @Nullable
     private View mReject;
+
     @Nullable
     private View mAccept;
 
@@ -45,27 +45,21 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_analytics, container, false);
-
         mReject = ViewUtils.$$(view, R.id.reject);
         mAccept = ViewUtils.$$(view, R.id.accept);
         TextView text = (TextView) ViewUtils.$$(view, R.id.text);
-
         text.setText(Html.fromHtml(getString(R.string.analytics_explain)));
         text.setMovementMethod(LinkMovementMethod2.getInstance());
-
         mReject.setOnClickListener(this);
         mAccept.setOnClickListener(this);
-
         return view;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         mReject = null;
         mAccept = null;
     }
@@ -76,7 +70,6 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
         if (null == context) {
             return;
         }
-
         if (mReject == v) {
             Settings.putEnableAnalytics(false);
         } else if (mAccept == v) {
@@ -85,7 +78,6 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
             Analytics.start(context);
         }
         Settings.putAskAnalytics(false);
-
         // Start new scene and finish it self
         MainActivity activity = getActivity2();
         if (null != activity) {

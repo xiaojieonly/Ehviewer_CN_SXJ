@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import androidx.annotation.NonNull;
-
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.network.StatusCodeException;
-
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Objects;
-
 import javax.net.ssl.SSLException;
-
 import org.apache.http.conn.ConnectTimeoutException;
 
 public final class ExceptionUtils {
@@ -43,8 +38,7 @@ public final class ExceptionUtils {
         e.printStackTrace();
         if (e instanceof MalformedURLException) {
             return GetText.getString(R.string.error_invalid_url);
-        } else if (e instanceof ConnectTimeoutException ||
-                e instanceof SocketTimeoutException) {
+        } else if (e instanceof ConnectTimeoutException || e instanceof SocketTimeoutException) {
             return GetText.getString(R.string.error_timeout);
         } else if (e instanceof UnknownHostException) {
             return GetText.getString(R.string.error_unknown_host);

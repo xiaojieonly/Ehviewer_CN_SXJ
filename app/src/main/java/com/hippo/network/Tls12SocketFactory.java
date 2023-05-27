@@ -1,9 +1,9 @@
 package com.hippo.network;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -16,7 +16,8 @@ import javax.net.ssl.SSLSocketFactory;
  * @see SSLSocketFactory
  */
 public class Tls12SocketFactory extends SSLSocketFactory {
-    private static final String[] TLS_V12_ONLY = {"TLSv1.2"};
+
+    private static final String[] TLS_V12_ONLY = { "TLSv1.2" };
 
     final SSLSocketFactory delegate;
 

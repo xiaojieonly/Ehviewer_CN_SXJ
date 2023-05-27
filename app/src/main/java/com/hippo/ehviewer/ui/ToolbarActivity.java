@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.graphics.drawable.Drawable;
@@ -30,7 +29,7 @@ public abstract class ToolbarActivity extends EhActivity {
 
     @Override
     protected int getThemeResId(int theme) {
-        switch (theme) {
+        switch(theme) {
             case Settings.THEME_LIGHT:
             default:
                 return R.style.AppTheme_Toolbar;

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget.lockpattern;
 
 import android.animation.Animator;
@@ -51,21 +50,31 @@ import java.util.List;
  * "correct" states.
  */
 public class LockPatternView extends View {
+
     // Aspect to use when rendering this view
-    private static final int ASPECT_SQUARE = 0; // View will be the minimum of width/height
-    private static final int ASPECT_LOCK_WIDTH = 1; // Fixed width; height will be minimum of (w,h)
-    private static final int ASPECT_LOCK_HEIGHT = 2; // Fixed height; width will be minimum of (w,h)
+    // View will be the minimum of width/height
+    private static final int ASPECT_SQUARE = 0;
+
+    // Fixed width; height will be minimum of (w,h)
+    private static final int ASPECT_LOCK_WIDTH = 1;
+
+    // Fixed height; width will be minimum of (w,h)
+    private static final int ASPECT_LOCK_HEIGHT = 2;
 
     private static final boolean PROFILE_DRAWING = false;
+
     private final CellState[][] mCellStates;
 
     private final int mDotSize;
+
     private final int mDotSizeActivated;
+
     private final int mPathWidth;
 
     private boolean mDrawingProfilingStarted = false;
 
     private final Paint mPaint = new Paint();
+
     private final Paint mPathPaint = new Paint();
 
     /**
@@ -82,6 +91,7 @@ public class LockPatternView extends View {
     private static final float DRAG_THRESHHOLD = 0.0f;
 
     private OnPatternListener mOnPatternListener;
+
     private final ArrayList<Cell> mPattern = new ArrayList<>(9);
 
     /**
@@ -98,42 +108,57 @@ public class LockPatternView extends View {
      * - during animation: the current tip of the animating line
      */
     private float mInProgressX = -1;
+
     private float mInProgressY = -1;
 
     private long mAnimatingPeriodStart;
 
     private DisplayMode mPatternDisplayMode = DisplayMode.Correct;
+
     private boolean mInputEnabled = true;
+
     private boolean mInStealthMode = false;
+
     private boolean mEnableHapticFeedback = true;
+
     private boolean mPatternInProgress = false;
 
     private final float mHitFactor = 0.6f;
 
     private float mSquareWidth;
+
     private float mSquareHeight;
 
     private final Path mCurrentPath = new Path();
+
     private final Rect mInvalidate = new Rect();
+
     private final Rect mTmpInvalidateRect = new Rect();
 
     private final int mAspect;
+
     private final int mRegularColor;
+
     private final int mErrorColor;
+
     private final int mSuccessColor;
 
     private final Interpolator mFastOutSlowInInterpolator;
+
     private final Interpolator mLinearOutSlowInInterpolator;
 
     /**
      * Represents a cell in the 3 X 3 matrix of the unlock pattern view.
      */
     public static class Cell {
+
         int row;
+
         int column;
 
         // keep # objects limited to 9
         static Cell[][] sCells = new Cell[3][3];
+
         static {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -184,14 +209,21 @@ public class LockPatternView extends View {
     }
 
     public static class CellState {
+
         public float scale = 1.0f;
+
         public float translateY = 0.0f;
+
         public float alpha = 1.0f;
+
         public float size;
+
         public float lineEndX = Float.MIN_VALUE;
+
         public float lineEndY = Float.MIN_VALUE;
+
         public ValueAnimator lineAnimator;
-     }
+    }
 
     /**
      * How to display the current pattern.
@@ -202,12 +234,10 @@ public class LockPatternView extends View {
          * The pattern drawn is correct (i.e draw it in a friendly color)
          */
         Correct,
-
         /**
          * Animate the pattern (for demo, and help).
          */
         Animate,
-
         /**
          * The pattern is wrong (i.e draw a foreboding color)
          */
@@ -248,11 +278,8 @@ public class LockPatternView extends View {
 
     public LockPatternView(Context context, AttributeSet attrs) {
         super(context, attrs);
-
         //TypedArray a = context.obtainStyledAttributes(attrs, LockPatternView);
-
         //final String aspect = a.getString(R.styleable.LockPatternView_aspect);
-
         //if ("square".equals(aspect)) {
         //    mAspect = ASPECT_SQUARE;
         //} else if ("lock_width".equals(aspect)) {
@@ -260,37 +287,26 @@ public class LockPatternView extends View {
         //} else if ("lock_height".equals(aspect)) {
         //    mAspect = ASPECT_LOCK_HEIGHT;
         //} else {
-            mAspect = ASPECT_SQUARE;
+        mAspect = ASPECT_SQUARE;
         //}
-
         setClickable(true);
-
-
         mPathPaint.setAntiAlias(true);
         mPathPaint.setDither(true);
-
-        mRegularColor = getResources().getColor(AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme) ?
-            R.color.lock_pattern_view_regular_color_light : R.color.lock_pattern_view_regular_color_dark);
+        mRegularColor = getResources().getColor(AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme) ? R.color.lock_pattern_view_regular_color_light : R.color.lock_pattern_view_regular_color_dark);
         mErrorColor = getResources().getColor(R.color.lock_pattern_view_error_color);
         mSuccessColor = getResources().getColor(R.color.lock_pattern_view_success_color);
-
-        int pathColor = mRegularColor;//a.getColor(R.styleable.LockPatternView_pathColor, mRegularColor);
+        //a.getColor(R.styleable.LockPatternView_pathColor, mRegularColor);
+        int pathColor = mRegularColor;
         mPathPaint.setColor(pathColor);
-
         mPathPaint.setStyle(Paint.Style.STROKE);
         mPathPaint.setStrokeJoin(Paint.Join.ROUND);
         mPathPaint.setStrokeCap(Paint.Cap.ROUND);
-
         mPathWidth = getResources().getDimensionPixelSize(R.dimen.lock_pattern_dot_line_width);
         mPathPaint.setStrokeWidth(mPathWidth);
-
         mDotSize = getResources().getDimensionPixelSize(R.dimen.lock_pattern_dot_size);
-        mDotSizeActivated = getResources().getDimensionPixelSize(
-                R.dimen.lock_pattern_dot_size_activated);
-
+        mDotSizeActivated = getResources().getDimensionPixelSize(R.dimen.lock_pattern_dot_size_activated);
         mPaint.setAntiAlias(true);
         mPaint.setDither(true);
-
         mCellStates = new CellState[3][3];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -298,7 +314,6 @@ public class LockPatternView extends View {
                 mCellStates[i][j].size = mDotSize;
             }
         }
-
         mFastOutSlowInInterpolator = new FastOutSlowInInterpolator();
         mLinearOutSlowInInterpolator = new LinearOutSlowInInterpolator();
     }
@@ -353,8 +368,7 @@ public class LockPatternView extends View {
      * Set the call back for pattern detection.
      * @param onPatternListener The call back.
      */
-    public void setOnPatternListener(
-            OnPatternListener onPatternListener) {
+    public void setOnPatternListener(OnPatternListener onPatternListener) {
         mOnPatternListener = onPatternListener;
     }
 
@@ -371,7 +385,6 @@ public class LockPatternView extends View {
         for (Cell cell : pattern) {
             mPatternDrawLookup[cell.getRow()][cell.getColumn()] = true;
         }
-
         setDisplayMode(displayMode);
     }
 
@@ -385,8 +398,7 @@ public class LockPatternView extends View {
         mPatternDisplayMode = displayMode;
         if (displayMode == DisplayMode.Animate) {
             if (mPattern.size() == 0) {
-                throw new IllegalStateException("you must have a pattern to "
-                        + "animate if you want to set the display mode to animate");
+                throw new IllegalStateException("you must have a pattern to " + "animate if you want to set the display mode to animate");
             }
             mAnimatingPeriodStart = SystemClock.elapsedRealtime();
             final Cell first = mPattern.get(0);
@@ -476,16 +488,14 @@ public class LockPatternView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         final int width = w - getPaddingLeft() - getPaddingRight();
         mSquareWidth = width / 3.0f;
-
         final int height = h - getPaddingTop() - getPaddingBottom();
         mSquareHeight = height / 3.0f;
     }
 
-    private int resolveMeasured(int measureSpec, int desired)
-    {
+    private int resolveMeasured(int measureSpec, int desired) {
         int result = 0;
         int specSize = MeasureSpec.getSize(measureSpec);
-        switch (MeasureSpec.getMode(measureSpec)) {
+        switch(MeasureSpec.getMode(measureSpec)) {
             case MeasureSpec.UNSPECIFIED:
                 result = desired;
                 break;
@@ -505,8 +515,7 @@ public class LockPatternView extends View {
         final int minimumHeight = getSuggestedMinimumHeight();
         int viewWidth = resolveMeasured(widthMeasureSpec, minimumWidth);
         int viewHeight = resolveMeasured(heightMeasureSpec, minimumHeight);
-
-        switch (mAspect) {
+        switch(mAspect) {
             case ASPECT_SQUARE:
                 viewWidth = viewHeight = Math.min(viewWidth, viewHeight);
                 break;
@@ -531,7 +540,6 @@ public class LockPatternView extends View {
     private Cell detectAndAddHit(float x, float y) {
         final Cell cell = checkForNewHit(x, y);
         if (cell != null) {
-
             // check for gaps in existing pattern
             Cell fillInGapCell = null;
             final ArrayList<Cell> pattern = mPattern;
@@ -539,30 +547,22 @@ public class LockPatternView extends View {
                 final Cell lastCell = pattern.get(pattern.size() - 1);
                 int dRow = cell.row - lastCell.row;
                 int dColumn = cell.column - lastCell.column;
-
                 int fillInRow = lastCell.row;
                 int fillInColumn = lastCell.column;
-
                 if (Math.abs(dRow) == 2 && Math.abs(dColumn) != 1) {
                     fillInRow = lastCell.row + ((dRow > 0) ? 1 : -1);
                 }
-
                 if (Math.abs(dColumn) == 2 && Math.abs(dRow) != 1) {
                     fillInColumn = lastCell.column + ((dColumn > 0) ? 1 : -1);
                 }
-
                 fillInGapCell = Cell.of(fillInRow, fillInColumn);
             }
-
-            if (fillInGapCell != null &&
-                    !mPatternDrawLookup[fillInGapCell.row][fillInGapCell.column]) {
+            if (fillInGapCell != null && !mPatternDrawLookup[fillInGapCell.row][fillInGapCell.column]) {
                 addCellToPattern(fillInGapCell);
             }
             addCellToPattern(cell);
             if (mEnableHapticFeedback) {
-                performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY,
-                        HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING
-                        | HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING | HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             }
             return cell;
         }
@@ -580,22 +580,20 @@ public class LockPatternView extends View {
 
     private void startCellActivatedAnimation(Cell cell) {
         final CellState cellState = mCellStates[cell.row][cell.column];
-        startSizeAnimation(mDotSize, mDotSizeActivated, 96, mLinearOutSlowInInterpolator,
-                cellState, new Runnable() {
+        startSizeAnimation(mDotSize, mDotSizeActivated, 96, mLinearOutSlowInInterpolator, cellState, new Runnable() {
+
             @Override
             public void run() {
-                startSizeAnimation(mDotSizeActivated, mDotSize, 192, mFastOutSlowInInterpolator,
-                        cellState, null);
+                startSizeAnimation(mDotSizeActivated, mDotSize, 192, mFastOutSlowInInterpolator, cellState, null);
             }
         });
-        startLineEndAnimation(cellState, mInProgressX, mInProgressY,
-                getCenterXForColumn(cell.column), getCenterYForRow(cell.row));
+        startLineEndAnimation(cellState, mInProgressX, mInProgressY, getCenterXForColumn(cell.column), getCenterYForRow(cell.row));
     }
 
-    private void startLineEndAnimation(final CellState state,
-            final float startX, final float startY, final float targetX, final float targetY) {
+    private void startLineEndAnimation(final CellState state, final float startX, final float startY, final float targetX, final float targetY) {
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float t = (float) animation.getAnimatedValue();
@@ -605,6 +603,7 @@ public class LockPatternView extends View {
             }
         });
         valueAnimator.addListener(new AnimatorListenerAdapter() {
+
             @Override
             public void onAnimationEnd(Animator animation) {
                 state.lineAnimator = null;
@@ -616,10 +615,10 @@ public class LockPatternView extends View {
         state.lineAnimator = valueAnimator;
     }
 
-    private void startSizeAnimation(float start, float end, long duration, Interpolator interpolator,
-            final CellState state, final Runnable endRunnable) {
+    private void startSizeAnimation(float start, float end, long duration, Interpolator interpolator, final CellState state, final Runnable endRunnable) {
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(start, end);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 state.size = (float) animation.getAnimatedValue();
@@ -628,6 +627,7 @@ public class LockPatternView extends View {
         });
         if (endRunnable != null) {
             valueAnimator.addListener(new AnimatorListenerAdapter() {
+
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     endRunnable.run();
@@ -641,7 +641,6 @@ public class LockPatternView extends View {
 
     // helper method to find which cell a point maps to
     private Cell checkForNewHit(float x, float y) {
-
         final int rowHit = getRowHit(y);
         if (rowHit < 0) {
             return null;
@@ -650,7 +649,6 @@ public class LockPatternView extends View {
         if (columnHit < 0) {
             return null;
         }
-
         if (mPatternDrawLookup[rowHit][columnHit]) {
             return null;
         }
@@ -663,13 +661,10 @@ public class LockPatternView extends View {
      * @return The row that y falls in, or -1 if it falls in no row.
      */
     private int getRowHit(float y) {
-
         final float squareHeight = mSquareHeight;
         float hitSize = squareHeight * mHitFactor;
-
         float offset = getPaddingTop() + (squareHeight - hitSize) / 2f;
         for (int i = 0; i < 3; i++) {
-
             final float hitTop = offset + squareHeight * i;
             if (y >= hitTop && y <= hitTop + hitSize) {
                 return i;
@@ -686,10 +681,8 @@ public class LockPatternView extends View {
     private int getColumnHit(float x) {
         final float squareWidth = mSquareWidth;
         float hitSize = squareWidth * mHitFactor;
-
         float offset = getPaddingLeft() + (squareWidth - hitSize) / 2f;
         for (int i = 0; i < 3; i++) {
-
             final float hitLeft = offset + squareWidth * i;
             if (x >= hitLeft && x <= hitLeft + hitSize) {
                 return i;
@@ -700,11 +693,10 @@ public class LockPatternView extends View {
 
     @Override
     public boolean onHoverEvent(@NonNull MotionEvent event) {
-        AccessibilityManager accessibilityManager =
-                (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
+        AccessibilityManager accessibilityManager = (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
         if (accessibilityManager.isTouchExplorationEnabled()) {
             final int action = event.getAction();
-            switch (action) {
+            switch(action) {
                 case MotionEvent.ACTION_HOVER_ENTER:
                     event.setAction(MotionEvent.ACTION_DOWN);
                     break;
@@ -726,7 +718,6 @@ public class LockPatternView extends View {
         if (!mInputEnabled || !isEnabled()) {
             return false;
         }
-
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 handleActionDown(event);
@@ -776,40 +767,33 @@ public class LockPatternView extends View {
             if (dx > DRAG_THRESHHOLD || dy > DRAG_THRESHHOLD) {
                 invalidateNow = true;
             }
-
             if (mPatternInProgress && patternSize > 0) {
                 final ArrayList<Cell> pattern = mPattern;
                 final Cell lastCell = pattern.get(patternSize - 1);
                 float lastCellCenterX = getCenterXForColumn(lastCell.column);
                 float lastCellCenterY = getCenterYForRow(lastCell.row);
-
                 // Adjust for drawn segment from last cell to (x,y). Radius accounts for line width.
                 float left = Math.min(lastCellCenterX, x) - radius;
                 float right = Math.max(lastCellCenterX, x) + radius;
                 float top = Math.min(lastCellCenterY, y) - radius;
                 float bottom = Math.max(lastCellCenterY, y) + radius;
-
                 // Invalidate between the pattern's new cell and the pattern's previous cell
                 if (hitCell != null) {
                     final float width = mSquareWidth * 0.5f;
                     final float height = mSquareHeight * 0.5f;
                     final float hitCellCenterX = getCenterXForColumn(hitCell.column);
                     final float hitCellCenterY = getCenterYForRow(hitCell.row);
-
                     left = Math.min(hitCellCenterX - width, left);
                     right = Math.max(hitCellCenterX + width, right);
                     top = Math.min(hitCellCenterY - height, top);
                     bottom = Math.max(hitCellCenterY + height, bottom);
                 }
-
                 // Invalidate between the pattern's last cell and the previous location
-                mTmpInvalidateRect.union(Math.round(left), Math.round(top),
-                        Math.round(right), Math.round(bottom));
+                mTmpInvalidateRect.union(Math.round(left), Math.round(top), Math.round(right), Math.round(bottom));
             }
         }
         mInProgressX = event.getX();
         mInProgressY = event.getY();
-
         // To save updates, we only invalidate if the user moved beyond a certain amount.
         if (invalidateNow) {
             mInvalidate.union(mTmpInvalidateRect);
@@ -846,6 +830,7 @@ public class LockPatternView extends View {
             }
         }
     }
+
     private void handleActionDown(MotionEvent event) {
         resetPattern();
         final float x = event.getX();
@@ -862,12 +847,9 @@ public class LockPatternView extends View {
         if (hitCell != null) {
             final float startX = getCenterXForColumn(hitCell.column);
             final float startY = getCenterYForRow(hitCell.row);
-
             final float widthOffset = mSquareWidth / 2f;
             final float heightOffset = mSquareHeight / 2f;
-
-            invalidate((int) (startX - widthOffset), (int) (startY - heightOffset),
-                    (int) (startX + widthOffset), (int) (startY + heightOffset));
+            invalidate((int) (startX - widthOffset), (int) (startY - heightOffset), (int) (startX + widthOffset), (int) (startY + heightOffset));
         }
         mInProgressX = x;
         mInProgressY = y;
@@ -892,52 +874,35 @@ public class LockPatternView extends View {
         final ArrayList<Cell> pattern = mPattern;
         final int count = pattern.size();
         final boolean[][] drawLookup = mPatternDrawLookup;
-
         if (mPatternDisplayMode == DisplayMode.Animate) {
-
             // figure out which circles to draw
-
             // + 1 so we pause on complete pattern
             final int oneCycle = (count + 1) * MILLIS_PER_CIRCLE_ANIMATING;
-            final int spotInCycle = (int) (SystemClock.elapsedRealtime() -
-                    mAnimatingPeriodStart) % oneCycle;
+            final int spotInCycle = (int) (SystemClock.elapsedRealtime() - mAnimatingPeriodStart) % oneCycle;
             final int numCircles = spotInCycle / MILLIS_PER_CIRCLE_ANIMATING;
-
             clearPatternDrawLookup();
             for (int i = 0; i < numCircles; i++) {
                 final Cell cell = pattern.get(i);
                 drawLookup[cell.getRow()][cell.getColumn()] = true;
             }
-
             // figure out in progress portion of ghosting line
-
-            final boolean needToUpdateInProgressPoint = numCircles > 0
-                    && numCircles < count;
-
+            final boolean needToUpdateInProgressPoint = numCircles > 0 && numCircles < count;
             if (needToUpdateInProgressPoint) {
-                final float percentageOfNextCircle =
-                        ((float) (spotInCycle % MILLIS_PER_CIRCLE_ANIMATING)) /
-                                MILLIS_PER_CIRCLE_ANIMATING;
-
+                final float percentageOfNextCircle = ((float) (spotInCycle % MILLIS_PER_CIRCLE_ANIMATING)) / MILLIS_PER_CIRCLE_ANIMATING;
                 final Cell currentCell = pattern.get(numCircles - 1);
                 final float centerX = getCenterXForColumn(currentCell.column);
                 final float centerY = getCenterYForRow(currentCell.row);
-
                 final Cell nextCell = pattern.get(numCircles);
-                final float dx = percentageOfNextCircle *
-                        (getCenterXForColumn(nextCell.column) - centerX);
-                final float dy = percentageOfNextCircle *
-                        (getCenterYForRow(nextCell.row) - centerY);
+                final float dx = percentageOfNextCircle * (getCenterXForColumn(nextCell.column) - centerX);
+                final float dy = percentageOfNextCircle * (getCenterYForRow(nextCell.row) - centerY);
                 mInProgressX = centerX + dx;
                 mInProgressY = centerY + dy;
             }
             // TODO: Infinite loop here...
             invalidate();
         }
-
         final Path currentPath = mCurrentPath;
         currentPath.rewind();
-
         // draw the circles
         for (int i = 0; i < 3; i++) {
             float centerY = getCenterYForRow(i);
@@ -946,25 +911,20 @@ public class LockPatternView extends View {
                 float centerX = getCenterXForColumn(j);
                 float size = cellState.size * cellState.scale;
                 float translationY = cellState.translateY;
-                drawCircle(canvas, (int) centerX, (int) centerY + translationY,
-                        size, drawLookup[i][j], cellState.alpha);
+                drawCircle(canvas, (int) centerX, (int) centerY + translationY, size, drawLookup[i][j], cellState.alpha);
             }
         }
-
         // TODO: the path should be created and cached every time we hit-detect a cell
         // only the last segment of the path should be computed here
         // draw the path of the pattern (unless we are in stealth mode)
         final boolean drawPath = !mInStealthMode;
-
         if (drawPath) {
-            mPathPaint.setColor(getCurrentColor(true /* partOfPattern */));
-
+            mPathPaint.setColor(getCurrentColor(true));
             boolean anyCircles = false;
             float lastX = 0f;
             float lastY = 0f;
             for (int i = 0; i < count; i++) {
                 Cell cell = pattern.get(i);
-
                 // only draw the part of the pattern stored in
                 // the lookup table (this is only different in the case
                 // of animation).
@@ -972,7 +932,6 @@ public class LockPatternView extends View {
                     break;
                 }
                 anyCircles = true;
-
                 float centerX = getCenterXForColumn(cell.column);
                 float centerY = getCenterYForRow(cell.row);
                 if (i != 0) {
@@ -989,16 +948,12 @@ public class LockPatternView extends View {
                 lastX = centerX;
                 lastY = centerY;
             }
-
             // draw last in progress section
-            if ((mPatternInProgress || mPatternDisplayMode == DisplayMode.Animate)
-                    && anyCircles) {
+            if ((mPatternInProgress || mPatternDisplayMode == DisplayMode.Animate) && anyCircles) {
                 currentPath.rewind();
                 currentPath.moveTo(lastX, lastY);
                 currentPath.lineTo(mInProgressX, mInProgressY);
-
-                mPathPaint.setAlpha((int) (calculateLastSegmentAlpha(
-                        mInProgressX, mInProgressY, lastX, lastY) * 255f));
+                mPathPaint.setAlpha((int) (calculateLastSegmentAlpha(mInProgressX, mInProgressY, lastX, lastY) * 255f));
                 canvas.drawPath(currentPath, mPathPaint);
             }
         }
@@ -1007,8 +962,8 @@ public class LockPatternView extends View {
     private float calculateLastSegmentAlpha(float x, float y, float lastX, float lastY) {
         float diffX = x - lastX;
         float diffY = y - lastY;
-        float dist = (float) Math.sqrt(diffX*diffX + diffY*diffY);
-        float frac = dist/mSquareWidth;
+        float dist = (float) Math.sqrt(diffX * diffX + diffY * diffY);
+        float frac = dist / mSquareWidth;
         return Math.min(1f, Math.max(0f, (frac - 0.3f) * 4f));
     }
 
@@ -1019,8 +974,7 @@ public class LockPatternView extends View {
         } else if (mPatternDisplayMode == DisplayMode.Wrong) {
             // the pattern is wrong
             return mErrorColor;
-        } else if (mPatternDisplayMode == DisplayMode.Correct ||
-                mPatternDisplayMode == DisplayMode.Animate) {
+        } else if (mPatternDisplayMode == DisplayMode.Correct || mPatternDisplayMode == DisplayMode.Animate) {
             return mSuccessColor;
         } else {
             throw new IllegalStateException("unknown display mode " + mPatternDisplayMode);
@@ -1030,29 +984,23 @@ public class LockPatternView extends View {
     /**
      * @param partOfPattern Whether this circle is part of the pattern.
      */
-    private void drawCircle(Canvas canvas, float centerX, float centerY, float size,
-            boolean partOfPattern, float alpha) {
+    private void drawCircle(Canvas canvas, float centerX, float centerY, float size, boolean partOfPattern, float alpha) {
         mPaint.setColor(getCurrentColor(partOfPattern));
         mPaint.setAlpha((int) (alpha * 255));
-        canvas.drawCircle(centerX, centerY, size/2, mPaint);
+        canvas.drawCircle(centerX, centerY, size / 2, mPaint);
     }
 
     @Override
     protected Parcelable onSaveInstanceState() {
         Parcelable superState = super.onSaveInstanceState();
-        return new SavedState(superState,
-                LockPatternUtils.patternToString(mPattern),
-                mPatternDisplayMode.ordinal(),
-                mInputEnabled, mInStealthMode, mEnableHapticFeedback);
+        return new SavedState(superState, LockPatternUtils.patternToString(mPattern), mPatternDisplayMode.ordinal(), mInputEnabled, mInStealthMode, mEnableHapticFeedback);
     }
 
     @Override
     protected void onRestoreInstanceState(Parcelable state) {
         final SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
-        setPattern(
-                DisplayMode.Correct,
-                LockPatternUtils.stringToPattern(ss.getSerializedPattern()));
+        setPattern(DisplayMode.Correct, LockPatternUtils.stringToPattern(ss.getSerializedPattern()));
         mPatternDisplayMode = DisplayMode.values()[ss.getDisplayMode()];
         mInputEnabled = ss.isInputEnabled();
         mInStealthMode = ss.isInStealthMode();
@@ -1065,16 +1013,19 @@ public class LockPatternView extends View {
     private static class SavedState extends BaseSavedState {
 
         private final String mSerializedPattern;
+
         private final int mDisplayMode;
+
         private final boolean mInputEnabled;
+
         private final boolean mInStealthMode;
+
         private final boolean mTactileFeedbackEnabled;
 
         /**
          * Constructor called from {@link LockPatternView#onSaveInstanceState()}
          */
-        private SavedState(Parcelable superState, String serializedPattern, int displayMode,
-                boolean inputEnabled, boolean inStealthMode, boolean tactileFeedbackEnabled) {
+        private SavedState(Parcelable superState, String serializedPattern, int displayMode, boolean inputEnabled, boolean inStealthMode, boolean tactileFeedbackEnabled) {
             super(superState);
             mSerializedPattern = serializedPattern;
             mDisplayMode = displayMode;
@@ -1112,7 +1063,7 @@ public class LockPatternView extends View {
             return mInStealthMode;
         }
 
-        public boolean isTactileFeedbackEnabled(){
+        public boolean isTactileFeedbackEnabled() {
             return mTactileFeedbackEnabled;
         }
 
@@ -1126,17 +1077,17 @@ public class LockPatternView extends View {
             dest.writeValue(mTactileFeedbackEnabled);
         }
 
-        public static final Creator<SavedState> CREATOR =
-                new Creator<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in) {
-                        return new SavedState(in);
-                    }
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                };
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 }

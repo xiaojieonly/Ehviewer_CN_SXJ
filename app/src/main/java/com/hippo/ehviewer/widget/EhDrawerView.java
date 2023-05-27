@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
-
 import com.hippo.drawerlayout.DrawerLayoutChild;
 import com.hippo.widget.DrawerView;
 
 public class EhDrawerView extends DrawerView implements DrawerLayoutChild {
 
     private int mWindowPaddingTop;
+
     private int mWindowPaddingBottom;
 
     public EhDrawerView(Context context) {

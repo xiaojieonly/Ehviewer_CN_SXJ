@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import android.text.TextUtils;
@@ -27,19 +26,19 @@ import org.json.JSONObject;
 public class GalleryPageApiParser {
 
     private static final Pattern PATTERN_IMAGE_URL = Pattern.compile("<img[^>]*src=\"([^\"]+)\" style");
+
     private static final Pattern PATTERN_SKIP_HATH_KEY = Pattern.compile("onclick=\"return nl\\('([^\\)]+)'\\)");
+
     private static final Pattern PATTERN_ORIGIN_IMAGE_URL = Pattern.compile("<a href=\"([^\"]+)fullimg.php([^\"]+)\">");
 
     public static Result parse(String body) throws ParseException {
         try {
             Matcher m;
             Result result = new Result();
-
             JSONObject jo = new JSONObject(body);
             if (jo.has("error")) {
                 throw new ParseException(jo.getString("error"), body);
             }
-
             String i3 = jo.getString("i3");
             m = PATTERN_IMAGE_URL.matcher(i3);
             if (m.find()) {
@@ -55,7 +54,6 @@ public class GalleryPageApiParser {
             if (m.find()) {
                 result.originImageUrl = StringUtils.unescapeXml(m.group(1)) + "fullimg.php" + StringUtils.unescapeXml(m.group(2));
             }
-
             if (!TextUtils.isEmpty(result.imageUrl)) {
                 return result;
             } else {
@@ -67,8 +65,11 @@ public class GalleryPageApiParser {
     }
 
     public static class Result {
+
         public String imageUrl;
+
         public String skipHathKey;
+
         public String originImageUrl;
     }
 }

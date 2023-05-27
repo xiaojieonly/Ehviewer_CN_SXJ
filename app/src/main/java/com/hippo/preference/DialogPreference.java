@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
@@ -44,22 +42,28 @@ import com.hippo.ehviewer.R;
  * dialog-based. These preferences will, when clicked, open a dialog showing the
  * actual preference controls.
  */
-public abstract class DialogPreference extends Preference implements
-        DialogInterface.OnClickListener, DialogInterface.OnDismissListener,
-        PreferenceManager.OnActivityDestroyListener {
+public abstract class DialogPreference extends Preference implements DialogInterface.OnClickListener, DialogInterface.OnDismissListener, PreferenceManager.OnActivityDestroyListener {
 
     private AlertDialog.Builder mBuilder;
 
     private CharSequence mDialogTitle;
+
     private Drawable mDialogIcon;
+
     private CharSequence mPositiveButtonText;
+
     private CharSequence mNegativeButtonText;
+
     private int mDialogLayoutResId;
 
-    /** The dialog, if it is showing. */
+    /**
+     * The dialog, if it is showing.
+     */
     private AlertDialog mDialog;
 
-    /** Which button was clicked. */
+    /**
+     * Which button was clicked.
+     */
     private int mWhichButtonClicked;
 
     public DialogPreference(Context context) {
@@ -232,8 +236,8 @@ public abstract class DialogPreference extends Preference implements
 
     @Override
     protected void onClick() {
-        if (mDialog != null && mDialog.isShowing()) return;
-
+        if (mDialog != null && mDialog.isShowing())
+            return;
         showDialog(null);
     }
 
@@ -246,25 +250,15 @@ public abstract class DialogPreference extends Preference implements
      */
     protected void showDialog(Bundle state) {
         Context context = getContext();
-
         mWhichButtonClicked = DialogInterface.BUTTON_NEGATIVE;
-
-        mBuilder = new AlertDialog.Builder(context)
-                .setTitle(mDialogTitle)
-                .setIcon(mDialogIcon)
-                .setPositiveButton(mPositiveButtonText, this)
-                .setNegativeButton(mNegativeButtonText, this);
-
+        mBuilder = new AlertDialog.Builder(context).setTitle(mDialogTitle).setIcon(mDialogIcon).setPositiveButton(mPositiveButtonText, this).setNegativeButton(mNegativeButtonText, this);
         View contentView = onCreateDialogView();
         if (contentView != null) {
             onBindDialogView(contentView);
             mBuilder.setView(contentView);
         }
-
         onPrepareDialogBuilder(mBuilder);
-
         PreferenceUtils.registerOnActivityDestroyListener(this, this);
-
         // Create the dialog
         final AlertDialog dialog = mDialog = mBuilder.create();
         if (state != null) {
@@ -275,7 +269,6 @@ public abstract class DialogPreference extends Preference implements
         }
         dialog.setOnDismissListener(this);
         dialog.show();
-
         onDialogCreated(dialog);
     }
 
@@ -308,7 +301,6 @@ public abstract class DialogPreference extends Preference implements
         if (mDialogLayoutResId == 0) {
             return null;
         }
-
         LayoutInflater inflater = LayoutInflater.from(mBuilder.getContext());
         return inflater.inflate(mDialogLayoutResId, null);
     }
@@ -318,9 +310,11 @@ public abstract class DialogPreference extends Preference implements
      *
      * @param view The content View of the dialog, if it is custom.
      */
-    protected void onBindDialogView(View view) {}
+    protected void onBindDialogView(View view) {
+    }
 
-    protected void onDialogCreated(AlertDialog dialog) {}
+    protected void onDialogCreated(AlertDialog dialog) {
+    }
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
@@ -330,7 +324,6 @@ public abstract class DialogPreference extends Preference implements
     @Override
     public void onDismiss(DialogInterface dialog) {
         PreferenceUtils.unregisterOnActivityDestroyListener(this, this);
-
         mDialog = null;
         onDialogClosed(mWhichButtonClicked == DialogInterface.BUTTON_POSITIVE);
     }
@@ -359,7 +352,6 @@ public abstract class DialogPreference extends Preference implements
         if (mDialog == null || !mDialog.isShowing()) {
             return;
         }
-
         mDialog.dismiss();
     }
 
@@ -369,7 +361,6 @@ public abstract class DialogPreference extends Preference implements
         if (mDialog == null || !mDialog.isShowing()) {
             return superState;
         }
-
         final SavedState myState = new SavedState(superState);
         myState.isDialogShowing = true;
         myState.dialogBundle = mDialog.onSaveInstanceState();
@@ -383,7 +374,6 @@ public abstract class DialogPreference extends Preference implements
             super.onRestoreInstanceState(state);
             return;
         }
-
         SavedState myState = (SavedState) state;
         super.onRestoreInstanceState(myState.getSuperState());
         if (myState.isDialogShowing) {
@@ -392,7 +382,9 @@ public abstract class DialogPreference extends Preference implements
     }
 
     private static class SavedState extends BaseSavedState {
+
         boolean isDialogShowing;
+
         Bundle dialogBundle;
 
         public SavedState(Parcel source) {
@@ -412,17 +404,17 @@ public abstract class DialogPreference extends Preference implements
             super(superState);
         }
 
-        public static final Creator<SavedState> CREATOR =
-                new Creator<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in) {
-                        return new SavedState(in);
-                    }
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                };
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 }

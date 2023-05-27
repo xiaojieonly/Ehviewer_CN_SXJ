@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -24,14 +23,16 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
-
 import com.hippo.ehviewer.R;
 
 public class DividerView extends View {
 
     private Paint mPaint;
+
     private Rect mRect;
+
     private int mDividerWidth;
+
     private int mDividerHeight;
 
     public DividerView(Context context, AttributeSet attrs) {
@@ -50,7 +51,6 @@ public class DividerView extends View {
         mDividerWidth = a.getDimensionPixelOffset(R.styleable.DividerView_dividerWidth, 0);
         mDividerHeight = a.getDimensionPixelOffset(R.styleable.DividerView_dividerHeight, 0);
         a.recycle();
-
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
         mPaint.setColor(color);
         mRect = new Rect();
@@ -75,8 +75,7 @@ public class DividerView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         Rect rect = mRect;
-        rect.set(getPaddingLeft(), getPaddingTop(),
-                getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
+        rect.set(getPaddingLeft(), getPaddingTop(), getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
         if (!rect.isEmpty()) {
             canvas.drawRect(rect, mPaint);
         }

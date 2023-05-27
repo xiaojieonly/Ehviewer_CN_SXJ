@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.app.Fragment;
@@ -39,26 +38,19 @@ public final class SettingsActivity extends EhPreferenceActivity {
 
     private static final int REQUEST_CODE_FRAGMENT = 0;
 
-    private static final String[] ENTRY_FRAGMENTS = {
-            EhFragment.class.getName(),
-            ReadFragment.class.getName(),
-            DownloadFragment.class.getName(),
-            AdvancedFragment.class.getName(),
-            AboutFragment.class.getName(),
-            PrivacyFragment.class.getName(),
-    };
+    private static final String[] ENTRY_FRAGMENTS = { EhFragment.class.getName(), ReadFragment.class.getName(), DownloadFragment.class.getName(), AdvancedFragment.class.getName(), AboutFragment.class.getName(), PrivacyFragment.class.getName() };
 
     @Override
     protected int getThemeResId(int theme) {
-      switch (theme) {
-        case Settings.THEME_LIGHT:
-        default:
-          return R.style.AppTheme_Settings;
-        case Settings.THEME_DARK:
-          return R.style.AppTheme_Settings_Dark;
-        case Settings.THEME_BLACK:
-          return R.style.AppTheme_Settings_Black;
-      }
+        switch(theme) {
+            case Settings.THEME_LIGHT:
+            default:
+                return R.style.AppTheme_Settings;
+            case Settings.THEME_DARK:
+                return R.style.AppTheme_Settings_Dark;
+            case Settings.THEME_BLACK:
+                return R.style.AppTheme_Settings_Black;
+        }
     }
 
     private void setActionBarUpIndicator(Drawable drawable) {
@@ -82,7 +74,7 @@ public final class SettingsActivity extends EhPreferenceActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
                 return true;
@@ -97,9 +89,7 @@ public final class SettingsActivity extends EhPreferenceActivity {
     }
 
     @Override
-    public void startWithFragment(String fragmentName, Bundle args,
-            Fragment resultTo, int resultRequestCode, @StringRes int titleRes,
-            @StringRes int shortTitleRes) {
+    public void startWithFragment(String fragmentName, Bundle args, Fragment resultTo, int resultRequestCode, @StringRes int titleRes, @StringRes int shortTitleRes) {
         Intent intent = onBuildStartFragmentIntent(fragmentName, args, titleRes, shortTitleRes);
         if (resultTo == null) {
             startActivityForResult(intent, REQUEST_CODE_FRAGMENT);

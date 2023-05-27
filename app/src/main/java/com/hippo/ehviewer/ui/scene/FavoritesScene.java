@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.annotation.SuppressLint;
@@ -42,7 +41,6 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -51,7 +49,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
@@ -98,32 +95,33 @@ import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 // TODO Get favorite, modify favorite, add favorite, what a mess!
-public class FavoritesScene extends BaseScene implements
-        EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
-        FastScroller.OnDragHandlerListener, SearchBarMover.Helper, SearchBar.Helper,
-        FabLayout.OnClickFabListener, FabLayout.OnExpandListener,
-        EasyRecyclerView.CustomChoiceListener {
+public class FavoritesScene extends BaseScene implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener, FastScroller.OnDragHandlerListener, SearchBarMover.Helper, SearchBar.Helper, FabLayout.OnClickFabListener, FabLayout.OnExpandListener, EasyRecyclerView.CustomChoiceListener {
 
     private static final long ANIMATE_TIME = 300L;
 
     private static final String KEY_URL_BUILDER = "url_builder";
+
     private static final String KEY_SEARCH_MODE = "search_mode";
+
     private static final String KEY_HAS_FIRST_REFRESH = "has_first_refresh";
+
     private static final String KEY_FAV_COUNT_ARRAY = "fav_count_array";
+
     private static final String TAG = "FavoritesScene";
 
     @Nullable
     @ViewLifeCircle
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     @ViewLifeCircle
     private SearchBar mSearchBar;
+
     @Nullable
     @ViewLifeCircle
     private FabLayout mFabLayout;
@@ -131,15 +129,19 @@ public class FavoritesScene extends BaseScene implements
     @Nullable
     @ViewLifeCircle
     private FavoritesAdapter mAdapter;
+
     @Nullable
     @ViewLifeCircle
     private FavoritesHelper mHelper;
+
     @Nullable
     @ViewLifeCircle
     private SearchBarMover mSearchBarMover;
+
     @Nullable
     @ViewLifeCircle
     private DrawerArrowDrawable mLeftDrawable;
+
     private AddDeleteDrawable mActionFabDrawable;
 
     @Nullable
@@ -148,41 +150,57 @@ public class FavoritesScene extends BaseScene implements
     @Nullable
     @DrawerLifeCircle
     private FavDrawerAdapter mDrawerAdapter;
+
     @Nullable
     @WholeLifeCircle
     private EhClient mClient;
+
     @Nullable
     @WholeLifeCircle
     private String[] mFavCatArray;
+
     @Nullable
     @WholeLifeCircle
     private int[] mFavCountArray;
+
     @Nullable
     @WholeLifeCircle
     private FavListUrlBuilder mUrlBuilder;
 
     @Nullable
     private AlertDialog jumpSelectorDialog;
+
     private JumpDateSelector mJumpDateSelector;
 
-    public int current; // -1 for error
-    public int limit; // -1 for error
+    // -1 for error
+    public int current;
+
+    // -1 for error
+    public int limit;
 
     private int mFavLocalCount = 0;
+
     private int mFavCountSum = 0;
 
     private boolean mHasFirstRefresh;
+
     private boolean mSearchMode;
+
     // Avoid unnecessary search bar update
     private String mOldFavCat;
+
     // Avoid unnecessary search bar update
     private String mOldKeyword;
+
     // For modify action
     private boolean mEnableModify;
+
     // For modify action
     private int mModifyFavCat;
+
     // For modify action
     private final List<GalleryInfo> mModifyGiList = new ArrayList<>();
+
     // For modify action
     private boolean mModifyAdd;
 
@@ -198,7 +216,6 @@ public class FavoritesScene extends BaseScene implements
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mClient = EhApplication.getEhClient(context);
@@ -206,7 +223,6 @@ public class FavoritesScene extends BaseScene implements
         mFavCountArray = Settings.getFavCount();
         mFavLocalCount = Settings.getFavLocalCount();
         mFavCountSum = Settings.getFavCloudCount();
-
         if (savedInstanceState == null) {
             onInit();
         } else {
@@ -233,7 +249,6 @@ public class FavoritesScene extends BaseScene implements
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-
         boolean hasFirstRefresh;
         if (mHelper != null && 1 == mHelper.getShownViewIndex()) {
             hasFirstRefresh = false;
@@ -249,7 +264,6 @@ public class FavoritesScene extends BaseScene implements
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         mClient = null;
         mFavCatArray = null;
         mFavCountArray = null;
@@ -259,8 +273,7 @@ public class FavoritesScene extends BaseScene implements
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater,
-                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_favorites, container, false);
         ContentLayout contentLayout = (ContentLayout) view.findViewById(R.id.content_layout);
         MainActivity activity = getActivity2();
@@ -271,17 +284,14 @@ public class FavoritesScene extends BaseScene implements
         RefreshLayout refreshLayout = contentLayout.getRefreshLayout();
         mSearchBar = (SearchBar) ViewUtils.$$(view, R.id.search_bar);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
         int paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
-
         mHelper = new FavoritesHelper();
         mHelper.setEmptyString(resources.getString(R.string.gallery_list_empty_hit));
         contentLayout.setHelper(mHelper);
         contentLayout.getFastScroller().setOnDragHandlerListener(this);
-
         mAdapter = new FavoritesAdapter(inflater, resources, mRecyclerView, Settings.getListMode());
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
@@ -290,12 +300,8 @@ public class FavoritesScene extends BaseScene implements
         mRecyclerView.setOnItemLongClickListener(this);
         mRecyclerView.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM);
         mRecyclerView.setCustomCheckedListener(this);
-
-        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
-                fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
-
+        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB, fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
         refreshLayout.setHeaderTranslationY(paddingTopSB);
-
         mLeftDrawable = new DrawerArrowDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
         mSearchBar.setLeftDrawable(mLeftDrawable);
         mSearchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
@@ -303,7 +309,6 @@ public class FavoritesScene extends BaseScene implements
         mSearchBar.setAllowEmptySearch(false);
         updateSearchBar();
         mSearchBarMover = new SearchBarMover(this, mSearchBar, mRecyclerView);
-
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
         mFabLayout.setExpanded(false, false);
@@ -312,21 +317,17 @@ public class FavoritesScene extends BaseScene implements
         mFabLayout.setOnClickFabListener(this);
         mFabLayout.setOnExpandListener(this);
         addAboveSnackView(mFabLayout);
-
         // Restore search mode
         if (mSearchMode) {
             mSearchMode = false;
             enterSearchMode(false);
         }
-
         // Only refresh for the first time
         if (!mHasFirstRefresh) {
             mHasFirstRefresh = true;
             mHelper.firstRefresh();
         }
-
         guideCollections();
-
         return view;
     }
 
@@ -335,28 +336,19 @@ public class FavoritesScene extends BaseScene implements
         if (null == activity || !Settings.getGuideCollections()) {
             return;
         }
-
         Display display = activity.getWindowManager().getDefaultDisplay();
         Point point = new Point();
         display.getSize(point);
+        mShowcaseView = new ShowcaseView.Builder(activity).withMaterialShowcase().setStyle(R.style.Guide).setTarget(new PointTarget(point.x, point.y / 3)).blockAllTouches().setContentTitle(R.string.guide_collections_title).setContentText(R.string.guide_collections_text).replaceEndButton(R.layout.button_guide).setShowcaseEventListener(new SimpleShowcaseEventListener() {
 
-        mShowcaseView = new ShowcaseView.Builder(activity)
-                .withMaterialShowcase()
-                .setStyle(R.style.Guide)
-                .setTarget(new PointTarget(point.x, point.y / 3))
-                .blockAllTouches()
-                .setContentTitle(R.string.guide_collections_title)
-                .setContentText(R.string.guide_collections_text)
-                .replaceEndButton(R.layout.button_guide)
-                .setShowcaseEventListener(new SimpleShowcaseEventListener() {
-                    @Override
-                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
-                        mShowcaseView = null;
-                        ViewUtils.removeFromParent(showcaseView);
-                        Settings.putGuideCollections(false);
-                        openDrawer(Gravity.RIGHT);
-                    }
-                }).build();
+            @Override
+            public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                mShowcaseView = null;
+                ViewUtils.removeFromParent(showcaseView);
+                Settings.putGuideCollections(false);
+                openDrawer(Gravity.RIGHT);
+            }
+        }).build();
     }
 
     // keyword of mUrlBuilder, fav cat of mUrlBuilder, mFavCatArray.
@@ -366,7 +358,6 @@ public class FavoritesScene extends BaseScene implements
         if (null == context || null == mUrlBuilder || null == mSearchBar || null == mFavCatArray) {
             return;
         }
-
         // Update title
         int favCat = mUrlBuilder.getFavCat();
         String favCatName;
@@ -387,7 +378,6 @@ public class FavoritesScene extends BaseScene implements
                 mSearchBar.setTitle(getString(R.string.favorites_title_2, favCatName, keyword));
             }
         }
-
         // Update hint
         if (!ObjectUtils.equal(favCatName, mOldFavCat)) {
             Drawable searchImage = DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24);
@@ -400,10 +390,8 @@ public class FavoritesScene extends BaseScene implements
             }
             mSearchBar.setEditTextHint(ssb);
         }
-
         mOldFavCat = favCatName;
         mOldKeyword = keyword;
-
         // Save recent fav cat
         Settings.putRecentFavCat(mUrlBuilder.getFavCat());
     }
@@ -411,12 +399,10 @@ public class FavoritesScene extends BaseScene implements
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mShowcaseView) {
             ViewUtils.removeFromParent(mShowcaseView);
             mShowcaseView = null;
         }
-
         if (null != mHelper) {
             mHelper.destroy();
             if (1 == mHelper.getShownViewIndex()) {
@@ -431,14 +417,10 @@ public class FavoritesScene extends BaseScene implements
             removeAboveSnackView(mFabLayout);
             mFabLayout = null;
         }
-
         mAdapter = null;
-
         mSearchBar = null;
-
         mSearchBarMover = null;
         mLeftDrawable = null;
-
         mOldFavCat = null;
         mOldKeyword = null;
     }
@@ -446,6 +428,7 @@ public class FavoritesScene extends BaseScene implements
     private class FavDrawerHolder extends RecyclerView.ViewHolder {
 
         private final TextView key;
+
         private final TextView value;
 
         private FavDrawerHolder(View itemView) {
@@ -486,9 +469,7 @@ public class FavoritesScene extends BaseScene implements
                 holder.value.setText(Integer.toString(mFavCountSum));
                 holder.itemView.setEnabled(true);
             } else {
-                if (null == mFavCatArray || null == mFavCountArray ||
-                        mFavCatArray.length < (position - 1) ||
-                        mFavCountArray.length < (position - 1)) {
+                if (null == mFavCatArray || null == mFavCountArray || mFavCatArray.length < (position - 1) || mFavCountArray.length < (position - 1)) {
                     return;
                 }
                 holder.key.setText(mFavCatArray[position - 2]);
@@ -507,56 +488,49 @@ public class FavoritesScene extends BaseScene implements
     }
 
     @Override
-    public View onCreateDrawerView(LayoutInflater inflater,
-                                   @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateDrawerView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.drawer_list_rv, container, false);
         final Context context = getEHContext();
         Toolbar toolbar = (Toolbar) ViewUtils.$$(view, R.id.toolbar);
-
         AssertUtils.assertNotNull(context);
-
         toolbar.setTitle(R.string.collections);
         toolbar.inflateMenu(R.menu.drawer_favorites);
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 int id = item.getItemId();
-                switch (id) {
+                switch(id) {
                     case R.id.action_default_favorites_slot:
                         String[] items = new String[12];
                         items[0] = getString(R.string.let_me_select);
                         items[1] = getString(R.string.local_favorites);
                         String[] favCat = Settings.getFavCat();
                         System.arraycopy(favCat, 0, items, 2, 10);
-                        new AlertDialog.Builder(context)
-                                .setTitle(R.string.default_favorites_collection)
-                                .setItems(items, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        Settings.putDefaultFavSlot(which - 2);
-                                    }
-                                }).show();
+                        new AlertDialog.Builder(context).setTitle(R.string.default_favorites_collection).setItems(items, new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Settings.putDefaultFavSlot(which - 2);
+                            }
+                        }).show();
                         return true;
                 }
                 return false;
             }
         });
-
         EasyRecyclerView recyclerView = (EasyRecyclerView) view.findViewById(R.id.recycler_view_drawer);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
-
         mDrawerAdapter = new FavDrawerAdapter(inflater);
         recyclerView.setAdapter(mDrawerAdapter);
         recyclerView.setOnItemClickListener(this);
-
         return view;
     }
 
     @Override
     public void onDestroyDrawerView() {
         super.onDestroyDrawerView();
-
         mDrawerAdapter = null;
     }
 
@@ -565,7 +539,6 @@ public class FavoritesScene extends BaseScene implements
         if (null != mShowcaseView) {
             return;
         }
-
         if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
             mRecyclerView.outOfCustomChoiceMode();
         } else if (mFabLayout != null && mFabLayout.isExpanded()) {
@@ -591,7 +564,6 @@ public class FavoritesScene extends BaseScene implements
         if (null != mRecyclerView && !mRecyclerView.isInCustomChoice()) {
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
         }
-
         if (mSearchBarMover != null) {
             mSearchBarMover.returnSearchBarPosition();
         }
@@ -605,33 +577,25 @@ public class FavoritesScene extends BaseScene implements
             if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
                 return true;
             }
-
             if (mUrlBuilder == null || mHelper == null) {
                 return true;
             }
-
             // Local favorite position is 0, All favorite position is 1, so position - 2 is OK
             int newFavCat = position - 2;
-
             // Check is the same
             if (mUrlBuilder.getFavCat() == newFavCat) {
                 return true;
             }
-
             // Ensure outOfCustomChoiceMode to avoid error
             if (mRecyclerView != null) {
                 mRecyclerView.isInCustomChoice();
             }
-
             exitSearchMode(true);
-
             mUrlBuilder.setKeyword(null);
             mUrlBuilder.setFavCat(newFavCat);
             updateSearchBar();
             mHelper.refresh();
-
             closeDrawer(Gravity.RIGHT);
-
         } else {
             if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
                 mRecyclerView.toggleItemChecked(position);
@@ -692,7 +656,6 @@ public class FavoritesScene extends BaseScene implements
         if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
             return;
         }
-
         if (!mSearchMode) {
             enterSearchMode(true);
         }
@@ -705,7 +668,6 @@ public class FavoritesScene extends BaseScene implements
         if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
             return;
         }
-
         if (mSearchMode) {
             exitSearchMode(true);
         } else {
@@ -720,7 +682,6 @@ public class FavoritesScene extends BaseScene implements
         if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
             return;
         }
-
         if (!mSearchMode) {
             enterSearchMode(true);
         } else {
@@ -742,18 +703,14 @@ public class FavoritesScene extends BaseScene implements
         if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
             return;
         }
-
         if (mUrlBuilder == null || mHelper == null) {
             return;
         }
-
         // Ensure outOfCustomChoiceMode to avoid error
         if (mRecyclerView != null) {
             mRecyclerView.isInCustomChoice();
         }
-
         exitSearchMode(true);
-
         mUrlBuilder.setKeyword(query);
         updateSearchBar();
         mHelper.refresh();
@@ -788,22 +745,18 @@ public class FavoritesScene extends BaseScene implements
 
     private void showGoToDialog() {
         Context context = getEHContext();
-
         if (null == context || null == mHelper) {
             return;
         }
-
         if (mHelper.mPages < 0) {
             showDateJumpDialog(context);
         } else {
             showPageJumpDialog(context);
         }
-//        Context context = getEHContext();
-//        if (null == context || null == mHelper) {
-//            return;
-//        }
-
-
+        //        Context context = getEHContext();
+        //        if (null == context || null == mHelper) {
+        //            return;
+        //        }
     }
 
     private void showDateJumpDialog(Context context) {
@@ -811,7 +764,7 @@ public class FavoritesScene extends BaseScene implements
             return;
         }
         if (mHelper.nextHref == null || mHelper.nextHref.isEmpty()) {
-//            if ((mHelper.nextHref == null || mHelper.nextHref.isEmpty())&&(mHelper.prevHref == null || mHelper.prevHref.isEmpty())) {
+            //            if ((mHelper.nextHref == null || mHelper.nextHref.isEmpty())&&(mHelper.prevHref == null || mHelper.prevHref.isEmpty())) {
             Toast.makeText(getEHContext(), R.string.gallery_list_no_more_data, Toast.LENGTH_LONG).show();
             return;
         }
@@ -831,15 +784,12 @@ public class FavoritesScene extends BaseScene implements
         String hint = getString(R.string.go_to_hint, page + 1, pages);
         final EditTextDialogBuilder builder = new EditTextDialogBuilder(context, null, hint);
         builder.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        final AlertDialog dialog = builder.setTitle(R.string.go_to)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
+        final AlertDialog dialog = builder.setTitle(R.string.go_to).setPositiveButton(android.R.string.ok, null).show();
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
             if (null == mHelper) {
                 dialog.dismiss();
                 return;
             }
-
             String text = builder.getText().trim();
             int goTo;
             try {
@@ -876,40 +826,30 @@ public class FavoritesScene extends BaseScene implements
         if (null == context || null == mRecyclerView || null == mHelper) {
             return;
         }
-
         if (!mRecyclerView.isInCustomChoice()) {
-            switch (position) {
-                case 0: // Go to
+            switch(position) {
+                case // Go to
+                0:
                     if (mHelper.canGoTo()) {
                         showGoToDialog();
                     }
                     break;
-                case 1: // Refresh
+                case // Refresh
+                1:
                     mHelper.refresh();
                     break;
-                case 5: // add share
+                case // add share
+                5:
                     mModifyGiList.clear();
-
                     AddDialogHelper add = new AddDialogHelper();
                     GalleryInfo galleryInfo = ClipboardUtil.getGalleryInfoFromClip();
-
                     if (galleryInfo != null) {
                         if (!EhDB.containLocalFavorites(galleryInfo.gid)) {
                             mModifyGiList.add(galleryInfo);
-                            new AlertDialog.Builder(context)
-                                    .setTitle(R.string.share_favorites_dialog_title)
-                                    .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
-                                    .setPositiveButton(android.R.string.ok, add)
-                                    .setOnCancelListener(add)
-                                    .show();
-
+                            new AlertDialog.Builder(context).setTitle(R.string.share_favorites_dialog_title).setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title)).setPositiveButton(android.R.string.ok, add).setOnCancelListener(add).show();
                             mHelper.refresh();
                         } else {
-                            new AlertDialog.Builder(context)
-                                    .setTitle(R.string.share_favorites_dialog_title)
-                                    .setMessage("已有名为：[" + galleryInfo.title + "]的本子，无需重复添加~")
-                                    .setPositiveButton(android.R.string.ok, add)
-                                    .show();
+                            new AlertDialog.Builder(context).setTitle(R.string.share_favorites_dialog_title).setMessage("已有名为：[" + galleryInfo.title + "]的本子，无需重复添加~").setPositiveButton(android.R.string.ok, add).show();
                         }
                     }
                     break;
@@ -917,7 +857,6 @@ public class FavoritesScene extends BaseScene implements
             view.setExpanded(false);
             return;
         }
-
         mModifyGiList.clear();
         SparseBooleanArray stateArray = mRecyclerView.getCheckedItemPositions();
         for (int i = 0, n = stateArray.size(); i < n; i++) {
@@ -928,56 +867,50 @@ public class FavoritesScene extends BaseScene implements
                 }
             }
         }
-
-        switch (position) {
-            case 2: { // Download
-                Activity activity = getActivity2();
-                if (activity != null) {
-                    CommonOperations.startDownload(getActivity2(), mModifyGiList, false);
+        switch(position) {
+            case 2:
+                {
+                    // Download
+                    Activity activity = getActivity2();
+                    if (activity != null) {
+                        CommonOperations.startDownload(getActivity2(), mModifyGiList, false);
+                    }
+                    mModifyGiList.clear();
+                    if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
+                        mRecyclerView.outOfCustomChoiceMode();
+                    }
+                    break;
                 }
-                mModifyGiList.clear();
-                if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
-                    mRecyclerView.outOfCustomChoiceMode();
+            case 3:
+                {
+                    // Delete
+                    DeleteDialogHelper helper = new DeleteDialogHelper();
+                    new AlertDialog.Builder(context).setTitle(R.string.delete_favorites_dialog_title).setMessage(getString(R.string.delete_favorites_dialog_message, mModifyGiList.size())).setPositiveButton(android.R.string.ok, helper).setOnCancelListener(helper).show();
+                    break;
                 }
-                break;
-            }
-            case 3: { // Delete
-                DeleteDialogHelper helper = new DeleteDialogHelper();
-                new AlertDialog.Builder(context)
-                        .setTitle(R.string.delete_favorites_dialog_title)
-                        .setMessage(getString(R.string.delete_favorites_dialog_message, mModifyGiList.size()))
-                        .setPositiveButton(android.R.string.ok, helper)
-                        .setOnCancelListener(helper)
-                        .show();
-                break;
-            }
-            case 4: { // Move
-                MoveDialogHelper helper = new MoveDialogHelper();
-                // First is local favorite, the other 10 is cloud favorite
-                String[] array = new String[11];
-                array[0] = getString(R.string.local_favorites);
-                System.arraycopy(Settings.getFavCat(), 0, array, 1, 10);
-                new AlertDialog.Builder(context)
-                        .setTitle(R.string.move_favorites_dialog_title)
-                        .setItems(array, helper)
-                        .setOnCancelListener(helper)
-                        .show();
-                break;
-            }
-            case 6: { // share
-                ShareDialogHelper share = new ShareDialogHelper();
-                new AlertDialog.Builder(context)
-                        .setTitle(R.string.share_favorites_dialog_title)
-                        .setMessage(getString(R.string.share_favorites_dialog_message, mModifyGiList.get(0).title))
-                        .setPositiveButton(android.R.string.ok, share)
-                        .setOnCancelListener(share)
-                        .show();
-                break;
-            }
+            case 4:
+                {
+                    // Move
+                    MoveDialogHelper helper = new MoveDialogHelper();
+                    // First is local favorite, the other 10 is cloud favorite
+                    String[] array = new String[11];
+                    array[0] = getString(R.string.local_favorites);
+                    System.arraycopy(Settings.getFavCat(), 0, array, 1, 10);
+                    new AlertDialog.Builder(context).setTitle(R.string.move_favorites_dialog_title).setItems(array, helper).setOnCancelListener(helper).show();
+                    break;
+                }
+            case 6:
+                {
+                    // share
+                    ShareDialogHelper share = new ShareDialogHelper();
+                    new AlertDialog.Builder(context).setTitle(R.string.share_favorites_dialog_title).setMessage(getString(R.string.share_favorites_dialog_message, mModifyGiList.get(0).title)).setPositiveButton(android.R.string.ok, share).setOnCancelListener(share).show();
+                    break;
+                }
         }
     }
 
     private Runnable showNormalFabsRunnable = new Runnable() {
+
         @Override
         public void run() {
             if (mFabLayout != null) {
@@ -1000,7 +933,6 @@ public class FavoritesScene extends BaseScene implements
 
     private void showSelectionFabs() {
         SimpleHandler.getInstance().removeCallbacks(showNormalFabsRunnable);
-
         if (mFabLayout != null) {
             mFabLayout.setSecondaryFabVisibilityAt(0, false);
             mFabLayout.setSecondaryFabVisibilityAt(1, false);
@@ -1075,13 +1007,10 @@ public class FavoritesScene extends BaseScene implements
 
     private void onGetFavoritesSuccess(FavoritesParser.Result result, int taskId) {
         mResult = result;
-        if (mHelper != null && mSearchBarMover != null &&
-                mHelper.isCurrentTask(taskId)) {
-
+        if (mHelper != null && mSearchBarMover != null && mHelper.isCurrentTask(taskId)) {
             if (mFavCatArray != null) {
                 System.arraycopy(result.catArray, 0, mFavCatArray, 0, 10);
             }
-
             mFavCountArray = result.countArray;
             if (mFavCountArray != null) {
                 mFavCountSum = 0;
@@ -1090,11 +1019,9 @@ public class FavoritesScene extends BaseScene implements
                 }
                 Settings.putFavCloudCount(mFavCountSum);
             }
-
             updateSearchBar();
-//            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
+            //            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
             mHelper.onGetPageData(taskId, result, result.galleryInfoList);
-
             if (mDrawerAdapter != null) {
                 mDrawerAdapter.notifyDataSetChanged();
             }
@@ -1102,8 +1029,7 @@ public class FavoritesScene extends BaseScene implements
     }
 
     private void onGetFavoritesFailure(Exception e, int taskId) {
-        if (mHelper != null && mSearchBarMover != null &&
-                mHelper.isCurrentTask(taskId)) {
+        if (mHelper != null && mSearchBarMover != null && mHelper.isCurrentTask(taskId)) {
             mHelper.onGetException(taskId, e);
         }
     }
@@ -1117,13 +1043,11 @@ public class FavoritesScene extends BaseScene implements
             } else {
                 list = EhDB.searchLocalFavorites(keyword);
             }
-
             if (list.size() == 0) {
                 mHelper.onGetPageData(taskId, 0, 0, Collections.EMPTY_LIST);
             } else {
                 mHelper.onGetPageData(taskId, 1, 0, list);
             }
-
             if (TextUtils.isEmpty(keyword)) {
                 mFavLocalCount = list.size();
                 Settings.putFavLocalCount(mFavLocalCount);
@@ -1134,8 +1058,7 @@ public class FavoritesScene extends BaseScene implements
         }
     }
 
-    private class AddDialogHelper implements DialogInterface.OnClickListener,
-            DialogInterface.OnCancelListener {
+    private class AddDialogHelper implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -1145,13 +1068,8 @@ public class FavoritesScene extends BaseScene implements
             if (mRecyclerView == null || mHelper == null || mUrlBuilder == null || mModifyGiList == null) {
                 return;
             }
-
             mRecyclerView.outOfCustomChoiceMode();
-
-
             EhDB.putLocalFavorites(mModifyGiList);
-
-
         }
 
         @Override
@@ -1160,8 +1078,7 @@ public class FavoritesScene extends BaseScene implements
         }
     }
 
-    private class ShareDialogHelper implements DialogInterface.OnClickListener,
-            DialogInterface.OnCancelListener {
+    private class ShareDialogHelper implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -1171,7 +1088,6 @@ public class FavoritesScene extends BaseScene implements
             if (mRecyclerView == null || mHelper == null || mUrlBuilder == null) {
                 return;
             }
-
             mRecyclerView.outOfCustomChoiceMode();
             long[] gidArray = new long[mModifyGiList.size()];
             for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
@@ -1179,7 +1095,6 @@ public class FavoritesScene extends BaseScene implements
             }
             GalleryInfo galleryInfo = EhDB.searchLocalFavorites(gidArray[0]);
             ClipboardUtil.copy(galleryInfo);
-
         }
 
         @Override
@@ -1188,8 +1103,7 @@ public class FavoritesScene extends BaseScene implements
         }
     }
 
-    private class DeleteDialogHelper implements DialogInterface.OnClickListener,
-            DialogInterface.OnCancelListener {
+    private class DeleteDialogHelper implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -1199,10 +1113,9 @@ public class FavoritesScene extends BaseScene implements
             if (mRecyclerView == null || mHelper == null || mUrlBuilder == null) {
                 return;
             }
-
             mRecyclerView.outOfCustomChoiceMode();
-
-            if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) { // Delete local fav
+            if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
+                // Delete local fav
                 long[] gidArray = new long[mModifyGiList.size()];
                 for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
                     gidArray[i] = mModifyGiList.get(i).gid;
@@ -1210,7 +1123,8 @@ public class FavoritesScene extends BaseScene implements
                 EhDB.removeLocalFavorites(gidArray);
                 mModifyGiList.clear();
                 mHelper.refresh();
-            } else { // Delete cloud fav
+            } else {
+                // Delete cloud fav
                 mEnableModify = true;
                 mModifyFavCat = -1;
                 mModifyAdd = false;
@@ -1224,8 +1138,7 @@ public class FavoritesScene extends BaseScene implements
         }
     }
 
-    private class MoveDialogHelper implements DialogInterface.OnClickListener,
-            DialogInterface.OnCancelListener {
+    private class MoveDialogHelper implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -1242,10 +1155,9 @@ public class FavoritesScene extends BaseScene implements
             if (srcCat == dstCat) {
                 return;
             }
-
             mRecyclerView.outOfCustomChoiceMode();
-
-            if (srcCat == FavListUrlBuilder.FAV_CAT_LOCAL) { // Move from local to cloud
+            if (srcCat == FavListUrlBuilder.FAV_CAT_LOCAL) {
+                // Move from local to cloud
                 long[] gidArray = new long[mModifyGiList.size()];
                 for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
                     gidArray[i] = mModifyGiList.get(i).gid;
@@ -1255,7 +1167,8 @@ public class FavoritesScene extends BaseScene implements
                 mModifyFavCat = dstCat;
                 mModifyAdd = true;
                 mHelper.refresh();
-            } else if (dstCat == FavListUrlBuilder.FAV_CAT_LOCAL) { // Move from cloud to local
+            } else if (dstCat == FavListUrlBuilder.FAV_CAT_LOCAL) {
+                // Move from cloud to local
                 EhDB.putLocalFavorites(mModifyGiList);
                 mEnableModify = true;
                 mModifyFavCat = -1;
@@ -1277,8 +1190,7 @@ public class FavoritesScene extends BaseScene implements
 
     private class FavoritesAdapter extends GalleryAdapter {
 
-        public FavoritesAdapter(@NonNull LayoutInflater inflater, @NonNull Resources resources,
-                                @NonNull RecyclerView recyclerView, int type) {
+        public FavoritesAdapter(@NonNull LayoutInflater inflater, @NonNull Resources resources, @NonNull RecyclerView recyclerView, int type) {
             super(inflater, resources, recyclerView, type, false);
         }
 
@@ -1302,12 +1214,9 @@ public class FavoritesScene extends BaseScene implements
             if (null == activity || null == mUrlBuilder || null == mClient) {
                 return;
             }
-
             if (mEnableModify) {
                 mEnableModify = false;
-
                 boolean local = mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL;
-
                 if (mModifyAdd) {
                     long[] gidArray = new long[mModifyGiList.size()];
                     String[] tokenArray = new String[mModifyGiList.size()];
@@ -1318,12 +1227,9 @@ public class FavoritesScene extends BaseScene implements
                     }
                     List<GalleryInfo> modifyGiListBackup = new ArrayList<>(mModifyGiList);
                     mModifyGiList.clear();
-
                     EhRequest request = new EhRequest();
                     request.setMethod(EhClient.METHOD_ADD_FAVORITES_RANGE);
-                    request.setCallback(new AddFavoritesListener(getContext(),
-                            activity.getStageId(), getTag(),
-                            taskId, mUrlBuilder.getKeyword(), modifyGiListBackup));
+                    request.setCallback(new AddFavoritesListener(getContext(), activity.getStageId(), getTag(), taskId, mUrlBuilder.getKeyword(), modifyGiListBackup));
                     request.setArgs(gidArray, tokenArray, mModifyFavCat);
                     mClient.execute(request);
                 } else {
@@ -1332,7 +1238,6 @@ public class FavoritesScene extends BaseScene implements
                         gidArray[i] = mModifyGiList.get(i).gid;
                     }
                     mModifyGiList.clear();
-
                     String url;
                     if (local) {
                         // Local fav is shown now, but operation need be done for cloud fav
@@ -1340,19 +1245,17 @@ public class FavoritesScene extends BaseScene implements
                     } else {
                         url = mUrlBuilder.build();
                     }
-
                     mUrlBuilder.setIndex(page);
                     EhRequest request = new EhRequest();
                     request.setMethod(EhClient.METHOD_MODIFY_FAVORITES);
-                    request.setCallback(new GetFavoritesListener(getContext(),
-                            activity.getStageId(), getTag(),
-                            taskId, local, mUrlBuilder.getKeyword()));
+                    request.setCallback(new GetFavoritesListener(getContext(), activity.getStageId(), getTag(), taskId, local, mUrlBuilder.getKeyword()));
                     request.setArgs(url, gidArray, mModifyFavCat, Settings.getShowJpnTitle());
                     mClient.execute(request);
                 }
             } else if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
                 final String keyword = mUrlBuilder.getKeyword();
                 SimpleHandler.getInstance().post(new Runnable() {
+
                     @Override
                     public void run() {
                         onGetFavoritesLocal(keyword, taskId);
@@ -1363,9 +1266,7 @@ public class FavoritesScene extends BaseScene implements
                 String url = mUrlBuilder.build();
                 EhRequest request = new EhRequest();
                 request.setMethod(EhClient.METHOD_GET_FAVORITES);
-                request.setCallback(new GetFavoritesListener(getContext(),
-                        activity.getStageId(), getTag(),
-                        taskId, false, mUrlBuilder.getKeyword()));
+                request.setCallback(new GetFavoritesListener(getContext(), activity.getStageId(), getTag(), taskId, false, mUrlBuilder.getKeyword()));
                 request.setArgs(url, Settings.getShowJpnTitle());
                 mClient.execute(request);
             }
@@ -1377,12 +1278,9 @@ public class FavoritesScene extends BaseScene implements
             if (null == activity || null == mUrlBuilder || null == mClient) {
                 return;
             }
-
             if (mEnableModify) {
                 mEnableModify = false;
-
                 boolean local = mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL;
-
                 long[] gidArray = new long[mModifyGiList.size()];
                 if (mModifyAdd) {
                     String[] tokenArray = new String[mModifyGiList.size()];
@@ -1393,12 +1291,9 @@ public class FavoritesScene extends BaseScene implements
                     }
                     List<GalleryInfo> modifyGiListBackup = new ArrayList<>(mModifyGiList);
                     mModifyGiList.clear();
-
                     EhRequest request = new EhRequest();
                     request.setMethod(EhClient.METHOD_ADD_FAVORITES_RANGE);
-                    request.setCallback(new AddFavoritesListener(getContext(),
-                            activity.getStageId(), getTag(),
-                            taskId, mUrlBuilder.getKeyword(), modifyGiListBackup));
+                    request.setCallback(new AddFavoritesListener(getContext(), activity.getStageId(), getTag(), taskId, mUrlBuilder.getKeyword(), modifyGiListBackup));
                     request.setArgs(gidArray, tokenArray, mModifyFavCat);
                     mClient.execute(request);
                 } else {
@@ -1406,36 +1301,33 @@ public class FavoritesScene extends BaseScene implements
                         gidArray[i] = mModifyGiList.get(i).gid;
                     }
                     mModifyGiList.clear();
-
                     String url;
                     if (local) {
                         // Local fav is shown now, but operation need be done for cloud fav
                         url = EhUrl.getFavoritesUrl();
                     } else {
-//                        url = mUrlBuilder.build();
+                        //                        url = mUrlBuilder.build();
                         url = mResult.nextHref;
                     }
-
                     mUrlBuilder.setIndex(page);
                     EhRequest request = new EhRequest();
                     request.setMethod(EhClient.METHOD_MODIFY_FAVORITES);
-                    request.setCallback(new GetFavoritesListener(getContext(),
-                            activity.getStageId(), getTag(),
-                            taskId, local, mUrlBuilder.getKeyword()));
+                    request.setCallback(new GetFavoritesListener(getContext(), activity.getStageId(), getTag(), taskId, local, mUrlBuilder.getKeyword()));
                     request.setArgs(url, gidArray, mModifyFavCat, Settings.getShowJpnTitle());
                     mClient.execute(request);
                 }
             } else if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
                 final String keyword = mUrlBuilder.getKeyword();
                 SimpleHandler.getInstance().post(new Runnable() {
+
                     @Override
                     public void run() {
                         onGetFavoritesLocal(keyword, taskId);
                     }
                 });
             } else {
-//                String url = mUrlBuilder.build();
-//                String url = mResult.nextHref;
+                //                String url = mUrlBuilder.build();
+                //                String url = mResult.nextHref;
                 String url = mUrlBuilder.build(pageAction, mHelper);
                 if (url == null || url.isEmpty()) {
                     Toast.makeText(getContext(), R.string.gallery_list_action_url_missed, Toast.LENGTH_LONG).show();
@@ -1447,9 +1339,7 @@ public class FavoritesScene extends BaseScene implements
                 mUrlBuilder.setIndex(page);
                 EhRequest request = new EhRequest();
                 request.setMethod(EhClient.METHOD_GET_FAVORITES);
-                request.setCallback(new GetFavoritesListener(getContext(),
-                        activity.getStageId(), getTag(),
-                        taskId, false, mUrlBuilder.getKeyword()));
+                request.setCallback(new GetFavoritesListener(getContext(), activity.getStageId(), getTag(), taskId, false, mUrlBuilder.getKeyword()));
                 request.setArgs(url, Settings.getShowJpnTitle());
                 mClient.execute(request);
             }
@@ -1466,7 +1356,6 @@ public class FavoritesScene extends BaseScene implements
             if (mRecyclerView != null) {
                 mRecyclerView.outOfCustomChoiceMode();
             }
-
             if (mAdapter != null) {
                 mAdapter.notifyDataSetChanged();
             }
@@ -1511,11 +1400,12 @@ public class FavoritesScene extends BaseScene implements
     private static class AddFavoritesListener extends EhCallback<FavoritesScene, Void> {
 
         private final int mTaskId;
+
         private final String mKeyword;
+
         private final List<GalleryInfo> mBackup;
 
-        private AddFavoritesListener(Context context, int stageId,
-                                     String sceneTag, int taskId, String keyword, List<GalleryInfo> backup) {
+        private AddFavoritesListener(Context context, int stageId, String sceneTag, int taskId, String keyword, List<GalleryInfo> backup) {
             super(context, stageId, sceneTag);
             mTaskId = taskId;
             mKeyword = keyword;
@@ -1535,7 +1425,6 @@ public class FavoritesScene extends BaseScene implements
             // TODO It's a failure, add all of backup back to db.
             // But how to known which one is failed?
             EhDB.putLocalFavorites(mBackup);
-
             FavoritesScene scene = getScene();
             if (scene != null) {
                 scene.onGetFavoritesLocal(mKeyword, mTaskId);
@@ -1555,12 +1444,13 @@ public class FavoritesScene extends BaseScene implements
     private static class GetFavoritesListener extends EhCallback<FavoritesScene, FavoritesParser.Result> {
 
         private final int mTaskId;
+
         // Local fav is shown now, but operation need be done for cloud fav
         private final boolean mLocal;
+
         private final String mKeyword;
 
-        private GetFavoritesListener(Context context, int stageId,
-                                     String sceneTag, int taskId, boolean local, String keyword) {
+        private GetFavoritesListener(Context context, int stageId, String sceneTag, int taskId, boolean local, String keyword) {
             super(context, stageId, sceneTag);
             mTaskId = taskId;
             mLocal = local;

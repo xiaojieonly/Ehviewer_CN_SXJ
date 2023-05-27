@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.content.Context;
@@ -31,27 +30,9 @@ public class ExcludedTagNamespacesPreference extends DialogPreference {
 
     private View mTableLayout;
 
-    private static final int[] EXCLUDED_TAG_GROUP_RES_ID = {
-            R.id.tag_group_reclass,
-            R.id.tag_group_language,
-            R.id.tag_group_parody,
-            R.id.tag_group_character,
-            R.id.tag_group_group,
-            R.id.tag_group_artist,
-            R.id.tag_group_male,
-            R.id.tag_group_female,
-    };
+    private static final int[] EXCLUDED_TAG_GROUP_RES_ID = { R.id.tag_group_reclass, R.id.tag_group_language, R.id.tag_group_parody, R.id.tag_group_character, R.id.tag_group_group, R.id.tag_group_artist, R.id.tag_group_male, R.id.tag_group_female };
 
-    private static final int[] EXCLUDED_TAG_GROUP_ID = {
-            0x1,
-            0x2,
-            0x4,
-            0x8,
-            0x10,
-            0x20,
-            0x40,
-            0x80
-    };
+    private static final int[] EXCLUDED_TAG_GROUP_ID = { 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80 };
 
     public ExcludedTagNamespacesPreference(Context context) {
         super(context);

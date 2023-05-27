@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.text;
 
 import android.graphics.drawable.Drawable;
-
 import com.hippo.conaco.Conaco;
 import com.hippo.drawable.UnikeryDrawable;
 import com.hippo.image.ImageBitmap;
@@ -26,6 +24,7 @@ import com.hippo.widget.ObservedTextView;
 public class URLImageGetter implements Html.ImageGetter {
 
     private final ObservedTextView mTextView;
+
     private final Conaco<ImageBitmap> mConaco;
 
     public URLImageGetter(ObservedTextView textView, Conaco<ImageBitmap> conaco) {

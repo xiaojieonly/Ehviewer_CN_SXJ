@@ -4,9 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
-
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
@@ -23,11 +21,12 @@ import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 
-
 public class SplashActivity extends EhActivity {
+
     private final SignNewsListener signNewsListener = new SignNewsListener();
 
     private boolean CheckUpdate = false;
+
     private boolean openNews = false;
 
     private Context mContext;
@@ -44,10 +43,9 @@ public class SplashActivity extends EhActivity {
             Distribute.setListener(new EhDistributeListener());
             CheckUpdate = true;
         }
-        AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
-                Analytics.class, Crashes.class, Distribute.class);
-//        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
-//                Analytics.class, Crashes.class, Distribute.class);
+        AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca", Analytics.class, Crashes.class, Distribute.class);
+        //        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
+        //                Analytics.class, Crashes.class, Distribute.class);
         Distribute.setEnabled(!Settings.getCloseAutoUpdate());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_layout);
@@ -67,10 +65,7 @@ public class SplashActivity extends EhActivity {
     }
 
     private void signInNews() {
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_NEWS)
-                .setArgs(EhUrl.getEhNewsUrl())
-                .setCallback(signNewsListener);
+        EhRequest request = new EhRequest().setMethod(EhClient.METHOD_GET_NEWS).setArgs(EhUrl.getEhNewsUrl()).setCallback(signNewsListener);
         EhApplication.getEhClient(getApplicationContext()).execute(request);
     }
 

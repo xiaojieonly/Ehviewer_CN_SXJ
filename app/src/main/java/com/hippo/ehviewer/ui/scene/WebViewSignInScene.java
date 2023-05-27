@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.annotation.SuppressLint;
@@ -57,20 +56,15 @@ public class WebViewSignInScene extends SolidScene {
     @Nullable
     @Override
     @SuppressWarnings("deprecation")
-
-    public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
-
         EhUtils.signOut(context);
-
         // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.flush();
         cookieManager.removeAllCookies(null);
         cookieManager.removeSessionCookies(null);
-
         mWebView = new WebView(context);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -82,7 +76,6 @@ public class WebViewSignInScene extends SolidScene {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mWebView) {
             mWebView.destroy();
             mWebView = null;
@@ -95,10 +88,9 @@ public class WebViewSignInScene extends SolidScene {
             if (cookieStrings == null) {
                 return Collections.emptyList();
             }
-
             List<Cookie> cookies = null;
             String[] pieces = cookieStrings.split(";");
-            for (String piece: pieces) {
+            for (String piece : pieces) {
                 Cookie cookie = Cookie.parse(url, piece);
                 if (cookie == null) {
                     continue;
@@ -108,7 +100,6 @@ public class WebViewSignInScene extends SolidScene {
                 }
                 cookies.add(cookie);
             }
-
             return cookies != null ? cookies : Collections.<Cookie>emptyList();
         }
 
@@ -126,12 +117,11 @@ public class WebViewSignInScene extends SolidScene {
             if (httpUrl == null) {
                 return;
             }
-
             String cookieString = CookieManager.getInstance().getCookie(EhUrl.HOST_E);
             List<Cookie> cookies = parseCookies(httpUrl, cookieString);
             boolean getId = false;
             boolean getHash = false;
-            for (Cookie cookie: cookies) {
+            for (Cookie cookie : cookies) {
                 if (EhCookieStore.KEY_IPD_MEMBER_ID.equals(cookie.name())) {
                     getId = true;
                 } else if (EhCookieStore.KEY_IPD_PASS_HASH.equals(cookie.name())) {
@@ -140,7 +130,6 @@ public class WebViewSignInScene extends SolidScene {
                 addCookie(context, EhUrl.DOMAIN_EX, cookie);
                 addCookie(context, EhUrl.DOMAIN_E, cookie);
             }
-
             if (getId && getHash) {
                 setResult(RESULT_OK, null);
                 finish();

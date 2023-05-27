@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -22,7 +21,6 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
-
 import com.hippo.ehviewer.R;
 import com.hippo.util.DrawableManager;
 import com.hippo.yorozuya.MathUtils;
@@ -33,12 +31,17 @@ import com.hippo.yorozuya.MathUtils;
 public class SimpleRatingView extends View {
 
     private Drawable mStarDrawable;
+
     private Drawable mStarHalfDrawable;
+
     private Drawable mStarOutlineDrawable;
+
     private int mRatingSize;
+
     private int mRatingInterval;
 
     private float mRating;
+
     private int mRatingInt;
 
     public SimpleRatingView(Context context) {
@@ -63,7 +66,6 @@ public class SimpleRatingView extends View {
         mStarOutlineDrawable = DrawableManager.getVectorDrawable(context, R.drawable.v_star_outline_x16);
         mRatingSize = resources.getDimensionPixelOffset(R.dimen.rating_size);
         mRatingInterval = resources.getDimensionPixelOffset(R.dimen.rating_interval);
-
         mStarDrawable.setBounds(0, 0, mRatingSize, mRatingSize);
         mStarHalfDrawable.setBounds(0, 0, mRatingSize, mRatingSize);
         mStarOutlineDrawable.setBounds(0, 0, mRatingSize, mRatingSize);

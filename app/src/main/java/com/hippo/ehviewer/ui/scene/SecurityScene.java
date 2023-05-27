@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.content.Context;
@@ -27,7 +26,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.R;
@@ -42,22 +40,27 @@ import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.ViewUtils;
 import java.util.List;
 
-public class SecurityScene extends SolidScene implements
-        LockPatternView.OnPatternListener, ShakeDetector.OnShakeListener {
+public class SecurityScene extends SolidScene implements LockPatternView.OnPatternListener, ShakeDetector.OnShakeListener {
 
     private static final int MAX_RETRY_TIMES = 5;
+
     private static final long ERROR_TIMEOUT_MILLIS = 1200;
+
     private static final long SUCCESS_DELAY_MILLIS = 100;
 
     private static final String KEY_RETRY_TIMES = "retry_times";
 
     @Nullable
     private LockPatternView mPatternView;
+
     private ImageView mFingerprintIcon;
 
     private SensorManager mSensorManager;
+
     private Sensor mAccelerometer;
+
     private ShakeDetector mShakeDetector;
+
     @Nullable
     private FingerprintManager mFingerprintManager;
 
@@ -73,7 +76,6 @@ public class SecurityScene extends SolidScene implements
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -87,7 +89,6 @@ public class SecurityScene extends SolidScene implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mFingerprintManager = context.getSystemService(FingerprintManager.class);
         }
-
         if (null == savedInstanceState) {
             mRetryTimes = MAX_RETRY_TIMES;
         } else {
@@ -98,7 +99,6 @@ public class SecurityScene extends SolidScene implements
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         mSensorManager = null;
         mAccelerometer = null;
         mShakeDetector = null;
@@ -107,48 +107,44 @@ public class SecurityScene extends SolidScene implements
     @Override
     public void onResume() {
         super.onResume();
-
         if (null != mShakeDetector) {
             mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
         }
-
         if (isFingerprintAuthAvailable()) {
             mFingerprintCancellationSignal = new CancellationSignal();
             // The line below prevents the false positive inspection from Android Studio
             // noinspection ResourceType
-            mFingerprintManager.authenticate(null, mFingerprintCancellationSignal, 0,
-                    new FingerprintManager.AuthenticationCallback() {
-                        @Override
-                        public void onAuthenticationError(int errMsgId, CharSequence errString) {
-                            fingerprintError(true);
-                        }
+            mFingerprintManager.authenticate(null, mFingerprintCancellationSignal, 0, new FingerprintManager.AuthenticationCallback() {
+
+                @Override
+                public void onAuthenticationError(int errMsgId, CharSequence errString) {
+                    fingerprintError(true);
+                }
+
+                @Override
+                public void onAuthenticationFailed() {
+                    fingerprintError(false);
+                }
+
+                @Override
+                public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+                    mFingerprintIcon.setImageResource(R.drawable.fingerprint_success);
+                    mFingerprintIcon.postDelayed(new Runnable() {
 
                         @Override
-                        public void onAuthenticationFailed() {
-                            fingerprintError(false);
+                        public void run() {
+                            startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
+                            finish();
                         }
-
-                        @Override
-                        public void onAuthenticationSucceeded(
-                                FingerprintManager.AuthenticationResult result) {
-                            mFingerprintIcon.setImageResource(R.drawable.fingerprint_success);
-                            mFingerprintIcon.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
-                                    finish();
-                                }
-                            }, SUCCESS_DELAY_MILLIS);
-
-                        }
-                    }, null);
+                    }, SUCCESS_DELAY_MILLIS);
+                }
+            }, null);
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-
         if (null != mShakeDetector) {
             mSensorManager.unregisterListener(mShakeDetector);
         }
@@ -166,13 +162,10 @@ public class SecurityScene extends SolidScene implements
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_security, container, false);
-
         mPatternView = (LockPatternView) ViewUtils.$$(view, R.id.pattern_view);
         mPatternView.setOnPatternListener(this);
-
         mFingerprintIcon = (ImageView) ViewUtils.$$(view, R.id.fingerprint_icon);
         if (Settings.getEnableFingerprint() && isFingerprintAuthAvailable()) {
             mFingerprintIcon.setVisibility(View.VISIBLE);
@@ -184,18 +177,20 @@ public class SecurityScene extends SolidScene implements
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         mPatternView = null;
     }
 
     @Override
-    public void onPatternStart() {}
+    public void onPatternStart() {
+    }
 
     @Override
-    public void onPatternCleared() {}
+    public void onPatternCleared() {
+    }
 
     @Override
-    public void onPatternCellAdded(List<LockPatternView.Cell> pattern) {}
+    public void onPatternCellAdded(List<LockPatternView.Cell> pattern) {
+    }
 
     @Override
     public void onPatternDetected(List<LockPatternView.Cell> pattern) {
@@ -203,10 +198,8 @@ public class SecurityScene extends SolidScene implements
         if (null == activity || null == mPatternView) {
             return;
         }
-
         String enteredPatter = LockPatternUtils.patternToString(pattern);
         String targetPatter = Settings.getSecurity();
-
         if (ObjectUtils.equal(enteredPatter, targetPatter)) {
             startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
             finish();
@@ -235,13 +228,11 @@ public class SecurityScene extends SolidScene implements
     private boolean isFingerprintAuthAvailable() {
         // The line below prevents the false positive inspection from Android Studio
         // noinspection ResourceType
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && Settings.getEnableFingerprint()
-                && mFingerprintManager != null
-                && SetSecurityActivity.hasEnrolledFingerprints(mFingerprintManager);
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.getEnableFingerprint() && mFingerprintManager != null && SetSecurityActivity.hasEnrolledFingerprints(mFingerprintManager);
     }
 
     private Runnable mResetFingerprintRunnable = new Runnable() {
+
         @Override
         public void run() {
             if (mFingerprintIcon != null)
@@ -255,6 +246,7 @@ public class SecurityScene extends SolidScene implements
         mFingerprintIcon.removeCallbacks(mResetFingerprintRunnable);
         if (unrecoverable) {
             mFingerprintIcon.postDelayed(new Runnable() {
+
                 @Override
                 public void run() {
                     mFingerprintIcon.setVisibility(View.INVISIBLE);

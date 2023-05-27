@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import android.text.TextUtils;
@@ -25,8 +24,11 @@ import java.util.regex.Pattern;
 public class GalleryPageParser {
 
     private static final Pattern PATTERN_IMAGE_URL = Pattern.compile("<img[^>]*src=\"([^\"]+)\" style");
+
     private static final Pattern PATTERN_SKIP_HATH_KEY = Pattern.compile("onclick=\"return nl\\('([^\\)]+)'\\)");
+
     private static final Pattern PATTERN_ORIGIN_IMAGE_URL = Pattern.compile("<a href=\"([^\"]+)fullimg.php([^\"]+)\">");
+
     // TODO Not sure about the size of show keys
     private static final Pattern PATTERN_SHOW_KEY = Pattern.compile("var showkey=\"([0-9a-z]+)\";");
 
@@ -49,7 +51,6 @@ public class GalleryPageParser {
         if (m.find()) {
             result.showKey = m.group(1);
         }
-
         if (!TextUtils.isEmpty(result.imageUrl) && !TextUtils.isEmpty(result.showKey)) {
             return result;
         } else {
@@ -58,9 +59,13 @@ public class GalleryPageParser {
     }
 
     public static class Result {
+
         public String imageUrl;
+
         public String skipHathKey;
+
         public String originImageUrl;
+
         public String showKey;
     }
 }

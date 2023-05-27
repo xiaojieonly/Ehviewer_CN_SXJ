@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.daogenerator;
 
 public class Main {
 
-    public static void main(String args[]){
+    public static void main(String[] args) {
         try {
             EhDaoGenerator.generate();
-        }catch (Throwable t){
+        } catch (Throwable t) {
             System.out.println(t);
         }
     }

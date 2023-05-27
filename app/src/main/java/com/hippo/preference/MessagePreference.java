@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.content.Context;
@@ -29,6 +28,7 @@ import com.hippo.text.Html;
 public class MessagePreference extends DialogPreference {
 
     private CharSequence mDialogMessage;
+
     private boolean mDialogMessageLinkify;
 
     public MessagePreference(Context context) {
@@ -73,7 +73,6 @@ public class MessagePreference extends DialogPreference {
     @Override
     protected void onDialogCreated(AlertDialog dialog) {
         super.onDialogCreated(dialog);
-
         if (mDialogMessageLinkify) {
             final View messageView = dialog.findViewById(android.R.id.message);
             if (null != messageView && messageView instanceof TextView) {

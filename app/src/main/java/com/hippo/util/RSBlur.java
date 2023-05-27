@@ -14,14 +14,15 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 
 public class RSBlur {
+
     /**
-     *
      * @param context 上下文
      * @param lowerView 底层view控件
      * @param upperView 需要模糊背景的控件
      */
     public static void doBlur(final Context context, final View lowerView, final View upperView) {
         lowerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+
             @Override
             public boolean onPreDraw() {
                 lowerView.getViewTreeObserver().removeOnPreDrawListener(this);
@@ -32,8 +33,8 @@ public class RSBlur {
             }
         });
     }
+
     /**
-     *
      * @param context 上下文
      * @param bkg 原图
      * @param view 需要模糊背景的控件
@@ -43,41 +44,25 @@ public class RSBlur {
     public static void doBlur(Context context, Bitmap bkg, View view, boolean isDownScale) {
         float scaleFactor = 1;
         float radius = 20;
-
         if (isDownScale) {
             scaleFactor = 8;
             radius = 2;
         }
-
-        Bitmap overlay = Bitmap.createBitmap((int) (view.getMeasuredWidth() / scaleFactor),
-                (int) (view.getMeasuredHeight() / scaleFactor), Bitmap.Config.ARGB_8888);
-
+        Bitmap overlay = Bitmap.createBitmap((int) (view.getMeasuredWidth() / scaleFactor), (int) (view.getMeasuredHeight() / scaleFactor), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(overlay);
-
         canvas.translate(-view.getLeft() / scaleFactor, -view.getTop() / scaleFactor);
         canvas.scale(1 / scaleFactor, 1 / scaleFactor);
         Paint paint = new Paint();
         paint.setFlags(Paint.FILTER_BITMAP_FLAG);
         canvas.drawBitmap(bkg, 0, 0, paint);
-
         RenderScript rs = RenderScript.create(context);
-
-        Allocation overlayAlloc = Allocation.createFromBitmap(
-                rs, overlay);
-
-        ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(
-                rs, overlayAlloc.getElement());
-
+        Allocation overlayAlloc = Allocation.createFromBitmap(rs, overlay);
+        ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(rs, overlayAlloc.getElement());
         blur.setInput(overlayAlloc);
-
         blur.setRadius(radius);
-
         blur.forEach(overlayAlloc);
-
         overlayAlloc.copyTo(overlay);
-
         view.setBackground(new BitmapDrawable(context.getResources(), overlay));
-
         rs.destroy();
     }
 }

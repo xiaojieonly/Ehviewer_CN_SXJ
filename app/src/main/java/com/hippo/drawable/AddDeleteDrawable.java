@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.animation.ObjectAnimator;
@@ -27,13 +26,13 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-
 import com.hippo.ehviewer.R;
 import com.hippo.yorozuya.MathUtils;
 
 public class AddDeleteDrawable extends Drawable {
 
     private final Paint mPaint = new Paint();
+
     private final Path mPath = new Path();
 
     private final int mSize;
@@ -41,6 +40,7 @@ public class AddDeleteDrawable extends Drawable {
     private float mProgress;
 
     private boolean mAutoUpdateMirror = false;
+
     private boolean mVerticalMirror = false;
 
     /**
@@ -48,16 +48,13 @@ public class AddDeleteDrawable extends Drawable {
      */
     public AddDeleteDrawable(Context context, int color) {
         Resources resources = context.getResources();
-
         mSize = resources.getDimensionPixelSize(R.dimen.add_size);
         float barThickness = Math.round(resources.getDimension(R.dimen.add_thickness));
-
         mPaint.setColor(color);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.MITER);
         mPaint.setStrokeCap(Paint.Cap.BUTT);
         mPaint.setStrokeWidth(barThickness);
-
         float halfSize = mSize / 2;
         mPath.moveTo(0f, -halfSize);
         mPath.lineTo(0, halfSize);
@@ -74,7 +71,6 @@ public class AddDeleteDrawable extends Drawable {
         } else {
             canvasRotate = MathUtils.lerp(0f, 135f, mProgress);
         }
-
         canvas.save();
         canvas.translate(bounds.centerX(), bounds.centerY());
         canvas.rotate(canvasRotate);

@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import com.hippo.ehviewer.client.exception.ParseException;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class RateGalleryParser {
 
     public static class Result {
+
         public float rating;
+
         public int ratingCount;
     }
 
@@ -32,7 +32,7 @@ public class RateGalleryParser {
         try {
             JSONObject jsonObject = new JSONObject(body);
             Result result = new Result();
-            result.rating = (float)jsonObject.getDouble("rating_avg");
+            result.rating = (float) jsonObject.getDouble("rating_avg");
             result.ratingCount = jsonObject.getInt("rating_cnt");
             return result;
         } catch (JSONException e) {

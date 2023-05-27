@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.Canvas;
@@ -48,7 +47,6 @@ public class WrapDrawable extends Drawable {
     @Override
     public void setBounds(int left, int top, int right, int bottom) {
         super.setBounds(left, top, right, bottom);
-
         if (mDrawable != null) {
             mDrawable.setBounds(left, top, right, bottom);
         }
@@ -57,7 +55,6 @@ public class WrapDrawable extends Drawable {
     @Override
     public void setBounds(Rect bounds) {
         super.setBounds(bounds);
-
         if (mDrawable != null) {
             mDrawable.setBounds(bounds);
         }
@@ -66,7 +63,6 @@ public class WrapDrawable extends Drawable {
     @Override
     public void setChangingConfigurations(int configs) {
         super.setChangingConfigurations(configs);
-
         if (mDrawable != null) {
             mDrawable.setChangingConfigurations(configs);
         }
@@ -84,7 +80,6 @@ public class WrapDrawable extends Drawable {
     @Override
     public void setDither(boolean dither) {
         super.setDither(dither);
-
         if (mDrawable != null) {
             mDrawable.setDither(dither);
         }
@@ -93,12 +88,10 @@ public class WrapDrawable extends Drawable {
     @Override
     public void setFilterBitmap(boolean filter) {
         super.setFilterBitmap(filter);
-
         if (mDrawable != null) {
             mDrawable.setFilterBitmap(filter);
         }
     }
-
 
     @Override
     public void setAlpha(int alpha) {

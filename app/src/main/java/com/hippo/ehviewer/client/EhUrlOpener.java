@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 import android.os.Bundle;
@@ -38,7 +37,6 @@ public class EhUrlOpener {
         if (TextUtils.isEmpty(url)) {
             return null;
         }
-
         ListUrlBuilder listUrlBuilder = GalleryListUrlParser.parse(url);
         if (listUrlBuilder != null) {
             Bundle args = new Bundle();
@@ -46,7 +44,6 @@ public class EhUrlOpener {
             args.putParcelable(GalleryListScene.KEY_LIST_URL_BUILDER, listUrlBuilder);
             return new Announcer(GalleryListScene.class).setArgs(args);
         }
-
         GalleryDetailUrlParser.Result result1 = GalleryDetailUrlParser.parse(url);
         if (result1 != null) {
             Bundle args = new Bundle();
@@ -55,7 +52,6 @@ public class EhUrlOpener {
             args.putString(GalleryDetailScene.KEY_TOKEN, result1.token);
             return new Announcer(GalleryDetailScene.class).setArgs(args);
         }
-
         GalleryPageUrlParser.Result result2 = GalleryPageUrlParser.parse(url);
         if (result2 != null) {
             Bundle args = new Bundle();
@@ -65,9 +61,7 @@ public class EhUrlOpener {
             args.putInt(ProgressScene.KEY_PAGE, result2.page);
             return new Announcer(ProgressScene.class).setArgs(args);
         }
-
         Log.i(TAG, "Can't parse url: " + url);
-
         return null;
     }
 }

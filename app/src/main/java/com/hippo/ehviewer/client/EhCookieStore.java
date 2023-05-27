@@ -13,34 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 import android.content.Context;
-
 import com.hippo.network.CookieRepository;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
 public class EhCookieStore extends CookieRepository {
 
     public static final String KEY_IPD_MEMBER_ID = "ipb_member_id";
+
     public static final String KEY_IPD_PASS_HASH = "ipb_pass_hash";
+
     public static final String KEY_IGNEOUS = "igneous";
 
-    public static final Cookie sTipsCookie =
-            new Cookie.Builder()
-                    .name(EhConfig.KEY_CONTENT_WARNING)
-                    .value(EhConfig.CONTENT_WARNING_NOT_SHOW)
-                    .domain(EhUrl.DOMAIN_E)
-                    .path("/")
-                    .expiresAt(Long.MAX_VALUE)
-                    .build();
+    public static final Cookie sTipsCookie = new Cookie.Builder().name(EhConfig.KEY_CONTENT_WARNING).value(EhConfig.CONTENT_WARNING_NOT_SHOW).domain(EhUrl.DOMAIN_E).path("/").expiresAt(Long.MAX_VALUE).build();
 
     public EhCookieStore(Context context) {
         super(context, "okhttp3-cookie.db");
@@ -52,16 +43,13 @@ public class EhCookieStore extends CookieRepository {
 
     public boolean hasSignedIn() {
         HttpUrl url = HttpUrl.parse(EhUrl.HOST_E);
-        return contains(url, KEY_IPD_MEMBER_ID) &&
-                contains(url, KEY_IPD_PASS_HASH);
+        return contains(url, KEY_IPD_MEMBER_ID) && contains(url, KEY_IPD_PASS_HASH);
     }
 
-    public static Cookie newCookie(Cookie cookie, String newDomain, boolean forcePersistent,
-            boolean forceLongLive, boolean forceNotHostOnly) {
+    public static Cookie newCookie(Cookie cookie, String newDomain, boolean forcePersistent, boolean forceLongLive, boolean forceNotHostOnly) {
         Cookie.Builder builder = new Cookie.Builder();
         builder.name(cookie.name());
         builder.value(cookie.value());
-
         if (forceLongLive) {
             builder.expiresAt(Long.MAX_VALUE);
         } else if (cookie.persistent()) {
@@ -87,13 +75,11 @@ public class EhCookieStore extends CookieRepository {
     @Override
     public List<Cookie> loadForRequest(HttpUrl url) {
         List<Cookie> cookies = super.loadForRequest(url);
-
         boolean checkTips = domainMatch(url, EhUrl.DOMAIN_E);
-
         if (checkTips) {
             List<Cookie> result = new ArrayList<>(cookies.size() + 1);
             // Add all but skip some
-            for (Cookie cookie: cookies) {
+            for (Cookie cookie : cookies) {
                 String name = cookie.name();
                 if (EhConfig.KEY_CONTENT_WARNING.equals(name)) {
                     continue;

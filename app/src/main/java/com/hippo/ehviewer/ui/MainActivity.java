@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.Manifest;
@@ -42,13 +41,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
-
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.hippo.drawerlayout.DrawerLayout;
@@ -104,44 +101,48 @@ import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ResourcesUtils;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
-
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
-public final class MainActivity extends StageActivity
-        implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack {
+public final class MainActivity extends StageActivity implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack {
 
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
 
     private static final int REQUEST_CODE_SETTINGS = 0;
 
     private static final String KEY_NAV_CHECKED_ITEM = "nav_checked_item";
-//    private static final String KEY_CLIP_TEXT_HASH_CODE = "clip_text_hash_code";
 
+    //    private static final String KEY_CLIP_TEXT_HASH_CODE = "clip_text_hash_code";
     /*---------------
      Whole life cycle
      ---------------*/
     @Nullable
     private EhDrawerLayout mDrawerLayout;
+
     @Nullable
     private NavigationView mNavView;
+
     @Nullable
     private FrameLayout mRightDrawer;
+
     @Nullable
     private AvatarImageView mAvatar;
+
     @Nullable
     private AvatarImageView mAvatarGif;
+
     @Nullable
     private ImageView mHeaderBackground;
+
     @Nullable
     private TextView mDisplayName;
+
     @Nullable
     UserImageChange userImageChange;
 
@@ -153,6 +154,7 @@ public final class MainActivity extends StageActivity
 
     @SuppressLint("HandlerLeak")
     Handler handlerB = new Handler() {
+
         @Override
         public void handleMessage(Message msg) {
             int mNextFrame = gifHandler.updateFrame(backgroundBit);
@@ -187,7 +189,7 @@ public final class MainActivity extends StageActivity
 
     @Override
     protected int getThemeResId(int theme) {
-        switch (theme) {
+        switch(theme) {
             case Settings.THEME_LIGHT:
             default:
                 return R.style.AppTheme_Main;
@@ -260,23 +262,19 @@ public final class MainActivity extends StageActivity
         if (null == file) {
             return null;
         }
-
         Bitmap bitmap = null;
         try {
-            bitmap = BitmapUtils.decodeStream(new UniFileInputStreamPipe(file),
-                    -1, -1, 500 * 500, false, false, null);
+            bitmap = BitmapUtils.decodeStream(new UniFileInputStreamPipe(file), -1, -1, 500 * 500, false, false, null);
         } catch (OutOfMemoryError e) {
             // Ignore
         }
         if (null == bitmap) {
             return null;
         }
-
         File temp = AppConfig.createTempFile();
         if (null == temp) {
             return null;
         }
-
         OutputStream os = null;
         try {
             os = new FileOutputStream(temp);
@@ -293,7 +291,6 @@ public final class MainActivity extends StageActivity
         if (intent == null) {
             return false;
         }
-
         String action = intent.getAction();
         if (Intent.ACTION_VIEW.equals(action)) {
             Uri uri = intent.getData();
@@ -332,7 +329,6 @@ public final class MainActivity extends StageActivity
                 }
             }
         }
-
         return false;
     }
 
@@ -343,14 +339,12 @@ public final class MainActivity extends StageActivity
             // TODO the intent lost
             return;
         }
-
         if (!handleIntent(intent)) {
             boolean handleUrl = false;
             if (intent != null && Intent.ACTION_VIEW.equals(intent.getAction())) {
                 handleUrl = true;
                 Toast.makeText(this, R.string.error_cannot_parse_the_url, Toast.LENGTH_SHORT).show();
             }
-
             if (0 == getSceneCount()) {
                 if (handleUrl) {
                     finish();
@@ -372,7 +366,6 @@ public final class MainActivity extends StageActivity
     @Override
     protected void onCreate2(@Nullable Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
-
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
         mNavView = (NavigationView) ViewUtils.$$(this, R.id.nav_view);
         mRightDrawer = (FrameLayout) ViewUtils.$$(this, R.id.right_drawer);
@@ -385,20 +378,17 @@ public final class MainActivity extends StageActivity
         updateProfile();
         mDisplayName = (TextView) ViewUtils.$$(headerLayout, R.id.display_name);
         TextView mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
-
         mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
-//        mDrawerLayout.setStatusBarColor(0);
-
+        //        mDrawerLayout.setStatusBarColor(0);
         if (mNavView != null) {
-            if (Settings.isLogin()){
+            if (Settings.isLogin()) {
                 MenuItem newsItem = mNavView.getMenu().findItem(R.id.nav_eh_news);
-//                newsItem.setVisible(true);
+                //                newsItem.setVisible(true);
             }
             mNavView.setNavigationItemSelectedListener(this);
         }
         if (Settings.getTheme(getApplicationContext()) == 0) {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_light));
-
             mChangeTheme.setBackgroundColor(getColor(R.color.white));
         } else if (Settings.getTheme(getApplicationContext()) == 1) {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
@@ -407,13 +397,11 @@ public final class MainActivity extends StageActivity
             mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
             mChangeTheme.setBackgroundColor(getColor(R.color.black));
         }
-
         mChangeTheme.setText(getThemeText());
         mChangeTheme.setOnClickListener(v -> {
             Settings.putTheme(getNextTheme());
             ((EhApplication) getApplication()).recreate();
         });
-
         if (savedInstanceState == null) {
             onInit();
             CommonOperations.checkUpdate(this, false);
@@ -424,7 +412,6 @@ public final class MainActivity extends StageActivity
         } else {
             onRestore(savedInstanceState);
         }
-
         EhTagDatabase.update(this);
     }
 
@@ -459,7 +446,7 @@ public final class MainActivity extends StageActivity
 
     private String getThemeText() {
         int resId;
-        switch (Settings.getTheme(getApplicationContext())) {
+        switch(Settings.getTheme(getApplicationContext())) {
             default:
             case Settings.THEME_LIGHT:
                 resId = R.string.theme_light;
@@ -475,7 +462,7 @@ public final class MainActivity extends StageActivity
     }
 
     private int getNextTheme() {
-        switch (Settings.getTheme(getApplicationContext())) {
+        switch(Settings.getTheme(getApplicationContext())) {
             default:
             case Settings.THEME_LIGHT:
                 return Settings.THEME_DARK;
@@ -492,11 +479,7 @@ public final class MainActivity extends StageActivity
         if (null == uniFile || uniFile.ensureDir()) {
             return;
         }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.waring)
-                .setMessage(R.string.invalid_download_location)
-                .setPositiveButton(R.string.get_it, null)
-                .show();
+        new AlertDialog.Builder(this).setTitle(R.string.waring).setMessage(R.string.invalid_download_location).setPositiveButton(R.string.get_it, null).show();
     }
 
     private void checkCellularNetwork() {
@@ -507,21 +490,18 @@ public final class MainActivity extends StageActivity
 
     private void onInit() {
         // Check permission
-        PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+        PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
         EhCookieStore store = EhApplication.getEhCookieStore(getApplicationContext());
         List<Cookie> eCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_E));
         List<Cookie> exCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_EX));
         List<Cookie> cookies = new LinkedList<>(eCookies);
         cookies.addAll(exCookies);
-
         String ipbMemberId = null;
         String ipbPassHash = null;
         String igneous = null;
-
         for (int i = 0, n = cookies.size(); i < n; i++) {
             Cookie cookie = cookies.get(i);
-            switch (cookie.name()) {
+            switch(cookie.name()) {
                 case EhCookieStore.KEY_IPD_MEMBER_ID:
                     ipbMemberId = cookie.value();
                     break;
@@ -533,11 +513,11 @@ public final class MainActivity extends StageActivity
                     break;
             }
         }
-//        if (ipbMemberId != null || ipbPassHash != null || igneous != null) {
-//            Settings.setLoginState(true);
-//        } else {
-//            Settings.setLoginState(false);
-//        }
+        //        if (ipbMemberId != null || ipbPassHash != null || igneous != null) {
+        //            Settings.setLoginState(true);
+        //        } else {
+        //            Settings.setLoginState(false);
+        //        }
         Settings.setLoginState(ipbMemberId != null || ipbPassHash != null || igneous != null);
     }
 
@@ -554,7 +534,6 @@ public final class MainActivity extends StageActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         mDrawerLayout = null;
         mNavView = null;
         mRightDrawer = null;
@@ -565,16 +544,13 @@ public final class MainActivity extends StageActivity
     @Override
     protected void onResume() {
         super.onResume();
-
         setNavCheckedItem(mNavCheckedItem);
-
         checkClipboardUrl();
     }
 
     @Override
     protected void onTransactScene() {
         super.onTransactScene();
-
         checkClipboardUrl();
     }
 
@@ -612,7 +588,6 @@ public final class MainActivity extends StageActivity
             args.putString(GalleryDetailScene.KEY_TOKEN, result1.token);
             return new Announcer(GalleryDetailScene.class).setArgs(args);
         }
-
         GalleryPageUrlParser.Result result2 = GalleryPageUrlParser.parse(url, false);
         if (result2 != null) {
             Bundle args = new Bundle();
@@ -622,14 +597,12 @@ public final class MainActivity extends StageActivity
             args.putInt(ProgressScene.KEY_PAGE, result2.page);
             return new Announcer(ProgressScene.class).setArgs(args);
         }
-
         return null;
     }
 
     private void checkClipboardUrlInternal() {
         String text = getTextFromClipboard();
         int hashCode = text != null ? text.hashCode() : 0;
-
         if (text != null && hashCode != 0 && Settings.getClipboardTextHashCode() != hashCode) {
             Announcer announcer = createAnnouncerFromClipboardUrl(text);
             if (announcer != null && mDrawerLayout != null) {
@@ -638,13 +611,11 @@ public final class MainActivity extends StageActivity
                 snackbar.show();
             }
         }
-
         Settings.putClipboardTextHashCode(hashCode);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE) {
             if (grantResults.length == 1 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, R.string.you_rejected_me, Toast.LENGTH_SHORT).show();
@@ -658,12 +629,10 @@ public final class MainActivity extends StageActivity
     @Override
     public void onSceneViewCreated(SceneFragment scene, Bundle savedInstanceState) {
         super.onSceneViewCreated(scene, savedInstanceState);
-
         if (scene instanceof BaseScene && mRightDrawer != null && mDrawerLayout != null) {
             BaseScene baseScene = (BaseScene) scene;
             mRightDrawer.removeAllViews();
-            View drawerView = baseScene.createDrawerView(
-                    baseScene.getLayoutInflater2(), mRightDrawer, savedInstanceState);
+            View drawerView = baseScene.createDrawerView(baseScene.getLayoutInflater2(), mRightDrawer, savedInstanceState);
             if (drawerView != null) {
                 mRightDrawer.addView(drawerView);
                 mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
@@ -676,7 +645,6 @@ public final class MainActivity extends StageActivity
     @Override
     public void onSceneViewDestroyed(SceneFragment scene) {
         super.onSceneViewDestroyed(scene);
-
         if (scene instanceof BaseScene) {
             BaseScene baseScene = (BaseScene) scene;
             baseScene.destroyDrawerView();
@@ -699,7 +667,6 @@ public final class MainActivity extends StageActivity
                 mAvatar.load(avatarUrl, avatarUrl);
             }
         }
-
         if (null != mDisplayName) {
             String displayName = Settings.getDisplayName();
             if (TextUtils.isEmpty(displayName)) {
@@ -708,7 +675,6 @@ public final class MainActivity extends StageActivity
             Toast.makeText(this, displayName, Toast.LENGTH_LONG).show();
             mDisplayName.setText(displayName);
         }
-
     }
 
     public void addAboveSnackView(View view) {
@@ -727,12 +693,7 @@ public final class MainActivity extends StageActivity
         if (userImageChange != null) {
             userImageChange = null;
         }
-        userImageChange = new UserImageChange(MainActivity.this,
-                UserImageChange.CHANGE_BACKGROUND,
-                getLayoutInflater(),
-                LayoutInflater.from(MainActivity.this),
-                this
-        );
+        userImageChange = new UserImageChange(MainActivity.this, UserImageChange.CHANGE_BACKGROUND, getLayoutInflater(), LayoutInflater.from(MainActivity.this), this);
         userImageChange.showImageChangeDialog();
         System.out.println("更换壁纸");
     }
@@ -741,25 +702,18 @@ public final class MainActivity extends StageActivity
         if (userImageChange != null) {
             userImageChange = null;
         }
-        userImageChange = new UserImageChange(MainActivity.this,
-                UserImageChange.CHANGE_AVATAR,
-                getLayoutInflater(),
-                LayoutInflater.from(MainActivity.this),
-                this
-        );
-
+        userImageChange = new UserImageChange(MainActivity.this, UserImageChange.CHANGE_AVATAR, getLayoutInflater(), LayoutInflater.from(MainActivity.this), this);
         userImageChange.showImageChangeDialog();
         System.out.println("更换头像");
     }
 
     //    public int getDrawerLockMode(int edgeGravity) {
-//        if (mDrawerLayout != null) {
-//            return mDrawerLayout.getDrawerLockMode(edgeGravity);
-//        } else {
-//            return DrawerLayout.LOCK_MODE_UNLOCKED;
-//        }
-//    }
-
+    //        if (mDrawerLayout != null) {
+    //            return mDrawerLayout.getDrawerLockMode(edgeGravity);
+    //        } else {
+    //            return DrawerLayout.LOCK_MODE_UNLOCKED;
+    //        }
+    //    }
     public void setDrawerLockMode(int lockMode, int edgeGravity) {
         if (mDrawerLayout != null) {
             mDrawerLayout.setDrawerLockMode(lockMode, edgeGravity);
@@ -822,59 +776,50 @@ public final class MainActivity extends StageActivity
      */
     public void showTip(CharSequence message, int length) {
         if (null != mDrawerLayout) {
-            Snackbar.make(mDrawerLayout, message,
-                    length == BaseScene.LENGTH_LONG ? 5000 : 3000).show();
+            Snackbar.make(mDrawerLayout, message, length == BaseScene.LENGTH_LONG ? 5000 : 3000).show();
         } else {
-            Toast.makeText(this, message,
-                    length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, message, length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
         }
     }
 
     @SuppressLint("RtlHardcoded")
     @Override
     public void onBackPressed() {
-        if (mDrawerLayout != null && (mDrawerLayout.isDrawerOpen(Gravity.LEFT) ||
-                mDrawerLayout.isDrawerOpen(Gravity.RIGHT))) {
+        if (mDrawerLayout != null && (mDrawerLayout.isDrawerOpen(Gravity.LEFT) || mDrawerLayout.isDrawerOpen(Gravity.RIGHT))) {
             mDrawerLayout.closeDrawers();
         } else {
             super.onBackPressed();
         }
     }
 
-    @SuppressLint({"NonConstantResourceId", "RtlHardcoded"})
+    @SuppressLint({ "NonConstantResourceId", "RtlHardcoded" })
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Don't select twice
         if (item.isChecked()) {
             return false;
         }
-
         int id = item.getItemId();
-
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case R.id.nav_homepage:
                 Bundle nav_homepage = new Bundle();
                 nav_homepage.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
-                startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_homepage));
+                startSceneFirstly(new Announcer(GalleryListScene.class).setArgs(nav_homepage));
                 break;
             case R.id.nav_subscription:
                 Bundle nav_subscription = new Bundle();
                 nav_subscription.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
-                startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_subscription));
+                startSceneFirstly(new Announcer(GalleryListScene.class).setArgs(nav_subscription));
                 break;
             case R.id.nav_whats_hot:
                 Bundle nav_whats_hot = new Bundle();
                 nav_whats_hot.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
-                startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_whats_hot));
+                startSceneFirstly(new Announcer(GalleryListScene.class).setArgs(nav_whats_hot));
                 break;
             case R.id.nav_top_lists:
                 Bundle nav_top_lists = new Bundle();
                 nav_top_lists.putString(EhTopListScene.KEY_ACTION, EhTopListScene.ACTION_TOP_LIST);
-                startSceneFirstly(new Announcer(EhTopListScene.class)
-                        .setArgs(nav_top_lists));
+                startSceneFirstly(new Announcer(EhTopListScene.class).setArgs(nav_top_lists));
                 break;
             case R.id.nav_eh_news:
                 Bundle news = new Bundle();
@@ -898,11 +843,9 @@ public final class MainActivity extends StageActivity
             default:
                 throw new IllegalStateException("Unexpected value: " + item.getItemId());
         }
-
         if (id != R.id.nav_stub && mDrawerLayout != null) {
             mDrawerLayout.closeDrawers();
         }
-
         return true;
     }
 
@@ -921,5 +864,4 @@ public final class MainActivity extends StageActivity
             }
         super.onActivityResult(requestCode, resultCode, data);
     }
-
 }

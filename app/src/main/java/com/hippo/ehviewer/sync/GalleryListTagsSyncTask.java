@@ -1,22 +1,22 @@
 package com.hippo.ehviewer.sync;
 
 import android.util.Log;
-
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.GalleryTagGroup;
 import com.hippo.ehviewer.dao.GalleryTags;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class GalleryListTagsSyncTask {
+
     ExecutorService service = Executors.newSingleThreadExecutor();
 
     private final String TAG = "GalleryListTagsSyncTask";
+
     final List<GalleryInfo> galleryInfoList;
 
     public GalleryListTagsSyncTask(List<GalleryInfo> galleryInfoList) {
@@ -25,29 +25,26 @@ public class GalleryListTagsSyncTask {
 
     public void execute() {
         service.execute(this::executeFunction);
-
     }
 
     private void executeFunction() {
-//        for (GalleryInfo info : galleryInfoList) {
-//            GalleryTags galleryTags = getTags(info);
-//            if (galleryTags != null) {
-//                try {
-//                    if (!EhDB.inGalleryTags(info.gid)) {
-//                        EhDB.insertGalleryTags(galleryTags);
-//                    }
-//                } catch (Exception e) {
-//                    Log.e(TAG, e.toString());
-//                }
-//            }
-//
-//        }
+        //        for (GalleryInfo info : galleryInfoList) {
+        //            GalleryTags galleryTags = getTags(info);
+        //            if (galleryTags != null) {
+        //                try {
+        //                    if (!EhDB.inGalleryTags(info.gid)) {
+        //                        EhDB.insertGalleryTags(galleryTags);
+        //                    }
+        //                } catch (Exception e) {
+        //                    Log.e(TAG, e.toString());
+        //                }
+        //            }
+        //
+        //        }
     }
 
     private GalleryTags getTags(GalleryInfo info) {
-
         GalleryTags tags = new GalleryTags(info.gid);
-
         ArrayList<String> groups = info.tgList;
         if (groups == null || groups.isEmpty()) {
             return null;
@@ -55,7 +52,6 @@ public class GalleryListTagsSyncTask {
         for (String tag : groups) {
             parserData(tags, tag);
         }
-
         return tags;
     }
 
@@ -64,7 +60,7 @@ public class GalleryListTagsSyncTask {
         if (tagArr.length < 2) {
             return;
         }
-        switch (tagArr[0]) {
+        switch(tagArr[0]) {
             case "rows":
                 tags.rows = getTagString(tags.rows, tagArr[1]);
                 break;
@@ -112,8 +108,6 @@ public class GalleryListTagsSyncTask {
         if (tagContent == null || tagContent.isEmpty()) {
             return newTag;
         }
-
         return tagContent + "," + newTag;
     }
-
 }

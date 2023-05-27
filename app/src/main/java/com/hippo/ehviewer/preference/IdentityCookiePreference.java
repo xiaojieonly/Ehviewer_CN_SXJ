@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.content.ClipData;
@@ -58,14 +57,12 @@ public class IdentityCookiePreference extends MessagePreference {
         List<Cookie> exCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_EX));
         List<Cookie> cookies = new LinkedList<>(eCookies);
         cookies.addAll(exCookies);
-
         String ipbMemberId = null;
         String ipbPassHash = null;
         String igneous = null;
-
         for (int i = 0, n = cookies.size(); i < n; i++) {
             Cookie cookie = cookies.get(i);
-            switch (cookie.name()) {
+            switch(cookie.name()) {
                 case EhCookieStore.KEY_IPD_MEMBER_ID:
                     ipbMemberId = cookie.value();
                     break;
@@ -77,11 +74,8 @@ public class IdentityCookiePreference extends MessagePreference {
                     break;
             }
         }
-
         if (ipbMemberId != null || ipbPassHash != null || igneous != null) {
-            message = EhCookieStore.KEY_IPD_MEMBER_ID + ": " + ipbMemberId + "<br>"
-                    + EhCookieStore.KEY_IPD_PASS_HASH + ": " + ipbPassHash + "<br>"
-                    + EhCookieStore.KEY_IGNEOUS + ": " + igneous;
+            message = EhCookieStore.KEY_IPD_MEMBER_ID + ": " + ipbMemberId + "<br>" + EhCookieStore.KEY_IPD_PASS_HASH + ": " + ipbPassHash + "<br>" + EhCookieStore.KEY_IGNEOUS + ": " + igneous;
             setDialogMessage(Html.fromHtml(getContext().getString(R.string.settings_eh_identity_cookies_signed, message)));
             message = message.replace("<br>", "\n");
         } else {
@@ -97,7 +91,6 @@ public class IdentityCookiePreference extends MessagePreference {
                 ClipboardManager cmb = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
                 cmb.setPrimaryClip(ClipData.newPlainText(null, message));
                 Toast.makeText(getContext(), R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
-
                 IdentityCookiePreference.this.onClick(dialog, which);
             });
         }

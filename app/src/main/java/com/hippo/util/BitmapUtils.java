@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.app.ActivityManager;
@@ -26,7 +25,9 @@ import com.hippo.yorozuya.MathUtils;
 import java.io.IOException;
 
 public final class BitmapUtils {
-    private BitmapUtils() {}
+
+    private BitmapUtils() {
+    }
 
     public static Context sContext;
 
@@ -37,24 +38,18 @@ public final class BitmapUtils {
     public static long availableMemory() {
         final Runtime runtime = Runtime.getRuntime();
         final long used = runtime.totalMemory() - runtime.freeMemory();
-
-        final ActivityManager activityManager = (ActivityManager) sContext.
-                getSystemService(Context.ACTIVITY_SERVICE);
+        final ActivityManager activityManager = (ActivityManager) sContext.getSystemService(Context.ACTIVITY_SERVICE);
         final long total = activityManager.getMemoryClass() * 1024 * 1024;
-
         return total - used;
     }
 
-    public static Bitmap decodeStream(@NonNull InputStreamPipe isp, int maxWidth, int maxHeight,
-            int pixels, boolean checkMemory, boolean justCalc, int[] sampleSize) {
+    public static Bitmap decodeStream(@NonNull InputStreamPipe isp, int maxWidth, int maxHeight, int pixels, boolean checkMemory, boolean justCalc, int[] sampleSize) {
         try {
             isp.obtain();
-
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeStream(isp.open(), null, options);
             isp.close();
-
             int width = options.outWidth;
             int height = options.outHeight;
             if (width <= 0 || height <= 0) {
@@ -63,7 +58,6 @@ public final class BitmapUtils {
                 }
                 return null;
             }
-
             int scaleW = 1;
             int scaleH = 1;
             int scaleP = 1;
@@ -78,7 +72,8 @@ public final class BitmapUtils {
                 scaleP = (int) Math.ceil(Math.sqrt(width * height / (float) pixels));
             }
             if (checkMemory) {
-                long m = availableMemory() - 5 * 1024 * 1024; // Leave 5m
+                // Leave 5m
+                long m = availableMemory() - 5 * 1024 * 1024;
                 if (m < 0) {
                     if (sampleSize != null && sampleSize.length >= 1) {
                         sampleSize[0] = -1;
@@ -93,9 +88,7 @@ public final class BitmapUtils {
             if (sampleSize != null && sampleSize.length >= 1) {
                 sampleSize[0] = options.inSampleSize;
             }
-
             options.inJustDecodeBounds = false;
-
             if (justCalc) {
                 return null;
             } else {

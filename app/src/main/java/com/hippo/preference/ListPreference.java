@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.content.Context;
@@ -30,10 +29,15 @@ import com.hippo.ehviewer.R;
 public class ListPreference extends DialogPreference {
 
     private CharSequence[] mEntries;
+
     private CharSequence[] mEntryValues;
+
     private String mValue;
+
     private String mSummary;
+
     private int mClickedDialogEntryIndex;
+
     private boolean mValueSet;
 
     public ListPreference(Context context) {
@@ -53,16 +57,14 @@ public class ListPreference extends DialogPreference {
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         setNegativeButtonText(android.R.string.cancel);
-
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ListPreference, defStyleAttr, defStyleRes);
         mEntries = a.getTextArray(R.styleable.ListPreference_entries);
         mEntryValues = a.getTextArray(R.styleable.ListPreference_entryValues);
         a.recycle();
-
         /* Retrieve the Preference summary attribute since it's private
          * in the Preference class.
          */
-        a = context.obtainStyledAttributes(attrs, new int[]{android.R.attr.summary}, defStyleAttr, defStyleRes);
+        a = context.obtainStyledAttributes(attrs, new int[] { android.R.attr.summary }, defStyleAttr, defStyleRes);
         mSummary = a.getString(0);
         a.recycle();
     }
@@ -237,33 +239,28 @@ public class ListPreference extends DialogPreference {
     @Override
     protected void onPrepareDialogBuilder(AlertDialog.Builder builder) {
         super.onPrepareDialogBuilder(builder);
-
         if (mEntries == null || mEntryValues == null) {
-            throw new IllegalStateException(
-                    "ListPreference requires an entries array and an entryValues array.");
+            throw new IllegalStateException("ListPreference requires an entries array and an entryValues array.");
         }
-
         mClickedDialogEntryIndex = getValueIndex();
-        builder.setSingleChoiceItems(mEntries, mClickedDialogEntryIndex,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mClickedDialogEntryIndex = which;
+        builder.setSingleChoiceItems(mEntries, mClickedDialogEntryIndex, new DialogInterface.OnClickListener() {
 
-                        /*
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mClickedDialogEntryIndex = which;
+                /*
                          * Clicking on an item simulates the positive button
                          * click, and dismisses the dialog.
                          */
-                        ListPreference.this.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
-                        dialog.dismiss();
-                    }
-                });
+                ListPreference.this.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+                dialog.dismiss();
+            }
+        });
     }
 
     @Override
     protected void onDialogClosed(boolean positiveResult) {
         super.onDialogClosed(positiveResult);
-
         if (positiveResult && mClickedDialogEntryIndex >= 0 && mEntryValues != null) {
             String value = mEntryValues[mClickedDialogEntryIndex].toString();
             if (callChangeListener(value)) {
@@ -289,7 +286,6 @@ public class ListPreference extends DialogPreference {
             // No need to save instance state since it's persistent
             return superState;
         }
-
         final SavedState myState = new SavedState(superState);
         myState.value = getValue();
         return myState;
@@ -302,13 +298,13 @@ public class ListPreference extends DialogPreference {
             super.onRestoreInstanceState(state);
             return;
         }
-
         SavedState myState = (SavedState) state;
         super.onRestoreInstanceState(myState.getSuperState());
         setValue(myState.value);
     }
 
     private static class SavedState extends BaseSavedState {
+
         String value;
 
         public SavedState(Parcel source) {
@@ -326,18 +322,17 @@ public class ListPreference extends DialogPreference {
             super(superState);
         }
 
-        public static final Creator<SavedState> CREATOR =
-                new Creator<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in) {
-                        return new SavedState(in);
-                    }
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                };
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
-
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
@@ -23,16 +22,27 @@ public class GalleryComment implements Parcelable {
 
     // 0 for uploader comment. can't vote
     public long id;
+
     public int score;
+
     public boolean editable;
+
     public boolean voteUpAble;
+
     public boolean voteUpEd;
+
     public boolean voteDownAble;
+
     public boolean voteDownEd;
+
     public String voteState;
+
     public long time;
+
     public String user;
+
     public String comment;
+
     public long lastEdited;
 
     @Override
@@ -75,6 +85,7 @@ public class GalleryComment implements Parcelable {
     }
 
     public static final Creator<GalleryComment> CREATOR = new Creator<GalleryComment>() {
+
         @Override
         public GalleryComment createFromParcel(Parcel source) {
             return new GalleryComment(source);

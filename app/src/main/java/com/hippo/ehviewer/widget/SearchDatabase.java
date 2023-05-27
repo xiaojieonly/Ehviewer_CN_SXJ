@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.ContentValues;
@@ -24,9 +23,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 import android.util.Log;
-
 import com.hippo.util.SqlUtils;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,9 +32,11 @@ public final class SearchDatabase {
     private static final String TAG = SearchDatabase.class.getSimpleName();
 
     public static final String COLUMN_QUERY = "query";
+
     public static final String COLUMN_DATE = "date";
 
     private static final String DATABASE_NAME = "search_database.db";
+
     private static final String TABLE_SUGGESTIONS = "suggestions";
 
     private static final int MAX_HISTORY = 100;
@@ -61,16 +60,12 @@ public final class SearchDatabase {
     public String[] getSuggestions(String prefix, int limit) {
         List<String> queryList = new LinkedList<>();
         limit = Math.max(0, limit);
-
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT * FROM ").append(TABLE_SUGGESTIONS);
         if (!TextUtils.isEmpty(prefix)) {
-            sb.append(" WHERE ").append(COLUMN_QUERY).append(" LIKE '")
-                    .append(SqlUtils.sqlEscapeString(prefix)).append("%'");
+            sb.append(" WHERE ").append(COLUMN_QUERY).append(" LIKE '").append(SqlUtils.sqlEscapeString(prefix)).append("%'");
         }
-        sb.append(" ORDER BY ").append(COLUMN_DATE).append(" DESC")
-            .append(" LIMIT ").append(limit);
-
+        sb.append(" ORDER BY ").append(COLUMN_DATE).append(" DESC").append(" LIMIT ").append(limit);
         try {
             Cursor cursor = mDatabase.rawQuery(sb.toString(), null);
             int queryIndex = cursor.getColumnIndex(COLUMN_QUERY);
@@ -105,7 +100,7 @@ public final class SearchDatabase {
     }
 
     public void deleteQuery(final String query) {
-        mDatabase.delete(TABLE_SUGGESTIONS, COLUMN_QUERY + "=?", new String[]{query});
+        mDatabase.delete(TABLE_SUGGESTIONS, COLUMN_QUERY + "=?", new String[] { query });
     }
 
     public void clearQuery() {
@@ -121,15 +116,11 @@ public final class SearchDatabase {
         if (maxEntries < 0) {
             throw new IllegalArgumentException();
         }
-
         try {
             // null means "delete all".  otherwise "delete but leave n newest"
             String selection = null;
             if (maxEntries > 0) {
-                selection = "_id IN " +
-                        "(SELECT _id FROM " + TABLE_SUGGESTIONS +
-                        " ORDER BY " + COLUMN_DATE + " DESC" +
-                        " LIMIT -1 OFFSET " + String.valueOf(maxEntries) + ")";
+                selection = "_id IN " + "(SELECT _id FROM " + TABLE_SUGGESTIONS + " ORDER BY " + COLUMN_DATE + " DESC" + " LIMIT -1 OFFSET " + String.valueOf(maxEntries) + ")";
             }
             mDatabase.delete(TABLE_SUGGESTIONS, selection, null);
         } catch (RuntimeException e) {
@@ -150,11 +141,7 @@ public final class SearchDatabase {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            db.execSQL("CREATE TABLE " + TABLE_SUGGESTIONS + " (" +
-                    "_id INTEGER PRIMARY KEY" +
-                    "," + COLUMN_QUERY + " TEXT" +
-                    "," + COLUMN_DATE + " LONG" +
-                    ");");
+            db.execSQL("CREATE TABLE " + TABLE_SUGGESTIONS + " (" + "_id INTEGER PRIMARY KEY" + "," + COLUMN_QUERY + " TEXT" + "," + COLUMN_DATE + " LONG" + ");");
         }
 
         @Override

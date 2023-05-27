@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.Canvas;
@@ -28,7 +27,9 @@ import android.graphics.drawable.Drawable;
 public class RoundSideRectDrawable extends Drawable {
 
     private final Paint mPaint;
+
     private final Path mPath;
+
     private final RectF mTempRectF;
 
     public RoundSideRectDrawable(int color) {
@@ -44,7 +45,6 @@ public class RoundSideRectDrawable extends Drawable {
         int height = bounds.height();
         RectF rectF = mTempRectF;
         Path path = mPath;
-
         path.reset();
         if (width > height) {
             int radius = height / 2;

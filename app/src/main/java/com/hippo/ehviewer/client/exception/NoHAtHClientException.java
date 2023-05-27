@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.exception;
 
 public class NoHAtHClientException extends EhException {
@@ -21,5 +20,4 @@ public class NoHAtHClientException extends EhException {
     public NoHAtHClientException(String detailMessage) {
         super(detailMessage);
     }
-
 }

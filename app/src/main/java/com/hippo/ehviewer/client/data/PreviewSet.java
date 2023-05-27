@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcelable;
-
 import com.hippo.widget.LoadImageView;
 
 public abstract class PreviewSet implements Parcelable {

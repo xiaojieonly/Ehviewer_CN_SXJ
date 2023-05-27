@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -42,12 +41,15 @@ import java.util.List;
 public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.OnItemClickListener {
 
     private static final DirFilter DIR_FILTER = new DirFilter();
+
     private static final FileSort FILE_SORT = new FileSort();
 
     private static final File PARENT_DIR = null;
+
     private static final String PARENT_DIR_NAME = "..";
 
     private File mCurrentFile;
+
     private final List<File> mFiles = new ArrayList<>();
 
     private DirAdapter mAdapter;
@@ -73,17 +75,13 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
         mAdapter = new DirAdapter();
         setAdapter(mAdapter);
         setLayoutManager(new LinearLayoutManager(context));
-        LinearDividerItemDecoration decoration = new LinearDividerItemDecoration(
-                LinearDividerItemDecoration.VERTICAL, AttrResources.getAttrColor(context, R.attr.dividerColor),
-                LayoutUtils.dp2pix(context, 1));
+        LinearDividerItemDecoration decoration = new LinearDividerItemDecoration(LinearDividerItemDecoration.VERTICAL, AttrResources.getAttrColor(context, R.attr.dividerColor), LayoutUtils.dp2pix(context, 1));
         decoration.setShowLastDivider(true);
         addItemDecoration(decoration);
         setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         setOnItemClickListener(this);
-
         mCurrentFile = Environment.getExternalStorageDirectory();
-        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
-                || mCurrentFile == null) {
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) || mCurrentFile == null) {
             mCurrentFile = new File("/");
         }
         updateFileList();
@@ -95,7 +93,6 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
 
     public void updateFileList() {
         File[] files = mCurrentFile.listFiles(DIR_FILTER);
-
         mFiles.clear();
         if (mCurrentFile.getParent() != null) {
             mFiles.add(PARENT_DIR);
@@ -116,7 +113,6 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
             mCurrentFile = file;
             updateFileList();
             mAdapter.notifyDataSetChanged();
-
             if (mOnChangeDirListener != null) {
                 mOnChangeDirListener.onChangeDir(mCurrentFile);
             }
@@ -147,7 +143,7 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
 
         @Override
         public DirHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new DirHolder( LayoutInflater.from(getContext()).inflate(R.layout.item_dir_explorer, parent, false));
+            return new DirHolder(LayoutInflater.from(getContext()).inflate(R.layout.item_dir_explorer, parent, false));
         }
 
         @Override
@@ -163,6 +159,7 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
     }
 
     static class DirFilter implements FileFilter {
+
         @Override
         public boolean accept(File pathname) {
             return pathname.isDirectory();
@@ -170,6 +167,7 @@ public class DirExplorer extends EasyRecyclerView implements EasyRecyclerView.On
     }
 
     static class FileSort implements Comparator<File> {
+
         @Override
         public int compare(File lhs, File rhs) {
             if (lhs == null) {

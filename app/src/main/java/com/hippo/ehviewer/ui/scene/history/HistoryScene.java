@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene.history;
 
 import android.content.Context;
@@ -73,23 +72,22 @@ import com.hippo.widget.LoadImageView;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ViewUtils;
-
 import org.greenrobot.greendao.query.LazyList;
 
-
-public class HistoryScene extends ToolbarScene
-        implements EasyRecyclerView.OnItemClickListener,
-        EasyRecyclerView.OnItemLongClickListener{
+public class HistoryScene extends ToolbarScene implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener {
 
     /*---------------
      View life cycle
      ---------------*/
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private ViewTransition mViewTransition;
+
     @Nullable
     private RecyclerView.Adapter<?> mAdapter;
+
     @Nullable
     private LazyList<HistoryInfo> mLazyList;
 
@@ -100,23 +98,19 @@ public class HistoryScene extends ToolbarScene
 
     @Nullable
     @Override
-    public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_history, container, false);
         View content = ViewUtils.$$(view, R.id.content);
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(content, R.id.recycler_view);
         FastScroller fastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(content, tip);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
-
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_history);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
-
         RecyclerViewTouchActionGuardManager guardManager = new RecyclerViewTouchActionGuardManager();
         guardManager.setInterceptVerticalScrollingWhileAnimationRunning(true);
         guardManager.setEnabled(true);
@@ -128,8 +122,7 @@ public class HistoryScene extends ToolbarScene
         final GeneralItemAnimator animator = new SwipeDismissItemAnimator();
         animator.setSupportsChangeAnimations(false);
         mRecyclerView.setItemAnimator(animator);
-        AutoStaggeredGridLayoutManager layoutManager = new AutoStaggeredGridLayoutManager(
-                0, StaggeredGridLayoutManager.VERTICAL);
+        AutoStaggeredGridLayoutManager layoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
         layoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
         layoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
         mRecyclerView.setLayoutManager(layoutManager);
@@ -146,15 +139,12 @@ public class HistoryScene extends ToolbarScene
         decoration.applyPaddings(mRecyclerView);
         guardManager.attachRecyclerView(mRecyclerView);
         swipeManager.attachRecyclerView(mRecyclerView);
-
         fastScroller.attachToRecyclerView(mRecyclerView);
         HandlerDrawable handlerDrawable = new HandlerDrawable();
         handlerDrawable.setColor(AttrResources.getAttrColor(context, R.attr.widgetColorThemeAccent));
         fastScroller.setHandlerDrawable(handlerDrawable);
-
         updateLazyList();
         updateView(false);
-
         return view;
     }
 
@@ -168,7 +158,6 @@ public class HistoryScene extends ToolbarScene
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mLazyList) {
             mLazyList.close();
             mLazyList = null;
@@ -180,7 +169,6 @@ public class HistoryScene extends ToolbarScene
             mRecyclerView.stopScroll();
             mRecyclerView = null;
         }
-
         mViewTransition = null;
         mAdapter = null;
     }
@@ -198,7 +186,6 @@ public class HistoryScene extends ToolbarScene
         if (null == mAdapter || null == mViewTransition) {
             return;
         }
-
         if (mAdapter.getItemCount() == 0) {
             mViewTransition.showView(1, animation);
         } else {
@@ -217,21 +204,19 @@ public class HistoryScene extends ToolbarScene
     }
 
     private void showClearAllDialog() {
-        new AlertDialog.Builder(getEHContext())
-                .setMessage(R.string.clear_all_history)
-                .setPositiveButton(R.string.clear_all, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (DialogInterface.BUTTON_POSITIVE != which || null == mAdapter) {
-                            return;
-                        }
+        new AlertDialog.Builder(getEHContext()).setMessage(R.string.clear_all_history).setPositiveButton(R.string.clear_all, new DialogInterface.OnClickListener() {
 
-                        EhDB.clearHistoryInfo();
-                        updateLazyList();
-                        mAdapter.notifyDataSetChanged();
-                        updateView(true);
-                    }
-                }).show();
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (DialogInterface.BUTTON_POSITIVE != which || null == mAdapter) {
+                    return;
+                }
+                EhDB.clearHistoryInfo();
+                updateLazyList();
+                mAdapter.notifyDataSetChanged();
+                updateView(true);
+            }
+        }).show();
     }
 
     @Override
@@ -241,13 +226,13 @@ public class HistoryScene extends ToolbarScene
         if (null == context) {
             return false;
         }
-
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_clear_all: {
-                showClearAllDialog();
-                return true;
-            }
+        switch(id) {
+            case R.id.action_clear_all:
+                {
+                    showClearAllDialog();
+                    return true;
+                }
         }
         return false;
     }
@@ -257,7 +242,6 @@ public class HistoryScene extends ToolbarScene
         if (null == mLazyList) {
             return false;
         }
-
         Bundle args = new Bundle();
         args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
         args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, mLazyList.get(position));
@@ -277,42 +261,46 @@ public class HistoryScene extends ToolbarScene
         if (null == context || null == activity || null == mLazyList) {
             return false;
         }
-
         final GalleryInfo gi = mLazyList.get(position);
-        new AlertDialog.Builder(context)
-                .setTitle(EhUtils.getSuitableTitle(gi))
-                .setItems(R.array.gallery_list_menu_entries, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case 0: // Download
-                                CommonOperations.startDownload(activity, gi, false);
-                                break;
-                            case 1: // Favorites
-                                CommonOperations.addToFavorites(activity, gi,
-                                        new addToFavoriteListener(context,
-                                                activity.getStageId(), getTag()));
-                                break;
-                        }
-                    }
-                }).show();
+        new AlertDialog.Builder(context).setTitle(EhUtils.getSuitableTitle(gi)).setItems(R.array.gallery_list_menu_entries, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch(which) {
+                    case // Download
+                    0:
+                        CommonOperations.startDownload(activity, gi, false);
+                        break;
+                    case // Favorites
+                    1:
+                        CommonOperations.addToFavorites(activity, gi, new addToFavoriteListener(context, activity.getStageId(), getTag()));
+                        break;
+                }
+            }
+        }).show();
         return true;
     }
 
     private class HistoryHolder extends AbstractSwipeableItemViewHolder {
 
         public final View card;
+
         public final LoadImageView thumb;
+
         public final TextView title;
+
         public final TextView uploader;
+
         public final SimpleRatingView rating;
+
         public final TextView category;
+
         public final TextView posted;
+
         public final TextView simpleLanguage;
 
         public HistoryHolder(View itemView) {
             super(itemView);
-
             card = itemView.findViewById(R.id.card);
             thumb = (LoadImageView) itemView.findViewById(R.id.thumb);
             title = (TextView) itemView.findViewById(R.id.title);
@@ -329,16 +317,16 @@ public class HistoryScene extends ToolbarScene
         }
     }
 
-    private class HistoryAdapter extends RecyclerView.Adapter<HistoryHolder>
-            implements SwipeableItemAdapter<HistoryHolder> {
+    private class HistoryAdapter extends RecyclerView.Adapter<HistoryHolder> implements SwipeableItemAdapter<HistoryHolder> {
 
         private final LayoutInflater mInflater;
+
         private final int mListThumbWidth;
+
         private final int mListThumbHeight;
 
         public HistoryAdapter() {
             mInflater = getLayoutInflater2();
-
             View calculator = mInflater.inflate(R.layout.item_gallery_list_thumb_height, null);
             ViewUtils.measureView(calculator, 1024, ViewGroup.LayoutParams.WRAP_CONTENT);
             mListThumbHeight = calculator.getMeasuredHeight();
@@ -357,12 +345,10 @@ public class HistoryScene extends ToolbarScene
         @Override
         public HistoryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             HistoryHolder holder = new HistoryHolder(mInflater.inflate(R.layout.item_history, parent, false));
-
             ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
             lp.width = mListThumbWidth;
             lp.height = mListThumbHeight;
             holder.thumb.setLayoutParams(lp);
-
             return holder;
         }
 
@@ -371,7 +357,6 @@ public class HistoryScene extends ToolbarScene
             if (null == mLazyList) {
                 return;
             }
-
             GalleryInfo gi = mLazyList.get(position);
             holder.thumb.load(EhCacheKeyFactory.getThumbKey(gi.gid), gi.thumb);
             holder.title.setText(EhUtils.getSuitableTitle(gi));
@@ -385,7 +370,6 @@ public class HistoryScene extends ToolbarScene
             }
             holder.posted.setText(gi.posted);
             holder.simpleLanguage.setText(gi.simpleLanguage);
-
             // Update transition name
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 long gid = gi.gid;
@@ -404,14 +388,16 @@ public class HistoryScene extends ToolbarScene
         }
 
         @Override
-        public void onSwipeItemStarted(HistoryHolder holder, int position) { }
+        public void onSwipeItemStarted(HistoryHolder holder, int position) {
+        }
 
         @Override
-        public void onSetSwipeBackground(HistoryHolder holder, int position, int type) {}
+        public void onSetSwipeBackground(HistoryHolder holder, int position, int type) {
+        }
 
         @Override
         public SwipeResultAction onSwipeItem(HistoryHolder holder, int position, int result) {
-            switch (result) {
+            switch(result) {
                 case SwipeableItemConstants.RESULT_SWIPED_LEFT:
                     return new SwipeResultActionClear(position);
                 case SwipeableItemConstants.RESULT_SWIPED_RIGHT:
@@ -436,7 +422,6 @@ public class HistoryScene extends ToolbarScene
             if (null == mLazyList || null == mAdapter) {
                 return;
             }
-
             HistoryInfo info = mLazyList.get(mPosition);
             EhDB.deleteHistoryInfo(info);
             updateLazyList();
@@ -462,7 +447,8 @@ public class HistoryScene extends ToolbarScene
         }
 
         @Override
-        public void onCancel() {}
+        public void onCancel() {
+        }
 
         @Override
         public boolean isInstance(SceneFragment scene) {

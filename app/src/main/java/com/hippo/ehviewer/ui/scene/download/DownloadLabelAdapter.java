@@ -7,21 +7,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.hippo.ehviewer.R;
-
 import java.util.List;
 
 public class DownloadLabelAdapter extends ArrayAdapter<DownloadLabelItem> {
 
-
     public DownloadLabelAdapter(@NonNull Context context, int resource, @NonNull List<DownloadLabelItem> objects) {
         super(context, resource, objects);
     }
-
 
     @SuppressLint("ViewHolder")
     @NonNull
@@ -30,26 +25,28 @@ public class DownloadLabelAdapter extends ArrayAdapter<DownloadLabelItem> {
         View view;
         ViewHolder viewHolder;
         DownloadLabelItem item = getItem(position);
-        if (convertView==null){
+        if (convertView == null) {
             view = LayoutInflater.from(getContext()).inflate(R.layout.item_download_label_list, parent, false);
             viewHolder = new ViewHolder();
-            viewHolder.textView1 = (TextView)view.findViewById(R.id.text1);
-            viewHolder.textView2 = (TextView)view.findViewById(R.id.text2);
+            viewHolder.textView1 = (TextView) view.findViewById(R.id.text1);
+            viewHolder.textView2 = (TextView) view.findViewById(R.id.text2);
             view.setTag(viewHolder);
-        }else {
+        } else {
             view = convertView;
             viewHolder = (ViewHolder) view.getTag();
         }
-
         viewHolder.textView1.setText(item.label);
         viewHolder.textView2.setText(item.count());
-
         return view;
     }
 
-    private static class ViewHolder{
+    private static class ViewHolder {
+
         TextView textView1;
+
         TextView textView2;
-        ViewHolder(){}
+
+        ViewHolder() {
+        }
     }
 }

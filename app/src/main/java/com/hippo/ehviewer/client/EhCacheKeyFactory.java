@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 public class EhCacheKeyFactory {
 
     public static String getThumbKey(long gid) {
-        return "preview:large:" + gid + ":" + 0; // "thumb:" + gid;
+        // "thumb:" + gid;
+        return "preview:large:" + gid + ":" + 0;
     }
 
     public static String getNormalPreviewKey(long gid, int index) {

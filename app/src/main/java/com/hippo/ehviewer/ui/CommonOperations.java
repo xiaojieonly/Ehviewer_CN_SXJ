@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.app.Activity;
@@ -71,7 +70,9 @@ public final class CommonOperations {
     private static final class UpdateTask extends AsyncTask<Void, Void, JSONObject> {
 
         private final Activity mActivity;
+
         private final OkHttpClient mHttpClient;
+
         private final boolean mFeedback;
 
         public UpdateTask(Activity activity, boolean feedback) {
@@ -95,18 +96,15 @@ public final class CommonOperations {
             } else {
                 url = "http://www.ehviewer.com/update.json";
             }
-
             try {
                 return fetchUpdateInfo(url);
             } catch (Throwable e1) {
                 ExceptionUtils.throwIfFatal(e1);
-
                 if (Settings.getBetaUpdateChannel()) {
                     url = "https://raw.githubusercontent.com/seven332/EhViewer/api/update_beta.json";
                 } else {
                     url = "https://raw.githubusercontent.com/seven332/EhViewer/api/update.json";
                 }
-
                 try {
                     return fetchUpdateInfo(url);
                 } catch (Throwable e2) {
@@ -117,41 +115,34 @@ public final class CommonOperations {
         }
 
         private void showUpToDateDialog() {
-            new AlertDialog.Builder(mActivity)
-                    .setMessage(R.string.update_to_date)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
+            new AlertDialog.Builder(mActivity).setMessage(R.string.update_to_date).setPositiveButton(android.R.string.ok, null).show();
         }
 
         private void showUpdateDialog(String versionName, int versionCode, String size, CharSequence info, final String url) {
-            new AlertDialog.Builder(mActivity)
-                    .setTitle(R.string.update)
-                    .setMessage(mActivity.getString(R.string.update_plain, versionName, size, info))
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            UrlOpener.openUrl(mActivity, url, false);
-                        }
-                    })
-                    .setNegativeButton(R.string.update_ignore, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Settings.putSkipUpdateVersion(versionCode);
-                        }
-                    }).show();
+            new AlertDialog.Builder(mActivity).setTitle(R.string.update).setMessage(mActivity.getString(R.string.update_plain, versionName, size, info)).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    UrlOpener.openUrl(mActivity, url, false);
+                }
+            }).setNegativeButton(R.string.update_ignore, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Settings.putSkipUpdateVersion(versionCode);
+                }
+            }).show();
         }
 
         private void handleResult(JSONObject jo) {
             if (null == jo || mActivity.isFinishing()) {
                 return;
             }
-
             String versionName;
             int versionCode;
             String size;
             CharSequence info;
             String url;
-
             try {
                 PackageManager pm = mActivity.getPackageManager();
                 PackageInfo pi = pm.getPackageInfo(mActivity.getPackageName(), PackageManager.GET_ACTIVITIES);
@@ -164,7 +155,6 @@ public final class CommonOperations {
                     }
                     return;
                 }
-
                 versionName = jo.getString("version_name");
                 size = FileUtils.humanReadableByteCount(jo.getLong("size"), false);
                 info = Html.fromHtml(jo.getString("info"));
@@ -173,7 +163,6 @@ public final class CommonOperations {
                 ExceptionUtils.throwIfFatal(e);
                 return;
             }
-
             if (mFeedback || versionCode != Settings.getSkipUpdateVersion()) {
                 showUpdateDialog(versionName, versionCode, size, info, url);
             }
@@ -189,8 +178,7 @@ public final class CommonOperations {
         }
     }
 
-    private static void doAddToFavorites(Activity activity, GalleryInfo galleryInfo,
-            int slot, EhClient.Callback<Void> listener) {
+    private static void doAddToFavorites(Activity activity, GalleryInfo galleryInfo, int slot, EhClient.Callback<Void> listener) {
         if (slot == -1) {
             EhDB.putLocalFavorites(galleryInfo);
             listener.onSuccess(null);
@@ -202,12 +190,12 @@ public final class CommonOperations {
             request.setCallback(listener);
             client.execute(request);
         } else {
-            listener.onFailure(new Exception()); // TODO Add text
+            // TODO Add text
+            listener.onFailure(new Exception());
         }
     }
 
-    public static void addToFavorites(final Activity activity, final GalleryInfo galleryInfo,
-            final EhClient.Callback<Void> listener) {
+    public static void addToFavorites(final Activity activity, final GalleryInfo galleryInfo, final EhClient.Callback<Void> listener) {
         int slot = Settings.getDefaultFavSlot();
         String[] items = new String[11];
         items[0] = activity.getString(R.string.local_favorites);
@@ -217,25 +205,20 @@ public final class CommonOperations {
             String newFavoriteName = slot >= 0 ? items[slot + 1] : null;
             doAddToFavorites(activity, galleryInfo, slot, new DelegateFavoriteCallback(listener, galleryInfo, newFavoriteName, slot));
         } else {
-            new ListCheckBoxDialogBuilder(activity, items,
-                    (builder, dialog, position) -> {
-                        int slot1 = position - 1;
-                        String newFavoriteName = (slot1 >= 0 && slot1 <= 9) ? items[slot1+1] : null;
-                        doAddToFavorites(activity, galleryInfo, slot1, new DelegateFavoriteCallback(listener, galleryInfo, newFavoriteName, slot1));
-                        if (builder.isChecked()) {
-                            Settings.putDefaultFavSlot(slot1);
-                        } else {
-                            Settings.putDefaultFavSlot(Settings.INVALID_DEFAULT_FAV_SLOT);
-                        }
-                    }, activity.getString(R.string.remember_favorite_collection), false)
-                    .setTitle(R.string.add_favorites_dialog_title)
-                    .setOnCancelListener(dialog -> listener.onCancel())
-                    .show();
+            new ListCheckBoxDialogBuilder(activity, items, (builder, dialog, position) -> {
+                int slot1 = position - 1;
+                String newFavoriteName = (slot1 >= 0 && slot1 <= 9) ? items[slot1 + 1] : null;
+                doAddToFavorites(activity, galleryInfo, slot1, new DelegateFavoriteCallback(listener, galleryInfo, newFavoriteName, slot1));
+                if (builder.isChecked()) {
+                    Settings.putDefaultFavSlot(slot1);
+                } else {
+                    Settings.putDefaultFavSlot(Settings.INVALID_DEFAULT_FAV_SLOT);
+                }
+            }, activity.getString(R.string.remember_favorite_collection), false).setTitle(R.string.add_favorites_dialog_title).setOnCancelListener(dialog -> listener.onCancel()).show();
         }
     }
 
-    public static void removeFromFavorites(Activity activity, GalleryInfo galleryInfo,
-            final EhClient.Callback<Void> listener) {
+    public static void removeFromFavorites(Activity activity, GalleryInfo galleryInfo, final EhClient.Callback<Void> listener) {
         EhDB.removeLocalFavorites(galleryInfo.gid);
         EhClient client = EhApplication.getEhClient(activity);
         EhRequest request = new EhRequest();
@@ -248,12 +231,14 @@ public final class CommonOperations {
     private static class DelegateFavoriteCallback implements EhClient.Callback<Void> {
 
         private final EhClient.Callback<Void> delegate;
+
         private final GalleryInfo info;
+
         private final String newFavoriteName;
+
         private final int slot;
 
-        DelegateFavoriteCallback(EhClient.Callback<Void> delegate, GalleryInfo info,
-                String newFavoriteName, int slot) {
+        DelegateFavoriteCallback(EhClient.Callback<Void> delegate, GalleryInfo info, String newFavoriteName, int slot) {
             this.delegate = delegate;
             this.info = info;
             this.newFavoriteName = newFavoriteName;
@@ -286,7 +271,6 @@ public final class CommonOperations {
     // TODO Add context if activity and context are different style
     public static void startDownload(final MainActivity activity, final List<GalleryInfo> galleryInfos, boolean forceDefault) {
         final DownloadManager dm = EhApplication.getDownloadManager(activity);
-
         LongList toStart = new LongList();
         List<GalleryInfo> toAdd = new ArrayList<>();
         for (GalleryInfo gi : galleryInfos) {
@@ -296,19 +280,16 @@ public final class CommonOperations {
                 toAdd.add(gi);
             }
         }
-
         if (!toStart.isEmpty()) {
             Intent intent = new Intent(activity, DownloadService.class);
             intent.setAction(DownloadService.ACTION_START_RANGE);
             intent.putExtra(DownloadService.KEY_GID_LIST, toStart);
             activity.startService(intent);
         }
-
         if (toAdd.isEmpty()) {
             activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
             return;
         }
-
         boolean justStart = forceDefault;
         String label = null;
         // Get default download label
@@ -321,7 +302,6 @@ public final class CommonOperations {
             justStart = true;
             label = null;
         }
-
         if (justStart) {
             // Got default label
             for (GalleryInfo gi : toAdd) {
@@ -341,41 +321,38 @@ public final class CommonOperations {
             for (int i = 0, n = list.size(); i < n; i++) {
                 items[i + 1] = list.get(i).getLabel();
             }
+            new ListCheckBoxDialogBuilder(activity, items, new ListCheckBoxDialogBuilder.OnItemClickListener() {
 
-            new ListCheckBoxDialogBuilder(activity, items,
-                    new ListCheckBoxDialogBuilder.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(ListCheckBoxDialogBuilder builder, AlertDialog dialog, int position) {
-                            String label;
-                            if (position == 0) {
-                                label = null;
-                            } else {
-                                label = items[position];
-                                if (!dm.containLabel(label)) {
-                                    label = null;
-                                }
-                            }
-                            // Start download
-                            for (GalleryInfo gi : toAdd) {
-                                Intent intent = new Intent(activity, DownloadService.class);
-                                intent.setAction(DownloadService.ACTION_START);
-                                intent.putExtra(DownloadService.KEY_LABEL, label);
-                                intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                                activity.startService(intent);
-                            }
-                            // Save settings
-                            if (builder.isChecked()) {
-                                Settings.putHasDefaultDownloadLabel(true);
-                                Settings.putDefaultDownloadLabel(label);
-                            } else {
-                                Settings.putHasDefaultDownloadLabel(false);
-                            }
-                            // Notify
-                            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                @Override
+                public void onItemClick(ListCheckBoxDialogBuilder builder, AlertDialog dialog, int position) {
+                    String label;
+                    if (position == 0) {
+                        label = null;
+                    } else {
+                        label = items[position];
+                        if (!dm.containLabel(label)) {
+                            label = null;
                         }
-                    }, activity.getString(R.string.remember_download_label), false)
-                    .setTitle(R.string.download)
-                    .show();
+                    }
+                    // Start download
+                    for (GalleryInfo gi : toAdd) {
+                        Intent intent = new Intent(activity, DownloadService.class);
+                        intent.setAction(DownloadService.ACTION_START);
+                        intent.putExtra(DownloadService.KEY_LABEL, label);
+                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
+                        activity.startService(intent);
+                    }
+                    // Save settings
+                    if (builder.isChecked()) {
+                        Settings.putHasDefaultDownloadLabel(true);
+                        Settings.putDefaultDownloadLabel(label);
+                    } else {
+                        Settings.putHasDefaultDownloadLabel(false);
+                    }
+                    // Notify
+                    activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                }
+            }, activity.getString(R.string.remember_download_label), false).setTitle(R.string.download).show();
         }
     }
 
@@ -383,12 +360,10 @@ public final class CommonOperations {
         if (null == file) {
             return;
         }
-
         UniFile noMedia = file.createFile(".nomedia");
         if (null == noMedia) {
             return;
         }
-
         InputStream is = null;
         try {
             is = noMedia.openInputStream();
@@ -403,7 +378,6 @@ public final class CommonOperations {
         if (null == file) {
             return;
         }
-
         UniFile noMedia = file.subFile(".nomedia");
         if (null != noMedia && noMedia.isFile()) {
             noMedia.delete();

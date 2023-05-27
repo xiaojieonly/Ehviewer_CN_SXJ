@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import androidx.annotation.Nullable;
@@ -24,15 +23,12 @@ import java.util.regex.Pattern;
 
 /**
  * Like http://exhentai.org/g/1234567/a1b2c3d4e5<br>
- *
  */
 public final class GalleryDetailUrlParser {
 
-    private static final Pattern URL_STRICT_PATTERN = Pattern.compile(
-            "https?://(?:" + EhUrl.DOMAIN_EX + "|" + EhUrl.DOMAIN_E + "|" + EhUrl.DOMAIN_LOFI + ")/(?:g|mpv)/(\\d+)/([0-9a-f]{10})");
+    private static final Pattern URL_STRICT_PATTERN = Pattern.compile("https?://(?:" + EhUrl.DOMAIN_EX + "|" + EhUrl.DOMAIN_E + "|" + EhUrl.DOMAIN_LOFI + ")/(?:g|mpv)/(\\d+)/([0-9a-f]{10})");
 
-    private static final Pattern URL_PATTERN = Pattern.compile(
-            "(\\d+)/([0-9a-f]{10})(?:[^0-9a-f]|$)");
+    private static final Pattern URL_PATTERN = Pattern.compile("(\\d+)/([0-9a-f]{10})(?:[^0-9a-f]|$)");
 
     @Nullable
     public static Result parse(String url) {
@@ -44,7 +40,6 @@ public final class GalleryDetailUrlParser {
         if (url == null) {
             return null;
         }
-
         Pattern pattern = strict ? URL_STRICT_PATTERN : URL_PATTERN;
         Matcher m = pattern.matcher(url);
         if (m.find()) {
@@ -61,7 +56,9 @@ public final class GalleryDetailUrlParser {
     }
 
     public static class Result {
+
         public long gid;
+
         public String token;
     }
 }

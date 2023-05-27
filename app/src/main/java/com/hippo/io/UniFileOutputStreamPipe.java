@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.io;
 
 import androidx.annotation.NonNull;
@@ -26,6 +25,7 @@ import java.io.OutputStream;
 public class UniFileOutputStreamPipe implements OutputStreamPipe {
 
     private final UniFile mUniFile;
+
     private OutputStream mOs;
 
     public UniFileOutputStreamPipe(UniFile uniFile) {
@@ -48,7 +48,6 @@ public class UniFileOutputStreamPipe implements OutputStreamPipe {
         if (mOs != null) {
             throw new IllegalStateException("Please close it first");
         }
-
         mOs = mUniFile.openOutputStream();
         return mOs;
     }

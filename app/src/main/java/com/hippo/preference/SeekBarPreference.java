@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.content.Context;
@@ -24,13 +23,14 @@ import android.preference.Preference;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.SeekBar;
-
 import com.hippo.ehviewer.R;
 
 public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarChangeListener {
 
     private int mProgress;
+
     private int mMax;
+
     private boolean mTrackingTouch;
 
     public SeekBarPreference(Context context) {
@@ -52,7 +52,6 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SeekBarPreference, defStyleAttr, defStyleRes);
         setMax(a.getInt(R.styleable.SeekBarPreference_max, mMax));
         a.recycle();
-
         setLayoutResource(R.layout.preference_widget_seekbar);
     }
 
@@ -68,8 +67,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
 
     @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
-        setProgress(restoreValue ? getPersistedInt(mProgress)
-                : (Integer) defaultValue);
+        setProgress(restoreValue ? getPersistedInt(mProgress) : (Integer) defaultValue);
     }
 
     @Override
@@ -124,8 +122,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
     }
 
     @Override
-    public void onProgressChanged(
-            SeekBar seekBar, int progress, boolean fromUser) {
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if (fromUser && !mTrackingTouch) {
             syncProgress(seekBar);
         }
@@ -151,13 +148,11 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
          * must save the instance state so it is able to, for example, survive
          * orientation changes.
          */
-
         final Parcelable superState = super.onSaveInstanceState();
         if (isPersistent()) {
             // No need to save instance state since it's persistent
             return superState;
         }
-
         // Save the instance state
         final SavedState myState = new SavedState(superState);
         myState.progress = mProgress;
@@ -172,7 +167,6 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
             super.onRestoreInstanceState(state);
             return;
         }
-
         // Restore the instance state
         SavedState myState = (SavedState) state;
         super.onRestoreInstanceState(myState.getSuperState());
@@ -188,12 +182,13 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
      * It is important to always call through to super methods.
      */
     private static class SavedState extends BaseSavedState {
+
         int progress;
+
         int max;
 
         public SavedState(Parcel source) {
             super(source);
-
             // Restore the click counter
             progress = source.readInt();
             max = source.readInt();
@@ -202,7 +197,6 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         @Override
         public void writeToParcel(Parcel dest, int flags) {
             super.writeToParcel(dest, flags);
-
             // Save the click counter
             dest.writeInt(progress);
             dest.writeInt(max);
@@ -213,17 +207,17 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         }
 
         @SuppressWarnings("unused")
-        public static final Creator<SavedState> CREATOR =
-                new Creator<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in) {
-                        return new SavedState(in);
-                    }
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                };
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.scene;
 
 import android.os.Bundle;
@@ -33,26 +32,37 @@ import java.util.List;
 
 public class SceneFragment extends Fragment {
 
-    @IntDef({LAUNCH_MODE_STANDARD, LAUNCH_MODE_SINGLE_TOP, LAUNCH_MODE_SINGLE_TASK})
+    @IntDef({ LAUNCH_MODE_STANDARD, LAUNCH_MODE_SINGLE_TOP, LAUNCH_MODE_SINGLE_TASK })
     @Retention(RetentionPolicy.SOURCE)
-    public @interface LaunchMode {}
+    public @interface LaunchMode {
+    }
 
     public static final int LAUNCH_MODE_STANDARD = 0;
+
     public static final int LAUNCH_MODE_SINGLE_TOP = 1;
+
     public static final int LAUNCH_MODE_SINGLE_TASK = 2;
 
-    /** Standard scene result: operation canceled. */
-    public static final int RESULT_CANCELED  = 0;
-    /** Standard scene result: operation succeeded. */
+    /**
+     * Standard scene result: operation canceled.
+     */
+    public static final int RESULT_CANCELED = 0;
+
+    /**
+     * Standard scene result: operation succeeded.
+     */
     public static final int RESULT_OK = -1;
 
     int resultCode = RESULT_CANCELED;
+
     Bundle result = null;
 
     List<String> mRequestSceneTagList = new ArrayList<>(0);
+
     IntList mRequestCodeList = new IntList(0);
 
-    public void onNewArguments(@NonNull Bundle args) {}
+    public void onNewArguments(@NonNull Bundle args) {
+    }
 
     public void startScene(Announcer announcer) {
         FragmentActivity activity = getActivity();
@@ -99,10 +109,8 @@ public class SceneFragment extends Fragment {
     @SuppressWarnings("deprecation")
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         view.setTag(R.id.fragment_tag, getTag());
         view.setBackgroundDrawable(AttrResources.getAttrDrawable(getContext(), android.R.attr.windowBackground));
-
         // Notify
         FragmentActivity activity = getActivity();
         if (activity instanceof StageActivity) {
@@ -113,7 +121,6 @@ public class SceneFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         // Notify
         FragmentActivity activity = getActivity();
         if (activity instanceof StageActivity) {
@@ -124,7 +131,6 @@ public class SceneFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         FragmentActivity activity = getActivity();
         if (activity instanceof StageActivity) {
             ((StageActivity) activity).onSceneDestroyed(this);

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.os.Bundle;
@@ -34,84 +33,15 @@ import com.hippo.ripple.Ripple;
 import com.hippo.widget.SensitiveCheckBox;
 import com.hippo.yorozuya.ViewUtils;
 
-public class ExcludedLanguagesActivity extends ToolbarActivity
-        implements View.OnClickListener {
+public class ExcludedLanguagesActivity extends ToolbarActivity implements View.OnClickListener {
 
     private static final String KEY_SELECTIONS = "selections";
 
     private static final int ROW_COUNT = 17;
-    private static final int[] LANGUAGE_STR_IDS = {
-            R.string.language_japanese,
-            R.string.language_english,
-            R.string.language_chinese,
-            R.string.language_dutch,
-            R.string.language_french,
-            R.string.language_german,
-            R.string.language_hungarian,
-            R.string.language_italian,
-            R.string.language_korean,
-            R.string.language_polish,
-            R.string.language_portuguese,
-            R.string.language_russian,
-            R.string.language_spanish,
-            R.string.language_thai,
-            R.string.language_vietnamese,
-            R.string.language_na,
-            R.string.language_other
-    };
 
-    private static final String[] LANGUAGES = {
-            EhConfig.JAPANESE_ORIGINAL,
-            EhConfig.JAPANESE_TRANSLATED,
-            EhConfig.JAPANESE_REWRITE,
-            EhConfig.ENGLISH_ORIGINAL,
-            EhConfig.ENGLISH_TRANSLATED,
-            EhConfig.ENGLISH_REWRITE,
-            EhConfig.CHINESE_ORIGINAL,
-            EhConfig.CHINESE_TRANSLATED,
-            EhConfig.CHINESE_REWRITE,
-            EhConfig.DUTCH_ORIGINAL,
-            EhConfig.DUTCH_TRANSLATED,
-            EhConfig.DUTCH_REWRITE,
-            EhConfig.FRENCH_ORIGINAL,
-            EhConfig.FRENCH_TRANSLATED,
-            EhConfig.FRENCH_REWRITE,
-            EhConfig.GERMAN_ORIGINAL,
-            EhConfig.GERMAN_TRANSLATED,
-            EhConfig.GERMAN_REWRITE,
-            EhConfig.HUNGARIAN_ORIGINAL,
-            EhConfig.HUNGARIAN_TRANSLATED,
-            EhConfig.HUNGARIAN_REWRITE,
-            EhConfig.ITALIAN_ORIGINAL,
-            EhConfig.ITALIAN_TRANSLATED,
-            EhConfig.ITALIAN_REWRITE,
-            EhConfig.KOREAN_ORIGINAL,
-            EhConfig.KOREAN_TRANSLATED,
-            EhConfig.KOREAN_REWRITE,
-            EhConfig.POLISH_ORIGINAL,
-            EhConfig.POLISH_TRANSLATED,
-            EhConfig.POLISH_REWRITE,
-            EhConfig.PORTUGUESE_ORIGINAL,
-            EhConfig.PORTUGUESE_TRANSLATED,
-            EhConfig.PORTUGUESE_REWRITE,
-            EhConfig.RUSSIAN_ORIGINAL,
-            EhConfig.RUSSIAN_TRANSLATED,
-            EhConfig.RUSSIAN_REWRITE,
-            EhConfig.SPANISH_ORIGINAL,
-            EhConfig.SPANISH_TRANSLATED,
-            EhConfig.SPANISH_REWRITE,
-            EhConfig.THAI_ORIGINAL,
-            EhConfig.THAI_TRANSLATED,
-            EhConfig.THAI_REWRITE,
-            EhConfig.VIETNAMESE_ORIGINAL,
-            EhConfig.VIETNAMESE_TRANSLATED,
-            EhConfig.VIETNAMESE_REWRITE,
-            EhConfig.NA_ORIGINAL,
-            EhConfig.NA_TRANSLATED,
-            EhConfig.NA_REWRITE,
-            EhConfig.OTHER_ORIGINAL,
-            EhConfig.OTHER_TRANSLATED,
-            EhConfig.OTHER_REWRITE};
+    private static final int[] LANGUAGE_STR_IDS = { R.string.language_japanese, R.string.language_english, R.string.language_chinese, R.string.language_dutch, R.string.language_french, R.string.language_german, R.string.language_hungarian, R.string.language_italian, R.string.language_korean, R.string.language_polish, R.string.language_portuguese, R.string.language_russian, R.string.language_spanish, R.string.language_thai, R.string.language_vietnamese, R.string.language_na, R.string.language_other };
+
+    private static final String[] LANGUAGES = { EhConfig.JAPANESE_ORIGINAL, EhConfig.JAPANESE_TRANSLATED, EhConfig.JAPANESE_REWRITE, EhConfig.ENGLISH_ORIGINAL, EhConfig.ENGLISH_TRANSLATED, EhConfig.ENGLISH_REWRITE, EhConfig.CHINESE_ORIGINAL, EhConfig.CHINESE_TRANSLATED, EhConfig.CHINESE_REWRITE, EhConfig.DUTCH_ORIGINAL, EhConfig.DUTCH_TRANSLATED, EhConfig.DUTCH_REWRITE, EhConfig.FRENCH_ORIGINAL, EhConfig.FRENCH_TRANSLATED, EhConfig.FRENCH_REWRITE, EhConfig.GERMAN_ORIGINAL, EhConfig.GERMAN_TRANSLATED, EhConfig.GERMAN_REWRITE, EhConfig.HUNGARIAN_ORIGINAL, EhConfig.HUNGARIAN_TRANSLATED, EhConfig.HUNGARIAN_REWRITE, EhConfig.ITALIAN_ORIGINAL, EhConfig.ITALIAN_TRANSLATED, EhConfig.ITALIAN_REWRITE, EhConfig.KOREAN_ORIGINAL, EhConfig.KOREAN_TRANSLATED, EhConfig.KOREAN_REWRITE, EhConfig.POLISH_ORIGINAL, EhConfig.POLISH_TRANSLATED, EhConfig.POLISH_REWRITE, EhConfig.PORTUGUESE_ORIGINAL, EhConfig.PORTUGUESE_TRANSLATED, EhConfig.PORTUGUESE_REWRITE, EhConfig.RUSSIAN_ORIGINAL, EhConfig.RUSSIAN_TRANSLATED, EhConfig.RUSSIAN_REWRITE, EhConfig.SPANISH_ORIGINAL, EhConfig.SPANISH_TRANSLATED, EhConfig.SPANISH_REWRITE, EhConfig.THAI_ORIGINAL, EhConfig.THAI_TRANSLATED, EhConfig.THAI_REWRITE, EhConfig.VIETNAMESE_ORIGINAL, EhConfig.VIETNAMESE_TRANSLATED, EhConfig.VIETNAMESE_REWRITE, EhConfig.NA_ORIGINAL, EhConfig.NA_TRANSLATED, EhConfig.NA_REWRITE, EhConfig.OTHER_ORIGINAL, EhConfig.OTHER_TRANSLATED, EhConfig.OTHER_REWRITE };
 
     private final boolean[][] mSelections = new boolean[ROW_COUNT][3];
 
@@ -120,16 +50,22 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
      ---------------*/
     @Nullable
     private View mCancel;
+
     @Nullable
     private View mOk;
+
     @Nullable
     private View mSelectAll;
+
     @Nullable
     private View mDeselectAll;
+
     @Nullable
     private View mInvertSelection;
+
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private LanguageAdapter mAdapter;
 
@@ -138,32 +74,27 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.scene_excluded_languages);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-
         if (null == savedInstanceState) {
             onInit();
         } else {
             onRestore(savedInstanceState);
         }
-
         mCancel = ViewUtils.$$(this, R.id.cancel);
         mOk = ViewUtils.$$(this, R.id.ok);
         mSelectAll = ViewUtils.$$(this, R.id.select_all);
         mDeselectAll = ViewUtils.$$(this, R.id.deselect_all);
         mInvertSelection = ViewUtils.$$(this, R.id.invert_selection);
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(this, R.id.recycler_view);
-
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setClipToPadding(false);
         mAdapter = new LanguageAdapter();
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         mCancel.setOnClickListener(this);
         mOk.setOnClickListener(this);
         mSelectAll.setOnClickListener(this);
         mDeselectAll.setOnClickListener(this);
         mInvertSelection.setOnClickListener(this);
-
         boolean isDarkTheme = !AttrResources.getAttrBoolean(this, androidx.appcompat.R.attr.isLightTheme);
         Ripple.addRipple(mCancel, isDarkTheme);
         Ripple.addRipple(mOk, isDarkTheme);
@@ -174,12 +105,10 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
 
     private boolean isDecimal(String str) {
         int length = str.length();
-
         // "" is not decimal
         if (length <= 0) {
             return false;
         }
-
         for (int i = 0; i < length; i++) {
             char ch = str.charAt(i);
             if (ch < '0' || ch > '9') {
@@ -194,9 +123,7 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
         if (null == excludedLanguages) {
             return;
         }
-
         String[] languages = excludedLanguages.split("x");
-
         int iLength = languages.length;
         int jLength = LANGUAGES.length;
         for (int i = 0, j = 0; i < iLength; i++) {
@@ -204,7 +131,6 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
             if (!isDecimal(language)) {
                 continue;
             }
-
             for (; j < jLength; j++) {
                 String pattern = LANGUAGES[j];
                 if (pattern.equals(language)) {
@@ -253,7 +179,6 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         mCancel = null;
         mOk = null;
         mSelectAll = null;
@@ -265,7 +190,7 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
@@ -279,7 +204,6 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
         if (null == mAdapter) {
             return;
         }
-
         if (v == mCancel) {
             finish();
         } else if (v == mOk) {
@@ -299,7 +223,6 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
                     i++;
                 }
             }
-
             String excludedLanguages = sb.toString();
             Settings.putExcludedLanguages(excludedLanguages);
             finish();
@@ -330,23 +253,23 @@ public class ExcludedLanguagesActivity extends ToolbarActivity
         }
     }
 
-    private class LanguageHolder extends RecyclerView.ViewHolder
-            implements SensitiveCheckBox.OnCheckedChangeListener {
+    private class LanguageHolder extends RecyclerView.ViewHolder implements SensitiveCheckBox.OnCheckedChangeListener {
 
         public TextView language;
+
         public SensitiveCheckBox original;
+
         public SensitiveCheckBox translated;
+
         public SensitiveCheckBox rewrite;
 
         public LanguageHolder(View itemView) {
             super(itemView);
-
             ViewGroup viewGroup = (ViewGroup) itemView;
             language = (TextView) viewGroup.getChildAt(0);
             original = (SensitiveCheckBox) viewGroup.getChildAt(1);
             translated = (SensitiveCheckBox) viewGroup.getChildAt(2);
             rewrite = (SensitiveCheckBox) viewGroup.getChildAt(3);
-
             original.setOnCheckedChangeListener(this);
             translated.setOnCheckedChangeListener(this);
             rewrite.setOnCheckedChangeListener(this);

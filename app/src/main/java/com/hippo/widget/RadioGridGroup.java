@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -28,17 +27,19 @@ import com.hippo.yorozuya.ViewUtils;
 
 public class RadioGridGroup extends SimpleGridLayout {
 
-    private static final int[] RADIO_ATTRS = new int[] {
-            android.R.attr.checkedButton
-    };
+    private static final int[] RADIO_ATTRS = new int[] { android.R.attr.checkedButton };
 
     // holds the checked id; the selection is empty by default
     private int mCheckedId = -1;
+
     // tracks children radio buttons checked state
     private CompoundButton.OnCheckedChangeListener mChildOnCheckedChangeListener;
+
     // when true, mOnCheckedChangeListener discards events
     private boolean mProtectFromCheckedChange = false;
+
     private OnCheckedChangeListener mOnCheckedChangeListener;
+
     private PassThroughHierarchyChangeListener mPassThroughListener;
 
     public RadioGridGroup(Context context, AttributeSet attrs) {
@@ -58,12 +59,10 @@ public class RadioGridGroup extends SimpleGridLayout {
             mCheckedId = value;
         }
         a.recycle();
-
         mChildOnCheckedChangeListener = new CheckedStateTracker();
         mPassThroughListener = new PassThroughHierarchyChangeListener();
         super.setOnHierarchyChangeListener(mPassThroughListener);
     }
-
 
     /**
      * {@inheritDoc}
@@ -80,7 +79,6 @@ public class RadioGridGroup extends SimpleGridLayout {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-
         // checks the appropriate radio button as requested in the XML file
         if (mCheckedId != -1) {
             mProtectFromCheckedChange = true;
@@ -103,7 +101,6 @@ public class RadioGridGroup extends SimpleGridLayout {
                 setCheckedId(button.getId());
             }
         }
-
         super.addView(child, index, params);
     }
 
@@ -122,15 +119,12 @@ public class RadioGridGroup extends SimpleGridLayout {
         if (id != -1 && (id == mCheckedId)) {
             return;
         }
-
         if (mCheckedId != -1) {
             setCheckedStateForView(mCheckedId, false);
         }
-
         if (id != -1) {
             setCheckedStateForView(id, true);
         }
-
         setCheckedId(id);
     }
 
@@ -189,6 +183,7 @@ public class RadioGridGroup extends SimpleGridLayout {
      * radio button changed in this group.</p>
      */
     public interface OnCheckedChangeListener {
+
         /**
          * <p>Called when the checked radio button has changed. When the
          * selection is cleared, checkedId is -1.</p>
@@ -200,19 +195,18 @@ public class RadioGridGroup extends SimpleGridLayout {
     }
 
     private class CheckedStateTracker implements CompoundButton.OnCheckedChangeListener {
+
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             // prevents from infinite recursion
             if (mProtectFromCheckedChange) {
                 return;
             }
-
             mProtectFromCheckedChange = true;
             if (mCheckedId != -1) {
                 setCheckedStateForView(mCheckedId, false);
             }
             mProtectFromCheckedChange = false;
-
             int id = buttonView.getId();
             setCheckedId(id);
         }
@@ -223,8 +217,8 @@ public class RadioGridGroup extends SimpleGridLayout {
      * to another listener. This allows the table layout to set its own internal
      * hierarchy change listener without preventing the user to setup his.</p>
      */
-    private class PassThroughHierarchyChangeListener implements
-            OnHierarchyChangeListener {
+    private class PassThroughHierarchyChangeListener implements OnHierarchyChangeListener {
+
         private OnHierarchyChangeListener mOnHierarchyChangeListener;
 
         /**
@@ -239,10 +233,8 @@ public class RadioGridGroup extends SimpleGridLayout {
                     id = ViewUtils.generateViewId();
                     child.setId(id);
                 }
-                ((RadioButton) child).setOnCheckedChangeListener(
-                        mChildOnCheckedChangeListener);
+                ((RadioButton) child).setOnCheckedChangeListener(mChildOnCheckedChangeListener);
             }
-
             if (mOnHierarchyChangeListener != null) {
                 mOnHierarchyChangeListener.onChildViewAdded(parent, child);
             }
@@ -256,7 +248,6 @@ public class RadioGridGroup extends SimpleGridLayout {
             if (parent == RadioGridGroup.this && child instanceof RadioButton) {
                 ((RadioButton) child).setOnCheckedChangeListener(null);
             }
-
             if (mOnHierarchyChangeListener != null) {
                 mOnHierarchyChangeListener.onChildViewRemoved(parent, child);
             }

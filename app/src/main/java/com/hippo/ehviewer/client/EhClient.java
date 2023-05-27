@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 import android.content.Context;
 import android.os.AsyncTask;
-
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.userTag.TagPushParam;
 import com.hippo.ehviewer.client.data.userTag.UserTag;
@@ -26,12 +24,10 @@ import com.hippo.ehviewer.client.exception.CancelledException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.yorozuya.SimpleHandler;
-
 import java.io.File;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 
@@ -40,31 +36,55 @@ public class EhClient {
     public static final String TAG = EhClient.class.getSimpleName();
 
     public static final int METHOD_SIGN_IN = 0;
+
     public static final int METHOD_GET_GALLERY_LIST = 1;
+
     public static final int METHOD_GET_GALLERY_DETAIL = 3;
+
     public static final int METHOD_GET_PREVIEW_SET = 4;
+
     public static final int METHOD_GET_RATE_GALLERY = 5;
+
     public static final int METHOD_GET_COMMENT_GALLERY = 6;
+
     public static final int METHOD_GET_GALLERY_TOKEN = 7;
+
     public static final int METHOD_GET_FAVORITES = 8;
+
     public static final int METHOD_ADD_FAVORITES = 9;
+
     public static final int METHOD_ADD_FAVORITES_RANGE = 10;
+
     public static final int METHOD_MODIFY_FAVORITES = 11;
+
     public static final int METHOD_GET_TORRENT_LIST = 12;
+
     public static final int METHOD_GET_TOP_LIST = 13;
+
     public static final int METHOD_GET_PROFILE = 14;
+
     public static final int METHOD_VOTE_COMMENT = 15;
+
     public static final int METHOD_IMAGE_SEARCH = 16;
+
     public static final int METHOD_ARCHIVE_LIST = 17;
+
     public static final int METHOD_DOWNLOAD_ARCHIVE = 18;
+
     public static final int METHOD_ADD_TAG = 20;
+
     public static final int METHOD_EDIT_WATCHED = 21;
+
     public static final int METHOD_DELETE_WATCHED = 22;
+
     public static final int METHOD_GET_WATCHED = 23;
+
     public static final int METHOD_GET_NEWS = 24;
 
     private final ThreadPoolExecutor mRequestThreadPool;
+
     private final OkHttpClient mOkHttpClient;
+
     private final OkHttpClient mImageOkHttpClient;
 
     public EhClient(Context context) {
@@ -86,10 +106,13 @@ public class EhClient {
     public class Task extends AsyncTask<Object, Void, Object> {
 
         private final int mMethod;
+
         private Callback mCallback;
+
         private EhConfig mEhConfig;
 
         private final AtomicReference<Call> mCall = new AtomicReference<>();
+
         private final AtomicBoolean mStop = new AtomicBoolean();
 
         public Task(int method, Callback callback, EhConfig ehConfig) {
@@ -115,13 +138,11 @@ public class EhClient {
         public void stop() {
             if (!mStop.get()) {
                 mStop.lazySet(true);
-
                 if (mCallback != null) {
                     // TODO Avoid new runnable
                     final Callback finalCallback = mCallback;
                     SimpleHandler.getInstance().post(finalCallback::onCancel);
                 }
-
                 Status status = getStatus();
                 if (status == Status.PENDING) {
                     cancel(false);
@@ -132,7 +153,6 @@ public class EhClient {
                         call.cancel();
                     }
                 }
-
                 // Clear
                 mCallback = null;
                 mEhConfig = null;
@@ -143,7 +163,7 @@ public class EhClient {
         @Override
         protected Object doInBackground(Object... params) {
             try {
-                switch (mMethod) {
+                switch(mMethod) {
                     case METHOD_SIGN_IN:
                         return EhEngine.signIn(this, mOkHttpClient, (String) params[0], (String) params[1]);
                     case METHOD_GET_GALLERY_LIST:
@@ -181,14 +201,14 @@ public class EhClient {
                     case METHOD_DOWNLOAD_ARCHIVE:
                         return EhEngine.downloadArchive(this, mOkHttpClient, (Long) params[0], (String) params[1], (String) params[2], (String) params[3]);
                     case METHOD_ADD_TAG:
-                        return EhEngine.addTag(this, mOkHttpClient,(String) params[0],(TagPushParam) params[1]);
+                        return EhEngine.addTag(this, mOkHttpClient, (String) params[0], (TagPushParam) params[1]);
                     case METHOD_EDIT_WATCHED:
                     case METHOD_DELETE_WATCHED:
-                        return EhEngine.deleteWatchedTag(this, mOkHttpClient,(String) params[0],(UserTag) params[1]);
+                        return EhEngine.deleteWatchedTag(this, mOkHttpClient, (String) params[0], (UserTag) params[1]);
                     case METHOD_GET_WATCHED:
-                        return EhEngine.getWatchedList(this, mOkHttpClient,(String) params[0]);
+                        return EhEngine.getWatchedList(this, mOkHttpClient, (String) params[0]);
                     case METHOD_GET_NEWS:
-                        return EhEngine.getEhNews(this,mOkHttpClient);
+                        return EhEngine.getEhNews(this, mOkHttpClient);
                     default:
                         return new IllegalStateException("Can't detect method " + mMethod);
                 }
@@ -213,7 +233,6 @@ public class EhClient {
                     // onCancel is called in stop
                 }
             }
-
             // Clear
             mCallback = null;
             mEhConfig = null;

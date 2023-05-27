@@ -15,18 +15,22 @@ public class GifHandler {
     }
 
     private native long loadPath(String path);
+
     public native int getWidth(long ndkGif);
+
     public native int getHeight(long ndkGif);
+
     public native int updateFrame(long ndkGif, Bitmap bitmap);
 
     public int getWidth() {
         return getWidth(gifAddr);
     }
+
     public int getHeight() {
         return getHeight(gifAddr);
     }
 
     public int updateFrame(Bitmap bitmap) {
-        return updateFrame(gifAddr,bitmap);
+        return updateFrame(gifAddr, bitmap);
     }
 }

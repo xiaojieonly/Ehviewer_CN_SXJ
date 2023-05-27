@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.content.Context;
@@ -45,11 +44,13 @@ public class SwitchPreference extends TwoStatePreference {
 
     // Switch text for on and off states
     private CharSequence mSwitchOn;
+
     private CharSequence mSwitchOff;
 
     private final Listener mListener = new Listener();
 
     private class Listener implements CompoundButton.OnCheckedChangeListener {
+
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (!callChangeListener(isChecked)) {
@@ -58,7 +59,6 @@ public class SwitchPreference extends TwoStatePreference {
                 buttonView.setChecked(!isChecked);
                 return;
             }
-
             SwitchPreference.this.setChecked(isChecked);
         }
     }
@@ -93,16 +93,13 @@ public class SwitchPreference extends TwoStatePreference {
     @Override
     protected void onBindView(View view) {
         super.onBindView(view);
-
         View checkableView = view.findViewById(R.id.switchWidget);
         if (checkableView != null && checkableView instanceof Checkable) {
             if (checkableView instanceof SwitchCompat) {
                 final SwitchCompat switchView = (SwitchCompat) checkableView;
                 switchView.setOnCheckedChangeListener(null);
             }
-
             ((Checkable) checkableView).setChecked(isChecked());
-
             if (checkableView instanceof SwitchCompat) {
                 final SwitchCompat switchView = (SwitchCompat) checkableView;
                 switchView.setTextOn(mSwitchOn);
@@ -110,7 +107,6 @@ public class SwitchPreference extends TwoStatePreference {
                 switchView.setOnCheckedChangeListener(mListener);
             }
         }
-
         if (sSyncSummaryViewMethod != null) {
             try {
                 sSyncSummaryViewMethod.invoke(this, view);
@@ -121,7 +117,6 @@ public class SwitchPreference extends TwoStatePreference {
             }
         }
     }
-
 
     /**
      * Set the text displayed on the switch widget in the on state.

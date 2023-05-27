@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.annotation.SuppressLint;
@@ -22,7 +21,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.util.Log;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -57,7 +55,7 @@ public final class PackageUtils {
             md = MessageDigest.getInstance("SHA1");
             byte[] sha1 = md.digest(certRaw);
             int length = sha1.length;
-            for (int i = 0; i  < length; i++) {
+            for (int i = 0; i < length; i++) {
                 if (i != 0) {
                     sb.append(':');
                 }
@@ -68,10 +66,8 @@ public final class PackageUtils {
                 }
                 sb.append(appendStr);
             }
-
             return sb.toString().toUpperCase();
-        }
-        catch (NoSuchAlgorithmException ex) {
+        } catch (NoSuchAlgorithmException ex) {
             Log.e(TAG, "Can't final Algorithm SHA1", ex);
             return null;
         }

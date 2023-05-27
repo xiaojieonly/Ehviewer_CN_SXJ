@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -29,6 +28,7 @@ import com.hippo.yorozuya.ViewUtils;
 public class SeekBarPanel extends LinearLayout {
 
     private SeekBar mSeekBar;
+
     private int[] mLocation = new int[2];
 
     public SeekBarPanel(Context context) {

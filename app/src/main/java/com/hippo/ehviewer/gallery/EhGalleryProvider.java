@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
@@ -30,7 +29,9 @@ import java.util.Locale;
 public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.OnSpiderListener {
 
     private final Context mContext;
+
     private final GalleryInfo mGalleryInfo;
+
     @Nullable
     private SpiderQueen mSpiderQueen;
 
@@ -42,7 +43,6 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     @Override
     public void start() {
         super.start();
-
         mSpiderQueen = SpiderQueen.obtainSpiderQueen(mContext, mGalleryInfo, SpiderQueen.MODE_READ);
         mSpiderQueen.addOnSpiderListener(this);
     }
@@ -50,7 +50,6 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     @Override
     public void stop() {
         super.stop();
-
         if (mSpiderQueen != null) {
             mSpiderQueen.removeOnSpiderListener(this);
             // Activity recreate may called, so wait 3000s
@@ -149,7 +148,8 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
         if (mSpiderQueen != null) {
             return mSpiderQueen.getError();
         } else {
-            return "Error"; // TODO
+            // TODO
+            return "Error";
         }
     }
 

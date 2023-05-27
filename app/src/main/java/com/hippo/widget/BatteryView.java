@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.annotation.SuppressLint;
@@ -32,15 +31,19 @@ import com.hippo.ehviewer.R;
 public class BatteryView extends AppCompatTextView {
 
     private int mColor;
+
     private int mWarningColor;
+
     private int mCurrentColor;
 
     private int mLevel = 0;
+
     private boolean mCharging = false;
 
     private BatteryDrawable mDrawable;
 
     private boolean mAttached = false;
+
     private boolean mIsChargerWorking = false;
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
@@ -48,12 +51,8 @@ public class BatteryView extends AppCompatTextView {
         @Override
         @SuppressLint("SetTextI18n")
         public void onReceive(Context context, Intent intent) {
-
-            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0)
-                    * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 0);
-            boolean charging = (intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-                    == BatteryManager.BATTERY_STATUS_CHARGING);
-
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 0);
+            boolean charging = (intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING);
             if (mLevel != level || mCharging != charging) {
                 mLevel = level;
                 mCharging = charging;
@@ -63,7 +62,6 @@ public class BatteryView extends AppCompatTextView {
                     stopCharger();
                     mDrawable.setElect(mLevel);
                 }
-
                 if (level <= BatteryDrawable.WARN_LIMIT && !charging) {
                     setTextColor(mWarningColor);
                 } else {
@@ -100,15 +98,11 @@ public class BatteryView extends AppCompatTextView {
 
     public BatteryView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-
         init();
-
-        TypedArray typedArray = context.obtainStyledAttributes(
-                attrs, R.styleable.BatteryView, defStyleAttr, 0);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.BatteryView, defStyleAttr, 0);
         mColor = typedArray.getColor(R.styleable.BatteryView_color, Color.WHITE);
         mWarningColor = typedArray.getColor(R.styleable.BatteryView_warningColor, Color.RED);
         typedArray.recycle();
-
         mDrawable.setColor(mColor);
         mDrawable.setWarningColor(mWarningColor);
     }
@@ -146,10 +140,8 @@ public class BatteryView extends AppCompatTextView {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
         if (!mAttached) {
             mAttached = true;
-
             registerReceiver();
         }
     }
@@ -157,7 +149,6 @@ public class BatteryView extends AppCompatTextView {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
         if (mAttached) {
             unregisterReceiver();
             stopCharger();

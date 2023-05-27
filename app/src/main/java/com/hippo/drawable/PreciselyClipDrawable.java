@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-
 import com.hippo.yorozuya.MathUtils;
 
 /**
@@ -29,24 +27,22 @@ import com.hippo.yorozuya.MathUtils;
 public class PreciselyClipDrawable extends DrawableWrapper {
 
     private final boolean mClip;
+
     private RectF mScale;
+
     private Rect mTemp;
 
     public PreciselyClipDrawable(Drawable drawable, int offsetX, int offsetY, int width, int height) {
         super(drawable);
         float originWidth = drawable.getIntrinsicWidth();
         float originHeight = drawable.getIntrinsicHeight();
-
         if (originWidth <= 0 || originHeight <= 0) {
             // Can not clip
             mClip = false;
         } else {
             mClip = true;
             mScale = new RectF();
-            mScale.set(MathUtils.clamp(offsetX / originWidth, 0.0f, 1.0f),
-                    MathUtils.clamp(offsetY / originHeight, 0.0f, 1.0f),
-                    MathUtils.clamp((offsetX + width) / originWidth, 0.0f, 1.0f),
-                    MathUtils.clamp((offsetY + height) / originHeight, 0.0f, 1.0f));
+            mScale.set(MathUtils.clamp(offsetX / originWidth, 0.0f, 1.0f), MathUtils.clamp(offsetY / originHeight, 0.0f, 1.0f), MathUtils.clamp((offsetX + width) / originWidth, 0.0f, 1.0f), MathUtils.clamp((offsetY + height) / originHeight, 0.0f, 1.0f));
             mTemp = new Rect();
         }
     }
@@ -55,14 +51,10 @@ public class PreciselyClipDrawable extends DrawableWrapper {
     protected void onBoundsChange(Rect bounds) {
         if (mClip) {
             if (!mScale.isEmpty()) {
-                mTemp.left = (int) ((mScale.left * bounds.right - mScale.right * bounds.left) /
-                        (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
-                mTemp.right = (int) (((1 - mScale.right) * bounds.left - (1 - mScale.left) * bounds.right) /
-                        (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
-                mTemp.top = (int) ((mScale.top * bounds.bottom - mScale.bottom * bounds.top) /
-                        (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
-                mTemp.bottom = (int) (((1 - mScale.bottom) * bounds.top - (1 - mScale.top) * bounds.bottom) /
-                        (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
+                mTemp.left = (int) ((mScale.left * bounds.right - mScale.right * bounds.left) / (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
+                mTemp.right = (int) (((1 - mScale.right) * bounds.left - (1 - mScale.left) * bounds.right) / (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
+                mTemp.top = (int) ((mScale.top * bounds.bottom - mScale.bottom * bounds.top) / (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
+                mTemp.bottom = (int) (((1 - mScale.bottom) * bounds.top - (1 - mScale.top) * bounds.bottom) / (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
                 super.onBoundsChange(mTemp);
             }
         } else {

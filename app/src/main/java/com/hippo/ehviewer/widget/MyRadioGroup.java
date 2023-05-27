@@ -37,7 +37,6 @@ public class MyRadioGroup extends RadioGroup {
         // 用于记录换行前的行宽和行高
         int oldHeight;
         int oldWidth;
-
         int count = getChildCount();
         // 假设 widthMode和heightMode都是AT_MOST
         for (int i = 0; i < count; i++) {
@@ -47,7 +46,6 @@ public class MyRadioGroup extends RadioGroup {
             oldHeight = maxLineHeight;
             // 当前最大宽度
             oldWidth = maxWidth;
-
             int deltaX = child.getMeasuredWidth() + params.leftMargin + params.rightMargin;
             if (lineWidth + deltaX + getPaddingLeft() + getPaddingRight() > widthSize) {
                 // 如果换行,height增加和目前最大的宽度比较,得到最宽。不能加上当前的child的宽,所以用的是oldWidth
@@ -72,7 +70,6 @@ public class MyRadioGroup extends RadioGroup {
                 maxWidth = Math.max(lineWidth, oldWidth);
             }
         }
-
         // 加上当前容器的padding值
         maxWidth += getPaddingLeft() + getPaddingRight();
         totalHeight += getPaddingTop() + getPaddingBottom();
@@ -82,8 +79,7 @@ public class MyRadioGroup extends RadioGroup {
          * -具体值--- MeasureSpec.UNSPECIFIED
          */
         // 设置当前View的宽高
-        setMeasuredDimension(widthMode == MeasureSpec.EXACTLY ? widthSize : maxWidth,
-                heightMode == MeasureSpec.EXACTLY ? heightSize : totalHeight);
+        setMeasuredDimension(widthMode == MeasureSpec.EXACTLY ? widthSize : maxWidth, heightMode == MeasureSpec.EXACTLY ? heightSize : totalHeight);
     }
 
     @Override
@@ -98,16 +94,15 @@ public class MyRadioGroup extends RadioGroup {
             View child = getChildAt(i);
             MarginLayoutParams params = (MarginLayoutParams) child.getLayoutParams();
             // r-l为当前容器的宽度。如果子view的累积宽度大于容器宽度，就换行。
-            if (preLeft + params.leftMargin + child.getMeasuredWidth() + params.rightMargin
-                    + getPaddingRight() > (r - l)) {
+            if (preLeft + params.leftMargin + child.getMeasuredWidth() + params.rightMargin + getPaddingRight() > (r - l)) {
                 // 重置
                 preLeft = getPaddingLeft();
                 // 要选择child的height最大的作为设置
                 preTop = preTop + maxHeight;
                 maxHeight = getChildAt(i).getMeasuredHeight() + params.topMargin + params.bottomMargin;
-            } else { // 不换行,计算最大高度
-                maxHeight = Math.max(maxHeight,
-                        child.getMeasuredHeight() + params.topMargin + params.bottomMargin);
+            } else {
+                // 不换行,计算最大高度
+                maxHeight = Math.max(maxHeight, child.getMeasuredHeight() + params.topMargin + params.bottomMargin);
             }
             // left坐标
             int left = preLeft + params.leftMargin;

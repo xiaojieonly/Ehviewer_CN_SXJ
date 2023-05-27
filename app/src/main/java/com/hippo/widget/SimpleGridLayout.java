@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -21,7 +20,6 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-
 import com.hippo.ehviewer.R;
 import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.ViewUtils;
@@ -30,16 +28,17 @@ import com.hippo.yorozuya.ViewUtils;
  * not scrollable
  *
  * @author Hippo
- *
  */
 public class SimpleGridLayout extends ViewGroup {
 
     private static final int DEFAULT_COLUMN_COUNT = 3;
 
     private int mColumnCount;
+
     private int mItemMargin;
 
     private int[] mRowHeights;
+
     private int mItemWidth;
 
     public SimpleGridLayout(Context context) {
@@ -75,7 +74,6 @@ public class SimpleGridLayout extends ViewGroup {
         if (columnCount <= 0) {
             throw new IllegalStateException("Column count can't be " + columnCount);
         }
-
         if (mColumnCount != columnCount) {
             mColumnCount = columnCount;
             requestLayout();
@@ -88,25 +86,20 @@ public class SimpleGridLayout extends ViewGroup {
         if (mRowHeights == null || mRowHeights.length != maxRowCount) {
             mRowHeights = new int[maxRowCount];
         }
-
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int maxWidth = MeasureSpec.getSize(widthMeasureSpec);
         int maxHeight = MeasureSpec.getSize(heightMeasureSpec);
-
         if (widthMode == MeasureSpec.UNSPECIFIED) {
             maxWidth = 300;
         }
         if (heightMode == MeasureSpec.UNSPECIFIED) {
             maxHeight = ViewUtils.MAX_SIZE;
         }
-
         // Get item width MeasureSpec
-        mItemWidth = Math.max(
-                (maxWidth - getPaddingLeft() - getPaddingRight() - ((mColumnCount - 1) * mItemMargin)) / mColumnCount, 1);
+        mItemWidth = Math.max((maxWidth - getPaddingLeft() - getPaddingRight() - ((mColumnCount - 1) * mItemMargin)) / mColumnCount, 1);
         int itemWidthMeasureSpec = MeasureSpec.makeMeasureSpec(mItemWidth, MeasureSpec.EXACTLY);
         int itemHeightMeasureSpec = MeasureSpec.UNSPECIFIED;
-
         int measuredWidth = maxWidth;
         int measuredHeight = 0;
         int rowHeight = 0;
@@ -118,18 +111,14 @@ public class SimpleGridLayout extends ViewGroup {
                 indexInRow--;
                 continue;
             }
-
             child.measure(itemWidthMeasureSpec, itemHeightMeasureSpec);
-
             if (indexInRow == mColumnCount) {
                 // New row
                 indexInRow = 0;
                 rowHeight = 0;
                 row++;
             }
-
             rowHeight = Math.max(rowHeight, child.getMeasuredHeight());
-
             if (indexInRow == mColumnCount - 1 || index == count - 1) {
                 mRowHeights[row] = rowHeight;
                 measuredHeight += rowHeight + mItemMargin;
@@ -137,7 +126,6 @@ public class SimpleGridLayout extends ViewGroup {
         }
         measuredHeight -= mItemMargin;
         measuredHeight = Math.max(0, Math.min(measuredHeight + getPaddingTop() + getPaddingBottom(), maxHeight));
-
         setMeasuredDimension(measuredWidth, measuredHeight);
     }
 
@@ -156,18 +144,14 @@ public class SimpleGridLayout extends ViewGroup {
                 indexInRow--;
                 continue;
             }
-
             if (indexInRow == mColumnCount) {
                 // New row
                 left = paddingLeft;
                 top += mRowHeights[row] + itemMargin;
-
                 indexInRow = 0;
                 row++;
             }
-
             child.layout(left, top, left + child.getMeasuredWidth(), top + child.getMeasuredHeight());
-
             left += itemWidth + itemMargin;
         }
     }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import androidx.annotation.NonNull;
@@ -45,7 +44,7 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
 
     @Override
     public int sizeOf(@NonNull String key, @NonNull ImageBitmap value) {
-        return value.getWidth() * value.getHeight() * 4 /* value.getByteCount() TODO Update Image */;
+        return value.getWidth() * value.getHeight() * 4;
     }
 
     @Override
@@ -53,11 +52,10 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
         value.obtain();
     }
 
-//    @Override
-//    public void onAddToMemoryCache(@NonNull ImageBitmap oldValue) {
-//        oldValue.obtain();
-//    }
-
+    //    @Override
+    //    public void onAddToMemoryCache(@NonNull ImageBitmap oldValue) {
+    //        oldValue.obtain();
+    //    }
     @Override
     public void onRemoveFromMemoryCache(@NonNull String key, @NonNull ImageBitmap oldValue) {
         oldValue.release();
@@ -66,8 +64,7 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
     @Override
     public boolean useMemoryCache(@NonNull String key, ImageBitmap value) {
         if (value != null) {
-            return value.getWidth() * value.getHeight() <= MAX_CACHE_SIZE
-                    /* value.getByteCount() <= MAX_CACHE_BYTE_COUNT TODO Update Image */;
+            return value.getWidth() * value.getHeight() <= MAX_CACHE_SIZE;
         } else {
             return true;
         }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.content.Context;
@@ -25,10 +24,12 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.scene.SceneFragment;
 import com.hippo.scene.StageActivity;
 
-public abstract class EhCallback<E extends SceneFragment, T> implements EhClient.Callback<T>  {
+public abstract class EhCallback<E extends SceneFragment, T> implements EhClient.Callback<T> {
 
     private final EhApplication mApplication;
+
     private final int mStageId;
+
     private final String mSceneTag;
 
     public EhCallback(Context context, int stageId, String sceneTag) {
@@ -74,8 +75,7 @@ public abstract class EhCallback<E extends SceneFragment, T> implements EhClient
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).showTip(id, length);
         } else {
-            Toast.makeText(getApplication(), id,
-                    length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplication(), id, length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -84,8 +84,7 @@ public abstract class EhCallback<E extends SceneFragment, T> implements EhClient
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).showTip(tip, length);
         } else {
-            Toast.makeText(getApplication(), tip,
-                    length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplication(), tip, length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
         }
     }
 }

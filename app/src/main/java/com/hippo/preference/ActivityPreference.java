@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.content.Context;
@@ -65,7 +64,6 @@ public class ActivityPreference extends Preference {
         if (null == mActivityClazz) {
             return;
         }
-
         Context context = getContext();
         Intent intent = new Intent(context, mActivityClazz);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

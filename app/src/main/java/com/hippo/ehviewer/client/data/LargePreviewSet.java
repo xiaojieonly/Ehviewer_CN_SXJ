@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.widget.LoadImageView;
 import com.hippo.yorozuya.collect.IntList;
-
 import java.util.ArrayList;
 
 public class LargePreviewSet extends PreviewSet {
 
     private final IntList mPositionList;
+
     private final ArrayList<String> mImageUrlList;
+
     private final ArrayList<String> mPageUrlList;
 
     public void addItem(int index, String imageUrl, String pageUrl) {
@@ -65,8 +64,7 @@ public class LargePreviewSet extends PreviewSet {
     @Override
     public void load(LoadImageView view, long gid, int index) {
         view.resetClip();
-        view.load(EhCacheKeyFactory.getLargePreviewKey(gid, mPositionList.get(index)),
-                mImageUrlList.get(index));
+        view.load(EhCacheKeyFactory.getLargePreviewKey(gid, mPositionList.get(index)), mImageUrlList.get(index));
     }
 
     @Override
@@ -94,6 +92,7 @@ public class LargePreviewSet extends PreviewSet {
     }
 
     public static final Creator<LargePreviewSet> CREATOR = new Creator<LargePreviewSet>() {
+
         @Override
         public LargePreviewSet createFromParcel(Parcel source) {
             return new LargePreviewSet(source);

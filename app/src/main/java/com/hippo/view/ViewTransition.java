@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.view;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.view.View;
-
 import com.hippo.yorozuya.SimpleAnimatorListener;
 
 public class ViewTransition {
@@ -31,6 +29,7 @@ public class ViewTransition {
     private int mShownView = -1;
 
     private Animator mAnimator1;
+
     private Animator mAnimator2;
 
     private OnShowViewListener mOnShowViewListener;
@@ -44,7 +43,6 @@ public class ViewTransition {
                 throw new IllegalStateException("Any View pass to ViewTransition must not be null");
             }
         }
-
         mViews = views;
         showView(0, false);
     }
@@ -65,14 +63,11 @@ public class ViewTransition {
         View[] views = mViews;
         int length = views.length;
         if (shownView >= length || shownView < 0) {
-            throw new IndexOutOfBoundsException("Only " + length + " view(s) in " +
-                    "the ViewTransition, but attempt to show " + shownView);
+            throw new IndexOutOfBoundsException("Only " + length + " view(s) in " + "the ViewTransition, but attempt to show " + shownView);
         }
-
         if (mShownView != shownView) {
             int oldShownView = mShownView;
             mShownView = shownView;
-
             // Cancel animation
             if (mAnimator1 != null) {
                 mAnimator1.cancel();
@@ -80,7 +75,6 @@ public class ViewTransition {
             if (mAnimator2 != null) {
                 mAnimator2.cancel();
             }
-
             if (animation) {
                 for (int i = 0; i < length; i++) {
                     if (i != oldShownView && i != shownView) {
@@ -102,11 +96,9 @@ public class ViewTransition {
                     }
                 }
             }
-
             if (null != mOnShowViewListener) {
                 mOnShowViewListener.onShowView(views[oldShownView], views[shownView]);
             }
-
             return true;
         } else {
             return false;
@@ -117,6 +109,7 @@ public class ViewTransition {
         ObjectAnimator oa1 = ObjectAnimator.ofFloat(hiddenView, "alpha", 0f);
         oa1.setDuration(ANIMATE_TIME);
         oa1.addListener(new SimpleAnimatorListener() {
+
             @Override
             public void onAnimationEnd(Animator animation) {
                 hiddenView.setVisibility(View.GONE);
@@ -125,11 +118,11 @@ public class ViewTransition {
         });
         oa1.start();
         mAnimator1 = oa1;
-
         shownView.setVisibility(View.VISIBLE);
         ObjectAnimator oa2 = ObjectAnimator.ofFloat(shownView, "alpha", 1f);
         oa2.setDuration(ANIMATE_TIME);
         oa2.addListener(new SimpleAnimatorListener() {
+
             @Override
             public void onAnimationEnd(Animator animation) {
                 mAnimator2 = null;
@@ -140,6 +133,7 @@ public class ViewTransition {
     }
 
     public interface OnShowViewListener {
+
         void onShowView(View hiddenView, View shownView);
     }
 }

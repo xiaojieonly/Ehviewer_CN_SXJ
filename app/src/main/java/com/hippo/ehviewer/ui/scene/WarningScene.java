@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.os.Bundle;
@@ -31,6 +30,7 @@ public final class WarningScene extends SolidScene implements View.OnClickListen
 
     @Nullable
     private View mReject;
+
     @Nullable
     @ViewLifeCircle
     private View mAccept;
@@ -42,23 +42,18 @@ public final class WarningScene extends SolidScene implements View.OnClickListen
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_warning, container, false);
-
         mReject = ViewUtils.$$(view, R.id.reject);
         mAccept = ViewUtils.$$(view, R.id.accept);
-
         mReject.setOnClickListener(this);
         mAccept.setOnClickListener(this);
-
         return view;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         mReject = null;
         mAccept = null;
     }
@@ -70,7 +65,6 @@ public final class WarningScene extends SolidScene implements View.OnClickListen
         } else if (mAccept == v) {
             // Never show this warning anymore
             Settings.putShowWarning(false);
-
             // Start new scene and finish it self
             MainActivity activity = getActivity2();
             if (null != activity) {

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.content.Context;
@@ -32,12 +31,12 @@ public final class Analytics {
 
     private static FirebaseAnalytics analytics;
 
-    private Analytics() {}
+    private Analytics() {
+    }
 
     public static void start(Context context) {
         analytics = FirebaseAnalytics.getInstance(context);
         analytics.setUserId(Settings.getUserID());
-
         Locale locale = Locale.getDefault();
         String language = locale.getLanguage();
         if (TextUtils.isEmpty(language)) {

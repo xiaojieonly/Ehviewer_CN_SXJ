@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.hardware.fingerprint.FingerprintManager;
@@ -35,10 +34,13 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
 
     @Nullable
     private LockPatternView mPatternView;
+
     @Nullable
     private View mCancel;
+
     @Nullable
     private View mSet;
+
     @Nullable
     private CheckBox mFingerprint;
 
@@ -47,18 +49,14 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_set_security);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-
         mPatternView = (LockPatternView) ViewUtils.$$(this, R.id.pattern_view);
         mCancel = ViewUtils.$$(this, R.id.cancel);
         mSet = ViewUtils.$$(this, R.id.set);
         mFingerprint = (CheckBox) ViewUtils.$$(this, R.id.fingerprint_checkbox);
-
         String pattern = Settings.getSecurity();
         if (!TextUtils.isEmpty(pattern)) {
-            mPatternView.setPattern(LockPatternView.DisplayMode.Correct,
-                    LockPatternUtils.stringToPattern(pattern));
+            mPatternView.setPattern(LockPatternView.DisplayMode.Correct, LockPatternUtils.stringToPattern(pattern));
         }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             FingerprintManager fingerprintManager = getSystemService(FingerprintManager.class);
             // The line below prevents the false positive inspection from Android Studio
@@ -68,7 +66,6 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
                 mFingerprint.setChecked(Settings.getEnableFingerprint());
             }
         }
-
         mCancel.setOnClickListener(this);
         mSet.setOnClickListener(this);
     }
@@ -76,8 +73,7 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static boolean hasEnrolledFingerprints(FingerprintManager fingerprintManager) {
         try {
-            return fingerprintManager.isHardwareDetected()
-                && fingerprintManager.hasEnrolledFingerprints();
+            return fingerprintManager.isHardwareDetected() && fingerprintManager.hasEnrolledFingerprints();
         } catch (Throwable e) {
             return false;
         }
@@ -91,7 +87,7 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
@@ -113,8 +109,7 @@ public class SetSecurityActivity extends ToolbarActivity implements View.OnClick
                     security = mPatternView.getPatternString();
                 }
                 Settings.putSecurity(security);
-                Settings.putEnableFingerprint(mFingerprint.getVisibility() == View.VISIBLE &&
-                        mFingerprint.isChecked() && !security.isEmpty());
+                Settings.putEnableFingerprint(mFingerprint.getVisibility() == View.VISIBLE && mFingerprint.isChecked() && !security.isEmpty());
             }
             finish();
         }

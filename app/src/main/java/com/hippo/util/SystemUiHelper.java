@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.app.Activity;
@@ -87,6 +86,7 @@ public final class SystemUiHelper {
     private final SystemUiHelperImpl mImpl;
 
     private final Handler mHandler;
+
     private final Runnable mHideRunnable;
 
     /**
@@ -114,12 +114,9 @@ public final class SystemUiHelper {
      *              {@link #FLAG_IMMERSIVE_STICKY}
      * @param listener A listener which is called when the system visibility is changed
      */
-    public SystemUiHelper(Activity activity, int level, int flags,
-            OnVisibilityChangeListener listener) {
-
+    public SystemUiHelper(Activity activity, int level, int flags, OnVisibilityChangeListener listener) {
         mHandler = new Handler(Looper.getMainLooper());
         mHideRunnable = new HideRunnable();
-
         // Create impl
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mImpl = new SystemUiHelperImplKK(activity, level, flags, listener);
@@ -151,7 +148,6 @@ public final class SystemUiHelper {
     public void show() {
         // Ensure that any currently queued hide calls are removed
         removeQueuedRunnables();
-
         mImpl.show();
     }
 
@@ -164,7 +160,6 @@ public final class SystemUiHelper {
     public void hide() {
         // Ensure that any currently queued hide calls are removed
         removeQueuedRunnables();
-
         mImpl.hide();
     }
 
@@ -179,7 +174,6 @@ public final class SystemUiHelper {
     public void delayHide(long delayMillis) {
         // Ensure that any currently queued hide calls are removed
         removeQueuedRunnables();
-
         mHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
@@ -203,6 +197,7 @@ public final class SystemUiHelper {
      * A callback interface used to listen for system UI visibility changes.
      */
     public interface OnVisibilityChangeListener {
+
         /**
          * Called when the system UI visibility has changed.
          *
@@ -214,14 +209,16 @@ public final class SystemUiHelper {
     static abstract class SystemUiHelperImpl {
 
         final Activity mActivity;
+
         final int mLevel;
+
         final int mFlags;
+
         final OnVisibilityChangeListener mOnVisibilityChangeListener;
 
         boolean mIsShowing = true;
 
-        SystemUiHelperImpl(Activity activity, int level, int flags,
-                OnVisibilityChangeListener onVisibilityChangeListener) {
+        SystemUiHelperImpl(Activity activity, int level, int flags, OnVisibilityChangeListener onVisibilityChangeListener) {
             mActivity = activity;
             mLevel = level;
             mFlags = flags;
@@ -229,6 +226,7 @@ public final class SystemUiHelper {
         }
 
         abstract void show();
+
         abstract void hide();
 
         boolean isShowing() {
@@ -237,7 +235,6 @@ public final class SystemUiHelper {
 
         void setIsShowing(boolean isShowing) {
             mIsShowing = isShowing;
-
             if (mOnVisibilityChangeListener != null) {
                 mOnVisibilityChangeListener.onVisibilityChange(mIsShowing);
             }
@@ -249,14 +246,10 @@ public final class SystemUiHelper {
      */
     static class SystemUiHelperImplBase extends SystemUiHelperImpl {
 
-        SystemUiHelperImplBase(Activity activity, int level, int flags,
-                OnVisibilityChangeListener onVisibilityChangeListener) {
+        SystemUiHelperImplBase(Activity activity, int level, int flags, OnVisibilityChangeListener onVisibilityChangeListener) {
             super(activity, level, flags, onVisibilityChangeListener);
-
             if ((mFlags & SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES) != 0) {
-                mActivity.getWindow().addFlags(
-                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+                mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
             }
         }
 
@@ -278,10 +271,10 @@ public final class SystemUiHelper {
     }
 
     private class HideRunnable implements Runnable {
+
         @Override
         public void run() {
             hide();
         }
     }
-
 }

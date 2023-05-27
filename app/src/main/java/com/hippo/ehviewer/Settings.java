@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.content.Context;
@@ -45,7 +44,9 @@ public class Settings {
     private static final String TAG = Settings.class.getSimpleName();
 
     private static Context sContext;
+
     private static SharedPreferences sSettingsPre;
+
     private static EhConfig sEhConfig;
 
     public static void initialize(Context context) {
@@ -68,11 +69,10 @@ public class Settings {
                 putDF(true);
             }
         }
-
     }
 
     private static EhConfig loadEhConfig() {
-        EhConfig ehConfig= new EhConfig();
+        EhConfig ehConfig = new EhConfig();
         ehConfig.imageSize = getImageResolution();
         ehConfig.excludedLanguages = getExcludedLanguages();
         ehConfig.defaultCategories = getDefaultCategories();
@@ -160,6 +160,7 @@ public class Settings {
     }
 
     private static final String KEY_VERSION_CODE = "version_code";
+
     private static final int DEFAULT_VERSION_CODE = 0;
 
     public static int getVersionCode() {
@@ -171,6 +172,7 @@ public class Settings {
     }
 
     private static final String KEY_DISPLAY_NAME = "display_name";
+
     private static final String DEFAULT_DISPLAY_NAME = null;
 
     public static String getDisplayName() {
@@ -182,6 +184,7 @@ public class Settings {
     }
 
     private static final String KEY_AVATAR = "avatar";
+
     private static final String DEFAULT_AVATAR = null;
 
     public static String getAvatar() {
@@ -193,6 +196,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_WARNING = "show_warning";
+
     private static final boolean DEFAULT_SHOW_WARNING = true;
 
     public static boolean getShowWarning() {
@@ -204,6 +208,7 @@ public class Settings {
     }
 
     private static final String KEY_REMOVE_IMAGE_FILES = "include_pic";
+
     private static final boolean DEFAULT_REMOVE_IMAGE_FILES = true;
 
     public static boolean getRemoveImageFiles() {
@@ -219,6 +224,7 @@ public class Settings {
     }
 
     private static final String KEY_NEED_SIGN_IN = "need_sign_in";
+
     private static final boolean DEFAULT_NEED_SIGN_IN = true;
 
     public static boolean getNeedSignIn() {
@@ -230,6 +236,7 @@ public class Settings {
     }
 
     private static final String KEY_SELECT_SITE = "select_site";
+
     private static final boolean DEFAULT_SELECT_SITE = true;
 
     public static boolean getSelectSite() {
@@ -241,6 +248,7 @@ public class Settings {
     }
 
     private static final String KEY_QUICK_SEARCH_TIP = "quick_search_tip";
+
     private static final boolean DEFAULT_QUICK_SEARCH_TIP = true;
 
     public static boolean getQuickSearchTip() {
@@ -251,28 +259,34 @@ public class Settings {
         putBoolean(KEY_QUICK_SEARCH_TIP, value);
     }
 
-    /********************
-     ****** Eh
-     ********************/
-
+    /**
+     * *****************
+     * ***** Eh
+     * ******************
+     */
     public static final String KEY_THEME = "theme";
+
     public static final String KEY_THEME_DARK = "theme";
+
     public static final int THEME_LIGHT = 0;
+
     public static final int THEME_DARK = 1;
+
     public static final int THEME_BLACK = 2;
+
     private static final int DEFAULT_THEME = THEME_LIGHT;
 
     private static boolean overSet = false;
 
     public static int getTheme(Context context) {
-        if (getDarkModeStatus(context) && !overSet){
+        if (getDarkModeStatus(context) && !overSet) {
             return THEME_BLACK;
         }
         return getIntFromStr(KEY_THEME, DEFAULT_THEME);
     }
 
     public static void putTheme(int theme) {
-        if (!overSet){
+        if (!overSet) {
             overSet = true;
             System.out.println("覆盖主题");
         }
@@ -286,6 +300,7 @@ public class Settings {
     }
 
     public static final String KEY_APPLY_NAV_BAR_THEME_COLOR = "apply_nav_bar_theme_color";
+
     private static final boolean DEFAULT_APPLY_NAV_BAR_THEME_COLOR = true;
 
     public static boolean getApplyNavBarThemeColor() {
@@ -293,6 +308,7 @@ public class Settings {
     }
 
     public static final String KEY_GALLERY_SITE = "gallery_site";
+
     private static final int DEFAULT_GALLERY_SITE = 0;
 
     public static int getGallerySite() {
@@ -304,11 +320,12 @@ public class Settings {
     }
 
     private static final String KEY_LAUNCH_PAGE = "launch_page";
+
     private static final int DEFAULT_LAUNCH_PAGE = 0;
 
     public static String getLaunchPageGalleryListSceneAction() {
         int value = getIntFromStr(KEY_LAUNCH_PAGE, DEFAULT_LAUNCH_PAGE);
-        switch (value) {
+        switch(value) {
             default:
             case 0:
                 return GalleryListScene.ACTION_HOMEPAGE;
@@ -320,6 +337,7 @@ public class Settings {
     }
 
     public static final String KEY_LIST_MODE = "list_mode";
+
     private static final int DEFAULT_LIST_MODE = 0;
 
     public static int getListMode() {
@@ -327,6 +345,7 @@ public class Settings {
     }
 
     public static final String KEY_DETAIL_SIZE = "detail_size";
+
     private static final int DEFAULT_DETAIL_SIZE = 0;
 
     public static int getDetailSize() {
@@ -335,7 +354,7 @@ public class Settings {
 
     @DimenRes
     public static int getDetailSizeResId() {
-        switch (getDetailSize()) {
+        switch(getDetailSize()) {
             default:
             case 0:
                 return R.dimen.gallery_list_column_width_long;
@@ -345,6 +364,7 @@ public class Settings {
     }
 
     public static final String KEY_THUMB_SIZE = "thumb_size";
+
     private static final int DEFAULT_THUMB_SIZE = 1;
 
     public static int getThumbSize() {
@@ -353,7 +373,7 @@ public class Settings {
 
     @DimenRes
     public static int getThumbSizeResId() {
-        switch (getThumbSize()) {
+        switch(getThumbSize()) {
             case 0:
                 return R.dimen.gallery_grid_column_width_large;
             default:
@@ -365,6 +385,7 @@ public class Settings {
     }
 
     public static final String KEY_THUMB_RESOLUTION = "thumb_resolution";
+
     private static final int DEFAULT_THUMB_RESOLUTION = 0;
 
     public static int getThumbResolution() {
@@ -372,6 +393,7 @@ public class Settings {
     }
 
     private static final String KEY_FIX_THUMB_URL = "fix_thumb_url";
+
     private static final boolean DEFAULT_FIX_THUMB_URL = false;
 
     public static boolean getFixThumbUrl() {
@@ -379,6 +401,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_JPN_TITLE = "show_jpn_title";
+
     private static final boolean DEFAULT_SHOW_JPN_TITLE = false;
 
     public static boolean getShowJpnTitle() {
@@ -386,6 +409,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_GALLERY_PAGES = "show_gallery_pages";
+
     private static final boolean DEFAULT_SHOW_GALLERY_PAGES = false;
 
     public static boolean getShowGalleryPages() {
@@ -393,6 +417,7 @@ public class Settings {
     }
 
     public static final String KEY_SHOW_TAG_TRANSLATIONS = "show_tag_translations";
+
     private static final boolean DEFAULT_SHOW_TAG_TRANSLATIONS = true;
 
     /**
@@ -404,6 +429,7 @@ public class Settings {
     }
 
     public static final String KEY_DEFAULT_CATEGORIES = "default_categories";
+
     public static final int DEFAULT_DEFAULT_CATEGORIES = EhUtils.ALL_CATEGORY;
 
     public static int getDefaultCategories() {
@@ -417,6 +443,7 @@ public class Settings {
     }
 
     public static final String KEY_EXCLUDED_TAG_NAMESPACES = "excluded_tag_namespaces";
+
     private static final int DEFAULT_EXCLUDED_TAG_NAMESPACES = 0;
 
     public static int getExcludedTagNamespaces() {
@@ -430,6 +457,7 @@ public class Settings {
     }
 
     public static final String KEY_EXCLUDED_LANGUAGES = "excluded_languages";
+
     private static final String DEFAULT_EXCLUDED_LANGUAGES = null;
 
     public static String getExcludedLanguages() {
@@ -443,16 +471,20 @@ public class Settings {
     }
 
     private static final String KEY_CELLULAR_NETWORK_WARNING = "cellular_network_warning";
+
     private static final boolean DEFAULT_CELLULAR_NETWORK_WARNING = false;
 
     public static boolean getCellularNetworkWarning() {
         return getBoolean(KEY_CELLULAR_NETWORK_WARNING, DEFAULT_CELLULAR_NETWORK_WARNING);
     }
 
-    /********************
-     ****** Read
-     ********************/
+    /**
+     * *****************
+     * ***** Read
+     * ******************
+     */
     private static final String KEY_SCREEN_ROTATION = "screen_rotation";
+
     private static final int DEFAULT_SCREEN_ROTATION = 0;
 
     public static int getScreenRotation() {
@@ -464,6 +496,7 @@ public class Settings {
     }
 
     private static final String KEY_READING_DIRECTION = "reading_direction";
+
     private static final int DEFAULT_READING_DIRECTION = GalleryView.LAYOUT_RIGHT_TO_LEFT;
 
     @GalleryView.LayoutMode
@@ -476,6 +509,7 @@ public class Settings {
     }
 
     private static final String KEY_PAGE_SCALING = "page_scaling";
+
     private static final int DEFAULT_PAGE_SCALING = GalleryView.SCALE_FIT;
 
     @GalleryView.ScaleMode
@@ -488,6 +522,7 @@ public class Settings {
     }
 
     private static final String KEY_START_POSITION = "start_position";
+
     private static final int DEFAULT_START_POSITION = GalleryView.START_POSITION_TOP_RIGHT;
 
     @GalleryView.StartPosition
@@ -500,6 +535,7 @@ public class Settings {
     }
 
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";
+
     private static final boolean DEFAULT_KEEP_SCREEN_ON = false;
 
     public static boolean getKeepScreenOn() {
@@ -511,6 +547,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_CLOCK = "gallery_show_clock";
+
     private static final boolean DEFAULT_SHOW_CLOCK = true;
 
     public static boolean getShowClock() {
@@ -522,6 +559,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_PROGRESS = "gallery_show_progress";
+
     private static final boolean DEFAULT_SHOW_PROGRESS = true;
 
     public static boolean getShowProgress() {
@@ -533,6 +571,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_BATTERY = "gallery_show_battery";
+
     private static final boolean DEFAULT_SHOW_BATTERY = true;
 
     public static boolean getShowBattery() {
@@ -544,6 +583,7 @@ public class Settings {
     }
 
     private static final String KEY_SHOW_PAGE_INTERVAL = "gallery_show_page_interval";
+
     private static final boolean DEFAULT_SHOW_PAGE_INTERVAL = true;
 
     public static boolean getShowPageInterval() {
@@ -555,6 +595,7 @@ public class Settings {
     }
 
     private static final String KEY_VOLUME_PAGE = "volume_page";
+
     private static final boolean DEFAULT_VOLUME_PAGE = false;
 
     public static boolean getVolumePage() {
@@ -565,8 +606,8 @@ public class Settings {
         putBoolean(KEY_VOLUME_PAGE, value);
     }
 
-
     private static final String KEY_REVERSE_VOLUME_PAGE = "reverse_volume_page";
+
     private static final boolean DEFAULT_REVERSE_VOLUME_PAGE = false;
 
     public static boolean getReverseVolumePage() {
@@ -578,6 +619,7 @@ public class Settings {
     }
 
     private static final String KEY_READING_FULLSCREEN = "reading_fullscreen";
+
     private static final boolean VALUE_READING_FULLSCREEN = true;
 
     public static boolean getReadingFullscreen() {
@@ -589,6 +631,7 @@ public class Settings {
     }
 
     private static final String KEY_CUSTOM_SCREEN_LIGHTNESS = "custom_screen_lightness";
+
     private static final boolean DEFAULT_CUSTOM_SCREEN_LIGHTNESS = false;
 
     public static boolean getCustomScreenLightness() {
@@ -600,6 +643,7 @@ public class Settings {
     }
 
     private static final String KEY_SCREEN_LIGHTNESS = "screen_lightness";
+
     private static final int DEFAULT_SCREEN_LIGHTNESS = 50;
 
     public static int getScreenLightness() {
@@ -610,26 +654,36 @@ public class Settings {
         putInt(KEY_SCREEN_LIGHTNESS, value);
     }
 
-    /********************
-     ****** Privacy and Security
-     ********************/
+    /**
+     * *****************
+     * ***** Privacy and Security
+     * ******************
+     */
     public static final String KEY_SEC_SECURITY = "enable_secure";
+
     public static final boolean VALUE_SEC_SECURITY = false;
 
     public static boolean getEnabledSecurity() {
         return getBoolean(KEY_SEC_SECURITY, VALUE_SEC_SECURITY);
     }
+
     public static void putEnabledSecurity(boolean value) {
         putBoolean(KEY_READING_FULLSCREEN, value);
     }
 
-    /********************
-     ****** Download
-     ********************/
+    /**
+     * *****************
+     * ***** Download
+     * ******************
+     */
     public static final String KEY_DOWNLOAD_SAVE_SCHEME = "image_scheme";
+
     public static final String KEY_DOWNLOAD_SAVE_AUTHORITY = "image_authority";
+
     public static final String KEY_DOWNLOAD_SAVE_PATH = "image_path";
+
     public static final String KEY_DOWNLOAD_SAVE_QUERY = "image_query";
+
     public static final String KEY_DOWNLOAD_SAVE_FRAGMENT = "image_fragment";
 
     @Nullable
@@ -657,7 +711,6 @@ public class Settings {
         putString(KEY_DOWNLOAD_SAVE_PATH, uri.getEncodedPath());
         putString(KEY_DOWNLOAD_SAVE_QUERY, uri.getEncodedQuery());
         putString(KEY_DOWNLOAD_SAVE_FRAGMENT, uri.getEncodedFragment());
-
         if (getMediaScan()) {
             CommonOperations.removeNoMediaFile(location);
         } else {
@@ -666,6 +719,7 @@ public class Settings {
     }
 
     public static final String KEY_MEDIA_SCAN = "media_scan";
+
     private static final boolean DEFAULT_MEDIA_SCAN = false;
 
     public static boolean getMediaScan() {
@@ -673,6 +727,7 @@ public class Settings {
     }
 
     private static final String KEY_RECENT_DOWNLOAD_LABEL = "recent_download_label";
+
     private static final String DEFAULT_RECENT_DOWNLOAD_LABEL = null;
 
     public static String getRecentDownloadLabel() {
@@ -684,6 +739,7 @@ public class Settings {
     }
 
     private static final String KEY_HAS_DEFAULT_DOWNLOAD_LABEL = "has_default_download_label";
+
     private static final boolean DEFAULT_HAS_DOWNLOAD_LABEL = false;
 
     public static boolean getHasDefaultDownloadLabel() {
@@ -695,6 +751,7 @@ public class Settings {
     }
 
     private static final String KEY_DEFAULT_DOWNLOAD_LABEL = "default_download_label";
+
     private static final String DEFAULT_DOWNLOAD_LABEL = null;
 
     public static String getDefaultDownloadLabel() {
@@ -706,6 +763,7 @@ public class Settings {
     }
 
     private static final String KEY_MULTI_THREAD_DOWNLOAD = "download_thread";
+
     private static final int DEFAULT_MULTI_THREAD_DOWNLOAD = 3;
 
     public static int getMultiThreadDownload() {
@@ -717,6 +775,7 @@ public class Settings {
     }
 
     private static final String KEY_PRELOAD_IMAGE = "preload_image";
+
     private static final int DEFAULT_PRELOAD_IMAGE = 5;
 
     public static int getPreloadImage() {
@@ -728,6 +787,7 @@ public class Settings {
     }
 
     public static final String KEY_IMAGE_RESOLUTION = "image_size";
+
     public static final String DEFAULT_IMAGE_RESOLUTION = EhConfig.IMAGE_SIZE_AUTO;
 
     public static String getImageResolution() {
@@ -741,6 +801,7 @@ public class Settings {
     }
 
     private static final String KEY_DOWNLOAD_ORIGIN_IMAGE = "download_origin_image";
+
     private static final boolean DEFAULT_DOWNLOAD_ORIGIN_IMAGE = false;
 
     public static boolean getDownloadOriginImage() {
@@ -751,42 +812,73 @@ public class Settings {
         putBoolean(KEY_DOWNLOAD_ORIGIN_IMAGE, value);
     }
 
-    /********************
-     ****** Favorites
-     ********************/
+    /**
+     * *****************
+     * ***** Favorites
+     * ******************
+     */
     private static final String KEY_FAV_CAT_0 = "fav_cat_0";
+
     private static final String KEY_FAV_CAT_1 = "fav_cat_1";
+
     private static final String KEY_FAV_CAT_2 = "fav_cat_2";
+
     private static final String KEY_FAV_CAT_3 = "fav_cat_3";
+
     private static final String KEY_FAV_CAT_4 = "fav_cat_4";
+
     private static final String KEY_FAV_CAT_5 = "fav_cat_5";
+
     private static final String KEY_FAV_CAT_6 = "fav_cat_6";
+
     private static final String KEY_FAV_CAT_7 = "fav_cat_7";
+
     private static final String KEY_FAV_CAT_8 = "fav_cat_8";
+
     private static final String KEY_FAV_CAT_9 = "fav_cat_9";
+
     private static final String DEFAULT_FAV_CAT_0 = "Favorites 0";
+
     private static final String DEFAULT_FAV_CAT_1 = "Favorites 1";
+
     private static final String DEFAULT_FAV_CAT_2 = "Favorites 2";
+
     private static final String DEFAULT_FAV_CAT_3 = "Favorites 3";
+
     private static final String DEFAULT_FAV_CAT_4 = "Favorites 4";
+
     private static final String DEFAULT_FAV_CAT_5 = "Favorites 5";
+
     private static final String DEFAULT_FAV_CAT_6 = "Favorites 6";
+
     private static final String DEFAULT_FAV_CAT_7 = "Favorites 7";
+
     private static final String DEFAULT_FAV_CAT_8 = "Favorites 8";
+
     private static final String DEFAULT_FAV_CAT_9 = "Favorites 9";
 
     private static final String KEY_FAV_COUNT_0 = "fav_count_0";
+
     private static final String KEY_FAV_COUNT_1 = "fav_count_1";
+
     private static final String KEY_FAV_COUNT_2 = "fav_count_2";
+
     private static final String KEY_FAV_COUNT_3 = "fav_count_3";
+
     private static final String KEY_FAV_COUNT_4 = "fav_count_4";
+
     private static final String KEY_FAV_COUNT_5 = "fav_count_5";
+
     private static final String KEY_FAV_COUNT_6 = "fav_count_6";
+
     private static final String KEY_FAV_COUNT_7 = "fav_count_7";
+
     private static final String KEY_FAV_COUNT_8 = "fav_count_8";
+
     private static final String KEY_FAV_COUNT_9 = "fav_count_9";
 
     private static final String KEY_FAV_LOCAL = "fav_local";
+
     private static final String KEY_FAV_CLOUD = "fav_cloud";
 
     private static final int DEFAULT_FAV_COUNT = 0;
@@ -808,18 +900,7 @@ public class Settings {
 
     public static void putFavCat(String[] value) {
         AssertUtils.assertEquals(10, value.length);
-        sSettingsPre.edit()
-                .putString(KEY_FAV_CAT_0, value[0])
-                .putString(KEY_FAV_CAT_1, value[1])
-                .putString(KEY_FAV_CAT_2, value[2])
-                .putString(KEY_FAV_CAT_3, value[3])
-                .putString(KEY_FAV_CAT_4, value[4])
-                .putString(KEY_FAV_CAT_5, value[5])
-                .putString(KEY_FAV_CAT_6, value[6])
-                .putString(KEY_FAV_CAT_7, value[7])
-                .putString(KEY_FAV_CAT_8, value[8])
-                .putString(KEY_FAV_CAT_9, value[9])
-                .apply();
+        sSettingsPre.edit().putString(KEY_FAV_CAT_0, value[0]).putString(KEY_FAV_CAT_1, value[1]).putString(KEY_FAV_CAT_2, value[2]).putString(KEY_FAV_CAT_3, value[3]).putString(KEY_FAV_CAT_4, value[4]).putString(KEY_FAV_CAT_5, value[5]).putString(KEY_FAV_CAT_6, value[6]).putString(KEY_FAV_CAT_7, value[7]).putString(KEY_FAV_CAT_8, value[8]).putString(KEY_FAV_CAT_9, value[9]).apply();
     }
 
     public static int[] getFavCount() {
@@ -839,18 +920,7 @@ public class Settings {
 
     public static void putFavCount(int[] count) {
         AssertUtils.assertEquals(10, count.length);
-        sSettingsPre.edit()
-                .putInt(KEY_FAV_COUNT_0, count[0])
-                .putInt(KEY_FAV_COUNT_1, count[1])
-                .putInt(KEY_FAV_COUNT_2, count[2])
-                .putInt(KEY_FAV_COUNT_3, count[3])
-                .putInt(KEY_FAV_COUNT_4, count[4])
-                .putInt(KEY_FAV_COUNT_5, count[5])
-                .putInt(KEY_FAV_COUNT_6, count[6])
-                .putInt(KEY_FAV_COUNT_7, count[7])
-                .putInt(KEY_FAV_COUNT_8, count[8])
-                .putInt(KEY_FAV_COUNT_9, count[9])
-                .apply();
+        sSettingsPre.edit().putInt(KEY_FAV_COUNT_0, count[0]).putInt(KEY_FAV_COUNT_1, count[1]).putInt(KEY_FAV_COUNT_2, count[2]).putInt(KEY_FAV_COUNT_3, count[3]).putInt(KEY_FAV_COUNT_4, count[4]).putInt(KEY_FAV_COUNT_5, count[5]).putInt(KEY_FAV_COUNT_6, count[6]).putInt(KEY_FAV_COUNT_7, count[7]).putInt(KEY_FAV_COUNT_8, count[8]).putInt(KEY_FAV_COUNT_9, count[9]).apply();
     }
 
     public static int getFavLocalCount() {
@@ -870,6 +940,7 @@ public class Settings {
     }
 
     private static final String KEY_RECENT_FAV_CAT = "recent_fav_cat";
+
     private static final int DEFAULT_RECENT_FAV_CAT = FavListUrlBuilder.FAV_CAT_ALL;
 
     public static int getRecentFavCat() {
@@ -882,7 +953,9 @@ public class Settings {
 
     // -1 for local, 0 - 9 for cloud favorite, other for no default fav slot
     private static final String KEY_DEFAULT_FAV_SLOT = "default_favorite_2";
+
     public static final int INVALID_DEFAULT_FAV_SLOT = -2;
+
     private static final int DEFAULT_DEFAULT_FAV_SLOT = INVALID_DEFAULT_FAV_SLOT;
 
     public static int getDefaultFavSlot() {
@@ -893,10 +966,13 @@ public class Settings {
         putInt(KEY_DEFAULT_FAV_SLOT, value);
     }
 
-    /********************
-     ****** Analytics
-     ********************/
+    /**
+     * *****************
+     * ***** Analytics
+     * ******************
+     */
     private static final String KEY_ASK_ANALYTICS = "ask_analytics";
+
     private static final boolean DEFAULT_ASK_ANALYTICS = true;
 
     public static boolean getAskAnalytics() {
@@ -908,6 +984,7 @@ public class Settings {
     }
 
     public static final String KEY_ENABLE_ANALYTICS = "enable_analytics";
+
     private static final boolean DEFAULT_ENABLE_ANALYTICS = false;
 
     public static boolean getEnableAnalytics() {
@@ -919,7 +996,9 @@ public class Settings {
     }
 
     private static final String KEY_USER_ID = "user_id";
+
     private static final String FILENAME_USER_ID = ".user_id";
+
     private static final int LENGTH_USER_ID = 32;
 
     public static String getUserID() {
@@ -938,14 +1017,12 @@ public class Settings {
         } else {
             writeFile = true;
         }
-
         if (writeXml) {
             putString(KEY_USER_ID, userID);
         }
         if (writeFile) {
             FileUtils.write(file, userID);
         }
-
         return userID;
     }
 
@@ -953,7 +1030,6 @@ public class Settings {
     private static String generateUserID() {
         int length = LENGTH_USER_ID;
         StringBuilder sb = new StringBuilder(length);
-
         for (int i = 0; i < length; i++) {
             if (MathUtils.random(0, ('9' - '0' + 1) + ('z' - 'a' + 1)) <= '9' - '0') {
                 sb.append((char) MathUtils.random('0', '9' + 1));
@@ -961,7 +1037,6 @@ public class Settings {
                 sb.append((char) MathUtils.random('a', 'z' + 1));
             }
         }
-
         return sb.toString();
     }
 
@@ -969,23 +1044,26 @@ public class Settings {
         if (null == userID || LENGTH_USER_ID != userID.length()) {
             return false;
         }
-
         for (int i = 0; i < LENGTH_USER_ID; i++) {
             char ch = userID.charAt(i);
             if (!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'z')) {
                 return false;
             }
         }
-
         return true;
     }
 
-    /********************
-     ****** Update
-     ********************/
+    /**
+     * *****************
+     * ***** Update
+     * ******************
+     */
     private static final String KEY_BETA_UPDATE_CHANNEL = "beta_update_channel";
+
     private static final boolean DEFAULT_BETA_UPDATE_CHANNEL = EhApplication.BETA;
+
     private static final String KEY_SKIP_UPDATE_VERSION = "skip_update_version";
+
     private static final int DEFAULT_SKIP_UPDATE_VERSION = 0;
 
     public static boolean getBetaUpdateChannel() {
@@ -1004,10 +1082,13 @@ public class Settings {
         putInt(KEY_SKIP_UPDATE_VERSION, value);
     }
 
-    /********************
-     ****** Advanced
-     ********************/
+    /**
+     * *****************
+     * ***** Advanced
+     * ******************
+     */
     public static final String KEY_SAVE_PARSE_ERROR_BODY = "save_parse_error_body";
+
     private static final boolean DEFAULT_SAVE_PARSE_ERROR_BODY = EhApplication.BETA;
 
     public static boolean getSaveParseErrorBody() {
@@ -1019,6 +1100,7 @@ public class Settings {
     }
 
     private static final String KEY_SAVE_CRASH_LOG = "save_crash_log";
+
     private static final boolean DEFAULT_SAVE_CRASH_LOG = false;
 
     public static boolean getSaveCrashLog() {
@@ -1026,6 +1108,7 @@ public class Settings {
     }
 
     public static final String KEY_SECURITY = "security";
+
     public static final String DEFAULT_SECURITY = "";
 
     public static String getSecurity() {
@@ -1047,6 +1130,7 @@ public class Settings {
     }
 
     public static final String KEY_READ_CACHE_SIZE = "read_cache_size";
+
     public static final int DEFAULT_READ_CACHE_SIZE = 160;
 
     public static int getReadCacheSize() {
@@ -1054,6 +1138,7 @@ public class Settings {
     }
 
     public static final String KEY_BUILT_IN_HOSTS = "built_in_hosts";
+
     private static final boolean DEFAULT_BUILT_IN_HOSTS = true;
 
     public static boolean getBuiltInHosts() {
@@ -1065,6 +1150,7 @@ public class Settings {
     }
 
     public static final String KEY_BUILT_EX_HOSTS = "built_ex_hosts";
+
     private static final boolean DEFAULT_BUILT_EX_HOSTS = true;
 
     public static boolean getBuiltEXHosts() {
@@ -1075,8 +1161,8 @@ public class Settings {
         putBoolean(KEY_BUILT_EX_HOSTS, value);
     }
 
-
     public static final String KEY_APP_LANGUAGE = "app_language";
+
     private static final String DEFAULT_APP_LANGUAGE = "system";
 
     //获取系统语言
@@ -1089,6 +1175,7 @@ public class Settings {
     }
 
     private static final String KEY_PROXY_TYPE = "proxy_type";
+
     private static final int DEFAULT_PROXY_TYPE = EhProxySelector.TYPE_SYSTEM;
 
     public static int getProxyType() {
@@ -1100,6 +1187,7 @@ public class Settings {
     }
 
     private static final String KEY_PROXY_IP = "proxy_ip";
+
     private static final String DEFAULT_PROXY_IP = null;
 
     public static String getProxyIp() {
@@ -1111,6 +1199,7 @@ public class Settings {
     }
 
     private static final String KEY_PROXY_PORT = "proxy_port";
+
     private static final int DEFAULT_PROXY_PORT = -1;
 
     public static int getProxyPort() {
@@ -1121,10 +1210,13 @@ public class Settings {
         putInt(KEY_PROXY_PORT, value);
     }
 
-    /********************
-     ****** Guide
-     ********************/
+    /**
+     * *****************
+     * ***** Guide
+     * ******************
+     */
     private static final String KEY_GUIDE_QUICK_SEARCH = "guide_quick_search";
+
     private static final boolean DEFAULT_GUIDE_QUICK_SEARCH = true;
 
     public static boolean getGuideQuickSearch() {
@@ -1136,6 +1228,7 @@ public class Settings {
     }
 
     private static final String KEY_GUIDE_COLLECTIONS = "guide_collections";
+
     private static final boolean DEFAULT_GUIDE_COLLECTIONS = true;
 
     public static boolean getGuideCollections() {
@@ -1147,6 +1240,7 @@ public class Settings {
     }
 
     private static final String KEY_GUIDE_DOWNLOAD_THUMB = "guide_download_thumb";
+
     private static final boolean DEFAULT_GUIDE_DOWNLOAD_THUMB = true;
 
     public static boolean getGuideDownloadThumb() {
@@ -1158,6 +1252,7 @@ public class Settings {
     }
 
     private static final String KEY_GUIDE_DOWNLOAD_LABELS = "guide_download_labels";
+
     private static final boolean DEFAULT_GUIDE_DOWNLOAD_LABELS = true;
 
     public static boolean getGuideDownloadLabels() {
@@ -1169,6 +1264,7 @@ public class Settings {
     }
 
     private static final String KEY_GUIDE_GALLERY = "guide_gallery";
+
     private static final boolean DEFAULT_GUIDE_GALLERY = true;
 
     public static boolean getGuideGallery() {
@@ -1180,6 +1276,7 @@ public class Settings {
     }
 
     private static final String KEY_CLIPBOARD_TEXT_HASH_CODE = "clipboard_text_hash_code";
+
     private static final int DEFAULT_CLIPBOARD_TEXT_HASH_CODE = 0;
 
     public static int getClipboardTextHashCode() {
@@ -1190,8 +1287,8 @@ public class Settings {
         putInt(KEY_CLIPBOARD_TEXT_HASH_CODE, value);
     }
 
-
     public static final String KEY_DOH = "dns_over_https";
+
     private static final boolean DEFAULT_DOH = false;
 
     /**
@@ -1206,10 +1303,9 @@ public class Settings {
         putBoolean(KEY_DOH, value);
     }
 
-
     private static final boolean DEFAULT_FRONTING = true;
-    public static final String KEY_DOMAIN_FRONTING = "domain_fronting";
 
+    public static final String KEY_DOMAIN_FRONTING = "domain_fronting";
 
     public static boolean getDF() {
         return getBoolean(KEY_DOMAIN_FRONTING, DEFAULT_FRONTING);
@@ -1219,13 +1315,14 @@ public class Settings {
         putBoolean(KEY_DOMAIN_FRONTING, value);
     }
 
-
     private static final String KEY_DOWNLOAD_DELAY = "download_delay";
+
     private static final int DEFAULT_DOWNLOAD_DELAY = 0;
 
     public static int getDownloadDelay() {
         return getIntFromStr(KEY_DOWNLOAD_DELAY, DEFAULT_DOWNLOAD_DELAY);
     }
+
     public static void putDownloadDelay(int value) {
         putIntToStr(KEY_DOWNLOAD_DELAY, value);
     }
@@ -1241,7 +1338,6 @@ public class Settings {
     public static void setLoginState(boolean value) {
         putBoolean(KEY_IS_LOGIN, value);
     }
-
 
     public static final String KEY_SHOW_GALLERY_COMMENT = "show_gallery_comment";
 
@@ -1279,13 +1375,12 @@ public class Settings {
         putBoolean(KEY_SHOW_EH_EVENTS, value);
     }
 
-
     public static final String KEY_LOCK_COOKIE_IGNEOUS = "lock_cookie_igneous";
 
     private static boolean IS_LOCK_COOKIE_IGNEOUS = false;
 
     public static boolean getLockCookieIgneous() {
-        return getBoolean(KEY_LOCK_COOKIE_IGNEOUS, IS_LOCK_COOKIE_IGNEOUS) ;
+        return getBoolean(KEY_LOCK_COOKIE_IGNEOUS, IS_LOCK_COOKIE_IGNEOUS);
     }
 
     public static void setLockCookieIgneous(boolean value) {
@@ -1293,32 +1388,32 @@ public class Settings {
     }
 
     public static final String USER_BACKGROUND_IMAGE = "background_image_path";
+
     public static final String USER_AVATAR_IMAGE = "avatar_image_path";
 
-    public static File getUserImageFile(String key){
-        String path = getString(key,"");
-        if (path.equals("")){
+    public static File getUserImageFile(String key) {
+        String path = getString(key, "");
+        if (path.equals("")) {
             return null;
         }
         File file = new File(path);
-        if (file.exists()){
+        if (file.exists()) {
             return file;
-        }else {
+        } else {
             return null;
         }
     }
 
-    public static void saveFilePath(String key,String path){
-        putString(key,path);
+    public static void saveFilePath(String key, String path) {
+        putString(key, path);
     }
-
-//    private static boolean ALREADY_CHECK;
-//
-//    public static void setCheckUpdate(boolean b){
-//        ALREADY_CHECK = b;
-//    }
-//
-//    public static boolean getCheckUpdateState(){
-//        return ALREADY_CHECK;
-//    }
+    //    private static boolean ALREADY_CHECK;
+    //
+    //    public static void setCheckUpdate(boolean b){
+    //        ALREADY_CHECK = b;
+    //    }
+    //
+    //    public static boolean getCheckUpdateState(){
+    //        return ALREADY_CHECK;
+    //    }
 }

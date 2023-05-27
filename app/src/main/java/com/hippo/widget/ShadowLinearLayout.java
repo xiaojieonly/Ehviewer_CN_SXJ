@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -31,6 +30,7 @@ import com.hippo.yorozuya.LayoutUtils;
 public class ShadowLinearLayout extends LinearLayout {
 
     private NinePatchDrawable mShadow;
+
     private final Rect mShadowPaddings = new Rect();
 
     public ShadowLinearLayout(Context context) {
@@ -54,7 +54,8 @@ public class ShadowLinearLayout extends LinearLayout {
             setOutlineProvider(ViewOutlineProvider.BOUNDS);
             setElevation(LayoutUtils.dp2pix(context, 2));
         } else {
-            setShadow((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_2dp)); // TODO draktheme
+            // TODO draktheme
+            setShadow((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_2dp));
         }
     }
 
@@ -70,7 +71,6 @@ public class ShadowLinearLayout extends LinearLayout {
         if (shadow == null) {
             return;
         }
-
         int width = getWidth();
         int height = getHeight();
         Rect paddings = mShadowPaddings;

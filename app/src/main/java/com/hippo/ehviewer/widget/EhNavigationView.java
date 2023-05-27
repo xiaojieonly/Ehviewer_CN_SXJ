@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -28,9 +27,13 @@ import com.hippo.drawerlayout.DrawerLayoutChild;
 public class EhNavigationView extends LinearLayout implements DrawerLayoutChild {
 
     private static final int SCRIM_COLOR = 0x44000000;
+
     private static final boolean DRAW_SCRIM = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+
     private Paint mPaint;
+
     private int mWindowPaddingTop;
+
     private int mWindowPaddingBottom;
 
     public EhNavigationView(Context context) {
@@ -57,7 +60,6 @@ public class EhNavigationView extends LinearLayout implements DrawerLayoutChild 
     @Override
     public void draw(@NonNull Canvas canvas) {
         super.draw(canvas);
-
         if (DRAW_SCRIM && mWindowPaddingTop > 0) {
             if (null == mPaint) {
                 mPaint = new Paint();

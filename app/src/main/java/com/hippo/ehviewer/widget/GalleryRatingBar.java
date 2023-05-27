@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -22,8 +21,7 @@ import android.util.AttributeSet;
 import android.widget.RatingBar;
 import androidx.appcompat.widget.AppCompatRatingBar;
 
-public class GalleryRatingBar extends AppCompatRatingBar
-        implements RatingBar.OnRatingBarChangeListener {
+public class GalleryRatingBar extends AppCompatRatingBar implements RatingBar.OnRatingBarChangeListener {
 
     private OnUserRateListener mListener;
 
@@ -37,8 +35,7 @@ public class GalleryRatingBar extends AppCompatRatingBar
         init();
     }
 
-    public GalleryRatingBar(Context context, AttributeSet attrs,
-            int defStyle) {
+    public GalleryRatingBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }
@@ -50,7 +47,6 @@ public class GalleryRatingBar extends AppCompatRatingBar
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
         if (mListener != null) {
             mListener.onUserRate(getRating());
         }
@@ -68,6 +64,7 @@ public class GalleryRatingBar extends AppCompatRatingBar
     }
 
     public interface OnUserRateListener {
+
         void onUserRate(float rating);
     }
 }

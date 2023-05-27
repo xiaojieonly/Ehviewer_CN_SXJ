@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.Canvas;
@@ -23,7 +22,6 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-
 import com.hippo.yorozuya.MathUtils;
 
 public class BatteryDrawable extends Drawable {
@@ -34,22 +32,30 @@ public class BatteryDrawable extends Drawable {
     public static final int WARN_LIMIT = 15;
 
     private int mColor = Color.WHITE;
+
     private int mWarningColor = Color.RED;
+
     private int mElect = -1;
+
     private final Paint mPaint;
 
     private final Rect mTopRect;
+
     private final Rect mBottomRect;
+
     private final Rect mRightRect;
+
     private final Rect mHeadRect;
+
     private final Rect mElectRect;
+
     private int mStart;
+
     private int mStop;
 
     public BatteryDrawable() {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
-
         mTopRect = new Rect();
         mBottomRect = new Rect();
         mRightRect = new Rect();
@@ -69,7 +75,6 @@ public class BatteryDrawable extends Drawable {
         int secBottom = height - strokeWidth;
         mStart = strokeWidth;
         mStop = turn1 - strokeWidth;
-
         mTopRect.set(0, 0, turn1, strokeWidth);
         mBottomRect.set(0, secBottom, turn1, height);
         mRightRect.set(turn1 - strokeWidth, strokeWidth, turn1, secBottom);
@@ -93,9 +98,7 @@ public class BatteryDrawable extends Drawable {
         if (mElect == -1) {
             return;
         }
-
         mElectRect.right = MathUtils.lerp(mStart, mStop, mElect / 100.0f);
-
         canvas.drawRect(mTopRect, mPaint);
         canvas.drawRect(mBottomRect, mPaint);
         canvas.drawRect(mRightRect, mPaint);
@@ -111,7 +114,6 @@ public class BatteryDrawable extends Drawable {
         if (mColor == color) {
             return;
         }
-
         mColor = color;
         if (!isWarn()) {
             mPaint.setColor(mColor);
@@ -123,7 +125,6 @@ public class BatteryDrawable extends Drawable {
         if (mWarningColor == color) {
             return;
         }
-
         mWarningColor = color;
         if (isWarn()) {
             mPaint.setColor(mWarningColor);
@@ -135,7 +136,6 @@ public class BatteryDrawable extends Drawable {
         if (mElect == elect) {
             return;
         }
-
         mElect = elect;
         updatePaint();
     }
@@ -144,7 +144,6 @@ public class BatteryDrawable extends Drawable {
         if (mElect == elect) {
             return;
         }
-
         mElect = elect;
         updatePaint(warn);
     }

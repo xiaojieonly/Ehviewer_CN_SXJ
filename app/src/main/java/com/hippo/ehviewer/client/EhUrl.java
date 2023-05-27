@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 import androidx.annotation.NonNull;
@@ -29,56 +28,75 @@ import okhttp3.HttpUrl;
 public class EhUrl {
 
     public static final int SITE_E = 0;
+
     public static final int SITE_EX = 1;
 
     public static final String DOMAIN_EX = "exhentai.org";
+
     public static final String DOMAIN_E = "e-hentai.org";
+
     public static final String DOMAIN_LOFI = "lofi.e-hentai.org";
 
     public static final String REFERER_EX = "https://" + DOMAIN_EX;
+
     public static final String REFERER_E = "https://" + DOMAIN_E;
 
     public static final String HOST_EX = REFERER_EX + "/";
+
     public static final String HOST_E = REFERER_E + "/";
 
     public static final String API_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login&CODE=01";
 
-    public static final String URL_NEWS_E = HOST_E+"news.php";
+    public static final String URL_NEWS_E = HOST_E + "news.php";
 
     public static final String API_E = HOST_E + "api.php";
+
     public static final String API_EX = HOST_EX + "api.php";
 
     public static final String HOME_E = HOST_E + "home.php";
+
     public static final String HOME_EX = HOST_EX + "home.php";
 
     public static final String URL_POPULAR_E = "https://e-hentai.org/popular";
+
     public static final String URL_POPULAR_EX = "https://exhentai.org/popular";
 
-    public static final String URL_TOP_LIST_E = HOST_E+"toplist.php";
-    public static final String URL_TOP_LIST_EX = HOST_EX+"toplist.php";
+    public static final String URL_TOP_LIST_E = HOST_E + "toplist.php";
+
+    public static final String URL_TOP_LIST_EX = HOST_EX + "toplist.php";
 
     public static final String URL_IMAGE_SEARCH_E = "https://upload.e-hentai.org/image_lookup.php";
+
     public static final String URL_IMAGE_SEARCH_EX = "https://exhentai.org/upload/image_lookup.php";
 
     public static final String URL_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login";
+
     public static final String URL_REGISTER = "https://forums.e-hentai.org/index.php?act=Reg&CODE=00";
+
     public static final String URL_FAVORITES_E = HOST_E + "favorites.php";
+
     public static final String URL_FAVORITES_EX = HOST_EX + "favorites.php";
+
     public static final String URL_FORUMS = "https://forums.e-hentai.org/";
 
     public static final String ORIGIN_EX = REFERER_EX;
+
     public static final String ORIGIN_E = REFERER_E;
 
     public static final String URL_UCONFIG_E = HOST_E + "uconfig.php";
+
     public static final String URL_UCONFIG_EX = HOST_EX + "uconfig.php";
 
     public static final String URL_MY_TAGS_E = HOST_E + "mytags";
+
     public static final String URL_MY_TAGS_EX = HOST_EX + "mytags";
 
     public static final String URL_WATCHED_E = HOST_E + "watched";
+
     public static final String URL_WATCHED_EX = HOST_EX + "watched";
 
     private static final String URL_PREFIX_THUMB_E = "https://ehgt.org/";
+
     private static final String URL_PREFIX_THUMB_EX = "https://exhentai.org/t/";
 
     public static String getGalleryDetailUrl(long gid, String token) {
@@ -86,7 +104,7 @@ public class EhUrl {
     }
 
     public static String getHost() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return HOST_E;
@@ -96,7 +114,7 @@ public class EhUrl {
     }
 
     public static String getMyTag() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_MY_TAGS_E;
@@ -106,7 +124,7 @@ public class EhUrl {
     }
 
     public static String getFavoritesUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_FAVORITES_E;
@@ -116,7 +134,7 @@ public class EhUrl {
     }
 
     public static String getApiUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return API_E;
@@ -126,7 +144,7 @@ public class EhUrl {
     }
 
     public static String getReferer() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return REFERER_E;
@@ -136,7 +154,7 @@ public class EhUrl {
     }
 
     public static String getOrigin() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return ORIGIN_E;
@@ -146,7 +164,7 @@ public class EhUrl {
     }
 
     public static String getUConfigUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_UCONFIG_E;
@@ -156,7 +174,7 @@ public class EhUrl {
     }
 
     public static String getMyTagsUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_MY_TAGS_E;
@@ -206,7 +224,7 @@ public class EhUrl {
      */
     @NonNull
     public static String getPopularUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_POPULAR_E;
@@ -226,13 +244,13 @@ public class EhUrl {
          * 里站没排行榜入口？？？
          * 妈的绝了
          */
-//        switch (Settings.getGallerySite()) {
-//            default:
-//            case SITE_E:
-//                return URL_TOP_LIST_E;
-//            case SITE_EX:
-//                return URL_TOP_LIST_EX;
-//        }
+        //        switch (Settings.getGallerySite()) {
+        //            default:
+        //            case SITE_E:
+        //                return URL_TOP_LIST_E;
+        //            case SITE_EX:
+        //                return URL_TOP_LIST_EX;
+        //        }
     }
 
     /**
@@ -246,7 +264,7 @@ public class EhUrl {
 
     @NonNull
     public static String getImageSearchUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_IMAGE_SEARCH_E;
@@ -257,7 +275,7 @@ public class EhUrl {
 
     @NonNull
     public static String getWatchedUrl() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
             case SITE_E:
                 return URL_WATCHED_E;
@@ -267,39 +285,38 @@ public class EhUrl {
     }
 
     public static String getThumbUrlPrefix() {
-        switch (Settings.getGallerySite()) {
+        switch(Settings.getGallerySite()) {
             default:
-            //case SITE_E:
+                //case SITE_E:
                 return URL_PREFIX_THUMB_E;
-            //case SITE_EX:
-            //    return URL_PREFIX_THUMB_EX;
         }
     }
 
     public static String getFixedPreviewThumbUrl(String originUrl) {
         HttpUrl url = HttpUrl.parse(originUrl);
-        if (url == null) return originUrl;
+        if (url == null)
+            return originUrl;
         List<String> pathSegments = url.pathSegments();
-        if (pathSegments == null || pathSegments.size() < 3) return originUrl;
-
+        if (pathSegments == null || pathSegments.size() < 3)
+            return originUrl;
         ListIterator<String> iterator = pathSegments.listIterator(pathSegments.size());
         // The last segments, like
         // 317a1a254cd9c3269e71b2aa2671fe8d28c91097-260198-640-480-png_250.jpg
-        if (!iterator.hasPrevious()) return originUrl;
+        if (!iterator.hasPrevious())
+            return originUrl;
         String lastSegment = iterator.previous();
         // The second last segments, like
         // 7a
-        if (!iterator.hasPrevious()) return originUrl;
+        if (!iterator.hasPrevious())
+            return originUrl;
         String secondLastSegment = iterator.previous();
         // The third last segments, like
         // 31
-        if (!iterator.hasPrevious()) return originUrl;
+        if (!iterator.hasPrevious())
+            return originUrl;
         String thirdLastSegment = iterator.previous();
         // Check path segments
-        if (lastSegment != null && secondLastSegment != null
-                && thirdLastSegment != null
-                && lastSegment.startsWith(thirdLastSegment)
-                && lastSegment.startsWith(secondLastSegment, thirdLastSegment.length())) {
+        if (lastSegment != null && secondLastSegment != null && thirdLastSegment != null && lastSegment.startsWith(thirdLastSegment) && lastSegment.startsWith(secondLastSegment, thirdLastSegment.length())) {
             return getThumbUrlPrefix() + thirdLastSegment + "/" + secondLastSegment + "/" + lastSegment;
         } else {
             return originUrl;

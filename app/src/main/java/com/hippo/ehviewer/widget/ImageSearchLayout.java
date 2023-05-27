@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -52,9 +51,13 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
     private static final String TAG = ImageSearchLayout.class.getSimpleName();
 
     private ImageView mPreview;
+
     private View mSelectImage;
+
     private CheckBox mSearchUSS;
+
     private CheckBox mSearchOSC;
+
     private CheckBox mSearchSE;
 
     private Helper mHelper;
@@ -83,13 +86,11 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
         setDividerDrawable(context.getResources().getDrawable(R.drawable.spacer_keyline));
         setShowDividers(SHOW_DIVIDER_MIDDLE);
         LayoutInflater.from(context).inflate(R.layout.widget_image_search, this);
-
         mPreview = (ImageView) ViewUtils.$$(this, R.id.preview);
         mSelectImage = ViewUtils.$$(this, R.id.select_image);
         mSearchUSS = (CheckBox) ViewUtils.$$(this, R.id.search_uss);
         mSearchOSC = (CheckBox) ViewUtils.$$(this, R.id.search_osc);
         mSearchSE = (CheckBox) ViewUtils.$$(this, R.id.search_se);
-
         mSelectImage.setOnClickListener(this);
     }
 
@@ -110,13 +111,11 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
         if (null == imageUri) {
             return;
         }
-
         Context context = getContext();
         UniFile file = UniFile.fromUri(context, imageUri);
         if (null == file) {
             return;
         }
-
         try {
             int maxSize = context.getResources().getDimensionPixelOffset(R.dimen.image_search_max_size);
             Bitmap bitmap = BitmapUtils.decodeStream(new UniFileInputStreamPipe(file), maxSize, maxSize);
@@ -127,7 +126,6 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
             if (null == temp) {
                 return;
             }
-
             // TODO ehentai image search is bad when I'm writing this line.
             // Re-compress image will make image search failed.
             OutputStream os = null;
@@ -151,7 +149,6 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
         if (null == imagePath) {
             return;
         }
-
         InputStream is = null;
         try {
             is = new FileInputStream(imagePath);
@@ -173,7 +170,6 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
         if (null == mImagePath) {
             throw new EhException(getContext().getString(R.string.select_image_first));
         }
-
         builder.setImagePath(mImagePath);
         builder.setUseSimilarityScan(mSearchUSS.isChecked());
         builder.setOnlySearchCovers(mSearchOSC.isChecked());
@@ -220,8 +216,8 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
             out.writeString(imagePath);
         }
 
-        public static final Creator<SavedState> CREATOR
-                = new Creator<SavedState>() {
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
+
             @Override
             public SavedState createFromParcel(Parcel in) {
                 return new SavedState(in);
@@ -235,6 +231,7 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
     }
 
     public interface Helper {
+
         void onSelectImage();
     }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.fragment;
 
 import android.app.Activity;
@@ -34,11 +33,10 @@ import com.hippo.ehviewer.ui.DirPickerActivity;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 
-public class DownloadFragment extends PreferenceFragment implements
-        Preference.OnPreferenceChangeListener,
-        Preference.OnPreferenceClickListener {
+public class DownloadFragment extends PreferenceFragment implements Preference.OnPreferenceChangeListener, Preference.OnPreferenceClickListener {
 
     public static final int REQUEST_CODE_PICK_IMAGE_DIR = 0;
+
     public static final int REQUEST_CODE_PICK_IMAGE_DIR_L = 1;
 
     public static final String KEY_DOWNLOAD_LOCATION = "download_location";
@@ -50,16 +48,12 @@ public class DownloadFragment extends PreferenceFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.download_settings);
-
         Preference mediaScan = findPreference(Settings.KEY_MEDIA_SCAN);
         Preference imageResolution = findPreference(Settings.KEY_IMAGE_RESOLUTION);
         mDownloadLocation = findPreference(KEY_DOWNLOAD_LOCATION);
-
         onUpdateDownloadLocation();
-
         mediaScan.setOnPreferenceChangeListener(this);
         imageResolution.setOnPreferenceChangeListener(this);
-
         if (mDownloadLocation != null) {
             mDownloadLocation.setOnPreferenceClickListener(this);
         }
@@ -100,13 +94,12 @@ public class DownloadFragment extends PreferenceFragment implements
     }
 
     private void showDirPickerDialogKK() {
-        new AlertDialog.Builder(getActivity()).setMessage(R.string.settings_download_pick_dir_kk)
-                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker()).show();
+        new AlertDialog.Builder(getActivity()).setMessage(R.string.settings_download_pick_dir_kk).setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker()).show();
     }
 
     private void showDirPickerDialogL() {
         DialogInterface.OnClickListener listener = (dialog, which) -> {
-            switch (which) {
+            switch(which) {
                 case DialogInterface.BUTTON_POSITIVE:
                     openDirPicker();
                     break;
@@ -115,11 +108,7 @@ public class DownloadFragment extends PreferenceFragment implements
                     break;
             }
         };
-
-        new AlertDialog.Builder(getActivity()).setMessage(R.string.settings_download_pick_dir_l)
-                .setPositiveButton(R.string.settings_download_continue, listener)
-                .setNeutralButton(R.string.settings_download_document, listener)
-                .show();
+        new AlertDialog.Builder(getActivity()).setMessage(R.string.settings_download_pick_dir_l).setPositiveButton(R.string.settings_download_continue, listener).setNeutralButton(R.string.settings_download_document, listener).show();
     }
 
     private void openDirPicker() {
@@ -143,43 +132,43 @@ public class DownloadFragment extends PreferenceFragment implements
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(data == null){
+        if (data == null) {
             super.onActivityResult(requestCode, resultCode, null);
             return;
         }
-        switch (requestCode) {
-            case REQUEST_CODE_PICK_IMAGE_DIR: {
-                if (resultCode == Activity.RESULT_OK) {
-                    UniFile uniFile = UniFile.fromUri(getActivity(), data.getData());
-                    if (uniFile != null) {
-                        Settings.putDownloadLocation(uniFile);
-                        onUpdateDownloadLocation();
-                    } else {
-                        Toast.makeText(getActivity(), R.string.settings_download_cant_get_download_location,
-                                Toast.LENGTH_SHORT).show();
+        switch(requestCode) {
+            case REQUEST_CODE_PICK_IMAGE_DIR:
+                {
+                    if (resultCode == Activity.RESULT_OK) {
+                        UniFile uniFile = UniFile.fromUri(getActivity(), data.getData());
+                        if (uniFile != null) {
+                            Settings.putDownloadLocation(uniFile);
+                            onUpdateDownloadLocation();
+                        } else {
+                            Toast.makeText(getActivity(), R.string.settings_download_cant_get_download_location, Toast.LENGTH_SHORT).show();
+                        }
                     }
+                    break;
                 }
-                break;
-            }
-            case REQUEST_CODE_PICK_IMAGE_DIR_L: {
-                if (resultCode == Activity.RESULT_OK) {
-                    Uri treeUri = data.getData();
-                    getActivity().getContentResolver().takePersistableUriPermission(
-                            treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    UniFile uniFile = UniFile.fromTreeUri(getActivity(), treeUri);
-                    if (uniFile != null) {
-                        Settings.putDownloadLocation(uniFile);
-                        onUpdateDownloadLocation();
-                    } else {
-                        Toast.makeText(getActivity(), R.string.settings_download_cant_get_download_location,
-                                Toast.LENGTH_SHORT).show();
+            case REQUEST_CODE_PICK_IMAGE_DIR_L:
+                {
+                    if (resultCode == Activity.RESULT_OK) {
+                        Uri treeUri = data.getData();
+                        getActivity().getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        UniFile uniFile = UniFile.fromTreeUri(getActivity(), treeUri);
+                        if (uniFile != null) {
+                            Settings.putDownloadLocation(uniFile);
+                            onUpdateDownloadLocation();
+                        } else {
+                            Toast.makeText(getActivity(), R.string.settings_download_cant_get_download_location, Toast.LENGTH_SHORT).show();
+                        }
                     }
+                    break;
                 }
-                break;
-            }
-            default: {
-                super.onActivityResult(requestCode, resultCode, data);
-            }
+            default:
+                {
+                    super.onActivityResult(requestCode, resultCode, data);
+                }
         }
     }
 

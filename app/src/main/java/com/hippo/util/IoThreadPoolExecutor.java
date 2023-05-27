@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import androidx.annotation.NonNull;
@@ -28,63 +27,47 @@ import java.util.concurrent.TimeUnit;
 
 public class IoThreadPoolExecutor extends ThreadPoolExecutor {
 
-  private final static ThreadPoolExecutor INSTANCE =
-      IoThreadPoolExecutor.newInstance(3, 32, 1L, TimeUnit.SECONDS,
-          new PriorityThreadFactory("IO",android.os.Process.THREAD_PRIORITY_BACKGROUND));
+    private final static ThreadPoolExecutor INSTANCE = IoThreadPoolExecutor.newInstance(3, 32, 1L, TimeUnit.SECONDS, new PriorityThreadFactory("IO", android.os.Process.THREAD_PRIORITY_BACKGROUND));
 
-  private IoThreadPoolExecutor(
-      int corePoolSize,
-      int maximumPoolSize,
-      long keepAliveTime,
-      TimeUnit unit,
-      BlockingQueue<Runnable> workQueue,
-      ThreadFactory threadFactory,
-      RejectedExecutionHandler handler
-  ) {
-    super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
-  }
-
-  public static ThreadPoolExecutor getInstance() {
-    return INSTANCE;
-  }
-
-  private static ThreadPoolExecutor newInstance(
-      int corePoolSize,
-      int maximumPoolSize,
-      long keepAliveTime,
-      TimeUnit unit,
-      ThreadFactory threadFactory
-  ) {
-    ThreadQueue queue = new ThreadQueue();
-    PutRunnableBackHandler handler = new PutRunnableBackHandler();
-    IoThreadPoolExecutor executor = new IoThreadPoolExecutor(
-        corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, threadFactory, handler);
-    queue.setThreadPoolExecutor(executor);
-    return executor;
-  }
-
-  private static class ThreadQueue extends LinkedBlockingQueue<Runnable> {
-
-    private ThreadPoolExecutor executor;
-
-    void setThreadPoolExecutor(ThreadPoolExecutor executor) {
-      this.executor = executor;
+    private IoThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
+        super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
     }
 
-    @Override
-    public boolean offer(@NonNull Runnable o) {
-      int allWorkingThreads = executor.getActiveCount() + super.size();
-      return allWorkingThreads < executor.getPoolSize() && super.offer(o);
+    public static ThreadPoolExecutor getInstance() {
+        return INSTANCE;
     }
-  }
 
-  public static class PutRunnableBackHandler implements RejectedExecutionHandler {
-    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-      try {
-        executor.getQueue().put(r);
-      } catch (InterruptedException e) {
-        throw new RejectedExecutionException(e);
-      }
+    private static ThreadPoolExecutor newInstance(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, ThreadFactory threadFactory) {
+        ThreadQueue queue = new ThreadQueue();
+        PutRunnableBackHandler handler = new PutRunnableBackHandler();
+        IoThreadPoolExecutor executor = new IoThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, threadFactory, handler);
+        queue.setThreadPoolExecutor(executor);
+        return executor;
     }
-  }
+
+    private static class ThreadQueue extends LinkedBlockingQueue<Runnable> {
+
+        private ThreadPoolExecutor executor;
+
+        void setThreadPoolExecutor(ThreadPoolExecutor executor) {
+            this.executor = executor;
+        }
+
+        @Override
+        public boolean offer(@NonNull Runnable o) {
+            int allWorkingThreads = executor.getActiveCount() + super.size();
+            return allWorkingThreads < executor.getPoolSize() && super.offer(o);
+        }
+    }
+
+    public static class PutRunnableBackHandler implements RejectedExecutionHandler {
+
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+            try {
+                executor.getQueue().put(r);
+            } catch (InterruptedException e) {
+                throw new RejectedExecutionException(e);
+            }
+        }
+    }
 }

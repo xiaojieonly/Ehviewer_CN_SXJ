@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import android.util.Pair;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -26,6 +24,7 @@ import java.util.regex.Pattern;
 public class ArchiveParser {
 
     private static final Pattern PATTERN_FORM = Pattern.compile("<form id=\"hathdl_form\" action=\"[^\"]*?or=([^=\"]*?)\" method=\"post\">");
+
     private static final Pattern PATTERN_ARCHIVE = Pattern.compile("<a href=\"[^\"]*\" onclick=\"return do_hathdl\\('([0-9]+|org)'\\)\">([^<]+)</a>");
 
     @SuppressWarnings("unchecked")

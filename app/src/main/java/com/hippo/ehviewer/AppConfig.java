@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.content.Context;
@@ -33,11 +32,17 @@ public class AppConfig {
     private static final String APP_DIRNAME = "EhViewer";
 
     private static final String DOWNLOAD = "download";
+
     private static final String TEMP = "temp";
+
     private static final String IMAGE = "image";
+
     private static final String PARSE_ERROR = "parse_error";
+
     private static final String LOGCAT = "logcat";
+
     private static final String DATA = "data";
+
     private static final String CRASH = "crash";
 
     private static Context sContext;
@@ -139,7 +144,6 @@ public class AppConfig {
         if (null == dir) {
             return;
         }
-
         File file = new File(dir, ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt");
         OutputStream os = null;
         try {
@@ -167,7 +171,6 @@ public class AppConfig {
         if (dir == null) {
             return null;
         }
-
         dir = new File(dir, name);
         if (dir.isDirectory() || dir.mkdirs()) {
             return dir;

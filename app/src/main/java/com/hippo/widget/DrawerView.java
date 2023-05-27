@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
-
 import com.hippo.yorozuya.LayoutUtils;
 
 public class DrawerView extends FrameLayout {
 
     private static final int DEFAULT_MAX_WIDTH = 280;
 
-    private static final int[] SIZE_ATTRS = new int[] {
-            android.R.attr.maxWidth
-    };
+    private static final int[] SIZE_ATTRS = new int[] { android.R.attr.maxWidth };
 
     private int mMaxWidth;
 
@@ -56,13 +52,12 @@ public class DrawerView extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        switch (MeasureSpec.getMode(widthSpec)) {
+        switch(MeasureSpec.getMode(widthSpec)) {
             case MeasureSpec.EXACTLY:
                 // Nothing to do
                 break;
             case MeasureSpec.AT_MOST:
-                widthSpec = MeasureSpec.makeMeasureSpec(
-                        Math.min(MeasureSpec.getSize(widthSpec), mMaxWidth), MeasureSpec.EXACTLY);
+                widthSpec = MeasureSpec.makeMeasureSpec(Math.min(MeasureSpec.getSize(widthSpec), mMaxWidth), MeasureSpec.EXACTLY);
                 break;
             case MeasureSpec.UNSPECIFIED:
                 widthSpec = MeasureSpec.makeMeasureSpec(mMaxWidth, MeasureSpec.EXACTLY);

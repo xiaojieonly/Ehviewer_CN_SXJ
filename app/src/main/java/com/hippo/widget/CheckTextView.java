@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.animation.Animator;
@@ -42,6 +41,7 @@ import com.hippo.yorozuya.SimpleAnimatorListener;
 public class CheckTextView extends AppCompatTextView implements OnClickListener, Hotspotable {
 
     private static final String STATE_KEY_SUPER = "super";
+
     private static final String STATE_KEY_CHECKED = "checked";
 
     private static final long ANIMATION_DURATION = 200;
@@ -49,11 +49,15 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
     private int mMaskColor;
 
     private boolean mChecked = false;
+
     private boolean mPrepareAnimator = false;
 
     private Paint mPaint;
+
     private float mRadius = 0f;
+
     private float mX;
+
     private float mY;
 
     Animator mAnimator;
@@ -74,10 +78,8 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CheckTextView);
         mMaskColor = a.getColor(R.styleable.CheckTextView_maskColor, Color.WHITE);
         a.recycle();
-
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
         mPaint.setColor(mMaskColor);
-
         setOnClickListener(this);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Hotspot.addHotspotable(this, this);
@@ -94,7 +96,6 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
     @Override
     public void drawableHotspotChanged(float x, float y) {
         super.drawableHotspotChanged(x, y);
-
         mX = x;
         mY = y;
         mMaxRadius = MathUtils.coverageRadius(getWidth(), getHeight(), x, y);
@@ -111,6 +112,7 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
     }
 
     private final Animator.AnimatorListener mAnimatorListener = new SimpleAnimatorListener() {
+
         @Override
         public void onAnimationEnd(Animator animation) {
             mAnimator = null;
@@ -135,7 +137,6 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
             interpolator = AnimationUtils.SLOW_FAST_INTERPOLATOR;
         }
         mRadius = startRadius;
-
         final ObjectAnimator radiusAnim = ObjectAnimator.ofFloat(this, "radius", startRadius, endRadius);
         radiusAnim.setDuration(ANIMATION_DURATION);
         radiusAnim.setInterpolator(interpolator);
@@ -158,13 +159,11 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
-
         if (mPrepareAnimator) {
             mPrepareAnimator = false;
             cancelAnimations();
             createAnimations();
         }
-
         if (mAnimator != null) {
             canvas.drawCircle(mX, mY, mRadius, mPaint);
         } else {
@@ -187,7 +186,6 @@ public class CheckTextView extends AppCompatTextView implements OnClickListener,
     public void setChecked(boolean checked, boolean animation) {
         if (mChecked != checked) {
             mChecked = checked;
-
             if (animation) {
                 prepareAnimations();
             }

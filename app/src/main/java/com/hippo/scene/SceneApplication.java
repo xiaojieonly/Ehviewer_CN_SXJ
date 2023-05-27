@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.scene;
 
 import android.app.Application;
 import android.util.SparseArray;
-
 import com.hippo.yorozuya.IntIdGenerator;
 
 public abstract class SceneApplication extends Application {
 
     private final IntIdGenerator mIdGenerator = new IntIdGenerator();
+
     private final SparseArray<StageActivity> mStageMap = new SparseArray<>();
 
     void registerStageActivity(StageActivity stage) {
@@ -36,7 +35,6 @@ public abstract class SceneApplication extends Application {
         if (mStageMap.indexOfKey(id) >= 0) {
             throw new IllegalStateException("The id exists: " + id);
         }
-
         mStageMap.put(id, stage);
         stage.onRegister(id);
     }

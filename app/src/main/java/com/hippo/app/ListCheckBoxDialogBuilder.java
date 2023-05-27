@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.app;
 
 import android.annotation.SuppressLint;
@@ -35,8 +34,7 @@ public class ListCheckBoxDialogBuilder extends AlertDialog.Builder {
     private AlertDialog mDialog;
 
     @SuppressLint("InflateParams")
-    public ListCheckBoxDialogBuilder(Context context, CharSequence[] items,
-            final OnItemClickListener listener, String checkText, boolean checked) {
+    public ListCheckBoxDialogBuilder(Context context, CharSequence[] items, final OnItemClickListener listener, String checkText, boolean checked) {
         super(context);
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_list_checkbox_builder, null);
         setView(view);
@@ -44,6 +42,7 @@ public class ListCheckBoxDialogBuilder extends AlertDialog.Builder {
         mCheckBox = (CheckBox) ViewUtils.$$(view, R.id.checkbox);
         listView.setAdapter(new ArrayAdapter<>(getContext(), R.layout.item_select_dialog, items));
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (listener != null) {
@@ -67,6 +66,7 @@ public class ListCheckBoxDialogBuilder extends AlertDialog.Builder {
     }
 
     public interface OnItemClickListener {
+
         void onItemClick(ListCheckBoxDialogBuilder builder, AlertDialog dialog, int position);
     }
 }

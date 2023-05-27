@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.os.Bundle;
@@ -32,6 +31,7 @@ import com.hippo.yorozuya.ViewUtils;
 public class SelectSiteScene extends SolidScene implements View.OnClickListener {
 
     private RadioGroup mRadioGroup;
+
     private View mOk;
 
     @Override
@@ -41,22 +41,17 @@ public class SelectSiteScene extends SolidScene implements View.OnClickListener 
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_select_site, container, false);
-
         mRadioGroup = (RadioGroup) ViewUtils.$$(view, R.id.radio_group);
         mOk = ViewUtils.$$(view, R.id.ok);
-
         mOk.setOnClickListener(this);
-
         return view;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         mRadioGroup = null;
         mOk = null;
     }
@@ -67,10 +62,9 @@ public class SelectSiteScene extends SolidScene implements View.OnClickListener 
         if (null == activity || null == mRadioGroup) {
             return;
         }
-
         if (v == mOk) {
             int id = mRadioGroup.getCheckedRadioButtonId();
-            switch (id) {
+            switch(id) {
                 case R.id.site_e:
                     Settings.putSelectSite(false);
                     Settings.putGallerySite(EhUrl.SITE_E);

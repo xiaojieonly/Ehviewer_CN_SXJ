@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -27,11 +26,9 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
-
 import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.DataContainer;
@@ -43,31 +40,44 @@ import com.hippo.image.ImageBitmap;
 import com.hippo.image.ImageDrawable;
 import com.hippo.image.RecycledException;
 import com.hippo.util.DrawableManager;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-public class LoadImageView extends FixedAspectImageView implements Unikery<ImageBitmap>,
-        View.OnClickListener, View.OnLongClickListener, Animatable {
+public class LoadImageView extends FixedAspectImageView implements Unikery<ImageBitmap>, View.OnClickListener, View.OnLongClickListener, Animatable {
 
     public static final int RETRY_TYPE_NONE = 0;
-    public static final int RETRY_TYPE_CLICK = 1;
-    public static final int RETRY_TYPE_LONG_CLICK = 2;
-    private static final String TAG = LoadImageView.class.getSimpleName();
-    private int mTaskId = Unikery.INVALID_ID;
-    private Conaco<ImageBitmap> mConaco;
-    private String mKey;
-    private String mUrl;
-    private DataContainer mContainer;
-    private boolean mUseNetwork;
-    private int mOffsetX = Integer.MIN_VALUE;
-    private int mOffsetY = Integer.MIN_VALUE;
-    private int mClipWidth = Integer.MIN_VALUE;
-    private int mClipHeight = Integer.MIN_VALUE;
-    private int mRetryType;
-    public boolean mFailed;
-    private boolean mLoadFromDrawable;
 
+    public static final int RETRY_TYPE_CLICK = 1;
+
+    public static final int RETRY_TYPE_LONG_CLICK = 2;
+
+    private static final String TAG = LoadImageView.class.getSimpleName();
+
+    private int mTaskId = Unikery.INVALID_ID;
+
+    private Conaco<ImageBitmap> mConaco;
+
+    private String mKey;
+
+    private String mUrl;
+
+    private DataContainer mContainer;
+
+    private boolean mUseNetwork;
+
+    private int mOffsetX = Integer.MIN_VALUE;
+
+    private int mOffsetY = Integer.MIN_VALUE;
+
+    private int mClipWidth = Integer.MIN_VALUE;
+
+    private int mClipHeight = Integer.MIN_VALUE;
+
+    private int mRetryType;
+
+    public boolean mFailed;
+
+    private boolean mLoadFromDrawable;
 
     public LoadImageView(Context context) {
         super(context);
@@ -107,11 +117,11 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
         if (!mLoadFromDrawable) {
             if (mFailed) {
                 onFailure();
-            } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */ {
+            } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */
+            {
                 load(mKey, mUrl, mContainer, mUseNetwork);
             }
         }
@@ -120,7 +130,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
         if (!mLoadFromDrawable) {
             try {
                 // Cancel
@@ -157,7 +166,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         if (imageDrawable != null) {
             imageDrawable.recycle();
         }
-
         // Set drawable null
         setImageDrawable(null);
     }
@@ -176,7 +184,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         if (mRetryType != retryType) {
             int oldRetryType = mRetryType;
             mRetryType = retryType;
-
             if (mFailed) {
                 if (oldRetryType == RETRY_TYPE_CLICK) {
                     setOnClickListener(null);
@@ -185,7 +192,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
                     setOnLongClickListener(null);
                     setLongClickable(false);
                 }
-
                 if (retryType == RETRY_TYPE_CLICK) {
                     setOnClickListener(this);
                 } else if (retryType == RETRY_TYPE_LONG_CLICK) {
@@ -221,29 +227,26 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         if (url == null || (key == null && container == null)) {
             return;
         }
-
         mLoadFromDrawable = false;
         mFailed = false;
         clearRetry();
-
         mKey = key;
         mUrl = url;
         mContainer = container;
         mUseNetwork = useNetwork;
-
-//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
-//                .setUnikery(this)
-//                .setKey(key)
-//                .setUrl(url)
-//                .setDataContainer(container)
-//                .setUseNetwork(useNetwork);
+        //        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
+        //                .setUnikery(this)
+        //                .setKey(key)
+        //                .setUrl(url)
+        //                .setDataContainer(container)
+        //                .setUseNetwork(useNetwork);
         ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
         builder.unikery = this;
         builder.key = key;
         builder.url = url;
-        builder.dataContainer= container;
-        builder.useNetwork= useNetwork;
-        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+        builder.dataContainer = container;
+        builder.useNetwork = useNetwork;
+        builder.okHttpClient = EhApplication.getOkHttpClient(getContext());
         mConaco.load(builder);
     }
 
@@ -276,10 +279,9 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         }
     }
 
-//    @Override
-//    public void onRequest() {
-//    }
-
+    //    @Override
+    //    public void onRequest() {
+    //    }
     @Override
     public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {
     }
@@ -299,13 +301,10 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             Log.d(TAG, "The image is recycled", e);
             return;
         }
-
         clearDrawable();
-
         if (Integer.MIN_VALUE != mOffsetX) {
             drawable = new PreciselyClipDrawable(drawable, mOffsetX, mOffsetY, mClipWidth, mClipHeight);
         }
-
         onPreSetImageDrawable(drawable, true);
         if ((source == Conaco.SOURCE_DISK || source == Conaco.SOURCE_NETWORK) && isShown()) {
             Drawable[] layers = new Drawable[2];
@@ -329,7 +328,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         } else {
             drawable = DrawableManager.getVectorDrawable(getContext(), R.drawable.image_failed);
         }
-
         onPreSetImageDrawable(drawable, true);
         setImageDrawable(drawable);
         if (mRetryType == RETRY_TYPE_CLICK) {
@@ -392,7 +390,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public void onPreSetImageResource(int resId, boolean isTarget) {
     }
 
-    @IntDef({RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK})
+    @IntDef({ RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK })
     @Retention(RetentionPolicy.SOURCE)
     private @interface RetryType {
     }

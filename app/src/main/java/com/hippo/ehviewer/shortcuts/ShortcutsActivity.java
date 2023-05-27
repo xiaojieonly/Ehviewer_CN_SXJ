@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.shortcuts;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-
 import com.hippo.ehviewer.download.DownloadService;
 
 /**
  * Created by onlymash on 3/25/18.
  */
+public class ShortcutsActivity extends Activity {
 
-public class ShortcutsActivity extends Activity{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         String action = null;
         Intent intent = getIntent();
-        if (intent != null){
+        if (intent != null) {
             action = intent.getAction();
-            if (action != null && (action.equals(DownloadService.ACTION_START_ALL) ||
-                    action.equals(DownloadService.ACTION_STOP_ALL))){
+            if (action != null && (action.equals(DownloadService.ACTION_START_ALL) || action.equals(DownloadService.ACTION_STOP_ALL))) {
                 startService(new Intent(this, DownloadService.class).setAction(action));
             }
         }

@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.preference;
 
 import android.preference.Preference;
 import android.preference.PreferenceManager;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class PreferenceUtils {
-    private PreferenceUtils() {}
+
+    private PreferenceUtils() {
+    }
 
     private static final Method mRegisterOnActivityDestroyListener;
+
     private static final Method mUnregisterOnActivityDestroyListener;
 
     static {
         Method method;
         Class<?> clazz = PreferenceManager.class;
-
         method = null;
         try {
-            method = clazz.getDeclaredMethod("registerOnActivityDestroyListener",
-                    PreferenceManager.OnActivityDestroyListener.class);
+            method = clazz.getDeclaredMethod("registerOnActivityDestroyListener", PreferenceManager.OnActivityDestroyListener.class);
             if (null != method) {
                 method.setAccessible(true);
             }
@@ -43,11 +42,9 @@ public final class PreferenceUtils {
             e.printStackTrace();
         }
         mRegisterOnActivityDestroyListener = method;
-
         method = null;
         try {
-            method = clazz.getDeclaredMethod("unregisterOnActivityDestroyListener",
-                    PreferenceManager.OnActivityDestroyListener.class);
+            method = clazz.getDeclaredMethod("unregisterOnActivityDestroyListener", PreferenceManager.OnActivityDestroyListener.class);
             if (null != method) {
                 method.setAccessible(true);
             }
@@ -58,8 +55,7 @@ public final class PreferenceUtils {
     }
 
     @SuppressWarnings("TryWithIdenticalCatches")
-    public static void registerOnActivityDestroyListener(Preference preference,
-            PreferenceManager.OnActivityDestroyListener listener) {
+    public static void registerOnActivityDestroyListener(Preference preference, PreferenceManager.OnActivityDestroyListener listener) {
         if (null == mRegisterOnActivityDestroyListener || null == preference || null == listener) {
             return;
         }
@@ -67,7 +63,6 @@ public final class PreferenceUtils {
         if (null == preferenceManager) {
             return;
         }
-
         try {
             mRegisterOnActivityDestroyListener.invoke(preferenceManager, listener);
         } catch (IllegalAccessException e) {
@@ -78,8 +73,7 @@ public final class PreferenceUtils {
     }
 
     @SuppressWarnings("TryWithIdenticalCatches")
-    public static void unregisterOnActivityDestroyListener(Preference preference,
-            PreferenceManager.OnActivityDestroyListener listener) {
+    public static void unregisterOnActivityDestroyListener(Preference preference, PreferenceManager.OnActivityDestroyListener listener) {
         if (null == mUnregisterOnActivityDestroyListener || null == preference || null == listener) {
             return;
         }
@@ -87,7 +81,6 @@ public final class PreferenceUtils {
         if (null == preferenceManager) {
             return;
         }
-
         try {
             mUnregisterOnActivityDestroyListener.invoke(preferenceManager, listener);
         } catch (IllegalAccessException e) {

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.io;
 
 import androidx.annotation.NonNull;
@@ -27,6 +26,7 @@ import java.io.InputStream;
 public class FileInputStreamPipe implements InputStreamPipe {
 
     private final File mFile;
+
     private InputStream mIs;
 
     public FileInputStreamPipe(File file) {
@@ -49,7 +49,6 @@ public class FileInputStreamPipe implements InputStreamPipe {
         if (mIs != null) {
             throw new IllegalStateException("Please close it first");
         }
-
         mIs = new FileInputStream(mFile);
         return mIs;
     }

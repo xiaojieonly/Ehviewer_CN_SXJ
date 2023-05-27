@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.text.TextUtils;
@@ -31,76 +30,80 @@ import java.util.List;
 
 public class EhProxySelector extends ProxySelector {
 
-  public static final int TYPE_DIRECT = 0;
-  public static final int TYPE_SYSTEM = 1;
-  public static final int TYPE_HTTP = 2;
-  public static final int TYPE_SOCKS = 3;
+    public static final int TYPE_DIRECT = 0;
 
-  private ProxySelector delegation;
-  private ProxySelector alternative;
+    public static final int TYPE_SYSTEM = 1;
 
-  EhProxySelector() {
-    alternative = ProxySelector.getDefault();
-    if (alternative == null) {
-      alternative = new NullProxySelector();
-    }
+    public static final int TYPE_HTTP = 2;
 
-    updateProxy();
-  }
+    public static final int TYPE_SOCKS = 3;
 
-  public void updateProxy() {
-    switch (Settings.getProxyType()) {
-      case TYPE_DIRECT:
-        delegation = new NullProxySelector();
-        break;
-      default:
-      case TYPE_SYSTEM:
-        delegation = alternative;
-        break;
-      case TYPE_HTTP:
-      case TYPE_SOCKS:
-        delegation = null;
-        break;
-    }
-  }
+    private ProxySelector delegation;
 
-  @Override
-  public List<Proxy> select(URI uri) {
-    int type = Settings.getProxyType();
-    if (type == TYPE_HTTP || type == TYPE_SOCKS) {
-      try {
-        String ip = Settings.getProxyIp();
-        int port = Settings.getProxyPort();
-        if (!TextUtils.isEmpty(ip) && InetValidator.isValidInetPort(port)) {
-          InetAddress inetAddress = InetAddress.getByName(ip);
-          SocketAddress socketAddress = new InetSocketAddress(inetAddress, port);
-          return Collections.singletonList(new Proxy(type == TYPE_HTTP ? Proxy.Type.HTTP : Proxy.Type.SOCKS, socketAddress));
+    private ProxySelector alternative;
+
+    EhProxySelector() {
+        alternative = ProxySelector.getDefault();
+        if (alternative == null) {
+            alternative = new NullProxySelector();
         }
-      } catch (Throwable t) {
-        ExceptionUtils.throwIfFatal(t);
-      }
+        updateProxy();
     }
 
-    if (delegation != null) {
-      return delegation.select(uri);
+    public void updateProxy() {
+        switch(Settings.getProxyType()) {
+            case TYPE_DIRECT:
+                delegation = new NullProxySelector();
+                break;
+            default:
+            case TYPE_SYSTEM:
+                delegation = alternative;
+                break;
+            case TYPE_HTTP:
+            case TYPE_SOCKS:
+                delegation = null;
+                break;
+        }
     }
 
-    return alternative.select(uri);
-  }
-
-  @Override
-  public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
-    if (delegation != null) {
-      delegation.select(uri);
-    }
-  }
-
-  private static class NullProxySelector extends ProxySelector {
     @Override
     public List<Proxy> select(URI uri) {
-      return Collections.singletonList(Proxy.NO_PROXY);
+        int type = Settings.getProxyType();
+        if (type == TYPE_HTTP || type == TYPE_SOCKS) {
+            try {
+                String ip = Settings.getProxyIp();
+                int port = Settings.getProxyPort();
+                if (!TextUtils.isEmpty(ip) && InetValidator.isValidInetPort(port)) {
+                    InetAddress inetAddress = InetAddress.getByName(ip);
+                    SocketAddress socketAddress = new InetSocketAddress(inetAddress, port);
+                    return Collections.singletonList(new Proxy(type == TYPE_HTTP ? Proxy.Type.HTTP : Proxy.Type.SOCKS, socketAddress));
+                }
+            } catch (Throwable t) {
+                ExceptionUtils.throwIfFatal(t);
+            }
+        }
+        if (delegation != null) {
+            return delegation.select(uri);
+        }
+        return alternative.select(uri);
     }
+
     @Override
-    public void connectFailed(URI uri, SocketAddress sa, IOException ioe) { }
-  }
+    public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        if (delegation != null) {
+            delegation.select(uri);
+        }
+    }
+
+    private static class NullProxySelector extends ProxySelector {
+
+        @Override
+        public List<Proxy> select(URI uri) {
+            return Collections.singletonList(Proxy.NO_PROXY);
+        }
+
+        @Override
+        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        }
+    }
 }

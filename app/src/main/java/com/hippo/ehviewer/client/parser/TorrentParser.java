@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import android.util.Pair;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;

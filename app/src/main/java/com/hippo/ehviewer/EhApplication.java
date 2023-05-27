@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.annotation.SuppressLint;
@@ -32,12 +31,10 @@ import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.collection.LruCache;
-
 import com.hippo.a7zip.A7Zip;
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.conaco.Conaco;
@@ -69,9 +66,7 @@ import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.IntIdGenerator;
 import com.hippo.yorozuya.OSUtils;
 import com.hippo.yorozuya.SimpleHandler;
-
 import org.conscrypt.Conscrypt;
-
 import java.io.File;
 import java.security.KeyStore;
 import java.security.Security;
@@ -81,12 +76,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-
 import okhttp3.Cache;
 import okhttp3.ConnectionSpec;
 import okhttp3.Dispatcher;
@@ -95,34 +88,54 @@ import okhttp3.OkHttpClient;
 public class EhApplication extends RecordingApplication {
 
     private static final String TAG = EhApplication.class.getSimpleName();
+
     private static final String KEY_GLOBAL_STUFF_NEXT_ID = "global_stuff_next_id";
 
     public static final boolean BETA = false;
 
     private static final boolean DEBUG_CONACO = false;
+
     private static final boolean DEBUG_PRINT_NATIVE_MEMORY = false;
+
     private static final boolean DEBUG_PRINT_IMAGE_COUNT = false;
+
     private static final long DEBUG_PRINT_INTERVAL = 3000L;
 
     private static EhApplication instance;
 
     private final IntIdGenerator mIdGenerator = new IntIdGenerator();
+
     private final HashMap<Integer, Object> mGlobalStuffMap = new HashMap<>();
+
     private EhCookieStore mEhCookieStore;
+
     private EhClient mEhClient;
+
     private EhProxySelector mEhProxySelector;
+
     private OkHttpClient mOkHttpClient;
+
     private OkHttpClient mImageOkHttpClient;
+
     private Cache mOkHttpCache;
+
     private ImageBitmapHelper mImageBitmapHelper;
+
     private Conaco<ImageBitmap> mConaco;
+
     private LruCache<Long, GalleryDetail> mGalleryDetailCache;
+
     private SimpleDiskCache mSpiderInfoCache;
+
     private DownloadManager mDownloadManager;
+
     private Hosts mHosts;
+
     private FavouriteStatusRouter mFavouriteStatusRouter;
+
     @Nullable
     private UserTagList userTagList;
+
     @Nullable
     private EhNewsDetail ehNewsDetail;
 
@@ -140,7 +153,6 @@ public class EhApplication extends RecordingApplication {
     @Override
     public void onCreate() {
         instance = this;
-
         Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             try {
@@ -150,14 +162,11 @@ public class EhApplication extends RecordingApplication {
                 }
             } catch (Throwable ignored) {
             }
-
             if (handler != null) {
                 handler.uncaughtException(t, e);
             }
         });
-
         super.onCreate();
-
         GetText.initialize(this);
         StatusCodeException.initialize(this);
         Settings.initialize(this);
@@ -170,19 +179,18 @@ public class EhApplication extends RecordingApplication {
         BitmapUtils.initialize(this);
         Image.initialize(this);
         // 实际作用不确定，但是与64位应用有冲突
-//        A7Zip.loadLibrary(A7ZipExtractLite.LIBRARY, libname -> ReLinker.loadLibrary(EhApplication.this, libname));
+        //        A7Zip.loadLibrary(A7ZipExtractLite.LIBRARY, libname -> ReLinker.loadLibrary(EhApplication.this, libname));
         // 64位适配
         A7Zip.initialize(this);
         if (EhDB.needMerge()) {
             EhDB.mergeOldDB(this);
         }
-
         if (Settings.getEnableAnalytics()) {
             Analytics.start(this);
         }
-
         // Do io tasks in new thread
         new AsyncTask<Void, Void, Void>() {
+
             @Override
             protected Void doInBackground(Void... voids) {
                 // Check no media file
@@ -196,21 +204,17 @@ public class EhApplication extends RecordingApplication {
                 } catch (Throwable t) {
                     ExceptionUtils.throwIfFatal(t);
                 }
-
                 // Clear temp files
                 try {
                     clearTempDir();
                 } catch (Throwable t) {
                     ExceptionUtils.throwIfFatal(t);
                 }
-
                 return null;
             }
         }.executeOnExecutor(IoThreadPoolExecutor.getInstance());
-
         // Check app update
         update();
-
         // Update version code
         try {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -218,13 +222,10 @@ public class EhApplication extends RecordingApplication {
         } catch (PackageManager.NameNotFoundException e) {
             // Ignore
         }
-
         mIdGenerator.setNextId(Settings.getInt(KEY_GLOBAL_STUFF_NEXT_ID, 0));
-
         if (DEBUG_PRINT_NATIVE_MEMORY || DEBUG_PRINT_IMAGE_COUNT) {
             debugPrint();
         }
-
         initialized = true;
     }
 
@@ -237,7 +238,6 @@ public class EhApplication extends RecordingApplication {
         if (null != dir) {
             FileUtils.deleteContent(dir);
         }
-
         // Add .nomedia to external temp dir
         CommonOperations.ensureNoMediaFile(UniFile.fromFile(AppConfig.getExternalTempDir()));
     }
@@ -261,7 +261,6 @@ public class EhApplication extends RecordingApplication {
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-
         if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             clearMemoryCache();
         }
@@ -269,11 +268,11 @@ public class EhApplication extends RecordingApplication {
 
     private void debugPrint() {
         new Runnable() {
+
             @Override
             public void run() {
                 if (DEBUG_PRINT_NATIVE_MEMORY) {
-                    Log.i(TAG, "Native memory: " + FileUtils.humanReadableByteCount(
-                            Debug.getNativeHeapAllocatedSize(), false));
+                    Log.i(TAG, "Native memory: " + FileUtils.humanReadableByteCount(Debug.getNativeHeapAllocatedSize(), false));
                 }
                 if (DEBUG_PRINT_IMAGE_COUNT) {
                     Log.i(TAG, "Image count: " + Image.getImageCount());
@@ -338,38 +337,28 @@ public class EhApplication extends RecordingApplication {
         if (application.mOkHttpClient == null) {
             Dispatcher dispatcher = new Dispatcher();
             dispatcher.setMaxRequestsPerHost(4);
-            OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                    .connectTimeout(10, TimeUnit.SECONDS)
-                    .readTimeout(10, TimeUnit.SECONDS)
-                    .writeTimeout(10, TimeUnit.SECONDS)
-//                    .callTimeout(10, TimeUnit.SECONDS)
-                    .cookieJar(getEhCookieStore(application))
-                    .cache(getOkHttpCache(application))
-//                    .hostnameVerifier((hostname, session) -> true)
-                    .dispatcher(dispatcher)
-                    .dns(new EhDns(application))
-                    .addNetworkInterceptor(sprocket -> {
-                        try {
-                            return sprocket.proceed(sprocket.request());
-                        } catch (NullPointerException e) {
-                            throw new NullPointerException(e.getMessage());
-                        }
-                    })
-                    .proxySelector(getEhProxySelector(application));
+            OkHttpClient.Builder builder = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).//                    .callTimeout(10, TimeUnit.SECONDS)
+            cookieJar(getEhCookieStore(application)).cache(getOkHttpCache(application)).//                    .hostnameVerifier((hostname, session) -> true)
+            dispatcher(dispatcher).dns(new EhDns(application)).addNetworkInterceptor(sprocket -> {
+                try {
+                    return sprocket.proceed(sprocket.request());
+                } catch (NullPointerException e) {
+                    throw new NullPointerException(e.getMessage());
+                }
+            }).proxySelector(getEhProxySelector(application));
             if (Settings.getDF() && !AppHelper.checkVPN(context)) {
                 if (Build.VERSION.SDK_INT < 29) {
                     Security.insertProviderAt(Conscrypt.newProvider(), 1);
                     builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
                     try {
-                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                                TrustManagerFactory.getDefaultAlgorithm());
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init((KeyStore) null);
                         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
                         if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
                             throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
                         }
                         X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-//                        X509TrustManager tm = Conscrypt.getDefaultX509TrustManager();
+                        //                        X509TrustManager tm = Conscrypt.getDefaultX509TrustManager();
                         SSLContext sslContext = SSLContext.getInstance("TLS", "Conscrypt");
                         sslContext.init(null, trustManagers, null);
                         builder.sslSocketFactory(new EhSSLSocketFactoryLowSDK(sslContext.getSocketFactory()), trustManager);
@@ -379,8 +368,7 @@ public class EhApplication extends RecordingApplication {
                     }
                 } else {
                     try {
-                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                                TrustManagerFactory.getDefaultAlgorithm());
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init((KeyStore) null);
                         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
                         if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
@@ -396,7 +384,6 @@ public class EhApplication extends RecordingApplication {
             }
             application.mOkHttpClient = builder.build();
         }
-
         return application.mOkHttpClient;
     }
 
@@ -404,24 +391,13 @@ public class EhApplication extends RecordingApplication {
     public static OkHttpClient getImageOkHttpClient(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mImageOkHttpClient == null) {
-            OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                    .followRedirects(false)
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-                    .callTimeout(30, TimeUnit.SECONDS)
-                    .cookieJar(getEhCookieStore(application))
-                    .cache(getOkHttpCache(application))
-                    .hostnameVerifier((hostname, session) -> true)
-                    .dns(new EhDns(application))
-                    .proxySelector(getEhProxySelector(application));
+            OkHttpClient.Builder builder = new OkHttpClient.Builder().followRedirects(false).connectTimeout(30, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).callTimeout(30, TimeUnit.SECONDS).cookieJar(getEhCookieStore(application)).cache(getOkHttpCache(application)).hostnameVerifier((hostname, session) -> true).dns(new EhDns(application)).proxySelector(getEhProxySelector(application));
             if (Settings.getDF() && !AppHelper.checkVPN(context)) {
                 if (Build.VERSION.SDK_INT < 29) {
                     Security.insertProviderAt(Conscrypt.newProvider(), 1);
                     builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
                     try {
-                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                                TrustManagerFactory.getDefaultAlgorithm());
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init((KeyStore) null);
                         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
                         if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
@@ -437,8 +413,7 @@ public class EhApplication extends RecordingApplication {
                     }
                 } else {
                     try {
-                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                                TrustManagerFactory.getDefaultAlgorithm());
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init((KeyStore) null);
                         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
                         if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
@@ -454,7 +429,6 @@ public class EhApplication extends RecordingApplication {
             }
             application.mImageOkHttpClient = builder.build();
         }
-
         return application.mImageOkHttpClient;
     }
 
@@ -480,7 +454,8 @@ public class EhApplication extends RecordingApplication {
             builder.memoryCacheMaxSize = getMemoryCacheMaxSize();
             builder.hasDiskCache = true;
             builder.diskCacheDir = new File(context.getCacheDir(), "thumb");
-            builder.diskCacheMaxSize = 320 * 1024 * 1024; // 320MB
+            // 320MB
+            builder.diskCacheMaxSize = 320 * 1024 * 1024;
             builder.okHttpClient = getOkHttpClient(context);
             builder.objectHelper = getImageBitmapHelper(context);
             builder.debug = DEBUG_CONACO;
@@ -488,7 +463,6 @@ public class EhApplication extends RecordingApplication {
         }
         return application.mConaco;
     }
-
 
     @NonNull
     public static LruCache<Long, GalleryDetail> getGalleryDetailCache(@NonNull Context context) {
@@ -510,8 +484,8 @@ public class EhApplication extends RecordingApplication {
     public static SimpleDiskCache getSpiderInfoCache(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (null == application.mSpiderInfoCache) {
-            application.mSpiderInfoCache = new SimpleDiskCache(
-                    new File(context.getCacheDir(), "spider_info"), 5 * 1024 * 1024); // 5M
+            application.mSpiderInfoCache = new SimpleDiskCache(new File(context.getCacheDir(), "spider_info"), // 5M
+            5 * 1024 * 1024);
         }
         return application.mSpiderInfoCache;
     }
@@ -618,18 +592,15 @@ public class EhApplication extends RecordingApplication {
 
     public static boolean addDownloadTorrent(@NonNull Context context, String url) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
-
         if (application.torrentList.contains(url)) {
             return false;
         }
-
         application.torrentList.add(url);
         return true;
     }
 
     public static void removeDownloadTorrent(@NonNull Context context, String url) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
-
         application.torrentList.remove(url);
     }
 
@@ -655,20 +626,17 @@ public class EhApplication extends RecordingApplication {
         return application.userTagList;
     }
 
-    public void showEventPane(String html){
-        if (!Settings.getShowEhEvents()){
+    public void showEventPane(String html) {
+        if (!Settings.getShowEhEvents()) {
             return;
         }
-        if (html==null){
+        if (html == null) {
             return;
         }
         Activity activity = getTopActivity();
         if (activity != null) {
             activity.runOnUiThread(() -> {
-                AlertDialog dialog = new AlertDialog.Builder(activity)
-                        .setMessage(Html.fromHtml(html))
-                        .setPositiveButton(android.R.string.ok, null)
-                        .create();
+                AlertDialog dialog = new AlertDialog.Builder(activity).setMessage(Html.fromHtml(html)).setPositiveButton(android.R.string.ok, null).create();
                 dialog.setOnShowListener(d -> {
                     final View messageView = dialog.findViewById(android.R.id.message);
                     if (messageView instanceof TextView) {
@@ -695,9 +663,7 @@ public class EhApplication extends RecordingApplication {
         showEventPane(html);
     }
 
-    public EhNewsDetail getEhNewsDetail(){
+    public EhNewsDetail getEhNewsDetail() {
         return ehNewsDetail;
     }
-
 }
-

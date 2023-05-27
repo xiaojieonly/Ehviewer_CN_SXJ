@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.scene;
 
 import android.content.Intent;
@@ -21,18 +20,15 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.EhActivity;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.IntIdGenerator;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,14 +44,19 @@ public abstract class StageActivity extends EhActivity {
     public static final String ACTION_START_SCENE = "start_scene";
 
     public static final String KEY_SCENE_NAME = "stage_activity_scene_name";
+
     public static final String KEY_SCENE_ARGS = "stage_activity_scene_args";
 
     private static final String KEY_STAGE_ID = "stage_activity_stage_id";
+
     private static final String KEY_SCENE_TAG_LIST = "stage_activity_scene_tag_list";
+
     private static final String KEY_NEXT_ID = "stage_activity_next_id";
 
     private final ArrayList<String> mSceneTagList = new ArrayList<>();
+
     private final ArrayList<String> mDelaySceneTagList = new ArrayList<>();
+
     private final AtomicInteger mIdGenerator = new AtomicInteger();
 
     private int mStageId = IntIdGenerator.INVALID_ID;
@@ -82,9 +83,7 @@ public abstract class StageActivity extends EhActivity {
     private static final Map<Class<?>, Integer> sLaunchModeMap = new HashMap<>();
 
     public static void registerLaunchMode(Class<?> clazz, @SceneFragment.LaunchMode int launchMode) {
-        if (launchMode != SceneFragment.LAUNCH_MODE_STANDARD &&
-                launchMode != SceneFragment.LAUNCH_MODE_SINGLE_TOP &&
-                launchMode != SceneFragment.LAUNCH_MODE_SINGLE_TASK) {
+        if (launchMode != SceneFragment.LAUNCH_MODE_STANDARD && launchMode != SceneFragment.LAUNCH_MODE_SINGLE_TOP && launchMode != SceneFragment.LAUNCH_MODE_SINGLE_TASK) {
             throw new IllegalStateException("Invalid launch mode: " + launchMode);
         }
         sLaunchModeMap.put(clazz, launchMode);
@@ -100,7 +99,6 @@ public abstract class StageActivity extends EhActivity {
         if (null == clazzStr) {
             return false;
         }
-
         Class clazz;
         try {
             clazz = Class.forName(clazzStr);
@@ -108,14 +106,11 @@ public abstract class StageActivity extends EhActivity {
             Log.e(TAG, "Can't find class " + clazzStr, e);
             return false;
         }
-
         Bundle args = intent.getBundleExtra(KEY_SCENE_ARGS);
-
         Announcer announcer = onStartSceneFromIntent(clazz, args);
         if (announcer == null) {
             return false;
         }
-
         startScene(announcer);
         return true;
     }
@@ -134,9 +129,7 @@ public abstract class StageActivity extends EhActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-
-        if (intent == null || !ACTION_START_SCENE.equals(intent.getAction()) ||
-                !startSceneFromIntent(intent)) {
+        if (intent == null || !ACTION_START_SCENE.equals(intent.getAction()) || !startSceneFromIntent(intent)) {
             onUnrecognizedIntent(intent);
         }
     }
@@ -151,7 +144,8 @@ public abstract class StageActivity extends EhActivity {
      * Can't recognize intent in first time {@code onCreate} and {@code onNewIntent},
      * null included.
      */
-    protected void onUnrecognizedIntent(@Nullable Intent intent) {}
+    protected void onUnrecognizedIntent(@Nullable Intent intent) {
+    }
 
     /**
      * Call {@code setContentView} here. Do <b>NOT</b> call {@code startScene} here
@@ -161,7 +155,6 @@ public abstract class StageActivity extends EhActivity {
     @Override
     protected final void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (savedInstanceState != null) {
             mStageId = savedInstanceState.getInt(KEY_STAGE_ID, IntIdGenerator.INVALID_ID);
             ArrayList<String> list = savedInstanceState.getStringArrayList(KEY_SCENE_TAG_LIST);
@@ -171,16 +164,13 @@ public abstract class StageActivity extends EhActivity {
             }
             mIdGenerator.lazySet(savedInstanceState.getInt(KEY_NEXT_ID));
         }
-
         if (mStageId == IntIdGenerator.INVALID_ID) {
             ((SceneApplication) getApplicationContext()).registerStageActivity(this);
         } else {
             ((SceneApplication) getApplicationContext()).registerStageActivity(this, mStageId);
         }
-
         // Create layout
         onCreate2(savedInstanceState);
-
         Intent intent = getIntent();
         if (savedInstanceState == null) {
             if (intent != null) {
@@ -197,7 +187,6 @@ public abstract class StageActivity extends EhActivity {
                     }
                 }
             }
-
             // Can't recognize intent
             onUnrecognizedIntent(intent);
         }
@@ -260,8 +249,7 @@ public abstract class StageActivity extends EhActivity {
         } catch (InstantiationException e) {
             throw new IllegalStateException("Can't instance " + clazz.getName(), e);
         } catch (IllegalAccessException e) {
-            throw new IllegalStateException("The constructor of " +
-                    clazz.getName() + " is not visible", e);
+            throw new IllegalStateException("The constructor of " + clazz.getName() + " is not visible", e);
         } catch (ClassCastException e) {
             throw new IllegalStateException(clazz.getName() + " can not cast to scene", e);
         }
@@ -273,7 +261,6 @@ public abstract class StageActivity extends EhActivity {
         TransitionHelper tranHelper = announcer.tranHelper;
         FragmentManager fragmentManager = getSupportFragmentManager();
         int launchMode = getSceneLaunchMode(clazz);
-
         // Check LAUNCH_MODE_SINGLE_TASK
         if (launchMode == SceneFragment.LAUNCH_MODE_SINGLE_TASK) {
             for (int i = 0, n = mSceneTagList.size(); i < n; i++) {
@@ -283,13 +270,11 @@ public abstract class StageActivity extends EhActivity {
                     Log.e(TAG, "Can't find fragment with tag: " + tag);
                     continue;
                 }
-
-                if (clazz.isInstance(fragment)) { // Get it
+                if (clazz.isInstance(fragment)) {
+                    // Get it
                     FragmentTransaction transaction = fragmentManager.beginTransaction();
-
                     // Use default animation
                     transaction.setCustomAnimations(R.anim.scene_open_enter, R.anim.scene_open_exit);
-
                     // Remove top fragments
                     for (int j = i + 1; j < n; j++) {
                         String topTag = mSceneTagList.get(j);
@@ -306,29 +291,23 @@ public abstract class StageActivity extends EhActivity {
                         // Remove it
                         transaction.remove(topFragment);
                     }
-
                     // Remove tag from index i+1
                     mSceneTagList.subList(i + 1, mSceneTagList.size()).clear();
-
                     // Attach fragment
                     if (fragment.isDetached()) {
                         transaction.attach(fragment);
                     }
-
                     // Commit
                     transaction.commitAllowingStateLoss();
                     onTransactScene();
-
                     // New arguments
                     if (args != null && fragment instanceof SceneFragment) {
                         ((SceneFragment) fragment).onNewArguments(args);
                     }
-
                     return;
                 }
             }
         }
-
         // Get current fragment
         SceneFragment currentScene = null;
         if (mSceneTagList.size() > 0) {
@@ -340,7 +319,6 @@ public abstract class StageActivity extends EhActivity {
                 currentScene = (SceneFragment) fragment;
             }
         }
-
         // Check LAUNCH_MODE_SINGLE_TASK
         if (clazz.isInstance(currentScene) && launchMode == SceneFragment.LAUNCH_MODE_SINGLE_TOP) {
             if (args != null) {
@@ -348,23 +326,18 @@ public abstract class StageActivity extends EhActivity {
             }
             return;
         }
-
         // Create new scene
         SceneFragment newScene = newSceneInstance(clazz);
         newScene.setArguments(args);
-
         // Create new scene tag
         String newTag = Integer.toString(mIdGenerator.getAndIncrement());
-
         // Add new tag to list
         mSceneTagList.add(newTag);
         mDelaySceneTagList.add(newTag);
-
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         // Animation
         if (currentScene != null) {
-            if (tranHelper == null || !tranHelper.onTransition(
-                    this, transaction, currentScene, newScene)) {
+            if (tranHelper == null || !tranHelper.onTransition(this, transaction, currentScene, newScene)) {
                 // Clear shared item
                 currentScene.setSharedElementEnterTransition(null);
                 currentScene.setSharedElementReturnTransition(null);
@@ -384,14 +357,11 @@ public abstract class StageActivity extends EhActivity {
                 Log.e(TAG, "Current scene is detached");
             }
         }
-
         // Add new scene
         transaction.add(getContainerViewId(), newScene, newTag);
-
         // Commit
         transaction.commitAllowingStateLoss();
         onTransactScene();
-
         // Check request
         if (announcer.requestFrom != null) {
             newScene.addRequest(announcer.requestFrom.getTag(), announcer.requestCode);
@@ -407,12 +377,9 @@ public abstract class StageActivity extends EhActivity {
         boolean createNewScene = true;
         boolean findScene = false;
         SceneFragment scene = null;
-
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-
         // Set default animation
         transaction.setCustomAnimations(R.anim.scene_open_enter, R.anim.scene_open_exit);
-
         String findSceneTag = null;
         for (int i = 0, n = mSceneTagList.size(); i < n; i++) {
             String tag = mSceneTagList.get(i);
@@ -421,16 +388,13 @@ public abstract class StageActivity extends EhActivity {
                 Log.e(TAG, "Can't find fragment with tag: " + tag);
                 continue;
             }
-
             // Clear shared element
             fragment.setSharedElementEnterTransition(null);
             fragment.setSharedElementReturnTransition(null);
             fragment.setEnterTransition(null);
             fragment.setExitTransition(null);
-
             // Check is target scene
-            if (!forceNewScene && !findScene && clazz.isInstance(fragment) &&
-                    (launchMode == SceneFragment.LAUNCH_MODE_SINGLE_TASK || !fragment.isDetached())) {
+            if (!forceNewScene && !findScene && clazz.isInstance(fragment) && (launchMode == SceneFragment.LAUNCH_MODE_SINGLE_TASK || !fragment.isDetached())) {
                 scene = (SceneFragment) fragment;
                 findScene = true;
                 createNewScene = false;
@@ -443,32 +407,25 @@ public abstract class StageActivity extends EhActivity {
                 transaction.remove(fragment);
             }
         }
-
         // Handle tag list
         mSceneTagList.clear();
         if (null != findSceneTag) {
             mSceneTagList.add(findSceneTag);
         }
-
         if (createNewScene) {
             scene = newSceneInstance(clazz);
             scene.setArguments(args);
-
             // Create scene tag
             String tag = Integer.toString(mIdGenerator.getAndIncrement());
-
             // Add tag to list
             mSceneTagList.add(tag);
             mDelaySceneTagList.add(tag);
-
             // Add scene
             transaction.add(getContainerViewId(), scene, tag);
         }
-
         // Commit
         transaction.commitAllowingStateLoss();
         onTransactScene();
-
         if (!createNewScene && args != null) {
             scene.onNewArguments(args);
         }
@@ -496,38 +453,32 @@ public abstract class StageActivity extends EhActivity {
 
     private void finishScene(String tag, TransitionHelper transitionHelper) {
         FragmentManager fragmentManager = getSupportFragmentManager();
-
         // Get scene
         Fragment scene = fragmentManager.findFragmentByTag(tag);
         if (scene == null) {
             Log.e(TAG, "finishScene: Can't find scene by tag: " + tag);
             return;
         }
-
         // Get scene index
         int index = mSceneTagList.indexOf(tag);
         if (index < 0) {
             Log.e(TAG, "finishScene: Can't find the tag in tag list: " + tag);
             return;
         }
-
         if (mSceneTagList.size() == 1) {
             // It is the last fragment, finish Activity now
             Log.i(TAG, "finishScene: It is the last scene, finish activity now");
             finish();
             return;
         }
-
         Fragment next = null;
         if (index == mSceneTagList.size() - 1) {
             // It is first fragment, show the next one
             next = fragmentManager.findFragmentByTag(mSceneTagList.get(index - 1));
         }
-
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         if (next != null) {
-            if (transitionHelper == null || !transitionHelper.onTransition(
-                    this, transaction, scene, next)) {
+            if (transitionHelper == null || !transitionHelper.onTransition(this, transaction, scene, next)) {
                 // Clear shared item
                 scene.setSharedElementEnterTransition(null);
                 scene.setSharedElementReturnTransition(null);
@@ -546,10 +497,8 @@ public abstract class StageActivity extends EhActivity {
         transaction.remove(scene);
         transaction.commitAllowingStateLoss();
         onTransactScene();
-
         // Remove tag
         mSceneTagList.remove(index);
-
         // Return result
         if (scene instanceof SceneFragment) {
             ((SceneFragment) scene).returnResult(this);
@@ -562,10 +511,8 @@ public abstract class StageActivity extends EhActivity {
             return;
         }
         String tag = mSceneTagList.get(index);
-
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentByTag(tag);
-
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.detach(fragment);
         transaction.attach(fragment);
@@ -587,7 +534,6 @@ public abstract class StageActivity extends EhActivity {
             Log.e(TAG, "onBackPressed: The fragment is not SceneFragment");
             return;
         }
-
         scene = (SceneFragment) fragment;
         scene.onBackPressed();
     }
@@ -618,7 +564,7 @@ public abstract class StageActivity extends EhActivity {
 
     @Override
     public void applyOverrideConfiguration(Configuration overrideConfiguration) {
-        if (overrideConfiguration != null){
+        if (overrideConfiguration != null) {
             int uiMode = overrideConfiguration.uiMode;
             overrideConfiguration.setTo(getApplicationContext().getResources().getConfiguration());
             overrideConfiguration.uiMode = uiMode;

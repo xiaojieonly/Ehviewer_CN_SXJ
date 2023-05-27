@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.gallery;
 
 import android.os.Process;
@@ -43,15 +42,22 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
 
     private static final String TAG = DirGalleryProvider.class.getSimpleName();
+
     private static final AtomicInteger sIdGenerator = new AtomicInteger();
 
     private final UniFile mDir;
+
     private final Stack<Integer> mRequests = new Stack<>();
+
     private final AtomicInteger mDecodingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
+
     private final AtomicReference<UniFile[]> mFileList = new AtomicReference<>();
+
     @Nullable
     private Thread mBgThread;
+
     private volatile int mSize = STATE_WAIT;
+
     private String mError;
 
     public DirGalleryProvider(@NonNull UniFile dir) {
@@ -61,16 +67,13 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
     @Override
     public void start() {
         super.start();
-
-        mBgThread = new PriorityThread(this, TAG + '-' + sIdGenerator.incrementAndGet(),
-                Process.THREAD_PRIORITY_BACKGROUND);
+        mBgThread = new PriorityThread(this, TAG + '-' + sIdGenerator.incrementAndGet(), Process.THREAD_PRIORITY_BACKGROUND);
         mBgThread.start();
     }
 
     @Override
     public void stop() {
         super.stop();
-
         if (mBgThread != null) {
             mBgThread.interrupt();
             mBgThread = null;
@@ -123,7 +126,6 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
         if (null == fileList || index < 0 || index >= fileList.length) {
             return false;
         }
-
         InputStream is = null;
         OutputStream os = null;
         try {
@@ -146,14 +148,12 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
         if (null == fileList || index < 0 || index >= fileList.length) {
             return null;
         }
-
         UniFile src = fileList[index];
         String extension = FileUtils.getExtensionFromFilename(src.getName());
         UniFile dst = dir.subFile(null != extension ? filename + "." + extension : filename);
         if (null == dst) {
             return null;
         }
-
         InputStream is = null;
         OutputStream os = null;
         try {
@@ -173,28 +173,21 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
     public void run() {
         // It may take a long time, so run it in new thread
         UniFile[] files = mDir.listFiles(imageFilter);
-
         if (files == null) {
             mSize = STATE_ERROR;
             mError = GetText.getString(R.string.error_not_folder_path);
-
             // Notify to to show error
             notifyDataChanged();
-
             Log.i(TAG, "ImageDecoder end with error");
             return;
         }
-
         // Sort it
         Arrays.sort(files, naturalComparator);
-
         // Put file list
         mFileList.lazySet(files);
-
         // Set state normal and notify
         mSize = files.length;
         notifyDataChanged();
-
         while (!Thread.currentThread().isInterrupted()) {
             int index;
             synchronized (mRequests) {
@@ -210,14 +203,12 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
                 index = mRequests.pop();
                 mDecodingIndex.lazySet(index);
             }
-
             // Check index valid
             if (index < 0 || index >= files.length) {
                 mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
                 notifyPageFailed(index, GetText.getString(R.string.error_out_of_range));
                 continue;
             }
-
             InputStream is = null;
             try {
                 is = files[index].openInputStream();
@@ -236,18 +227,17 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
             }
             mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
         }
-
         // Clear file list
         mFileList.lazySet(null);
-
         Log.i(TAG, "ImageDecoder end");
     }
 
-    private static FilenameFilter imageFilter =
-        (dir, name) -> StringUtils.endsWith(name.toLowerCase(), SUPPORT_IMAGE_EXTENSIONS);
+    private static FilenameFilter imageFilter = (dir, name) -> StringUtils.endsWith(name.toLowerCase(), SUPPORT_IMAGE_EXTENSIONS);
 
     private static Comparator<UniFile> naturalComparator = new Comparator<UniFile>() {
+
         private NaturalComparator comparator = new NaturalComparator();
+
         @Override
         public int compare(UniFile o1, UniFile o2) {
             return comparator.compare(o1.getName(), o2.getName());

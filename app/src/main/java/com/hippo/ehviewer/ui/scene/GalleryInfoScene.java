@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.content.ClipData;
@@ -49,10 +48,13 @@ import java.util.ArrayList;
 public final class GalleryInfoScene extends ToolbarScene implements EasyRecyclerView.OnItemClickListener {
 
     public static final String KEY_GALLERY_DETAIL = "gallery_detail";
+
     public static final String KEY_KEYS = "keys";
+
     public static final String KEY_VALUES = "values";
 
     private static final int INDEX_URL = 3;
+
     private static final int INDEX_PARENT = 10;
 
     /*---------------
@@ -60,6 +62,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
      ---------------*/
     @Nullable
     private ArrayList<String> mKeys;
+
     @Nullable
     private ArrayList<String> mValues;
 
@@ -69,7 +72,6 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (savedInstanceState == null) {
             onInit();
         } else {
@@ -88,7 +90,6 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
         if (mKeys == null || mValues == null) {
             return;
         }
-
         Resources resources = getResources2();
         AssertUtils.assertNotNull(resources);
         mKeys.add(resources.getString(R.string.header_key));
@@ -158,21 +159,15 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     @SuppressWarnings("deprecation")
     @Nullable
     @Override
-    public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_gallery_info, container, false);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
-
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
         InfoAdapter adapter = new InfoAdapter();
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.VERTICAL, false));
-        LinearDividerItemDecoration decoration = new LinearDividerItemDecoration(
-                LinearDividerItemDecoration.VERTICAL,
-                AttrResources.getAttrColor(context, R.attr.dividerColor),
-                LayoutUtils.dp2pix(context, 1));
+        LinearDividerItemDecoration decoration = new LinearDividerItemDecoration(LinearDividerItemDecoration.VERTICAL, AttrResources.getAttrColor(context, R.attr.dividerColor), LayoutUtils.dp2pix(context, 1));
         decoration.setPadding(context.getResources().getDimensionPixelOffset(R.dimen.keyline_margin));
         mRecyclerView.addItemDecoration(decoration);
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
@@ -192,7 +187,6 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();
             mRecyclerView = null;
@@ -208,12 +202,10 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
             } else {
                 ClipboardManager cmb = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
                 cmb.setPrimaryClip(ClipData.newPlainText(null, mValues.get(position)));
-
                 if (position == INDEX_URL) {
                     // Save it to avoid detect the gallery
                     Settings.putClipboardTextHashCode(mValues.get(position).hashCode());
                 }
-
                 showTip(R.string.copied_to_clipboard, LENGTH_SHORT);
             }
             return true;
@@ -230,11 +222,11 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     private static class InfoHolder extends RecyclerView.ViewHolder {
 
         private final TextView key;
+
         private final TextView value;
 
         public InfoHolder(View itemView) {
             super(itemView);
-
             key = (TextView) itemView.findViewById(R.id.key);
             value = (TextView) itemView.findViewById(R.id.value);
         }
@@ -243,6 +235,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     private class InfoAdapter extends RecyclerView.Adapter<InfoHolder> {
 
         private static final int TYPE_HEADER = 0;
+
         private static final int TYPE_DATA = 1;
 
         private final LayoutInflater mInflater;
@@ -263,8 +256,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
 
         @Override
         public InfoHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new InfoHolder(mInflater.inflate(viewType == TYPE_HEADER ?
-                    R.layout.item_gallery_info_header : R.layout.item_gallery_info_data, parent, false));
+            return new InfoHolder(mInflater.inflate(viewType == TYPE_HEADER ? R.layout.item_gallery_info_header : R.layout.item_gallery_info_data, parent, false));
         }
 
         @Override

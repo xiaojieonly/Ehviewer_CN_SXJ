@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,21 +41,18 @@ public class SqlUtils {
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             String tableName = cursor.getString(1);
-            if (!tableName.equals("android_metadata") &&
-                    !tableName.equals("sqlite_sequence"))
+            if (!tableName.equals("android_metadata") && !tableName.equals("sqlite_sequence"))
                 tables.add(tableName);
             cursor.moveToNext();
         }
         cursor.close();
-
-        for(String tableName : tables) {
+        for (String tableName : tables) {
             dropTable(db, tableName);
         }
     }
 
     public static String sqlEscapeString(String value) {
         StringBuilder sb = new StringBuilder();
-
         int length = value.length();
         for (int i = 0; i < length; i++) {
             char c = value.charAt(i);
@@ -66,7 +61,6 @@ public class SqlUtils {
             }
             sb.append(c);
         }
-
         return sb.toString();
     }
 
@@ -76,7 +70,9 @@ public class SqlUtils {
             if (index != -1) {
                 return cursor.getInt(index) != 0;
             }
-        } catch (Throwable e) { /* Ignore */ }
+        } catch (Throwable e) {
+            /* Ignore */
+        }
         return defValue;
     }
 
@@ -86,7 +82,9 @@ public class SqlUtils {
             if (index != -1) {
                 return cursor.getInt(index);
             }
-        } catch (Throwable e) { /* Ignore */ }
+        } catch (Throwable e) {
+            /* Ignore */
+        }
         return defValue;
     }
 
@@ -96,7 +94,9 @@ public class SqlUtils {
             if (index != -1) {
                 return cursor.getLong(index);
             }
-        } catch (Throwable e) { /* Ignore */ }
+        } catch (Throwable e) {
+            /* Ignore */
+        }
         return defValue;
     }
 
@@ -106,7 +106,9 @@ public class SqlUtils {
             if (index != -1) {
                 return cursor.getFloat(index);
             }
-        } catch (Throwable e) { /* Ignore */ }
+        } catch (Throwable e) {
+            /* Ignore */
+        }
         return defValue;
     }
 
@@ -116,7 +118,9 @@ public class SqlUtils {
             if (index != -1) {
                 return cursor.getString(index);
             }
-        } catch (Throwable e) { /* Ignore */ }
+        } catch (Throwable e) {
+            /* Ignore */
+        }
         return defValue;
     }
 }

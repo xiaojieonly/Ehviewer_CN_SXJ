@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -57,33 +56,26 @@ public class LinkifyTextView extends ObservedTextView {
         // action on it, so we analyze touched url here.
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             mCurrentSpan = null;
-
             if (getText() instanceof Spanned) {
                 // Get this code from android.text.method.LinkMovementMethod.
                 // Work fine !
                 int x = (int) event.getX();
                 int y = (int) event.getY();
-
                 x -= getTotalPaddingLeft();
                 y -= getTotalPaddingTop();
-
                 x += getScrollX();
                 y += getScrollY();
-
                 Layout layout = getLayout();
                 if (null != layout) {
                     int line = layout.getLineForVertical(y);
                     int off = layout.getOffsetForHorizontal(line, x);
-
-                    ClickableSpan[] spans = ((Spanned)getText()).getSpans(off, off, ClickableSpan.class);
-
+                    ClickableSpan[] spans = ((Spanned) getText()).getSpans(off, off, ClickableSpan.class);
                     if (spans.length > 0) {
                         mCurrentSpan = spans[0];
                     }
                 }
             }
         }
-
         return super.onTouchEvent(event);
     }
 }

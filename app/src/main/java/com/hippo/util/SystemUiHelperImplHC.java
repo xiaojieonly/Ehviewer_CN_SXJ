@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.annotation.TargetApi;
@@ -24,19 +23,15 @@ import android.view.View;
 import android.view.WindowManager;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-class SystemUiHelperImplHC extends SystemUiHelper.SystemUiHelperImpl
-        implements View.OnSystemUiVisibilityChangeListener {
+class SystemUiHelperImplHC extends SystemUiHelper.SystemUiHelperImpl implements View.OnSystemUiVisibilityChangeListener {
 
     final View mDecorView;
 
-    SystemUiHelperImplHC(Activity activity, int level, int flags,
-            SystemUiHelper.OnVisibilityChangeListener onVisibilityChangeListener) {
+    SystemUiHelperImplHC(Activity activity, int level, int flags, SystemUiHelper.OnVisibilityChangeListener onVisibilityChangeListener) {
         super(activity, level, flags, onVisibilityChangeListener);
-
         mDecorView = activity.getWindow().getDecorView();
         mDecorView.setOnSystemUiVisibilityChangeListener(this);
     }
-
 
     @Override
     void show() {
@@ -62,9 +57,7 @@ class SystemUiHelperImplHC extends SystemUiHelper.SystemUiHelperImpl
         if (ab != null) {
             ab.show();
         }
-
         mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setIsShowing(true);
     }
 
@@ -73,14 +66,12 @@ class SystemUiHelperImplHC extends SystemUiHelper.SystemUiHelperImpl
         if (ab != null) {
             ab.hide();
         }
-
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setIsShowing(false);
     }
 
     protected int createShowFlags() {
-       return View.STATUS_BAR_VISIBLE;
+        return View.STATUS_BAR_VISIBLE;
     }
 
     protected int createHideFlags() {

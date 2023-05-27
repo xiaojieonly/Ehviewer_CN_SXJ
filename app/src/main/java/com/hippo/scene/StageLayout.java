@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.scene;
 
 import android.content.Context;
@@ -22,18 +21,20 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
 import com.hippo.ehviewer.R;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class StageLayout extends FrameLayout {
 
     private Field mDisappearingChildrenField;
+
     private ArrayList<View> mSuperDisappearingChildren;
+
     private ArrayList<View> mSortedScenes;
+
     private View mDumpView;
+
     private boolean mDoTrick;
 
     public StageLayout(Context context) {
@@ -58,7 +59,6 @@ public class StageLayout extends FrameLayout {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
-
         if (mDisappearingChildrenField != null) {
             mDumpView = new View(context);
             addView(mDumpView, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
@@ -70,7 +70,6 @@ public class StageLayout extends FrameLayout {
         if (mDisappearingChildrenField == null || mSuperDisappearingChildren != null) {
             return;
         }
-
         try {
             mSuperDisappearingChildren = (ArrayList<View>) mDisappearingChildrenField.get(this);
         } catch (IllegalAccessException e) {
@@ -80,12 +79,10 @@ public class StageLayout extends FrameLayout {
 
     private boolean beforeDispatchDraw() {
         getSuperDisappearingChildren();
-
-        if (mSuperDisappearingChildren == null ||
-                mSuperDisappearingChildren.size() <= 0 || getChildCount() <= 1) { // only dump view
+        if (mSuperDisappearingChildren == null || mSuperDisappearingChildren.size() <= 0 || getChildCount() <= 1) {
+            // only dump view
             return false;
         }
-
         // Get stage
         StageActivity stage = null;
         Context context = getContext();
@@ -95,15 +92,14 @@ public class StageLayout extends FrameLayout {
         if (stage == null) {
             return false;
         }
-
         if (null == mSortedScenes) {
             mSortedScenes = new ArrayList<>();
         }
-
         // Add all scene view to mSortedScenes
         ArrayList<View> disappearingChildren = mSuperDisappearingChildren;
         ArrayList<View> sortedScenes = mSortedScenes;
-        for (int i = 1, n = getChildCount(); i < n; i++) { // Skip dump view
+        for (int i = 1, n = getChildCount(); i < n; i++) {
+            // Skip dump view
             View view = getChildAt(i);
             if (null != view.getTag(R.id.fragment_tag)) {
                 sortedScenes.add(view);
@@ -115,9 +111,7 @@ public class StageLayout extends FrameLayout {
                 sortedScenes.add(view);
             }
         }
-
         stage.sortSceneViews(sortedScenes);
-
         return true;
     }
 
@@ -150,7 +144,6 @@ public class StageLayout extends FrameLayout {
                 return false;
             }
         }
-
         return super.drawChild(canvas, child, drawingTime);
     }
 }
