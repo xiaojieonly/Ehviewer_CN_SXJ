@@ -54,10 +54,8 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
         switch(keyCode) {
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
-                if (KeyEvent.metaStateHasNoModifiers(movementMetaState)) {
-                    if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 && action(CLICK, widget, buffer)) {
-                        return true;
-                    }
+                if (KeyEvent.metaStateHasNoModifiers(movementMetaState) && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 && action(CLICK, widget, buffer)) {
+                    return true;
                 }
                 break;
         }
@@ -110,10 +108,8 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
         int b = Selection.getSelectionEnd(buffer);
         int selStart = Math.min(a, b);
         int selEnd = Math.max(a, b);
-        if (selStart < 0) {
-            if (buffer.getSpanStart(FROM_BELOW) >= 0) {
-                selStart = selEnd = buffer.length();
-            }
+        if (selStart < 0 && buffer.getSpanStart(FROM_BELOW) >= 0) {
+            selStart = selEnd = buffer.length();
         }
         if (selStart > last)
             selStart = selEnd = Integer.MAX_VALUE;
@@ -135,11 +131,9 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
                 bestend = -1;
                 for (int i = 0; i < candidates.length; i++) {
                     int end = buffer.getSpanEnd(candidates[i]);
-                    if (end < selEnd || selStart == selEnd) {
-                        if (end > bestend) {
-                            beststart = buffer.getSpanStart(candidates[i]);
-                            bestend = end;
-                        }
+                    if (end < selEnd || selStart == selEnd && end > bestend) {
+                        beststart = buffer.getSpanStart(candidates[i]);
+                        bestend = end;
                     }
                 }
                 if (beststart >= 0) {
@@ -152,11 +146,9 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
                 bestend = Integer.MAX_VALUE;
                 for (int i = 0; i < candidates.length; i++) {
                     int start = buffer.getSpanStart(candidates[i]);
-                    if (start > selStart || selStart == selEnd) {
-                        if (start < beststart) {
-                            beststart = start;
-                            bestend = buffer.getSpanEnd(candidates[i]);
-                        }
+                    if (start > selStart || selStart == selEnd && start < beststart) {
+                        beststart = start;
+                        bestend = buffer.getSpanEnd(candidates[i]);
                     }
                 }
                 if (bestend < Integer.MAX_VALUE) {

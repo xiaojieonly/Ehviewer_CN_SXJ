@@ -1389,10 +1389,8 @@ public class FavoritesScene extends BaseScene implements EasyRecyclerView.OnItem
 
         @Override
         protected void onScrollToPosition(int postion) {
-            if (0 == postion) {
-                if (null != mSearchBarMover) {
-                    mSearchBarMover.showSearchBar();
-                }
+            if (0 == postion && null != mSearchBarMover) {
+                mSearchBarMover.showSearchBar();
             }
         }
     }

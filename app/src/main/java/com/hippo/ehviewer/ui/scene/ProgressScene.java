@@ -185,13 +185,11 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
 
     @Override
     public void onClick(View v) {
-        if (mTip == v) {
-            if (doJobs()) {
-                mValid = true;
-                // Show progress
-                if (null != mViewTransition) {
-                    mViewTransition.showView(0, true);
-                }
+        if (mTip == v && doJobs()) {
+            mValid = true;
+            // Show progress
+            if (null != mViewTransition) {
+                mViewTransition.showView(0, true);
             }
         }
     }

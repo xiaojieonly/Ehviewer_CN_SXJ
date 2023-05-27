@@ -237,11 +237,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mGalleryInfo != null) {
                 mGalleryProvider = new EhGalleryProvider(this, mGalleryInfo);
             }
-        } else if (Intent.ACTION_VIEW.equals(mAction)) {
-            if (mUri != null) {
-                // Only support zip now
-                mGalleryProvider = new ArchiveGalleryProvider(this, mUri);
-            }
+        } else if (Intent.ACTION_VIEW.equals(mAction) && mUri != null) {
+            // Only support zip now
+            mGalleryProvider = new ArchiveGalleryProvider(this, mUri);
         }
     }
 
@@ -510,10 +508,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         // Check volume
-        if (Settings.getVolumePage()) {
-            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                return true;
-            }
+        if (Settings.getVolumePage() && keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            return true;
         }
         // Check keyboard and Dpad
         if (keyCode == KeyEvent.KEYCODE_PAGE_UP || keyCode == KeyEvent.KEYCODE_PAGE_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_SPACE || keyCode == KeyEvent.KEYCODE_MENU) {
@@ -962,29 +958,27 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         super.onActivityResult(requestCode, resultCode, resultData);
-        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            if (resultData != null) {
-                Uri uri = resultData.getData();
-                String filepath = getCacheDir() + "/" + mCacheFileName;
-                File cacheFile = new File(filepath);
-                InputStream is = null;
-                OutputStream os = null;
-                ContentResolver resolver = getContentResolver();
-                try {
-                    is = new FileInputStream(cacheFile);
-                    os = resolver.openOutputStream(uri);
-                    IOUtils.copy(is, os);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    IOUtils.closeQuietly(is);
-                    IOUtils.closeQuietly(os);
-                }
-                cacheFile.delete();
-                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
-                // Sync media store
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK && resultData != null) {
+            Uri uri = resultData.getData();
+            String filepath = getCacheDir() + "/" + mCacheFileName;
+            File cacheFile = new File(filepath);
+            InputStream is = null;
+            OutputStream os = null;
+            ContentResolver resolver = getContentResolver();
+            try {
+                is = new FileInputStream(cacheFile);
+                os = resolver.openOutputStream(uri);
+                IOUtils.copy(is, os);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                IOUtils.closeQuietly(is);
+                IOUtils.closeQuietly(os);
             }
+            cacheFile.delete();
+            Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+            // Sync media store
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
         }
     }
 

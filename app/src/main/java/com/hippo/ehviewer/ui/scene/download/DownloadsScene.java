@@ -1407,10 +1407,8 @@ public class DownloadsScene extends ToolbarScene implements DownloadManager.Down
                 intent.setAction(DownloadService.ACTION_START);
                 intent.putExtra(DownloadService.KEY_GALLERY_INFO, list.get(index));
                 activity.startService(intent);
-            } else if (stop == v) {
-                if (null != mDownloadManager) {
-                    mDownloadManager.stopDownload(list.get(index).gid);
-                }
+            } else if (stop == v && null != mDownloadManager) {
+                mDownloadManager.stopDownload(list.get(index).gid);
             }
         }
     }

@@ -351,11 +351,9 @@ public class SearchBar extends CardView implements View.OnClickListener, TextVie
 
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-        if (v == mEditText) {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_NULL) {
-                applySearch();
-                return true;
-            }
+        if (v == mEditText && actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_NULL) {
+            applySearch();
+            return true;
         }
         return false;
     }

@@ -134,11 +134,9 @@ public class ProxyPreference extends DialogPreference implements View.OnClickLis
         }
         int type = mType.getSelectedItemPosition();
         String ip = mIp.getText().toString().trim();
-        if (ip.isEmpty()) {
-            if (type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS) {
-                mIpInputLayout.setError(context.getString(R.string.text_is_empty));
-                return;
-            }
+        if (ip.isEmpty() && type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS) {
+            mIpInputLayout.setError(context.getString(R.string.text_is_empty));
+            return;
         }
         mIpInputLayout.setError(null);
         int port;

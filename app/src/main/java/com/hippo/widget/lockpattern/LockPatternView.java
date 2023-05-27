@@ -734,11 +734,9 @@ public class LockPatternView extends View {
                     resetPattern();
                     notifyPatternCleared();
                 }
-                if (PROFILE_DRAWING) {
-                    if (mDrawingProfilingStarted) {
-                        Debug.stopMethodTracing();
-                        mDrawingProfilingStarted = false;
-                    }
+                if (PROFILE_DRAWING && mDrawingProfilingStarted) {
+                    Debug.stopMethodTracing();
+                    mDrawingProfilingStarted = false;
                 }
                 return true;
         }
@@ -810,11 +808,9 @@ public class LockPatternView extends View {
             notifyPatternDetected();
             invalidate();
         }
-        if (PROFILE_DRAWING) {
-            if (mDrawingProfilingStarted) {
-                Debug.stopMethodTracing();
-                mDrawingProfilingStarted = false;
-            }
+        if (PROFILE_DRAWING && mDrawingProfilingStarted) {
+            Debug.stopMethodTracing();
+            mDrawingProfilingStarted = false;
         }
     }
 
@@ -853,11 +849,9 @@ public class LockPatternView extends View {
         }
         mInProgressX = x;
         mInProgressY = y;
-        if (PROFILE_DRAWING) {
-            if (!mDrawingProfilingStarted) {
-                Debug.startMethodTracing("LockPatternDrawing");
-                mDrawingProfilingStarted = true;
-            }
+        if (PROFILE_DRAWING && !mDrawingProfilingStarted) {
+            Debug.startMethodTracing("LockPatternDrawing");
+            mDrawingProfilingStarted = true;
         }
     }
 

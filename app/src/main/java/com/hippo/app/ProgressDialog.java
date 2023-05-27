@@ -349,10 +349,8 @@ public class ProgressDialog extends AlertDialog {
     }
 
     private void onProgressChanged() {
-        if (mProgressStyle == STYLE_HORIZONTAL) {
-            if (mViewUpdateHandler != null && !mViewUpdateHandler.hasMessages(0)) {
-                mViewUpdateHandler.sendEmptyMessage(0);
-            }
+        if (mProgressStyle == STYLE_HORIZONTAL && mViewUpdateHandler != null && !mViewUpdateHandler.hasMessages(0)) {
+            mViewUpdateHandler.sendEmptyMessage(0);
         }
     }
 }

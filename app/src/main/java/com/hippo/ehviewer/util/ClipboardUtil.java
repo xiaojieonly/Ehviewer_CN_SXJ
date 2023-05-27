@@ -108,13 +108,11 @@ public class ClipboardUtil {
      */
     private static String getClipContent() {
         ClipboardManager manager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
-        if (manager != null) {
-            if (manager.hasPrimaryClip() && manager.getPrimaryClip().getItemCount() > 0) {
-                CharSequence addedText = manager.getPrimaryClip().getItemAt(0).getText();
-                String addedTextString = String.valueOf(addedText);
-                if (!TextUtils.isEmpty(addedTextString)) {
-                    return addedTextString;
-                }
+        if (manager != null && manager.hasPrimaryClip() && manager.getPrimaryClip().getItemCount() > 0) {
+            CharSequence addedText = manager.getPrimaryClip().getItemAt(0).getText();
+            String addedTextString = String.valueOf(addedText);
+            if (!TextUtils.isEmpty(addedTextString)) {
+                return addedTextString;
             }
         }
         return "";

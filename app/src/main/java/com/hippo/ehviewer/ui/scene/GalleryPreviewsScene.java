@@ -159,10 +159,8 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (null != mHelper) {
-            if (1 == mHelper.getShownViewIndex()) {
-                mHasFirstRefresh = false;
-            }
+        if (null != mHelper && 1 == mHelper.getShownViewIndex()) {
+            mHasFirstRefresh = false;
         }
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();

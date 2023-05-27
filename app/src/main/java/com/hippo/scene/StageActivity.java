@@ -181,10 +181,8 @@ public abstract class StageActivity extends EhActivity {
                         startScene(announcer);
                         return;
                     }
-                } else if (ACTION_START_SCENE.equals(action)) {
-                    if (startSceneFromIntent(intent)) {
-                        return;
-                    }
+                } else if (ACTION_START_SCENE.equals(action) && startSceneFromIntent(intent)) {
+                    return;
                 }
             }
             // Can't recognize intent

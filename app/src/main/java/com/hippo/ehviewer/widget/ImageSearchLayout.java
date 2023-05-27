@@ -100,10 +100,8 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
 
     @Override
     public void onClick(View v) {
-        if (v == mSelectImage) {
-            if (null != mHelper) {
-                mHelper.onSelectImage();
-            }
+        if (v == mSelectImage && null != mHelper) {
+            mHelper.onSelectImage();
         }
     }
 

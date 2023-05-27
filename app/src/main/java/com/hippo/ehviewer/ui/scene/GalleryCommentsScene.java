@@ -607,23 +607,21 @@ public final class GalleryCommentsScene extends ToolbarScene implements EasyRecy
                 prepareNewComment();
                 showEditPanel(true);
             }
-        } else if (mSendImage == v) {
-            if (!mInAnimation) {
-                String comment = mEditText.getText().toString();
-                if (TextUtils.isEmpty(comment)) {
-                    // Comment is empty
-                    return;
-                }
-                String url = getGalleryDetailUrl();
-                if (url == null) {
-                    return;
-                }
-                // Request
-                EhRequest request = new EhRequest().setMethod(EhClient.METHOD_GET_COMMENT_GALLERY).setArgs(url, comment, mCommentId != 0 ? Long.toString(mCommentId) : null).setCallback(new CommentGalleryListener(context, activity.getStageId(), getTag(), mCommentId));
-                EhApplication.getEhClient(context).execute(request);
-                hideSoftInput();
-                hideEditPanel(true);
+        } else if (mSendImage == v && !mInAnimation) {
+            String comment = mEditText.getText().toString();
+            if (TextUtils.isEmpty(comment)) {
+                // Comment is empty
+                return;
             }
+            String url = getGalleryDetailUrl();
+            if (url == null) {
+                return;
+            }
+            // Request
+            EhRequest request = new EhRequest().setMethod(EhClient.METHOD_GET_COMMENT_GALLERY).setArgs(url, comment, mCommentId != 0 ? Long.toString(mCommentId) : null).setCallback(new CommentGalleryListener(context, activity.getStageId(), getTag(), mCommentId));
+            EhApplication.getEhClient(context).execute(request);
+            hideSoftInput();
+            hideEditPanel(true);
         }
     }
 

@@ -59,12 +59,9 @@ public class SearchEditText extends AppCompatEditText {
                 if (state != null) {
                     state.handleUpEvent(event);
                 }
-                if (event.isTracking() && !event.isCanceled()) {
-                    // TODO stopSelectionActionMode
-                    if (mListener != null) {
-                        mListener.onBackPressed();
-                        return true;
-                    }
+                if (event.isTracking() && !event.isCanceled() && mListener != null) {
+                    mListener.onBackPressed();
+                    return true;
                 }
             }
         }

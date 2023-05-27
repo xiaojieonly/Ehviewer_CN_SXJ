@@ -58,16 +58,12 @@ public class Settings {
 
     private static void fixDefaultValue(Context context) {
         // Enable builtin hosts if the country is CN
-        if (!sSettingsPre.contains(KEY_BUILT_IN_HOSTS)) {
-            if ("CN".equals(Locale.getDefault().getCountry())) {
-                putBuiltInHosts(true);
-                putBuiltEXHosts(true);
-            }
+        if (!sSettingsPre.contains(KEY_BUILT_IN_HOSTS) && "CN".equals(Locale.getDefault().getCountry())) {
+            putBuiltInHosts(true);
+            putBuiltEXHosts(true);
         }
-        if (!sSettingsPre.contains(KEY_DOMAIN_FRONTING)) {
-            if ("CN".equals(Locale.getDefault().getCountry())) {
-                putDF(true);
-            }
+        if (!sSettingsPre.contains(KEY_DOMAIN_FRONTING) && "CN".equals(Locale.getDefault().getCountry())) {
+            putDF(true);
         }
     }
 

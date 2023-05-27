@@ -233,11 +233,9 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-        if (v == mPassword) {
-            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_NULL) {
-                signIn();
-                return true;
-            }
+        if (v == mPassword && actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_NULL) {
+            signIn();
+            return true;
         }
         return false;
     }
