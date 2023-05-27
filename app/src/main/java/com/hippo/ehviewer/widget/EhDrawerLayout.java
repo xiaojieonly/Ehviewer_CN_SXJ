@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.animation.ValueAnimator;
@@ -72,20 +71,19 @@ public class EhDrawerLayout extends DrawerLayout {
     }
 
     public static class Behavior extends CoordinatorLayout.Behavior<EhDrawerLayout> {
+
         // We only support the FAB <> Snackbar shift movement on Honeycomb and above. This is
         // because we can use view translation properties which greatly simplifies the code.
         private static final boolean SNACKBAR_BEHAVIOR_ENABLED = Build.VERSION.SDK_INT >= 11;
 
         @Override
-        public boolean layoutDependsOn(CoordinatorLayout parent,
-                EhDrawerLayout child, View dependency) {
+        public boolean layoutDependsOn(CoordinatorLayout parent, EhDrawerLayout child, View dependency) {
             // We're dependent on all SnackbarLayouts (if enabled)
             return SNACKBAR_BEHAVIOR_ENABLED && dependency instanceof Snackbar.SnackbarLayout;
         }
 
         @Override
-        public boolean onDependentViewChanged(CoordinatorLayout parent, EhDrawerLayout child,
-                View dependency) {
+        public boolean onDependentViewChanged(CoordinatorLayout parent, EhDrawerLayout child, View dependency) {
             if (dependency instanceof Snackbar.SnackbarLayout) {
                 for (int i = 0, n = child.getAboveSnackViewCount(); i < n; i++) {
                     View view = child.getAboveSnackViewAt(i);
@@ -95,8 +93,7 @@ public class EhDrawerLayout extends DrawerLayout {
             return false;
         }
 
-        private void updateChildTranslationForSnackbar(CoordinatorLayout parent,
-                EhDrawerLayout view, final View child) {
+        private void updateChildTranslationForSnackbar(CoordinatorLayout parent, EhDrawerLayout view, final View child) {
             final float targetTransY = getChildTranslationYForSnackbar(parent, view);
             float childTranslationY = 0.0f;
             Object obj = child.getTag(R.id.fab_translation_y);
@@ -107,7 +104,6 @@ public class EhDrawerLayout extends DrawerLayout {
                 // We're already at (or currently animating to) the target value, return...
                 return;
             }
-
             ValueAnimator fabTranslationYAnimator = null;
             obj = child.getTag(R.id.fab_translation_y_animator);
             if (obj instanceof ValueAnimator) {
@@ -117,23 +113,20 @@ public class EhDrawerLayout extends DrawerLayout {
             if (fabTranslationYAnimator != null && fabTranslationYAnimator.isRunning()) {
                 fabTranslationYAnimator.cancel();
             }
-
             final float currentTransY = ViewCompat.getTranslationY(child);
-
-            if (child.isShown()
-                    && Math.abs(currentTransY - targetTransY) > (child.getHeight() * 0.667f)) {
+            if (child.isShown() && Math.abs(currentTransY - targetTransY) > (child.getHeight() * 0.667f)) {
                 // If the FAB will be travelling by more than 2/3 of it's height, let's animate
                 // it instead
                 if (fabTranslationYAnimator == null) {
                     fabTranslationYAnimator = ValueAnimator.ofFloat();
                     fabTranslationYAnimator.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
-                    fabTranslationYAnimator.addUpdateListener(
-                            new ValueAnimator.AnimatorUpdateListener() {
-                                @Override
-                                public void onAnimationUpdate(ValueAnimator animation) {
-                                    ViewCompat.setTranslationY(child, (Float) animation.getAnimatedValue());
-                                }
-                            });
+                    fabTranslationYAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+                        @Override
+                        public void onAnimationUpdate(ValueAnimator animation) {
+                            ViewCompat.setTranslationY(child, (Float) animation.getAnimatedValue());
+                        }
+                    });
                     child.setTag(R.id.fab_translation_y_animator, fabTranslationYAnimator);
                 }
                 fabTranslationYAnimator.setFloatValues(currentTransY, targetTransY);
@@ -142,22 +135,18 @@ public class EhDrawerLayout extends DrawerLayout {
                 // Now update the translation Y
                 ViewCompat.setTranslationY(child, targetTransY);
             }
-
             child.setTag(R.id.fab_translation_y, targetTransY);
         }
 
-        private float getChildTranslationYForSnackbar(CoordinatorLayout parent,
-                EhDrawerLayout child) {
+        private float getChildTranslationYForSnackbar(CoordinatorLayout parent, EhDrawerLayout child) {
             float minOffset = 0;
             final List<View> dependencies = parent.getDependencies(child);
             for (int i = 0, z = dependencies.size(); i < z; i++) {
                 final View view = dependencies.get(i);
                 if (view instanceof Snackbar.SnackbarLayout && parent.doViewsOverlap(child, view)) {
-                    minOffset = Math.min(minOffset,
-                            ViewCompat.getTranslationY(view) - view.getHeight());
+                    minOffset = Math.min(minOffset, ViewCompat.getTranslationY(view) - view.getHeight());
                 }
             }
-
             return minOffset;
         }
     }

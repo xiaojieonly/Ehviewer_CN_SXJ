@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.app.Dialog;
@@ -36,6 +35,7 @@ import com.hippo.yorozuya.IntIdGenerator;
 public abstract class TaskPreference extends DialogPreference {
 
     private Task mTask;
+
     private int mTaskId = IntIdGenerator.INVALID_ID;
 
     public TaskPreference(Context context) {
@@ -84,7 +84,6 @@ public abstract class TaskPreference extends DialogPreference {
     @Override
     public void onActivityDestroy() {
         super.onActivityDestroy();
-
         if (null != mTask) {
             mTask.setPreference(null);
         }
@@ -105,7 +104,6 @@ public abstract class TaskPreference extends DialogPreference {
             super.onRestoreInstanceState(state);
             return;
         }
-
         SavedState myState = (SavedState) state;
         mTaskId = myState.asyncTaskId;
         if (IntIdGenerator.INVALID_ID != mTaskId) {
@@ -118,13 +116,12 @@ public abstract class TaskPreference extends DialogPreference {
         if (null == mTask) {
             mTaskId = IntIdGenerator.INVALID_ID;
         }
-
         // TODO if not task, show not reopen dialog
-
         super.onRestoreInstanceState(myState.getSuperState());
     }
 
     private static class SavedState extends AbsSavedState {
+
         int asyncTaskId;
 
         public SavedState(Parcel source) {
@@ -142,23 +139,24 @@ public abstract class TaskPreference extends DialogPreference {
             super(superState);
         }
 
-        public static final Creator<SavedState> CREATOR =
-                new Creator<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in) {
-                        return new SavedState(in);
-                    }
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                };
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 
     public abstract static class Task extends AsyncTask<Void, Void, Object> {
 
         private final EhApplication mApplication;
+
         @Nullable
         private TaskPreference mPreference;
 

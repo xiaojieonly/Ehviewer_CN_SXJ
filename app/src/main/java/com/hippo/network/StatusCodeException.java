@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.network;
 
 import android.content.Context;
 import android.content.res.Resources;
 import android.util.SparseArray;
-
 import com.hippo.ehviewer.R;
 
 public class StatusCodeException extends Exception {
 
     private static final SparseArray<String> ERROR_MESSAGE_ARRAY = new SparseArray<>(24);
+
     private static final String DEFAULT_ERROR_MESSAGE = "Error response code";
 
     private final int mResponseCode;
+
     private final String mMessage;
 
     public static void initialize(Context context) {
         Resources resources = context.getApplicationContext().getResources();
-
         ERROR_MESSAGE_ARRAY.append(400, resources.getString(R.string.error_status_code_400));
         ERROR_MESSAGE_ARRAY.append(401, resources.getString(R.string.error_status_code_401));
         ERROR_MESSAGE_ARRAY.append(402, resources.getString(R.string.error_status_code_402));
@@ -51,7 +50,6 @@ public class StatusCodeException extends Exception {
         ERROR_MESSAGE_ARRAY.append(415, resources.getString(R.string.error_status_code_415));
         ERROR_MESSAGE_ARRAY.append(416, resources.getString(R.string.error_status_code_416));
         ERROR_MESSAGE_ARRAY.append(417, resources.getString(R.string.error_status_code_417));
-
         ERROR_MESSAGE_ARRAY.append(500, resources.getString(R.string.error_status_code_500));
         ERROR_MESSAGE_ARRAY.append(501, resources.getString(R.string.error_status_code_501));
         ERROR_MESSAGE_ARRAY.append(502, resources.getString(R.string.error_status_code_502));

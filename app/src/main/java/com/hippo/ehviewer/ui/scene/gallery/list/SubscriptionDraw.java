@@ -9,10 +9,8 @@ import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
-
 import com.hippo.app.EditTextDialogBuilder;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
@@ -33,21 +31,28 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.widget.ProgressView;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ViewUtils;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import static com.hippo.ehviewer.Settings.*;
 
 public class SubscriptionDraw {
+
     private final Context context;
+
     private final LayoutInflater inflater;
+
     private ListView listView;
+
     private ProgressView progressView;
+
     private FrameLayout frameLayout;
+
     private TextView textView;
+
     private final EhClient ehClient;
+
     protected MainActivity activity;
+
     private SubscriptionCallback callback;
 
     private final String mTag;
@@ -65,7 +70,7 @@ public class SubscriptionDraw {
         this.inflater = inflater;
         this.ehClient = ehClient;
         this.mTag = mTag;
-        if (ehTags == null){
+        if (ehTags == null) {
             this.ehTags = EhTagDatabase.getInstance(context);
         }
         this.ehTags = ehTags;
@@ -77,24 +82,22 @@ public class SubscriptionDraw {
         this.callback = callback;
         @SuppressLint("InflateParams")
         View subscriptionView = inflater.inflate(R.layout.subscription_draw, null, false);
-
         progressView = (ProgressView) ViewUtils.$$(subscriptionView, R.id.tag_list_view_progress);
         frameLayout = (FrameLayout) ViewUtils.$$(subscriptionView, R.id.tag_list_parent);
-        textView = (TextView)ViewUtils.$$(subscriptionView,R.id.not_login_text);
+        textView = (TextView) ViewUtils.$$(subscriptionView, R.id.not_login_text);
         frameLayout.setVisibility(View.GONE);
-
         Toolbar toolbar = (Toolbar) ViewUtils.$$(subscriptionView, R.id.toolbar);
         final TextView tip = (TextView) ViewUtils.$$(subscriptionView, R.id.tip);
         listView = (ListView) ViewUtils.$$(subscriptionView, R.id.list_view);
         AssertUtils.assertNotNull(context);
-
         tip.setText(R.string.subscription_tip);
         toolbar.setLogo(R.drawable.ic_baseline_subscriptions_24);
         toolbar.setTitle(R.string.subscription);
         toolbar.inflateMenu(R.menu.drawer_gallery_list);
-        toolbar.setOnMenuItemClickListener(item -> {  //点击增加快速搜索按钮触发
+        toolbar.setOnMenuItemClickListener(item -> {
+            //点击增加快速搜索按钮触发
             int id = item.getItemId();
-            switch (id) {
+            switch(id) {
                 case R.id.action_add:
                     addNewTag();
                     break;
@@ -104,9 +107,7 @@ public class SubscriptionDraw {
             }
             return true;
         });
-
         toolbar.setOnClickListener(l -> drawPager.setCurrentItem(0));
-
         if (needLoad) {
             try {
                 loadData();
@@ -114,41 +115,37 @@ public class SubscriptionDraw {
                 e.printStackTrace();
             }
         }
-
         return subscriptionView;
     }
 
     private void seeDetailPage() {
-        if(!isLogin()){
-            Toast.makeText(context,R.string.settings_eh_identity_cookies_tourist,Toast.LENGTH_SHORT).show();
+        if (!isLogin()) {
+            Toast.makeText(context, R.string.settings_eh_identity_cookies_tourist, Toast.LENGTH_SHORT).show();
             return;
         }
-        if (userTagList == null){
-            Toast.makeText(context,R.string.empty_subscription,Toast.LENGTH_SHORT).show();
+        if (userTagList == null) {
+            Toast.makeText(context, R.string.empty_subscription, Toast.LENGTH_SHORT).show();
             return;
         }
-        userTagList.stageId=activity.getStageId();
-        EhApplication.saveUserTagList(context,userTagList);
+        userTagList.stageId = activity.getStageId();
+        EhApplication.saveUserTagList(context, userTagList);
         activity.startScene(new Announcer(SubscriptionsScene.class));
     }
 
     private void bindViewSecond() {
         progressView.setVisibility(View.GONE);
         frameLayout.setVisibility(View.VISIBLE);
-        if (userTagList.userTags.isEmpty()){
-            if (isLogin()){
+        if (userTagList.userTags.isEmpty()) {
+            if (isLogin()) {
                 textView.setVisibility(View.VISIBLE);
             }
             return;
         }
         List<String> name = new ArrayList<>();
-
         for (UserTag userTag : userTagList.userTags) {
             name.add(userTag.getName(ehTags));
         }
-
-        SubscriptionItemAdapter adapter = new SubscriptionItemAdapter(context,userTagList,ehTags);
-
+        SubscriptionItemAdapter adapter = new SubscriptionItemAdapter(context, userTagList, ehTags);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener((parent, view1, position, id) -> {
             UserTag tag = userTagList.userTags.get(position);
@@ -157,37 +154,35 @@ public class SubscriptionDraw {
     }
 
     private void addNewTag() {
-        if(!isLogin()){
-            Toast.makeText(context,R.string.settings_eh_identity_cookies_tourist,Toast.LENGTH_SHORT).show();
+        if (!isLogin()) {
+            Toast.makeText(context, R.string.settings_eh_identity_cookies_tourist, Toast.LENGTH_SHORT).show();
             return;
         }
         tagName = callback.getAddTagName(userTagList);
-        if (tagName == null){
-            Toast.makeText(context,R.string.can_not_use_this_tag,Toast.LENGTH_SHORT).show();
+        if (tagName == null) {
+            Toast.makeText(context, R.string.can_not_use_this_tag, Toast.LENGTH_SHORT).show();
             return;
         }
-
-        final EditTextDialogBuilder builder = new EditTextDialogBuilder(context,
-                tagName, context.getString(R.string.tag_title));
+        final EditTextDialogBuilder builder = new EditTextDialogBuilder(context, tagName, context.getString(R.string.tag_title));
         builder.setTitle(R.string.add_tag_dialog_title);
         builder.setPositiveButton(R.string.subscription_watched, this::onDialogPositiveButtonClick);
         builder.setNegativeButton(R.string.subscription_hidden, this::onDialogNegativeButtonClick);
-//        final AlertDialog dialog = builder.show();
+        //        final AlertDialog dialog = builder.show();
         builder.show();
-//        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
-//            dialog.dismiss();
-//            requestTag(tagName,true);
-//        });
+        //        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+        //            dialog.dismiss();
+        //            requestTag(tagName,true);
+        //        });
     }
 
-    private void onDialogNegativeButtonClick(DialogInterface dialog, int which){
+    private void onDialogNegativeButtonClick(DialogInterface dialog, int which) {
         dialog.dismiss();
-        requestTag(tagName,false);
+        requestTag(tagName, false);
     }
 
-    private void onDialogPositiveButtonClick(DialogInterface dialog, int which){
+    private void onDialogPositiveButtonClick(DialogInterface dialog, int which) {
         dialog.dismiss();
-        requestTag(tagName,true);
+        requestTag(tagName, true);
     }
 
     private void loadData() throws EhException {
@@ -197,32 +192,22 @@ public class SubscriptionDraw {
         }
     }
 
-    private void  requestTag(String tagName,boolean tagState){
+    private void requestTag(String tagName, boolean tagState) {
         String url = EhUrl.getMyTag();
-
         if (null == context || null == activity) {
             return;
         }
-
         progressView.setVisibility(View.VISIBLE);
         frameLayout.setVisibility(View.GONE);
-
         EhClient.Callback callback = new SubscriptionDetailListener(context, activity.getStageId(), mTag);
-
         TagPushParam param = new TagPushParam();
-
         param.tagNameNew = tagName;
-        if (tagState){
+        if (tagState) {
             param.tagWatchNew = "on";
-        }else {
+        } else {
             param.tagHiddenNew = "on";
         }
-
-
-        EhRequest mRequest = new EhRequest()
-                .setMethod(EhClient.METHOD_ADD_TAG)
-                .setArgs(url,param).setCallback(callback);
-
+        EhRequest mRequest = new EhRequest().setMethod(EhClient.METHOD_ADD_TAG).setArgs(url, param).setCallback(callback);
         ehClient.execute(mRequest);
     }
 
@@ -232,25 +217,16 @@ public class SubscriptionDraw {
      * @return
      */
     private boolean request() {
-
-//        String url = EhUrl.getTopListUrl();
+        //        String url = EhUrl.getTopListUrl();
         String url = EhUrl.getMyTag();
-
         if (null == context || null == activity) {
             return false;
         }
-
         EhClient.Callback callback = new SubscriptionDetailListener(context, activity.getStageId(), mTag);
-
-        EhRequest mRequest = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_WATCHED)
-                .setArgs(url).setCallback(callback);
-
+        EhRequest mRequest = new EhRequest().setMethod(EhClient.METHOD_GET_WATCHED).setArgs(url).setCallback(callback);
         ehClient.execute(mRequest);
-
         return true;
     }
-
 
     private class SubscriptionDetailListener extends EhCallback<GalleryListScene, UserTagList> {
 
@@ -265,28 +241,23 @@ public class SubscriptionDraw {
 
         @Override
         public void onSuccess(UserTagList result) {
-
-            if (result == null){
+            if (result == null) {
                 userTagList = new UserTagList();
                 userTagList.userTags = new ArrayList<>();
-            }else {
+            } else {
                 userTagList = result;
             }
-            EhApplication.saveUserTagList(context,userTagList);
+            EhApplication.saveUserTagList(context, userTagList);
             bindViewSecond();
             needLoad = false;
         }
 
         @Override
         public void onFailure(Exception e) {
-
         }
 
         @Override
         public void onCancel() {
-
         }
     }
-
-
 }

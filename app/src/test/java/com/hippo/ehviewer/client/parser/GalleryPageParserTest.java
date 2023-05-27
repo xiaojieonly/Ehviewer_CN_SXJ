@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import static org.junit.Assert.assertEquals;
-
 import com.hippo.ehviewer.client.exception.ParseException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,16 +30,15 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 public class GalleryPageParserTest {
 
-  @Test
-  public void testParse() throws IOException, ParseException {
-    InputStream resource = GalleryPageParserTest.class.getResourceAsStream("GalleryPageParserTest.GalleryTopListEX.html");
-    BufferedSource source = Okio.buffer(Okio.source(resource));
-    String body = source.readUtf8();
-
-    GalleryPageParser.Result result = GalleryPageParser.parse(body);
-    assertEquals("http://108.6.41.160:2688/h/5c63e9a5810d8d9c873d9e0dfaadc4a0d70a13bf-188862-1280-879-jpg/keystamp=1550291700-145ecbbb10;fileindex=67290651;xres=1280/10.jpg", result.imageUrl);
-    assertEquals("26664-430636", result.skipHathKey);
-    assertEquals("https://e-hentai.org/fullimg.php?gid=1363978&page=10&key=qt2hwrx98a4", result.originImageUrl);
-    assertEquals("ghz0e5m98a4", result.showKey);
-  }
+    @Test
+    public void testParse() throws IOException, ParseException {
+        InputStream resource = GalleryPageParserTest.class.getResourceAsStream("GalleryPageParserTest.GalleryTopListEX.html");
+        BufferedSource source = Okio.buffer(Okio.source(resource));
+        String body = source.readUtf8();
+        GalleryPageParser.Result result = GalleryPageParser.parse(body);
+        assertEquals("http://108.6.41.160:2688/h/5c63e9a5810d8d9c873d9e0dfaadc4a0d70a13bf-188862-1280-879-jpg/keystamp=1550291700-145ecbbb10;fileindex=67290651;xres=1280/10.jpg", result.imageUrl);
+        assertEquals("26664-430636", result.skipHathKey);
+        assertEquals("https://e-hentai.org/fullimg.php?gid=1363978&page=10&key=qt2hwrx98a4", result.originImageUrl);
+        assertEquals("ghz0e5m98a4", result.showKey);
+    }
 }

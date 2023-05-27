@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import static com.hippo.ehviewer.client.EhTagDatabase.NAMESPACE_TO_PREFIX;
-
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -43,10 +41,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
@@ -55,47 +51,61 @@ import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.ViewUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class SearchBar extends CardView implements View.OnClickListener,
-        TextView.OnEditorActionListener, TextWatcher,
-        SearchEditText.SearchEditTextListener {
+public class SearchBar extends CardView implements View.OnClickListener, TextView.OnEditorActionListener, TextWatcher, SearchEditText.SearchEditTextListener {
 
     private static final String STATE_KEY_SUPER = "super";
+
     private static final String STATE_KEY_STATE = "state";
 
     private static final long ANIMATE_TIME = 300L;
 
     public static final int STATE_NORMAL = 0;
+
     public static final int STATE_SEARCH = 1;
+
     public static final int STATE_SEARCH_LIST = 2;
 
     private int mState = STATE_NORMAL;
 
     private final Rect mRect = new Rect();
+
     private int mWidth;
+
     private int mHeight;
+
     private int mBaseHeight;
+
     private float mProgress;
 
     private ImageView mMenuButton;
+
     private TextView mTitleTextView;
+
     private ImageView mActionButton;
+
     private SearchEditText mEditText;
+
     private ListView mListView;
+
     private View mListContainer;
+
     private View mListHeader;
 
     private ViewTransition mViewTransition;
 
     private SearchDatabase mSearchDatabase;
+
     private List<Suggestion> mSuggestionList;
+
     private SuggestionAdapter mSuggestionAdapter;
 
     private Helper mHelper;
+
     private OnStateChangeListener mOnStateChangeListener;
+
     private SuggestionProvider mSuggestionProvider;
 
     private boolean mAllowEmptySearch = true;
@@ -124,7 +134,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
     private void init(Context context) {
         showTranslation = Settings.getShowTagTranslations();
         mSearchDatabase = SearchDatabase.getInstance(getContext());
-
         LayoutInflater inflater = LayoutInflater.from(context);
         inflater.inflate(R.layout.widget_search_bar, this);
         mMenuButton = (ImageView) ViewUtils.$$(this, R.id.search_menu);
@@ -134,20 +143,16 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mListContainer = ViewUtils.$$(this, R.id.list_container);
         mListView = (ListView) ViewUtils.$$(mListContainer, R.id.search_bar_list);
         mListHeader = ViewUtils.$$(mListContainer, R.id.list_header);
-
         mViewTransition = new ViewTransition(mTitleTextView, mEditText);
-
         mTitleTextView.setOnClickListener(this);
         mMenuButton.setOnClickListener(this);
         mActionButton.setOnClickListener(this);
         mEditText.setSearchEditTextListener(this);
         mEditText.setOnEditorActionListener(this);
         mEditText.addTextChangedListener(this);
-
         // Get base height
         ViewUtils.measureView(this, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         mBaseHeight = getMeasuredHeight();
-
         mSuggestionList = new ArrayList<>();
         mSuggestionAdapter = new SuggestionAdapter(LayoutInflater.from(getContext()));
         mListView.setAdapter(mSuggestionAdapter);
@@ -177,27 +182,22 @@ public class SearchBar extends CardView implements View.OnClickListener,
         if (editable != null) {
             text = editable.toString();
         }
-
-
         if (mSuggestionProvider != null) {
             List<Suggestion> suggestions = mSuggestionProvider.providerSuggestions(text);
             if (suggestions != null && !suggestions.isEmpty()) {
                 mSuggestionList.addAll(suggestions);
             }
         }
-
         String[] keywords = mSearchDatabase.getSuggestions(text, 128);
         for (String keyword : keywords) {
             mSuggestionList.add(new TagSuggestion(null, keyword));
         }
-
         EhTagDatabase ehTagDatabase = EhTagDatabase.getInstance(getContext());
         if (!TextUtils.isEmpty(text) && ehTagDatabase != null && !text.endsWith(" ")) {
             String[] s = text.split(" ");
             if (s.length > 0) {
                 String keyword = s[s.length - 1];
                 List<Pair<String, String>> searchHints = ehTagDatabase.suggest(keyword);
-
                 for (Pair<String, String> searchHint : searchHints) {
                     if (showTranslation) {
                         mSuggestionList.add(new TagSuggestion(searchHint.first, searchHint.second));
@@ -207,14 +207,12 @@ public class SearchBar extends CardView implements View.OnClickListener,
                 }
             }
         }
-
         if (mSuggestionList.size() == 0) {
             removeListHeader();
         } else {
             addListHeader();
         }
         mSuggestionAdapter.notifyDataSetChanged();
-
         if (scrollToTop) {
             mListView.setSelection(0);
         }
@@ -313,17 +311,15 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mEditText.setLayoutParams(lp);
     }
 
-    public void setIsComeFromDownload(boolean isComeFromDownload){
+    public void setIsComeFromDownload(boolean isComeFromDownload) {
         this.isComeFromDownload = isComeFromDownload;
     }
 
     private void applySearch() {
         String query = mEditText.getText().toString().trim();
-
         if (!mAllowEmptySearch && TextUtils.isEmpty(query)) {
             return;
         }
-
         // Put it into db
         mSearchDatabase.addQuery(query);
         // Callback
@@ -355,15 +351,12 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-        if (v == mEditText) {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_NULL) {
-                applySearch();
-                return true;
-            }
+        if (v == mEditText && actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_NULL) {
+            applySearch();
+            return true;
         }
         return false;
     }
-
 
     public int getState() {
         return mState;
@@ -377,13 +370,11 @@ public class SearchBar extends CardView implements View.OnClickListener,
         if (mState != state) {
             int oldState = mState;
             mState = state;
-
-            switch (oldState) {
+            switch(oldState) {
                 default:
                 case STATE_NORMAL:
                     mViewTransition.showView(1, animation);
                     mEditText.requestFocus();
-
                     if (state == STATE_SEARCH_LIST) {
                         showImeAndSuggestionsList(animation);
                     }
@@ -418,7 +409,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
         showImeAndSuggestionsList(true);
     }
 
-
     public void showImeAndSuggestionsList(boolean animation) {
         // Show ime
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -431,6 +421,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
             oa.setDuration(ANIMATE_TIME);
             oa.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
             oa.addListener(new SimpleAnimatorListener() {
+
                 @Override
                 public void onAnimationStart(Animator animation) {
                     mListContainer.setVisibility(View.VISIBLE);
@@ -464,6 +455,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
             oa.setDuration(ANIMATE_TIME);
             oa.setInterpolator(AnimationUtils.SLOW_FAST_INTERPOLATOR);
             oa.addListener(new SimpleAnimatorListener() {
+
                 @Override
                 public void onAnimationStart(Animator animation) {
                     mInAnimation = true;
@@ -560,6 +552,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
     }
 
     public interface Helper {
+
         void onClickTitle();
 
         void onClickLeftIcon();
@@ -595,6 +588,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
     }
 
     private class SuggestionAdapter extends BaseAdapter {
+
         private final LayoutInflater inflater;
 
         public SuggestionAdapter(LayoutInflater inflater) {
@@ -622,31 +616,27 @@ public class SearchBar extends CardView implements View.OnClickListener,
             if (convertView == null) {
                 linearLayout = (LinearLayout) inflater.inflate(R.layout.search_suggestion_item, parent, false);
             } else {
-//                return convertView;
+                //                return convertView;
                 linearLayout = (LinearLayout) convertView;
             }
             TextView hintView = linearLayout.findViewById(R.id.hintView);
             TextView textView = linearLayout.findViewById(R.id.textView);
-
             Suggestion suggestion = mSuggestionList.get(position);
-
             String hint = (String) suggestion.getText(hintView);
             String text = (String) suggestion.getText(textView);
-
             hintView.setText(hint);
-
             if (text == null || text.isEmpty()) {
                 textView.setVisibility(GONE);
             } else {
                 textView.setVisibility(View.VISIBLE);
                 textView.setText(text);
             }
-
             return linearLayout;
         }
     }
 
     private class TagSuggestion extends Suggestion {
+
         public String show, mKeyword;
 
         public TagSuggestion(String show, String mKeyword) {
@@ -679,11 +669,9 @@ public class SearchBar extends CardView implements View.OnClickListener,
                     while (builder.charAt(builder.length() - 1) != c) {
                         builder.deleteCharAt(builder.length() - 1);
                     }
-
                     while (builder.length() != 0 && builder.charAt(builder.length() - 1) == c) {
                         builder.deleteCharAt(builder.length() - 1);
                     }
-
                     builder.append("  ").append(tagKey);
                     key = builder.toString();
                 }
@@ -699,9 +687,9 @@ public class SearchBar extends CardView implements View.OnClickListener,
             }
             String groupName;
             String tagName = strings[1];
-            if (isComeFromDownload){
+            if (isComeFromDownload) {
                 groupName = strings[0];
-                return groupName+":"+tagName;
+                return groupName + ":" + tagName;
             }
             if (NAMESPACE_TO_PREFIX.containsKey(strings[0])) {
                 groupName = NAMESPACE_TO_PREFIX.get(strings[0]);
@@ -711,13 +699,10 @@ public class SearchBar extends CardView implements View.OnClickListener,
             }
         }
 
-
-
         @Override
         public void onLongClick() {
             mSearchDatabase.deleteQuery(mKeyword);
             updateSuggestions(false);
         }
     }
-
 }

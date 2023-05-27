@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.animation.ValueAnimator;
@@ -45,45 +44,60 @@ import com.hippo.yorozuya.SimpleHandler;
 
 public class Slider extends View {
 
-    private static final char[] CHARACTERS = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-    };
+    private static final char[] CHARACTERS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
     private static final int BUBBLE_WIDTH = 26;
+
     private static final int BUBBLE_HEIGHT = 32;
 
     private Context mContext;
 
     private Paint mPaint;
+
     private Paint mBgPaint;
 
     private final RectF mLeftRectF = new RectF();
+
     private final RectF mRightRectF = new RectF();
 
     private PopupWindow mPopup;
+
     private BubbleView mBubble;
 
     private int mStart;
+
     private int mEnd;
+
     private int mProgress;
+
     private float mPercent;
+
     private int mDrawProgress;
+
     private float mDrawPercent;
+
     private int mTargetProgress;
 
     private float mThickness;
+
     private float mRadius;
 
     private float mCharWidth;
+
     private float mCharHeight;
 
     private int mBubbleWidth;
+
     private int mBubbleHeight;
+
     private int mBubbleMinWidth;
+
     private int mBubbleMinHeight;
 
     private int mPopupX;
+
     private int mPopupY;
+
     private int mPopupWidth;
 
     private final int[] mTemp = new int[2];
@@ -95,6 +109,7 @@ public class Slider extends View {
     private float mDrawBubbleScale = 0f;
 
     private ValueAnimator mProgressAnimation;
+
     private ValueAnimator mBubbleScaleAnimation;
 
     private OnSetProgressListener mListener;
@@ -117,11 +132,9 @@ public class Slider extends View {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
-
         Resources resources = context.getResources();
         mBubbleMinWidth = resources.getDimensionPixelOffset(R.dimen.slider_bubble_width);
         mBubbleMinHeight = resources.getDimensionPixelOffset(R.dimen.slider_bubble_height);
-
         mBubble = new BubbleView(context, textPaint);
         mBubble.setScaleX(0.0f);
         mBubble.setScaleY(0.0f);
@@ -132,27 +145,22 @@ public class Slider extends View {
         mPopup.setOutsideTouchable(false);
         mPopup.setTouchable(false);
         mPopup.setFocusable(false);
-
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Slider);
         textPaint.setColor(a.getColor(R.styleable.Slider_textColor, Color.WHITE));
         textPaint.setTextSize(a.getDimensionPixelSize(R.styleable.Slider_textSize, 12));
-
         updateTextSize();
-
         setRange(a.getInteger(R.styleable.Slider_start, 0), a.getInteger(R.styleable.Slider_end, 0));
         setProgress(a.getInteger(R.styleable.Slider_slider_progress, 0));
         mThickness = a.getDimension(R.styleable.Slider_thickness, 2);
         mRadius = a.getDimension(R.styleable.Slider_radius, 6);
         setColor(a.getColor(R.styleable.Slider_color, Color.BLACK));
-
         mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBgPaint.setColor(a.getBoolean(R.styleable.Slider_dark, false) ? 0x4dffffff : 0x42000000);
-
         a.recycle();
-
         mProgressAnimation = new ValueAnimator();
         mProgressAnimation.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
         mProgressAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
             @Override
             public void onAnimationUpdate(@NonNull ValueAnimator animation) {
                 float value = (Float) animation.getAnimatedValue();
@@ -163,9 +171,9 @@ public class Slider extends View {
                 invalidate();
             }
         });
-
         mBubbleScaleAnimation = new ValueAnimator();
         mBubbleScaleAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
             @Override
             public void onAnimationUpdate(@NonNull ValueAnimator animation) {
                 float value = (Float) animation.getAnimatedValue();
@@ -185,7 +193,6 @@ public class Slider extends View {
         for (float f : widths) {
             mCharWidth = Math.max(mCharWidth, f);
         }
-
         Paint.FontMetrics fm = mPaint.getFontMetrics();
         mCharHeight = fm.bottom - fm.top;
     }
@@ -193,11 +200,8 @@ public class Slider extends View {
     private void updateBubbleSize() {
         int oldWidth = mBubbleWidth;
         int oldHeight = mBubbleHeight;
-        mBubbleWidth = (int) Math.max(mBubbleMinWidth,
-                Integer.toString(mEnd).length() * mCharWidth + LayoutUtils.dp2pix(mContext, 8));
-        mBubbleHeight = (int) Math.max(mBubbleMinHeight,
-                mCharHeight + LayoutUtils.dp2pix(mContext, 8));
-
+        mBubbleWidth = (int) Math.max(mBubbleMinWidth, Integer.toString(mEnd).length() * mCharWidth + LayoutUtils.dp2pix(mContext, 8));
+        mBubbleHeight = (int) Math.max(mBubbleMinHeight, mCharHeight + LayoutUtils.dp2pix(mContext, 8));
         if (oldWidth != mBubbleWidth && oldHeight != mBubbleHeight) {
             //noinspection deprecation
             AbsoluteLayout.LayoutParams lp = (AbsoluteLayout.LayoutParams) mBubble.getLayoutParams();
@@ -211,16 +215,11 @@ public class Slider extends View {
         int width = getWidth();
         int paddingTop = getPaddingTop();
         int paddingBottom = getPaddingBottom();
-
         getLocationInWindow(mTemp);
-
         mPopupWidth = (int) (width - mRadius - mRadius + mBubbleWidth);
         int popupHeight = mBubbleHeight;
         mPopupX = (int) (mTemp[0] + mRadius - (mBubbleWidth / 2));
-        mPopupY = (int) (mTemp[1] - popupHeight + paddingTop +
-                ((getHeight() - paddingTop - paddingBottom) / 2) -
-                mRadius -LayoutUtils.dp2pix(mContext, 2));
-
+        mPopupY = (int) (mTemp[1] - popupHeight + paddingTop + ((getHeight() - paddingTop - paddingBottom) / 2) - mRadius - LayoutUtils.dp2pix(mContext, 2));
         mPopup.update(mPopupX, mPopupY, mPopupWidth, popupHeight, false);
     }
 
@@ -232,7 +231,6 @@ public class Slider extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-
         updatePopup();
         updateBubblePosition();
     }
@@ -240,14 +238,12 @@ public class Slider extends View {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
         mPopup.showAtLocation(this, Gravity.TOP | Gravity.LEFT, mPopupX, mPopupY);
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
         mPopup.dismiss();
     }
 
@@ -296,7 +292,6 @@ public class Slider extends View {
         mStart = start;
         mEnd = end;
         setProgress(mProgress);
-
         updateBubbleSize();
     }
 
@@ -307,7 +302,6 @@ public class Slider extends View {
             mProgress = progress;
             mPercent = MathUtils.delerp(mStart, mEnd, mProgress);
             mTargetProgress = progress;
-
             if (mProgressAnimation == null) {
                 // For init
                 mDrawPercent = mPercent;
@@ -353,17 +347,11 @@ public class Slider extends View {
             float thickness = mThickness;
             float radius = mRadius;
             float halfThickness = thickness / 2;
-
             int saved = canvas.save();
-
             canvas.translate(0, paddingTop + ((height - paddingTop - paddingBottom) / 2));
-
-            float currentX = paddingLeft + radius + (width - radius - radius - paddingLeft - paddingRight) *
-                    (mReverse ? (1.0f - mDrawPercent) : mDrawPercent);
-
+            float currentX = paddingLeft + radius + (width - radius - radius - paddingLeft - paddingRight) * (mReverse ? (1.0f - mDrawPercent) : mDrawPercent);
             mLeftRectF.set(paddingLeft + radius, -halfThickness, currentX, halfThickness);
             mRightRectF.set(currentX, -halfThickness, width - paddingRight - radius, halfThickness);
-
             // Draw bar
             if (mReverse) {
                 canvas.drawRect(mRightRectF, mPaint);
@@ -372,14 +360,12 @@ public class Slider extends View {
                 canvas.drawRect(mLeftRectF, mPaint);
                 canvas.drawRect(mRightRectF, mBgPaint);
             }
-
             // Draw controller
             float scale = 1.0f - mDrawBubbleScale;
             if (scale != 0.0f) {
                 canvas.scale(scale, scale, currentX, 0);
                 canvas.drawCircle(currentX, 0, radius, mPaint);
             }
-
             canvas.restoreToCount(saved);
         }
     }
@@ -398,12 +384,11 @@ public class Slider extends View {
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent event) {
         int action = event.getAction();
-        switch (action) {
+        switch(action) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_MOVE:
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-
                 if (mListener != null) {
                     if (action == MotionEvent.ACTION_DOWN) {
                         mListener.onFingerDown();
@@ -411,31 +396,24 @@ public class Slider extends View {
                         mListener.onFingerUp();
                     }
                 }
-
                 int paddingLeft = getPaddingLeft();
                 int paddingRight = getPaddingRight();
                 float radius = mRadius;
                 float x = event.getX();
-                int progress = Math.round(MathUtils.lerp((float) mStart, (float) mEnd,
-                        MathUtils.clamp((mReverse ? (getWidth() - paddingLeft - radius - x) : (x - radius - paddingLeft)) /
-                                (getWidth() - radius - radius - paddingLeft - paddingRight), 0.0f, 1.0f)));
+                int progress = Math.round(MathUtils.lerp((float) mStart, (float) mEnd, MathUtils.clamp((mReverse ? (getWidth() - paddingLeft - radius - x) : (x - radius - paddingLeft)) / (getWidth() - radius - radius - paddingLeft - paddingRight), 0.0f, 1.0f)));
                 float percent = MathUtils.delerp(mStart, mEnd, progress);
-
                 // ACTION_CANCEL not changed
                 if (action == MotionEvent.ACTION_CANCEL) {
                     progress = mProgress;
                     percent = mPercent;
                 }
-
                 if (mTargetProgress != progress) {
                     mTargetProgress = progress;
                     startProgressAnimation(percent);
-
                     if (mListener != null) {
                         mListener.onSetProgress(this, mProgress, progress, true, false);
                     }
                 }
-
                 if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                     SimpleHandler.getInstance().removeCallbacks(mCheckForShowBubble);
                     setShowBubble(false);
@@ -445,7 +423,6 @@ public class Slider extends View {
                     }
                     SimpleHandler.getInstance().postDelayed(mCheckForShowBubble, ViewConfiguration.getTapTimeout());
                 }
-
                 if (action == MotionEvent.ACTION_UP) {
                     int oldProgress = mProgress;
                     if (mProgress != progress) {
@@ -458,7 +435,6 @@ public class Slider extends View {
                 }
                 break;
         }
-
         return true;
     }
 
@@ -507,7 +483,6 @@ public class Slider extends View {
         @Override
         protected void onDraw(@NonNull Canvas canvas) {
             super.onDraw(canvas);
-
             int width = getWidth();
             int height = getHeight();
             int x = width / 2;

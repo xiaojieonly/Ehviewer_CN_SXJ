@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.Context;
@@ -59,8 +58,10 @@ public final class QuickSearchScene extends ToolbarScene {
      ---------------*/
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private ViewTransition mViewTransition;
+
     @Nullable
     private RecyclerView.Adapter mAdapter;
 
@@ -79,41 +80,31 @@ public final class QuickSearchScene extends ToolbarScene {
     @SuppressWarnings("deprecation")
     @Nullable
     @Override
-    public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_label_list, container, false);
-
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
-
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_search);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
         tip.setText(R.string.no_quick_search);
-
         // drag & drop manager
         RecyclerViewDragDropManager dragDropManager = new RecyclerViewDragDropManager();
-        dragDropManager.setDraggingItemShadowDrawable(
-                (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
-
+        dragDropManager.setDraggingItemShadowDrawable((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
         RecyclerView.Adapter adapter = new QuickSearchAdapter();
         adapter.setHasStableIds(true);
-        adapter = dragDropManager.createWrappedAdapter(adapter); // wrap for dragging
+        // wrap for dragging
+        adapter = dragDropManager.createWrappedAdapter(adapter);
         mAdapter = adapter;
-
         final GeneralItemAnimator animator = new DraggableItemAnimator();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setItemAnimator(animator);
-
         dragDropManager.attachRecyclerView(mRecyclerView);
-
         updateView();
-
         return view;
     }
 
@@ -127,12 +118,10 @@ public final class QuickSearchScene extends ToolbarScene {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();
             mRecyclerView = null;
         }
-
         mViewTransition = null;
     }
 
@@ -154,16 +143,16 @@ public final class QuickSearchScene extends ToolbarScene {
     private class QuickSearchHolder extends AbstractDraggableItemViewHolder implements View.OnClickListener {
 
         public final TextView label;
+
         public final View dragHandler;
+
         public final View delete;
 
         public QuickSearchHolder(View itemView) {
             super(itemView);
-
             label = (TextView) ViewUtils.$$(itemView, R.id.label);
             dragHandler = ViewUtils.$$(itemView, R.id.drag_handler);
             delete = ViewUtils.$$(itemView, R.id.delete);
-
             delete.setOnClickListener(this);
         }
 
@@ -174,32 +163,28 @@ public final class QuickSearchScene extends ToolbarScene {
             if (position == RecyclerView.NO_POSITION || mQuickSearchList == null) {
                 return;
             }
-
             final QuickSearch quickSearch = mQuickSearchList.get(position);
-            new AlertDialog.Builder(context)
-                .setTitle(R.string.delete_quick_search_title)
-                .setMessage(getString(R.string.delete_quick_search_message, quickSearch.name))
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        EhDB.deleteQuickSearch(quickSearch);
-                        mQuickSearchList.remove(position);
+            new AlertDialog.Builder(context).setTitle(R.string.delete_quick_search_title).setMessage(getString(R.string.delete_quick_search_message, quickSearch.name)).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    EhDB.deleteQuickSearch(quickSearch);
+                    mQuickSearchList.remove(position);
+                }
+            }).setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    if (null != mAdapter) {
+                        mAdapter.notifyDataSetChanged();
                     }
-                })
-                .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        if (null != mAdapter) {
-                            mAdapter.notifyDataSetChanged();
-                        }
-                        updateView();
-                    }
-                }).show();
+                    updateView();
+                }
+            }).show();
         }
     }
 
-    private class QuickSearchAdapter extends RecyclerView.Adapter<QuickSearchHolder>
-            implements DraggableItemAdapter<QuickSearchHolder> {
+    private class QuickSearchAdapter extends RecyclerView.Adapter<QuickSearchHolder> implements DraggableItemAdapter<QuickSearchHolder> {
 
         private final LayoutInflater mInflater;
 
@@ -248,7 +233,6 @@ public final class QuickSearchScene extends ToolbarScene {
             if (null == mQuickSearchList) {
                 return;
             }
-
             EhDB.moveQuickSearch(fromPosition, toPosition);
             final QuickSearch item = mQuickSearchList.remove(fromPosition);
             mQuickSearchList.add(toPosition, item);
@@ -260,9 +244,11 @@ public final class QuickSearchScene extends ToolbarScene {
         }
 
         @Override
-        public void onItemDragStarted(int position) { }
+        public void onItemDragStarted(int position) {
+        }
 
         @Override
-        public void onItemDragFinished(int fromPosition, int toPosition, boolean result) { }
+        public void onItemDragFinished(int fromPosition, int toPosition, boolean result) {
+        }
     }
 }

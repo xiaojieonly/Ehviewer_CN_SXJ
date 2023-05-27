@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import java.util.ArrayList;
 
 // TODO Add url field?
 public class GalleryTagGroup implements Parcelable {
 
     public String groupName;
+
     private final ArrayList<String> mTagList;
 
     public void addTag(String tag) {
@@ -60,6 +59,7 @@ public class GalleryTagGroup implements Parcelable {
     }
 
     public static final Creator<GalleryTagGroup> CREATOR = new Creator<GalleryTagGroup>() {
+
         @Override
         public GalleryTagGroup createFromParcel(Parcel source) {
             return new GalleryTagGroup(source);

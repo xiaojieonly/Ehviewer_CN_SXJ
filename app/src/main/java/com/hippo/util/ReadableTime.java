@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.annotation.SuppressLint;
@@ -31,43 +30,41 @@ public final class ReadableTime {
     private static Resources sResources;
 
     public static final long SECOND_MILLIS = 1000;
+
     public static final long MINUTE_MILLIS = 60 * SECOND_MILLIS;
+
     public static final long HOUR_MILLIS = 60 * MINUTE_MILLIS;
+
     public static final long DAY_MILLIS = 24 * HOUR_MILLIS;
+
     public static final long WEEK_MILLIS = 7 * DAY_MILLIS;
+
     public static final long YEAR_MILLIS = 365 * DAY_MILLIS;
 
     public static final int SIZE = 5;
 
-    public static final long[] MULTIPLES = {
-            YEAR_MILLIS,
-            DAY_MILLIS,
-            HOUR_MILLIS,
-            MINUTE_MILLIS,
-            SECOND_MILLIS
-    };
+    public static final long[] MULTIPLES = { YEAR_MILLIS, DAY_MILLIS, HOUR_MILLIS, MINUTE_MILLIS, SECOND_MILLIS };
 
-    public static final int[] UNITS = {
-            R.plurals.year,
-            R.plurals.day,
-            R.plurals.hour,
-            R.plurals.minute,
-            R.plurals.second
-    };
+    public static final int[] UNITS = { R.plurals.year, R.plurals.day, R.plurals.hour, R.plurals.minute, R.plurals.second };
 
     private static final Calendar sCalendar = Calendar.getInstance();
+
     private static final Object sCalendarLock = new Object();
 
     private static final SimpleDateFormat DATE_FORMAT_WITHOUT_YEAR = new SimpleDateFormat("MMM d");
+
     private static final SimpleDateFormat DATE_FORMAT_WITH_YEAR = new SimpleDateFormat("MMM d, yyyy");
 
     private static final SimpleDateFormat DATE_FORMAT_WITHOUT_YEAR_ZH = new SimpleDateFormat("M月d日");
+
     private static final SimpleDateFormat DATE_FORMAT_WITH_YEAR_ZH = new SimpleDateFormat("yyyy年M月d日");
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yy-MM-dd HH:mm");
+
     private static final Object sDateFormatLock1 = new Object();
 
     private static final SimpleDateFormat FILENAMABLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
+
     private static final Object sDateFormatLock2 = new Object();
 
     public static void initialize(Context context) {
@@ -83,7 +80,6 @@ public final class ReadableTime {
         }
     }
     */
-
     public static String getPlainTime(long time) {
         synchronized (sDateFormatLock1) {
             return DATE_FORMAT.format(new Date(time));
@@ -92,12 +88,10 @@ public final class ReadableTime {
 
     public static String getTimeAgo(long time) {
         Resources resources = sResources;
-
         long now = System.currentTimeMillis();
         if (time > now + (2 * MINUTE_MILLIS) || time <= 0) {
             return resources.getString(R.string.from_the_future);
         }
-
         final long diff = now - time;
         if (diff < MINUTE_MILLIS) {
             return resources.getString(R.string.just_now);
@@ -125,7 +119,6 @@ public final class ReadableTime {
                 sCalendar.setTime(timeDate);
                 int timeYear = sCalendar.get(Calendar.YEAR);
                 boolean isZh = Locale.getDefault().getLanguage().equals("zh");
-
                 if (nowYear == timeYear) {
                     return (isZh ? DATE_FORMAT_WITHOUT_YEAR_ZH : DATE_FORMAT_WITHOUT_YEAR).format(timeDate);
                 } else {
@@ -138,10 +131,8 @@ public final class ReadableTime {
     public static String getTimeInterval(long time) {
         StringBuilder sb = new StringBuilder();
         Resources resources = sResources;
-
         long leftover = time;
         boolean start = false;
-
         for (int i = 0; i < SIZE; i++) {
             long multiple = MULTIPLES[i];
             long quotient = leftover / multiple;
@@ -150,32 +141,25 @@ public final class ReadableTime {
                 if (start) {
                     sb.append(" ");
                 }
-                sb.append(quotient)
-                        .append(" ")
-                        .append(resources.getQuantityString(UNITS[i], (int) quotient));
+                sb.append(quotient).append(" ").append(resources.getQuantityString(UNITS[i], (int) quotient));
                 start = true;
             }
             leftover = remainder;
         }
-
         return sb.toString();
     }
 
     public static String getShortTimeInterval(long time) {
         StringBuilder sb = new StringBuilder();
         Resources resources = sResources;
-
         for (int i = 0; i < SIZE; i++) {
             long multiple = MULTIPLES[i];
             long quotient = time / multiple;
             if (time > multiple * 1.5 || i == SIZE - 1) {
-                sb.append(quotient)
-                        .append(" ")
-                        .append(resources.getQuantityString(UNITS[i], (int) quotient));
+                sb.append(quotient).append(" ").append(resources.getQuantityString(UNITS[i], (int) quotient));
                 break;
             }
         }
-
         return sb.toString();
     }
 

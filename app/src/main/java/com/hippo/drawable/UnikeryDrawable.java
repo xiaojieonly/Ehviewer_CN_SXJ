@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.drawable.Drawable;
@@ -27,15 +26,16 @@ import com.hippo.image.ImageDrawable;
 import com.hippo.image.RecycledException;
 import com.hippo.widget.ObservedTextView;
 
-public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap>,
-        ObservedTextView.OnWindowAttachListener {
+public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap>, ObservedTextView.OnWindowAttachListener {
 
     private static final String TAG = UnikeryDrawable.class.getSimpleName();
 
     private int mTaskId = Unikery.INVALID_ID;
 
     private final ObservedTextView mTextView;
+
     private final Conaco<ImageBitmap> mConaco;
+
     private String mUrl;
 
     public UnikeryDrawable(ObservedTextView textView, Conaco<ImageBitmap> conaco) {
@@ -58,8 +58,8 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
     public void load(String url) {
         if (url != null) {
             mUrl = url;
-//            mConaco.load(new ConacoTask.Builder<ImageBitmap>().setUnikery(this).setUrl(url).setKey(url));
-            ConacoTask.Builder<ImageBitmap> builder =new ConacoTask.Builder<>();
+            //            mConaco.load(new ConacoTask.Builder<ImageBitmap>().setUnikery(this).setUrl(url).setKey(url));
+            ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
             builder.url = url;
             builder.unikery = this;
             builder.key = url;
@@ -82,13 +82,10 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
         if (oldDrawable != null) {
             oldDrawable.setCallback(null);
         }
-
         super.setDrawable(drawable);
-
         if (drawable != null) {
             drawable.setCallback(mTextView);
         }
-
         updateBounds();
         if (drawable != null) {
             invalidateSelf();
@@ -112,16 +109,18 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
     }
 
     @Override
-    public void onMiss(int source) {}
+    public void onMiss(int source) {
+    }
 
-//    @Override
-//    public void onRequest() {}
+    //    @Override
+    //    public void onRequest() {}
+    @Override
+    public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {
+    }
 
     @Override
-    public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {}
-
-    @Override
-    public void onWait() {}
+    public void onWait() {
+    }
 
     @Override
     public void onGetValue(@NonNull ImageBitmap value, int source) {
@@ -130,14 +129,11 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
             drawable = new ImageDrawable(value);
         } catch (RecycledException e) {
             Log.d(TAG, "The ImageBitmap is recycled", e);
-            return ;
+            return;
         }
-
         clearDrawable();
-
         setDrawable(drawable);
         drawable.start();
-
     }
 
     @Override

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.reveal;
 
 import android.content.Context;
@@ -25,9 +24,13 @@ import android.view.View;
 public class RevealView extends View implements Reveal {
 
     private final Path mRevealPath = new Path();
+
     private boolean mReveal;
+
     private int mCenterX;
+
     private int mCenterY;
+
     private float mRadius;
 
     public RevealView(Context context) {
@@ -60,7 +63,6 @@ public class RevealView extends View implements Reveal {
     public void draw(Canvas canvas) {
         boolean reveal = mReveal;
         int saveCount = 0;
-
         if (reveal) {
             saveCount = canvas.save();
             Path path = mRevealPath;
@@ -68,9 +70,7 @@ public class RevealView extends View implements Reveal {
             path.addCircle(mCenterX, mCenterY, mRadius, Path.Direction.CW);
             canvas.clipPath(path);
         }
-
         super.draw(canvas);
-
         if (reveal) {
             canvas.restoreToCount(saveCount);
         }

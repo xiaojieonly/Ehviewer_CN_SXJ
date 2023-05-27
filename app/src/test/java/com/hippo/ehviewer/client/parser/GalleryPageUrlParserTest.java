@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
 import java.util.Arrays;
 import java.util.Collection;
 import org.junit.Test;
@@ -28,44 +26,41 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class GalleryPageUrlParserTest {
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {
-        { "https://e-hentai.org/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0},
-        { "https://exhentai.org/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0},
-        { "7b87643838/530350-1", true, true, 0, null, 0},
-
-        { "7b87643838/530350-1", false, false, 530350, "7b87643838", 0},
-        { "s/7b87643838/530350-1", false, false, 530350, "7b87643838", 0},
-        { "7b87643838/530350a-1", false, true, 0, null, 0},
-    });
-  }
-
-  private String url;
-  private boolean strict;
-  private boolean isNull;
-  private long gid;
-  private String pToken;
-  private int page;
-
-  public GalleryPageUrlParserTest(String url, boolean strict, boolean isNull, long gid, String pToken, int page) {
-    this.url = url;
-    this.strict = strict;
-    this.isNull = isNull;
-    this.gid = gid;
-    this.pToken = pToken;
-    this.page = page;
-  }
-
-  @Test
-  public void testParse() {
-    GalleryPageUrlParser.Result result = GalleryPageUrlParser.parse(url, strict);
-    if (isNull) {
-      assertNull(result);
-    } else {
-      assertEquals(gid, result.gid);
-      assertEquals(pToken, result.pToken);
-      assertEquals(page, result.page);
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] { { "https://e-hentai.org/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0 }, { "https://exhentai.org/s/7b87643838/530350-1", true, false, 530350, "7b87643838", 0 }, { "7b87643838/530350-1", true, true, 0, null, 0 }, { "7b87643838/530350-1", false, false, 530350, "7b87643838", 0 }, { "s/7b87643838/530350-1", false, false, 530350, "7b87643838", 0 }, { "7b87643838/530350a-1", false, true, 0, null, 0 } });
     }
-  }
+
+    private String url;
+
+    private boolean strict;
+
+    private boolean isNull;
+
+    private long gid;
+
+    private String pToken;
+
+    private int page;
+
+    public GalleryPageUrlParserTest(String url, boolean strict, boolean isNull, long gid, String pToken, int page) {
+        this.url = url;
+        this.strict = strict;
+        this.isNull = isNull;
+        this.gid = gid;
+        this.pToken = pToken;
+        this.page = page;
+    }
+
+    @Test
+    public void testParse() {
+        GalleryPageUrlParser.Result result = GalleryPageUrlParser.parse(url, strict);
+        if (isNull) {
+            assertNull(result);
+        } else {
+            assertEquals(gid, result.gid);
+            assertEquals(pToken, result.pToken);
+            assertEquals(page, result.page);
+        }
+    }
 }

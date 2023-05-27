@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
@@ -23,19 +22,33 @@ import androidx.annotation.Nullable;
 public class GalleryApiInfo implements Parcelable {
 
     public long gid;
+
     public String token;
+
     public String archiverKey;
+
     public String title;
+
     public String titleJpn;
+
     public int category;
+
     public String thumb;
+
     public String uploader;
+
     public long posted;
+
     public int filecount;
+
     public long filesize;
+
     public boolean expunged;
+
     public float rating;
+
     public int torrentcount;
+
     @Nullable
     public String[] tags;
 
@@ -85,6 +98,7 @@ public class GalleryApiInfo implements Parcelable {
     }
 
     public static final Creator<GalleryApiInfo> CREATOR = new Creator<GalleryApiInfo>() {
+
         @Override
         public GalleryApiInfo createFromParcel(Parcel source) {
             return new GalleryApiInfo(source);

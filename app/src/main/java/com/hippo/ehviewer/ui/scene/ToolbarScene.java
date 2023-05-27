@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.graphics.drawable.Drawable;
@@ -38,19 +37,16 @@ public abstract class ToolbarScene extends BaseScene {
     private CharSequence mTempTitle;
 
     @Nullable
-    public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return null;
     }
 
     @Nullable
     @Override
-    public final View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public final View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_toolbar, container, false);
         Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         FrameLayout contentPanel = (FrameLayout) view.findViewById(R.id.content_panel);
-
         View contentView = onCreateView3(inflater, contentPanel, savedInstanceState);
         if (contentView == null) {
             return null;
@@ -75,7 +71,6 @@ public abstract class ToolbarScene extends BaseScene {
                 mToolbar.setTitle(mTempTitle);
                 mTempTitle = null;
             }
-
             int menuResId = getMenuResId();
             if (menuResId != 0) {
                 mToolbar.inflateMenu(menuResId);
@@ -83,6 +78,7 @@ public abstract class ToolbarScene extends BaseScene {
                 onMenuCreated(mToolbar.getMenu());
             }
             mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     onNavigationClick();

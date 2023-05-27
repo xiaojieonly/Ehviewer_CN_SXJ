@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.content.Intent;
@@ -35,8 +34,7 @@ import com.hippo.widget.DirExplorer;
 import com.hippo.yorozuya.FileUtils;
 import java.io.File;
 
-public class DirPickerActivity extends ToolbarActivity
-        implements View.OnClickListener, DirExplorer.OnChangeDirListener {
+public class DirPickerActivity extends ToolbarActivity implements View.OnClickListener, DirExplorer.OnChangeDirListener {
 
     public static final String KEY_FILE_URI = "file_uri";
 
@@ -47,9 +45,12 @@ public class DirPickerActivity extends ToolbarActivity
      ---------------*/
     @Nullable
     private TextView mPath;
+
     @Nullable
     private DirExplorer mDirExplorer;
+
     private View mDefault;
+
     @Nullable
     private View mOk;
 
@@ -58,27 +59,21 @@ public class DirPickerActivity extends ToolbarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dir_picker);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-
         mPath = findViewById(R.id.path);
         mDirExplorer = findViewById(R.id.dir_explorer);
         mDefault = findViewById(R.id.preset);
         mOk = findViewById(R.id.ok);
-
         File file;
         if (null == savedInstanceState) {
             file = onInit();
         } else {
             file = onRestore(savedInstanceState);
         }
-
         mDirExplorer.setCurrentFile(file);
         mDirExplorer.setOnChangeDirListener(this);
-
         Ripple.addRipple(mOk, !AttrResources.getAttrBoolean(this, androidx.appcompat.R.attr.isLightTheme));
-
         mDefault.setOnClickListener(this);
         mOk.setOnClickListener(this);
-
         mPath.setText(mDirExplorer.getCurrentFile().getPath());
     }
 
@@ -113,7 +108,6 @@ public class DirPickerActivity extends ToolbarActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         mPath = null;
         mDirExplorer = null;
         mOk = null;
@@ -121,7 +115,7 @@ public class DirPickerActivity extends ToolbarActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
@@ -139,13 +133,11 @@ public class DirPickerActivity extends ToolbarActivity
             for (int i = 0; i < externalFilesDirs.length; i++) {
                 dirs[i + 1] = new File(externalFilesDirs[i], "download");
             }
-
             CharSequence[] items = new CharSequence[dirs.length];
             items[0] = getString(R.string.default_directory);
             for (int i = 1; i < items.length; i++) {
                 items[i] = getString(R.string.application_file_directory, i);
             }
-
             new AlertDialog.Builder(this).setItems(items, (dialog, which) -> {
                 File dir = dirs[which];
                 if (!FileUtils.ensureDirectory(dir)) {

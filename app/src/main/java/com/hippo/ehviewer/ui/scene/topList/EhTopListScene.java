@@ -9,14 +9,12 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
-
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
-
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.EhClient;
@@ -33,7 +31,6 @@ import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.scene.SceneFragment;
 import com.hippo.view.ViewTransition;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
@@ -41,48 +38,52 @@ import java.util.Random;
 
 public class EhTopListScene extends BaseScene {
 
-    @IntDef({STATE_INIT, STATE_NORMAL, STATE_REFRESH, STATE_REFRESH_HEADER, STATE_FAILED})
+    @IntDef({ STATE_INIT, STATE_NORMAL, STATE_REFRESH, STATE_REFRESH_HEADER, STATE_FAILED })
     @Retention(RetentionPolicy.SOURCE)
     private @interface State {
     }
 
     private static final int STATE_INIT = -1;
+
     private static final int STATE_NORMAL = 0;
+
     private static final int STATE_REFRESH = 1;
+
     private static final int STATE_REFRESH_HEADER = 2;
+
     private static final int STATE_FAILED = 3;
 
     private static int mPosition = 0;
 
     private long mPressBackTime = 0;
+
     private static final int BACK_PRESSED_INTERVAL = 2000;
 
     @State
     private int mState = STATE_INIT;
 
     public final static String KEY_ACTION = "action";
+
     //    public final static String ACTION_HOMEPAGE = "action_homepage";
-//    public final static String ACTION_SUBSCRIPTION = "action_subscription";
-//    public final static String ACTION_WHATS_HOT = "action_whats_hot";
+    //    public final static String ACTION_SUBSCRIPTION = "action_subscription";
+    //    public final static String ACTION_WHATS_HOT = "action_whats_hot";
     public final static String ACTION_TOP_LIST = "action_top_list";
-//    public final static String ACTION_LIST_URL_BUILDER = "action_list_url_builder";
 
-//    public static final String ACTION_TOP_LIST_INFO = "action_gallery_info";
-//    public static final String ACTION_GID_TOKEN = "action_gid_token";
-
-
+    //    public final static String ACTION_LIST_URL_BUILDER = "action_list_url_builder";
+    //    public static final String ACTION_TOP_LIST_INFO = "action_gallery_info";
+    //    public static final String ACTION_GID_TOKEN = "action_gid_token";
     private EhTopListDetail ehTopListDetail;
 
     @Nullable
     private ViewTransition mViewTransition;
+
     @Nullable
     private RecyclerView mRecyclerView;
+
     @NonNull
     private ViewPager drawPager;
 
-//    private ShowcaseView mShowcaseView;
-
-
+    //    private ShowcaseView mShowcaseView;
     @Nullable
     private EhClient mClient;
 
@@ -95,14 +96,10 @@ public class EhTopListScene extends BaseScene {
 
     private static final boolean TRANSITION_ANIMATION_DISABLED = true;
 
-
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Context context = getEHContext();
-
         mClient = EhApplication.getEhClient(context);
     }
 
@@ -110,16 +107,13 @@ public class EhTopListScene extends BaseScene {
     @Override
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_gallery_top_list, container, false);
-
         Spinner spinner = view.findViewById(R.id.top_list_spinner);
         spinner.setSelection(0);
         spinner.setOnItemSelectedListener(new TopListKindSelectedListener());
         FrameLayout mFrameLayout = view.findViewById(R.id.page_detail_view);
         View transitionView = view.findViewById(R.id.data_loading_view);
         mViewTransition = new ViewTransition(transitionView, mFrameLayout);
-
         mRecyclerView = view.findViewById(R.id.top_list_recycler_view);
-
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getEHContext());
         mRecyclerView.setLayoutManager(linearLayoutManager);
         if (!mHasFirstRefresh) {
@@ -133,7 +127,6 @@ public class EhTopListScene extends BaseScene {
             bindViewSecond(mPosition);
             adjustViewVisibility(STATE_NORMAL, true);
         }
-
         return view;
     }
 
@@ -145,10 +138,7 @@ public class EhTopListScene extends BaseScene {
 
     @Override
     public void onBackPressed() {
-
         boolean handle = checkDoubleClickExit();
-
-
         if (!handle) {
             if (mState == STATE_INIT) {
                 mRequest.cancel();
@@ -161,7 +151,6 @@ public class EhTopListScene extends BaseScene {
         if (getStackIndex() != 0) {
             return false;
         }
-
         long time = System.currentTimeMillis();
         if (time - mPressBackTime > BACK_PRESSED_INTERVAL) {
             // It is the last scene
@@ -173,7 +162,6 @@ public class EhTopListScene extends BaseScene {
         }
     }
 
-
     /**
      * 数据请求入口
      */
@@ -184,35 +172,23 @@ public class EhTopListScene extends BaseScene {
         }
     }
 
-
     /**
      * 请求数据
      *
      * @return
      */
     private boolean request() {
-
         Context context = getEHContext();
-
         MainActivity activity = getActivity2();
-
         String url = EhUrl.getTopListUrl();
-//        String url = EhUrl.getMyTag();
-
+        //        String url = EhUrl.getMyTag();
         if (null == context || null == activity) {
             return false;
         }
-
         EhClient.Callback callback = new GetTopListDetailListener(context, activity.getStageId(), getTag());
-
-        mRequest = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_TOP_LIST)
-//                .setMethod(EhClient.METHOD_ADD_WATCHED)
-                .setArgs(url).setCallback(callback);
-
+        mRequest = new EhRequest().setMethod(EhClient.METHOD_GET_TOP_LIST).//                .setMethod(EhClient.METHOD_ADD_WATCHED)
+        setArgs(url).setCallback(callback);
         mClient.execute(mRequest);
-
-
         return true;
     }
 
@@ -236,7 +212,6 @@ public class EhTopListScene extends BaseScene {
         }
         EhTopListAdapterView mAdapter = new EhTopListAdapterView(getEHContext(), mRecyclerView, ehTopListDetail.get(index), this, index);
         mRecyclerView.setAdapter(mAdapter);
-
     }
 
     /**
@@ -245,19 +220,15 @@ public class EhTopListScene extends BaseScene {
      * @param state
      */
     private void adjustViewVisibility(int state, boolean animation) {
-//        if (state == mState) {
-//            return;
-//        }
+        //        if (state == mState) {
+        //            return;
+        //        }
         if (null == mViewTransition) {
             return;
         }
-
-
         mState = state;
-
         animation = !TRANSITION_ANIMATION_DISABLED && animation;
-
-        switch (state) {
+        switch(state) {
             case STATE_INIT:
             case STATE_REFRESH:
                 mViewTransition.showView(0, animation);
@@ -269,8 +240,6 @@ public class EhTopListScene extends BaseScene {
                 mViewTransition.showView(1, animation);
                 break;
         }
-
-
     }
 
     /**
@@ -294,17 +263,17 @@ public class EhTopListScene extends BaseScene {
 
         @Override
         public void onFailure(Exception e) {
-
         }
 
         @Override
         public void onCancel() {
-
         }
     }
 
     private class EhTopListAdapterView extends EhTopListAdapter {
+
         private SceneFragment sceneFragment;
+
         private HashMap<Integer, Integer> hashMap = new HashMap();
 
         public EhTopListAdapterView(@NonNull Context context, @NonNull RecyclerView recyclerView, TopListInfo topListInfo, SceneFragment scene, int searchType) {
@@ -315,7 +284,6 @@ public class EhTopListScene extends BaseScene {
         @Override
         int getRandomColor(int position) {
             Random random = new Random();
-
             if (hashMap.containsKey(position)) {
                 return hashMap.get(position);
             } else {
@@ -343,6 +311,7 @@ public class EhTopListScene extends BaseScene {
      * 下拉框监听
      */
     private class TopListKindSelectedListener implements AdapterView.OnItemSelectedListener {
+
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
             mPosition = position;
@@ -351,7 +320,6 @@ public class EhTopListScene extends BaseScene {
 
         @Override
         public void onNothingSelected(AdapterView<?> parent) {
-
         }
     }
 }

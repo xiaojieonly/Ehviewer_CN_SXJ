@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.download;
 
 import android.app.NotificationChannel;
@@ -51,43 +50,65 @@ import java.lang.annotation.RetentionPolicy;
 public class DownloadService extends Service implements DownloadManager.DownloadListener {
 
     public static final String ACTION_START = "start";
+
     public static final String ACTION_START_RANGE = "start_range";
+
     public static final String ACTION_START_ALL = "start_all";
+
     public static final String ACTION_STOP = "stop";
+
     public static final String ACTION_STOP_RANGE = "stop_range";
+
     public static final String ACTION_STOP_CURRENT = "stop_current";
+
     public static final String ACTION_STOP_ALL = "stop_all";
+
     public static final String ACTION_DELETE = "delete";
+
     public static final String ACTION_DELETE_RANGE = "delete_range";
 
     public static final String ACTION_CLEAR = "clear";
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
+
     public static final String KEY_LABEL = "label";
+
     public static final String KEY_GID = "gid";
+
     public static final String KEY_GID_LIST = "gid_list";
 
     private static final int ID_DOWNLOADING = 1;
+
     private static final int ID_DOWNLOADED = 2;
+
     private static final int ID_509 = 3;
 
     @Nullable
     private NotificationManager mNotifyManager;
+
     @Nullable
     private DownloadManager mDownloadManager;
+
     private NotificationCompat.Builder mDownloadingBuilder;
+
     private NotificationCompat.Builder mDownloadedBuilder;
+
     private NotificationCompat.Builder m509dBuilder;
+
     private NotificationDelay mDownloadingDelay;
+
     private NotificationDelay mDownloadedDelay;
+
     private NotificationDelay m509Delay;
 
-
     private final static SparseJBArray sItemStateArray = new SparseJBArray();
+
     private final static SparseJLArray<String> sItemTitleArray = new SparseJLArray<>();
 
     private static int sFailedCount;
+
     private static int sFinishedCount;
+
     private static int sDownloadedCount;
 
     private String CHANNEL_ID;
@@ -103,12 +124,10 @@ public class DownloadService extends Service implements DownloadManager.Download
     @Override
     public void onCreate() {
         super.onCreate();
-
-        CHANNEL_ID = getPackageName()+".download";
+        CHANNEL_ID = getPackageName() + ".download";
         mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            mNotifyManager.createNotificationChannel(new NotificationChannel(CHANNEL_ID, getString(R.string.download_service),
-                    NotificationManager.IMPORTANCE_LOW));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mNotifyManager.createNotificationChannel(new NotificationChannel(CHANNEL_ID, getString(R.string.download_service), NotificationManager.IMPORTANCE_LOW));
         }
         mDownloadManager = EhApplication.getDownloadManager(getApplicationContext());
         mDownloadManager.setDownloadListener(this);
@@ -117,7 +136,6 @@ public class DownloadService extends Service implements DownloadManager.Download
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         mNotifyManager = null;
         if (mDownloadManager != null) {
             mDownloadManager.setDownloadListener(null);
@@ -148,7 +166,6 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (intent != null) {
             action = intent.getAction();
         }
-
         if (ACTION_START.equals(action)) {
             GalleryInfo gi = intent.getParcelableExtra(KEY_GALLERY_INFO);
             String label = intent.getStringExtra(KEY_LABEL);
@@ -195,7 +212,6 @@ public class DownloadService extends Service implements DownloadManager.Download
         } else if (ACTION_CLEAR.equals(action)) {
             clear();
         }
-
         checkStopSelf();
     }
 
@@ -210,21 +226,10 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (mDownloadingBuilder != null) {
             return;
         }
-
         Intent stopAllIntent = new Intent(this, DownloadService.class);
         stopAllIntent.setAction(ACTION_STOP_ALL);
         PendingIntent piStopAll = PendingIntent.getService(this, 0, stopAllIntent, 0);
-
-        mDownloadingBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.stat_sys_download)
-                .setOngoing(true)
-                .setAutoCancel(false)
-                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-                .setColor(getResources().getColor(R.color.colorPrimary))
-                .addAction(R.drawable.ic_pause_x24, getString(R.string.stat_download_action_stop_all), piStopAll)
-                .setShowWhen(false)
-                .setChannelId(CHANNEL_ID);
-
+        mDownloadingBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID).setSmallIcon(android.R.drawable.stat_sys_download).setOngoing(true).setAutoCancel(false).setCategory(NotificationCompat.CATEGORY_PROGRESS).setColor(getResources().getColor(R.color.colorPrimary)).addAction(R.drawable.ic_pause_x24, getString(R.string.stat_download_action_stop_all), piStopAll).setShowWhen(false).setChannelId(CHANNEL_ID);
         mDownloadingDelay = new NotificationDelay(this, mNotifyManager, mDownloadingBuilder, ID_DOWNLOADING);
     }
 
@@ -232,30 +237,17 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (mDownloadedBuilder != null) {
             return;
         }
-
         Intent clearIntent = new Intent(this, DownloadService.class);
         clearIntent.setAction(ACTION_CLEAR);
         PendingIntent piClear = PendingIntent.getService(this, 0, clearIntent, 0);
-
         Bundle bundle = new Bundle();
         bundle.putString(DownloadsScene.KEY_ACTION, DownloadsScene.ACTION_CLEAR_DOWNLOAD_SERVICE);
         Intent activityIntent = new Intent(this, MainActivity.class);
         activityIntent.setAction(StageActivity.ACTION_START_SCENE);
         activityIntent.putExtra(StageActivity.KEY_SCENE_NAME, DownloadsScene.class.getName());
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle);
-        PendingIntent piActivity = PendingIntent.getActivity(DownloadService.this, 0,
-                activityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mDownloadedBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
-                .setContentTitle(getString(R.string.stat_download_done_title))
-                .setDeleteIntent(piClear)
-                .setOngoing(false)
-                .setAutoCancel(true)
-                .setContentIntent(piActivity)
-                .setChannelId(CHANNEL_ID);
-
+        PendingIntent piActivity = PendingIntent.getActivity(DownloadService.this, 0, activityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mDownloadedBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID).setSmallIcon(android.R.drawable.stat_sys_download_done).setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher)).setContentTitle(getString(R.string.stat_download_done_title)).setDeleteIntent(piClear).setOngoing(false).setAutoCancel(true).setContentIntent(piActivity).setChannelId(CHANNEL_ID);
         mDownloadedDelay = new NotificationDelay(this, mNotifyManager, mDownloadedBuilder, ID_DOWNLOADED);
     }
 
@@ -263,17 +255,7 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (m509dBuilder != null) {
             return;
         }
-
-        m509dBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_stat_alert)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
-                .setContentText(getString(R.string.stat_509_alert_title))
-                .setContentText(getString(R.string.stat_509_alert_text))
-                .setAutoCancel(true)
-                .setOngoing(false)
-                .setCategory(NotificationCompat.CATEGORY_ERROR)
-                .setChannelId(CHANNEL_ID);
-
+        m509dBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID).setSmallIcon(R.drawable.ic_stat_alert).setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher)).setContentText(getString(R.string.stat_509_alert_title)).setContentText(getString(R.string.stat_509_alert_text)).setAutoCancel(true).setOngoing(false).setCategory(NotificationCompat.CATEGORY_ERROR).setChannelId(CHANNEL_ID);
         m509Delay = new NotificationDelay(this, mNotifyManager, m509dBuilder, ID_509);
     }
 
@@ -282,7 +264,6 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (mNotifyManager == null) {
             return;
         }
-
         ensure509Builder();
         m509dBuilder.setWhen(System.currentTimeMillis());
         m509Delay.show();
@@ -293,24 +274,15 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (mNotifyManager == null) {
             return;
         }
-
         ensureDownloadingBuilder();
-
         Bundle bundle = new Bundle();
         bundle.putLong(DownloadsScene.KEY_GID, info.gid);
         Intent activityIntent = new Intent(this, MainActivity.class);
         activityIntent.setAction(StageActivity.ACTION_START_SCENE);
         activityIntent.putExtra(StageActivity.KEY_SCENE_NAME, DownloadsScene.class.getName());
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle);
-        PendingIntent piActivity = PendingIntent.getActivity(DownloadService.this, 0,
-                activityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mDownloadingBuilder.setContentTitle(EhUtils.getSuitableTitle(info))
-                .setContentText(null)
-                .setContentInfo(null)
-                .setProgress(0, 0, true)
-                .setContentIntent(piActivity);
-
+        PendingIntent piActivity = PendingIntent.getActivity(DownloadService.this, 0, activityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mDownloadingBuilder.setContentTitle(EhUtils.getSuitableTitle(info)).setContentText(null).setContentInfo(null).setProgress(0, 0, true).setContentIntent(piActivity);
         mDownloadingDelay.startForeground();
     }
 
@@ -319,7 +291,6 @@ public class DownloadService extends Service implements DownloadManager.Download
             return;
         }
         ensureDownloadingBuilder();
-
         long speed = info.speed;
         if (speed < 0) {
             speed = 0;
@@ -331,22 +302,18 @@ public class DownloadService extends Service implements DownloadManager.Download
         } else {
             text = getString(R.string.download_speed_text, text);
         }
-        mDownloadingBuilder.setContentTitle(EhUtils.getSuitableTitle(info))
-                .setContentText(text)
-                .setContentInfo(info.total == -1 || info.finished == -1 ? null : info.finished + "/" + info.total)
-                .setProgress(info.total, info.finished, false);
-
+        mDownloadingBuilder.setContentTitle(EhUtils.getSuitableTitle(info)).setContentText(text).setContentInfo(info.total == -1 || info.finished == -1 ? null : info.finished + "/" + info.total).setProgress(info.total, info.finished, false);
         mDownloadingDelay.startForeground();
     }
 
     @Override
     public void onDownload(DownloadInfo info) {
-        onUpdate(info);
+        updateObjectInfo(info);
     }
 
     @Override
     public void onGetPage(DownloadInfo info) {
-        onUpdate(info);
+        updateObjectInfo(info);
     }
 
     @Override
@@ -354,17 +321,15 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (mNotifyManager == null) {
             return;
         }
-
         if (null != mDownloadingDelay) {
             mDownloadingDelay.cancel();
         }
-
         ensureDownloadedBuilder();
-
         boolean finish = info.state == DownloadInfo.STATE_FINISH;
         long gid = info.gid;
         int index = sItemStateArray.indexOfKey(gid);
-        if (index < 0) { // Not contain
+        if (index < 0) {
+            // Not contain
             sItemStateArray.put(gid, finish);
             sItemTitleArray.put(gid, EhUtils.getSuitableTitle(info));
             sDownloadedCount++;
@@ -373,7 +338,8 @@ public class DownloadService extends Service implements DownloadManager.Download
             } else {
                 sFailedCount++;
             }
-        } else { // Contain
+        } else {
+            // Contain
             boolean oldFinish = sItemStateArray.valueAt(index);
             sItemStateArray.put(gid, finish);
             sItemTitleArray.put(gid, EhUtils.getSuitableTitle(info));
@@ -385,7 +351,6 @@ public class DownloadService extends Service implements DownloadManager.Download
                 sFailedCount--;
             }
         }
-
         String text;
         boolean needStyle;
         if (sFinishedCount != 0 && sFailedCount == 0) {
@@ -418,7 +383,6 @@ public class DownloadService extends Service implements DownloadManager.Download
             text = getString(R.string.stat_download_done_text_mix, sFinishedCount, sFailedCount);
             needStyle = true;
         }
-
         NotificationCompat.InboxStyle style;
         if (needStyle) {
             style = new NotificationCompat.InboxStyle();
@@ -432,20 +396,13 @@ public class DownloadService extends Service implements DownloadManager.Download
                 if (title == null) {
                     continue;
                 }
-                style.addLine(getString(fin ? R.string.stat_download_done_line_succeeded :
-                                R.string.stat_download_done_line_failed, title));
+                style.addLine(getString(fin ? R.string.stat_download_done_line_succeeded : R.string.stat_download_done_line_failed, title));
             }
         } else {
             style = null;
         }
-
-        mDownloadedBuilder.setContentText(text)
-                .setStyle(style)
-                .setWhen(System.currentTimeMillis())
-                .setNumber(sDownloadedCount);
-
+        mDownloadedBuilder.setContentText(text).setStyle(style).setWhen(System.currentTimeMillis()).setNumber(sDownloadedCount);
         mDownloadedDelay.show();
-
         checkStopSelf();
     }
 
@@ -454,11 +411,9 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (mNotifyManager == null) {
             return;
         }
-
         if (null != mDownloadingDelay) {
             mDownloadingDelay.cancel();
         }
-
         checkStopSelf();
     }
 
@@ -473,29 +428,37 @@ public class DownloadService extends Service implements DownloadManager.Download
     // Avoid frequent notification
     private static class NotificationDelay implements Runnable {
 
-        @IntDef({OPS_NOTIFY, OPS_CANCEL, OPS_START_FOREGROUND})
+        @IntDef({ OPS_NOTIFY, OPS_CANCEL, OPS_START_FOREGROUND })
         @Retention(RetentionPolicy.SOURCE)
-        private @interface Ops {}
+        private @interface Ops {
+        }
 
         private static final int OPS_NOTIFY = 0;
+
         private static final int OPS_CANCEL = 1;
+
         private static final int OPS_START_FOREGROUND = 2;
 
-        private static final long DELAY = 1000; // 1s
+        // 1s
+        private static final long DELAY = 1000;
 
         private Service mService;
+
         private final NotificationManager mNotifyManager;
+
         private final NotificationCompat.Builder mBuilder;
+
         private final int mId;
 
         private long mLastTime;
+
         private boolean mPosted;
+
         // false for show, true for cancel
         @Ops
         private int mOps;
 
-        public NotificationDelay(Service service, NotificationManager notifyManager,
-                NotificationCompat.Builder builder, int id) {
+        public NotificationDelay(Service service, NotificationManager notifyManager, NotificationCompat.Builder builder, int id) {
             mService = service;
             mNotifyManager = notifyManager;
             mBuilder = builder;
@@ -563,7 +526,7 @@ public class DownloadService extends Service implements DownloadManager.Download
         @Override
         public void run() {
             mPosted = false;
-            switch (mOps) {
+            switch(mOps) {
                 case OPS_NOTIFY:
                     mNotifyManager.notify(mId, mBuilder.build());
                     break;
@@ -577,5 +540,9 @@ public class DownloadService extends Service implements DownloadManager.Download
                     break;
             }
         }
+    }
+
+    public void updateObjectInfo(DownloadInfo info) {
+        onUpdate(info);
     }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.content.Context;
@@ -50,6 +49,7 @@ public class CleanRedundancyPreference extends TaskPreference {
     private static class ClearTask extends Task {
 
         private final EhApplication mApplication;
+
         private final DownloadManager mManager;
 
         public ClearTask(@NonNull Context context) {
@@ -89,14 +89,12 @@ public class CleanRedundancyPreference extends TaskPreference {
             if (null == files) {
                 return 0;
             }
-
             int count = 0;
-            for (UniFile f: files) {
+            for (UniFile f : files) {
                 if (clearFile(f)) {
                     ++count;
                 }
             }
-
             return count;
         }
 
@@ -108,10 +106,7 @@ public class CleanRedundancyPreference extends TaskPreference {
             } else {
                 count = 0;
             }
-
-            Toast.makeText(mApplication, 0 == count ?
-                    mApplication.getString(R.string.settings_download_clean_redundancy_no_redundancy):
-                    mApplication.getString(R.string.settings_download_clean_redundancy_done, count), Toast.LENGTH_SHORT).show();
+            Toast.makeText(mApplication, 0 == count ? mApplication.getString(R.string.settings_download_clean_redundancy_no_redundancy) : mApplication.getString(R.string.settings_download_clean_redundancy_done, count), Toast.LENGTH_SHORT).show();
             super.onPostExecute(o);
         }
     }

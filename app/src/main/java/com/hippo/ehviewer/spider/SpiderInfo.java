@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.spider;
 
 import android.text.TextUtils;
@@ -34,23 +33,29 @@ public class SpiderInfo {
     private static final String TAG = SpiderInfo.class.getSimpleName();
 
     private static final String VERSION_STR = "VERSION";
+
     private static final int VERSION = 2;
 
     static final String TOKEN_FAILED = "failed";
 
     public int startPage = 0;
+
     public long gid = -1;
+
     public String token = null;
+
     public int pages = -1;
+
     public int previewPages = -1;
+
     public int previewPerPage = -1;
+
     public SparseArray<String> pTokenMap = null;
 
     public static SpiderInfo read(@Nullable UniFile file) {
         if (file == null) {
             return null;
         }
-
         InputStream is = null;
         try {
             is = file.openInputStream();
@@ -66,7 +71,6 @@ public class SpiderInfo {
         if (null == str) {
             return 0;
         }
-
         int startPage = 0;
         for (int i = 0, n = str.length(); i < n; i++) {
             startPage *= 16;
@@ -77,7 +81,6 @@ public class SpiderInfo {
                 startPage += ch - 'a' + 10;
             }
         }
-
         return startPage >= 0 ? startPage : 0;
     }
 
@@ -98,7 +101,6 @@ public class SpiderInfo {
         if (null == is) {
             return null;
         }
-
         SpiderInfo spiderInfo = null;
         try {
             spiderInfo = new SpiderInfo();
@@ -139,7 +141,8 @@ public class SpiderInfo {
             }
             // PToken
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
-            while (true) { // EOFException will raise
+            while (true) {
+                // EOFException will raise
                 line = IOUtils.readAsciiLine(is);
                 int pos = line.indexOf(" ");
                 if (pos > 0) {
@@ -155,9 +158,7 @@ public class SpiderInfo {
         } catch (IOException | NumberFormatException e) {
             // Ignore
         }
-
-        if (spiderInfo == null || spiderInfo.gid == -1 || spiderInfo.token == null ||
-                spiderInfo.pages == -1 || spiderInfo.pTokenMap == null) {
+        if (spiderInfo == null || spiderInfo.gid == -1 || spiderInfo.token == null || spiderInfo.pages == -1 || spiderInfo.pTokenMap == null) {
             return null;
         } else {
             return spiderInfo;
@@ -171,7 +172,8 @@ public class SpiderInfo {
             writer.write(VERSION_STR);
             writer.write(Integer.toString(VERSION));
             writer.write("\n");
-            writer.write(String.format("%08x", startPage >= 0 ? startPage : 0)); // Avoid negative
+            // Avoid negative
+            writer.write(String.format("%08x", startPage >= 0 ? startPage : 0));
             writer.write("\n");
             writer.write(Long.toString(gid));
             writer.write("\n");

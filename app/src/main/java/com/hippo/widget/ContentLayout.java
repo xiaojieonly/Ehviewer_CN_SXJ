@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -28,11 +27,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.FastScroller;
@@ -49,7 +46,6 @@ import com.hippo.view.ViewTransition;
 import com.hippo.yorozuya.IntIdGenerator;
 import com.hippo.yorozuya.LayoutUtils;
 import com.hippo.yorozuya.collect.IntList;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -58,16 +54,21 @@ import java.util.List;
 public class ContentLayout extends FrameLayout {
 
     private ProgressView mProgressView;
+
     private TextView mTipView;
+
     private ViewGroup mContentView;
 
     private RefreshLayout mRefreshLayout;
+
     private EasyRecyclerView mRecyclerView;
+
     private FastScroller mFastScroller;
 
     private ContentHelper mContentHelper;
 
     private int mRecyclerViewOriginTop;
+
     private int mRecyclerViewOriginBottom;
 
     public ContentLayout(Context context) {
@@ -87,33 +88,18 @@ public class ContentLayout extends FrameLayout {
 
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.widget_content_layout, this);
-
         mProgressView = (ProgressView) findViewById(R.id.progress);
         mTipView = (TextView) findViewById(R.id.tip);
         mContentView = (ViewGroup) findViewById(R.id.content_view);
-
         mRefreshLayout = (RefreshLayout) mContentView.findViewById(R.id.refresh_layout);
         mFastScroller = (FastScroller) mContentView.findViewById(R.id.fast_scroller);
         mRecyclerView = (EasyRecyclerView) mRefreshLayout.findViewById(R.id.recycler_view);
-
         mFastScroller.attachToRecyclerView(mRecyclerView);
         HandlerDrawable drawable = new HandlerDrawable();
         drawable.setColor(AttrResources.getAttrColor(context, R.attr.widgetColorThemeAccent));
         mFastScroller.setHandlerDrawable(drawable);
-
-        mRefreshLayout.setHeaderColorSchemeResources(
-                R.color.loading_indicator_red,
-                R.color.loading_indicator_purple,
-                R.color.loading_indicator_blue,
-                R.color.loading_indicator_cyan,
-                R.color.loading_indicator_green,
-                R.color.loading_indicator_yellow);
-        mRefreshLayout.setFooterColorSchemeResources(
-                R.color.loading_indicator_red,
-                R.color.loading_indicator_blue,
-                R.color.loading_indicator_green,
-                R.color.loading_indicator_orange);
-
+        mRefreshLayout.setHeaderColorSchemeResources(R.color.loading_indicator_red, R.color.loading_indicator_purple, R.color.loading_indicator_blue, R.color.loading_indicator_cyan, R.color.loading_indicator_green, R.color.loading_indicator_yellow);
+        mRefreshLayout.setFooterColorSchemeResources(R.color.loading_indicator_red, R.color.loading_indicator_blue, R.color.loading_indicator_green, R.color.loading_indicator_orange);
         mRecyclerViewOriginTop = mRecyclerView.getPaddingTop();
         mRecyclerViewOriginBottom = mRecyclerView.getPaddingBottom();
     }
@@ -150,14 +136,13 @@ public class ContentLayout extends FrameLayout {
         // RecyclerView
         mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerViewOriginTop + fitPaddingTop, mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
         // RefreshLayout
-        mRefreshLayout.setProgressViewOffset(false, fitPaddingTop, fitPaddingTop + LayoutUtils.dp2pix(getContext(), 32)); // TODO
+        // TODO
+        mRefreshLayout.setProgressViewOffset(false, fitPaddingTop, fitPaddingTop + LayoutUtils.dp2pix(getContext(), 32));
     }
 
     public void setFitPaddingBottom(int fitPaddingBottom) {
         // RecyclerView
-        mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(),
-                mRecyclerView.getPaddingTop(), mRecyclerView.getPaddingRight(),
-                mRecyclerViewOriginBottom + fitPaddingBottom);
+        mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerView.getPaddingTop(), mRecyclerView.getPaddingRight(), mRecyclerViewOriginBottom + fitPaddingBottom);
     }
 
     @Override
@@ -177,42 +162,69 @@ public class ContentLayout extends FrameLayout {
         private static final int CHECK_DUPLICATE_RANGE = 50;
 
         private static final String KEY_SUPER = "super";
+
         private static final String KEY_SHOWN_VIEW = "shown_view";
+
         private static final String KEY_TIP = "tip";
+
         private static final String KEY_DATA = "data";
+
         private static final String KEY_NEXT_ID = "next_id";
+
         private static final String KEY_PAGE_DIVIDER = "page_divider";
+
         private static final String KEY_START_PAGE = "start_page";
+
         private static final String KEY_END_PAGE = "end_page";
+
         private static final String KEY_PAGES = "pages";
+
         private static final String KEY_RESULT_COUNT = "result_count";
+
         private static final String KEY_FIRST_HREF = "first_href";
+
         private static final String KEY_PREV_HREF = "prev_href";
+
         private static final String KEY_NEXT_HREF = "next_href";
+
         private static final String KEY_LAST_HREF = "last_href";
 
         public static final int TYPE_REFRESH = 0;
+
         public static final int TYPE_PRE_PAGE = 1;
+
         public static final int TYPE_PRE_PAGE_KEEP_POS = 2;
+
         public static final int TYPE_NEXT_PAGE = 3;
+
         public static final int TYPE_NEXT_PAGE_KEEP_POS = 4;
+
         public static final int TYPE_SOMEWHERE = 5;
+
         public static final int TYPE_REFRESH_PAGE = 6;
 
         public static final int REFRESH_TYPE_HEADER = 0;
+
         public static final int REFRESH_TYPE_FOOTER = 1;
+
         public static final int REFRESH_TYPE_PROGRESS_VIEW = 2;
 
         public static final int GOTO_FIRST_PAGE = 0;
+
         public static final int GOTO_PREV_PAGE = 1;
+
         public static final int GOTO_NEXT_PAGE = 2;
+
         public static final int GOTO_LAST_PAGE = 3;
 
         private ProgressView mProgressView;
+
         private TextView mTipView;
+
         private ViewGroup mContentView;
 
         private RefreshLayout mRefreshLayout;
+
         private EasyRecyclerView mRecyclerView;
 
         private ViewTransition mViewTransition;
@@ -254,13 +266,19 @@ public class ContentLayout extends FrameLayout {
         private int mNextPage;
 
         public String resultCount;
+
         public String firstHref;
+
         public String prevHref;
+
         public String nextHref;
+
         public String lastHref;
 
         private int mCurrentTaskId;
+
         private int mCurrentTaskType;
+
         private int mCurrentTaskPage;
 
         private int mNextPageScrollSize;
@@ -268,6 +286,7 @@ public class ContentLayout extends FrameLayout {
         private String mEmptyString = "No hint";
 
         private final RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
+
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if (!mRefreshLayout.isRefreshing() && mRefreshLayout.isAlmostBottom() && (mEndPage < mPages || mNextPage == -1 || mPages == -1)) {
@@ -279,6 +298,7 @@ public class ContentLayout extends FrameLayout {
         };
 
         private final RefreshLayout.OnRefreshListener mOnRefreshListener = new RefreshLayout.OnRefreshListener() {
+
             @Override
             public void onHeaderRefresh() {
                 if (mStartPage > 0) {
@@ -289,7 +309,7 @@ public class ContentLayout extends FrameLayout {
                 } else if (prevHref != null && !prevHref.isEmpty()) {
                     mCurrentTaskId = mIdGenerator.nextId();
                     mCurrentTaskType = TYPE_PRE_PAGE_KEEP_POS;
-//                    mCurrentTaskPage = mStartPage - 1;
+                    //                    mCurrentTaskPage = mStartPage - 1;
                     getExPageData(GOTO_PREV_PAGE, mCurrentTaskId, mCurrentTaskPage);
                 } else {
                     doRefresh();
@@ -301,7 +321,7 @@ public class ContentLayout extends FrameLayout {
                 if (mEndPage == -1 || mPages == -1) {
                     mCurrentTaskId = mIdGenerator.nextId();
                     mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-//                    mCurrentTaskPage = mPages+1;
+                    //                    mCurrentTaskPage = mPages+1;
                     getExPageData(GOTO_NEXT_PAGE, mCurrentTaskId, mPages);
                 } else if (mEndPage < mPages) {
                     // Get next page
@@ -329,46 +349,37 @@ public class ContentLayout extends FrameLayout {
             }
         };
 
-        private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
-                ContentHelper.this::onScrollToPosition;
+        private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener = ContentHelper.this::onScrollToPosition;
 
-//        private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
-//                new LayoutManagerUtils.OnScrollToPositionListener() {
-//                    @Override
-//                    public void onScrollToPosition(int position) {
-//                        ContentHelper.this.onScrollToPosition(position);
-//                    }
-//                };
-
+        //        private final LayoutManagerUtils.OnScrollToPositionListener mOnScrollToPositionListener =
+        //                new LayoutManagerUtils.OnScrollToPositionListener() {
+        //                    @Override
+        //                    public void onScrollToPosition(int position) {
+        //                        ContentHelper.this.onScrollToPosition(position);
+        //                    }
+        //                };
         private void init(ContentLayout contentLayout) {
             mNextPageScrollSize = LayoutUtils.dp2pix(contentLayout.getContext(), 48);
-
             mProgressView = contentLayout.mProgressView;
             mTipView = contentLayout.mTipView;
             mContentView = contentLayout.mContentView;
-
             mRefreshLayout = contentLayout.mRefreshLayout;
             mRecyclerView = contentLayout.mRecyclerView;
-
             Drawable drawable = DrawableManager.getVectorDrawable(getContext(), R.drawable.big_sad_pandroid);
             drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
             mTipView.setCompoundDrawables(null, drawable, null, null);
-
             mViewTransition = new ViewTransition(mContentView, mProgressView, mTipView);
             mViewTransition.setOnShowViewListener(this);
-
             mRecyclerView.addOnScrollListener(mOnScrollListener);
             mRefreshLayout.setOnRefreshListener(mOnRefreshListener);
-
             //点击刷新页面
             mTipView.setOnClickListener(v -> refresh());
-
-//            mTipView.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    refresh();
-//                }
-//            });
+            //            mTipView.setOnClickListener(new OnClickListener() {
+            //                @Override
+            //                public void onClick(View v) {
+            //                    refresh();
+            //                }
+            //            });
         }
 
         /**
@@ -401,11 +412,11 @@ public class ContentLayout extends FrameLayout {
         }
 
         public void setRefreshLayoutEnable(boolean enable) {
-            mRefreshLayout.setEnabled(enable);
+            set(enable);
         }
 
         public void setEnable(boolean enable) {
-            mRefreshLayout.setEnabled(enable);
+            set(enable);
         }
 
         public void setEmptyString(String str) {
@@ -447,28 +458,24 @@ public class ContentLayout extends FrameLayout {
         public void addAt(int index, E data) {
             mData.add(index, data);
             onAddData(data);
-
             for (int i = 0, n = mPageDivider.size(); i < n; i++) {
                 int divider = mPageDivider.get(i);
                 if (index < divider) {
                     mPageDivider.set(i, divider + 1);
                 }
             }
-
             notifyItemRangeInserted(index, 1);
         }
 
         public void removeAt(int index) {
             E data = mData.remove(index);
             onRemoveData(data);
-
             for (int i = 0, n = mPageDivider.size(); i < n; i++) {
                 int divider = mPageDivider.get(i);
                 if (index < divider) {
                     mPageDivider.set(i, divider - 1);
                 }
             }
-
             notifyItemRangeRemoved(index, 1);
         }
 
@@ -531,8 +538,7 @@ public class ContentLayout extends FrameLayout {
 
         public void onGetPageData(int taskId, int pages, int nextPage, List<E> data) {
             if (mCurrentTaskId == taskId) {
-
-                switch (mCurrentTaskType) {
+                switch(mCurrentTaskType) {
                     case TYPE_REFRESH:
                         onTypeRefresh(pages, nextPage, data);
                         break;
@@ -556,17 +562,13 @@ public class ContentLayout extends FrameLayout {
 
         private void onTypeRefreshPage(int pages, int nextPage, List<E> data) {
             if (mCurrentTaskPage < mStartPage || mCurrentTaskPage >= mEndPage) {
-                Log.e(TAG, "TYPE_REFRESH_PAGE, but mCurrentTaskPage = " + mCurrentTaskPage +
-                        ", mStartPage = " + mStartPage + ", mEndPage = " + mEndPage);
+                Log.e(TAG, "TYPE_REFRESH_PAGE, but mCurrentTaskPage = " + mCurrentTaskPage + ", mStartPage = " + mStartPage + ", mEndPage = " + mEndPage);
                 return;
             }
-
             if (mCurrentTaskPage == mEndPage - 1) {
                 mNextPage = nextPage;
             }
-
             mPages = Math.max(mEndPage, pages);
-
             int oldIndexStart = mCurrentTaskPage == mStartPage ? 0 : mPageDivider.get(mCurrentTaskPage - mStartPage - 1);
             int oldIndexEnd = mPageDivider.get(mCurrentTaskPage - mStartPage);
             List<E> toRemove = mData.subList(oldIndexStart, oldIndexEnd);
@@ -577,11 +579,9 @@ public class ContentLayout extends FrameLayout {
             mData.addAll(oldIndexStart, data);
             onAddData(data);
             notifyDataSetChanged();
-
             for (int i = mCurrentTaskPage - mStartPage, n = mPageDivider.size(); i < n; i++) {
                 mPageDivider.set(i, mPageDivider.get(i) - oldIndexEnd + newIndexEnd);
             }
-
             if (mData.isEmpty()) {
                 // Ui change, show empty string
                 mRefreshLayout.setHeaderRefreshing(false);
@@ -592,7 +592,6 @@ public class ContentLayout extends FrameLayout {
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showContent();
-
                 // RecyclerView scroll
                 if (newIndexEnd > oldIndexEnd && newIndexEnd > 0 && mRecyclerView.isAttachedToWindow()) {
                     mRecyclerView.stopScroll();
@@ -613,45 +612,40 @@ public class ContentLayout extends FrameLayout {
             mPages = pages;
             mPageDivider.clear();
             mPageDivider.add(data.size());
-
             if (data.isEmpty()) {
                 mData.clear();
                 onClearData();
                 notifyDataSetChanged();
-
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showEmptyString();
-
-//                if (true || mEndPage >= mPages) { // Not found
-//                    // Ui change, show empty string
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showEmptyString();
-//                } else {
-//                    // Ui change, show progress bar
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showProgressBar();
-//
-//                    // Get next page
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-//                    mCurrentTaskPage = mEndPage;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
+                //                if (true || mEndPage >= mPages) { // Not found
+                //                    // Ui change, show empty string
+                //                    mRefreshLayout.setHeaderRefreshing(false);
+                //                    mRefreshLayout.setFooterRefreshing(false);
+                //                    showEmptyString();
+                //                } else {
+                //                    // Ui change, show progress bar
+                //                    mRefreshLayout.setHeaderRefreshing(false);
+                //                    mRefreshLayout.setFooterRefreshing(false);
+                //                    showProgressBar();
+                //
+                //                    // Get next page
+                //                    mCurrentTaskId = mIdGenerator.nextId();
+                //                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
+                //                    mCurrentTaskPage = mEndPage;
+                //                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+                //                }
             } else {
                 mData.clear();
                 onClearData();
                 mData.addAll(data);
                 onAddData(data);
                 notifyDataSetChanged();
-
                 // Ui change, show content
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showContent();
-
                 if (mRecyclerView.isAttachedToWindow()) {
                     // RecyclerView scroll
                     mRecyclerView.stopScroll();
@@ -675,7 +669,6 @@ public class ContentLayout extends FrameLayout {
                 mNextPage = nextPage;
                 mPages = Math.max(mEndPage, pages);
             }
-
             if (data.isEmpty()) {
                 if (mData.isEmpty()) {
                     // Ui change, show empty string
@@ -687,7 +680,6 @@ public class ContentLayout extends FrameLayout {
                     mRefreshLayout.setHeaderRefreshing(false);
                     mRefreshLayout.setFooterRefreshing(false);
                     showContent();
-
                     if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
                         // RecyclerView scroll
                         mRecyclerView.stopScroll();
@@ -699,44 +691,42 @@ public class ContentLayout extends FrameLayout {
                         onScrollToPosition(oldDataSize);
                     }
                 }
-//                if (true || mEndPage >= mPages) { // OK, that's all
-//                    if (mData.isEmpty()) {
-//                        // Ui change, show empty string
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showEmptyString();
-//                    } else {
-//                        // Ui change, show content
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showContent();
-//
-//                        if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
-//                            // RecyclerView scroll
-//                            mRecyclerView.stopScroll();
-//                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), oldDataSize, 0);
-//                            onScrollToPosition(oldDataSize);
-//                        }
-//                    }
-//                } else {
-//                    // Keep UI
-//
-//                    // Get next page
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    // Keep mCurrentTaskType
-//                    mCurrentTaskPage = mEndPage;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
+                //                if (true || mEndPage >= mPages) { // OK, that's all
+                //                    if (mData.isEmpty()) {
+                //                        // Ui change, show empty string
+                //                        mRefreshLayout.setHeaderRefreshing(false);
+                //                        mRefreshLayout.setFooterRefreshing(false);
+                //                        showEmptyString();
+                //                    } else {
+                //                        // Ui change, show content
+                //                        mRefreshLayout.setHeaderRefreshing(false);
+                //                        mRefreshLayout.setFooterRefreshing(false);
+                //                        showContent();
+                //
+                //                        if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
+                //                            // RecyclerView scroll
+                //                            mRecyclerView.stopScroll();
+                //                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), oldDataSize, 0);
+                //                            onScrollToPosition(oldDataSize);
+                //                        }
+                //                    }
+                //                } else {
+                //                    // Keep UI
+                //
+                //                    // Get next page
+                //                    mCurrentTaskId = mIdGenerator.nextId();
+                //                    // Keep mCurrentTaskType
+                //                    mCurrentTaskPage = mEndPage;
+                //                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+                //                }
             } else {
                 mData.addAll(data);
                 onAddData(data);
                 notifyItemRangeInserted(oldDataSize, dataSize);
-
                 // Ui change, show content
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showContent();
-
                 if (mRecyclerView.isAttachedToWindow()) {
                     if (mCurrentTaskType == TYPE_NEXT_PAGE_KEEP_POS) {
                         mRecyclerView.stopScroll();
@@ -764,7 +754,6 @@ public class ContentLayout extends FrameLayout {
             mStartPage--;
             mPages = Math.max(mEndPage, pages);
             // assert mStartPage >= 0
-
             if (data.isEmpty()) {
                 if (mData.isEmpty()) {
                     // Ui change, show empty string
@@ -776,7 +765,6 @@ public class ContentLayout extends FrameLayout {
                     mRefreshLayout.setHeaderRefreshing(false);
                     mRefreshLayout.setFooterRefreshing(false);
                     showContent();
-
                     if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
                         // RecyclerView scroll, to top
                         mRecyclerView.stopScroll();
@@ -788,50 +776,47 @@ public class ContentLayout extends FrameLayout {
                         onScrollToPosition(0);
                     }
                 }
-//                if (true || mStartPage <= 0) { // OK, that's all
-//                    if (mData.isEmpty()) {
-//                        // Ui change, show empty string
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showEmptyString();
-//                    } else {
-//                        // Ui change, show content
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showContent();
-//
-//                        if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
-//                            // RecyclerView scroll, to top
-//                            mRecyclerView.stopScroll();
-//                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
-//                            onScrollToPosition(0);
-//                        }
-//                    }
-//                } else {
-//                    // Keep UI
-//
-//                    // Get previous
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    // Keep mCurrentTaskType
-//                    mCurrentTaskPage = mStartPage - 1;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
+                //                if (true || mStartPage <= 0) { // OK, that's all
+                //                    if (mData.isEmpty()) {
+                //                        // Ui change, show empty string
+                //                        mRefreshLayout.setHeaderRefreshing(false);
+                //                        mRefreshLayout.setFooterRefreshing(false);
+                //                        showEmptyString();
+                //                    } else {
+                //                        // Ui change, show content
+                //                        mRefreshLayout.setHeaderRefreshing(false);
+                //                        mRefreshLayout.setFooterRefreshing(false);
+                //                        showContent();
+                //
+                //                        if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
+                //                            // RecyclerView scroll, to top
+                //                            mRecyclerView.stopScroll();
+                //                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
+                //                            onScrollToPosition(0);
+                //                        }
+                //                    }
+                //                } else {
+                //                    // Keep UI
+                //
+                //                    // Get previous
+                //                    mCurrentTaskId = mIdGenerator.nextId();
+                //                    // Keep mCurrentTaskType
+                //                    mCurrentTaskPage = mStartPage - 1;
+                //                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+                //                }
             } else {
                 mData.addAll(0, data);
                 onAddData(data);
                 notifyItemRangeInserted(0, data.size());
-
                 // Ui change, show content
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showContent();
-
                 if (mRecyclerView.isAttachedToWindow()) {
                     // RecyclerView scroll
                     if (mCurrentTaskType == TYPE_PRE_PAGE_KEEP_POS) {
                         mRecyclerView.stopScroll();
-                        LayoutManagerUtils.scrollToPositionProperly(mRecyclerView.getLayoutManager(), getContext(),
-                                dataSize - 1, mOnScrollToPositionListener);
+                        LayoutManagerUtils.scrollToPositionProperly(mRecyclerView.getLayoutManager(), getContext(), dataSize - 1, mOnScrollToPositionListener);
                     } else {
                         mRecyclerView.stopScroll();
                         RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
@@ -852,7 +837,6 @@ public class ContentLayout extends FrameLayout {
             mNextPage = nextPage;
             mPageDivider.clear();
             mPageDivider.add(data.size());
-
             if (data.isEmpty()) {
                 mData.clear();
                 onClearData();
@@ -860,35 +844,33 @@ public class ContentLayout extends FrameLayout {
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showEmptyString();
-//                if (true || mEndPage >= mPages) { // Not found
-//                    // Ui change, show empty string
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showEmptyString();
-//                } else {
-//                    // Ui change, show progress bar
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showProgressBar();
-//
-//                    // Get next page
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-//                    mCurrentTaskPage = mEndPage;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
+                //                if (true || mEndPage >= mPages) { // Not found
+                //                    // Ui change, show empty string
+                //                    mRefreshLayout.setHeaderRefreshing(false);
+                //                    mRefreshLayout.setFooterRefreshing(false);
+                //                    showEmptyString();
+                //                } else {
+                //                    // Ui change, show progress bar
+                //                    mRefreshLayout.setHeaderRefreshing(false);
+                //                    mRefreshLayout.setFooterRefreshing(false);
+                //                    showProgressBar();
+                //
+                //                    // Get next page
+                //                    mCurrentTaskId = mIdGenerator.nextId();
+                //                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
+                //                    mCurrentTaskPage = mEndPage;
+                //                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+                //                }
             } else {
                 mData.clear();
                 onClearData();
                 mData.addAll(data);
                 onAddData(data);
                 notifyDataSetChanged();
-
                 // Ui change, show content
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showContent();
-
                 // RecyclerView scroll
                 if (mRecyclerView.isAttachedToWindow()) {
                     mRecyclerView.stopScroll();
@@ -906,7 +888,6 @@ public class ContentLayout extends FrameLayout {
             if (mCurrentTaskId == taskId) {
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
-
                 String readableError;
                 if (e != null) {
                     e.printStackTrace();
@@ -914,7 +895,6 @@ public class ContentLayout extends FrameLayout {
                 } else {
                     readableError = getContext().getString(R.string.error_unknown);
                 }
-
                 if (mViewTransition.getShownViewIndex() == 0) {
                     Toast.makeText(getContext(), readableError, Toast.LENGTH_SHORT).show();
                 } else {
@@ -952,7 +932,7 @@ public class ContentLayout extends FrameLayout {
          * Be carefull
          */
         public void doGetData(int type, int page, int refreshType) {
-            switch (refreshType) {
+            switch(refreshType) {
                 default:
                 case REFRESH_TYPE_HEADER:
                     showContent();
@@ -970,7 +950,6 @@ public class ContentLayout extends FrameLayout {
                     mRefreshLayout.setFooterRefreshing(false);
                     break;
             }
-
             mCurrentTaskId = mIdGenerator.nextId();
             mCurrentTaskType = type;
             mCurrentTaskPage = page;
@@ -1022,14 +1001,12 @@ public class ContentLayout extends FrameLayout {
             if (position < 0) {
                 return -1;
             }
-
             IntList pageDivider = mPageDivider;
             for (int i = 0, n = pageDivider.size(); i < n; i++) {
                 if (position < pageDivider.get(i)) {
                     return i + mStartPage;
                 }
             }
-
             return -1;
         }
 
@@ -1055,17 +1032,15 @@ public class ContentLayout extends FrameLayout {
             if (page == -996) {
                 mRefreshLayout.setFooterRefreshing(false);
                 mRefreshLayout.setHeaderRefreshing(true);
-
                 mCurrentTaskId = mIdGenerator.nextId();
                 mCurrentTaskType = TYPE_SOMEWHERE;
                 mCurrentTaskPage = page;
                 getExPageData(mCurrentTaskType, mCurrentTaskId, mPages);
-//                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
+                //                getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
             } else if (page < 0 || page >= mPages) {
                 throw new IndexOutOfBoundsException("Page count is " + mPages + ", page is " + page);
             } else if (page >= mStartPage && page < mEndPage) {
                 cancelCurrentTask();
-
                 int position = getPageStart(page);
                 mRecyclerView.stopScroll();
                 LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), position, 0);
@@ -1073,7 +1048,6 @@ public class ContentLayout extends FrameLayout {
             } else if (page == mStartPage - 1) {
                 mRefreshLayout.setFooterRefreshing(false);
                 mRefreshLayout.setHeaderRefreshing(true);
-
                 mCurrentTaskId = mIdGenerator.nextId();
                 mCurrentTaskType = TYPE_PRE_PAGE;
                 mCurrentTaskPage = page;
@@ -1081,7 +1055,6 @@ public class ContentLayout extends FrameLayout {
             } else if (page == mEndPage) {
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(true);
-
                 mCurrentTaskId = mIdGenerator.nextId();
                 mCurrentTaskType = TYPE_NEXT_PAGE;
                 mCurrentTaskPage = page;
@@ -1089,7 +1062,6 @@ public class ContentLayout extends FrameLayout {
             } else {
                 mRefreshLayout.setFooterRefreshing(false);
                 mRefreshLayout.setHeaderRefreshing(true);
-
                 mCurrentTaskId = mIdGenerator.nextId();
                 mCurrentTaskType = TYPE_SOMEWHERE;
                 mCurrentTaskPage = page;
@@ -1105,7 +1077,6 @@ public class ContentLayout extends FrameLayout {
             int shownView = mViewTransition.getShownViewIndex();
             bundle.putInt(KEY_SHOWN_VIEW, shownView);
             bundle.putString(KEY_TIP, mTipView.getText().toString());
-
             // TODO It's a bad design
             EhApplication app = (EhApplication) getContext().getApplicationContext();
             if (mSavedDataId != IntIdGenerator.INVALID_ID) {
@@ -1114,7 +1085,6 @@ public class ContentLayout extends FrameLayout {
             }
             mSavedDataId = app.putGlobalStuff(mData);
             bundle.putInt(KEY_DATA, mSavedDataId);
-
             bundle.putInt(KEY_NEXT_ID, mIdGenerator.nextId());
             bundle.putParcelable(KEY_PAGE_DIVIDER, mPageDivider);
             bundle.putInt(KEY_START_PAGE, mStartPage);
@@ -1133,7 +1103,6 @@ public class ContentLayout extends FrameLayout {
                 Bundle bundle = (Bundle) state;
                 mViewTransition.showView(bundle.getInt(KEY_SHOWN_VIEW), false);
                 mTipView.setText(bundle.getString(KEY_TIP));
-
                 mSavedDataId = bundle.getInt(KEY_DATA);
                 ArrayList<E> newData = null;
                 EhApplication app = (EhApplication) getContext().getApplicationContext();
@@ -1144,7 +1113,6 @@ public class ContentLayout extends FrameLayout {
                         mData = newData;
                     }
                 }
-
                 mIdGenerator.setNextId(bundle.getInt(KEY_NEXT_ID));
                 mPageDivider = bundle.getParcelable(KEY_PAGE_DIVIDER);
                 mStartPage = bundle.getInt(KEY_START_PAGE);
@@ -1155,9 +1123,7 @@ public class ContentLayout extends FrameLayout {
                 prevHref = bundle.getString(KEY_PREV_HREF);
                 nextHref = bundle.getString(KEY_NEXT_HREF);
                 lastHref = bundle.getString(KEY_LAST_HREF);
-
                 notifyDataSetChanged();
-
                 if (newData == null) {
                     mPageDivider.clear();
                     mStartPage = 0;
@@ -1165,11 +1131,14 @@ public class ContentLayout extends FrameLayout {
                     mPages = 0;
                     firstRefresh();
                 }
-
                 return bundle.getParcelable(KEY_SUPER);
             } else {
                 return state;
             }
+        }
+
+        public void set(boolean enable) {
+            mRefreshLayout.setEnabled(enable);
         }
     }
 }

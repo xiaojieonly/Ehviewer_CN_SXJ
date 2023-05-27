@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.BroadcastReceiver;
@@ -37,6 +36,7 @@ import java.util.TimeZone;
 public class TextClock extends AppCompatTextView {
 
     public static final CharSequence DEFAULT_FORMAT_12_HOUR = "hh:mm a";
+
     public static final CharSequence DEFAULT_FORMAT_24_HOUR;
 
     static {
@@ -47,19 +47,23 @@ public class TextClock extends AppCompatTextView {
     }
 
     private CharSequence mFormat12;
+
     private CharSequence mFormat24;
 
     @ExportedProperty
     private CharSequence mFormat;
+
     @ExportedProperty
     private boolean mHasSeconds;
 
     private boolean mAttached;
 
     private Calendar mTime;
+
     private String mTimeZone;
 
     private final ContentObserver mFormatChangeObserver = new ContentObserver(new Handler()) {
+
         @Override
         public void onChange(boolean selfChange) {
             chooseFormat();
@@ -74,6 +78,7 @@ public class TextClock extends AppCompatTextView {
     };
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+
         @Override
         public void onReceive(Context context, Intent intent) {
             if (mTimeZone == null && Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())) {
@@ -85,13 +90,12 @@ public class TextClock extends AppCompatTextView {
     };
 
     private final Runnable mTicker = new Runnable() {
+
         @Override
         public void run() {
             onTimeChanged();
-
             long now = SystemClock.uptimeMillis();
             long next = now + (1000 - now % 1000);
-
             getHandler().postAtTime(mTicker, next);
         }
     };
@@ -106,11 +110,9 @@ public class TextClock extends AppCompatTextView {
 
     public TextClock(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
         mFormat12 = DEFAULT_FORMAT_12_HOUR;
         mFormat24 = DEFAULT_FORMAT_24_HOUR;
         mTimeZone = TimeZone.getDefault().getID();
-
         init();
     }
 
@@ -134,7 +136,6 @@ public class TextClock extends AppCompatTextView {
 
     public void setFormat12Hour(CharSequence format) {
         mFormat12 = format;
-
         chooseFormat();
         onTimeChanged();
     }
@@ -145,7 +146,6 @@ public class TextClock extends AppCompatTextView {
 
     public void setFormat24Hour(CharSequence format) {
         mFormat24 = format;
-
         chooseFormat();
         onTimeChanged();
     }
@@ -160,7 +160,6 @@ public class TextClock extends AppCompatTextView {
 
     public void setTimeZone(String timeZone) {
         mTimeZone = timeZone;
-
         createTime(timeZone);
         onTimeChanged();
     }
@@ -188,34 +187,29 @@ public class TextClock extends AppCompatTextView {
      */
     private void chooseFormat(boolean handleTicker) {
         final boolean format24Requested = is24HourModeEnabled();
-
         if (format24Requested) {
             mFormat = mFormat24;
         } else {
             mFormat = mFormat12;
         }
-
         boolean hadSeconds = mHasSeconds;
         mHasSeconds = DateUtils.hasSeconds(mFormat);
-
         if (handleTicker && mAttached && hadSeconds != mHasSeconds) {
-            if (hadSeconds) getHandler().removeCallbacks(mTicker);
-            else mTicker.run();
+            if (hadSeconds)
+                getHandler().removeCallbacks(mTicker);
+            else
+                mTicker.run();
         }
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
         if (!mAttached) {
             mAttached = true;
-
             registerReceiver();
             registerObserver();
-
             createTime(mTimeZone);
-
             if (mHasSeconds) {
                 mTicker.run();
             } else {
@@ -227,24 +221,19 @@ public class TextClock extends AppCompatTextView {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
         if (mAttached) {
             unregisterReceiver();
             unregisterObserver();
-
             getHandler().removeCallbacks(mTicker);
-
             mAttached = false;
         }
     }
 
     private void registerReceiver() {
         final IntentFilter filter = new IntentFilter();
-
         filter.addAction(Intent.ACTION_TIME_TICK);
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
-
         getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
     }
 

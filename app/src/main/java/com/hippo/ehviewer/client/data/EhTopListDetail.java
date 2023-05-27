@@ -2,24 +2,29 @@ package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import com.hippo.ehviewer.client.data.topList.TopListInfo;
 
 public class EhTopListDetail implements Parcelable {
 
     public String title;
+
     public TopListInfo galleryTopListInfo;
+
     public TopListInfo uploaderTopListInfo;
+
     public TopListInfo taggingTopListInfo;
+
     public TopListInfo hentaiHomeTopListInfo;
+
     public TopListInfo ehTrackerTopListInfo;
+
     public TopListInfo cleanUpTopListInfo;
+
     public TopListInfo ratingAndReviewingTopListInfo;
 
     private ClassLoader classLoader;
 
-
-    public EhTopListDetail(){
+    public EhTopListDetail() {
         classLoader = TopListInfo.class.getClassLoader();
     }
 
@@ -34,6 +39,7 @@ public class EhTopListDetail implements Parcelable {
     }
 
     public static final Creator<EhTopListDetail> CREATOR = new Creator<EhTopListDetail>() {
+
         @Override
         public EhTopListDetail createFromParcel(Parcel in) {
             return new EhTopListDetail(in);
@@ -52,16 +58,17 @@ public class EhTopListDetail implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(this.galleryTopListInfo,flags);
-        dest.writeParcelable(this.uploaderTopListInfo,flags);
-        dest.writeParcelable(this.taggingTopListInfo,flags);
-        dest.writeParcelable(this.hentaiHomeTopListInfo,flags);
-        dest.writeParcelable(this.ehTrackerTopListInfo,flags);
-        dest.writeParcelable(this.cleanUpTopListInfo,flags);
-        dest.writeParcelable(this.ratingAndReviewingTopListInfo,flags);
+        dest.writeParcelable(this.galleryTopListInfo, flags);
+        dest.writeParcelable(this.uploaderTopListInfo, flags);
+        dest.writeParcelable(this.taggingTopListInfo, flags);
+        dest.writeParcelable(this.hentaiHomeTopListInfo, flags);
+        dest.writeParcelable(this.ehTrackerTopListInfo, flags);
+        dest.writeParcelable(this.cleanUpTopListInfo, flags);
+        dest.writeParcelable(this.ratingAndReviewingTopListInfo, flags);
     }
-    public TopListInfo get(int index){
-        switch (index){
+
+    public TopListInfo get(int index) {
+        switch(index) {
             case 0:
                 return galleryTopListInfo;
             case 1:

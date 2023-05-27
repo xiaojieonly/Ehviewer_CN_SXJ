@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
-
 import java.util.Arrays;
 
 /**
@@ -28,21 +25,37 @@ import java.util.Arrays;
 public class GalleryDetail extends GalleryInfo {
 
     public long apiUid = -1L;
+
     public String apiKey;
+
     public int torrentCount;
+
     public String torrentUrl;
+
     public String archiveUrl;
+
     public String parent;
+
     public String visible;
+
     public String language;
+
     public String size;
+
     public int pages;
+
     public int favoriteCount;
+
     public boolean isFavorited;
+
     public int ratingCount;
+
     public GalleryTagGroup[] tags;
+
     public GalleryCommentList comments;
+
     public int previewPages;
+
     public PreviewSet previewSet;
 
     @Override
@@ -98,6 +111,7 @@ public class GalleryDetail extends GalleryInfo {
     }
 
     public static final Creator<GalleryDetail> CREATOR = new Creator<GalleryDetail>() {
+
         @Override
         public GalleryDetail createFromParcel(Parcel source) {
             return new GalleryDetail(source);

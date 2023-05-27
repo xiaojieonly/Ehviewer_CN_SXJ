@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget.recyclerview;
 
 import android.content.Context;
@@ -25,10 +24,13 @@ import java.util.List;
 public class AutoGridLayoutManager extends GridLayoutManager {
 
     public static final int STRATEGY_MIN_SIZE = 0;
+
     public static final int STRATEGY_SUITABLE_SIZE = 1;
 
     private int mColumnSize = -1;
+
     private boolean mColumnSizeChanged = true;
+
     private int mStrategy;
 
     private List<OnUpdateSpanCountListener> mListeners;
@@ -83,9 +85,8 @@ public class AutoGridLayoutManager extends GridLayoutManager {
             } else {
                 totalSpace = getHeight() - getPaddingTop() - getPaddingBottom();
             }
-
             int spanCount;
-            switch (mStrategy) {
+            switch(mStrategy) {
                 default:
                 case STRATEGY_MIN_SIZE:
                     spanCount = getSpanCountForMinSize(totalSpace, mColumnSize);
@@ -96,7 +97,6 @@ public class AutoGridLayoutManager extends GridLayoutManager {
             }
             setSpanCount(spanCount);
             mColumnSizeChanged = false;
-
             if (null != mListeners) {
                 for (int i = 0, n = mListeners.size(); i < n; i++) {
                     mListeners.get(i).onUpdateSpanCount(spanCount);
@@ -120,6 +120,7 @@ public class AutoGridLayoutManager extends GridLayoutManager {
     }
 
     public interface OnUpdateSpanCountListener {
+
         void onUpdateSpanCount(int spanCount);
     }
 }

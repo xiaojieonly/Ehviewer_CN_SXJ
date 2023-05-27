@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.spider;
 
 import android.content.Context;
@@ -46,15 +45,16 @@ public final class SpiderDen {
 
     @Nullable
     private final UniFile mDownloadDir;
+
     private volatile int mMode = SpiderQueen.MODE_READ;
+
     private final long mGid;
 
     @Nullable
     private static SimpleDiskCache sCache;
 
     public static void initialize(Context context) {
-        sCache = new SimpleDiskCache(new File(context.getCacheDir(), "image"),
-                MathUtils.clamp(Settings.getReadCacheSize(), 40, 640) * 1024 * 1024);
+        sCache = new SimpleDiskCache(new File(context.getCacheDir(), "image"), MathUtils.clamp(Settings.getReadCacheSize(), 40, 640) * 1024 * 1024);
     }
 
     private static class StartWithFilenameFilter implements FilenameFilter {
@@ -81,7 +81,6 @@ public final class SpiderDen {
                 dirname = FileUtils.sanitizeFilename(dirname);
                 EhDB.putDownloadDirname(galleryInfo.gid, dirname);
             }
-
             // Find it
             if (null == dirname) {
                 UniFile[] files = dir.listFiles(new StartWithFilenameFilter(galleryInfo.gid + "-"));
@@ -103,13 +102,11 @@ public final class SpiderDen {
                     }
                 }
             }
-
             // Create it
             if (null == dirname) {
                 dirname = FileUtils.sanitizeFilename(galleryInfo.gid + "-" + EhUtils.getSuitableTitle(galleryInfo));
                 EhDB.putDownloadDirname(galleryInfo.gid, dirname);
             }
-
             return dir.subFile(dirname);
         } else {
             return null;
@@ -123,7 +120,6 @@ public final class SpiderDen {
 
     public void setMode(@SpiderQueen.Mode int mode) {
         mMode = mode;
-
         if (mode == SpiderQueen.MODE_DOWNLOAD) {
             ensureDownloadDir();
         }
@@ -134,7 +130,7 @@ public final class SpiderDen {
     }
 
     public boolean isReady() {
-        switch (mMode) {
+        switch(mMode) {
             case SpiderQueen.MODE_READ:
                 return sCache != null;
             case SpiderQueen.MODE_DOWNLOAD:
@@ -153,7 +149,6 @@ public final class SpiderDen {
         if (sCache == null) {
             return false;
         }
-
         String key = EhCacheKeyFactory.getImageKey(mGid, index);
         return sCache.contain(key);
     }
@@ -182,7 +177,6 @@ public final class SpiderDen {
         if (dir == null) {
             return false;
         }
-
         // Find image file in download dir
         return findImageFile(dir, index) != null;
     }
@@ -212,7 +206,6 @@ public final class SpiderDen {
         if (pipe == null) {
             return false;
         }
-
         OutputStream os = null;
         try {
             // Get extension
@@ -261,7 +254,6 @@ public final class SpiderDen {
         if (sCache == null) {
             return false;
         }
-
         String key = EhCacheKeyFactory.getImageKey(mGid, index);
         return sCache.remove(key);
     }
@@ -271,7 +263,6 @@ public final class SpiderDen {
         if (dir == null) {
             return false;
         }
-
         boolean result = false;
         for (int i = 0, n = GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS.length; i < n; i++) {
             String filename = generateImageFilename(index, GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS[i]);
@@ -294,7 +285,6 @@ public final class SpiderDen {
         if (sCache == null) {
             return null;
         }
-
         String key = EhCacheKeyFactory.getImageKey(mGid, index);
         return sCache.getOutputStreamPipe(key);
     }
@@ -308,7 +298,6 @@ public final class SpiderDen {
         if (dir == null) {
             return null;
         }
-
         extension = fixExtension('.' + extension);
         UniFile file = dir.createFile(generateImageFilename(index, extension));
         if (file != null) {
@@ -334,13 +323,11 @@ public final class SpiderDen {
         }
     }
 
-
     @Nullable
     private InputStreamPipe openCacheInputStreamPipe(int index) {
         if (sCache == null) {
             return null;
         }
-
         String key = EhCacheKeyFactory.getImageKey(mGid, index);
         return sCache.getInputStreamPipe(key);
     }
@@ -351,7 +338,6 @@ public final class SpiderDen {
         if (dir == null) {
             return null;
         }
-
         for (int i = 0; i < 2; i++) {
             UniFile file = findImageFile(dir, index);
             if (file != null) {
@@ -360,7 +346,6 @@ public final class SpiderDen {
                 return null;
             }
         }
-
         return null;
     }
 

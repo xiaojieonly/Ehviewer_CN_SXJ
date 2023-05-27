@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -22,10 +21,13 @@ import android.util.AttributeSet;
 public class SimpleGridAutoSpanLayout extends SimpleGridLayout {
 
     public static final int STRATEGY_MIN_SIZE = 0;
+
     public static final int STRATEGY_SUITABLE_SIZE = 1;
 
     private int mColumnSize = -1;
+
     private boolean mColumnSizeChanged = true;
+
     private int mStrategy;
 
     public SimpleGridAutoSpanLayout(Context context) {
@@ -75,11 +77,10 @@ public class SimpleGridAutoSpanLayout extends SimpleGridLayout {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-
         if (mColumnSizeChanged && mColumnSize > 0 && widthMode == MeasureSpec.EXACTLY) {
             int totalSpace = widthSize - getPaddingRight() - getPaddingLeft();
             int spanCount;
-            switch (mStrategy) {
+            switch(mStrategy) {
                 default:
                 case STRATEGY_MIN_SIZE:
                     spanCount = getSpanCountForMinSize(totalSpace, mColumnSize);

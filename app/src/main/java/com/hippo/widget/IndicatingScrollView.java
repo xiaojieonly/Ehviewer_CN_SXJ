@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -32,6 +31,7 @@ public class IndicatingScrollView extends ScrollView {
     private int mIndicatorHeight;
 
     private final Paint mPaint = new Paint();
+
     private final Rect mTemp = new Rect();
 
     public IndicatingScrollView(Context context) {
@@ -76,10 +76,8 @@ public class IndicatingScrollView extends ScrollView {
     @Override
     public void draw(@NonNull Canvas canvas) {
         super.draw(canvas);
-
         final int restoreCount = canvas.save();
         canvas.translate(getScrollX(), getScrollY());
-
         // Draw top indicator
         if (needShowTopIndicator()) {
             fillTopIndicatorDrawRect();
@@ -90,7 +88,6 @@ public class IndicatingScrollView extends ScrollView {
             fillBottomIndicatorDrawRect();
             canvas.drawRect(mTemp, mPaint);
         }
-
         canvas.restoreToCount(restoreCount);
     }
 }

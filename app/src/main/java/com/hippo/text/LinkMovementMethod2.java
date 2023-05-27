@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.text;
 
 import android.text.Layout;
@@ -28,7 +27,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
-
 import com.hippo.ehviewer.UrlOpener;
 
 /**
@@ -36,11 +34,15 @@ import com.hippo.ehviewer.UrlOpener;
  * Supports clicking on links with DPad Center or Enter.
  */
 public class LinkMovementMethod2 extends ScrollingMovementMethod {
+
     private static final int CLICK = 1;
+
     private static final int UP = 2;
+
     private static final int DOWN = 3;
 
-    private LinkMovementMethod2() {}
+    private LinkMovementMethod2() {
+    }
 
     @Override
     public boolean canSelectArbitrarily() {
@@ -48,16 +50,12 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
     }
 
     @Override
-    protected boolean handleMovementKey(TextView widget, Spannable buffer, int keyCode,
-            int movementMetaState, KeyEvent event) {
-        switch (keyCode) {
+    protected boolean handleMovementKey(TextView widget, Spannable buffer, int keyCode, int movementMetaState, KeyEvent event) {
+        switch(keyCode) {
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
-                if (KeyEvent.metaStateHasNoModifiers(movementMetaState)) {
-                    if (event.getAction() == KeyEvent.ACTION_DOWN &&
-                            event.getRepeatCount() == 0 && action(CLICK, widget, buffer)) {
-                        return true;
-                    }
+                if (KeyEvent.metaStateHasNoModifiers(movementMetaState) && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 && action(CLICK, widget, buffer)) {
+                    return true;
                 }
                 break;
         }
@@ -69,7 +67,6 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
         if (action(UP, widget, buffer)) {
             return true;
         }
-
         return super.up(widget, buffer);
     }
 
@@ -78,7 +75,6 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
         if (action(DOWN, widget, buffer)) {
             return true;
         }
-
         return super.down(widget, buffer);
     }
 
@@ -87,7 +83,6 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
         if (action(UP, widget, buffer)) {
             return true;
         }
-
         return super.left(widget, buffer);
     }
 
@@ -96,129 +91,89 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
         if (action(DOWN, widget, buffer)) {
             return true;
         }
-
         return super.right(widget, buffer);
     }
 
     private boolean action(int what, TextView widget, Spannable buffer) {
         Layout layout = widget.getLayout();
-
-        int padding = widget.getTotalPaddingTop() +
-                widget.getTotalPaddingBottom();
+        int padding = widget.getTotalPaddingTop() + widget.getTotalPaddingBottom();
         int areatop = widget.getScrollY();
         int areabot = areatop + widget.getHeight() - padding;
-
         int linetop = layout.getLineForVertical(areatop);
         int linebot = layout.getLineForVertical(areabot);
-
         int first = layout.getLineStart(linetop);
         int last = layout.getLineEnd(linebot);
-
         ClickableSpan[] candidates = buffer.getSpans(first, last, ClickableSpan.class);
-
         int a = Selection.getSelectionStart(buffer);
         int b = Selection.getSelectionEnd(buffer);
-
         int selStart = Math.min(a, b);
         int selEnd = Math.max(a, b);
-
-        if (selStart < 0) {
-            if (buffer.getSpanStart(FROM_BELOW) >= 0) {
-                selStart = selEnd = buffer.length();
-            }
+        if (selStart < 0 && buffer.getSpanStart(FROM_BELOW) >= 0) {
+            selStart = selEnd = buffer.length();
         }
-
         if (selStart > last)
             selStart = selEnd = Integer.MAX_VALUE;
         if (selEnd < first)
             selStart = selEnd = -1;
-
-        switch (what) {
+        switch(what) {
             case CLICK:
                 if (selStart == selEnd) {
                     return false;
                 }
-
                 ClickableSpan[] link = buffer.getSpans(selStart, selEnd, ClickableSpan.class);
-
                 if (link.length != 1)
                     return false;
-
                 link[0].onClick(widget);
                 break;
-
             case UP:
                 int beststart, bestend;
-
                 beststart = -1;
                 bestend = -1;
-
                 for (int i = 0; i < candidates.length; i++) {
                     int end = buffer.getSpanEnd(candidates[i]);
-
-                    if (end < selEnd || selStart == selEnd) {
-                        if (end > bestend) {
-                            beststart = buffer.getSpanStart(candidates[i]);
-                            bestend = end;
-                        }
+                    if (end < selEnd || selStart == selEnd && end > bestend) {
+                        beststart = buffer.getSpanStart(candidates[i]);
+                        bestend = end;
                     }
                 }
-
                 if (beststart >= 0) {
                     Selection.setSelection(buffer, bestend, beststart);
                     return true;
                 }
-
                 break;
-
             case DOWN:
                 beststart = Integer.MAX_VALUE;
                 bestend = Integer.MAX_VALUE;
-
                 for (int i = 0; i < candidates.length; i++) {
                     int start = buffer.getSpanStart(candidates[i]);
-
-                    if (start > selStart || selStart == selEnd) {
-                        if (start < beststart) {
-                            beststart = start;
-                            bestend = buffer.getSpanEnd(candidates[i]);
-                        }
+                    if (start > selStart || selStart == selEnd && start < beststart) {
+                        beststart = start;
+                        bestend = buffer.getSpanEnd(candidates[i]);
                     }
                 }
-
                 if (bestend < Integer.MAX_VALUE) {
                     Selection.setSelection(buffer, beststart, bestend);
                     return true;
                 }
-
                 break;
         }
-
         return false;
     }
 
     @Override
-    public boolean onTouchEvent(TextView widget, Spannable buffer,
-            MotionEvent event) {
+    public boolean onTouchEvent(TextView widget, Spannable buffer, MotionEvent event) {
         int action = event.getAction();
-
-        if (action == MotionEvent.ACTION_UP ||
-                action == MotionEvent.ACTION_DOWN) {
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_DOWN) {
             int x = (int) event.getX();
             int y = (int) event.getY();
-
             x -= widget.getTotalPaddingLeft();
             y -= widget.getTotalPaddingTop();
-
             x += widget.getScrollX();
             y += widget.getScrollY();
-
             Layout layout = widget.getLayout();
             int line = layout.getLineForVertical(y);
             int off = layout.getOffsetForHorizontal(line, x);
-
             ClickableSpan[] link = buffer.getSpans(off, off, ClickableSpan.class);
-
             if (link.length != 0) {
                 if (action == MotionEvent.ACTION_UP) {
                     ClickableSpan span = link[0];
@@ -228,17 +183,13 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
                         span.onClick(widget);
                     }
                 } else if (action == MotionEvent.ACTION_DOWN) {
-                    Selection.setSelection(buffer,
-                            buffer.getSpanStart(link[0]),
-                            buffer.getSpanEnd(link[0]));
+                    Selection.setSelection(buffer, buffer.getSpanStart(link[0]), buffer.getSpanEnd(link[0]));
                 }
-
                 return true;
             } else {
                 Selection.removeSelection(buffer);
             }
         }
-
         return super.onTouchEvent(widget, buffer, event);
     }
 
@@ -251,7 +202,6 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
     @Override
     public void onTakeFocus(TextView view, Spannable text, int dir) {
         Selection.removeSelection(text);
-
         if ((dir & View.FOCUS_BACKWARD) != 0) {
             text.setSpan(FROM_BELOW, 0, 0, Spannable.SPAN_POINT_POINT);
         } else {
@@ -262,10 +212,10 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
     public static MovementMethod getInstance() {
         if (sInstance == null)
             sInstance = new LinkMovementMethod2();
-
         return sInstance;
     }
 
     private static LinkMovementMethod2 sInstance;
+
     private static final Object FROM_BELOW = new NoCopySpan.Concrete();
 }

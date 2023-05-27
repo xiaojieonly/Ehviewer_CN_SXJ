@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import com.hippo.ehviewer.GetText;
@@ -33,15 +32,27 @@ import org.jsoup.select.Elements;
 public class FavoritesParser {
 
     public static class Result {
-        public String[] catArray; // Size 10
-        public int[] countArray; // Size 10
+
+        // Size 10
+        public String[] catArray;
+
+        // Size 10
+        public int[] countArray;
+
         public int pages;
+
         public int nextPage;
+
         public String resultCount;
+
         public String firstHref;
+
         public String prevHref;
+
         public String nextHref;
+
         public String lastHref;
+
         public List<GalleryInfo> galleryInfoList;
     }
 
@@ -51,7 +62,6 @@ public class FavoritesParser {
         }
         String[] catArray = new String[10];
         int[] countArray = new int[10];
-
         try {
             Document d = Jsoup.parse(body);
             Element ido = JsoupUtils.getElementByClass(d, "ido");
@@ -59,7 +69,6 @@ public class FavoritesParser {
             Elements fps = ido.getElementsByClass("fp");
             // Last one is "fp fps"
             AssertUtils.assertEquals(11, fps.size());
-
             for (int i = 0; i < 10; i++) {
                 Element fp = fps.get(i);
                 countArray[i] = ParserUtils.parseInt(fp.child(0).text(), 0);
@@ -70,9 +79,7 @@ public class FavoritesParser {
             e.printStackTrace();
             throw new ParseException("Parse favorites error", body);
         }
-
         GalleryListParser.Result result = GalleryListParser.parse(body);
-
         Result re = new Result();
         re.catArray = catArray;
         re.countArray = countArray;
@@ -84,7 +91,6 @@ public class FavoritesParser {
         re.prevHref = result.prevHref;
         re.lastHref = result.lastHref;
         re.galleryInfoList = result.galleryInfoList;
-
         return re;
     }
 }

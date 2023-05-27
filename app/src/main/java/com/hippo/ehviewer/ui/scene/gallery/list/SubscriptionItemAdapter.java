@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
@@ -23,7 +22,7 @@ public class SubscriptionItemAdapter extends BaseAdapter {
 
     private final EhTagDatabase ehTags;
 
-    public SubscriptionItemAdapter(Context context,UserTagList userTagList,EhTagDatabase ehTags){
+    public SubscriptionItemAdapter(Context context, UserTagList userTagList, EhTagDatabase ehTags) {
         this.userTagList = userTagList;
         this.ehTags = ehTags;
         inflater = LayoutInflater.from(context);
@@ -44,29 +43,24 @@ public class SubscriptionItemAdapter extends BaseAdapter {
         return Long.decode(getItem(position).userTagId.substring(8));
     }
 
-    @SuppressLint({"ViewHolder","InflateParams"})
+    @SuppressLint({ "ViewHolder", "InflateParams" })
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
         UserTag userTag = getItem(position);
-
-        View view = inflater.inflate(R.layout.subscripition_list_item,null);
+        View view = inflater.inflate(R.layout.subscripition_list_item, null);
         ImageView imageView = view.findViewById(R.id.subscription_state);
-        if (userTag.hidden){
+        if (userTag.hidden) {
             imageView.setImageResource(R.drawable.ic_baseline_visibility_off_24);
         }
-        if (userTag.watched){
+        if (userTag.watched) {
             imageView.setImageResource(R.drawable.ic_baseline_visibility_24);
         }
-
         TextView textView = view.findViewById(R.id.label);
-        if (Settings.getShowTagTranslations()){
+        if (Settings.getShowTagTranslations()) {
             textView.setText(userTag.getName(ehTags));
-        }else {
+        } else {
             textView.setText(userTag.tagName);
         }
-
-
         return view;
     }
 }

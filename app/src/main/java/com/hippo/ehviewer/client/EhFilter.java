@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 import android.util.Log;
-
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.Filter;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,13 +27,19 @@ public final class EhFilter {
     private static final String TAG = EhFilter.class.getSimpleName();
 
     public static final int MODE_TITLE = 0;
+
     public static final int MODE_UPLOADER = 1;
+
     public static final int MODE_TAG = 2;
+
     public static final int MODE_TAG_NAMESPACE = 3;
 
     private final List<Filter> mTitleFilterList = new ArrayList<>();
+
     private final List<Filter> mUploaderFilterList = new ArrayList<>();
+
     private final List<Filter> mTagFilterList = new ArrayList<>();
+
     private final List<Filter> mTagNamespaceFilterList = new ArrayList<>();
 
     private static EhFilter sInstance;
@@ -52,7 +55,7 @@ public final class EhFilter {
         List<Filter> list = EhDB.getAllFilter();
         for (int i = 0, n = list.size(); i < n; i++) {
             Filter filter = list.get(i);
-            switch (filter.mode) {
+            switch(filter.mode) {
                 case MODE_TITLE:
                     filter.text = filter.text.toLowerCase();
                     mTitleFilterList.add(filter);
@@ -95,8 +98,7 @@ public final class EhFilter {
         // enable filter by default before it is added to database
         filter.enable = true;
         EhDB.addFilter(filter);
-
-        switch (filter.mode) {
+        switch(filter.mode) {
             case MODE_TITLE:
                 filter.text = filter.text.toLowerCase();
                 mTitleFilterList.add(filter);
@@ -124,8 +126,7 @@ public final class EhFilter {
 
     public synchronized void deleteFilter(Filter filter) {
         EhDB.deleteFilter(filter);
-
-        switch (filter.mode) {
+        switch(filter.mode) {
             case MODE_TITLE:
                 mTitleFilterList.remove(filter);
                 break;
@@ -152,7 +153,6 @@ public final class EhFilter {
         if (null == info) {
             return false;
         }
-
         // Title
         String title = info.title;
         List<Filter> filters = mTitleFilterList;
@@ -163,7 +163,6 @@ public final class EhFilter {
                 }
             }
         }
-
         return true;
     }
 
@@ -171,7 +170,6 @@ public final class EhFilter {
         if (null == info) {
             return false;
         }
-
         // Uploader
         String uploader = info.uploader;
         List<Filter> filters = mUploaderFilterList;
@@ -182,7 +180,6 @@ public final class EhFilter {
                 }
             }
         }
-
         return true;
     }
 
@@ -190,7 +187,6 @@ public final class EhFilter {
         if (null == tag || null == filter) {
             return false;
         }
-
         String tagNamespace;
         String tagName;
         String filterNamespace;
@@ -211,15 +207,12 @@ public final class EhFilter {
             filterNamespace = filter.substring(0, index);
             filterName = filter.substring(index + 1);
         }
-
-        if (null != tagNamespace && null != filterNamespace &&
-                !tagNamespace.equals(filterNamespace)) {
+        if (null != tagNamespace && null != filterNamespace && !tagNamespace.equals(filterNamespace)) {
             return false;
         }
         if (!tagName.equals(filterName)) {
             return false;
         }
-
         return true;
     }
 
@@ -227,12 +220,11 @@ public final class EhFilter {
         if (null == info) {
             return false;
         }
-
         // Tag
         String[] tags = info.simpleTags;
         List<Filter> filters = mTagFilterList;
         if (null != tags && filters.size() > 0) {
-            for (String tag: tags) {
+            for (String tag : tags) {
                 for (int i = 0, n = filters.size(); i < n; i++) {
                     if (filters.get(i).enable && matchTag(tag, filters.get(i).text)) {
                         return false;
@@ -240,7 +232,6 @@ public final class EhFilter {
                 }
             }
         }
-
         return true;
     }
 
@@ -248,7 +239,6 @@ public final class EhFilter {
         if (null == tag || null == filter) {
             return false;
         }
-
         String tagNamespace;
         int index = tag.indexOf(':');
         if (index >= 0) {
@@ -263,11 +253,10 @@ public final class EhFilter {
         if (null == info) {
             return false;
         }
-
         String[] tags = info.simpleTags;
         List<Filter> filters = mTagNamespaceFilterList;
         if (null != tags && filters.size() > 0) {
-            for (String tag: tags) {
+            for (String tag : tags) {
                 for (int i = 0, n = filters.size(); i < n; i++) {
                     if (filters.get(i).enable && matchTagNamespace(tag, filters.get(i).text)) {
                         return false;
@@ -275,7 +264,6 @@ public final class EhFilter {
                 }
             }
         }
-
         return true;
     }
 }

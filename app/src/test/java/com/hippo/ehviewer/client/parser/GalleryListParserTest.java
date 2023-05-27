@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import static org.junit.Assert.assertEquals;
 //import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
 import com.hippo.ehviewer.client.EhUtils;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import java.io.InputStream;
@@ -34,77 +32,62 @@ import org.robolectric.ParameterizedRobolectricTestRunner;
 @RunWith(ParameterizedRobolectricTestRunner.class)
 public class GalleryListParserTest {
 
-  private static final String E_MINIMAL = "GalleryListParserTestEMinimal.GalleryTopListEX.html";
-  private static final String E_MINIMAL_PLUS = "GalleryListParserTestEMinimalPlus.GalleryTopListEX.html";
-  private static final String E_COMPAT = "GalleryListParserTestECompat.GalleryTopListEX.html";
-  private static final String E_EXTENDED = "GalleryListParserTestEExtended.GalleryTopListEX.html";
-  private static final String E_THUMBNAIL = "GalleryListParserTestEThumbnail.GalleryTopListEX.html";
+    private static final String E_MINIMAL = "GalleryListParserTestEMinimal.GalleryTopListEX.html";
 
-  private static final String EX_MINIMAL = "GalleryListParserTestExMinimal.GalleryTopListEX.html";
-  private static final String EX_MINIMAL_PLUS = "GalleryListParserTestExMinimalPlus.GalleryTopListEX.html";
-  private static final String EX_COMPAT = "GalleryListParserTestExCompat.GalleryTopListEX.html";
-  private static final String EX_EXTENDED = "GalleryListParserTestExExtended.GalleryTopListEX.html";
-  private static final String EX_THUMBNAIL = "GalleryListParserTestExThumbnail.GalleryTopListEX.html";
+    private static final String E_MINIMAL_PLUS = "GalleryListParserTestEMinimalPlus.GalleryTopListEX.html";
 
-  @ParameterizedRobolectricTestRunner.Parameters(name = "{index}-{0}")
-  public static List data() {
-    return Arrays.asList(new Object[][] {
-        { E_MINIMAL },
-        { E_MINIMAL_PLUS },
-        { E_COMPAT },
-        { E_EXTENDED },
-        { E_THUMBNAIL },
-        { EX_MINIMAL },
-        { EX_MINIMAL_PLUS },
-        { EX_COMPAT },
-        { EX_EXTENDED },
-        { EX_THUMBNAIL },
-    });
-  }
+    private static final String E_COMPAT = "GalleryListParserTestECompat.GalleryTopListEX.html";
 
-  private String file;
+    private static final String E_EXTENDED = "GalleryListParserTestEExtended.GalleryTopListEX.html";
 
-  public GalleryListParserTest(String file) {
-    this.file = file;
-  }
+    private static final String E_THUMBNAIL = "GalleryListParserTestEThumbnail.GalleryTopListEX.html";
 
-  @Test
-  public void testParse() throws Exception {
-    InputStream resource = GalleryPageApiParserTest.class.getResourceAsStream(file);
-    BufferedSource source = Okio.buffer(Okio.source(resource));
-    String body = source.readUtf8();
+    private static final String EX_MINIMAL = "GalleryListParserTestExMinimal.GalleryTopListEX.html";
 
-    GalleryListParser.Result result = GalleryListParser.parse(body);
+    private static final String EX_MINIMAL_PLUS = "GalleryListParserTestExMinimalPlus.GalleryTopListEX.html";
 
-    assertEquals(25, result.galleryInfoList.size());
+    private static final String EX_COMPAT = "GalleryListParserTestExCompat.GalleryTopListEX.html";
 
-    result.galleryInfoList.forEach(gi -> {
-//      assertNotEquals(0, gi.gid);
-//      assertNotEquals(0, gi.token);
-      assertNotNull(gi.title);
+    private static final String EX_EXTENDED = "GalleryListParserTestExExtended.GalleryTopListEX.html";
 
-      //assertNotNull(gi.simpleTags);
+    private static final String EX_THUMBNAIL = "GalleryListParserTestExThumbnail.GalleryTopListEX.html";
 
-//      assertNotEquals(0, gi.category);
-//      assertNotEquals(EhUtils.UNKNOWN, gi.category);
-//      assertNotEquals(0, gi.thumbWidth);
-//      assertNotEquals(0, gi.thumbHeight);
-      assertNotNull(gi.thumb);
-      assertNotNull(gi.posted);
-//      assertNotEquals(0.0, gi.rating);
-      if (E_MINIMAL.equals(file) ||
-          E_MINIMAL_PLUS.equals(file) ||
-          E_COMPAT.equals(file) ||
-          E_EXTENDED.equals(file) ||
-          EX_MINIMAL.equals(file) ||
-          EX_MINIMAL_PLUS.equals(file) ||
-          EX_COMPAT.equals(file) ||
-          EX_EXTENDED.equals(file)) {
-        assertNotNull(gi.uploader);
-      } else {
-        assertNull(gi.uploader);
-      }
-//      assertNotEquals(0, gi.pages);
-    });
-  }
+    @ParameterizedRobolectricTestRunner.Parameters(name = "{index}-{0}")
+    public static List data() {
+        return Arrays.asList(new Object[][] { { E_MINIMAL }, { E_MINIMAL_PLUS }, { E_COMPAT }, { E_EXTENDED }, { E_THUMBNAIL }, { EX_MINIMAL }, { EX_MINIMAL_PLUS }, { EX_COMPAT }, { EX_EXTENDED }, { EX_THUMBNAIL } });
+    }
+
+    private String file;
+
+    public GalleryListParserTest(String file) {
+        this.file = file;
+    }
+
+    @Test
+    public void testParse() throws Exception {
+        InputStream resource = GalleryPageApiParserTest.class.getResourceAsStream(file);
+        BufferedSource source = Okio.buffer(Okio.source(resource));
+        String body = source.readUtf8();
+        GalleryListParser.Result result = GalleryListParser.parse(body);
+        assertEquals(25, result.galleryInfoList.size());
+        result.galleryInfoList.forEach(gi -> {
+            //      assertNotEquals(0, gi.gid);
+            //      assertNotEquals(0, gi.token);
+            assertNotNull(gi.title);
+            //assertNotNull(gi.simpleTags);
+            //      assertNotEquals(0, gi.category);
+            //      assertNotEquals(EhUtils.UNKNOWN, gi.category);
+            //      assertNotEquals(0, gi.thumbWidth);
+            //      assertNotEquals(0, gi.thumbHeight);
+            assertNotNull(gi.thumb);
+            assertNotNull(gi.posted);
+            //      assertNotEquals(0.0, gi.rating);
+            if (E_MINIMAL.equals(file) || E_MINIMAL_PLUS.equals(file) || E_COMPAT.equals(file) || E_EXTENDED.equals(file) || EX_MINIMAL.equals(file) || EX_MINIMAL_PLUS.equals(file) || EX_COMPAT.equals(file) || EX_EXTENDED.equals(file)) {
+                assertNotNull(gi.uploader);
+            } else {
+                assertNull(gi.uploader);
+            }
+            //      assertNotEquals(0, gi.pages);
+        });
+    }
 }

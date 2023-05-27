@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.annotation.SuppressLint;
@@ -39,9 +38,13 @@ import com.hippo.yorozuya.ViewUtils;
 public class ProxyPreference extends DialogPreference implements View.OnClickListener {
 
     private Spinner mType;
+
     private TextInputLayout mIpInputLayout;
+
     private EditText mIp;
+
     private TextInputLayout mPortInputLayout;
+
     private EditText mPort;
 
     public ProxyPreference(Context context) {
@@ -70,21 +73,15 @@ public class ProxyPreference extends DialogPreference implements View.OnClickLis
     }
 
     private void updateSummary(int type, String ip, int port) {
-        if ((type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS)
-                && (TextUtils.isEmpty(ip) || !InetValidator.isValidInetPort(port)) ) {
+        if ((type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS) && (TextUtils.isEmpty(ip) || !InetValidator.isValidInetPort(port))) {
             type = EhProxySelector.TYPE_SYSTEM;
         }
-
         if (type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS) {
             Context context = getContext();
-            setSummary(context.getString(R.string.settings_advanced_proxy_summary_1,
-                getProxyTypeText(context, type),
-                ip,
-                port));
+            setSummary(context.getString(R.string.settings_advanced_proxy_summary_1, getProxyTypeText(context, type), ip, port));
         } else {
             Context context = getContext();
-            setSummary(context.getString(R.string.settings_advanced_proxy_summary_2,
-                getProxyTypeText(context, type)));
+            setSummary(context.getString(R.string.settings_advanced_proxy_summary_2, getProxyTypeText(context, type)));
         }
     }
 
@@ -98,21 +95,16 @@ public class ProxyPreference extends DialogPreference implements View.OnClickLis
     @SuppressLint("SetTextI18n")
     protected void onDialogCreated(AlertDialog dialog) {
         super.onDialogCreated(dialog);
-
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(this);
-
         mType = (Spinner) ViewUtils.$$(dialog, R.id.type);
         mIpInputLayout = (TextInputLayout) ViewUtils.$$(dialog, R.id.ip_input_layout);
         mIp = (EditText) ViewUtils.$$(dialog, R.id.ip);
         mPortInputLayout = (TextInputLayout) ViewUtils.$$(dialog, R.id.port_input_layout);
         mPort = (EditText) ViewUtils.$$(dialog, R.id.port);
-
         int type = Settings.getProxyType();
         String[] array = getContext().getResources().getStringArray(R.array.proxy_types);
         mType.setSelection(MathUtils.clamp(type, 0, array.length));
-
         mIp.setText(Settings.getProxyIp());
-
         String portString;
         int port = Settings.getProxyPort();
         if (!InetValidator.isValidInetPort(port)) {
@@ -137,23 +129,16 @@ public class ProxyPreference extends DialogPreference implements View.OnClickLis
     public void onClick(View v) {
         Dialog dialog = getDialog();
         Context context = getContext();
-        if (null == dialog || null == context || null == mType ||
-                null == mIpInputLayout || null == mIp ||
-                null == mPortInputLayout || null == mPort) {
+        if (null == dialog || null == context || null == mType || null == mIpInputLayout || null == mIp || null == mPortInputLayout || null == mPort) {
             return;
         }
-
         int type = mType.getSelectedItemPosition();
-
         String ip = mIp.getText().toString().trim();
-        if (ip.isEmpty()) {
-            if (type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS) {
-                mIpInputLayout.setError(context.getString(R.string.text_is_empty));
-                return;
-            }
+        if (ip.isEmpty() && type == EhProxySelector.TYPE_HTTP || type == EhProxySelector.TYPE_SOCKS) {
+            mIpInputLayout.setError(context.getString(R.string.text_is_empty));
+            return;
         }
         mIpInputLayout.setError(null);
-
         int port;
         String portString = mPort.getText().toString().trim();
         if (portString.isEmpty()) {
@@ -175,15 +160,11 @@ public class ProxyPreference extends DialogPreference implements View.OnClickLis
             }
         }
         mPortInputLayout.setError(null);
-
         Settings.putProxyType(type);
         Settings.putProxyIp(ip);
         Settings.putProxyPort(port);
-
         updateSummary(type, ip, port);
-
         EhApplication.getEhProxySelector(getContext()).updateProxy();
-
         dialog.dismiss();
     }
 }

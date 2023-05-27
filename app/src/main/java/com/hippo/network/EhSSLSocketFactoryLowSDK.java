@@ -1,14 +1,11 @@
 package com.hippo.network;
 
 import android.util.Log;
-
 import com.hippo.ehviewer.Settings;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -16,7 +13,7 @@ public class EhSSLSocketFactoryLowSDK extends SSLSocketFactory {
 
     private final SSLSocketFactory mSSLSocketFactory;
 
-    public EhSSLSocketFactoryLowSDK(SSLSocketFactory sslSocketFactory)  {
+    public EhSSLSocketFactoryLowSDK(SSLSocketFactory sslSocketFactory) {
         this.mSSLSocketFactory = sslSocketFactory;
     }
 
@@ -42,7 +39,8 @@ public class EhSSLSocketFactoryLowSDK extends SSLSocketFactory {
         }
         InetAddress address = s.getInetAddress();
         Log.d("EhSSLSocketFactory", "Host: " + host + " Address: " + address.getHostAddress());
-        if (autoClose) s.close();
+        if (autoClose)
+            s.close();
         return enableTLSOnSocket(mSSLSocketFactory.createSocket(address, port));
     }
 
@@ -67,7 +65,8 @@ public class EhSSLSocketFactoryLowSDK extends SSLSocketFactory {
     }
 
     private Socket enableTLSOnSocket(Socket socket) {
-        if(socket instanceof SSLSocket) ((SSLSocket) socket).setEnabledProtocols(new String[] {"TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"});
+        if (socket instanceof SSLSocket)
+            ((SSLSocket) socket).setEnabledProtocols(new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3" });
         return socket;
     }
 }

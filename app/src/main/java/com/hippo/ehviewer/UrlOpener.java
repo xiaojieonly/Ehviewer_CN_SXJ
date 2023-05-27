@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.content.Context;
@@ -38,10 +37,8 @@ public final class UrlOpener {
         if (TextUtils.isEmpty(url)) {
             return;
         }
-
         Intent intent;
         Uri uri = Uri.parse(url);
-
         if (ehUrl) {
             Announcer announcer = EhUrlOpener.parseUrl(url);
             if (null != announcer) {
@@ -54,7 +51,6 @@ public final class UrlOpener {
                 return;
             }
         }
-
         // Intent.ACTION_VIEW
         intent = new Intent(Intent.ACTION_VIEW, uri);
         intent.putExtra(Browser.EXTRA_APPLICATION_ID, context.getPackageName());

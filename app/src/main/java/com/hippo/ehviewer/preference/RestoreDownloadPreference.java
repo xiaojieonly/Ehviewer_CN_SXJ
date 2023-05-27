@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.app.Activity;
@@ -66,7 +65,9 @@ public class RestoreDownloadPreference extends TaskPreference {
     private static class RestoreTask extends Task {
 
         private final EhApplication mApplication;
+
         private final DownloadManager mManager;
+
         private final OkHttpClient mHttpClient;
 
         public RestoreTask(@NonNull Context context) {
@@ -84,7 +85,6 @@ public class RestoreDownloadPreference extends TaskPreference {
             if (null == siFile) {
                 return null;
             }
-
             InputStream is = null;
             try {
                 is = siFile.openInputStream();
@@ -115,25 +115,20 @@ public class RestoreDownloadPreference extends TaskPreference {
             if (null == dir) {
                 return null;
             }
-
             List<RestoreItem> restoreItemList = new ArrayList<>();
-
             UniFile[] files = dir.listFiles();
             if (files == null) {
                 return null;
             }
-
-            for (UniFile file: files) {
+            for (UniFile file : files) {
                 RestoreItem restoreItem = getRestoreItem(file);
                 if (null != restoreItem) {
                     restoreItemList.add(restoreItem);
                 }
             }
-
             if (0 == restoreItemList.size()) {
                 return Collections.EMPTY_LIST;
             }
-
             try {
                 return EhEngine.fillGalleryListByApi(null, mHttpClient, new ArrayList<GalleryInfo>(restoreItemList), EhUrl.getReferer());
             } catch (Throwable e) {
@@ -165,10 +160,7 @@ public class RestoreDownloadPreference extends TaskPreference {
                             count++;
                         }
                     }
-                    Toast.makeText(mApplication,
-                            mApplication.getString(R.string.settings_download_restore_successfully, count),
-                            Toast.LENGTH_SHORT).show();
-
+                    Toast.makeText(mApplication, mApplication.getString(R.string.settings_download_restore_successfully, count), Toast.LENGTH_SHORT).show();
                     Preference preference = getPreference();
                     if (null != preference) {
                         Context context = preference.getContext();
@@ -206,6 +198,7 @@ public class RestoreDownloadPreference extends TaskPreference {
         }
 
         public static final Creator<RestoreItem> CREATOR = new Creator<RestoreItem>() {
+
             @Override
             public RestoreItem createFromParcel(Parcel source) {
                 return new RestoreItem(source);

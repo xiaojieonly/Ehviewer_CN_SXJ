@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.content.Context;
@@ -21,7 +20,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.preference.Preference;
 import android.util.AttributeSet;
-
 import com.hippo.ehviewer.R;
 
 public class VersionPreference extends Preference {
@@ -43,7 +41,6 @@ public class VersionPreference extends Preference {
 
     private void init(Context context) {
         setTitle(R.string.settings_about_version);
-
         String version;
         try {
             PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);

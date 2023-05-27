@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
-
 import com.hippo.yorozuya.NumberUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.List;
 
 public class GalleryApiParser {
@@ -31,7 +28,6 @@ public class GalleryApiParser {
     public static void parse(String body, List<GalleryInfo> galleryInfoList) throws JSONException {
         JSONObject jo = new JSONObject(body);
         JSONArray ja = jo.getJSONArray("gmetadata");
-
         for (int i = 0, length = ja.length(); i < length; i++) {
             JSONObject g = ja.getJSONObject(i);
             long gid = g.getLong("gid");

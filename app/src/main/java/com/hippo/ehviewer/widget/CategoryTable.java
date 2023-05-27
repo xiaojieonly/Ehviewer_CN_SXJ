@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -32,17 +31,27 @@ import com.hippo.yorozuya.NumberUtils;
 public class CategoryTable extends TableLayout implements View.OnLongClickListener {
 
     private static final String STATE_KEY_SUPER = "super";
+
     private static final String STATE_KEY_CATEGORY = "category";
 
     private CheckTextView mDoujinshi;
+
     private CheckTextView mManga;
+
     private CheckTextView mArtistCG;
+
     private CheckTextView mGameCG;
+
     private CheckTextView mWestern;
+
     private CheckTextView mNonH;
+
     private CheckTextView mImageSets;
+
     private CheckTextView mCosplay;
+
     private CheckTextView mAsianPorn;
+
     private CheckTextView mMisc;
 
     private CheckTextView[] mOptions;
@@ -60,32 +69,22 @@ public class CategoryTable extends TableLayout implements View.OnLongClickListen
     public void init() {
         LayoutInflater inflater = LayoutInflater.from(getContext());
         inflater.inflate(R.layout.widget_category_table, this);
-
         ViewGroup row0 = (ViewGroup) getChildAt(0);
         mDoujinshi = (CheckTextView) row0.getChildAt(0);
         mManga = (CheckTextView) row0.getChildAt(1);
-
         ViewGroup row1 = (ViewGroup) getChildAt(1);
         mArtistCG = (CheckTextView) row1.getChildAt(0);
         mGameCG = (CheckTextView) row1.getChildAt(1);
-
         ViewGroup row2 = (ViewGroup) getChildAt(2);
         mWestern = (CheckTextView) row2.getChildAt(0);
         mNonH = (CheckTextView) row2.getChildAt(1);
-
         ViewGroup row3 = (ViewGroup) getChildAt(3);
         mImageSets = (CheckTextView) row3.getChildAt(0);
         mCosplay = (CheckTextView) row3.getChildAt(1);
-
         ViewGroup row4 = (ViewGroup) getChildAt(4);
         mAsianPorn = (CheckTextView) row4.getChildAt(0);
         mMisc = (CheckTextView) row4.getChildAt(1);
-
-        mOptions = new CheckTextView[] {
-            mDoujinshi, mManga, mArtistCG, mGameCG, mWestern,
-            mNonH, mImageSets, mCosplay, mAsianPorn, mMisc
-        };
-
+        mOptions = new CheckTextView[] { mDoujinshi, mManga, mArtistCG, mGameCG, mWestern, mNonH, mImageSets, mCosplay, mAsianPorn, mMisc };
         for (CheckTextView option : mOptions) {
             option.setOnLongClickListener(this);
         }
@@ -101,7 +100,6 @@ public class CategoryTable extends TableLayout implements View.OnLongClickListen
                 }
             }
         }
-
         return true;
     }
 
@@ -129,16 +127,26 @@ public class CategoryTable extends TableLayout implements View.OnLongClickListen
      */
     public int getCategory() {
         int category = 0;
-        if (!mDoujinshi.isChecked()) category |= EhConfig.DOUJINSHI;
-        if (!mManga.isChecked()) category |= EhConfig.MANGA;
-        if (!mArtistCG.isChecked()) category |= EhConfig.ARTIST_CG;
-        if (!mGameCG.isChecked()) category |= EhConfig.GAME_CG;
-        if (!mWestern.isChecked()) category |= EhConfig.WESTERN;
-        if (!mNonH.isChecked()) category |= EhConfig.NON_H;
-        if (!mImageSets.isChecked()) category |= EhConfig.IMAGE_SET;
-        if (!mCosplay.isChecked()) category |= EhConfig.COSPLAY;
-        if (!mAsianPorn.isChecked()) category |= EhConfig.ASIAN_PORN;
-        if (!mMisc.isChecked()) category |= EhConfig.MISC;
+        if (!mDoujinshi.isChecked())
+            category |= EhConfig.DOUJINSHI;
+        if (!mManga.isChecked())
+            category |= EhConfig.MANGA;
+        if (!mArtistCG.isChecked())
+            category |= EhConfig.ARTIST_CG;
+        if (!mGameCG.isChecked())
+            category |= EhConfig.GAME_CG;
+        if (!mWestern.isChecked())
+            category |= EhConfig.WESTERN;
+        if (!mNonH.isChecked())
+            category |= EhConfig.NON_H;
+        if (!mImageSets.isChecked())
+            category |= EhConfig.IMAGE_SET;
+        if (!mCosplay.isChecked())
+            category |= EhConfig.COSPLAY;
+        if (!mAsianPorn.isChecked())
+            category |= EhConfig.ASIAN_PORN;
+        if (!mMisc.isChecked())
+            category |= EhConfig.MISC;
         return category;
     }
 

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -39,7 +38,6 @@ public class ObservedTextView extends AppCompatTextView {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
         if (mOnWindowAttachListener != null) {
             mOnWindowAttachListener.onAttachedToWindow();
         }
@@ -48,7 +46,6 @@ public class ObservedTextView extends AppCompatTextView {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
         if (mOnWindowAttachListener != null) {
             mOnWindowAttachListener.onDetachedFromWindow();
         }
@@ -59,7 +56,9 @@ public class ObservedTextView extends AppCompatTextView {
     }
 
     public interface OnWindowAttachListener {
+
         void onAttachedToWindow();
+
         void onDetachedFromWindow();
     }
 }

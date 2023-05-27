@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.Context;
@@ -26,12 +25,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.h6ah4i.android.widget.advrecyclerview.animator.DraggableItemAnimator;
 import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
 import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
@@ -55,7 +52,6 @@ import com.hippo.view.ViewTransition;
 import com.hippo.widget.ProgressView;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ViewUtils;
-
 import java.util.ArrayList;
 
 public final class SubscriptionsScene extends ToolbarScene {
@@ -71,7 +67,9 @@ public final class SubscriptionsScene extends ToolbarScene {
      ---------------*/
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     private ProgressView progressView;
+
     @Nullable
     private ViewTransition mViewTransition;
 
@@ -85,7 +83,7 @@ public final class SubscriptionsScene extends ToolbarScene {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.context = getEHContext();
-        if (ehClient == null){
+        if (ehClient == null) {
             this.ehClient = EhApplication.getEhClient(context);
         }
         userTagList = EhApplication.getUserTagList(context);
@@ -101,41 +99,31 @@ public final class SubscriptionsScene extends ToolbarScene {
     @SuppressWarnings("deprecation")
     @Nullable
     @Override
-    public View onCreateView3(LayoutInflater inflater,
-                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_label_list, container, false);
         progressView = view.findViewById(R.id.scene_label_progress);
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
-
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_search);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
         tip.setText(R.string.no_quick_search);
-
         // drag & drop manager
         RecyclerViewDragDropManager dragDropManager = new RecyclerViewDragDropManager();
-        dragDropManager.setDraggingItemShadowDrawable(
-                (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
-
+        dragDropManager.setDraggingItemShadowDrawable((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
         RecyclerView.Adapter adapter = new QuickSearchAdapter();
         adapter.setHasStableIds(true);
-        adapter = dragDropManager.createWrappedAdapter(adapter); // wrap for dragging
-
+        // wrap for dragging
+        adapter = dragDropManager.createWrappedAdapter(adapter);
         final GeneralItemAnimator animator = new DraggableItemAnimator();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setItemAnimator(animator);
-
         dragDropManager.attachRecyclerView(mRecyclerView);
-
         updateView();
-
         return view;
     }
 
@@ -149,12 +137,10 @@ public final class SubscriptionsScene extends ToolbarScene {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();
             mRecyclerView = null;
         }
-
         mViewTransition = null;
     }
 
@@ -167,23 +153,20 @@ public final class SubscriptionsScene extends ToolbarScene {
         progressView.setVisibility(View.GONE);
         assert mRecyclerView != null;
         mRecyclerView.setVisibility(View.VISIBLE);
-        if (userTagList == null){
+        if (userTagList == null) {
             userTagList.userTags = new ArrayList<>();
         }
         // drag & drop manager
         RecyclerViewDragDropManager dragDropManager = new RecyclerViewDragDropManager();
-        dragDropManager.setDraggingItemShadowDrawable(
-                (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
-
+        dragDropManager.setDraggingItemShadowDrawable((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
         RecyclerView.Adapter adapter = new QuickSearchAdapter();
         adapter.setHasStableIds(true);
-        adapter = dragDropManager.createWrappedAdapter(adapter); // wrap for dragging
-
+        // wrap for dragging
+        adapter = dragDropManager.createWrappedAdapter(adapter);
         final GeneralItemAnimator animator = new DraggableItemAnimator();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setItemAnimator(animator);
-
         dragDropManager.attachRecyclerView(mRecyclerView);
     }
 
@@ -200,18 +183,19 @@ public final class SubscriptionsScene extends ToolbarScene {
     private class SubscriptionHolder extends AbstractDraggableItemViewHolder implements View.OnClickListener {
 
         public final TextView label;
+
         public final View dragHandler;
+
         public final View delete;
+
         public ImageView imageView;
 
         public SubscriptionHolder(View itemView) {
             super(itemView);
-
             label = (TextView) ViewUtils.$$(itemView, R.id.label);
             dragHandler = ViewUtils.$$(itemView, R.id.drag_handler);
             delete = ViewUtils.$$(itemView, R.id.delete);
             imageView = itemView.findViewById(R.id.drag_handler);
-
             delete.setOnClickListener(this);
         }
 
@@ -222,12 +206,8 @@ public final class SubscriptionsScene extends ToolbarScene {
             if (position == RecyclerView.NO_POSITION || userTagList == null) {
                 return;
             }
-
             final UserTag userTag = userTagList.userTags.get(position);
-            new AlertDialog.Builder(context)
-                    .setTitle(R.string.delete_subscription_title)
-                    .setMessage(getString(R.string.delete_quick_search_message, userTag.tagName))
-                    .setPositiveButton(android.R.string.ok, (dialog,i)->deleteTag(userTag)).show();
+            new AlertDialog.Builder(context).setTitle(R.string.delete_subscription_title).setMessage(getString(R.string.delete_quick_search_message, userTag.tagName)).setPositiveButton(android.R.string.ok, (dialog, i) -> deleteTag(userTag)).show();
         }
 
         private void deleteTag(UserTag userTag) {
@@ -235,26 +215,18 @@ public final class SubscriptionsScene extends ToolbarScene {
             assert mRecyclerView != null;
             mRecyclerView.setVisibility(View.INVISIBLE);
             deleteRequest(userTag);
-
         }
 
-        private void deleteRequest(UserTag userTag){
+        private void deleteRequest(UserTag userTag) {
             String url = EhUrl.getMyTag();
-
             if (null == context) {
                 return;
             }
             assert userTagList != null;
             EhClient.Callback callback = new SubscriptionsScene.SubscriptionDetailListener(context, userTagList.stageId, getTag());
-
-            EhRequest mRequest = new EhRequest()
-                    .setMethod(EhClient.METHOD_DELETE_WATCHED)
-                    .setArgs(url,userTag).setCallback(callback);
-
+            EhRequest mRequest = new EhRequest().setMethod(EhClient.METHOD_DELETE_WATCHED).setArgs(url, userTag).setCallback(callback);
             ehClient.execute(mRequest);
-
         }
-
     }
 
     private class QuickSearchAdapter extends RecyclerView.Adapter<SubscriptionHolder> {
@@ -274,16 +246,16 @@ public final class SubscriptionsScene extends ToolbarScene {
         @Override
         public void onBindViewHolder(SubscriptionHolder holder, int position) {
             if (userTagList != null) {
-                if (Settings.getShowTagTranslations()){
+                if (Settings.getShowTagTranslations()) {
                     holder.label.setText(userTagList.userTags.get(position).getName(ehTags));
-                }else {
+                } else {
                     holder.label.setText(userTagList.userTags.get(position).tagName);
                 }
             }
-            if (userTagList.get(position).hidden){
+            if (userTagList.get(position).hidden) {
                 holder.imageView.setImageResource(R.drawable.ic_baseline_visibility_off_24);
             }
-            if (userTagList.get(position).watched){
+            if (userTagList.get(position).watched) {
                 holder.imageView.setImageResource(R.drawable.ic_baseline_visibility_24);
             }
         }
@@ -297,7 +269,6 @@ public final class SubscriptionsScene extends ToolbarScene {
         public int getItemCount() {
             return userTagList != null ? userTagList.userTags.size() : 0;
         }
-
     }
 
     private class SubscriptionDetailListener extends EhCallback<GalleryListScene, UserTagList> {
@@ -313,23 +284,21 @@ public final class SubscriptionsScene extends ToolbarScene {
 
         @Override
         public void onSuccess(UserTagList result) {
-            if (result == null || result.userTags == null){
+            if (result == null || result.userTags == null) {
                 userTagList.userTags = new ArrayList<>();
-            }else {
+            } else {
                 userTagList.userTags = result.userTags;
             }
-            EhApplication.saveUserTagList(context,result);
+            EhApplication.saveUserTagList(context, result);
             bindSecond();
         }
 
         @Override
         public void onFailure(Exception e) {
-
         }
 
         @Override
         public void onCancel() {
-
         }
     }
 }

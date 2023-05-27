@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.annotation.SuppressLint;
@@ -42,15 +41,16 @@ import com.hippo.util.AppHelper;
 public abstract class BaseScene extends SceneFragment {
 
     public static final int LENGTH_SHORT = 0;
+
     public static final int LENGTH_LONG = 1;
 
-    public static final String KEY_DRAWER_VIEW_STATE =
-        "com.hippo.ehviewer.ui.scene.BaseScene:DRAWER_VIEW_STATE";
+    public static final String KEY_DRAWER_VIEW_STATE = "com.hippo.ehviewer.ui.scene.BaseScene:DRAWER_VIEW_STATE";
 
     private Context mThemeContext;
 
     @Nullable
     private View drawerView;
+
     @Nullable
     private SparseArray<Parcelable> drawerViewState;
 
@@ -82,15 +82,14 @@ public abstract class BaseScene extends SceneFragment {
         }
     }
 
-//    public int getDrawerLockMode(int edgeGravity) {
-//        FragmentActivity activity = getActivity();
-//        if (activity instanceof MainActivity) {
-//            return ((MainActivity) activity).getDrawerLockMode(edgeGravity);
-//        } else {
-//            return DrawerLayout.LOCK_MODE_UNLOCKED;
-//        }
-//    }
-
+    //    public int getDrawerLockMode(int edgeGravity) {
+    //        FragmentActivity activity = getActivity();
+    //        if (activity instanceof MainActivity) {
+    //            return ((MainActivity) activity).getDrawerLockMode(edgeGravity);
+    //        } else {
+    //            return DrawerLayout.LOCK_MODE_UNLOCKED;
+    //        }
+    //    }
     public void openDrawer(int drawerGravity) {
         FragmentActivity activity = getActivity();
         if (activity instanceof MainActivity) {
@@ -160,10 +159,8 @@ public abstract class BaseScene extends SceneFragment {
         return 0;
     }
 
-    public final View createDrawerView(LayoutInflater inflater,
-        @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public final View createDrawerView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         drawerView = onCreateDrawerView(inflater, container, savedInstanceState);
-
         if (drawerView != null) {
             SparseArray<Parcelable> saved = drawerViewState;
             if (saved == null && savedInstanceState != null) {
@@ -173,13 +170,11 @@ public abstract class BaseScene extends SceneFragment {
                 drawerView.restoreHierarchyState(saved);
             }
         }
-
         return drawerView;
     }
 
-    public View onCreateDrawerView(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return null;
+    public View onCreateDrawerView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return generateNullValue(inflater, container, savedInstanceState);
     }
 
     public final void destroyDrawerView() {
@@ -187,9 +182,7 @@ public abstract class BaseScene extends SceneFragment {
             drawerViewState = new SparseArray<>();
             drawerView.saveHierarchyState(drawerViewState);
         }
-
         onDestroyDrawerView();
-
         drawerView = null;
     }
 
@@ -198,32 +191,27 @@ public abstract class BaseScene extends SceneFragment {
 
     @Nullable
     @Override
-    public final View onCreateView(@NonNull LayoutInflater inflater,
-                                   @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public final View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return onCreateView2(LayoutInflater.from(getEHContext()), container, savedInstanceState);
     }
 
     @Nullable
-    public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return null;
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return generateNullValue(inflater, container, savedInstanceState);
     }
 
     @SuppressLint("RtlHardcoded")
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         // Update left drawer locked state
         if (needShowLeftDrawer()) {
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
         } else {
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
         }
-
         // Update nav checked item
         setNavCheckedItem(getNavCheckedItem());
-
         // Hide soft ime
         AppHelper.hideSoftInput(requireActivity());
     }
@@ -291,11 +279,14 @@ public abstract class BaseScene extends SceneFragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-
         if (drawerView != null) {
             drawerViewState = new SparseArray<>();
             drawerView.saveHierarchyState(drawerViewState);
             outState.putSparseParcelableArray(KEY_DRAWER_VIEW_STATE, drawerViewState);
         }
+    }
+
+    public View generateNullValue(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return null;
     }
 }

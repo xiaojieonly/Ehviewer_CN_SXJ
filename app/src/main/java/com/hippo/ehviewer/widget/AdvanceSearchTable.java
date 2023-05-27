@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -33,38 +32,67 @@ import com.hippo.yorozuya.NumberUtils;
 public class AdvanceSearchTable extends LinearLayout {
 
     private static final String STATE_KEY_SUPER = "super";
+
     private static final String STATE_KEY_ADVANCE_SEARCH = "advance_search";
+
     private static final String STATE_KEY_MIN_RATING = "min_rating";
+
     private static final String STATE_KEY_PAGE_FROM = "page_from";
+
     private static final String STATE_KEY_PAGE_TO = "page_to";
 
     public static final int SNAME = 0x1;
+
     public static final int STAGS = 0x2;
+
     public static final int SDESC = 0x4;
+
     public static final int STORR = 0x8;
+
     public static final int STO = 0x10;
+
     public static final int SDT1 = 0x20;
+
     public static final int SDT2 = 0x40;
+
     public static final int SH = 0x80;
+
     public static final int SFL = 0x100;
+
     public static final int SFU = 0x200;
+
     public static final int SFT = 0x400;
 
     private CheckBox mSname;
+
     private CheckBox mStags;
+
     private CheckBox mSdesc;
+
     private CheckBox mStorr;
+
     private CheckBox mSto;
+
     private CheckBox mSdt1;
+
     private CheckBox mSdt2;
+
     private CheckBox mSh;
+
     private CheckBox mSr;
+
     private Spinner mMinRating;
+
     private CheckBox mSp;
+
     private EditText mSpf;
+
     private EditText mSpt;
+
     private CheckBox mSfl;
+
     private CheckBox mSfu;
+
     private CheckBox mSft;
 
     public AdvanceSearchTable(Context context) {
@@ -79,58 +107,47 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public void init() {
         setOrientation(LinearLayout.VERTICAL);
-
         LayoutInflater inflater = LayoutInflater.from(getContext());
-         inflater.inflate(R.layout.widget_advance_search_table, this);
-
-//        ViewGroup row0 = (ViewGroup) getChildAt(0);
-//        mSname = (CheckBox) row0.getChildAt(0);
-//        mStags = (CheckBox) row0.getChildAt(1);
-        mSname = (CheckBox)findViewById(R.id.search_gallery);
-
+        inflater.inflate(R.layout.widget_advance_search_table, this);
+        //        ViewGroup row0 = (ViewGroup) getChildAt(0);
+        //        mSname = (CheckBox) row0.getChildAt(0);
+        //        mStags = (CheckBox) row0.getChildAt(1);
+        mSname = (CheckBox) findViewById(R.id.search_gallery);
         mStags = (CheckBox) findViewById(R.id.search_gallery_tags);
-
-//        ViewGroup row1 = (ViewGroup) getChildAt(1);
-//        mSdesc = (CheckBox) row1.getChildAt(0);
-//        mStorr = (CheckBox) row1.getChildAt(1);
+        //        ViewGroup row1 = (ViewGroup) getChildAt(1);
+        //        mSdesc = (CheckBox) row1.getChildAt(0);
+        //        mStorr = (CheckBox) row1.getChildAt(1);
         mSdesc = (CheckBox) findViewById(R.id.search_gallery_description);
-
         mStorr = (CheckBox) findViewById(R.id.search_torrent_filenames);
-
-//        ViewGroup row2 = (ViewGroup) getChildAt(2);
-//        mSto = (CheckBox) row2.getChildAt(0);
-//        mSdt1 = (CheckBox) row2.getChildAt(1);
+        //        ViewGroup row2 = (ViewGroup) getChildAt(2);
+        //        mSto = (CheckBox) row2.getChildAt(0);
+        //        mSdt1 = (CheckBox) row2.getChildAt(1);
         mSto = (CheckBox) findViewById(R.id.only_show_galleries_with_torrents);
         mSdt1 = (CheckBox) findViewById(R.id.search_low_power_tags);
-
-//        ViewGroup row3 = (ViewGroup) getChildAt(3);
-//        mSdt2 = (CheckBox) row3.getChildAt(0);
-//        mSh = (CheckBox) row3.getChildAt(1);
+        //        ViewGroup row3 = (ViewGroup) getChildAt(3);
+        //        mSdt2 = (CheckBox) row3.getChildAt(0);
+        //        mSh = (CheckBox) row3.getChildAt(1);
         mSdt2 = (CheckBox) findViewById(R.id.search_downvoted_tags);
         mSh = (CheckBox) findViewById(R.id.search_expunged_galleries);
-
-//        ViewGroup row4 = (ViewGroup) getChildAt(4);
-//        mSr = (CheckBox) row4.getChildAt(0);
-//        mMinRating = (Spinner) row4.getChildAt(1);
+        //        ViewGroup row4 = (ViewGroup) getChildAt(4);
+        //        mSr = (CheckBox) row4.getChildAt(0);
+        //        mMinRating = (Spinner) row4.getChildAt(1);
         mSr = (CheckBox) findViewById(R.id.minimum_rating);
-        mMinRating = (Spinner)findViewById(R.id.search_min_rating);
-
-//        ViewGroup row5 = (ViewGroup) getChildAt(5);
-//        mSp = (CheckBox) row5.getChildAt(0);
-//        mSpf = (EditText) row5.getChildAt(1);
-//        mSpt = (EditText) row5.getChildAt(3);
+        mMinRating = (Spinner) findViewById(R.id.search_min_rating);
+        //        ViewGroup row5 = (ViewGroup) getChildAt(5);
+        //        mSp = (CheckBox) row5.getChildAt(0);
+        //        mSpf = (EditText) row5.getChildAt(1);
+        //        mSpt = (EditText) row5.getChildAt(3);
         mSp = (CheckBox) findViewById(R.id.pages_setting);
         mSpf = (EditText) findViewById(R.id.spf);
         mSpt = (EditText) findViewById(R.id.spt);
-
-//        ViewGroup row7 = (ViewGroup) getChildAt(7);
-//        mSfl = (CheckBox) row7.getChildAt(0);
-//        mSfu = (CheckBox) row7.getChildAt(1);
-//        mSft = (CheckBox) row7.getChildAt(2);
+        //        ViewGroup row7 = (ViewGroup) getChildAt(7);
+        //        mSfl = (CheckBox) row7.getChildAt(0);
+        //        mSfu = (CheckBox) row7.getChildAt(1);
+        //        mSft = (CheckBox) row7.getChildAt(2);
         mSfl = (CheckBox) findViewById(R.id.disable_default_filter_language);
         mSfu = (CheckBox) findViewById(R.id.disable_default_filter_uploader);
         mSft = (CheckBox) findViewById(R.id.disable_default_filter_tags);
-
         // Avoid java.lang.IllegalStateException: focus search returned a view that wasn't able to take focus!
         mSpt.setOnEditorActionListener((v, actionId, event) -> {
             View nextView = v.focusSearch(View.FOCUS_DOWN);
@@ -143,17 +160,28 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public int getAdvanceSearch() {
         int advanceSearch = 0;
-        if (mSname.isChecked()) advanceSearch |= SNAME;
-        if (mStags.isChecked()) advanceSearch |= STAGS;
-        if (mSdesc.isChecked()) advanceSearch |= SDESC;
-        if (mStorr.isChecked()) advanceSearch |= STORR;
-        if (mSto.isChecked()) advanceSearch |= STO;
-        if (mSdt1.isChecked()) advanceSearch |= SDT1;
-        if (mSdt2.isChecked()) advanceSearch |= SDT2;
-        if (mSh.isChecked()) advanceSearch |= SH;
-        if (mSfl.isChecked()) advanceSearch |= SFL;
-        if (mSfu.isChecked()) advanceSearch |= SFU;
-        if (mSft.isChecked()) advanceSearch |= SFT;
+        if (mSname.isChecked())
+            advanceSearch |= SNAME;
+        if (mStags.isChecked())
+            advanceSearch |= STAGS;
+        if (mSdesc.isChecked())
+            advanceSearch |= SDESC;
+        if (mStorr.isChecked())
+            advanceSearch |= STORR;
+        if (mSto.isChecked())
+            advanceSearch |= STO;
+        if (mSdt1.isChecked())
+            advanceSearch |= SDT1;
+        if (mSdt2.isChecked())
+            advanceSearch |= SDT2;
+        if (mSh.isChecked())
+            advanceSearch |= SH;
+        if (mSfl.isChecked())
+            advanceSearch |= SFL;
+        if (mSfu.isChecked())
+            advanceSearch |= SFU;
+        if (mSft.isChecked())
+            advanceSearch |= SFT;
         return advanceSearch;
     }
 
@@ -205,7 +233,7 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public void setPageFrom(int pageFrom) {
         if (pageFrom > 0) {
-//            mSpf.setText(Integer.toString(pageFrom));
+            //            mSpf.setText(Integer.toString(pageFrom));
             String setS = Integer.toString(pageFrom);
             mSpf.setText(setS);
             mSp.setChecked(true);
@@ -217,7 +245,7 @@ public class AdvanceSearchTable extends LinearLayout {
 
     public void setPageTo(int pageTo) {
         if (pageTo > 0) {
-//            mSpt.setText(Integer.toString(pageTo));
+            //            mSpt.setText(Integer.toString(pageTo));
             String setS = Integer.toString(pageTo);
             mSpt.setText(setS);
             mSp.setChecked(true);

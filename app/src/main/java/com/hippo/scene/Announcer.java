@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.scene;
 
 import android.os.Bundle;
@@ -21,9 +20,13 @@ import android.os.Bundle;
 public final class Announcer {
 
     Class<?> clazz;
+
     Bundle args;
+
     TransitionHelper tranHelper;
+
     SceneFragment requestFrom;
+
     int requestCode;
 
     public Announcer(Class<?> clazz) {

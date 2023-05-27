@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.annotation.SuppressLint;
@@ -40,44 +39,34 @@ public class OffsetLayout extends FrameLayout {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        layoutChildrenEx(left, top, right, bottom, false /* no force left gravity */);
+        layoutChildrenEx(left, top, right, bottom, false);
     }
 
     // TODO foreground not work fine
     @SuppressLint("RtlHardcoded")
-    void layoutChildrenEx(int left, int top, int right, int bottom,
-            boolean forceLeftGravity) {
+    void layoutChildrenEx(int left, int top, int right, int bottom, boolean forceLeftGravity) {
         final int count = getChildCount();
-
         final int parentLeft = getPaddingLeft();
         final int parentRight = right - left - getPaddingRight();
-
         final int parentTop = getPaddingTop();
         final int parentBottom = bottom - top - getPaddingBottom();
-
         for (int i = 0; i < count; i++) {
             final View child = getChildAt(i);
             if (child.getVisibility() != GONE) {
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-
                 final int width = child.getMeasuredWidth();
                 final int height = child.getMeasuredHeight();
-
                 int childLeft;
                 int childTop;
-
                 int gravity = lp.gravity;
                 if (gravity == -1) {
                     gravity = Gravity.TOP | Gravity.LEFT;
                 }
-
                 final int absoluteGravity = gravity;
                 final int verticalGravity = gravity & Gravity.VERTICAL_GRAVITY_MASK;
-
-                switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
+                switch(absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
                     case Gravity.CENTER_HORIZONTAL:
-                        childLeft = parentLeft + (parentRight - parentLeft - width) / 2 +
-                                lp.leftMargin - lp.rightMargin;
+                        childLeft = parentLeft + (parentRight - parentLeft - width) / 2 + lp.leftMargin - lp.rightMargin;
                         break;
                     case Gravity.RIGHT:
                         if (!forceLeftGravity) {
@@ -88,14 +77,12 @@ public class OffsetLayout extends FrameLayout {
                     default:
                         childLeft = parentLeft + lp.leftMargin;
                 }
-
-                switch (verticalGravity) {
+                switch(verticalGravity) {
                     case Gravity.TOP:
                         childTop = parentTop + lp.topMargin;
                         break;
                     case Gravity.CENTER_VERTICAL:
-                        childTop = parentTop + (parentBottom - parentTop - height) / 2 +
-                                lp.topMargin - lp.bottomMargin;
+                        childTop = parentTop + (parentBottom - parentTop - height) / 2 + lp.topMargin - lp.bottomMargin;
                         break;
                     case Gravity.BOTTOM:
                         childTop = parentBottom - height - lp.bottomMargin;
@@ -103,9 +90,7 @@ public class OffsetLayout extends FrameLayout {
                     default:
                         childTop = parentTop + lp.topMargin;
                 }
-
-                child.layout(childLeft + lp.offsetX, childTop + lp.offsetY,
-                        childLeft + width + lp.offsetX, childTop + height + lp.offsetY);
+                child.layout(childLeft + lp.offsetX, childTop + lp.offsetY, childLeft + width + lp.offsetX, childTop + height + lp.offsetY);
             }
         }
     }
@@ -128,6 +113,7 @@ public class OffsetLayout extends FrameLayout {
     public static class LayoutParams extends FrameLayout.LayoutParams {
 
         public int offsetX;
+
         public int offsetY;
 
         public LayoutParams(Context c, AttributeSet attrs) {

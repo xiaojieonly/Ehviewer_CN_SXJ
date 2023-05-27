@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.gallery;
 
 import androidx.annotation.NonNull;
@@ -24,18 +23,17 @@ import com.hippo.unifile.UniFile;
 public abstract class GalleryProvider2 extends GalleryProvider {
 
     // With dot
-    public static final String[] SUPPORT_IMAGE_EXTENSIONS = {
-            ".jpg", // Joint Photographic Experts Group
-            ".jpeg",
-            ".png", // Portable Network Graphics
-            ".gif", // Graphics Interchange Format
-    };
+    public static final String[] SUPPORT_IMAGE_EXTENSIONS = { // Joint Photographic Experts Group
+    ".jpg", ".jpeg", // Portable Network Graphics
+    ".png", // Graphics Interchange Format
+    ".gif" };
 
     public int getStartPage() {
         return 0;
     }
 
-    public void putStartPage(int page) {}
+    public void putStartPage(int page) {
+    }
 
     /**
      * @return without extension

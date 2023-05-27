@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.content.Context;
@@ -26,7 +25,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -48,12 +46,12 @@ import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.IntIdGenerator;
 import com.hippo.yorozuya.ViewUtils;
 
-public final class SignInScene extends SolidScene implements EditText.OnEditorActionListener,
-        View.OnClickListener {
+public final class SignInScene extends SolidScene implements EditText.OnEditorActionListener, View.OnClickListener {
 
     private static final String KEY_REQUEST_ID = "request_id";
 
     private static final int REQUEST_CODE_WEBVIEW = 0;
+
     private static final int REQUEST_CODE_COOKIE = 0;
 
     /*---------------
@@ -61,26 +59,36 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
      ---------------*/
     @Nullable
     private View mProgress;
+
     @Nullable
     private TextInputLayout mUsernameLayout;
+
     @Nullable
     private TextInputLayout mPasswordLayout;
+
     @Nullable
     private EditText mUsername;
+
     @Nullable
     private EditText mPassword;
+
     @Nullable
     private View mRegister;
+
     @Nullable
     private View mSignIn;
+
     @Nullable
     private TextView mSignInViaWebView;
+
     @Nullable
     private TextView mSignInViaCookies;
+
     @Nullable
     private TextView mSkipSigningIn;
 
     private boolean mSigningIn;
+
     private int mRequestId = IntIdGenerator.INVALID_ID;
 
     @Override
@@ -91,7 +99,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (savedInstanceState == null) {
             onInit();
         } else {
@@ -114,10 +121,8 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_login, container, false);
-
         View loginForm = ViewUtils.$$(view, R.id.login_form);
         mProgress = ViewUtils.$$(view, R.id.progress);
         mUsernameLayout = (TextInputLayout) ViewUtils.$$(loginForm, R.id.username_layout);
@@ -131,19 +136,15 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         mSignInViaWebView = (TextView) ViewUtils.$$(loginForm, R.id.sign_in_via_webview);
         mSignInViaCookies = (TextView) ViewUtils.$$(loginForm, R.id.sign_in_via_cookies);
         mSkipSigningIn = (TextView) ViewUtils.$$(loginForm, R.id.skip_signing_in);
-
         mSignInViaWebView.setPaintFlags(mSignInViaWebView.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         mSignInViaCookies.setPaintFlags(mSignInViaCookies.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         mSkipSigningIn.setPaintFlags(mSignInViaCookies.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-
         mPassword.setOnEditorActionListener(this);
-
         mRegister.setOnClickListener(this);
         mSignIn.setOnClickListener(this);
         mSignInViaWebView.setOnClickListener(this);
         mSignInViaCookies.setOnClickListener(this);
         mSkipSigningIn.setOnClickListener(this);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         EhApplication application = (EhApplication) context.getApplicationContext();
@@ -152,14 +153,12 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
             // request exist
             showProgress(false);
         }
-
         return view;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         // Show IME
         if (mProgress != null && View.INVISIBLE != mProgress.getVisibility()) {
             showSoftInput(mUsername);
@@ -169,7 +168,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         mProgress = null;
         mUsernameLayout = null;
         mPasswordLayout = null;
@@ -218,7 +216,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (null == activity) {
             return;
         }
-
         if (mRegister == v) {
             UrlOpener.openUrl(activity, EhUrl.URL_REGISTER, false);
         } else if (mSignIn == v) {
@@ -236,13 +233,10 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-        if (v == mPassword) {
-            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_NULL) {
-                signIn();
-                return true;
-            }
+        if (v == mPassword && actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_NULL) {
+            signIn();
+            return true;
         }
-
         return false;
     }
 
@@ -250,46 +244,33 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (mSigningIn) {
             return;
         }
-
         Context context = getEHContext();
         MainActivity activity = getActivity2();
-        if (null == context || null == activity || null == mUsername || null == mPassword || null == mUsernameLayout ||
-                null == mPasswordLayout) {
+        if (null == context || null == activity || null == mUsername || null == mPassword || null == mUsernameLayout || null == mPasswordLayout) {
             return;
         }
-
         String username = mUsername.getText().toString();
         String password = mPassword.getText().toString();
-
         if (username.isEmpty()) {
             mUsernameLayout.setError(getString(R.string.error_username_cannot_empty));
             return;
         } else {
             mUsernameLayout.setError(null);
         }
-
         if (password.isEmpty()) {
             mPasswordLayout.setError(getString(R.string.error_password_cannot_empty));
             return;
         } else {
             mPasswordLayout.setError(null);
         }
-
         hideSoftInput();
         showProgress(true);
-
         // Clean up for sign in
         EhUtils.signOut(context);
-
-        EhCallback callback = new SignInListener(context,
-                activity.getStageId(), getTag());
+        EhCallback callback = new SignInListener(context, activity.getStageId(), getTag());
         mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_SIGN_IN)
-                .setArgs(username, password)
-                .setCallback(callback);
+        EhRequest request = new EhRequest().setMethod(EhClient.METHOD_SIGN_IN).setArgs(username, password).setCallback(callback);
         EhApplication.getEhClient(context).execute(request);
-
         mSigningIn = true;
     }
 
@@ -299,16 +280,11 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (null == context || null == activity) {
             return;
         }
-
         hideSoftInput();
         showProgress(true);
-
-        EhCallback callback = new GetProfileListener(context,
-                activity.getStageId(), getTag());
+        EhCallback callback = new GetProfileListener(context, activity.getStageId(), getTag());
         mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_PROFILE)
-                .setCallback(callback);
+        EhRequest request = new EhRequest().setMethod(EhClient.METHOD_GET_PROFILE).setCallback(callback);
         EhApplication.getEhClient(context).execute(request);
     }
 
@@ -326,12 +302,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (null == context) {
             return;
         }
-
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.sign_in_failed)
-                .setMessage(ExceptionUtils.getReadableString(e) + "\n\n" + getString(R.string.sign_in_failed_tip))
-                .setPositiveButton(R.string.get_it, null)
-                .show();
+        new AlertDialog.Builder(context).setTitle(R.string.sign_in_failed).setMessage(ExceptionUtils.getReadableString(e) + "\n\n" + getString(R.string.sign_in_failed_tip)).setPositiveButton(R.string.get_it, null).show();
     }
 
     public void onSignInEnd(Exception e) {
@@ -339,7 +310,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (null == context) {
             return;
         }
-
         if (EhApplication.getEhCookieStore(context).hasSignedIn()) {
             getProfile();
         } else {
@@ -365,7 +335,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         public void onSuccess(String result) {
             getApplication().removeGlobalStuff(this);
             Settings.putDisplayName(result);
-
             SignInScene scene = getScene();
             if (scene != null) {
                 scene.onSignInEnd(null);
@@ -376,7 +345,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         public void onFailure(Exception e) {
             getApplication().removeGlobalStuff(this);
             e.printStackTrace();
-
             SignInScene scene = getScene();
             if (scene != null) {
                 scene.onSignInEnd(e);
@@ -405,7 +373,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
             getApplication().removeGlobalStuff(this);
             Settings.putDisplayName(result.displayName);
             Settings.putAvatar(result.avatar);
-
             SignInScene scene = getScene();
             if (scene != null) {
                 scene.onGetProfileEnd();
@@ -416,7 +383,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         public void onFailure(Exception e) {
             getApplication().removeGlobalStuff(this);
             e.printStackTrace();
-
             SignInScene scene = getScene();
             if (scene != null) {
                 scene.onGetProfileEnd();

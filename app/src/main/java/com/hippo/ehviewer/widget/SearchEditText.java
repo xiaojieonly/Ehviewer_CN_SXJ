@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -60,12 +59,9 @@ public class SearchEditText extends AppCompatEditText {
                 if (state != null) {
                     state.handleUpEvent(event);
                 }
-                if (event.isTracking() && !event.isCanceled()) {
-                    // TODO stopSelectionActionMode
-                    if (mListener != null) {
-                        mListener.onBackPressed();
-                        return true;
-                    }
+                if (event.isTracking() && !event.isCanceled() && mListener != null) {
+                    mListener.onBackPressed();
+                    return true;
                 }
             }
         }
@@ -88,7 +84,9 @@ public class SearchEditText extends AppCompatEditText {
     }
 
     public interface SearchEditTextListener {
+
         void onClick();
+
         void onBackPressed();
     }
 }

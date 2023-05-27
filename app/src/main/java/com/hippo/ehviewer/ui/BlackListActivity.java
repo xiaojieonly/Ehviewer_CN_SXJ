@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.content.DialogInterface;
@@ -29,12 +28,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.textfield.TextInputLayout;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.ehviewer.EhDB;
@@ -44,17 +41,19 @@ import com.hippo.util.DrawableManager;
 import com.hippo.util.TimeUtils;
 import com.hippo.view.ViewTransition;
 import com.hippo.yorozuya.ViewUtils;
-
 import java.util.List;
 
 public class BlackListActivity extends ToolbarActivity {
 
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private ViewTransition mViewTransition;
+
     @Nullable
     private BlackListAdapter mAdapter;
+
     @Nullable
     private BlackListList mblackListList;
 
@@ -63,17 +62,13 @@ public class BlackListActivity extends ToolbarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blacklist);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-
         mblackListList = new BlackListList();
-
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(this, R.id.recycler_view1);
         TextView tip = (TextView) ViewUtils.$$(this, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
-
         Drawable drawable = DrawableManager.getVectorDrawable(this, R.drawable.big_filter);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
-
         mAdapter = new BlackListAdapter();
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setClipToPadding(false);
@@ -81,7 +76,6 @@ public class BlackListActivity extends ToolbarActivity {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.hasFixedSize();
         mRecyclerView.setItemAnimator(null);
-
         updateView(false);
     }
 
@@ -89,10 +83,9 @@ public class BlackListActivity extends ToolbarActivity {
         if (null == mViewTransition) {
             return;
         }
-
         if (null == mblackListList || 0 == mblackListList.size()) {
             mViewTransition.showView(1, animation);
-        }else {
+        } else {
             mViewTransition.showView(0, animation);
         }
     }
@@ -100,7 +93,6 @@ public class BlackListActivity extends ToolbarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         mRecyclerView = null;
         mViewTransition = null;
         mAdapter = null;
@@ -116,7 +108,7 @@ public class BlackListActivity extends ToolbarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
@@ -132,46 +124,40 @@ public class BlackListActivity extends ToolbarActivity {
     }
 
     private void showTipDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.blacklist)
-                .setMessage(R.string.blacklist_tip)
-                .show();
+        new AlertDialog.Builder(this).setTitle(R.string.blacklist).setMessage(R.string.blacklist_tip).show();
     }
 
     private void showAddBlackListDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.add_blacklist)
-                .setView(R.layout.dialog_add_blacklist)
-                .setPositiveButton(R.string.add, null)
-                .show();
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle(R.string.add_blacklist).setView(R.layout.dialog_add_blacklist).setPositiveButton(R.string.add, null).show();
         AddBlackListDialogHelper helper = new AddBlackListDialogHelper();
         helper.setDialog(dialog);
     }
 
     private void showDeleteBlackListDialog(final BlackList blackList) {
         String message = getString(R.string.delete_blacklist, blackList.badgayname);
-        new AlertDialog.Builder(this)
-                .setMessage(message)
-                .setPositiveButton(R.string.delete, (dialog, which) -> {
-                    if (DialogInterface.BUTTON_POSITIVE != which || null == mblackListList) {
-                        return;
-                    }
-                    mblackListList.delete(blackList);
-                    if (null != mAdapter) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                    updateView(true);
-                }).show();
+        new AlertDialog.Builder(this).setMessage(message).setPositiveButton(R.string.delete, (dialog, which) -> {
+            if (DialogInterface.BUTTON_POSITIVE != which || null == mblackListList) {
+                return;
+            }
+            mblackListList.delete(blackList);
+            if (null != mAdapter) {
+                mAdapter.notifyDataSetChanged();
+            }
+            updateView(true);
+        }).show();
     }
 
     private class AddBlackListDialogHelper implements View.OnClickListener {
 
         @Nullable
         private AlertDialog mDialog;
+
         @Nullable
         private Spinner mSpinner;
+
         @Nullable
         private TextInputLayout mInputLayout;
+
         @Nullable
         private EditText mEditText;
 
@@ -188,11 +174,9 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Override
         public void onClick(View v) {
-            if (null == mblackListList || null == mDialog || null == mSpinner ||
-                    null == mInputLayout || null == mEditText) {
+            if (null == mblackListList || null == mDialog || null == mSpinner || null == mInputLayout || null == mEditText) {
                 return;
             }
-
             String text = mEditText.getText().toString().trim();
             if (TextUtils.isEmpty(text)) {
                 mInputLayout.setError(getString(R.string.text_is_empty));
@@ -201,20 +185,16 @@ public class BlackListActivity extends ToolbarActivity {
                 mInputLayout.setError(null);
             }
             int mode = mSpinner.getSelectedItemPosition();
-
             BlackList blackList = new BlackList();
             blackList.badgayname = text;
             blackList.add_time = TimeUtils.getTimeNow();
             blackList.angrywith = "/手动添加/";
-            blackList.mode=1;
-
+            blackList.mode = 1;
             mblackListList.add(blackList);
-
             if (null != mAdapter) {
                 mAdapter.notifyDataSetChanged();
             }
             updateView(true);
-
             mDialog.dismiss();
             mDialog = null;
             mSpinner = null;
@@ -226,13 +206,13 @@ public class BlackListActivity extends ToolbarActivity {
     private class BlackListHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private final TextView text;
+
         private final ImageView icon;
 
         public BlackListHolder(View itemView) {
             super(itemView);
             text = (TextView) ViewUtils.$$(itemView, R.id.text);
             icon = itemView.findViewById(R.id.icon);
-
             if (null != icon) {
                 icon.setOnClickListener(this);
             }
@@ -246,21 +226,19 @@ public class BlackListActivity extends ToolbarActivity {
             if (position < 0 || null == mblackListList) {
                 return;
             }
-
             BlackList blackList = mblackListList.get(position);
-
             if (v instanceof ImageView) {
                 showDeleteBlackListDialog(blackList);
             } else if (v instanceof TextView) {
                 mAdapter.notifyItemChanged(getAdapterPosition());
             }
-
         }
     }
 
     private class BlackListAdapter extends RecyclerView.Adapter<BlackListHolder> {
 
         private static final int TYPE_ITEM = 0;
+
         private static final int TYPE_HEADER = 1;
 
         @Override
@@ -268,7 +246,6 @@ public class BlackListActivity extends ToolbarActivity {
             if (null == mblackListList) {
                 return TYPE_ITEM;
             }
-
             if (mblackListList.get(position).mode == BlackListList.MODE_HEADER) {
                 return TYPE_HEADER;
             } else {
@@ -278,8 +255,8 @@ public class BlackListActivity extends ToolbarActivity {
 
         @Override
         public BlackListHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            int layoutId ;
-            switch (viewType) {
+            int layoutId;
+            switch(viewType) {
                 default:
                 case TYPE_ITEM:
                     layoutId = R.layout.item_blacklist;
@@ -288,14 +265,10 @@ public class BlackListActivity extends ToolbarActivity {
                     layoutId = R.layout.item_blacklist_header;
                     break;
             }
-
             BlackListHolder holder = new BlackListHolder(getLayoutInflater().inflate(layoutId, parent, false));
-
             if (R.layout.item_blacklist == layoutId) {
-                holder.icon.setImageDrawable(
-                        DrawableManager.getVectorDrawable(BlackListActivity.this, R.drawable.v_delete_x24));
+                holder.icon.setImageDrawable(DrawableManager.getVectorDrawable(BlackListActivity.this, R.drawable.v_delete_x24));
             }
-
             return holder;
         }
 
@@ -305,16 +278,12 @@ public class BlackListActivity extends ToolbarActivity {
                 return;
             }
             BlackList blackList = mblackListList.get(position);
-
             if (BlackListList.MODE_HEADER == blackList.mode) {
                 holder.text.setText(blackList.badgayname);
             } else {
                 holder.text.setText(blackList.badgayname);
-
                 holder.text.setPaintFlags(holder.text.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-
             }
-
         }
 
         @Override
@@ -326,7 +295,6 @@ public class BlackListActivity extends ToolbarActivity {
     private class BlackListList {
 
         public static final int MODE_HEADER = -1;
-
 
         private List<BlackList> mTitleBlackList;
 
@@ -340,7 +308,6 @@ public class BlackListActivity extends ToolbarActivity {
             int count = 0;
             int size = mTitleBlackList.size();
             count += 0 == size ? 0 : size + 1;
-
             return count;
         }
 
@@ -353,8 +320,6 @@ public class BlackListActivity extends ToolbarActivity {
             return mTitleHeader;
         }
 
-
-
         public BlackList get(int index) {
             int size = mTitleBlackList.size();
             if (0 != size) {
@@ -366,8 +331,6 @@ public class BlackListActivity extends ToolbarActivity {
                     index -= size + 1;
                 }
             }
-
-
             throw new IndexOutOfBoundsException();
         }
 
@@ -380,6 +343,5 @@ public class BlackListActivity extends ToolbarActivity {
             EhDB.deleteBlackList(blackList);
             mTitleBlackList.remove(blackList);
         }
-
     }
 }

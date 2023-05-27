@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.preference;
 
 import android.content.Context;
@@ -35,8 +34,7 @@ public class ClearDownloadPathCachePreference extends MessagePreference {
         init(context);
     }
 
-    public ClearDownloadPathCachePreference(Context context,
-            AttributeSet attrs, int defStyleAttr) {
+    public ClearDownloadPathCachePreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
@@ -54,7 +52,6 @@ public class ClearDownloadPathCachePreference extends MessagePreference {
     @Override
     protected void onDialogClosed(boolean positiveResult) {
         super.onDialogClosed(positiveResult);
-
         if (positiveResult) {
             EhDB.clearDownloadDirname();
         }

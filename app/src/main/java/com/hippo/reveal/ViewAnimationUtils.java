@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.reveal;
 
 import android.animation.Animator;
@@ -21,46 +20,42 @@ import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.os.Build;
 import android.view.View;
-
 import com.hippo.yorozuya.SimpleAnimatorListener;
 
 public final class ViewAnimationUtils {
-    private ViewAnimationUtils() {}
 
-    public static final boolean API_SUPPORT_CIRCULAR_REVEAL =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+    private ViewAnimationUtils() {
+    }
+
+    public static final boolean API_SUPPORT_CIRCULAR_REVEAL = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+
     // http://developer.android.com/guide/topics/graphics/hardware-accel.html#unsupported
-    public static final boolean API_SUPPORT_CANVAS_CLIP_PATH =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
+    public static final boolean API_SUPPORT_CANVAS_CLIP_PATH = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public static Animator createCircularReveal(View view,
-            int centerX,  int centerY, float startRadius, float endRadius) {
+    public static Animator createCircularReveal(View view, int centerX, int centerY, float startRadius, float endRadius) {
         if (API_SUPPORT_CIRCULAR_REVEAL) {
-            return android.view.ViewAnimationUtils.createCircularReveal(
-                    view, centerX, centerY, startRadius, endRadius);
-        } else if (view instanceof Reveal){
-            return createRevealAnimator((Reveal) view, centerX, centerY,
-                    startRadius, endRadius);
+            return android.view.ViewAnimationUtils.createCircularReveal(view, centerX, centerY, startRadius, endRadius);
+        } else if (view instanceof Reveal) {
+            return createRevealAnimator((Reveal) view, centerX, centerY, startRadius, endRadius);
         } else {
-            throw new IllegalStateException("Only View implements CircularReveal or" +
-                    " api >= 21 can create circular reveal");
+            throw new IllegalStateException("Only View implements CircularReveal or" + " api >= 21 can create circular reveal");
         }
     }
 
-    private static Animator createRevealAnimator(Reveal reveal, int centerX, int centerY,
-            float startRadius, float endRadius) {
+    private static Animator createRevealAnimator(Reveal reveal, int centerX, int centerY, float startRadius, float endRadius) {
         ValueAnimator animator = ValueAnimator.ofFloat(startRadius, endRadius);
         animator.addUpdateListener(new RevealAnimatorUpdateListener(reveal, centerX, centerY));
         animator.addListener(new RevealAnimatorListener(reveal));
         return animator;
     }
 
-    private static class RevealAnimatorUpdateListener
-            implements ValueAnimator.AnimatorUpdateListener {
+    private static class RevealAnimatorUpdateListener implements ValueAnimator.AnimatorUpdateListener {
 
         private final Reveal mReveal;
+
         private final int mCenterX;
+
         private final int mCenterY;
 
         public RevealAnimatorUpdateListener(Reveal reveal, int centerX, int centerY) {
@@ -81,6 +76,7 @@ public final class ViewAnimationUtils {
     private static class RevealAnimatorListener extends SimpleAnimatorListener {
 
         private final Reveal mReveal;
+
         private final View mView;
 
         public RevealAnimatorListener(Reveal reveal) {

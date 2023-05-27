@@ -1,10 +1,7 @@
 package com.hippo.ehviewer.util;
 
 import android.content.res.AssetManager;
-
-
 import com.hippo.ehviewer.client.EhTagDatabase;
-
 
 public class TagTranslationUtil {
 
@@ -14,8 +11,6 @@ public class TagTranslationUtil {
             //翻译标签名
             String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
             String tagStr = ehTags.getTranslation(prefix != null ? prefix + tags[1] : "" + tags[1]);
-
-
             if (group != null && tagStr != null) {
                 return group + "：" + tagStr;
             } else if (group != null && tagStr == null) {
@@ -30,13 +25,12 @@ public class TagTranslationUtil {
             for (int i = 0; i < tags.length; i++) {
                 if (i == 0) {
                     s = s.append(tags[i]);
-//                    s +=  tags[i];
+                    //                    s +=  tags[i];
                 } else {
                     s = s.append(":").append(tags[i]);
-//                    s +=  ":" + tags[i];
+                    //                    s +=  ":" + tags[i];
                 }
             }
-
             return s.toString();
         }
     }
@@ -47,8 +41,6 @@ public class TagTranslationUtil {
             //翻译标签名
             String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
             String tagstr = ehTags.getTranslation(prefix != null ? prefix + tags[1] : "" + tags[1]);
-
-
             if (group != null && tagstr != null) {
                 return tagstr;
             } else if (group != null && tagstr == null) {
@@ -66,6 +58,4 @@ public class TagTranslationUtil {
             return s.toString();
         }
     }
-
-
 }

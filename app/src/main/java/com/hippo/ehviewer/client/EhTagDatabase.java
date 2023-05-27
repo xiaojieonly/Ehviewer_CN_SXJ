@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client;
 
 import android.content.Context;
 import android.os.Build;
 import android.util.Base64;
 import android.util.Pair;
-
 import androidx.annotation.Nullable;
-
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
@@ -32,7 +29,6 @@ import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.util.TextUrl;
 import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.IOUtils;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -50,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -67,18 +62,18 @@ import okio.Timeout;
 public class EhTagDatabase {
 
     private final String name;
+
     private final byte[] tags;
+
     private final List<Tag> tagList;
 
     public EhTagDatabase(String name, BufferedSource source) throws IOException {
         this.name = name;
         int totalBytes = source.readInt();
-
         tags = new byte[totalBytes];
         source.readFully(tags);
         byte[] newByte = tags.clone();
         String sourceString = new String(newByte, StandardCharsets.UTF_8);
-
         tagList = initTagList(sourceString);
     }
 
@@ -88,13 +83,10 @@ public class EhTagDatabase {
 
     private List<Tag> initTagList(String sourceString) {
         String[] tagStrings = sourceString.split("\n");
-
         List<Tag> initList = new ArrayList<>();
-
         for (String tagString : tagStrings) {
             initList.add(parseTag(tagString));
         }
-
         return initList;
     }
 
@@ -112,7 +104,6 @@ public class EhTagDatabase {
             }
             return new Tag(english, chinese);
         }
-
         return new Tag(source, "null");
     }
 
@@ -127,23 +118,19 @@ public class EhTagDatabase {
                 start--;
             }
             start++;
-
             // Look for the middle '\r'.
             int middle = 1;
             while (tags[start + middle] != '\r') {
                 middle++;
             }
-
             // Look for the ending '\n'
             int end = middle + 1;
             while (tags[start + end] != '\n') {
                 end++;
             }
-
             int compare;
             int tagIndex = 0;
             int curIndex = start;
-
             for (; ; ) {
                 int tagByte = tag[tagIndex] & 0xff;
                 int curByte = tags[curIndex] & 0xff;
@@ -151,7 +138,6 @@ public class EhTagDatabase {
                 if (compare != 0) {
                     break;
                 }
-
                 tagIndex++;
                 curIndex++;
                 if (tagIndex == tag.length && curIndex == start + middle) {
@@ -166,7 +152,6 @@ public class EhTagDatabase {
                     break;
                 }
             }
-
             if (compare < 0) {
                 high = start - 1;
             } else if (compare > 0) {
@@ -179,8 +164,8 @@ public class EhTagDatabase {
         return null;
     }
 
-
     public static final Map<String, String> NAMESPACE_TO_PREFIX = new HashMap<>();
+
     public static final Map<String, String> PREFIX_TO_NAMESPACE = new HashMap<>();
 
     static {
@@ -213,6 +198,7 @@ public class EhTagDatabase {
     }
 
     private static volatile EhTagDatabase instance;
+
     // TODO more lock for different language
     private static Lock lock = new ReentrantLock();
 
@@ -284,17 +270,14 @@ public class EhTagDatabase {
         if (b1 == null || b2 == null) {
             return false;
         }
-
         if (b1.length != b2.length) {
             return false;
         }
-
         for (int i = 0; i < b1.length; i++) {
             if (b1[i] != b2[i]) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -303,12 +286,10 @@ public class EhTagDatabase {
         if (s1 == null) {
             return false;
         }
-
         byte[] s2 = getFileSha1(dataFile);
         if (s2 == null) {
             return false;
         }
-
         return equals(s1, s2);
     }
 
@@ -323,11 +304,10 @@ public class EhTagDatabase {
             if (body == null) {
                 return false;
             }
-
-            try (InputStream is = body.byteStream(); OutputStream os = new FileOutputStream(file)) {
+            try (InputStream is = body.byteStream();
+                OutputStream os = new FileOutputStream(file)) {
                 IOUtils.copy(is, os);
             }
-
             return true;
         } catch (Throwable t) {
             ExceptionUtils.throwIfFatal(t);
@@ -342,29 +322,24 @@ public class EhTagDatabase {
             instance = null;
             return;
         }
-
         String sha1Name = urls[0];
         String sha1Url = urls[1];
         String dataName = urls[2];
         String dataUrl = urls[3];
-
         // Clear tags if name if different
         EhTagDatabase tmp = instance;
         if (tmp != null && !tmp.name.equals(dataName)) {
             instance = null;
         }
-
         IoThreadPoolExecutor.getInstance().execute(() -> {
             if (!lock.tryLock()) {
                 return;
             }
-
             try {
                 File dir = AppConfig.getFilesDir("tag-translations");
                 if (dir == null) {
                     return;
                 }
-
                 // Check current sha1 and current data
                 File sha1File = new File(dir, sha1Name);
                 File dataFile = new File(dir, dataName);
@@ -372,7 +347,6 @@ public class EhTagDatabase {
                     FileUtils.delete(sha1File);
                     FileUtils.delete(dataFile);
                 }
-
                 // Read current EhTagDatabase
                 if (instance == null && dataFile.exists()) {
                     try (BufferedSource source = Okio.buffer(Okio.source(dataFile))) {
@@ -382,43 +356,36 @@ public class EhTagDatabase {
                         FileUtils.delete(dataFile);
                     }
                 }
-
                 OkHttpClient client = EhApplication.getOkHttpClient(EhApplication.getInstance());
-
                 // Save new sha1
                 File tempSha1File = new File(dir, sha1Name + ".tmp");
                 if (!save(client, sha1Url, tempSha1File)) {
                     FileUtils.delete(tempSha1File);
                     return;
                 }
-
                 // Check new sha1 and current data
                 if (checkData(tempSha1File, dataFile)) {
                     // The data is the same
                     FileUtils.delete(tempSha1File);
                     return;
                 }
-
                 // Save new data
                 File tempDataFile = new File(dir, dataName + ".tmp");
                 if (!save(client, dataUrl, tempDataFile)) {
                     FileUtils.delete(tempDataFile);
                     return;
                 }
-
                 // Check new sha1 and new data
                 if (!checkData(tempSha1File, tempDataFile)) {
                     FileUtils.delete(tempSha1File);
                     FileUtils.delete(tempDataFile);
                     return;
                 }
-
                 // Replace current sha1 and current data with new sha1 and new data
                 FileUtils.delete(sha1File);
                 FileUtils.delete(dataFile);
                 tempSha1File.renameTo(sha1File);
                 tempDataFile.renameTo(dataFile);
-
                 // Read new EhTagDatabase
                 try (BufferedSource source = Okio.buffer(Okio.source(dataFile))) {
                     instance = new EhTagDatabase(dataName, source);
@@ -436,7 +403,6 @@ public class EhTagDatabase {
     }
 
     private List<Pair<String, String>> searchTag(List<Tag> tags, String keyword) {
-
         List<Pair<String, String>> searchList = new ArrayList<>();
         int total = 0;
         for (Tag tag : tags) {
@@ -448,7 +414,6 @@ public class EhTagDatabase {
                 total++;
             }
         }
-
         return searchList;
     }
 }

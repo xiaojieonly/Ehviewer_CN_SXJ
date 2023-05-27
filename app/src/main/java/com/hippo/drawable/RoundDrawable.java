@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.Canvas;
@@ -27,6 +26,7 @@ import android.graphics.drawable.Drawable;
 public class RoundDrawable extends Drawable {
 
     private final Paint mPaint;
+
     private final RectF mRectF;
 
     public RoundDrawable(int color) {

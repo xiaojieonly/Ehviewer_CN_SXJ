@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.app;
 
 import android.annotation.SuppressLint;
@@ -32,7 +31,9 @@ import com.hippo.ehviewer.R;
 public class EditTextDialogBuilder extends AlertDialog.Builder implements EditText.OnEditorActionListener {
 
     private final TextInputLayout mTextInputLayout;
+
     private final EditText mEditText;
+
     private AlertDialog mDialog;
 
     @SuppressLint("InflateParams")

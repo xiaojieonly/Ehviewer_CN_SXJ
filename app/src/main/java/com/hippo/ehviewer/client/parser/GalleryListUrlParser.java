@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import android.text.TextUtils;
-
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.yorozuya.Utilities;
-
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -29,10 +26,12 @@ import java.net.URLDecoder;
 
 public final class GalleryListUrlParser {
 
-    private static final String[] VALID_HOSTS = {EhUrl.DOMAIN_EX, EhUrl.DOMAIN_E, EhUrl.DOMAIN_LOFI};
+    private static final String[] VALID_HOSTS = { EhUrl.DOMAIN_EX, EhUrl.DOMAIN_E, EhUrl.DOMAIN_LOFI };
 
     private static final String PATH_NORMAL = "/";
+
     private static final String PATH_UPLOADER = "/uploader/";
+
     private static final String PATH_TAG = "/tag/";
 
     public static ListUrlBuilder parse(String urlStr) {
@@ -42,11 +41,9 @@ public final class GalleryListUrlParser {
         } catch (MalformedURLException e) {
             return null;
         }
-
         if (!Utilities.contain(VALID_HOSTS, url.getHost())) {
             return null;
         }
-
         String path = url.getPath();
         if (path == null) {
             return null;
@@ -80,23 +77,19 @@ public final class GalleryListUrlParser {
         String uploader;
         int prefixLength = PATH_UPLOADER.length();
         int index = path.indexOf('/', prefixLength);
-
         if (index < 0) {
             uploader = path.substring(prefixLength);
         } else {
             uploader = path.substring(prefixLength, index);
         }
-
         try {
             uploader = URLDecoder.decode(uploader, "utf-8");
         } catch (UnsupportedEncodingException e) {
             return null;
         }
-
         if (TextUtils.isEmpty(uploader)) {
             return null;
         }
-
         ListUrlBuilder builder = new ListUrlBuilder();
         builder.setMode(ListUrlBuilder.MODE_UPLOADER);
         builder.setKeyword(uploader);
@@ -108,24 +101,19 @@ public final class GalleryListUrlParser {
         String tag;
         int prefixLength = PATH_TAG.length();
         int index = path.indexOf('/', prefixLength);
-
-
         if (index < 0) {
             tag = path.substring(prefixLength);
         } else {
             tag = path.substring(prefixLength, index);
         }
-
         try {
             tag = URLDecoder.decode(tag, "utf-8");
         } catch (UnsupportedEncodingException e) {
             return null;
         }
-
         if (TextUtils.isEmpty(tag)) {
             return null;
         }
-
         ListUrlBuilder builder = new ListUrlBuilder();
         builder.setMode(ListUrlBuilder.MODE_TAG);
         builder.setKeyword(tag);

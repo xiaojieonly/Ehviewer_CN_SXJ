@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.app;
 
 import android.annotation.SuppressLint;
@@ -47,11 +46,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NavUtils;
 import androidx.core.app.TaskStackBuilder;
 
-public abstract class AppCompatPreferenceActivity extends PreferenceActivity implements AppCompatCallback,
-    TaskStackBuilder.SupportParentable, ActionBarDrawerToggle.DelegateProvider {
+public abstract class AppCompatPreferenceActivity extends PreferenceActivity implements AppCompatCallback, TaskStackBuilder.SupportParentable, ActionBarDrawerToggle.DelegateProvider {
 
     private AppCompatDelegate mDelegate;
+
     private int mThemeId = 0;
+
     private Resources mResources;
 
     @Override
@@ -184,10 +184,8 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
         if (super.onMenuItemSelected(featureId, item)) {
             return true;
         }
-
         final ActionBar ab = getSupportActionBar();
-        if (item.getItemId() == android.R.id.home && ab != null &&
-            (ab.getDisplayOptions() & ActionBar.DISPLAY_HOME_AS_UP) != 0) {
+        if (item.getItemId() == android.R.id.home && ab != null && (ab.getDisplayOptions() & ActionBar.DISPLAY_HOME_AS_UP) != 0) {
             return onSupportNavigateUp();
         }
         return false;
@@ -224,12 +222,12 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
     }
 
     public void supportInvalidateOptionsMenu() {
-        getDelegate().invalidateOptionsMenu();
+        executeInvalidateOptionsMenu();
     }
 
     @Override
     public void invalidateOptionsMenu() {
-        getDelegate().invalidateOptionsMenu();
+        executeInvalidateOptionsMenu();
     }
 
     /**
@@ -378,14 +376,12 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
      */
     public boolean onSupportNavigateUp() {
         Intent upIntent = getSupportParentActivityIntent();
-
         if (upIntent != null) {
             if (supportShouldUpRecreateTask(upIntent)) {
                 TaskStackBuilder b = TaskStackBuilder.create(this);
                 onCreateSupportNavigateUpTaskStack(b);
                 onPrepareSupportNavigateUpTaskStack(b);
                 b.startActivities();
-
                 try {
                     ActivityCompat.finishAffinity(this);
                 } catch (IllegalStateException e) {
@@ -503,8 +499,7 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
         // the window handling it
         final int keyCode = event.getKeyCode();
         final ActionBar actionBar = getSupportActionBar();
-        if (keyCode == KeyEvent.KEYCODE_MENU
-            && actionBar != null && actionBar.onMenuKeyEvent(event)) {
+        if (keyCode == KeyEvent.KEYCODE_MENU && actionBar != null && actionBar.onMenuKeyEvent(event)) {
             return true;
         }
         return super.dispatchKeyEvent(event);
@@ -525,10 +520,7 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
      * and perform the corresponding action.
      */
     private boolean performMenuItemShortcut(int keycode, KeyEvent event) {
-        if (!(Build.VERSION.SDK_INT >= 26) && !event.isCtrlPressed()
-            && !KeyEvent.metaStateHasNoModifiers(event.getMetaState())
-            && event.getRepeatCount() == 0
-            && !KeyEvent.isModifierKey(event.getKeyCode())) {
+        if (!(Build.VERSION.SDK_INT >= 26) && !event.isCtrlPressed() && !KeyEvent.metaStateHasNoModifiers(event.getMetaState()) && event.getRepeatCount() == 0 && !KeyEvent.isModifierKey(event.getKeyCode())) {
             final Window currentWindow = getWindow();
             if (currentWindow != null && currentWindow.getDecorView() != null) {
                 final View decorView = currentWindow.getDecorView();
@@ -552,8 +544,7 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
     @Override
     public void openOptionsMenu() {
         ActionBar actionBar = getSupportActionBar();
-        if (getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)
-            && (actionBar == null || !actionBar.openOptionsMenu())) {
+        if (getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL) && (actionBar == null || !actionBar.openOptionsMenu())) {
             super.openOptionsMenu();
         }
     }
@@ -562,10 +553,12 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
     @Override
     public void closeOptionsMenu() {
         ActionBar actionBar = getSupportActionBar();
-        if (getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)
-            && (actionBar == null || !actionBar.closeOptionsMenu())) {
+        if (getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL) && (actionBar == null || !actionBar.closeOptionsMenu())) {
             super.closeOptionsMenu();
         }
     }
 
+    public void executeInvalidateOptionsMenu() {
+        getDelegate().invalidateOptionsMenu();
+    }
 }

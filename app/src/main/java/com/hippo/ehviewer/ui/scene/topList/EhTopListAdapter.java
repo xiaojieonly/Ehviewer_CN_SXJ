@@ -6,10 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TableLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.topList.TopListInfo;
 import com.hippo.ehviewer.client.data.topList.TopListItem;
@@ -18,7 +16,9 @@ import com.hippo.ehviewer.client.data.topList.TopListItemArray;
 abstract class EhTopListAdapter extends RecyclerView.Adapter<EhTopListAdapter.EhTopListViewHolder> {
 
     private Context context;
+
     private TopListInfo ehTopListInfo;
+
     private int searchType;
 
     public EhTopListAdapter(@NonNull Context context, @NonNull RecyclerView recyclerView, TopListInfo topListInfo, int searchType) {
@@ -31,7 +31,6 @@ abstract class EhTopListAdapter extends RecyclerView.Adapter<EhTopListAdapter.Eh
     @Override
     public EhTopListAdapter.EhTopListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = View.inflate(context, R.layout.gallery_top_list_table_item, null);
-
         return new EhTopListViewHolder(view);
     }
 
@@ -42,16 +41,13 @@ abstract class EhTopListAdapter extends RecyclerView.Adapter<EhTopListAdapter.Eh
         for (int i = 0; i < topListItemArray.length(); i++) {
             View view = View.inflate(context, R.layout.gallery_top_list_item, null);
             TextView textView = view.findViewById(R.id.list_item);
-
-//            textView.setBackgroundColor(getRandomColor());
+            //            textView.setBackgroundColor(getRandomColor());
             GradientDrawable gradientDrawable = new GradientDrawable();
             gradientDrawable.setColor(getRandomColor(i));
             TopListItem topListItem = topListItemArray.get(i);
             gradientDrawable.setCornerRadius(8);
             textView.setBackground(gradientDrawable);
-
             textView.setText(topListItem.value);
-
             view.setOnClickListener(v -> {
                 onItemClick(topListItem, searchType);
             });
@@ -64,7 +60,7 @@ abstract class EhTopListAdapter extends RecyclerView.Adapter<EhTopListAdapter.Eh
     abstract void onItemClick(TopListItem topListItem, int searchType);
 
     private int timeInfoId(int index) {
-        switch (index) {
+        switch(index) {
             default:
             case 3:
                 return R.string.all_time_top_list;
@@ -82,12 +78,11 @@ abstract class EhTopListAdapter extends RecyclerView.Adapter<EhTopListAdapter.Eh
         return ehTopListInfo.size();
     }
 
-
     public class EhTopListViewHolder extends RecyclerView.ViewHolder {
 
         private TextView textView;
-        private TableLayout tableLayout;
 
+        private TableLayout tableLayout;
 
         public EhTopListViewHolder(@NonNull View itemView) {
             super(itemView);

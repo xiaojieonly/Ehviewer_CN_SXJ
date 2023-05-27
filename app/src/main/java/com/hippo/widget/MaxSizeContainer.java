@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -27,6 +26,7 @@ import com.hippo.yorozuya.AssertUtils;
 public class MaxSizeContainer extends ViewGroup {
 
     private int mMaxWidth;
+
     private int mMaxHeight;
 
     public MaxSizeContainer(Context context, AttributeSet attrs) {
@@ -50,11 +50,9 @@ public class MaxSizeContainer extends ViewGroup {
         if (max < 0) {
             return measureSpec;
         }
-
         int size = MeasureSpec.getSize(measureSpec);
         int mode = MeasureSpec.getMode(measureSpec);
-
-        switch (mode) {
+        switch(mode) {
             case MeasureSpec.AT_MOST:
                 size = Math.min(size, max);
                 break;
@@ -69,11 +67,9 @@ public class MaxSizeContainer extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         AssertUtils.assertEquals("getChildCount() must be 1", 1, getChildCount());
-
         View child = getChildAt(0);
         if (child.getVisibility() != GONE) {
-            child.measure(getMeasureSpec(widthMeasureSpec, mMaxWidth),
-                    getMeasureSpec(heightMeasureSpec, mMaxHeight));
+            child.measure(getMeasureSpec(widthMeasureSpec, mMaxWidth), getMeasureSpec(heightMeasureSpec, mMaxHeight));
             setMeasuredDimension(child.getMeasuredWidth(), child.getMeasuredHeight());
         } else {
             setMeasuredDimension(0, 0);
@@ -83,7 +79,6 @@ public class MaxSizeContainer extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         AssertUtils.assertEquals("getChildCount() must be 1", 1, getChildCount());
-
         View child = getChildAt(0);
         if (child.getVisibility() != GONE) {
             child.layout(0, 0, r - l, b - t);

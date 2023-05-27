@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -36,12 +35,10 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.DataContainer;
@@ -53,36 +50,52 @@ import com.hippo.image.ImageBitmap;
 import com.hippo.image.ImageDrawable;
 import com.hippo.image.RecycledException;
 import com.hippo.util.DrawableManager;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-public class AvatarImageView extends FixedAspectImageView implements Unikery<ImageBitmap>,
-        View.OnClickListener, View.OnLongClickListener, Animatable {
+public class AvatarImageView extends FixedAspectImageView implements Unikery<ImageBitmap>, View.OnClickListener, View.OnLongClickListener, Animatable {
 
     public static final int RETRY_TYPE_NONE = 0;
+
     public static final int RETRY_TYPE_CLICK = 1;
+
     public static final int RETRY_TYPE_LONG_CLICK = 2;
+
     private static final String TAG = AvatarImageView.class.getSimpleName();
+
     private int mTaskId = Unikery.INVALID_ID;
+
     private Conaco<ImageBitmap> mConaco;
+
     private String mKey;
+
     private String mUrl;
+
     private DataContainer mContainer;
+
     private boolean mUseNetwork;
+
     private int mOffsetX = Integer.MIN_VALUE;
+
     private int mOffsetY = Integer.MIN_VALUE;
+
     private int mClipWidth = Integer.MIN_VALUE;
+
     private int mClipHeight = Integer.MIN_VALUE;
+
     private int mRetryType;
+
     public boolean mFailed;
+
     private boolean mLoadFromDrawable;
 
     private Bitmap mSrcBitmap;
+
     /**
      * 圆角的弧度
      */
     private float mRadius;
+
     private boolean mIsCircle;
 
     public AvatarImageView(Context context) {
@@ -103,24 +116,17 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     private void init(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.LoadImageView, defStyleAttr, 0);
         setRetryType(a.getInt(R.styleable.LoadImageView_retryType, 0));
-
         mRadius = a.getDimension(R.styleable.LoadImageView_image_radius, 0);
         mIsCircle = a.getBoolean(R.styleable.LoadImageView_image_circle, false);
-
-        if (attrs != null ){
-            int srcResource = attrs.getAttributeResourceValue(
-                    "http://schemas.android.com/apk/res/android", "src", 0);
+        if (attrs != null) {
+            int srcResource = attrs.getAttributeResourceValue("http://schemas.android.com/apk/res/android", "src", 0);
             if (srcResource != 0)
-                mSrcBitmap = BitmapFactory.decodeResource(getResources(),
-                        srcResource);
+                mSrcBitmap = BitmapFactory.decodeResource(getResources(), srcResource);
         }
-
-
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         Paint paintBorder = new Paint();
         paintBorder.setAntiAlias(true);
-
         a.recycle();
         setFocusable(false);
         if (!isInEditMode()) {
@@ -130,24 +136,19 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
 
     @Override
     protected void onDraw(Canvas canvas) {
-
         int width = getWidth() - getPaddingLeft() - getPaddingRight();
         int height = getHeight() - getPaddingTop() - getPaddingBottom();
         Bitmap image = drawableToBitmap(getDrawable());
-        if (image == null){
+        if (image == null) {
             super.onDraw(canvas);
             return;
         }
         if (mIsCircle) {
             Bitmap reSizeImage = reSizeImageC(image, width, height);
-            canvas.drawBitmap(createCircleImage(reSizeImage, width, height),
-                    getPaddingLeft(), getPaddingTop(), null);
-
+            canvas.drawBitmap(createCircleImage(reSizeImage, width, height), getPaddingLeft(), getPaddingTop(), null);
         } else {
-
             Bitmap reSizeImage = reSizeImage(image, width, height);
-            canvas.drawBitmap(createRoundImage(reSizeImage, width, height),
-                    getPaddingLeft(), getPaddingTop(), null);
+            canvas.drawBitmap(createRoundImage(reSizeImage, width, height), getPaddingLeft(), getPaddingTop(), null);
         }
     }
 
@@ -164,11 +165,10 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
         if (!mLoadFromDrawable) {
             if (mFailed) {
                 onFailure();
-            /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */
+                /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */
             } else if (mTaskId == Unikery.INVALID_ID) {
                 load(mKey, mUrl, mContainer, mUseNetwork);
             }
@@ -178,7 +178,6 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
         if (!mLoadFromDrawable) {
             try {
                 // Cancel
@@ -215,7 +214,6 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         if (imageDrawable != null) {
             imageDrawable.recycle();
         }
-
         // Set drawable null
         setImageDrawable(null);
     }
@@ -234,7 +232,6 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         if (mRetryType != retryType) {
             int oldRetryType = mRetryType;
             mRetryType = retryType;
-
             if (mFailed) {
                 if (oldRetryType == RETRY_TYPE_CLICK) {
                     setOnClickListener(null);
@@ -243,7 +240,6 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
                     setOnLongClickListener(null);
                     setLongClickable(false);
                 }
-
                 if (retryType == RETRY_TYPE_CLICK) {
                     setOnClickListener(this);
                 } else if (retryType == RETRY_TYPE_LONG_CLICK) {
@@ -279,29 +275,26 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         if (url == null || (key == null && container == null)) {
             return;
         }
-
         mLoadFromDrawable = false;
         mFailed = false;
         clearRetry();
-
         mKey = key;
         mUrl = url;
         mContainer = container;
         mUseNetwork = useNetwork;
-
-//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
-//                .setUnikery(this)
-//                .setKey(key)
-//                .setUrl(url)
-//                .setDataContainer(container)
-//                .setUseNetwork(useNetwork);
+        //        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
+        //                .setUnikery(this)
+        //                .setKey(key)
+        //                .setUrl(url)
+        //                .setDataContainer(container)
+        //                .setUseNetwork(useNetwork);
         ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
         builder.unikery = this;
         builder.key = key;
         builder.url = url;
-        builder.dataContainer= container;
-        builder.useNetwork= useNetwork;
-        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+        builder.dataContainer = container;
+        builder.useNetwork = useNetwork;
+        builder.okHttpClient = EhApplication.getOkHttpClient(getContext());
         mConaco.load(builder);
     }
 
@@ -334,10 +327,9 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         }
     }
 
-//    @Override
-//    public void onRequest() {
-//    }
-
+    //    @Override
+    //    public void onRequest() {
+    //    }
     @Override
     public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {
     }
@@ -357,13 +349,10 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
             Log.d(TAG, "The image is recycled", e);
             return;
         }
-
         clearDrawable();
-
         if (Integer.MIN_VALUE != mOffsetX) {
             drawable = new PreciselyClipDrawable(drawable, mOffsetX, mOffsetY, mClipWidth, mClipHeight);
         }
-
         onPreSetImageDrawable(drawable, true);
         if ((source == Conaco.SOURCE_DISK || source == Conaco.SOURCE_NETWORK) && isShown()) {
             Drawable[] layers = new Drawable[2];
@@ -387,7 +376,6 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         } else {
             drawable = DrawableManager.getVectorDrawable(getContext(), R.drawable.image_failed);
         }
-
         onPreSetImageDrawable(drawable, true);
         setImageDrawable(drawable);
         if (mRetryType == RETRY_TYPE_CLICK) {
@@ -450,7 +438,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     public void onPreSetImageResource(int resId, boolean isTarget) {
     }
 
-    @IntDef({RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK})
+    @IntDef({ RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK })
     @Retention(RetentionPolicy.SOURCE)
     private @interface RetryType {
     }
@@ -485,19 +473,15 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
      * @return
      */
     private Bitmap createCircleImage(Bitmap source, int width, int height) {
-
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         Bitmap target = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(target);
-        canvas.drawCircle(width >> 1, height >> 1, Math.min(width, height) >> 1,
-                paint);
+        canvas.drawCircle(width >> 1, height >> 1, Math.min(width, height) >> 1, paint);
         // 核心代码取两个图片的交集部分
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(source, (width - source.getWidth()) >> 1,
-                (height - source.getHeight()) >> 1, paint);
+        canvas.drawBitmap(source, (width - source.getWidth()) >> 1, (height - source.getHeight()) >> 1, paint);
         return target;
-
     }
 
     @Override
@@ -523,8 +507,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         } else if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
         }
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
@@ -547,7 +530,6 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         float scaleHeight = ((float) newHeight) / height;
         // 矩阵缩放bitmap
         Matrix matrix = new Matrix();
-
         matrix.postScale(scaleWidth, scaleHeight);
         return Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
     }
@@ -568,13 +550,10 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         if (x > 0 && y > 0) {
             return Bitmap.createBitmap(bitmap, 0, 0, width, height, null, true);
         }
-
         float scale;
-
         if (width > height) {
             // 按照宽度进行等比缩放
             scale = ((float) newWidth) / width;
-
         } else {
             // 按照高度进行等比缩放
             // 计算出缩放比

@@ -13,31 +13,40 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-
 import androidx.annotation.Nullable;
-
 import com.hippo.ehviewer.R;
-
 import java.util.Calendar;
 
-public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateChangedListener{
+public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateChangedListener {
+
     private MyRadioGroup mRadioGroup;
+
     private RadioButton mSelectRadio;
+
     private TextView foundMessage;
+
     private OnTimeSelectedListener onTimeSelectedListener;
+
     private Button pickDateButton;
+
     private Button gotoJumpButton;
+
     private DatePicker datePicker;
+
     private static final int DATE_PICKER_TYPE = 2;
+
     private static final int DATE_NODE_TYPE = 1;
 
     private int dateJumpType = 1;
 
     private int dayOfMonthSelected;
+
     private int monthOfYearSelected;
+
     private int yearSelected;
 
     private ColorStateList radioButtonOriginColor = null;
+
     public JumpDateSelector(Context context) {
         super(context);
         init(context);
@@ -60,54 +69,53 @@ public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateC
 
     private void init(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        inflater.inflate(R.layout.gallery_list_jump_selector,this);
+        inflater.inflate(R.layout.gallery_list_jump_selector, this);
         datePicker = findViewById(R.id.date_picker_view);
         Calendar calendar = Calendar.getInstance();
         yearSelected = calendar.get(Calendar.YEAR);
         monthOfYearSelected = calendar.get(Calendar.MONTH);
         dayOfMonthSelected = calendar.get(Calendar.DAY_OF_MONTH);
-        datePicker.init(yearSelected, monthOfYearSelected, dayOfMonthSelected,this);
+        datePicker.init(yearSelected, monthOfYearSelected, dayOfMonthSelected, this);
         datePicker.setMaxDate(calendar.getTimeInMillis());
-
         Calendar minDate;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            minDate  = new Calendar.Builder().setDate(2007,3,20).build();
-        }else {
+            minDate = new Calendar.Builder().setDate(2007, 3, 20).build();
+        } else {
             minDate = Calendar.getInstance();
-            minDate.set(2007,3,20);
+            minDate.set(2007, 3, 20);
         }
         datePicker.setMinDate(minDate.getTimeInMillis());
         pickDateButton = findViewById(R.id.picker_date);
         gotoJumpButton = findViewById(R.id.goto_jump);
         pickDateButton.setOnClickListener(this::onClickPickerDateButton);
         gotoJumpButton.setOnClickListener(this::buildJumpParamAndGoto);
-        mRadioGroup =  findViewById(R.id.jump_date_picker_group);
+        mRadioGroup = findViewById(R.id.jump_date_picker_group);
         mRadioGroup.setOnCheckedChangeListener(this::onSelectChange);
         foundMessage = findViewById(R.id.found_message);
     }
 
     private void buildJumpParamAndGoto(View view) {
         String urlAppend;
-        if (dateJumpType == DATE_PICKER_TYPE){
+        if (dateJumpType == DATE_PICKER_TYPE) {
             urlAppend = datePickerAppendBuild();
-        }else{
+        } else {
             urlAppend = nodePickerAppendBuild();
         }
         onTimeSelectedListener.onTimeSelected(urlAppend);
     }
 
-    private String datePickerAppendBuild(){
-        return  "seek="+yearSelected+"-"+monthOfYearSelected+"-"+dayOfMonthSelected;
+    private String datePickerAppendBuild() {
+        return "seek=" + yearSelected + "-" + monthOfYearSelected + "-" + dayOfMonthSelected;
     }
 
     @SuppressLint("NonConstantResourceId")
-    private String nodePickerAppendBuild(){
-        if (mSelectRadio==null){
+    private String nodePickerAppendBuild() {
+        if (mSelectRadio == null) {
             return "";
         }
         final int selectId = mSelectRadio.getId();
         String param;
-        switch (selectId){
+        switch(selectId) {
             default:
             case R.id.jump_1d:
                 param = "1d";
@@ -134,16 +142,16 @@ public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateC
                 param = "2y";
                 break;
         }
-        return "jump="+param;
+        return "jump=" + param;
     }
 
     private void onClickPickerDateButton(View view) {
-        if (dateJumpType == DATE_PICKER_TYPE){
+        if (dateJumpType == DATE_PICKER_TYPE) {
             datePicker.setVisibility(GONE);
             mRadioGroup.setVisibility(VISIBLE);
             dateJumpType = DATE_NODE_TYPE;
             pickDateButton.setText(R.string.gallery_list_select_jump_date);
-        }else{
+        } else {
             datePicker.setVisibility(VISIBLE);
             mRadioGroup.setVisibility(GONE);
             dateJumpType = DATE_PICKER_TYPE;
@@ -152,26 +160,25 @@ public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateC
     }
 
     private void onSelectChange(RadioGroup radioGroup, int i) {
-        if (i==-1){
+        if (i == -1) {
             return;
         }
-        if (radioButtonOriginColor==null){
+        if (radioButtonOriginColor == null) {
             mSelectRadio = radioGroup.findViewById(i);
             radioButtonOriginColor = mSelectRadio.getTextColors();
-        }else{
+        } else {
             mSelectRadio.setTextColor(radioButtonOriginColor);
             mSelectRadio = radioGroup.findViewById(i);
         }
-
         mSelectRadio.setTextColor(mSelectRadio.getHighlightColor());
     }
 
-    public void setFoundMessage(String message){
-        if (message == null || message.isEmpty()){
+    public void setFoundMessage(String message) {
+        if (message == null || message.isEmpty()) {
             foundMessage.setVisibility(GONE);
-        }else{
+        } else {
             foundMessage.setVisibility(VISIBLE);
-            foundMessage.setText(getResources().getString(R.string.gallery_list_time_jump_dialog_found_message,message));
+            foundMessage.setText(getResources().getString(R.string.gallery_list_time_jump_dialog_found_message, message));
         }
     }
 
@@ -181,13 +188,13 @@ public class JumpDateSelector extends LinearLayout implements DatePicker.OnDateC
 
     @Override
     public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-        yearSelected =year;
-        monthOfYearSelected = monthOfYear+1;
+        yearSelected = year;
+        monthOfYearSelected = monthOfYear + 1;
         dayOfMonthSelected = dayOfMonth;
     }
 
-    public interface OnTimeSelectedListener{
+    public interface OnTimeSelectedListener {
+
         void onTimeSelected(String urlAppend);
     }
-
 }

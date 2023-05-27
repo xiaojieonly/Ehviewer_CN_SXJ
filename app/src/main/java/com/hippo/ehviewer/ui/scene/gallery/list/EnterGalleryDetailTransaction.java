@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.Context;
@@ -35,22 +34,16 @@ public class EnterGalleryDetailTransaction implements TransitionHelper {
     }
 
     @Override
-    public boolean onTransition(Context context, FragmentTransaction transaction,
-            Fragment exit, Fragment enter) {
+    public boolean onTransition(Context context, FragmentTransaction transaction, Fragment exit, Fragment enter) {
         if (mThumb == null || !(enter instanceof GalleryDetailScene)) {
             return false;
         }
-
         String transitionName = ViewCompat.getTransitionName(mThumb);
         if (transitionName != null) {
-            exit.setSharedElementReturnTransition(
-                    TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
-            exit.setExitTransition(
-                    TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
-            enter.setSharedElementEnterTransition(
-                    TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
-            enter.setEnterTransition(
-                    TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
+            exit.setSharedElementReturnTransition(TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
+            exit.setExitTransition(TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
+            enter.setSharedElementEnterTransition(TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
+            enter.setEnterTransition(TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
             transaction.addSharedElement(mThumb, transitionName);
         }
         return true;

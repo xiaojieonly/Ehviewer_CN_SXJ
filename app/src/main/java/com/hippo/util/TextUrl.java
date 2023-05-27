@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
 
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.URLSpan;
-
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +30,6 @@ public final class TextUrl {
 
     public static CharSequence handleTextUrl(CharSequence content) {
         Matcher m = URL_PATTERN.matcher(content);
-
         Spannable spannable = null;
         while (m.find()) {
             // Ensure spannable
@@ -43,20 +40,16 @@ public final class TextUrl {
                     spannable = new SpannableString(content);
                 }
             }
-
             int start = m.start();
             int end = m.end();
-
             URLSpan[] links = spannable.getSpans(start, end, URLSpan.class);
             if (links.length > 0) {
                 // There has been URLSpan already, leave it alone
                 continue;
             }
-
             URLSpan urlSpan = new URLSpan(m.group(0));
             spannable.setSpan(urlSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-
         return spannable == null ? content : spannable;
     }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.annotation.SuppressLint;
@@ -61,6 +60,7 @@ import java.util.Locale;
 public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerView.OnItemClickListener {
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
+
     private final static String KEY_HAS_FIRST_REFRESH = "has_first_refresh";
 
     /*---------------
@@ -68,6 +68,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
      ---------------*/
     @Nullable
     private EhClient mClient;
+
     @Nullable
     private GalleryInfo mGalleryInfo;
 
@@ -76,8 +77,10 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
      ---------------*/
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private GalleryPreviewAdapter mAdapter;
+
     @Nullable
     private GalleryPreviewHelper mHelper;
 
@@ -86,7 +89,6 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         mClient = EhApplication.getEhClient(context);
@@ -102,7 +104,6 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         if (args == null) {
             return;
         }
-
         mGalleryInfo = args.getParcelable(KEY_GALLERY_INFO);
     }
 
@@ -114,7 +115,6 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-
         boolean hasFirstRefresh;
         if (mHelper != null && 1 == mHelper.getShownViewIndex()) {
             hasFirstRefresh = false;
@@ -127,17 +127,13 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
     @Nullable
     @Override
-    public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        ContentLayout contentLayout = (ContentLayout) inflater.inflate(
-                R.layout.scene_gallery_previews, container, false);
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        ContentLayout contentLayout = (ContentLayout) inflater.inflate(R.layout.scene_gallery_previews, container, false);
         contentLayout.hideFastScroll();
         mRecyclerView = contentLayout.getRecyclerView();
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
-
         mAdapter = new GalleryPreviewAdapter();
         mRecyclerView.setAdapter(mAdapter);
         int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
@@ -150,33 +146,26 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         MarginItemDecoration decoration = new MarginItemDecoration(padding, padding, padding, padding, padding);
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
-
         mHelper = new GalleryPreviewHelper();
         contentLayout.setHelper(mHelper);
-
         // Only refresh for the first time
         if (!mHasFirstRefresh) {
             mHasFirstRefresh = true;
             mHelper.firstRefresh();
         }
-
         return contentLayout;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        if (null != mHelper) {
-            if (1 == mHelper.getShownViewIndex()) {
-                mHasFirstRefresh = false;
-            }
+        if (null != mHelper && 1 == mHelper.getShownViewIndex()) {
+            mHasFirstRefresh = false;
         }
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();
             mRecyclerView = null;
         }
-
         mAdapter = null;
     }
 
@@ -198,9 +187,8 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         if (null == context) {
             return false;
         }
-
         int id = item.getItemId();
-        switch (id) {
+        switch(id) {
             case R.id.action_go_to:
                 if (mHelper == null) {
                     return true;
@@ -208,10 +196,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                 int pages = mHelper.getPages();
                 if (pages > 0 && mHelper.canGoTo()) {
                     GoToDialogHelper helper = new GoToDialogHelper(pages, mHelper.getPageForTop());
-                    AlertDialog dialog = new AlertDialog.Builder(context).setTitle(R.string.go_to)
-                            .setView(R.layout.dialog_go_to)
-                            .setPositiveButton(android.R.string.ok, null)
-                            .create();
+                    AlertDialog dialog = new AlertDialog.Builder(context).setTitle(R.string.go_to).setView(R.layout.dialog_go_to).setPositiveButton(android.R.string.ok, null).create();
                     dialog.show();
                     helper.setDialog(dialog);
                 }
@@ -244,11 +229,11 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     private class GalleryPreviewHolder extends RecyclerView.ViewHolder {
 
         public LoadImageView image;
+
         public TextView text;
 
         public GalleryPreviewHolder(View itemView) {
             super(itemView);
-
             image = (LoadImageView) itemView.findViewById(R.id.image);
             text = (TextView) itemView.findViewById(R.id.text);
         }
@@ -295,12 +280,10 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                 onGetException(taskId, new EhException(getString(R.string.error_cannot_find_gallery)));
                 return;
             }
-
             String url = EhUrl.getGalleryDetailUrl(mGalleryInfo.gid, mGalleryInfo.token, page, false);
             EhRequest request = new EhRequest();
             request.setMethod(EhClient.METHOD_GET_PREVIEW_SET);
-            request.setCallback(new GetPreviewSetListener(getContext(),
-                    activity.getStageId(), getTag(), taskId));
+            request.setCallback(new GetPreviewSetListener(getContext(), activity.getStageId(), getTag(), taskId));
             request.setArgs(url);
             mClient.execute(request);
         }
@@ -312,12 +295,10 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                 onGetException(taskId, new EhException(getString(R.string.error_cannot_find_gallery)));
                 return;
             }
-
             String url = EhUrl.getGalleryDetailUrl(mGalleryInfo.gid, mGalleryInfo.token, page, false);
             EhRequest request = new EhRequest();
             request.setMethod(EhClient.METHOD_GET_PREVIEW_SET);
-            request.setCallback(new GetPreviewSetListener(getContext(),
-                    activity.getStageId(), getTag(), taskId));
+            request.setCallback(new GetPreviewSetListener(getContext(), activity.getStageId(), getTag(), taskId));
             request.setArgs(url);
             mClient.execute(request);
         }
@@ -362,7 +343,6 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
             for (int i = 0; i < size; i++) {
                 list.add(previewSet.getGalleryPreview(mGalleryInfo.gid, i));
             }
-
             mHelper.onGetPageData(taskId, result.second, 0, list);
         }
     }
@@ -400,7 +380,6 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
         @Override
         public void onCancel() {
-
         }
 
         @Override
@@ -409,14 +388,15 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         }
     }
 
-    private class GoToDialogHelper implements View.OnClickListener,
-            DialogInterface.OnDismissListener {
+    private class GoToDialogHelper implements View.OnClickListener, DialogInterface.OnDismissListener {
 
         private final int mPages;
+
         private final int mCurrentPage;
 
         @Nullable
         private Slider mSlider;
+
         @Nullable
         private Dialog mDialog;
 
@@ -427,13 +407,11 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
 
         public void setDialog(@NonNull AlertDialog dialog) {
             mDialog = dialog;
-
             ((TextView) ViewUtils.$$(dialog, R.id.start)).setText(String.format(Locale.US, "%d", 1));
             ((TextView) ViewUtils.$$(dialog, R.id.end)).setText(String.format(Locale.US, "%d", mPages));
             mSlider = (Slider) ViewUtils.$$(dialog, R.id.slider);
             mSlider.setRange(1, mPages);
             mSlider.setProgress(mCurrentPage + 1);
-
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(this);
             dialog.setOnDismissListener(this);
         }
@@ -443,7 +421,6 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
             if (null == mSlider) {
                 return;
             }
-
             int page = mSlider.getProgress() - 1;
             if (page >= 0 && page < mPages && mHelper != null) {
                 mHelper.goTo(page);

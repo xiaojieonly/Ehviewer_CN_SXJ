@@ -6,13 +6,16 @@ import android.os.Parcelable;
 public class TopListItem implements Parcelable {
 
     public String href;
+
     public String gid;
+
     public String token;
+
     public String tag;
+
     public String value;
 
     public TopListItem() {
-
     }
 
     protected TopListItem(Parcel in) {
@@ -24,6 +27,7 @@ public class TopListItem implements Parcelable {
     }
 
     public static final Creator<TopListItem> CREATOR = new Creator<TopListItem>() {
+
         @Override
         public TopListItem createFromParcel(Parcel in) {
             return new TopListItem(in);

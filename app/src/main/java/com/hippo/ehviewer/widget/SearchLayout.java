@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.annotation.SuppressLint;
@@ -49,54 +48,65 @@ import com.hippo.yorozuya.ViewUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnCheckedChangeListener,
-        View.OnClickListener, ImageSearchLayout.Helper {
+public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnCheckedChangeListener, View.OnClickListener, ImageSearchLayout.Helper {
 
-    @IntDef({SEARCH_MODE_NORMAL, SEARCH_MODE_IMAGE})
+    @IntDef({ SEARCH_MODE_NORMAL, SEARCH_MODE_IMAGE })
     @Retention(RetentionPolicy.SOURCE)
-    private @interface SearchMode {}
+    private @interface SearchMode {
+    }
 
     private static final String STATE_KEY_SUPER = "super";
+
     private static final String STATE_KEY_SEARCH_MODE = "search_mode";
+
     private static final String STATE_KEY_ENABLE_ADVANCE = "enable_advance";
 
     public static final int SEARCH_MODE_NORMAL = 0;
+
     public static final int SEARCH_MODE_IMAGE = 1;
 
     private static final int ITEM_TYPE_NORMAL = 0;
+
     private static final int ITEM_TYPE_NORMAL_ADVANCE = 1;
+
     private static final int ITEM_TYPE_IMAGE = 2;
+
     private static final int ITEM_TYPE_ACTION = 3;
 
-    private static final int[] SEARCH_ITEM_COUNT_ARRAY = {
-            3, 2
-    };
+    private static final int[] SEARCH_ITEM_COUNT_ARRAY = { 3, 2 };
 
-    private static final int[][] SEARCH_ITEM_TYPE = {
-            {ITEM_TYPE_NORMAL, ITEM_TYPE_NORMAL_ADVANCE, ITEM_TYPE_ACTION}, // SEARCH_MODE_NORMAL
-            {ITEM_TYPE_IMAGE, ITEM_TYPE_ACTION}, // SEARCH_MODE_IMAGE
-    };
+    private static final int[][] SEARCH_ITEM_TYPE = { // SEARCH_MODE_NORMAL
+    { ITEM_TYPE_NORMAL, ITEM_TYPE_NORMAL_ADVANCE, ITEM_TYPE_ACTION }, // SEARCH_MODE_IMAGE
+    { ITEM_TYPE_IMAGE, ITEM_TYPE_ACTION } };
 
     private LayoutInflater mInflater;
 
     private int mSearchMode = SEARCH_MODE_NORMAL;
+
     private boolean mEnableAdvance = false;
 
     private View mNormalView;
+
     private CategoryTable mCategoryTable;
+
     private RadioGridGroup mNormalSearchMode;
+
     private ImageView mNormalSearchModeHelp;
+
     private SwitchCompat mEnableAdvanceSwitch;
 
     private View mAdvanceView;
+
     private AdvanceSearchTable mTableAdvanceSearch;
 
     private ImageSearchLayout mImageView;
 
     private View mActionView;
+
     private TextView mAction;
 
     private LinearLayoutManager mLayoutManager;
+
     private SearchAdapter mAdapter;
 
     private Helper mHelper;
@@ -115,7 +125,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     private void init(Context context) {
         Resources resources = context.getResources();
         mInflater = LayoutInflater.from(context);
-
         mLayoutManager = new LinearLayoutManager(context);
         mAdapter = new SearchAdapter();
         setLayoutManager(mLayoutManager);
@@ -125,11 +134,9 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         int interval = resources.getDimensionPixelOffset(R.dimen.search_layout_interval);
         int paddingH = resources.getDimensionPixelOffset(R.dimen.search_layout_margin_h);
         int paddingV = resources.getDimensionPixelOffset(R.dimen.search_layout_margin_v);
-        MarginItemDecoration decoration = new MarginItemDecoration(
-                interval, paddingH, paddingV, paddingH, paddingV);
+        MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
         addItemDecoration(decoration);
         decoration.applyPaddings(this);
-
         // Create normal view
         View normalView = mInflater.inflate(R.layout.search_normal, null);
         mNormalView = normalView;
@@ -141,15 +148,12 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         Ripple.addRipple(mNormalSearchModeHelp, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme));
         mEnableAdvanceSwitch.setOnCheckedChangeListener(SearchLayout.this);
         mEnableAdvanceSwitch.setSwitchPadding(resources.getDimensionPixelSize(R.dimen.switch_padding));
-
         // Create advance view
         mAdvanceView = mInflater.inflate(R.layout.search_advance, null);
         mTableAdvanceSearch = (AdvanceSearchTable) mAdvanceView.findViewById(R.id.search_advance_search_table);
-
         // Create image view
         mImageView = (ImageSearchLayout) mInflater.inflate(R.layout.search_image, null);
         mImageView.setHelper(this);
-
         // Create action view
         mActionView = mInflater.inflate(R.layout.search_action, null);
         mAction = (TextView) mActionView.findViewById(R.id.action);
@@ -182,7 +186,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     @Override
     protected void dispatchSaveInstanceState(@NonNull SparseArray<Parcelable> container) {
         super.dispatchSaveInstanceState(container);
-
         mNormalView.saveHierarchyState(container);
         mAdvanceView.saveHierarchyState(container);
         mImageView.saveHierarchyState(container);
@@ -192,7 +195,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     @Override
     protected void dispatchRestoreInstanceState(@NonNull SparseArray<Parcelable> container) {
         super.dispatchRestoreInstanceState(container);
-
         mNormalView.restoreHierarchyState(container);
         mAdvanceView.restoreHierarchyState(container);
         mImageView.restoreHierarchyState(container);
@@ -228,7 +230,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                 } else {
                     mAdapter.notifyItemRemoved(1);
                 }
-
                 if (mHelper != null) {
                     mHelper.onChangeSearchMode();
                 }
@@ -238,11 +239,10 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
 
     public void formatListUrlBuilder(ListUrlBuilder urlBuilder, String query) throws EhException {
         urlBuilder.reset();
-
-        switch (mSearchMode) {
+        switch(mSearchMode) {
             case SEARCH_MODE_NORMAL:
                 int nsMode = mNormalSearchMode.getCheckedRadioButtonId();
-                switch (nsMode) {
+                switch(nsMode) {
                     default:
                     case R.id.search_normal_search:
                         urlBuilder.setMode(ListUrlBuilder.MODE_NORMAL);
@@ -278,14 +278,12 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
             int oldItemCount = mAdapter.getItemCount();
             mSearchMode = searchMode;
             int newItemCount = mAdapter.getItemCount();
-
             if (animation) {
                 mAdapter.notifyItemRangeRemoved(0, oldItemCount - 1);
                 mAdapter.notifyItemRangeInserted(0, newItemCount - 1);
             } else {
                 mAdapter.notifyDataSetChanged();
             }
-
             if (mHelper != null) {
                 mHelper.onChangeSearchMode();
             }
@@ -294,20 +292,16 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
 
     public void toggleSearchMode() {
         int oldItemCount = mAdapter.getItemCount();
-
         mSearchMode++;
         if (mSearchMode > SEARCH_MODE_IMAGE) {
             mSearchMode = SEARCH_MODE_NORMAL;
         }
-
         int newItemCount = mAdapter.getItemCount();
-
         mAdapter.notifyItemRangeRemoved(0, oldItemCount - 1);
         mAdapter.notifyItemRangeInserted(0, newItemCount - 1);
-
         // Update action text
         int resId;
-        switch (mSearchMode) {
+        switch(mSearchMode) {
             default:
             case SEARCH_MODE_NORMAL:
                 resId = R.string.image_search;
@@ -317,7 +311,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                 break;
         }
         mAction.setText(resId);
-
         if (mHelper != null) {
             mHelper.onChangeSearchMode();
         }
@@ -326,15 +319,14 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     @Override
     public void onClick(View v) {
         if (mNormalSearchModeHelp == v) {
-            new AlertDialog.Builder(getContext())
-                    .setMessage(R.string.search_tip)
-                    .show();
+            new AlertDialog.Builder(getContext()).setMessage(R.string.search_tip).show();
         } else if (mAction == v) {
             toggleSearchMode();
         }
     }
 
     private class SimpleHolder extends ViewHolder {
+
         public SimpleHolder(View itemView) {
             super(itemView);
         }
@@ -363,14 +355,11 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view;
-
             if (viewType == ITEM_TYPE_ACTION) {
                 ViewUtils.removeFromParent(mActionView);
-                mActionView.setLayoutParams(new LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
+                mActionView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 int resId;
-                switch (mSearchMode) {
+                switch(mSearchMode) {
                     default:
                     case SEARCH_MODE_NORMAL:
                         resId = R.string.image_search;
@@ -385,7 +374,7 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                 view = mInflater.inflate(R.layout.search_category, parent, false);
                 TextView title = (TextView) view.findViewById(R.id.category_title);
                 FrameLayout content = (FrameLayout) view.findViewById(R.id.category_content);
-                switch (viewType) {
+                switch(viewType) {
                     case ITEM_TYPE_NORMAL:
                         title.setText(R.string.search_normal);
                         ViewUtils.removeFromParent(mNormalView);
@@ -403,7 +392,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                         break;
                 }
             }
-
             return new SimpleHolder(view);
         }
 
@@ -414,7 +402,9 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     }
 
     public interface Helper {
+
         void onChangeSearchMode();
+
         void onSelectImage();
     }
 }

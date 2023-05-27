@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.content.Context;
@@ -43,12 +42,9 @@ public abstract class EhActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-
         setTheme(getThemeResId(Settings.getTheme(context)));
         super.onCreate(savedInstanceState);
-
         ((EhApplication) getApplication()).registerActivity(this);
-
         if (Analytics.isEnabled()) {
             FirebaseAnalytics.getInstance(this);
         }
@@ -57,17 +53,15 @@ public abstract class EhActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         ((EhApplication) getApplication()).unregisterActivity(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(Settings.getEnabledSecurity()){
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
-                    WindowManager.LayoutParams.FLAG_SECURE);
-        }else{
+        if (Settings.getEnabledSecurity()) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
     }
@@ -86,7 +80,6 @@ public abstract class EhActivity extends AppCompatActivity {
                 locale = new Locale(split[0], split[1], split[2]);
             }
         }
-
         if (locale == null) {
             locale = Resources.getSystem().getConfiguration().locale;
         }

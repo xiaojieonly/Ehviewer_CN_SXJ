@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.widget;
 
 import android.content.Context;
@@ -41,11 +40,9 @@ public class SensitiveCheckBox extends AppCompatCheckBox {
     @Override
     public boolean performClick() {
         boolean result;
-
         mFromUser = true;
         result = super.performClick();
         mFromUser = false;
-
         return result;
     }
 
@@ -56,7 +53,6 @@ public class SensitiveCheckBox extends AppCompatCheckBox {
     @Override
     public void setChecked(boolean checked) {
         super.setChecked(checked);
-
         if (mOnCheckedChangeListener != null) {
             mOnCheckedChangeListener.onCheckedChanged(this, checked, mFromUser);
         }
@@ -67,6 +63,7 @@ public class SensitiveCheckBox extends AppCompatCheckBox {
      * of a compound button changed.
      */
     public interface OnCheckedChangeListener {
+
         /**
          * Called when the checked state of a compound button has changed.
          *

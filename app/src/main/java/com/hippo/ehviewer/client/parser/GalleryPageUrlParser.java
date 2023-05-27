@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.parser;
 
 import androidx.annotation.Nullable;
@@ -27,11 +26,9 @@ import java.util.regex.Pattern;
  */
 public final class GalleryPageUrlParser {
 
-    private static final Pattern URL_STRICT_PATTERN = Pattern.compile(
-            "https?://(?:" + EhUrl.DOMAIN_EX + "|" + EhUrl.DOMAIN_E + "|" + EhUrl.DOMAIN_LOFI + ")/s/([0-9a-f]{10})/(\\d+)-(\\d+)");
+    private static final Pattern URL_STRICT_PATTERN = Pattern.compile("https?://(?:" + EhUrl.DOMAIN_EX + "|" + EhUrl.DOMAIN_E + "|" + EhUrl.DOMAIN_LOFI + ")/s/([0-9a-f]{10})/(\\d+)-(\\d+)");
 
-    private static final Pattern URL_PATTERN = Pattern.compile(
-            "([0-9a-f]{10})/(\\d+)-(\\d+)");
+    private static final Pattern URL_PATTERN = Pattern.compile("([0-9a-f]{10})/(\\d+)-(\\d+)");
 
     @Nullable
     public static Result parse(String url) {
@@ -43,7 +40,6 @@ public final class GalleryPageUrlParser {
         if (url == null) {
             return null;
         }
-
         Pattern pattern = strict ? URL_STRICT_PATTERN : URL_PATTERN;
         Matcher m = pattern.matcher(url);
         if (m.find()) {
@@ -61,8 +57,11 @@ public final class GalleryPageUrlParser {
     }
 
     public static class Result {
+
         public long gid;
+
         public String pToken;
+
         public int page;
     }
 }

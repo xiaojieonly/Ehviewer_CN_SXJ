@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
-
 import com.hippo.widget.LoadImageView;
 import com.hippo.yorozuya.collect.IntList;
-
 import java.util.ArrayList;
 
 public class NormalPreviewSet extends PreviewSet {
 
     private IntList mPositionList = new IntList();
+
     private ArrayList<String> mImageKeyList = new ArrayList<>();
+
     private ArrayList<String> mImageUrlList = new ArrayList<>();
+
     private IntList mOffsetXList = new IntList();
+
     private IntList mOffsetYList = new IntList();
+
     private IntList mClipWidthList = new IntList();
+
     private IntList mClipHeightList = new IntList();
+
     private ArrayList<String> mPageUrlList = new ArrayList<>();
 
     private String getImageKey(String imageUrl) {
@@ -43,8 +47,7 @@ public class NormalPreviewSet extends PreviewSet {
         }
     }
 
-    public void addItem(int position, String imageUrl, int xOffset, int yOffset, int width,
-            int height, String pageUrl) {
+    public void addItem(int position, String imageUrl, int xOffset, int yOffset, int width, int height, String pageUrl) {
         mPositionList.add(position);
         mImageKeyList.add(getImageKey(imageUrl));
         mImageUrlList.add(imageUrl);
@@ -86,8 +89,7 @@ public class NormalPreviewSet extends PreviewSet {
 
     @Override
     public void load(LoadImageView view, long gid, int index) {
-        view.setClip(mOffsetXList.get(index), mOffsetYList.get(index),
-                mClipWidthList.get(index), mClipHeightList.get(index));
+        view.setClip(mOffsetXList.get(index), mOffsetYList.get(index), mClipWidthList.get(index), mClipHeightList.get(index));
         view.load(mImageKeyList.get(index), mImageUrlList.get(index));
     }
 
@@ -123,6 +125,7 @@ public class NormalPreviewSet extends PreviewSet {
     }
 
     public static final Creator<NormalPreviewSet> CREATOR = new Creator<NormalPreviewSet>() {
+
         @Override
         public NormalPreviewSet createFromParcel(Parcel source) {
             return new NormalPreviewSet(source);

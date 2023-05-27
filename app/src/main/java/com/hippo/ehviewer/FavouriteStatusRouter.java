@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer;
 
 import android.annotation.SuppressLint;
@@ -26,47 +25,48 @@ import java.util.Map;
 
 public class FavouriteStatusRouter {
 
-  private static final String KEY_DATA_MAP_NEXT_ID = "data_map_next_id";
+    private static final String KEY_DATA_MAP_NEXT_ID = "data_map_next_id";
 
-  private final IntIdGenerator idGenerator = new IntIdGenerator(Settings.getInt(KEY_DATA_MAP_NEXT_ID, 0));
-  @SuppressLint("UseSparseArrays")
-  private final HashMap<Integer, Map<Long, GalleryInfo>> maps = new HashMap<>();
+    private final IntIdGenerator idGenerator = new IntIdGenerator(Settings.getInt(KEY_DATA_MAP_NEXT_ID, 0));
 
-  private List<Listener> listeners = new ArrayList<>();
+    @SuppressLint("UseSparseArrays")
+    private final HashMap<Integer, Map<Long, GalleryInfo>> maps = new HashMap<>();
 
-  public int saveDataMap(Map<Long, GalleryInfo> map) {
-    int id = idGenerator.nextId();
-    maps.put(id, map);
-    Settings.putInt(KEY_DATA_MAP_NEXT_ID, idGenerator.nextId());
-    return id;
-  }
+    private List<Listener> listeners = new ArrayList<>();
 
-  public Map<Long, GalleryInfo> restoreDataMap(int id) {
-    return maps.remove(id);
-  }
-
-  public void modifyFavourites(long gid, int slot) {
-    for (Map<Long, GalleryInfo> map : maps.values()) {
-      GalleryInfo info = map.get(gid);
-      if (info != null) {
-        info.favoriteSlot = slot;
-      }
+    public int saveDataMap(Map<Long, GalleryInfo> map) {
+        int id = idGenerator.nextId();
+        maps.put(id, map);
+        Settings.putInt(KEY_DATA_MAP_NEXT_ID, idGenerator.nextId());
+        return id;
     }
 
-    for (Listener listener : listeners) {
-      listener.onModifyFavourites(gid, slot);
+    public Map<Long, GalleryInfo> restoreDataMap(int id) {
+        return maps.remove(id);
     }
-  }
 
-  public void addListener(Listener listener) {
-    listeners.add(listener);
-  }
+    public void modifyFavourites(long gid, int slot) {
+        for (Map<Long, GalleryInfo> map : maps.values()) {
+            GalleryInfo info = map.get(gid);
+            if (info != null) {
+                info.favoriteSlot = slot;
+            }
+        }
+        for (Listener listener : listeners) {
+            listener.onModifyFavourites(gid, slot);
+        }
+    }
 
-  public void removeListener(Listener listener) {
-    listeners.remove(listener);
-  }
+    public void addListener(Listener listener) {
+        listeners.add(listener);
+    }
 
-  public interface Listener {
-    void onModifyFavourites(long gid, int slot);
-  }
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
+    }
+
+    public interface Listener {
+
+        void onModifyFavourites(long gid, int slot);
+    }
 }

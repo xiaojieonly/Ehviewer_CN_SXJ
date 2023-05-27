@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.util;
+
 /*
  * Created by Hippo on 2017/9/4.
  */
-
 public class HashCodeUtils {
 
-  private static final int X = 31;
+    private static final int X = 31;
 
-  /**
-   * <pre>{@code
-   * args[0].hashCode()*31^(n-1) + args[1].hashCode()*31^(n-2) + ... + args[n-1].hashCode()
-   * }</pre>
-   * Returns 0 if {@code args == null}.
-   */
-  public static int hashCode(Object... args) {
-    if (args == null) {
-      return 0;
+    /**
+     * <pre>{@code
+     * args[0].hashCode()*31^(n-1) + args[1].hashCode()*31^(n-2) + ... + args[n-1].hashCode()
+     * }</pre>
+     * Returns 0 if {@code args == null}.
+     */
+    public static int hashCode(Object... args) {
+        if (args == null) {
+            return 0;
+        }
+        int hash = 0;
+        for (Object o : args) {
+            hash = X * hash + (o != null ? o.hashCode() : 0);
+        }
+        return hash;
     }
-    int hash = 0;
-    for (Object o: args) {
-      hash = X * hash + (o != null ? o.hashCode() : 0);
-    }
-    return hash;
-  }
 }

@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.client.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import com.hippo.widget.LoadImageView;
 
 public class GalleryPreview implements Parcelable {
 
     String imageKey;
+
     String imageUrl;
+
     String pageUrl;
+
     int position;
+
     int offsetX = Integer.MIN_VALUE;
+
     int offsetY = Integer.MIN_VALUE;
+
     int clipWidth = Integer.MIN_VALUE;
+
     int clipHeight = Integer.MIN_VALUE;
 
     public int getPosition() {
@@ -71,6 +76,7 @@ public class GalleryPreview implements Parcelable {
     }
 
     public static final Creator<GalleryPreview> CREATOR = new Creator<GalleryPreview>() {
+
         @Override
         public GalleryPreview createFromParcel(Parcel source) {
             return new GalleryPreview(source);

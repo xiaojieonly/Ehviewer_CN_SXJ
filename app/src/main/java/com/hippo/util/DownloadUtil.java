@@ -6,18 +6,14 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
-
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.callBack.TorrentDownloadCallBack;
 import com.hippo.ehviewer.client.data.TorrentDownloadMessage;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -28,8 +24,11 @@ import okhttp3.Response;
  * 文件下载工具
  */
 public class DownloadUtil {
+
     private static final String TAG = DownloadUtil.class.getName();
+
     private static DownloadUtil downloadUtil;
+
     private final OkHttpClient okHttpClient;
 
     private Handler handler;
@@ -67,12 +66,12 @@ public class DownloadUtil {
         }
         sendMessage(url, name, 0, false);
         okHttpClient.newCall(request).enqueue(new Callback() {
+
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 // 下载失败
                 EhApplication.removeDownloadTorrent(context, url);
                 sendMessage(url, name, -1, true);
-
             }
 
             @Override
@@ -84,7 +83,6 @@ public class DownloadUtil {
                 try {
                     is = response.body().byteStream();
                     long total = response.body().contentLength();
-
                     fos = new FileOutputStream(file);
                     long sum = 0;
                     while ((len = is.read(buf)) != -1) {
@@ -155,24 +153,16 @@ public class DownloadUtil {
         handler.sendMessage(message);
     }
 
-
     private Message torrentDownLoadMessage(String path, String name, int progress, boolean failed) {
-
         Message result = handler.obtainMessage();
         Bundle data = new Bundle();
-
         TorrentDownloadMessage message = new TorrentDownloadMessage();
-
         message.failed = failed;
         message.progress = progress;
         message.path = path;
         message.name = name;
-
         data.putParcelable("torrent_download_message", message);
-
         result.setData(data);
-
         return result;
     }
-
 }

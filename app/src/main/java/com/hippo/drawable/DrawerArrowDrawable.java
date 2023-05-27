@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.animation.ObjectAnimator;
@@ -40,26 +39,37 @@ public class DrawerArrowDrawable extends Drawable {
 
     // The angle in degrees that the arrow head is inclined at.
     private static final float ARROW_HEAD_ANGLE = (float) Math.toRadians(45);
+
     private final float mBarThickness;
+
     // The length of top and bottom bars when they merge into an arrow
     private final float mTopBottomArrowSize;
+
     // The length of middle bar
     private final float mBarSize;
+
     // The length of the middle bar when arrow is shaped
     private final float mMiddleArrowSize;
+
     // The space between bars when they are parallel
     private final float mBarGap;
+
     // Whether bars should spin or not during progress
     private final boolean mSpin;
+
     // Use Path instead of canvas operations so that if color has transparency, overlapping sections
     // wont look different
     private final Path mPath = new Path();
+
     // The reported intrinsic size of the drawable.
     private final int mSize;
+
     // Whether we should mirror animation when animation is reversed.
     private boolean mVerticalMirror = false;
+
     // The interpolated version of the original progress
     private float mProgress;
+
     // the amount that overlaps w/ bar size when rotation is max
     private final float mMaxCutForBarSize;
 
@@ -68,7 +78,6 @@ public class DrawerArrowDrawable extends Drawable {
      */
     public DrawerArrowDrawable(Context context, int color) {
         Resources resources = context.getResources();
-
         mPaint.setAntiAlias(true);
         mPaint.setColor(color);
         mSize = resources.getDimensionPixelSize(R.dimen.dad_drawable_size);
@@ -81,12 +90,10 @@ public class DrawerArrowDrawable extends Drawable {
         mBarGap = Math.round(resources.getDimension(R.dimen.dad_gap_between_bars));
         mSpin = resources.getBoolean(R.bool.dad_spin_bars);
         mMiddleArrowSize = resources.getDimension(R.dimen.dad_middle_bar_arrow_size);
-
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.MITER);
         mPaint.setStrokeCap(Paint.Cap.BUTT);
         mPaint.setStrokeWidth(mBarThickness);
-
         mMaxCutForBarSize = (float) (mBarThickness / 2 * Math.cos(ARROW_HEAD_ANGLE));
     }
 
@@ -107,31 +114,23 @@ public class DrawerArrowDrawable extends Drawable {
         final float middleBarCut = Math.round(MathUtils.lerp(0, mMaxCutForBarSize, mProgress));
         // The rotation of the top and bottom bars (that make the arrow head)
         final float rotation = MathUtils.lerp(0, ARROW_HEAD_ANGLE, mProgress);
-
         // The whole canvas rotates as the transition happens
         final float canvasRotate = MathUtils.lerp(-180, 0, mProgress);
         final float arrowWidth = Math.round(arrowSize * Math.cos(rotation));
         final float arrowHeight = Math.round(arrowSize * Math.sin(rotation));
-
         mPath.rewind();
-        final float topBottomBarOffset = MathUtils.lerp(mBarGap + mBarThickness, -mMaxCutForBarSize,
-                mProgress);
-
+        final float topBottomBarOffset = MathUtils.lerp(mBarGap + mBarThickness, -mMaxCutForBarSize, mProgress);
         final float arrowEdge = -middleBarSize / 2;
         // draw middle bar
         mPath.moveTo(arrowEdge + middleBarCut, 0);
         mPath.rLineTo(middleBarSize - middleBarCut * 2, 0);
-
         // bottom bar
         mPath.moveTo(arrowEdge, topBottomBarOffset);
         mPath.rLineTo(arrowWidth, arrowHeight);
-
         // top bar
         mPath.moveTo(arrowEdge, -topBottomBarOffset);
         mPath.rLineTo(arrowWidth, -arrowHeight);
-
         mPath.close();
-
         canvas.save();
         // Rotate the whole canvas if spinning, if not, rotate it 180 to get
         // the arrow pointing the other way for RTL.
@@ -140,7 +139,6 @@ public class DrawerArrowDrawable extends Drawable {
             canvas.rotate(canvasRotate * (mVerticalMirror ? -1 : 1));
         }
         canvas.drawPath(mPath, mPaint);
-
         canvas.restore();
     }
 
@@ -161,12 +159,12 @@ public class DrawerArrowDrawable extends Drawable {
 
     @Override
     public int getIntrinsicHeight() {
-        return mSize;
+        return getSize();
     }
 
     @Override
     public int getIntrinsicWidth() {
-        return mSize;
+        return getSize();
     }
 
     @Override
@@ -212,5 +210,9 @@ public class DrawerArrowDrawable extends Drawable {
                 oa.start();
             }
         }
+    }
+
+    public int getSize() {
+        return mSize;
     }
 }

@@ -6,8 +6,11 @@ import android.os.Parcelable;
 public class TorrentDownloadMessage implements Parcelable {
 
     public String path;
+
     public String name;
+
     public int progress;
+
     public boolean failed;
 
     public TorrentDownloadMessage() {
@@ -21,6 +24,7 @@ public class TorrentDownloadMessage implements Parcelable {
     }
 
     public static final Creator<TorrentDownloadMessage> CREATOR = new Creator<TorrentDownloadMessage>() {
+
         @Override
         public TorrentDownloadMessage createFromParcel(Parcel in) {
             return new TorrentDownloadMessage(in);
@@ -41,7 +45,7 @@ public class TorrentDownloadMessage implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.name);
         dest.writeString(this.path);
-        dest.writeByte((byte)(this.failed ? 1:0));
+        dest.writeByte((byte) (this.failed ? 1 : 0));
         dest.writeInt(this.progress);
     }
 }

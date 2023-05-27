@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.content.DialogInterface;
@@ -47,10 +46,13 @@ public class FilterActivity extends ToolbarActivity {
 
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private ViewTransition mViewTransition;
+
     @Nullable
     private FilterAdapter mAdapter;
+
     @Nullable
     private FilterList mFilterList;
 
@@ -59,17 +61,13 @@ public class FilterActivity extends ToolbarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filter);
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-
         mFilterList = new FilterList();
-
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(this, R.id.recycler_view);
         TextView tip = (TextView) ViewUtils.$$(this, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
-
         Drawable drawable = DrawableManager.getVectorDrawable(this, R.drawable.big_filter);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
-
         mAdapter = new FilterAdapter();
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setClipToPadding(false);
@@ -77,7 +75,6 @@ public class FilterActivity extends ToolbarActivity {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.hasFixedSize();
         mRecyclerView.setItemAnimator(null);
-
         updateView(false);
     }
 
@@ -85,7 +82,6 @@ public class FilterActivity extends ToolbarActivity {
         if (null == mViewTransition) {
             return;
         }
-
         if (null == mFilterList || 0 == mFilterList.size()) {
             mViewTransition.showView(1, animation);
         } else {
@@ -96,7 +92,6 @@ public class FilterActivity extends ToolbarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         mRecyclerView = null;
         mViewTransition = null;
         mAdapter = null;
@@ -112,7 +107,7 @@ public class FilterActivity extends ToolbarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        switch(item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
@@ -128,46 +123,40 @@ public class FilterActivity extends ToolbarActivity {
     }
 
     private void showTipDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.filter)
-                .setMessage(R.string.filter_tip)
-                .show();
+        new AlertDialog.Builder(this).setTitle(R.string.filter).setMessage(R.string.filter_tip).show();
     }
 
     private void showAddFilterDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.add_filter)
-                .setView(R.layout.dialog_add_filter)
-                .setPositiveButton(R.string.add, null)
-                .show();
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle(R.string.add_filter).setView(R.layout.dialog_add_filter).setPositiveButton(R.string.add, null).show();
         AddFilterDialogHelper helper = new AddFilterDialogHelper();
         helper.setDialog(dialog);
     }
 
     private void showDeleteFilterDialog(final Filter filter) {
         String message = getString(R.string.delete_filter, filter.text);
-        new AlertDialog.Builder(this)
-                .setMessage(message)
-                .setPositiveButton(R.string.delete, (dialog, which) -> {
-                    if (DialogInterface.BUTTON_POSITIVE != which || null == mFilterList) {
-                        return;
-                    }
-                    mFilterList.delete(filter);
-                    if (null != mAdapter) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                    updateView(true);
-                }).show();
+        new AlertDialog.Builder(this).setMessage(message).setPositiveButton(R.string.delete, (dialog, which) -> {
+            if (DialogInterface.BUTTON_POSITIVE != which || null == mFilterList) {
+                return;
+            }
+            mFilterList.delete(filter);
+            if (null != mAdapter) {
+                mAdapter.notifyDataSetChanged();
+            }
+            updateView(true);
+        }).show();
     }
 
     private class AddFilterDialogHelper implements View.OnClickListener {
 
         @Nullable
         private AlertDialog mDialog;
+
         @Nullable
         private Spinner mSpinner;
+
         @Nullable
         private TextInputLayout mInputLayout;
+
         @Nullable
         private EditText mEditText;
 
@@ -184,11 +173,9 @@ public class FilterActivity extends ToolbarActivity {
 
         @Override
         public void onClick(View v) {
-            if (null == mFilterList || null == mDialog || null == mSpinner ||
-                    null == mInputLayout || null == mEditText) {
+            if (null == mFilterList || null == mDialog || null == mSpinner || null == mInputLayout || null == mEditText) {
                 return;
             }
-
             String text = mEditText.getText().toString().trim();
             if (TextUtils.isEmpty(text)) {
                 mInputLayout.setError(getString(R.string.text_is_empty));
@@ -197,17 +184,14 @@ public class FilterActivity extends ToolbarActivity {
                 mInputLayout.setError(null);
             }
             int mode = mSpinner.getSelectedItemPosition();
-
             Filter filter = new Filter();
             filter.mode = mode;
             filter.text = text;
             mFilterList.add(filter);
-
             if (null != mAdapter) {
                 mAdapter.notifyDataSetChanged();
             }
             updateView(true);
-
             mDialog.dismiss();
             mDialog = null;
             mSpinner = null;
@@ -219,13 +203,13 @@ public class FilterActivity extends ToolbarActivity {
     private class FilterHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private final TextView text;
+
         private final ImageView icon;
 
         public FilterHolder(View itemView) {
             super(itemView);
             text = (TextView) ViewUtils.$$(itemView, R.id.text);
             icon = itemView.findViewById(R.id.icon);
-
             if (null != icon) {
                 icon.setOnClickListener(this);
             }
@@ -245,11 +229,9 @@ public class FilterActivity extends ToolbarActivity {
                     showDeleteFilterDialog(filter);
                 } else if (v instanceof TextView) {
                     mFilterList.trigger(filter);
-
                     //for updating delete line on filter text
                     mAdapter.notifyItemChanged(getAdapterPosition());
                 }
-
             }
         }
     }
@@ -257,6 +239,7 @@ public class FilterActivity extends ToolbarActivity {
     private class FilterAdapter extends RecyclerView.Adapter<FilterHolder> {
 
         private static final int TYPE_ITEM = 0;
+
         private static final int TYPE_HEADER = 1;
 
         @Override
@@ -264,7 +247,6 @@ public class FilterActivity extends ToolbarActivity {
             if (null == mFilterList) {
                 return TYPE_ITEM;
             }
-
             if (mFilterList.get(position).mode == FilterList.MODE_HEADER) {
                 return TYPE_HEADER;
             } else {
@@ -275,7 +257,7 @@ public class FilterActivity extends ToolbarActivity {
         @Override
         public FilterHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             int layoutId;
-            switch (viewType) {
+            switch(viewType) {
                 default:
                 case TYPE_ITEM:
                     layoutId = R.layout.item_filter;
@@ -284,14 +266,10 @@ public class FilterActivity extends ToolbarActivity {
                     layoutId = R.layout.item_filter_header;
                     break;
             }
-
             FilterHolder holder = new FilterHolder(getLayoutInflater().inflate(layoutId, parent, false));
-
             if (R.layout.item_filter == layoutId) {
-                holder.icon.setImageDrawable(
-                        DrawableManager.getVectorDrawable(FilterActivity.this, R.drawable.v_delete_x24));
+                holder.icon.setImageDrawable(DrawableManager.getVectorDrawable(FilterActivity.this, R.drawable.v_delete_x24));
             }
-
             return holder;
         }
 
@@ -300,7 +278,6 @@ public class FilterActivity extends ToolbarActivity {
             if (null == mFilterList) {
                 return;
             }
-
             Filter filter = mFilterList.get(position);
             if (FilterList.MODE_HEADER == filter.mode) {
                 holder.text.setText(filter.text);
@@ -326,14 +303,21 @@ public class FilterActivity extends ToolbarActivity {
         public static final int MODE_HEADER = -1;
 
         private final EhFilter mEhFilter;
+
         private final List<Filter> mTitleFilterList;
+
         private final List<Filter> mUploaderFilterList;
+
         private final List<Filter> mTagFilterList;
+
         private final List<Filter> mTagNamespaceFilterList;
 
         private Filter mTitleHeader;
+
         private Filter mUploaderHeader;
+
         private Filter mTagHeader;
+
         private Filter mTagNamespaceHeader;
 
         public FilterList() {
@@ -404,7 +388,6 @@ public class FilterActivity extends ToolbarActivity {
                     index -= size + 1;
                 }
             }
-
             size = mUploaderFilterList.size();
             if (0 != size) {
                 if (index == 0) {
@@ -415,7 +398,6 @@ public class FilterActivity extends ToolbarActivity {
                     index -= size + 1;
                 }
             }
-
             size = mTagFilterList.size();
             if (0 != size) {
                 if (index == 0) {
@@ -426,7 +408,6 @@ public class FilterActivity extends ToolbarActivity {
                     index -= size + 1;
                 }
             }
-
             size = mTagNamespaceFilterList.size();
             if (0 != size) {
                 if (index == 0) {
@@ -437,7 +418,6 @@ public class FilterActivity extends ToolbarActivity {
                     index -= size + 1;
                 }
             }
-
             throw new IndexOutOfBoundsException();
         }
 

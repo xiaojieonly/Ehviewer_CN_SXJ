@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.fragment;
 
 import android.app.Activity;
@@ -34,28 +33,27 @@ import com.hippo.util.ReadableTime;
 import java.io.File;
 import java.util.Arrays;
 
-public class AdvancedFragment extends PreferenceFragment
-    implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
+public class AdvancedFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
 
     private static final String KEY_DUMP_LOGCAT = "dump_logcat";
+
     private static final String KEY_CLEAR_MEMORY_CACHE = "clear_memory_cache";
+
     private static final String KEY_APP_LANGUAGE = "app_language";
+
     private static final String KEY_IMPORT_DATA = "import_data";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.advanced_settings);
-
         Preference dumpLogcat = findPreference(KEY_DUMP_LOGCAT);
         Preference clearMemoryCache = findPreference(KEY_CLEAR_MEMORY_CACHE);
         Preference appLanguage = findPreference(KEY_APP_LANGUAGE);
         Preference importData = findPreference(KEY_IMPORT_DATA);
-
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
         importData.setOnPreferenceClickListener(this);
-
         appLanguage.setOnPreferenceChangeListener(this);
     }
 
@@ -78,9 +76,7 @@ public class AdvancedFragment extends PreferenceFragment
                 ok = false;
             }
             Resources resources = getResources();
-            Toast.makeText(getActivity(),
-                    ok ? resources.getString(R.string.settings_advanced_dump_logcat_to, file.getPath()) :
-                            resources.getString(R.string.settings_advanced_dump_logcat_failed), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), ok ? resources.getString(R.string.settings_advanced_dump_logcat_to, file.getPath()) : resources.getString(R.string.settings_advanced_dump_logcat_failed), Toast.LENGTH_SHORT).show();
             return true;
         } else if (KEY_CLEAR_MEMORY_CACHE.equals(key)) {
             ((EhApplication) getActivity().getApplication()).clearMemoryCache();
@@ -106,6 +102,7 @@ public class AdvancedFragment extends PreferenceFragment
         }
         Arrays.sort(files);
         new AlertDialog.Builder(context).setItems(files, new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 File file = new File(dir, files[which]);

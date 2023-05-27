@@ -6,13 +6,16 @@ import android.os.Parcelable;
 public class TopListInfo implements Parcelable {
 
     public TopListItemArray allTimeTopList;
+
     public TopListItemArray pastYearTopList;
+
     public TopListItemArray pastMonthTopList;
+
     public TopListItemArray yesterdayTopList;
+
     public String title;
 
     private ClassLoader classLoader;
-
 
     public TopListInfo() {
         classLoader = TopListItemArray.class.getClassLoader();
@@ -27,6 +30,7 @@ public class TopListInfo implements Parcelable {
     }
 
     public static final Creator<TopListInfo> CREATOR = new Creator<TopListInfo>() {
+
         @Override
         public TopListInfo createFromParcel(Parcel in) {
             return new TopListInfo(in);
@@ -53,7 +57,7 @@ public class TopListInfo implements Parcelable {
     }
 
     public TopListItemArray get(int index) {
-        switch (index) {
+        switch(index) {
             case 0:
                 return yesterdayTopList;
             case 1:

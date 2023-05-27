@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
@@ -32,14 +31,21 @@ import com.hippo.yorozuya.ViewUtils;
 public class GalleryGuideView extends ViewGroup implements View.OnClickListener {
 
     private int mBgColor;
+
     private Paint mPaint;
+
     private final float[] mPoints = new float[3 * 4];
+
     private int mStep;
 
     private TextView mLeftText;
+
     private TextView mRightText;
+
     private TextView mMenuText;
+
     private TextView mProgressText;
+
     private TextView mLongClickText;
 
     public GalleryGuideView(Context context) {
@@ -76,8 +82,7 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
         mMenuText = null;
         mProgressText = null;
         mLongClickText = null;
-
-        switch (mStep) {
+        switch(mStep) {
             case 0:
                 bind1();
                 break;
@@ -112,25 +117,18 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
         if (MeasureSpec.EXACTLY != widthMode || MeasureSpec.EXACTLY != heightMode) {
             throw new IllegalStateException();
         }
-
-        switch (mStep) {
+        switch(mStep) {
             case 0:
-                mLeftText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
-                mRightText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
-                mMenuText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(heightSize / 2, MeasureSpec.EXACTLY));
-                mProgressText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(heightSize / 2, MeasureSpec.EXACTLY));
+                mLeftText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
+                mRightText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
+                mMenuText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(heightSize / 2, MeasureSpec.EXACTLY));
+                mProgressText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(heightSize / 2, MeasureSpec.EXACTLY));
                 break;
             default:
             case 1:
-                mLongClickText.measure(MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
+                mLongClickText.measure(MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
                 break;
         }
-
         setMeasuredDimension(widthSize, heightSize);
     }
 
@@ -138,8 +136,7 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int width = r - l;
         int height = b - t;
-
-        switch (mStep) {
+        switch(mStep) {
             case 0:
                 mLeftText.layout(0, 0, width / 3, height);
                 mRightText.layout(width * 2 / 3, 0, width, height);
@@ -156,18 +153,15 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-
         if (0 == mStep) {
             mPoints[0] = w / 3;
             mPoints[1] = 0;
             mPoints[2] = w / 3;
             mPoints[3] = h;
-
             mPoints[4] = w * 2 / 3;
             mPoints[5] = 0;
             mPoints[6] = w * 2 / 3;
             mPoints[7] = h;
-
             mPoints[8] = w / 3;
             mPoints[9] = h / 2;
             mPoints[10] = w * 2 / 3;
@@ -186,7 +180,7 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
 
     @Override
     public void onClick(View v) {
-        switch (mStep) {
+        switch(mStep) {
             case 0:
                 mStep++;
                 bind();

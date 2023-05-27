@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.network;
 
 import android.content.Context;
@@ -21,7 +20,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 public final class Network {
-    private Network() {}
+
+    private Network() {
+    }
 
     public static int getActiveNetworkType(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);

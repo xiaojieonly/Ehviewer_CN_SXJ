@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene.download;
 
 import android.content.Context;
@@ -63,8 +62,10 @@ public class DownloadLabelsScene extends ToolbarScene {
      ---------------*/
     @Nullable
     private EasyRecyclerView mRecyclerView;
+
     @Nullable
     private ViewTransition mViewTransition;
+
     @Nullable
     private RecyclerView.Adapter mAdapter;
 
@@ -83,40 +84,31 @@ public class DownloadLabelsScene extends ToolbarScene {
     @SuppressWarnings("deprecation")
     @Nullable
     @Override
-    public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView3(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_label_list, container, false);
-
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_label);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
         tip.setText(R.string.no_download_label);
-
         // drag & drop manager
         RecyclerViewDragDropManager dragDropManager = new RecyclerViewDragDropManager();
-        dragDropManager.setDraggingItemShadowDrawable(
-                (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
-
+        dragDropManager.setDraggingItemShadowDrawable((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
         RecyclerView.Adapter adapter = new LabelAdapter();
         adapter.setHasStableIds(true);
-        adapter = dragDropManager.createWrappedAdapter(adapter); // wrap for dragging
+        // wrap for dragging
+        adapter = dragDropManager.createWrappedAdapter(adapter);
         mAdapter = adapter;
         final GeneralItemAnimator animator = new SwipeDismissItemAnimator();
-
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setItemAnimator(animator);
-
         dragDropManager.attachRecyclerView(mRecyclerView);
-
         updateView();
-
         return view;
     }
 
@@ -130,12 +122,10 @@ public class DownloadLabelsScene extends ToolbarScene {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();
             mRecyclerView = null;
         }
-
         mViewTransition = null;
         mAdapter = null;
     }
@@ -156,16 +146,16 @@ public class DownloadLabelsScene extends ToolbarScene {
         if (null == context) {
             return false;
         }
-
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_add: {
-                EditTextDialogBuilder builder = new EditTextDialogBuilder(context, null, getString(R.string.download_labels));
-                builder.setTitle(R.string.new_label_title);
-                builder.setPositiveButton(android.R.string.ok, null);
-                AlertDialog dialog = builder.show();
-                new NewLabelDialogHelper(builder, dialog);
-            }
+        switch(id) {
+            case R.id.action_add:
+                {
+                    EditTextDialogBuilder builder = new EditTextDialogBuilder(context, null, getString(R.string.download_labels));
+                    builder.setTitle(R.string.new_label_title);
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    AlertDialog dialog = builder.show();
+                    new NewLabelDialogHelper(builder, dialog);
+                }
         }
         return false;
     }
@@ -183,6 +173,7 @@ public class DownloadLabelsScene extends ToolbarScene {
     private class NewLabelDialogHelper implements View.OnClickListener {
 
         private final EditTextDialogBuilder mBuilder;
+
         private final AlertDialog mDialog;
 
         public NewLabelDialogHelper(EditTextDialogBuilder builder, AlertDialog dialog) {
@@ -200,7 +191,6 @@ public class DownloadLabelsScene extends ToolbarScene {
             if (null == context) {
                 return;
             }
-
             String text = mBuilder.getText();
             if (TextUtils.isEmpty(text)) {
                 mBuilder.setError(getString(R.string.label_text_is_empty));
@@ -229,12 +219,14 @@ public class DownloadLabelsScene extends ToolbarScene {
     private class RenameLabelDialogHelper implements View.OnClickListener {
 
         private final EditTextDialogBuilder mBuilder;
+
         private final AlertDialog mDialog;
+
         private final String mOriginalLabel;
+
         private final int mPosition;
 
-        public RenameLabelDialogHelper(EditTextDialogBuilder builder, AlertDialog dialog,
-                String originalLabel, int position) {
+        public RenameLabelDialogHelper(EditTextDialogBuilder builder, AlertDialog dialog, String originalLabel, int position) {
             mBuilder = builder;
             mDialog = dialog;
             mOriginalLabel = originalLabel;
@@ -251,7 +243,6 @@ public class DownloadLabelsScene extends ToolbarScene {
             if (null == context) {
                 return;
             }
-
             String text = mBuilder.getText();
             if (TextUtils.isEmpty(text)) {
                 mBuilder.setError(getString(R.string.label_text_is_empty));
@@ -270,20 +261,19 @@ public class DownloadLabelsScene extends ToolbarScene {
         }
     }
 
-    private class LabelHolder extends AbstractDraggableItemViewHolder
-            implements View.OnClickListener {
+    private class LabelHolder extends AbstractDraggableItemViewHolder implements View.OnClickListener {
 
         public final TextView label;
+
         public final View dragHandler;
+
         public final View delete;
 
         public LabelHolder(View itemView) {
             super(itemView);
-
             label = (TextView) ViewUtils.$$(itemView, R.id.label);
             dragHandler = ViewUtils.$$(itemView, R.id.drag_handler);
             delete = ViewUtils.$$(itemView, R.id.delete);
-
             label.setOnClickListener(this);
             delete.setOnClickListener(this);
         }
@@ -295,41 +285,36 @@ public class DownloadLabelsScene extends ToolbarScene {
             if (null == context || null == mList || null == mRecyclerView) {
                 return;
             }
-
             if (label == v) {
                 DownloadLabel raw = mList.get(position);
-                EditTextDialogBuilder builder = new EditTextDialogBuilder(
-                        context, raw.getLabel(), getString(R.string.download_labels));
+                EditTextDialogBuilder builder = new EditTextDialogBuilder(context, raw.getLabel(), getString(R.string.download_labels));
                 builder.setTitle(R.string.rename_label_title);
                 builder.setPositiveButton(android.R.string.ok, null);
                 AlertDialog dialog = builder.show();
                 new RenameLabelDialogHelper(builder, dialog, raw.getLabel(), position);
             } else if (delete == v) {
                 final DownloadLabel label = mList.get(position);
-                new AlertDialog.Builder(context)
-                    .setTitle(R.string.delete_label_title)
-                    .setMessage(getString(R.string.delete_label_message, label.getLabel()))
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            EhApplication.getDownloadManager(context).deleteLabel(label.getLabel());
+                new AlertDialog.Builder(context).setTitle(R.string.delete_label_title).setMessage(getString(R.string.delete_label_message, label.getLabel())).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        EhApplication.getDownloadManager(context).deleteLabel(label.getLabel());
+                    }
+                }).setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        if (null != mAdapter) {
+                            mAdapter.notifyDataSetChanged();
                         }
-                    })
-                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            if (null != mAdapter) {
-                                mAdapter.notifyDataSetChanged();
-                            }
-                            updateView();
-                        }
-                    }).show();
+                        updateView();
+                    }
+                }).show();
             }
         }
     }
 
-    private class LabelAdapter extends RecyclerView.Adapter<LabelHolder>
-            implements DraggableItemAdapter<LabelHolder> {
+    private class LabelAdapter extends RecyclerView.Adapter<LabelHolder> implements DraggableItemAdapter<LabelHolder> {
 
         private final LayoutInflater mInflater;
 
@@ -376,7 +361,6 @@ public class DownloadLabelsScene extends ToolbarScene {
             if (null == context || fromPosition == toPosition) {
                 return;
             }
-
             EhApplication.getDownloadManager(context).moveLabel(fromPosition, toPosition);
         }
 
@@ -386,9 +370,11 @@ public class DownloadLabelsScene extends ToolbarScene {
         }
 
         @Override
-        public void onItemDragStarted(int position) { }
+        public void onItemDragStarted(int position) {
+        }
 
         @Override
-        public void onItemDragFinished(int fromPosition, int toPosition, boolean result) { }
+        public void onItemDragFinished(int fromPosition, int toPosition, boolean result) {
+        }
     }
 }

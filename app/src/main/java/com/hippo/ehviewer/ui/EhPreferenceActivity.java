@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui;
 
 import android.content.Context;
@@ -45,11 +44,10 @@ public abstract class EhPreferenceActivity extends PrettyPreferenceActivity {
         if (Analytics.isEnabled()) {
             FirebaseAnalytics.getInstance(this);
         }
-
-//        Unnecessary; SDK_INT is always >= 23
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && Settings.getApplyNavBarThemeColor()) {
-//            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
-//        }
+        //        Unnecessary; SDK_INT is always >= 23
+        //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && Settings.getApplyNavBarThemeColor()) {
+        //            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
+        //        }
         if (Settings.getApplyNavBarThemeColor()) {
             getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
         }
@@ -58,17 +56,15 @@ public abstract class EhPreferenceActivity extends PrettyPreferenceActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         ((EhApplication) getApplication()).unregisterActivity(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(Settings.getEnabledSecurity()){
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
-                    WindowManager.LayoutParams.FLAG_SECURE);
-        }else{
+        if (Settings.getEnabledSecurity()) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
     }
@@ -87,11 +83,9 @@ public abstract class EhPreferenceActivity extends PrettyPreferenceActivity {
                 locale = new Locale(split[0], split[1], split[2]);
             }
         }
-
         if (locale == null) {
             locale = Resources.getSystem().getConfiguration().locale;
         }
-
         newBase = ContextLocalWrapper.wrap(newBase, locale);
         super.attachBaseContext(newBase);
     }

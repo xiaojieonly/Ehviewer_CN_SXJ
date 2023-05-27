@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.drawable;
 
 import android.graphics.Bitmap;
@@ -54,7 +53,6 @@ class BitmapPool {
                 iterator.remove();
             }
         }
-
         // Can not find reusable bitmap
         try {
             return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);

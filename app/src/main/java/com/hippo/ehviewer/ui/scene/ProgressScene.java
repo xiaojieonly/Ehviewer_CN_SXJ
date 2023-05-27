@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hippo.ehviewer.ui.scene;
 
 import android.content.Context;
@@ -45,26 +44,34 @@ import com.hippo.yorozuya.ViewUtils;
 public final class ProgressScene extends BaseScene implements View.OnClickListener {
 
     public static final String KEY_ACTION = "action";
+
     public static final String ACTION_GALLERY_TOKEN = "gallery_token";
 
     private static final String KEY_VALID = "valid";
+
     private static final String KEY_ERROR = "error";
 
     public static final String KEY_GID = "gid";
+
     public static final String KEY_PTOKEN = "ptoken";
+
     public static final String KEY_PAGE = "page";
 
     private boolean mValid;
+
     private String mError;
 
     private String mAction;
 
     private long mGid;
+
     private String mPToken;
+
     private int mPage;
 
     @Nullable
     private TextView mTip;
+
     @Nullable
     private ViewTransition mViewTransition;
 
@@ -76,7 +83,6 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (savedInstanceState == null) {
             onInit();
         } else {
@@ -90,17 +96,11 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
         if (null == context || null == activity) {
             return false;
         }
-
         if (ACTION_GALLERY_TOKEN.equals(mAction)) {
             if (mGid == -1 || mPToken == null || mPage == -1) {
                 return false;
             }
-
-            EhRequest request = new EhRequest()
-                    .setMethod(EhClient.METHOD_GET_GALLERY_TOKEN)
-                    .setArgs(mGid, mPToken, mPage)
-                    .setCallback(new GetGalleryTokenListener(context,
-                            activity.getStageId(), getTag()));
+            EhRequest request = new EhRequest().setMethod(EhClient.METHOD_GET_GALLERY_TOKEN).setArgs(mGid, mPToken, mPage).setCallback(new GetGalleryTokenListener(context, activity.getStageId(), getTag()));
             EhApplication.getEhClient(context).execute(request);
             return true;
         }
@@ -111,7 +111,6 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
         if (args == null) {
             return false;
         }
-
         mAction = args.getString(KEY_ACTION);
         if (ACTION_GALLERY_TOKEN.equals(mAction)) {
             mGid = args.getLong(KEY_GID, -1);
@@ -122,7 +121,6 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
             }
             return true;
         }
-
         return false;
     }
 
@@ -139,9 +137,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     private void onRestore(@NonNull Bundle savedInstanceState) {
         mValid = savedInstanceState.getBoolean(KEY_VALID);
         mError = savedInstanceState.getString(KEY_ERROR);
-
         mAction = savedInstanceState.getString(KEY_ACTION);
-
         mGid = savedInstanceState.getLong(KEY_GID, -1);
         mPToken = savedInstanceState.getString(KEY_PTOKEN, null);
         mPage = savedInstanceState.getInt(KEY_PAGE, -1);
@@ -152,9 +148,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_VALID, mValid);
         outState.putString(KEY_ERROR, mError);
-
         outState.putString(KEY_ACTION, mAction);
-
         outState.putLong(KEY_GID, mGid);
         outState.putString(KEY_PTOKEN, mPToken);
         outState.putInt(KEY_PAGE, mPage);
@@ -162,49 +156,40 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
 
     @Nullable
     @Override
-    public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_progress, container, false);
         View progress = ViewUtils.$$(view, R.id.progress);
         mTip = (TextView) ViewUtils.$$(view, R.id.tip);
-
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
-
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_sad_pandroid);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         mTip.setCompoundDrawables(null, drawable, null, null);
         mTip.setOnClickListener(this);
         mTip.setText(mError);
-
         mViewTransition = new ViewTransition(progress, mTip);
-
         if (mValid) {
             mViewTransition.showView(0, false);
         } else {
             mViewTransition.showView(1, false);
         }
-
         return view;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         mTip = null;
         mViewTransition = null;
     }
 
     @Override
     public void onClick(View v) {
-        if (mTip == v) {
-            if (doJobs()) {
-                mValid = true;
-                // Show progress
-                if (null != mViewTransition) {
-                    mViewTransition.showView(0, true);
-                }
+        if (mTip == v && doJobs()) {
+            mValid = true;
+            // Show progress
+            if (null != mViewTransition) {
+                mViewTransition.showView(0, true);
             }
         }
     }
@@ -221,9 +206,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
 
     private void onGetGalleryTokenFailure(Exception e) {
         mValid = false;
-
         Context context = getEHContext();
-
         if (null != context && null != mViewTransition && null != mTip) {
             // Show tip
             mError = ExceptionUtils.getReadableString(e);
