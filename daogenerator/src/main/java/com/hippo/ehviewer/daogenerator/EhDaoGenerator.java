@@ -360,6 +360,8 @@ public class EhDaoGenerator {
         javaClass.addField("public static final int STATE_DOWNLOAD = 2");
         javaClass.addField("public static final int STATE_FINISH = 3");
         javaClass.addField("public static final int STATE_FAILED = 4");
+        javaClass.addField("public static final int STATE_UPDATE = 5");
+        javaClass.addField("public static final int GOTO_NEW = 6");
         javaClass.addField("public long speed");
         javaClass.addField("public long remaining");
         javaClass.addField("public int finished");

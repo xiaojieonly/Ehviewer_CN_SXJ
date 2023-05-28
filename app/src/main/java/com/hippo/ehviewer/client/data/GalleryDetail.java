@@ -21,6 +21,7 @@ import android.os.Parcelable;
 
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 画廊参数存储对象
@@ -36,6 +37,7 @@ public class GalleryDetail extends GalleryInfo {
     public String visible;
     public String language;
     public String size;
+    public String updateUrl;
     public int pages;
     public int favoriteCount;
     public boolean isFavorited;
@@ -44,6 +46,8 @@ public class GalleryDetail extends GalleryInfo {
     public GalleryCommentList comments;
     public int previewPages;
     public PreviewSet previewSet;
+
+    public String body;
 
     @Override
     public int describeContents() {
@@ -60,6 +64,7 @@ public class GalleryDetail extends GalleryInfo {
         dest.writeString(this.visible);
         dest.writeString(this.language);
         dest.writeString(this.size);
+        dest.writeString(this.updateUrl);
         dest.writeInt(this.pages);
         dest.writeInt(this.favoriteCount);
         dest.writeByte(isFavorited ? (byte) 1 : (byte) 0);
@@ -68,6 +73,7 @@ public class GalleryDetail extends GalleryInfo {
         dest.writeParcelable(this.comments, flags);
         dest.writeInt(this.previewPages);
         dest.writeParcelable(previewSet, flags);
+        dest.writeString(body);
     }
 
     public GalleryDetail() {
@@ -82,6 +88,7 @@ public class GalleryDetail extends GalleryInfo {
         this.visible = in.readString();
         this.language = in.readString();
         this.size = in.readString();
+        this.updateUrl = in.readString();
         this.pages = in.readInt();
         this.favoriteCount = in.readInt();
         this.isFavorited = in.readByte() != 0;
@@ -95,9 +102,10 @@ public class GalleryDetail extends GalleryInfo {
         this.comments = in.readParcelable(getClass().getClassLoader());
         this.previewPages = in.readInt();
         this.previewSet = in.readParcelable(PreviewSet.class.getClassLoader());
+        this.body = in.readString();
     }
 
-    public static final Creator<GalleryDetail> CREATOR = new Creator<GalleryDetail>() {
+    public static final Creator<GalleryDetail> CREATOR = new Creator<>() {
         @Override
         public GalleryDetail createFromParcel(Parcel source) {
             return new GalleryDetail(source);
@@ -108,4 +116,21 @@ public class GalleryDetail extends GalleryInfo {
             return new GalleryDetail[size];
         }
     };
+
+    public GalleryDetail getNewGalleryDetail() {
+       try{
+           GalleryDetail n = (GalleryDetail) this.clone();
+           if (updateUrl==null){
+               return n;
+           }
+           String[] params = updateUrl.split("/");
+           int length = params.length;
+           token = params[length-1];
+           gid = Long.parseLong(params[length-2]);
+           updateUrl = null;
+           return n;
+       }catch (Throwable e){
+           return this;
+       }
+    }
 }

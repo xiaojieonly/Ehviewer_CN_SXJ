@@ -19,7 +19,9 @@ package com.hippo.ehviewer.spider;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.webkit.MimeTypeMap;
+
 import androidx.annotation.Nullable;
+
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.Settings;
@@ -37,6 +39,7 @@ import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.Utilities;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -47,7 +50,9 @@ public final class SpiderDen {
     @Nullable
     private final UniFile mDownloadDir;
     private volatile int mMode = SpiderQueen.MODE_READ;
-    private final long mGid;
+
+
+    private long mGid;
 
     @Nullable
     private static SimpleDiskCache sCache;
@@ -57,7 +62,7 @@ public final class SpiderDen {
                 MathUtils.clamp(Settings.getReadCacheSize(), 40, 640) * 1024 * 1024);
     }
 
-    private static class StartWithFilenameFilter implements FilenameFilter {
+    public static class StartWithFilenameFilter implements FilenameFilter {
 
         private final String mPrefix;
 
@@ -121,6 +126,10 @@ public final class SpiderDen {
         mDownloadDir = getGalleryDownloadDir(galleryInfo);
     }
 
+    public void setMGid(long mGid) {
+        this.mGid = mGid;
+    }
+
     public void setMode(@SpiderQueen.Mode int mode) {
         mMode = mode;
 
@@ -147,6 +156,10 @@ public final class SpiderDen {
     @Nullable
     public UniFile getDownloadDir() {
         return mDownloadDir != null && mDownloadDir.isDirectory() ? mDownloadDir : null;
+    }
+
+    public UniFile getDownloadDirName() {
+        return mDownloadDir != null ? mDownloadDir : null;
     }
 
     private boolean containInCache(int index) {

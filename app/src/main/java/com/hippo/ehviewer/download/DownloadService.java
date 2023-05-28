@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.download;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -34,6 +35,7 @@ import androidx.core.app.NotificationCompat;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.ui.MainActivity;
@@ -47,7 +49,7 @@ import com.hippo.yorozuya.collect.SparseJBArray;
 import com.hippo.yorozuya.collect.SparseJLArray;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-
+@SuppressLint("UnspecifiedImmutableFlag")
 public class DownloadService extends Service implements DownloadManager.DownloadListener {
 
     public static final String ACTION_START = "start";
@@ -59,10 +61,10 @@ public class DownloadService extends Service implements DownloadManager.Download
     public static final String ACTION_STOP_ALL = "stop_all";
     public static final String ACTION_DELETE = "delete";
     public static final String ACTION_DELETE_RANGE = "delete_range";
-
     public static final String ACTION_CLEAR = "clear";
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
+    public static final String KEY_DOWNLOAD_INFO = "download_info";
     public static final String KEY_LABEL = "label";
     public static final String KEY_GID = "gid";
     public static final String KEY_GID_LIST = "gid_list";
@@ -148,52 +150,67 @@ public class DownloadService extends Service implements DownloadManager.Download
         if (intent != null) {
             action = intent.getAction();
         }
+        if (action==null){
+            checkStopSelf();
+            return;
+        }
+        switch (action){
+            case ACTION_CLEAR:
+                clear();
+                break;
+            case ACTION_DELETE_RANGE:
+                LongList gidList = intent.getParcelableExtra(KEY_GID_LIST);
+                if (gidList != null && mDownloadManager != null) {
+                    mDownloadManager.deleteRangeDownload(gidList);
+                }
+                break;
+            case ACTION_DELETE:
+                long gid = intent.getLongExtra(KEY_GID, -1);
+                if (gid != -1 && mDownloadManager != null) {
+                    mDownloadManager.deleteDownload(gid);
+                }
+                break;
+            case ACTION_STOP_ALL:
+                if (mDownloadManager != null) {
+                    mDownloadManager.stopAllDownload();
+                }
+                break;
+            case ACTION_STOP_RANGE:
+                LongList gidListS = intent.getParcelableExtra(KEY_GID_LIST);
+                if (gidListS != null && mDownloadManager != null) {
+                    mDownloadManager.stopRangeDownload(gidListS);
+                }
+                break;
+            case ACTION_STOP_CURRENT:
+                if (mDownloadManager != null) {
+                    mDownloadManager.stopCurrentDownload();
+                }
+                break;
+            case ACTION_STOP:
+                long gidS = intent.getLongExtra(KEY_GID, -1);
+                if (gidS != -1 && mDownloadManager != null) {
+                    mDownloadManager.stopDownload(gidS);
+                }
+                break;
+            case ACTION_START_ALL:
+                if (mDownloadManager != null) {
+                    mDownloadManager.startAllDownload();
+                }
+                break;
+            case ACTION_START_RANGE:
+                LongList gidListSR = intent.getParcelableExtra(KEY_GID_LIST);
+                if (gidListSR != null && mDownloadManager != null) {
+                    mDownloadManager.startRangeDownload(gidListSR);
+                }
+                break;
+            case ACTION_START:
+                GalleryInfo gi = intent.getParcelableExtra(KEY_GALLERY_INFO);
+                String label = intent.getStringExtra(KEY_LABEL);
+                if (gi != null && mDownloadManager != null) {
+                    mDownloadManager.startDownload(gi, label);
+                }
+                break;
 
-        if (ACTION_START.equals(action)) {
-            GalleryInfo gi = intent.getParcelableExtra(KEY_GALLERY_INFO);
-            String label = intent.getStringExtra(KEY_LABEL);
-            if (gi != null && mDownloadManager != null) {
-                mDownloadManager.startDownload(gi, label);
-            }
-        } else if (ACTION_START_RANGE.equals(action)) {
-            LongList gidList = intent.getParcelableExtra(KEY_GID_LIST);
-            if (gidList != null && mDownloadManager != null) {
-                mDownloadManager.startRangeDownload(gidList);
-            }
-        } else if (ACTION_START_ALL.equals(action)) {
-            if (mDownloadManager != null) {
-                mDownloadManager.startAllDownload();
-            }
-        } else if (ACTION_STOP.equals(action)) {
-            long gid = intent.getLongExtra(KEY_GID, -1);
-            if (gid != -1 && mDownloadManager != null) {
-                mDownloadManager.stopDownload(gid);
-            }
-        } else if (ACTION_STOP_CURRENT.equals(action)) {
-            if (mDownloadManager != null) {
-                mDownloadManager.stopCurrentDownload();
-            }
-        } else if (ACTION_STOP_RANGE.equals(action)) {
-            LongList gidList = intent.getParcelableExtra(KEY_GID_LIST);
-            if (gidList != null && mDownloadManager != null) {
-                mDownloadManager.stopRangeDownload(gidList);
-            }
-        } else if (ACTION_STOP_ALL.equals(action)) {
-            if (mDownloadManager != null) {
-                mDownloadManager.stopAllDownload();
-            }
-        } else if (ACTION_DELETE.equals(action)) {
-            long gid = intent.getLongExtra(KEY_GID, -1);
-            if (gid != -1 && mDownloadManager != null) {
-                mDownloadManager.deleteDownload(gid);
-            }
-        } else if (ACTION_DELETE_RANGE.equals(action)) {
-            LongList gidList = intent.getParcelableExtra(KEY_GID_LIST);
-            if (gidList != null && mDownloadManager != null) {
-                mDownloadManager.deleteRangeDownload(gidList);
-            }
-        } else if (ACTION_CLEAR.equals(action)) {
-            clear();
         }
 
         checkStopSelf();

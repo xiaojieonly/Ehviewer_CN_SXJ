@@ -454,6 +454,21 @@ public class EhDB {
         dao.deleteByKey(gid);
     }
 
+    public static synchronized void updateDownloadDirname(long removeGid,long newGid, String dirname) {
+        DownloadDirnameDao dao = sDaoSession.getDownloadDirnameDao();
+        dao.deleteByKey(removeGid);
+        DownloadDirname raw = dao.load(newGid);
+        if (raw != null) { // Update
+            raw.setDirname(dirname);
+            dao.update(raw);
+        } else { // Insert
+            raw = new DownloadDirname();
+            raw.setGid(newGid);
+            raw.setDirname(dirname);
+            dao.insert(raw);
+        }
+    }
+
     public static synchronized void clearDownloadDirname() {
         DownloadDirnameDao dao = sDaoSession.getDownloadDirnameDao();
         dao.deleteAll();

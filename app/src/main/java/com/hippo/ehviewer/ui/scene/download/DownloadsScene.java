@@ -17,7 +17,8 @@
 package com.hippo.ehviewer.ui.scene.download;
 
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
-import static com.hippo.ehviewer.spider.SpiderQueen.SPIDER_INFO_FILENAME;
+import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
+import static com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene.KEY_COME_FROM_DOWNLOAD;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -141,6 +142,8 @@ public class DownloadsScene extends ToolbarScene
     private static final String KEY_LABEL = "label";
 
     public static final String ACTION_CLEAR_DOWNLOAD_SERVICE = "clear_download_service";
+
+    public static final String DOWNLOAD_DATA_CHANGE = "download_data_change";
 
     public static final int LOCAL_GALLERY_INFO_CHANGE = 909;
 
@@ -311,9 +314,6 @@ public class DownloadsScene extends ToolbarScene
             setTitle(getString(R.string.scene_download_title,
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         }
-
-//        setTitle(getString(R.string.scene_download_title,
-//                mLabel != null ? mLabel : getString(R.string.default_download_label_name));
     }
 
     private void onInit() {
@@ -717,32 +717,6 @@ public class DownloadsScene extends ToolbarScene
         }
 
         // TODO handle download label items update
-//        ListView listView = (ListView) view.findViewById(R.id.list_view);
-//        listView.setAdapter(new ArrayAdapter<>(context, R.layout.item_simple_list, labels));
-//        listView.setOnItemClickListener((parent, view1, position, id) -> {
-//            if (searching) {
-//                Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
-//                return;
-//            }
-//            String label;
-//            if (position == 0) {
-//                label = null;
-//            } else {
-//                label = labels.get(position);
-//            }
-//            if (!ObjectUtils.equal(label, mLabel)) {
-//                mLabel = label;
-//                updateForLabel();
-//                if (searchKey != null && !searchKey.isEmpty()) {
-//                    startSearching();
-//                } else {
-//                    updateView();
-//                }
-//                closeDrawer(Gravity.RIGHT);
-//            }
-//
-//        });
-
         final List<DownloadLabelItem> downloadLabelList = new ArrayList<>();
 
         for (int i = 0; i < labels.size(); i++) {
@@ -966,6 +940,35 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Override
+    public void onReplace(@NonNull DownloadInfo newInfo, @NonNull DownloadInfo oldInfo) {
+        if (mList == null) {
+            return;
+        }
+        int position = 0;
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo info = mList.get(i);
+            if (info.gid == oldInfo.gid){
+                position = i;
+                mList.remove(i);
+                if (i==mList.size()-1){
+                    mList.add(newInfo);
+                }else {
+                    mList.add(i,newInfo);
+                }
+                break;
+            }
+        }
+        if (mAdapter != null) {
+            mAdapter.notifyItemInserted(position);
+        }
+        updateView();
+        List<DownloadInfo> infos = new ArrayList<>();
+        infos.add(newInfo);
+        DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(infos, this::spiderInfoResultCallBack);
+        executor.execute();
+    }
+
+    @Override
     public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list) {
         if (mList != list) {
             return;
@@ -1040,6 +1043,7 @@ public class DownloadsScene extends ToolbarScene
                 bindState(holder, info, resources.getString(R.string.download_state_none));
                 break;
             case DownloadInfo.STATE_WAIT:
+            case DownloadInfo.STATE_UPDATE:
                 bindState(holder, info, resources.getString(R.string.download_state_wait));
                 break;
             case DownloadInfo.STATE_DOWNLOAD:
@@ -1249,7 +1253,7 @@ public class DownloadsScene extends ToolbarScene
         if (result.getResultCode() == LOCAL_GALLERY_INFO_CHANGE) {
             Intent data = result.getData();
             if (data != null) {
-                GalleryInfo info =  data.getParcelableExtra("info");
+                GalleryInfo info = data.getParcelableExtra("info");
                 mSpiderInfoMap.remove(info.gid);
                 SpiderInfo spiderInfo = getSpiderInfo(info);
                 if (spiderInfo != null) {
@@ -1276,42 +1280,36 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private void queryUnreadSpiderInfo(){
-        if (mList == null){
+    @Override
+    protected void onSceneResult(int requestCode, int resultCode, Bundle data) {
+        super.onSceneResult(requestCode, resultCode, data);
+        boolean dataChange = data.getBoolean(DOWNLOAD_DATA_CHANGE);
+        if (dataChange) {
+            updateForLabel();
+        }
+    }
+
+    private void queryUnreadSpiderInfo() {
+        if (mList == null) {
             return;
         }
         List<DownloadInfo> requestList = new ArrayList<>();
         for (int i = 0; i < mList.size(); i++) {
             DownloadInfo info = mList.get(i);
-            if (!mSpiderInfoMap.containsKey(info.gid)||mSpiderInfoMap.get(info.gid)==null){
+            if (!mSpiderInfoMap.containsKey(info.gid) || mSpiderInfoMap.get(info.gid) == null) {
                 requestList.add(info);
             }
         }
-        DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(requestList,this::spiderInfoResultCallBack);
+        DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(requestList, this::spiderInfoResultCallBack);
         executor.execute();
     }
 
     @SuppressLint("NotifyDataSetChanged")
     private void spiderInfoResultCallBack(Map<Long, SpiderInfo> resultMap) {
         mSpiderInfoMap.putAll(resultMap);
-        if (mAdapter!=null){
+        if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
-    }
-
-
-    private SpiderInfo getSpiderInfo(GalleryInfo info) {
-        SpiderInfo spiderInfo;
-        UniFile mDownloadDir = getGalleryDownloadDir(info);
-        if (mDownloadDir != null && mDownloadDir.isDirectory()) {
-            UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
-            spiderInfo = SpiderInfo.read(file);
-            if (spiderInfo != null && spiderInfo.gid == info.gid &&
-                    spiderInfo.token.equals(info.token)) {
-                return spiderInfo;
-            }
-        }
-        return null;
     }
 
     private class DeleteDialogHelper implements DialogInterface.OnClickListener {
@@ -1490,13 +1488,22 @@ public class DownloadsScene extends ToolbarScene
                 Bundle args = new Bundle();
                 args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
                 args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list.get(index));
+                args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
                 Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
                 announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
                 startScene(announcer);
             } else if (start == v) {
+                final DownloadInfo info = list.get(index);
+//                if (info.state == DownloadInfo.STATE_UPDATE) {
+//                    Intent intent = new Intent(activity, DownloadService.class);
+//                    intent.setAction(DownloadService.ACTION_UPDATE);
+//                    intent.putExtra(DownloadService.KEY_DOWNLOAD_INFO, info);
+//                    activity.startService(intent);
+//                    return;
+//                }
                 Intent intent = new Intent(activity, DownloadService.class);
                 intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, list.get(index));
+                intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
                 activity.startService(intent);
             } else if (stop == v) {
                 if (null != mDownloadManager) {
@@ -1690,14 +1697,6 @@ public class DownloadsScene extends ToolbarScene
             if (mFile != null) {
                 mFile.delete();
             }
-        }
-    }
-
-    private class SpiderInfoTask extends AsyncTask{
-
-        @Override
-        protected Object doInBackground(Object[] objects) {
-            return null;
         }
     }
 }

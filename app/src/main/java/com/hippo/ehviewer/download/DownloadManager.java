@@ -96,7 +96,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         HashMap<String, LinkedList<DownloadInfo>> map = new HashMap<>();
         mMap = map;
         for (DownloadLabel label : labels) {
-            map.put(label.getLabel(), new LinkedList<DownloadInfo>());
+            map.put(label.getLabel(), new LinkedList<>());
         }
 
         // Create default for non tag
@@ -139,6 +139,72 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         mWaitList = new LinkedList<>();
         mSpeedReminder = new SpeedReminder();
         mDownloadInfoListeners = new ArrayList<>();
+    }
+
+    public void replaceInfo(DownloadInfo newInfo,DownloadInfo oldInfo){
+
+        mLabelList.clear();
+        List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
+        mLabelList.addAll(labels);
+
+        mMap.clear();
+        // Create list for each label
+        HashMap<String, LinkedList<DownloadInfo>> map = new HashMap<>();
+        mMap.putAll(map);
+        for (DownloadLabel label : labels) {
+            map.put(label.getLabel(), new LinkedList<>());
+        }
+
+        // Clear default for non tag
+        mDefaultInfoList.clear();
+
+        // Get all info
+        List<DownloadInfo> allInfoList = EhDB.getAllDownloadInfo();
+        mAllInfoList.addAll(allInfoList);
+
+        mAllInfoMap.clear();
+        // Create all info map
+        SparseJLArray<DownloadInfo> allInfoMap = new SparseJLArray<>(allInfoList.size() + 10);
+
+
+
+        for (int i = 0, n = allInfoList.size(); i < n; i++) {
+            DownloadInfo info = allInfoList.get(i);
+
+            // Add to all info map
+            allInfoMap.put(info.gid, info);
+
+            // Add to each label list
+            LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
+            if (list == null) {
+                // Can't find the label in label list
+                list = new LinkedList<>();
+                map.put(info.label, list);
+                if (!containLabel(info.label)) {
+                    // Add label to DB and list
+                    labels.add(EhDB.addDownloadLabel(info.label));
+                }
+            }
+            list.add(info);
+        }
+
+        for (int i = 0; i < allInfoMap.size(); i++) {
+            mAllInfoMap.put(allInfoMap.keyAt(i),allInfoMap.valueAt(i));
+        }
+
+        mLabelCountMap.clear();
+
+        for (Map.Entry<String, LinkedList<DownloadInfo>> entry : map.entrySet()){
+            mLabelCountMap.put(entry.getKey(), (long) entry.getValue().size());
+        }
+
+        for (DownloadInfoListener l:mDownloadInfoListeners){
+            l.onReplace(newInfo,oldInfo);
+        }
+
+//        mWaitList = new LinkedList<>();
+//        mSpeedReminder = new SpeedReminder();
+//        mDownloadInfoListeners = new ArrayList<>();
     }
 
     @Nullable
@@ -430,7 +496,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadLabel label: downloadLabelList) {
             String labelString = label.getLabel();
             if (!containLabel(labelString)) {
-                mMap.put(labelString, new LinkedList<DownloadInfo>());
+                mMap.put(labelString, new LinkedList<>());
                 mLabelList.add(EhDB.addDownloadLabel(label));
             }
         }
@@ -766,7 +832,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
 
         mLabelList.add(EhDB.addDownloadLabel(label));
-        mMap.put(label, new LinkedList<DownloadInfo>());
+        mMap.put(label, new LinkedList<>());
 
         for (DownloadInfoListener l: mDownloadInfoListeners) {
             l.onUpdateLabels();
@@ -1208,7 +1274,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
     }
 
-    private static final Comparator<DownloadInfo> DATE_DESC_COMPARATOR = new Comparator<DownloadInfo>() {
+    private static final Comparator<DownloadInfo> DATE_DESC_COMPARATOR = new Comparator<>() {
         @Override
         public int compare(DownloadInfo lhs, DownloadInfo rhs) {
             return lhs.time - rhs.time > 0 ? -1 : 1;
@@ -1221,6 +1287,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
          * Add the special info to the special position
          */
         void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position);
+
+        /**
+         * delete Old replace new
+         */
+        void onReplace(@NonNull DownloadInfo newInfo,@NonNull DownloadInfo oldInfo);
 
         /**
          * The special info is changed

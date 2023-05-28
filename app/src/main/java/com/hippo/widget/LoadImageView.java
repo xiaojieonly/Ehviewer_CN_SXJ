@@ -231,12 +231,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         mContainer = container;
         mUseNetwork = useNetwork;
 
-//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
-//                .setUnikery(this)
-//                .setKey(key)
-//                .setUrl(url)
-//                .setDataContainer(container)
-//                .setUseNetwork(useNetwork);
         ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
         builder.unikery = this;
         builder.key = key;

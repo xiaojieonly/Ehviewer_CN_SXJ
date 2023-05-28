@@ -20,6 +20,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.dao.DownloadInfo;
+
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -212,7 +214,7 @@ public class GalleryInfo implements Parcelable {
         this.tgList = in.readArrayList(String.class.getClassLoader());
     }
 
-    public static final Creator<GalleryInfo> CREATOR = new Creator<GalleryInfo>() {
+    public static final Creator<GalleryInfo> CREATOR = new Creator<>() {
 
         @Override
         public GalleryInfo createFromParcel(Parcel source) {
@@ -224,4 +226,36 @@ public class GalleryInfo implements Parcelable {
             return new GalleryInfo[size];
         }
     };
+
+    public DownloadInfo getDownloadInfo(@Nullable DownloadInfo info){
+        DownloadInfo i = new DownloadInfo();
+        i.gid = gid;
+        i.token = token;
+        i.title = title;
+        i.titleJpn = titleJpn;
+        i.thumb = thumb;
+        i.category = category;
+        i.posted = posted;
+        i.uploader = uploader;
+        i.rating = rating;
+        i.rated = rated;
+        i.simpleLanguage=simpleLanguage;
+        i.simpleTags = simpleTags;
+        i.thumbWidth =thumbWidth;
+        i.thumbHeight = thumbHeight;
+        i.spanSize = spanSize;
+        i.spanIndex = spanIndex;
+        i.spanGroupIndex = spanGroupIndex;
+        i.favoriteSlot = favoriteSlot;
+        i.favoriteName = favoriteName;
+        i.tgList = tgList;
+        if (info!=null){
+            i.state = DownloadInfo.STATE_WAIT;
+            i.legacy = info.legacy;
+            i.time = info.time;
+            i.label = info.label;
+        }
+
+        return i;
+    }
 }
