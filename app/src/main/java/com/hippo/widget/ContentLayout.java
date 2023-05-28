@@ -788,34 +788,6 @@ public class ContentLayout extends FrameLayout {
                         onScrollToPosition(0);
                     }
                 }
-//                if (true || mStartPage <= 0) { // OK, that's all
-//                    if (mData.isEmpty()) {
-//                        // Ui change, show empty string
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showEmptyString();
-//                    } else {
-//                        // Ui change, show content
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showContent();
-//
-//                        if (mCurrentTaskType == TYPE_PRE_PAGE && mRecyclerView.isAttachedToWindow()) {
-//                            // RecyclerView scroll, to top
-//                            mRecyclerView.stopScroll();
-//                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), 0, 0);
-//                            onScrollToPosition(0);
-//                        }
-//                    }
-//                } else {
-//                    // Keep UI
-//
-//                    // Get previous
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    // Keep mCurrentTaskType
-//                    mCurrentTaskPage = mStartPage - 1;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
             } else {
                 mData.addAll(0, data);
                 onAddData(data);

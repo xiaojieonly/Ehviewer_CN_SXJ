@@ -114,12 +114,13 @@ public class GalleryDetailParser {
 
 
         GalleryDetail galleryDetail = new GalleryDetail();
+        galleryDetail.body = body;
         Document document = Jsoup.parse(body);
         parseDetail(galleryDetail, document, body);
         galleryDetail.tags = parseTagGroups(document);       //获取标签列表
         galleryDetail.comments = parseComments(document);    //获取评论内容
         galleryDetail.previewPages = parsePreviewPages(document, body);  //获取画廊图片数量
-        galleryDetail.previewSet = parsePreviewSet(document, body);  //获取画廊浏览参数（如：之前有观看则从上次看到的位置开始）
+        galleryDetail.previewSet = parsePreviewSet(document, body);//获取画廊浏览参数（如：之前有观看则从上次看到的位置开始）
         return galleryDetail;
     }
 
@@ -207,7 +208,6 @@ public class GalleryDetailParser {
             gd.posted = "";
             gd.parent = "";
             gd.visible = "";
-            gd.visible = "";
             gd.size = "";
             gd.pages = 0;
             gd.favoriteCount = 0;
@@ -262,6 +262,13 @@ public class GalleryDetailParser {
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throw new ParseException("Can't parse gallery detail", body);
+        }
+        try{
+            Element updateElement = d.getElementById("gnd");
+            Element urlE = updateElement.child(1);
+            gd.updateUrl = urlE.absUrl("href");
+        }catch (Throwable ignore){
+            gd.updateUrl = null;
         }
     }
 

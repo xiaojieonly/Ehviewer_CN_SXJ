@@ -16,14 +16,31 @@
 
 package com.hippo.ehviewer.spider;
 
+import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
+import static com.hippo.ehviewer.spider.SpiderQueen.SPIDER_INFO_FILENAME;
+
+import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.client.data.GalleryDetail;
+import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.client.data.PreviewSet;
+import com.hippo.ehviewer.client.exception.ParseException;
+import com.hippo.ehviewer.client.parser.GalleryDetailParser;
+import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
+import com.hippo.streampipe.OutputStreamPipe;
 import com.hippo.unifile.UniFile;
+import com.hippo.util.ExceptionUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.NumberUtils;
+import com.microsoft.appcenter.crashes.Crashes;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -78,7 +95,7 @@ public class SpiderInfo {
             }
         }
 
-        return startPage >= 0 ? startPage : 0;
+        return Math.max(startPage, 0);
     }
 
     private static int getVersion(String str) {
@@ -171,7 +188,7 @@ public class SpiderInfo {
             writer.write(VERSION_STR);
             writer.write(Integer.toString(VERSION));
             writer.write("\n");
-            writer.write(String.format("%08x", startPage >= 0 ? startPage : 0)); // Avoid negative
+            writer.write(String.format("%08x", Math.max(startPage, 0))); // Avoid negative
             writer.write("\n");
             writer.write(Long.toString(gid));
             writer.write("\n");
@@ -186,7 +203,7 @@ public class SpiderInfo {
             writer.write(Integer.toString(pages));
             writer.write("\n");
             for (int i = 0; i < pTokenMap.size(); i++) {
-                Integer key = pTokenMap.keyAt(i);
+                int key = pTokenMap.keyAt(i);
                 String value = pTokenMap.valueAt(i);
                 if (TOKEN_FAILED.equals(value) || TextUtils.isEmpty(value)) {
                     continue;
@@ -204,4 +221,89 @@ public class SpiderInfo {
             IOUtils.closeQuietly(os);
         }
     }
+
+    public void updateSpiderInfo(SpiderInfo newInfo){
+        this.pages = newInfo.pages;
+        this.gid = newInfo.gid;
+        this.token = newInfo.token;
+        this.pTokenMap = newInfo.pTokenMap;
+        this.previewPerPage = newInfo.previewPerPage;this.previewPages = newInfo.previewPages;
+    }
+
+    public synchronized void writeNewSpiderInfoToLocal(@NonNull SpiderDen spiderDen, Context context) {
+//    public synchronized void writeNewSpiderInfoToLocal(@NonNull SpiderDen spiderDen) {
+        // Write to download dir
+        UniFile downloadDir = spiderDen.getDownloadDir();
+        if (downloadDir != null) {
+            UniFile file = downloadDir.createFile(SPIDER_INFO_FILENAME);
+            try {
+                write(file.openOutputStream());
+            } catch (Throwable e) {
+                ExceptionUtils.throwIfFatal(e);
+                // Ignore
+            }
+            // Read from cache
+            OutputStreamPipe pipe = EhApplication.getSpiderInfoCache(context).getOutputStreamPipe(Long.toString(gid));
+            try {
+                pipe.obtain();
+                write(pipe.open());
+            } catch (IOException e) {
+                // Ignore
+            } finally {
+                pipe.close();
+                pipe.release();
+            }
+        }
+    }
+
+    public static SpiderInfo getSpiderInfo(GalleryInfo info) {
+        SpiderInfo spiderInfo;
+        UniFile mDownloadDir = getGalleryDownloadDir(info);
+        if (mDownloadDir != null && mDownloadDir.isDirectory()) {
+            UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
+            spiderInfo = SpiderInfo.read(file);
+            if (spiderInfo != null && spiderInfo.gid == info.gid &&
+                    spiderInfo.token.equals(info.token)) {
+                return spiderInfo;
+            }
+        }
+        return null;
+    }
+
+    public static SpiderInfo getSpiderInfo(GalleryDetail info) {
+        try {
+            SpiderInfo spiderInfo = new SpiderInfo();
+            spiderInfo.gid = info.gid;
+            spiderInfo.token = info.token;
+            spiderInfo.pages = GalleryDetailParser.parsePages(info.body);
+            spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
+            readPreviews(info.body, 0, spiderInfo);
+            return spiderInfo;
+        } catch (ParseException e) {
+            Crashes.trackError(e);
+        }
+        return null;
+    }
+
+    private static void readPreviews(String body, int index, SpiderInfo spiderInfo) throws ParseException {
+        spiderInfo.pages = GalleryDetailParser.parsePages(body);
+        spiderInfo.previewPages = GalleryDetailParser.parsePreviewPages(body);
+        PreviewSet previewSet = GalleryDetailParser.parsePreviewSet(body);
+
+        if (previewSet.size() > 0) {
+            if (index == 0) {
+                spiderInfo.previewPerPage = previewSet.size();
+            } else {
+                spiderInfo.previewPerPage = previewSet.getPosition(0) / index;
+            }
+        }
+
+        for (int i = 0, n = previewSet.size(); i < n; i++) {
+            GalleryPageUrlParser.Result result = GalleryPageUrlParser.parse(previewSet.getPageUrlAt(i));
+            if (result != null) {
+                spiderInfo.pTokenMap.put(result.page, result.pToken);
+            }
+        }
+    }
+
 }

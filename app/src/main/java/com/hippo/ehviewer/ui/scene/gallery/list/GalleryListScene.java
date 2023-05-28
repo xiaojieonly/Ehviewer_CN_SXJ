@@ -327,6 +327,7 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -339,11 +340,17 @@ public final class GalleryListScene extends BaseScene
         mFavouriteStatusRouter = EhApplication.getFavouriteStatusRouter(context);
 
         mDownloadInfoListener = new DownloadManager.DownloadInfoListener() {
+
             @Override
             public void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
                 if (mAdapter != null) {
                     mAdapter.notifyDataSetChanged();
                 }
+            }
+
+            @Override
+            public void onReplace(@NonNull DownloadInfo newInfo, @NonNull DownloadInfo oldInfo) {
+
             }
 
             @Override
@@ -751,7 +758,7 @@ public final class GalleryListScene extends BaseScene
                 chip.setText(tagName.split(":")[1]);
             }
             chip.setOnClickListener(l -> onTagClick(tagName));
-            chip.setOnLongClickListener(l->onTagLongClick(tagName));
+            chip.setOnLongClickListener(l -> onTagLongClick(tagName));
             tagFlowLayout.addView(chip, i);
         }
 
@@ -759,16 +766,15 @@ public final class GalleryListScene extends BaseScene
     }
 
     private boolean onTagLongClick(String tagName) {
-       GalleryListSecenDialog dialog = new GalleryListSecenDialog(this);
-       dialog.setTagName(tagName);
-       dialog.showTagLongPressDialog();
+        GalleryListSecenDialog dialog = new GalleryListSecenDialog(this);
+        dialog.setTagName(tagName);
+        dialog.showTagLongPressDialog();
 //        Context context = requireContext();
 //        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 //        manager.setPrimaryClip(ClipData.newPlainText(null,tagName));
 //        Toast.makeText(context,R.string.gallery_tag_copy,Toast.LENGTH_LONG).show();
         return true;
     }
-
 
 
     private void onTagClick(String tagName) {
