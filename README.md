@@ -5,6 +5,9 @@
  ###  祝大家六一儿童节快乐，谁还不是个孩子呢~
  ###  修复了下载列表略缩图因e站图床地址变更导致不显示的问题（需要手动进入详情页重新加载） 
  ###  新增了画廊更新功能，现在画廊出了新版本不需要重新下载了 
+![image](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/be4b1cf8-1bfb-4031-928b-4b2c8f8c688e)
+![image](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/a123e394-648c-4af7-ab4a-1a519f08edfb)
+
    点击前往下载：[蓝奏云](https://wwsu.lanzouk.com/iOP4K0xxozub)  密码:2dag  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
