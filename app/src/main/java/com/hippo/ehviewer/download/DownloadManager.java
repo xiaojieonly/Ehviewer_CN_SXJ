@@ -143,68 +143,29 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     public void replaceInfo(DownloadInfo newInfo,DownloadInfo oldInfo){
 
-        mLabelList.clear();
-        List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
-        mLabelList.addAll(labels);
-
-        mMap.clear();
-        // Create list for each label
-        HashMap<String, LinkedList<DownloadInfo>> map = new HashMap<>();
-        mMap.putAll(map);
-        for (DownloadLabel label : labels) {
-            map.put(label.getLabel(), new LinkedList<>());
+        for (int i = 0; i < mAllInfoList.size(); i++) {
+            if (oldInfo.gid==mAllInfoList.get(i).gid){
+                mAllInfoList.set(i,newInfo);
+                break;
+            }
         }
-
-        // Clear default for non tag
-        mDefaultInfoList.clear();
-
-        // Get all info
-        List<DownloadInfo> allInfoList = EhDB.getAllDownloadInfo();
-        mAllInfoList.addAll(allInfoList);
-
-        mAllInfoMap.clear();
-        // Create all info map
-        SparseJLArray<DownloadInfo> allInfoMap = new SparseJLArray<>(allInfoList.size() + 10);
-
-
-
-        for (int i = 0, n = allInfoList.size(); i < n; i++) {
-            DownloadInfo info = allInfoList.get(i);
-
-            // Add to all info map
-            allInfoMap.put(info.gid, info);
-
-            // Add to each label list
-            LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
-            if (list == null) {
-                // Can't find the label in label list
-                list = new LinkedList<>();
-                map.put(info.label, list);
-                if (!containLabel(info.label)) {
-                    // Add label to DB and list
-                    labels.add(EhDB.addDownloadLabel(info.label));
+        final List<DownloadInfo> infoList = getInfoListForLabel(oldInfo.label);
+        if (infoList!=null){
+            for (int i = 0; i < infoList.size(); i++) {
+                if (oldInfo.gid==infoList.get(i).gid){
+                    infoList.set(i,newInfo);
+                    break;
                 }
             }
-            list.add(info);
         }
 
-        for (int i = 0; i < allInfoMap.size(); i++) {
-            mAllInfoMap.put(allInfoMap.keyAt(i),allInfoMap.valueAt(i));
-        }
+        mAllInfoMap.remove(oldInfo.gid);
+        mAllInfoMap.put(newInfo.gid,newInfo);
 
-        mLabelCountMap.clear();
-
-        for (Map.Entry<String, LinkedList<DownloadInfo>> entry : map.entrySet()){
-            mLabelCountMap.put(entry.getKey(), (long) entry.getValue().size());
-        }
 
         for (DownloadInfoListener l:mDownloadInfoListeners){
             l.onReplace(newInfo,oldInfo);
         }
-
-//        mWaitList = new LinkedList<>();
-//        mSpeedReminder = new SpeedReminder();
-//        mDownloadInfoListeners = new ArrayList<>();
     }
 
     @Nullable
@@ -264,6 +225,26 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         return mAllInfoMap.get(gid);
     }
 
+    @Nullable
+    public DownloadInfo getNoneDownloadInfo(long gid) {
+        if (mCurrentTask != null && mCurrentTask.gid == gid) {
+            // Stop current
+            stopCurrentDownloadInternal();
+        }else {
+            // Remove wait
+            for (Iterator<DownloadInfo> iterator = mWaitList.iterator(); iterator.hasNext();) {
+                DownloadInfo info = iterator.next();
+                if (info.gid == gid) {
+                    info.state = DownloadInfo.STATE_NONE;
+                    // Remove from wait list
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        return mAllInfoMap.get(gid);
+    }
+
     public int getDownloadState(long gid) {
         DownloadInfo info = mAllInfoMap.get(gid);
         if (null != info) {
@@ -317,7 +298,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             List<DownloadInfo> list = getInfoListForLabel(info.label);
             if (list != null) {
                 for (DownloadInfoListener l: mDownloadInfoListeners) {
-                    l.onUpdate(info, list);
+                    l.onUpdate(info, list,mWaitList);
                 }
             }
         }
@@ -343,7 +324,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 List<DownloadInfo> list = getInfoListForLabel(info.label);
                 if (list != null) {
                     for (DownloadInfoListener l: mDownloadInfoListeners) {
-                        l.onUpdate(info, list);
+                        l.onUpdate(info, list,mWaitList);
                     }
                 }
                 // Make sure download is running
@@ -543,7 +524,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             List<DownloadInfo> list = getInfoListForLabel(info.label);
             if (list != null) {
                 for (DownloadInfoListener l: mDownloadInfoListeners) {
-                    l.onUpdate(info, list);
+                    l.onUpdate(info, list,mWaitList);
                 }
             }
             // Ensure download
@@ -558,7 +539,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             List<DownloadInfo> list = getInfoListForLabel(info.label);
             if (list != null) {
                 for (DownloadInfoListener l: mDownloadInfoListeners) {
-                    l.onUpdate(info, list);
+                    l.onUpdate(info, list,mWaitList);
                 }
             }
             // Ensure download
@@ -1072,7 +1053,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         List<DownloadInfo> list = getInfoListForLabel(info.label);
                         if (list != null) {
                             for (DownloadInfoListener l: mDownloadInfoListeners) {
-                                l.onUpdate(info, list);
+                                l.onUpdate(info, list,mWaitList);
                             }
                         }
                     }
@@ -1103,7 +1084,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         List<DownloadInfo> list = getInfoListForLabel(info.label);
                         if (list != null) {
                             for (DownloadInfoListener l: mDownloadInfoListeners) {
-                                l.onUpdate(info, list);
+                                l.onUpdate(info, list,mWaitList);
                             }
                         }
                     }
@@ -1121,7 +1102,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         List<DownloadInfo> list = getInfoListForLabel(info.label);
                         if (list != null) {
                             for (DownloadInfoListener l: mDownloadInfoListeners) {
-                                l.onUpdate(info, list);
+                                l.onUpdate(info, list,mWaitList);
                             }
                         }
                     }
@@ -1165,7 +1146,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     List<DownloadInfo> list = getInfoListForLabel(info.label);
                     if (list != null) {
                         for (DownloadInfoListener l: mDownloadInfoListeners) {
-                            l.onUpdate(info, list);
+                            l.onUpdate(info, list,mWaitList);
                         }
                     }
                     // Start next download
@@ -1261,7 +1242,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 List<DownloadInfo> list = getInfoListForLabel(info.label);
                 if (list != null) {
                     for (DownloadInfoListener l: mDownloadInfoListeners) {
-                        l.onUpdate(info, list);
+                        l.onUpdate(info, list,mWaitList);
                     }
                 }
             }
@@ -1296,7 +1277,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         /**
          * The special info is changed
          */
-        void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list);
+        void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list,LinkedList<DownloadInfo> mWaitList);
 
         /**
          * Maybe all data is changed, but size is the same

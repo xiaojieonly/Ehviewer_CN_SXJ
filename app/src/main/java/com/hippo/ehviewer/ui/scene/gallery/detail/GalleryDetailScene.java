@@ -116,6 +116,7 @@ import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
 import com.hippo.util.AppHelper;
+import com.hippo.util.DataUtils;
 import com.hippo.util.DownloadUtil;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -144,6 +145,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -310,6 +312,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @Nullable
     private TextView downloadProgress;
 
+    private GalleryUpdateDialog updateDialog;
     @Nullable
     private Handler torrentDownloadHandler = null;
 
@@ -638,7 +641,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         EhApplication.getDownloadManager(context).addDownloadInfoListener(this);
-
+        if (updateDialog == null) {
+            updateDialog = new GalleryUpdateDialog(this, context);
+        }
         return view;
     }
 
@@ -740,7 +745,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         return request();
     }
 
-    private boolean request(String url,int resultMode){
+    private boolean request(String url, int resultMode) {
         Context context = getEHContext();
         MainActivity activity = getActivity2();
 
@@ -749,7 +754,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         EhClient.Callback callback = new GetGalleryDetailListener(context,
-                activity.getStageId(), getTag(),resultMode);
+                activity.getStageId(), getTag(), resultMode);
         mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
         EhRequest request = new EhRequest()
                 .setMethod(EhClient.METHOD_GET_GALLERY_DETAIL)
@@ -759,9 +764,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         return true;
     }
+
     private boolean request() {
         String url = getGalleryDetailUrl();
-        return request(url,GetGalleryDetailListener.RESULT_DETAIL);
+        return request(url, GetGalleryDetailListener.RESULT_DETAIL);
     }
 
     private void setActionDrawable(TextView text, Drawable drawable) {
@@ -922,10 +928,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (null == mGalleryInfo) {
             mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
         } else {
-            if (useNetWorkLoadThumb){
+            if (useNetWorkLoadThumb) {
                 mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
                 useNetWorkLoadThumb = false;
-            }else {
+            } else {
                 mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb, false);
             }
         }
@@ -1534,29 +1540,20 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private void onDownload(boolean onLongClick) {
         GalleryInfo galleryInfo = getGalleryInfo();
         if (galleryInfo != null) {
-            if (EhApplication.getDownloadManager(context).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
-                CommonOperations.startDownload(activity, galleryInfo, false);
-            } else if (mDownloadState == DownloadInfo.STATE_UPDATE) {
-                if (onLongClick){
+            if (mDownloadState == DownloadInfo.STATE_UPDATE) {
+                if (onLongClick) {
                     CommonOperations.startDownload(activity, galleryInfo, true);
-                }else{
-                    if (comeFromDownload){
-                        startUpdateDownload();
-                    }else{
-                        if (mGalleryDetail==null){
-                            return;
-                        }
-                        Bundle args = new Bundle();
-                        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
-                        args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO,mGalleryDetail.getNewGalleryDetail());
-                        args.putBoolean(KEY_COME_FROM_DOWNLOAD,true);
-                        Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
-                        announcer.setTranHelper(new EnterGalleryDetailTransaction(mThumb));
-                        startScene(announcer);
-                    }
-
+                } else {
+                    updateDialog.showSelectDialog(mGalleryDetail, true);
                 }
 
+            } else if (mDownloadState == DownloadInfo.GOTO_NEW) {
+                if (mGalleryDetail == null) {
+                    return;
+                }
+                updateDialog.showSelectDialog(mGalleryDetail, false);
+            } else if (EhApplication.getDownloadManager(context).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
+                CommonOperations.startDownload(activity, galleryInfo, false);
             } else {
                 new AlertDialog.Builder(context)
                         .setTitle(R.string.download_remove_dialog_title)
@@ -1567,12 +1564,22 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
-    public void startUpdateDownload(){
-        if (mGalleryDetail==null||mGalleryDetail.updateUrl==null){
+    public void startUpdateDownload(String updateUrl) {
+        if (mGalleryDetail == null || mGalleryDetail.newVersions == null) {
             return;
         }
         adjustViewVisibility(STATE_REFRESH, false);
-        request(mGalleryDetail.updateUrl,GetGalleryDetailListener.RESULT_UPDATE);
+        request(updateUrl, GetGalleryDetailListener.RESULT_UPDATE);
+    }
+
+    public void gotoNewVersion(GalleryDetail detail) {
+        Bundle args = new Bundle();
+        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
+        args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, detail);
+        args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
+        Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
+        announcer.setTranHelper(new EnterGalleryDetailTransaction(mThumb));
+        startScene(announcer);
     }
 
     @Override
@@ -1614,10 +1621,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (null == mDownload) {
             return;
         }
-        if (mGalleryDetail!=null&&mGalleryDetail.updateUrl!=null){
-            if (comeFromDownload){
+        if (mGalleryDetail != null && mGalleryDetail.newVersions != null) {
+            if (comeFromDownload) {
                 mDownloadState = DownloadInfo.STATE_UPDATE;
-            }else{
+            } else {
                 mDownloadState = DownloadInfo.GOTO_NEW;
             }
         }
@@ -1641,8 +1648,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             case DownloadInfo.STATE_FAILED:
                 mDownload.setText(R.string.download_state_failed);
             case DownloadInfo.STATE_UPDATE:
-            case DownloadInfo.GOTO_NEW:
                 mDownload.setText(R.string.update);
+                break;
+            case DownloadInfo.GOTO_NEW:
+                mDownload.setText(R.string.new_version);
                 break;
         }
     }
@@ -1673,7 +1682,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     @Override
-    public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list) {
+    public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, LinkedList<DownloadInfo> mWaitList) {
         updateDownloadState();
     }
 
@@ -1709,7 +1718,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mGalleryDetail = result;
         updateDownloadState();
         if (mDownloadState != DownloadInfo.STATE_INVALID) {
-            if (result.updateUrl != null) {
+            if (result.newVersions != null) {
                 mDownloadState = DownloadInfo.STATE_UPDATE;
                 updateDownloadText();
             }
@@ -1719,7 +1728,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 info.state = mDownloadState;
                 EhDB.putDownloadInfo(info);
             }
-        } else if (result.updateUrl != null) {
+        } else if (result.newVersions != null) {
             mDownloadState = DownloadInfo.GOTO_NEW;
             updateDownloadText();
         }
@@ -1728,53 +1737,57 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     protected void onGetGalleryDetailUpdateSuccess(GalleryDetail result, SpiderInfo newInfo, String newPath) {
-        if (mGalleryDetail==null){
+        if (mGalleryDetail == null) {
             adjustViewVisibility(STATE_NORMAL, true);
             return;
         }
-        if (newPath==null){
-            adjustViewVisibility(STATE_NORMAL, true);
-            return;
-        }
-        SpiderDen oldSpiderDen = new SpiderDen(mGalleryDetail);
-        if (oldSpiderDen.getDownloadDir()==null){
-            adjustViewVisibility(STATE_NORMAL, true);
-            return;
-        }
-        SpiderInfo oldInfo = SpiderInfo.getSpiderInfo((GalleryInfo)mGalleryDetail);
-        if (oldInfo==null){
-            adjustViewVisibility(STATE_NORMAL, true);
-            return;
-        }
-        DownloadInfo oldDownloadInfo = EhApplication.getDownloadManager(context).getDownloadInfo(mGalleryDetail.gid);
-        if (oldDownloadInfo==null){
+        if (newPath == null) {
             adjustViewVisibility(STATE_NORMAL, true);
             return;
         }
 
-       if (!oldSpiderDen.getDownloadDir().renameTo(newPath)){
-           adjustViewVisibility(STATE_NORMAL, true);
-           return;
+        final DownloadInfo oldDownloadInfo = EhApplication.getDownloadManager(context).getNoneDownloadInfo(mGalleryDetail.gid);
+        if (oldDownloadInfo == null) {
+            adjustViewVisibility(STATE_NORMAL, true);
+            return;
         }
-        oldSpiderDen.setMGid(result.gid);
-        EhDB.updateDownloadDirname(mGalleryDetail.gid,result.gid,newPath);
-        oldInfo.updateSpiderInfo(newInfo);
-        oldInfo.writeNewSpiderInfoToLocal(oldSpiderDen,context);
-
         DownloadInfo downloadInfoNew = result.getDownloadInfo(oldDownloadInfo);
+
+        SpiderDen oldSpiderDen = new SpiderDen(mGalleryDetail);
+        if (oldSpiderDen.getDownloadDir() != null) {
+            if (!oldSpiderDen.getDownloadDir().renameTo(newPath)) {
+                adjustViewVisibility(STATE_NORMAL, true);
+                return;
+            }
+            oldSpiderDen.setMGid(result.gid);
+        }
+
+        SpiderInfo oldInfo = SpiderInfo.getSpiderInfo((GalleryInfo) mGalleryDetail);
+        if (oldInfo == null) {
+            oldInfo = newInfo;
+        } else {
+            oldInfo.updateSpiderInfo(newInfo);
+        }
+        oldInfo.writeNewSpiderInfoToLocal(oldSpiderDen, context);
+
+
+        EhDB.updateDownloadDirname(mGalleryDetail.gid, result.gid, newPath);
+
         EhDB.removeDownloadInfo(mGalleryDetail.gid);
         EhDB.putDownloadInfo(downloadInfoNew);
         DownloadManager manager = EhApplication.getDownloadManager(context);
-        manager.replaceInfo(downloadInfoNew,oldDownloadInfo);
+        manager.replaceInfo(downloadInfoNew, oldDownloadInfo);
+
 
         Intent intent = new Intent(activity, DownloadService.class);
         intent.setAction(DownloadService.ACTION_START);
         intent.putExtra(DownloadService.KEY_LABEL, downloadInfoNew.label);
-        intent.putExtra(DownloadService.KEY_GALLERY_INFO, downloadInfoNew);
+        intent.putExtra(DownloadService.KEY_GALLERY_INFO, manager.getDownloadInfo(downloadInfoNew.gid));
         activity.startService(intent);
         mGalleryDetail = result;
         useNetWorkLoadThumb = true;
-        updateDownloadState();
+        mDownloadState = DownloadInfo.STATE_DOWNLOAD;
+        updateDownloadText();
         adjustViewVisibility(STATE_NORMAL, true);
         bindViewSecond();
     }

@@ -250,7 +250,7 @@ public class GalleryInfo implements Parcelable {
         i.favoriteName = favoriteName;
         i.tgList = tgList;
         if (info!=null){
-            i.state = DownloadInfo.STATE_WAIT;
+            i.state = info.state;
             i.legacy = info.legacy;
             i.time = info.time;
             i.label = info.label;
