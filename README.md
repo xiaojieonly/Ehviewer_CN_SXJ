@@ -1,6 +1,16 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/06/01 :    
+ ###  祝大家六一儿童节快乐，谁还不是个孩子呢~
+ ###  修复了下载列表略缩图因e站图床地址变更导致不显示的问题（需要手动进入详情页重新加载） 
+ ###  新增了画廊更新功能，现在画廊出了新版本不需要重新下载了 
+   点击前往下载：[蓝奏云](https://wwsu.lanzouk.com/iOP4K0xxozub)  密码:2dag  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/05/17 : 家人们，谁懂呀！   
  ###  批量读取阅读进度使用单独线程进行，优化下载列表滑动操作流畅度
  ###  修复可能看不了预览图片的问题 
