@@ -133,6 +133,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -354,7 +355,7 @@ public final class GalleryListScene extends BaseScene
             }
 
             @Override
-            public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list) {
+            public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, LinkedList<DownloadInfo> mWaitList) {
             }
 
             @Override

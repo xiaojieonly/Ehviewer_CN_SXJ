@@ -103,6 +103,7 @@ import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
 import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.unifile.UniFile;
+import com.hippo.util.DataUtils;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.view.ViewTransition;
@@ -142,8 +143,6 @@ public class DownloadsScene extends ToolbarScene
     private static final String KEY_LABEL = "label";
 
     public static final String ACTION_CLEAR_DOWNLOAD_SERVICE = "clear_download_service";
-
-    public static final String DOWNLOAD_DATA_CHANGE = "download_data_change";
 
     public static final int LOCAL_GALLERY_INFO_CHANGE = 909;
 
@@ -944,24 +943,14 @@ public class DownloadsScene extends ToolbarScene
         if (mList == null) {
             return;
         }
-        int position = 0;
-        for (int i = 0; i < mList.size(); i++) {
-            DownloadInfo info = mList.get(i);
-            if (info.gid == oldInfo.gid){
-                position = i;
-                mList.remove(i);
-                if (i==mList.size()-1){
-                    mList.add(newInfo);
-                }else {
-                    mList.add(i,newInfo);
-                }
-                break;
-            }
-        }
-        if (mAdapter != null) {
-            mAdapter.notifyItemInserted(position);
-        }
+        updateForLabel();
         updateView();
+
+        int index = mList.indexOf(newInfo);
+        if (index >= 0 && mAdapter != null) {
+//            mSpiderInfoMap.put(info.gid,getSpiderInfo(info));
+            mAdapter.notifyItemChanged(index);
+        }
         List<DownloadInfo> infos = new ArrayList<>();
         infos.add(newInfo);
         DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(infos, this::spiderInfoResultCallBack);
@@ -969,7 +958,7 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Override
-    public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list) {
+    public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list,LinkedList<DownloadInfo> mWaitList) {
         if (mList != list) {
             return;
         }
@@ -1280,15 +1269,6 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    @Override
-    protected void onSceneResult(int requestCode, int resultCode, Bundle data) {
-        super.onSceneResult(requestCode, resultCode, data);
-        boolean dataChange = data.getBoolean(DOWNLOAD_DATA_CHANGE);
-        if (dataChange) {
-            updateForLabel();
-        }
-    }
-
     private void queryUnreadSpiderInfo() {
         if (mList == null) {
             return;
@@ -1494,13 +1474,6 @@ public class DownloadsScene extends ToolbarScene
                 startScene(announcer);
             } else if (start == v) {
                 final DownloadInfo info = list.get(index);
-//                if (info.state == DownloadInfo.STATE_UPDATE) {
-//                    Intent intent = new Intent(activity, DownloadService.class);
-//                    intent.setAction(DownloadService.ACTION_UPDATE);
-//                    intent.putExtra(DownloadService.KEY_DOWNLOAD_INFO, info);
-//                    activity.startService(intent);
-//                    return;
-//                }
                 Intent intent = new Intent(activity, DownloadService.class);
                 intent.setAction(DownloadService.ACTION_START);
                 intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);

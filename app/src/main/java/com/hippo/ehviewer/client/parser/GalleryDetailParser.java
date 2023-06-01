@@ -28,6 +28,7 @@ import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryTagGroup;
 import com.hippo.ehviewer.client.data.LargePreviewSet;
+import com.hippo.ehviewer.client.data.NewVersion;
 import com.hippo.ehviewer.client.data.NormalPreviewSet;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.exception.EhException;
@@ -44,6 +45,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
@@ -93,8 +95,9 @@ public class GalleryDetailParser {
 
     /**
      * 画廊详情页数据处理
-     * @param body  传入原始画廊html数据
-     * @return  返回从html数据中提取的有用数据
+     *
+     * @param body 传入原始画廊html数据
+     * @return 返回从html数据中提取的有用数据
      * @throws EhException
      */
     public static GalleryDetail parse(String body) throws EhException {
@@ -263,12 +266,34 @@ public class GalleryDetailParser {
             ExceptionUtils.throwIfFatal(e);
             throw new ParseException("Can't parse gallery detail", body);
         }
-        try{
+        try {
             Element updateElement = d.getElementById("gnd");
-            Element urlE = updateElement.child(1);
-            gd.updateUrl = urlE.absUrl("href");
-        }catch (Throwable ignore){
-            gd.updateUrl = null;
+            List<NewVersion> versionList = new ArrayList<>();
+            List<TextNode> textNodes = updateElement.textNodes();
+            for (int i = 0; i < updateElement.childrenSize(); i++) {
+                Element urlE = updateElement.child(i);
+                String url = urlE.absUrl("href");
+                if (url != null && !url.isEmpty()) {
+                    NewVersion version = new NewVersion();
+                    version.versionUrl = url;
+                    String nameS = urlE.text();
+                    TextNode textNode = textNodes.get(versionList.size());
+                    String timeS = textNode.text();
+                    if (timeS != null && !timeS.isEmpty()) {
+                        version.versionName = nameS + timeS;
+                    } else {
+                        version.versionName = nameS;
+                    }
+                    versionList.add(version);
+                }
+            }
+            if (versionList.isEmpty()) {
+                gd.newVersions = null;
+                return;
+            }
+            gd.newVersions = versionList.toArray(new NewVersion[0]);
+        } catch (Throwable ignore) {
+            gd.newVersions = null;
         }
     }
 
@@ -377,6 +402,7 @@ public class GalleryDetailParser {
 
     /**
      * 从HTML元素中提取tag
+     *
      * @param trs
      * @return
      */
@@ -517,7 +543,8 @@ public class GalleryDetailParser {
                 }
 
                 @Override
-                public void tail(Node node, int depth) { }
+                public void tail(Node node, int depth) {
+                }
             }, chd);
 
             return new GalleryCommentList(list.toArray(new GalleryComment[list.size()]), hasMore.value);
@@ -607,13 +634,13 @@ public class GalleryDetailParser {
         PreviewSet previewSet;
         try {
             previewSet = parseLargePreviewSet(d, body);
-            if (previewSet == null){
+            if (previewSet == null) {
                 previewSet = parseNormalPreviewSet(body);
             }
-            if (previewSet == null){
-                throw new ParseException("加载预览图失败",body);
+            if (previewSet == null) {
+                throw new ParseException("加载预览图失败", body);
             }
-            return  previewSet;
+            return previewSet;
 //            return parseLargePreviewSet(d, body);
         } catch (ParseException e) {
             ExceptionUtils.throwIfFatal(e);
@@ -701,8 +728,8 @@ public class GalleryDetailParser {
                 continue;
             }
             String imageUrl = ParserUtils.trim(m.group(3));
-            int xOffset =  ParserUtils.parseInt(m.group(4), 0);
-            int yOffset =  0;
+            int xOffset = ParserUtils.parseInt(m.group(4), 0);
+            int yOffset = 0;
             int width = ParserUtils.parseInt(m.group(1), 0);
             if (width <= 0) {
                 continue;

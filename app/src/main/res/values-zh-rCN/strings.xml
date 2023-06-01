@@ -125,7 +125,9 @@
     <string name="no_select">请选择一个站点</string>
 
     <!-- Update -->
+    <string name="new_version">新版本</string>
     <string name="update">更新</string>
+    <string name="update_to">更新至</string>
     <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>
     <string name="update_to_date">EhViewer 已是最新版本</string>
     <string name="update_ignore">忽略</string>

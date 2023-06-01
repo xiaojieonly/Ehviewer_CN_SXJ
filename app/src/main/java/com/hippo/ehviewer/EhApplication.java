@@ -128,7 +128,7 @@ public class EhApplication extends RecordingApplication {
 
     private final List<Activity> mActivityList = new ArrayList<>();
 
-    private List<String> torrentList = new ArrayList<>();
+    private final List<String> torrentList = new ArrayList<>();
 
     private boolean initialized = false;
 
@@ -337,7 +337,7 @@ public class EhApplication extends RecordingApplication {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mOkHttpClient == null) {
             Dispatcher dispatcher = new Dispatcher();
-            dispatcher.setMaxRequestsPerHost(4);
+            dispatcher.setMaxRequestsPerHost(2);
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
@@ -695,6 +695,7 @@ public class EhApplication extends RecordingApplication {
         showEventPane(html);
     }
 
+    @Nullable
     public EhNewsDetail getEhNewsDetail(){
         return ehNewsDetail;
     }
