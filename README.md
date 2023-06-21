@@ -1,7 +1,14 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2023/06/01 :    
+# 2023/06/18 :紧急通知  
+ ###  中国地区，表站已被高墙（ip封禁），目前只能通过梯子使用o(￣┰￣*)ゞ  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
+# 2023/06/01 :  
+ ###  新版本：1.9.5.1  
  ###  祝大家六一儿童节快乐，谁还不是个孩子呢~
  ###  修复了下载列表略缩图因e站图床地址变更导致不显示的问题（需要手动进入详情页重新加载） 
  ###  新增了画廊更新功能，现在画廊出了新版本不需要重新下载了——需要从下载列表手动进入详情页查看更新信息 
@@ -15,6 +22,7 @@
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
 # 2023/05/17 : 家人们，谁懂呀！   
+ ###  新版本：1.9.5.0  
  ###  批量读取阅读进度使用单独线程进行，优化下载列表滑动操作流畅度
  ###  修复可能看不了预览图片的问题 
  ###  优化了图片加载逻辑，现在图片加载应该会更快一些 
@@ -25,6 +33,7 @@
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
    
 # 2023/04/28 :   
+ ###  新版本：1.9.4.9  
  ###  提前祝大家五一劳动节快乐
  ###  下载列表新增阅读进度 
  ###  下载列表标签分组新增分组画廊总数 
