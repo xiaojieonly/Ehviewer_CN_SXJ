@@ -1,6 +1,21 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/06/21 :感谢NiceBowl  
+ ###  新版发布1.9.5.2
+ ###  感谢NiceBowl提供的host数据  
+ ###  e站可以不挂梯子了（目前来说）  
+ ###  大伙们可以不用再找我问东问西了   
+ ![image](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/167e7d1b-c7f0-4f74-96bb-965dfd9c439d)
+ ![image](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/4b080924-6e58-4716-b333-8e72eafe3c74)
+ ![image](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/e46949fd-e1b0-4de7-80fe-21d46773e0c9)
+
+   点击前往下载：[蓝奏云](https://wwsu.lanzouk.com/iQhpy0zov5ub)  密码:8d3g  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/06/18 :紧急通知  
  ###  中国地区，表站已被高墙（ip封禁），目前只能通过梯子使用o(￣┰￣*)ゞ  
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
