@@ -1,6 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/06/23 :紧急通知  
+ ###  E站一切正常  
+ ###  软件一切正常  
+ ###  解析错误或者无法打开页面的，请自行挂梯子  
+ ###  我选择低调做人  
+ ###  以后大概率不会再对网络方面做额外的补充了，特别是在绕过GFW的封锁上不可能再做过多的文章了  
+ ###  其他想好要做的功能还是会做的，反正是开源的  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/06/21 :感谢NiceBowl  
  ###  新版发布1.9.5.2
  ###  感谢NiceBowl提供的host数据  
