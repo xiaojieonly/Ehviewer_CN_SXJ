@@ -60,6 +60,12 @@
         android:summary="@string/settings_download_download_origin_image_summary"
         android:defaultValue="false"/>
 
+    <com.hippo.preference.SwitchPreference
+        android:key="download_order_asc"
+        android:title="@string/settings_download_download_order_by_asc"
+        android:summary="@string/settings_download_download_order_by_asc_summary"
+        android:defaultValue="true"/>
+
     <com.hippo.ehviewer.preference.RestoreDownloadPreference
         android:key="restore_download_items"
         android:title="@string/settings_download_restore_download_items"
