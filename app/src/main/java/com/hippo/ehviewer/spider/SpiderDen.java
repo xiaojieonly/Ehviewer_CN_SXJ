@@ -179,7 +179,7 @@ public final class SpiderDen {
     }
 
     @Nullable
-    private static UniFile findImageFile(UniFile dir, int index) {
+    public static UniFile findImageFile(UniFile dir, int index) {
         for (String extension : GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS) {
             String filename = generateImageFilename(index, extension);
             UniFile file = dir.findFile(filename);

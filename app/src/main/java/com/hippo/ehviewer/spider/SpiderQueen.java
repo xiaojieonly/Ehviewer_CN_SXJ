@@ -16,6 +16,8 @@
 
 package com.hippo.ehviewer.spider;
 
+import static com.hippo.ehviewer.spider.SpiderDen.generateImageFilename;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -56,6 +58,7 @@ import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.streampipe.OutputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
+import com.hippo.util.FileUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.MathUtils;
@@ -65,6 +68,7 @@ import com.hippo.yorozuya.Utilities;
 import com.hippo.yorozuya.collect.SparseJLArray;
 import com.hippo.yorozuya.thread.PriorityThread;
 import com.hippo.yorozuya.thread.PriorityThreadFactory;
+import com.microsoft.appcenter.crashes.Crashes;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -101,6 +105,9 @@ public final class SpiderQueen implements Runnable {
     public static final int STATE_FAILED = 3;
     public static final int DECODE_THREAD_NUM = 2;
     public static final String SPIDER_INFO_FILENAME = ".ehviewer";
+    public static final String SPIDER_INFO_BACKUP_FILENAME = ".ehviewer_backup";
+
+    public static final String SPIDER_INFO_BACKUP_DIR = "backupDir";
     private static final String TAG = SpiderQueen.class.getSimpleName();
     private static final AtomicInteger sIdGenerator = new AtomicInteger();
     private static final boolean DEBUG_LOG = false;
@@ -1419,6 +1426,20 @@ public final class SpiderQueen implements Runnable {
         // false for stop
         private boolean runInternal() {
             SpiderInfo spiderInfo = mSpiderInfo.get();
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            UniFile backupFile;
+            if (downloadDir == null){
+                backupFile = null;
+            }else {
+                backupFile = downloadDir.findFile(SPIDER_INFO_BACKUP_FILENAME);
+            }
+            SpiderInfo oldInfo;
+            if (backupFile == null) {
+                oldInfo = null;
+            } else {
+                oldInfo = SpiderInfo.read(backupFile);
+            }
+
             if (spiderInfo == null) {
                 return false;
             }
@@ -1465,8 +1486,13 @@ public final class SpiderQueen implements Runnable {
 
             // Check exist for not force request
             if (!force && mSpiderDen.contain(index)) {
-                updatePageState(index, STATE_FINISHED);
-                return true;
+//                if (comparedPToken(index, spiderInfo)) {
+                if (comparedPTokenIndex(index, spiderInfo,oldInfo)) {
+                    updatePageState(index, STATE_FINISHED);
+                    return true;
+                }
+//                updatePageState(index, STATE_FINISHED);
+//                return true;
             }
 
             // Clear TOKEN_FAILED for force request
@@ -1556,6 +1582,150 @@ public final class SpiderQueen implements Runnable {
 
             // Get image url
             return downloadImage(mGid, index, pToken, previousPToken, force);
+        }
+
+
+        /**
+         * 仅校验对应位置的文件pToken，不一致则舍弃，一致则保留
+         *
+         * @param index
+         * @return
+         */
+        private boolean comparedPTokenIndex(int index, SpiderInfo spiderInfo,SpiderInfo oldInfo) {
+            String pToken = spiderInfo.pTokenMap.get(index);
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            if (downloadDir == null) {
+                return false;
+            }
+
+            if (oldInfo == null) {
+                return true;
+            }
+
+            String oldPToken = oldInfo.pTokenMap.get(index);
+
+            if (pToken == null) {
+                if (oldPToken != null) {
+                    return false;
+                }
+                Log.e("spiderQueen", "旧的pToken已校验删除");
+                return true;
+            }
+            if (oldPToken == null) {
+                return true;
+            }
+            return pToken.equals(oldPToken);
+        }
+
+        /**
+         * 先检测本地备份文件是否存在，不存在则检测备份文件夹内数据
+         * 如果存在备份配置，则检测对应位置pToken与新版本是否一致
+         * 检测一致则返回true
+         * 不一致则获取对应位置文件
+         * 将此位置文件复制到备份文件夹内以pToken命名的同后缀文件中，并删除此文件
+         * 在备份文件夹内查询新的pToken名称的文件，如果存在则写回画廊目录并删除备份文件，并返回true
+         * 如果备份文件夹中不存在对应新的pToken的文件，则查询旧的备份文件信息中是否存在同样名称但是位置不同的pToken
+         * 如果存在，则将旧位置的文件修改至新位置并返回true
+         * 如果不存，则返回false
+         * 每次匹配均从旧备份文件中删除对应位置信息
+         * 当旧备份pToken列表中不在有有效数据后删除备份文件
+         *
+         * 过于复杂，测试工作量过大
+         *
+         * @param index
+         * @return
+         */
+        private boolean comparedPToken(int index, SpiderInfo spiderInfo) {
+            String pToken = spiderInfo.pTokenMap.get(index);
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            if (downloadDir == null) {
+                return false;
+            }
+            UniFile backupFile = downloadDir.findFile(SPIDER_INFO_BACKUP_FILENAME);
+
+            if (backupFile == null) {
+                return checkInBackupDir(pToken, downloadDir, index);
+            }
+            SpiderInfo oldInfo = SpiderInfo.read(backupFile);
+            if (oldInfo == null) {
+                return true;
+            }
+
+            String oldPToken = oldInfo.pTokenMap.get(index);
+            try {
+                if (pToken == null) {
+                    Log.e("spiderQueen", "旧的pToken已校验删除");
+                    return true;
+                }
+                if (pToken.equals(oldPToken)) {
+                    return true;
+                }
+
+                for (String extension : GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS) {
+                    String filename = generateImageFilename(index, extension);
+                    UniFile image = downloadDir.findFile(filename);
+                    if (image != null) {
+                        UniFile backUpDir = downloadDir.findFile(SPIDER_INFO_BACKUP_DIR);
+                        if (backUpDir == null) {
+                            backUpDir = downloadDir.createDirectory(SPIDER_INFO_BACKUP_DIR);
+                        }
+                        try {
+                            String imageName = image.getName();
+                            String[] names = imageName.split("\\.");
+                            if (names.length == 0) {
+                                Log.e("spiderQueen", "type miss");
+                            }
+                            String pTokenFileName = oldPToken + "." + names[names.length - 1];
+                            UniFile pTokenFile = backUpDir.createFile(pTokenFileName);
+                            FileUtils.copyFile(image, pTokenFile, true);
+                        } catch (NullPointerException e) {
+                            Crashes.trackError(e);
+                        }
+                        image.delete();
+                        return false;
+                    }
+                }
+
+                return false;
+            } finally {
+                oldInfo.pTokenMap.remove(index);
+                if (oldInfo.pTokenMap.size() == 0) {
+                    backupFile.delete();
+                } else {
+                    try {
+                        oldInfo.write(backupFile.openOutputStream());
+                    } catch (IOException e) {
+                        Crashes.trackError(e);
+                    }
+                }
+            }
+        }
+
+        private boolean checkInBackupDir(String pToken, UniFile fileDir, int index) {
+            UniFile dir = fileDir.findFile(SPIDER_INFO_BACKUP_DIR);
+            if (dir == null || !dir.isDirectory()) {
+                return false;
+            }
+            for (String extension : GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS) {
+                String filename = pToken + extension;
+                UniFile image = dir.findFile(filename);
+                if (image != null) {
+                    try {
+                        String[] strings = image.getName().split("\\.");
+                        String fileExt = "." + strings[strings.length - 1];
+                        String fileName = generateImageFilename(index, fileExt);
+                        UniFile indexFile = dir.createFile(fileName);
+                        FileUtils.copyFile(image, indexFile, true);
+                        image.delete();
+                        return true;
+                    } catch (NullPointerException e) {
+                        Crashes.trackError(e);
+                        return false;
+                    }
+                }
+            }
+
+            return false;
         }
 
         @Override
