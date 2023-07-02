@@ -1,6 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/07/02 :  
+ ###  新版发布1.9.5.3
+ ###  新增画廊倒叙下载功能  
+ ###  画廊更新功能优化，新增画廊图片位置校验，（修复了更新可能导致画廊图片顺序失序的问题）  
+ ###  修复一个可能导致订阅列表奔溃的问题   
+ ###  修复加载画廊预览图可能导致软件奔溃的bug   
+   点击前往下载：[蓝奏云](https://wwsu.lanzouk.com/iYb381133n5c)  密码:2as1  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/06/23 :紧急通知  
  ###  E站一切正常  
  ###  软件一切正常  
