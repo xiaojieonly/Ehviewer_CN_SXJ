@@ -1312,13 +1312,16 @@ public class Settings {
         putString(key,path);
     }
 
-//    private static boolean ALREADY_CHECK;
-//
-//    public static void setCheckUpdate(boolean b){
-//        ALREADY_CHECK = b;
-//    }
-//
-//    public static boolean getCheckUpdateState(){
-//        return ALREADY_CHECK;
-//    }
+    public static final String KEY_DOWNLOAD_ORDER_ASC = "download_order_asc";
+
+    private static boolean IS_DOWNLOAD_ORDER_ASC = true;
+
+    public static boolean getDownloadOrder() {
+        return getBoolean(KEY_DOWNLOAD_ORDER_ASC, IS_DOWNLOAD_ORDER_ASC) ;
+    }
+
+    public static void setDownloadOrder(boolean value) {
+        putBoolean(KEY_DOWNLOAD_ORDER_ASC, value);
+    }
+
 }

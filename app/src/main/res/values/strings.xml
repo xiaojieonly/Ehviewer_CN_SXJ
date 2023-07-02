@@ -634,6 +634,8 @@
     <string name="settings_download_image_resolution_auto">Auto</string>
     <string name="settings_download_download_origin_image">Download original image</string>
     <string name="settings_download_download_origin_image_summary">It is dangerous! You may get 509 error</string>
+    <string name="settings_download_download_order_by_asc">Download order by asc</string>
+    <string name="settings_download_download_order_by_asc_summary">Download in sequence when downloading all galleries</string>
     <string name="settings_download_restore_download_items">Restore download items</string>
     <string name="settings_download_restore_download_items_summary">Restore all download items in download location</string>
     <string name="settings_download_restoring">Restoring</string>
