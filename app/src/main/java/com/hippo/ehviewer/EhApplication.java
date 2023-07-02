@@ -481,7 +481,8 @@ public class EhApplication extends RecordingApplication {
             builder.hasDiskCache = true;
             builder.diskCacheDir = new File(context.getCacheDir(), "thumb");
             builder.diskCacheMaxSize = 320 * 1024 * 1024; // 320MB
-            builder.okHttpClient = getOkHttpClient(context);
+//            builder.okHttpClient = getOkHttpClient(context);
+            builder.okHttpClient = getImageOkHttpClient(context);
             builder.objectHelper = getImageBitmapHelper(context);
             builder.debug = DEBUG_CONACO;
             application.mConaco = builder.build();

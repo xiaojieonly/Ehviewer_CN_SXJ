@@ -16,6 +16,7 @@
 
 package com.hippo.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -85,7 +86,7 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.LoadImageView, defStyleAttr, 0);
+        @SuppressLint("CustomViewStyleable") TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.LoadImageView, defStyleAttr, 0);
         setRetryType(a.getInt(R.styleable.LoadImageView_retryType, 0));
         a.recycle();
         setFocusable(false);
@@ -247,7 +248,8 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         builder.url = url;
         builder.dataContainer= container;
         builder.useNetwork= useNetwork;
-        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+//        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+        builder.okHttpClient= EhApplication.getImageOkHttpClient(getContext());
         mConaco.load(builder);
     }
 

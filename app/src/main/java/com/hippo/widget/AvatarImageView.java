@@ -301,7 +301,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         builder.url = url;
         builder.dataContainer= container;
         builder.useNetwork= useNetwork;
-        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+        builder.okHttpClient= EhApplication.getImageOkHttpClient(getContext());
         mConaco.load(builder);
     }
 

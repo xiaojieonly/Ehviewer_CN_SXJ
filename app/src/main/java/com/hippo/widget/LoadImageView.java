@@ -237,7 +237,8 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         builder.url = url;
         builder.dataContainer= container;
         builder.useNetwork= useNetwork;
-        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+//        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
+        builder.okHttpClient= EhApplication.getImageOkHttpClient(getContext());
         mConaco.load(builder);
     }
 
