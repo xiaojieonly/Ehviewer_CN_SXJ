@@ -116,7 +116,6 @@ import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
 import com.hippo.util.AppHelper;
-import com.hippo.util.DataUtils;
 import com.hippo.util.DownloadUtil;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -1513,7 +1512,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @Override
     public boolean onLongClick(View v) {
-        MainActivity activity = getActivity2();
+        context = getEHContext();
+        activity = getActivity2();
         if (null == activity) {
             return false;
         }
@@ -1751,7 +1751,14 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             adjustViewVisibility(STATE_NORMAL, true);
             return;
         }
+
         DownloadInfo downloadInfoNew = result.getDownloadInfo(oldDownloadInfo);
+        SpiderInfo oldInfo = SpiderInfo.createBackupSpiderInfo( mGalleryDetail);
+        if (oldInfo == null) {
+            oldInfo = newInfo;
+        } else {
+            oldInfo.updateSpiderInfo(newInfo);
+        }
 
         SpiderDen oldSpiderDen = new SpiderDen(mGalleryDetail);
         if (oldSpiderDen.getDownloadDir() != null) {
@@ -1762,12 +1769,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             oldSpiderDen.setMGid(result.gid);
         }
 
-        SpiderInfo oldInfo = SpiderInfo.getSpiderInfo((GalleryInfo) mGalleryDetail);
-        if (oldInfo == null) {
-            oldInfo = newInfo;
-        } else {
-            oldInfo.updateSpiderInfo(newInfo);
-        }
         oldInfo.writeNewSpiderInfoToLocal(oldSpiderDen, context);
 
 

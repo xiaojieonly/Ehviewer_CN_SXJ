@@ -64,7 +64,6 @@ public class DownloadService extends Service implements DownloadManager.Download
     public static final String ACTION_CLEAR = "clear";
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
-    public static final String KEY_DOWNLOAD_INFO = "download_info";
     public static final String KEY_LABEL = "label";
     public static final String KEY_GID = "gid";
     public static final String KEY_GID_LIST = "gid_list";
