@@ -168,6 +168,7 @@ public final class SubscriptionsScene extends ToolbarScene {
         assert mRecyclerView != null;
         mRecyclerView.setVisibility(View.VISIBLE);
         if (userTagList == null){
+            userTagList = new UserTagList();
             userTagList.userTags = new ArrayList<>();
         }
         // drag & drop manager
@@ -313,6 +314,9 @@ public final class SubscriptionsScene extends ToolbarScene {
 
         @Override
         public void onSuccess(UserTagList result) {
+            if (userTagList==null){
+                userTagList =  new UserTagList();
+            }
             if (result == null || result.userTags == null){
                 userTagList.userTags = new ArrayList<>();
             }else {
