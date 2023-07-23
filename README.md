@@ -4,6 +4,17 @@
 
 
 # 2023/07/02 :  
+ ###  新版发布1.9.5.5
+ ###  修复了一些可能导致app崩溃的问题  
+ ###  对网络问题再次进行了一定程度的优化
+ ###  如果还是老样子，请覆盖安装旧版   
+   点击前往下载：[蓝奏云](https://wwsu.lanzouk.com/icNka1395wsj)  密码:a3jm  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+   
+# 2023/07/02 :  
  ###  新版发布1.9.5.4
  ###  对预览图片加载导致的奔溃问题进行了修复   
  ###  如果还是老样子，请覆盖安装旧版   
