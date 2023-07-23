@@ -14,7 +14,7 @@
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
    
-# 2023/07/02 :  
+# 2023/07/13 :  
  ###  新版发布1.9.5.4
  ###  对预览图片加载导致的奔溃问题进行了修复   
  ###  如果还是老样子，请覆盖安装旧版   
