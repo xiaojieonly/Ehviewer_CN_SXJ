@@ -316,4 +316,19 @@
         <item>SOCKS</item>
     </string-array>
 
+    <array name="socket_colors">
+        <item>@color/socket0</item>
+        <item>@color/socket1</item>
+        <item>@color/socket2</item>
+        <item>@color/socket3</item>
+        <item>@color/socket4</item>
+        <item>@color/socket5</item>
+        <item>@color/socket6</item>
+        <item>@color/socket7</item>
+        <item>@color/socket8</item>
+        <item>@color/socket9</item>
+        <item>@color/socket10</item>
+        <item>@color/socket11</item>
+    </array>
+
 </resources>

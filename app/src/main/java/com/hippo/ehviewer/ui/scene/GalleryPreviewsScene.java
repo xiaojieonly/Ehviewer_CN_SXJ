@@ -55,6 +55,8 @@ import com.hippo.widget.recyclerview.AutoGridLayoutManager;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.LayoutUtils;
 import com.hippo.yorozuya.ViewUtils;
+import com.microsoft.appcenter.crashes.Crashes;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -231,11 +233,16 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         if (null != context && null != mHelper && null != mGalleryInfo) {
             GalleryPreview p = mHelper.getDataAtEx(position);
             if (p != null) {
-                Intent intent = new Intent(context, GalleryActivity.class);
-                intent.setAction(GalleryActivity.ACTION_EH);
-                intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, mGalleryInfo);
-                intent.putExtra(GalleryActivity.KEY_PAGE, p.getPosition());
-                startActivity(intent);
+                try{
+                    Intent intent = new Intent(context, GalleryActivity.class);
+                    intent.setAction(GalleryActivity.ACTION_EH);
+                    intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, mGalleryInfo);
+                    intent.putExtra(GalleryActivity.KEY_PAGE, p.getPosition());
+                    startActivity(intent);
+                }catch (RuntimeException e){
+                    Crashes.trackError(e);
+
+                }
             }
         }
         return true;

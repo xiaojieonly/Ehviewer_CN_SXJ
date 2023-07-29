@@ -48,15 +48,15 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
         return value.getWidth() * value.getHeight() * 4 /* value.getByteCount() TODO Update Image */;
     }
 
-    @Override
-    public void onAddToMemoryCache(@NonNull String key, @NonNull ImageBitmap value) {
-        value.obtain();
-    }
-
 //    @Override
-//    public void onAddToMemoryCache(@NonNull ImageBitmap oldValue) {
-//        oldValue.obtain();
+//    public void onAddToMemoryCache(@NonNull String key, @NonNull ImageBitmap value) {
+//        value.obtain();
 //    }
+
+    @Override
+    public void onAddToMemoryCache(@NonNull ImageBitmap oldValue) {
+        oldValue.obtain();
+    }
 
     @Override
     public void onRemoveFromMemoryCache(@NonNull String key, @NonNull ImageBitmap oldValue) {

@@ -263,7 +263,11 @@ public abstract class BaseScene extends SceneFragment {
 
     @NonNull
     public LayoutInflater getLayoutInflater2() {
-        LayoutInflater layoutInflater = LayoutInflater.from(getEHContext());
+        Context context = getEHContext();
+        if (context==null){
+            context = getContext();
+        }
+        LayoutInflater layoutInflater = LayoutInflater.from(context);
         if (layoutInflater==null){
             layoutInflater = getLayoutInflater();
         }

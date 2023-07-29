@@ -336,8 +336,8 @@ public class EhApplication extends RecordingApplication {
     public static OkHttpClient getOkHttpClient(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mOkHttpClient == null) {
-            Dispatcher dispatcher = new Dispatcher();
-            dispatcher.setMaxRequestsPerHost(2);
+//            Dispatcher dispatcher = new Dispatcher();
+//            dispatcher.setMaxRequestsPerHost(4);
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
@@ -346,7 +346,7 @@ public class EhApplication extends RecordingApplication {
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
-                    .dispatcher(dispatcher)
+//                    .dispatcher(dispatcher)
                     .dns(new EhDns(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
@@ -356,7 +356,7 @@ public class EhApplication extends RecordingApplication {
                         }
                     })
                     .proxySelector(getEhProxySelector(application));
-            if (Settings.getDF() && !AppHelper.checkVPN(context)) {
+            if (Settings.getDF() && AppHelper.checkVPN(context)) {
                 if (Build.VERSION.SDK_INT < 29) {
                     Security.insertProviderAt(Conscrypt.newProvider(), 1);
                     builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
@@ -406,16 +406,23 @@ public class EhApplication extends RecordingApplication {
         if (application.mImageOkHttpClient == null) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .followRedirects(false)
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-                    .callTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(20, TimeUnit.SECONDS)
+                    .readTimeout(20, TimeUnit.SECONDS)
+                    .writeTimeout(20, TimeUnit.SECONDS)
+                    .callTimeout(20, TimeUnit.SECONDS)
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
-                    .hostnameVerifier((hostname, session) -> true)
+//                    .hostnameVerifier((hostname, session) -> true)
                     .dns(new EhDns(application))
+                    .addNetworkInterceptor(sprocket -> {
+                        try {
+                            return sprocket.proceed(sprocket.request());
+                        } catch (NullPointerException e) {
+                            throw new NullPointerException(e.getMessage());
+                        }
+                    })
                     .proxySelector(getEhProxySelector(application));
-            if (Settings.getDF() && !AppHelper.checkVPN(context)) {
+            if (Settings.getDF() && AppHelper.checkVPN(context)) {
                 if (Build.VERSION.SDK_INT < 29) {
                     Security.insertProviderAt(Conscrypt.newProvider(), 1);
                     builder.connectionSpecs(Collections.singletonList(ConnectionSpec.MODERN_TLS));
@@ -481,8 +488,8 @@ public class EhApplication extends RecordingApplication {
             builder.hasDiskCache = true;
             builder.diskCacheDir = new File(context.getCacheDir(), "thumb");
             builder.diskCacheMaxSize = 320 * 1024 * 1024; // 320MB
-//            builder.okHttpClient = getOkHttpClient(context);
-            builder.okHttpClient = getImageOkHttpClient(context);
+            builder.okHttpClient = getOkHttpClient(context);
+//            builder.okHttpClient = getImageOkHttpClient(context);
             builder.objectHelper = getImageBitmapHelper(context);
             builder.debug = DEBUG_CONACO;
             application.mConaco = builder.build();

@@ -289,19 +289,19 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         mContainer = container;
         mUseNetwork = useNetwork;
 
-//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
-//                .setUnikery(this)
-//                .setKey(key)
-//                .setUrl(url)
-//                .setDataContainer(container)
-//                .setUseNetwork(useNetwork);
-        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
-        builder.unikery = this;
-        builder.key = key;
-        builder.url = url;
-        builder.dataContainer= container;
-        builder.useNetwork= useNetwork;
-        builder.okHttpClient= EhApplication.getImageOkHttpClient(getContext());
+        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
+                .setUnikery(this)
+                .setKey(key)
+                .setUrl(url)
+                .setDataContainer(container)
+                .setUseNetwork(useNetwork);
+//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
+//        builder.unikery = this;
+//        builder.key = key;
+//        builder.url = url;
+//        builder.dataContainer= container;
+//        builder.useNetwork= useNetwork;
+//        builder.okHttpClient= EhApplication.getImageOkHttpClient(getContext());
         mConaco.load(builder);
     }
 
@@ -334,9 +334,9 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         }
     }
 
-//    @Override
-//    public void onRequest() {
-//    }
+    @Override
+    public void onRequest() {
+    }
 
     @Override
     public void onProgress(long singleReceivedSize, long receivedSize, long totalSize) {
@@ -348,14 +348,14 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     }
 
     @Override
-    public void onGetValue(@NonNull ImageBitmap value, int source) {
+    public boolean onGetValue(@NonNull ImageBitmap value, int source) {
         Drawable drawable;
         try {
             drawable = new ImageDrawable(value);
         } catch (RecycledException e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);
-            return;
+            return false;
         }
 
         clearDrawable();
@@ -375,6 +375,8 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         } else {
             setImageDrawable(drawable);
         }
+
+        return true;
     }
 
     @Override

@@ -167,4 +167,9 @@
     <dimen name="download_search_bar_height">40dp</dimen>
     <dimen name="button_space_between">20dp</dimen>
 
+    <!--  socket  -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <dimen name="spacing">8dp</dimen>
 </resources>
