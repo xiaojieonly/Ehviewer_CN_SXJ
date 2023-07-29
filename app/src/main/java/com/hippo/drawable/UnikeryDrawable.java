@@ -58,12 +58,12 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
     public void load(String url) {
         if (url != null) {
             mUrl = url;
-//            mConaco.load(new ConacoTask.Builder<ImageBitmap>().setUnikery(this).setUrl(url).setKey(url));
-            ConacoTask.Builder<ImageBitmap> builder =new ConacoTask.Builder<>();
-            builder.url = url;
-            builder.unikery = this;
-            builder.key = url;
-            mConaco.load(builder);
+            mConaco.load(new ConacoTask.Builder<ImageBitmap>().setUnikery(this).setUrl(url).setKey(url));
+//            ConacoTask.Builder<ImageBitmap> builder =new ConacoTask.Builder<>();
+//            builder.url = url;
+//            builder.unikery = this;
+//            builder.key = url;
+//            mConaco.load(builder);
         }
     }
 
@@ -114,6 +114,11 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
     @Override
     public void onMiss(int source) {}
 
+    @Override
+    public void onRequest() {
+
+    }
+
 //    @Override
 //    public void onRequest() {}
 
@@ -124,13 +129,13 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
     public void onWait() {}
 
     @Override
-    public void onGetValue(@NonNull ImageBitmap value, int source) {
+    public boolean onGetValue(@NonNull ImageBitmap value, int source) {
         ImageDrawable drawable;
         try {
             drawable = new ImageDrawable(value);
         } catch (RecycledException e) {
             Log.d(TAG, "The ImageBitmap is recycled", e);
-            return ;
+            return false;
         }
 
         clearDrawable();
@@ -138,6 +143,7 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap
         setDrawable(drawable);
         drawable.start();
 
+        return true;
     }
 
     @Override

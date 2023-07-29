@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -165,7 +166,10 @@ public final class SubscriptionsScene extends ToolbarScene {
 
     private void bindSecond() {
         progressView.setVisibility(View.GONE);
-        assert mRecyclerView != null;
+        if (mRecyclerView == null){
+            Toast.makeText(context,"描述文件未找到？？？重启试试~",Toast.LENGTH_LONG).show();
+            return;
+        }
         mRecyclerView.setVisibility(View.VISIBLE);
         if (userTagList == null){
             userTagList = new UserTagList();

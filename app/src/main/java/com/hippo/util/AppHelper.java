@@ -27,20 +27,21 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.net.VpnManager;
-import android.os.Build;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.hippo.ehviewer.R;
+import com.microsoft.appcenter.crashes.Crashes;
 
 public class AppHelper {
 
     public static boolean sendEmail(@NonNull Activity from, @NonNull String address,
-            @Nullable String subject, @Nullable String text) {
+                                    @Nullable String subject, @Nullable String text) {
         Intent i = new Intent(Intent.ACTION_SENDTO);
         i.setData(Uri.parse("mailto:" + address));
         if (subject != null) {
@@ -105,7 +106,7 @@ public class AppHelper {
         }
     }
 
-    public static void copyPlainText(String data,Context context) {
+    public static void copyPlainText(String data, Context context) {
         // 获取系统剪贴板
         ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         // 创建一个剪贴数据集，包含一个普通文本数据条目（需要复制的数据）,其他的还有
@@ -126,10 +127,14 @@ public class AppHelper {
         //don't know why always returns null:
         NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
         boolean result = networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_VPN;
-        if (result){
-            Toast.makeText(context,R.string.network_remind,Toast.LENGTH_LONG).show();
+        if (result) {
+            try {
+                Toast.makeText(context, R.string.network_remind, Toast.LENGTH_LONG).show();
+            } catch (RuntimeException ignore) {
+
+            }
         }
-        return result;
+        return !result;
     }
 
     private boolean isWifiProxy(Context context) {

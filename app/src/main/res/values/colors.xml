@@ -191,4 +191,18 @@
     <color name="light_blue_A200">#FF40C4FF</color>
     <color name="light_blue_A400">#FF00B0FF</color>
     <color name="black_overlay">#66000000</color>
+
+    <!--  socket  -->
+    <color name="socket0">#e21400</color>
+    <color name="socket1">#91580f</color>
+    <color name="socket2">#f8a700</color>
+    <color name="socket3">#f78b00</color>
+    <color name="socket4">#58dc00</color>
+    <color name="socket5">#287b00</color>
+    <color name="socket6">#a8f07a</color>
+    <color name="socket7">#4ae8c4</color>
+    <color name="socket8">#3b88eb</color>
+    <color name="socket9">#3824aa</color>
+    <color name="socket10">#a700ff</color>
+    <color name="socket11">#d300e7</color>
 </resources>

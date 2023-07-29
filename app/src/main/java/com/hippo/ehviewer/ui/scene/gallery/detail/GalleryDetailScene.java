@@ -1245,8 +1245,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         OutputStream os = null;
         try {
             os = new FileOutputStream(temp);
-//            if (beerBelly.pullFromDiskCache(EhCacheKeyFactory.getThumbKey(gid), os)) {
-            if (beerBelly.pullRawFromDisk(EhCacheKeyFactory.getThumbKey(gid), os)) {
+            if (beerBelly.pullFromDiskCache(EhCacheKeyFactory.getThumbKey(gid), os)) {
+//            if (beerBelly.pullRawFromDisk(EhCacheKeyFactory.getThumbKey(gid), os)) {
                 ListUrlBuilder lub = new ListUrlBuilder();
                 lub.setMode(ListUrlBuilder.MODE_IMAGE_SEARCH);
                 lub.setImagePath(temp.getPath());
@@ -1621,7 +1621,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (null == mDownload) {
             return;
         }
-        if (mGalleryDetail != null && mGalleryDetail.newVersions != null) {
+        if (mGalleryDetail != null && mGalleryDetail.newVersions != null && mDownloadState != DownloadInfo.STATE_FAILED) {
             if (comeFromDownload) {
                 mDownloadState = DownloadInfo.STATE_UPDATE;
             } else {
@@ -1753,7 +1753,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         DownloadInfo downloadInfoNew = result.getDownloadInfo(oldDownloadInfo);
-        SpiderInfo oldInfo = SpiderInfo.createBackupSpiderInfo( mGalleryDetail);
+        SpiderInfo oldInfo = SpiderInfo.createBackupSpiderInfo(mGalleryDetail);
         if (oldInfo == null) {
             oldInfo = newInfo;
         } else {

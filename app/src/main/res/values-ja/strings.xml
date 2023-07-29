@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -148,7 +147,7 @@
     <string name="search_sr">評価の下限：</string>
     <string name="search_sp">ページ：</string>
     <string name="search_sp_to">から</string>
-	<string name="search_sp_suffix">まで</string>
+    <string name="search_sp_suffix">まで</string>
     <string name="search_sf">既定フィルターから下記のものを例外とする：</string>
     <string name="search_sfl">言語</string>
     <string name="search_sfu">アップローダ</string>
@@ -445,11 +444,11 @@
     <string name="settings_read_custom_screen_lightness">画面の明るさを設定</string>
     <string name="settings_read_screen_lightness">画面の明るさ</string>
 
-  
-   <!-- My Tags Activity -->
+
+    <!-- My Tags Activity -->
     <string name="my_tags">マイ タグ</string>
-  
-  
+
+
     <string name="settings_download">ダウンロード</string>
     <string name="settings_download_download_location">ダウンロードパス</string>
     <string name="settings_download_invalid_download_location">無効なダウンロードパス</string>
@@ -530,8 +529,8 @@
     <string name="proxy_port">ポート</string>
     <string name="proxy_domain_not_supported">ドメインには対応していません</string>
     <string name="proxy_invalid_port">入力したポートは無効です</string>
-  
-  
+
+
     <!-- ExcludedLanguagesScene -->
     <string name="excluded_languages">言語を除外</string>
     <string name="select_all">すべて選択</string>
@@ -675,7 +674,7 @@
     <string name="settings_advanced_custom_hosts_title">カスタムhosts.txt</string>
     <string name="settings_advanced_custom_hosts_summary">ホスト名をIPにマッピング\n既定のhosts.txtを上書きできます。</string>
 
-     <string name="settings_eh_theme">テーマ</string>
+    <string name="settings_eh_theme">テーマ</string>
     <string name="settings_eh_theme_light">ライト</string>
     <string name="settings_eh_theme_dark">ダーク</string>
     <string name="settings_eh_theme_black">ブラック</string>
@@ -693,7 +692,6 @@
     <string name="settings_eh_identity_cookies_copy">コピー</string>
     <string name="settings_eh_show_gallery_pages">ギャラリーページ数を表示</string>
     <string name="settings_eh_show_gallery_pages_summary">リストにギャラリーのページの数量を表示します</string>
-    <string name="settings_about_donate_guide">サポートガイド</string>
 
     <!--  排行榜  -->
 
@@ -705,5 +703,46 @@
     <string name="cleanup_toplists">そーじ ランキング</string>
     <string name="rating_reviewing_toplists">格付け&#038;検討 ランキング</string>
     <string name="top_list">ランキング</string>
+
+    <!--  以下数据由GitHub用户shixichann提供  -->
+    <string name="blacklist_id">ユーザー ID</string>
+    <string name="blacklist">ブラックリスト</string>
+    <string name="join_in_blacklist">ブラックリストに参加する</string>
+    <string name="add_blacklist">ブロックされたユーザーを追加する</string>
+    <string name="blacklist_tip">このブロック システムは、EHentai ウェブサイトのコメント システムに基づいてコメントをブロックし続けます。 \n\nレビューアーのブロック項目: このレビューアーによってアップロードされたコメントを除外します。 これにより、ギャラリー リストの読み込みに時間がかかる場合があります。 </string>
+    <string name="blacklist_text">ユーザーをブロックする</string>
+    <string name="delete_blacklist">ユーザー“%s“のブロックを解除しますか? </string>
+    <string name="blacklist_reason_text">ブロックの理由</string>
+    <string name="settings_eh_blacklist">コメントブラックリスト</string>
+    <string name="settings_eh_blacklist_summary">アカウント名に従って他の人のコメントをブロックする</string>
+    <string name="settings_advanced_dns_over_http_title">セキュア DNS (DoH)</string>
+    <string name="settings_advanced_dns_over_http_summary">一部の地域での DNS 汚染を修正する</string>
+    <string name="settings_advanced_domain_fronting_title">ドメインフロンティング</string>
+    <string name="settings_advanced_domain_fronting_summary">SNI ブロックをバイパスする</string>
+    <string name="settings_advanced_url_replace_title">URL マスカレード、SNI をオフにする必要があります</string>
+    <string name="settings_advanced_url_replace_summary">URL 偽装 (再起動が必要です。開くとアカウント機能が無効になります)</string>
+    <string name="settings_about_donate_guide">サポート ガイド</string>
+    <string name="share_favorites_dialog_title">お気に入りを共有</string>
+    <string name="share_favorites_dialog_message">お気に入り %s を共有しますか? </string>
+    <string name="add_favorites_dialog_message">お気に入り %s を追加しますか? </string>
+    <string name="settings_advanced_built_ex_hosts_title">組み込みの 例外 hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_summary">アプリケーションによって提供されるホストから IP へのマッピングは\nカスタム hosts.txt によって上書きできます</string>
+    <string name="network_remind">VPN が有効になっていることが検出されました。ネットワーク セキュリティに注意してください</string>
+
+    <string name="no_blicklist">これはブラックリストです</string>
+    <!--  日本語化不足対応  -->
+    <string name="settings_eh_lock_cookies_igneous">Lock the Cookie igneous field</string> <!--  翻訳不能  -->
+    <string name="settings_eh_lock_cookies_igneous_summary">特別な状況を除いて、これを有効にすることは推奨されない。</string>
+    <string name="settings_eh_show_jpn_title_summary">EHentaiウェブサイトの設定で日本語タイトルを有効にする必要がある</string>
+    <string name="settings_eh_show_tag_translations">タグの翻訳（中国語）を表示する</string>
+    <string name="settings_eh_show_tag_translations_summary">原文ではなくタグ翻訳（中国語）を表示（データファイルのダウンロードに時間がかかります）</string>
+    <string name="settings_eh_tag_translations_source">プレースホルダ</string>
+    <string name="settings_eh_tag_translations_source_url">https://placeholder</string>
+    <string name="settings_eh_show_gallery_comment">ギャラリーコメントを表示</string>
+    <string name="settings_eh_show_eh_event">EHイベントを表示する</string>
+    <string name="settings_read_reverse_volume_page">ボリュームキーの変換方向を逆にする</string>
+    <string name="settings_download_download_order_by_asc">昇順でのダウンロードする</string>
+    <string name="settings_download_download_order_by_asc_summary">すべてのギャラリーをダウンロードする場合は、順番にダウンロードします</string>
+    <!--  以上数据由GitHub用户shixichann提供  -->
 
 </resources>
