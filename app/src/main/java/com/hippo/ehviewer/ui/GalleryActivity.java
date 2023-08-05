@@ -58,6 +58,7 @@ import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.event.GalleryActivityEvent;
 import com.hippo.ehviewer.gallery.ArchiveGalleryProvider;
 import com.hippo.ehviewer.gallery.DirGalleryProvider;
 import com.hippo.ehviewer.gallery.EhGalleryProvider;
@@ -83,8 +84,14 @@ import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -99,6 +106,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     public static final String KEY_FILENAME = "filename";
     public static final String KEY_URI = "uri";
     public static final String KEY_GALLERY_INFO = "gallery_info";
+    public static final String DATA_IN_EVENT = "data_in_event";
     public static final String KEY_PAGE = "page";
     public static final String KEY_CURRENT_INDEX = "current_index";
 
@@ -149,6 +157,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private int mLayoutMode;
     private int mSize;
     private int mCurrentIndex;
+
+    private boolean canFinish = false;
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(3);
 
@@ -221,9 +231,25 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+    /**
+     * eventbus 通知，用于修复跳转奔溃的问题
+     * @param event
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onGalleryActivityEvent(GalleryActivityEvent event) {
+        if (mGalleryProvider != null) {
+            return;
+        }
+        mGalleryInfo = event.galleryInfo;
+        mPage = event.pagePosition;
+        buildProvider();
+        onCreateView(null);
+    }
+
     private void onInit() {
         Intent intent = getIntent();
         if (intent == null) {
+            canFinish = true;
             return;
         }
 
@@ -231,6 +257,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mFilename = intent.getStringExtra(KEY_FILENAME);
         mUri = intent.getData();
         mGalleryInfo = intent.getParcelableExtra(KEY_GALLERY_INFO);
+        boolean onEvent = intent.getBooleanExtra(DATA_IN_EVENT,false);
+        if (!onEvent){
+            canFinish = true;
+        }
         mPage = intent.getIntExtra(KEY_PAGE, -1);
         buildProvider();
     }
@@ -261,16 +291,14 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Override
     @SuppressWarnings({"deprecation", "WrongConstant"})
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        if (Settings.getReadingFullscreen()) {
+        if (Settings.getReadingFullscreen() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window w = getWindow();
             w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
             w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
-
         super.onCreate(savedInstanceState);
-
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         builder.detectFileUriExposure();
@@ -280,8 +308,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         } else {
             onRestore(savedInstanceState);
         }
+        onCreateView(savedInstanceState);
+        //注册事件
+        EventBus.getDefault().register(this);
+    }
 
+    private void onCreateView(@Nullable Bundle savedInstanceState) {
         if (mGalleryProvider == null) {
+            if (!canFinish){
+                return;
+            }
             finish();
             return;
         }
@@ -329,7 +365,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         // System UI helper
         if (Settings.getReadingFullscreen()) {
             int systemUiLevel;
-            systemUiLevel = SystemUiHelper.LEVEL_IMMERSIVE;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                systemUiLevel = SystemUiHelper.LEVEL_IMMERSIVE;
+            } else {
+                systemUiLevel = SystemUiHelper.LEVEL_HIDE_STATUS_BAR;
+            }
             mSystemUiHelper = new SystemUiHelper(this, systemUiLevel,
                     SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES | SystemUiHelper.FLAG_IMMERSIVE_STICKY);
             mSystemUiHelper.hide();
@@ -425,13 +465,15 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mSeekBar = null;
         super.onDestroy();
         SimpleHandler.getInstance().removeCallbacks(mHideSliderRunnable);
+        //销毁事件
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putExtra("info",mGalleryInfo);
-        setResult(LOCAL_GALLERY_INFO_CHANGE,intent);
+        intent.putExtra("info", mGalleryInfo);
+        setResult(LOCAL_GALLERY_INFO_CHANGE, intent);
         super.onBackPressed();
     }
 
@@ -748,6 +790,178 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         w.setAttributes(lp);
     }
 
+    private void shareImage(int page) {
+        if (null == mGalleryProvider) {
+            return;
+        }
+
+        File dir = AppConfig.getExternalTempDir();
+        if (null == dir) {
+            Toast.makeText(this, R.string.error_cant_create_temp_file, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        UniFile file;
+        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
+            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String filename = file.getName();
+        if (filename == null) {
+            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+                MimeTypeMap.getFileExtensionFromUrl(filename));
+        if (TextUtils.isEmpty(mimeType)) {
+            mimeType = "image/jpeg";
+        }
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.putExtra(Intent.EXTRA_STREAM, file.getUri());
+        intent.setType(mimeType);
+
+        try {
+            startActivity(Intent.createChooser(intent, getString(R.string.share_image)));
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Toast.makeText(this, R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveImage(int page) {
+        if (null == mGalleryProvider) {
+            return;
+        }
+
+        File dir = AppConfig.getExternalImageDir();
+        if (null == dir) {
+            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        UniFile file;
+        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
+            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, getString(R.string.image_saved, file.getUri()), Toast.LENGTH_SHORT).show();
+
+        // Sync media store
+        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, file.getUri()));
+    }
+
+    private void saveImageTo(int page) {
+        if (null == mGalleryProvider) {
+            return;
+        }
+        File dir = getCacheDir();
+        UniFile file;
+        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
+            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String filename = file.getName();
+        if (filename == null) {
+            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        mCacheFileName = filename;
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_TITLE, filename);
+        try {
+            startActivityForResult(intent, WRITE_REQUEST_CODE);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Toast.makeText(this, R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        super.onActivityResult(requestCode, resultCode, resultData);
+        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            if (resultData != null) {
+                Uri uri = resultData.getData();
+                String filepath = getCacheDir() + "/" + mCacheFileName;
+                File cacheFile = new File(filepath);
+
+                InputStream is = null;
+                OutputStream os = null;
+                ContentResolver resolver = getContentResolver();
+
+                try {
+                    is = new FileInputStream(cacheFile);
+                    os = resolver.openOutputStream(uri);
+                    IOUtils.copy(is, os);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    IOUtils.closeQuietly(is);
+                    IOUtils.closeQuietly(os);
+                }
+
+                cacheFile.delete();
+
+                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+                // Sync media store
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+            }
+        }
+    }
+
+    private void showPageDialog(final int page) {
+        Resources resources = GalleryActivity.this.getResources();
+        AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
+        builder.setTitle(resources.getString(R.string.page_menu_title, page + 1));
+
+        final CharSequence[] items;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            items = new CharSequence[]{
+                    getString(R.string.page_menu_refresh),
+                    getString(R.string.page_menu_share),
+                    getString(R.string.page_menu_save),
+                    getString(R.string.page_menu_save_to)};
+        } else {
+            items = new CharSequence[]{
+                    getString(R.string.page_menu_refresh),
+                    getString(R.string.page_menu_share),
+                    getString(R.string.page_menu_save)};
+        }
+        pageDialogListener(builder, items, page);
+        builder.show();
+    }
+
+    private void pageDialogListener(AlertDialog.Builder builder, CharSequence[] items, int page) {
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (mGalleryProvider == null) {
+                    return;
+                }
+
+                switch (which) {
+                    case 0: // Refresh
+                        mGalleryProvider.removeCache(page);
+                        mGalleryProvider.forceRequest(page);
+                        break;
+                    case 1: // Share
+                        shareImage(page);
+                        break;
+                    case 2: // Save
+                        saveImage(page);
+                        break;
+                    case 3: // Save to
+                        saveImageTo(page);
+                        break;
+                }
+            }
+        });
+    }
+
     private class GalleryMenuHelper implements DialogInterface.OnClickListener {
 
         private final View mView;
@@ -914,168 +1128,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 recreate();
             }
         }
-    }
-
-    private void shareImage(int page) {
-        if (null == mGalleryProvider) {
-            return;
-        }
-
-        File dir = AppConfig.getExternalTempDir();
-        if (null == dir) {
-            Toast.makeText(this, R.string.error_cant_create_temp_file, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        UniFile file;
-        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String filename = file.getName();
-        if (filename == null) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-
-        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                MimeTypeMap.getFileExtensionFromUrl(filename));
-        if (TextUtils.isEmpty(mimeType)) {
-            mimeType = "image/jpeg";
-        }
-
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.putExtra(Intent.EXTRA_STREAM, file.getUri());
-        intent.setType(mimeType);
-
-        try {
-            startActivity(Intent.createChooser(intent, getString(R.string.share_image)));
-        } catch (Throwable e) {
-            ExceptionUtils.throwIfFatal(e);
-            Toast.makeText(this, R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void saveImage(int page) {
-        if (null == mGalleryProvider) {
-            return;
-        }
-
-        File dir = AppConfig.getExternalImageDir();
-        if (null == dir) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        UniFile file;
-        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Toast.makeText(this, getString(R.string.image_saved, file.getUri()), Toast.LENGTH_SHORT).show();
-
-        // Sync media store
-        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, file.getUri()));
-    }
-
-    private void saveImageTo(int page) {
-        if (null == mGalleryProvider) {
-            return;
-        }
-        File dir = getCacheDir();
-        UniFile file;
-        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String filename = file.getName();
-        if (filename == null) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        mCacheFileName = filename;
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-        intent.putExtra(Intent.EXTRA_TITLE, filename);
-        try {
-            startActivityForResult(intent, WRITE_REQUEST_CODE);
-        } catch (Throwable e) {
-            ExceptionUtils.throwIfFatal(e);
-            Toast.makeText(this, R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        super.onActivityResult(requestCode, resultCode, resultData);
-        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            if (resultData != null) {
-                Uri uri = resultData.getData();
-                String filepath = getCacheDir() + "/" + mCacheFileName;
-                File cacheFile = new File(filepath);
-
-                InputStream is = null;
-                OutputStream os = null;
-                ContentResolver resolver = getContentResolver();
-
-                try {
-                    is = new FileInputStream(cacheFile);
-                    os = resolver.openOutputStream(uri);
-                    IOUtils.copy(is, os);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    IOUtils.closeQuietly(is);
-                    IOUtils.closeQuietly(os);
-                }
-
-                cacheFile.delete();
-
-                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
-                // Sync media store
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
-            }
-        }
-    }
-
-    private void showPageDialog(final int page) {
-        Resources resources = GalleryActivity.this.getResources();
-        AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
-        builder.setTitle(resources.getString(R.string.page_menu_title, page + 1));
-
-        final CharSequence[] items;
-        items = new CharSequence[]{
-                getString(R.string.page_menu_refresh),
-                getString(R.string.page_menu_share),
-                getString(R.string.page_menu_save),
-                getString(R.string.page_menu_save_to)};
-        pageDialogListener(builder, items, page);
-        builder.show();
-    }
-
-    private void pageDialogListener(AlertDialog.Builder builder, CharSequence[] items, int page) {
-        builder.setItems(items, (dialog, which) -> {
-            if (mGalleryProvider == null) {
-                return;
-            }
-
-            switch (which) {
-                case 0: // Refresh
-                    mGalleryProvider.removeCache(page);
-                    mGalleryProvider.forceRequest(page);
-                    break;
-                case 1: // Share
-                    shareImage(page);
-                    break;
-                case 2: // Save
-                    saveImage(page);
-                    break;
-                case 3: // Save to
-                    saveImageTo(page);
-                    break;
-            }
-        });
     }
 
     private class NotifyTask implements Runnable {
