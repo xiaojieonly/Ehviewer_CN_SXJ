@@ -28,7 +28,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "1.9.5.6"
+        versionName "1.9.5.7"
         vectorDrawables.useSupportLibrary = true
         resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
         testOptions.unitTests.includeAndroidResources = true
@@ -169,6 +169,10 @@ dependencies {
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
     implementation 'org.jsoup:jsoup:1.14.2'
+
+    //事件通知
+    implementation 'org.greenrobot:eventbus:3.1.1'
+
 
     testImplementation 'junit:junit:4.8.2'
     testImplementation 'org.robolectric:robolectric:4.2.1'

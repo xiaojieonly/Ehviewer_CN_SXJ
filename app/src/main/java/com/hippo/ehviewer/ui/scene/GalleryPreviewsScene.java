@@ -45,6 +45,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.GalleryPreview;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.exception.EhException;
+import com.hippo.ehviewer.event.GalleryActivityEvent;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.scene.SceneFragment;
@@ -56,6 +57,8 @@ import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.LayoutUtils;
 import com.hippo.yorozuya.ViewUtils;
 import com.microsoft.appcenter.crashes.Crashes;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -236,12 +239,12 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                 try{
                     Intent intent = new Intent(context, GalleryActivity.class);
                     intent.setAction(GalleryActivity.ACTION_EH);
-                    intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, mGalleryInfo);
-                    intent.putExtra(GalleryActivity.KEY_PAGE, p.getPosition());
+                    intent.putExtra(GalleryActivity.DATA_IN_EVENT, true);
+//                    intent.putExtra(GalleryActivity.KEY_PAGE, p.getPosition());
                     startActivity(intent);
+                    EventBus.getDefault().postSticky(new GalleryActivityEvent(p.getPosition(),mGalleryInfo));
                 }catch (RuntimeException e){
                     Crashes.trackError(e);
-
                 }
             }
         }
