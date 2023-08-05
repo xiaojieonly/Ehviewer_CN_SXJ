@@ -1,6 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+
+# 2023/08/05 :  
+ ###  新版发布1.9.5.7  
+ ###  专门对预览页跳转至浏览页的数据传输方式进行了修改，如果还是会出现奔溃情况的话应该是手机有问题😵‍💫  
+ ###  如果还是老样子，请覆盖安装1.9.5.0版   
+   点击前往下载：[蓝奏云](https://wwsu.lanzouk.com/iA76A14i8zcj)  密码:f0yx  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
+
 # 2023/07/29 :  
  ###  新版发布1.9.5.6  
  ###  修复了画廊详情中画廊下载失败但按钮显示的是‘更新’的问题  
