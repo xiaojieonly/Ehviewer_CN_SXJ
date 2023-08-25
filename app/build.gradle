@@ -159,13 +159,6 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.14.7'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
 
-
-    //socket通道
-//    implementation ('io.socket:socket.io-client:0.8.3') {
-//        exclude group: 'org.json', module: 'json'
-//    }
-    implementation 'io.socket:socket.io-client:0.8.3'
-
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
     implementation 'org.jsoup:jsoup:1.14.2'
