@@ -606,6 +606,8 @@
     <string name="settings_advanced_import_data">导入数据</string>
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
     <string name="settings_advanced_import_data_successfully">导入数据成功</string>
+    <string name="settings_advanced_wifi_sender">WiFi传输</string>
+    <string name="settings_advanced_wifi_sander_summary">通过热点发送app数据</string>
 
     <string name="settings_about">更新与支持</string>
     <string name="settings_about_declaration_summary">EhViewer 与 E-Hentai.org 无任何联系</string>
@@ -834,4 +836,17 @@
 
     <string name="yes">是</string>
     <string name="cancel">取消</string>
+
+    <!--  wifi server -->
+    <string name="wifi_server_name">WiFiServer</string>
+    <string name="create_wifi">创建热点</string>
+    <string name="close_wifi">关闭热点</string>
+    <string name="wifi_send_bookmark">发送</string>
+    <string name="wifi_receive_text">接收</string>
+    <string name="wifi_server_connection_succeeded">设备连接成功</string>
+    <string name="wifi_server_send_success">发送消息成功: %s</string>
+    <string name="wifi_server_send_fail">发送消息失败: %s</string>
+    <string name="wifi_server_receive_message">收到消息: %s</string>
+    <!--    -->
+
 </resources>

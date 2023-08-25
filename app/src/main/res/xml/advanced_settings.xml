@@ -114,4 +114,14 @@
         android:title="@string/settings_advanced_import_data"
         android:summary="@string/settings_advanced_import_data_summary"/>
 
+    <Preference
+        android:key="wifi_server"
+        android:title="@string/settings_advanced_wifi_sender"
+        android:summary="@string/settings_advanced_wifi_sander_summary"/>
+
+    <Preference
+        android:key="wifi_client"
+        android:title="@string/settings_advanced_wifi_client"
+        android:summary="@string/settings_advanced_wifi_client_summary"/>
+
 </PreferenceScreen>

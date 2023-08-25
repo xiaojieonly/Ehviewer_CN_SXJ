@@ -680,6 +680,10 @@
     <string name="settings_advanced_import_data">Import data</string>
     <string name="settings_advanced_import_data_summary">Load data which were previously saved</string>
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>
+    <string name="settings_advanced_wifi_sender">WiFi Sender</string>
+    <string name="settings_advanced_wifi_sander_summary">Send app data over WiFi</string>
+    <string name="settings_advanced_wifi_client">WiFi 数据接收</string>
+    <string name="settings_advanced_wifi_client_summary">接收来自WiFi热点的数据</string>
 
     <string name="settings_about">About</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -904,34 +908,23 @@
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 
-    <!--  socket  -->
-    <string name="socket_name">Socket.IO Chat Demo</string>
-    <string name="action_leave">Leave</string>
-    <string name="action_send">Send</string>
-    <string name="prompt_message">Message</string>
-
-    <string name="connect">Connected</string>
-    <string name="disconnect">Disconnected, Please check your internet connection</string>
-    <string name="error_connect">Failed to connect</string>
-
-    <!-- socket messages -->
-    <string name="message_welcome">Welcome to Socket.IO Chat –</string>
-    <plurals name="message_participants">
-        <item quantity="one">there\'s %d participant</item>
-        <item quantity="other">there are %d participants</item>
-    </plurals>
-    <string name="message_user_joined">%s joined</string>
-    <string name="message_user_left">%s left</string>
-    <string name="user_action_typing">is typing</string>
-
-    <!--  socket login  -->
-    <string name="title_activity_login">Join</string>
-
-    <!-- socket Strings related to login -->
-    <string name="prompt_username">What\'s your nickname?</string>
-    <string name="action_sign_in">Join</string>
-    <string name="action_sign_in_short">Join</string>
-
-    <string name="error_field_required">This field is required</string>
+    <!--  wifi server -->
+    <string name="wifi_server_name">WiFiServer</string>
+    <string name="wifi_server">WiFiServer</string>
+    <string name="wifi_client">WiFiClient</string>
+    <string name="create_wifi">创建热点</string>
+    <string name="close_wifi">关闭热点</string>
+    <string name="wifi_send_bookmark">发送书签</string>
+    <string name="wifi_receive_text">接收</string>
+    <string name="wifi_server_connect">连接</string>
+    <string name="wifi_server_connection_succeeded">设备连接成功</string>
+    <string name="wifi_server_connection_fail">创建通信失败</string>
+    <string name="wifi_server_send_success">发送消息成功: %s</string>
+    <string name="wifi_server_send_fail">发送消息失败: %s</string>
+    <string name="wifi_server_receive_message">收到消息: %s</string>
+    <string name="wifi_server_opened">热点已开启 SSID: %1s \n%2s</string>
+    <string name="wifi_server_closed">热点已关闭</string>
+    <string name="wifi_server_password">密码: %s</string>
+    <!--    -->
 
 </resources>

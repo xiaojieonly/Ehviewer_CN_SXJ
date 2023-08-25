@@ -73,6 +73,7 @@ import com.hippo.yorozuya.SimpleHandler;
 import org.conscrypt.Conscrypt;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.ArrayList;
@@ -89,7 +90,6 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
 import okhttp3.ConnectionSpec;
-import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 
 public class EhApplication extends RecordingApplication {
