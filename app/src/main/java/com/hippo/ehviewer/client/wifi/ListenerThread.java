@@ -24,6 +24,7 @@ public class ListenerThread extends Thread {
         this.handler = handler;
         try {
             serverSocket = new ServerSocket(port);//监听本机的12345端口
+            serverSocket.setReuseAddress(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -34,14 +35,22 @@ public class ListenerThread extends Thread {
     public void run() {
         try {
             while (!interrupted()) {
-                Thread.sleep(200);
                 Log.i("ListennerThread", "阻塞");
                 //阻塞，等待设备连接
-                if (serverSocket != null)
+                if (serverSocket != null) {
                     socket = serverSocket.accept();
+                } else {
+                    try {
+                        serverSocket = new ServerSocket(port);//监听本机的12345端口
+                        serverSocket.setReuseAddress(true);
+                    } catch (IOException ignore) {
+
+                    }
+                }
                 Message message = Message.obtain();
                 message.what = DEVICE_CONNECTING;
                 handler.sendMessage(message);
+                Thread.sleep(500);
             }
             serverSocket.close();
         } catch (IOException | InterruptedException e) {
@@ -55,13 +64,13 @@ public class ListenerThread extends Thread {
         return socket;
     }
 
-    public void closeConnect(){
+    public void closeConnect() {
         try {
             socket.close();
             serverSocket.close();
             interrupt();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | NullPointerException e) {
+            e.printStackTrace();
         }
     }
 }

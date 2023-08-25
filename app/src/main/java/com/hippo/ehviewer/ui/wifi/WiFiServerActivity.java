@@ -22,6 +22,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
 import com.hippo.ehviewer.client.wifi.ListenerThread;
+import com.microsoft.appcenter.crashes.Crashes;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -64,28 +65,21 @@ public class WiFiServerActivity extends AppCompatActivity implements View.OnClic
         if (handler == null) {
             handler = new WiFiServerHandler(getMainLooper());
         }
-        listenerThread = new ListenerThread(PORT, handler);
-        listenerThread.start();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         //        开启连接线程
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    listenerThread = new ListenerThread(PORT, handler);
+                    listenerThread.start();
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     Log.i("ip", "getWifiApIpAddress()" + getWifiApIpAddress());
                     //本地路由开启通信
-                    String ip = getWifiApIpAddress();
-                    if (ip != null) {
-                    } else {
-                        ip = "192.168.43.1";
-                    }
-                    Socket socket = new Socket(ip, PORT);
-                    connectThread = new ConnectThread(WiFiServerActivity.this, socket, handler,IS_SERVER);
-                    connectThread.start();
+                  openSocket();
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -99,6 +93,17 @@ public class WiFiServerActivity extends AppCompatActivity implements View.OnClic
                 }
             }
         }).start();
+    }
+
+    private void openSocket() throws IOException {
+        String ip = getWifiApIpAddress();
+        if (ip != null) {
+        } else {
+            ip = "192.168.43.1";
+        }
+        Socket socket = new Socket(ip, PORT);
+        connectThread = new ConnectThread(WiFiServerActivity.this, socket, handler,IS_SERVER);
+        connectThread.start();
     }
 
     @Override
@@ -119,7 +124,15 @@ public class WiFiServerActivity extends AppCompatActivity implements View.OnClic
                 object.put("text","sdf代课教师封号斗罗会计法花洒放大花洒开发德哈卡估计会送达方干哈开发技术犯规红烧豆腐好卡代发搜嘎好啦" +
                         "所肩负的忽高忽低发过火科技阿萨法高等级"+"\n这是来自Wifi热点的消息"+i);
                 WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.SEND,object);
-                connectThread.sendData(wiFiDataHand.toSendString());
+                if (connectThread.isSocketClose()){
+                    try {
+                        openSocket();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Crashes.trackError(e);
+                    }
+                }
+                connectThread.sendData(wiFiDataHand);
                 i++;
             } else {
                 Log.w("AAA", "connectThread == null");
@@ -173,8 +186,9 @@ public class WiFiServerActivity extends AppCompatActivity implements View.OnClic
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case DEVICE_CONNECTING:
-//                    connectThread = new ConnectThread(WiFiServerActivity.this, listenerThread.getSocket(), handler,IS_SERVER);
-//                    connectThread.start();
+                    connectThread.closeConnect();
+                    connectThread = new ConnectThread(WiFiServerActivity.this, listenerThread.getSocket(), handler,IS_SERVER);
+                    connectThread.start();
                     break;
                 case DEVICE_CONNECTED:
                     textState.setText(R.string.wifi_server_connection_succeeded);

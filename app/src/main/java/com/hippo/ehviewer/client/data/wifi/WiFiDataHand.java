@@ -62,4 +62,7 @@ public class WiFiDataHand {
         return toJsonObject().toString()+":END";
     }
 
+    public byte[] getSendBytes() {
+        return  toSendString().getBytes();
+    }
 }

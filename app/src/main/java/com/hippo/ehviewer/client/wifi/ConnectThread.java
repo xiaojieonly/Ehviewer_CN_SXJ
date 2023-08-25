@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.nio.charset.StandardCharsets;
 
 public class ConnectThread extends Thread {
 
@@ -107,21 +105,20 @@ public class ConnectThread extends Thread {
     /**
      * 发送数据
      */
-    public void sendData(String msg) {
-        Log.i("ConnectThread", "发送数据:" + (outputStream == null));
-
+    public void sendData(WiFiDataHand dataHand) {
         try {
-            if (socket.isOutputShutdown()){
+            if (outputStream == null){
                 outputStream = socket.getOutputStream();
             }
+            Log.i("ConnectThread", "发送数据:" + (outputStream == null));
 
-            outputStream.write(msg.getBytes());
+            outputStream.write(dataHand.getSendBytes());
             outputStream.flush();
-            Log.i("ConnectThread", "发送消息：" + msg);
+            Log.i("ConnectThread", "发送消息：" + dataHand);
             Message message = Message.obtain();
             message.what = SEND_MSG_SUCCESS;
             Bundle bundle = new Bundle();
-            bundle.putString("MSG", msg);
+            bundle.putString("MSG", dataHand.toString());
             message.setData(bundle);
             handler.sendMessage(message);
         } catch (IOException e) {
@@ -129,7 +126,7 @@ public class ConnectThread extends Thread {
             Message message = Message.obtain();
             message.what = SEND_MSG_ERROR;
             Bundle bundle = new Bundle();
-            bundle.putString("MSG", msg);
+            bundle.putString("MSG", dataHand.toString());
             message.setData(bundle);
             handler.sendMessage(message);
         }
@@ -174,5 +171,9 @@ public class ConnectThread extends Thread {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public boolean isSocketClose(){
+        return  socket.isClosed();
     }
 }

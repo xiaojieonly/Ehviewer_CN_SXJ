@@ -46,6 +46,7 @@ public class WiFiClientActivity extends AppCompatActivity {
      * 连接线程
      */
     private ConnectThread connectThread;
+    private ConnectThread connectThreadNew;
 
 
     /**
@@ -99,29 +100,30 @@ public class WiFiClientActivity extends AppCompatActivity {
         }
         //        initBroadcastReceiver();
         //        开启连接线程
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Socket socket = new Socket(getWifiRouteIPAddress(WiFiClientActivity.this), PORT);
-                    connectThread = new ConnectThread(getApplicationContext(), socket, handler, IS_CLIENT);
-                    connectThread.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            textState.setText("通信连接失败");
-                        }
-                    });
-
-                }
-            }
-        }).start();
-
-
+        connectSocket();
         listenerThread = new ListenerThread(PORT, handler);
         listenerThread.start();
+    }
+
+    private void connectSocket() {
+        new Thread(() -> {
+            try {
+                Socket socket = new Socket(getWifiRouteIPAddress(WiFiClientActivity.this), PORT);
+                connectThread = new ConnectThread(getApplicationContext(), socket, handler, IS_CLIENT);
+                connectThread.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+                runOnUiThread(() -> textState.setText("通信连接失败"));
+                try {
+                    Thread.sleep(2000);
+                    runOnUiThread(() -> textState.setText("尝试重新链接"));
+                    connectSocket();
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        }).start();
     }
 
     private void connect(View view) {
@@ -255,8 +257,9 @@ public class WiFiClientActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case DEVICE_CONNECTING:
-                    connectThread = new ConnectThread(WiFiClientActivity.this, listenerThread.getSocket(), handler, IS_CLIENT);
-                    connectThread.start();
+//                    connectThread.closeConnect();
+//                    connectThread = new ConnectThread(WiFiClientActivity.this, listenerThread.getSocket(), handler, IS_CLIENT);
+//                    connectThread.start();
                     break;
                 case DEVICE_CONNECTED:
                     textState.setText(R.string.wifi_server_connection_succeeded);
