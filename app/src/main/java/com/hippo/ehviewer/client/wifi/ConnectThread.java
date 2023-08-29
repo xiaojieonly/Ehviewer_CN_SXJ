@@ -19,8 +19,9 @@ public class ConnectThread extends Thread {
 
     public static final int DEVICE_CONNECTING = 1;//有设备正在连接热点
     public static final int DEVICE_CONNECTED = 2;//有设备连上热点
-    public static final int SEND_MSG_SUCCESS = 3;//发送消息成功
-    public static final int SEND_MSG_ERROR = 4;//发送消息失败
+    public static final int DEVICE_DISCONNECTED = 3;//有设备连上热点
+    public static final int SEND_MSG_SUCCESS = 4;//发送消息成功
+    public static final int SEND_MSG_ERROR = 5;//发送消息失败
     public static final int GET_MSG = 6;//获取新消息
 
     public static final int IS_SERVER = 101;
@@ -115,12 +116,6 @@ public class ConnectThread extends Thread {
             outputStream.write(dataHand.getSendBytes());
             outputStream.flush();
             Log.i("ConnectThread", "发送消息：" + dataHand);
-            Message message = Message.obtain();
-            message.what = SEND_MSG_SUCCESS;
-            Bundle bundle = new Bundle();
-            bundle.putString("MSG", dataHand.toString());
-            message.setData(bundle);
-            handler.sendMessage(message);
         } catch (IOException e) {
             e.printStackTrace();
             Message message = Message.obtain();
@@ -132,9 +127,16 @@ public class ConnectThread extends Thread {
         }
     }
 
-    public void dataProcessed() {
+    public void dataProcessed(WiFiDataHand response) {
         processed = true;
         WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.RECEIVED);
+        wiFiDataHand.data = response.data;
+        Message message = Message.obtain();
+        message.what = SEND_MSG_SUCCESS;
+        Bundle bundle = new Bundle();
+        bundle.putString("MSG", wiFiDataHand.toString());
+        message.setData(bundle);
+        handler.sendMessage(message);
     }
 
     private WiFiDataHand isToResponse(InputStream inputStream) {

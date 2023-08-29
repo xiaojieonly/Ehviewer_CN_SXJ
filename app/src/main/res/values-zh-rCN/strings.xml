@@ -839,14 +839,22 @@
 
     <!--  wifi server -->
     <string name="wifi_server_name">WiFiServer</string>
+    <string name="wifi_server">WiFiServer</string>
+    <string name="wifi_client">WiFiClient</string>
     <string name="create_wifi">创建热点</string>
     <string name="close_wifi">关闭热点</string>
-    <string name="wifi_send_bookmark">发送</string>
+    <string name="wifi_send_bookmark">发送书签</string>
     <string name="wifi_receive_text">接收</string>
+    <string name="wifi_server_connect">连接</string>
     <string name="wifi_server_connection_succeeded">设备连接成功</string>
+    <string name="wifi_server_disconnect">设备连接断开</string>
+    <string name="wifi_server_connection_fail">创建通信失败</string>
     <string name="wifi_server_send_success">发送消息成功: %s</string>
     <string name="wifi_server_send_fail">发送消息失败: %s</string>
     <string name="wifi_server_receive_message">收到消息: %s</string>
-    <!--    -->
+    <string name="wifi_server_opened">热点已开启 SSID: %1s \n%2s</string>
+    <string name="wifi_server_closed">热点已关闭</string>
+    <string name="wifi_server_password">密码: %s</string>
+    <!--  wifi server  -->
 
 </resources>

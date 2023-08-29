@@ -2,6 +2,7 @@ package com.hippo.ehviewer.ui.wifi;
 
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTING;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_DISCONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_CLIENT;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_ERROR;
@@ -131,6 +132,7 @@ public class WiFiClientActivity extends AppCompatActivity {
                 "\nIP:" + getIp()
                 + "\n路由：" + getWifiRouteIPAddress(this);
         statusInit.setText(text);
+        connectSocket();
     }
 
     /**
@@ -190,21 +192,6 @@ public class WiFiClientActivity extends AppCompatActivity {
     //文件传输
     //    https://blog.csdn.net/yuankundong/article/details/51489823
 
-    /**
-     * 查找当前连接状态
-     */
-    private void initBroadcastReceiver() {
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        //        intentFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
-        if (receiver == null) {
-            receiver = new ClientReceiver();
-        }
-        registerReceiver(receiver, intentFilter);
-    }
 
     /**
      * 获取连接到热点上的手机ip
@@ -243,8 +230,8 @@ public class WiFiClientActivity extends AppCompatActivity {
     }
 
     private void onReceiveMsg(WiFiDataHand response) {
-        connectThread.dataProcessed();
-        receiveMessage.setText(response.toString());
+        connectThread.dataProcessed(response);
+        receiveMessage.setText(getString(R.string.wifi_server_receive_message, response.toString()));
     }
 
     private class WiFiClientHandler extends Handler {
@@ -256,13 +243,11 @@ public class WiFiClientActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case DEVICE_CONNECTING:
-//                    connectThread.closeConnect();
-//                    connectThread = new ConnectThread(WiFiClientActivity.this, listenerThread.getSocket(), handler, IS_CLIENT);
-//                    connectThread.start();
-                    break;
                 case DEVICE_CONNECTED:
                     textState.setText(R.string.wifi_server_connection_succeeded);
+                    break;
+                case DEVICE_DISCONNECTED:
+                    textState.setText(R.string.wifi_server_disconnect);
                     break;
                 case SEND_MSG_SUCCESS:
                     textState.setText(getString(R.string.wifi_server_send_success, msg.getData().getString("MSG")));
@@ -271,8 +256,9 @@ public class WiFiClientActivity extends AppCompatActivity {
                     textState.setText(getString(R.string.wifi_server_send_fail, msg.getData().getString("MSG")));
                     break;
                 case GET_MSG:
-                    textState.setText(getString(R.string.wifi_server_receive_message, msg.getData().getString("MSG")));
                     onReceiveMsg(new WiFiDataHand(msg.getData().getString("MSG")));
+                    break;
+                default:
                     break;
             }
         }
