@@ -24,6 +24,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -97,6 +98,7 @@ import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
@@ -127,6 +129,10 @@ import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.StringUtils;
 import com.hippo.yorozuya.ViewUtils;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.lang.annotation.Retention;
@@ -220,6 +226,10 @@ public final class GalleryListScene extends BaseScene
     private AlertDialog jumpSelectorDialog;
     @NonNull
     private ViewPager drawPager;
+    @NonNull
+    private View bookmarksView;
+    @Nullable
+    private View subscriptionView;
 
     private JumpDateSelector mJumpDateSelector;
 
@@ -439,11 +449,11 @@ public final class GalleryListScene extends BaseScene
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         mClient = null;
         mUrlBuilder = null;
         mDownloadManager.removeDownloadInfoListener(mDownloadInfoListener);
         mFavouriteStatusRouter.removeListener(mFavouriteStatusRouterListener);
+        EventBus.getDefault().unregister(this);
     }
 
     private void setSearchBarHint(Context context, SearchBar searchBar) {
@@ -1003,8 +1013,8 @@ public final class GalleryListScene extends BaseScene
 
         drawPager = view.findViewById(R.id.drawer_list_pager);
 
-        View bookmarksView = bookmarksViewBuild(inflater);
-        View subscriptionView = subscriptionViewBuild(inflater);
+        bookmarksView = bookmarksViewBuild(inflater);
+        subscriptionView = subscriptionViewBuild(inflater);
 
         List<View> views = new ArrayList<>();
 
@@ -1152,6 +1162,29 @@ public final class GalleryListScene extends BaseScene
             }
         }
         return getSuitableTitleForUrlBuilder(getEHContext().getResources(), urlBuilder, false);
+    }
+
+    /**
+     * eventBus 通知书签数据修改
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onQuickSearchDataChanged(SomethingNeedRefresh refresh){
+        if (!refresh.isBookmarkDrawNeed()){
+            return;
+        }
+        LayoutInflater inflater = getLayoutInflater();
+        bookmarksView = bookmarksViewBuild(inflater);
+        if (subscriptionView==null){
+            subscriptionView = subscriptionViewBuild(inflater);
+        }
+        List<View> views = new ArrayList<>();
+
+        views.add(bookmarksView);
+        views.add(subscriptionView);
+
+        DrawViewPagerAdapter pagerAdapter = new DrawViewPagerAdapter(views);
+
+        drawPager.setAdapter(pagerAdapter);
     }
 
     private boolean checkDoubleClickExit() {

@@ -214,6 +214,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
     }
 
+    public List<DownloadInfo> getAllDownloadInfoList(){
+        return mAllInfoList;
+    }
+
     @NonNull
     public List<DownloadInfo> getDefaultDownloadInfoList() {
         return mDefaultInfoList;

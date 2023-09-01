@@ -12,17 +12,20 @@ public class WiFiDataHand {
 
     public int messageType;
 
-    public long totalSize = 1;
+    public int dataType;
 
-    public long part = 1;
+    public long pageSize = 1;
+
+    public long pageIndex = 1;
 
     public String errorMessage;
 
-    public JSONObject data;
+    private JSONObject data;
 
     public WiFiDataHand(int messageType) {
-        this(messageType,null);
+        this(messageType, null);
     }
+
     public WiFiDataHand(int messageType, JSONObject data) {
         this.messageType = messageType;
         this.data = data;
@@ -32,9 +35,10 @@ public class WiFiDataHand {
         try {
             JSONObject object = JSONObject.parseObject(msg);
             this.messageType = object.getIntValue("messageType");
+            this.dataType = object.getIntValue("dataType");
             this.data = object.getJSONObject("data");
-            this.totalSize = object.getLongValue("totalSize");
-            this.part = object.getLongValue("part");
+            this.pageSize = object.getLongValue("totalSize");
+            this.pageIndex = object.getLongValue("part");
         } catch (Throwable throwable) {
             Crashes.trackError(throwable);
             messageType = ERROR;
@@ -43,12 +47,28 @@ public class WiFiDataHand {
         }
     }
 
+    public JSONObject getData() {
+        return data;
+    }
+
+    public void addData(String key, Object object) {
+        if (data == null) {
+            data = new JSONObject();
+        }
+        data.put(key, object);
+    }
+
+    public void setData(JSONObject data) {
+        this.data = data;
+    }
+
     public JSONObject toJsonObject() {
         JSONObject object = new JSONObject();
         object.put("messageType", messageType);
+        object.put("dataType", dataType);
         object.put("data", data);
-        object.put("totalSize", totalSize);
-        object.put("part", part);
+        object.put("totalSize", pageSize);
+        object.put("part", pageIndex);
         return object;
     }
 
@@ -59,10 +79,10 @@ public class WiFiDataHand {
     }
 
     public String toSendString() {
-        return toJsonObject().toString()+":END";
+        return toJsonObject().toString() + ":END";
     }
 
     public byte[] getSendBytes() {
-        return  toSendString().getBytes();
+        return toSendString().getBytes();
     }
 }

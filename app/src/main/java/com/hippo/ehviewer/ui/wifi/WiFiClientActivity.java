@@ -1,18 +1,18 @@
 package com.hippo.ehviewer.ui.wifi;
 
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_QUICK_SEARCH;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTED;
-import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTING;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_DISCONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_CLIENT;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.QUICK_SEARCH_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_ERROR;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_SUCCESS;
+import static com.hippo.ehviewer.event.SomethingNeedRefresh.bookmarkDrawNeedRefresh;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
 import android.net.DhcpInfo;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -28,16 +28,24 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
 import com.hippo.ehviewer.client.wifi.ListenerThread;
+import com.hippo.ehviewer.dao.QuickSearch;
+import com.hippo.ehviewer.event.SomethingNeedRefresh;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 
 public class WiFiClientActivity extends AppCompatActivity {
 
@@ -47,8 +55,6 @@ public class WiFiClientActivity extends AppCompatActivity {
      * 连接线程
      */
     private ConnectThread connectThread;
-    private ConnectThread connectThreadNew;
-
 
     /**
      * 监听线程
@@ -69,19 +75,12 @@ public class WiFiClientActivity extends AppCompatActivity {
 
     private WiFiClientHandler handler;
 
-    private ClientReceiver receiver;
-
-    int CHOOSE_FILE_RESULT_CODE = 1001;
-
-    int FILE_CODE = 1002;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_client);
 //        findViewById(R.id.send).setOnClickListener(this::send);
         findViewById(R.id.connect_server).setOnClickListener(this::connect);
-//        findViewById(R.id.fileButton).setOnClickListener(this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         //检查Wifi状态
@@ -158,13 +157,6 @@ public class WiFiClientActivity extends AppCompatActivity {
                 (i >> 24 & 0xFF);
     }
 
-    private String intToRouterIp(int i) {
-        return (i & 0xFF) + "." +
-                ((i >> 8) & 0xFF) + "." +
-                ((i >> 16) & 0xFF) + "." +
-                1;
-    }
-
     /**
      * wifi获取 已连接网络路由  路由ip地址---方法同上
      *
@@ -184,14 +176,6 @@ public class WiFiClientActivity extends AppCompatActivity {
 
         return routeIp;
     }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-    //文件传输
-    //    https://blog.csdn.net/yuankundong/article/details/51489823
-
 
     /**
      * 获取连接到热点上的手机ip
@@ -230,8 +214,28 @@ public class WiFiClientActivity extends AppCompatActivity {
     }
 
     private void onReceiveMsg(WiFiDataHand response) {
+        switch (response.dataType){
+            case DATA_TYPE_QUICK_SEARCH:
+                dealWithQuickSearch(response);
+                break;
+        }
+
+    }
+
+    private void dealWithQuickSearch(WiFiDataHand response) {
+        JSONArray jsonArray = response.getData().getJSONArray(QUICK_SEARCH_DATA_KEY);
+
+        List<QuickSearch> quickSearchList = new ArrayList<>();
+
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject object = jsonArray.getJSONObject(i);
+            quickSearchList.add(QuickSearch.quickSearchFromJson(object));
+        }
+
+        EhDB.insertQuickSearchList(quickSearchList);
         connectThread.dataProcessed(response);
         receiveMessage.setText(getString(R.string.wifi_server_receive_message, response.toString()));
+        EventBus.getDefault().post(bookmarkDrawNeedRefresh());
     }
 
     private class WiFiClientHandler extends Handler {
@@ -292,7 +296,7 @@ public class WiFiClientActivity extends AppCompatActivity {
                 Log.i("BBB", "WifiManager.NETWORK_STATE_CHANGED_ACTION");
                 NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                 if (info.getState().equals(NetworkInfo.State.DISCONNECTED)) {
-                    textState.setText("连接已断开");
+                    textState.setText(R.string.wifi_server_disconnect);
                 } else if (info.getState().equals(NetworkInfo.State.CONNECTED)) {
                     WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
                     final WifiInfo wifiInfo = wifiManager.getConnectionInfo();
