@@ -843,9 +843,11 @@
     <string name="wifi_client">WiFiClient</string>
     <string name="create_wifi">创建热点</string>
     <string name="close_wifi">关闭热点</string>
-    <string name="wifi_send_bookmark">发送书签</string>
-    <string name="wifi_receive_text">接收</string>
+    <string name="wifi_send_bookmark">迁移书签</string>
+    <string name="wifi_receive_text">接收数据</string>
+    <string name="wifi_server_illustrate">请确保要接收数据的手机链接上本机热点，并且在迁移完成前请勿断开链接或者返回上级页面！</string>
     <string name="wifi_server_connect">连接</string>
+    <string name="wifi_server_connect_unable">连接不存在</string>
     <string name="wifi_server_connection_succeeded">设备连接成功</string>
     <string name="wifi_server_disconnect">设备连接断开</string>
     <string name="wifi_server_connection_fail">创建通信失败</string>
@@ -855,6 +857,8 @@
     <string name="wifi_server_opened">热点已开启 SSID: %1s \n%2s</string>
     <string name="wifi_server_closed">热点已关闭</string>
     <string name="wifi_server_password">密码: %s</string>
+    <string name="wifi_server_no_permission">权限不足，请授予权限</string>
     <!--  wifi server  -->
+
 
 </resources>

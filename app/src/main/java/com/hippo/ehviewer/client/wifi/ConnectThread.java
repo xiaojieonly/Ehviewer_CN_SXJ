@@ -27,6 +27,12 @@ public class ConnectThread extends Thread {
     public static final int IS_SERVER = 101;
     public static final int IS_CLIENT = 102;
 
+    public static final int DATA_TYPE_QUICK_SEARCH = 1001;
+    public static final String QUICK_SEARCH_DATA_KEY = "quick_search";
+    public static final int DATA_TYPE_DOWNLOAD_INFO = 1002;
+    public static final String DOWNLOAD_INFO__DATA_KEY = "download";
+    public static final int DATA_TYPE_DOWNLOAD_LABEL = 1003;
+    public static final String DOWNLOAD_LABEL_KEY = "download_label";
     private final Socket socket;
     private final Handler handler;
     private final int connectKind;
@@ -57,10 +63,9 @@ public class ConnectThread extends Thread {
             outputStream = socket.getOutputStream();
 
             while (!isInterrupted()) {
-                Thread.sleep(100);
                 //获取数据流
                 WiFiDataHand wiFiDataHand = isToResponse(inputStream);
-                if (close){
+                if (close) {
                     break;
                 }
                 if (wiFiDataHand != null) {
@@ -72,7 +77,7 @@ public class ConnectThread extends Thread {
                 }
             }
             socket.close();
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             Crashes.trackError(e);
         }
@@ -108,11 +113,10 @@ public class ConnectThread extends Thread {
      */
     public void sendData(WiFiDataHand dataHand) {
         try {
-            if (outputStream == null){
+            if (outputStream == null) {
                 outputStream = socket.getOutputStream();
             }
             Log.i("ConnectThread", "发送数据:" + (outputStream == null));
-
             outputStream.write(dataHand.getSendBytes());
             outputStream.flush();
             Log.i("ConnectThread", "发送消息：" + dataHand);
@@ -130,13 +134,8 @@ public class ConnectThread extends Thread {
     public void dataProcessed(WiFiDataHand response) {
         processed = true;
         WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.RECEIVED);
-        wiFiDataHand.data = response.data;
-        Message message = Message.obtain();
-        message.what = SEND_MSG_SUCCESS;
-        Bundle bundle = new Bundle();
-        bundle.putString("MSG", wiFiDataHand.toString());
-        message.setData(bundle);
-        handler.sendMessage(message);
+        wiFiDataHand.setData(response.getData());
+        new Thread(()-> sendData(wiFiDataHand)).start();
     }
 
     private WiFiDataHand isToResponse(InputStream inputStream) {
@@ -147,8 +146,8 @@ public class ConnectThread extends Thread {
             for (int length; (length = inputStream.read(bytes)) != -1; ) {
                 outputStream.write(bytes, 0, length);
                 result = outputStream.toString("UTF-8");
-                if (result.endsWith("}:END")){
-                    result = result.substring(0,result.length()-4);
+                if (result.endsWith("}:END")) {
+                    result = result.substring(0, result.length() - 4);
                     break;
                 }
             }
@@ -158,14 +157,14 @@ public class ConnectThread extends Thread {
             return new WiFiDataHand(result);
         } catch (Throwable throwable) {
             Crashes.trackError(throwable);
-            if (socket.isClosed()){
+            if (socket.isClosed()) {
                 interrupt();
             }
             return null;
         }
     }
 
-    public void closeConnect(){
+    public void closeConnect() {
         try {
             socket.close();
             interrupt();
@@ -175,7 +174,7 @@ public class ConnectThread extends Thread {
         }
     }
 
-    public boolean isSocketClose(){
-        return  socket.isClosed();
+    public boolean isSocketClose() {
+        return socket.isClosed();
     }
 }

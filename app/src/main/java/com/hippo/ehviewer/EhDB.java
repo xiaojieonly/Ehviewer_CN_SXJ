@@ -674,6 +674,16 @@ public class EhDB {
         quickSearch.id = dao.insert(quickSearch);
     }
 
+    public static synchronized void insertQuickSearchList(List<QuickSearch> quickSearchList) {
+        QuickSearchDao dao = sDaoSession.getQuickSearchDao();
+        for (int i = 0; i < quickSearchList.size(); i++) {
+            QuickSearch search = quickSearchList.get(i);
+            search.id = null;
+            search.time = System.currentTimeMillis();
+            search.id = dao.insert(search);
+        }
+    }
+
     public static synchronized void updateQuickSearch(QuickSearch quickSearch) {
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         dao.update(quickSearch);
