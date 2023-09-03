@@ -6,8 +6,9 @@
  ###  新增通过wifi迁移书签、下载分组、下载画廊数据的功能   
  ###  未来会逐步支持所有数据数据，并在最后提供包括下载的图片数据和app设置配置数据的完整迁移   
  ###  修复了一些已知的稳定行问题   
- [S30903-12022958.webm](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/297649ee-f334-4263-a550-07fe442cac49)
- [Screenrecorder-2023-09-03-12-02-43-518(0).webm](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/8a47d49d-b87d-4e7c-a4d9-544692b6aa50)
+ ###  具体操作请看下方视频链接
+ ![数据接收](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/297649ee-f334-4263-a550-07fe442cac49)
+ ![数据发出](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/8a47d49d-b87d-4e7c-a4d9-544692b6aa50)
 
    点击前往下载：[蓝奏云](https://wwsu.lanzouc.com/ijcIs17b3nef)  密码:828x  
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
