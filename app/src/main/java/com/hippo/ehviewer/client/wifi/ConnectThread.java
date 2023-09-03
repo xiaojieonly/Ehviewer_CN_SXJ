@@ -30,7 +30,7 @@ public class ConnectThread extends Thread {
     public static final int DATA_TYPE_QUICK_SEARCH = 1001;
     public static final String QUICK_SEARCH_DATA_KEY = "quick_search";
     public static final int DATA_TYPE_DOWNLOAD_INFO = 1002;
-    public static final String DOWNLOAD_INFO__DATA_KEY = "download";
+    public static final String DOWNLOAD_INFO_DATA_KEY = "download_info";
     public static final int DATA_TYPE_DOWNLOAD_LABEL = 1003;
     public static final String DOWNLOAD_LABEL_KEY = "download_label";
     private final Socket socket;
@@ -169,12 +169,15 @@ public class ConnectThread extends Thread {
             socket.close();
             interrupt();
             close = true;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException|NullPointerException e) {
+            Crashes.trackError(e);
         }
     }
 
     public boolean isSocketClose() {
+        if (socket==null){
+            return true;
+        }
         return socket.isClosed();
     }
 }

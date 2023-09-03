@@ -5,7 +5,7 @@ import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_LA
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_QUICK_SEARCH;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTING;
-import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_INFO__DATA_KEY;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_INFO_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_LABEL_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_SERVER;
@@ -74,6 +74,8 @@ public class WiFiServerActivity extends ToolbarActivity{
     private static final int PORT = 54321;
 
     private WiFiServerHandler handler;
+
+    private boolean sending = false;
 
     private final LinkedList<WiFiDataHand> dataHands = new LinkedList<>();
 
@@ -153,31 +155,40 @@ public class WiFiServerActivity extends ToolbarActivity{
     }
 
     private void createBookmarkData(View view) {
-        List<QuickSearch> list = EhDB.getAllQuickSearch();
-        int pageSize = 10;
-        int pageCount = totalPage(list.size(), pageSize);
-
-        for (int i = 0; i < pageCount; i++) {
-            WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.SEND);
-            wiFiDataHand.dataType = DATA_TYPE_QUICK_SEARCH;
-            wiFiDataHand.pageSize = pageCount;
-            wiFiDataHand.pageIndex = i + 1;
-            JSONArray objects = new JSONArray();
-            for (int j = 0; j < pageSize; j++) {
-                if (list.isEmpty()) {
-                    continue;
-                }
-                QuickSearch quickSearch = list.remove(0);
-                objects.add(quickSearch.toJson());
-            }
-            wiFiDataHand.addData(QUICK_SEARCH_DATA_KEY,objects);
-            dataHands.add(wiFiDataHand);
+        if (sending){
+            Toast.makeText(mContext,R.string.wifi_sending,Toast.LENGTH_LONG).show();
+            return;
         }
-        sendNextPage();
+        List<QuickSearch> list = EhDB.getAllQuickSearch();
+        new Thread(()->{
+            int pageSize = 10;
+            int pageCount = totalPage(list.size(), pageSize);
+
+            for (int i = 0; i < pageCount; i++) {
+                WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.SEND);
+                wiFiDataHand.dataType = DATA_TYPE_QUICK_SEARCH;
+                wiFiDataHand.pageSize = pageCount;
+                wiFiDataHand.pageIndex = i + 1;
+                JSONArray objects = new JSONArray();
+                for (int j = 0; j < pageSize; j++) {
+                    if (list.isEmpty()) {
+                        continue;
+                    }
+                    QuickSearch quickSearch = list.remove(0);
+                    objects.add(quickSearch.toJson());
+                }
+                wiFiDataHand.addData(QUICK_SEARCH_DATA_KEY,objects);
+                dataHands.add(wiFiDataHand);
+            }
+            sendNextPage();
+        }).start();
     }
 
     private void createDownloadData(View view) {
-        DownloadManager downloadManager = EhApplication.getDownloadManager();
+        if (sending){
+            Toast.makeText(mContext,R.string.wifi_sending,Toast.LENGTH_LONG).show();
+            return;
+        }
         new Thread(()->{
             List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
             WiFiDataHand dataHand = new WiFiDataHand(WiFiDataHand.SEND);
@@ -190,25 +201,26 @@ public class WiFiServerActivity extends ToolbarActivity{
             dataHand.addData(DOWNLOAD_LABEL_KEY,labelArray);
             dataHands.add(dataHand);
 
-            List<DownloadInfo> allInfo = downloadManager.getAllDownloadInfoList();
+            List<DownloadInfo> allInfo = EhDB.getAllDownloadInfo();
 
             int pageSize = 10;
             int pageCount = totalPage(allInfo.size(), pageSize);
-            int j = 0;
-            WiFiDataHand infoHand = new WiFiDataHand(WiFiDataHand.SEND);
-            infoHand.dataType = DATA_TYPE_DOWNLOAD_INFO;
-            JSONArray infoArray = new JSONArray();
-            for (int i = 0; i < allInfo.size(); i++) {
-                if (infoArray.size()==10){
-                    infoHand.addData(DOWNLOAD_INFO__DATA_KEY,infoArray);
-                    dataHands.add(infoHand);
-                    infoHand = new WiFiDataHand(WiFiDataHand.SEND);
-                    infoHand.dataType = DATA_TYPE_DOWNLOAD_INFO;
-                    infoArray = new JSONArray();
+            for (int i = 0; i < pageCount; i++) {
+                WiFiDataHand infoHand = new WiFiDataHand(WiFiDataHand.SEND);
+                infoHand.dataType = DATA_TYPE_DOWNLOAD_INFO;
+                infoHand.pageSize = pageCount;
+                infoHand.pageIndex = i+1;
+                JSONArray infoArray = new JSONArray();
+                for (int j = 0; j < pageSize; j++) {
+                    if (allInfo.isEmpty()){
+                        continue;
+                    }
+                    DownloadInfo downloadInfo = allInfo.remove(0);
+                    infoArray.add(downloadInfo.toJson());
                 }
-                infoArray.add(allInfo.get(i));
+                infoHand.addData(DOWNLOAD_INFO_DATA_KEY,infoArray);
+                dataHands.add(infoHand);
             }
-
             sendNextPage();
         }).start();
     }
@@ -225,10 +237,12 @@ public class WiFiServerActivity extends ToolbarActivity{
 
     private void sendNextPage() {
         if (dataHands.isEmpty()) {
+            sending = false;
             return;
         }
 
         new Thread(() -> {
+            sending = true;
             if (connectThread != null) {
                 WiFiDataHand dataHand = dataHands.removeFirst();
                 if (connectThread.isSocketClose()) {
@@ -310,6 +324,7 @@ public class WiFiServerActivity extends ToolbarActivity{
                     break;
                 case SEND_MSG_ERROR:
                     textState.setText(getString(R.string.wifi_server_send_fail, msg.getData().getString("MSG")));
+                    sending = false;
                     break;
                 case GET_MSG:
                     textState.setText(getString(R.string.wifi_server_receive_message, msg.getData().getString("MSG")));

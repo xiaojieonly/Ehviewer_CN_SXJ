@@ -606,8 +606,10 @@
     <string name="settings_advanced_import_data">导入数据</string>
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
     <string name="settings_advanced_import_data_successfully">导入数据成功</string>
-    <string name="settings_advanced_wifi_sender">WiFi传输</string>
-    <string name="settings_advanced_wifi_sander_summary">通过热点发送app数据</string>
+    <string name="settings_advanced_wifi_sender">WiFi 数据迁移</string>
+    <string name="settings_advanced_wifi_sander_summary">通过WiFi热点迁移数据</string>
+    <string name="settings_advanced_wifi_client">WiFi 迁移数据接收</string>
+    <string name="settings_advanced_wifi_client_summary">接收来自WiFi热点的迁移数据</string>
 
     <string name="settings_about">更新与支持</string>
     <string name="settings_about_declaration_summary">EhViewer 与 E-Hentai.org 无任何联系</string>
@@ -841,19 +843,20 @@
     <string name="wifi_server_name">WiFiServer</string>
     <string name="wifi_server">WiFiServer</string>
     <string name="wifi_client">WiFiClient</string>
-    <string name="create_wifi">创建热点</string>
-    <string name="close_wifi">关闭热点</string>
     <string name="wifi_send_bookmark">迁移书签</string>
+    <string name="wifi_send_download">迁移下载数据</string>
+    <string name="wifi_sending">数据迁移中请稍候或退出重试</string>
     <string name="wifi_receive_text">接收数据</string>
-    <string name="wifi_server_illustrate">请确保要接收数据的手机链接上本机热点，并且在迁移完成前请勿断开链接或者返回上级页面！</string>
+    <string name="wifi_server_illustrate">请确保要接收数据的手机链接上本机热点，并且在迁移完成前请勿断开链接或者返回上级页面！ </string>
     <string name="wifi_server_connect">连接</string>
     <string name="wifi_server_connect_unable">连接不存在</string>
-    <string name="wifi_server_connection_succeeded">设备连接成功</string>
+    <string name="wifi_server_connection_succeeded">设备连接成功，数据接受完毕后请重启app使数据生效</string>
     <string name="wifi_server_disconnect">设备连接断开</string>
     <string name="wifi_server_connection_fail">创建通信失败</string>
     <string name="wifi_server_send_success">发送消息成功: %s</string>
     <string name="wifi_server_send_fail">发送消息失败: %s</string>
     <string name="wifi_server_receive_message">收到消息: %s</string>
+    <string name="wifi_server_receive_message_unknown">未知数据类型</string>
     <string name="wifi_server_opened">热点已开启 SSID: %1s \n%2s</string>
     <string name="wifi_server_closed">热点已关闭</string>
     <string name="wifi_server_password">密码: %s</string>
