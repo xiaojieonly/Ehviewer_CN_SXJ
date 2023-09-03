@@ -680,10 +680,10 @@
     <string name="settings_advanced_import_data">Import data</string>
     <string name="settings_advanced_import_data_summary">Load data which were previously saved</string>
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>
-    <string name="settings_advanced_wifi_sender">WiFi 数据迁移</string>
-    <string name="settings_advanced_wifi_sander_summary">通过WiFi热点迁移数据</string>
-    <string name="settings_advanced_wifi_client">WiFi 数据接收</string>
-    <string name="settings_advanced_wifi_client_summary">接收来自WiFi热点的数据</string>
+    <string name="settings_advanced_wifi_sender">WiFi data migration</string>
+    <string name="settings_advanced_wifi_sander_summary">Data Migration via Wi-Fi Hotspot</string>
+    <string name="settings_advanced_wifi_client">WiFi migration data reception</string>
+    <string name="settings_advanced_wifi_client_summary">Receive migration data from Wi Fi hotspots</string>
 
     <string name="settings_about">About</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -912,24 +912,24 @@
     <string name="wifi_server_name">WiFiServer</string>
     <string name="wifi_server">WiFiServer</string>
     <string name="wifi_client">WiFiClient</string>
-    <string name="create_wifi">创建热点</string>
-    <string name="close_wifi">关闭热点</string>
-    <string name="wifi_send_bookmark">迁移书签</string>
-    <string name="wifi_send_download">迁移下载数据</string>
+    <string name="wifi_send_bookmark">Migrate bookmarks</string>
+    <string name="wifi_send_download">Migrate download data</string>
+    <string name="wifi_sending">数据迁移中请稍候或退出重试</string>
     <string name="wifi_receive_text">接收数据</string>
-    <string name="wifi_server_illustrate">请确保要接收数据的手机链接上本机热点，并且在迁移完成前请勿断开链接或者返回上级页面！</string>
+    <string name="wifi_server_illustrate">Please make sure that the mobile phone to receive data is connected to the local hotspot, and do not disconnect or return to the parent page before the migration is complete! </string>
     <string name="wifi_server_connect">连接</string>
     <string name="wifi_server_connect_unable">连接不存在</string>
-    <string name="wifi_server_connection_succeeded">设备连接成功</string>
-    <string name="wifi_server_disconnect">设备连接断开</string>
+    <string name="wifi_server_connection_succeeded">The device is connected successfully. After receiving the data, please restart the app to make the data take effect.</string>
+    <string name="wifi_server_disconnect">Device disconnected</string>
     <string name="wifi_server_connection_fail">创建通信失败</string>
     <string name="wifi_server_send_success">发送消息成功: %s</string>
     <string name="wifi_server_send_fail">发送消息失败: %s</string>
     <string name="wifi_server_receive_message">收到消息: %s</string>
+    <string name="wifi_server_receive_message_unknown">unknown data type</string>
     <string name="wifi_server_opened">热点已开启 SSID: %1s \n%2s</string>
     <string name="wifi_server_closed">热点已关闭</string>
     <string name="wifi_server_password">密码: %s</string>
-    <string name="wifi_server_no_permission">权限不足，请授予权限</string>
+    <string name="wifi_server_no_permission">Insufficient permission, please grant permission</string>
     <!--  wifi server  -->
 
 </resources>

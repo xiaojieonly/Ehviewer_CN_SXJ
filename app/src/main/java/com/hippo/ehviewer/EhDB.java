@@ -684,6 +684,27 @@ public class EhDB {
         }
     }
 
+    public static synchronized void takeOverQuickSearchList(List<QuickSearch> quickSearchList) {
+        QuickSearchDao dao = sDaoSession.getQuickSearchDao();
+        List<QuickSearch> allList = dao.queryBuilder().orderAsc(QuickSearchDao.Properties.Time).list();
+        for (int i = 0; i < quickSearchList.size(); i++) {
+            QuickSearch newSearch = quickSearchList.get(i);
+            boolean insert = true;
+            for (int j = 0; j < allList.size(); j++) {
+                QuickSearch exist = allList.get(j);
+                if (exist.keyword.equals(newSearch.keyword)){
+                    insert = false;
+                    break;
+                }
+            }
+            if (insert){
+                newSearch.id = null;
+                newSearch.time = System.currentTimeMillis();
+                newSearch.id = dao.insert(newSearch);
+            }
+        }
+    }
+
     public static synchronized void updateQuickSearch(QuickSearch quickSearch) {
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         dao.update(quickSearch);

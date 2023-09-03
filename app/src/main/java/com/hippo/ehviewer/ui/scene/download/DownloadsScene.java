@@ -86,6 +86,7 @@ import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
+import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.DownloadSearchingExecutor;
 import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
@@ -120,6 +121,10 @@ import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
 import com.microsoft.appcenter.crashes.Crashes;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -148,13 +153,14 @@ public class DownloadsScene extends ToolbarScene
 
     private static final long ANIMATE_TIME = 300L;
 
+
     /*---------------
-     Whole life cycle
-     ---------------*/
+         Whole life cycle
+         ---------------*/
     @Nullable
     private DownloadManager mDownloadManager;
     @Nullable
-    private String mLabel;
+    public String mLabel;
     @Nullable
     private List<DownloadInfo> mList;
 
@@ -180,15 +186,17 @@ public class DownloadsScene extends ToolbarScene
 
     private AlertDialog mSearchDialog;
     private SearchBar mSearchBar;
+
+    private DownloadLabelDraw downloadLabelDraw;
     @Nullable
     @ViewLifeCircle
     private SearchBarMover mSearchBarMover;
     private boolean mSearchMode = false;
-    private String searchKey = null;
+    public String searchKey = null;
 
     private int mInitPosition = -1;
 
-    private boolean searching = false;
+    public boolean searching = false;
 
     private Handler mHandler;
     @NonNull
@@ -277,7 +285,7 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private void updateForLabel() {
+    public void updateForLabel() {
         if (null == mDownloadManager) {
             return;
         }
@@ -515,6 +523,7 @@ public class DownloadsScene extends ToolbarScene
         mViewTransition = null;
         mAdapter = null;
         mLayoutManager = null;
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -652,109 +661,11 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public View onCreateDrawerView(LayoutInflater inflater,
                                    @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.bookmarks_draw, container, false);
-
-        final Context context = getEHContext();
-        assert context != null;
-        AssertUtils.assertNotNull(context);
-
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.download_labels);
-        toolbar.inflateMenu(R.menu.drawer_download);
-        toolbar.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            switch (id) {
-                case R.id.action_settings:
-                    startScene(new Announcer(DownloadLabelsScene.class));
-                    return true;
-                case R.id.action_default_download_label:
-                    DownloadManager dm = mDownloadManager;
-                    if (null == dm) {
-                        return true;
-                    }
-
-                    List<DownloadLabel> list = dm.getLabelList();
-                    final String[] items = new String[list.size() + 2];
-                    items[0] = getString(R.string.let_me_select);
-                    items[1] = getString(R.string.default_download_label_name);
-                    for (int i = 0, n = list.size(); i < n; i++) {
-                        items[i + 2] = list.get(i).getLabel();
-                    }
-                    new AlertDialog.Builder(context)
-                            .setTitle(R.string.default_download_label)
-                            .setItems(items, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (which == 0) {
-                                        Settings.putHasDefaultDownloadLabel(false);
-                                    } else {
-                                        Settings.putHasDefaultDownloadLabel(true);
-                                        String label;
-                                        if (which == 1) {
-                                            label = null;
-                                        } else {
-                                            label = items[which];
-                                        }
-                                        Settings.putDefaultDownloadLabel(label);
-                                    }
-                                }
-                            }).show();
-                    return true;
-            }
-            return false;
-        });
-
-        final DownloadManager downloadManager = EhApplication.getDownloadManager(context);
-
-
-        List<DownloadLabel> list = downloadManager.getLabelList();
-        final List<String> labels = new ArrayList<>(list.size() + 1);
-        // Add default label name
-        labels.add(getString(R.string.default_download_label_name));
-        for (DownloadLabel raw : list) {
-            labels.add(raw.getLabel());
+        if (downloadLabelDraw==null){
+            downloadLabelDraw = new DownloadLabelDraw(inflater,container,this);
         }
 
-        // TODO handle download label items update
-        final List<DownloadLabelItem> downloadLabelList = new ArrayList<>();
-
-        for (int i = 0; i < labels.size(); i++) {
-            String label = labels.get(i);
-            if (i == 0) {
-                downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getDefaultDownloadInfoList().size()));
-                continue;
-            }
-            downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getLabelCount(label)));
-        }
-
-        ListView listView = (ListView) view.findViewById(R.id.list_view);
-        DownloadLabelAdapter adapter = new DownloadLabelAdapter(getEHContext(), R.layout.item_download_label_list, downloadLabelList);
-        listView.setAdapter(adapter);
-
-        listView.setOnItemClickListener((parent, view1, position, id) -> {
-            if (searching) {
-                Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
-                return;
-            }
-            String label;
-            if (position == 0) {
-                label = null;
-            } else {
-                label = labels.get(position);
-            }
-            if (!ObjectUtils.equal(label, mLabel)) {
-                mLabel = label;
-                updateForLabel();
-                if (searchKey != null && !searchKey.isEmpty()) {
-                    startSearching();
-                } else {
-                    updateView();
-                }
-                closeDrawer(Gravity.RIGHT);
-            }
-
-        });
-        return view;
+        return downloadLabelDraw.createView();
     }
 
     @Override
@@ -1021,6 +932,11 @@ public class DownloadsScene extends ToolbarScene
         // TODO
     }
 
+    @Nullable
+    public DownloadManager getmDownloadManager() {
+        return mDownloadManager;
+    }
+
     private void bindForState(DownloadHolder holder, DownloadInfo info) {
         Resources resources = getResources2();
         if (null == resources) {
@@ -1152,7 +1068,7 @@ public class DownloadsScene extends ToolbarScene
         startSearching();
     }
 
-    private void startSearching() {
+    protected void startSearching() {
         mProgressView.setVisibility(View.VISIBLE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.GONE);
@@ -1289,6 +1205,13 @@ public class DownloadsScene extends ToolbarScene
         mSpiderInfoMap.putAll(resultMap);
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateDownloadLabels(SomethingNeedRefresh somethingNeedRefresh){
+        if (somethingNeedRefresh.isDownloadLabelDrawNeed()){
+            downloadLabelDraw.updateDownloadLabels();
         }
     }
 

@@ -29,19 +29,19 @@ import java.io.FileWriter;
 public class EhDaoGenerator {
 
     private static final String PACKAGE = "com.hippo.ehviewer.dao";
-    private static final String OUT_DIR = "../app/src/main/java-gen";
-    private static final String DELETE_DIR = "../app/src/main/java-gen/com/hippo/ehviewer/dao";
+    private static final String OUT_DIR = "app/src/main/java-gen";
+    private static final String DELETE_DIR = "app/src/main/java-gen/com/hippo/ehviewer/dao";
 
     private static final int VERSION = 6;
 
-    private static final String DOWNLOAD_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/DownloadInfo.java";
-    private static final String HISTORY_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/HistoryInfo.java";
-    private static final String QUICK_SEARCH_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/QuickSearch.java";
-    private static final String LOCAL_FAVORITE_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/LocalFavoriteInfo.java";
-    private static final String BOOKMARK_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
-    private static final String FILTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
-    private static final String BLACKLIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
-    private static final String GALLERY_TAG_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/GalleryTags.java";
+    private static final String DOWNLOAD_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/DownloadInfo.java";
+    private static final String HISTORY_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/HistoryInfo.java";
+    private static final String QUICK_SEARCH_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/QuickSearch.java";
+    private static final String LOCAL_FAVORITE_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/LocalFavoriteInfo.java";
+    private static final String BOOKMARK_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
+    private static final String FILTER_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
+    private static final String BLACKLIST_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
+    private static final String GALLERY_TAG_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/GalleryTags.java";
 
 
     public static void generate() throws Exception {
@@ -412,7 +412,7 @@ public class EhDaoGenerator {
                 "\t}");
         javaClass.addImport("com.alibaba.fastjson.JSONObject");
 
-        javaClass.addMethod("public static DownloadInfo downloadInfoFromJson(JSONObject object){\n" +
+        javaClass.addMethod("\tpublic static DownloadInfo downloadInfoFromJson(JSONObject object) {\n" +
                 "\t\tDownloadInfo downloadInfo = new DownloadInfo();\n" +
                 "\t\tdownloadInfo.posted = object.getString(\"posted\");\n" +
                 "\t\tdownloadInfo.finished = object.getIntValue(\"finished\");\n" +
@@ -433,16 +433,19 @@ public class EhDaoGenerator {
                 "\t\tdownloadInfo.rating = object.getFloat(\"rating\");\n" +
                 "\t\tdownloadInfo.simpleLanguage = object.getString(\"\");\n" +
                 "\t\tJSONArray simpleTagsArr = object.getJSONArray(\"simpleTags\");\n" +
-                "\t\tif (simpleTagsArr!=null){\n" +
+                "\t\tif (simpleTagsArr != null) {\n" +
                 "\t\t\ttry {\n" +
                 "\t\t\t\tdownloadInfo.simpleTags = simpleTagsArr.toJavaList(String.class).toArray(new String[0]);\n" +
-                "\t\t\t}catch (ClassCastException ignore){\n" +
+                "\t\t\t} catch (ClassCastException ignore) {\n" +
                 "\t\t\t}\n" +
                 "\t\t}\n" +
                 "\t\tdownloadInfo.spanGroupIndex = object.getIntValue(\"spanGroupIndex\");\n" +
                 "\t\tdownloadInfo.spanIndex = object.getIntValue(\"spanIndex\");\n" +
                 "\t\tdownloadInfo.spanSize = object.getIntValue(\"spanSize\");\n" +
-                "\t\tdownloadInfo.tgList = (ArrayList<String>) object.getJSONArray(\"tgList\").toJavaList(String.class);\n" +
+                "\t\tJSONArray tagArr = object.getJSONArray(\"tgList\");\n" +
+                "\t\tif (tagArr!=null){\n" +
+                "\t\t\tdownloadInfo.tgList = (ArrayList<String>) tagArr.toJavaList(String.class);\n" +
+                "\t\t}\n" +
                 "\t\tdownloadInfo.thumb = object.getString(\"thumb\");\n" +
                 "\t\tdownloadInfo.thumbHeight = object.getIntValue(\"thumbHeight\");\n" +
                 "\t\tdownloadInfo.thumbWidth = object.getIntValue(\"thumbWidth\");\n" +
@@ -452,6 +455,8 @@ public class EhDaoGenerator {
                 "\t\tdownloadInfo.uploader = object.getString(\"uploader\");\n" +
                 "\t\treturn downloadInfo;\n" +
                 "\t}");
+        javaClass.addImport("com.alibaba.fastjson.JSONArray");
+        javaClass.addImport("java.util.ArrayList");
 
         FileWriter fileWriter = new FileWriter(DOWNLOAD_INFO_PATH);
         fileWriter.write(javaClass.toString());

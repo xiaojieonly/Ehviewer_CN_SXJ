@@ -1,20 +1,23 @@
 package com.hippo.ehviewer.ui.wifi;
 
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_INFO;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_LABEL;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_QUICK_SEARCH;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_DISCONNECTED;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_INFO_DATA_KEY;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_LABEL_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_CLIENT;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.QUICK_SEARCH_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_ERROR;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_SUCCESS;
 import static com.hippo.ehviewer.event.SomethingNeedRefresh.bookmarkDrawNeedRefresh;
+import static com.hippo.ehviewer.event.SomethingNeedRefresh.downloadInfoNeedRefresh;
+import static com.hippo.ehviewer.event.SomethingNeedRefresh.downloadLabelDrawNeedRefresh;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.net.DhcpInfo;
-import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -30,13 +33,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
 import com.hippo.ehviewer.client.wifi.ListenerThread;
+import com.hippo.ehviewer.dao.DownloadInfo;
+import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.QuickSearch;
-import com.hippo.ehviewer.event.SomethingNeedRefresh;
+import com.hippo.ehviewer.download.DownloadManager;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -131,7 +137,7 @@ public class WiFiClientActivity extends AppCompatActivity {
                 "\nIP:" + getIp()
                 + "\n路由：" + getWifiRouteIPAddress(this);
         statusInit.setText(text);
-        connectSocket();
+//        connectSocket();
     }
 
     /**
@@ -204,12 +210,14 @@ public class WiFiClientActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        connectThread.closeConnect();
-        connectThread.interrupt();
-        connectThread = null;
-        listenerThread.closeConnect();
-        listenerThread.interrupt();
-        listenerThread = null;
+        if (connectThread!=null){
+            connectThread.closeConnect();
+            connectThread = null;
+        }
+        if (listenerThread!=null){
+            listenerThread.closeConnect();
+            listenerThread = null;
+        }
         super.onDestroy();
     }
 
@@ -218,8 +226,44 @@ public class WiFiClientActivity extends AppCompatActivity {
             case DATA_TYPE_QUICK_SEARCH:
                 dealWithQuickSearch(response);
                 break;
+            case DATA_TYPE_DOWNLOAD_LABEL:
+                dealWithDownloadLabel(response);
+                break;
+            case DATA_TYPE_DOWNLOAD_INFO:
+                dealWithDownloadInfo(response);
+                break;
+            default:
+                receiveMessage.setText(R.string.wifi_server_receive_message_unknown);
+                connectThread.dataProcessed(response);
+                break;
         }
 
+    }
+
+    private void dealWithDownloadInfo(WiFiDataHand response) {
+        JSONArray jsonArray = response.getData().getJSONArray(DOWNLOAD_INFO_DATA_KEY);
+        DownloadManager manager = EhApplication.getDownloadManager();
+        new Thread(()->{
+            for (int i = 0; i < jsonArray.size(); i++) {
+                DownloadInfo info = DownloadInfo.downloadInfoFromJson(jsonArray.getJSONObject(i));
+                manager.addDownloadInfo(info,info.label);
+            }
+            connectThread.dataProcessed(response);
+            updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
+        }).start();
+    }
+
+    private void dealWithDownloadLabel(WiFiDataHand response) {
+        JSONArray jsonArray = response.getData().getJSONArray(DOWNLOAD_LABEL_KEY);
+        DownloadManager manager = EhApplication.getDownloadManager();
+        new Thread(()->{
+            for (int i = 0; i < jsonArray.size(); i++) {
+                manager.addLabelInSyncThread(jsonArray.getString(i));
+            }
+            connectThread.dataProcessed(response);
+            updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
+            EventBus.getDefault().post(downloadInfoNeedRefresh());
+       }).start();
     }
 
     private void dealWithQuickSearch(WiFiDataHand response) {
@@ -231,11 +275,16 @@ public class WiFiClientActivity extends AppCompatActivity {
             JSONObject object = jsonArray.getJSONObject(i);
             quickSearchList.add(QuickSearch.quickSearchFromJson(object));
         }
+        new Thread(()->{
+            EhDB.takeOverQuickSearchList(quickSearchList);
+            connectThread.dataProcessed(response);
+            updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
+            EventBus.getDefault().post(bookmarkDrawNeedRefresh());
+        }).start();
+    }
 
-        EhDB.insertQuickSearchList(quickSearchList);
-        connectThread.dataProcessed(response);
-        receiveMessage.setText(getString(R.string.wifi_server_receive_message, response.toString()));
-        EventBus.getDefault().post(bookmarkDrawNeedRefresh());
+    public void updateReceiveMessage(String message){
+        runOnUiThread(()->receiveMessage.setText(message));
     }
 
     private class WiFiClientHandler extends Handler {
@@ -264,84 +313,6 @@ public class WiFiClientActivity extends AppCompatActivity {
                     break;
                 default:
                     break;
-            }
-        }
-    }
-
-    private class ClientReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (action.equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
-                Log.i("BBB", "SCAN_RESULTS_AVAILABLE_ACTION");
-                // wifi已成功扫描到可用wifi。
-                //                List<ScanResult> scanResults = wifiManager.getScanResults();
-                //                wifiListAdapter.clear();
-                //                wifiListAdapter.addAll(scanResults);
-            } else if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-                Log.i("BBB", "WifiManager.WIFI_STATE_CHANGED_ACTION");
-                int wifiState = intent.getIntExtra(
-                        WifiManager.EXTRA_WIFI_STATE, 0);
-                switch (wifiState) {
-                    case WifiManager.WIFI_STATE_ENABLED:
-                        //获取到wifi开启的广播时，开始扫描
-                        //                        wifiManager.startScan();
-                        break;
-                    case WifiManager.WIFI_STATE_DISABLED:
-                        //wifi关闭发出的广播
-                        break;
-                }
-            } else if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-                Log.i("BBB", "WifiManager.NETWORK_STATE_CHANGED_ACTION");
-                NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-                if (info.getState().equals(NetworkInfo.State.DISCONNECTED)) {
-                    textState.setText(R.string.wifi_server_disconnect);
-                } else if (info.getState().equals(NetworkInfo.State.CONNECTED)) {
-                    WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-                    final WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-//                    text_state.setText("已连接到网络:" + wifiInfo.getSSID()
-//                            + "\n" + wifiInfo.getIpAddress()
-//                            + "\n" + wifiInfo.getNetworkId()
-//                            + "\n" + wifiInfo.getMacAddress());
-                    textState.setText(R.string.wifi_server_connection_succeeded);
-                    Log.i("AAA", "wifiInfo.getSSID():" + wifiInfo.getSSID() +
-                            "  WIFI_HOTSPOT_SSID:" + WIFI_HOTSPOT_SSID);
-                    if (wifiInfo.getSSID().equals(WIFI_HOTSPOT_SSID)) {
-                        //如果当前连接到的wifi是热点,则开启连接线程
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    ArrayList<String> connectedIP = getConnectedIP();
-                                    for (String ip : connectedIP) {
-                                        if (ip.contains(".")) {
-                                            Log.i("AAA", "IP:" + ip);
-                                            Socket socket = new Socket(ip, PORT);
-                                            connectThread = new ConnectThread(getApplicationContext(), socket, handler, IS_CLIENT);
-                                            connectThread.start();
-                                        }
-                                    }
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }).start();
-                    }
-                } else {
-                    NetworkInfo.DetailedState state = info.getDetailedState();
-                    if (state == state.CONNECTING) {
-                        textState.setText("连接中...");
-                    } else if (state == state.AUTHENTICATING) {
-                        textState.setText("正在验证身份信息...");
-                    } else if (state == state.OBTAINING_IPADDR) {
-                        textState.setText("正在获取IP地址...");
-                    } else if (state == state.FAILED) {
-                        textState.setText("连接失败");
-                    }
-                }
-
             }
         }
     }
