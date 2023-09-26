@@ -33,6 +33,9 @@ public class ConnectThread extends Thread {
     public static final String DOWNLOAD_INFO_DATA_KEY = "download_info";
     public static final int DATA_TYPE_DOWNLOAD_LABEL = 1003;
     public static final String DOWNLOAD_LABEL_KEY = "download_label";
+
+    public static final int DATA_TYPE_FAVORITE_INFO = 1004;
+    public static final String FAVORITE_INFO_DATA_KEY = "favorite_info";
     private final Socket socket;
     private final Handler handler;
     private final int connectKind;

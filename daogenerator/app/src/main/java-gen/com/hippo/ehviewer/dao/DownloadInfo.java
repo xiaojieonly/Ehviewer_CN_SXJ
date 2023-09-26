@@ -221,46 +221,23 @@ public class DownloadInfo extends GalleryInfo {
 	}
 
 	public JSONObject toJson() {
-		JSONObject jsonObject = new JSONObject();
-		jsonObject.put("posted", posted);
-		jsonObject.put("downloaded", downloaded);
-		jsonObject.put("category", category);
-		jsonObject.put("favoriteName", favoriteName);
+		JSONObject jsonObject = super.toJson();
+		jsonObject.put("finished", finished);
 		jsonObject.put("legacy", legacy);
 		jsonObject.put("label", label);
-		jsonObject.put("finished", finished);
+		jsonObject.put("downloaded", downloaded);
 		jsonObject.put("remaining", remaining);
 		jsonObject.put("speed", speed);
 		jsonObject.put("state", state);
 		jsonObject.put("time", time);
 		jsonObject.put("total", total);
-		jsonObject.put("favoriteSlot", favoriteSlot);
-		jsonObject.put("gid", gid);
-		jsonObject.put("pages", pages);
-		jsonObject.put("rated", rated);
-		jsonObject.put("rating", rating);
-		jsonObject.put("simpleLanguage", simpleLanguage);
-		jsonObject.put("simpleTags", simpleTags);
-		jsonObject.put("spanGroupIndex", spanGroupIndex);
-		jsonObject.put("spanSize", spanSize);
-		jsonObject.put("tgList", tgList);
-		jsonObject.put("thumb", thumb);
-		jsonObject.put("thumbHeight", thumbHeight);
-		jsonObject.put("thumbWidth", thumbWidth);
-		jsonObject.put("title", title);
-		jsonObject.put("titleJpn", titleJpn);
-		jsonObject.put("token", token);
-		jsonObject.put("uploader", uploader);
 		return jsonObject;
 	}
 
 	public static DownloadInfo downloadInfoFromJson(JSONObject object) {
-		DownloadInfo downloadInfo = new DownloadInfo();
-		downloadInfo.posted = object.getString("posted");
+		DownloadInfo downloadInfo = (DownloadInfo) GalleryInfo.galleryInfoFromJson(object);
 		downloadInfo.finished = object.getIntValue("finished");
 		downloadInfo.legacy = object.getIntValue("legacy");
-		downloadInfo.category = object.getIntValue("category");
-		downloadInfo.favoriteName = object.getString("favoriteName");
 		downloadInfo.label = object.getString("label");
 		downloadInfo.downloaded = object.getIntValue("downloaded");
 		downloadInfo.remaining = object.getLongValue("remaining");
@@ -268,33 +245,6 @@ public class DownloadInfo extends GalleryInfo {
 		downloadInfo.state = object.getIntValue("state");
 		downloadInfo.time = object.getLongValue("time");
 		downloadInfo.total = object.getIntValue("total");
-		downloadInfo.favoriteSlot = object.getIntValue("favoriteSlot");
-		downloadInfo.gid = object.getLongValue("gid");
-		downloadInfo.pages = object.getIntValue("pages");
-		downloadInfo.rated = object.getBoolean("rated");
-		downloadInfo.rating = object.getFloat("rating");
-		downloadInfo.simpleLanguage = object.getString("");
-		JSONArray simpleTagsArr = object.getJSONArray("simpleTags");
-		if (simpleTagsArr != null) {
-			try {
-				downloadInfo.simpleTags = simpleTagsArr.toJavaList(String.class).toArray(new String[0]);
-			} catch (ClassCastException ignore) {
-			}
-		}
-		downloadInfo.spanGroupIndex = object.getIntValue("spanGroupIndex");
-		downloadInfo.spanIndex = object.getIntValue("spanIndex");
-		downloadInfo.spanSize = object.getIntValue("spanSize");
-		JSONArray tagArr = object.getJSONArray("tgList");
-		if (tagArr != null) {
-			downloadInfo.tgList = (ArrayList<String>) tagArr.toJavaList(String.class);
-		}
-		downloadInfo.thumb = object.getString("thumb");
-		downloadInfo.thumbHeight = object.getIntValue("thumbHeight");
-		downloadInfo.thumbWidth = object.getIntValue("thumbWidth");
-		downloadInfo.title = object.getString("title");
-		downloadInfo.titleJpn = object.getString("titleJpn");
-		downloadInfo.token = object.getString("token");
-		downloadInfo.uploader = object.getString("uploader");
 		return downloadInfo;
 	}
 

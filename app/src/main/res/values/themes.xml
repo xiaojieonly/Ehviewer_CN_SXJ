@@ -59,7 +59,6 @@
         <item name="preferenceHeaderBackground">@drawable/preference_header_background_light</item>
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_light</item>
-
     </style>
 
     <style name="AppTheme" parent="BaseTheme">

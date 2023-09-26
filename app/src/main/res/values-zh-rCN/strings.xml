@@ -844,9 +844,13 @@
     <string name="wifi_server">WiFiServer</string>
     <string name="wifi_client">WiFiClient</string>
     <string name="wifi_send_bookmark">迁移书签</string>
+    <string name="wifi_send_favorite">迁移本地收藏</string>
     <string name="wifi_send_download">迁移下载数据</string>
+    <string name="wifi_send_done">该项数据迁移完毕</string>
+    <string name="wifi_send_start">开始迁移%s</string>
+    <string name="wifi_send_stop">暂停迁移%s</string>
     <string name="wifi_sending">数据迁移中请稍候或退出重试</string>
-    <string name="wifi_receive_text">接收数据</string>
+    <string name="wifi_send_text">发送数据</string>
     <string name="wifi_server_illustrate">请确保要接收数据的手机链接上本机热点，并且在迁移完成前请勿断开链接或者返回上级页面！ </string>
     <string name="wifi_server_connect">连接</string>
     <string name="wifi_server_connect_unable">连接不存在</string>
