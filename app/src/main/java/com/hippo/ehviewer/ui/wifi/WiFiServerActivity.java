@@ -2,11 +2,13 @@ package com.hippo.ehviewer.ui.wifi;
 
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_INFO;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_LABEL;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_FAVORITE_INFO;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_QUICK_SEARCH;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTING;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_INFO_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_LABEL_KEY;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.FAVORITE_INFO_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_SERVER;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.QUICK_SEARCH_DATA_KEY;
@@ -22,7 +24,9 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,16 +34,15 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.alibaba.fastjson.JSONArray;
-import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
 import com.hippo.ehviewer.client.wifi.ListenerThread;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.QuickSearch;
-import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.ui.ToolbarActivity;
 import com.microsoft.appcenter.crashes.Crashes;
 
@@ -53,11 +56,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class WiFiServerActivity extends ToolbarActivity{
+public class WiFiServerActivity extends ToolbarActivity implements AdapterView.OnItemSelectedListener {
 
     private static final int REQUEST_CODE = 996;
-    private Context mContext;
-    private TextView textState;
+
     /**
      * 连接线程
      */
@@ -79,6 +81,13 @@ public class WiFiServerActivity extends ToolbarActivity{
 
     private final LinkedList<WiFiDataHand> dataHands = new LinkedList<>();
 
+    private Context mContext;
+    private TextView textState;
+
+    private Button statusButton;
+
+    private int selectIndex = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,15 +95,17 @@ public class WiFiServerActivity extends ToolbarActivity{
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
         setContentView(R.layout.activity_wifi_server);
         textState = findViewById(R.id.receive);
-        Button sendBookmark = findViewById(R.id.send_bookmark);
-        sendBookmark.setOnClickListener(this::createBookmarkData);
-        Button sendDownload = findViewById(R.id.send_download);
-        sendDownload.setOnClickListener(this::createDownloadData);
+        Spinner spinner = findViewById(R.id.migrate_spinner);
+        spinner.setOnItemSelectedListener(this);
+        statusButton = findViewById(R.id.status_change);
+        statusButton.setOnClickListener(this::onStatusChange);
+        updateStatusButton();
         boolean result = requestMyPermission();
         if (result) {
             openConnectThread();
         }
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -154,13 +165,77 @@ public class WiFiServerActivity extends ToolbarActivity{
         connectThread.start();
     }
 
-    private void createBookmarkData(View view) {
-        if (sending){
-            Toast.makeText(mContext,R.string.wifi_sending,Toast.LENGTH_LONG).show();
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      selectIndex = position;
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        selectIndex = 999;
+    }
+
+    private void onStatusChange(View view) {
+        sending = !sending;
+        if (!sending) {
+            return;
+        }
+        if (!dataHands.isEmpty()){
+            sendNextPage();
+        }else{
+            switch (selectIndex){
+                case 0:
+                    createBookmarkData();
+                    break;
+                case 1:
+                    createFavoriteData();
+                    break;
+                case 2:
+                    createDownloadData();
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void createFavoriteData() {
+        if (sending) {
+            Toast.makeText(mContext, R.string.wifi_sending, Toast.LENGTH_LONG).show();
+            return;
+        }
+        List<GalleryInfo> list = EhDB.getAllLocalFavorites();
+        new Thread(() -> {
+            int pageSize = 10;
+            int pageCount = totalPage(list.size(), pageSize);
+
+            for (int i = 0; i < pageCount; i++) {
+                WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.SEND);
+                wiFiDataHand.dataType = DATA_TYPE_FAVORITE_INFO;
+                wiFiDataHand.pageSize = pageCount;
+                wiFiDataHand.pageIndex = i + 1;
+                JSONArray objects = new JSONArray();
+                for (int j = 0; j < pageSize; j++) {
+                    if (list.isEmpty()) {
+                        continue;
+                    }
+                    GalleryInfo galleryInfo = list.remove(0);
+                    objects.add(galleryInfo.toJson());
+                }
+                wiFiDataHand.addData(FAVORITE_INFO_DATA_KEY, objects);
+                dataHands.add(wiFiDataHand);
+            }
+            sendNextPage();
+        }).start();
+    }
+
+    private void createBookmarkData() {
+        if (sending) {
+            Toast.makeText(mContext, R.string.wifi_sending, Toast.LENGTH_LONG).show();
             return;
         }
         List<QuickSearch> list = EhDB.getAllQuickSearch();
-        new Thread(()->{
+        new Thread(() -> {
             int pageSize = 10;
             int pageCount = totalPage(list.size(), pageSize);
 
@@ -177,19 +252,19 @@ public class WiFiServerActivity extends ToolbarActivity{
                     QuickSearch quickSearch = list.remove(0);
                     objects.add(quickSearch.toJson());
                 }
-                wiFiDataHand.addData(QUICK_SEARCH_DATA_KEY,objects);
+                wiFiDataHand.addData(QUICK_SEARCH_DATA_KEY, objects);
                 dataHands.add(wiFiDataHand);
             }
             sendNextPage();
         }).start();
     }
 
-    private void createDownloadData(View view) {
-        if (sending){
-            Toast.makeText(mContext,R.string.wifi_sending,Toast.LENGTH_LONG).show();
+    private void createDownloadData() {
+        if (sending) {
+            Toast.makeText(mContext, R.string.wifi_sending, Toast.LENGTH_LONG).show();
             return;
         }
-        new Thread(()->{
+        new Thread(() -> {
             List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
             WiFiDataHand dataHand = new WiFiDataHand(WiFiDataHand.SEND);
             dataHand.dataType = DATA_TYPE_DOWNLOAD_LABEL;
@@ -198,7 +273,7 @@ public class WiFiServerActivity extends ToolbarActivity{
                 labelArray.add(labels.get(i).getLabel());
 
             }
-            dataHand.addData(DOWNLOAD_LABEL_KEY,labelArray);
+            dataHand.addData(DOWNLOAD_LABEL_KEY, labelArray);
             dataHands.add(dataHand);
 
             List<DownloadInfo> allInfo = EhDB.getAllDownloadInfo();
@@ -209,20 +284,39 @@ public class WiFiServerActivity extends ToolbarActivity{
                 WiFiDataHand infoHand = new WiFiDataHand(WiFiDataHand.SEND);
                 infoHand.dataType = DATA_TYPE_DOWNLOAD_INFO;
                 infoHand.pageSize = pageCount;
-                infoHand.pageIndex = i+1;
+                infoHand.pageIndex = i + 1;
                 JSONArray infoArray = new JSONArray();
                 for (int j = 0; j < pageSize; j++) {
-                    if (allInfo.isEmpty()){
+                    if (allInfo.isEmpty()) {
                         continue;
                     }
                     DownloadInfo downloadInfo = allInfo.remove(0);
                     infoArray.add(downloadInfo.toJson());
                 }
-                infoHand.addData(DOWNLOAD_INFO_DATA_KEY,infoArray);
+                infoHand.addData(DOWNLOAD_INFO_DATA_KEY, infoArray);
                 dataHands.add(infoHand);
             }
             sendNextPage();
         }).start();
+    }
+
+    private void updateStatusButton(){
+        String content;
+        if (!sending) {
+            if (dataHands.isEmpty()){
+                content = getString(R.string.wifi_send_start,"");
+            }else{
+                content = getString(R.string.wifi_send_start,"("+dataHands.size()+")");
+            }
+            statusButton.setText(content);
+            return;
+        }
+        if (dataHands.isEmpty()){
+            content = getString(R.string.wifi_send_stop,"");
+        }else{
+            content = getString(R.string.wifi_send_stop,"("+dataHands.size()+")");
+        }
+        statusButton.setText(content);
     }
 
 
@@ -245,6 +339,7 @@ public class WiFiServerActivity extends ToolbarActivity{
             sending = true;
             if (connectThread != null) {
                 WiFiDataHand dataHand = dataHands.removeFirst();
+                runOnUiThread(this::updateStatusButton);
                 if (connectThread.isSocketClose()) {
                     try {
                         openSocket();
@@ -320,6 +415,12 @@ public class WiFiServerActivity extends ToolbarActivity{
                     break;
                 case SEND_MSG_SUCCESS:
                     textState.setText(getString(R.string.wifi_server_send_success, msg.getData().getString("MSG")));
+                    if (dataHands.isEmpty()){
+                        Toast.makeText(mContext,R.string.wifi_send_done,Toast.LENGTH_LONG).show();
+                        sending = false;
+                        updateStatusButton();
+                        break;
+                    }
                     sendNextPage();
                     break;
                 case SEND_MSG_ERROR:

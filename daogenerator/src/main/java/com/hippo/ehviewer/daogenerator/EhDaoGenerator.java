@@ -378,47 +378,24 @@ public class EhDaoGenerator {
         javaClass.addImport("com.hippo.ehviewer.client.data.GalleryInfo");
 
         javaClass.addMethod("\tpublic JSONObject toJson(){\n" +
-                "\t\tJSONObject jsonObject = new JSONObject();\n" +
-                "\t\tjsonObject.put(\"posted\",posted);\n" +
-                "\t\tjsonObject.put(\"downloaded\",downloaded);\n" +
-                "\t\tjsonObject.put(\"category\",category);\n" +
-                "\t\tjsonObject.put(\"favoriteName\",favoriteName);\n" +
+                "\t\tJSONObject jsonObject = super.toJson();\n" +
+                "\t\tjsonObject.put(\"finished\",finished);\n" +
                 "\t\tjsonObject.put(\"legacy\",legacy);\n" +
                 "\t\tjsonObject.put(\"label\",label);\n" +
-                "\t\tjsonObject.put(\"finished\",finished);\n" +
+                "\t\tjsonObject.put(\"downloaded\",downloaded);\n" +
                 "\t\tjsonObject.put(\"remaining\",remaining);\n" +
                 "\t\tjsonObject.put(\"speed\",speed);\n" +
                 "\t\tjsonObject.put(\"state\",state);\n" +
                 "\t\tjsonObject.put(\"time\",time);\n" +
                 "\t\tjsonObject.put(\"total\",total);\n" +
-                "\t\tjsonObject.put(\"favoriteSlot\",favoriteSlot);\n" +
-                "\t\tjsonObject.put(\"gid\",gid);\n" +
-                "\t\tjsonObject.put(\"pages\",pages);\n" +
-                "\t\tjsonObject.put(\"rated\",rated);\n" +
-                "\t\tjsonObject.put(\"rating\",rating);\n" +
-                "\t\tjsonObject.put(\"simpleLanguage\",simpleLanguage);\n" +
-                "\t\tjsonObject.put(\"simpleTags\",simpleTags);\n" +
-                "\t\tjsonObject.put(\"spanGroupIndex\",spanGroupIndex);\n" +
-                "\t\tjsonObject.put(\"spanSize\",spanSize);\n" +
-                "\t\tjsonObject.put(\"tgList\",tgList);\n" +
-                "\t\tjsonObject.put(\"thumb\",thumb);\n" +
-                "\t\tjsonObject.put(\"thumbHeight\",thumbHeight);\n" +
-                "\t\tjsonObject.put(\"thumbWidth\",thumbWidth);\n" +
-                "\t\tjsonObject.put(\"title\",title);\n" +
-                "\t\tjsonObject.put(\"titleJpn\",titleJpn);\n" +
-                "\t\tjsonObject.put(\"token\",token);\n" +
-                "\t\tjsonObject.put(\"uploader\",uploader);\n" +
                 "\t\treturn  jsonObject;\n" +
                 "\t}");
         javaClass.addImport("com.alibaba.fastjson.JSONObject");
 
-        javaClass.addMethod("\tpublic static DownloadInfo downloadInfoFromJson(JSONObject object) {\n" +
-                "\t\tDownloadInfo downloadInfo = new DownloadInfo();\n" +
-                "\t\tdownloadInfo.posted = object.getString(\"posted\");\n" +
+        javaClass.addMethod("\tpublic static DownloadInfo downloadInfoFromJson(JSONObject object){\n" +
+                "\t\tDownloadInfo downloadInfo = (DownloadInfo) GalleryInfo.galleryInfoFromJson(object);\n" +
                 "\t\tdownloadInfo.finished = object.getIntValue(\"finished\");\n" +
                 "\t\tdownloadInfo.legacy = object.getIntValue(\"legacy\");\n" +
-                "\t\tdownloadInfo.category = object.getIntValue(\"category\");\n" +
-                "\t\tdownloadInfo.favoriteName = object.getString(\"favoriteName\");\n" +
                 "\t\tdownloadInfo.label = object.getString(\"label\");\n" +
                 "\t\tdownloadInfo.downloaded = object.getIntValue(\"downloaded\");\n" +
                 "\t\tdownloadInfo.remaining = object.getLongValue(\"remaining\");\n" +
@@ -426,33 +403,6 @@ public class EhDaoGenerator {
                 "\t\tdownloadInfo.state = object.getIntValue(\"state\");\n" +
                 "\t\tdownloadInfo.time = object.getLongValue(\"time\");\n" +
                 "\t\tdownloadInfo.total = object.getIntValue(\"total\");\n" +
-                "\t\tdownloadInfo.favoriteSlot = object.getIntValue(\"favoriteSlot\");\n" +
-                "\t\tdownloadInfo.gid = object.getLongValue(\"gid\");\n" +
-                "\t\tdownloadInfo.pages = object.getIntValue(\"pages\");\n" +
-                "\t\tdownloadInfo.rated = object.getBoolean(\"rated\");\n" +
-                "\t\tdownloadInfo.rating = object.getFloat(\"rating\");\n" +
-                "\t\tdownloadInfo.simpleLanguage = object.getString(\"\");\n" +
-                "\t\tJSONArray simpleTagsArr = object.getJSONArray(\"simpleTags\");\n" +
-                "\t\tif (simpleTagsArr != null) {\n" +
-                "\t\t\ttry {\n" +
-                "\t\t\t\tdownloadInfo.simpleTags = simpleTagsArr.toJavaList(String.class).toArray(new String[0]);\n" +
-                "\t\t\t} catch (ClassCastException ignore) {\n" +
-                "\t\t\t}\n" +
-                "\t\t}\n" +
-                "\t\tdownloadInfo.spanGroupIndex = object.getIntValue(\"spanGroupIndex\");\n" +
-                "\t\tdownloadInfo.spanIndex = object.getIntValue(\"spanIndex\");\n" +
-                "\t\tdownloadInfo.spanSize = object.getIntValue(\"spanSize\");\n" +
-                "\t\tJSONArray tagArr = object.getJSONArray(\"tgList\");\n" +
-                "\t\tif (tagArr!=null){\n" +
-                "\t\t\tdownloadInfo.tgList = (ArrayList<String>) tagArr.toJavaList(String.class);\n" +
-                "\t\t}\n" +
-                "\t\tdownloadInfo.thumb = object.getString(\"thumb\");\n" +
-                "\t\tdownloadInfo.thumbHeight = object.getIntValue(\"thumbHeight\");\n" +
-                "\t\tdownloadInfo.thumbWidth = object.getIntValue(\"thumbWidth\");\n" +
-                "\t\tdownloadInfo.title = object.getString(\"title\");\n" +
-                "\t\tdownloadInfo.titleJpn = object.getString(\"titleJpn\");\n" +
-                "\t\tdownloadInfo.token = object.getString(\"token\");\n" +
-                "\t\tdownloadInfo.uploader = object.getString(\"uploader\");\n" +
                 "\t\treturn downloadInfo;\n" +
                 "\t}");
         javaClass.addImport("com.alibaba.fastjson.JSONArray");

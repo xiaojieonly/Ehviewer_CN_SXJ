@@ -331,4 +331,10 @@
         <item>@color/socket11</item>
     </array>
 
+    <string-array name="migrate_data_types">
+        <item>@string/wifi_send_bookmark</item>
+        <item>@string/wifi_send_favorite</item>
+        <item>@string/wifi_send_download</item>
+    </string-array>
+
 </resources>

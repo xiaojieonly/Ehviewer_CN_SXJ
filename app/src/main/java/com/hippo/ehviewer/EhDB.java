@@ -47,7 +47,6 @@ import com.hippo.ehviewer.dao.QuickSearchDao;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.SqlUtils;
-import com.hippo.util.TimeUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.collect.SparseJLArray;
@@ -575,7 +574,7 @@ public class EhDB {
         return null != dao.load(gid);
     }
 
-    public static synchronized void putLocalFavorites(GalleryInfo galleryInfo) {
+    public static synchronized void putLocalFavorite(GalleryInfo galleryInfo) {
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
         if (null == dao.load(galleryInfo.gid)) {
             LocalFavoriteInfo info;
@@ -591,7 +590,7 @@ public class EhDB {
 
     public static synchronized void putLocalFavorites(List<GalleryInfo> galleryInfoList) {
         for (GalleryInfo gi: galleryInfoList) {
-            putLocalFavorites(gi);
+            putLocalFavorite(gi);
         }
     }
 
@@ -923,7 +922,7 @@ public class EhDB {
             // LocalFavorites
             List<LocalFavoriteInfo> localFavoriteInfoList = session.getLocalFavoritesDao().queryBuilder().list();
             for (LocalFavoriteInfo info: localFavoriteInfoList) {
-                putLocalFavorites(info);
+                putLocalFavorite(info);
             }
 
             // Bookmarks

@@ -34,9 +34,7 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
-import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
-import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
@@ -199,7 +197,7 @@ public final class CommonOperations {
     private static void doAddToFavorites(Activity activity, GalleryInfo galleryInfo,
                                          int slot, EhClient.Callback<Void> listener) {
         if (slot == -1) {
-            EhDB.putLocalFavorites(galleryInfo);
+            EhDB.putLocalFavorite(galleryInfo);
             listener.onSuccess(null);
         } else if (slot >= 0 && slot <= 9) {
             EhClient client = EhApplication.getEhClient(activity);

@@ -2,11 +2,13 @@ package com.hippo.ehviewer.ui.wifi;
 
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_INFO;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_DOWNLOAD_LABEL;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_FAVORITE_INFO;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DATA_TYPE_QUICK_SEARCH;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_CONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DEVICE_DISCONNECTED;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_INFO_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.DOWNLOAD_LABEL_KEY;
+import static com.hippo.ehviewer.client.wifi.ConnectThread.FAVORITE_INFO_DATA_KEY;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.GET_MSG;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.IS_CLIENT;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.QUICK_SEARCH_DATA_KEY;
@@ -14,7 +16,6 @@ import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_ERROR;
 import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_SUCCESS;
 import static com.hippo.ehviewer.event.SomethingNeedRefresh.bookmarkDrawNeedRefresh;
 import static com.hippo.ehviewer.event.SomethingNeedRefresh.downloadInfoNeedRefresh;
-import static com.hippo.ehviewer.event.SomethingNeedRefresh.downloadLabelDrawNeedRefresh;
 
 import android.content.Context;
 import android.net.DhcpInfo;
@@ -36,11 +37,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
 import com.hippo.ehviewer.client.wifi.ListenerThread;
 import com.hippo.ehviewer.dao.DownloadInfo;
-import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
 
@@ -232,12 +233,26 @@ public class WiFiClientActivity extends AppCompatActivity {
             case DATA_TYPE_DOWNLOAD_INFO:
                 dealWithDownloadInfo(response);
                 break;
+            case DATA_TYPE_FAVORITE_INFO:
+                dealWithFavoriteInfo(response);
+                break;
             default:
                 receiveMessage.setText(R.string.wifi_server_receive_message_unknown);
                 connectThread.dataProcessed(response);
                 break;
         }
 
+    }
+
+    private void dealWithFavoriteInfo(WiFiDataHand response) {
+        JSONArray jsonArray = response.getData().getJSONArray(FAVORITE_INFO_DATA_KEY);
+        new Thread(()->{
+            for (int i = 0; i < jsonArray.size(); i++) {
+                EhDB.putLocalFavorite(GalleryInfo.galleryInfoFromJson(jsonArray.getJSONObject(i)));
+            }
+            connectThread.dataProcessed(response);
+            updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
+        }).start();
     }
 
     private void dealWithDownloadInfo(WiFiDataHand response) {

@@ -913,9 +913,13 @@
     <string name="wifi_server">WiFiServer</string>
     <string name="wifi_client">WiFiClient</string>
     <string name="wifi_send_bookmark">Migrate bookmarks</string>
+    <string name="wifi_send_favorite">Migrate favorite</string>
     <string name="wifi_send_download">Migrate download data</string>
+    <string name="wifi_send_done">Migrate data done</string>
+    <string name="wifi_send_start">Start Migrate%s</string>
+    <string name="wifi_send_stop">Stop Migrate%s</string>
     <string name="wifi_sending">数据迁移中请稍候或退出重试</string>
-    <string name="wifi_receive_text">接收数据</string>
+    <string name="wifi_send_text">发送数据</string>
     <string name="wifi_server_illustrate">Please make sure that the mobile phone to receive data is connected to the local hotspot, and do not disconnect or return to the parent page before the migration is complete! </string>
     <string name="wifi_server_connect">连接</string>
     <string name="wifi_server_connect_unable">连接不存在</string>

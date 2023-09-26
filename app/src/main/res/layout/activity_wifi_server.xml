@@ -19,33 +19,61 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <Spinner
+        android:id="@+id/migrate_spinner"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:entries="@array/migrate_data_types"
+        android:paddingHorizontal="@dimen/spinner_horizontal_padding" />
 
-        <Button
-            android:id="@+id/send_bookmark"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="@string/wifi_send_bookmark"
-            android:textAllCaps="false" />
+    <Button
+        android:id="@+id/status_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:text=""
+        android:textAllCaps="false" />
 
-        <Button
-            android:id="@+id/send_download"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="@string/wifi_send_download"
-            android:textAllCaps="false" />
-    </LinearLayout>
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content">-->
+
+    <!--        <Button-->
+    <!--            android:id="@+id/send_bookmark"-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_margin="10dp"-->
+    <!--            android:text="@string/wifi_send_bookmark"-->
+    <!--            android:textAllCaps="false" />-->
+
+    <!--        <Button-->
+    <!--            android:id="@+id/send_download"-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_margin="10dp"-->
+    <!--            android:text="@string/wifi_send_download"-->
+    <!--            android:textAllCaps="false" />-->
+    <!--    </LinearLayout>-->
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content">-->
+
+    <!--        <Button-->
+    <!--            android:id="@+id/send_favorite"-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_margin="10dp"-->
+    <!--            android:text="@string/wifi_send_favorite"-->
+    <!--            android:textAllCaps="false" />-->
+    <!--    </LinearLayout>-->
 
     <TextView
         android:id="@+id/receive"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:text="@string/wifi_receive_text"
+        android:text="@string/wifi_send_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
