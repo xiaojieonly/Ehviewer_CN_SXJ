@@ -1,6 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/09/27 : 还好成功退款payday3  
+ ###  新版发布1.9.5.9  
+ ###  提前祝大家国庆节、中秋节快乐   
+ ###  新增了本地收藏的迁移项   
+ ###  重新构建了迁移数据发送页面的ui，现在改为使用下拉列表选择要迁移的数据   
+ ###  由于时间关系，原本打算添加的IP配额显示功能将延后至下个版本更新   
+   点击前往下载：[蓝奏云](https://wwsu.lanzouj.com/iBdjy1a1zlkj)  密码:i3s3  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/09/03 : 还好没买星空  
  ###  新版发布1.9.5.8  
  ###  新增通过wifi迁移书签、下载分组、下载画廊数据的功能   
