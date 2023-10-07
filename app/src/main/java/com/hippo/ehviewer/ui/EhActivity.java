@@ -39,12 +39,11 @@ public abstract class EhActivity extends AppCompatActivity {
     @StyleRes
     protected abstract int getThemeResId(int theme);
 
-    private Context context;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
 
-        setTheme(getThemeResId(Settings.getTheme(context)));
+//        setTheme(getThemeResId(Settings.getTheme(context)));
+        setTheme(getThemeResId(Settings.getTheme()));
         super.onCreate(savedInstanceState);
 
         ((EhApplication) getApplication()).registerActivity(this);
@@ -92,6 +91,6 @@ public abstract class EhActivity extends AppCompatActivity {
         }
         newBase = ContextLocalWrapper.wrap(newBase, locale);
         super.attachBaseContext(newBase);
-        context = newBase;
+        Context context = newBase;
     }
 }

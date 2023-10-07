@@ -53,11 +53,11 @@
             android:title="@string/downloads"
             android:icon="@drawable/v_download_black_x24"/>
 
-        <item
-            android:id="@+id/nav_eh_news"
-            android:title="@string/news"
-            android:icon="@drawable/ic_eh_news_24"
-            android:visible="false"/>
+<!--        <item-->
+<!--            android:id="@+id/nav_eh_news"-->
+<!--            android:title="@string/news"-->
+<!--            android:icon="@drawable/ic_eh_news_24"-->
+<!--            android:visible="false"/>-->
 
         <item
             android:id="@+id/nav_settings"
