@@ -262,20 +262,21 @@ public class Settings {
     public static final int THEME_BLACK = 2;
     private static final int DEFAULT_THEME = THEME_LIGHT;
 
-    private static boolean overSet = false;
+//    private static boolean overSet = false;
 
-    public static int getTheme(Context context) {
-        if (getDarkModeStatus(context) && !overSet){
-            return THEME_BLACK;
-        }
+//    public static int getTheme(Context context) {
+    public static int getTheme() {
+//        if (getDarkModeStatus(context) && !overSet){
+//            return THEME_BLACK;
+//        }
         return getIntFromStr(KEY_THEME, DEFAULT_THEME);
     }
 
     public static void putTheme(int theme) {
-        if (!overSet){
-            overSet = true;
-            System.out.println("覆盖主题");
-        }
+//        if (!overSet){
+//            overSet = true;
+//            System.out.println("覆盖主题");
+//        }
         putIntToStr(KEY_THEME, theme);
     }
 

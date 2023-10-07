@@ -73,7 +73,6 @@ import com.hippo.ehviewer.ui.scene.download.DownloadLabelsScene;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.ehviewer.ui.scene.FavoritesScene;
 import com.hippo.ehviewer.ui.scene.GalleryCommentsScene;
-import com.hippo.ehviewer.ui.scene.ehNews.EhNewsScene;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.GalleryInfoScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
@@ -137,8 +136,6 @@ public final class MainActivity extends StageActivity
     @Nullable
     private AvatarImageView mAvatar;
     @Nullable
-    private AvatarImageView mAvatarGif;
-    @Nullable
     private ImageView mHeaderBackground;
     @Nullable
     private TextView mDisplayName;
@@ -171,7 +168,6 @@ public final class MainActivity extends StageActivity
         registerLaunchMode(SelectSiteScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(EhTopListScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
-        registerLaunchMode(EhNewsScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(QuickSearchScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(SubscriptionsScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(GalleryDetailScene.class, SceneFragment.LAUNCH_MODE_STANDARD);
@@ -390,17 +386,17 @@ public final class MainActivity extends StageActivity
 //        mDrawerLayout.setStatusBarColor(0);
 
         if (mNavView != null) {
-            if (Settings.isLogin()){
-                MenuItem newsItem = mNavView.getMenu().findItem(R.id.nav_eh_news);
+//            if (Settings.isLogin()){
+//                MenuItem newsItem = mNavView.getMenu().findItem(R.id.nav_eh_news);
 //                newsItem.setVisible(true);
-            }
+//            }
             mNavView.setNavigationItemSelectedListener(this);
         }
-        if (Settings.getTheme(getApplicationContext()) == 0) {
+        if (Settings.getTheme() == 0) {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_light));
 
             mChangeTheme.setBackgroundColor(getColor(R.color.white));
-        } else if (Settings.getTheme(getApplicationContext()) == 1) {
+        } else if (Settings.getTheme() == 1) {
             mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
             mChangeTheme.setBackgroundColor(getColor(R.color.grey_850));
         } else {
@@ -459,7 +455,7 @@ public final class MainActivity extends StageActivity
 
     private String getThemeText() {
         int resId;
-        switch (Settings.getTheme(getApplicationContext())) {
+        switch (Settings.getTheme()) {
             default:
             case Settings.THEME_LIGHT:
                 resId = R.string.theme_light;
@@ -475,7 +471,7 @@ public final class MainActivity extends StageActivity
     }
 
     private int getNextTheme() {
-        switch (Settings.getTheme(getApplicationContext())) {
+        switch (Settings.getTheme()) {
             default:
             case Settings.THEME_LIGHT:
                 return Settings.THEME_DARK;
@@ -875,12 +871,6 @@ public final class MainActivity extends StageActivity
                 nav_top_lists.putString(EhTopListScene.KEY_ACTION, EhTopListScene.ACTION_TOP_LIST);
                 startSceneFirstly(new Announcer(EhTopListScene.class)
                         .setArgs(nav_top_lists));
-                break;
-            case R.id.nav_eh_news:
-                Bundle news = new Bundle();
-                Announcer scene = new Announcer(EhNewsScene.class);
-                scene.setArgs(news);
-                startScene(scene);
                 break;
             case R.id.nav_favourite:
                 startScene(new Announcer(FavoritesScene.class));
