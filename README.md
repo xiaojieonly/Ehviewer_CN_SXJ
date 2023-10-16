@@ -1,6 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+
+# 2023/10/16 : 大的来了   
+ ###  新版发布1.9.6.0  
+ ###  删除了一些冗余代码    
+ ###  删除了自动跟随系统进入黑暗模式的功能，此功能在一些手机上会导致app奔溃   
+ ###  新增用户IP配额显示与用户配额重置功能    
+   点击前往下载：[蓝奏云](https://wwsu.lanzouj.com/iqzMa1bzk7hc)  密码:7xmf  
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+
 # 2023/09/27 : 还好成功退款payday3  
  ###  新版发布1.9.5.9  
  ###  提前祝大家国庆节、中秋节快乐   
