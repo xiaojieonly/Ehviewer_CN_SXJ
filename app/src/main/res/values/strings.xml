@@ -936,4 +936,13 @@
     <string name="wifi_server_no_permission">Insufficient permission, please grant permission</string>
     <!--  wifi server  -->
 
+    <!--  limits  -->
+    <string name="refresh_limits">Refresh Limits Usage</string>
+    <string name="from_gallery_visits">%s from gallery visits</string>
+    <string name="from_torrent_completions">%s from torrent completions</string>
+    <string name="from_archive_download">%s from archive download</string>
+    <string name="from_hentai_home">%s from Hentai@Home</string>
+    <string name="current_moderation_power">Current Moderation Power %s</string>
+    <string name="reset_cost">Cost %s To Reset</string>
+    <string name="limit_unneed_reset">There is currently no need to reset quotas, please try again after refreshing~</string>
 </resources>

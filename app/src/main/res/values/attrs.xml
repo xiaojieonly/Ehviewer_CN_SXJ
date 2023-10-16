@@ -72,6 +72,12 @@
 
         <attr name="toolbarPopupTheme" format="reference" />
         <attr name="galleryDetailDivider" format="reference" />
+
+        <attr name="limitCountBgColor" format="color"/>
+        <attr name="iconColor" format="color"/>
+
+        <attr name="limits_shape_color" format="color"/>
+        <attr name="home_shadow" format="color"/>
     </declare-styleable>
 
     <declare-styleable name="ProgressView">

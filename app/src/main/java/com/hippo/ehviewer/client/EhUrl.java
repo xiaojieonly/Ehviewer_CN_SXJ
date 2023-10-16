@@ -95,6 +95,10 @@ public class EhUrl {
         }
     }
 
+    public static String getHomeUrl(){
+        return HOME_E;
+    }
+
     public static String getMyTag() {
         switch (Settings.getGallerySite()) {
             default:

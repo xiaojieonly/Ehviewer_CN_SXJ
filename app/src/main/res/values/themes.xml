@@ -59,6 +59,12 @@
         <item name="preferenceHeaderBackground">@drawable/preference_header_background_light</item>
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_light</item>
+
+        <item name="limitCountBgColor">@color/colorLimitCountBg</item>
+        <item name="limits_shape_color">@color/shape_color_limits</item>
+        <item name="home_shadow">@color/home_shadow_color</item>
+
+        <item name="iconColor">@color/icon_color</item>
     </style>
 
     <style name="AppTheme" parent="BaseTheme">
@@ -123,6 +129,11 @@
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
 
+        <item name="limitCountBgColor">@color/colorLimitCountBgDark</item>
+        <item name="limits_shape_color">@color/shape_color_limits_dart</item>
+        <item name="home_shadow">@color/home_shadow_color_dark</item>
+
+        <item name="iconColor">@color/icon_color_dark</item>
     </style>
 
     <style name="AppTheme.Dark" parent="BaseTheme.Dark"></style>
@@ -181,6 +192,11 @@
         <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
         <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
 
+        <item name="limitCountBgColor">@color/colorLimitCountBgBlack</item>
+        <item name="limits_shape_color">@color/shape_color_limits_black</item>
+        <item name="home_shadow">@color/home_shadow_color_black</item>
+
+        <item name="iconColor">@color/icon_color_black</item>
     </style>
 
     <style name="AppTheme.Black" parent="BaseTheme.Black"></style>

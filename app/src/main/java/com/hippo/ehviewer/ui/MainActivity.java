@@ -47,6 +47,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.navigation.NavigationView;
@@ -89,6 +90,7 @@ import com.hippo.ehviewer.ui.scene.SolidScene;
 import com.hippo.ehviewer.ui.scene.WarningScene;
 import com.hippo.ehviewer.ui.scene.WebViewSignInScene;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
+import com.hippo.ehviewer.widget.LimitsCountView;
 import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.network.Network;
 import com.hippo.scene.Announcer;
@@ -115,7 +117,7 @@ import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
 public final class MainActivity extends StageActivity
-        implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack {
+        implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack, DrawerLayout.DrawerListener {
 
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
 
@@ -139,6 +141,8 @@ public final class MainActivity extends StageActivity
     private ImageView mHeaderBackground;
     @Nullable
     private TextView mDisplayName;
+    @Nullable
+    private LimitsCountView limitsCountView;
     @Nullable
     UserImageChange userImageChange;
 
@@ -370,6 +374,7 @@ public final class MainActivity extends StageActivity
         setContentView(R.layout.activity_main);
 
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
+        mDrawerLayout.setDrawerListener(this);
         mNavView = (NavigationView) ViewUtils.$$(this, R.id.nav_view);
         mRightDrawer = (FrameLayout) ViewUtils.$$(this, R.id.right_drawer);
         View headerLayout = mNavView.getHeaderView(0);
@@ -381,6 +386,8 @@ public final class MainActivity extends StageActivity
         updateProfile();
         mDisplayName = (TextView) ViewUtils.$$(headerLayout, R.id.display_name);
         TextView mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
+
+        limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
 
         mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
 //        mDrawerLayout.setStatusBarColor(0);
@@ -719,6 +726,9 @@ public final class MainActivity extends StageActivity
         }
     }
 
+    /**
+     * 更换壁纸
+     */
     public void onBackgroundChange() {
         if (userImageChange != null) {
             userImageChange = null;
@@ -730,9 +740,11 @@ public final class MainActivity extends StageActivity
                 this
         );
         userImageChange.showImageChangeDialog();
-        System.out.println("更换壁纸");
     }
 
+    /**
+     * 更换头像
+     */
     public void onAvatarChange() {
         if (userImageChange != null) {
             userImageChange = null;
@@ -745,16 +757,7 @@ public final class MainActivity extends StageActivity
         );
 
         userImageChange.showImageChangeDialog();
-        System.out.println("更换头像");
     }
-
-    //    public int getDrawerLockMode(int edgeGravity) {
-//        if (mDrawerLayout != null) {
-//            return mDrawerLayout.getDrawerLockMode(edgeGravity);
-//        } else {
-//            return DrawerLayout.LOCK_MODE_UNLOCKED;
-//        }
-//    }
 
     public void setDrawerLockMode(int lockMode, int edgeGravity) {
         if (mDrawerLayout != null) {
@@ -893,6 +896,9 @@ public final class MainActivity extends StageActivity
             mDrawerLayout.closeDrawers();
         }
 
+        if (limitsCountView != null) {
+            limitsCountView.hide();
+        }
         return true;
     }
 
@@ -912,4 +918,27 @@ public final class MainActivity extends StageActivity
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    public void onDrawerSlide(View drawerView, float percent) {
+
+    }
+
+    @Override
+    public void onDrawerOpened(View drawerView) {
+        if (limitsCountView != null) {
+            limitsCountView.onLoadData(drawerView,true);
+        }
+    }
+
+    @Override
+    public void onDrawerClosed(View drawerView) {
+        if (limitsCountView != null) {
+            limitsCountView.hide();
+        }
+    }
+
+    @Override
+    public void onDrawerStateChanged(View drawerView, int newState) {
+
+    }
 }
