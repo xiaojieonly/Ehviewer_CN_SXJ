@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:color="?android:navigationBarColor"
+    android:maxHeight="250dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/from_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
+        android:layout_marginVertical="@dimen/limits_layout_margin_v"
+        android:alpha="0"
+        android:background="@drawable/home_item_shape"
+        android:gravity="center"
+        android:text="@string/from_gallery_visits"
+        android:textAlignment="center"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/from_torrent"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
+        android:layout_marginVertical="@dimen/limits_layout_margin_v"
+        android:alpha="0"
+        android:background="@drawable/home_item_shape"
+        android:gravity="center"
+        android:text="@string/from_torrent_completions"
+        android:textAlignment="center"
+        android:translationZ="-50dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/from_download"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
+        android:layout_marginVertical="@dimen/limits_layout_margin_v"
+        android:alpha="0"
+        android:background="@drawable/home_item_shape"
+        android:gravity="center"
+        android:text="@string/from_archive_download"
+        android:textAlignment="center"
+        android:translationZ="-50dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/from_hentai"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
+        android:layout_marginVertical="@dimen/limits_layout_margin_v"
+        android:alpha="0"
+        android:background="@drawable/home_item_shape"
+        android:gravity="center"
+        android:text="@string/from_hentai_home"
+        android:textAlignment="center"
+        android:translationZ="-50dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/current_power"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
+        android:layout_marginVertical="@dimen/limits_layout_margin_v"
+        android:alpha="0"
+        android:background="@drawable/home_item_shape"
+        android:gravity="center"
+        android:text="@string/current_moderation_power"
+        android:textAlignment="center"
+        android:translationZ="-50dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/reset_limits"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:paddingHorizontal="@dimen/limits_layout_padding"
+        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
+        android:layout_marginVertical="@dimen/limits_layout_margin_v"
+        android:alpha="0"
+        android:background="@drawable/home_item_shape"
+        android:gravity="center"
+        android:text="@string/reset_cost"
+        android:textAlignment="center"
+        android:translationZ="-50dp"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/limits_view"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_marginHorizontal="@dimen/limits_layout_padding"
+        android:background="@drawable/limits_shape"
+        android:paddingHorizontal="@dimen/limits_layout_margin_h">
+
+        <TextView
+            android:id="@+id/limits_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical|center_horizontal"
+            android:minWidth="0dp"
+            android:minHeight="48dp"
+            android:text="\????/????"
+            app:insetForeground="@android:color/transparent" />
+
+        <ImageView
+            android:id="@+id/refresh_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="end|center_vertical"
+            android:scaleType="fitXY"
+            app:srcCompat="@drawable/v_refresh_dark_x24" />
+
+        <com.github.ybq.android.spinkit.SpinKitView
+            android:id="@+id/refreshing"
+            style="@style/SpinKitView.CubeGrid"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="end|center_vertical"
+            android:visibility="gone"
+            app:SpinKit_Color="?android:attr/colorAccent" />
+
+    </FrameLayout>
+</LinearLayout>

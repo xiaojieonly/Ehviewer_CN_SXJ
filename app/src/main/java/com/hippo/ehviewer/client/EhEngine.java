@@ -42,6 +42,7 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.ehviewer.client.parser.ArchiveParser;
 import com.hippo.ehviewer.client.parser.EhEventParse;
+import com.hippo.ehviewer.client.parser.EhHomeParser;
 import com.hippo.ehviewer.client.parser.FavoritesParser;
 import com.hippo.ehviewer.client.parser.ForumsParser;
 import com.hippo.ehviewer.client.parser.GalleryApiParser;
@@ -1184,10 +1185,10 @@ public class EhEngine {
     public static EhNewsDetail getEhNews(EhClient.Task task, OkHttpClient mOkHttpClient) throws Throwable {
 //        return EhNewsParse.parse("");
         String url = EhUrl.getEhNewsUrl();
-        Request request = new EhRequestBuilder(url,null).build();
+        Request request = new EhRequestBuilder(url, null).build();
 
         Call call = mOkHttpClient.newCall(request);
-        if (null!=task){
+        if (null != task) {
             task.setCall(call);
         }
         int code = -1;
@@ -1197,7 +1198,7 @@ public class EhEngine {
             Response response = call.execute();
             code = response.code();
             headers = response.headers();
-            if (response.body()==null){
+            if (response.body() == null) {
                 return null;
             }
             body = response.body().string();
@@ -1209,5 +1210,73 @@ public class EhEngine {
         }
 
         return new EhNewsDetail();
+    }
+
+    public static HomeDetail getHomeDetail(@Nullable EhClient.Task task, OkHttpClient okHttpClient) throws Throwable {
+        String referer = EhUrl.getReferer();
+        String url = EhUrl.getHomeUrl();
+        Log.d(TAG, url);
+        Request request = new EhRequestBuilder(url, referer).build();
+        Call call = okHttpClient.newCall(request);
+
+        // Put call
+        if (null != task) {
+            task.setCall(call);
+        }
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            String html = EhEventParse.parse(body);
+            if (html != null) {
+                EhApplication.getInstance().showEventPane(html);
+            }
+            return EhHomeParser.parse(body);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            throw e;
+        }
+    }
+
+    public static HomeDetail resetLimit(@Nullable EhClient.Task task, OkHttpClient okHttpClient) throws Throwable {
+        FormBody.Builder builder = new FormBody.Builder();
+        builder.add("reset_imagelimit", "Reset Limit");
+        String referer = EhUrl.getReferer();
+        String url = EhUrl.getHomeUrl();
+        Log.d(TAG, url);
+        FormBody formBody = builder.build();
+        Request  request = new EhRequestBuilder(url, referer).post(formBody).build();;
+        Call call = okHttpClient.newCall(request);
+        // Put call
+        if (null != task) {
+            task.setCall(call);
+        }
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            String html = EhEventParse.parse(body);
+            if (html != null) {
+                EhApplication.getInstance().showEventPane(html);
+            }
+            return EhHomeParser.parse(body);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            throw e;
+        }
     }
 }

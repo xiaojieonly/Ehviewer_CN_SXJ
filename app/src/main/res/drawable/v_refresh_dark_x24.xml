@@ -23,7 +23,7 @@
     android:viewportHeight="24">
 
     <path
-        android:fillColor="@color/primary_drawable_dark"
+        android:fillColor="?attr/iconColor"
         android:pathData="@string/pd_refresh"/>
 
 </vector>

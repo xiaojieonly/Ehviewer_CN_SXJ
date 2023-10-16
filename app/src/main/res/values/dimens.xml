@@ -172,5 +172,10 @@
 
     <dimen name="spacing">8dp</dimen>
 
+    <!--  padding  -->
+    <dimen name="limits_layout_margin_h">24dp</dimen>
+    <dimen name="limits_home_item_margin_h">30dp</dimen>
+    <dimen name="limits_layout_margin_v">2dp</dimen>
+    <dimen name="limits_layout_padding">12dp</dimen>
 
 </resources>

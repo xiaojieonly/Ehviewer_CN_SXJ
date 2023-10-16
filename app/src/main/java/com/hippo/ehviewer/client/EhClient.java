@@ -62,6 +62,8 @@ public class EhClient {
     public static final int METHOD_DELETE_WATCHED = 22;
     public static final int METHOD_GET_WATCHED = 23;
     public static final int METHOD_GET_NEWS = 24;
+    public static final int METHOD_GET_HOME = 25;
+    public static final int METHOD_RESET_LIMIT = 26;
 
     private final ThreadPoolExecutor mRequestThreadPool;
     private final OkHttpClient mOkHttpClient;
@@ -181,14 +183,18 @@ public class EhClient {
                     case METHOD_DOWNLOAD_ARCHIVE:
                         return EhEngine.downloadArchive(this, mOkHttpClient, (Long) params[0], (String) params[1], (String) params[2], (String) params[3]);
                     case METHOD_ADD_TAG:
-                        return EhEngine.addTag(this, mOkHttpClient,(String) params[0],(TagPushParam) params[1]);
+                        return EhEngine.addTag(this, mOkHttpClient, (String) params[0], (TagPushParam) params[1]);
                     case METHOD_EDIT_WATCHED:
                     case METHOD_DELETE_WATCHED:
-                        return EhEngine.deleteWatchedTag(this, mOkHttpClient,(String) params[0],(UserTag) params[1]);
+                        return EhEngine.deleteWatchedTag(this, mOkHttpClient, (String) params[0], (UserTag) params[1]);
                     case METHOD_GET_WATCHED:
-                        return EhEngine.getWatchedList(this, mOkHttpClient,(String) params[0]);
+                        return EhEngine.getWatchedList(this, mOkHttpClient, (String) params[0]);
                     case METHOD_GET_NEWS:
-                        return EhEngine.getEhNews(this,mOkHttpClient);
+                        return EhEngine.getEhNews(this, mOkHttpClient);
+                    case METHOD_GET_HOME:
+                        return EhEngine.getHomeDetail(this, mOkHttpClient);
+                    case METHOD_RESET_LIMIT:
+                        return EhEngine.resetLimit(this, mOkHttpClient);
                     default:
                         return new IllegalStateException("Can't detect method " + mMethod);
                 }
