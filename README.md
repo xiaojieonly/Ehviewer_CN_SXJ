@@ -12,6 +12,7 @@
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
+![image](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/assets/49278135/47cdd6e8-2f2b-438d-9daf-beb65504fa41)
 
 # 2023/09/27 : 还好成功退款payday3  
  ###  新版发布1.9.5.9  
