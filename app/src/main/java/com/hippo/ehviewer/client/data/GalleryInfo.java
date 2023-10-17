@@ -277,7 +277,7 @@ public class GalleryInfo implements Parcelable {
         jsonObject.put("rated",rated);
         jsonObject.put("simpleLanguage",simpleLanguage);
         if (simpleTags!=null){
-            jsonObject.put("simpleTags",new JSONArray(Arrays.asList(simpleTags)));
+            jsonObject.put("simpleTags",simpleTags);
         }
         jsonObject.put("thumbHeight",thumbHeight);
         jsonObject.put("thumbWidth",thumbWidth);

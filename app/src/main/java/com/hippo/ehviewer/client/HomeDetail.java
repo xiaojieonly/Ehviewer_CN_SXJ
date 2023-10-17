@@ -2,14 +2,14 @@ package com.hippo.ehviewer.client;
 
 public class HomeDetail {
 
-    private long used;
-    private long total;
-    private long resetCost;
-    private long fromGalleryVisits;
-    private long fromTorrentCompletions;
-    private long fromArchiveDownloads;
-    private long fromHentaiAtHome;
-    private long currentModerationPower;
+    private long used = 0L;
+    private long total = 0L;
+    private long resetCost = 0L;
+    private long fromGalleryVisits = 0L;
+    private long fromTorrentCompletions = 0L;
+    private long fromArchiveDownloads = 0L;
+    private long fromHentaiAtHome = 0L;
+    private long currentModerationPower = 0L;
 
     public HomeDetail() {
 

@@ -925,14 +925,14 @@ public final class MainActivity extends StageActivity
 
     @Override
     public void onDrawerOpened(View drawerView) {
-        if (limitsCountView != null) {
-            limitsCountView.onLoadData(drawerView,true);
+        if (limitsCountView != null && Settings.isLogin()) {
+            limitsCountView.onLoadData(drawerView, true);
         }
     }
 
     @Override
     public void onDrawerClosed(View drawerView) {
-        if (limitsCountView != null) {
+        if (limitsCountView != null && Settings.isLogin()) {
             limitsCountView.hide();
         }
     }

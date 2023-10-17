@@ -176,8 +176,9 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
     }
 
     private void onStatusChange(View view) {
-        sending = !sending;
-        if (!sending) {
+        if (sending) {
+            sending = false;
+            updateStatusButton();
             return;
         }
         if (!dataHands.isEmpty()){
