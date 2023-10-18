@@ -27,7 +27,6 @@ public class EhHomeParser {
      *
      * @param body 传入原始个人中心html数据
      * @return 返回从html数据中提取的有用数据
-     * @throws EhException
      */
     public static HomeDetail parse(String body) throws EhException {
 
@@ -36,7 +35,7 @@ public class EhHomeParser {
         Elements homeBoxes = document.getElementsByClass(HOME_BOX);
 
         if (homeBoxes.isEmpty()) {
-            return null;
+            return homeDetail;
         }
 
         try {
