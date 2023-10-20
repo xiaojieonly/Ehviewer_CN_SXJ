@@ -160,7 +160,7 @@ public final class SubscriptionsScene extends ToolbarScene {
     }
 
     @Override
-    public void onNavigationClick() {
+    public void onNavigationClick(View view) {
         onBackPressed();
     }
 

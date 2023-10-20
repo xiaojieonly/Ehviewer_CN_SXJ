@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -82,14 +83,15 @@ public abstract class ToolbarScene extends BaseScene {
                 mToolbar.setOnMenuItemClickListener(ToolbarScene.this::onMenuItemClick);
                 onMenuCreated(mToolbar.getMenu());
             }
-            mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    onNavigationClick();
-                }
-            });
+            mToolbar.setNavigationOnClickListener(this::onNavigationClick);
+            mToolbar.setOnClickListener(this::onClickListener);
         }
     }
+
+    public void onClickListener(View view) {
+
+    }
+
 
     public int getMenuResId() {
         return 0;
@@ -102,7 +104,7 @@ public abstract class ToolbarScene extends BaseScene {
         return false;
     }
 
-    public void onNavigationClick() {
+    public void onNavigationClick(View view) {
     }
 
     public void setNavigationIcon(@DrawableRes int resId) {

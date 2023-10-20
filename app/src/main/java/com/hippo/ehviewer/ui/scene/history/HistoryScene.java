@@ -207,7 +207,7 @@ public class HistoryScene extends ToolbarScene
     }
 
     @Override
-    public void onNavigationClick() {
+    public void onNavigationClick(View view) {
         onBackPressed();
     }
 

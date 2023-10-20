@@ -137,7 +137,7 @@ public final class QuickSearchScene extends ToolbarScene {
     }
 
     @Override
-    public void onNavigationClick() {
+    public void onNavigationClick(View view) {
         onBackPressed();
     }
 

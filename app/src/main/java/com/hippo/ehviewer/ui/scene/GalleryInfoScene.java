@@ -223,7 +223,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     }
 
     @Override
-    public void onNavigationClick() {
+    public void onNavigationClick(View view) {
         onBackPressed();
     }
 

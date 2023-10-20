@@ -285,7 +285,7 @@ public final class GalleryCommentsScene extends ToolbarScene
     }
 
     @Override
-    public void onNavigationClick() {
+    public void onNavigationClick(View view) {
         onBackPressed();
     }
 
