@@ -38,7 +38,7 @@ public class LimitsCountView extends FrameLayout {
     private TextView currentPower;
     private TextView resetLimits;
 
-    private HomeDetail homeDetail = new HomeDetail();
+    private HomeDetail homeDetail;
 
     private OnViewNeedGone onViewNeedGone;
     private OnViewNeedVisible onViewNeedVisible;
