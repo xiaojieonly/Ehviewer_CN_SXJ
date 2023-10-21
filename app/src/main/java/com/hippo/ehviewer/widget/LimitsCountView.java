@@ -38,7 +38,7 @@ public class LimitsCountView extends FrameLayout {
     private TextView currentPower;
     private TextView resetLimits;
 
-    private HomeDetail homeDetail;
+    private HomeDetail homeDetail = new HomeDetail();
 
     private OnViewNeedGone onViewNeedGone;
     private OnViewNeedVisible onViewNeedVisible;
@@ -133,6 +133,9 @@ public class LimitsCountView extends FrameLayout {
     }
 
     public void onLoadData(View view, boolean checkData) {
+        if(!Settings.isLogin()){
+            return;
+        }
         if (checkData && homeDetail != null) {
             return;
         }
