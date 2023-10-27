@@ -1132,7 +1132,7 @@ public final class SpiderQueen implements Runnable {
 
         private GalleryPageApiParser.Result fetchPageResultFromApi(long gid, int index, String pToken, String showKey, String previousPToken) throws Throwable {
             GalleryPageApiParser.Result result = EhEngine.getGalleryPageApi(null, mHttpClient, gid, index, pToken, showKey, previousPToken);
-            if (StringUtils.endsWith(result.imageUrl, URL_509_SUFFIX_ARRAY)) {
+            if (StringUtils.endsWith(result.imageUrl, URL_509_SUFFIX_ARRAY)||StringUtils.endsWith(result.batterImageUrl, URL_509_SUFFIX_ARRAY)) {
                 // Get 509
                 // Notify listeners
                 notifyGet509(index);
@@ -1212,7 +1212,12 @@ public final class SpiderQueen implements Runnable {
 
                     try {
                         GalleryPageApiParser.Result result = fetchPageResultFromApi(gid, index, pToken, localShowKey, previousPToken);
-                        imageUrl = result.imageUrl;
+                        if (result.batterImageUrl!=null){
+                            imageUrl = result.batterImageUrl;
+                        }else {
+                            imageUrl = result.imageUrl;
+                        }
+
                         skipHathKey = result.skipHathKey;
                         originImageUrl = result.originImageUrl;
                     } catch (Image509Exception e) {
