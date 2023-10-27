@@ -1,7 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2023/10/16 :    
+# 2023/10/27 :    
  ###  新版发布1.9.6.3  
  ###  紧急修复画廊解析失败问题     
    点击前往下载：[蓝奏云](https://wwsu.lanzouj.com/iCu6Y1d0rxni)  密码:gr3e  
@@ -10,7 +10,7 @@
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS  
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
-# 2023/10/16 :    
+# 2023/10/21 :    
  ###  新版发布1.9.6.2  
  ###  修复了在获取ip配额过程中因空安全导致的app奔溃问题     
    点击前往下载：[蓝奏云](https://wwsu.lanzouj.com/i8Nvu1cdirsf)  密码:45sy  
