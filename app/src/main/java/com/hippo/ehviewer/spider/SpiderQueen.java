@@ -41,7 +41,6 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhEngine;
 import com.hippo.ehviewer.client.EhRequestBuilder;
 import com.hippo.ehviewer.client.EhUrl;
-import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.exception.Image509Exception;
@@ -1132,7 +1131,7 @@ public final class SpiderQueen implements Runnable {
 
         private GalleryPageApiParser.Result fetchPageResultFromApi(long gid, int index, String pToken, String showKey, String previousPToken) throws Throwable {
             GalleryPageApiParser.Result result = EhEngine.getGalleryPageApi(null, mHttpClient, gid, index, pToken, showKey, previousPToken);
-            if (StringUtils.endsWith(result.imageUrl, URL_509_SUFFIX_ARRAY)||StringUtils.endsWith(result.batterImageUrl, URL_509_SUFFIX_ARRAY)) {
+            if (StringUtils.endsWith(result.imageUrl, URL_509_SUFFIX_ARRAY)) {
                 // Get 509
                 // Notify listeners
                 notifyGet509(index);
@@ -1212,12 +1211,11 @@ public final class SpiderQueen implements Runnable {
 
                     try {
                         GalleryPageApiParser.Result result = fetchPageResultFromApi(gid, index, pToken, localShowKey, previousPToken);
-                        if (result.batterImageUrl!=null){
-                            imageUrl = result.batterImageUrl;
-                        }else {
+                        if (result.imageUrl!=null){
                             imageUrl = result.imageUrl;
+                        }else {
+                            imageUrl = result.otherImageUrl;
                         }
-
                         skipHathKey = result.skipHathKey;
                         originImageUrl = result.originImageUrl;
                     } catch (Image509Exception e) {
@@ -1247,11 +1245,10 @@ public final class SpiderQueen implements Runnable {
                 String referer;
                 if (Settings.getDownloadOriginImage() && !TextUtils.isEmpty(originImageUrl)) {
                     targetImageUrl = originImageUrl;
-                    referer = EhUrl.getPageUrl(gid, index, pToken);
                 } else {
                     targetImageUrl = imageUrl;
-                    referer = null;
                 }
+                referer = EhUrl.getPageUrl(gid, index, pToken);
                 if (targetImageUrl == null) {
                     error = "TargetImageUrl error";
                     break;

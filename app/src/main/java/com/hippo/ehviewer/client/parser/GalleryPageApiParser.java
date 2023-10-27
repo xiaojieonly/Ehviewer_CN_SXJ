@@ -54,9 +54,7 @@ public class GalleryPageApiParser {
 
             m = PATTERN_ORIGIN_IMAGE_URL_NEW.matcher(i6);
             if (m.find()) {
-                result.batterImageUrl = StringUtils.unescapeXml(m.group(1));
-            }else {
-                throw new JSONException("找不到原始链接");
+                result.otherImageUrl = StringUtils.unescapeXml(m.group(1));
             }
 
             if (jo.isNull("i7")){
@@ -82,7 +80,7 @@ public class GalleryPageApiParser {
 
     public static class Result {
         public String imageUrl;
-        public String batterImageUrl;
+        public String otherImageUrl;
         public String skipHathKey;
         public String originImageUrl;
     }
