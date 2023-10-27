@@ -43,7 +43,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,7 +53,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
@@ -104,7 +102,6 @@ import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
 import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.unifile.UniFile;
-import com.hippo.util.DataUtils;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.view.ViewTransition;
@@ -586,6 +583,12 @@ public class DownloadsScene extends ToolbarScene
                 gotoSearch(context);
                 return true;
             }
+            case R.id.sort_download_list:{
+
+
+
+                return true;
+            }
         }
         return false;
     }
@@ -933,7 +936,7 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Nullable
-    public DownloadManager getmDownloadManager() {
+    public DownloadManager getMDownloadManager() {
         return mDownloadManager;
     }
 
