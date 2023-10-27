@@ -583,12 +583,12 @@ public class DownloadsScene extends ToolbarScene
                 gotoSearch(context);
                 return true;
             }
-            case R.id.sort_download_list:{
-
-
-
-                return true;
-            }
+//            case R.id.sort_download_list:{
+//
+//
+//
+//                return true;
+//            }
         }
         return false;
     }
