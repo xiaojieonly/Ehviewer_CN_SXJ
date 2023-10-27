@@ -1,7 +1,6 @@
 package com.hippo.ehviewer.ui.scene.download;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,7 +56,7 @@ public class DownloadLabelDraw {
                     scene.startScene(new Announcer(DownloadLabelsScene.class));
                     return true;
                 case R.id.action_default_download_label:
-                    DownloadManager dm = scene.getmDownloadManager();
+                    DownloadManager dm = scene.getMDownloadManager();
                     if (null == dm) {
                         return true;
                     }

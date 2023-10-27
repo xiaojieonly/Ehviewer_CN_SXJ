@@ -435,6 +435,21 @@
     <string name="default_download_label_name">Default</string>
     <string name="download_move_dialog_title">Move</string>
     <string name="download_labels">Download labels</string>
+    <string name="download_sort_list">Sort</string>
+    <string name="download_filter_by_status">Filter by status</string>
+    <string name="download_status_all">All</string>
+    <string name="download_status_done">Download Done</string>
+    <string name="download_status_waiting">Waiting Download</string>
+    <string name="download_status_downloading">Downloading</string>
+    <string name="download_status_failed">Download Failed</string>
+    <string name="default_sort">Default</string>
+    <string name="sort_by_gallery_id_asc">By Id Asc</string>
+    <string name="sort_by_gallery_id_desc">By Id Desc</string>
+    <string name="sort_by_create_time_asc">By Create Time Asc</string>
+    <string name="sort_by_create_time_desc">By Create Time Desc</string>
+    <string name="sort_by_rating_asc">By Rating Asc</string>
+    <string name="sort_by_rating_desc">By Rating Desc</string>
+    <string name="sort_download_list">Sort List</string>
     <string name="download_start_all">Start all</string>
     <string name="download_stop_all">Stop all</string>
     <string name="download_reset_reading_progress">Reset reading progress</string>
@@ -945,4 +960,5 @@
     <string name="current_moderation_power">Current Moderation Power %s</string>
     <string name="reset_cost">Cost %s To Reset</string>
     <string name="limit_unneed_reset">There is currently no need to reset quotas, please try again after refreshing~</string>
+
 </resources>
