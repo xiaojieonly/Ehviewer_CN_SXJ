@@ -1,10 +1,20 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
+链接:  提取码:  复制这段内容后打开百度网盘手机App，操作更方便哦
+
+# 2023/10/29 :    
+ ###  新版发布1.9.6.6     
+ ###  修复了一些app内部的图片资源         
+   点击前往下载：[百度云](https://pan.baidu.com/s/1xdAMQwLeXnyzXw7GrVlJMg)  密码:86vw   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
 
 # 2023/10/27 :    
  ###  新版发布1.9.6.5     
  ###  紧急修复画廊解析失败问题     
-  ###  由于蓝奏云策略变更，经研究后准备弃用，之后将只会使用百度云或其他更友好的网盘    
+ ###  由于蓝奏云策略变更，经研究后准备弃用，之后将只会使用百度云或其他更友好的网盘    
    点击前往下载：[百度云](https://pan.baidu.com/s/1Vwj04GiGVwMQ5i0iJ5G_Sg)  密码:eps6   
    点击前往下载：[蓝奏云](https://wwsu.lanzouj.com/ivNdP1d16qcf)  密码:4bz5   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
