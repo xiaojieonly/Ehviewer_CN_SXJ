@@ -134,6 +134,7 @@ import com.hippo.yorozuya.SimpleHandler;
 import com.hippo.yorozuya.ViewUtils;
 import com.microsoft.appcenter.crashes.Crashes;
 
+import com.hippo.ehviewer.spider.SpiderQueen;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -942,8 +943,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         updateDownloadText();
 
         mLanguage.setText(gd.language);
-        mPages.setText(resources.getQuantityString(
-                R.plurals.page_count, gd.pages, gd.pages));
+        GalleryInfo galleryInfo = getGalleryInfo();
+        Context context = getEHContext();
+        SpiderQueen mSpiderQueen;
+        mSpiderQueen = SpiderQueen.obtainSpiderQueen(context, galleryInfo, SpiderQueen.MODE_READ);
+        mPages.setText(mSpiderQueen.getStartPage()+"/"+resources.getQuantityString(
+               R.plurals.page_count, gd.pages, gd.pages));
         mSize.setText(gd.size);
         mPosted.setText(gd.posted);
         mFavoredTimes.setText(resources.getString(R.string.favored_times, gd.favoriteCount));
