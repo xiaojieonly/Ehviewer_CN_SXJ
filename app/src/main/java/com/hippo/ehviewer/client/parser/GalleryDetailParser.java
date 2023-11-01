@@ -117,13 +117,25 @@ public class GalleryDetailParser {
 
 
         GalleryDetail galleryDetail = new GalleryDetail();
-        galleryDetail.body = body;
+//        GalleryDetail galleryDetailOld = new GalleryDetail();
+//        galleryDetail.body = body;
+//
         Document document = Jsoup.parse(body);
         parseDetail(galleryDetail, document, body);
         galleryDetail.tags = parseTagGroups(document);       //获取标签列表
         galleryDetail.comments = parseComments(document);    //获取评论内容
         galleryDetail.previewPages = parsePreviewPages(document, body);  //获取画廊图片数量
         galleryDetail.previewSet = parsePreviewSet(document, body);//获取画廊浏览参数（如：之前有观看则从上次看到的位置开始）
+        galleryDetail.SpiderInfoPages = parsePages(body);
+        galleryDetail.SpiderInfoPreviewPages = parsePreviewPages(body);
+        galleryDetail.SpiderInfoPreviewSet = parsePreviewSet(body);
+//        parseDetail(galleryDetailOld, document, body);
+//        galleryDetailOld.tags = parseTagGroups(document);       //获取标签列表
+//        galleryDetailOld.comments = parseComments(document);    //获取评论内容
+//        galleryDetailOld.previewPages = parsePreviewPages(document, body);  //获取画廊图片数量
+//        galleryDetailOld.previewSet = parsePreviewSet(document, body);//获取画廊浏览参数（如：之前有观看则从上次看到的位置开始）
+//
+//        galleryDetail.oldDetail = galleryDetailOld;
         return galleryDetail;
     }
 

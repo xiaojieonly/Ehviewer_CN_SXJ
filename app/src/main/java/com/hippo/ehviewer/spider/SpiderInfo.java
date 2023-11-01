@@ -317,9 +317,10 @@ public class SpiderInfo {
             SpiderInfo spiderInfo = new SpiderInfo();
             spiderInfo.gid = info.gid;
             spiderInfo.token = info.token;
-            spiderInfo.pages = GalleryDetailParser.parsePages(info.body);
+//            spiderInfo.pages = GalleryDetailParser.parsePages(info.body);
+            spiderInfo.pages = info.SpiderInfoPages;
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
-            readPreviews(info.body, 0, spiderInfo);
+            readPreviews(info, 0, spiderInfo);
             return spiderInfo;
         } catch (ParseException e) {
             Crashes.trackError(e);
@@ -327,10 +328,10 @@ public class SpiderInfo {
         return null;
     }
 
-    private static void readPreviews(String body, int index, SpiderInfo spiderInfo) throws ParseException {
-        spiderInfo.pages = GalleryDetailParser.parsePages(body);
-        spiderInfo.previewPages = GalleryDetailParser.parsePreviewPages(body);
-        PreviewSet previewSet = GalleryDetailParser.parsePreviewSet(body);
+    private static void readPreviews(GalleryDetail info, int index, SpiderInfo spiderInfo) throws ParseException {
+        spiderInfo.pages = info.SpiderInfoPages;
+        spiderInfo.previewPages = info.SpiderInfoPreviewPages;
+        PreviewSet previewSet = info.SpiderInfoPreviewSet;
 
         if (previewSet.size() > 0) {
             if (index == 0) {

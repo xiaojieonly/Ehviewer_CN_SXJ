@@ -207,7 +207,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     @Nullable
     public long getLabelCount(String label) {
         try {
-            return mLabelCountMap.get(label);
+            if (mLabelCountMap.containsKey(label)){
+                return mLabelCountMap.get(label);
+            }else {
+                return 0;
+            }
         } catch (NullPointerException e) {
             Crashes.trackError(e);
             return 0;

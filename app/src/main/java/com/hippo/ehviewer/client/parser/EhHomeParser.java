@@ -31,21 +31,21 @@ public class EhHomeParser {
     public static HomeDetail parse(String body) throws EhException {
 
         HomeDetail homeDetail = new HomeDetail();
-        Document document = Jsoup.parse(body);
-        Elements homeBoxes = document.getElementsByClass(HOME_BOX);
-
-        if (homeBoxes.isEmpty()) {
-            return homeDetail;
-        }
 
         try {
+            Document document = Jsoup.parse(body);
+            Elements homeBoxes = document.getElementsByClass(HOME_BOX);
+
+            if (homeBoxes.isEmpty()) {
+                return homeDetail;
+            }
             Element imageLimits = homeBoxes.get(0);
             parseImageLimits(imageLimits, homeDetail);
             Element totalGpGained = homeBoxes.get(2);
             parseTotalGpGained(totalGpGained, homeDetail);
             Element moderationPower = homeBoxes.get(4);
             parseModerationPower(moderationPower, homeDetail);
-        } catch (IndexOutOfBoundsException e) {
+        } catch (Exception e ) {
             Log.e(TAG, "数据结构错误");
             Crashes.trackError(e);
         }

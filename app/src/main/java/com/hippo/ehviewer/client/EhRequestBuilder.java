@@ -18,6 +18,8 @@ package com.hippo.ehviewer.client;
 
 import com.hippo.okhttp.ChromeRequestBuilder;
 
+import okhttp3.Request;
+
 public class EhRequestBuilder extends ChromeRequestBuilder {
 
     public EhRequestBuilder(String url) {
@@ -37,4 +39,5 @@ public class EhRequestBuilder extends ChromeRequestBuilder {
             addHeader("Origin", origin);
         }
     }
+
 }

@@ -29,10 +29,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.MarginItemDecoration;
 import com.hippo.ehviewer.EhApplication;
@@ -133,7 +135,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     @Nullable
     @Override
     public View onCreateView3(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         ContentLayout contentLayout = (ContentLayout) inflater.inflate(
                 R.layout.scene_gallery_previews, container, false);
         contentLayout.hideFastScroll();
@@ -236,14 +238,14 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         if (null != context && null != mHelper && null != mGalleryInfo) {
             GalleryPreview p = mHelper.getDataAtEx(position);
             if (p != null) {
-                try{
+                try {
                     Intent intent = new Intent(context, GalleryActivity.class);
                     intent.setAction(GalleryActivity.ACTION_EH);
                     intent.putExtra(GalleryActivity.DATA_IN_EVENT, true);
 //                    intent.putExtra(GalleryActivity.KEY_PAGE, p.getPosition());
                     startActivity(intent);
-                    EventBus.getDefault().postSticky(new GalleryActivityEvent(p.getPosition(),mGalleryInfo));
-                }catch (RuntimeException e){
+                    EventBus.getDefault().postSticky(new GalleryActivityEvent(p.getPosition(), mGalleryInfo));
+                } catch (RuntimeException e) {
                     Crashes.trackError(e);
                 }
             }

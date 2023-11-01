@@ -1280,6 +1280,18 @@ public class Settings {
         putBoolean(KEY_SHOW_EH_EVENTS, value);
     }
 
+    public static final String KEY_SHOW_EH_LIMITS = "show_eh_limits";
+
+    private static boolean IS_SHOW_EH_LIMITS = true;
+
+    public static boolean getShowEhLimits() {
+        return getBoolean(KEY_SHOW_EH_LIMITS, IS_SHOW_EH_LIMITS) && isLogin();
+    }
+
+    public static void setKeyShowEhLimits(boolean value) {
+        putBoolean(KEY_SHOW_EH_LIMITS, value);
+    }
+
 
     public static final String KEY_LOCK_COOKIE_IGNEOUS = "lock_cookie_igneous";
 
