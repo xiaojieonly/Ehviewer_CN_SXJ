@@ -1,6 +1,18 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
-链接:  提取码:  复制这段内容后打开百度网盘手机App，操作更方便哦
+
+
+# 2023/11/01 :    
+ ###  新版发布1.9.6.7     
+ ###  修复了预览页跳转闪退    
+ ###  修复了侧滑栏闪退    
+ ###  新增了配额显示开关：设置->Eh->显示E站配额        
+   点击前往下载：[百度云](https://pan.baidu.com/s/19vdPs87UBuj8oy5EgaDqSQ)  密码:ycwn   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iJBOr1depati)  密码:8o1h   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
 
 # 2023/10/29 :    
  ###  新版发布1.9.6.6     
