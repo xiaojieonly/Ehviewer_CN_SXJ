@@ -108,6 +108,7 @@ public class EhApplication extends RecordingApplication {
 
     private final IntIdGenerator mIdGenerator = new IntIdGenerator();
     private final HashMap<Integer, Object> mGlobalStuffMap = new HashMap<>();
+
     private EhCookieStore mEhCookieStore;
     private EhClient mEhClient;
     private EhProxySelector mEhProxySelector;
@@ -240,6 +241,10 @@ public class EhApplication extends RecordingApplication {
 
         // Add .nomedia to external temp dir
         CommonOperations.ensureNoMediaFile(UniFile.fromFile(AppConfig.getExternalTempDir()));
+    }
+
+    public EhCookieStore getmEhCookieStore() {
+        return mEhCookieStore;
     }
 
     private void update() {

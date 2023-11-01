@@ -585,6 +585,7 @@
     <string name="settings_eh_show_jpn_title">Show Japanese title</string>
     <string name="settings_eh_show_gallery_comment">Show Gallery Comment</string>
     <string name="settings_eh_show_eh_event">Show EH events</string>
+    <string name="settings_eh_show_eh_limits">Show EH limits</string>
     <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>

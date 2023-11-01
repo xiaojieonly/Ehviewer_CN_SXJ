@@ -511,6 +511,7 @@
     <string name="settings_eh_show_jpn_title">显示日文标题</string>
     <string name="settings_eh_show_gallery_comment">显示画廊评论</string>
     <string name="settings_eh_show_eh_event">显示E站事件</string>
+    <string name="settings_eh_show_eh_limits">显示E站配额</string>
     <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">显示画廊页数</string>
     <string name="settings_eh_show_gallery_pages_summary">在画廊列表中显示页数</string>

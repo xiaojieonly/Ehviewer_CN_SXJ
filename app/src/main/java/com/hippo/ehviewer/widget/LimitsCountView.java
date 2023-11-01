@@ -78,7 +78,7 @@ public class LimitsCountView extends FrameLayout {
     private void init(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         inflater.inflate(R.layout.limits_count_main, this);
-        boolean login = Settings.isLogin();
+        boolean login = Settings.isLogin() && Settings.getShowEhLimits();
         if (!login) {
             this.setVisibility(GONE);
             return;
@@ -136,7 +136,14 @@ public class LimitsCountView extends FrameLayout {
         if(!Settings.isLogin()){
             return;
         }
+        if (!Settings.getShowEhLimits()){
+            this.setVisibility(GONE);
+            return;
+        }
         if (checkData && homeDetail != null) {
+            return;
+        }
+        if (refreshIcon==null||refreshing==null){
             return;
         }
         onLoadData(view);
