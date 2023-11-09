@@ -77,7 +77,7 @@ public class HomeDetail {
     }
 
     public String getCurrentModerationPower() {
-        return withGp(currentModerationPower);
+        return Long.toString(currentModerationPower);
     }
 
     public void setCurrentModerationPower(long currentModerationPower) {
