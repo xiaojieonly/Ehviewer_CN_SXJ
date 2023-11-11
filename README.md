@@ -2,6 +2,17 @@
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
 
+# 2023/11/11 :    
+ ###  新版发布1.9.6.8     
+ ###  紧急修复了获取不到原图链接导致无法下载原图的问题    
+ ###  画廊详情页新增阅读进度显示        
+   点击前往下载：[百度云](https://pan.baidu.com/s/1ZOM7hpvPRtuVPlMsFauiBw)  密码:pd6a   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iAjXv1eicc0d)  密码:5b3d   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
+
 # 2023/11/01 :    
  ###  新版发布1.9.6.7     
  ###  修复了预览页跳转闪退    
