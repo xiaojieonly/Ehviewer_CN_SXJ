@@ -1,4 +1,4 @@
-package com.hippo.ehviewer.client;
+package com.hippo.ehviewer.client.data;
 
 public class HomeDetail {
 

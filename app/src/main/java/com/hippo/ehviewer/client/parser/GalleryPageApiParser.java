@@ -28,7 +28,7 @@ public class GalleryPageApiParser {
 
     private static final Pattern PATTERN_IMAGE_URL = Pattern.compile("<img[^>]*src=\"([^\"]+)\" style");
     private static final Pattern PATTERN_SKIP_HATH_KEY = Pattern.compile("onclick=\"return nl\\('([^\\)]+)'\\)");
-    private static final Pattern PATTERN_ORIGIN_IMAGE_URL = Pattern.compile("<a href=\"([^\"]+)fullimg.php([^\"]+)\">");
+    private static final Pattern PATTERN_ORIGIN_IMAGE_URL = Pattern.compile("<a href=\"([^\"]+)fullimg([^\"]+)\">");
     private static final Pattern PATTERN_ORIGIN_IMAGE_URL_NEW = Pattern.compile("<a href=\"#\" onclick=\"prompt\\('Copy the URL below.', '([^\"]+)'\\)");
 
     public static Result parse(String body) throws ParseException {

@@ -32,6 +32,7 @@ import com.hippo.ehviewer.client.data.EhTopListDetail;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.client.data.HomeDetail;
 import com.hippo.ehviewer.client.data.userTag.TagPushParam;
 import com.hippo.ehviewer.client.data.userTag.UserTag;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
