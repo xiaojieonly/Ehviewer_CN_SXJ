@@ -19,7 +19,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
-import com.hippo.ehviewer.client.HomeDetail;
+import com.hippo.ehviewer.client.data.HomeDetail;
 
 import java.util.ArrayList;
 import java.util.List;

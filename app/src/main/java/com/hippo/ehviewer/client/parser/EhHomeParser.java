@@ -2,7 +2,7 @@ package com.hippo.ehviewer.client.parser;
 
 import android.util.Log;
 
-import com.hippo.ehviewer.client.HomeDetail;
+import com.hippo.ehviewer.client.data.HomeDetail;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.yorozuya.NumberUtils;
 import com.microsoft.appcenter.crashes.Crashes;
