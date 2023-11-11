@@ -411,6 +411,7 @@ public class EhApplication extends RecordingApplication {
         if (application.mImageOkHttpClient == null) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .followRedirects(false)
+                    .followSslRedirects(false)
                     .connectTimeout(20, TimeUnit.SECONDS)
                     .readTimeout(20, TimeUnit.SECONDS)
                     .writeTimeout(20, TimeUnit.SECONDS)

@@ -64,7 +64,7 @@ public class GalleryPageApiParser {
                 m = PATTERN_ORIGIN_IMAGE_URL.matcher(i7);
             }
             if (m.find()) {
-                result.originImageUrl = StringUtils.unescapeXml(m.group(1)) + "fullimg.php" + StringUtils.unescapeXml(m.group(2));
+                result.originImageUrl = StringUtils.unescapeXml(m.group(1)) + "fullimg" + StringUtils.unescapeXml(m.group(2));
             }
 
 

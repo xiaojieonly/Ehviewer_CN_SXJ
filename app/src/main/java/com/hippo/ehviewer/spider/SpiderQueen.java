@@ -119,6 +119,8 @@ public final class SpiderQueen implements Runnable {
     @NonNull
     private final OkHttpClient mHttpClient;
     @NonNull
+    private final OkHttpClient mHttpImageClient;
+    @NonNull
     private final SimpleDiskCache mSpiderInfoCache;
     @NonNull
     private final GalleryInfo mGalleryInfo;
@@ -164,6 +166,7 @@ public final class SpiderQueen implements Runnable {
 
     private SpiderQueen(EhApplication application, @NonNull GalleryInfo galleryInfo) {
         mHttpClient = EhApplication.getOkHttpClient(application);
+        mHttpImageClient = EhApplication.getImageOkHttpClient(application);
         mSpiderInfoCache = EhApplication.getSpiderInfoCache(application);
         mGalleryInfo = galleryInfo;
         mSpiderDen = new SpiderDen(mGalleryInfo);
@@ -1211,9 +1214,9 @@ public final class SpiderQueen implements Runnable {
 
                     try {
                         GalleryPageApiParser.Result result = fetchPageResultFromApi(gid, index, pToken, localShowKey, previousPToken);
-                        if (result.imageUrl!=null){
+                        if (result.imageUrl != null) {
                             imageUrl = result.imageUrl;
-                        }else {
+                        } else {
                             imageUrl = result.otherImageUrl;
                         }
                         skipHathKey = result.skipHathKey;
@@ -1243,12 +1246,33 @@ public final class SpiderQueen implements Runnable {
 
                 String targetImageUrl;
                 String referer;
+                referer = EhUrl.getPageUrl(gid, index, pToken);
                 if (Settings.getDownloadOriginImage() && !TextUtils.isEmpty(originImageUrl)) {
                     targetImageUrl = originImageUrl;
+                    String refNew;
+                    if (targetImageUrl.contains("?")) {
+                        refNew = referer + "&nl=" + skipHathKey;
+                    } else {
+                        refNew = referer + "?nl=" + skipHathKey;
+                    }
+
+                    Call call = mHttpImageClient.newBuilder()
+                            .callTimeout(0, TimeUnit.SECONDS).build()
+                            .newCall(new EhRequestBuilder(targetImageUrl, refNew).build());
+                    Response response;
+                    try {
+                        response = call.execute();
+                        targetImageUrl = response.header("location");
+                        if (targetImageUrl == null ) {
+                            targetImageUrl = originImageUrl;
+                        }
+                    } catch (IOException e) {
+                        continue;
+                    }
                 } else {
                     targetImageUrl = imageUrl;
                 }
-                referer = EhUrl.getPageUrl(gid, index, pToken);
+
                 if (targetImageUrl == null) {
                     error = "TargetImageUrl error";
                     break;
@@ -1430,9 +1454,9 @@ public final class SpiderQueen implements Runnable {
             SpiderInfo spiderInfo = mSpiderInfo.get();
             UniFile downloadDir = mSpiderDen.getDownloadDir();
             UniFile backupFile;
-            if (downloadDir == null){
+            if (downloadDir == null) {
                 backupFile = null;
-            }else {
+            } else {
                 backupFile = downloadDir.findFile(SPIDER_INFO_BACKUP_FILENAME);
             }
             SpiderInfo oldInfo;
@@ -1489,7 +1513,7 @@ public final class SpiderQueen implements Runnable {
             // Check exist for not force request
             if (!force && mSpiderDen.contain(index)) {
 //                if (comparedPToken(index, spiderInfo)) {
-                if (comparedPTokenIndex(index, spiderInfo,oldInfo)) {
+                if (comparedPTokenIndex(index, spiderInfo, oldInfo)) {
                     updatePageState(index, STATE_FINISHED);
                     return true;
                 }
@@ -1593,7 +1617,7 @@ public final class SpiderQueen implements Runnable {
          * @param index
          * @return
          */
-        private boolean comparedPTokenIndex(int index, SpiderInfo spiderInfo,SpiderInfo oldInfo) {
+        private boolean comparedPTokenIndex(int index, SpiderInfo spiderInfo, SpiderInfo oldInfo) {
             String pToken = spiderInfo.pTokenMap.get(index);
             UniFile downloadDir = mSpiderDen.getDownloadDir();
             if (downloadDir == null) {
@@ -1631,7 +1655,7 @@ public final class SpiderQueen implements Runnable {
          * 如果不存，则返回false
          * 每次匹配均从旧备份文件中删除对应位置信息
          * 当旧备份pToken列表中不在有有效数据后删除备份文件
-         *
+         * <p>
          * 过于复杂，测试工作量过大
          *
          * @param index
