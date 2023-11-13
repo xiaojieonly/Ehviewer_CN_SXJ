@@ -1263,11 +1263,9 @@ public final class SpiderQueen implements Runnable {
                     try {
                         response = call.execute();
                         targetImageUrl = response.header("location");
-                        if (targetImageUrl == null ) {
-                            targetImageUrl = originImageUrl;
-                        }
                     } catch (IOException e) {
-                        continue;
+                        error = "TargetImageUrl error";
+                        break;
                     }
                 } else {
                     targetImageUrl = imageUrl;
