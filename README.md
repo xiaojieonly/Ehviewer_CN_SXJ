@@ -1,6 +1,19 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+
+# 2023/11/13 :    
+ ###  新版发布1.9.6.10     
+ ###  修复了因okhttp版本导致的网络不稳定    
+ ###  优化了原图下载逻辑    
+   点击前往下载：[百度云](https://pan.baidu.com/s/1DtWDi7mvhYfAIB7RUoVaPQ)  密码:n93t   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/i9wJj1eqikyj)  密码:avks   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
+
+
 # 2023/11/11 :    
  ###  新版发布1.9.6.9     
  ###  紧急修复了获取原图链接获取错误导致无法下载原图的问题    
