@@ -8,5 +8,7 @@ public interface DownloadSearchCallback {
 
     void onDownloadSearchSuccess(List<DownloadInfo> mList);
 
+    void onDownloadListHandleSuccess(List<DownloadInfo> mList);
+
     void onDownloadSearchFailed(List<DownloadInfo> mList);
 }
