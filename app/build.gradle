@@ -28,7 +28,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "1.9.6.9"
+        versionName "1.9.6.10"
         vectorDrawables.useSupportLibrary = true
         resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
         testOptions.unitTests.includeAndroidResources = true
@@ -159,11 +159,11 @@ dependencies {
 
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'
 
-    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:5.0.0-alpha.11'
+//    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
+//    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:5.0.0-alpha.11'
     // 还是旧版稳定好用
-//    implementation 'com.squareup.okhttp3:okhttp:3.14.7'
-//    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.7'
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
