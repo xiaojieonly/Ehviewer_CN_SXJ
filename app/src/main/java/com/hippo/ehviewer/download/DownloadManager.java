@@ -1425,4 +1425,5 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
          */
         void onCancel(DownloadInfo info);
     }
+
 }

@@ -86,7 +86,7 @@ import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.spider.SpiderInfo;
-import com.hippo.ehviewer.sync.DownloadSearchingExecutor;
+import com.hippo.ehviewer.sync.DownloadListInfosExecutor;
 import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
@@ -160,6 +160,8 @@ public class DownloadsScene extends ToolbarScene
     public String mLabel;
     @Nullable
     private List<DownloadInfo> mList;
+    @Nullable
+    private List<DownloadInfo> mBackList;
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
@@ -300,7 +302,7 @@ public class DownloadsScene extends ToolbarScene
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
-
+        mBackList = mList;
         updateTitle();
         Settings.putRecentDownloadLabel(mLabel);
         queryUnreadSpiderInfo();
@@ -583,12 +585,21 @@ public class DownloadsScene extends ToolbarScene
                 gotoSearch(context);
                 return true;
             }
-//            case R.id.sort_download_list:{
-//
-//
-//
-//                return true;
-//            }
+            case R.id.all:
+            case R.id.sort_by_default:
+            case R.id.download_done:
+            case R.id.waiting:
+            case R.id.downloading:
+            case R.id.failed:
+            case R.id.sort_by_gallery_id_asc:
+            case R.id.sort_by_gallery_id_desc:
+            case R.id.sort_by_create_time_asc:
+            case R.id.sort_by_create_time_desc:
+            case R.id.sort_by_rating_asc:
+            case R.id.sort_by_rating_desc:
+                gotoFilterAndSort(id);
+                return true;
+
         }
         return false;
     }
@@ -1087,11 +1098,24 @@ public class DownloadsScene extends ToolbarScene
 
         updateForLabel();
 
-        DownloadSearchingExecutor executor = new DownloadSearchingExecutor(mList, searchKey);
+        DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mList, searchKey);
 
         executor.setDownloadSearchingListener(this);
 
-        executor.execute();
+        executor.executeSearching();
+    }
+
+    private void gotoFilterAndSort(int id){
+        mProgressView.setVisibility(View.VISIBLE);
+        if (mRecyclerView != null) {
+            mRecyclerView.setVisibility(View.GONE);
+        }
+
+        DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mBackList, mDownloadManager);
+
+        executor.setDownloadSearchingListener(this);
+
+        executor.executeFilterAndSort(id);
     }
 
     private void updateAdapter() {
@@ -1140,6 +1164,17 @@ public class DownloadsScene extends ToolbarScene
             mRecyclerView.setVisibility(View.VISIBLE);
         }
         searching = false;
+        queryUnreadSpiderInfo();
+    }
+
+    @Override
+    public void onDownloadListHandleSuccess(List<DownloadInfo> list) {
+        mList = list;
+        updateAdapter();
+        mProgressView.setVisibility(View.GONE);
+        if (mRecyclerView != null) {
+            mRecyclerView.setVisibility(View.VISIBLE);
+        }
         queryUnreadSpiderInfo();
     }
 
