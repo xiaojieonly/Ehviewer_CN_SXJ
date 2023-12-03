@@ -554,7 +554,7 @@
     <string name="settings_download_image_resolution_summary">%s，大於 1280x 的解析度可能不會生效</string>
     <string name="settings_download_image_resolution_auto">自動</string>
     <string name="settings_download_download_origin_image">下載原圖</string>
-    <string name="settings_download_download_origin_image_summary">這很危險！點選此項會快速耗用下載配額</string>
+    <string name="settings_download_download_origin_image_summary">這很危險！點選此項會快速耗用下載配額與GP</string>
     <string name="settings_download_media_scan">允許媒體掃描</string>
     <string name="settings_download_media_scan_summary_on">請避免他人翻看你的圖庫應用</string>
     <string name="settings_download_media_scan_summary_off">大多數圖庫應用將不會顯示下載目錄中的圖片</string>

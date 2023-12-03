@@ -572,7 +572,7 @@
     <string name="settings_download_image_resolution_summary">%s，大于 1280x 的分辨率可能不好使</string>
     <string name="settings_download_image_resolution_auto">自动</string>
     <string name="settings_download_download_origin_image">下载原图</string>
-    <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额迅速流失</string>
+    <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额与GP迅速流失</string>
     <string name="settings_download_download_order_by_asc">正序下载</string>
     <string name="settings_download_download_order_by_asc_summary">下载全部画廊时正序下载</string>
     <string name="settings_download_media_scan">允许媒体扫描</string>
