@@ -683,11 +683,17 @@ public class SearchBar extends CardView implements View.OnClickListener,
             return show;
         }
 
+        /**
+         * 无法替换中文
+         * @param text1
+         * @param text2
+         * @return
+         */
         public String removeCommonSubstring(String text1, String text2) {
             int m = text1.length();
             int n = text2.length();
             String match = "";
-            
+
             for (int i = m - 1; i >= 0; i--) {
                 String tmp = text1.substring(i, m);
                 if (!text2.contains(tmp)) {
@@ -696,9 +702,28 @@ public class SearchBar extends CardView implements View.OnClickListener,
                     match = tmp;
                 }
             }
-            
+
             String result = text1.substring(0, m - match.length());
             return result;
+        }
+
+        public String replaceCommonSubstring(String tagKey, Editable editable) {
+            String key = tagKey;
+            if (editable.toString().contains(" ")) {
+                StringBuilder builder = new StringBuilder(editable);
+                char c = ' ';
+                while (builder.charAt(builder.length() - 1) != c) {
+                    builder.deleteCharAt(builder.length() - 1);
+                }
+
+                while (builder.length() != 0 && builder.charAt(builder.length() - 1) == c) {
+                    builder.deleteCharAt(builder.length() - 1);
+                }
+
+                builder.append("  ").append(tagKey);
+                key = builder.toString();
+            }
+            return key;
         }
 
         @Override
@@ -706,7 +731,8 @@ public class SearchBar extends CardView implements View.OnClickListener,
             Editable editable = mEditText.getText();
             if (editable != null) {
                 String tagKey = rebuildKeyword(mKeyword);
-                String newText = removeCommonSubstring(editable.toString(), mKeyword)+" "+tagKey;
+//                String newText = removeCommonSubstring(editable.toString(), mKeyword)+" "+tagKey;
+                String newText = replaceCommonSubstring(tagKey,editable);
                 mEditText.setText(newText);
                 mEditText.setSelection(mEditText.getText().length());
             }

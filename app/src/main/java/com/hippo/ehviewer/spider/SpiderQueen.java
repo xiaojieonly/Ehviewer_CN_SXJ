@@ -568,9 +568,14 @@ public final class SpiderQueen implements Runnable {
                 return;
             }
 
-            for (; mWorkerCount < mWorkerMaxCount; mWorkerCount++) {
-                mWorkerPoolExecutor.execute(new SpiderWorker());
-            }
+           try {
+               for (; mWorkerCount < mWorkerMaxCount; mWorkerCount++) {
+                   mWorkerPoolExecutor.execute(new SpiderWorker());
+               }
+           }catch (OutOfMemoryError outOfMemoryError){
+               Crashes.trackError(outOfMemoryError);
+               notifyFinish();
+           }
         }
     }
 

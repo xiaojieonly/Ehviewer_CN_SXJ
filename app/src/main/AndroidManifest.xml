@@ -35,7 +35,10 @@
         android:glEsVersion="0x00020000"
         android:required="true" />
 
-
+    <!--  鼠标适配  -->
+    <uses-feature
+        android:name="android.hardware.type.pc"
+        android:required="false" />
     <application
         android:name="com.hippo.ehviewer.EhApplication"
         android:allowBackup="true"

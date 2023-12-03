@@ -385,10 +385,6 @@
     <string name="download_sort_list">排序</string>
     <string name="download_filter_by_status">照狀態篩選</string>
     <string name="download_status_all">全部</string>
-    <string name="download_status_done">下載完成</string>
-    <string name="download_status_waiting">正在等待下載</string>
-    <string name="download_status_downloading">正在下載</string>
-    <string name="download_status_failed">下載失敗</string>
 
     <!-- Download label -->
     <string name="no_download_label">下載標籤將會顯示在這裡</string>

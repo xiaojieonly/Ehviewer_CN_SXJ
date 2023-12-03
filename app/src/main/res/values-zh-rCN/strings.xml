@@ -363,10 +363,6 @@
     <string name="download_sort_list">排序</string>
     <string name="download_filter_by_status">根据状态过滤</string>
     <string name="download_status_all">全部</string>
-    <string name="download_status_done">下载完成</string>
-    <string name="download_status_waiting">等待下载</string>
-    <string name="download_status_downloading">下载中</string>
-    <string name="download_status_failed">下载失败</string>
     <string name="sort_download_list">对内容排序</string>
     <string name="default_sort">默认</string>
     <string name="sort_by_gallery_id_asc">按ID升序</string>
