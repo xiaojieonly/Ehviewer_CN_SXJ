@@ -984,9 +984,26 @@ public final class GalleryListScene extends BaseScene
                     ehTags = EhTagDatabase.getInstance(context);
                 }
                 //根据‘：’分割字符串为组名和标签名
-                String[] tags = text.split(":");
-
-                quickSearch.name = TagTranslationUtil.getTagCN(tags, ehTags);
+                //String[] tags = text.split(":");
+                //quickSearch.name = TagTranslationUtil.getTagCN(tags, ehTags);
+                String[] parts = text.split("(?=(?:(?:[^\"]*\"){2})*[^\"]*$)\\s+");
+                String newText = "";
+                for (int i = 0; i < parts.length; i++) {
+                    String[] tags = parts[i].split(":");
+                    for(int j=0; j<tags.length; j++)
+                    {
+                        tags[j]=tags[j].replace("\"", "").replace("$", "");
+                    }
+                    quickSearch.name = TagTranslationUtil.getTagCN(tags, ehTags);
+                    if(newText.isEmpty())
+                    {
+                        newText = TagTranslationUtil.getTagCN(tags, ehTags);
+                    }else
+                    {
+                        newText+=" "+TagTranslationUtil.getTagCN(tags, ehTags);
+                    }
+                }
+                quickSearch.name = newText;
             } else {
                 quickSearch.name = text;
             }

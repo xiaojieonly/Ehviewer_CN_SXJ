@@ -192,17 +192,33 @@ public class SearchBar extends CardView implements View.OnClickListener,
         }
 
         EhTagDatabase ehTagDatabase = EhTagDatabase.getInstance(getContext());
-        if (!TextUtils.isEmpty(text) && ehTagDatabase != null && !text.endsWith(" ")) {
+        if (!TextUtils.isEmpty(text) && ehTagDatabase != null) {
             String[] s = text.split(" ");
             if (s.length > 0) {
-                String keyword = s[s.length - 1];
-                List<Pair<String, String>> searchHints = ehTagDatabase.suggest(keyword);
-
-                for (Pair<String, String> searchHint : searchHints) {
-                    if (showTranslation) {
-                        mSuggestionList.add(new TagSuggestion(searchHint.first, searchHint.second));
+                // String keyword = s[s.length - 1];
+                String keyword = "";
+                for (int i = s.length - 1; i >= 0; i--) {
+                    if (s[i].contains(":") || s[i].contains("$")) {
+                        break;
                     } else {
-                        mSuggestionList.add(new TagSuggestion(null, searchHint.second));
+                        if(keyword.isEmpty())
+                            keyword = s[i];
+                        else
+                            keyword = s[i] + " " + keyword;
+                    }
+                }
+                keyword = keyword.trim();
+
+                if(!keyword.isEmpty()) 
+                {
+                    List<Pair<String, String>> searchHints = ehTagDatabase.suggest(keyword);
+
+                    for (Pair<String, String> searchHint : searchHints) {
+                        if (showTranslation) {
+                            mSuggestionList.add(new TagSuggestion(searchHint.first, searchHint.second));
+                        } else {
+                            mSuggestionList.add(new TagSuggestion(null, searchHint.second));
+                        }
                     }
                 }
             }
@@ -667,27 +683,31 @@ public class SearchBar extends CardView implements View.OnClickListener,
             return show;
         }
 
+        public String removeCommonSubstring(String text1, String text2) {
+            int m = text1.length();
+            int n = text2.length();
+            String match = "";
+            
+            for (int i = m - 1; i >= 0; i--) {
+                String tmp = text1.substring(i, m);
+                if (!text2.contains(tmp)) {
+                    break;
+                } else {
+                    match = tmp;
+                }
+            }
+            
+            String result = text1.substring(0, m - match.length());
+            return result;
+        }
+
         @Override
         public void onClick() {
             Editable editable = mEditText.getText();
             if (editable != null) {
                 String tagKey = rebuildKeyword(mKeyword);
-                String key = tagKey;
-                if (editable.toString().contains(" ")) {
-                    StringBuilder builder = new StringBuilder(editable);
-                    char c = ' ';
-                    while (builder.charAt(builder.length() - 1) != c) {
-                        builder.deleteCharAt(builder.length() - 1);
-                    }
-
-                    while (builder.length() != 0 && builder.charAt(builder.length() - 1) == c) {
-                        builder.deleteCharAt(builder.length() - 1);
-                    }
-
-                    builder.append("  ").append(tagKey);
-                    key = builder.toString();
-                }
-                mEditText.setText(key);
+                String newText = removeCommonSubstring(editable.toString(), mKeyword)+" "+tagKey;
+                mEditText.setText(newText);
                 mEditText.setSelection(mEditText.getText().length());
             }
         }

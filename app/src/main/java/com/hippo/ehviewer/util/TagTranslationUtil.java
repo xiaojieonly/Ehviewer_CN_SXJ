@@ -13,6 +13,10 @@ public class TagTranslationUtil {
             String group = ehTags.getTranslation("n:" + tags[0]);
             //翻译标签名
             String prefix = EhTagDatabase.namespaceToPrefix(tags[0]);
+            if (tags[0].length() == 1 && tags[0].matches("^[a-z]+$")) {
+                prefix = tags[0] + ":";
+            }
+
             String tagStr = ehTags.getTranslation(prefix != null ? prefix + tags[1] : "" + tags[1]);
 
 
@@ -23,7 +27,10 @@ public class TagTranslationUtil {
             } else if (group == null && tagStr != null) {
                 return tags[0] + "：" + tagStr;
             } else {
-                return tags[0] + ":" + tags[1];
+                if(tagStr != null)
+                    return tags[0] + ":" + tagStr;
+                else
+                    return tags[0] + ":" + tags[1];
             }
         } else {
             StringBuffer s = new StringBuffer();
