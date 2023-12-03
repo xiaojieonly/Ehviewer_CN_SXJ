@@ -438,10 +438,7 @@
     <string name="download_sort_list">Sort</string>
     <string name="download_filter_by_status">Filter by status</string>
     <string name="download_status_all">All</string>
-    <string name="download_status_done">Download Done</string>
-    <string name="download_status_waiting">Waiting Download</string>
-    <string name="download_status_downloading">Downloading</string>
-    <string name="download_status_failed">Download Failed</string>
+    <string name="download_status_not_started">Not </string>
     <string name="default_sort">Default</string>
     <string name="sort_by_gallery_id_asc">By Id Asc</string>
     <string name="sort_by_gallery_id_desc">By Id Desc</string>

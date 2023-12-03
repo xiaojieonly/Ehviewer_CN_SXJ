@@ -376,6 +376,7 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView.setOnItemLongClickListener(this);
         mRecyclerView.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM);
         mRecyclerView.setCustomCheckedListener(new DownloadChoiceListener());
+        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
         // Cancel change animation
         RecyclerView.ItemAnimator itemAnimator = mRecyclerView.getItemAnimator();
         if (itemAnimator instanceof SimpleItemAnimator) {
@@ -588,6 +589,7 @@ public class DownloadsScene extends ToolbarScene
             case R.id.all:
             case R.id.sort_by_default:
             case R.id.download_done:
+            case R.id.not_started:
             case R.id.waiting:
             case R.id.downloading:
             case R.id.failed:
@@ -1454,7 +1456,13 @@ public class DownloadsScene extends ToolbarScene
         private final int mListThumbHeight;
 
         public DownloadAdapter() {
-            mInflater = getLayoutInflater2();
+            LayoutInflater mInflater1;
+            try{
+                mInflater1 = getLayoutInflater2();
+            }catch (NullPointerException e){
+                mInflater1 = getLayoutInflater();
+            }
+            mInflater = mInflater1;
             AssertUtils.assertNotNull(mInflater);
 
             View calculator = mInflater.inflate(R.layout.item_gallery_list_thumb_height, null);

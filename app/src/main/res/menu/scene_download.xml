@@ -36,19 +36,23 @@
                         app:showAsAction="ifRoom"/>
                     <item
                         android:id="@+id/download_done"
-                        android:title="@string/download_status_done"
+                        android:title="@string/download_state_downloaded"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/not_started"
+                        android:title="@string/download_state_none"
                         app:showAsAction="ifRoom"/>
                     <item
                         android:id="@+id/waiting"
-                        android:title="@string/download_status_waiting"
+                        android:title="@string/download_state_wait"
                         app:showAsAction="ifRoom"/>
                     <item
                         android:id="@+id/downloading"
-                        android:title="@string/download_status_downloading"
+                        android:title="@string/download_state_downloading"
                         app:showAsAction="ifRoom"/>
                     <item
                         android:id="@+id/failed"
-                        android:title="@string/download_status_failed"
+                        android:title="@string/download_state_failed"
                         app:showAsAction="ifRoom"/>
                 </menu>
             </item>
