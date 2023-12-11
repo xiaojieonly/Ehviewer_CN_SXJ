@@ -1747,7 +1747,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 mDownloadState = DownloadInfo.STATE_UPDATE;
                 updateDownloadText();
             }
-            if (mDownloadInfo != null && !mDownloadInfo.thumb.equals(result.thumb) && mDownloadInfo.gid != result.gid) {
+            if (mDownloadInfo != null && !mDownloadInfo.thumb.equals(result.thumb) && mDownloadInfo.gid == result.gid) {
                 useNetWorkLoadThumb = true;
                 mDownloadInfo.updateInfo(result);
                 mDownloadInfo.state = mDownloadState;
