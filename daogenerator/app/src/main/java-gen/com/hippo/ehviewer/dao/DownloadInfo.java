@@ -220,6 +220,19 @@ public class DownloadInfo extends GalleryInfo {
 		this.simpleLanguage = galleryInfo.simpleLanguage;
 	}
 
+	public DownloadInfo(GalleryInfo galleryInfo) {
+		this.token = galleryInfo.token;
+		this.title = galleryInfo.title;
+		this.titleJpn = galleryInfo.titleJpn;
+		this.thumb = galleryInfo.thumb;
+		this.category = galleryInfo.category;
+		this.posted = galleryInfo.posted;
+		this.uploader = galleryInfo.uploader;
+		this.rating = galleryInfo.rating;
+		this.simpleTags = galleryInfo.simpleTags;
+		this.simpleLanguage = galleryInfo.simpleLanguage;
+	}
+
 	public JSONObject toJson() {
 		JSONObject jsonObject = super.toJson();
 		jsonObject.put("finished", finished);
