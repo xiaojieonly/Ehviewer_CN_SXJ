@@ -171,6 +171,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     public final static String KEY_ACTION = "action";
     public static final String ACTION_GALLERY_INFO = "action_gallery_info";
+    public static final String ACTION_DOWNLOAD_GALLERY_INFO = "action_download_gallery_info";
     public static final String ACTION_GID_TOKEN = "action_gid_token";
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
@@ -286,6 +287,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private String mAction;
     @Nullable
     private GalleryInfo mGalleryInfo;
+    private DownloadInfo mDownloadInfo;
     private long mGid;
     private String mToken;
 
@@ -340,6 +342,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         } else if (ACTION_GID_TOKEN.equals(action)) {
             mGid = args.getLong(KEY_GID);
             mToken = args.getString(KEY_TOKEN);
+        } else if (ACTION_DOWNLOAD_GALLERY_INFO.equals(action)) {
+            mDownloadInfo = args.getParcelable(KEY_GALLERY_INFO);
+            mGalleryInfo = mDownloadInfo;
+            // Add history
+            if (null != mGalleryInfo) {
+                EhDB.putHistoryInfo(mGalleryInfo);
+            }
         }
         comeFromDownload = args.getBoolean(KEY_COME_FROM_DOWNLOAD);
 
@@ -876,7 +885,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             return;
         }
 
-        if (ACTION_GALLERY_INFO.equals(mAction) && mGalleryInfo != null) {
+        if ((ACTION_GALLERY_INFO.equals(mAction) || ACTION_DOWNLOAD_GALLERY_INFO.equals(mAction)) && mGalleryInfo != null) {
             GalleryInfo gi = mGalleryInfo;
             mThumb.load(EhCacheKeyFactory.getThumbKey(gi.gid), gi.thumb);
             mTitle.setText(EhUtils.getSuitableTitle(gi));
@@ -1590,8 +1599,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     public void gotoNewVersion(GalleryDetail detail) {
         Bundle args = new Bundle();
-        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
-        args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, detail);
+        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
+        args.putParcelable(KEY_GALLERY_INFO, detail);
         args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
         Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
         announcer.setTranHelper(new EnterGalleryDetailTransaction(mThumb));
@@ -1738,11 +1747,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 mDownloadState = DownloadInfo.STATE_UPDATE;
                 updateDownloadText();
             }
-            if (mGalleryInfo != null && !mGalleryInfo.thumb.equals(result.thumb)) {
+            if (mDownloadInfo != null && !mDownloadInfo.thumb.equals(result.thumb) && mDownloadInfo.gid != result.gid) {
                 useNetWorkLoadThumb = true;
-                DownloadInfo info = new DownloadInfo(result);
-                info.state = mDownloadState;
-                EhDB.putDownloadInfo(info);
+                mDownloadInfo.updateInfo(result);
+                mDownloadInfo.state = mDownloadState;
+                EhDB.putDownloadInfo(mDownloadInfo);
             }
         } else if (result.newVersions != null) {
             mDownloadState = DownloadInfo.GOTO_NEW;
@@ -1799,7 +1808,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Intent intent = new Intent(activity, DownloadService.class);
         intent.setAction(DownloadService.ACTION_START);
         intent.putExtra(DownloadService.KEY_LABEL, downloadInfoNew.label);
-        intent.putExtra(DownloadService.KEY_GALLERY_INFO, manager.getDownloadInfo(downloadInfoNew.gid));
+        intent.putExtra(KEY_GALLERY_INFO, manager.getDownloadInfo(downloadInfoNew.gid));
         activity.startService(intent);
         mGalleryDetail = result;
         useNetWorkLoadThumb = true;
