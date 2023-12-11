@@ -1429,7 +1429,7 @@ public class DownloadsScene extends ToolbarScene
 
             if (thumb == v) {
                 Bundle args = new Bundle();
-                args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
+                args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
                 args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list.get(index));
                 args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
                 Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
@@ -1497,45 +1497,51 @@ public class DownloadsScene extends ToolbarScene
                 return;
             }
 
-            DownloadInfo info = mList.get(position);
+            try {
+                DownloadInfo info = mList.get(position);
 
-            String title = EhUtils.getSuitableTitle(info);
-            holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
-                    new ThumbDataContainer(info), true);
-            holder.title.setText(title);
-            holder.uploader.setText(info.uploader);
-            holder.rating.setRating(info.rating);
+                String title = EhUtils.getSuitableTitle(info);
+                holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
+                        new ThumbDataContainer(info), true);
+                holder.title.setText(title);
+                holder.uploader.setText(info.uploader);
+                holder.rating.setRating(info.rating);
 
-            SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
+                SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
 //            if (spiderInfo == null) {
 //                spiderInfo = getSpiderInfo(info);
 //                if (spiderInfo != null) {
 //                    mSpiderInfoMap.put(spiderInfo.gid, spiderInfo);
 //                }
 //            }
-            if (spiderInfo != null) {
-                int startPage = spiderInfo.startPage + 1;
-                String readText = startPage + "/" + spiderInfo.pages;
-                holder.readProgress.setText(readText);
+                if (spiderInfo != null) {
+                    int startPage = spiderInfo.startPage + 1;
+                    String readText = startPage + "/" + spiderInfo.pages;
+                    holder.readProgress.setText(readText);
+                }
+
+
+                TextView category = holder.category;
+                String newCategoryText = EhUtils.getCategory(info.category);
+                if (!newCategoryText.equals(category.getText())) {
+                    category.setText(newCategoryText);
+                    category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
+                }
+                bindForState(holder, info);
+
+                // Update transition name
+                ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
+            }catch (Exception e){
+                Crashes.trackError(e);
             }
-
-
-            TextView category = holder.category;
-            String newCategoryText = EhUtils.getCategory(info.category);
-            if (!newCategoryText.equals(category.getText())) {
-                category.setText(newCategoryText);
-                category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
-            }
-            bindForState(holder, info);
-
-            // Update transition name
-            ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         }
 
         @Override
         public int getItemCount() {
             return mList == null ? 0 : mList.size();
         }
+
+
     }
 
     private class DownloadChoiceListener implements EasyRecyclerView.CustomChoiceListener {
