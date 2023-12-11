@@ -639,7 +639,7 @@ public final class GalleryListScene extends BaseScene
         mRecyclerView.setOnItemLongClickListener(this);
         assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
-        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
+//        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
         fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
                 fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
 

@@ -376,7 +376,7 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView.setOnItemLongClickListener(this);
         mRecyclerView.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM);
         mRecyclerView.setCustomCheckedListener(new DownloadChoiceListener());
-        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
+//        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
         // Cancel change animation
         RecyclerView.ItemAnimator itemAnimator = mRecyclerView.getItemAnimator();
         if (itemAnimator instanceof SimpleItemAnimator) {
