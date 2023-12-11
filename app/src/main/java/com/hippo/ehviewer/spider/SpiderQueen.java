@@ -1254,11 +1254,17 @@ public final class SpiderQueen implements Runnable {
                 referer = EhUrl.getPageUrl(gid, index, pToken);
                 if (Settings.getDownloadOriginImage() && !TextUtils.isEmpty(originImageUrl)) {
                     targetImageUrl = originImageUrl;
-                    String refNew;
+//                    String refNew;
+//                    if (targetImageUrl.contains("?")) {
+//                        refNew = referer + "&nl=" + skipHathKey;
+//                    } else {
+//                        refNew = referer + "?nl=" + skipHathKey;
+//                    }
+                    String refNew = referer;
                     if (targetImageUrl.contains("?")) {
-                        refNew = referer + "&nl=" + skipHathKey;
+                        targetImageUrl = targetImageUrl + "&nl=" + skipHathKey;
                     } else {
-                        refNew = referer + "?nl=" + skipHathKey;
+                        targetImageUrl = targetImageUrl + "?nl=" + skipHathKey;
                     }
 
                     Call call = mHttpImageClient.newBuilder()
@@ -1270,6 +1276,8 @@ public final class SpiderQueen implements Runnable {
                         targetImageUrl = response.header("location");
                     } catch (IOException e) {
                         error = "TargetImageUrl error";
+                        IOException ioException = new IOException("原图链接获取失败",e);
+                        Crashes.trackError(ioException);
                         break;
                     }
                 } else {
