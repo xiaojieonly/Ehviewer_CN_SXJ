@@ -310,26 +310,26 @@ public abstract class BaseScene extends SceneFragment {
         }
     }
 
-    public boolean onGenericMotion(View view, MotionEvent motionEvent) {
-        if (motionEvent.isFromSource(InputDevice.SOURCE_CLASS_POINTER)) {
-            if (motionEvent.getAction() == MotionEvent.ACTION_SCROLL) {
-                float scrollX = motionEvent.getAxisValue(MotionEvent.AXIS_HSCROLL);
-                float scrollY = motionEvent.getAxisValue(MotionEvent.AXIS_VSCROLL);
-                int x = view.getScrollX();
-                int y = view.getScrollY();
-                int toX = x + Math.round(scrollX);
-                int toY = y + Math.round(scrollY);
-                if (toX == view.getWidth()) {
-                    toX = view.getWidth();
-                }
-                if (toY == view.getHeight()) {
-                    toY = view.getHeight();
-                }
-                view.scrollTo(toX, toY);
-                Log.d("MA", "Mouse scrolled " + scrollX + ", " + scrollY);
-                return true;
-            }
-        }
-        return false;
-    }
+//    public boolean onGenericMotion(View view, MotionEvent motionEvent) {
+//        if (motionEvent.isFromSource(InputDevice.SOURCE_CLASS_POINTER)) {
+//            if (motionEvent.getAction() == MotionEvent.ACTION_SCROLL) {
+//                float scrollX = motionEvent.getAxisValue(MotionEvent.AXIS_HSCROLL);
+//                float scrollY = motionEvent.getAxisValue(MotionEvent.AXIS_VSCROLL);
+//                int x = view.getScrollX();
+//                int y = view.getScrollY();
+//                int toX = x + Math.round(scrollX);
+//                int toY = y + Math.round(scrollY);
+//                if (toX == view.getWidth()) {
+//                    toX = view.getWidth();
+//                }
+//                if (toY == view.getHeight()) {
+//                    toY = view.getHeight();
+//                }
+//                view.scrollTo(toX, toY);
+//                Log.d("MA", "Mouse scrolled " + scrollX + ", " + scrollY);
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 }
