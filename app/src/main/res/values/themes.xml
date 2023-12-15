@@ -225,6 +225,8 @@
 
     <style name="AppTheme.Gallery" parent="AppTheme.Dark.NoActionBar">
         <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_dark</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 
     <style name="AppTheme.Gallery.Dark" />

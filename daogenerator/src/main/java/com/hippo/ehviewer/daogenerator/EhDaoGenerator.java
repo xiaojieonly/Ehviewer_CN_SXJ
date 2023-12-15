@@ -375,6 +375,18 @@ public class EhDaoGenerator {
                 "\t\tthis.simpleTags = galleryInfo.simpleTags;\n" +
                 "\t\tthis.simpleLanguage = galleryInfo.simpleLanguage;\n" +
                 "\t}").setConstructor(true);
+        javaClass.addMethod("public void updateInfo(GalleryInfo galleryInfo) {\n" +
+                "\t\tthis.token = galleryInfo.token;\n" +
+                "\t\tthis.title = galleryInfo.title;\n" +
+                "\t\tthis.titleJpn = galleryInfo.titleJpn;\n" +
+                "\t\tthis.thumb = galleryInfo.thumb;\n" +
+                "\t\tthis.category = galleryInfo.category;\n" +
+                "\t\tthis.posted = galleryInfo.posted;\n" +
+                "\t\tthis.uploader = galleryInfo.uploader;\n" +
+                "\t\tthis.rating = galleryInfo.rating;\n" +
+                "\t\tthis.simpleTags = galleryInfo.simpleTags;\n" +
+                "\t\tthis.simpleLanguage = galleryInfo.simpleLanguage;\n" +
+                "\t}").setConstructor(true);
         javaClass.addImport("com.hippo.ehviewer.client.data.GalleryInfo");
 
         javaClass.addMethod("\tpublic JSONObject toJson(){\n" +
