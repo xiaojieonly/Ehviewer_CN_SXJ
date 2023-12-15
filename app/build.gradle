@@ -142,6 +142,7 @@ dependencies {
     implementation 'com.github.seven332:conaco:0.1.5-eh'
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
+//    implementation 'com.github.seven332:easyrecyclerview:1.2.1'
     implementation 'com.github.seven332:glgallery:0.1.2'
     implementation 'com.github.seven332:glview:0.1.0'
     implementation 'com.github.seven332:glview-image:0.1.0'
