@@ -7,6 +7,7 @@
  ###  原图下载优化    
  ###  修复下载列表乱序问题    
  ###  修复部分机型画廊浏览页面无法全屏的问题       
+   点击前往下载：[Microsoft App Center](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/1uSYEneJDVg0N5X0axkyCdA)  密码:a8hm   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/i0Hm01i7ktxe)  密码:bdpx   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
