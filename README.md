@@ -1,6 +1,19 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2023/12/17 :    
+ ###  新版发布1.9.7.1     
+ ###  修复列表鼠标滚动失效问题    
+ ###  原图下载优化    
+ ###  修复下载列表乱序问题    
+ ###  修复部分机型画廊浏览页面无法全屏的问题       
+   点击前往下载：[百度云](https://pan.baidu.com/s/1uSYEneJDVg0N5X0axkyCdA)  密码:a8hm   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/i0Hm01i7ktxe)  密码:bdpx   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
+
 # 2023/12/03 :    
  ###  新版发布1.9.7.0     
  ###  新增下载列表状态过滤和排序    
