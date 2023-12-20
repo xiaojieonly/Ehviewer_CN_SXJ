@@ -343,12 +343,20 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             mGid = args.getLong(KEY_GID);
             mToken = args.getString(KEY_TOKEN);
         } else if (ACTION_DOWNLOAD_GALLERY_INFO.equals(action)) {
-            mDownloadInfo = args.getParcelable(KEY_GALLERY_INFO);
-            mGalleryInfo = mDownloadInfo;
-            // Add history
-            if (null != mGalleryInfo) {
-                EhDB.putHistoryInfo(mGalleryInfo);
+            try{
+                mDownloadInfo = args.getParcelable(KEY_GALLERY_INFO);
+                mGalleryInfo = mDownloadInfo;
+                if (null != mGalleryInfo) {
+                    EhDB.putHistoryInfo(mGalleryInfo);
+                }
+            }catch (ClassCastException e){
+                mGalleryInfo = args.getParcelable(KEY_GALLERY_INFO);
+                if (null != mGalleryInfo) {
+                    EhDB.putHistoryInfo(mGalleryInfo);
+                }
             }
+            // Add history
+
         }
         comeFromDownload = args.getBoolean(KEY_COME_FROM_DOWNLOAD);
 
@@ -1599,7 +1607,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     public void gotoNewVersion(GalleryDetail detail) {
         Bundle args = new Bundle();
-        args.putString(GalleryDetailScene.KEY_ACTION, ACTION_GALLERY_INFO);
+        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
         args.putParcelable(KEY_GALLERY_INFO, detail);
         args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
         Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
