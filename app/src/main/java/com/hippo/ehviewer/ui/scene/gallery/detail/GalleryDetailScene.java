@@ -1599,7 +1599,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     public void gotoNewVersion(GalleryDetail detail) {
         Bundle args = new Bundle();
-        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
+        args.putString(GalleryDetailScene.KEY_ACTION, ACTION_GALLERY_INFO);
         args.putParcelable(KEY_GALLERY_INFO, detail);
         args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
         Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
