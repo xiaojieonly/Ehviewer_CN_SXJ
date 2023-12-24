@@ -107,6 +107,7 @@ import com.hippo.ehviewer.ui.scene.history.HistoryScene;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.util.AppCenterAnalytics;
+import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.GalleryRatingBar;
 import com.hippo.reveal.ViewAnimationUtils;
 import com.hippo.ripple.Ripple;
@@ -343,13 +344,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             mGid = args.getLong(KEY_GID);
             mToken = args.getString(KEY_TOKEN);
         } else if (ACTION_DOWNLOAD_GALLERY_INFO.equals(action)) {
-            try{
+            try {
                 mDownloadInfo = args.getParcelable(KEY_GALLERY_INFO);
                 mGalleryInfo = mDownloadInfo;
                 if (null != mGalleryInfo) {
                     EhDB.putHistoryInfo(mGalleryInfo);
                 }
-            }catch (ClassCastException e){
+            } catch (ClassCastException e) {
                 mGalleryInfo = args.getParcelable(KEY_GALLERY_INFO);
                 if (null != mGalleryInfo) {
                     EhDB.putHistoryInfo(mGalleryInfo);
@@ -577,6 +578,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mDownload.setOnClickListener(this);
         mDownload.setOnLongClickListener(this);
         mRead.setOnClickListener(this);
+        mTitle.setOnClickListener(this);
 
         mUploader.setOnLongClickListener(this);
 
@@ -1434,6 +1436,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 Bundle args = new Bundle();
                 args.putParcelable(GalleryPreviewsScene.KEY_GALLERY_INFO, mGalleryDetail);
                 startScene(new Announcer(GalleryPreviewsScene.class).setArgs(args));
+            }
+        } else if (mTitle == v) {
+            if (mGalleryDetail != null && mGalleryDetail.title != null) {
+                ClipboardUtil.copyText(mGalleryDetail.title);
+                Toast.makeText(getContext(), R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
             }
         } else {
             Object o = v.getTag(R.id.tag);

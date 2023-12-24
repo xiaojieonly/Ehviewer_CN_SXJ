@@ -56,6 +56,24 @@ public class ClipboardUtil {
         }
     }
 
+    /**
+     * 实现文本复制功能
+     *
+     * @param text 复制的文本
+     */
+    public static void copyText(String text) {
+
+        clearClipboard();
+        if (!TextUtils.isEmpty(text)) {
+            // 得到剪贴板管理器
+            ClipboardManager cmb = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
+            // 创建一个剪贴数据集，包含一个普通文本数据条目（需要复制的数据）
+            ClipData clipData = ClipData.newPlainText(null, text);
+            // 把数据集设置（复制）到剪贴板
+            cmb.setPrimaryClip(clipData);
+        }
+    }
+
 
     /**
      * 从剪切板获取数据
