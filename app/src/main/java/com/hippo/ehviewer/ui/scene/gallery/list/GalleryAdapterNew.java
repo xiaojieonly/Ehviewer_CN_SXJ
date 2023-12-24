@@ -224,16 +224,12 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
                     holder.pages.setText(null);
                     holder.pages.setVisibility(View.GONE);
                 } else {
-//                    会导致卡顿
-//                    SpiderQueen mSpiderQueen;
-//                    mSpiderQueen = SpiderQueen.obtainSpiderQueen(mInflater.getContext(), gi, SpiderQueen.MODE_READ);
-//                    if (mSpiderQueen.getStartPage() > 0) {
-//                        holder.pages.setText(mSpiderQueen.getStartPage() + 1 + "/" + gi.pages + "P");
-//                    } else {
-//                        holder.pages.setText("0/" + gi.pages + "P");
-//                    }
-//                    holder.pages.setVisibility(View.VISIBLE);
-                    holder.pages.setText(gi.pages + "P");
+                    int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
+                    if (startPage > 0) {
+                        holder.pages.setText(startPage + 1 + "/" + gi.pages + "P");
+                    } else {
+                        holder.pages.setText("0/" + gi.pages + "P");
+                    }
                     holder.pages.setVisibility(View.VISIBLE);
                 }
                 if (TextUtils.isEmpty(gi.simpleLanguage)) {

@@ -43,6 +43,7 @@ import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.yorozuya.ViewUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import com.hippo.ehviewer.spider.SpiderQueen;
 
 abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
 
@@ -208,7 +209,12 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
                     holder.pages.setText(null);
                     holder.pages.setVisibility(View.GONE);
                 } else {
-                    holder.pages.setText(Integer.toString(gi.pages) + "P");
+                    int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
+                    if (startPage > 0) {
+                        holder.pages.setText(startPage + 1 + "/" + gi.pages + "P");
+                    } else {
+                        holder.pages.setText("0/" + gi.pages + "P");
+                    }
                     holder.pages.setVisibility(View.VISIBLE);
                 }
                 if (TextUtils.isEmpty(gi.simpleLanguage)) {

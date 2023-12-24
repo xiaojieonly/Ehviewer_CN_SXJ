@@ -205,6 +205,38 @@ public final class SpiderQueen implements Runnable {
     }
 
     @UiThread
+    public static int findStartPage(@NonNull Context context, @NonNull GalleryInfo galleryInfo) {
+        OSUtils.checkMainLoop();
+
+        SpiderInfo spiderInfo = null;
+        SimpleDiskCache msic;
+        EhApplication application = (EhApplication) context.getApplicationContext();
+        msic = EhApplication.getSpiderInfoCache(application);
+        InputStreamPipe pipe = msic.getInputStreamPipe(Long.toString(galleryInfo.gid));
+        if (null != pipe) {
+            try {
+                pipe.obtain();
+                spiderInfo = SpiderInfo.read(pipe.open());
+                if (spiderInfo != null && spiderInfo.gid == galleryInfo.gid &&
+                        spiderInfo.token.equals(galleryInfo.token)) {
+                }
+            } catch (IOException e) {
+                // Ignore
+            } finally {
+                pipe.close();
+                pipe.release();
+            }
+        }
+
+        int startPage = 0;
+        if (spiderInfo != null) {
+            startPage = spiderInfo.startPage;
+        } else {
+            startPage = 0;
+        }
+        return startPage;
+    }
+    @UiThread
     public static void releaseSpiderQueen(@NonNull SpiderQueen queen, @Mode int mode) {
         OSUtils.checkMainLoop();
 
