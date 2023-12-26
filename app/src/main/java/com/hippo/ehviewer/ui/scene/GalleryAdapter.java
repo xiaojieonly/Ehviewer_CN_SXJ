@@ -16,8 +16,11 @@
 
 package com.hippo.ehviewer.ui.scene;
 
+import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,6 +46,8 @@ import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.yorozuya.ViewUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.concurrent.ExecutorService;
+
 import com.hippo.ehviewer.spider.SpiderQueen;
 
 abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
@@ -67,10 +72,14 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
     private int mType = TYPE_INVALID;
     private boolean mShowFavourited;
 
-    private DownloadManager mDownloadManager;
+    private final DownloadManager mDownloadManager;
+
+    private final ExecutorService executor;
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     public GalleryAdapter(@NonNull LayoutInflater inflater, @NonNull Resources resources,
-            @NonNull RecyclerView recyclerView, int type, boolean showFavourited) {
+            @NonNull RecyclerView recyclerView, int type, boolean showFavourited,ExecutorService executor) {
+        this.executor = executor;
         mInflater = inflater;
         mResources = resources;
         mRecyclerView = recyclerView;
@@ -81,7 +90,7 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
         mRecyclerView.setAdapter(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        View calculator = inflater.inflate(R.layout.item_gallery_list_thumb_height, null);
+        @SuppressLint("InflateParams") View calculator = inflater.inflate(R.layout.item_gallery_list_thumb_height, null);
         ViewUtils.measureView(calculator, 1024, ViewGroup.LayoutParams.WRAP_CONTENT);
         mListThumbHeight = calculator.getMeasuredHeight();
         mListThumbWidth = mListThumbHeight * 2 / 3;
@@ -101,6 +110,7 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
         return mType;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setType(int type) {
         if (type == mType) {
             return;
@@ -151,8 +161,9 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
         }
     }
 
+    @NonNull
     @Override
-    public GalleryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public GalleryHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         int layoutId;
         switch (viewType) {
             default:
@@ -185,7 +196,7 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
     public abstract GalleryInfo getDataAt(int position);
 
     @Override
-    public void onBindViewHolder(GalleryHolder holder, int position) {
+    public void onBindViewHolder(@NonNull GalleryHolder holder, int position) {
         GalleryInfo gi = getDataAt(position);
         if (null == gi) {
             return;
@@ -209,12 +220,20 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
                     holder.pages.setText(null);
                     holder.pages.setVisibility(View.GONE);
                 } else {
-                    int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
-                    if (startPage > 0) {
-                        holder.pages.setText(startPage + 1 + "/" + gi.pages + "P");
-                    } else {
-                        holder.pages.setText("0/" + gi.pages + "P");
-                    }
+                    executor.submit(()->{
+                        int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
+                        handler.post(()->{
+                            String text;
+                            if (startPage > 0) {
+                                text = startPage + 1 + "/" + gi.pages + "P";
+                                holder.pages.setText(text);
+                            } else {
+                                text = "0/" + gi.pages + "P";
+                                holder.pages.setText(text);
+                            }
+                        });
+                    });
+                    holder.pages.setText(new StringBuffer(gi.pages + "P"));
                     holder.pages.setVisibility(View.VISIBLE);
                 }
                 if (TextUtils.isEmpty(gi.simpleLanguage)) {
@@ -236,7 +255,7 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
                 int color = EhUtils.getCategoryColor(gi.category);
                 if (!(drawable instanceof TriangleDrawable)) {
                     drawable = new TriangleDrawable(color);
-                    category.setBackgroundDrawable(drawable);
+                    category.setBackground(drawable);
                 } else {
                     ((TriangleDrawable) drawable).setColor(color);
                 }

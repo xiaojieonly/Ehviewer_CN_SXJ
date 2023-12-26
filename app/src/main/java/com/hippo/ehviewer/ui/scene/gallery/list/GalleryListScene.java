@@ -142,6 +142,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class GalleryListScene extends BaseScene
         implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
@@ -236,6 +238,8 @@ public final class GalleryListScene extends BaseScene
     private SubscriptionDraw subscriptionDraw;
 
     private EhTagDatabase ehTags;
+
+    private ExecutorService executorService;
 
     @Nullable
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
@@ -346,6 +350,7 @@ public final class GalleryListScene extends BaseScene
         Context context = getEHContext();
         assert context != null;
         AssertUtils.assertNotNull(context);
+        executorService = EhApplication.getExecutorService(context);
         mClient = EhApplication.getEhClient(context);
         mDownloadManager = EhApplication.getDownloadManager(context);
         mFavouriteStatusRouter = EhApplication.getFavouriteStatusRouter(context);
@@ -2043,7 +2048,7 @@ public final class GalleryListScene extends BaseScene
 
         public GalleryListAdapter(@NonNull LayoutInflater inflater,
                                   @NonNull Resources resources, @NonNull RecyclerView recyclerView, int type) {
-            super(inflater, resources, recyclerView, type, true);
+            super(inflater, resources, recyclerView, type, true,executorService);
         }
 
         @Override

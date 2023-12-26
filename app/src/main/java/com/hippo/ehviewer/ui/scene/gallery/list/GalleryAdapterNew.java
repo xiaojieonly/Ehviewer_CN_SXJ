@@ -18,6 +18,9 @@ package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,6 +53,8 @@ import com.hippo.yorozuya.ViewUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.content.Context;
 
@@ -81,9 +86,13 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
 
     private DownloadManager mDownloadManager;
 
+    private final ExecutorService executor;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
 
     public GalleryAdapterNew(@NonNull LayoutInflater inflater, @NonNull Resources resources,
-                             @NonNull RecyclerView recyclerView, int type, boolean showFavourited) {
+                             @NonNull RecyclerView recyclerView, int type, boolean showFavourited, ExecutorService executor) {
+        this.executor = executor;
         mInflater = inflater;
         mResources = resources;
         mRecyclerView = recyclerView;
@@ -224,12 +233,20 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
                     holder.pages.setText(null);
                     holder.pages.setVisibility(View.GONE);
                 } else {
-                    int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
-                    if (startPage > 0) {
-                        holder.pages.setText(startPage + 1 + "/" + gi.pages + "P");
-                    } else {
-                        holder.pages.setText("0/" + gi.pages + "P");
-                    }
+                    executor.submit(()->{
+                        int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
+                        handler.post(()->{
+                            String text;
+                            if (startPage > 0) {
+                                text = startPage + 1 + "/" + gi.pages + "P";
+                                holder.pages.setText(text);
+                            } else {
+                                text = "0/" + gi.pages + "P";
+                                holder.pages.setText(text);
+                            }
+                        });
+                    });
+                    holder.pages.setText(new StringBuffer(gi.pages + "P"));
                     holder.pages.setVisibility(View.VISIBLE);
                 }
                 if (TextUtils.isEmpty(gi.simpleLanguage)) {
@@ -298,7 +315,7 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
             if (mType == 0) {
                 thumb.setOnClickListener(v -> {
                     if (onThumbItemClickListener != null) {
-                        int position = getAdapterPosition();
+                        int position = getBindingAdapterPosition();
                         onThumbItemClickListener.onThumbItemClick(position, itemView, getDataAt(position));
                     }
                 });
