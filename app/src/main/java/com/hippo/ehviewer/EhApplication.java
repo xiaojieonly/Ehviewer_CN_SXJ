@@ -81,6 +81,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -132,6 +134,8 @@ public class EhApplication extends RecordingApplication {
     private final List<String> torrentList = new ArrayList<>();
 
     private boolean initialized = false;
+
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public static EhApplication getInstance() {
         return instance;
@@ -712,6 +716,11 @@ public class EhApplication extends RecordingApplication {
     @Nullable
     public EhNewsDetail getEhNewsDetail(){
         return ehNewsDetail;
+    }
+
+    public static ExecutorService getExecutorService(@NonNull Context context){
+        EhApplication application = ((EhApplication) context.getApplicationContext());
+        return  application.executorService;
     }
 
 }

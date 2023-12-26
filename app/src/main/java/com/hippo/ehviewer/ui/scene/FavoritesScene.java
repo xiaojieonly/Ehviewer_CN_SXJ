@@ -102,6 +102,7 @@ import com.hippo.yorozuya.ViewUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 // TODO Get favorite, modify favorite, add favorite, what a mess!
 public class FavoritesScene extends BaseScene implements
@@ -190,6 +191,8 @@ public class FavoritesScene extends BaseScene implements
 
     private FavoritesParser.Result mResult;
 
+    private ExecutorService executorService;
+
     @Override
     public int getNavCheckedItem() {
         return R.id.nav_favourite;
@@ -201,6 +204,7 @@ public class FavoritesScene extends BaseScene implements
 
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
+        executorService = EhApplication.getExecutorService(context);
         mClient = EhApplication.getEhClient(context);
         mFavCatArray = Settings.getFavCat();
         mFavCountArray = Settings.getFavCount();
@@ -1279,7 +1283,7 @@ public class FavoritesScene extends BaseScene implements
 
         public FavoritesAdapter(@NonNull LayoutInflater inflater, @NonNull Resources resources,
                                 @NonNull RecyclerView recyclerView, int type) {
-            super(inflater, resources, recyclerView, type, false);
+            super(inflater, resources, recyclerView, type, false,executorService);
         }
 
         @Override
