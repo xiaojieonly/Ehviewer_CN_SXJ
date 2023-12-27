@@ -33,6 +33,9 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.os.StrictMode;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -43,6 +46,7 @@ import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -66,10 +70,10 @@ import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.ehviewer.widget.GalleryGuideView;
 import com.hippo.ehviewer.widget.GalleryHeader;
 import com.hippo.ehviewer.widget.ReversibleSeekBar;
-import com.hippo.glgallery.GalleryPageView;
-import com.hippo.glgallery.GalleryProvider;
-import com.hippo.glgallery.GalleryView;
-import com.hippo.glgallery.SimpleAdapter;
+import com.hippo.lib.glgallery.GalleryPageView;
+import com.hippo.lib.glgallery.GalleryProvider;
+import com.hippo.lib.glgallery.GalleryView;
+import com.hippo.lib.glgallery.SimpleAdapter;
 import com.hippo.glview.view.GLRootView;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
@@ -90,11 +94,12 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener,
         GalleryView.Listener {
@@ -146,6 +151,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Nullable
     private View mSeekBarPanel;
     @Nullable
+    private ImageView mAutoTransferPanel;
+    @Nullable
     private TextView mLeftText;
     @Nullable
     private TextView mRightText;
@@ -153,20 +160,28 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private ReversibleSeekBar mSeekBar;
 
     private ObjectAnimator mSeekBarPanelAnimator;
+    private ObjectAnimator mAutoTransferAnimator;
 
     private int mLayoutMode;
     private int mSize;
     private int mCurrentIndex;
 
     private boolean canFinish = false;
+    private boolean autoTransferring = false;
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(3);
+
+    private ScheduledExecutorService transferService = Executors.newSingleThreadScheduledExecutor();
+    private final Handler transHandle = new Handler(Looper.getMainLooper());
 
     private final ValueAnimator.AnimatorUpdateListener mUpdateSliderListener = new ValueAnimator.AnimatorUpdateListener() {
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
             if (null != mSeekBarPanel) {
                 mSeekBarPanel.requestLayout();
+            }
+            if (null != mAutoTransferPanel) {
+                mAutoTransferPanel.requestLayout();
             }
         }
     };
@@ -175,6 +190,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         @Override
         public void onAnimationEnd(Animator animation) {
             mSeekBarPanelAnimator = null;
+            mAutoTransferAnimator = null;
         }
     };
 
@@ -185,6 +201,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mSeekBarPanel != null) {
                 mSeekBarPanel.setVisibility(View.INVISIBLE);
             }
+            mAutoTransferAnimator = null;
+            if (mAutoTransferPanel != null) {
+                mAutoTransferPanel.setVisibility(View.INVISIBLE);
+            }
         }
     };
 
@@ -192,7 +212,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         @Override
         public void run() {
             if (mSeekBarPanel != null) {
-                hideSlider(mSeekBarPanel);
+                hideSlider(mSeekBarPanel, mSeekBarPanelAnimator);
+                hideSlider(mAutoTransferPanel, mAutoTransferAnimator);
             }
         }
     };
@@ -233,6 +254,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     /**
      * eventbus 通知，用于修复跳转奔溃的问题
+     *
      * @param event
      */
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
@@ -257,8 +279,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mFilename = intent.getStringExtra(KEY_FILENAME);
         mUri = intent.getData();
         mGalleryInfo = intent.getParcelableExtra(KEY_GALLERY_INFO);
-        boolean onEvent = intent.getBooleanExtra(DATA_IN_EVENT,false);
-        if (!onEvent){
+        boolean onEvent = intent.getBooleanExtra(DATA_IN_EVENT, false);
+        if (!onEvent) {
             canFinish = true;
         }
         mPage = intent.getIntExtra(KEY_PAGE, -1);
@@ -315,7 +337,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private void onCreateView(@Nullable Bundle savedInstanceState) {
         if (mGalleryProvider == null) {
-            if (!canFinish){
+            if (!canFinish) {
                 return;
             }
             finish();
@@ -385,10 +407,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mBattery.setVisibility(Settings.getShowBattery() ? View.VISIBLE : View.GONE);
 
         mSeekBarPanel = ViewUtils.$$(this, R.id.seek_bar_panel);
+        mAutoTransferPanel = (ImageView) ViewUtils.$$(this, R.id.auto_transfer);
         mLeftText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.left);
         mRightText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.right);
         mSeekBar = (ReversibleSeekBar) ViewUtils.$$(mSeekBarPanel, R.id.seek_bar);
         mSeekBar.setOnSeekBarChangeListener(this);
+        mAutoTransferPanel.setOnClickListener(this::autoRead);
 
         mSize = mGalleryProvider.size();
         mCurrentIndex = startPage;
@@ -460,6 +484,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mProgress = null;
         mBattery = null;
         mSeekBarPanel = null;
+        mAutoTransferPanel = null;
         mLeftText = null;
         mRightText = null;
         mSeekBar = null;
@@ -604,6 +629,37 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+    private void autoRead(View view) {
+        autoTransferring = !autoTransferring;
+        if (mAutoTransferPanel == null) {
+            return;
+        }
+
+        if (!autoTransferring) {
+            mAutoTransferPanel.setImageResource(R.drawable.ic_start_play_24);
+            transferService.shutdown();
+        } else {
+            mAutoTransferPanel.setImageResource(R.drawable.ic_pause_circle);
+            if (transferService.isShutdown()) {
+                transferService = Executors.newSingleThreadScheduledExecutor();
+            }
+            transferService.scheduleAtFixedRate(
+                    () -> transHandle.post(() -> {
+                        if (mGalleryView == null) {
+                            return;
+                        }
+                        if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                            mGalleryView.pageLeft();
+                        } else {
+                            mGalleryView.pageRight();
+                        }
+                    }),
+                    0, 3, TimeUnit.SECONDS
+            );
+        }
+    }
+
+
     @SuppressLint("SetTextI18n")
     private void updateProgress() {
         if (mProgress == null) {
@@ -721,21 +777,34 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         SimpleHandler.getInstance().post(task);
     }
 
-    private void showSlider(View sliderPanel) {
+    @Override
+    public void onAutoTransferDone() {
+        if (autoTransferring){
+            autoRead(mAutoTransferPanel);
+        }
+    }
+
+    private void showSlider(View sliderPanel, ObjectAnimator animator) {
         if (null != mSeekBarPanelAnimator) {
-            mSeekBarPanelAnimator.cancel();
-            mSeekBarPanelAnimator = null;
+            animator.cancel();
+            animator = null;
+        }
+        if (sliderPanel == mAutoTransferPanel) {
+            sliderPanel.setTranslationX(sliderPanel.getWidth());
+            animator = ObjectAnimator.ofFloat(sliderPanel, "translationX", 0.0f);
+        } else {
+            sliderPanel.setTranslationY(sliderPanel.getHeight());
+            animator = ObjectAnimator.ofFloat(sliderPanel, "translationY", 0.0f);
         }
 
-        sliderPanel.setTranslationY(sliderPanel.getHeight());
         sliderPanel.setVisibility(View.VISIBLE);
 
-        mSeekBarPanelAnimator = ObjectAnimator.ofFloat(sliderPanel, "translationY", 0.0f);
-        mSeekBarPanelAnimator.setDuration(SLIDER_ANIMATION_DURING);
-        mSeekBarPanelAnimator.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
-        mSeekBarPanelAnimator.addUpdateListener(mUpdateSliderListener);
-        mSeekBarPanelAnimator.addListener(mShowSliderListener);
-        mSeekBarPanelAnimator.start();
+
+        animator.setDuration(SLIDER_ANIMATION_DURING);
+        animator.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
+        animator.addUpdateListener(mUpdateSliderListener);
+        animator.addListener(mShowSliderListener);
+        animator.start();
 
         if (null != mSystemUiHelper) {
             mSystemUiHelper.show();
@@ -743,18 +812,22 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
-    private void hideSlider(View sliderPanel) {
-        if (null != mSeekBarPanelAnimator) {
-            mSeekBarPanelAnimator.cancel();
-            mSeekBarPanelAnimator = null;
+    private void hideSlider(View sliderPanel, ObjectAnimator animator) {
+        if (null != animator) {
+            animator.cancel();
+            animator = null;
+        }
+        if (sliderPanel == mAutoTransferPanel) {
+            animator = ObjectAnimator.ofFloat(sliderPanel, "translationX", sliderPanel.getWidth());
+        } else {
+            animator = ObjectAnimator.ofFloat(sliderPanel, "translationY", sliderPanel.getHeight());
         }
 
-        mSeekBarPanelAnimator = ObjectAnimator.ofFloat(sliderPanel, "translationY", sliderPanel.getHeight());
-        mSeekBarPanelAnimator.setDuration(SLIDER_ANIMATION_DURING);
-        mSeekBarPanelAnimator.setInterpolator(AnimationUtils.SLOW_FAST_INTERPOLATOR);
-        mSeekBarPanelAnimator.addUpdateListener(mUpdateSliderListener);
-        mSeekBarPanelAnimator.addListener(mHideSliderListener);
-        mSeekBarPanelAnimator.start();
+        animator.setDuration(SLIDER_ANIMATION_DURING);
+        animator.setInterpolator(AnimationUtils.SLOW_FAST_INTERPOLATOR);
+        animator.addUpdateListener(mUpdateSliderListener);
+        animator.addListener(mHideSliderListener);
+        animator.start();
 
         if (null != mSystemUiHelper) {
             mSystemUiHelper.hide();
@@ -936,28 +1009,25 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     private void pageDialogListener(AlertDialog.Builder builder, CharSequence[] items, int page) {
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (mGalleryProvider == null) {
-                    return;
-                }
+        builder.setItems(items, (dialog, which) -> {
+            if (mGalleryProvider == null) {
+                return;
+            }
 
-                switch (which) {
-                    case 0: // Refresh
-                        mGalleryProvider.removeCache(page);
-                        mGalleryProvider.forceRequest(page);
-                        break;
-                    case 1: // Share
-                        shareImage(page);
-                        break;
-                    case 2: // Save
-                        saveImage(page);
-                        break;
-                    case 3: // Save to
-                        saveImageTo(page);
-                        break;
-                }
+            switch (which) {
+                case 0: // Refresh
+                    mGalleryProvider.removeCache(page);
+                    mGalleryProvider.forceRequest(page);
+                    break;
+                case 1: // Share
+                    shareImage(page);
+                    break;
+                case 2: // Save
+                    saveImage(page);
+                    break;
+                case 3: // Save to
+                    saveImageTo(page);
+                    break;
             }
         });
     }
@@ -1157,16 +1227,18 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         private void onTapSliderArea() {
-            if (mSeekBarPanel == null || mSize <= 0 || mCurrentIndex < 0) {
+            if (mSeekBarPanel == null || mSize <= 0 || mCurrentIndex < 0 || mAutoTransferPanel == null) {
                 return;
             }
 
             SimpleHandler.getInstance().removeCallbacks(mHideSliderRunnable);
 
             if (mSeekBarPanel.getVisibility() == View.VISIBLE) {
-                hideSlider(mSeekBarPanel);
+                hideSlider(mSeekBarPanel, mSeekBarPanelAnimator);
+                hideSlider(mAutoTransferPanel, mAutoTransferAnimator);
             } else {
-                showSlider(mSeekBarPanel);
+                showSlider(mSeekBarPanel, mSeekBarPanelAnimator);
+                showSlider(mAutoTransferPanel, mAutoTransferAnimator);
                 SimpleHandler.getInstance().postDelayed(mHideSliderRunnable, HIDE_SLIDER_DELAY);
             }
         }
@@ -1236,4 +1308,5 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
         }
     }
+
 }

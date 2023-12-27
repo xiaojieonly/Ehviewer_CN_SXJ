@@ -615,6 +615,7 @@
     <string name="settings_read_start_position_top_right">Top right</string>
     <string name="settings_read_start_position_bottom_left">Bottom left</string>
     <string name="settings_read_start_position_bottom_right">Bottom right</string>
+    <string name="settings_read_auto_transfer_time">Auto Transfer(s)</string>
     <string name="settings_read_start_position_center">Center</string>
     <string name="settings_read_keep_screen_on">Keep screen on</string>
     <string name="settings_read_show_clock">Show clock</string>

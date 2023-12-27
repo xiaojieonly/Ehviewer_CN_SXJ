@@ -22,7 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
-import com.hippo.glgallery.GalleryPageView;
+import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.image.Image;
 import com.hippo.unifile.FilenameFilter;
 import com.hippo.unifile.UniFile;

@@ -30,7 +30,7 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.FavListUrlBuilder;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
-import com.hippo.glgallery.GalleryView;
+import com.hippo.lib.glgallery.GalleryView;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.yorozuya.AssertUtils;
