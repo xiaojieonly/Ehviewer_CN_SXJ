@@ -540,6 +540,7 @@
     <string name="settings_read_start_position_top_right">右上角</string>
     <string name="settings_read_start_position_bottom_left">左下角</string>
     <string name="settings_read_start_position_bottom_right">右下角</string>
+    <string name="settings_read_auto_transfer_time">自动翻页(秒)</string>
     <string name="settings_read_start_position_center">中心</string>
     <string name="settings_read_keep_screen_on">屏幕常亮</string>
     <string name="settings_read_show_clock">显示时钟</string>

@@ -104,6 +104,7 @@
     <string name="filter_much_more" translatable="false">M3,5L1,5v16c0,1.1 0.9,2 2,2h16v-2L3,21L3,5zM14,12L14,8c0,-1.11 -0.9,-2 -2,-2h-1c-1.1,0 -2,0.89 -2,2v1c0,1.11 0.9,2 2,2h1v1L9,12v2h3c1.1,0 2,-0.89 2,-2zM11,9L11,8h1v1h-1zM21,1L7,1c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2L23,3c0,-1.1 -0.9,-2 -2,-2zM21,9h-2L19,7h-2v2h-2v2h2v2h2v-2h2v6L7,17L7,3h14v6z</string>
 
     <string name="start_play" translatable="false">M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM10,16.5v-9l6,4.5 -6,4.5z</string>
+    <string name="pause_circle" translatable="false">M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10s10,-4.48 10,-10S17.52,2 12,2zM11,16H9V8h2V16zM15,16h-2V8h2V16z</string>
     <string name="ic_bookmarks" translatable="false">M19,18l2,1V3c0,-1.1 -0.9,-2 -2,-2H8.99C7.89,1 7,1.9 7,3h10c1.1,0 2,0.9 2,2v13zM15,5H5c-1.1,0 -2,0.9 -2,2v16l7,-3 7,3V7c0,-1.1 -0.9,-2 -2,-2z</string>
     <string name="ic_subscription" translatable="false">M20,8L4,8L4,6h16v2zM18,2L6,2v2h12L18,2zM22,12v8c0,1.1 -0.9,2 -2,2L4,22c-1.1,0 -2,-0.9 -2,-2v-8c0,-1.1 0.9,-2 2,-2h16c1.1,0 2,0.9 2,2zM16,16l-6,-3.27v6.53L16,16z</string>
     <string name="ic_visibility" translatable="false">M12,4.5C7,4.5 2.73,7.61 1,12c1.73,4.39 6,7.5 11,7.5s9.27,-3.11 11,-7.5c-1.73,-4.39 -6,-7.5 -11,-7.5zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,9c-1.66,0 -3,1.34 -3,3s1.34,3 3,3 3,-1.34 3,-3 -1.34,-3 -3,-3z</string>
