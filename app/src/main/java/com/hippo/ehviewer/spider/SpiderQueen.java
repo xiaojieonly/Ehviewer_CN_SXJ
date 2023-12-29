@@ -808,6 +808,7 @@ public final class SpiderQueen implements Runnable {
             return spiderInfo;
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
+            Crashes.trackError(e);
             return null;
         }
     }

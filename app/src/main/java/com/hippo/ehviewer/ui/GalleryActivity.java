@@ -35,11 +35,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.os.StrictMode;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -374,13 +376,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 .setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary))
                 .setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size))
                 .setPageTextTypeface(Typeface.DEFAULT)
-                .setErrorTextColor(resources.getColor(R.color.red_500))
+                .setErrorTextColor(resources.getColor(R.color.red_500, null))
                 .setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size))
                 .setDefaultErrorString(resources.getString(R.string.error_unknown))
                 .setEmptyString(resources.getString(R.string.error_empty))
                 .build();
-
         mGLRootView.setContentPane(mGalleryView);
+        mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
         mGalleryProvider.setListener(mGalleryAdapter);
         mGalleryProvider.setGLRoot(mGLRootView);
 
@@ -467,6 +469,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     protected void onDestroy() {
+        if (!transferService.isShutdown()) {
+            transferService.shutdown();
+            transferService = null;
+        }
         mGLRootView = null;
         mGalleryView = null;
         if (mGalleryAdapter != null) {
@@ -643,6 +649,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (transferService.isShutdown()) {
                 transferService = Executors.newSingleThreadScheduledExecutor();
             }
+            long initialDelay = Settings.getStartTransferTime();
+            long waitTime = initialDelay * 2L;
             transferService.scheduleAtFixedRate(
                     () -> transHandle.post(() -> {
                         if (mGalleryView == null) {
@@ -654,11 +662,36 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                             mGalleryView.pageRight();
                         }
                     }),
-                    0, 3, TimeUnit.SECONDS
+                    initialDelay, waitTime, TimeUnit.SECONDS
             );
         }
     }
 
+    public boolean onGenericMotion(View view, MotionEvent motionEvent) {
+        if (motionEvent.isFromSource(InputDevice.SOURCE_CLASS_POINTER)) {
+            if (motionEvent.getAction() == MotionEvent.ACTION_SCROLL) {
+                float scrollX = motionEvent.getAxisValue(MotionEvent.AXIS_HSCROLL);
+                if (mGalleryView == null) {
+                    return false;
+                }
+                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                    if (scrollX > 0) {
+                        mGalleryView.pageLeft();
+                    } else {
+                        mGalleryView.pageRight();
+                    }
+                } else {
+                    if (scrollX < 0) {
+                        mGalleryView.pageLeft();
+                    } else {
+                        mGalleryView.pageRight();
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
 
     @SuppressLint("SetTextI18n")
     private void updateProgress() {
@@ -779,7 +812,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     public void onAutoTransferDone() {
-        if (autoTransferring){
+        if (autoTransferring) {
             autoRead(mAutoTransferPanel);
         }
     }
@@ -1039,6 +1072,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private final Spinner mReadingDirection;
         private final Spinner mScaleMode;
         private final Spinner mStartPosition;
+        private final SeekBar mStartTransferTime;
         private final SwitchCompat mKeepScreenOn;
         private final SwitchCompat mShowClock;
         private final SwitchCompat mShowProgress;
@@ -1057,6 +1091,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mReadingDirection = (Spinner) mView.findViewById(R.id.reading_direction);
             mScaleMode = (Spinner) mView.findViewById(R.id.page_scaling);
             mStartPosition = (Spinner) mView.findViewById(R.id.start_position);
+            mStartTransferTime = (SeekBar) mView.findViewById(R.id.start_transfer_time);
             mKeepScreenOn = (SwitchCompat) mView.findViewById(R.id.keep_screen_on);
             mShowClock = (SwitchCompat) mView.findViewById(R.id.show_clock);
             mShowProgress = (SwitchCompat) mView.findViewById(R.id.show_progress);
@@ -1072,6 +1107,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mReadingDirection.setSelection(Settings.getReadingDirection());
             mScaleMode.setSelection(Settings.getPageScaling());
             mStartPosition.setSelection(Settings.getStartPosition());
+            mStartTransferTime.setProgress(Settings.getStartTransferTime());
             mKeepScreenOn.setChecked(Settings.getKeepScreenOn());
             mShowClock.setChecked(Settings.getShowClock());
             mShowProgress.setChecked(Settings.getShowProgress());
@@ -1129,6 +1165,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             boolean customScreenLightness = mCustomScreenLightness.isChecked();
 
             int screenLightness = mScreenLightness.getProgress();
+            int transferTime = mStartTransferTime.getProgress();
 
             boolean oldReadingFullscreen = Settings.getReadingFullscreen();
 
@@ -1136,6 +1173,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             Settings.putReadingDirection(layoutMode);
             Settings.putPageScaling(scaleMode);
             Settings.putStartPosition(startPosition);
+            Settings.putStartTransferTime(transferTime);
             Settings.putKeepScreenOn(keepScreenOn);
             Settings.putShowClock(showClock);
             Settings.putShowProgress(showProgress);

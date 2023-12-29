@@ -500,6 +500,17 @@ public class Settings {
         putIntToStr(KEY_START_POSITION, value);
     }
 
+    private static final String KEY_START_TRANSFER_TIME = "start_transfer_time";
+    private static final int DEFAULT_START_TRANSFER_TIME = 2;
+
+    public static int getStartTransferTime() {
+        return getInt(KEY_START_TRANSFER_TIME, DEFAULT_START_TRANSFER_TIME);
+    }
+
+    public static void putStartTransferTime(int value) {
+        putInt(KEY_START_TRANSFER_TIME, value);
+    }
+
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";
     private static final boolean DEFAULT_KEEP_SCREEN_ON = false;
 
