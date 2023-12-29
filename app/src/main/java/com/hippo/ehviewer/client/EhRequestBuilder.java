@@ -16,9 +16,12 @@
 
 package com.hippo.ehviewer.client;
 
+import android.net.Uri;
+
 import com.hippo.okhttp.ChromeRequestBuilder;
 
-import okhttp3.Request;
+import java.util.Iterator;
+import java.util.Map;
 
 public class EhRequestBuilder extends ChromeRequestBuilder {
 
@@ -37,6 +40,15 @@ public class EhRequestBuilder extends ChromeRequestBuilder {
         }
         if (origin != null) {
             addHeader("Origin", origin);
+        }
+    }
+
+    public EhRequestBuilder(Map<String, String> headers,String url ) {
+        super(url);
+        Iterator<Map.Entry<String, String>> e = headers.entrySet().iterator();
+        while(e.hasNext()){
+            Map.Entry<String,String> m = (Map.Entry<String, String>) e.next();
+            addHeader(m.getKey(),m.getValue());
         }
     }
 

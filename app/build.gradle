@@ -34,7 +34,7 @@ android {
         testOptions.unitTests.includeAndroidResources = true
         ndk {
             moduleName "native-lib"
-            abiFilters "armeabi-v7a" , "arm64-v8a", "x86", "x86_64"
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
         externalNativeBuild {
             cmake {
@@ -143,7 +143,8 @@ dependencies {
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
 //    implementation 'com.github.seven332:easyrecyclerview:1.2.1'
-    implementation 'com.github.seven332:glgallery:0.1.2'
+//    为方便扩展代码直接迁移至项目内
+//    implementation 'com.github.seven332:glgallery:0.1.2'
     implementation 'com.github.seven332:glview:0.1.0'
     implementation 'com.github.seven332:glview-image:0.1.0'
     implementation 'com.github.seven332:hotspot:0.1.0'
@@ -165,6 +166,10 @@ dependencies {
     // 还是旧版稳定好用
     implementation 'com.squareup.okhttp3:okhttp:3.14.7'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
+//    https://github.com/acsbendi/Android-Request-Inspector-WebView
+//    implementation 'com.github.acsbendi:Android-Request-Inspector-WebView:1.0.5'
+//    https://github.com/xiaojieonly/Android-Request-Inspector-WebView
+    implementation 'com.github.xiaojieonly:Android-Request-Inspector-WebView:70403bb'
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'

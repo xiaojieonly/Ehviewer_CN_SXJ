@@ -19,7 +19,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:divider="@drawable/spacer_keyline"
@@ -119,6 +119,29 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:text="@string/settings_read_auto_transfer_time"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <SeekBar
+                android:id="@+id/start_transfer_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:defaultValue="2"
+                android:max="15" />
+        </LinearLayout>
+
+
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/keep_screen_on"
             android:layout_width="match_parent"
@@ -169,13 +192,13 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"/>
+                android:layout_weight="2" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/reverse_volume_page"
-                android:layout_weight="20"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="20"
                 android:text="@string/settings_read_reverse_volume_page"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="@dimen/text_super_small" />
@@ -183,7 +206,7 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"/>
+                android:layout_weight="1" />
 
         </LinearLayout>
 

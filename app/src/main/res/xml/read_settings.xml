@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,92 +14,97 @@
   ~ limitations under the License.
   -->
 
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.hippo.preference.ListPreference
+        android:defaultValue="0"
         android:key="screen_rotation"
+        android:summary="%s"
         android:title="@string/settings_read_screen_rotation"
-        android:summary="%s"
         app:entries="@array/screen_rotation_entries"
-        app:entryValues="@array/screen_rotation_entry_values"
-        android:defaultValue="0"/>
+        app:entryValues="@array/screen_rotation_entry_values" />
 
     <com.hippo.preference.ListPreference
+        android:defaultValue="1"
         android:key="reading_direction"
+        android:summary="%s"
         android:title="@string/settings_read_reading_direction"
-        android:summary="%s"
         app:entries="@array/reading_direction_entries"
-        app:entryValues="@array/reading_direction_entry_values"
-        android:defaultValue="1"/>
+        app:entryValues="@array/reading_direction_entry_values" />
 
     <com.hippo.preference.ListPreference
+        android:defaultValue="3"
         android:key="page_scaling"
-        android:title="@string/settings_read_page_scaling"
         android:summary="%s"
+        android:title="@string/settings_read_page_scaling"
         app:entries="@array/page_scaling_entries"
-        app:entryValues="@array/page_scaling_entry_values"
-        android:defaultValue="3"/>
+        app:entryValues="@array/page_scaling_entry_values" />
 
     <com.hippo.preference.ListPreference
+        android:defaultValue="1"
         android:key="start_position"
-        android:title="@string/settings_read_start_position"
         android:summary="%s"
+        android:title="@string/settings_read_start_position"
         app:entries="@array/start_position_entries"
-        app:entryValues="@array/start_position_values"
-        android:defaultValue="1"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="keep_screen_on"
-        android:title="@string/settings_read_keep_screen_on"
-        android:defaultValue="false" />
-
-    <com.hippo.preference.SwitchPreference
-        android:key="gallery_show_clock"
-        android:title="@string/settings_read_show_clock"
-        android:defaultValue="true"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="gallery_show_progress"
-        android:title="@string/settings_read_show_progress"
-        android:defaultValue="true"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="gallery_show_battery"
-        android:title="@string/settings_read_show_battery"
-        android:defaultValue="true"/>
-
-    <com.hippo.preference.SwitchPreference
-      android:key="gallery_show_page_interval"
-      android:title="@string/settings_read_show_page_interval"
-      android:defaultValue="true"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="volume_page"
-        android:title="@string/settings_read_volume_page"
-        android:defaultValue="false"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="reverse_volume_page"
-        android:title="@string/settings_read_reverse_volume_page"
-        android:defaultValue="false"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="reading_fullscreen"
-        android:title="@string/settings_read_reading_fullscreen"
-        android:defaultValue="true"/>
-
-    <com.hippo.preference.SwitchPreference
-        android:key="custom_screen_lightness"
-        android:title="@string/settings_read_custom_screen_lightness"
-        android:defaultValue="false"/>
+        app:entryValues="@array/start_position_values" />
 
     <com.hippo.preference.SeekBarPreference
+        android:defaultValue="2"
+        android:key="start_transfer_time"
+        android:title="@string/settings_read_auto_transfer_time"
+        app:max="15" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="keep_screen_on"
+        android:title="@string/settings_read_keep_screen_on" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="gallery_show_clock"
+        android:title="@string/settings_read_show_clock" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="gallery_show_progress"
+        android:title="@string/settings_read_show_progress" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="gallery_show_battery"
+        android:title="@string/settings_read_show_battery" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="gallery_show_page_interval"
+        android:title="@string/settings_read_show_page_interval" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="volume_page"
+        android:title="@string/settings_read_volume_page" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="reverse_volume_page"
+        android:title="@string/settings_read_reverse_volume_page" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="reading_fullscreen"
+        android:title="@string/settings_read_reading_fullscreen" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="custom_screen_lightness"
+        android:title="@string/settings_read_custom_screen_lightness" />
+
+    <com.hippo.preference.SeekBarPreference
+        android:defaultValue="50"
+        android:dependency="custom_screen_lightness"
         android:key="screen_lightness"
         android:title="@string/settings_read_screen_lightness"
-        android:dependency="custom_screen_lightness"
-        app:max="200"
-        android:defaultValue="50"/>
+        app:max="200" />
 
 </PreferenceScreen>
