@@ -1,6 +1,20 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/01/01 :感谢大家在过去一年的陪伴，祝大家新年快乐~    
+ ###  新版发布1.9.7.2     
+ ###  新增自动翻页功能    
+ ###  新增画廊详情页标题点击复制功能    
+ ###  为EH->EHentai 设置页面添加直连适配       
+ ###  修复跳转画廊新版本时闪退的问题    
+   点击前往下载：[Microsoft App Center](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1PmH59LkFXIwObWoEmnp1IQ)  密码:ffk4   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iOCCu1jioj9g)  密码:1az8   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
+
 # 2023/12/17 :    
  ###  新版发布1.9.7.1     
  ###  修复列表鼠标滚动失效问题    
