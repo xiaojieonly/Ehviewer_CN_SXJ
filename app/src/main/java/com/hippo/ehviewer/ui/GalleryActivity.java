@@ -37,7 +37,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -54,6 +53,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -72,7 +73,6 @@ import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.ehviewer.widget.GalleryGuideView;
 import com.hippo.ehviewer.widget.GalleryHeader;
 import com.hippo.ehviewer.widget.ReversibleSeekBar;
-import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.lib.glgallery.GalleryView;
 import com.hippo.lib.glgallery.SimpleAdapter;
@@ -120,7 +120,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private static final long SLIDER_ANIMATION_DURING = 150;
     private static final long HIDE_SLIDER_DELAY = 3000;
 
-    private static final int WRITE_REQUEST_CODE = 43;
+//    private static final int WRITE_REQUEST_CODE = 43;
 
     private String mAction;
     private String mFilename;
@@ -257,7 +257,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     /**
      * eventbus 通知，用于修复跳转奔溃的问题
      *
-     * @param event
+     * @param event 通知数据对象
      */
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     public void onGalleryActivityEvent(GalleryActivityEvent event) {
@@ -300,7 +300,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(KEY_ACTION, mAction);
         outState.putString(KEY_FILENAME, mFilename);
@@ -313,9 +313,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     @Override
-    @SuppressWarnings({"deprecation", "WrongConstant"})
+    @SuppressWarnings({"WrongConstant"})
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        if (Settings.getReadingFullscreen() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Settings.getReadingFullscreen()) {
             Window w = getWindow();
             w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
@@ -389,11 +389,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         // System UI helper
         if (Settings.getReadingFullscreen()) {
             int systemUiLevel;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                systemUiLevel = SystemUiHelper.LEVEL_IMMERSIVE;
-            } else {
-                systemUiLevel = SystemUiHelper.LEVEL_HIDE_STATUS_BAR;
-            }
+            systemUiLevel = SystemUiHelper.LEVEL_IMMERSIVE;
             mSystemUiHelper = new SystemUiHelper(this, systemUiLevel,
                     SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES | SystemUiHelper.FLAG_IMMERSIVE_STICKY);
             mSystemUiHelper.hide();
@@ -418,7 +414,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         mSize = mGalleryProvider.size();
         mCurrentIndex = startPage;
-        mLayoutMode = mGalleryView.getLayoutMode();
+        if (mGalleryView!=null){
+            mLayoutMode = mGalleryView.getLayoutMode();
+        }
         updateSlider();
 
         // Update keep screen on
@@ -627,13 +625,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         return super.onKeyUp(keyCode, event);
     }
 
-    private GalleryPageView findPageByIndex(int index) {
-        if (mGalleryView != null) {
-            return mGalleryView.findPageByIndex(index);
-        } else {
-            return null;
-        }
-    }
+//    private GalleryPageView findPageByIndex(int index) {
+//        if (mGalleryView != null) {
+//            return mGalleryView.findPageByIndex(index);
+//        } else {
+//            return null;
+//        }
+//    }
 
     private void autoRead(View view) {
         autoTransferring = !autoTransferring;
@@ -820,7 +818,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private void showSlider(View sliderPanel, ObjectAnimator animator) {
         if (null != mSeekBarPanelAnimator) {
             animator.cancel();
-            animator = null;
         }
         if (sliderPanel == mAutoTransferPanel) {
             sliderPanel.setTranslationX(sliderPanel.getWidth());
@@ -848,7 +845,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private void hideSlider(View sliderPanel, ObjectAnimator animator) {
         if (null != animator) {
             animator.cancel();
-            animator = null;
         }
         if (sliderPanel == mAutoTransferPanel) {
             animator = ObjectAnimator.ofFloat(sliderPanel, "translationX", sliderPanel.getWidth());
@@ -979,7 +975,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         intent.setType("image/*");
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         try {
-            startActivityForResult(intent, WRITE_REQUEST_CODE);
+//            startActivityForResult(intent, WRITE_REQUEST_CODE);
+//            registerForActivityResult(intent, WRITE_REQUEST_CODE);
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::saveImageDats)
+                    .launch(intent);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             Toast.makeText(this, R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
@@ -989,35 +988,75 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         super.onActivityResult(requestCode, resultCode, resultData);
-        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            if (resultData != null) {
-                Uri uri = resultData.getData();
-                String filepath = getCacheDir() + "/" + mCacheFileName;
-                File cacheFile = new File(filepath);
+//        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+//            if (resultData != null) {
+//                Uri uri = resultData.getData();
+//                String filepath = getCacheDir() + "/" + mCacheFileName;
+//                File cacheFile = new File(filepath);
+//
+//                InputStream is = null;
+//                OutputStream os = null;
+//                ContentResolver resolver = getContentResolver();
+//
+//                try {
+//                    is = new FileInputStream(cacheFile);
+//                    os = resolver.openOutputStream(uri);
+//                    IOUtils.copy(is, os);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                } finally {
+//                    IOUtils.closeQuietly(is);
+//                    IOUtils.closeQuietly(os);
+//                }
+//
+//                cacheFile.delete();
+//
+//                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+//                // Sync media store
+//                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+//            }
+//        }
+    }
 
-                InputStream is = null;
-                OutputStream os = null;
-                ContentResolver resolver = getContentResolver();
+    private void saveImageDats(ActivityResult result){
+        if (result==null){
+            return;
+        }
+        if (result.getResultCode() != Activity.RESULT_OK){
+            return;
+        }
+        Intent resultData = result.getData();
+        if (resultData != null) {
+            Uri uri = resultData.getData();
+            String filepath = getCacheDir() + "/" + mCacheFileName;
+            File cacheFile = new File(filepath);
 
-                try {
-                    is = new FileInputStream(cacheFile);
-                    os = resolver.openOutputStream(uri);
-                    IOUtils.copy(is, os);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    IOUtils.closeQuietly(is);
-                    IOUtils.closeQuietly(os);
-                }
+            InputStream is = null;
+            OutputStream os = null;
+            ContentResolver resolver = getContentResolver();
 
-                cacheFile.delete();
-
-                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
-                // Sync media store
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+            try {
+                is = new FileInputStream(cacheFile);
+                os = resolver.openOutputStream(uri);
+                IOUtils.copy(is, os);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                IOUtils.closeQuietly(is);
+                IOUtils.closeQuietly(os);
             }
+
+            boolean deleted = cacheFile.delete();
+            if (!deleted){
+                cacheFile.deleteOnExit();
+            }
+
+            Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+            // Sync media store
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
         }
     }
+
 
     private void showPageDialog(final int page) {
         Resources resources = GalleryActivity.this.getResources();
@@ -1025,18 +1064,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         builder.setTitle(resources.getString(R.string.page_menu_title, page + 1));
 
         final CharSequence[] items;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            items = new CharSequence[]{
-                    getString(R.string.page_menu_refresh),
-                    getString(R.string.page_menu_share),
-                    getString(R.string.page_menu_save),
-                    getString(R.string.page_menu_save_to)};
-        } else {
-            items = new CharSequence[]{
-                    getString(R.string.page_menu_refresh),
-                    getString(R.string.page_menu_share),
-                    getString(R.string.page_menu_save)};
-        }
+        items = new CharSequence[]{
+                getString(R.string.page_menu_refresh),
+                getString(R.string.page_menu_share),
+                getString(R.string.page_menu_save),
+                getString(R.string.page_menu_save_to)};
         pageDialogListener(builder, items, page);
         builder.show();
     }
