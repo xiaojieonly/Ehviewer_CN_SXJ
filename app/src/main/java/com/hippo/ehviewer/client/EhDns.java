@@ -83,20 +83,7 @@ public class EhDns implements Dns {
         hosts = EhApplication.getHosts(context);
         DnsOverHttps.Builder builder = new DnsOverHttps.Builder()
                 .client(new OkHttpClient.Builder().cache(EhApplication.getOkHttpCache(context)).build())
-                .url(HttpUrl.get("https://cloudflare-dns.com/dns-query"));
-        try {
-            builder.bootstrapDnsHosts(InetAddress.getByName("162.159.36.1"),
-                    InetAddress.getByName("162.159.46.1"),
-                    InetAddress.getByName("1.1.1.1"),
-                    InetAddress.getByName("1.0.0.1"),
-                    InetAddress.getByName("162.159.132.53"),
-                    InetAddress.getByName("2606:4700:4700::1111"),
-                    InetAddress.getByName("2606:4700:4700::1001"),
-                    InetAddress.getByName("2606:4700:4700::0064"),
-                    InetAddress.getByName("2606:4700:4700::6400"));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+                .url(HttpUrl.get("https://77.88.8.1/dns-query"));
         dnsOverHttps = builder.post(true).build();
     }
 
