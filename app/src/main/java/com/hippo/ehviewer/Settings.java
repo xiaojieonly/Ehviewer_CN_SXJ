@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -44,6 +45,7 @@ public class Settings {
 
     private static final String TAG = Settings.class.getSimpleName();
 
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
     private static SharedPreferences sSettingsPre;
     private static EhConfig sEhConfig;
@@ -52,10 +54,10 @@ public class Settings {
         sContext = context.getApplicationContext();
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
         sEhConfig = loadEhConfig();
-        fixDefaultValue(context);
+        fixDefaultValue();
     }
 
-    private static void fixDefaultValue(Context context) {
+    private static void fixDefaultValue() {
         // Enable builtin hosts if the country is CN
         if (!sSettingsPre.contains(KEY_BUILT_IN_HOSTS)) {
             if ("CN".equals(Locale.getDefault().getCountry())) {

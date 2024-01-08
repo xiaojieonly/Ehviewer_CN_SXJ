@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Environment;
 import androidx.annotation.Nullable;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class AppConfig {
 
@@ -40,6 +42,7 @@ public class AppConfig {
     private static final String DATA = "data";
     private static final String CRASH = "crash";
 
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
     public static void initialize(Context context) {
@@ -113,10 +116,10 @@ public class AppConfig {
         return getDirInExternalAppDir(CRASH);
     }
 
-    @Nullable
-    public static File createExternalTempFile() {
-        return FileUtils.createTempFile(getExternalTempDir(), null);
-    }
+//    @Nullable
+//    public static File createExternalTempFile() {
+//        return FileUtils.createTempFile(getExternalTempDir(), null);
+//    }
 
     @Nullable
     public static File getTempDir() {
@@ -147,11 +150,11 @@ public class AppConfig {
             String message = e.getMessage();
             String body = e.getBody();
             if (null != message) {
-                os.write(message.getBytes("utf-8"));
+                os.write(message.getBytes(StandardCharsets.UTF_8));
                 os.write('\n');
             }
             if (null != body) {
-                os.write(body.getBytes("utf-8"));
+                os.write(body.getBytes(StandardCharsets.UTF_8));
             }
             os.flush();
         } catch (IOException e1) {

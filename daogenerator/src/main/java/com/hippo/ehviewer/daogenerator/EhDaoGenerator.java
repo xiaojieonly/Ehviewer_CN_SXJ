@@ -47,8 +47,12 @@ public class EhDaoGenerator {
     public static void generate() throws Exception {
         Utilities.deleteContents(new File(DELETE_DIR));
         File outDir = new File(OUT_DIR);
-        outDir.delete();
-        outDir.mkdirs();
+        if(!outDir.delete()){
+            outDir.deleteOnExit();
+        }
+        if (!outDir.mkdirs()){
+            throw new Exception("创建文件失败");
+        }
 
         Schema schema = new Schema(VERSION, PACKAGE);
         addGalleryTags(schema);

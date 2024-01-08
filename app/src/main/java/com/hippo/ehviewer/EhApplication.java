@@ -73,7 +73,6 @@ import com.hippo.yorozuya.SimpleHandler;
 import org.conscrypt.Conscrypt;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.ArrayList;
@@ -654,8 +653,6 @@ public class EhApplication extends RecordingApplication {
     /**
      * 将用户订阅标签列表存入内存缓存
      *
-     * @param context
-     * @param userTagList
      */
     public static void saveUserTagList(@NonNull Context context, UserTagList userTagList) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
@@ -665,8 +662,6 @@ public class EhApplication extends RecordingApplication {
     /**
      * 从内存缓存中获取用户订阅标签列表
      *
-     * @param context
-     * @return
      */
     public static UserTagList getUserTagList(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
@@ -705,7 +700,6 @@ public class EhApplication extends RecordingApplication {
     /**
      * 显示eh事件
      *
-     * @param result
      */
     public void showEventPane(EhNewsDetail result) {
         ehNewsDetail = result;
