@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -42,6 +43,7 @@ public final class Crash {
     return null != str ? str : "null";
   }
 
+  @SuppressLint("HardwareIds")
   private static void collectInfo(Context context, FileWriter fw) throws IOException {
     try {
       PackageManager pm = context.getPackageManager();
