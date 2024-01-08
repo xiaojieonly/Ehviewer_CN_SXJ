@@ -386,7 +386,7 @@ public class EhDaoGenerator {
                 "\t\tthis.rating = galleryInfo.rating;\n" +
                 "\t\tthis.simpleTags = galleryInfo.simpleTags;\n" +
                 "\t\tthis.simpleLanguage = galleryInfo.simpleLanguage;\n" +
-                "\t}").setConstructor(true);
+                "\t}");
         javaClass.addImport("com.hippo.ehviewer.client.data.GalleryInfo");
 
         javaClass.addMethod("\tpublic JSONObject toJson(){\n" +
