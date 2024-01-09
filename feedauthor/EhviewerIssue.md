@@ -6,6 +6,7 @@
 ## 能看预览图但是无法下载/浏览图片：[issue199](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/199)
 ## 阅读漫画时提示“获取pToken错误”：[issue302](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/302)
 ## 如何修改默认下载标签：[issue391](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/391)
+## 无法自己选择收藏夹：[issue975](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/975)
 ## 如何删除屏蔽标签：[issue242](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/242)
 ## 下载列表等备份文件导出后无法导入其他软件：[issue168](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/168)
 ## 无法下载，已经下载的内容读取失败：[issue485](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/issues/485)
