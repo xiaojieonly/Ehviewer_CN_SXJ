@@ -29,6 +29,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -150,6 +151,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import okhttp3.OkHttpClient;
 
@@ -326,6 +328,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     private Context context;
     private MainActivity activity;
+
+    private ExecutorService executorService;
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     private void handleArgs(Bundle args) {
         if (args == null) {
@@ -964,19 +970,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mLanguage.setText(gd.language);
         GalleryInfo galleryInfo = getGalleryInfo();
-        Context context = getEHContext();
-        SpiderQueen mSpiderQueen;
-        mSpiderQueen = SpiderQueen.obtainSpiderQueen(context, galleryInfo, SpiderQueen.MODE_READ);
-        int ssp = mSpiderQueen.getStartPage();
-        int startPage;
-        if (ssp == 0) {
-            startPage = 0;
-        } else {
-            startPage = ssp + 1;
-        }
+        bindReadProgress(galleryInfo);
 
-        mPages.setText(startPage + "/" + resources.getQuantityString(
-                R.plurals.page_count, gd.pages, gd.pages));
+//        mPages.setText(startPage + "/" + resources.getQuantityString(
+//                R.plurals.page_count, gd.pages, gd.pages));
 //        mPages.setText(resources.getQuantityString(
 //                R.plurals.page_count, gd.pages, gd.pages));
         mSize.setText(gd.size);
@@ -993,6 +990,28 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         bindTags(gd.tags);
         bindComments(gd.comments.comments);
         bindPreviews(gd);
+    }
+
+    private void bindReadProgress(GalleryInfo galleryInfo){
+        if (executorService == null){
+            executorService = EhApplication.getExecutorService(context);
+        }
+        executorService.submit(()->{
+            int startPage = SpiderQueen.findStartPage(this.context, galleryInfo);
+            handler.post(()->{
+                String text;
+                if (mPages==null){
+                    return;
+                }
+                if (startPage > 0) {
+                    text = startPage + 1 + "/" + galleryInfo.pages + "P";
+                    mPages.setText(text);
+                } else {
+                    text = "0/" + galleryInfo.pages + "P";
+                    mPages.setText(text);
+                }
+            });
+        });
     }
 
     @SuppressWarnings("deprecation")
