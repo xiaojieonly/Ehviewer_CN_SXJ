@@ -215,10 +215,9 @@ public final class SpiderQueen implements Runnable {
             try {
                 pipe.obtain();
                 spiderInfo = SpiderInfo.read(pipe.open());
-            } catch (IOException e) {
+            } catch (IOException ignore) {
                 // Ignore
-                IOException exception = new IOException("读取失败",e);
-                Crashes.trackError(exception);
+//                Crashes.trackError(ignore);
             } finally {
                 pipe.close();
                 pipe.release();
