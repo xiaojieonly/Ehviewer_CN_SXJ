@@ -17,7 +17,9 @@ import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_SUCCESS;
 import static com.hippo.ehviewer.event.SomethingNeedRefresh.bookmarkDrawNeedRefresh;
 import static com.hippo.ehviewer.event.SomethingNeedRefresh.downloadInfoNeedRefresh;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -30,6 +32,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.fastjson.JSONArray;
@@ -44,6 +47,7 @@ import com.hippo.ehviewer.client.wifi.ListenerThread;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.util.PermissionRequester;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -55,6 +59,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WiFiClientActivity extends AppCompatActivity {
+
+    private final int pCode = 88888;
 
     private TextView textState;
     private TextView receiveMessage;
@@ -90,8 +96,10 @@ public class WiFiClientActivity extends AppCompatActivity {
         findViewById(R.id.connect_server).setOnClickListener(this::connect);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
+        boolean result = PermissionRequester.request(this, Manifest.permission.CHANGE_WIFI_STATE,
+                getString(R.string.wifi_server_no_permission),pCode);
         //检查Wifi状态
-        if (!wifiManager.isWifiEnabled())
+        if (result && !wifiManager.isWifiEnabled())
             wifiManager.setWifiEnabled(true);
         textState = findViewById(R.id.status_info);
         receiveMessage = findViewById(R.id.receive_message);
@@ -110,6 +118,15 @@ public class WiFiClientActivity extends AppCompatActivity {
         connectSocket();
         listenerThread = new ListenerThread(PORT, handler);
         listenerThread.start();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == pCode){
+            wifiManager.setWifiEnabled(true);
+            connectSocket();
+        }
     }
 
     private void connectSocket() {
