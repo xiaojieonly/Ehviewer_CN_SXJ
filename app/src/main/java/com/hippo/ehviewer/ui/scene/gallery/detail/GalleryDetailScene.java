@@ -1004,7 +1004,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         bindPreviews(gd);
     }
 
-    private void bindReadProgress(GalleryInfo galleryInfo){
+    private void bindReadProgress(GalleryInfo info){
         if (mContext== null){
             mContext = getEHContext();
             if (mContext==null){
@@ -1014,20 +1014,21 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (executorService == null){
             executorService = EhApplication.getExecutorService(mContext);
         }
+
         executorService.submit(()->{
-            int startPage = SpiderQueen.findStartPage(this.mContext, galleryInfo);
+            int startPage = SpiderQueen.findStartPage(this.mContext, info);
+            int pages = info.pages;
+            String text;
+            if (startPage > 0) {
+                text = startPage + 1 + "/" + pages + "P";
+            } else {
+                text = "0/" + pages + "P";
+            }
             handler.post(()->{
-                String text;
                 if (mPages==null){
                     return;
                 }
-                if (startPage > 0) {
-                    text = startPage + 1 + "/" + galleryInfo.pages + "P";
-                    mPages.setText(text);
-                } else {
-                    text = "0/" + galleryInfo.pages + "P";
-                    mPages.setText(text);
-                }
+                mPages.setText(text);
             });
         });
     }

@@ -19,13 +19,9 @@ package com.hippo.ehviewer.client.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-
-import androidx.annotation.Nullable;
-
 import com.hippo.util.DataUtils;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * 画廊参数存储对象
@@ -42,7 +38,7 @@ public class GalleryDetail extends GalleryInfo {
     public String language;
     public String size;
 //    public String updateUrl;
-    public int pages;
+//    public int pages;
     public int SpiderInfoPages;
 
     public int favoriteCount;
