@@ -414,7 +414,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         mSize = mGalleryProvider.size();
         mCurrentIndex = startPage;
-        if (mGalleryView!=null){
+        if (mGalleryView != null) {
             mLayoutMode = mGalleryView.getLayoutMode();
         }
         updateSlider();
@@ -492,6 +492,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mLeftText = null;
         mRightText = null;
         mSeekBar = null;
+
+        if (transferService != null && !transferService.isShutdown()) {
+            transferService.shutdown();
+            transferService = null;
+        }
+
         super.onDestroy();
         SimpleHandler.getInstance().removeCallbacks(mHideSliderRunnable);
         //销毁事件
@@ -649,19 +655,23 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
             long initialDelay = Settings.getStartTransferTime();
             long waitTime = initialDelay * 2L;
-            transferService.scheduleAtFixedRate(
-                    () -> transHandle.post(() -> {
-                        if (mGalleryView == null) {
-                            return;
-                        }
-                        if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
-                            mGalleryView.pageLeft();
-                        } else {
-                            mGalleryView.pageRight();
-                        }
-                    }),
-                    initialDelay, waitTime, TimeUnit.SECONDS
-            );
+            try {
+                transferService.scheduleAtFixedRate(
+                        () -> transHandle.post(() -> {
+                            if (mGalleryView == null) {
+                                return;
+                            }
+                            if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                                mGalleryView.pageLeft();
+                            } else {
+                                mGalleryView.pageRight();
+                            }
+                        }),
+                        initialDelay, waitTime, TimeUnit.SECONDS
+                );
+            } catch (IllegalArgumentException ignore) {
+
+            }
         }
     }
 
@@ -842,6 +852,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+
     private void hideSlider(View sliderPanel, ObjectAnimator animator) {
         if (null != animator) {
             animator.cancel();
@@ -1018,11 +1029,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 //        }
     }
 
-    private void saveImageDats(ActivityResult result){
-        if (result==null){
+    private void saveImageDats(ActivityResult result) {
+        if (result == null) {
             return;
         }
-        if (result.getResultCode() != Activity.RESULT_OK){
+        if (result.getResultCode() != Activity.RESULT_OK) {
             return;
         }
         Intent resultData = result.getData();
@@ -1047,7 +1058,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
 
             boolean deleted = cacheFile.delete();
-            if (!deleted){
+            if (!deleted) {
                 cacheFile.deleteOnExit();
             }
 
@@ -1119,21 +1130,21 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         @SuppressLint("InflateParams")
         public GalleryMenuHelper(Context context) {
             mView = LayoutInflater.from(context).inflate(R.layout.dialog_gallery_menu, null);
-            mScreenRotation = (Spinner) mView.findViewById(R.id.screen_rotation);
-            mReadingDirection = (Spinner) mView.findViewById(R.id.reading_direction);
-            mScaleMode = (Spinner) mView.findViewById(R.id.page_scaling);
-            mStartPosition = (Spinner) mView.findViewById(R.id.start_position);
-            mStartTransferTime = (SeekBar) mView.findViewById(R.id.start_transfer_time);
-            mKeepScreenOn = (SwitchCompat) mView.findViewById(R.id.keep_screen_on);
-            mShowClock = (SwitchCompat) mView.findViewById(R.id.show_clock);
-            mShowProgress = (SwitchCompat) mView.findViewById(R.id.show_progress);
-            mShowBattery = (SwitchCompat) mView.findViewById(R.id.show_battery);
-            mShowPageInterval = (SwitchCompat) mView.findViewById(R.id.show_page_interval);
-            mVolumePage = (SwitchCompat) mView.findViewById(R.id.volume_page);
-            mReverseVolumePage = (SwitchCompat) mView.findViewById(R.id.reverse_volume_page);
-            mReadingFullscreen = (SwitchCompat) mView.findViewById(R.id.reading_fullscreen);
-            mCustomScreenLightness = (SwitchCompat) mView.findViewById(R.id.custom_screen_lightness);
-            mScreenLightness = (SeekBar) mView.findViewById(R.id.screen_lightness);
+            mScreenRotation = mView.findViewById(R.id.screen_rotation);
+            mReadingDirection = mView.findViewById(R.id.reading_direction);
+            mScaleMode = mView.findViewById(R.id.page_scaling);
+            mStartPosition = mView.findViewById(R.id.start_position);
+            mStartTransferTime = mView.findViewById(R.id.start_transfer_time);
+            mKeepScreenOn = mView.findViewById(R.id.keep_screen_on);
+            mShowClock = mView.findViewById(R.id.show_clock);
+            mShowProgress = mView.findViewById(R.id.show_progress);
+            mShowBattery = mView.findViewById(R.id.show_battery);
+            mShowPageInterval = mView.findViewById(R.id.show_page_interval);
+            mVolumePage = mView.findViewById(R.id.volume_page);
+            mReverseVolumePage = mView.findViewById(R.id.reverse_volume_page);
+            mReadingFullscreen = mView.findViewById(R.id.reading_fullscreen);
+            mCustomScreenLightness = mView.findViewById(R.id.custom_screen_lightness);
+            mScreenLightness = mView.findViewById(R.id.screen_lightness);
 
             mScreenRotation.setSelection(Settings.getScreenRotation());
             mReadingDirection.setSelection(Settings.getReadingDirection());
