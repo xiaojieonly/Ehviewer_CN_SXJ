@@ -29,24 +29,26 @@ import java.io.FileWriter;
 public class EhDaoGenerator {
 
     private static final String PACKAGE = "com.hippo.ehviewer.dao";
-    private static final String OUT_DIR = "../app/src/main/java-gen";
-    private static final String DELETE_DIR = "../app/src/main/java-gen/com/hippo/ehviewer/dao";
+    private static final String OUT_DIR = "app/src/main/java-gen";
+    private static final String DELETE_DIR = "app/src/main/java-gen/com/hippo/ehviewer/dao";
 
     private static final int VERSION = 6;
 
-    private static final String DOWNLOAD_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/DownloadInfo.java";
-    private static final String HISTORY_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/HistoryInfo.java";
-    private static final String QUICK_SEARCH_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/QuickSearch.java";
-    private static final String LOCAL_FAVORITE_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/LocalFavoriteInfo.java";
-    private static final String BOOKMARK_INFO_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
-    private static final String FILTER_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
-    private static final String BLACKLIST_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
-    private static final String GALLERY_TAG_PATH = "../app/src/main/java-gen/com/hippo/ehviewer/dao/GalleryTags.java";
+    private static final String DOWNLOAD_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/DownloadInfo.java";
+    private static final String HISTORY_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/HistoryInfo.java";
+    private static final String QUICK_SEARCH_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/QuickSearch.java";
+    private static final String LOCAL_FAVORITE_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/LocalFavoriteInfo.java";
+    private static final String BOOKMARK_INFO_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/BookmarkInfo.java";
+    private static final String FILTER_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/Filter.java";
+    private static final String BLACKLIST_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/BlackList.java";
+    private static final String GALLERY_TAG_PATH = "app/src/main/java-gen/com/hippo/ehviewer/dao/GalleryTags.java";
 
 
     public static void generate() throws Exception {
         Utilities.deleteContents(new File(DELETE_DIR));
-        File outDir = new File(OUT_DIR);
+        File absFile = new File("");
+        String absPath = absFile.getAbsolutePath()+"/"+OUT_DIR;
+        File outDir = new File(absPath);
         if(!outDir.delete()){
             outDir.deleteOnExit();
         }
