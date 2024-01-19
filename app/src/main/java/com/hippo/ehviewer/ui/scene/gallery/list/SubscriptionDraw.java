@@ -5,18 +5,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
 
 import com.hippo.app.EditTextDialogBuilder;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.callBack.SubscriptionCallback;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
@@ -35,13 +36,19 @@ import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ViewUtils;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.hippo.ehviewer.Settings.*;
 
 public class SubscriptionDraw {
+
+    private static final String SUBSCRIPTION_DRAW_SCROLL_Y = "SubscriptionDrawScrollY";
+    private static final String SUBSCRIPTION_DRAW_POS = "SubscriptionDrawPos";
+
     private final Context context;
     private final LayoutInflater inflater;
+
+    final private EhApplication ehApplication;
+
     private ListView listView;
     private ProgressView progressView;
     private FrameLayout frameLayout;
@@ -56,11 +63,13 @@ public class SubscriptionDraw {
 
     private UserTagList userTagList;
 
-    private EhTagDatabase ehTags;
+    private final EhTagDatabase ehTags;
 
     private String tagName;
 
-    public SubscriptionDraw(Context context, LayoutInflater inflater, EhClient ehClient, String mTag, EhTagDatabase ehTags) {
+
+
+    public SubscriptionDraw(@NonNull Context context, LayoutInflater inflater, EhClient ehClient, String mTag, EhTagDatabase ehTags) {
         this.context = context;
         this.inflater = inflater;
         this.ehClient = ehClient;
@@ -70,7 +79,7 @@ public class SubscriptionDraw {
         } else {
             this.ehTags = ehTags;
         }
-
+        ehApplication = (EhApplication) context.getApplicationContext();
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -143,11 +152,11 @@ public class SubscriptionDraw {
             }
             return;
         }
-        List<String> name = new ArrayList<>();
-
-        for (UserTag userTag : userTagList.userTags) {
-            name.add(userTag.getName(ehTags));
-        }
+//        List<String> name = new ArrayList<>();
+//
+//        for (UserTag userTag : userTagList.userTags) {
+//            name.add(userTag.getName(ehTags));
+//        }
 
         SubscriptionItemAdapter adapter = new SubscriptionItemAdapter(context, userTagList, ehTags);
 
@@ -156,6 +165,10 @@ public class SubscriptionDraw {
             UserTag tag = userTagList.userTags.get(position);
             callback.onSubscriptionItemClick(tag.tagName);
         });
+        listView.setOnScrollListener(new ScrollListener());
+        if (userTagList.size()>0){
+            resume();
+        }
     }
 
     private void addNewTag() {
@@ -174,12 +187,7 @@ public class SubscriptionDraw {
         builder.setTitle(R.string.add_tag_dialog_title);
         builder.setPositiveButton(R.string.subscription_watched, this::onDialogPositiveButtonClick);
         builder.setNegativeButton(R.string.subscription_hidden, this::onDialogNegativeButtonClick);
-//        final AlertDialog dialog = builder.show();
         builder.show();
-//        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
-//            dialog.dismiss();
-//            requestTag(tagName,true);
-//        });
     }
 
     private void onDialogNegativeButtonClick(DialogInterface dialog, int which) {
@@ -209,7 +217,7 @@ public class SubscriptionDraw {
         progressView.setVisibility(View.VISIBLE);
         frameLayout.setVisibility(View.GONE);
 
-        EhClient.Callback callback = new SubscriptionDetailListener(context, activity.getStageId(), mTag);
+        EhClient.Callback<UserTagList> callback = new SubscriptionDetailListener(context, activity.getStageId(), mTag);
 
         TagPushParam param = new TagPushParam();
 
@@ -231,7 +239,6 @@ public class SubscriptionDraw {
     /**
      * 请求数据
      *
-     * @return
      */
     private boolean request() {
 
@@ -242,7 +249,7 @@ public class SubscriptionDraw {
             return false;
         }
 
-        EhClient.Callback callback = new SubscriptionDetailListener(context, activity.getStageId(), mTag);
+        EhClient.Callback<UserTagList> callback = new SubscriptionDetailListener(context, activity.getStageId(), mTag);
 
         EhRequest mRequest = new EhRequest()
                 .setMethod(EhClient.METHOD_GET_WATCHED)
@@ -251,6 +258,14 @@ public class SubscriptionDraw {
         ehClient.execute(mRequest);
 
         return true;
+    }
+
+    public void resume() {
+        Object scrollY = ehApplication.getTempCache(SUBSCRIPTION_DRAW_SCROLL_Y);
+        Object pos = ehApplication.getTempCache(SUBSCRIPTION_DRAW_POS);
+        if (scrollY != null && pos != null) {
+            listView.setSelection((Integer) pos);
+        }
     }
 
 
@@ -290,5 +305,26 @@ public class SubscriptionDraw {
         }
     }
 
+    private class ScrollListener implements AbsListView.OnScrollListener {
+        public ScrollListener() {
+            super();
+        }
 
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
+            View item = view.getChildAt(0);
+            if (item == null) {
+                return;
+            }
+            int firstPos = view.getFirstVisiblePosition();
+            int top = item.getTop();
+            int scrollY = firstPos * item.getHeight() - top;
+            ehApplication.putTempCache(SUBSCRIPTION_DRAW_SCROLL_Y, scrollY);
+            ehApplication.putTempCache(SUBSCRIPTION_DRAW_POS, firstPos);
+        }
+
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        }
+    }
 }

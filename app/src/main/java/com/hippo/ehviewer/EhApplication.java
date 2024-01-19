@@ -110,6 +110,8 @@ public class EhApplication extends RecordingApplication {
     private final IntIdGenerator mIdGenerator = new IntIdGenerator();
     private final HashMap<Integer, Object> mGlobalStuffMap = new HashMap<>();
 
+    private final HashMap<String, Object> mTempCacheMap = new HashMap<>();
+
     private EhCookieStore mEhCookieStore;
     private EhClient mEhClient;
     private EhProxySelector mEhProxySelector;
@@ -308,6 +310,23 @@ public class EhApplication extends RecordingApplication {
 
     public Object removeGlobalStuff(int id) {
         return mGlobalStuffMap.remove(id);
+    }
+
+    public String putTempCache(@NonNull String key,@NonNull Object o) {
+        mTempCacheMap.put(key, o);
+        return key;
+    }
+
+    public boolean containTempCache(@NonNull String key) {
+        return mTempCacheMap.containsKey(key);
+    }
+
+    public Object getTempCache(@NonNull String key) {
+        return mTempCacheMap.get(key);
+    }
+
+    public Object removeTempCache(@NonNull String key) {
+        return mTempCacheMap.remove(key);
     }
 
     public void removeGlobalStuff(Object o) {
