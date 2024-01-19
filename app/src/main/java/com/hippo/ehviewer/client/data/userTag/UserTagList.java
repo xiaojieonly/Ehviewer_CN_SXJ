@@ -44,4 +44,8 @@ public class UserTagList implements Parcelable {
     public UserTag get(int index){
         return userTags.get(index);
     }
+
+    public int size(){
+        return userTags.size();
+    }
 }

@@ -19,12 +19,9 @@ package com.hippo.ehviewer.ui.scene.gallery.list;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -55,7 +52,6 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
@@ -78,7 +74,6 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.FavouriteStatusRouter;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
-import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.callBack.SubscriptionCallback;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhClient;
@@ -141,9 +136,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class GalleryListScene extends BaseScene
         implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
@@ -173,10 +166,10 @@ public final class GalleryListScene extends BaseScene
     public final static String KEY_HAS_FIRST_REFRESH = "has_first_refresh";
     public final static String KEY_STATE = "state";
 
-    private final static int STATE_NORMAL = 0;
-    private final static int STATE_SIMPLE_SEARCH = 1;
-    private final static int STATE_SEARCH = 2;
-    private final static int STATE_SEARCH_SHOW_LIST = 3;
+    final static int STATE_NORMAL = 0;
+    final static int STATE_SIMPLE_SEARCH = 1;
+    final static int STATE_SEARCH = 2;
+    final static int STATE_SEARCH_SHOW_LIST = 3;
 
     private static final long ANIMATE_TIME = 300L;
 
@@ -189,7 +182,7 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     private EhClient mClient;
     @Nullable
-    private ListUrlBuilder mUrlBuilder;
+    ListUrlBuilder mUrlBuilder;
 
     /*---------------
      View life cycle
@@ -211,7 +204,7 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     private GalleryListAdapter mAdapter;
     @Nullable
-    private GalleryListHelper mHelper;
+    public GalleryListHelper mHelper;
     @Nullable
     private DrawerArrowDrawable mLeftDrawable;
     @Nullable
@@ -227,7 +220,7 @@ public final class GalleryListScene extends BaseScene
     @Nullable
     private AlertDialog jumpSelectorDialog;
     @NonNull
-    private ViewPager drawPager;
+    ViewPager drawPager;
     @NonNull
     private View bookmarksView;
     @Nullable
@@ -235,11 +228,12 @@ public final class GalleryListScene extends BaseScene
 
     private JumpDateSelector mJumpDateSelector;
 
-    private SubscriptionDraw subscriptionDraw;
-
     private EhTagDatabase ehTags;
 
     private ExecutorService executorService;
+
+    private BookmarksDraw mBookmarksDraw;
+    private SubscriptionDraw mSubscriptionDraw;
 
     @Nullable
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
@@ -545,7 +539,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     // Update search bar title, drawer checked item
-    private void onUpdateUrlBuilder() {
+    protected void onUpdateUrlBuilder() {
         ListUrlBuilder builder = mUrlBuilder;
         Resources resources = getResources2();
         if (resources == null || builder == null || mSearchLayout == null) {
@@ -785,10 +779,6 @@ public final class GalleryListScene extends BaseScene
         GalleryListSecenDialog dialog = new GalleryListSecenDialog(this);
         dialog.setTagName(tagName);
         dialog.showTagLongPressDialog();
-//        Context context = requireContext();
-//        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-//        manager.setPrimaryClip(ClipData.newPlainText(null,tagName));
-//        Toast.makeText(context,R.string.gallery_tag_copy,Toast.LENGTH_LONG).show();
         return true;
     }
 
@@ -918,8 +908,8 @@ public final class GalleryListScene extends BaseScene
         mActionFabDrawable = null;
     }
 
-    private void showQuickSearchTipDialog(final List<QuickSearch> list,
-                                          final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
+    void showQuickSearchTipDialog(final List<QuickSearch> list,
+                                  final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
         Context context = getEHContext();
         if (null == context) {
             return;
@@ -935,8 +925,8 @@ public final class GalleryListScene extends BaseScene
         }).show();
     }
 
-    private void showAddQuickSearchDialog(final List<QuickSearch> list,
-                                          final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
+    void showAddQuickSearchDialog(final List<QuickSearch> list,
+                                  final ArrayAdapter<QuickSearch> adapter, final ListView listView, final TextView tip) {
         Context context = getEHContext();
         final ListUrlBuilder urlBuilder = mUrlBuilder;
         if (null == context || null == urlBuilder) {
@@ -995,17 +985,14 @@ public final class GalleryListScene extends BaseScene
                 String newText = "";
                 for (int i = 0; i < parts.length; i++) {
                     String[] tags = parts[i].split(":");
-                    for(int j=0; j<tags.length; j++)
-                    {
-                        tags[j]=tags[j].replace("\"", "").replace("$", "");
+                    for (int j = 0; j < tags.length; j++) {
+                        tags[j] = tags[j].replace("\"", "").replace("$", "");
                     }
                     quickSearch.name = TagTranslationUtil.getTagCN(tags, ehTags);
-                    if(newText.isEmpty())
-                    {
+                    if (newText.isEmpty()) {
                         newText = TagTranslationUtil.getTagCN(tags, ehTags);
-                    }else
-                    {
-                        newText+=" "+TagTranslationUtil.getTagCN(tags, ehTags);
+                    } else {
+                        newText += " " + TagTranslationUtil.getTagCN(tags, ehTags);
                     }
                 }
                 quickSearch.name = newText;
@@ -1052,102 +1039,17 @@ public final class GalleryListScene extends BaseScene
 
     @SuppressLint({"RtlHardcoded", "NonConstantResourceId"})
     private View bookmarksViewBuild(LayoutInflater inflater) {
-
-        View bookmarksView = inflater.inflate(R.layout.bookmarks_draw, null, false);
-
-        Toolbar toolbar = (Toolbar) ViewUtils.$$(bookmarksView, R.id.toolbar);
-        final TextView tip = (TextView) ViewUtils.$$(bookmarksView, R.id.tip);
-        final ListView listView = (ListView) ViewUtils.$$(bookmarksView, R.id.list_view);
-
         Context context = getEHContext();
-        assert context != null;
-        AssertUtils.assertNotNull(context);
-
-        List<QuickSearch> quickSearchList = EhDB.getAllQuickSearch();
-        //汉化标签
-        final boolean judge = Settings.getShowTagTranslations();
-        if (judge && 0 != quickSearchList.size()) {
-            if (ehTags == null) {
-                ehTags = EhTagDatabase.getInstance(getContext());
-            }
-            for (int i = 0; i < quickSearchList.size(); i++) {
-                String name = quickSearchList.get(i).getName();
-                //重设标签名称,并跳过已翻译的标签
-                if (name != null && 2 == name.split(":").length) {
-                    quickSearchList.get(i).setName(TagTranslationUtil.getTagCN(name.split(":"), ehTags));
-                    EhDB.updateQuickSearch(quickSearchList.get(i));
-                }
-            }
-        } else if (!judge && 0 != quickSearchList.size()) {
-            for (int i = 0; i < quickSearchList.size(); i++) {
-                String name = quickSearchList.get(i).getName();
-                //重设标签名称,并跳过未翻译的标签
-                if (null != name && 1 == name.split(":").length) {
-                    quickSearchList.get(i).setName(quickSearchList.get(i).getKeyword());
-                    EhDB.updateQuickSearch(quickSearchList.get(i));
-                }
-            }
+        if (context == null) {
+            return new View(null);
         }
-
-
-        final List<QuickSearch> list = quickSearchList;
-
-        final ArrayAdapter<QuickSearch> adapter = new ArrayAdapter<>(context, R.layout.item_simple_list, list);
-        listView.setAdapter(adapter);
-        //快速搜索点击tag事件监听
-        listView.setOnItemClickListener((parent, view1, position, id) -> {
-            if (null == mHelper || null == mUrlBuilder) {
-                return;
-            }
-
-            mUrlBuilder.set(list.get(position));
-            mUrlBuilder.setPageIndex(0);
-            onUpdateUrlBuilder();
-            mHelper.refresh();
-            setState(STATE_NORMAL);
-            closeDrawer(Gravity.RIGHT);
-        });
-
-        tip.setText(R.string.quick_search_tip);
-        toolbar.setLogo(R.drawable.ic_baseline_bookmarks_24);
-        toolbar.setTitle(R.string.quick_search);
-        toolbar.inflateMenu(R.menu.drawer_gallery_list);
-        toolbar.setOnMenuItemClickListener(item -> {  //点击增加快速搜索按钮触发
-            int id = item.getItemId();
-            switch (id) {
-                case R.id.action_add:
-                    if (Settings.getQuickSearchTip()) {
-                        showQuickSearchTipDialog(list, adapter, listView, tip);
-                    } else {
-                        showAddQuickSearchDialog(list, adapter, listView, tip);
-                    }
-                    break;
-                case R.id.action_settings:
-                    startScene(new Announcer(QuickSearchScene.class));
-                    break;
-            }
-            return true;
-        });
-
-        if (0 == list.size()) {
-            tip.setVisibility(View.VISIBLE);
-            listView.setVisibility(View.GONE);
-        } else {
-            tip.setVisibility(View.GONE);
-            listView.setVisibility(View.VISIBLE);
-        }
-
-        toolbar.setOnClickListener(l -> {
-            drawPager.setCurrentItem(1);
-        });
-
-
-        return bookmarksView;
+        mBookmarksDraw = new BookmarksDraw(getEHContext(), inflater, ehTags);
+        return mBookmarksDraw.onCreate(this);
     }
 
     private View subscriptionViewBuild(LayoutInflater inflater) {
-        subscriptionDraw = new SubscriptionDraw(getEHContext(), inflater, mClient, getTag(), ehTags);
-        return subscriptionDraw.onCreate(drawPager, getActivity2(), this);
+        mSubscriptionDraw = new SubscriptionDraw(getEHContext(), inflater, mClient, getTag(), ehTags);
+        return mSubscriptionDraw.onCreate(drawPager, getActivity2(), this);
     }
 
     @Override
@@ -1190,13 +1092,13 @@ public final class GalleryListScene extends BaseScene
      * eventBus 通知书签数据修改
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onQuickSearchDataChanged(SomethingNeedRefresh refresh){
-        if (!refresh.isBookmarkDrawNeed()){
+    public void onQuickSearchDataChanged(SomethingNeedRefresh refresh) {
+        if (!refresh.isBookmarkDrawNeed()) {
             return;
         }
         LayoutInflater inflater = getLayoutInflater();
         bookmarksView = bookmarksViewBuild(inflater);
-        if (subscriptionView==null){
+        if (subscriptionView == null) {
             subscriptionView = subscriptionViewBuild(inflater);
         }
         List<View> views = new ArrayList<>();
@@ -1225,6 +1127,19 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mBookmarksDraw==null){
+            return;
+        }
+        mBookmarksDraw.resume();
+        if (mSubscriptionDraw==null){
+            return;
+        }
+        mSubscriptionDraw.resume();
+    }
     @Override
     public void onBackPressed() {
         if (null != mShowcaseView) {
@@ -1665,7 +1580,7 @@ public final class GalleryListScene extends BaseScene
         }
     }
 
-    private void setState(@State int state) {
+    void setState(@State int state) {
         setState(state, true);
     }
 
@@ -2048,7 +1963,7 @@ public final class GalleryListScene extends BaseScene
 
         public GalleryListAdapter(@NonNull LayoutInflater inflater,
                                   @NonNull Resources resources, @NonNull RecyclerView recyclerView, int type) {
-            super(inflater, resources, recyclerView, type, true,executorService);
+            super(inflater, resources, recyclerView, type, true, executorService);
         }
 
         @Override
@@ -2064,7 +1979,7 @@ public final class GalleryListScene extends BaseScene
 
     }
 
-    private class GalleryListHelper extends GalleryInfoContentHelper {
+    class GalleryListHelper extends GalleryInfoContentHelper {
 
         @Override
         protected void getPageData(int taskId, int type, int page) {
