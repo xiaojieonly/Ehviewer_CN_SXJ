@@ -539,7 +539,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     // Update search bar title, drawer checked item
-    protected void onUpdateUrlBuilder() {
+    void onUpdateUrlBuilder() {
         ListUrlBuilder builder = mUrlBuilder;
         Resources resources = getResources2();
         if (resources == null || builder == null || mSearchLayout == null) {
@@ -1425,9 +1425,7 @@ public final class GalleryListScene extends BaseScene
         }
         if (!open) {
             mFloatingActionButton.setImageResource(R.drawable.ic_baseline_filter_none_24);
-            if (null != filterTagList) {
-                filterTagList.clear();
-            }
+            filterTagList.clear();
             return;
         }
 
