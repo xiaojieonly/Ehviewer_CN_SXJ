@@ -366,7 +366,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         }
         comeFromDownload = args.getBoolean(KEY_COME_FROM_DOWNLOAD);
-
     }
 
     @Nullable
