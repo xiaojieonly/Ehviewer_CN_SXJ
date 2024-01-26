@@ -890,4 +890,8 @@
     <string name="reset_cost">花费 %s 重置</string>
     <string name="limit_unneed_reset">当前无需重置配额，请在刷新后重试~</string>
 
+
+    <string name="pagination_count">共</string>
+    <string name="pagination_page_and_item">条/页</string>
+
 </resources>

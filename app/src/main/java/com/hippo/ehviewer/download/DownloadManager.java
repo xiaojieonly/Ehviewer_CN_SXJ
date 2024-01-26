@@ -207,9 +207,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     @Nullable
     public long getLabelCount(String label) {
         try {
-            if (mLabelCountMap.containsKey(label)){
+            if (mLabelCountMap.containsKey(label)) {
                 return mLabelCountMap.get(label);
-            }else {
+            } else {
                 return 0;
             }
         } catch (NullPointerException e) {
@@ -218,13 +218,23 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
     }
 
-    public List<DownloadInfo> getAllDownloadInfoList(){
+    public List<DownloadInfo> getAllDownloadInfoList() {
         return mAllInfoList;
     }
 
     @NonNull
     public List<DownloadInfo> getDefaultDownloadInfoList() {
         return mDefaultInfoList;
+//        List<DownloadInfo> infoList = new ArrayList<>();
+//        int i = 0;
+//        while (infoList.size() < 30000) {
+//            if (i == mDefaultInfoList.size()) {
+//                i = 0;
+//            }
+//            infoList.add(mDefaultInfoList.get(i));
+//            i++;
+//        }
+//        return infoList;
     }
 
     @Nullable
@@ -590,7 +600,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         // Save to
         EhDB.putDownloadInfo(info);
-        mAllInfoMap.put(galleryInfo.gid,info);
+        mAllInfoMap.put(galleryInfo.gid, info);
     }
 
 

@@ -960,4 +960,8 @@
     <string name="reset_cost">Cost %s To Reset</string>
     <string name="limit_unneed_reset">There is currently no need to reset quotas, please try again after refreshing~</string>
 
+
+    <string name="pagination_count">count</string>
+    <string name="pagination_page_and_item">r/p</string>
+
 </resources>
