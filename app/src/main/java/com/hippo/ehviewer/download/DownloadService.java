@@ -479,7 +479,7 @@ public class DownloadService extends Service implements DownloadManager.Download
 
     private void checkStopSelf() {
         if (mDownloadManager == null || mDownloadManager.isIdle()) {
-            stopForeground(true);
+//            stopForeground(true);
             stopSelf();
         }
     }

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +13,13 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-<!--    <com.hippo.ehviewer.widget.SearchBar-->
-<!--        android:id="@+id/download_search_bar"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginLeft="@dimen/gallery_search_bar_margin_h"-->
-<!--        android:layout_marginRight="@dimen/gallery_search_bar_margin_h"-->
-<!--        android:layout_marginTop="@dimen/gallery_search_bar_margin_v"-->
-<!--        style="@style/CardView.Normal"/>-->
+
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -36,18 +29,39 @@
             style="@style/ProgressView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
         <FrameLayout
             android:id="@+id/content"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.hippo.easyrecyclerview.EasyRecyclerView
-                android:id="@+id/recycler_view"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <com.hippo.easyrecyclerview.EasyRecyclerView
+                    android:id="@+id/recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="5" />
+
+                <com.sxj.paginationlib.PaginationIndicator
+                    android:id="@+id/indicator"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:visibility="invisible"
+                    app:number_tip_count="5"
+                    app:count_text="@string/pagination_count"
+                    app:page_and_item="@string/pagination_page_and_item"
+                    app:rect_size="30dp"
+                    app:selected_color="?attr/drawableColorThemePrimary"
+                    app:text_size="14sp"
+                    app:unselected_color="?attr/drawableColorSecondary" />
+            </LinearLayout>
 
             <com.hippo.easyrecyclerview.FastScroller
                 android:id="@+id/fast_scroller"
@@ -55,24 +69,23 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="right"
                 android:paddingStart="20dp"
-                android:paddingEnd="4dp"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"/>
+                android:paddingEnd="4dp"
+                android:paddingBottom="8dp" />
 
         </FrameLayout>
 
         <TextView
             android:id="@+id/tip"
+            style="@style/TextAppearance.AppCompat.Medium"
             android:layout_width="228dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:gravity="center_horizontal"
             android:drawablePadding="16dp"
-            android:text="@string/no_download_info"
-            style="@style/TextAppearance.AppCompat.Medium"/>
+            android:gravity="center_horizontal"
+            android:text="@string/no_download_info" />
 
-        <com.hippo.widget.FabLayout
-            xmlns:app="http://schemas.android.com/apk/res-auto"
+        <com.hippo.widget.FabLayout xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/fab_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -80,46 +93,46 @@
             android:paddingBottom="@dimen/corner_fab_margin">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/v_check_all_dark_x24"
                 app:backgroundTint="?attr/widgetColorThemeAccent"
-                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+                app:srcCompat="@drawable/v_check_all_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/v_play_dark_x24"
                 app:backgroundTint="?attr/widgetColorThemeAccent"
-                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+                app:srcCompat="@drawable/v_play_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/v_pause_dark_x24"
                 app:backgroundTint="?attr/widgetColorThemeAccent"
-                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+                app:srcCompat="@drawable/v_pause_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/v_delete_dark_x24"
                 app:backgroundTint="?attr/widgetColorThemeAccent"
-                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+                app:srcCompat="@drawable/v_delete_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/v_folder_move_dark_x24"
                 app:backgroundTint="?attr/widgetColorThemeAccent"
-                style="@style/Widget.Design.FloatingActionButton.Mini"/>
+                app:srcCompat="@drawable/v_folder_move_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="@style/Widget.Design.FloatingActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/v_close_dark_x24"
                 app:backgroundTint="?attr/widgetColorThemePrimary"
-                style="@style/Widget.Design.FloatingActionButton"/>
+                app:srcCompat="@drawable/v_close_dark_x24" />
 
         </com.hippo.widget.FabLayout>
 

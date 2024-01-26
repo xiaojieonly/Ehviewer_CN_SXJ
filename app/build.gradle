@@ -120,6 +120,7 @@ dependencies {
     implementation "androidx.preference:preference:1.0.0"
     implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation 'org.conscrypt:conscrypt-android:2.5.1'
+//    implementation 'com.android.support:recyclerview-v7:25.0.1'
 
 //     https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng
     implementation 'com.fpliu.ndk.pkg.prefab.android.21:libpng:1.6.37'
@@ -142,6 +143,11 @@ dependencies {
     implementation 'com.github.seven332:conaco:0.1.5-eh'
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
+//    分页组件
+    implementation 'com.github.xiaojieonly:Pagination_Sxj:1cdc50a00a8d7eaf1fdc016c418b36afec46d976'
+//    implementation 'com.github.xiaojieonly:EasyRecyclerView_sxj:f4c9e4ab9c31a5aebdd3dd02a5a592dc5a18b107'
+//    implementation 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
+//    implementation 'com.github.LqTk:recyclerView_fastScroller:1.1.0'
 //    implementation 'com.github.seven332:easyrecyclerview:1.2.1'
 //    为方便扩展代码直接迁移至项目内
 //    implementation 'com.github.seven332:glgallery:0.1.2'

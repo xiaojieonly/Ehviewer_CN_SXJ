@@ -591,7 +591,7 @@ public class EhApplication extends RecordingApplication {
 
     @NonNull
     public static String getDeveloperEmail() {
-        return "ehviewersu$gmail.com".replace('$', '@');
+        return "xiaojieonly$foxmail.com".replace('$', '@');
     }
 
     public void registerActivity(Activity activity) {

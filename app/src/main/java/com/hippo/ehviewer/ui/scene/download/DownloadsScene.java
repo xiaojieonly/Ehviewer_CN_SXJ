@@ -19,6 +19,7 @@ package com.hippo.ehviewer.ui.scene.download;
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
 import static com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene.KEY_COME_FROM_DOWNLOAD;
+import static com.microsoft.appcenter.utils.HandlerUtils.runOnUiThread;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -32,7 +33,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
@@ -116,6 +116,7 @@ import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
+import com.sxj.paginationlib.PaginationIndicator;
 import com.microsoft.appcenter.crashes.Crashes;
 
 import org.greenrobot.eventbus.EventBus;
@@ -163,6 +164,13 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     private List<DownloadInfo> mBackList;
 
+    private int indexPage = 1;
+    private int pageSize = 50;
+    private int paginationSize = 500;
+
+    private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
+//    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
+
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
     /*---------------
@@ -185,6 +193,8 @@ public class DownloadsScene extends ToolbarScene
 
     private AlertDialog mSearchDialog;
     private SearchBar mSearchBar;
+    @Nullable
+    private PaginationIndicator mPaginationIndicator;
 
     private DownloadLabelDraw downloadLabelDraw;
     @Nullable
@@ -196,10 +206,11 @@ public class DownloadsScene extends ToolbarScene
     private int mInitPosition = -1;
 
     public boolean searching = false;
+    private boolean doNotScroll = false;
 
-    private Handler mHandler;
+
     @NonNull
-    private ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
+    private final ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             this::updateReadProcess
     );
@@ -230,7 +241,7 @@ public class DownloadsScene extends ToolbarScene
                 if (null != mList) {
                     int position = mList.indexOf(info);
                     if (position >= 0 && null != mRecyclerView) {
-                        mRecyclerView.scrollToPosition(position);
+                        initPage(position);
                     } else {
                         mInitPosition = position;
                     }
@@ -284,6 +295,7 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void updateForLabel() {
         if (null == mDownloadManager) {
             return;
@@ -304,8 +316,21 @@ public class DownloadsScene extends ToolbarScene
         }
         mBackList = mList;
         updateTitle();
+        updatePaginationIndicator();
         Settings.putRecentDownloadLabel(mLabel);
         queryUnreadSpiderInfo();
+    }
+
+    private void updatePaginationIndicator() {
+        if (mPaginationIndicator == null || mList == null) {
+            return;
+        }
+        if (mList.size() < paginationSize) {
+            mPaginationIndicator.setVisibility(View.INVISIBLE);
+            return;
+        }
+        mPaginationIndicator.setTotalCount(mList.size());
+        mPaginationIndicator.setVisibility(View.VISIBLE);
     }
 
     @SuppressLint("StringFormatMatches")
@@ -352,6 +377,11 @@ public class DownloadsScene extends ToolbarScene
         FastScroller fastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
+        mPaginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
+
+        mPaginationIndicator.setPerPageCountChoices(perPageCountChoices);
+        mPaginationIndicator.setListener(new MyPageChangeListener());
+
         mViewTransition = new ViewTransition(content, tip);
 
         Context context = getEHContext();
@@ -389,7 +419,8 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
         if (mInitPosition >= 0) {
-            mRecyclerView.scrollToPosition(mInitPosition);
+            initPage(mInitPosition);
+            mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
             mInitPosition = -1;
         }
 
@@ -408,7 +439,7 @@ public class DownloadsScene extends ToolbarScene
         updateView();
 
         guide();
-
+        updatePaginationIndicator();
         return view;
     }
 
@@ -677,8 +708,8 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public View onCreateDrawerView(LayoutInflater inflater,
                                    @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        if (downloadLabelDraw==null){
-            downloadLabelDraw = new DownloadLabelDraw(inflater,container,this);
+        if (downloadLabelDraw == null) {
+            downloadLabelDraw = new DownloadLabelDraw(inflater, container, this);
         }
 
         return downloadLabelDraw.createView();
@@ -876,7 +907,7 @@ public class DownloadsScene extends ToolbarScene
         int index = mList.indexOf(newInfo);
         if (index >= 0 && mAdapter != null) {
 //            mSpiderInfoMap.put(info.gid,getSpiderInfo(info));
-            mAdapter.notifyItemChanged(index);
+            mAdapter.notifyItemChanged(listIndexInPage(index));
         }
         List<DownloadInfo> infos = new ArrayList<>();
         infos.add(newInfo);
@@ -885,15 +916,13 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Override
-    public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list,LinkedList<DownloadInfo> mWaitList) {
-        if (mList != list) {
+    public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, LinkedList<DownloadInfo> mWaitList) {
+        if (mList != list || !mList.contains(info)) {
             return;
         }
-
-        int index = list.indexOf(info);
+        int index = mList.indexOf(info);
         if (index >= 0 && mAdapter != null) {
-//            mSpiderInfoMap.put(info.gid,getSpiderInfo(info));
-            mAdapter.notifyItemChanged(index);
+            mAdapter.notifyItemChanged(listIndexInPage(index));
         }
     }
 
@@ -938,7 +967,7 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         if (mAdapter != null) {
-            mAdapter.notifyItemRemoved(position);
+            mAdapter.notifyItemRemoved(listIndexInPage(position));
         }
         updateView();
     }
@@ -1107,7 +1136,7 @@ public class DownloadsScene extends ToolbarScene
         executor.executeSearching();
     }
 
-    private void gotoFilterAndSort(int id){
+    private void gotoFilterAndSort(int id) {
         mProgressView.setVisibility(View.VISIBLE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.GONE);
@@ -1209,7 +1238,7 @@ public class DownloadsScene extends ToolbarScene
                     }
                     for (int i = 0; i < mList.size(); i++) {
                         if (mList.get(i).gid == info.gid) {
-                            position = i;
+                            position = listIndexInPage(i);
                             break;
                         }
                     }
@@ -1249,10 +1278,48 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void updateDownloadLabels(SomethingNeedRefresh somethingNeedRefresh){
-        if (somethingNeedRefresh.isDownloadLabelDrawNeed()){
+    public void updateDownloadLabels(SomethingNeedRefresh somethingNeedRefresh) {
+        if (somethingNeedRefresh.isDownloadLabelDrawNeed()) {
             downloadLabelDraw.updateDownloadLabels();
         }
+    }
+
+    private int positionInList(int position) {
+        if (mList != null && mList.size() > paginationSize) {
+            return position + pageSize * (indexPage - 1);
+        }
+        return position;
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void initPage(int position) {
+        if (mList != null && mList.size() > paginationSize) {
+            indexPage = position / pageSize + 1;
+        }
+        doNotScroll = true;
+//        new Thread(() -> {
+//            try {
+//                Thread.sleep(200);
+//            } catch (InterruptedException ignore) {
+//            }
+//            runOnUiThread(() -> {
+//                if (mPaginationIndicator != null) {
+//                    mPaginationIndicator.skip2Pos(indexPage);
+//                }
+//                mRecyclerView.scrollToPosition(listIndexInPage(position));
+//            });
+//        }).start();
+        if (mPaginationIndicator != null) {
+            mPaginationIndicator.skip2Pos(indexPage);
+        }
+        mRecyclerView.scrollToPosition(listIndexInPage(position));
+    }
+
+    private int listIndexInPage(int position) {
+        if (mList != null && mList.size() > paginationSize) {
+            return position % pageSize;
+        }
+        return position;
     }
 
     private class DeleteDialogHelper implements DialogInterface.OnClickListener {
@@ -1430,20 +1497,20 @@ public class DownloadsScene extends ToolbarScene
             if (thumb == v) {
                 Bundle args = new Bundle();
                 args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
-                args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list.get(index));
+                args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list.get(positionInList(index)));
                 args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
                 Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
                 announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
                 startScene(announcer);
             } else if (start == v) {
-                final DownloadInfo info = list.get(index);
+                final DownloadInfo info = list.get(positionInList(index));
                 Intent intent = new Intent(activity, DownloadService.class);
                 intent.setAction(DownloadService.ACTION_START);
                 intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
                 activity.startService(intent);
             } else if (stop == v) {
                 if (null != mDownloadManager) {
-                    mDownloadManager.stopDownload(list.get(index).gid);
+                    mDownloadManager.stopDownload(list.get(positionInList(index)).gid);
                 }
             }
         }
@@ -1457,9 +1524,9 @@ public class DownloadsScene extends ToolbarScene
 
         public DownloadAdapter() {
             LayoutInflater mInflater1;
-            try{
+            try {
                 mInflater1 = getLayoutInflater2();
-            }catch (NullPointerException e){
+            } catch (NullPointerException e) {
                 mInflater1 = getLayoutInflater();
             }
             mInflater = mInflater1;
@@ -1473,14 +1540,16 @@ public class DownloadsScene extends ToolbarScene
 
         @Override
         public long getItemId(int position) {
-            if (mList == null || position < 0 || position >= mList.size()) {
+            int posInList = positionInList(position);
+            if (mList == null || posInList < 0 || posInList >= mList.size()) {
                 return 0;
             }
-            return mList.get(position).gid;
+            return mList.get(posInList).gid;
         }
 
+        @NonNull
         @Override
-        public DownloadHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public DownloadHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             DownloadHolder holder = new DownloadHolder(mInflater.inflate(R.layout.item_download, parent, false));
 
             ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
@@ -1498,22 +1567,20 @@ public class DownloadsScene extends ToolbarScene
             }
 
             try {
-                DownloadInfo info = mList.get(position);
+                int pos = positionInList(position);
+                DownloadInfo info = mList.get(pos);
 
                 String title = EhUtils.getSuitableTitle(info);
+
                 holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                         new ThumbDataContainer(info), true);
+
                 holder.title.setText(title);
                 holder.uploader.setText(info.uploader);
                 holder.rating.setRating(info.rating);
 
                 SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
-//            if (spiderInfo == null) {
-//                spiderInfo = getSpiderInfo(info);
-//                if (spiderInfo != null) {
-//                    mSpiderInfoMap.put(spiderInfo.gid, spiderInfo);
-//                }
-//            }
+
                 if (spiderInfo != null) {
                     int startPage = spiderInfo.startPage + 1;
                     String readText = startPage + "/" + spiderInfo.pages;
@@ -1531,17 +1598,23 @@ public class DownloadsScene extends ToolbarScene
 
                 // Update transition name
                 ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
-            }catch (Exception e){
+            } catch (Exception e) {
                 Crashes.trackError(e);
             }
         }
 
         @Override
         public int getItemCount() {
-            return mList == null ? 0 : mList.size();
+            if (mList == null) {
+                return 0;
+            }
+            int listSize = mList.size();
+            if (listSize < paginationSize) {
+                return listSize;
+            }
+            int count = listSize - pageSize * (indexPage - 1);
+            return Math.min(count, pageSize);
         }
-
-
     }
 
     private class DownloadChoiceListener implements EasyRecyclerView.CustomChoiceListener {
@@ -1644,6 +1717,35 @@ public class DownloadsScene extends ToolbarScene
         public void remove() {
             if (mFile != null) {
                 mFile.delete();
+            }
+        }
+    }
+
+    public class MyPageChangeListener implements PaginationIndicator.OnChangedListener {
+
+        @Override
+        public void onPageSelectedChanged(int currentPagePos, int lastPagePos, int totalPageCount, int total) {
+            indexPage = currentPagePos;
+            notifyAdapter();
+        }
+
+        @Override
+        public void onPerPageCountChanged(int perPageCount) {
+            pageSize = perPageCount;
+            notifyAdapter();
+        }
+
+        @SuppressLint("NotifyDataSetChanged")
+        public void notifyAdapter() {
+            if (mAdapter != null) {
+                mAdapter.notifyDataSetChanged();
+            }
+            if (mRecyclerView != null) {
+                if (doNotScroll) {
+                    doNotScroll = false;
+                    return;
+                }
+                mRecyclerView.scrollToPosition(0);
             }
         }
     }
