@@ -166,7 +166,7 @@ public class DownloadsScene extends ToolbarScene
 
     private int indexPage = 1;
     private int pageSize = 50;
-    private int paginationSize = 500;
+    private final int paginationSize = 500;
 
     private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
 //    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
@@ -326,7 +326,7 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         if (mList.size() < paginationSize) {
-            mPaginationIndicator.setVisibility(View.INVISIBLE);
+            mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
         mPaginationIndicator.setTotalCount(mList.size());
@@ -1297,18 +1297,6 @@ public class DownloadsScene extends ToolbarScene
             indexPage = position / pageSize + 1;
         }
         doNotScroll = true;
-//        new Thread(() -> {
-//            try {
-//                Thread.sleep(200);
-//            } catch (InterruptedException ignore) {
-//            }
-//            runOnUiThread(() -> {
-//                if (mPaginationIndicator != null) {
-//                    mPaginationIndicator.skip2Pos(indexPage);
-//                }
-//                mRecyclerView.scrollToPosition(listIndexInPage(position));
-//            });
-//        }).start();
         if (mPaginationIndicator != null) {
             mPaginationIndicator.skip2Pos(indexPage);
         }
