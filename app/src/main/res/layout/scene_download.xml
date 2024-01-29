@@ -53,7 +53,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
                     android:layout_weight="1"
-                    android:visibility="invisible"
+                    android:visibility="gone"
                     app:number_tip_count="5"
                     app:count_text="@string/pagination_count"
                     app:page_and_item="@string/pagination_page_and_item"

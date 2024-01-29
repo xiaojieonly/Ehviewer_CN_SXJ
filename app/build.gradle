@@ -145,10 +145,7 @@ dependencies {
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
 //    分页组件
     implementation 'com.github.xiaojieonly:Pagination_Sxj:1cdc50a00a8d7eaf1fdc016c418b36afec46d976'
-//    implementation 'com.github.xiaojieonly:EasyRecyclerView_sxj:f4c9e4ab9c31a5aebdd3dd02a5a592dc5a18b107'
-//    implementation 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
-//    implementation 'com.github.LqTk:recyclerView_fastScroller:1.1.0'
-//    implementation 'com.github.seven332:easyrecyclerview:1.2.1'
+//    implementation 'com.github.xiaojieonly:Pagination_Sxj:d8253ceefd6b02b73f9e9485cbb7dd89a6b89ba3'
 //    为方便扩展代码直接迁移至项目内
 //    implementation 'com.github.seven332:glgallery:0.1.2'
     implementation 'com.github.seven332:glview:0.1.0'
