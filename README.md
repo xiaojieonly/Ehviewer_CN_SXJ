@@ -2,7 +2,7 @@
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
 # 2024/02/03 :感谢大伙们的陪伴，提前祝大家春节快乐~    
- ###  新版发布1.9.7.4（更新较多，如果出现问题请回滚至上一版本）     
+ ###  新版发布1.9.7.5（更新较多，如果出现问题请回滚至上一版本）     
  ###  更新了新的安全DNS    
  ###  修复了因缓存数据导致不下载原图的问题    
  ###  修复了.ehviewer 文件不生成的问题    
@@ -13,8 +13,8 @@
  ###  新增下载列表翻页，当列表画廊数大于500时生效    
  ###  日本語の更新やったよ。眠いです    
    点击前往下载：[Microsoft App Center](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
-   点击前往下载：[百度云](链接：https://pan.baidu.com/s/1J5kyaWAC3FeAYyKz2O6aSQ)  密码:17fk   
-   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/igFBg1n63owf)  密码:brdo   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1BztkP_L9Nzf-vX85OV97Cw)  密码:ekpt   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iVzwJ1n65l4b)  密码:3mc2   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
