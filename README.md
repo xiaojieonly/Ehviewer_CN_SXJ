@@ -13,6 +13,7 @@
  ###  新增下载列表翻页，当列表画廊数大于500时生效    
  ###  日本語の更新やったよ。眠いです    
    点击前往下载：[Microsoft App Center](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[Torrent](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/1BztkP_L9Nzf-vX85OV97Cw)  密码:ekpt   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iVzwJ1n65l4b)  密码:3mc2   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
