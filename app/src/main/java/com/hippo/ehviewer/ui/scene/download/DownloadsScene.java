@@ -827,7 +827,7 @@ public class DownloadsScene extends ToolbarScene
             SparseBooleanArray stateArray = recyclerView.getCheckedItemPositions();
             for (int i = 0, n = stateArray.size(); i < n; i++) {
                 if (stateArray.valueAt(i)) {
-                    DownloadInfo info = list.get(stateArray.keyAt(i));
+                    DownloadInfo info = list.get(positionInList(stateArray.keyAt(i)));
                     if (collectDownloadInfo) {
                         downloadInfoList.add(info);
                     }
@@ -1287,12 +1287,7 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private int positionInList(int position) {
-        if (mList != null && mList.size() > paginationSize) {
-            return position + pageSize * (indexPage - 1);
-        }
-        return position;
-    }
+
 
     @SuppressLint("NotifyDataSetChanged")
     private void initPage(int position) {
@@ -1304,6 +1299,13 @@ public class DownloadsScene extends ToolbarScene
             mPaginationIndicator.skip2Pos(indexPage);
         }
         mRecyclerView.scrollToPosition(listIndexInPage(position));
+    }
+
+    private int positionInList(int position) {
+        if (mList != null && mList.size() > paginationSize) {
+            return position + pageSize * (indexPage - 1);
+        }
+        return position;
     }
 
     private int listIndexInPage(int position) {
