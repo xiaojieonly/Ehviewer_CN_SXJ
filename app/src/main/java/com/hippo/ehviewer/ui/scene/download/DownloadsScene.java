@@ -767,7 +767,7 @@ public class DownloadsScene extends ToolbarScene
 
             Intent intent = new Intent(activity, GalleryActivity.class);
             intent.setAction(GalleryActivity.ACTION_EH);
-            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(position));
+            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(positionInList(position)));
 //            startActivity(intent);
             galleryActivityLauncher.launch(intent);
             return true;
