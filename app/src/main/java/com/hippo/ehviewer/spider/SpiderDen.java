@@ -212,7 +212,7 @@ public final class SpiderDen {
     }
 
     private boolean copyFromCacheToDownloadDir(int index) {
-        if (sCache == null) {
+        if (sCache == null || Settings.getDownloadOriginImage()) {
             return false;
         }
         UniFile dir = getDownloadDir();
