@@ -120,7 +120,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private static final long SLIDER_ANIMATION_DURING = 150;
     private static final long HIDE_SLIDER_DELAY = 3000;
 
-//    private static final int WRITE_REQUEST_CODE = 43;
+    private static final int WRITE_REQUEST_CODE = 43;
 
     private String mAction;
     private String mFilename;
@@ -986,10 +986,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         intent.setType("image/*");
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         try {
-//            startActivityForResult(intent, WRITE_REQUEST_CODE);
+            startActivityForResult(intent, WRITE_REQUEST_CODE);
 //            registerForActivityResult(intent, WRITE_REQUEST_CODE);
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::saveImageDats)
-                    .launch(intent);
+//            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::saveImageDats)
+//                    .launch(intent);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             Toast.makeText(this, R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
@@ -999,34 +999,34 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         super.onActivityResult(requestCode, resultCode, resultData);
-//        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-//            if (resultData != null) {
-//                Uri uri = resultData.getData();
-//                String filepath = getCacheDir() + "/" + mCacheFileName;
-//                File cacheFile = new File(filepath);
-//
-//                InputStream is = null;
-//                OutputStream os = null;
-//                ContentResolver resolver = getContentResolver();
-//
-//                try {
-//                    is = new FileInputStream(cacheFile);
-//                    os = resolver.openOutputStream(uri);
-//                    IOUtils.copy(is, os);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                } finally {
-//                    IOUtils.closeQuietly(is);
-//                    IOUtils.closeQuietly(os);
-//                }
-//
-//                cacheFile.delete();
-//
-//                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
-//                // Sync media store
-//                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
-//            }
-//        }
+        if (requestCode == WRITE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            if (resultData != null) {
+                Uri uri = resultData.getData();
+                String filepath = getCacheDir() + "/" + mCacheFileName;
+                File cacheFile = new File(filepath);
+
+                InputStream is = null;
+                OutputStream os = null;
+                ContentResolver resolver = getContentResolver();
+
+                try {
+                    is = new FileInputStream(cacheFile);
+                    os = resolver.openOutputStream(uri);
+                    IOUtils.copy(is, os);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    IOUtils.closeQuietly(is);
+                    IOUtils.closeQuietly(os);
+                }
+
+                cacheFile.delete();
+
+                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+                // Sync media store
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+            }
+        }
     }
 
     private void saveImageDats(ActivityResult result) {
