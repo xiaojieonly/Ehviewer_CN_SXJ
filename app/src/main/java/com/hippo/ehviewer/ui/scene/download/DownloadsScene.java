@@ -164,6 +164,9 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     private List<DownloadInfo> mBackList;
 
+    /*---------------
+     List pagination
+     ---------------*/
     private int indexPage = 1;
     private int pageSize = 50;
     private final int paginationSize = 500;
