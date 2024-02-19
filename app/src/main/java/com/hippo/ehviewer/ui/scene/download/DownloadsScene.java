@@ -19,7 +19,6 @@ package com.hippo.ehviewer.ui.scene.download;
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
 import static com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene.KEY_COME_FROM_DOWNLOAD;
-import static com.microsoft.appcenter.utils.HandlerUtils.runOnUiThread;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -168,11 +167,13 @@ public class DownloadsScene extends ToolbarScene
      List pagination
      ---------------*/
     private int indexPage = 1;
-    private int pageSize = 50;
-    private final int paginationSize = 500;
+    private int pageSize = 1;
+    private final int paginationSize = 5;
 
-    private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
-//    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
+    //    private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
+    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
+
+    private final MyPageChangeListener myPageChangeListener = new MyPageChangeListener();
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
@@ -211,7 +212,7 @@ public class DownloadsScene extends ToolbarScene
     public boolean searching = false;
     private boolean doNotScroll = false;
 
-
+    private boolean needInitPage = false;
     @NonNull
     private final ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -276,6 +277,7 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -332,7 +334,9 @@ public class DownloadsScene extends ToolbarScene
             mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
+        needInitPage = true;
         mPaginationIndicator.setTotalCount(mList.size());
+        mPaginationIndicator.setListener(myPageChangeListener);
         mPaginationIndicator.setVisibility(View.VISIBLE);
     }
 
@@ -383,7 +387,6 @@ public class DownloadsScene extends ToolbarScene
         mPaginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
 
         mPaginationIndicator.setPerPageCountChoices(perPageCountChoices);
-        mPaginationIndicator.setListener(new MyPageChangeListener());
 
         mViewTransition = new ViewTransition(content, tip);
 
@@ -421,7 +424,7 @@ public class DownloadsScene extends ToolbarScene
         MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
-        if (mInitPosition >= 0) {
+        if (mInitPosition >= 0 && indexPage != 1) {
             initPage(mInitPosition);
             mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
             mInitPosition = -1;
@@ -1288,7 +1291,6 @@ public class DownloadsScene extends ToolbarScene
     }
 
 
-
     @SuppressLint("NotifyDataSetChanged")
     private void initPage(int position) {
         if (mList != null && mList.size() > paginationSize) {
@@ -1718,6 +1720,13 @@ public class DownloadsScene extends ToolbarScene
 
         @Override
         public void onPageSelectedChanged(int currentPagePos, int lastPagePos, int totalPageCount, int total) {
+            if (needInitPage) {
+                needInitPage = false;
+                if (mPaginationIndicator != null) {
+                    mPaginationIndicator.skip2Pos(indexPage);
+                }
+                return;
+            }
             indexPage = currentPagePos;
             notifyAdapter();
         }
