@@ -213,6 +213,7 @@ public class DownloadsScene extends ToolbarScene
     private boolean doNotScroll = false;
 
     private boolean needInitPage = false;
+    private boolean needInitPageSize = false;
     @NonNull
     private final ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -335,7 +336,9 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         needInitPage = true;
-        mPaginationIndicator.setTotalCount(mList.size());
+        needInitPageSize = true;
+        mPaginationIndicator.initPaginationIndicator(pageSize,perPageCountChoices,mList.size(),indexPage);
+//        mPaginationIndicator.setTotalCount();
         mPaginationIndicator.setListener(myPageChangeListener);
         mPaginationIndicator.setVisibility(View.VISIBLE);
     }
@@ -386,7 +389,7 @@ public class DownloadsScene extends ToolbarScene
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mPaginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
 
-        mPaginationIndicator.setPerPageCountChoices(perPageCountChoices);
+        mPaginationIndicator.setPerPageCountChoices(perPageCountChoices, getPageSizePos(pageSize));
 
         mViewTransition = new ViewTransition(content, tip);
 
@@ -1317,6 +1320,17 @@ public class DownloadsScene extends ToolbarScene
         return position;
     }
 
+    private int getPageSizePos(int pageSize) {
+        int index = 0;
+        for (int i = 0; i < perPageCountChoices.length; i++) {
+            if (pageSize == perPageCountChoices[i]) {
+                index = i;
+                break;
+            }
+        }
+        return index;
+    }
+
     private class DeleteDialogHelper implements DialogInterface.OnClickListener {
 
         private final GalleryInfo mGalleryInfo;
@@ -1720,11 +1734,17 @@ public class DownloadsScene extends ToolbarScene
 
         @Override
         public void onPageSelectedChanged(int currentPagePos, int lastPagePos, int totalPageCount, int total) {
-            if (needInitPage) {
+            if (indexPage == currentPagePos) {
                 needInitPage = false;
+            }
+            if (needInitPage) {
                 if (mPaginationIndicator != null) {
+//                    mPaginationIndicator.setItemSelected(pageSize);
                     mPaginationIndicator.skip2Pos(indexPage);
                 }
+                return;
+            }
+            if (indexPage == currentPagePos){
                 return;
             }
             indexPage = currentPagePos;
@@ -1733,6 +1753,12 @@ public class DownloadsScene extends ToolbarScene
 
         @Override
         public void onPerPageCountChanged(int perPageCount) {
+//            if (needInitPage) {
+//                return;
+//            }
+            if (pageSize == perPageCount){
+                return;
+            }
             pageSize = perPageCount;
             notifyAdapter();
         }
