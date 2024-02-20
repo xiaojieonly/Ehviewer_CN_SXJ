@@ -335,12 +335,12 @@ public class DownloadsScene extends ToolbarScene
             mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
+        mPaginationIndicator.setVisibility(View.VISIBLE);
         needInitPage = true;
         needInitPageSize = true;
         mPaginationIndicator.initPaginationIndicator(pageSize,perPageCountChoices,mList.size(),indexPage);
 //        mPaginationIndicator.setTotalCount();
         mPaginationIndicator.setListener(myPageChangeListener);
-        mPaginationIndicator.setVisibility(View.VISIBLE);
     }
 
     @SuppressLint("StringFormatMatches")
@@ -1739,7 +1739,6 @@ public class DownloadsScene extends ToolbarScene
             }
             if (needInitPage) {
                 if (mPaginationIndicator != null) {
-//                    mPaginationIndicator.setItemSelected(pageSize);
                     mPaginationIndicator.skip2Pos(indexPage);
                 }
                 return;
@@ -1753,9 +1752,6 @@ public class DownloadsScene extends ToolbarScene
 
         @Override
         public void onPerPageCountChanged(int perPageCount) {
-//            if (needInitPage) {
-//                return;
-//            }
             if (pageSize == perPageCount){
                 return;
             }
