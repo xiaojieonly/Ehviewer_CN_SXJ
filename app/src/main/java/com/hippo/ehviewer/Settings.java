@@ -1350,4 +1350,16 @@ public class Settings {
         putBoolean(KEY_DOWNLOAD_ORDER_ASC, value);
     }
 
+    public static final String KEY_DOWNLOAD_LIST_PAGINATION = "download_list_pagination";
+
+    private static boolean IS_DOWNLOAD_LIST_PAGINATION = true;
+
+    public static boolean getDownloadPagination() {
+        return getBoolean(KEY_DOWNLOAD_LIST_PAGINATION, IS_DOWNLOAD_LIST_PAGINATION) ;
+    }
+
+    public static void setDownloadPagination(boolean value) {
+        putBoolean(KEY_DOWNLOAD_LIST_PAGINATION, value);
+    }
+
 }

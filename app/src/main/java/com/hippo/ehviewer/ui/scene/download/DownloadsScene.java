@@ -168,10 +168,11 @@ public class DownloadsScene extends ToolbarScene
      ---------------*/
     private int indexPage = 1;
     private int pageSize = 1;
-    private final int paginationSize = 5;
-
-    //    private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
-    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
+    private boolean canPagination = true;
+    private final int paginationSize = 500;
+//    private final int paginationSize = 5;
+    private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
+//    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
 
     private final MyPageChangeListener myPageChangeListener = new MyPageChangeListener();
 
@@ -270,7 +271,7 @@ public class DownloadsScene extends ToolbarScene
         AssertUtils.assertNotNull(context);
         mDownloadManager = EhApplication.getDownloadManager(context);
         mDownloadManager.addDownloadInfoListener(this);
-
+        canPagination = Settings.getDownloadPagination();
         if (savedInstanceState == null) {
             onInit();
         } else {
@@ -331,14 +332,13 @@ public class DownloadsScene extends ToolbarScene
         if (mPaginationIndicator == null || mList == null) {
             return;
         }
-        if (mList.size() < paginationSize) {
+        if (mList.size() < paginationSize || !canPagination) {
             mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
         mPaginationIndicator.setVisibility(View.VISIBLE);
-        needInitPage = true;
         needInitPageSize = true;
-        mPaginationIndicator.initPaginationIndicator(pageSize,perPageCountChoices,mList.size(),indexPage);
+        mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
 //        mPaginationIndicator.setTotalCount();
         mPaginationIndicator.setListener(myPageChangeListener);
     }
@@ -387,6 +387,9 @@ public class DownloadsScene extends ToolbarScene
         FastScroller fastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
+        if (mPaginationIndicator != null) {
+            needInitPage = true;
+        }
         mPaginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
 
         mPaginationIndicator.setPerPageCountChoices(perPageCountChoices, getPageSizePos(pageSize));
@@ -1296,7 +1299,7 @@ public class DownloadsScene extends ToolbarScene
 
     @SuppressLint("NotifyDataSetChanged")
     private void initPage(int position) {
-        if (mList != null && mList.size() > paginationSize) {
+        if (mList != null && mList.size() > paginationSize && canPagination) {
             indexPage = position / pageSize + 1;
         }
         doNotScroll = true;
@@ -1307,14 +1310,14 @@ public class DownloadsScene extends ToolbarScene
     }
 
     private int positionInList(int position) {
-        if (mList != null && mList.size() > paginationSize) {
+        if (mList != null && mList.size() > paginationSize && canPagination) {
             return position + pageSize * (indexPage - 1);
         }
         return position;
     }
 
     private int listIndexInPage(int position) {
-        if (mList != null && mList.size() > paginationSize) {
+        if (mList != null && mList.size() > paginationSize && canPagination) {
             return position % pageSize;
         }
         return position;
@@ -1618,7 +1621,7 @@ public class DownloadsScene extends ToolbarScene
                 return 0;
             }
             int listSize = mList.size();
-            if (listSize < paginationSize) {
+            if (listSize < paginationSize || !canPagination) {
                 return listSize;
             }
             int count = listSize - pageSize * (indexPage - 1);
@@ -1743,7 +1746,7 @@ public class DownloadsScene extends ToolbarScene
                 }
                 return;
             }
-            if (indexPage == currentPagePos){
+            if (indexPage == currentPagePos) {
                 return;
             }
             indexPage = currentPagePos;
@@ -1752,7 +1755,7 @@ public class DownloadsScene extends ToolbarScene
 
         @Override
         public void onPerPageCountChanged(int perPageCount) {
-            if (pageSize == perPageCount){
+            if (pageSize == perPageCount) {
                 return;
             }
             pageSize = perPageCount;

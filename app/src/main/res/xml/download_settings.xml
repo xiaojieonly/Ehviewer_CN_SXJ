@@ -46,6 +46,12 @@
         app:entryValues="@array/preload_image_entry_values"
         android:defaultValue="5"/>
 
+    <com.hippo.preference.SwitchPreference
+        android:key="download_list_pagination"
+        android:title="@string/settings_download_download_list_pagination"
+        android:summary="@string/settings_download_download_list_pagination_summary"
+        android:defaultValue="true"/>
+
     <com.hippo.preference.ListPreference
         android:key="image_size"
         android:title="@string/settings_download_image_resolution"

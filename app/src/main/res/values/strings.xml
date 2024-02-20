@@ -647,6 +647,8 @@
     <string name="settings_download_image_resolution_summary">Currently %s. Resolutions above 1280x may not work</string>
     <string name="settings_download_image_resolution_auto">Auto</string>
     <string name="settings_download_download_origin_image">Download original image</string>
+    <string name="settings_download_download_list_pagination">Pagination List</string>
+    <string name="settings_download_download_list_pagination_summary">The paging function will only take effect when the list length is greater than 500</string>
     <string name="settings_download_download_origin_image_summary">It is dangerous! You may get 509 error</string>
     <string name="settings_download_download_order_by_asc">Download order by asc</string>
     <string name="settings_download_download_order_by_asc_summary">Download in sequence when downloading all galleries</string>
