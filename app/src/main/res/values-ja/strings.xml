@@ -420,6 +420,8 @@
   <string name="settings_download_image_resolution_summary">現在は%sです。1280xを超える解像度は不安定になります</string>
   <string name="settings_download_image_resolution_auto">自動</string>
   <string name="settings_download_download_origin_image">オリジナル画像をダウンロードする</string>
+  <string name="settings_download_download_list_pagination">Pagination List</string>
+  <string name="settings_download_download_list_pagination_summary">The paging function will only take effect when the list length is greater than 500</string>
   <string name="settings_download_media_scan">メディアスキャンを許可する</string>
   <string name="settings_download_media_scan_summary_on">ギャラリーアプリを他人に見せないでください</string>
   <string name="settings_download_restore_download_items">ダウンロードタスクを復元する</string>
