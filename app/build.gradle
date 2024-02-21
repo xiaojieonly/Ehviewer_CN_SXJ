@@ -144,7 +144,7 @@ dependencies {
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
 //    分页组件
-    implementation 'com.github.xiaojieonly:Pagination_Sxj:1cdc50a00a8d7eaf1fdc016c418b36afec46d976'
+    implementation 'com.github.xiaojieonly:Pagination_Sxj:8d2c34d8f53927aeaa1d405d8653969379cb37ec'
 //    implementation 'com.github.xiaojieonly:Pagination_Sxj:d8253ceefd6b02b73f9e9485cbb7dd89a6b89ba3'
 //    为方便扩展代码直接迁移至项目内
 //    implementation 'com.github.seven332:glgallery:0.1.2'
