@@ -1722,6 +1722,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 break;
             case DownloadInfo.STATE_FAILED:
                 mDownload.setText(R.string.download_state_failed);
+                break;
             case DownloadInfo.STATE_UPDATE:
                 mDownload.setText(R.string.update);
                 break;
