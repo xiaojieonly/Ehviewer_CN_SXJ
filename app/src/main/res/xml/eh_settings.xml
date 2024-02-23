@@ -82,6 +82,12 @@
         app:entries="@array/list_mode_entries"
         app:entryValues="@array/list_mode_entry_values" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="show_read_progress"
+        android:title="@string/settings_eh_list_show_read_progress"
+        android:summary="@string/settings_eh_list_show_read_progress_summary" />
+
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="detail_size"

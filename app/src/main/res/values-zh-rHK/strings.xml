@@ -803,5 +803,7 @@
 
     <string name="yes">是</string>
     <string name="cancel">取消</string>
+    <string name="settings_eh_list_show_read_progress">Show reading progress</string>
+    <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
 
 </resources>

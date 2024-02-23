@@ -1362,4 +1362,16 @@ public class Settings {
         putBoolean(KEY_DOWNLOAD_LIST_PAGINATION, value);
     }
 
+    public static final String KEY_SHOW_READ_PROGRESS = "show_read_progress";
+
+    private static boolean IS_SHOW_READ_PROGRESS = true;
+
+    public static boolean getShowReadProgress() {
+        return getBoolean(KEY_SHOW_READ_PROGRESS, IS_SHOW_READ_PROGRESS) ;
+    }
+
+    public static void setShowReadProgress(boolean value) {
+        putBoolean(KEY_SHOW_READ_PROGRESS, value);
+    }
+
 }
