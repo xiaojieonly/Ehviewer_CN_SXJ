@@ -18,7 +18,6 @@ package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -54,9 +53,6 @@ import com.hippo.yorozuya.ViewUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import android.content.Context;
 
 import com.hippo.ehviewer.spider.SpiderQueen;
 
@@ -80,6 +76,7 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
     private MarginItemDecoration mGirdDecoration;
     private final int mListThumbWidth;
     private final int mListThumbHeight;
+    private final boolean showReadProgress;
     private int mType = TYPE_INVALID;
     private boolean mShowFavourite;
     private OnThumbItemClickListener myOnThumbItemClickListener;
@@ -91,8 +88,9 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
 
 
     public GalleryAdapterNew(@NonNull LayoutInflater inflater, @NonNull Resources resources,
-                             @NonNull RecyclerView recyclerView, int type, boolean showFavourited, ExecutorService executor) {
+                             @NonNull RecyclerView recyclerView, int type, boolean showFavourited, ExecutorService executor, boolean showReadProgress) {
         this.executor = executor;
+        this.showReadProgress = showReadProgress;
         mInflater = inflater;
         mResources = resources;
         mRecyclerView = recyclerView;
@@ -233,19 +231,21 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
                     holder.pages.setText(null);
                     holder.pages.setVisibility(View.GONE);
                 } else {
-                    executor.submit(()->{
-                        int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
-                        handler.post(()->{
-                            String text;
-                            if (startPage > 0) {
-                                text = startPage + 1 + "/" + gi.pages + "P";
-                                holder.pages.setText(text);
-                            } else {
-                                text = "0/" + gi.pages + "P";
-                                holder.pages.setText(text);
-                            }
+                    if (showReadProgress){
+                        executor.submit(()->{
+                            int startPage = SpiderQueen.findStartPage(mInflater.getContext(), gi);
+                            handler.post(()->{
+                                String text;
+                                if (startPage > 0) {
+                                    text = startPage + 1 + "/" + gi.pages + "P";
+                                    holder.pages.setText(text);
+                                } else {
+                                    text = "0/" + gi.pages + "P";
+                                    holder.pages.setText(text);
+                                }
+                            });
                         });
-                    });
+                    }
                     holder.pages.setText(new StringBuffer(gi.pages + "P"));
                     holder.pages.setVisibility(View.VISIBLE);
                 }

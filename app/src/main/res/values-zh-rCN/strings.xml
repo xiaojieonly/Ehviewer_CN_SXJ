@@ -487,6 +487,8 @@
     <string name="settings_eh_list_mode">列表模式</string>
     <string name="settings_eh_list_mode_detail">详情</string>
     <string name="settings_eh_list_mode_thumb">缩略图</string>
+    <string name="settings_eh_list_show_read_progress">显示阅读进度</string>
+    <string name="settings_eh_list_show_read_progress_summary">在详情列表模式下显示每个画廊的阅读进度</string>
     <string name="settings_eh_detail_size">详情大小</string>
     <string name="settings_eh_detail_size_long">长</string>
     <string name="settings_eh_detail_size_short">短</string>
