@@ -46,12 +46,9 @@ public class PermissionRequester {
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
             new AlertDialog.Builder(activity)
                     .setMessage(rationale)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            requestPermissions(activity, new String[]{permission}, requestCode);
-                        }
-                    }).setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok,
+                            (dialog, which)
+                                    -> requestPermissions(activity, new String[]{permission}, requestCode)).setNegativeButton(android.R.string.cancel, null)
                     .show();
         } else {
             return requestPermissions(activity, new String[]{permission}, requestCode);
@@ -80,12 +77,9 @@ public class PermissionRequester {
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
             new AlertDialog.Builder(activity)
                     .setMessage(rationale)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            requestPermissions(activity, new String[]{permission}, requestCode);
-                        }
-                    }).setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok,
+                            (dialog, which)
+                                    -> requestPermissions(activity, new String[]{permission}, requestCode)).setNegativeButton(android.R.string.cancel, null)
                     .show();
         } else {
             return requestPermissions(activity, new String[]{permission}, requestCode);
@@ -103,10 +97,9 @@ public class PermissionRequester {
             ActivityCompat.requestPermissions(activity, permissions, requestCode);
             if (callback != null)
                 callback.agree(requestCode);
-            return true;
         } catch (Throwable t) {
             ExceptionUtils.throwIfFatal(t);
-            return false;
         }
+        return false;
     }
 }
