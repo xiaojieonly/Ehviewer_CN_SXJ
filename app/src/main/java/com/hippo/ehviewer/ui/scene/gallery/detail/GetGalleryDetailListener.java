@@ -48,8 +48,6 @@ public class GetGalleryDetailListener extends EhCallback<GalleryDetailScene, Gal
                 scene.onGetGalleryDetailSuccess(result);
                 return;
             }
-
-
             scene.onGetGalleryDetailUpdateSuccess(result, SpiderInfo.getSpiderInfo(result), newPath(result));
         }
     }

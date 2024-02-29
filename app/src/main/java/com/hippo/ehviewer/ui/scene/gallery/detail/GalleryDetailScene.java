@@ -318,7 +318,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @Nullable
     private TextView downloadProgress;
 
-    private GalleryUpdateDialog updateDialog;
+    private GalleryUpdateDialog myUpdateDialog;
     @Nullable
     private Handler torrentDownloadHandler = null;
 
@@ -666,8 +666,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         EhApplication.getDownloadManager(context).addDownloadInfoListener(this);
-        if (updateDialog == null) {
-            updateDialog = new GalleryUpdateDialog(this, context);
+        if (myUpdateDialog == null) {
+            myUpdateDialog = new GalleryUpdateDialog(this, context);
         }
         return view;
     }
@@ -1621,14 +1621,14 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 if (onLongClick) {
                     CommonOperations.startDownload(activity, galleryInfo, true);
                 } else {
-                    updateDialog.showSelectDialog(mGalleryDetail, true);
+                    myUpdateDialog.showSelectDialog(mGalleryDetail, true);
                 }
 
             } else if (mDownloadState == DownloadInfo.GOTO_NEW) {
                 if (mGalleryDetail == null) {
                     return;
                 }
-                updateDialog.showSelectDialog(mGalleryDetail, false);
+                myUpdateDialog.showSelectDialog(mGalleryDetail, false);
             } else if (EhApplication.getDownloadManager(mContext).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
                 CommonOperations.startDownload(activity, galleryInfo, false);
             } else {
@@ -1647,6 +1647,14 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
         adjustViewVisibility(STATE_REFRESH, false);
         request(updateUrl, GetGalleryDetailListener.RESULT_UPDATE);
+    }
+
+    public void startDownloadAsNew(String updateUrl) {
+        if (mGalleryDetail == null || mGalleryDetail.newVersions == null) {
+            return;
+        }
+        adjustViewVisibility(STATE_REFRESH, false);
+        request(updateUrl, GetGalleryDetailListener.RESULT_DETAIL);
     }
 
     public void gotoNewVersion(GalleryDetail detail) {
@@ -1810,6 +1818,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
         adjustViewVisibility(STATE_NORMAL, true);
         bindViewSecond();
+        if (myUpdateDialog!=null&&myUpdateDialog.autoDownload){
+            myUpdateDialog.autoDownload = false;
+            onDownload(false);
+        }
     }
 
     protected void onGetGalleryDetailUpdateSuccess(GalleryDetail result, SpiderInfo newInfo, String newPath) {
