@@ -707,5 +707,9 @@
     <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
     <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
     <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
+    <string name="gallery_update_dialog_title">Update method</string>
+    <string name="gallery_update_dialog_message"><![CDATA[Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.&#xA;Download as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.]]></string>
+    <string name="gallery_update_download_as_new">Download as new</string>
+    <string name="gallery_update_override_old">Overwrite old</string>
 
 </resources>
