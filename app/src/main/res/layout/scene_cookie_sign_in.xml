@@ -135,11 +135,19 @@
         android:gravity="bottom"
         style="?attr/buttonBarStyle">
 
-        <View
+<!--        <View-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="0dp"-->
+<!--            android:layout_weight="1"/>-->
+        <Button
+            android:id="@+id/import_in_clipboard"
+            style="?attr/buttonBarPositiveButtonStyle"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="?attr/colorAccent"
+            android:textStyle="bold"
+            android:text="@string/cookie_login_import_in_clipboard"/>
         <Button
             android:id="@+id/ok"
             style="?attr/buttonBarPositiveButtonStyle"

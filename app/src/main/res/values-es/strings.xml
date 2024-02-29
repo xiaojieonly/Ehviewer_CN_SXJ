@@ -661,5 +661,7 @@
     <string name="top_list">Clasificar</string>
     <string name="settings_eh_list_show_read_progress">Show reading progress</string>
     <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
+    <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
+    <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
 
 </resources>

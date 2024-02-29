@@ -897,5 +897,7 @@
 
     <string name="pagination_count">共</string>
     <string name="pagination_page_and_item">条/页</string>
+    <string name="cookie_login_import_in_clipboard">从剪切板导入</string>
+    <string name="no_cookie_in_clipboard">未从剪切板中找到有效数据</string>
 
 </resources>
