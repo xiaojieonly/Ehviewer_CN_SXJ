@@ -16,8 +16,9 @@
 
 package com.hippo.ehviewer.ui.scene;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -25,10 +26,14 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+
 import com.google.android.material.textfield.TextInputLayout;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
@@ -37,6 +42,7 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.ViewUtils;
+
 import okhttp3.Cookie;
 
 public class CookieSignInScene extends SolidScene implements EditText.OnEditorActionListener,
@@ -59,6 +65,8 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     private EditText mIgneous;
     @Nullable
     private View mOk;
+    @Nullable
+    private Button importInClipboard;
 
     @Override
     public boolean needShowLeftDrawer() {
@@ -68,7 +76,7 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     @Nullable
     @Override
     public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_cookie_sign_in, container, false);
         mIpbMemberIdLayout = (TextInputLayout) ViewUtils.$$(view, R.id.ipb_member_id_layout);
         mIpbMemberId = mIpbMemberIdLayout.getEditText();
@@ -80,10 +88,12 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
         mIgneous = mIgneousLayout.getEditText();
         AssertUtils.assertNotNull(mIgneous);
         mOk = ViewUtils.$$(view, R.id.ok);
+        importInClipboard = (Button) ViewUtils.$$(view, R.id.import_in_clipboard);
 
         mIpbPassHash.setOnEditorActionListener(this);
 
         mOk.setOnClickListener(this);
+        importInClipboard.setOnClickListener(this);
 
         // Try to get old version cookie info
         Context context = getEHContext();
@@ -136,6 +146,8 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     public void onClick(View v) {
         if (mOk == v) {
             enter();
+        } else if (importInClipboard == v) {
+            importCookie();
         }
     }
 
@@ -203,18 +215,46 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
             new AlertDialog.Builder(context).setTitle(R.string.waring)
                     .setMessage(R.string.wrong_cookie_warning)
                     .setNegativeButton(R.string.i_dont_think_so, null)
-                    .setPositiveButton(R.string.i_will_check_it, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            storeCookie(ipbMemberId, ipbPassHash, igneous);
-                            setResult(RESULT_OK, null);
-                            finish();
-                        }
+                    .setPositiveButton(R.string.i_will_check_it, (dialog, which) -> {
+                        storeCookie(ipbMemberId, ipbPassHash, igneous);
+                        setResult(RESULT_OK, null);
+                        finish();
                     }).show();
         } else {
             storeCookie(ipbMemberId, ipbPassHash, igneous);
             setResult(RESULT_OK, null);
             finish();
+        }
+    }
+
+    private void importCookie() {
+        ClipboardManager clipboardManager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData data = clipboardManager.getPrimaryClip();
+        ClipData.Item item = data.getItemAt(0);
+        String cookieData = String.valueOf(item.getText());
+        String[] cookieRows = cookieData.split("\n");
+        if (cookieRows.length < 2) {
+            Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
+            return;
+        }
+        for (String cookieRow : cookieRows) {
+            handleCookie(cookieRow);
+        }
+    }
+
+    public void handleCookie(String cookieRow) {
+        String cleanRow = cookieRow.replace(" ", "");
+        String[] cookieData = cleanRow.split(":");
+        if (cookieData.length != 2) {
+            Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (cookieData[0].equals(EhCookieStore.KEY_IPD_PASS_HASH) && mIpbPassHash != null) {
+            mIpbPassHash.setText(cookieData[1]);
+        } else if (cookieData[0].equals(EhCookieStore.KEY_IPD_MEMBER_ID) && mIpbMemberId != null) {
+            mIpbMemberId.setText(cookieData[1]);
+        } else if (cookieData[0].equals(EhCookieStore.KEY_IGNEOUS) && mIgneous != null) {
+            mIgneous.setText(cookieData[1]);
         }
     }
 
