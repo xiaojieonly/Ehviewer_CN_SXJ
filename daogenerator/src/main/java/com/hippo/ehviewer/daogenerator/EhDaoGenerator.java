@@ -408,7 +408,7 @@ public class EhDaoGenerator {
                 "\t}");
         javaClass.addImport("com.alibaba.fastjson.JSONObject");
 
-        javaClass.addMethod("\tpublic static DownloadInfo downloadInfoFromJson(JSONObject object){\n" +
+        javaClass.addMethod("\tpublic static DownloadInfo downloadInfoFromJson(JSONObject object) throws ClassCastException {\n" +
                 "\t\tDownloadInfo downloadInfo = (DownloadInfo) GalleryInfo.galleryInfoFromJson(object);\n" +
                 "\t\tdownloadInfo.finished = object.getIntValue(\"finished\");\n" +
                 "\t\tdownloadInfo.legacy = object.getIntValue(\"legacy\");\n" +
