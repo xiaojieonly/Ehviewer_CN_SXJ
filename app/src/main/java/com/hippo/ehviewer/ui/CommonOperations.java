@@ -348,36 +348,33 @@ public final class CommonOperations {
             }
 
             new ListCheckBoxDialogBuilder(activity, items,
-                    new ListCheckBoxDialogBuilder.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(ListCheckBoxDialogBuilder builder, AlertDialog dialog, int position) {
-                            String label;
-                            if (position == 0) {
-                                label = null;
-                            } else {
-                                label = items[position];
-                                if (!dm.containLabel(label)) {
-                                    label = null;
-                                }
+                    (builder, dialog, position) -> {
+                        String label1;
+                        if (position == 0) {
+                            label1 = null;
+                        } else {
+                            label1 = items[position];
+                            if (!dm.containLabel(label1)) {
+                                label1 = null;
                             }
-                            // Start download
-                            for (GalleryInfo gi : toAdd) {
-                                Intent intent = new Intent(activity, DownloadService.class);
-                                intent.setAction(DownloadService.ACTION_START);
-                                intent.putExtra(DownloadService.KEY_LABEL, label);
-                                intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                                activity.startService(intent);
-                            }
-                            // Save settings
-                            if (builder.isChecked()) {
-                                Settings.putHasDefaultDownloadLabel(true);
-                                Settings.putDefaultDownloadLabel(label);
-                            } else {
-                                Settings.putHasDefaultDownloadLabel(false);
-                            }
-                            // Notify
-                            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
                         }
+                        // Start download
+                        for (GalleryInfo gi : toAdd) {
+                            Intent intent = new Intent(activity, DownloadService.class);
+                            intent.setAction(DownloadService.ACTION_START);
+                            intent.putExtra(DownloadService.KEY_LABEL, label1);
+                            intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
+                            activity.startService(intent);
+                        }
+                        // Save settings
+                        if (builder.isChecked()) {
+                            Settings.putHasDefaultDownloadLabel(true);
+                            Settings.putDefaultDownloadLabel(label1);
+                        } else {
+                            Settings.putHasDefaultDownloadLabel(false);
+                        }
+                        // Notify
+                        activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
                     }, activity.getString(R.string.remember_download_label), false)
                     .setTitle(R.string.download)
                     .show();

@@ -4,15 +4,12 @@ import android.content.Context;
 
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
-import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryDetail;
-import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.GalleryDetailTagsSyncTask;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.scene.SceneFragment;
-import com.hippo.unifile.UniFile;
 import com.hippo.yorozuya.FileUtils;
 
 public class GetGalleryDetailListener extends EhCallback<GalleryDetailScene, GalleryDetail> {
