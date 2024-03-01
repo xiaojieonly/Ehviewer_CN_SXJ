@@ -900,7 +900,7 @@
     <string name="cookie_login_import_in_clipboard">从剪切板导入</string>
     <string name="no_cookie_in_clipboard">未从剪切板中找到有效数据</string>
     <string name="gallery_update_dialog_title">更新方式</string>
-    <string name="gallery_update_dialog_message"><![CDATA[覆盖旧画廊：只保留下载版本，旧版本将被删除。&#xA;下载为新画廊：下载画廊将以新画廊形式存在，新画廊与旧画廊均会被保存。]]></string>
+    <string name="gallery_update_dialog_message">覆盖旧画廊：只保留下载版本，旧版本将被删除。\n下载为新画廊：下载画廊将以新画廊形式存在，新画廊与旧画廊均会被保存。</string>
     <string name="gallery_update_download_as_new">下载为新</string>
     <string name="gallery_update_override_old">覆盖下载</string>
 

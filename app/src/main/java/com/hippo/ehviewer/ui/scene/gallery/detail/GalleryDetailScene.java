@@ -802,35 +802,35 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     private void ensureActionDrawable(Context context) {
         Drawable heart = DrawableManager.getVectorDrawable(context, R.drawable.v_heart_primary_x48);
-        if (mHeart!=null){
+        if (mHeart != null) {
             setActionDrawable(mHeart, heart);
         }
         Drawable heartOutline = DrawableManager.getVectorDrawable(context, R.drawable.v_heart_outline_primary_x48);
-        if (mHeartOutline!=null){
+        if (mHeartOutline != null) {
             setActionDrawable(mHeartOutline, heartOutline);
         }
         Drawable torrent = DrawableManager.getVectorDrawable(context, R.drawable.v_utorrent_primary_x48);
-        if (mTorrent!=null){
+        if (mTorrent != null) {
             setActionDrawable(mTorrent, torrent);
         }
         Drawable archive = DrawableManager.getVectorDrawable(context, R.drawable.v_archive_primary_x48);
-        if (mArchive!=null){
+        if (mArchive != null) {
             setActionDrawable(mArchive, archive);
         }
         Drawable share = DrawableManager.getVectorDrawable(context, R.drawable.v_share_primary_x48);
-        if (mShare!=null){
+        if (mShare != null) {
             setActionDrawable(mShare, share);
         }
         Drawable rate = DrawableManager.getVectorDrawable(context, R.drawable.v_thumb_up_primary_x48);
-        if (mRate!=null){
+        if (mRate != null) {
             setActionDrawable(mRate, rate);
         }
         Drawable similar = DrawableManager.getVectorDrawable(context, R.drawable.v_similar_primary_x48);
-        if (mSimilar!=null){
+        if (mSimilar != null) {
             setActionDrawable(mSimilar, similar);
         }
         Drawable searchCover = DrawableManager.getVectorDrawable(context, R.drawable.v_file_find_primary_x48);
-        if (mSearchCover!=null){
+        if (mSearchCover != null) {
             setActionDrawable(mSearchCover, searchCover);
         }
     }
@@ -843,7 +843,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         int w = mColorBg.getWidth();
         int h = mColorBg.getHeight();
         if (ViewCompat.isAttachedToWindow(mColorBg) && w != 0 && h != 0) {
-            Resources resources = getEHContext().getResources();
+            Context context = getEHContext();
+            if (context == null) {
+                return false;
+            }
+            Resources resources = context.getResources();
             int keylineMargin = resources.getDimensionPixelSize(R.dimen.keyline_margin);
             int thumbWidth = resources.getDimensionPixelSize(R.dimen.gallery_detail_thumb_width);
             int thumbHeight = resources.getDimensionPixelSize(R.dimen.gallery_detail_thumb_height);
@@ -899,9 +903,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 mViewTransition.showView(2, animation);
                 break;
         }
-
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
         if ((oldState == STATE_INIT || oldState == STATE_FAILED || oldState == STATE_REFRESH) &&
-                (state == STATE_NORMAL || state == STATE_REFRESH_HEADER) && AttrResources.getAttrBoolean(getEHContext(), androidx.appcompat.R.attr.isLightTheme)) {
+                (state == STATE_NORMAL || state == STATE_REFRESH_HEADER) && AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme)) {
             if (!createCircularReveal()) {
                 SimpleHandler.getInstance().post(this::createCircularReveal);
             }
@@ -1003,18 +1010,18 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         bindPreviews(gd);
     }
 
-    private void bindReadProgress(GalleryInfo info){
-        if (mContext== null){
+    private void bindReadProgress(GalleryInfo info) {
+        if (mContext == null) {
             mContext = getEHContext();
-            if (mContext==null){
+            if (mContext == null) {
                 return;
             }
         }
-        if (executorService == null){
+        if (executorService == null) {
             executorService = EhApplication.getExecutorService(mContext);
         }
 
-        executorService.submit(()->{
+        executorService.submit(() -> {
             int startPage = SpiderQueen.findStartPage(this.mContext, info);
             int pages = info.pages;
             String text;
@@ -1023,8 +1030,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             } else {
                 text = "0/" + pages + "P";
             }
-            handler.post(()->{
-                if (mPages==null){
+            handler.post(() -> {
+                if (mPages == null) {
                     return;
                 }
                 mPages.setText(text);
@@ -1122,7 +1129,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             user.setText(comment.user);
             TextView time = v.findViewById(R.id.time);
             time.setText(ReadableTime.getTimeAgo(comment.time));
-            ObservedTextView c =  v.findViewById(R.id.comment);
+            ObservedTextView c = v.findViewById(R.id.comment);
             c.setMaxLines(5);
             c.setText(Html.fromHtml(comment.comment,
                     new URLImageGetter(c, EhApplication.getConaco(context)), null));
@@ -1159,7 +1166,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             previewSet.load(image, gd.gid, i);
             image.setTag(R.id.index, i);
             image.setOnClickListener(this);
-            TextView text =  view.findViewById(R.id.text);
+            TextView text = view.findViewById(R.id.text);
             text.setText(Integer.toString(previewSet.getPosition(i) + 1));
         }
     }
@@ -1229,7 +1236,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @SuppressLint("NonConstantResourceId")
     private void ensurePopMenu() {
-        if (mPopupMenu != null) {
+        if (mPopupMenu != null || mOtherActions == null) {
             return;
         }
 
@@ -1818,8 +1825,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
         adjustViewVisibility(STATE_NORMAL, true);
         bindViewSecond();
-        if (myUpdateDialog!=null&&myUpdateDialog.autoDownload){
+        if (myUpdateDialog != null && myUpdateDialog.autoDownload) {
             myUpdateDialog.autoDownload = false;
+            mDownloadState = DownloadInfo.STATE_INVALID;
             onDownload(false);
         }
     }
@@ -1930,7 +1938,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
      * 2022/4/7
      * 心情不好
      * 这个方法写的跟屎一样
-     *
      */
     @SuppressLint("SetTextI18n")
     private void showTorrentDownloadDialog(String url, String name, int progress, boolean success) {
@@ -1984,6 +1991,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 }
                 return;
             }
+            if (torrentDownloadView==null){
+                return;
+            }
             View detail = torrentDownloadView.findViewById(R.id.download_detail);
             View progressView = torrentDownloadView.findViewById(R.id.progress_view);
             detail.setVisibility(View.GONE);
@@ -2017,9 +2027,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @SuppressLint("HandlerLeak")
     private class TorrentDownloadHandler extends Handler {
-        public TorrentDownloadHandler(){
+        public TorrentDownloadHandler() {
             super(Looper.getMainLooper());
         }
+
         @Override
         public void handleMessage(Message msg) {
             TorrentDownloadMessage message = msg.getData().getParcelable("torrent_download_message");
@@ -2160,7 +2171,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         private Dialog mDialog;
 
         public void setDialog(@Nullable Dialog dialog, String url) {
-            if (dialog==null){
+            if (dialog == null) {
                 return;
             }
             mDialog = dialog;
@@ -2212,7 +2223,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             Context context = getEHContext();
             MainActivity activity = getActivity2();
             if (null != context && null != activity && null != mArchiveList && position < mArchiveList.length) {
-                if (mGalleryDetail==null)
+                if (mGalleryDetail == null)
                     return;
                 String res = mArchiveList[position].first;
                 EhRequest request = new EhRequest();
@@ -2285,7 +2296,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         private OkHttpClient okHttpClient;
 
         public void setDialog(@Nullable Dialog dialog, String url, OkHttpClient okHttpClient) {
-            if (dialog==null)
+            if (dialog == null)
                 return;
             mDialog = dialog;
             this.okHttpClient = okHttpClient;
@@ -2302,6 +2313,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     mRequest = new EhRequest().setMethod(EhClient.METHOD_GET_TORRENT_LIST)
                             .setArgs(url, mGid, mToken)
                             .setCallback(this);
+                    if (mRequest==null){
+                        return;
+                    }
                     EhApplication.getEhClient(context).execute(mRequest);
                 } else {
                     bind(mTorrentList);
