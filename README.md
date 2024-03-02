@@ -1,6 +1,23 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/03/02 :    
+ ###  新版发布1.9.7.7（如果出现问题请覆盖安装上一版本）     
+ ###  wifi数据迁移时因空指针导致的奔溃问题    
+ ###  下载列表分页优化，现在在列表中进入详情页后返回，列表会停留在原位    
+ ###  修复画廊下载失败时画廊详情中显示为更新的问题    
+ ###  优化wifi迁移时的稳定性       
+ ###  使用cookie登录时从剪切板导入的功能（cookie格式需与导出格式一致）    
+ ###  更新流程优化，允许用户选择下载为新画廊或者覆盖下载      
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1l3R-dzXgFJZmXIW-FXxAww)  密码:sm0x   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/ipEmU1pz9vif)  密码:fv77   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:7886b13e3eeb7e9a633ea61e1faa7b01b4bb5888&dn=EhviewerAllVersions  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
+
 # 2024/02/03 :感谢大伙们的陪伴，提前祝大家春节快乐~    
  ###  新版发布1.9.7.6（更新较多，如果出现问题请回滚至上一版本）     
  ###  更新了新的安全DNS    
