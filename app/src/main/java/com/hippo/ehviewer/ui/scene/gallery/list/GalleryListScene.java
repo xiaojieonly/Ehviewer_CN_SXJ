@@ -1144,6 +1144,9 @@ public final class GalleryListScene extends BaseScene
     }
     @Override
     public void onBackPressed() {
+        if (popupWindow!=null){
+            popupWindow.dismiss();
+        }
         if (null != mShowcaseView) {
             return;
         }
