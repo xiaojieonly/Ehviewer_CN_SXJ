@@ -16,10 +16,18 @@
 
 package com.hippo.ehviewer;
 
+import static com.hippo.ehviewer.ui.fragment.AdvancedFragment.DB_LOADING;
+import static com.hippo.ehviewer.ui.fragment.AdvancedFragment.DB_LOAD_FINISH;
+import static com.hippo.ehviewer.ui.fragment.AdvancedFragment.LOADING_PROGRESS;
+import static com.hippo.ehviewer.ui.fragment.AdvancedFragment.LOADING_STATUS;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -492,6 +500,10 @@ public class EhDB {
         // Reset id
         raw.setId(null);
         DownloadLabelDao dao = sDaoSession.getDownloadLabelDao();
+        DownloadLabel label = dao.load(raw.getId());
+        if (label!=null){
+            return label;
+        }
         raw.setId(dao.insert(raw));
         return raw;
     }
@@ -866,7 +878,7 @@ public class EhDB {
      * @param file The db file
      * @return error string, null for no error
      */
-    public static synchronized String importDB(Context context, File file) {
+    public static synchronized String importDB(Context context, File file, Handler handler) {
         try {
             SQLiteDatabase db = SQLiteDatabase.openDatabase(
                     file.getPath(), null, SQLiteDatabase.NO_LOCALIZED_COLLATORS);
@@ -881,21 +893,22 @@ public class EhDB {
 
             DaoMaster daoMaster = new DaoMaster(db);
             DaoSession session = daoMaster.newSession();
-
-            // Downloads
+            sendImportProgress(handler,10);
             DownloadManager manager = EhApplication.getDownloadManager(context);
-            List<DownloadInfo> downloadInfoList = session.getDownloadsDao().queryBuilder().list();
-            manager.addDownload(downloadInfoList);
-
             // Download label
             List<DownloadLabel> downloadLabelList = session.getDownloadLabelDao().queryBuilder().list();
             manager.addDownloadLabel(downloadLabelList);
+            // Downloads
+            List<DownloadInfo> downloadInfoList = session.getDownloadsDao().queryBuilder().list();
+            manager.addDownload(downloadInfoList);
 
+            sendImportProgress(handler,50);
             // Download dirname
             List<DownloadDirname> downloadDirnameList = session.getDownloadDirnameDao().queryBuilder().list();
             for (DownloadDirname dirname: downloadDirnameList) {
                 putDownloadDirname(dirname.getGid(), dirname.getDirname());
             }
+            sendImportProgress(handler,90);
 
             // History
             List<HistoryInfo> historyInfoList = session.getHistoryDao().queryBuilder().list();
@@ -959,5 +972,14 @@ public class EhDB {
             // Ignore
             return context.getString(R.string.cant_read_the_file);
         }
+    }
+
+    private static void sendImportProgress(Handler handler,int progress){
+        Message message = new Message();
+        Bundle bundle = new Bundle();
+        bundle.putInt(LOADING_PROGRESS, progress);
+        bundle.putInt(LOADING_STATUS, DB_LOADING);
+        message.setData(bundle);
+        handler.sendMessage(message);
     }
 }
