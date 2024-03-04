@@ -739,4 +739,5 @@
   <string name="gallery_update_dialog_message"><![CDATA[Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.&#xA;Download as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.]]></string>
   <string name="gallery_update_download_as_new">Download as new</string>
   <string name="gallery_update_override_old">Overwrite old</string>
+  <string name="loading_db_file">Data Loading …</string>
 </resources>

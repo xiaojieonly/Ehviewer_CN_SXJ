@@ -19,6 +19,8 @@ package com.hippo.ehviewer.download;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -494,7 +496,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadInfo info : downloadInfoList) {
             if (containDownloadInfo(info.gid)) {
                 // Contain
-                return;
+                continue;
             }
 
             // Ensure download state
@@ -530,9 +532,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
 
         // Notify
-        for (DownloadInfoListener l : mDownloadInfoListeners) {
-            l.onReload();
-        }
+        new Handler(Looper.getMainLooper()).post(() -> {
+            for (DownloadInfoListener l : mDownloadInfoListeners) {
+                l.onReload();
+            }
+        });
     }
 
     public void addDownloadLabel(List<DownloadLabel> downloadLabelList) {
@@ -1354,7 +1358,15 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     private static final Comparator<DownloadInfo> DATE_DESC_COMPARATOR = new Comparator<>() {
         @Override
         public int compare(DownloadInfo lhs, DownloadInfo rhs) {
-            return lhs.time - rhs.time > 0 ? -1 : 1;
+            long dif = lhs.time - rhs.time;
+            if (dif > 0) {
+                return -1;
+            } else if (dif < 0) {
+                return 1;
+            } else {
+                return 0;
+            }
+//            return  > 0 ? -1 : 1;
         }
     };
 

@@ -22,10 +22,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import com.hippo.ehviewer.AppConfig;
@@ -34,6 +38,7 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.wifi.WiFiClientActivity;
 import com.hippo.ehviewer.ui.wifi.WiFiServerActivity;
+import com.hippo.ehviewer.widget.ProgressHelper;
 import com.hippo.util.LogCat;
 import com.hippo.util.ReadableTime;
 
@@ -42,6 +47,11 @@ import java.util.Arrays;
 
 public class AdvancedFragment extends PreferenceFragment
         implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
+    public static final int DB_LOADING = 0;
+    public static final int DB_LOAD_FINISH = 1;
+
+    public static final String LOADING_STATUS = "loading_status";
+    public static final String LOADING_PROGRESS = "loading_progress";
 
     private static final String KEY_DUMP_LOGCAT = "dump_logcat";
     private static final String KEY_CLEAR_MEMORY_CACHE = "clear_memory_cache";
@@ -50,8 +60,13 @@ public class AdvancedFragment extends PreferenceFragment
     private static final String KEY_WIFI_SERVER = "wifi_server";
     private static final String KEY_WIFI_CLIENT = "wifi_client";
 
+    private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
+
+    private Context context;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        context = getContext();
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.advanced_settings);
 
@@ -134,7 +149,7 @@ public class AdvancedFragment extends PreferenceFragment
         return true;
     }
 
-    private static boolean importData(final Context context) {
+    private boolean importData(final Context context) {
         final File dir = AppConfig.getExternalDataDir();
         if (null == dir) {
             Toast.makeText(context, R.string.cant_get_data_dir, Toast.LENGTH_SHORT).show();
@@ -146,18 +161,30 @@ public class AdvancedFragment extends PreferenceFragment
             return false;
         }
         Arrays.sort(files);
-        new AlertDialog.Builder(context).setItems(files, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                File file = new File(dir, files[which]);
-                String error = EhDB.importDB(context, file);
-                if (null == error) {
-                    error = context.getString(R.string.settings_advanced_import_data_successfully);
-                }
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
-            }
+        new AlertDialog.Builder(context).setItems(files, (dialog, which) -> {
+            dialog.dismiss();
+            showProgress(context, dir, files, which);
         }).show();
         return false;
+    }
+
+    private void showProgress(final Context context, File dir, String[] files, int which) {
+
+        File file = new File(dir, files[which]);
+        ProgressHelper.showDialog(context, context.getString(R.string.loading_db_file));
+        new Thread(
+                () -> {
+                    String error = EhDB.importDB(context, file, dbSyncHandle);
+                    Message message = new Message();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("error", error);
+                    bundle.putInt(LOADING_STATUS, DB_LOAD_FINISH);
+                    message.setData(bundle);
+                    dbSyncHandle.sendMessage(message);
+                }
+        ).start();
+
+
     }
 
     @Override
@@ -168,5 +195,32 @@ public class AdvancedFragment extends PreferenceFragment
             return true;
         }
         return false;
+    }
+
+    private class DbSyncHandle extends Handler {
+        public DbSyncHandle(Looper mainLooper) {
+            super(mainLooper);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            Bundle data = msg.getData();
+            int state = data.getInt(LOADING_STATUS);
+            if (state == DB_LOAD_FINISH){
+                ProgressHelper.dismissDialog();
+                String error = data.getString("error");
+                if (context == null) {
+                    return;
+                }
+                if (null == error) {
+                    error = context.getString(R.string.settings_advanced_import_data_successfully);
+                }
+
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+            } else if (state == DB_LOADING) {
+                ProgressHelper.setProgress(data.getInt(LOADING_PROGRESS,0));
+            }
+
+        }
     }
 }

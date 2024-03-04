@@ -903,5 +903,6 @@
     <string name="gallery_update_dialog_message">覆盖旧画廊：只保留下载版本，旧版本将被删除。\n下载为新画廊：下载画廊将以新画廊形式存在，新画廊与旧画廊均会被保存。</string>
     <string name="gallery_update_download_as_new">下载为新</string>
     <string name="gallery_update_override_old">覆盖下载</string>
+    <string name="loading_db_file">数据加载中 …</string>
 
 </resources>
