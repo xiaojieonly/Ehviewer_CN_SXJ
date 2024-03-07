@@ -974,5 +974,7 @@
     <string name="gallery_update_download_as_new">Download as new</string>
     <string name="gallery_update_override_old">Overwrite old</string>
     <string name="loading_db_file">Data Loading …</string>
+    <string name="settings_eh_history_size">Number of historical records</string>
+    <string name="history_info_unlimited">Unlimited</string>
 
 </resources>

@@ -1374,4 +1374,16 @@ public class Settings {
         putBoolean(KEY_SHOW_READ_PROGRESS, value);
     }
 
+    public static final String KEY_HISTORY_INFO_SIZE = "history_info_size";
+
+    private static int DEFAULT_HISTORY_INFO_SIZE = 100;
+
+    public static int getHistoryInfoSize() {
+        return getIntFromStr(KEY_HISTORY_INFO_SIZE, DEFAULT_HISTORY_INFO_SIZE) ;
+    }
+
+    public static void setHistoryInfoSize(int value) {
+        putIntToStr(KEY_HISTORY_INFO_SIZE, value);
+    }
+
 }

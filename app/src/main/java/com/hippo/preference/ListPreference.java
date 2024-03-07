@@ -30,7 +30,7 @@ import com.hippo.ehviewer.R;
 public class ListPreference extends DialogPreference {
 
     private CharSequence[] mEntries;
-    private CharSequence[] mEntryValues;
+    private Object[] mEntryValues;
     private String mValue;
     private String mSummary;
     private int mClickedDialogEntryIndex;
@@ -122,7 +122,7 @@ public class ListPreference extends DialogPreference {
      *
      * @return The array of values.
      */
-    public CharSequence[] getEntryValues() {
+    public Object[] getEntryValues() {
         return mEntryValues;
     }
 

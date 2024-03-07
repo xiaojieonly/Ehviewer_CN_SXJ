@@ -21,7 +21,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+
 import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
@@ -40,6 +42,7 @@ public class EhFragment extends PreferenceFragment
         Preference listMode = findPreference(Settings.KEY_LIST_MODE);
         Preference detailSize = findPreference(Settings.KEY_DETAIL_SIZE);
         Preference thumbSize = findPreference(Settings.KEY_THUMB_SIZE);
+        Preference historyInfoSize = findPreference(Settings.KEY_HISTORY_INFO_SIZE);
         Preference showTagTranslations = findPreference(Settings.KEY_SHOW_TAG_TRANSLATIONS);
         Preference showGalleryComment = findPreference(Settings.KEY_SHOW_GALLERY_COMMENT);
         Preference tagTranslationsSource = findPreference("tag_translations_source");
@@ -50,6 +53,7 @@ public class EhFragment extends PreferenceFragment
         listMode.setOnPreferenceChangeListener(this);
         detailSize.setOnPreferenceChangeListener(this);
         thumbSize.setOnPreferenceChangeListener(this);
+        historyInfoSize.setOnPreferenceChangeListener(this);
         showTagTranslations.setOnPreferenceChangeListener(this);
         showGalleryComment.setOnPreferenceChangeListener(this);
 
@@ -85,11 +89,9 @@ public class EhFragment extends PreferenceFragment
             getActivity().setResult(Activity.RESULT_OK);
             return true;
         } else if (Settings.KEY_SHOW_TAG_TRANSLATIONS.equals(key)) {
-            if (Boolean.TRUE.equals(newValue)) {
-                EhTagDatabase.update(getActivity());
-            }
+            EhDB.MAX_HISTORY_COUNT = (int) newValue;
             return true;
-        }else if(Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)){
+        } else if (Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
             return true;
         }

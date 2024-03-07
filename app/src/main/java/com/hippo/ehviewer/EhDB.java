@@ -77,7 +77,7 @@ public class EhDB {
 
     private static final String TAG = EhDB.class.getSimpleName();
 
-    private static final int MAX_HISTORY_COUNT = 100;
+    public static int MAX_HISTORY_COUNT = 100;
 
     private static DaoSession sDaoSession;
 
@@ -199,6 +199,7 @@ public class EhDB {
         DaoMaster daoMaster = new DaoMaster(db);
 
         sDaoSession = daoMaster.newSession();
+        MAX_HISTORY_COUNT = Settings.getHistoryInfoSize();
     }
 
     public static boolean needMerge() {
@@ -767,8 +768,13 @@ public class EhDB {
             info = new HistoryInfo(galleryInfo);
             info.time = System.currentTimeMillis();
             dao.insert(info);
-            List<HistoryInfo> list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
-                    .limit(-1).offset(MAX_HISTORY_COUNT).list();
+            List<HistoryInfo> list;
+            if (MAX_HISTORY_COUNT==-1){
+                list = new ArrayList<>();
+            }else {
+                list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
+                        .limit(-1).offset(MAX_HISTORY_COUNT).list();
+            }
             dao.deleteInTx(list);
         }
     }
