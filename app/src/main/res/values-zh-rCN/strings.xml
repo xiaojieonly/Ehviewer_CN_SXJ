@@ -904,5 +904,7 @@
     <string name="gallery_update_download_as_new">下载为新</string>
     <string name="gallery_update_override_old">覆盖下载</string>
     <string name="loading_db_file">数据加载中 …</string>
+    <string name="settings_eh_history_size">历史记录数量</string>
+    <string name="history_info_unlimited">无限制</string>
 
 </resources>

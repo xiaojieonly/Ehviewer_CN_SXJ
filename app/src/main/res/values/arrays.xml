@@ -106,6 +106,22 @@
         <item>2</item>
     </string-array>
 
+    <string-array name="history_info_size_entries" translatable="false">
+        <item>100</item>
+        <item>500</item>
+        <item>1000</item>
+        <item>10000</item>
+        <item>@string/history_info_unlimited</item>
+    </string-array>
+
+    <string-array name="history_info_size_entry_values" translatable="false">
+        <item>100</item>
+        <item>500</item>
+        <item>1000</item>
+        <item>10000</item>
+        <item>-1</item>
+    </string-array>
+
     <string-array name="thumb_resolution_entries" translatable="false">
         <item>@string/settings_eh_thumb_resolution_auto</item>
         <item>250x</item>

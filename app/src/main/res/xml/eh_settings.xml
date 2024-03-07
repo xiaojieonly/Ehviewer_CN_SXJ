@@ -106,6 +106,14 @@
 
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
+        android:key="history_info_size"
+        android:summary="%s"
+        android:title="@string/settings_eh_history_size"
+        app:entries="@array/history_info_size_entries"
+        app:entryValues="@array/history_info_size_entry_values" />
+
+    <com.hippo.preference.ListPreference
+        android:defaultValue="0"
         android:key="thumb_resolution"
         android:summary="@string/settings_eh_thumb_resolution_summary"
         android:title="@string/settings_eh_thumb_resolution"
