@@ -1991,7 +1991,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 }
                 return;
             }
-            if (torrentDownloadView==null){
+            if (torrentDownloadView == null) {
                 return;
             }
             View detail = torrentDownloadView.findViewById(R.id.download_detail);
@@ -2313,7 +2313,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     mRequest = new EhRequest().setMethod(EhClient.METHOD_GET_TORRENT_LIST)
                             .setArgs(url, mGid, mToken)
                             .setCallback(this);
-                    if (mRequest==null){
+                    if (mRequest == null) {
                         return;
                     }
                     EhApplication.getEhClient(context).execute(mRequest);

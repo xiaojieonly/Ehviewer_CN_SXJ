@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
-
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "org.jetbrains.kotlin.plugin.parcelize"
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
 //    apply plugin: 'io.fabric'
