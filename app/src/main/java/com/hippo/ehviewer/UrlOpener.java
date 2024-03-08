@@ -48,7 +48,7 @@ public final class UrlOpener {
                 intent = new Intent(context, MainActivity.class);
                 intent.setAction(StageActivity.ACTION_START_SCENE);
                 intent.putExtra(StageActivity.KEY_SCENE_NAME, announcer.getClazz().getName());
-                intent.putExtra(StageActivity.KEY_SCENE_ARGS, announcer.getArgs());
+                intent.putExtra(StageActivity.KEY_SCENE_ARGS, announcer.args);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
                 return;

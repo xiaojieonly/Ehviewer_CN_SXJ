@@ -229,27 +229,27 @@ public final class MainActivity extends StageActivity
             if (!TextUtils.isEmpty(Settings.getSecurity())) {
                 Bundle newArgs = new Bundle();
                 newArgs.putString(SecurityScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
-                newArgs.putBundle(SecurityScene.KEY_TARGET_ARGS, announcer.getArgs());
+                newArgs.putBundle(SecurityScene.KEY_TARGET_ARGS, announcer.args);
                 return new Announcer(SecurityScene.class).setArgs(newArgs);
             } else if (Settings.getShowWarning()) {
                 Bundle newArgs = new Bundle();
                 newArgs.putString(WarningScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
-                newArgs.putBundle(WarningScene.KEY_TARGET_ARGS, announcer.getArgs());
+                newArgs.putBundle(WarningScene.KEY_TARGET_ARGS, announcer.args);
                 return new Announcer(WarningScene.class).setArgs(newArgs);
             } else if (Settings.getAskAnalytics()) {
                 Bundle newArgs = new Bundle();
                 newArgs.putString(AnalyticsScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
-                newArgs.putBundle(AnalyticsScene.KEY_TARGET_ARGS, announcer.getArgs());
+                newArgs.putBundle(AnalyticsScene.KEY_TARGET_ARGS, announcer.args);
                 return new Announcer(AnalyticsScene.class).setArgs(newArgs);
             } else if (EhUtils.needSignedIn(this)) {
                 Bundle newArgs = new Bundle();
                 newArgs.putString(SignInScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
-                newArgs.putBundle(SignInScene.KEY_TARGET_ARGS, announcer.getArgs());
+                newArgs.putBundle(SignInScene.KEY_TARGET_ARGS, announcer.args);
                 return new Announcer(SignInScene.class).setArgs(newArgs);
             } else if (Settings.getSelectSite()) {
                 Bundle newArgs = new Bundle();
                 newArgs.putString(SelectSiteScene.KEY_TARGET_SCENE, announcer.getClazz().getName());
-                newArgs.putBundle(SelectSiteScene.KEY_TARGET_ARGS, announcer.getArgs());
+                newArgs.putBundle(SelectSiteScene.KEY_TARGET_ARGS, announcer.args);
                 return new Announcer(SelectSiteScene.class).setArgs(newArgs);
             }
         }
