@@ -29,7 +29,7 @@ import java.io.FileWriter;
 public class EhDaoGenerator {
 
     private static final String PACKAGE = "com.hippo.ehviewer.dao";
-    private static final String OUT_DIR = "../app/src/main/java-gen";
+    private static final String OUT_DIR = "app/src/main/java";
     private static final String DELETE_DIR = OUT_DIR+"/com/hippo/ehviewer/dao";
 
     private static final int VERSION = 6;
