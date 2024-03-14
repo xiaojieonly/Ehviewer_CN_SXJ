@@ -18,6 +18,12 @@ package com.hippo.ehviewer.daogenerator;
 
 public class Main {
 
+    /**
+     * 随着项目逐渐迁移，此任务将被弃用，dao类将在项目目录中明文保存，而不是在每次打包时重新生成
+     * 以后改为手动执行dao类更新
+     * 祖宗之法不可变啊ToT
+     * @param args main 入参
+     */
     public static void main(String args[]){
         try {
             EhDaoGenerator.generate();

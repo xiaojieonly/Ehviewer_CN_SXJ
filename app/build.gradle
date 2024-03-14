@@ -67,11 +67,11 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
         }
     }
-    sourceSets {
-        main {
-            java.srcDirs += 'src/main/java-gen'
-        }
-    }
+//    sourceSets {
+//        main {
+//            java.srcDirs += 'src/main/java-gen'
+//        }
+//    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -86,15 +86,15 @@ android {
 
 }
 
-task copyNotice(type: Copy) {
-    from '../NOTICE.html'
-    into './src/main/assets'
-    finalizedBy ":daogenerator:executeDaoGenerator"
-}
+//task copyNotice(type: Copy) {
+//    from '../NOTICE.html'
+//    into './src/main/assets'
+//    finalizedBy ":daogenerator:executeDaoGenerator"
+//}
 
-tasks.withType(JavaCompile) {
-    task -> task.dependsOn copyNotice
-}
+//tasks.withType(JavaCompile) {
+//    task -> task.dependsOn copyNotice
+//}
 
 clean {
     delete file('src/main/assets/NOTICE.html').absolutePath
