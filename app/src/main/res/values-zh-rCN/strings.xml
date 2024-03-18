@@ -796,8 +796,8 @@
     <string name="no_archives">没有压缩包</string>
     <string name="download_archive_started">开始下载压缩包</string>
     <string name="download_archive_failure">无法下载压缩包</string>
-    <string name="archive">压缩包</string>
-    <string name="download_archive_failure_no_hath">下载压缩包需要 H@H 客户端</string>
+    <string name="h_h">H@H</string>
+    <string name="download_h_h_failure_no_hath">下载压缩包需要 H@H 客户端</string>
     <string name="settings_privacy">隐私</string>
     <string name="settings_privacy_secure">不允许屏幕抓取</string>
     <string name="settings_privacy_secure_summary">启用后，将不能截取该应用的屏幕截图，同时，将不会在系统任务切换器中显示该应用的内容预览\n\n重新启动应用以生效此更改</string>
@@ -906,5 +906,15 @@
     <string name="loading_db_file">数据加载中 …</string>
     <string name="settings_eh_history_size">历史记录数量</string>
     <string name="history_info_unlimited">无限制</string>
+    <string name="archiver">档案</string>
+    <string name="archiver_dialog_current_funds">当前拥有:</string>
+    <string name="archiver_dialog_download_original">下载原始档案</string>
+    <string name="archiver_dialog_download_resample">下载压缩档案</string>
+    <string name="archiver_dialog_size">预计大小:  %s</string>
+    <string name="dialog_archiver_title">档案下载</string>
+    <string name="download_receiver_label">EhViewer 下载接收</string>
+    <string name="decompressed_successfully">解压成功！</string>
+    <string name="decompression_failed">解压失败！</string>
+    <string name="download_label_archiver">档案</string>
 
 </resources>

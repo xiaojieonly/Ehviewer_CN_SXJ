@@ -93,10 +93,19 @@
                 android:textColor="?android:attr/textColorPrimary"/>
 
             <TextView
-                android:id="@+id/archive"
+                android:id="@+id/archiver"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/archive"
+                android:text="@string/archiver"
+                android:gravity="center_horizontal"
+                android:drawablePadding="8dp"
+                android:textColor="?android:attr/textColorPrimary"/>
+
+            <TextView
+                android:id="@+id/h_h"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/h_h"
                 android:gravity="center_horizontal"
                 android:drawablePadding="8dp"
                 android:textColor="?android:attr/textColorPrimary"/>

@@ -56,7 +56,9 @@ public class EhClient {
     public static final int METHOD_VOTE_COMMENT = 15;
     public static final int METHOD_IMAGE_SEARCH = 16;
     public static final int METHOD_ARCHIVE_LIST = 17;
+    public static final int METHOD_ARCHIVER = 27;
     public static final int METHOD_DOWNLOAD_ARCHIVE = 18;
+    public static final int METHOD_DOWNLOAD_ARCHIVER = 28;
     public static final int METHOD_ADD_TAG = 20;
     public static final int METHOD_EDIT_WATCHED = 21;
     public static final int METHOD_DELETE_WATCHED = 22;
@@ -180,8 +182,12 @@ public class EhClient {
                         return EhEngine.imageSearch(this, mImageOkHttpClient, (File) params[0], (Boolean) params[1], (Boolean) params[2], (Boolean) params[3]);
                     case METHOD_ARCHIVE_LIST:
                         return EhEngine.getArchiveList(this, mOkHttpClient, (String) params[0], (Long) params[1], (String) params[2]);
+                    case METHOD_ARCHIVER:
+                        return EhEngine.getArchiver(this, mOkHttpClient, (String) params[0], (Long) params[1], (String) params[2]);
                     case METHOD_DOWNLOAD_ARCHIVE:
                         return EhEngine.downloadArchive(this, mOkHttpClient, (Long) params[0], (String) params[1], (String) params[2], (String) params[3]);
+                    case METHOD_DOWNLOAD_ARCHIVER:
+                        return EhEngine.downloadArchiver(this, mOkHttpClient, (String) params[0],(String) params[1],(String) params[2],(String) params[3]);
                     case METHOD_ADD_TAG:
                         return EhEngine.addTag(this, mOkHttpClient, (String) params[0], (TagPushParam) params[1]);
                     case METHOD_EDIT_WATCHED:

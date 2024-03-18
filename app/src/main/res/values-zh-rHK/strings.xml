@@ -747,8 +747,8 @@
     <string name="no_archives">沒有壓縮檔</string>
     <string name="download_archive_started">開始下載壓縮檔</string>
     <string name="download_archive_failure">無法下載壓縮檔</string>
-    <string name="archive">壓縮檔</string>
-    <string name="download_archive_failure_no_hath">下載壓縮檔需要 H@H 客戶端</string>
+    <string name="h_h">H@H</string>
+    <string name="download_h_h_failure_no_hath">下載壓縮檔需要 H@H 客戶端</string>
     <string name="settings_privacy">私隱</string>
     <string name="settings_privacy_secure">禁止螢幕擷取</string>
     <string name="settings_privacy_secure_summary">啟用後，將無法在本應用程式中擷取螢幕，同時，將不會在系統任務切換器中顯示本應用程式的內容預覽\n\n重新啟動應用程式以套用此設定</string>
@@ -814,5 +814,15 @@
     <string name="loading_db_file">Data Loading …</string>
     <string name="settings_eh_history_size">Number of historical records</string>
     <string name="history_info_unlimited">Unlimited</string>
+    <string name="archiver">Archiver</string>
+    <string name="archiver_dialog_current_funds">Current Funds:</string>
+    <string name="archiver_dialog_download_original">Download Original Archive</string>
+    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
+    <string name="archiver_dialog_size">Estimated Size:  %s</string>
+    <string name="dialog_archiver_title">Archiver Downloader</string>
+    <string name="download_receiver_label">EhViewer Download Receiver</string>
+    <string name="decompressed_successfully">Decompressed successfully!</string>
+    <string name="decompression_failed">Decompression failed!</string>
+    <string name="download_label_archiver">Archiver</string>
 
 </resources>

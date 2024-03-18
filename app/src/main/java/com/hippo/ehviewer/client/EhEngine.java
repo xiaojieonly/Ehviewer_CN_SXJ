@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.client;
 
+import android.media.MediaCodec;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -27,6 +28,7 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.data.ArchiverData;
 import com.hippo.ehviewer.client.data.EhNewsDetail;
 import com.hippo.ehviewer.client.data.EhTopListDetail;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
@@ -777,6 +779,38 @@ public class EhEngine {
         return result;
     }
 
+    public static ArchiverData getArchiver(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
+                                           String url, long gid, String token) throws Throwable {
+        String referer = EhUrl.getGalleryDetailUrl(gid, token);
+        Log.d(TAG, url);
+        Request request = new EhRequestBuilder(url, referer).build();
+        Call call = okHttpClient.newCall(request);
+
+        // Put call
+        if (null != task) {
+            task.setCall(call);
+        }
+
+        String body = null;
+        Headers headers = null;
+        ArchiverData result;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            result = ArchiveParser.parseArchiver(body);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            throw e;
+        }
+
+        return result;
+    }
+
     public static Void downloadArchive(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                        long gid, String token, String or, String res) throws Throwable {
         if (or == null || or.length() == 0) {
@@ -823,6 +857,65 @@ public class EhEngine {
         }
 
         return null;
+    }
+
+    public static String downloadArchiver(
+            @Nullable EhClient.Task task, OkHttpClient okHttpClient, String url, String referer, String dltype, String dlcheck)
+            throws Throwable {
+        if (url == null || url.length() == 0) {
+            throw new EhException("Invalid form param url: " + url);
+        }
+        if (referer == null || referer.length() == 0) {
+            throw new EhException("Invalid form param referer: " + referer);
+        }
+
+        String origin = EhUrl.getOrigin();
+        FormBody.Builder builder = new FormBody.Builder();
+        builder.add("dltype",dltype);
+        builder.add("dlcheck",dlcheck);
+        Log.d(TAG, url);
+        Request request = new EhRequestBuilder(url, referer, origin)
+                .post(builder.build())
+                .build();
+        Call call = okHttpClient.newCall(request);
+
+        // Put call
+        if (null != task) {
+            task.setCall(call);
+        }
+
+        String body = null;
+        Headers headers = null;
+        int code = -1;
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            Pattern pattern = Pattern.compile("document.location = \"(.*)\"");
+            Matcher m = pattern.matcher(body);
+            if (!m.find()) {
+                return null;
+            }
+            String continueUrl = m.group(1);
+//            获取跳转链接
+            Request requestContinue = new EhRequestBuilder(continueUrl, origin, null)
+                    .build();
+            Call callContinue = okHttpClient.newCall(requestContinue);
+            Response responseC = callContinue.execute();
+            if (responseC.body() == null) {
+                return null;
+            }
+            body = responseC.body().string();
+            String downloadPath = ArchiveParser.parseArchiverDownloadUrl(body);
+            String downloadUrl = "https://"+ responseC.request().url().host()+downloadPath;
+            return downloadUrl;
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            return null;
+        }
     }
 
     private static ProfileParser.Result getProfileInternal(@Nullable EhClient.Task task,
@@ -1253,7 +1346,8 @@ public class EhEngine {
         String url = EhUrl.getHomeUrl();
         Log.d(TAG, url);
         FormBody formBody = builder.build();
-        Request  request = new EhRequestBuilder(url, referer).post(formBody).build();;
+        Request request = new EhRequestBuilder(url, referer).post(formBody).build();
+        ;
         Call call = okHttpClient.newCall(request);
         // Put call
         if (null != task) {

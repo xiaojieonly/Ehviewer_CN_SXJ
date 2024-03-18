@@ -549,7 +549,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
     }
 
-    public void addDownload(GalleryInfo galleryInfo, @Nullable String label) {
+    public void addDownload(GalleryInfo galleryInfo, @Nullable String label,int state) {
         if (containDownloadInfo(galleryInfo.gid)) {
             // Contain
             return;
@@ -558,7 +558,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         // It is new download info
         DownloadInfo info = new DownloadInfo(galleryInfo);
         info.label = label;
-        info.state = DownloadInfo.STATE_NONE;
+        info.state = state;
         info.time = System.currentTimeMillis();
 
         // Add to label download list
@@ -580,6 +580,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadInfoListener l : mDownloadInfoListeners) {
             l.onAdd(info, list, list.size() - 1);
         }
+    }
+
+    public void addDownload(GalleryInfo galleryInfo, @Nullable String label) {
+        addDownload(galleryInfo,label,DownloadInfo.STATE_NONE);
     }
 
     public void addDownloadInfo(GalleryInfo galleryInfo, @Nullable String label) {
