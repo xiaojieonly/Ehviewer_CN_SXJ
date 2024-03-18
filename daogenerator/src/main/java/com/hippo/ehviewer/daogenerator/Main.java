@@ -24,7 +24,7 @@ public class Main {
      * 祖宗之法不可变啊ToT
      * @param args main 入参
      */
-    public static void main(String args[]){
+    public static void main(String[] args){
         try {
             EhDaoGenerator.generate();
         }catch (Throwable t){
