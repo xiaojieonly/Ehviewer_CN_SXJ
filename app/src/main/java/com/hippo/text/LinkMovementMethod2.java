@@ -132,7 +132,7 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
             selStart = selEnd = Integer.MAX_VALUE;
         if (selEnd < first)
             selStart = selEnd = -1;
-
+        int beststart, bestend;
         switch (what) {
             case CLICK:
                 if (selStart == selEnd) {
@@ -148,8 +148,6 @@ public class LinkMovementMethod2 extends ScrollingMovementMethod {
                 break;
 
             case UP:
-                int beststart, bestend;
-
                 beststart = -1;
                 bestend = -1;
 
