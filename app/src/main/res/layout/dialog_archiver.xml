@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="@dimen/dad_top_bottom_bar_arrow_size"
+    android:paddingVertical="@dimen/dad_top_bottom_bar_arrow_size"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/dialog_archiver_current_funds"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/archiver_dialog_current_funds"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/dialog_archiver_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/dialog_archiver_original_cost"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/archiver_dialog_cost"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                    />
+                <Button
+                    android:id="@+id/dialog_archiver_original_download"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_height="wrap_content"
+                    android:text="@string/archiver_dialog_download_original"
+                    />
+                <TextView
+                    android:id="@+id/dialog_archiver_original_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/archiver_dialog_size"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                    />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/dialog_archiver_resample_cost"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/archiver_dialog_cost"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                    />
+                <Button
+                    android:id="@+id/dialog_archiver_resample_download"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_height="wrap_content"
+                    android:text="@string/archiver_dialog_download_resample"
+                    />
+                <TextView
+                    android:id="@+id/dialog_archiver_resample_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/archiver_dialog_size"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                    />
+            </LinearLayout>
+        </LinearLayout>
+        <ProgressBar
+            android:id="@+id/dialog_archiver_progress"
+            android:layout_marginTop="@dimen/dad_bar_size"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </FrameLayout>
+
+</LinearLayout>

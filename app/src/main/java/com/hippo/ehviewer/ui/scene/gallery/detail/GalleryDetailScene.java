@@ -96,6 +96,7 @@ import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
+import com.hippo.ehviewer.ui.dialog.ArchiverDownloadDialog;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
@@ -249,7 +250,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @Nullable
     private TextView mTorrent;
     @Nullable
-    private TextView mArchive;
+    private TextView mHaH;
+    @Nullable
+    private TextView mArchiver;
     @Nullable
     private TextView mShare;
     @Nullable
@@ -604,21 +607,24 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mHeart = (TextView) ViewUtils.$$(mHeartGroup, R.id.heart);
         mHeartOutline = (TextView) ViewUtils.$$(mHeartGroup, R.id.heart_outline);
         mTorrent = (TextView) ViewUtils.$$(mActions, R.id.torrent);
-        mArchive = (TextView) ViewUtils.$$(mActions, R.id.archive);
+        mHaH = (TextView) ViewUtils.$$(mActions, R.id.h_h);
+        mArchiver = (TextView) ViewUtils.$$(mActions, R.id.archiver);
         mShare = (TextView) ViewUtils.$$(mActions, R.id.share);
         mRate = (TextView) ViewUtils.$$(mActions, R.id.rate);
         mSimilar = (TextView) ViewUtils.$$(mActions, R.id.similar);
         mSearchCover = (TextView) ViewUtils.$$(mActions, R.id.search_cover);
         Ripple.addRipple(mHeartGroup, isDarkTheme);
         Ripple.addRipple(mTorrent, isDarkTheme);
-        Ripple.addRipple(mArchive, isDarkTheme);
+        Ripple.addRipple(mHaH, isDarkTheme);
+        Ripple.addRipple(mArchiver, isDarkTheme);
         Ripple.addRipple(mShare, isDarkTheme);
         Ripple.addRipple(mRate, isDarkTheme);
         Ripple.addRipple(mSimilar, isDarkTheme);
         Ripple.addRipple(mSearchCover, isDarkTheme);
         mHeartGroup.setOnClickListener(this);
         mTorrent.setOnClickListener(this);
-        mArchive.setOnClickListener(this);
+        mHaH.setOnClickListener(this);
+        mArchiver.setOnClickListener(this);
         mShare.setOnClickListener(this);
         mRate.setOnClickListener(this);
         mSimilar.setOnClickListener(this);
@@ -716,7 +722,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mHeart = null;
         mHeartOutline = null;
         mTorrent = null;
-        mArchive = null;
+        mHaH = null;
+        mArchiver = null;
         mShare = null;
         mRate = null;
         mSimilar = null;
@@ -813,10 +820,15 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (mTorrent != null) {
             setActionDrawable(mTorrent, torrent);
         }
-        Drawable archive = DrawableManager.getVectorDrawable(context, R.drawable.v_archive_primary_x48);
-        if (mArchive != null) {
-            setActionDrawable(mArchive, archive);
+        Drawable archiver = DrawableManager.getVectorDrawable(context, R.drawable.v_archiver_primary_x48);
+        if (mArchiver != null) {
+            setActionDrawable(mArchiver, archiver);
         }
+        Drawable archiveHH = DrawableManager.getVectorDrawable(context, R.drawable.v_archive_hh_primary_x48);
+        if (mHaH != null) {
+            setActionDrawable(mHaH, archiveHH);
+        }
+
         Drawable share = DrawableManager.getVectorDrawable(context, R.drawable.v_share_primary_x48);
         if (mShare != null) {
             setActionDrawable(mShare, share);
@@ -1428,7 +1440,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         .show();
                 helper.setDialog(dialog, mGalleryDetail.torrentUrl, EhApplication.getOkHttpClient(mContext));
             }
-        } else if (mArchive == v) {
+        } else if (mHaH == v) {
             if (mGalleryDetail == null) {
                 return;
             }
@@ -1443,6 +1455,18 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     .setOnDismissListener(helper)
                     .show();
             helper.setDialog(dialog, mGalleryDetail.archiveUrl);
+        } else if (mArchiver == v) {
+            if (mGalleryDetail == null) {
+                return;
+            }
+            if (mGalleryDetail.apiUid < 0) {
+                showTip(R.string.sign_in_first, LENGTH_LONG);
+                return;
+            }
+
+            ArchiverDownloadDialog archiverDownloadDialog = new ArchiverDownloadDialog(mGalleryDetail, this);
+            archiverDownloadDialog.showDialog();
+
         } else if (mRate == v) {
             if (mGalleryDetail == null) {
                 return;
@@ -2140,7 +2164,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         @Override
         public void onFailure(Exception e) {
             if (e instanceof NoHAtHClientException) {
-                showTip(R.string.download_archive_failure_no_hath, LENGTH_LONG);
+                showTip(R.string.download_h_h_failure_no_hath, LENGTH_LONG);
             } else {
                 showTip(R.string.download_archive_failure, LENGTH_LONG);
             }

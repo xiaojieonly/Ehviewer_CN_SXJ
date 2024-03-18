@@ -588,14 +588,14 @@
     <string name="no_archives">Sin archivos</string>
     <string name="download_archive_started">Descarga de archivos iniciada</string>
     <string name="download_archive_failure">Error al descargar archivo</string>
-    <string name="download_archive_failure_no_hath">Necesita un cliente H@H para descargar archivo</string>
+    <string name="download_h_h_failure_no_hath">Necesita un cliente H@H para descargar archivo</string>
     <string name="add_to_favorite_success">Añadido a favoritos</string>
     <string name="add_to_favourites">Agregar a favoritos</string>
     <string name="cancel_vote_down">Cancelar voto negativo</string>
     <string name="clear_all">Limpiar todo</string>
     <string name="comment_failed">Comentario fallido</string>
     <string name="count">Contar</string>
-    <string name="archive">Archivo</string>
+    <string name="h_h">H@H</string>
     <string name="delete">Eliminar</string>
     <string name="dir_picker">Seleccionar directorio</string>
     <string name="directory_not_writable">No se puede escribir en el directorio</string>
@@ -670,5 +670,15 @@
     <string name="loading_db_file">Data Loading …</string>
     <string name="settings_eh_history_size">Number of historical records</string>
     <string name="history_info_unlimited">Unlimited</string>
+    <string name="archiver">Archiver</string>
+    <string name="archiver_dialog_current_funds">Current Funds:</string>
+    <string name="archiver_dialog_download_original">Download Original Archive</string>
+    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
+    <string name="archiver_dialog_size">Estimated Size:  %s</string>
+    <string name="dialog_archiver_title">Archiver Downloader</string>
+    <string name="download_receiver_label">EhViewer Download Receiver</string>
+    <string name="decompressed_successfully">Decompressed successfully!</string>
+    <string name="decompression_failed">Decompression failed!</string>
+    <string name="download_label_archiver">Archiver</string>
 
 </resources>

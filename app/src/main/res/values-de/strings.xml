@@ -465,8 +465,8 @@
     <string name="no_archives">Keine Archivdatei</string>
     <string name="download_archive_started">Archivdatei wird heruntergeladen</string>
     <string name="download_archive_failure">Fehler beim Herunterladen der Archivdatei</string>
-    <string name="archive">Archivdateien</string>
-    <string name="download_archive_failure_no_hath">H@H-Klient ist für das Herunterladen der Archivdateien erforderlich</string>
+    <string name="h_h">H@H</string>
+    <string name="download_h_h_failure_no_hath">H@H-Klient ist für das Herunterladen der Archivdateien erforderlich</string>
     <string name="settings_privacy">Datenschutzoptionen</string>
     <string name="settings_privacy_secure">Screenshot verhindern</string>
     <string name="settings_privacy_secure_summary">Screenshots werden verhindert. Inhalt der App wird in Aktuelle Apps-Liste nicht angezeigt.</string>
@@ -577,5 +577,15 @@
     <string name="loading_db_file">Data Loading …</string>
     <string name="settings_eh_history_size">Number of historical records</string>
     <string name="history_info_unlimited">Unlimited</string>
+    <string name="archiver">Archiver</string>
+    <string name="archiver_dialog_current_funds">Current Funds:</string>
+    <string name="archiver_dialog_download_original">Download Original Archive</string>
+    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
+    <string name="archiver_dialog_size">Estimated Size:  %s</string>
+    <string name="dialog_archiver_title">Archiver Downloader</string>
+    <string name="download_receiver_label">EhViewer Download Receiver</string>
+    <string name="decompressed_successfully">Decompressed successfully!</string>
+    <string name="decompression_failed">Decompression failed!</string>
+    <string name="download_label_archiver">Archiver</string>
 
 </resources>

@@ -37,7 +37,6 @@ public class FastBlur {
      * @param view 需要模糊背景的控件
      * @param isDownScale 是否降低等级，优化效率（建议开启）
      */
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public static void doBlur(Context context, Bitmap bkg, View view, boolean isDownScale) {
         float scaleFactor = 1;
         float radius = 20;

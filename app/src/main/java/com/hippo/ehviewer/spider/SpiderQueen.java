@@ -1287,7 +1287,6 @@ public final class SpiderQueen implements Runnable {
 //                    } else {
 //                        refNew = referer + "?nl=" + skipHathKey;
 //                    }
-                    String refNew = referer;
                     if (targetImageUrl.contains("?")) {
                         targetImageUrl = targetImageUrl + "&nl=" + skipHathKey;
                     } else {
@@ -1296,7 +1295,7 @@ public final class SpiderQueen implements Runnable {
 
                     Call call = mHttpImageClient.newBuilder()
                             .callTimeout(0, TimeUnit.SECONDS).build()
-                            .newCall(new EhRequestBuilder(targetImageUrl, refNew).build());
+                            .newCall(new EhRequestBuilder(targetImageUrl, referer).build());
                     Response response;
                     try {
                         response = call.execute();

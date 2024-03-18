@@ -62,6 +62,7 @@ import com.hippo.yorozuya.collect.SparseJLArray;
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.query.CloseableListIterator;
 import org.greenrobot.greendao.query.LazyList;
+import org.greenrobot.greendao.query.QueryBuilder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -490,6 +491,13 @@ public class EhDB {
 
     public static synchronized DownloadLabel addDownloadLabel(String label) {
         DownloadLabelDao dao = sDaoSession.getDownloadLabelDao();
+
+        QueryBuilder<DownloadLabel> queryBuilder = dao.queryBuilder().where(DownloadLabelDao.Properties.Label.eq(label));
+        List<DownloadLabel> result = queryBuilder.list();
+        if (!result.isEmpty()){
+            return result.get(0);
+        }
+
         DownloadLabel raw = new DownloadLabel();
         raw.setLabel(label);
         raw.setTime(System.currentTimeMillis());
