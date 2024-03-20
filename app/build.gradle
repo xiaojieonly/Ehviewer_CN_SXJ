@@ -129,7 +129,8 @@ dependencies {
     implementation 'com.getkeepsafe.relinker:relinker:1.4.4'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
-    implementation 'com.alibaba:fastjson:1.2.73'
+    implementation 'com.alibaba:fastjson:1.2.83'
+//    implementation 'com.alibaba.fastjson2:fastjson2:2.0.47'
 
     /**
      * 原始依赖
@@ -177,7 +178,7 @@ dependencies {
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
-    implementation 'org.jsoup:jsoup:1.14.2'
+    implementation 'org.jsoup:jsoup:1.17.2'
 
     //事件通知
     implementation 'org.greenrobot:eventbus:3.1.1'
