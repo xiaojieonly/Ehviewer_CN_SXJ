@@ -6,8 +6,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
-import com.microsoft.appcenter.crashes.Crashes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -82,7 +82,7 @@ public class ConnectThread extends Thread {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
-            Crashes.trackError(e);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
@@ -159,7 +159,7 @@ public class ConnectThread extends Thread {
             }
             return new WiFiDataHand(result);
         } catch (Throwable throwable) {
-            Crashes.trackError(throwable);
+            FirebaseCrashlytics.getInstance().recordException(throwable);
             if (socket.isClosed()) {
                 interrupt();
             }
@@ -173,7 +173,7 @@ public class ConnectThread extends Thread {
             interrupt();
             close = true;
         } catch (IOException|NullPointerException e) {
-            Crashes.trackError(e);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 

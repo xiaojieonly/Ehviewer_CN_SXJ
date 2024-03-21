@@ -20,7 +20,7 @@ import com.hippo.ehviewer.ui.dialog.EhDistributeListener;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.microsoft.appcenter.distribute.Distribute;
 
 
@@ -45,7 +45,7 @@ public class SplashActivity extends EhActivity {
             CheckUpdate = true;
         }
         AppCenter.start(getApplication(), "a47010fb-702a-415a-ad93-ab5c674093ca",
-                Analytics.class, Crashes.class, Distribute.class);
+                Analytics.class, Distribute.class);
 //        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
 //                Analytics.class, Crashes.class, Distribute.class);
         Distribute.setEnabled(!Settings.getCloseAutoUpdate());

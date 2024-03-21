@@ -3,6 +3,7 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "org.jetbrains.kotlin.plugin.parcelize"
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
+    apply plugin: 'com.google.firebase.crashlytics'
 //    apply plugin: 'io.fabric'
 }
 
@@ -76,8 +77,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-//        sourceCompatibility JavaVersion.VERSION_1_8
-//        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildFeatures {
@@ -105,11 +104,22 @@ dependencies {
     // 应用服务分发
     def appCenterSdkVersion = '4.4.5'
     implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
+//    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     implementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
-    // app使用情况数据收集
+
     implementation 'com.google.android.material:material:1.4.0'
+
+    // app使用情况数据收集
+    // Import the BoM for the Firebase platform
+//    implementation platform('com.google.firebase:firebase-bom:32.1.0')
+
+    // Add the dependencies for the Crashlytics and Analytics libraries
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+//    implementation 'com.google.firebase:firebase-crashlytics'
+//    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-crashlytics:18.3.7'
     implementation 'com.google.firebase:firebase-analytics:21.3.0'
+//    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.activity:activity:1.2.4"
@@ -187,8 +197,6 @@ dependencies {
     testImplementation 'junit:junit:4.8.2'
     testImplementation 'org.robolectric:robolectric:4.2.1'
     testImplementation 'org.jooq:joor:0.9.6'
-//    implementation "androidx.core:core-ktx:1.9.0"
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // https://mvnrepository.com/artifact/androidx.webkit/webkit
     runtimeOnly group: 'androidx.webkit', name: 'webkit', version: '1.4.0'
@@ -205,6 +213,3 @@ configurations.all {
         exclude group: 'com.github.seven332', module: 'okhttp'
     }
 }
-//repositories {
-//    mavenCentral()
-//}

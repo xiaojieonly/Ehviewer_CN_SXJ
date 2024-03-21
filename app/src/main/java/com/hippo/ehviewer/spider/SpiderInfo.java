@@ -40,7 +40,7 @@ import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.NumberUtils;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -323,7 +323,7 @@ public class SpiderInfo {
             readPreviews(info, 0, spiderInfo);
             return spiderInfo;
         } catch (ParseException e) {
-            Crashes.trackError(e);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return null;
     }

@@ -44,7 +44,7 @@ import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.ui.ToolbarActivity;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -346,7 +346,7 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                         openSocket();
                     } catch (IOException e) {
                         e.printStackTrace();
-                        Crashes.trackError(e);
+                        FirebaseCrashlytics.getInstance().recordException(e);
                     }
                 }
                 connectThread.sendData(dataHand);

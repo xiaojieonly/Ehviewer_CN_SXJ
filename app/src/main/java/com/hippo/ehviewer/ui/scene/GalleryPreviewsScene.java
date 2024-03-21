@@ -58,7 +58,7 @@ import com.hippo.widget.recyclerview.AutoGridLayoutManager;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.LayoutUtils;
 import com.hippo.yorozuya.ViewUtils;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -246,7 +246,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                     startActivity(intent);
                     EventBus.getDefault().postSticky(new GalleryActivityEvent(p.getPosition(), mGalleryInfo));
                 } catch (RuntimeException e) {
-                    Crashes.trackError(e);
+                    FirebaseCrashlytics.getInstance().recordException(e);
                 }
             }
         }

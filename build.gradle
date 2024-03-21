@@ -1,15 +1,3 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-plugins {
-    id 'com.android.application' version '7.4.1' apply false
-    id 'com.android.library' version '7.4.1' apply false
-    id 'com.google.gms.google-services' version '4.3.10' apply false
-    id "org.jetbrains.kotlin.android" version "1.9.23" apply false
-    id "org.jetbrains.kotlin.plugin.parcelize" version "1.9.23" apply false
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
 //buildscript {
 //    repositories {
 //        google()
@@ -23,16 +11,17 @@ task clean(type: Delete) {
 ////        classpath 'com.google.gms:google-services:4.3.0'
 //        classpath 'com.google.gms:google-services:4.3.10'
 //        classpath 'io.fabric.tools:gradle:1.28.0'
-//
+//        // Add the dependency for the Crashlytics Gradle plugin
+//        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.5'
 //        // NOTE: Do not place your application dependencies here; they belong
 //        // in the individual module build.gradle files
 //    }
 //}
-//
+
 //allprojects {
 //    repositories {
 //        google()
-//        jcenter()
+//        mavenCentral()
 //        maven { url "https://jitpack.io" }
 //
 //        maven{ url 'https://maven.aliyun.com/repository/google'}
@@ -44,7 +33,20 @@ task clean(type: Delete) {
 //        maven{ url 'https://maven.aliyun.com/repository/jcenter'}
 //    }
 //}
-//
-//task clean(type: Delete) {
-//    delete rootProject.buildDir
-//}
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    id 'com.android.application' version '7.4.1' apply false
+    id 'com.android.library' version '7.4.1' apply false
+    id 'com.google.gms.google-services' version '4.4.1' apply false
+    id "org.jetbrains.kotlin.android" version "1.9.23" apply false
+    id "org.jetbrains.kotlin.plugin.parcelize" version "1.9.23" apply false
+    id "com.google.firebase.crashlytics" version "2.9.5" apply false
+}
+
+
+
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
