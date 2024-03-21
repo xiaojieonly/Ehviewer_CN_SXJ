@@ -3,7 +3,7 @@ package com.hippo.ehviewer.client.data.wifi;
 import androidx.annotation.NonNull;
 
 import com.alibaba.fastjson.JSONObject;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class WiFiDataHand {
     public final static int ERROR = 0;
@@ -40,7 +40,7 @@ public class WiFiDataHand {
             this.pageSize = object.getLongValue("totalSize");
             this.pageIndex = object.getLongValue("part");
         } catch (Throwable throwable) {
-            Crashes.trackError(throwable);
+            FirebaseCrashlytics.getInstance().recordException(throwable);
             messageType = ERROR;
             errorMessage = throwable.getMessage();
             data = new JSONObject();

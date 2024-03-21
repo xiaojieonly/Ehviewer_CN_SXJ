@@ -16,69 +16,70 @@ import java.io.OutputStream;
 import static androidx.core.app.ActivityCompat.startActivityForResult;
 
 import com.hippo.unifile.UniFile;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class FileUtils {
-    public static boolean copyFile(File fromFile,File toFile){
-        return copyFile(fromFile,toFile,false);
+    public static boolean copyFile(File fromFile, File toFile) {
+        return copyFile(fromFile, toFile, false);
     }
 
-    public static boolean copyFile(File fromFile,File toFile,boolean flush){
-        try{
+    public static boolean copyFile(File fromFile, File toFile, boolean flush) {
+        try {
             InputStream fileFrom = new FileInputStream(fromFile);
             OutputStream fileTo = new FileOutputStream(toFile);
             byte[] b = new byte[1024];
             int c;
 
-            while ((c = fileFrom.read(b))>0){
-                fileTo.write(b,0,c);
+            while ((c = fileFrom.read(b)) > 0) {
+                fileTo.write(b, 0, c);
             }
-            if (flush){
+            if (flush) {
                 fileTo.flush();
             }
             fileFrom.close();
             fileTo.close();
 
             return true;
-        }catch (IOException ioException){
+        } catch (IOException ioException) {
             ExceptionUtils.throwIfFatal(ioException);
-            Crashes.trackError(ioException);
+            FirebaseCrashlytics.getInstance().recordException(ioException);
             return false;
         }
     }
 
-    public static boolean copyFile(UniFile fromFile, UniFile toFile, boolean flush){
-        try{
+    public static boolean copyFile(UniFile fromFile, UniFile toFile, boolean flush) {
+        try {
             InputStream fileFrom = fromFile.openInputStream();
             OutputStream fileTo = toFile.openOutputStream();
             byte[] b = new byte[1024];
             int c;
 
-            while ((c = fileFrom.read(b))>0){
-                fileTo.write(b,0,c);
+            while ((c = fileFrom.read(b)) > 0) {
+                fileTo.write(b, 0, c);
             }
-            if (flush){
+            if (flush) {
                 fileTo.flush();
             }
             fileFrom.close();
             fileTo.close();
 
             return true;
-        }catch (IOException ioException){
+        } catch (IOException ioException) {
             ExceptionUtils.throwIfFatal(ioException);
-            Crashes.trackError(ioException);
+            FirebaseCrashlytics.getInstance().recordException(ioException);
             return false;
         }
     }
 
     /**
      * 打开目录
+     *
      * @param path
      * @param context
      */
-    public static void openAssignFolder(String path, Context context){
+    public static void openAssignFolder(String path, Context context) {
         File file = new File(path);
-        if(!file.exists()){
+        if (!file.exists()) {
             return;
         }
 
@@ -97,12 +98,11 @@ public class FileUtils {
 
         try {
 //            context.startActivity(intent);
-            context.startActivity(Intent.createChooser(intent,"选择浏览工具"));
+            context.startActivity(Intent.createChooser(intent, "选择浏览工具"));
         } catch (ActivityNotFoundException e) {
             e.printStackTrace();
         }
     }
-
 
 
 }

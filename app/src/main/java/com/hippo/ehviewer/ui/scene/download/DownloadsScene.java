@@ -116,7 +116,7 @@ import com.hippo.yorozuya.ObjectUtils;
 import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
 import com.sxj.paginationlib.PaginationIndicator;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -351,7 +351,7 @@ public class DownloadsScene extends ToolbarScene
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         } catch (Exception e) {
             e.printStackTrace();
-            Crashes.trackError(e);
+            FirebaseCrashlytics.getInstance().recordException(e);
             setTitle(getString(R.string.scene_download_title,
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         }
@@ -1611,7 +1611,7 @@ public class DownloadsScene extends ToolbarScene
                 // Update transition name
                 ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
             } catch (Exception e) {
-                Crashes.trackError(e);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         }
 

@@ -48,7 +48,7 @@ import com.hippo.ehviewer.client.EhRequestBuilder;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.widget.DialogWebChromeClient;
 import com.hippo.widget.ProgressView;
-import com.microsoft.appcenter.crashes.Crashes;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.util.Map;
@@ -249,7 +249,7 @@ public class UConfigActivity extends ToolbarActivity {
                 return new WebResourceResponse(mimeType, encoding, body.byteStream());
             } catch (IOException e) {
                 e.printStackTrace();
-                Crashes.trackError(e);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
             return null;
         }
