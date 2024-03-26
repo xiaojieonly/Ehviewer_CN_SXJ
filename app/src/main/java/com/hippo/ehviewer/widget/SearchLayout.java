@@ -153,6 +153,7 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         // Create action view
         mActionView = mInflater.inflate(R.layout.search_action, null);
         mAction = (TextView) mActionView.findViewById(R.id.action);
+        mAction.setVisibility(INVISIBLE);
         mAction.setOnClickListener(this);
     }
 
