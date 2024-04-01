@@ -1,6 +1,28 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/04/01 : 愚人节快乐~今天你骗人了吗🤣    
+ ###  新版发布1.9.7.8（如果出现问题请覆盖安装上一版本）    
+ ###  修复画廊列表标签弹窗在特定情况下没能正确消失的问题    
+ ###  修复导入数据量过大导致的主线程奔溃问题，优化数据导入流程，同步导入改为异步导入    
+ ###  移除远古更新代码    
+ ###  更新Tag汉化链接    
+ ###  历史记录不再限制为100条，可以在设置-EH-历史记录数量中自行设置    
+ ###  新增档案下载功能    
+ ###  新增在未退出app情况下档案下载完成后自动导入到下载列表   
+ ###  修复画廊下载失败时画廊详情中显示为更新的问题
+ ###  更新依赖，规避反序列化、Xss漏洞
+ ###  由于微软政策原因将错误收集模块从Visual Studio App Center迁移至Google Firebase
+ ###  影藏已经不再支持的图片搜索功能
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/18_AeVXxBTdaRnwU4cQwvbA)  密码:yi1m   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/ie7PI1tgrnwj)  密码:egy6   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:76a0eff70fc84e26d7e97710d38b904c4ed8e53a&dn=EhViewer-1.9.7.8.apk    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/03/02 :    
  ###  新版发布1.9.7.7（如果出现问题请覆盖安装上一版本）     
  ###  wifi数据迁移时因空指针导致的奔溃问题    
