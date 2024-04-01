@@ -13,7 +13,7 @@
  ###  修复画廊下载失败时画廊详情中显示为更新的问题
  ###  更新依赖，规避反序列化、Xss漏洞
  ###  由于微软政策原因将错误收集模块从Visual Studio App Center迁移至Google Firebase
- ###  影藏已经不再支持的图片搜索功能
+ ###  隐藏已经不再支持的图片搜索功能
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/18_AeVXxBTdaRnwU4cQwvbA)  密码:yi1m   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/ie7PI1tgrnwj)  密码:egy6   
