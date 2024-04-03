@@ -57,10 +57,6 @@ public class EhFragment extends PreferenceFragment
         showTagTranslations.setOnPreferenceChangeListener(this);
         showGalleryComment.setOnPreferenceChangeListener(this);
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            getPreferenceScreen().removePreference(applyNavBarThemeColor);
-        }
-
         if (!EhTagDatabase.isPossible(getActivity())) {
             getPreferenceScreen().removePreference(showTagTranslations);
             getPreferenceScreen().removePreference(tagTranslationsSource);
