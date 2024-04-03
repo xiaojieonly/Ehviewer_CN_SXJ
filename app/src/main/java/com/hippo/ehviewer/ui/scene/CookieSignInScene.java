@@ -228,17 +228,21 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     }
 
     private void importCookie() {
-        ClipboardManager clipboardManager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData data = clipboardManager.getPrimaryClip();
-        ClipData.Item item = data.getItemAt(0);
-        String cookieData = String.valueOf(item.getText());
-        String[] cookieRows = cookieData.split("\n");
-        if (cookieRows.length < 2) {
-            Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
-            return;
-        }
-        for (String cookieRow : cookieRows) {
-            handleCookie(cookieRow);
+        try{
+            ClipboardManager clipboardManager = (ClipboardManager) EhApplication.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData data = clipboardManager.getPrimaryClip();
+            ClipData.Item item = data.getItemAt(0);
+            String cookieData = String.valueOf(item.getText());
+            String[] cookieRows = cookieData.split("\n");
+            if (cookieRows.length < 2) {
+                Toast.makeText(getContext(), R.string.no_cookie_in_clipboard, Toast.LENGTH_LONG).show();
+                return;
+            }
+            for (String cookieRow : cookieRows) {
+                handleCookie(cookieRow);
+            }
+        }catch (NullPointerException e){
+            Toast.makeText(getContext(), R.string.cookie_in_clipboard_incorrect, Toast.LENGTH_LONG).show();
         }
     }
 

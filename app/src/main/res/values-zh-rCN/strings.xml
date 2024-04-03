@@ -916,5 +916,6 @@
     <string name="decompressed_successfully">解压成功！</string>
     <string name="decompression_failed">解压失败！</string>
     <string name="download_label_archiver">档案</string>
+    <string name="cookie_in_clipboard_incorrect">Cookie格式不正确</string>
 
 </resources>

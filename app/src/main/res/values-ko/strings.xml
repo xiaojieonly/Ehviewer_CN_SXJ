@@ -797,4 +797,5 @@
     <string name="decompressed_successfully">Decompressed successfully!</string>
     <string name="decompression_failed">Decompression failed!</string>
     <string name="download_label_archiver">Archiver</string>
+    <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
 </resources>
