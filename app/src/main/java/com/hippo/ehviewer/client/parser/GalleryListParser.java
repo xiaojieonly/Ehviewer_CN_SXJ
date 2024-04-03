@@ -92,7 +92,12 @@ public class GalleryListParser {
 
     public static Result parse(@NonNull String body) throws Exception {
         Result result = new Result();
-        Document d = Jsoup.parse(body);
+        Document d;
+        try{
+           d = Jsoup.parse(body);
+        }catch (Exception ignored){
+            return result;
+        }
 
         try {
             Element ptt = d.getElementsByClass("ptt").first();

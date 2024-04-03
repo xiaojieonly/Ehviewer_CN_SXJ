@@ -27,23 +27,27 @@ public class MyTagLitParser {
             throw new EhException(m.group(1));
         }
 
-        Document document = Jsoup.parse(body);
+        try{
+            Document document = Jsoup.parse(body);
+            Element element = document.getElementById("usertags_outer");
 
-        Element element = document.getElementById("usertags_outer");
-
-        if (element == null){
-            return list;
-        }
-
-        Elements tags = element.children();
-
-        for (int i = 0;i<tags.size();i++){
-            if (i !=0){
-                Element tag = tags.get(i);
-
-                list.userTags.add(parserUserTag(tag));
+            if (element == null){
+                return list;
             }
+
+            Elements tags = element.children();
+
+            for (int i = 0;i<tags.size();i++){
+                if (i !=0){
+                    Element tag = tags.get(i);
+
+                    list.userTags.add(parserUserTag(tag));
+                }
+            }
+        }catch (Exception ignored){
         }
+
+
 
 
         return list;
