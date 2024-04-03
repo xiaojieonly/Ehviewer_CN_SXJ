@@ -188,7 +188,8 @@ dependencies {
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
-    implementation 'org.jsoup:jsoup:1.17.2'
+    // https://mvnrepository.com/artifact/org.jsoup/jsoup
+    implementation 'org.jsoup:jsoup:1.15.3'
 
     //事件通知
     implementation 'org.greenrobot:eventbus:3.1.1'

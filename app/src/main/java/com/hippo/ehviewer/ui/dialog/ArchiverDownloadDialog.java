@@ -184,7 +184,7 @@ public class ArchiverDownloadDialog implements
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
             File file = AppConfig.getExternalArchiverDir();
-            if (file == null) {
+            if (file == null || downloadUrl == null) {
                 return;
             }
             Uri downloadUri = Uri.parse(downloadUrl);
