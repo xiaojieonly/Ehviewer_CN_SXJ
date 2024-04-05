@@ -88,8 +88,9 @@ public class EhFragment extends PreferenceFragment
             if (Boolean.TRUE.equals(newValue)) {
                 EhTagDatabase.update(getActivity());
             }
+            return true;
         } else if (Settings.KEY_HISTORY_INFO_SIZE.equals(key)) {
-            EhDB.MAX_HISTORY_COUNT = (int) newValue;
+            EhDB.MAX_HISTORY_COUNT = Integer.parseInt(newValue.toString());
             return true;
         } else if (Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
