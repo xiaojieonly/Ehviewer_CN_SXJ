@@ -1,16 +1,17 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2024/04/05 : 
- ###  新版发布1.9.7.9（如果出现问题请覆盖安装1.9.7.7版本）
- ###  修复归档下载因下载链接为空时导致的奔溃问题
- ###  修复wifi迁移时因获取不到ip导致的奔溃问题
- ###  修复从剪切版导入cookie时格式不对导致的奔溃问题
- ###  修复获取Tag列表时导致的奔溃问题
- ###  修复设置-Eh-显示标签翻译修改时奔溃的问题
+# 2024/04/05 :    
+ ###  新版发布1.9.7.10（如果出现问题请覆盖安装1.9.7.7版本）   
+ ###  修复归档下载因下载链接为空时导致的奔溃问题   
+ ###  修复wifi迁移时因获取不到ip导致的奔溃问题   
+ ###  修复从剪切版导入cookie时格式不对导致的奔溃问题   
+ ###  修复获取Tag列表时导致的奔溃问题   
+ ###  修复设置-Eh-显示标签翻译修改时奔溃的问题   
+ ###  修复历史记录无法现实的问题   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
-   点击前往下载：[百度云](https://pan.baidu.com/s/1jGCs7n9NS2_jF-YZHPwFUQ)  密码:3y7m   
-   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/i6LDk1tz3akj)  密码:co3p   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1hMZ-bdu8dGAb7BQe1KqmaA)  密码:qd37   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iSr1g1tza0ta)  密码:ak5p   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
    Torrent链接：magnet:?xt=urn:btih:d5afb7fd673e90a178c3ef06eab6f25f968c5b3e&dn=EhViewer-1.9.7.9.apk    
