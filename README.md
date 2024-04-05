@@ -13,7 +13,7 @@
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/i6LDk1tz3akj)  密码:co3p   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
-   Torrent链接：magnet:?xt=urn:btih:76a0eff70fc84e26d7e97710d38b904c4ed8e53a&dn=EhViewer-1.9.7.8.apk    
+   Torrent链接：magnet:?xt=urn:btih:d5afb7fd673e90a178c3ef06eab6f25f968c5b3e&dn=EhViewer-1.9.7.9.apk    
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
 
