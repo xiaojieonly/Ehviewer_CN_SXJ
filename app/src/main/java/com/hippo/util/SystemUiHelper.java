@@ -121,17 +121,7 @@ public final class SystemUiHelper {
         mHideRunnable = new HideRunnable();
 
         // Create impl
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mImpl = new SystemUiHelperImplKK(activity, level, flags, listener);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mImpl = new SystemUiHelperImplJB(activity, level, flags, listener);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            mImpl = new SystemUiHelperImplICS(activity, level, flags, listener);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            mImpl = new SystemUiHelperImplHC(activity, level, flags, listener);
-        } else {
-            mImpl = new SystemUiHelperImplBase(activity, level, flags, listener);
-        }
+        mImpl = new SystemUiHelperImplKK(activity, level, flags, listener);
     }
 
     /**

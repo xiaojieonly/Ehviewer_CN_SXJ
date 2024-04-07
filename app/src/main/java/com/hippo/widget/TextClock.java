@@ -25,6 +25,7 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.format.DateFormat;
@@ -40,10 +41,7 @@ public class TextClock extends AppCompatTextView {
     public static final CharSequence DEFAULT_FORMAT_24_HOUR;
 
     static {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2)
-            DEFAULT_FORMAT_24_HOUR = "kk:mm";
-        else
-            DEFAULT_FORMAT_24_HOUR = "HH:mm";
+        DEFAULT_FORMAT_24_HOUR = "HH:mm";
     }
 
     private CharSequence mFormat12;
@@ -59,7 +57,7 @@ public class TextClock extends AppCompatTextView {
     private Calendar mTime;
     private String mTimeZone;
 
-    private final ContentObserver mFormatChangeObserver = new ContentObserver(new Handler()) {
+    private final ContentObserver mFormatChangeObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
         @Override
         public void onChange(boolean selfChange) {
             chooseFormat();

@@ -31,6 +31,7 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.PersistableBundle;
 import android.text.TextUtils;
@@ -152,8 +153,7 @@ public final class MainActivity extends StageActivity
 
     Bitmap backgroundBit;
 
-    @SuppressLint("HandlerLeak")
-    Handler handlerB = new Handler() {
+    Handler handlerB = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             int mNextFrame = gifHandler.updateFrame(backgroundBit);
