@@ -147,9 +147,9 @@ public class ArchiverDownloadDialog implements
     public void onSuccess(ArchiverData result) {
         data = result;
         String cF;
-        if (Settings.getGallerySite()== EhUrl.SITE_E){
+        if (Settings.getGallerySite() == EhUrl.SITE_E) {
             cF = context.getString(R.string.archiver_dialog_current_funds) + data.funds;
-        }else {
+        } else {
             cF = data.funds;
         }
 
