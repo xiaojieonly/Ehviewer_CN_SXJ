@@ -1,6 +1,23 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/04/05 :    
+ ###  新版发布1.9.7.10（如果出现问题请覆盖安装1.9.7.7版本）   
+ ###  修复归档下载因下载链接为空时导致的奔溃问题   
+ ###  修复wifi迁移时因获取不到ip导致的奔溃问题   
+ ###  修复从剪切版导入cookie时格式不对导致的奔溃问题   
+ ###  修复获取Tag列表时导致的奔溃问题   
+ ###  修复设置-Eh-显示标签翻译修改时奔溃的问题   
+ ###  修复历史记录无法显示的问题   
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1mP9f6FPsELJLy-UiJvNzLQ)  密码:ohj2   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iC4AM1tzaf4f)  密码:cco8   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:3904faf25e291f70754f087aaa9729704fa588f7&dn=EhViewer-1.9.7.10.apk    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/04/01 : 愚人节快乐~今天你骗人了吗🤣    
  ###  新版发布1.9.7.8（如果出现问题请覆盖安装上一版本）    
  ###  修复画廊列表标签弹窗在特定情况下没能正确消失的问题    
