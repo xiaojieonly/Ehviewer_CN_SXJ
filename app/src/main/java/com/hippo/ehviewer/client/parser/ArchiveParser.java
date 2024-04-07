@@ -18,7 +18,10 @@ package com.hippo.ehviewer.client.parser;
 
 import android.util.Pair;
 
+import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.ArchiverData;
+import com.hippo.network.UrlBuilder;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -57,22 +60,40 @@ public class ArchiveParser {
     public static ArchiverData parseArchiver(String body) {
         ArchiverData data = new ArchiverData();
         Document document = Jsoup.parse(body);
+        if (Settings.getGallerySite()== EhUrl.SITE_E){
+            try {
+                Element bodyElement = (Element) document.childNode(2).childNode(3).childNode(1);
+                data.funds = bodyElement.child(2).text();
 
-        try {
-            Element bodyElement = (Element) document.childNode(2).childNode(3).childNode(1);
-            data.funds = bodyElement.child(2).text();
+                Element original = bodyElement.child(3).child(0);
+                data.originalCost = original.child(0).child(0).text();
+                data.originalSize = original.child(2).child(0).text();
+                data.originalUrl = original.child(1).attr("action");
 
-            Element original = bodyElement.child(3).child(0);
-            data.originalCost = original.child(0).child(0).text();
-            data.originalSize = original.child(2).child(0).text();
-            data.originalUrl = original.child(1).attr("action");
+                Element resample = bodyElement.child(3).child(1);
+                data.resampleCost = resample.child(0).child(0).text();
+                data.resampleSize = resample.child(2).child(0).text();
+                data.resampleUrl = resample.child(1).attr("action");
+            } catch (Exception ignore) {
+            }
+        }else {
+            try {
+                Element bodyElement = (Element) document.childNode(2).childNode(3).childNode(1);
+                data.funds = bodyElement.child(0).text();
 
-            Element resample = bodyElement.child(3).child(1);
-            data.resampleCost = resample.child(0).child(0).text();
-            data.resampleSize = resample.child(2).child(0).text();
-            data.resampleUrl = resample.child(1).attr("action");
-        } catch (Exception ignore) {
+                Element original = bodyElement.child(1).child(0);
+                data.originalCost = original.child(0).child(0).text();
+                data.originalSize = original.child(2).child(0).text();
+                data.originalUrl = original.child(1).attr("action");
+
+                Element resample = bodyElement.child(1).child(1);
+                data.resampleCost = resample.child(0).child(0).text();
+                data.resampleSize = resample.child(2).child(0).text();
+                data.resampleUrl = resample.child(1).attr("action");
+            } catch (Exception ignore) {
+            }
         }
+
         return data;
     }
 

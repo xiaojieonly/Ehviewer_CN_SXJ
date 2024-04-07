@@ -27,8 +27,10 @@ import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
+import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.ArchiverData;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
@@ -144,7 +146,13 @@ public class ArchiverDownloadDialog implements
     @Override
     public void onSuccess(ArchiverData result) {
         data = result;
-        String cF = context.getString(R.string.archiver_dialog_current_funds) + data.funds;
+        String cF;
+        if (Settings.getGallerySite()== EhUrl.SITE_E){
+            cF = context.getString(R.string.archiver_dialog_current_funds) + data.funds;
+        }else {
+            cF = data.funds;
+        }
+
         currentFunds.setText(cF);
         String oC = context.getString(R.string.archiver_dialog_cost, data.originalCost);
         String rC = context.getString(R.string.archiver_dialog_cost, data.resampleCost);
