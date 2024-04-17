@@ -1,6 +1,19 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/04/17 :  host过期，紧急修复   
+ ###  新版发布1.9.7.11（如果出现问题请覆盖安装1.9.7.7版本）   
+ ###  修复档案下载在捐赠用户浏览站点为里站时不起作用的问题   
+ ###  修复过期host   
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1RctX2kaupkGFWG8XAZA0_Q)  密码:5333   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/i8Pfs1vh2med)  密码:f27s   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:e0459ba93edb0e942c13b89c917974374ef5bc99&dn=EhViewer-1.9.7.11.apk    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel   
+
 # 2024/04/05 :    
  ###  新版发布1.9.7.10（如果出现问题请覆盖安装1.9.7.7版本）   
  ###  修复归档下载因下载链接为空时导致的奔溃问题   
