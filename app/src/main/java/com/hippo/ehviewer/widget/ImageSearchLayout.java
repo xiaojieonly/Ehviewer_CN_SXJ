@@ -30,7 +30,9 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
 import androidx.annotation.Nullable;
+
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
@@ -38,14 +40,18 @@ import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
+import com.hippo.util.FileUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ViewUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public final class ImageSearchLayout extends LinearLayout implements View.OnClickListener {
 
@@ -116,13 +122,13 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
         if (null == file) {
             return;
         }
-
         try {
             int maxSize = context.getResources().getDimensionPixelOffset(R.dimen.image_search_max_size);
             Bitmap bitmap = BitmapUtils.decodeStream(new UniFileInputStreamPipe(file), maxSize, maxSize);
             if (null == bitmap) {
                 return;
             }
+            String path = FileUtils.getPath(context, imageUri);
             File temp = AppConfig.createTempFile();
             if (null == temp) {
                 return;
@@ -134,7 +140,11 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
             try {
                 os = new FileOutputStream(temp);
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 90, os);
-                mImagePath = temp.getPath();
+                if (path == null || path.isEmpty()) {
+                    mImagePath = temp.getPath();
+                } else {
+                    mImagePath = path;
+                }
                 mPreview.setImageBitmap(bitmap);
                 mPreview.setVisibility(VISIBLE);
             } catch (FileNotFoundException e) {
@@ -142,8 +152,8 @@ public final class ImageSearchLayout extends LinearLayout implements View.OnClic
             } finally {
                 IOUtils.closeQuietly(os);
             }
-        } catch (OutOfMemoryError e) {
-            Log.e(TAG, "Out of memory");
+        } catch (OutOfMemoryError | IllegalArgumentException e) {
+            Log.e(TAG, "Out of memory / URI syntax");
         }
     }
 

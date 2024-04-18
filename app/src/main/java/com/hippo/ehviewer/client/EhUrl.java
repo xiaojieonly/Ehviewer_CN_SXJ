@@ -57,8 +57,8 @@ public class EhUrl {
     public static final String URL_TOP_LIST_E = HOST_E+"toplist.php";
     public static final String URL_TOP_LIST_EX = HOST_EX+"toplist.php";
 
-    public static final String URL_IMAGE_SEARCH_E = "https://upload.e-hentai.org/image_lookup.php";
-    public static final String URL_IMAGE_SEARCH_EX = "https://exhentai.org/upload/image_lookup.php";
+    public static final String URL_IMAGE_SEARCH_E = "https://upld.e-hentai.org/image_lookup.php";
+    public static final String URL_IMAGE_SEARCH_EX = "https://upld.exhentai.org/upld/image_lookup.php";
 
     public static final String URL_SIGN_IN = "https://forums.e-hentai.org/index.php?act=Login";
     public static final String URL_REGISTER = "https://forums.e-hentai.org/index.php?act=Reg&CODE=00";

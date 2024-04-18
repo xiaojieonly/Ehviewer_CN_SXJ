@@ -871,8 +871,8 @@ public class EhEngine {
 
         String origin = EhUrl.getOrigin();
         FormBody.Builder builder = new FormBody.Builder();
-        builder.add("dltype",dltype);
-        builder.add("dlcheck",dlcheck);
+        builder.add("dltype", dltype);
+        builder.add("dlcheck", dlcheck);
         Log.d(TAG, url);
         Request request = new EhRequestBuilder(url, referer, origin)
                 .post(builder.build())
@@ -909,7 +909,7 @@ public class EhEngine {
             }
             body = responseC.body().string();
             String downloadPath = ArchiveParser.parseArchiverDownloadUrl(body);
-            String downloadUrl = "https://"+ responseC.request().url().host()+downloadPath;
+            String downloadUrl = "https://" + responseC.request().url().host() + downloadPath;
             return downloadUrl;
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
@@ -1022,37 +1022,39 @@ public class EhEngine {
      */
     public static GalleryListParser.Result imageSearch(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                                        File image, boolean uss, boolean osc, boolean se) throws Throwable {
+        String imageName = image.getName();
+        String fileName;
+        if (imageName.contains(".")) {
+            fileName = imageName;
+        } else {
+            fileName = imageName + ".jpg";
+        }
         MultipartBody.Builder builder = new MultipartBody.Builder();
         builder.setType(MultipartBody.FORM);
         builder.addPart(
-                Headers.of("Content-Disposition", "form-data; name=\"sfile\"; filename=\"a.jpg\""),
-//                RequestBody.create(image, MEDIA_TYPE_JPEG)
+                Headers.of("Content-Disposition", "form-data; name=\"sfile\"; filename=\"" + fileName + "\"; size=\"40\""),
                 RequestBody.create(MEDIA_TYPE_JPEG, image)
         );
         if (uss) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_similar\""),
-//                    RequestBody.create("on", null)
                     RequestBody.create(null, "on")
             );
         }
         if (osc) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_covers\""),
-//                    RequestBody.create("on", null)
                     RequestBody.create(null, "on")
             );
         }
         if (se) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_exp\""),
-//                    RequestBody.create("on", null)
                     RequestBody.create(null, "on")
             );
         }
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"f_sfile\""),
-//                RequestBody.create("File Search", null)
                 RequestBody.create(null, "File Search")
         );
         String url = EhUrl.getImageSearchUrl();

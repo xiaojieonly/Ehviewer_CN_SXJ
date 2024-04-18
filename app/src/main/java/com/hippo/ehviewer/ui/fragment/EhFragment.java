@@ -90,7 +90,15 @@ public class EhFragment extends PreferenceFragment
             }
             return true;
         } else if (Settings.KEY_HISTORY_INFO_SIZE.equals(key)) {
-            EhDB.MAX_HISTORY_COUNT = Integer.parseInt(newValue.toString());
+            try{
+                int num = Integer.parseInt(newValue.toString());
+                if (num<Settings.DEFAULT_HISTORY_INFO_SIZE){
+                    num = Settings.DEFAULT_HISTORY_INFO_SIZE;
+                }
+                EhDB.MAX_HISTORY_COUNT = num;
+            }catch (NumberFormatException e){
+                EhDB.MAX_HISTORY_COUNT = Settings.DEFAULT_HISTORY_INFO_SIZE;
+            }
             return true;
         } else if (Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);

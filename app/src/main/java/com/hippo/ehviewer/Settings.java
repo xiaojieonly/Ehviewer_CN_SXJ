@@ -1376,7 +1376,7 @@ public class Settings {
 
     public static final String KEY_HISTORY_INFO_SIZE = "history_info_size";
 
-    private static int DEFAULT_HISTORY_INFO_SIZE = 100;
+    public static int DEFAULT_HISTORY_INFO_SIZE = 100;
 
     public static int getHistoryInfoSize() {
         return getIntFromStr(KEY_HISTORY_INFO_SIZE, DEFAULT_HISTORY_INFO_SIZE) ;
