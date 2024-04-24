@@ -2044,6 +2044,7 @@ public final class GalleryListScene extends BaseScene
             return GalleryListScene.this.getEHContext();
         }
 
+        @SuppressLint("NotifyDataSetChanged")
         @Override
         protected void notifyDataSetChanged() {
             if (null != mAdapter) {
