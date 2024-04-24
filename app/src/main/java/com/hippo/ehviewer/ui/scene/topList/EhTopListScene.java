@@ -304,12 +304,20 @@ public class EhTopListScene extends BaseScene {
     }
 
     private class EhTopListAdapterView extends EhTopListAdapter {
-        private SceneFragment sceneFragment;
-        private HashMap<Integer, Integer> hashMap = new HashMap();
+        private final SceneFragment sceneFragment;
+        private final HashMap<Integer, Integer> hashMap = new HashMap();
 
         public EhTopListAdapterView(@NonNull Context context, @NonNull RecyclerView recyclerView, TopListInfo topListInfo, SceneFragment scene, int searchType) {
-            super(context, recyclerView, topListInfo, searchType);
+            super(context, topListInfo, searchType);
             sceneFragment = scene;
+        }
+
+        @Override
+        void clickTitle(String urlFollow) {
+            ListUrlBuilder urlBuilder = new ListUrlBuilder();
+            urlBuilder.setMode(ListUrlBuilder.MODE_TOP_LIST);
+            urlBuilder.setFollow(urlFollow);
+            GalleryListScene.startScene(sceneFragment, urlBuilder);
         }
 
         @Override
@@ -335,7 +343,6 @@ public class EhTopListScene extends BaseScene {
             }
             urlBuilder.setKeyword(topListItem.value);
             GalleryListScene.startScene(sceneFragment, urlBuilder);
-            return;
         }
     }
 

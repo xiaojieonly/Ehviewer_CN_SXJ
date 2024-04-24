@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
 
 public class ListUrlBuilder implements Cloneable, Parcelable {
 
-    @IntDef({MODE_NORMAL, MODE_UPLOADER, MODE_TAG,MODE_FILTER,MODE_WHATS_HOT, MODE_IMAGE_SEARCH, MODE_SUBSCRIPTION})
+    @IntDef({MODE_NORMAL, MODE_UPLOADER, MODE_TAG,MODE_FILTER,MODE_WHATS_HOT, MODE_IMAGE_SEARCH, MODE_SUBSCRIPTION,MODE_TOP_LIST})
     @Retention(RetentionPolicy.SOURCE)
     private @interface Mode {}
 
@@ -59,10 +59,11 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
     public static final int MODE_NORMAL = 0x0;
     public static final int MODE_UPLOADER = 0x1;
     public static final int MODE_TAG = 0x2;
-    public static final int MODE_FILTER = 0x6;
     public static final int MODE_WHATS_HOT = 0x3;
     public static final int MODE_IMAGE_SEARCH = 0x4;
     public static final int MODE_SUBSCRIPTION = 0x5;
+    public static final int MODE_FILTER = 0x6;
+    public static final int MODE_TOP_LIST = 0x7;
 
     public static final int DEFAULT_ADVANCE = AdvanceSearchTable.SNAME | AdvanceSearchTable.STAGS;
     public static final int DEFAULT_MIN_RATING = 2;
@@ -74,6 +75,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
 
     private int mCategory = EhUtils.NONE;
     private String mKeyword = null;
+    private String mFollow = null;
 
     private int mAdvanceSearch = -1;
     private int mMinRating = -1;
@@ -143,6 +145,10 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
 
     public void setKeyword(String keyword) {
         mKeyword = keyword;
+    }
+
+    public void setFollow(String follow) {
+        mFollow = follow;
     }
 
     public int getAdvanceSearch() {
@@ -219,6 +225,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
         mPageIndex = lub.mPageIndex;
         mCategory = lub.mCategory;
         mKeyword = lub.mKeyword;
+        mFollow = lub.mFollow;
         mAdvanceSearch = lub.mAdvanceSearch;
         mMinRating = lub.mMinRating;
         mPageFrom = lub.mPageFrom;
@@ -648,6 +655,20 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
                 return EhUrl.getPopularUrl();
             case MODE_IMAGE_SEARCH:
                 return EhUrl.getImageSearchUrl();
+            case MODE_TOP_LIST:
+                StringBuilder sb = new StringBuilder(EhUrl.getTopListUrl());
+                sb.append("?");
+                sb.append(mFollow);
+                if (mPageIndex==0){
+                    return sb.toString();
+                }
+                if (mPageIndex>0&&mPageIndex<200){
+                 sb.append("&p=");
+                 sb.append(mPageIndex);
+                }else {
+                    return "127.0.0.1:8888";
+                }
+                return sb.toString();
         }
     }
 
@@ -691,7 +712,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
         this.mShowExpunged = in.readByte() != 0;
     }
 
-    public static final Creator<ListUrlBuilder> CREATOR = new Creator<ListUrlBuilder>() {
+    public static final Creator<ListUrlBuilder> CREATOR = new Creator<>() {
         @Override
         public ListUrlBuilder createFromParcel(Parcel source) {
             return new ListUrlBuilder(source);

@@ -16,12 +16,12 @@
 
 package com.hippo.ehviewer.client.parser;
 
+import static com.hippo.ehviewer.client.data.ListUrlBuilder.MODE_NORMAL;
 import static org.junit.Assert.assertEquals;
 //import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import com.hippo.ehviewer.client.EhUtils;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import java.io.InputStream;
 import java.util.List;
@@ -74,7 +74,7 @@ public class GalleryListParserTest {
     BufferedSource source = Okio.buffer(Okio.source(resource));
     String body = source.readUtf8();
 
-    GalleryListParser.Result result = GalleryListParser.parse(body);
+    GalleryListParser.Result result = GalleryListParser.parse(body, MODE_NORMAL);
 
     assertEquals(25, result.galleryInfoList.size());
 

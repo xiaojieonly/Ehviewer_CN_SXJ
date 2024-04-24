@@ -151,7 +151,7 @@ public class EhClient {
                     case METHOD_SIGN_IN:
                         return EhEngine.signIn(this, mOkHttpClient, (String) params[0], (String) params[1]);
                     case METHOD_GET_GALLERY_LIST:
-                        return EhEngine.getGalleryList(this, mOkHttpClient, (String) params[0]);
+                        return EhEngine.getGalleryList(this, mOkHttpClient, (String) params[0], (int) params[1]);
                     case METHOD_GET_GALLERY_DETAIL:
                         return EhEngine.getGalleryDetail(this, mOkHttpClient, (String) params[0]);
                     case METHOD_GET_PREVIEW_SET:
@@ -187,7 +187,7 @@ public class EhClient {
                     case METHOD_DOWNLOAD_ARCHIVE:
                         return EhEngine.downloadArchive(this, mOkHttpClient, (Long) params[0], (String) params[1], (String) params[2], (String) params[3]);
                     case METHOD_DOWNLOAD_ARCHIVER:
-                        return EhEngine.downloadArchiver(this, mOkHttpClient, (String) params[0],(String) params[1],(String) params[2],(String) params[3]);
+                        return EhEngine.downloadArchiver(this, mOkHttpClient, (String) params[0], (String) params[1], (String) params[2], (String) params[3]);
                     case METHOD_ADD_TAG:
                         return EhEngine.addTag(this, mOkHttpClient, (String) params[0], (TagPushParam) params[1]);
                     case METHOD_EDIT_WATCHED:

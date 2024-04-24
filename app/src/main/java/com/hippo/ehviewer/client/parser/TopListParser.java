@@ -52,21 +52,21 @@ public class TopListParser {
 
         ehTopListDetail.title = elements.get(0).text();
 
-        ehTopListDetail.galleryTopListInfo = parseInfo(elements.get(1), body);
-        ehTopListDetail.uploaderTopListInfo = parseInfo(elements.get(3), body);
-        ehTopListDetail.taggingTopListInfo = parseInfo(elements.get(5), body);
-        ehTopListDetail.hentaiHomeTopListInfo = parseInfo(elements.get(7), body);
-        ehTopListDetail.ehTrackerTopListInfo = parseInfo(elements.get(9), body);
-        ehTopListDetail.cleanUpTopListInfo = parseInfo(elements.get(11), body);
-        ehTopListDetail.ratingAndReviewingTopListInfo = parseInfo(elements.get(13), body);
+        ehTopListDetail.galleryTopListInfo = parseInfo(elements.get(1), EhTopListDetail.ListType.GALLERY);
+        ehTopListDetail.uploaderTopListInfo = parseInfo(elements.get(3), EhTopListDetail.ListType.UPLOADER);
+        ehTopListDetail.taggingTopListInfo = parseInfo(elements.get(5), EhTopListDetail.ListType.TAGGING);
+        ehTopListDetail.hentaiHomeTopListInfo = parseInfo(elements.get(7), EhTopListDetail.ListType.HENTAI_HOME);
+        ehTopListDetail.ehTrackerTopListInfo = parseInfo(elements.get(9), EhTopListDetail.ListType.EH_TRACKER);
+        ehTopListDetail.cleanUpTopListInfo = parseInfo(elements.get(11), EhTopListDetail.ListType.CLEANUP);
+        ehTopListDetail.ratingAndReviewingTopListInfo = parseInfo(elements.get(13), EhTopListDetail.ListType.RATING_AND_REVIEWING);
 
 
         return ehTopListDetail;
     }
 
-    private static TopListInfo parseInfo(Element element, String body) {
+    private static TopListInfo parseInfo(Element element, EhTopListDetail.ListType type) {
         TopListInfo topListInfo = new TopListInfo();
-
+        topListInfo.type = type;
         Elements elements = element.children();
 
         topListInfo.allTimeTopList = parseArray(elements.get(1).child(1).child(0));

@@ -16,7 +16,8 @@
 
 package com.hippo.ehviewer.client;
 
-import android.media.MediaCodec;
+import static com.hippo.ehviewer.client.data.ListUrlBuilder.MODE_NORMAL;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -253,7 +254,7 @@ public class EhEngine {
     }
 
     public static GalleryListParser.Result getGalleryList(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
-                                                          String url) throws Throwable {
+                                                          String url,int mode) throws Throwable {
         String referer = EhUrl.getReferer();
         Log.d(TAG, url);
         Request request = new EhRequestBuilder(url, referer).build();
@@ -274,7 +275,7 @@ public class EhEngine {
             headers = response.headers();
             assert response.body() != null;
             body = response.body().string();
-            result = GalleryListParser.parse(body);
+            result = GalleryListParser.parse(body,mode);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);
@@ -1095,7 +1096,7 @@ public class EhEngine {
             headers = response.headers();
             assert response.body() != null;
             body = response.body().string();
-            result = GalleryListParser.parse(body);
+            result = GalleryListParser.parse(body, MODE_NORMAL);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);

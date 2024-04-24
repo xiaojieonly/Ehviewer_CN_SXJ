@@ -3,6 +3,8 @@ package com.hippo.ehviewer.client.data.topList;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.hippo.ehviewer.client.data.EhTopListDetail;
+
 public class TopListInfo implements Parcelable {
 
     public TopListItemArray allTimeTopList;
@@ -10,6 +12,7 @@ public class TopListInfo implements Parcelable {
     public TopListItemArray pastMonthTopList;
     public TopListItemArray yesterdayTopList;
     public String title;
+    public EhTopListDetail.ListType type;
 
     private ClassLoader classLoader;
 
@@ -24,9 +27,10 @@ public class TopListInfo implements Parcelable {
         this.pastMonthTopList = in.readParcelable(classLoader);
         this.yesterdayTopList = in.readParcelable(classLoader);
         this.title = in.readString();
+        this.type = in.readParcelable(EhTopListDetail.ListType.class.getClassLoader());
     }
 
-    public static final Creator<TopListInfo> CREATOR = new Creator<TopListInfo>() {
+    public static final Creator<TopListInfo> CREATOR = new Creator<>() {
         @Override
         public TopListInfo createFromParcel(Parcel in) {
             return new TopListInfo(in);
@@ -49,6 +53,7 @@ public class TopListInfo implements Parcelable {
         dest.writeParcelable(this.pastYearTopList, flags);
         dest.writeParcelable(this.pastMonthTopList, flags);
         dest.writeParcelable(this.yesterdayTopList, flags);
+        dest.writeParcelable(this.type, flags);
         dest.writeString(this.title);
     }
 

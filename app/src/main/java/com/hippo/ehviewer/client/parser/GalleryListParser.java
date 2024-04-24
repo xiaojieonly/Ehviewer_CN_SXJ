@@ -25,7 +25,6 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.GalleryTagGroup;
-import com.hippo.ehviewer.client.exception.EmptyGalleryException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.ehviewer.sync.GalleryListTagsSyncTask;
 import com.hippo.util.ExceptionUtils;
@@ -90,7 +89,7 @@ public class GalleryListParser {
         }
     }
 
-    public static Result parse(@NonNull String body) throws Exception {
+    public static Result parse(@NonNull String body, int mode) throws Exception {
         Result result = new Result();
         Document d;
         try{

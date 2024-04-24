@@ -16,6 +16,8 @@
 
 package com.hippo.ehviewer.client.parser;
 
+import static com.hippo.ehviewer.client.data.ListUrlBuilder.MODE_NORMAL;
+
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -71,7 +73,7 @@ public class FavoritesParser {
             throw new ParseException("Parse favorites error", body);
         }
 
-        GalleryListParser.Result result = GalleryListParser.parse(body);
+        GalleryListParser.Result result = GalleryListParser.parse(body, MODE_NORMAL);
 
         Result re = new Result();
         re.catArray = catArray;

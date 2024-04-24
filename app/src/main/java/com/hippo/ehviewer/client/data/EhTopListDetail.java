@@ -7,6 +7,32 @@ import com.hippo.ehviewer.client.data.topList.TopListInfo;
 
 public class EhTopListDetail implements Parcelable {
 
+    public enum ListType implements Parcelable{
+        GALLERY,UPLOADER,TAGGING,HENTAI_HOME,EH_TRACKER,CLEANUP,RATING_AND_REVIEWING;
+
+        public static final Creator<ListType> CREATOR = new Creator<>() {
+            @Override
+            public ListType createFromParcel(Parcel in) {
+                return ListType.values()[in.readInt()];
+            }
+
+            @Override
+            public ListType[] newArray(int size) {
+                return new ListType[size];
+            }
+        };
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(ordinal());
+        }
+    }
+
     public String title;
     public TopListInfo galleryTopListInfo;
     public TopListInfo uploaderTopListInfo;

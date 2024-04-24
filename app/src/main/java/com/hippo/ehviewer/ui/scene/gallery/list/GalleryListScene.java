@@ -1133,18 +1133,19 @@ public final class GalleryListScene extends BaseScene
     @Override
     public void onResume() {
         super.onResume();
-        if (mBookmarksDraw==null){
+        if (mBookmarksDraw == null) {
             return;
         }
         mBookmarksDraw.resume();
-        if (mSubscriptionDraw==null){
+        if (mSubscriptionDraw == null) {
             return;
         }
         mSubscriptionDraw.resume();
     }
+
     @Override
     public void onBackPressed() {
-        if (popupWindow!=null){
+        if (popupWindow != null) {
             popupWindow.dismiss();
         }
         if (null != mShowcaseView) {
@@ -1413,6 +1414,8 @@ public final class GalleryListScene extends BaseScene
                 break;
             case 1: // Go to
                 if (mHelper.canGoTo()) {
+                    if (mUrlBuilder != null && mUrlBuilder.getMode() == ListUrlBuilder.MODE_TOP_LIST)
+                        break;
                     showGoToDialog();
                 }
                 break;
@@ -1966,7 +1969,7 @@ public final class GalleryListScene extends BaseScene
 
         public GalleryListAdapter(@NonNull LayoutInflater inflater,
                                   @NonNull Resources resources, @NonNull RecyclerView recyclerView, int type) {
-            super(inflater, resources, recyclerView, type, true, executorService,showReadProgress);
+            super(inflater, resources, recyclerView, type, true, executorService, showReadProgress);
         }
 
         @Override
@@ -2007,7 +2010,7 @@ public final class GalleryListScene extends BaseScene
                 request.setMethod(EhClient.METHOD_GET_GALLERY_LIST);
                 request.setCallback(new GetGalleryListListener(getContext(),
                         activity.getStageId(), getTag(), taskId));
-                request.setArgs(url);
+                request.setArgs(url,mUrlBuilder.getMode());
                 mClient.execute(request);
             }
         }
@@ -2031,7 +2034,7 @@ public final class GalleryListScene extends BaseScene
             request.setMethod(EhClient.METHOD_GET_GALLERY_LIST);
             request.setCallback(new GetGalleryListListener(getContext(),
                     activity.getStageId(), getTag(), taskId));
-            request.setArgs(url);
+            request.setArgs(url,mUrlBuilder.getMode());
             mClient.execute(request);
         }
 
