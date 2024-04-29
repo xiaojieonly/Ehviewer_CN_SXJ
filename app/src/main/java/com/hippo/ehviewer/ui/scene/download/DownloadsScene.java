@@ -170,7 +170,7 @@ public class DownloadsScene extends ToolbarScene
     private int pageSize = 1;
     private boolean canPagination = true;
     private final int paginationSize = 500;
-//    private final int paginationSize = 5;
+    //    private final int paginationSize = 5;
     private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
 //    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
 

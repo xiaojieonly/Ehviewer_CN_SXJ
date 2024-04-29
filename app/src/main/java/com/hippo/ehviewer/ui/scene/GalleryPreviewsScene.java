@@ -304,7 +304,11 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         protected void getPageData(final int taskId, int type, int page) {
             MainActivity activity = getActivity2();
             if (null == activity || null == mClient || null == mGalleryInfo) {
-                onGetException(taskId, new EhException(getString(R.string.error_cannot_find_gallery)));
+                try {
+                    onGetException(taskId, new EhException(getString(R.string.error_cannot_find_gallery)));
+                } catch (IllegalStateException ignore) {
+
+                }
                 return;
             }
 
