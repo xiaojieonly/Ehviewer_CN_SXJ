@@ -1,6 +1,21 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/05/01 :  劳动节快乐~~~
+ ###  新版发布1.9.8.0（如果出现问题请覆盖安装旧版本）   
+ ###  重新添加图片搜索功能   
+ ###  画廊排行榜优化，现在可以跳转至详细画廊排行列表   
+ ###  修复url打开奔溃问题   
+ ###  修复了一些可能的奔溃问题   
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1gtjGTkJfRp0UT-klghLG-Q)  密码:goe2   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iM1W51x6fupg)  密码:92a6   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:0e14bd3e5d8ff3d3096aadceecdcdbf322567053&dn=EhViewer-1.9.8.0.apk  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/04/17 :  host过期，紧急修复   
  ###  新版发布1.9.7.11（如果出现问题请覆盖安装1.9.7.7版本）   
  ###  修复档案下载在捐赠用户浏览站点为里站时不起作用的问题   
