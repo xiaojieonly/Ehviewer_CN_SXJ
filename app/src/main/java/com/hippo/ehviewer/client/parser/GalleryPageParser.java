@@ -26,7 +26,7 @@ public class GalleryPageParser {
 
     private static final Pattern PATTERN_IMAGE_URL = Pattern.compile("<img[^>]*src=\"([^\"]+)\" style");
     private static final Pattern PATTERN_SKIP_HATH_KEY = Pattern.compile("onclick=\"return nl\\('([^\\)]+)'\\)");
-    private static final Pattern PATTERN_ORIGIN_IMAGE_URL = Pattern.compile("<a href=\"([^\"]+)fullimg.php([^\"]+)\">");
+    private static final Pattern PATTERN_ORIGIN_IMAGE_URL = Pattern.compile("<a href=\"([^\"]+)fullimg([^\"]+)\">");
     // TODO Not sure about the size of show keys
     private static final Pattern PATTERN_SHOW_KEY = Pattern.compile("var showkey=\"([0-9a-z]+)\";");
 
@@ -43,7 +43,7 @@ public class GalleryPageParser {
         }
         m = PATTERN_ORIGIN_IMAGE_URL.matcher(body);
         if (m.find()) {
-            result.originImageUrl = StringUtils.unescapeXml(m.group(1)) + "fullimg.php" + StringUtils.unescapeXml(m.group(2));
+            result.originImageUrl = StringUtils.unescapeXml(m.group(1)) + "fullimg" + StringUtils.unescapeXml(m.group(2));
         }
         m = PATTERN_SHOW_KEY.matcher(body);
         if (m.find()) {
