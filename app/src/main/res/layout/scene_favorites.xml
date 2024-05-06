@@ -82,6 +82,13 @@
             style="@style/Widget.Design.FloatingActionButton.Mini"
             android:visibility="gone"/>
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/v_random_dark_x24"
+            app:backgroundTint="?attr/widgetColorThemeAccent"
+            style="@style/Widget.Design.FloatingActionButton.Mini"/>
+
 <!--        <com.google.android.material.floatingactionbutton.FloatingActionButton-->
 <!--            android:layout_width="wrap_content"-->
 <!--            android:layout_height="wrap_content"-->

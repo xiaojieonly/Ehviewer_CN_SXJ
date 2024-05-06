@@ -536,6 +536,33 @@ public class EhEngine {
         }
     }
 
+    public static FavoritesParser.Result getAllFavorites(OkHttpClient okHttpClient, String url) throws Throwable {
+        String referer = EhUrl.getReferer();
+        Log.d(TAG, url);
+        Request request = new EhRequestBuilder(url, referer).build();
+        Call call = okHttpClient.newCall(request);
+
+        String body = null;
+        Headers headers = null;
+        FavoritesParser.Result result;
+        int code = -1;
+
+        try {
+            Response response = call.execute();
+            code = response.code();
+            headers = response.headers();
+            assert response.body() != null;
+            body = response.body().string();
+            result = FavoritesParser.parse(body);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throwException(call, code, headers, body, e);
+            throw e;
+        }
+
+        return result;
+    }
+
     public static FavoritesParser.Result getFavorites(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                                       String url, boolean callApi) throws Throwable {
         String referer = EhUrl.getReferer();
@@ -564,9 +591,7 @@ public class EhEngine {
             throwException(call, code, headers, body, e);
             throw e;
         }
-
         fillGalleryList(task, okHttpClient, result.galleryInfoList, url, false);
-
         return result;
     }
 
