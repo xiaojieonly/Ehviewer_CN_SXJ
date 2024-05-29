@@ -897,13 +897,17 @@ public class FavoritesScene extends BaseScene implements
                     mHelper.refresh();
                     break;
                 case 5: // random
-                    if (mHelper==null||!mHelper.canGoTo()) {
+                    if (mHelper == null || !mHelper.canGoTo()) {
                         break;
                     }
-                    RandomFavority mRandomFavority = new RandomFavority(context,mHelper,mUrlBuilder);
+                    RandomFavority mRandomFavority = new RandomFavority(context);
                     mRandomFavority.execute();
                     break;
-                case 6: // add share
+                case 6:
+                    RandomFavority randomFavority = new RandomFavority();
+                    randomFavority.random();
+                    break;
+                case 7: // add share
                     mModifyGiList.clear();
 
                     AddDialogHelper add = new AddDialogHelper();
@@ -1297,7 +1301,7 @@ public class FavoritesScene extends BaseScene implements
 
         public FavoritesAdapter(@NonNull LayoutInflater inflater, @NonNull Resources resources,
                                 @NonNull RecyclerView recyclerView, int type) {
-            super(inflater, resources, recyclerView, type, false,executorService);
+            super(inflater, resources, recyclerView, type, false, executorService);
         }
 
         @Override
@@ -1625,20 +1629,19 @@ public class FavoritesScene extends BaseScene implements
 
     private class RandomFavority extends AsyncTask<Void, Void, GalleryInfo> {
         OkHttpClient mOkHttpClient;
-        FavoritesHelper mHelper;
-        FavListUrlBuilder mUrlBuilder;
 
-        RandomFavority(Context context,FavoritesHelper helper,FavListUrlBuilder urlBuilder) {
+        RandomFavority(Context context) {
             mOkHttpClient = EhApplication.getOkHttpClient(context);
-            mHelper = helper;
-            mUrlBuilder = urlBuilder;
+        }
+
+        public RandomFavority() {
         }
 
         @Override
         protected GalleryInfo doInBackground(Void... v) {
             publishProgress();
             // local favorities
-            if (mUrlBuilder.getFavCat()==FavListUrlBuilder.FAV_CAT_LOCAL) {
+            if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
                 String keyword = mUrlBuilder.getKeyword();
                 List<GalleryInfo> gInfoL;
                 if (TextUtils.isEmpty(keyword)) {
@@ -1646,39 +1649,36 @@ public class FavoritesScene extends BaseScene implements
                 } else {
                     gInfoL = EhDB.searchLocalFavorites(keyword);
                 }
-                return gInfoL.get((int)(Math.random()*gInfoL.size()));
+                return gInfoL.get((int) (Math.random() * gInfoL.size()));
             }
             // cloud favorities
             try {
                 GalleryInfo lastGInfo = null, firstGInfo = null;
                 String url = "";
 
-                if ((mHelper.lastHref==null||mHelper.lastHref.isEmpty())&&(mHelper.firstHref==null||mHelper.firstHref.isEmpty())) { // only one page
-                    if (mHelper.getDataAtEx(0)==null) return null; // no gallery
-                    return mHelper.getDataAtEx((int)(Math.random()*mHelper.size()));
-                }
-                else if (mHelper.lastHref==null||mHelper.lastHref.isEmpty()) { //many pages but user at the last page
-                    lastGInfo = mHelper.getDataAtEx(mHelper.size()-1);
-                    firstGInfo = EhEngine.getAllFavorites(mOkHttpClient,mHelper.firstHref).galleryInfoList.get(0);
+                if ((mHelper.lastHref == null || mHelper.lastHref.isEmpty()) && (mHelper.firstHref == null || mHelper.firstHref.isEmpty())) { // only one page
+                    if (mHelper.getDataAtEx(0) == null) return null; // no gallery
+                    return mHelper.getDataAtEx((int) (Math.random() * mHelper.size()));
+                } else if (mHelper.lastHref == null || mHelper.lastHref.isEmpty()) { //many pages but user at the last page
+                    lastGInfo = mHelper.getDataAtEx(mHelper.size() - 1);
+                    firstGInfo = EhEngine.getAllFavorites(mOkHttpClient, mHelper.firstHref).galleryInfoList.get(0);
                     url = mHelper.firstHref;
-                }
-                else if (mHelper.firstHref==null||mHelper.firstHref.isEmpty()) { //many pages but user at the first page
-                    List<GalleryInfo> gInfoL =EhEngine.getAllFavorites(mOkHttpClient,mHelper.lastHref).galleryInfoList;
-                    lastGInfo = gInfoL.get(gInfoL.size()-1);
+                } else if (mHelper.firstHref == null || mHelper.firstHref.isEmpty()) { //many pages but user at the first page
+                    List<GalleryInfo> gInfoL = EhEngine.getAllFavorites(mOkHttpClient, mHelper.lastHref).galleryInfoList;
+                    lastGInfo = gInfoL.get(gInfoL.size() - 1);
                     firstGInfo = mHelper.getDataAtEx(0);
-                    url = mHelper.lastHref.replace("&prev=1","");
-                }
-                else { // many pages
-                    List<GalleryInfo> gInfoL =EhEngine.getAllFavorites(mOkHttpClient,mHelper.lastHref).galleryInfoList;
-                    lastGInfo = gInfoL.get(gInfoL.size()-1);
-                    firstGInfo = EhEngine.getAllFavorites(mOkHttpClient,mHelper.firstHref).galleryInfoList.get(0);
-                    url = mHelper.lastHref.replace("&prev=1","");
+                    url = mHelper.lastHref.replace("&prev=1", "");
+                } else { // many pages
+                    List<GalleryInfo> gInfoL = EhEngine.getAllFavorites(mOkHttpClient, mHelper.lastHref).galleryInfoList;
+                    lastGInfo = gInfoL.get(gInfoL.size() - 1);
+                    firstGInfo = EhEngine.getAllFavorites(mOkHttpClient, mHelper.firstHref).galleryInfoList.get(0);
+                    url = mHelper.lastHref.replace("&prev=1", "");
                 }
 
                 long gidDiff = firstGInfo.gid - lastGInfo.gid;
-                long block = gidDiff/50;
-                List<GalleryInfo> rGInfoL =EhEngine.getAllFavorites(mOkHttpClient,url + "&next=" + (firstGInfo.gid + gidDiff/block*((int)(Math.random()*block)))+1).galleryInfoList;
-                return rGInfoL.get((int)(Math.random()*rGInfoL.size()));
+                long block = gidDiff / 50;
+                List<GalleryInfo> rGInfoL = EhEngine.getAllFavorites(mOkHttpClient, url + "&next=" + (firstGInfo.gid + gidDiff / block * ((int) (Math.random() * block))) + 1).galleryInfoList;
+                return rGInfoL.get((int) (Math.random() * rGInfoL.size()));
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -1694,7 +1694,7 @@ public class FavoritesScene extends BaseScene implements
             super.onPostExecute(info);
 
             //抄onItemClick(EasyRecyclerView parent, View view, int position, long id)的跳轉功能
-            if (info==null) return;
+            if (info == null) return;
             Bundle args = new Bundle();
             args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
             args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, info);
@@ -1704,6 +1704,18 @@ public class FavoritesScene extends BaseScene implements
                 announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
             }*/
             startScene(announcer);
+        }
+
+        public void random() {
+            if (mHelper==null){
+                return;
+            }
+            List<GalleryInfo> gInfoL = mHelper.getData();
+            if (gInfoL == null || gInfoL.isEmpty()) {
+                return;
+            }
+
+            onPostExecute(gInfoL.get((int) (Math.random() * gInfoL.size())));
         }
     }
 }

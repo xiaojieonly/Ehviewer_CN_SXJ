@@ -1422,6 +1422,13 @@ public final class GalleryListScene extends BaseScene
             case 2: // Refresh
                 mHelper.refresh();
                 break;
+            case 3:
+                List<GalleryInfo> gInfoL = mHelper.getData();
+                if (gInfoL == null || gInfoL.isEmpty()) {
+                    return;
+                }
+                onItemClick(null,gInfoL.get((int) (Math.random() * gInfoL.size())));
+                break;
         }
 
         view.setExpanded(false);
