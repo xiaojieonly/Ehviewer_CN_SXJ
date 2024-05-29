@@ -1212,7 +1212,7 @@ public final class GalleryListScene extends BaseScene
         args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, gi);
         Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
         View thumb;
-        if (null != (thumb = view.findViewById(R.id.thumb))) {
+        if (null != view && null != (thumb = view.findViewById(R.id.thumb))) {
             announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
         }
         startScene(announcer);
@@ -1427,7 +1427,7 @@ public final class GalleryListScene extends BaseScene
                 if (gInfoL == null || gInfoL.isEmpty()) {
                     return;
                 }
-                onItemClick(null,gInfoL.get((int) (Math.random() * gInfoL.size())));
+                onItemClick(null, gInfoL.get((int) (Math.random() * gInfoL.size())));
                 break;
         }
 
@@ -2017,7 +2017,7 @@ public final class GalleryListScene extends BaseScene
                 request.setMethod(EhClient.METHOD_GET_GALLERY_LIST);
                 request.setCallback(new GetGalleryListListener(getContext(),
                         activity.getStageId(), getTag(), taskId));
-                request.setArgs(url,mUrlBuilder.getMode());
+                request.setArgs(url, mUrlBuilder.getMode());
                 mClient.execute(request);
             }
         }
@@ -2041,7 +2041,7 @@ public final class GalleryListScene extends BaseScene
             request.setMethod(EhClient.METHOD_GET_GALLERY_LIST);
             request.setCallback(new GetGalleryListListener(getContext(),
                     activity.getStageId(), getTag(), taskId));
-            request.setArgs(url,mUrlBuilder.getMode());
+            request.setArgs(url, mUrlBuilder.getMode());
             mClient.execute(request);
         }
 
