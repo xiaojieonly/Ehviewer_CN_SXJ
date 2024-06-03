@@ -1379,7 +1379,12 @@ public class Settings {
     public static int DEFAULT_HISTORY_INFO_SIZE = 100;
 
     public static int getHistoryInfoSize() {
-        return getIntFromStr(KEY_HISTORY_INFO_SIZE, DEFAULT_HISTORY_INFO_SIZE) ;
+        int size = getIntFromStr(KEY_HISTORY_INFO_SIZE, DEFAULT_HISTORY_INFO_SIZE);
+        if (size<DEFAULT_HISTORY_INFO_SIZE){
+            setHistoryInfoSize(DEFAULT_HISTORY_INFO_SIZE);
+            return DEFAULT_HISTORY_INFO_SIZE;
+        }
+        return size;
     }
 
     public static void setHistoryInfoSize(int value) {
