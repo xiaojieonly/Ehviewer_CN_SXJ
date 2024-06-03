@@ -1,6 +1,22 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+
+# 2024/06/01 :  祝大家儿童节快乐~~~
+ ###  新版发布1.9.8.1（如果出现问题请覆盖安装旧版本）   
+ ###  优化了原图下载逻辑   
+ ###  新增雲端收藏隨機挑本功能   
+ ###  新增云端收藏当前数据随机挑选功能   
+ ###  新增画廊列表当前数据随机挑选功能   
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1cJ-h0fXcs9j8ChZOIDQcow)  密码:zr7m   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iFmqD20gj3kb)  密码:d2ou   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:a86fba060d36f9cc3e602daa0320a067d56c3f48&dn=EhViewer-1.9.8.1.apk  
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/05/01 :  劳动节快乐~~~
  ###  新版发布1.9.8.0（如果出现问题请覆盖安装旧版本）   
  ###  重新添加图片搜索功能   
