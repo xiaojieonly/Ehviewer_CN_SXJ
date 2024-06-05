@@ -45,10 +45,8 @@ public class EhRequestBuilder extends ChromeRequestBuilder {
 
     public EhRequestBuilder(Map<String, String> headers,String url ) {
         super(url);
-        Iterator<Map.Entry<String, String>> e = headers.entrySet().iterator();
-        while(e.hasNext()){
-            Map.Entry<String,String> m = (Map.Entry<String, String>) e.next();
-            addHeader(m.getKey(),m.getValue());
+        for (Map.Entry<String, String> m : headers.entrySet()) {
+            addHeader(m.getKey(), m.getValue());
         }
     }
 

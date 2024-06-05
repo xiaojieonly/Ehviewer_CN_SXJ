@@ -21,6 +21,7 @@ import static com.hippo.ehviewer.spider.SpiderDen.generateImageFilename;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.media.MediaCodec;
 import android.os.AsyncTask;
 import android.os.Process;
 import android.text.TextUtils;
@@ -86,6 +87,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.MediaType;
@@ -1237,7 +1240,6 @@ public final class SpiderQueen implements Runnable {
                         }
                     }
                 }
-
                 if (imageUrl == null) {
                     if (localShowKey == null) {
                         error = "ShowKey error";
@@ -1321,6 +1323,7 @@ public final class SpiderQueen implements Runnable {
                 // Download image
                 InputStream is = null;
                 try {
+
                     if (DEBUG_LOG) {
                         Log.d(TAG, "Start download image " + index);
                     }
@@ -1331,6 +1334,20 @@ public final class SpiderQueen implements Runnable {
                             .newCall(new EhRequestBuilder(targetImageUrl, referer).build());
                     Response response = call.execute();
                     ResponseBody responseBody = response.body();
+
+                    // 反劫持校验
+                    String responseUrl = null;
+                    if (response.networkResponse() != null) {
+                        responseUrl = response.networkResponse().request().url().toString();
+                    } else if (response.cacheResponse() != null) {
+                        responseUrl = response.cacheResponse().request().url().toString();
+                    }
+                    if (!targetImageUrl.equals(responseUrl)||!responseUrl.contains(pToken)){
+                        error = "链接疑似被劫持\nThe link is suspected to be hijacked";
+                        response.close();
+                        forceHtml = true;
+                        continue;
+                    }
 
                     if (response.code() >= 400) {
                         // Maybe 404

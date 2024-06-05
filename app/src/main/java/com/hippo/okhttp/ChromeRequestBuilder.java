@@ -31,6 +31,7 @@ public class ChromeRequestBuilder extends Request.Builder {
 
     private static final String CHROME_ACCEPT_LANGUAGE =
             "en-US,en;q=0.9";
+//    private static final String SOURCE_APP = "Ehviewer";
 
     private static final String CHROME_SEC_FETCH_DEST = "empty";
     private static final String CHROME_SEC_FETCH_MODE = "cors";
@@ -57,6 +58,7 @@ sec-ch-ua-platform: "Windows"
         addHeader("User-Agent", CHROME_USER_AGENT);
         addHeader("Accept", CHROME_ACCEPT);
         addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE);
+//        addHeader("Source-App", SOURCE_APP);
 //        addHeader("Sec-Fetch-Dest", CHROME_SEC_FETCH_DEST);
 //        addHeader("Sec-Fetch-Mode", CHROME_SEC_FETCH_MODE);
 //        addHeader("Sec-Fetch-Site", CHROME_SEC_FETCH_SITE);
