@@ -9,6 +9,7 @@
  ###  新增云端收藏当前数据随机挑选功能   
  ###  新增画廊列表当前数据随机挑选功能   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/ec4r177414)   
    点击前往下载：[百度云](https://pan.baidu.com/s/1cJ-h0fXcs9j8ChZOIDQcow)  密码:zr7m   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iFmqD20gj3kb)  密码:d2ou   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
