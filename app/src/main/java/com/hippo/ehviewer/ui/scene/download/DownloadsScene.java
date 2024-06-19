@@ -20,6 +20,7 @@ import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
 import static com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene.KEY_COME_FROM_DOWNLOAD;
 
+import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -49,6 +50,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -66,6 +68,7 @@ import com.hippo.android.resource.AttrResources;
 import com.hippo.app.CheckBoxDialogBuilder;
 import com.hippo.conaco.DataContainer;
 import com.hippo.conaco.ProgressNotifier;
+import com.hippo.drawable.AddDeleteDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.FastScroller;
@@ -94,6 +97,7 @@ import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
+import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.io.UniFileInputStreamPipe;
@@ -109,10 +113,12 @@ import com.hippo.widget.LoadImageView;
 import com.hippo.widget.ProgressView;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
+import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
+import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
 import com.sxj.paginationlib.PaginationIndicator;
@@ -125,6 +131,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -135,7 +143,7 @@ public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
         EasyRecyclerView.OnItemClickListener,
         EasyRecyclerView.OnItemLongClickListener,
-        FabLayout.OnClickFabListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener {
+        FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
 
@@ -149,6 +157,9 @@ public class DownloadsScene extends ToolbarScene
     public static final int LOCAL_GALLERY_INFO_CHANGE = 909;
 
     private static final long ANIMATE_TIME = 300L;
+
+    @Nullable
+    private AddDeleteDrawable mActionFabDrawable;
 
 
     /*---------------
@@ -300,6 +311,7 @@ public class DownloadsScene extends ToolbarScene
         } else {
             Log.e(TAG, "Can't removeDownloadInfoListener");
         }
+        mActionFabDrawable = null;
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -442,10 +454,13 @@ public class DownloadsScene extends ToolbarScene
         fastScroller.setHandlerDrawable(handlerDrawable);
         fastScroller.setOnDragHandlerListener(this);
 
-        mFabLayout.setExpanded(false, false);
-        mFabLayout.setHidePrimaryFab(true);
+        mFabLayout.setExpanded(false, true);
+        mFabLayout.setHidePrimaryFab(false);
         mFabLayout.setAutoCancel(false);
         mFabLayout.setOnClickFabListener(this);
+        mFabLayout.setOnExpandListener(this);
+        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
+        mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
         addAboveSnackView(mFabLayout);
 
         updateView();
@@ -798,11 +813,35 @@ public class DownloadsScene extends ToolbarScene
         return true;
     }
 
+    @SuppressLint("RtlHardcoded")
+    @Override
+    public void onExpand(boolean expanded) {
+        if (null == mActionFabDrawable) {
+            return;
+        }
+
+        if (expanded) {
+            setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
+            setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
+            mActionFabDrawable.setDelete(ANIMATE_TIME);
+        } else {
+            setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
+            setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
+            mActionFabDrawable.setAdd(ANIMATE_TIME);
+        }
+    }
+
     @Override
     public void onClickPrimaryFab(FabLayout view, FloatingActionButton fab) {
         if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
             mRecyclerView.outOfCustomChoiceMode();
+            return;
         }
+        if (mRecyclerView != null && !mRecyclerView.isInCustomChoice()) {
+            mRecyclerView.intoCustomChoiceMode();
+            return;
+        }
+        view.toggle();
     }
 
     @Override
@@ -848,6 +887,9 @@ public class DownloadsScene extends ToolbarScene
 
             switch (position) {
                 case 1: { // Start
+                    if (gidList.isEmpty()){
+                        break;
+                    }
                     Intent intent = new Intent(activity, DownloadService.class);
                     intent.setAction(DownloadService.ACTION_START_RANGE);
                     intent.putExtra(DownloadService.KEY_GID_LIST, gidList);
@@ -857,6 +899,9 @@ public class DownloadsScene extends ToolbarScene
                     break;
                 }
                 case 2: { // Stop
+                    if (gidList.isEmpty()){
+                        break;
+                    }
                     if (null != mDownloadManager) {
                         mDownloadManager.stopRangeDownload(gidList);
                     }
@@ -865,6 +910,9 @@ public class DownloadsScene extends ToolbarScene
                     break;
                 }
                 case 3: { // Delete
+                    if (downloadInfoList.isEmpty()){
+                        break;
+                    }
                     CheckBoxDialogBuilder builder = new CheckBoxDialogBuilder(context,
                             getString(R.string.download_remove_dialog_message_2, gidList.size()),
                             getString(R.string.download_remove_dialog_check_text),
@@ -877,6 +925,9 @@ public class DownloadsScene extends ToolbarScene
                     break;
                 }
                 case 4: {// Move
+                    if (downloadInfoList.isEmpty()){
+                        break;
+                    }
                     List<DownloadLabel> labelRawList = EhApplication.getDownloadManager(context).getLabelList();
                     List<String> labelList = new ArrayList<>(labelRawList.size() + 1);
                     labelList.add(getString(R.string.default_download_label_name));
@@ -893,8 +944,35 @@ public class DownloadsScene extends ToolbarScene
                             .show();
                     break;
                 }
+                case 5:
+                    if (mList == null || mList.isEmpty()) {
+                        return;
+                    }
+                    onClickPrimaryFab(mFabLayout,null);
+                    viewRandom((int) (Math.random() * mList.size()));
+                    break;
             }
         }
+    }
+
+    private void viewRandom(int position) {
+        List<DownloadInfo> list = mList;
+        if (list == null) {
+            return;
+        }
+        if (position < 0 || position >= list.size()) {
+            return ;
+        }
+        Activity activity = getActivity2();
+        if (null == activity || null == mRecyclerView) {
+            return;
+        }
+
+        Intent intent = new Intent(activity, GalleryActivity.class);
+        intent.setAction(GalleryActivity.ACTION_EH);
+        intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(positionInList(position)));
+//            startActivity(intent);
+        galleryActivityLauncher.launch(intent);
     }
 
     @Override

@@ -1335,14 +1335,14 @@ public final class SpiderQueen implements Runnable {
                     Response response = call.execute();
                     ResponseBody responseBody = response.body();
 
-                    // 反劫持校验
                     String responseUrl = null;
                     if (response.networkResponse() != null) {
                         responseUrl = response.networkResponse().request().url().toString();
                     } else if (response.cacheResponse() != null) {
                         responseUrl = response.cacheResponse().request().url().toString();
                     }
-                    if (!targetImageUrl.equals(responseUrl)||!responseUrl.contains(pToken)){
+                    // 反劫持校验
+                    if (!targetImageUrl.equals(responseUrl)){
                         error = "链接疑似被劫持\nThe link is suspected to be hijacked";
                         response.close();
                         forceHtml = true;
