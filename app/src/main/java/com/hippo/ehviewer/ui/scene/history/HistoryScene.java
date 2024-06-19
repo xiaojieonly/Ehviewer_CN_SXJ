@@ -291,7 +291,7 @@ public class HistoryScene extends ToolbarScene
                             case 1: // Favorites
                                 CommonOperations.addToFavorites(activity, gi,
                                         new addToFavoriteListener(context,
-                                                activity.getStageId(), getTag()));
+                                                activity.getStageId(), getTag()), false);
                                 break;
                         }
                     }

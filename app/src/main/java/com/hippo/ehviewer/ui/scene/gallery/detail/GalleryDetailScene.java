@@ -32,6 +32,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -622,6 +623,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Ripple.addRipple(mSimilar, isDarkTheme);
         Ripple.addRipple(mSearchCover, isDarkTheme);
         mHeartGroup.setOnClickListener(this);
+        mHeartGroup.setOnLongClickListener(this);
         mTorrent.setOnClickListener(this);
         mHaH.setOnClickListener(this);
         mArchiver.setOnClickListener(this);
@@ -1420,7 +1422,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     mModifingFavorites = true;
                     CommonOperations.addToFavorites(activity, mGalleryDetail,
                             new ModifyFavoritesListener(mContext,
-                                    activity.getStageId(), getTag(), false));
+                                    activity.getStageId(), getTag(), false), false);
                 }
                 // Update UI
                 updateFavoriteDrawable();
@@ -1635,6 +1637,17 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 //            }
             onDownload(true);
             return true;
+        } else if (v == mHeartGroup) {
+            if (mGalleryDetail != null && !mModifingFavorites) {
+                if (!(EhDB.containLocalFavorites(mGalleryDetail.gid) || mGalleryDetail.isFavorited)) {
+                    mModifingFavorites = true;
+                    CommonOperations.addToFavorites(activity, mGalleryDetail,
+                            new ModifyFavoritesListener(mContext,
+                                    activity.getStageId(), getTag(), false), true);
+                }
+                // Update UI
+                updateFavoriteDrawable();
+            }
         } else {
             String tag = (String) v.getTag(R.id.tag);
             if (null != tag) {
@@ -1642,6 +1655,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 return true;
             }
         }
+
         return false;
     }
 
