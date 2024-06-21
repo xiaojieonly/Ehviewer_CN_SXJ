@@ -64,6 +64,7 @@ import com.hippo.ehviewer.client.parser.TorrentParser;
 import com.hippo.ehviewer.client.parser.VoteCommentParser;
 import com.hippo.network.StatusCodeException;
 import com.hippo.util.ExceptionUtils;
+import com.hippo.util.FileUtils;
 import com.hippo.yorozuya.AssertUtils;
 
 import java.io.File;
@@ -1050,16 +1051,22 @@ public class EhEngine {
                                                        File image, boolean uss, boolean osc, boolean se) throws Throwable {
         String imageName = image.getName();
         String fileName;
+        File imageFile;
+        boolean shouldDelete = false;
         if (imageName.contains(".")) {
             fileName = imageName;
+            imageFile = image;
         } else {
             fileName = imageName + ".jpg";
+            imageFile = new File(image.getParent()+"/"+fileName);
+            FileUtils.copyFile(image,imageFile);
+            shouldDelete = true;
         }
         MultipartBody.Builder builder = new MultipartBody.Builder();
         builder.setType(MultipartBody.FORM);
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"sfile\"; filename=\"" + fileName + "\"; size=\"40\""),
-                RequestBody.create(MEDIA_TYPE_JPEG, image)
+                RequestBody.create(MediaType.parse("file"), imageFile)
         );
         if (uss) {
             builder.addPart(
@@ -1081,7 +1088,7 @@ public class EhEngine {
         }
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"f_sfile\""),
-                RequestBody.create(null, "File Search")
+                RequestBody.create(MediaType.parse("submit"), "File Search")
         );
         String url = EhUrl.getImageSearchUrl();
         String referer = EhUrl.getReferer() + '/';
@@ -1125,9 +1132,14 @@ public class EhEngine {
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);
+            if (shouldDelete){
+                imageFile.delete();
+            }
             throw e;
         }
-
+        if (shouldDelete){
+            imageFile.delete();
+        }
         fillGalleryList(task, okHttpClient, result.galleryInfoList, url, true);
 
         return result;
