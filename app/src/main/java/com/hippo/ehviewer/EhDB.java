@@ -775,8 +775,9 @@ public class EhDB {
             info.time = System.currentTimeMillis();
             dao.insert(info);
             List<HistoryInfo> list;
-            if (MAX_HISTORY_COUNT == -1) {
-                list = new ArrayList<>();
+            if (MAX_HISTORY_COUNT < 1) {
+                list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
+                        .limit(-1).offset(100).list();
             } else {
                 list = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time)
                         .limit(-1).offset(MAX_HISTORY_COUNT).list();

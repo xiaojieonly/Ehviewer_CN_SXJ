@@ -110,8 +110,19 @@
         <item>100</item>
         <item>500</item>
         <item>1000</item>
+        <item>5000</item>
         <item>10000</item>
-        <item>@string/history_info_unlimited</item>
+        <item>20000</item>
+    </string-array>
+
+    <string-array name="download_timeout_entries" translatable="false">
+        <item>@string/download_timeout_unlimited</item>
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
     </string-array>
 
     <string-array name="history_info_size_entry_values" translatable="false">
