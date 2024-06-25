@@ -105,7 +105,7 @@
         app:entryValues="@array/thumb_size_entry_values" />
 
     <com.hippo.preference.ListPreference
-        android:defaultValue="0"
+        android:defaultValue="100"
         android:key="history_info_size"
         android:summary="%s"
         android:title="@string/settings_eh_history_size"
