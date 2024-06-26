@@ -71,8 +71,8 @@
         android:key="download_timeout"
         android:summary="@string/settings_download_timeout_summary"
         android:title="@string/settings_download_timeout"
-        app:entries="@array/history_info_size_entries"
-        app:entryValues="@array/history_info_size_entry_values" />
+        app:entries="@array/download_timeout_entries"
+        app:entryValues="@array/download_timeout_entries_values" />
 
     <com.hippo.preference.SwitchPreference
         android:key="download_order_asc"
