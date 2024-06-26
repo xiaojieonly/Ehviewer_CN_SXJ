@@ -69,7 +69,7 @@
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="download_timeout"
-        android:summary="%s"
+        android:summary="@string/settings_download_timeout_summary"
         android:title="@string/settings_download_timeout"
         app:entries="@array/history_info_size_entries"
         app:entryValues="@array/history_info_size_entry_values" />

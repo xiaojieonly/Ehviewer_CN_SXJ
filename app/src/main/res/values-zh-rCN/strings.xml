@@ -917,5 +917,8 @@
     <string name="decompression_failed">解压失败！</string>
     <string name="download_label_archiver">档案</string>
     <string name="cookie_in_clipboard_incorrect">Cookie格式不正确</string>
+    <string name="settings_download_timeout">下载超时时间</string>
+    <string name="download_timeout_unlimited">无上限</string>
+    <string name="settings_download_timeout_summary">数值范围在1到Integer.MAX_VALUE/1000(2,147,483)秒内</string>
 
 </resources>
