@@ -181,11 +181,25 @@ The apk is in app\build\outputs\apk
 
 # Thanks
 
-本项目受到了诸多开源项目的帮助  
 感谢Ehviewer奠基人[Hippo/seven332](https://github.com/seven332)
-
-Here is the libraries  
 Thanks to [Hippo/seven332](https://github.com/seven332), the founder of Ehviewer
 
+本项目受到了诸多开源项目的帮助  
+This project has received help from many open source projects  
+
+这是部分库
+Here is the libraries  
 - [AOSP](http://source.android.com/)
-- [android-advancedrecyclerview](https://github.com/h6a
+- [android-advancedrecyclerview](https://github.com/h6ah4i/android-advancedrecyclerview)
+- [Apache Commons Lang](https://commons.apache.org/proper/commons-lang/)
+- [apng](http://apng.sourceforge.net/)
+- [giflib](http://giflib.sourceforge.net)
+- [greenDAO](https://github.com/greenrobot/greenDAO)
+- [jsoup](https://github.com/jhy/jsoup)
+- [libjpeg-turbo](http://libjpeg-turbo.virtualgl.org/)
+- [libpng](http://www.libpng.org/pub/png/libpng.html)
+- [okhttp](https://github.com/square/okhttp)
+- [roaster](https://github.com/forge/roaster)
+- [ShowcaseView](https://github.com/amlcurran/ShowcaseView)
+- [Slabo](https://github.com/TiroTypeworks/Slabo)
+- [TagSoup](http://home.ccil.org/~cowan/tagsoup/)
