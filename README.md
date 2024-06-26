@@ -181,8 +181,8 @@ The apk is in app\build\outputs\apk
 
 # Thanks
 
-感谢Ehviewer奠基人[Hippo/seven332](https://github.com/seven332)
-Thanks to [Hippo/seven332](https://github.com/seven332), the founder of Ehviewer
+感谢Ehviewer奠基人[Hippo/seven332](https://github.com/seven332)    
+Thanks to [Hippo/seven332](https://github.com/seven332), the founder of Ehviewer    
 
 本项目受到了诸多开源项目的帮助  
 This project has received help from many open source projects  
