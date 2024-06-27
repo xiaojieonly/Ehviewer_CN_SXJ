@@ -32,6 +32,7 @@ import com.hippo.ehviewer.client.data.NewVersion;
 import com.hippo.ehviewer.client.data.NormalPreviewSet;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.exception.EhException;
+import com.hippo.ehviewer.client.exception.GalleryUnavailableException;
 import com.hippo.ehviewer.client.exception.OffensiveException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.ehviewer.client.exception.PiningException;
@@ -93,6 +94,8 @@ public class GalleryDetailParser {
             "<p>(And if you choose to ignore this warning, you lose all rights to complain about it in the future.)</p>";
     private static final String PINING_STRING =
             "<p>This gallery is pining for the fjords.</p>";
+    private static final String UNAVAILABLE_STRING =
+            "This gallery is unavailable";
 
     /**
      * 画廊详情页数据处理
@@ -108,6 +111,9 @@ public class GalleryDetailParser {
 
         if (body.contains(PINING_STRING)) {
             throw new PiningException();
+        }
+        if (body.contains(UNAVAILABLE_STRING)) {
+            throw new GalleryUnavailableException();
         }
 
         // Error info

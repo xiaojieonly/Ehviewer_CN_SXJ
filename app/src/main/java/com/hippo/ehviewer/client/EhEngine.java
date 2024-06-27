@@ -142,6 +142,9 @@ public class EhEngine {
                 throw new EhException(GetText.getString(R.string.error_parse_error));
             }
         }
+        if (e instanceof EhException){
+            throw e;
+        }
 
         if (code >= 400) {
             throw new StatusCodeException(code);
@@ -347,7 +350,7 @@ public class EhEngine {
             throw e;
         }
     }
-
+//    https://e-hentai.org/g/2914213/fc8bce61d9/
     public static GalleryDetail getGalleryDetail(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                                  String url) throws Throwable {
         String referer = EhUrl.getReferer();

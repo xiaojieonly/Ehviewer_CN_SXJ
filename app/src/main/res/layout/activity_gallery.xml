@@ -15,6 +15,7 @@
   -->
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
@@ -41,12 +42,14 @@
             android:textColor="?android:attr/textColorSecondary"
             tools:ignore="RtlHardcoded" />
 
-        <TextView
+        <com.hippo.ehviewer.widget.StrokeTextView
             android:id="@+id/progress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="@dimen/gallery_widget_margin_v"
+            app:stroke_color="@android:color/black"
+            app:stroke_width="0.5dp"
             android:textColor="?android:attr/textColorSecondary" />
 
         <com.hippo.widget.BatteryView xmlns:app="http://schemas.android.com/apk/res-auto"

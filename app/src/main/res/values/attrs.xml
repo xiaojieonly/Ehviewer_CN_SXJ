@@ -223,4 +223,12 @@
         <attr name="fullscreenTextColor" format="color" />
     </declare-styleable>
 
+    <!-- 有描边的自定义TextView-->
+    <declare-styleable name="StrokeTextView">
+        <!--描边的颜色 -->
+        <attr name="stroke_color" format="color" />
+        <!-- 描边的宽度 -->
+        <attr name="stroke_width" format="dimension" />
+    </declare-styleable>
+
 </resources>
