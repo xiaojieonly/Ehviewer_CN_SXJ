@@ -203,8 +203,11 @@ public class DownloadFragment extends PreferenceFragment implements
                 Settings.putImageResolution((String) newValue);
             }
             return true;
-        }else if (KEY_DOWNLOAD_LOCATION.equals(key)) {
-            Settings.setDownloadTimeout(toTimeoutTime(newValue));
+        }else if (Settings.KEY_DOWNLOAD_TIMEOUT.equals(key)) {
+            if (newValue instanceof String) {
+                Settings.setDownloadTimeout(toTimeoutTime(newValue));
+            }
+            return true;
         }
         return false;
     }

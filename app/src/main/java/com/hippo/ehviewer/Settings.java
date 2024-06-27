@@ -1397,11 +1397,7 @@ public class Settings {
 
     public static int getDownloadTimeout() {
         int size = getIntFromStr(KEY_DOWNLOAD_TIMEOUT, DEFAULT_DOWNLOAD_TIMEOUT);
-        if (size<DEFAULT_HISTORY_INFO_SIZE){
-            setHistoryInfoSize(DEFAULT_DOWNLOAD_TIMEOUT);
-            return DEFAULT_HISTORY_INFO_SIZE;
-        }
-        return size;
+        return Math.max(size, DEFAULT_DOWNLOAD_TIMEOUT);
     }
 
     public static void setDownloadTimeout(int value) {

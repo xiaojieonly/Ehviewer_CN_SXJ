@@ -800,5 +800,5 @@
     <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
     <string name="settings_download_timeout">Download timeout</string>
     <string name="download_timeout_unlimited">Unlimited</string>
-    <string name="settings_download_timeout_summary">The value range is from 1 to Integer.MAX_VALUE/1000(2,147,483) seconds</string>
+    <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
 </resources>

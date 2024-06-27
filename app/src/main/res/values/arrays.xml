@@ -116,7 +116,7 @@
         <item>@string/history_info_unlimited</item>
     </string-array>
 
-    <integer-array name="history_info_size_entry_values" translatable="false">
+    <string-array name="history_info_size_entry_values" translatable="false">
         <item>100</item>
         <item>500</item>
         <item>1000</item>
@@ -124,7 +124,7 @@
         <item>10000</item>
         <item>20000</item>
         <item>-1</item>
-    </integer-array>
+    </string-array>
 
     <string-array name="download_timeout_entries" translatable="false">
         <item>@string/download_timeout_unlimited</item>
@@ -136,7 +136,7 @@
         <item>300</item>
     </string-array>
 
-    <integer-array name="download_timeout_entries_values" translatable="false">
+    <string-array name="download_timeout_entries_values" translatable="false">
         <item>0</item>
         <item>10</item>
         <item>30</item>
@@ -144,7 +144,7 @@
         <item>100</item>
         <item>200</item>
         <item>300</item>
-    </integer-array>
+    </string-array>
 
 
     <string-array name="thumb_resolution_entries" translatable="false">
