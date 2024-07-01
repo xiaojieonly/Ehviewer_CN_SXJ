@@ -1,6 +1,27 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/07/01 :     
+ ###  新版发布1.9.8.2（如果出现问题请覆盖安装旧版本）   
+ ###  修复历史记录需要重新设置才能显示的问题   
+ ###  新增图片请求链接校验，以防止在h@h服务器被不法分子劫持后导致的涉政、涉毒、涉赌及邪教等极端或影响E站及APP稳定性的内容的出现   
+ ###  下载列表添加随机浏览功能   
+ ###  改善收藏按鈕   
+ ###  新增图片搜索上传地址host   
+ ###  图片搜索优化   
+ ###  历史记录默认值从0修改为100,去除无上限选项，为了流畅度考虑，现在的历史记录上限为20000   
+ ###  新增下载超时时间设置，用于设置每张图片的最大下载时限，默认不设限，可在'设置-下载'内进行设置   
+ ###  新增下载速度归零超时放弃功能，现在下载速度为0超过30秒会主动放弃当前下载的图片   
+ ###  浏览画廊图片时，为阅读进度文本添加黑色描边   
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/ec4r177414&#41;   )
+   点击前往下载：[百度云](https://pan.baidu.com/s/16IG6TFYTfZyirYFlheyDlQ)  密码:il35   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iIwtX238nuif)  密码:dq01   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:d3ea86412c891bdf7b3e1c98866acbb658dcdfe4&dn=EhViewer-1.9.8.2.apk    
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel    
 
 # 2024/06/01 :  祝大家儿童节快乐~~~
  ###  新版发布1.9.8.1（如果出现问题请覆盖安装旧版本）   
