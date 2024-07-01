@@ -14,6 +14,7 @@
  ###  新增下载速度归零超时放弃功能，现在下载速度为0超过30秒会主动放弃当前下载的图片   
  ###  浏览画廊图片时，为阅读进度文本添加黑色描边   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)
+
 [//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/ec4r177414&#41;   )
    点击前往下载：[百度云](https://pan.baidu.com/s/16IG6TFYTfZyirYFlheyDlQ)  密码:il35   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iIwtX238nuif)  密码:dq01   
