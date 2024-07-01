@@ -1422,7 +1422,11 @@ public final class SpiderQueen implements Runnable {
                             }
                             if (receivedSize == receiveBytesBefore) {
                                 if (downloadSpeedZeroTimeCount == null) {
-                                    downloadSpeedZeroTimeCount = new TimeCount(30000, 1000);
+                                    try{
+                                        downloadSpeedZeroTimeCount = new TimeCount(30000, 1000);
+                                    }catch (RuntimeException e){
+                                        FirebaseCrashlytics.getInstance().recordException(e);
+                                    }
                                     downloadSpeedZeroTimeCount.start();
                                 }
                                 if (cancelDownload) {
