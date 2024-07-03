@@ -13,9 +13,8 @@
  ###  新增下载超时时间设置，用于设置每张图片的最大下载时限，默认不设限，可在'设置-下载'内进行设置   
  ###  新增下载速度归零超时放弃功能，现在下载速度为0超过30秒会主动放弃当前下载的图片   
  ###  浏览画廊图片时，为阅读进度文本添加黑色描边   
-   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)
-
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/ec4r177414&#41;   )
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/4c5r180827)   
    点击前往下载：[百度云](https://pan.baidu.com/s/1FVBOwj7FrJ2n42wa9YkV-Q)  密码:cah3   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwb.lanzouj.com/iIA9u238xp0h)  密码:g7vx   
    点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
