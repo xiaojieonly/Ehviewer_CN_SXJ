@@ -80,6 +80,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -169,7 +171,7 @@ public final class SpiderQueen implements Runnable {
 
     private long receiveBytesBefore;
 
-    private TimeCount downloadSpeedZeroTimeCount;
+    private Timer downloadSpeedZeroTimeCount;
 
     private boolean cancelDownload = false;
 
@@ -1423,9 +1425,10 @@ public final class SpiderQueen implements Runnable {
                             if (receivedSize == receiveBytesBefore) {
                                 if (downloadSpeedZeroTimeCount == null) {
                                     try{
-                                        downloadSpeedZeroTimeCount = new TimeCount(30000, 1000);
-                                        downloadSpeedZeroTimeCount.start();
-                                    }catch (RuntimeException e){
+                                        downloadSpeedZeroTimeCount = new Timer();
+                                        cancelDownload = false;
+                                        downloadSpeedZeroTimeCount.schedule(new TimeCount(),3000);
+                                    }catch (Throwable e){
                                         FirebaseCrashlytics.getInstance().recordException(e);
                                     }
                                 }
@@ -1963,27 +1966,16 @@ public final class SpiderQueen implements Runnable {
         }
     }
 
-    private class TimeCount extends CountDownTimer {
+    private class TimeCount extends TimerTask {
 
-        /**
-         * @param millisInFuture    The number of millis in the future from the call
-         *                          to {@link #start()} until the countdown is done and {@link #onFinish()}
-         *                          is called.
-         * @param countDownInterval The interval along the way to receive
-         *                          {@link #onTick(long)} callbacks.
-         */
-        public TimeCount(long millisInFuture, long countDownInterval) {
-            super(millisInFuture, countDownInterval);
-        }
-
-        @Override
-        public void onTick(long millisUntilFinished) {
+        public TimeCount() {
 
         }
 
         @Override
-        public void onFinish() {
+        public void run() {
             cancelDownload = true;
         }
+
     }
 }
