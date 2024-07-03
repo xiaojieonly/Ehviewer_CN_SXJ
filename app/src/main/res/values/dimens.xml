@@ -117,6 +117,8 @@
     <dimen name="slider_bubble_height">32dp</dimen>
 
     <dimen name="corner_fab_margin">16dp</dimen>
+    <dimen name="corner_fab_margin_download_bottom">70dp</dimen>
+    <dimen name="corner_fab_margin_download_right">3dp</dimen>
 
     <dimen name="gallery_detail_thumb_width">128dp</dimen>
     <dimen name="gallery_detail_thumb_height">192dp</dimen>

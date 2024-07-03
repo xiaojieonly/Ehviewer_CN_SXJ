@@ -89,8 +89,8 @@
             android:id="@+id/fab_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingRight="@dimen/corner_fab_margin"
-            android:paddingBottom="@dimen/corner_fab_margin">
+            android:paddingRight="@dimen/corner_fab_margin_download_right"
+            android:paddingBottom="@dimen/corner_fab_margin_download_bottom">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 style="@style/Widget.Design.FloatingActionButton.Mini"
