@@ -949,17 +949,18 @@ public class DownloadsScene extends ToolbarScene
                         return;
                     }
                     onClickPrimaryFab(mFabLayout,null);
-                    viewRandom((int) (Math.random() * mList.size()));
+                    viewRandom();
                     break;
             }
         }
     }
 
-    private void viewRandom(int position) {
+    private void viewRandom() {
         List<DownloadInfo> list = mList;
         if (list == null) {
             return;
         }
+        int position = (int) (Math.random() * list.size());
         if (position < 0 || position >= list.size()) {
             return ;
         }
@@ -970,8 +971,7 @@ public class DownloadsScene extends ToolbarScene
 
         Intent intent = new Intent(activity, GalleryActivity.class);
         intent.setAction(GalleryActivity.ACTION_EH);
-        intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(positionInList(position)));
-//            startActivity(intent);
+        intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(position));
         galleryActivityLauncher.launch(intent);
     }
 
