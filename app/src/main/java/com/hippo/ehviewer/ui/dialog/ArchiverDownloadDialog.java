@@ -191,10 +191,10 @@ public class ArchiverDownloadDialog implements
             body.setVisibility(View.VISIBLE);
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
-            File file = AppConfig.getExternalArchiverDir();
-            if (file == null || downloadUrl == null) {
-                return;
-            }
+//            File file = AppConfig.getExternalArchiverDir();
+//            if (file == null || downloadUrl == null) {
+//                return;
+//            }
             Uri downloadUri = Uri.parse(downloadUrl);
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
@@ -205,8 +205,10 @@ public class ArchiverDownloadDialog implements
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
 
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).mkdir() ;
+
+            request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS,  galleryDetail.title + ".zip");
             request.allowScanningByMediaScanner();
-            request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, file.getPath() + "/" + galleryDetail.title + ".zip");
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
             myDownloadId = downloadManager.enqueue(request);

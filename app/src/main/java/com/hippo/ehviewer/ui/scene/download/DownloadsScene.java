@@ -983,6 +983,7 @@ public class DownloadsScene extends ToolbarScene
         if (mAdapter != null) {
             mAdapter.notifyItemInserted(position);
         }
+        downloadLabelDraw.updateDownloadLabels();
         updateView();
     }
 

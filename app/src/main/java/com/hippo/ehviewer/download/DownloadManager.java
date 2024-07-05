@@ -563,6 +563,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         // Add to label download list
         LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
+        if (!mLabelCountMap.containsKey(label)){
+            mLabelCountMap.put(label,1L);
+        }else {
+            long value = mLabelCountMap.get(label)+1L;
+            mLabelCountMap.put(label,value);
+        }
         if (list == null) {
             Log.e(TAG, "Can't find download info list with label: " + label);
             return;
