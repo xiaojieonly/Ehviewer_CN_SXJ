@@ -113,7 +113,7 @@ public class DownloadLabelDraw {
             downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getLabelCount(label)));
         }
 
-        ListView listView = (ListView) view.findViewById(R.id.list_view);
+        listView = (ListView) view.findViewById(R.id.list_view);
         DownloadLabelAdapter adapter = new DownloadLabelAdapter(Objects.requireNonNull(scene.getEHContext()), R.layout.item_download_label_list, downloadLabelList);
         listView.setAdapter(adapter);
 
