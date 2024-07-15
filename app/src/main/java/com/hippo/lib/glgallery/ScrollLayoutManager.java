@@ -524,6 +524,7 @@ class ScrollLayoutManager extends GalleryView.LayoutManager {
 
                 if (isInScreen(page)) {
                     mFirstShownPageIndex = page.getIndex();
+                    mKeepTopPageIndex = page.getIndex();
                     break;
                 }
             }
