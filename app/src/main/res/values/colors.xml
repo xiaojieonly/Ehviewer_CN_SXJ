@@ -149,6 +149,7 @@
     <color name="manga">#ffff9800</color>
     <!-- Yellow 700 -->
     <color name="artist_cg">#ffFbc02d</color>
+    <color name="new_version_bg_color">#E6FFEB3B</color>
     <!-- Green -->
     <color name="game_cg">#ff4caf50</color>
     <!-- Light Green -->

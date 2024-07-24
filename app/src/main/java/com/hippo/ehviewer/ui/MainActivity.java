@@ -608,7 +608,7 @@ public final class MainActivity extends StageActivity
     }
 
     @Nullable
-    private Announcer createAnnouncerFromClipboardUrl(String url) {
+    public static Announcer createAnnouncerFromClipboardUrl(String url) {
         GalleryDetailUrlParser.Result result1 = GalleryDetailUrlParser.parse(url, false);
         if (result1 != null) {
             Bundle args = new Bundle();

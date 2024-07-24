@@ -41,25 +41,24 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" >
+        android:orientation="vertical">
 
         <RelativeLayout
+            android:id="@+id/view_head"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:id="@+id/view_head">
-
+            android:background="@android:color/transparent">
 
 
             <com.hippo.widget.LoadImageView
                 android:id="@+id/thumb"
                 android:layout_width="@dimen/gallery_detail_thumb_width"
                 android:layout_height="@dimen/gallery_detail_thumb_height"
+                android:layout_alignWithParentIfMissing="true"
+                android:layout_alignParentStart="true"
                 android:layout_marginStart="@dimen/keyline_margin"
                 android:layout_marginTop="@dimen/keyline_margin"
                 android:layout_marginBottom="@dimen/keyline_margin"
-                android:layout_alignParentStart="true"
-                android:layout_alignWithParentIfMissing="true"
                 android:scaleType="fitCenter" />
 
             <TextView
@@ -123,52 +122,74 @@
 
         </RelativeLayout>
 
-        <com.google.android.material.card.MaterialCardView
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/action_card"
-            style="@style/CardView.Normal"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/keyline_margin"
-            android:layout_marginRight="@dimen/keyline_margin"
-            app:cardUseCompatPadding="true">
+            android:gravity="center"
+            android:orientation="vertical">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/new_version"
+                style="@style/ButtonNewVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/keyline_margin"
+                android:layout_marginRight="@dimen/keyline_margin"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="@string/have_new_version"
+                android:textColor="?attr/textColorThemePrimary2"
+                android:visibility="gone" />
+
+            <com.google.android.material.card.MaterialCardView xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/action_card"
+                style="@style/CardView.Normal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_marginLeft="@dimen/keyline_margin"
+                android:layout_marginRight="@dimen/keyline_margin"
+                app:cardUseCompatPadding="true">
 
-                <TextView
-                    android:id="@+id/download"
-                    style="@style/ButtonInCard"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:textColor="?attr/textColorThemePrimary" />
+                    android:orientation="horizontal">
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="?attr/dividerColor" />
+                    <TextView
+                        android:id="@+id/download"
+                        style="@style/ButtonInCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:textColor="?attr/textColorThemePrimary" />
 
-                <TextView
-                    android:id="@+id/read"
-                    style="@style/ButtonInCard"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="@string/read"
-                    android:textColor="?attr/textColorThemeAccent" />
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="?attr/dividerColor" />
 
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:id="@+id/read"
+                        style="@style/ButtonInCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:text="@string/read"
+                        android:textColor="?attr/textColorThemeAccent" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
     </LinearLayout>
 </FrameLayout>

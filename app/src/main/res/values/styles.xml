@@ -150,6 +150,18 @@
         <item name="android:textColor">?attr/colorPrimary</item>
     </style>
 
+    <style name="ButtonNewVersion">
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">88dp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
     <style name="ButtonInCard.Accent">
         <item name="android:textColor">?attr/colorAccent</item>
     </style>

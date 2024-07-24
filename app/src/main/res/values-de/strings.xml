@@ -591,5 +591,6 @@
     <string name="settings_download_timeout">Download timeout</string>
     <string name="download_timeout_unlimited">Unlimited</string>
     <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
+    <string name="have_new_version">Click to see new gallery version</string>
 
 </resources>

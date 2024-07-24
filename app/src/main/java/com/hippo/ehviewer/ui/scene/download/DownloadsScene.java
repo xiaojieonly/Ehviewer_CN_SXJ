@@ -1084,7 +1084,6 @@ public class DownloadsScene extends ToolbarScene
                 bindState(holder, info, resources.getString(R.string.download_state_none));
                 break;
             case DownloadInfo.STATE_WAIT:
-            case DownloadInfo.STATE_UPDATE:
                 bindState(holder, info, resources.getString(R.string.download_state_wait));
                 break;
             case DownloadInfo.STATE_DOWNLOAD:

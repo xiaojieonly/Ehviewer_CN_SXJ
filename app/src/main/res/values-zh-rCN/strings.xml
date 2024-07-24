@@ -920,5 +920,6 @@
     <string name="settings_download_timeout">下载超时时间</string>
     <string name="download_timeout_unlimited">无上限</string>
     <string name="settings_download_timeout_summary">%s(S),下载一张图片的最大可用时长。</string>
+    <string name="have_new_version">点击查看新的画廊版本</string>
 
 </resources>
