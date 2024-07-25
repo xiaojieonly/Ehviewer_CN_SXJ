@@ -32,9 +32,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
@@ -104,22 +106,27 @@ public class EhDns implements Dns {
 
         List<InetAddress> inetAddresses = (List<InetAddress>) hosts.get(hostname);
         if (inetAddresses != null) {
+            Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
             return inetAddresses;
         }
         if (Settings.getBuiltInHosts() || Settings.getBuiltEXHosts()) {
             inetAddresses = builtInHosts.get(hostname);
             if (inetAddresses != null) {
+                Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
                 return inetAddresses;
             }
         }
         if (Settings.getDoH()) {
             inetAddresses = dnsOverHttps.lookup(hostname);
             if (inetAddresses != null && inetAddresses.size() > 0) {
+                Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
                 return inetAddresses;
             }
         }
         try {
-            return Arrays.asList(InetAddress.getAllByName(hostname));
+            inetAddresses = Arrays.asList(InetAddress.getAllByName(hostname));
+            Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
+            return inetAddresses;
         } catch (NullPointerException e) {
             UnknownHostException unknownHostException =
                     new UnknownHostException("Broken system behaviour for dns lookup of " + hostname);
