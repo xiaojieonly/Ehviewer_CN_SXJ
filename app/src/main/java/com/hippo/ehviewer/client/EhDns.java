@@ -171,7 +171,7 @@ public class EhDns implements Dns {
         }
         if (Settings.getDoH()) {
             inetAddresses = dnsOverHttps.lookup(hostname);
-            if (inetAddresses != null && inetAddresses.size() > 0) {
+            if (inetAddresses.size() > 0) {
                 Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
                 return inetAddresses;
             }
