@@ -1,7 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2024/07/01 :
+# 2024/08/01 :
  ###  新版发布1.9.8.5（如果出现问题请覆盖安装旧版本）
  ###  更新host文件
  ###  新增host地址随机调用
