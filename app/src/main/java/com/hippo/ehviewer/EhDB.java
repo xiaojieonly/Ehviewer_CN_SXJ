@@ -688,7 +688,9 @@ public class EhDB {
     public static synchronized void insertQuickSearch(QuickSearch quickSearch) {
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         quickSearch.id = null;
-        quickSearch.time = System.currentTimeMillis();
+        if (quickSearch.time==0L){
+            quickSearch.time = System.currentTimeMillis();
+        }
         quickSearch.id = dao.insert(quickSearch);
     }
 
