@@ -1,6 +1,29 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/08/01 :
+ ###  新版发布1.9.8.5（如果出现问题请覆盖安装旧版本）
+ ###  更新host文件
+ ###  新增host地址随机调用
+ ###  出于下载稳定性考虑，对于存在新版的画廊，不再提供覆盖下载，为了避免下载按钮的逻辑混乱，在有新版本的画廊中，提供了一个新的按钮供用户前往新版本
+ ###  修复只用音量键翻页时，页面会在翻过随机数量的页面后重新回到初始页面的问题
+ ###  删除历史记录上限选择列表中的无用选项
+ ###  修复了档案下载完成后下载标签列表对应档案分组总数没有加1的问题
+ ###  修复了普通下载任务创建后下载标签列表对应分组总数没有加1的问题
+ ###  优化下载列表悬浮按钮位置以防止遮挡开始下载按钮
+ ###  修复下载列表随机浏览可能会导致app奔溃的问题
+ ###  下载超时计数器从CountDownTimer变更为Timer，以避免内存泄漏风险
+
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/4c5r180827&#41;   )
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/10QXSnVi9wFJJ8VJC66-B1w)  密码:bc1w   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwi.lanzouj.com/ipD4h266eqch)  密码:hq0c   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:a7c51cab0345012f1818dd2c7c588687f440124c&dn=EhViewer-1.9.8.4.apk   
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/07/01 :     
  ###  新版发布1.9.8.4（如果出现问题请覆盖安装旧版本）   
  ###  修复历史记录需要重新设置才能显示的问题   
