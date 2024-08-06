@@ -171,10 +171,6 @@ public final class SpiderQueen implements Runnable {
 
     private long receiveBytesBefore;
 
-    private Timer downloadSpeedZeroTimeCount;
-
-    private boolean cancelDownload = false;
-
     private SpiderQueen(EhApplication application, @NonNull GalleryInfo galleryInfo) {
         mHttpClient = EhApplication.getOkHttpClient(application);
         mHttpImageClient = EhApplication.getImageOkHttpClient(application);
@@ -1075,14 +1071,6 @@ public final class SpiderQueen implements Runnable {
         }
     }
 
-    private void cancelTimeCount() {
-        if (downloadSpeedZeroTimeCount != null) {
-            downloadSpeedZeroTimeCount.cancel();
-            downloadSpeedZeroTimeCount = null;
-        }
-        cancelDownload = false;
-    }
-
     @IntDef({MODE_READ, MODE_DOWNLOAD})
     @Retention(RetentionPolicy.SOURCE)
     public @interface Mode {
@@ -1146,6 +1134,9 @@ public final class SpiderQueen implements Runnable {
     }
 
     private class SpiderWorker implements Runnable {
+        private Timer downloadSpeedZeroTimeCount;
+
+        private boolean cancelDownload = false;
 
         private final long mGid;
 
@@ -1424,11 +1415,11 @@ public final class SpiderQueen implements Runnable {
                             }
                             if (receivedSize == receiveBytesBefore) {
                                 if (downloadSpeedZeroTimeCount == null) {
-                                    try{
+                                    try {
                                         downloadSpeedZeroTimeCount = new Timer();
                                         cancelDownload = false;
-                                        downloadSpeedZeroTimeCount.schedule(new TimeCount(),3000);
-                                    }catch (Throwable e){
+                                        downloadSpeedZeroTimeCount.schedule(new TimeCount(), 3000);
+                                    } catch (Throwable e) {
                                         FirebaseCrashlytics.getInstance().recordException(e);
                                     }
                                 }
@@ -1844,6 +1835,14 @@ public final class SpiderQueen implements Runnable {
             return false;
         }
 
+        private void cancelTimeCount() {
+            if (downloadSpeedZeroTimeCount != null) {
+                downloadSpeedZeroTimeCount.cancel();
+                downloadSpeedZeroTimeCount = null;
+            }
+            cancelDownload = false;
+        }
+
         @Override
         @SuppressWarnings("StatementWithEmptyBody")
         public void run() {
@@ -1868,10 +1867,22 @@ public final class SpiderQueen implements Runnable {
             if (finish) {
                 notifyFinish();
             }
-
+            cancelTimeCount();
             if (DEBUG_LOG) {
                 Log.i(TAG, Thread.currentThread().getName() + ": end");
             }
+        }
+
+        private class TimeCount extends TimerTask {
+            public TimeCount() {
+
+            }
+
+            @Override
+            public void run() {
+                cancelDownload = true;
+            }
+
         }
     }
 
@@ -1964,18 +1975,5 @@ public final class SpiderQueen implements Runnable {
                 Log.i(TAG, Thread.currentThread().getName() + ": end");
             }
         }
-    }
-
-    private class TimeCount extends TimerTask {
-
-        public TimeCount() {
-
-        }
-
-        @Override
-        public void run() {
-            cancelDownload = true;
-        }
-
     }
 }
