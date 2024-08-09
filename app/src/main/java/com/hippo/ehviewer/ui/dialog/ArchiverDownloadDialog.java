@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -71,6 +72,7 @@ public class ArchiverDownloadDialog implements
     private LinearLayout body;
 
     private long myDownloadId;
+
 
     private ArchiverData data = new ArchiverData();
 
@@ -129,7 +131,7 @@ public class ArchiverDownloadDialog implements
                 EhRequest request = new EhRequest();
                 request.setMethod(EhClient.METHOD_DOWNLOAD_ARCHIVER);
                 request.setArgs(url, galleryDetail.archiveUrl, dltype, dlcheck);
-                request.setCallback(new DownloadArchiverListener(context, activity.getStageId(), detailScene.getTag()));
+                request.setCallback(new DownloadArchiverListener(context, activity.getStageId(), detailScene.getTag(), this));
                 EhApplication.getEhClient(context).execute(request);
             }
         } finally {
@@ -176,10 +178,15 @@ public class ArchiverDownloadDialog implements
 
     }
 
-    private class DownloadArchiverListener extends EhCallback<GalleryDetailScene, String> {
 
-        public DownloadArchiverListener(Context context, int stageId, String sceneTag) {
+    private class DownloadArchiverListener extends EhCallback<GalleryDetailScene, String> {
+        final ArchiverDownloadDialog archiverDownloadDialog;
+        final Context context;
+
+        public DownloadArchiverListener(Context context, int stageId, String sceneTag, ArchiverDownloadDialog archiverDownloadDialog) {
             super(context, stageId, sceneTag);
+            this.context = context;
+            this.archiverDownloadDialog = archiverDownloadDialog;
         }
 
         @Override
@@ -199,21 +206,35 @@ public class ArchiverDownloadDialog implements
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
             request.setAllowedOverRoaming(true);
-
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             request.setTitle(galleryDetail.title);
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
-
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).mkdir() ;
-
-            request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS,  galleryDetail.title + ".zip");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "/EhviewerArchiver/"+galleryDetail.title + ".zip");
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
             myDownloadId = downloadManager.enqueue(request);
 
             context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+
+
+//            String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
+//            String name = galleryDetail.title + ".zip";
+//            DownloadArchiverManager.Archiver archiver = new DownloadArchiverManager.Archiver(downloadUrl,path,name);
+//            final DownloadArchiverManager manager = archiverDownloadDialog.downloadArchiverManager;
+//            manager.addDownloadArchiverListener(this);
+//
+//            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+//            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+//                NotificationChannel channel = new NotificationChannel(CHANNEL_ID,context.getString(R.string.download_service),NotificationManager.IMPORTANCE_LOW);
+//                notificationManager.createNotificationChannel(channel);
+//            }
+//            NotificationCompat.Builder builder = new NotificationCompat.Builder(context,CHANNEL_ID)
+//                    .setContentTitle(context.getString(R.string.download))
+//                    .setContentText(archiver.name)
+//                    .setSmallIcon(R.mipmap.ic_launcher)
+//                    .setProgress(100,0,false);
         }
 
         @Override
@@ -366,12 +387,13 @@ public class ArchiverDownloadDialog implements
             if (!deleteTemp) {
                 tempFile.deleteOnExit();
             }
+            String finalFileName = tempFile.getName();
             new Handler(Looper.getMainLooper()).post(() -> {
                 String labelName = context.getString(R.string.download_label_archiver);
                 com.hippo.ehviewer.download.DownloadManager manager = EhApplication.getDownloadManager(context);
                 manager.addLabel(labelName);
                 manager.addDownload(galleryDetail, labelName, DownloadInfo.STATE_FINISH);
-
+                Toast.makeText(context,context.getString(R.string.stat_download_done_line_succeeded, finalFileName),Toast.LENGTH_LONG).show();
                 if (downloadReceiver != null) {
                     context.unregisterReceiver(downloadReceiver);
                 }

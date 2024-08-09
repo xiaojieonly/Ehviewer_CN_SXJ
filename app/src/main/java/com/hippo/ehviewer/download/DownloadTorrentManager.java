@@ -1,4 +1,4 @@
-package com.hippo.util;
+package com.hippo.ehviewer.download;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -10,7 +10,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.callBack.TorrentDownloadCallBack;
 import com.hippo.ehviewer.client.data.TorrentDownloadMessage;
 
 import java.io.File;
@@ -27,21 +26,21 @@ import okhttp3.Response;
 /**
  * 文件下载工具
  */
-public class DownloadUtil {
-    private static final String TAG = DownloadUtil.class.getName();
-    private static DownloadUtil downloadUtil;
+public class DownloadTorrentManager {
+    private static final String TAG = DownloadTorrentManager.class.getName();
+    private static DownloadTorrentManager downloadTorrentManager;
     private final OkHttpClient okHttpClient;
 
     private Handler handler;
 
-    public static DownloadUtil get(OkHttpClient okHttpClient) {
-        if (downloadUtil == null) {
-            downloadUtil = new DownloadUtil(okHttpClient);
+    public static DownloadTorrentManager get(OkHttpClient okHttpClient) {
+        if (downloadTorrentManager == null) {
+            downloadTorrentManager = new DownloadTorrentManager(okHttpClient);
         }
-        return downloadUtil;
+        return downloadTorrentManager;
     }
 
-    private DownloadUtil(OkHttpClient okHttpClient) {
+    private DownloadTorrentManager(OkHttpClient okHttpClient) {
         this.okHttpClient = okHttpClient;
     }
 

@@ -116,7 +116,7 @@ import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
 import com.hippo.util.AppHelper;
-import com.hippo.util.DownloadUtil;
+import com.hippo.ehviewer.download.DownloadTorrentManager;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.FileUtils;
@@ -2328,12 +2328,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 String url = mTorrentList[position].first;
                 String name = mTorrentList[position].second + ".torrent";
                 String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
-                DownloadUtil downloadUtil = DownloadUtil.get(okHttpClient);
+                DownloadTorrentManager downloadTorrentManager = DownloadTorrentManager.get(okHttpClient);
                 if (!EhApplication.addDownloadTorrent(context, url)) {
                     Toast.makeText(context, R.string.downloading, Toast.LENGTH_LONG).show();
                     return;
                 }
-                downloadUtil.download(url, path, name, torrentDownloadHandler, context);
+                downloadTorrentManager.download(url, path, name, torrentDownloadHandler, context);
 
             } catch (Exception e) {
                 ExceptionUtils.throwIfFatal(e);
