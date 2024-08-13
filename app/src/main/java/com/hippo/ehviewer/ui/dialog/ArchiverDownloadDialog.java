@@ -194,14 +194,14 @@ public class ArchiverDownloadDialog implements
             if (dialog != null && !dialog.isShowing()) {
                 return;
             }
+            if (downloadUrl==null){
+                Toast.makeText(context,R.string.download_state_failed,Toast.LENGTH_LONG).show();
+                return;
+            }
             progressBar.setVisibility(View.INVISIBLE);
             body.setVisibility(View.VISIBLE);
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
-//            File file = AppConfig.getExternalArchiverDir();
-//            if (file == null || downloadUrl == null) {
-//                return;
-//            }
             Uri downloadUri = Uri.parse(downloadUrl);
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
