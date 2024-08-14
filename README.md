@@ -250,4 +250,4 @@ Here is the libraries
 
 ## 状态
 
-[![Alt](https://repobeats.axiom.co/api/embed/2245f0745828242e4da50315448575353b94df96.svg "Repobeats analytics image")](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/pulse)
+[![Alt](https://repobeats.axiom.co/api/embed/e6becb5b041dae430dff7f85581aa1f91975d416.svg "Repobeats analytics image")](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/pulse)
