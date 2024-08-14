@@ -247,3 +247,7 @@ Here is the libraries
 - [ShowcaseView](https://github.com/amlcurran/ShowcaseView)
 - [Slabo](https://github.com/TiroTypeworks/Slabo)
 - [TagSoup](http://home.ccil.org/~cowan/tagsoup/)
+
+## 状态
+
+[![Alt](https://repobeats.axiom.co/api/embed/2245f0745828242e4da50315448575353b94df96.svg "Repobeats analytics image")](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/pulse)
