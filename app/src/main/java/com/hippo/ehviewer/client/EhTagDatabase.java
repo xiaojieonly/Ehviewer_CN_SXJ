@@ -229,7 +229,14 @@ public class EhTagDatabase {
 
     @Nullable
     public static String namespaceToPrefix(String namespace) {
-        return NAMESPACE_TO_PREFIX.get(namespace);
+        String prefix =  NAMESPACE_TO_PREFIX.get(namespace);
+        if (prefix!=null){
+            return prefix;
+        }
+        if (PREFIX_TO_NAMESPACE.containsKey(namespace+":")){
+            return namespace;
+        }
+        return null;
     }
 
     @Nullable

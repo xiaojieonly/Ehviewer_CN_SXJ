@@ -402,10 +402,7 @@ public class GalleryListParser {
             gi.favoriteSlot = EhDB.containLocalFavorites(gi.gid) ? -1 : -2;
         }
 
-        Elements gts = JsoupUtils.getElementsByClass(e, "gt");
-        if (gts != null) {
-            gi.tgList = (ArrayList<String>) gts.eachAttr("title");
-        }
+        parserTag(gi,e);
 
         // Rating
         Element ir = JsoupUtils.getElementByClass(e, "ir");
@@ -455,6 +452,20 @@ public class GalleryListParser {
         gi.generateSLang();
 
         return gi;
+    }
+
+    private static void parserTag(final GalleryInfo gi,final Element e) {
+        Elements gts = JsoupUtils.getElementsByClass(e, "gt");
+        if (gts != null) {
+            gi.tgList = (ArrayList<String>) gts.eachAttr("title");
+        }
+        Elements gtl = JsoupUtils.getElementsByClass(e, "gtl");
+        if (gtl!=null){
+            if (gi.tgList==null){
+                gi.tgList = new ArrayList<>();
+            }
+            gi.tgList.addAll(gtl.eachAttr("title"));
+        }
     }
 
 }
