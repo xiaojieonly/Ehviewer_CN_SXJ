@@ -14,7 +14,7 @@
  ###  修复下载列表随机浏览可能会导致app奔溃的问题
  ###  下载超时计数器从CountDownTimer变更为Timer，以避免内存泄漏风险
 
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/4c5r180827&#41;   )
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/87ar184853)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/10QXSnVi9wFJJ8VJC66-B1w)  密码:bc1w   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwi.lanzouj.com/ipD4h266eqch)  密码:hq0c   
