@@ -22,7 +22,7 @@
    点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
    Torrent链接：magnet:?xt=urn:btih:a7c51cab0345012f1818dd2c7c588687f440124c&dn=EhViewer-1.9.8.4.apk   
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
-   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel 
 
 # 2024/07/01 :     
  ###  新版发布1.9.8.4（如果出现问题请覆盖安装旧版本）   
