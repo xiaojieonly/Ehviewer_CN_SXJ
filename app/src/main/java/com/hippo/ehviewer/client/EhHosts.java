@@ -44,7 +44,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.dnsoverhttps.DnsOverHttps;
 
 
-public class EhDns implements Dns {
+public class EhHosts implements Dns {
 
     private static final Map<String, List<InetAddress>> builtInHosts;
 
@@ -55,30 +55,12 @@ public class EhDns implements Dns {
                     "104.20.18.168",
                     "104.20.19.168",
                     "172.67.2.238",
-                    "178.162.139.11",
-                    "178.162.139.12",
-                    "178.162.139.13",
-                    "178.162.139.14",
-                    "178.162.139.15",
-                    "178.162.139.16",
                     "178.162.139.33",
                     "178.162.139.34",
                     "178.162.139.36",
                     "178.162.145.131",
                     "178.162.145.132",
-                    "178.162.145.152",
-                    "37.48.89.1",
-                    "37.48.89.13",
-                    "37.48.89.14",
-                    "37.48.89.15",
-                    "37.48.89.2",
-                    "37.48.89.20",
-                    "37.48.89.25",
-                    "37.48.89.26",
-                    "37.48.89.3",
-                    "81.171.10.49",
-                    "81.171.10.51",
-                    "81.171.10.53"
+                    "178.162.145.152"
                     );
             put(map, "repo.e-hentai.org", "94.100.28.57", "94.100.29.73");
             put(map, "forums.e-hentai.org", "94.100.18.243");
@@ -127,7 +109,7 @@ public class EhDns implements Dns {
     private final Hosts hosts;
     private static DnsOverHttps dnsOverHttps;
 
-    public EhDns(Context context) {
+    public EhHosts(Context context) {
         hosts = EhApplication.getHosts(context);
         DnsOverHttps.Builder builder = new DnsOverHttps.Builder()
                 .client(new OkHttpClient.Builder().cache(EhApplication.getOkHttpCache(context)).build())

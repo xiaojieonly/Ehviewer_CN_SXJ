@@ -44,7 +44,7 @@ import com.hippo.conaco.Conaco;
 import com.hippo.content.RecordingApplication;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhCookieStore;
-import com.hippo.ehviewer.client.EhDns;
+import com.hippo.ehviewer.client.EhHosts;
 import com.hippo.ehviewer.client.EhEngine;
 import com.hippo.ehviewer.client.data.EhNewsDetail;
 import com.hippo.ehviewer.client.data.GalleryDetail;
@@ -374,7 +374,7 @@ public class EhApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
 //                    .dispatcher(dispatcher)
-                    .dns(new EhDns(application))
+                    .dns(new EhHosts(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
                             return sprocket.proceed(sprocket.request());
@@ -441,7 +441,7 @@ public class EhApplication extends RecordingApplication {
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
-                    .dns(new EhDns(application))
+                    .dns(new EhHosts(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
                             return sprocket.proceed(sprocket.request());
