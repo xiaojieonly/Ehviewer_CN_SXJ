@@ -1,6 +1,29 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/08/19 : E站略缩图服务器变更导致的强制更新，下次版本更新将顺延至10月
+ ###  新版发布1.9.8.6（如果出现问题请覆盖安装旧版本）
+ ###  修复下载计时器不适配多线程的问题
+ ###  修复导入搜索标签时，没有正常保留原有的插入时间导致标签无法正常排序的问题
+ ###  修复档案下载时，档案压缩包没有下载至公共的download目录的问题
+ ###  修复了一个添加下载项可能导致app崩溃的问题
+ ###  修复了一个下载档案文件时，获取下载链接失败导致app奔溃的问题
+ ###  修复隨機挑本的bug(#1363)
+ ###  优化添加搜索书签时的翻译逻辑
+ ###  修复表站列表因页面结构变动导致无法获取到画廊标签的问题
+ ###  更新host文件:删除了部分失效域名，修复略缩图host
+ ###  优化app link配置，现在每次安装都会重新检查一次
+
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/87ar184853&#41;   )
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/19uE6Q2JPqjsiMaoIyX_dCg)  密码:vonf   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iLFVo27u9n2j)  密码:f5xs   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:df119c759394a0231afdc3a2c7c606742501cd61&dn=EhViewer-1.9.8.6.apk   
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/08/01 :
  ###  新版发布1.9.8.5（如果出现问题请覆盖安装旧版本）
  ###  更新host文件
@@ -13,7 +36,6 @@
  ###  优化下载列表悬浮按钮位置以防止遮挡开始下载按钮
  ###  修复下载列表随机浏览可能会导致app奔溃的问题
  ###  下载超时计数器从CountDownTimer变更为Timer，以避免内存泄漏风险
-
    点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/87ar184853)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/10QXSnVi9wFJJ8VJC66-B1w)  密码:bc1w   

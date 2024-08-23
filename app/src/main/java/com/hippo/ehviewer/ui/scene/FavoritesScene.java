@@ -1677,7 +1677,8 @@ public class FavoritesScene extends BaseScene implements
 
                 long gidDiff = firstGInfo.gid - lastGInfo.gid;
                 long block = gidDiff / 50;
-                List<GalleryInfo> rGInfoL = EhEngine.getAllFavorites(mOkHttpClient, url + "&next=" + (firstGInfo.gid - gidDiff / block * ((int) (Math.random() * block))) + 1).galleryInfoList;
+                long rBlock = ((int) (Math.random() * block)) + 1;
+                List<GalleryInfo> rGInfoL = EhEngine.getAllFavorites(mOkHttpClient, url + "&next=" + (firstGInfo.gid - gidDiff / block * ((int) (Math.random() * block)) + 1)).galleryInfoList;
                 return rGInfoL.get((int) (Math.random() * rGInfoL.size()));
             } catch (Throwable e) {
                 throw new RuntimeException(e);
