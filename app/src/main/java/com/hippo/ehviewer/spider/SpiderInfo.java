@@ -17,7 +17,6 @@
 package com.hippo.ehviewer.spider;
 
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
-import static com.hippo.ehviewer.spider.SpiderQueen.SPIDER_INFO_BACKUP_FILENAME;
 import static com.hippo.ehviewer.spider.SpiderQueen.SPIDER_INFO_FILENAME;
 
 import android.content.Context;
@@ -269,48 +268,48 @@ public class SpiderInfo {
         return null;
     }
 
-    public static SpiderInfo createBackupSpiderInfo(GalleryInfo info) {
-        UniFile mDownloadDir = getGalleryDownloadDir(info);
-        if (mDownloadDir != null && mDownloadDir.isDirectory()) {
-            UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
-            if (file==null){
-                return null;
-            }
-            UniFile backupFile = mDownloadDir.findFile(SPIDER_INFO_BACKUP_FILENAME);
-            if (backupFile!=null){
-                backupFile.delete();
-            }
-            backupFile = mDownloadDir.createFile(SPIDER_INFO_BACKUP_FILENAME);
-            InputStream is;
-            OutputStream os = null;
-
-            try {
-                is = file.openInputStream();
-                os = backupFile.openOutputStream();
-
-                byte[] bytes = new byte[1024];
-                int l;
-                while((l=is.read(bytes))>0){
-                    os.write(bytes,0,l);
-                }
-                os.flush();
-                IOUtils.closeQuietly(is);
-                SpiderInfo spiderInfo;
-                spiderInfo = SpiderInfo.read(file);
-                if (spiderInfo != null && spiderInfo.gid == info.gid &&
-                        spiderInfo.token.equals(info.token)) {
-                    return spiderInfo;
-                }
-                return null;
-            } catch (IOException e) {
-                return null;
-            } finally {
-                IOUtils.closeQuietly(os);
-            }
-
-        }
-        return null;
-    }
+//    public static SpiderInfo createBackupSpiderInfo(GalleryInfo info) {
+//        UniFile mDownloadDir = getGalleryDownloadDir(info);
+//        if (mDownloadDir != null && mDownloadDir.isDirectory()) {
+//            UniFile file = mDownloadDir.findFile(SPIDER_INFO_FILENAME);
+//            if (file==null){
+//                return null;
+//            }
+//            UniFile backupFile = mDownloadDir.findFile(SPIDER_INFO_BACKUP_FILENAME);
+//            if (backupFile!=null){
+//                backupFile.delete();
+//            }
+//            backupFile = mDownloadDir.createFile(SPIDER_INFO_BACKUP_FILENAME);
+//            InputStream is;
+//            OutputStream os = null;
+//
+//            try {
+//                is = file.openInputStream();
+//                os = backupFile.openOutputStream();
+//
+//                byte[] bytes = new byte[1024];
+//                int l;
+//                while((l=is.read(bytes))>0){
+//                    os.write(bytes,0,l);
+//                }
+//                os.flush();
+//                IOUtils.closeQuietly(is);
+//                SpiderInfo spiderInfo;
+//                spiderInfo = SpiderInfo.read(file);
+//                if (spiderInfo != null && spiderInfo.gid == info.gid &&
+//                        spiderInfo.token.equals(info.token)) {
+//                    return spiderInfo;
+//                }
+//                return null;
+//            } catch (IOException e) {
+//                return null;
+//            } finally {
+//                IOUtils.closeQuietly(os);
+//            }
+//
+//        }
+//        return null;
+//    }
 
     public static SpiderInfo getSpiderInfo(GalleryDetail info) {
         try {

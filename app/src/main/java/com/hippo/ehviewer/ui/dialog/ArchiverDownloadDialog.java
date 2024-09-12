@@ -210,7 +210,8 @@ public class ArchiverDownloadDialog implements
             request.setTitle(galleryDetail.title);
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "/EhviewerArchiver/"+galleryDetail.title + ".zip");
+//            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EhviewerArchiver/"+galleryDetail.title + ".zip");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EhviewerArchiver/"+"[Abe Nattsu] SEX de Wakaru Unmei no Hito ~ Karada no Aishou... Tameshite miru? ~ Ch. 1-6 [Chinese] [裸單騎漢化]" + ".zip");
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
