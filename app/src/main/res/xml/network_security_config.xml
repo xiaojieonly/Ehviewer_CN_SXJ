@@ -16,5 +16,14 @@
   -->
 
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true"/>
+    <base-config>
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">ehtracker.org</domain>
+    </domain-config>
+<!--    <base-config cleartextTrafficPermitted="true"/>-->
 </network-security-config>
