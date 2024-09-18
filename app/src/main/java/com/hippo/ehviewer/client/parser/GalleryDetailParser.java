@@ -476,7 +476,11 @@ public class GalleryDetailParser {
             // Id
             Element a = element.previousElementSibling();
             String name = a.attr("name");
-            comment.id = Integer.parseInt(StringUtils.trim(name).substring(1));
+            try {
+                comment.id = Integer.parseInt(StringUtils.trim(name).substring(1));
+            } catch (NumberFormatException ignore) {
+
+            }
             // Editable, vote up and vote down
             Element c4 = JsoupUtils.getElementByClass(element, "c4");
             if (null != c4) {
@@ -512,10 +516,20 @@ public class GalleryDetailParser {
             // time
             Element c3 = JsoupUtils.getElementByClass(element, "c3");
             String temp = c3.ownText();
-            temp = temp.substring("Posted on ".length(), temp.length() - " by:".length());
+            if (temp.contains(" by:")){
+                temp = temp.substring("Posted on ".length(), temp.length() - " by:".length());
+            }else {
+                temp = temp.substring("Posted on ".length());
+            }
+
             comment.time = WEB_COMMENT_DATE_FORMAT.parse(temp).getTime();
             // user
-            comment.user = c3.child(0).text();
+            if (c3.children().isEmpty()){
+                comment.user = c4.text();
+            }else {
+                comment.user = c3.child(0).text();
+            }
+
             // comment
             comment.comment = JsoupUtils.getElementByClass(element, "c6").html();
             // last edited
@@ -543,7 +557,7 @@ public class GalleryDetailParser {
             Element cdiv = document.getElementById("cdiv");
             Elements c1s = cdiv.getElementsByClass("c1");
 
-            List<GalleryComment> list = new ArrayList<>(c1s.size());
+            List<GalleryComment> list = new ArrayList<>();
             for (int i = 0, n = c1s.size(); i < n; i++) {
                 GalleryComment comment = parseComment(c1s.get(i));
                 if (null != comment && !EhDB.inBlackList(comment.user)) {
