@@ -30,6 +30,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!--  用于获取wifi状态  -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!--  使用系统自带下载器  -->
+    <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -98,6 +100,7 @@
 
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 

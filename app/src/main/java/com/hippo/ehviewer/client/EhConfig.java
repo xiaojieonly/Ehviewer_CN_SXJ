@@ -220,7 +220,10 @@ public class EhConfig implements Cloneable {
     public static final String IMAGE_SIZE_780X = "780";
     /**
      * Image Size 980x
+     * 2024-09-11
+     * - The 980x resample option has been retired due to a combination of performance/overhead issues and lack of use.
      */
+    @Deprecated
     public static final String IMAGE_SIZE_980X = "980";
     /**
      * Image Size 1280x

@@ -16,6 +16,9 @@
 
 package com.hippo.ehviewer;
 
+import static com.hippo.ehviewer.client.EhConfig.IMAGE_SIZE_780X;
+import static com.hippo.ehviewer.client.EhConfig.IMAGE_SIZE_980X;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -26,9 +29,13 @@ import android.util.Log;
 import androidx.annotation.DimenRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.alibaba.fastjson.JSONObject;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.FavListUrlBuilder;
+import com.hippo.ehviewer.client.data.GalleryDetail;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.lib.glgallery.GalleryView;
@@ -38,6 +45,7 @@ import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.NumberUtils;
+
 import java.io.File;
 import java.util.Locale;
 
@@ -48,11 +56,13 @@ public class Settings {
     @SuppressLint("StaticFieldLeak")
     private static Context sContext;
     private static SharedPreferences sSettingsPre;
+    private static SharedPreferences sArchiverPre;
     private static EhConfig sEhConfig;
 
     public static void initialize(Context context) {
         sContext = context.getApplicationContext();
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
+        sArchiverPre = context.getSharedPreferences("archiver_cache",Context.MODE_PRIVATE);
         sEhConfig = loadEhConfig();
         fixDefaultValue();
     }
@@ -81,6 +91,34 @@ public class Settings {
         ehConfig.excludedNamespaces = getExcludedTagNamespaces();
         ehConfig.setDirty();
         return ehConfig;
+    }
+
+    public static GalleryInfo getArchiverDownload(long downloadId){
+        String s = sArchiverPre.getString(String.valueOf(downloadId),"");
+        if (s.isEmpty()){
+            return null;
+        }
+        return GalleryInfo.galleryInfoFromJson(JSONObject.parseObject(s));
+    }
+
+    public static void putArchiverDownload(long downloadId,GalleryInfo info){
+        sArchiverPre.edit().putString(String.valueOf(downloadId),info.toJson().toJSONString()).apply();
+    }
+
+    public static boolean deleteArchiverDownload(long downloadId){
+        return sArchiverPre.edit().remove(String.valueOf(downloadId)).commit();
+    }
+
+    public static long getArchiverDownloadId(long gid){
+        return sArchiverPre.getLong(gid+"DId",-1L);
+    }
+
+    public static void putArchiverDownloadId(long gid,long downloadId){
+        sArchiverPre.edit().putLong(gid+"DId",downloadId).apply();
+    }
+
+    public static boolean deleteArchiverDownloadId(long gid){
+        return sArchiverPre.edit().remove(gid+"DId").commit();
     }
 
     public static boolean getBoolean(String key, boolean defValue) {
@@ -745,7 +783,12 @@ public class Settings {
     public static final String DEFAULT_IMAGE_RESOLUTION = EhConfig.IMAGE_SIZE_AUTO;
 
     public static String getImageResolution() {
-        return getString(KEY_IMAGE_RESOLUTION, DEFAULT_IMAGE_RESOLUTION);
+        String result = getString(KEY_IMAGE_RESOLUTION, DEFAULT_IMAGE_RESOLUTION);
+        if (result.equals(IMAGE_SIZE_980X)){
+            putImageResolution(IMAGE_SIZE_780X);
+            return IMAGE_SIZE_780X;
+        }
+        return result;
     }
 
     public static void putImageResolution(String value) {

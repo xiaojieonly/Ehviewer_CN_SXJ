@@ -992,5 +992,9 @@
     <string name="download_timeout_unlimited">Unlimited</string>
     <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
     <string name="have_new_version">Click to see new gallery version</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">This is an app widget description</string>
+    <string name="archiver_downloading">Arc Downloading %s</string>
 
 </resources>

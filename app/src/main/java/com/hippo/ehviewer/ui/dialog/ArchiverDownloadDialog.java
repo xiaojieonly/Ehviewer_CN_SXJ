@@ -34,6 +34,7 @@ import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.ArchiverData;
 import com.hippo.ehviewer.client.data.GalleryDetail;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.spider.SpiderDen;
@@ -206,36 +207,23 @@ public class ArchiverDownloadDialog implements
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
             request.setAllowedOverRoaming(true);
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
             request.setTitle(galleryDetail.title);
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
-//            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EhviewerArchiver/"+galleryDetail.title + ".zip");
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EhviewerArchiver/"+"[Abe Nattsu] SEX de Wakaru Unmei no Hito ~ Karada no Aishou... Tameshite miru? ~ Ch. 1-6 [Chinese] [裸單騎漢化]" + ".zip");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EhviewerArchiver/"+galleryDetail.title + ".zip");
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+
+//            downloadManager.query(new DownloadManager.Query().setFilterByStatus(DownloadManager.STATUS_PAUSED));
+
             myDownloadId = downloadManager.enqueue(request);
+            Settings.putArchiverDownloadId(galleryDetail.gid,myDownloadId);
+            Settings.putArchiverDownload(myDownloadId,galleryDetail);
+            detailScene.bindArchiverProgress(galleryDetail);
 
             context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-
-
-//            String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
-//            String name = galleryDetail.title + ".zip";
-//            DownloadArchiverManager.Archiver archiver = new DownloadArchiverManager.Archiver(downloadUrl,path,name);
-//            final DownloadArchiverManager manager = archiverDownloadDialog.downloadArchiverManager;
-//            manager.addDownloadArchiverListener(this);
-//
-//            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-//            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-//                NotificationChannel channel = new NotificationChannel(CHANNEL_ID,context.getString(R.string.download_service),NotificationManager.IMPORTANCE_LOW);
-//                notificationManager.createNotificationChannel(channel);
-//            }
-//            NotificationCompat.Builder builder = new NotificationCompat.Builder(context,CHANNEL_ID)
-//                    .setContentTitle(context.getString(R.string.download))
-//                    .setContentText(archiver.name)
-//                    .setSmallIcon(R.mipmap.ic_launcher)
-//                    .setProgress(100,0,false);
         }
 
         @Override
@@ -322,6 +310,7 @@ public class ArchiverDownloadDialog implements
             if (tempDir == null) {
                 return;
             }
+            long downloadId = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID));
             String tempFilePath = tempDir.getPath() + "/" + galleryDetail.title;
             String zipFilePath = zipFile.getPath();
             new Thread(() -> {
@@ -329,11 +318,11 @@ public class ArchiverDownloadDialog implements
                 if (!result) {
                     return;
                 }
-                importGallery(tempFilePath);
+                importGallery(tempFilePath,downloadId);
             }).start();
         }
 
-        private void importGallery(String tempFilePath) {
+        private void importGallery(String tempFilePath, long downloadId) {
             if (tempFilePath.isEmpty() || context == null) {
                 return;
             }
@@ -398,6 +387,12 @@ public class ArchiverDownloadDialog implements
                 if (downloadReceiver != null) {
                     context.unregisterReceiver(downloadReceiver);
                 }
+                GalleryInfo info = Settings.getArchiverDownload(downloadId);
+                if (info==null){
+                    return;
+                }
+                Settings.deleteArchiverDownloadId(info.gid);
+                Settings.deleteArchiverDownload(downloadId);
             });
         }
     }

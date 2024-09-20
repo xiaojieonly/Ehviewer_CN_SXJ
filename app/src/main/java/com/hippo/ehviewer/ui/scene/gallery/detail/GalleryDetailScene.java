@@ -32,7 +32,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -108,6 +107,7 @@ import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.util.AppCenterAnalytics;
 import com.hippo.ehviewer.util.ClipboardUtil;
+import com.hippo.ehviewer.widget.ArchiverDownloadProgress;
 import com.hippo.ehviewer.widget.GalleryRatingBar;
 import com.hippo.reveal.ViewAnimationUtils;
 import com.hippo.ripple.Ripple;
@@ -177,8 +177,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     public static final String ACTION_GID_TOKEN = "action_gid_token";
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
-
-    public static final String KEY_COME_FROM_DOWNLOAD = "come_from_download";
     public static final String KEY_GID = "gid";
     public static final String KEY_TOKEN = "token";
     public static final String KEY_PAGE = "page";
@@ -282,6 +280,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @Nullable
     private View mProgress;
     @Nullable
+    private ArchiverDownloadProgress mArchiverDownloadProgress;
+    @Nullable
     private ViewTransition mViewTransition2;
     @Nullable
     private PopupMenu mPopupMenu;
@@ -327,8 +327,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     private boolean useNetWorkLoadThumb = false;
 
-    private boolean comeFromDownload = false;
-
     private Context mContext;
     private MainActivity activity;
 
@@ -368,7 +366,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             // Add history
 
         }
-        comeFromDownload = args.getBoolean(KEY_COME_FROM_DOWNLOAD);
     }
 
     @Nullable
@@ -577,6 +574,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mActionGroup = (ViewGroup) ViewUtils.$$(mHeader, R.id.action_card);
         mDownload = (TextView) ViewUtils.$$(mActionGroup, R.id.download);
         mHaveNewVersion = (TextView) ViewUtils.$$(mHeader, R.id.new_version);
+        mArchiverDownloadProgress = (ArchiverDownloadProgress) ViewUtils.$$(mHeader, R.id.archiver_download_progress);
         mRead = ViewUtils.$$(mActionGroup, R.id.read);
         Ripple.addRipple(mOtherActions, isDarkTheme);
         Ripple.addRipple(mDownload, isDarkTheme);
@@ -711,6 +709,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mHaveNewVersion = null;
         mRead = null;
         mBelowHeader = null;
+        mArchiverDownloadProgress = null;
 
         mInfo = null;
         mLanguage = null;
@@ -1029,10 +1028,16 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         updateFavoriteDrawable();
-
+        bindArchiverProgress(gd);
         bindTags(gd.tags);
         bindComments(gd.comments.comments);
         bindPreviews(gd);
+    }
+
+    public void bindArchiverProgress(GalleryDetail gd) {
+        if (mArchiverDownloadProgress != null) {
+            mArchiverDownloadProgress.initThread(gd);
+        }
     }
 
     private void bindReadProgress(GalleryInfo info) {
@@ -1704,16 +1709,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
         adjustViewVisibility(STATE_REFRESH, false);
         request(updateUrl, GetGalleryDetailListener.RESULT_DETAIL);
-    }
-
-    public void gotoNewVersion(GalleryDetail detail) {
-        Bundle args = new Bundle();
-        args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
-        args.putParcelable(KEY_GALLERY_INFO, detail);
-        args.putBoolean(KEY_COME_FROM_DOWNLOAD, true);
-        Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
-        announcer.setTranHelper(new EnterGalleryDetailTransaction(mThumb));
-        startScene(announcer);
     }
 
     @Override

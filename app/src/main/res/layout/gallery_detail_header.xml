@@ -128,6 +128,12 @@
             android:gravity="center"
             android:orientation="vertical">
 
+            <com.hippo.ehviewer.widget.ArchiverDownloadProgress
+                android:id="@+id/archiver_download_progress"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
             <TextView
                 android:id="@+id/new_version"
                 style="@style/ButtonNewVersion"

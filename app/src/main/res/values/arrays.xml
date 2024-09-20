@@ -201,7 +201,7 @@
     <string-array name="image_resolution_entries" translatable="false">
         <item>@string/settings_download_image_resolution_auto</item>
         <item>780x</item>
-        <item>980x</item>
+<!--        <item>980x</item>-->
         <item>1280x</item>
         <item>1600x</item>
         <item>2400x</item>
@@ -210,7 +210,7 @@
     <string-array name="image_resolution_entry_values" translatable="false">
         <item>a</item>
         <item>780</item>
-        <item>980</item>
+<!--        <item>980</item>-->
         <item>1280</item>
         <item>1600</item>
         <item>2400</item>

@@ -222,5 +222,7 @@
     <color name="home_shadow_color">@color/grey_350</color>
     <color name="home_shadow_color_dark">@color/grey_825</color>
     <color name="home_shadow_color_black">@color/grey_825</color>
+    <color name="light_blue_50">#FFE1F5FE</color>
+    <color name="light_blue_200">#FF81D4FA</color>
 
 </resources>
