@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.ui.dialog;
 
+import static com.hippo.ehviewer.client.EhConfig.ARCHIVER_PATH;
 import static com.hippo.ehviewer.ui.scene.BaseScene.LENGTH_LONG;
 import static com.hippo.ehviewer.ui.scene.BaseScene.LENGTH_SHORT;
 
@@ -211,7 +212,7 @@ public class ArchiverDownloadDialog implements
             request.setTitle(galleryDetail.title);
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EhviewerArchiver/"+galleryDetail.title + ".zip");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH+galleryDetail.title + ".zip");
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);

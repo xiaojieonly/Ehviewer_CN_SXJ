@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
@@ -16,6 +17,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static androidx.core.app.ActivityCompat.startActivityForResult;
+
+import static com.hippo.ehviewer.client.EhConfig.TORRENT_PATH;
 
 import com.hippo.unifile.UniFile;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -84,19 +87,23 @@ public class FileUtils {
         if (!file.exists()) {
             return;
         }
+        Intent intent;
 
-        Uri uri = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload");
 //        Uri uri = Uri.parse(path);
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
 
-//
-//        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-//        intent.addCategory(Intent.CATEGORY_DEFAULT);
-//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        intent.setDataAndType(Uri.fromFile(file), "file/*");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Uri uri = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload/"+TORRENT_PATH);
+            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*");
+            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+        }else{
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*");
+            intent.setDataAndType(Uri.fromFile(file), "file/*");
+        }
+
 
         try {
 //            context.startActivity(intent);
