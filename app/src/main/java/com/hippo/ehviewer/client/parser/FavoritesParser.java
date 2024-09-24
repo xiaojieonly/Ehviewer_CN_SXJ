@@ -44,6 +44,7 @@ public class FavoritesParser {
         public String prevHref;
         public String nextHref;
         public String lastHref;
+        public String favOrder;
         public List<GalleryInfo> galleryInfoList;
     }
 
@@ -51,11 +52,13 @@ public class FavoritesParser {
         if (body.contains("This page requires you to log on.</p>")) {
             throw new EhException(GetText.getString(R.string.need_sign_in));
         }
+        Result re = new Result();
+
         String[] catArray = new String[10];
         int[] countArray = new int[10];
-
+        Document d;
         try {
-            Document d = Jsoup.parse(body);
+            d = Jsoup.parse(body);
             Element ido = JsoupUtils.getElementByClass(d, "ido");
             //noinspection ConstantConditions
             Elements fps = ido.getElementsByClass("fp");
@@ -67,15 +70,27 @@ public class FavoritesParser {
                 countArray[i] = ParserUtils.parseInt(fp.child(0).text(), 0);
                 catArray[i] = ParserUtils.trim(fp.child(2).text());
             }
+            Elements orders = JsoupUtils.getElementsByClass(d,"searchnav");
+            if (null!=orders&&!orders.isEmpty()){
+                Element order = orders.first();
+                if (null!=order){
+                    Elements selects = order.getElementsByTag("select");
+                    if (!selects.isEmpty()){
+                        Element sel = selects.get(0);
+                        Elements result = sel.getElementsByAttribute("selected");
+                        re.favOrder = result.attr("value");
+                    }
+                }
+            }
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             e.printStackTrace();
             throw new ParseException("Parse favorites error", body);
         }
 
-        GalleryListParser.Result result = GalleryListParser.parse(body, MODE_NORMAL);
+        GalleryListParser.Result result = GalleryListParser.parse(d,body, MODE_NORMAL);
 
-        Result re = new Result();
+
         re.catArray = catArray;
         re.countArray = countArray;
         re.pages = result.pages;

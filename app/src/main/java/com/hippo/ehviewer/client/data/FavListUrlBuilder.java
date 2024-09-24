@@ -113,7 +113,7 @@ public class FavListUrlBuilder implements Parcelable {
         if (isValidFavCat(mFavCat)) {
             ub.addQuery("favcat", Integer.toString(mFavCat));
         } else if (mFavCat == FAV_CAT_ALL) {
-            ub.addQuery("favcat", "all");
+//            ub.addQuery("favcat", "all");
         }
         if (!TextUtils.isEmpty(mKeyword)) {
             try {

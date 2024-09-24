@@ -17,6 +17,11 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <string-array name="fav_sort">
+        <item>@string/sort_by_fav_time</item>
+        <item>@string/sort_by_pub_time</item>
+    </string-array>
+
     <string-array name="top_list_type">
         <item>@string/gallery_toplists</item>
         <item>@string/uploader_toplists</item>

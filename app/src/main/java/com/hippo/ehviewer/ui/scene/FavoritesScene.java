@@ -80,14 +80,13 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.DrawerLifeCircle;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
+import com.hippo.ehviewer.ui.dialog.FavoriteListSortDialog;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
-import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.ehviewer.widget.JumpDateSelector;
 import com.hippo.ehviewer.widget.SearchBar;
-import com.hippo.network.UrlBuilder;
 import com.hippo.refreshlayout.RefreshLayout;
 import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
@@ -197,6 +196,8 @@ public class FavoritesScene extends BaseScene implements
     private FavoritesParser.Result mResult;
 
     private ExecutorService executorService;
+    @ViewLifeCircle
+    private FavoriteListSortDialog sortDialog;
 
     @Override
     public int getNavCheckedItem() {
@@ -900,38 +901,26 @@ public class FavoritesScene extends BaseScene implements
                     if (mHelper == null || !mHelper.canGoTo()) {
                         break;
                     }
-                    RandomFavority mRandomFavority = new RandomFavority(context);
-                    mRandomFavority.execute();
+                    RandomFavorite mRandomFavorite = new RandomFavorite(context);
+                    mRandomFavorite.execute();
                     break;
                 case 6:
-                    RandomFavority randomFavority = new RandomFavority();
-                    randomFavority.random();
+                    RandomFavorite randomFavorite = new RandomFavorite();
+                    randomFavorite.random();
                     break;
-                case 7: // add share
-                    mModifyGiList.clear();
-
-                    AddDialogHelper add = new AddDialogHelper();
-                    GalleryInfo galleryInfo = ClipboardUtil.getGalleryInfoFromClip();
-
-                    if (galleryInfo != null) {
-                        if (!EhDB.containLocalFavorites(galleryInfo.gid)) {
-                            mModifyGiList.add(galleryInfo);
-                            new AlertDialog.Builder(context)
-                                    .setTitle(R.string.share_favorites_dialog_title)
-                                    .setMessage(getString(R.string.add_favorites_dialog_message, mModifyGiList.get(0).title))
-                                    .setPositiveButton(android.R.string.ok, add)
-                                    .setOnCancelListener(add)
-                                    .show();
-
-                            mHelper.refresh();
-                        } else {
-                            new AlertDialog.Builder(context)
-                                    .setTitle(R.string.share_favorites_dialog_title)
-                                    .setMessage("已有名为：[" + galleryInfo.title + "]的本子，无需重复添加~")
-                                    .setPositiveButton(android.R.string.ok, add)
-                                    .show();
-                        }
+                case 7: // sort
+                    if (mUrlBuilder==null){
+                        break;
                     }
+                    if (sortDialog == null) {
+                        sortDialog = new FavoriteListSortDialog(this);
+                    }
+                    if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL){
+                        sortDialog.showLocalSort(mResult);
+                    }else {
+                        sortDialog.showCloudSort(mResult);
+                    }
+
                     break;
             }
             view.setExpanded(false);
@@ -981,16 +970,6 @@ public class FavoritesScene extends BaseScene implements
                         .setTitle(R.string.move_favorites_dialog_title)
                         .setItems(array, helper)
                         .setOnCancelListener(helper)
-                        .show();
-                break;
-            }
-            case 7: { // share
-                ShareDialogHelper share = new ShareDialogHelper();
-                new AlertDialog.Builder(context)
-                        .setTitle(R.string.share_favorites_dialog_title)
-                        .setMessage(getString(R.string.share_favorites_dialog_message, mModifyGiList.get(0).title))
-                        .setPositiveButton(android.R.string.ok, share)
-                        .setOnCancelListener(share)
                         .show();
                 break;
             }
@@ -1156,58 +1135,11 @@ public class FavoritesScene extends BaseScene implements
         }
     }
 
-    private class AddDialogHelper implements DialogInterface.OnClickListener,
-            DialogInterface.OnCancelListener {
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            if (which != DialogInterface.BUTTON_POSITIVE) {
-                return;
-            }
-            if (mRecyclerView == null || mHelper == null || mUrlBuilder == null || mModifyGiList == null) {
-                return;
-            }
-
-            mRecyclerView.outOfCustomChoiceMode();
-
-
-            EhDB.putLocalFavorites(mModifyGiList);
-
-
+    public void updateSort(String sort){
+        if (null==mHelper){
+            return;
         }
-
-        @Override
-        public void onCancel(DialogInterface dialog) {
-            mModifyGiList.clear();
-        }
-    }
-
-    private class ShareDialogHelper implements DialogInterface.OnClickListener,
-            DialogInterface.OnCancelListener {
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            if (which != DialogInterface.BUTTON_POSITIVE) {
-                return;
-            }
-            if (mRecyclerView == null || mHelper == null || mUrlBuilder == null) {
-                return;
-            }
-
-            mRecyclerView.outOfCustomChoiceMode();
-            long[] gidArray = new long[mModifyGiList.size()];
-            for (int i = 0, n = mModifyGiList.size(); i < n; i++) {
-                gidArray[i] = mModifyGiList.get(i).gid;
-            }
-            GalleryInfo galleryInfo = EhDB.searchLocalFavorites(gidArray[0]);
-            ClipboardUtil.copy(galleryInfo);
-
-        }
-
-        @Override
-        public void onCancel(DialogInterface dialog) {
-            mModifyGiList.clear();
-        }
+        mHelper.refreshSort(sort);
     }
 
     private class DeleteDialogHelper implements DialogInterface.OnClickListener,
@@ -1374,12 +1306,7 @@ public class FavoritesScene extends BaseScene implements
                 }
             } else if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
                 final String keyword = mUrlBuilder.getKeyword();
-                SimpleHandler.getInstance().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        onGetFavoritesLocal(keyword, taskId);
-                    }
-                });
+                SimpleHandler.getInstance().post(() -> onGetFavoritesLocal(keyword, taskId));
             } else {
                 mUrlBuilder.setIndex(page);
                 String url = mUrlBuilder.build();
@@ -1391,6 +1318,28 @@ public class FavoritesScene extends BaseScene implements
                 request.setArgs(url, Settings.getShowJpnTitle());
                 mClient.execute(request);
             }
+        }
+
+        @Override
+        protected void getPageData(int taskId, int type, int page, String append) {
+            MainActivity activity = getActivity2();
+            if (null == activity || null == mUrlBuilder || null == mClient) {
+                return;
+            }
+            mUrlBuilder.setIndex(page);
+            String url = mUrlBuilder.build();
+            if (url.contains("?")){
+                url = url+"&"+append;
+            }else {
+                url = url+"?"+append;
+            }
+            EhRequest request = new EhRequest();
+            request.setMethod(EhClient.METHOD_GET_FAVORITES);
+            request.setCallback(new GetFavoritesListener(getContext(),
+                    activity.getStageId(), getTag(),
+                    taskId, false, mUrlBuilder.getKeyword()));
+            request.setArgs(url, Settings.getShowJpnTitle());
+            mClient.execute(request);
         }
 
         @Override
@@ -1627,19 +1576,22 @@ public class FavoritesScene extends BaseScene implements
         }
     }
 
-    private class RandomFavority extends AsyncTask<Void, Void, GalleryInfo> {
+    private class RandomFavorite extends AsyncTask<Void, Void, GalleryInfo> {
         OkHttpClient mOkHttpClient;
 
-        RandomFavority(Context context) {
+        RandomFavorite(Context context) {
             mOkHttpClient = EhApplication.getOkHttpClient(context);
         }
 
-        public RandomFavority() {
+        public RandomFavorite() {
         }
 
         @Override
         protected GalleryInfo doInBackground(Void... v) {
             publishProgress();
+            if (mUrlBuilder==null){
+                return new GalleryInfo();
+            }
             // local favorities
             if (mUrlBuilder.getFavCat() == FavListUrlBuilder.FAV_CAT_LOCAL) {
                 String keyword = mUrlBuilder.getKeyword();
@@ -1653,8 +1605,8 @@ public class FavoritesScene extends BaseScene implements
             }
             // cloud favorities
             try {
-                GalleryInfo lastGInfo = null, firstGInfo = null;
-                String url = "";
+                GalleryInfo lastGInfo, firstGInfo;
+                String url;
 
                 if ((mHelper.lastHref == null || mHelper.lastHref.isEmpty()) && (mHelper.firstHref == null || mHelper.firstHref.isEmpty())) { // only one page
                     if (mHelper.getDataAtEx(0) == null) return null; // no gallery
@@ -1708,7 +1660,7 @@ public class FavoritesScene extends BaseScene implements
         }
 
         public void random() {
-            if (mHelper==null){
+            if (mHelper == null) {
                 return;
             }
             List<GalleryInfo> gInfoL = mHelper.getData();

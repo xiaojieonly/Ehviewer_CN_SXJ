@@ -379,6 +379,8 @@ public class ContentLayout extends FrameLayout {
          */
         protected abstract void getPageData(int taskId, int type, int page);
 
+        protected abstract void getPageData(int taskId, int type, int page,String append);
+
         protected abstract void getExPageData(int pageAction, int taskId, int page);
 
         protected abstract Context getContext();
@@ -970,6 +972,14 @@ public class ContentLayout extends FrameLayout {
         public void refresh() {
             showProgressBar();
             doRefresh();
+        }
+
+        public void refreshSort(String sort) {
+            showProgressBar();
+            mCurrentTaskId = mIdGenerator.nextId();
+            mCurrentTaskType = TYPE_REFRESH;
+            mCurrentTaskPage = 0;
+            getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage,sort);
         }
 
         protected void cancelCurrentTask() {

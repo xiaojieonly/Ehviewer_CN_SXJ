@@ -322,6 +322,11 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         }
 
         @Override
+        protected void getPageData(int taskId, int type, int page, String append) {
+            // empty
+        }
+
+        @Override
         protected void getExPageData(int pageAction, int taskId, int page) {
             MainActivity activity = getActivity2();
             if (null == activity || null == mClient || null == mGalleryInfo) {

@@ -90,14 +90,17 @@ public class GalleryListParser {
     }
 
     public static Result parse(@NonNull String body, int mode) throws Exception {
-        Result result = new Result();
         Document d;
-        try{
-           d = Jsoup.parse(body);
-        }catch (Exception ignored){
-            return result;
+        try {
+            d = Jsoup.parse(body);
+            return parse(d, body, mode);
+        } catch (Exception ignored) {
+            return new Result();
         }
+    }
 
+    public static Result parse(@NonNull Document d,@NonNull String body, int mode) throws Exception {
+        Result result = new Result();
         try {
             Element ptt = d.getElementsByClass("ptt").first();
             if (ptt == null) {
@@ -107,61 +110,61 @@ public class GalleryListParser {
 
                 assert searchNav != null;
                 Element element = searchNav.getElementById("uFirst");
-                if (element!=null){
+                if (element != null) {
                     result.firstHref = element.attr("href");
-                }else {
+                } else {
                     result.firstHref = "";
                 }
                 element = searchNav.getElementById("uprev");
-                if (element!=null){
+                if (element != null) {
                     result.prevHref = element.attr("href");
-                }else {
+                } else {
                     result.prevHref = "";
                 }
                 element = searchNav.getElementById("unext");
-                if (element!=null){
+                if (element != null) {
                     result.nextHref = element.attr("href");
-                }else {
+                } else {
                     result.nextHref = "";
                 }
                 element = searchNav.getElementById("ulast");
-                if (element!=null){
+                if (element != null) {
                     result.lastHref = element.attr("href");
-                }else {
+                } else {
                     result.lastHref = "";
                 }
 
                 element = d.getElementsByClass("searchtext").first();
 
-                if (element!=null){
+                if (element != null) {
                     String text = element.text();
                     Matcher matcher = PATTERN_RESULT_COUNT_PAGE.matcher(text);
-                    if (matcher.find()){
+                    if (matcher.find()) {
                         String findString = matcher.group();
                         String[] resultArr = findString.split(" ");
-                        if (resultArr.length>3){
-                            switch (resultArr[1]){
+                        if (resultArr.length > 3) {
+                            switch (resultArr[1]) {
                                 case "thousands":
                                     result.resultCount = "1,000+";
                                     break;
                                 case "about":
-                                    result.resultCount = resultArr[2]+"+";
+                                    result.resultCount = resultArr[2] + "+";
                                     break;
                                 default:
                                     StringBuilder buffer = new StringBuilder();
-                                    for (int i=1;i<resultArr.length-1;i++){
+                                    for (int i = 1; i < resultArr.length - 1; i++) {
                                         buffer.append(resultArr[i]);
                                     }
                                     result.resultCount = buffer.toString();
                                     break;
                             }
-                        }else if(resultArr.length == 3){
+                        } else if (resultArr.length == 3) {
                             result.resultCount = resultArr[1];
-                        }else{
+                        } else {
                             result.resultCount = "";
                         }
                     }
-                }else {
+                } else {
                     result.resultCount = "";
                 }
 
@@ -402,7 +405,7 @@ public class GalleryListParser {
             gi.favoriteSlot = EhDB.containLocalFavorites(gi.gid) ? -1 : -2;
         }
 
-        parserTag(gi,e);
+        parserTag(gi, e);
 
         // Rating
         Element ir = JsoupUtils.getElementByClass(e, "ir");
@@ -454,14 +457,14 @@ public class GalleryListParser {
         return gi;
     }
 
-    private static void parserTag(final GalleryInfo gi,final Element e) {
+    private static void parserTag(final GalleryInfo gi, final Element e) {
         Elements gts = JsoupUtils.getElementsByClass(e, "gt");
         if (gts != null) {
             gi.tgList = (ArrayList<String>) gts.eachAttr("title");
         }
         Elements gtl = JsoupUtils.getElementsByClass(e, "gtl");
-        if (gtl!=null){
-            if (gi.tgList==null){
+        if (gtl != null) {
+            if (gi.tgList == null) {
                 gi.tgList = new ArrayList<>();
             }
             gi.tgList.addAll(gtl.eachAttr("title"));
