@@ -143,6 +143,8 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.2.83'
 //    implementation 'com.alibaba.fastjson2:fastjson2:2.0.47'
 
+    implementation 'com.android.support:multidex:1.0.3'
+
     /**
      * 原始依赖
      */
