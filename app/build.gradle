@@ -34,6 +34,7 @@ android {
         vectorDrawables.useSupportLibrary = true
         resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
         testOptions.unitTests.includeAndroidResources = true
+        multiDexEnabled true
         ndk {
             moduleName "native-lib"
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
