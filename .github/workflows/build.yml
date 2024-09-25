@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 11
@@ -27,7 +27,7 @@ jobs:
           ./gradlew clean app:assembleDebug
           
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Build
           path: ./app/build/outputs/apk/
