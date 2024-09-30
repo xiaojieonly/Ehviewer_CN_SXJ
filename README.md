@@ -18,7 +18,7 @@
  ###  修复在特定条件下图片缓存未生效的问题
  ###  修隨機挑本的bug(真 (#1379)
 
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/87ar184853&#41;   )
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/507r187173&#41;   )
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/15NRkRvgPrHT4rCUtVjhF3g)  密码:uvh6   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/irKpr2b6tl6b)  密码:7tix   
@@ -41,7 +41,7 @@
  ###  更新host文件:删除了部分失效域名，修复略缩图host
  ###  优化app link配置，现在每次安装都会重新检查一次
 
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/87ar184853&#41;   )
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/507r187173)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/19uE6Q2JPqjsiMaoIyX_dCg)  密码:vonf   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iLFVo27u9n2j)  密码:f5xs   
