@@ -19,6 +19,7 @@ package com.hippo.ehviewer.client;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.userTag.TagPushParam;
 import com.hippo.ehviewer.client.data.userTag.UserTag;
@@ -218,6 +219,7 @@ public class EhClient {
                 if (!(result instanceof CancelledException)) {
                     if (result instanceof Exception) {
                         mCallback.onFailure((Exception) result);
+                        FirebaseCrashlytics.getInstance().recordException((Throwable) result);
                     } else {
                         mCallback.onSuccess(result);
                     }

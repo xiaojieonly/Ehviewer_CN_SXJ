@@ -792,6 +792,9 @@ public class Settings {
     }
 
     public static void putImageResolution(String value) {
+        if(null==value){
+            return;
+        }
         sEhConfig.imageSize = value;
         sEhConfig.setDirty();
         putString(KEY_IMAGE_RESOLUTION, value);

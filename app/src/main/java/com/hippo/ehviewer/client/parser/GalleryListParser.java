@@ -76,7 +76,7 @@ public class GalleryListParser {
         public String nextHref;
         public String lastHref;
         public boolean noWatchedTags;
-        public List<GalleryInfo> galleryInfoList;
+        public List<GalleryInfo> galleryInfoList = new ArrayList<>();
     }
 
     private static int parsePages(Document d, String body) throws ParseException {
