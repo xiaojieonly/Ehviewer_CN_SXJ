@@ -792,7 +792,7 @@ public class Settings {
     }
 
     public static void putImageResolution(String value) {
-        if(null==value){
+        if(null==value||null==sEhConfig){
             return;
         }
         sEhConfig.imageSize = value;
