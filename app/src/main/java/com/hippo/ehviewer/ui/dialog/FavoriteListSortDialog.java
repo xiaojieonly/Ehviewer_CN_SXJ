@@ -18,7 +18,7 @@ public class FavoriteListSortDialog {
 
     public void showCloudSort(FavoritesParser.Result mResult) {
         int checked;
-        if (null == mResult.favOrder) {
+        if (null == mResult || null == mResult.favOrder) {
             return;
         }
         if (mResult.favOrder.equals(ORDER_BY_FAV_TIME)) {

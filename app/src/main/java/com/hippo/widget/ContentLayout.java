@@ -88,13 +88,13 @@ public class ContentLayout extends FrameLayout {
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.widget_content_layout, this);
 
-        mProgressView = (ProgressView) findViewById(R.id.progress);
-        mTipView = (TextView) findViewById(R.id.tip);
-        mContentView = (ViewGroup) findViewById(R.id.content_view);
+        mProgressView = findViewById(R.id.progress);
+        mTipView = findViewById(R.id.tip);
+        mContentView = findViewById(R.id.content_view);
 
-        mRefreshLayout = (RefreshLayout) mContentView.findViewById(R.id.refresh_layout);
-        mFastScroller = (FastScroller) mContentView.findViewById(R.id.fast_scroller);
-        mRecyclerView = (EasyRecyclerView) mRefreshLayout.findViewById(R.id.recycler_view);
+        mRefreshLayout = mContentView.findViewById(R.id.refresh_layout);
+        mFastScroller = mContentView.findViewById(R.id.fast_scroller);
+        mRecyclerView = mRefreshLayout.findViewById(R.id.recycler_view);
 
         mFastScroller.attachToRecyclerView(mRecyclerView);
         HandlerDrawable drawable = new HandlerDrawable();

@@ -1,6 +1,33 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/10/01 : 祝大家国庆快乐
+ ###  新版发布1.9.8.7（如果出现问题请覆盖安装旧版本）
+ ###  修复WiFi迁移下载列表，在迁移后下载列表乱序的问题
+ ###  在云端收藏列表新增排序功能，可按收藏时间和上传时间进行排序
+ ###  档案压缩包下载位置从Download/EhviewerArchiver/改为Download/Ehviewer/Archiver/
+ ###  种子下载位置从Download/改为Download/Ehviewer/Torrent/；
+ ###  修复档案下载在通知栏没有正确显示的bug
+ ###  在下载档案时，在对应画廊添加了下载进度条
+ ###  修复部分画廊无法正确显示上传者评论的问题
+ ###  添加用户自签名网络证书许可
+ ###  修复图片连接获取出错的提示
+ ###  修复档案下载下载路径格式错误的bug
+ ###  修复可能导致无限重复下载的bug
+ ###  修复GP配额使用情况显示出错的问题
+ ###  修复在特定条件下图片缓存未生效的问题
+ ###  修隨機挑本的bug(真 (#1379)
+
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/507r187173&#41;   )
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/15NRkRvgPrHT4rCUtVjhF3g)  密码:uvh6   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/irKpr2b6tl6b)  密码:7tix   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:393a1babd42f18fdf04f8d0d4af80277c450c45c&dn=EhViewer-1.9.8.7.apk   
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/08/19 : E站略缩图服务器变更导致的强制更新，下次版本更新将顺延至10月
  ###  新版发布1.9.8.6（如果出现问题请覆盖安装旧版本）
  ###  修复下载计时器不适配多线程的问题
@@ -14,7 +41,7 @@
  ###  更新host文件:删除了部分失效域名，修复略缩图host
  ###  优化app link配置，现在每次安装都会重新检查一次
 
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/87ar184853&#41;   )
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/507r187173)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/19uE6Q2JPqjsiMaoIyX_dCg)  密码:vonf   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iLFVo27u9n2j)  密码:f5xs   
