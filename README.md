@@ -1,6 +1,23 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/10/01 : 紧急修复
+ ###  新版发布1.9.8.9（如果出现问题请覆盖安装旧版本）
+ ###  修复了一些可能导致崩溃的问题
+ ###  修复红米澎湃os里站出现空指针报错的问题
+ ###  紧急修复解析详情页的正则表达式
+
+
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/507r187173&#41;   )
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1XTqvHayna9J_vFGeMt2weg)  密码:8467   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/ijhHG2dc6cwd)  密码:b5a9   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:f7f59ed53f0a0b9a8b3d174efaf1b9cfb43f7041&dn=EhViewer-1.9.8.9.apk   
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/10/01 : 祝大家国庆快乐
  ###  新版发布1.9.8.7（如果出现问题请覆盖安装旧版本）
  ###  修复WiFi迁移下载列表，在迁移后下载列表乱序的问题
@@ -18,7 +35,7 @@
  ###  修复在特定条件下图片缓存未生效的问题
  ###  修隨機挑本的bug(真 (#1379)
 
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/507r187173&#41;   )
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/507r187173)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/15NRkRvgPrHT4rCUtVjhF3g)  密码:uvh6   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/irKpr2b6tl6b)  密码:7tix   
