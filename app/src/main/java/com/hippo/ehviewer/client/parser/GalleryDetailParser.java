@@ -78,13 +78,17 @@ public class GalleryDetailParser {
     private static final Pattern PATTERN_PAGES = Pattern.compile("<tr><td[^<>]*>Length:</td><td[^<>]*>([\\d,]+) pages</td></tr>");
     private static final Pattern PATTERN_PREVIEW_PAGES = Pattern.compile("<td[^>]+><a[^>]+>([\\d,]+)</a></td><td[^>]+>(?:<a[^>]+>)?&gt;(?:</a>)?</td>");
     private static final Pattern PATTERN_NORMAL_PREVIEW = Pattern.compile("<div class=\"gdtm\"[^<>]*><div[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*-(\\d+)px[^<>]*><a[^<>]*href=\"(.+?)\"[^<>]*><img alt=\"([\\d,]+)\"");
+    private static final Pattern PATTERN_NORMAL_PREVIEW_NEW = Pattern.compile("<a href=\"(.+?)\">[^<>]*<[^<>]*title=\"Page (\\d+):[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*\"></div>[^<>]*</a>");
     private static final Pattern PATTERN_LARGE_PREVIEW = Pattern.compile("<div class=\"gdtl\".+?<a href=\"(.+?)\"><img alt=\"([\\d,]+)\".+?src=\"(.+?)\"");
+    private static final Pattern PATTERN_LARGE_PREVIEW_NEW = Pattern.compile("<a href=\"(.+?)\">[^<>]*<div title=\"Page (\\d+):[^<>]*\\((.+?)\\)[^<>]*0 0[^<>]*>");
     private static final Pattern PATTERN_ARCHIVE_DOWNLOAD = Pattern.compile("onclick=\"return popUp('(.*)',480,320)\">Archive Download</a>");
 
     private static final GalleryTagGroup[] EMPTY_GALLERY_TAG_GROUP_ARRAY = new GalleryTagGroup[0];
     private static final GalleryCommentList EMPTY_GALLERY_COMMENT_ARRAY = new GalleryCommentList(new GalleryComment[0], false);
 
     private static final DateFormat WEB_COMMENT_DATE_FORMAT = new SimpleDateFormat("dd MMMMM yyyy, HH:mm", Locale.US);
+
+    private static Integer EhSite;
 
     static {
         WEB_COMMENT_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -516,17 +520,17 @@ public class GalleryDetailParser {
             // time
             Element c3 = JsoupUtils.getElementByClass(element, "c3");
             String temp = c3.ownText();
-            if (temp.contains(" by:")){
+            if (temp.contains(" by:")) {
                 temp = temp.substring("Posted on ".length(), temp.length() - " by:".length());
-            }else {
+            } else {
                 temp = temp.substring("Posted on ".length());
             }
 
             comment.time = WEB_COMMENT_DATE_FORMAT.parse(temp).getTime();
             // user
-            if (c3.children().isEmpty()){
+            if (c3.children().isEmpty()) {
                 comment.user = c4.text();
-            }else {
+            } else {
                 comment.user = c3.child(0).text();
             }
 
@@ -664,14 +668,29 @@ public class GalleryDetailParser {
     }
 
     public static PreviewSet parsePreviewSet(Document d, String body) throws ParseException {
+        if (null == EhSite) {
+            EhSite = Settings.getGallerySite();
+        }
+        String previewClass;
+        switch (EhSite) {
+            case 0:
+                previewClass = body;
+                break;
+            case 1:
+                previewClass = d.getElementsByClass("gt200").html();
+                break;
+            default:
+                previewClass = "";
+                break;
+        }
         PreviewSet previewSet;
         try {
-            previewSet = parseLargePreviewSet(d, body);
-            if (previewSet == null) {
-                previewSet = parseNormalPreviewSet(body);
+            previewSet = parseNormalPreviewSet(previewClass);
+            if (previewSet.size() == 0) {
+                previewSet = parseLargePreviewSet(previewClass.isEmpty() ? body : previewClass);
             }
-            if (previewSet == null) {
-                throw new ParseException("加载预览图失败", body);
+            if (previewSet.size() == 0) {
+                throw new ParseException("加载预览图失败", previewClass);
             }
             return previewSet;
 //            return parseLargePreviewSet(d, body);
@@ -683,52 +702,26 @@ public class GalleryDetailParser {
     }
 
     public static PreviewSet parsePreviewSet(String body) throws ParseException {
-        try {
-            return parseLargePreviewSet(body);
-        } catch (ParseException e) {
-            return parseNormalPreviewSet(body);
-        }
+        return parsePreviewSet(Jsoup.parse(body), body);
     }
 
     /**
      * Parse large previews with regular expressions
      */
-    private static LargePreviewSet parseLargePreviewSet(Document d, String body) throws ParseException {
-        try {
-            LargePreviewSet largePreviewSet = new LargePreviewSet();
-            Element gdt = d.getElementById("gdt");
-            Elements gdtls = gdt.getElementsByClass("gdtl");
-            int n = gdtls.size();
-            if (n <= 0) {
-                return null;
-//                throw new ParseException("Can't parse large preview", body);
-            }
-            for (int i = 0; i < n; i++) {
-                Element element = gdtls.get(i).child(0);
-                String pageUrl = element.attr("href");
-                element = element.child(0);
-                String imageUrl = element.attr("src");
-                if (Settings.getFixThumbUrl()) {
-                    imageUrl = EhUrl.getFixedPreviewThumbUrl(imageUrl);
-                }
-                int index = Integer.parseInt(element.attr("alt")) - 1;
-                largePreviewSet.addItem(index, imageUrl, pageUrl);
-            }
-            return largePreviewSet;
-        } catch (Throwable e) {
-            ExceptionUtils.throwIfFatal(e);
-            e.printStackTrace();
-            throw new ParseException("Can't parse large preview", body);
-        }
-    }
-
-    /**
-     * Parse large previews with regular expressions
-     */
-    private static LargePreviewSet parseLargePreviewSet(String body) throws ParseException {
-        Matcher m = PATTERN_LARGE_PREVIEW.matcher(body);
+    private static LargePreviewSet parseLargePreviewSet(String body) {
+        Matcher m = PATTERN_LARGE_PREVIEW_NEW.matcher(body);
         LargePreviewSet largePreviewSet = new LargePreviewSet();
 
+        find(m, largePreviewSet);
+
+        if (largePreviewSet.size() == 0) {
+            m = PATTERN_LARGE_PREVIEW.matcher(body);
+            find(m, largePreviewSet);
+        }
+        return largePreviewSet;
+    }
+
+    private static void find(Matcher m, LargePreviewSet largePreviewSet) {
         while (m.find()) {
             int index = ParserUtils.parseInt(m.group(2), 0) - 1;
             if (index < 0) {
@@ -741,42 +734,55 @@ public class GalleryDetailParser {
             }
             largePreviewSet.addItem(index, imageUrl, pageUrl);
         }
-
-        if (largePreviewSet.size() == 0) {
-            throw new ParseException("Can't parse large preview", body);
-        }
-
-        return largePreviewSet;
     }
 
     /**
      * Parse normal previews with regular expressions
      */
     private static NormalPreviewSet parseNormalPreviewSet(String body) throws ParseException {
-        Matcher m = PATTERN_NORMAL_PREVIEW.matcher(body);
+
+        Matcher m = PATTERN_NORMAL_PREVIEW_NEW.matcher(body);
         NormalPreviewSet normalPreviewSet = new NormalPreviewSet();
         while (m.find()) {
-            int position = ParserUtils.parseInt(m.group(6), 0) - 1;
+            int position = ParserUtils.parseInt(m.group(2), 0) - 1;
             if (position < 0) {
                 continue;
             }
-            String imageUrl = ParserUtils.trim(m.group(3));
-            int xOffset = ParserUtils.parseInt(m.group(4), 0);
+            String imageUrl = ParserUtils.trim(m.group(5));
+            int xOffset = 0;
             int yOffset = 0;
-            int width = ParserUtils.parseInt(m.group(1), 0);
+            int width = ParserUtils.parseInt(m.group(3), 0);
             if (width <= 0) {
                 continue;
             }
-            int height = ParserUtils.parseInt(m.group(2), 0);
+            int height = ParserUtils.parseInt(m.group(4), 0);
             if (height <= 0) {
                 continue;
             }
-            String pageUrl = ParserUtils.trim(m.group(5));
+            String pageUrl = ParserUtils.trim(m.group(1));
             normalPreviewSet.addItem(position, imageUrl, xOffset, yOffset, width, height, pageUrl);
         }
-
         if (normalPreviewSet.size() == 0) {
-            throw new ParseException("Can't parse normal preview", body);
+            m = PATTERN_NORMAL_PREVIEW.matcher(body);
+            while (m.find()) {
+                int position = ParserUtils.parseInt(m.group(6), 0) - 1;
+                if (position < 0) {
+                    continue;
+                }
+                String imageUrl = ParserUtils.trim(m.group(3));
+                int xOffset = ParserUtils.parseInt(m.group(4), 0);
+                int yOffset = 0;
+                int width = ParserUtils.parseInt(m.group(1), 0);
+                if (width <= 0) {
+                    continue;
+                }
+                int height = ParserUtils.parseInt(m.group(2), 0);
+                if (height <= 0) {
+                    continue;
+                }
+                String pageUrl = ParserUtils.trim(m.group(5));
+                normalPreviewSet.addItem(position, imageUrl, xOffset, yOffset, width, height, pageUrl);
+            }
         }
 
         return normalPreviewSet;
