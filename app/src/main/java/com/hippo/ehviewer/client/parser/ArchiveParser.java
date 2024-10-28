@@ -42,10 +42,11 @@ public class ArchiveParser {
     @SuppressWarnings("unchecked")
     public static Pair<String, Pair<String, String>[]> parse(String body) {
         Matcher m = PATTERN_FORM.matcher(body);
-        if (!m.find()) {
-            return new Pair<String, Pair<String, String>[]>("", new Pair[0]);
+        String paramOr = "";
+        if (m.find()) {
+            paramOr = m.group(1);
         }
-        String paramOr = m.group(1);
+
         List<Pair<String, String>> archiveList = new ArrayList<>();
         m = PATTERN_ARCHIVE.matcher(body);
         while (m.find()) {
@@ -54,13 +55,13 @@ public class ArchiveParser {
             Pair<String, String> item = new Pair<>(res, name);
             archiveList.add(item);
         }
-        return new Pair<String, Pair<String, String>[]>(paramOr, archiveList.toArray(new Pair[archiveList.size()]));
+        return new Pair<>(paramOr, archiveList.toArray(new Pair[0]));
     }
 
     public static ArchiverData parseArchiver(String body) {
         ArchiverData data = new ArchiverData();
         Document document = Jsoup.parse(body);
-        if (Settings.getGallerySite()== EhUrl.SITE_E){
+        if (Settings.getGallerySite() == EhUrl.SITE_E) {
             try {
                 Element bodyElement = (Element) document.childNode(2).childNode(3).childNode(1);
                 data.funds = bodyElement.child(2).text();
@@ -76,7 +77,7 @@ public class ArchiveParser {
                 data.resampleUrl = resample.child(1).attr("action");
             } catch (Exception ignore) {
             }
-        }else {
+        } else {
             try {
                 Element bodyElement = (Element) document.childNode(2).childNode(3).childNode(1);
                 data.funds = bodyElement.child(0).text();
@@ -99,7 +100,7 @@ public class ArchiveParser {
 
     public static String parseArchiverDownloadUrl(String body) {
         Matcher m = PATTERN_ARCHIVER_DOWNLOAD_URL.matcher(body);
-        if (!m.find()){
+        if (!m.find()) {
             return null;
         }
         return m.group(1);

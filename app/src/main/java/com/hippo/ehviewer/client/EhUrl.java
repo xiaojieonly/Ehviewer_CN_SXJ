@@ -197,6 +197,9 @@ public class EhUrl {
     }
 
     public static String getDownloadArchive(long gid, String token, String or) {
+        if (or.isEmpty()){
+            return getHost() + "archiver.php?gid=" + gid + "&token=" + token;
+        }
         return getHost() + "archiver.php?gid=" + gid + "&token=" + token + "&or=" + or;
     }
 

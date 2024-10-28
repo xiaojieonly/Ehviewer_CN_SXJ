@@ -843,10 +843,10 @@ public class EhEngine {
 
     public static Void downloadArchive(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                        long gid, String token, String or, String res) throws Throwable {
-        if (or == null || or.length() == 0) {
+        if (or == null) {
             throw new EhException("Invalid form param or: " + or);
         }
-        if (res == null || res.length() == 0) {
+        if (res == null || res.isEmpty()) {
             throw new EhException("Invalid res: " + res);
         }
         FormBody.Builder builder = new FormBody.Builder();
