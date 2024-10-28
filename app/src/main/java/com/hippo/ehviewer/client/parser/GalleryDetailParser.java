@@ -79,7 +79,9 @@ public class GalleryDetailParser {
     private static final Pattern PATTERN_PREVIEW_PAGES = Pattern.compile("<td[^>]+><a[^>]+>([\\d,]+)</a></td><td[^>]+>(?:<a[^>]+>)?&gt;(?:</a>)?</td>");
     private static final Pattern PATTERN_NORMAL_PREVIEW = Pattern.compile("<div class=\"gdtm\"[^<>]*><div[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*-(\\d+)px[^<>]*><a[^<>]*href=\"(.+?)\"[^<>]*><img alt=\"([\\d,]+)\"");
     private static final Pattern PATTERN_NORMAL_PREVIEW_NEW = Pattern.compile("<a href=\"(.+?)\">[^<>]*<div[^<>]*title=\"Page (\\d+):[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*\"></div>[^<>]*</a>");
-    private static final Pattern PATTERN_SMALL_PREVIEW = Pattern.compile("<a href=\"(.+?)\"><div[^<>]*title=\"Page (\\d+):[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*-(\\d+)px[^<>]*>");
+    private static final Pattern PATTERN_NORMAL_PREVIEW_NEW_WITH_LABEL = Pattern.compile("<a href=\"(.+?)\">[^<>]*<div>[^<>]*<div[^<>]*title=\"Page (\\d+):[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*\">");
+    private static final Pattern PATTERN_SMALL_PREVIEW = Pattern.compile("<a href=\"(.+?)\">[^<>]*<div[^<>]*title=\"Page (\\d+):[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*-(\\d+)px[^<>]*>");
+    private static final Pattern PATTERN_SMALL_PREVIEW_WITH_LABEL = Pattern.compile("<a href=\"(.+?)\">[^<>]*<div>[^<>]*<div[^<>]*title=\"Page (\\d+):[^<>]*width:(\\d+)[^<>]*height:(\\d+)[^<>]*\\((.+?)\\)[^<>]*-(\\d+)px[^<>]*>");
     private static final Pattern PATTERN_LARGE_PREVIEW = Pattern.compile("<div class=\"gdtl\".+?<a href=\"(.+?)\"><img alt=\"([\\d,]+)\".+?src=\"(.+?)\"");
     private static final Pattern PATTERN_LARGE_PREVIEW_NEW = Pattern.compile("<a href=\"(.+?)\">[^<>]*<div title=\"Page (\\d+):[^<>]*\\((.+?)\\)[^<>]*0 0[^<>]*>");
     private static final Pattern PATTERN_ARCHIVE_DOWNLOAD = Pattern.compile("onclick=\"return popUp('(.*)',480,320)\">Archive Download</a>");
@@ -742,6 +744,14 @@ public class GalleryDetailParser {
 
         if (normalPreviewSet.size() == 0) {
             m = PATTERN_NORMAL_PREVIEW_NEW.matcher(body);
+            parserNewPreview(m, normalPreviewSet);
+        }
+        if (normalPreviewSet.size() == 0) {
+            m = PATTERN_SMALL_PREVIEW_WITH_LABEL.matcher(body);
+            parserNewPreview(m, normalPreviewSet);
+        }
+        if (normalPreviewSet.size() == 0) {
+            m = PATTERN_NORMAL_PREVIEW_NEW_WITH_LABEL.matcher(body);
             parserNewPreview(m, normalPreviewSet);
         }
 
