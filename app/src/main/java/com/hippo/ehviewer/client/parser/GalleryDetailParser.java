@@ -91,8 +91,6 @@ public class GalleryDetailParser {
 
     private static final DateFormat WEB_COMMENT_DATE_FORMAT = new SimpleDateFormat("dd MMMMM yyyy, HH:mm", Locale.US);
 
-    private static Integer EhSite;
-
     static {
         WEB_COMMENT_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
@@ -662,23 +660,11 @@ public class GalleryDetailParser {
     }
 
     public static PreviewSet parsePreviewSet(Document d, String body) {
-        if (null == EhSite) {
-            EhSite = Settings.getGallerySite();
-        }
+
         String previewClass;
-        switch (EhSite) {
-            case 0:
-                previewClass = body;
-                break;
-            case 1:
-                previewClass = d.getElementsByClass("gt200").html();
-                if (previewClass.isEmpty()) {
-                    previewClass = d.getElementsByClass("gt100").html();
-                }
-                break;
-            default:
-                previewClass = "";
-                break;
+        previewClass = d.getElementsByClass("gt200").html();
+        if (previewClass.isEmpty()) {
+            previewClass = d.getElementsByClass("gt100").html();
         }
         PreviewSet previewSet;
         try {
