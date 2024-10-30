@@ -9,7 +9,7 @@
 ###  紧急修复解析详情页的正则表达式在Thumbnail Settings为small时解析失败的问题
 
 
-[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/507r187173&#41;   )
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/2f4r195618)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/1J4cT2y_6cKOaSBKzdghVKg)  密码:zv1r   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/i13jD2dof07c)  密码:9sqo   
