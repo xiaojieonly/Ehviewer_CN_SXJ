@@ -53,7 +53,7 @@ import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.glgallery.GalleryProvider;
-import com.hippo.image.Image;
+import com.hippo.lib.image.Image;
 import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.streampipe.OutputStreamPipe;
 import com.hippo.unifile.UniFile;
@@ -71,6 +71,7 @@ import com.hippo.yorozuya.thread.PriorityThreadFactory;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -1784,7 +1785,7 @@ public final class SpiderQueen implements Runnable {
 
                 pipe.obtain();
                 try {
-                    is = new AutoCloseInputStream(pipe, pipe.open());
+                    is = pipe.open();
                 } catch (IOException e) {
                     // Can't open pipe
                     error = GetText.getString(R.string.error_reading_failed);
@@ -1794,7 +1795,16 @@ public final class SpiderQueen implements Runnable {
                 }
 
                 if (is != null) {
-                    image = Image.decode(is, true);
+                    try {
+                        image = Image.decode((FileInputStream) is, false);
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException e) {
+                            Log.e(TAG, "解码失败", e);
+                            FirebaseCrashlytics.getInstance().recordException(e);
+                        }
+                    }
                     if (image == null) {
                         error = GetText.getString(R.string.error_decoding_failed);
                     }

@@ -21,7 +21,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hippo.glview.view.GLRootView
+    <com.hippo.lib.glview.view.GLRootView
         android:id="@+id/gl_root_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

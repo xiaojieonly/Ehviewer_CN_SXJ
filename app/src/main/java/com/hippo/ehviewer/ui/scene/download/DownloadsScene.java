@@ -64,7 +64,6 @@ import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.app.CheckBoxDialogBuilder;
-import com.hippo.conaco.DataContainer;
 import com.hippo.conaco.ProgressNotifier;
 import com.hippo.drawable.AddDeleteDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
@@ -95,13 +94,10 @@ import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
-import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SimpleRatingView;
-import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
-import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.IoThreadPoolExecutor;
@@ -111,12 +107,9 @@ import com.hippo.widget.LoadImageView;
 import com.hippo.widget.ProgressView;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
-import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.FileUtils;
-import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.ObjectUtils;
-import com.hippo.yorozuya.SimpleAnimatorListener;
 import com.hippo.yorozuya.ViewUtils;
 import com.hippo.yorozuya.collect.LongList;
 import com.sxj.paginationlib.PaginationIndicator;
@@ -126,11 +119,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -241,7 +229,7 @@ public class DownloadsScene extends ToolbarScene
         }
 
         if (ACTION_CLEAR_DOWNLOAD_SERVICE.equals(args.getString(KEY_ACTION))) {
-            DownloadService.clear();
+            DownloadService.Companion.clear();
         }
 
         long gid;
@@ -1661,8 +1649,7 @@ public class DownloadsScene extends ToolbarScene
 
                 String title = EhUtils.getSuitableTitle(info);
 
-                holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
-                        new ThumbDataContainer(info), true);
+                holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb, true);
 
                 holder.title.setText(title);
                 holder.uploader.setText(info.uploader);
@@ -1739,73 +1726,6 @@ public class DownloadsScene extends ToolbarScene
         public void onItemCheckedStateChanged(EasyRecyclerView view, int position, long id, boolean checked) {
             if (view.getCheckedItemCount() == 0) {
                 view.outOfCustomChoiceMode();
-            }
-        }
-    }
-
-    private class ThumbDataContainer implements DataContainer {
-
-        private final DownloadInfo mInfo;
-        @Nullable
-        private UniFile mFile;
-
-        public ThumbDataContainer(@NonNull DownloadInfo info) {
-            mInfo = info;
-        }
-
-        private void ensureFile() {
-            if (mFile == null) {
-                UniFile dir = getGalleryDownloadDir(mInfo);
-                if (dir != null && dir.isDirectory()) {
-                    mFile = dir.createFile(".thumb");
-                }
-            }
-        }
-
-        @Override
-        public boolean isEnabled() {
-            ensureFile();
-            return mFile != null;
-        }
-
-        @Override
-        public void onUrlMoved(String requestUrl, String responseUrl) {
-        }
-
-        @Override
-        public boolean save(InputStream is, long length, String mediaType, ProgressNotifier notify) {
-            ensureFile();
-            if (mFile == null) {
-                return false;
-            }
-
-            OutputStream os = null;
-            try {
-                os = mFile.openOutputStream();
-                IOUtils.copy(is, os);
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            } finally {
-                IOUtils.closeQuietly(os);
-            }
-        }
-
-        @Override
-        public InputStreamPipe get() {
-            ensureFile();
-            if (mFile != null) {
-                return new UniFileInputStreamPipe(mFile);
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        public void remove() {
-            if (mFile != null) {
-                mFile.delete();
             }
         }
     }

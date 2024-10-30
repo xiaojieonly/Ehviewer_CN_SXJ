@@ -19,8 +19,10 @@ package com.hippo.ehviewer;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.conaco.ValueHelper;
-import com.hippo.image.ImageBitmap;
+import com.hippo.lib.image.ImageBitmap;
 import com.hippo.streampipe.InputStreamPipe;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 
 public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
@@ -32,7 +34,8 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
     public ImageBitmap decode(@NonNull InputStreamPipe isPipe) {
         try {
             isPipe.obtain();
-            return ImageBitmap.decode(isPipe.open());
+            FileInputStream is = (FileInputStream) isPipe.open();
+            return ImageBitmap.decode(is);
         } catch (OutOfMemoryError e) {
             return null;
         } catch (IOException e) {

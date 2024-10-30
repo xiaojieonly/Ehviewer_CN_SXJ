@@ -23,7 +23,7 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.lib.glgallery.GalleryPageView;
-import com.hippo.image.Image;
+import com.hippo.lib.image.Image;
 import com.hippo.unifile.FilenameFilter;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.NaturalComparator;
@@ -31,6 +31,8 @@ import com.hippo.yorozuya.FileUtils;
 import com.hippo.yorozuya.IOUtils;
 import com.hippo.yorozuya.StringUtils;
 import com.hippo.yorozuya.thread.PriorityThread;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -221,7 +223,8 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
             InputStream is = null;
             try {
                 is = files[index].openInputStream();
-                Image image = Image.decode(is, true);
+//                Image image = Image.decode(is, true);
+                Image image = Image.decode((FileInputStream) is, false);
                 mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
                 if (image != null) {
                     notifyPageSucceed(index, image);

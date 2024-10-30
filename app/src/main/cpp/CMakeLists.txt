@@ -3,7 +3,7 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.14)
 
 project("ehviewer")
 
@@ -17,6 +17,9 @@ add_library( # Sets the name of the library.
 
         # Sets the library as a shared library.
         SHARED
+        gifutils.c
+        fdutils.c
+        image.c
         gif/native-lib.cpp
         gif/dgif_lib.c
         gif/gifalloc.c)
@@ -46,4 +49,5 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}
-        ${jnigraphics-lib})
+        ${jnigraphics-lib}
+        GLESv2)

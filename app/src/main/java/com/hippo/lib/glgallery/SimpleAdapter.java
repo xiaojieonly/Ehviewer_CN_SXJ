@@ -17,9 +17,9 @@ package com.hippo.lib.glgallery;
 
 import androidx.annotation.NonNull;
 
-import com.hippo.glview.image.ImageTexture;
-import com.hippo.glview.image.ImageWrapper;
-import com.hippo.glview.view.GLRootView;
+import com.hippo.lib.glview.image.ImageTexture;
+import com.hippo.lib.glview.image.ImageWrapper;
+import com.hippo.lib.glview.view.GLRootView;
 
 public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvider.Listener {
 

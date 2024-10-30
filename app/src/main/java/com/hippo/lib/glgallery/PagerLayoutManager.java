@@ -24,12 +24,12 @@ import android.view.animation.Interpolator;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 
-import com.hippo.glview.anim.Animation;
-import com.hippo.glview.anim.FloatAnimation;
-import com.hippo.glview.view.GLView;
-import com.hippo.glview.widget.GLEdgeView;
-import com.hippo.glview.widget.GLProgressView;
-import com.hippo.glview.widget.GLTextureView;
+import com.hippo.lib.glview.anim.Animation;
+import com.hippo.lib.glview.anim.FloatAnimation;
+import com.hippo.lib.glview.view.GLView;
+import com.hippo.lib.glview.widget.GLEdgeView;
+import com.hippo.lib.glview.widget.GLProgressView;
+import com.hippo.lib.glview.widget.GLTextureView;
 import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.AssertUtils;
 import com.hippo.yorozuya.MathUtils;

@@ -21,10 +21,10 @@ import android.util.LruCache;
 import androidx.annotation.IntDef;
 import androidx.annotation.UiThread;
 
-import com.hippo.glview.glrenderer.GLCanvas;
-import com.hippo.glview.image.ImageWrapper;
-import com.hippo.glview.view.GLRoot;
-import com.hippo.image.Image;
+import com.hippo.lib.glview.glrenderer.GLCanvas;
+import com.hippo.lib.glview.image.ImageWrapper;
+import com.hippo.lib.glview.view.GLRoot;
+import com.hippo.lib.image.Image;
 import com.hippo.yorozuya.ConcurrentPool;
 import com.hippo.yorozuya.MathUtils;
 import com.hippo.yorozuya.OSUtils;
@@ -67,8 +67,8 @@ public abstract class GalleryProvider {
 
     /**
      * @return {@link #STATE_WAIT} for wait,
-     *          {@link #STATE_ERROR} for error, {@link #getError()} to get error message,
-     *          0 for empty
+     * {@link #STATE_ERROR} for error, {@link #getError()} to get error message,
+     * 0 for empty
      */
     public abstract int size();
 
@@ -158,7 +158,8 @@ public abstract class GalleryProvider {
 
         @IntDef({TYPE_DATA_CHANGED, NotifyTask.TYPE_WAIT, TYPE_PERCENT, TYPE_SUCCEED, TYPE_FAILED})
         @Retention(RetentionPolicy.SOURCE)
-        public @interface Type {}
+        public @interface Type {
+        }
 
         public static final int TYPE_DATA_CHANGED = 0;
         public static final int TYPE_WAIT = 1;
@@ -233,18 +234,14 @@ public abstract class GalleryProvider {
         }
 
         public void add(Integer key, ImageWrapper value) {
-            if (value.getFormat() != Image.FORMAT_GIF && value.obtain()) {
+            if (!value.getAnimated() && value.obtain()) {
                 put(key, value);
             }
         }
 
         @Override
         protected int sizeOf(Integer key, ImageWrapper value) {
-            int size = value.getWidth() * value.getHeight() * 4;
-            if (value.getFormat() == Image.FORMAT_GIF) {
-                size *= 5;
-            }
-            return size;
+            return value.getWidth() * value.getHeight() * 4;
         }
 
         @Override
