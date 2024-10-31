@@ -10,7 +10,7 @@ if (file('google-services.json').exists()) {
 android {
     namespace 'com.hippo.ehviewer'
     testNamespace 'com.hippo.ehviewer.debug'
-    compileSdkVersion 31
+    compileSdk 34
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '23.1.7779620'
 
@@ -101,6 +101,8 @@ clean {
 }
 
 dependencies {
+//    测试工具
+    implementation 'com.gu.android:toolargetool:0.3.0'
 
     // 应用服务分发
     def appCenterSdkVersion = '4.4.5'
@@ -108,7 +110,7 @@ dependencies {
 //    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     implementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
 
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.google.android.material:material:1.12.0'
 
     // app使用情况数据收集
     // Import the BoM for the Firebase platform
