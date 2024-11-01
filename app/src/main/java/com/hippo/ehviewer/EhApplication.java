@@ -291,9 +291,6 @@ public class EhApplication extends RecordingApplication {
                     Log.i(TAG, "Native memory: " + FileUtils.humanReadableByteCount(
                             Debug.getNativeHeapAllocatedSize(), false));
                 }
-                if (DEBUG_PRINT_IMAGE_COUNT) {
-                    Log.i(TAG, "Image count: " + Image.getImageCount());
-                }
                 SimpleHandler.getInstance().postDelayed(this, DEBUG_PRINT_INTERVAL);
             }
         }.run();
