@@ -120,8 +120,8 @@ dependencies {
     // When using the BoM, you don't specify versions in Firebase library dependencies
 //    implementation 'com.google.firebase:firebase-crashlytics'
 //    implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-crashlytics:18.3.7'
-    implementation 'com.google.firebase:firebase-analytics:21.3.0'
+    implementation 'com.google.firebase:firebase-crashlytics:19.2.1'
+    implementation 'com.google.firebase:firebase-analytics:22.1.2'
 //    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
