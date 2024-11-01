@@ -18,11 +18,11 @@ package com.hippo.lib.glgallery;
 
 import android.graphics.Rect;
 import android.graphics.RectF;
-import com.hippo.glview.anim.AlphaAnimation;
-import com.hippo.glview.glrenderer.GLCanvas;
-import com.hippo.glview.glrenderer.Texture;
-import com.hippo.glview.image.ImageTexture;
-import com.hippo.glview.view.GLView;
+import com.hippo.lib.glview.anim.AlphaAnimation;
+import com.hippo.lib.glview.glrenderer.GLCanvas;
+import com.hippo.lib.glview.glrenderer.Texture;
+import com.hippo.lib.glview.image.ImageTexture;
+import com.hippo.lib.glview.view.GLView;
 import com.hippo.yorozuya.AnimationUtils;
 import com.hippo.yorozuya.MathUtils;
 import java.util.Arrays;

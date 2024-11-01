@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.Animatable;
+import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
@@ -34,14 +35,11 @@ import androidx.annotation.NonNull;
 
 import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
-import com.hippo.conaco.DataContainer;
 import com.hippo.conaco.Unikery;
 import com.hippo.drawable.PreciselyClipDrawable;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
-import com.hippo.image.ImageBitmap;
-import com.hippo.image.ImageDrawable;
-import com.hippo.image.RecycledException;
+import com.hippo.lib.image.ImageBitmap;
 import com.hippo.util.DrawableManager;
 
 import java.lang.annotation.Retention;
@@ -58,7 +56,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     private Conaco<ImageBitmap> mConaco;
     private String mKey;
     private String mUrl;
-    private DataContainer mContainer;
     private boolean mUseNetwork;
     private int mOffsetX = Integer.MIN_VALUE;
     private int mOffsetY = Integer.MIN_VALUE;
@@ -68,6 +65,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public boolean mFailed;
     private boolean mLoadFromDrawable;
 
+    private ImageBitmap imageBitmap;
 
     public LoadImageView(Context context) {
         super(context);
@@ -112,7 +110,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             if (mFailed) {
                 onFailure();
             } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */ {
-                load(mKey, mUrl, mContainer, mUseNetwork);
+                load(mKey, mUrl, mUseNetwork);
             }
         }
     }
@@ -133,7 +131,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         }
     }
 
-    private ImageDrawable getImageDrawable() {
+    private Drawable getImageDrawable() {
         Drawable drawable = getDrawable();
         if (drawable instanceof TransitionDrawable) {
             TransitionDrawable transitionDrawable = (TransitionDrawable) drawable;
@@ -144,22 +142,22 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         if (drawable instanceof PreciselyClipDrawable) {
             drawable = ((PreciselyClipDrawable) drawable).getWrappedDrawable();
         }
-        if (drawable instanceof ImageDrawable) {
-            return (ImageDrawable) drawable;
-        } else {
-            return null;
-        }
+        return drawable;
     }
 
     private void clearDrawable() {
-        // Recycle ImageDrawable
-        ImageDrawable imageDrawable = getImageDrawable();
-        if (imageDrawable != null) {
-            imageDrawable.recycle();
-        }
+//        // Recycle ImageDrawable
+//        ImageDrawable imageDrawable = getImageDrawable();
+//        if (imageDrawable != null) {
+//            imageDrawable.recycle();
+//        }
 
         // Set drawable null
         setImageDrawable(null);
+        if (imageBitmap!=null){
+            imageBitmap.release();
+            imageBitmap = null;
+        }
     }
 
     private void clearRetry() {
@@ -210,15 +208,11 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     }
 
     public void load(String key, String url) {
-        load(key, url, null, true);
+        load(key, url, true);
     }
 
     public void load(String key, String url, boolean useNetwork) {
-        load(key, url, null, useNetwork);
-    }
-
-    public void load(String key, String url, DataContainer container, boolean useNetwork) {
-        if (url == null || (key == null && container == null)) {
+        if (url == null || key == null) {
             return;
         }
 
@@ -228,14 +222,12 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         mKey = key;
         mUrl = url;
-        mContainer = container;
         mUseNetwork = useNetwork;
 
         ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
                 .setUnikery(this)
                 .setKey(key)
                 .setUrl(url)
-                .setDataContainer(container)
                 .setUseNetwork(useNetwork);
 
 //        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
@@ -267,7 +259,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         mConaco.cancel(this);
         mKey = null;
         mUrl = null;
-        mContainer = null;
         clearDrawable();
     }
 
@@ -295,8 +286,8 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public boolean onGetValue(@NonNull ImageBitmap value, int source) {
         Drawable drawable;
         try {
-            drawable = new ImageDrawable(value);
-        } catch (RecycledException e) {
+            drawable = value.getDrawable();
+        } catch (Exception e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);
             return false;
@@ -319,7 +310,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         } else {
             setImageDrawable(drawable);
         }
-
+        imageBitmap = value;
         return true;
     }
 
@@ -344,7 +335,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             // Can't retry, so release
             mKey = null;
             mUrl = null;
-            mContainer = null;
         }
     }
 
@@ -355,25 +345,25 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
     @Override
     public void start() {
-        ImageDrawable drawable = getImageDrawable();
-        if (drawable != null) {
-            drawable.start();
+        Drawable drawable = getImageDrawable();
+        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+            animatedImageDrawable.start();
         }
     }
 
     @Override
     public void stop() {
-        ImageDrawable drawable = getImageDrawable();
-        if (drawable != null) {
-            drawable.stop();
+        Drawable drawable = getImageDrawable();
+        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+            animatedImageDrawable.stop();
         }
     }
 
     @Override
     public boolean isRunning() {
-        ImageDrawable drawable = getImageDrawable();
-        if (drawable != null) {
-            return drawable.isRunning();
+        Drawable drawable = getImageDrawable();
+        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+            return animatedImageDrawable.isRunning();
         } else {
             return false;
         }
@@ -381,12 +371,12 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
     @Override
     public void onClick(@NonNull View v) {
-        load(mKey, mUrl, mContainer, true);
+        load(mKey, mUrl, true);
     }
 
     @Override
     public boolean onLongClick(@NonNull View v) {
-        load(mKey, mUrl, mContainer, true);
+        load(mKey, mUrl, true);
         return true;
     }
 

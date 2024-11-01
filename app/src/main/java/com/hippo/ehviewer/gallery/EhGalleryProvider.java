@@ -22,7 +22,7 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.lib.glgallery.GalleryProvider;
-import com.hippo.image.Image;
+import com.hippo.lib.image.Image;
 import com.hippo.unifile.UniFile;
 import com.hippo.yorozuya.SimpleHandler;
 import java.util.Locale;

@@ -76,7 +76,7 @@ import com.hippo.ehviewer.widget.ReversibleSeekBar;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.lib.glgallery.GalleryView;
 import com.hippo.lib.glgallery.SimpleAdapter;
-import com.hippo.glview.view.GLRootView;
+import com.hippo.lib.glview.view.GLRootView;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.SystemUiHelper;

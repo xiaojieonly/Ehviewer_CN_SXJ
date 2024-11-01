@@ -12,7 +12,7 @@ android {
     testNamespace 'com.hippo.ehviewer.debug'
     compileSdk 34
 //    buildToolsVersion "30.0.3"
-//    ndkVersion '23.1.7779620'
+    ndkVersion '25.1.8937393'
 
     flavorDimensions "distribute"
     productFlavors {
@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
-        minSdkVersion 23
+        minSdkVersion 28
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
@@ -41,6 +41,7 @@ android {
         }
         externalNativeBuild {
             cmake {
+//                path 'src/main/cpp/CMakeLists.txt'
                 cppFlags ''
             }
         }
@@ -76,8 +77,8 @@ android {
 //    }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_16
+        targetCompatibility JavaVersion.VERSION_16
     }
 
     buildFeatures {
@@ -134,6 +135,8 @@ dependencies {
     implementation "androidx.preference:preference:1.0.0"
     implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation 'org.conscrypt:conscrypt-android:2.5.1'
+    // https://mvnrepository.com/artifact/androidx.core/core-ktx
+    implementation 'androidx.core:core-ktx:1.13.1'
 //    implementation 'com.android.support:recyclerview-v7:25.0.1'
 
 //     https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng
@@ -156,8 +159,8 @@ dependencies {
     implementation 'com.github.seven332:animator:0.1.0'
 //    implementation 'com.github.seven332:beerbelly:0.2.0'
 //    implementation 'com.github.seven332:conaco:0.2.0'
-    implementation 'com.github.seven332:beerbelly:0.1.4'
-    implementation 'com.github.seven332:conaco:0.1.5-eh'
+//    implementation 'com.github.seven332:beerbelly:0.1.4'
+//    implementation 'com.github.seven332:conaco:0.1.5-eh'
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
 //    分页组件
@@ -165,18 +168,18 @@ dependencies {
 //    implementation 'com.github.xiaojieonly:Pagination_Sxj:d8253ceefd6b02b73f9e9485cbb7dd89a6b89ba3'
 //    为方便扩展代码直接迁移至项目内
 //    implementation 'com.github.seven332:glgallery:0.1.2'
-    implementation 'com.github.seven332:glview:0.1.0'
-    implementation 'com.github.seven332:glview-image:0.1.0'
+//    implementation 'com.github.seven332:glview:0.1.0'
+//    implementation 'com.github.seven332:glview-image:0.1.0'
     implementation 'com.github.seven332:hotspot:0.1.0'
-    implementation 'com.github.seven332:image:0.1.12'
+//    implementation 'com.github.seven332:image:0.1.12'
     implementation 'com.github.seven332:refreshlayout:0.1.0'
     implementation 'com.github.seven332:ripple:0.1.2'
     implementation 'com.github.seven332:streampipe:0.1.0'
     implementation 'com.github.seven332:tuxiang:0.1.6'
-    implementation 'com.github.seven332:unifile:9ec57bcd8f'
-    implementation 'com.github.seven332:yorozuya:0.1.2'
-    implementation 'com.github.seven332:yorozuya-thread:0.1.1'
-    implementation 'com.github.seven332:yorozuya-collect:0.1.4'
+//    implementation 'com.github.seven332:unifile:9ec57bcd8f'
+//    implementation 'com.github.seven332:yorozuya:0.1.2'
+//    implementation 'com.github.seven332:yorozuya-thread:0.1.1'
+//    implementation 'com.github.seven332:yorozuya-collect:0.1.4'
 
 
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'

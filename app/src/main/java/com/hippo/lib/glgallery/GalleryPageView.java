@@ -16,16 +16,16 @@
 
 package com.hippo.lib.glgallery;
 
-import com.hippo.glview.glrenderer.BasicTexture;
-import com.hippo.glview.glrenderer.Texture;
-import com.hippo.glview.image.GLImageMovableTextView;
-import com.hippo.glview.image.ImageMovableTextTexture;
-import com.hippo.glview.image.ImageTexture;
-import com.hippo.glview.view.Gravity;
-import com.hippo.glview.widget.GLFrameLayout;
-import com.hippo.glview.widget.GLLinearLayout;
-import com.hippo.glview.widget.GLProgressView;
-import com.hippo.glview.widget.GLTextureView;
+import com.hippo.lib.glview.glrenderer.BasicTexture;
+import com.hippo.lib.glview.glrenderer.Texture;
+import com.hippo.lib.glview.image.GLImageMovableTextView;
+import com.hippo.lib.glview.image.ImageMovableTextTexture;
+import com.hippo.lib.glview.image.ImageTexture;
+import com.hippo.lib.glview.view.Gravity;
+import com.hippo.lib.glview.widget.GLFrameLayout;
+import com.hippo.lib.glview.widget.GLLinearLayout;
+import com.hippo.lib.glview.widget.GLProgressView;
+import com.hippo.lib.glview.widget.GLTextureView;
 
 public class GalleryPageView extends GLFrameLayout {
 
