@@ -36,8 +36,8 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.view.ViewTransition;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 /**
  * Only show a progress with jobs in background

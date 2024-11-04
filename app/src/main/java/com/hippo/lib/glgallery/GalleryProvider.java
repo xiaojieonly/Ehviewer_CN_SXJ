@@ -25,9 +25,9 @@ import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.image.ImageWrapper;
 import com.hippo.lib.glview.view.GLRoot;
 import com.hippo.lib.image.Image;
-import com.hippo.yorozuya.ConcurrentPool;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.OSUtils;
+import com.hippo.lib.yorozuya.ConcurrentPool;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.OSUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

@@ -26,7 +26,7 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class ListCheckBoxDialogBuilder extends AlertDialog.Builder {
 

@@ -16,13 +16,10 @@
 
 package com.hippo.ehviewer.spider;
 
-import static com.hippo.ehviewer.spider.SpiderDen.generateImageFilename;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.os.CountDownTimer;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
@@ -58,16 +55,15 @@ import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.streampipe.OutputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
-import com.hippo.util.FileUtils;
 import com.hippo.util.IoThreadPoolExecutor;
-import com.hippo.yorozuya.IOUtils;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.OSUtils;
-import com.hippo.yorozuya.StringUtils;
-import com.hippo.yorozuya.Utilities;
-import com.hippo.yorozuya.collect.SparseJLArray;
-import com.hippo.yorozuya.thread.PriorityThread;
-import com.hippo.yorozuya.thread.PriorityThreadFactory;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.OSUtils;
+import com.hippo.lib.yorozuya.StringUtils;
+import com.hippo.lib.yorozuya.Utilities;
+import com.hippo.lib.yorozuya.collect.SparseJLArray;
+import com.hippo.lib.yorozuya.thread.PriorityThread;
+import com.hippo.lib.yorozuya.thread.PriorityThreadFactory;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.BufferedInputStream;

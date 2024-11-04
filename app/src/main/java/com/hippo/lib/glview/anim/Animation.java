@@ -19,7 +19,7 @@ package com.hippo.lib.glview.anim;
 import android.os.SystemClock;
 import android.view.animation.Interpolator;
 
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 // Animation calculates a value according to the current input time.
 //

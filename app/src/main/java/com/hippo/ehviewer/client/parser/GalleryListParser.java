@@ -29,7 +29,7 @@ import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.ehviewer.sync.GalleryListTagsSyncTask;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.JsoupUtils;
-import com.hippo.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;

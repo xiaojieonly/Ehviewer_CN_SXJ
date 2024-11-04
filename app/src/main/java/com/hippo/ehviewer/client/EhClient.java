@@ -26,7 +26,7 @@ import com.hippo.ehviewer.client.data.userTag.UserTag;
 import com.hippo.ehviewer.client.exception.CancelledException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
-import com.hippo.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.SimpleHandler;
 
 import java.io.File;
 import java.util.concurrent.ThreadPoolExecutor;

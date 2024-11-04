@@ -18,7 +18,7 @@ package com.hippo.lib.glview.glrenderer;
 
 import android.graphics.Bitmap;
 
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 // BitmapTexture is a texture whose content is specified by a fixed Bitmap.
 //

@@ -22,7 +22,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 public class MaxSizeContainer extends ViewGroup {
 

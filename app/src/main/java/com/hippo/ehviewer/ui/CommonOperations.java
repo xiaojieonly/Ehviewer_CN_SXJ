@@ -32,8 +32,8 @@ import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.unifile.UniFile;
-import com.hippo.yorozuya.IOUtils;
-import com.hippo.yorozuya.collect.LongList;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.collect.LongList;
 
 import java.io.IOException;
 import java.io.InputStream;

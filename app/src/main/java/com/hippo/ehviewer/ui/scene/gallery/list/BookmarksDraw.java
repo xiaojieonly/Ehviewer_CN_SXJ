@@ -20,8 +20,8 @@ import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.scene.Announcer;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.util.List;
 

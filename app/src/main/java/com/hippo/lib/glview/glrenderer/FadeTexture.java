@@ -17,7 +17,7 @@
 package com.hippo.lib.glview.glrenderer;
 
 import com.hippo.lib.glview.view.AnimationTime;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 // FadeTexture is a texture which fades the given texture along the time.
 public abstract class FadeTexture implements Texture {

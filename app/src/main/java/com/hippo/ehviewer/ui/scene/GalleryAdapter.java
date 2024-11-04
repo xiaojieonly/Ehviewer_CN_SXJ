@@ -43,7 +43,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.widget.TileThumb;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.ExecutorService;

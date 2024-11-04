@@ -3,7 +3,7 @@ package com.hippo.lib.glview.glrenderer;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 public class SpriteTexture extends TiledTexture {
 

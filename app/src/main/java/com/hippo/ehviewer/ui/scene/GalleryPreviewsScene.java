@@ -55,9 +55,9 @@ import com.hippo.widget.ContentLayout;
 import com.hippo.widget.LoadImageView;
 import com.hippo.widget.Slider;
 import com.hippo.widget.recyclerview.AutoGridLayoutManager;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.LayoutUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.greenrobot.eventbus.EventBus;

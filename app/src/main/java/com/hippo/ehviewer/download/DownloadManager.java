@@ -22,7 +22,6 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,13 +37,13 @@ import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.lib.image.Image;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.IoThreadPoolExecutor;
-import com.hippo.yorozuya.ConcurrentPool;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.ObjectUtils;
-import com.hippo.yorozuya.SimpleHandler;
-import com.hippo.yorozuya.collect.LongList;
-import com.hippo.yorozuya.collect.SparseIJArray;
-import com.hippo.yorozuya.collect.SparseJLArray;
+import com.hippo.lib.yorozuya.ConcurrentPool;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.collect.LongList;
+import com.hippo.lib.yorozuya.collect.SparseIJArray;
+import com.hippo.lib.yorozuya.collect.SparseJLArray;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;

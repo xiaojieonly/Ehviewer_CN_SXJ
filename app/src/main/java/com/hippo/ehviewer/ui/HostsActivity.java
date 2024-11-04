@@ -46,7 +46,7 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.Hosts;
 import com.hippo.ehviewer.R;
 import com.hippo.ripple.Ripple;
-import com.hippo.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.LayoutUtils;
 import java.util.List;
 import java.util.Locale;
 

@@ -24,7 +24,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.widget.CategoryTable;
 import com.hippo.preference.DialogPreference;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class DefaultCategoryPreference extends DialogPreference {
 

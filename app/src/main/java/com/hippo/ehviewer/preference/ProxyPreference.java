@@ -33,8 +33,8 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.network.InetValidator;
 import com.hippo.preference.DialogPreference;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class ProxyPreference extends DialogPreference implements View.OnClickListener {
 

@@ -19,7 +19,7 @@ package com.hippo.scene;
 import android.app.Application;
 import android.util.SparseArray;
 
-import com.hippo.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.IntIdGenerator;
 
 public abstract class SceneApplication extends Application {
 

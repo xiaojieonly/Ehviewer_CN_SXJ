@@ -24,7 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import androidx.annotation.NonNull;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class SeekBarPanel extends LinearLayout {
 

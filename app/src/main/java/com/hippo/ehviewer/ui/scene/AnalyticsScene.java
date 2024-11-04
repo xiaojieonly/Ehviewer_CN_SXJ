@@ -29,7 +29,7 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.text.Html;
 import com.hippo.text.LinkMovementMethod2;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class AnalyticsScene extends SolidScene implements View.OnClickListener {
 

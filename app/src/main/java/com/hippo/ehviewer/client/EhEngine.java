@@ -65,7 +65,7 @@ import com.hippo.ehviewer.client.parser.VoteCommentParser;
 import com.hippo.network.StatusCodeException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.FileUtils;
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 import java.io.File;
 import java.io.IOException;

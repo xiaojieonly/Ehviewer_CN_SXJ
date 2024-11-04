@@ -32,8 +32,8 @@ import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.widget.ProgressView;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.util.ArrayList;
 

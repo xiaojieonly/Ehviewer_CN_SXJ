@@ -18,7 +18,7 @@ package com.hippo.lib.glview.util;
 
 import android.graphics.Color;
 
-import com.hippo.yorozuya.AssertError;
+import com.hippo.lib.yorozuya.AssertError;
 
 public class GalleryUtils {
 

@@ -46,9 +46,9 @@ import com.hippo.refreshlayout.RefreshLayout;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.view.ViewTransition;
-import com.hippo.yorozuya.IntIdGenerator;
-import com.hippo.yorozuya.LayoutUtils;
-import com.hippo.yorozuya.collect.IntList;
+import com.hippo.lib.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.collect.IntList;
 
 import java.util.ArrayList;
 import java.util.Collections;

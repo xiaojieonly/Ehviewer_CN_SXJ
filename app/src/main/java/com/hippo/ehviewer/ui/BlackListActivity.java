@@ -43,7 +43,7 @@ import com.hippo.ehviewer.dao.BlackList;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.TimeUtils;
 import com.hippo.view.ViewTransition;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.util.List;
 

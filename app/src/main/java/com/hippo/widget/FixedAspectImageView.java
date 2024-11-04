@@ -23,7 +23,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import androidx.appcompat.widget.AppCompatImageView;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 public class FixedAspectImageView extends AppCompatImageView {
 

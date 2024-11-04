@@ -27,7 +27,7 @@ import android.widget.TableLayout;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.widget.CheckTextView;
-import com.hippo.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
 
 public class CategoryTable extends TableLayout implements View.OnLongClickListener {
 

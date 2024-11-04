@@ -27,7 +27,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.ui.MainActivity;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class SelectSiteScene extends SolidScene implements View.OnClickListener {
 

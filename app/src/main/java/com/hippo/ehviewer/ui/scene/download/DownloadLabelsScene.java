@@ -46,8 +46,8 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.util.DrawableManager;
 import com.hippo.view.ViewTransition;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import java.util.List;
 
 public class DownloadLabelsScene extends ToolbarScene {

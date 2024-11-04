@@ -23,8 +23,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 /**
  * not scrollable

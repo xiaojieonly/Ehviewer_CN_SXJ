@@ -29,7 +29,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.widget.lockpattern.LockPatternUtils;
 import com.hippo.widget.lockpattern.LockPatternView;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class SetSecurityActivity extends ToolbarActivity implements View.OnClickListener {
 

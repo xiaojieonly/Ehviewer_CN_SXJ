@@ -32,13 +32,12 @@ import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.exception.ParseException;
-import com.hippo.ehviewer.client.parser.GalleryDetailParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.streampipe.OutputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
-import com.hippo.yorozuya.IOUtils;
-import com.hippo.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;

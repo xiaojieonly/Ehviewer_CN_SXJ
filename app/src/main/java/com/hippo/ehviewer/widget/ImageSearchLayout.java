@@ -41,8 +41,8 @@ import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
 import com.hippo.util.FileUtils;
-import com.hippo.yorozuya.IOUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,8 +50,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public final class ImageSearchLayout extends LinearLayout implements View.OnClickListener {
 

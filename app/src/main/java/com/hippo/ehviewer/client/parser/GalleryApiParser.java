@@ -19,7 +19,7 @@ package com.hippo.ehviewer.client.parser;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 
-import com.hippo.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

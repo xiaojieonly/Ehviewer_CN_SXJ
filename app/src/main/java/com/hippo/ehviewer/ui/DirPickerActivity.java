@@ -32,7 +32,7 @@ import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
 import com.hippo.ripple.Ripple;
 import com.hippo.widget.DirExplorer;
-import com.hippo.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.FileUtils;
 import java.io.File;
 
 public class DirPickerActivity extends ToolbarActivity

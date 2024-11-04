@@ -1,12 +1,27 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/10/29 : 紧急修复(不再支持Android 9以下手机)
+ ###  新版发布1.9.9.1
+ ###  紧急更新webp格式支持
+
+   点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/2f4r195618)   
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1UYLjcVUM_6Y9vLo85oIAEQ)  密码:3f4g   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iJPTF2e9p5cd)  密码:73ym   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:44ee110643fb1830843e197feb6403503fa554c7&xt=urn:btmh:122047ea931afbe25cb0f4c5fa74a57c03194ed8f2cb76e0d070b99b8a99b3c31b50&dn=EhViewer-1.9.9.1.apk   
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
+
 # 2024/10/29 : 紧急修复
-###  新版发布1.9.9.0
-###  紧急修复解析详情页的正则表达式
-###  修复画廊详情H@H功能解析失败的问题
-###  紧急修复解析详情页的正则表达式在Gallery Page Thumbnail Labeling设置不为none时解析失败的问题
-###  紧急修复解析详情页的正则表达式在Thumbnail Settings为small时解析失败的问题
+ ###  新版发布1.9.9.0
+ ###  紧急修复解析详情页的正则表达式
+ ###  修复画廊详情H@H功能解析失败的问题
+ ###  紧急修复解析详情页的正则表达式在Gallery Page Thumbnail Labeling设置不为none时解析失败的问题
+ ###  紧急修复解析详情页的正则表达式在Thumbnail Settings为small时解析失败的问题
 
 
    点击前往下载：[EhViewer (20.8 MB)](https://appteka.store/app/2f4r195618)   

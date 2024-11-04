@@ -22,7 +22,7 @@ import android.annotation.TargetApi;
 import android.os.Build;
 import android.view.View;
 
-import com.hippo.yorozuya.SimpleAnimatorListener;
+import com.hippo.lib.yorozuya.SimpleAnimatorListener;
 
 public final class ViewAnimationUtils {
     private ViewAnimationUtils() {}

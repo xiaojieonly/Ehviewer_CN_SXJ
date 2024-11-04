@@ -21,7 +21,7 @@ import android.graphics.RectF;
 import androidx.annotation.NonNull;
 
 import com.hippo.lib.glview.glrenderer.GLCanvas;
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 public class ImageSpriteTexture extends ImageTexture {
 

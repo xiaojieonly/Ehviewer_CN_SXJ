@@ -42,7 +42,7 @@ import com.hippo.lib.glview.glrenderer.UploadedTexture;
 import com.hippo.lib.glview.util.ApiHelper;
 import com.hippo.lib.glview.util.GalleryUtils;
 import com.hippo.lib.glview.util.MotionEventHelper;
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

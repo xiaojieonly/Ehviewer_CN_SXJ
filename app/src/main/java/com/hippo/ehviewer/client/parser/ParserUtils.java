@@ -16,8 +16,8 @@
 
 package com.hippo.ehviewer.client.parser;
 
-import com.hippo.yorozuya.NumberUtils;
-import com.hippo.yorozuya.StringUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.StringUtils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

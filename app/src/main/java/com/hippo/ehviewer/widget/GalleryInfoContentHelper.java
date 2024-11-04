@@ -23,7 +23,7 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.FavouriteStatusRouter;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.widget.ContentLayout;
-import com.hippo.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.IntIdGenerator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

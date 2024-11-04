@@ -29,9 +29,9 @@ import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.glrenderer.NativeTexture;
 import com.hippo.lib.glview.glrenderer.Texture;
 import com.hippo.lib.glview.view.GLRoot;
-import com.hippo.yorozuya.thread.InfiniteThreadExecutor;
-import com.hippo.yorozuya.thread.PVLock;
-import com.hippo.yorozuya.thread.PriorityThreadFactory;
+import com.hippo.lib.yorozuya.thread.InfiniteThreadExecutor;
+import com.hippo.lib.yorozuya.thread.PVLock;
+import com.hippo.lib.yorozuya.thread.PriorityThreadFactory;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

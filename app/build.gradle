@@ -12,7 +12,7 @@ android {
     testNamespace 'com.hippo.ehviewer.debug'
     compileSdk 34
 //    buildToolsVersion "30.0.3"
-    ndkVersion '25.1.8937393'
+//    ndkVersion '25.1.8937393'
 
     flavorDimensions "distribute"
     productFlavors {
@@ -30,7 +30,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "1.9.9.0"
+        versionName "1.9.9.1"
         vectorDrawables.useSupportLibrary = true
         resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
         testOptions.unitTests.includeAndroidResources = true

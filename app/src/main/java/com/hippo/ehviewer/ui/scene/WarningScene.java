@@ -25,7 +25,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public final class WarningScene extends SolidScene implements View.OnClickListener {
 

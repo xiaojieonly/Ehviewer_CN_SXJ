@@ -34,7 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.animation.PathInterpolatorCompat;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import java.util.ArrayList;
 
 // Base on android.graphics.drawable.MaterialProgressDrawable in L preview

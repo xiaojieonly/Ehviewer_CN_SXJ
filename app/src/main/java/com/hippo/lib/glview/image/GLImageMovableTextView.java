@@ -22,7 +22,7 @@ import android.text.TextUtils;
 import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.view.GLView;
 import com.hippo.lib.glview.view.Gravity;
-import com.hippo.yorozuya.collect.CollectionUtils;
+import com.hippo.lib.yorozuya.collect.CollectionUtils;
 
 public class GLImageMovableTextView extends GLView {
 

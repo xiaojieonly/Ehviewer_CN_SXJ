@@ -29,7 +29,7 @@ import androidx.annotation.IntDef;
 import com.hippo.lib.glview.anim.CanvasAnimation;
 import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.glrenderer.GLPaint;
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

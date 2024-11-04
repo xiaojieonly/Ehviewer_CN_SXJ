@@ -26,7 +26,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -39,15 +38,14 @@ import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange;
 import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
 import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableItemViewHolder;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
-import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.util.DrawableManager;
 import com.hippo.view.ViewTransition;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.util.List;
 

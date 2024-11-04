@@ -21,9 +21,9 @@ import android.animation.ValueAnimator;
 import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.SimpleAnimatorListener;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.SimpleAnimatorListener;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class SearchBarMover extends RecyclerView.OnScrollListener {
 

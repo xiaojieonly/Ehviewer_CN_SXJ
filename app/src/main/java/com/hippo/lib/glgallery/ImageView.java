@@ -23,8 +23,8 @@ import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.glrenderer.Texture;
 import com.hippo.lib.glview.image.ImageTexture;
 import com.hippo.lib.glview.view.GLView;
-import com.hippo.yorozuya.AnimationUtils;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 import java.util.Arrays;
 
 class ImageView extends GLView implements ImageTexture.Callback {

@@ -44,9 +44,9 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.ExceptionUtils;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.IntIdGenerator;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public final class SignInScene extends SolidScene implements EditText.OnEditorActionListener,
         View.OnClickListener {

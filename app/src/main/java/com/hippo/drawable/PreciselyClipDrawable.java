@@ -21,7 +21,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 /**
  * Show a part of the original drawable

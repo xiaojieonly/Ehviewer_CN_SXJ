@@ -29,7 +29,7 @@ import com.hippo.lib.image.Image;
 import com.hippo.unifile.UniFile;
 import com.hippo.unifile.UniRandomAccessFile;
 import com.hippo.util.NaturalComparator;
-import com.hippo.yorozuya.thread.PriorityThread;
+import com.hippo.lib.yorozuya.thread.PriorityThread;
 
 import java.io.FileInputStream;
 import java.io.IOException;

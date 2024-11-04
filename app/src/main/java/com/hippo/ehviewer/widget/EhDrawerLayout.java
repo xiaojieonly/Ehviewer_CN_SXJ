@@ -27,7 +27,7 @@ import androidx.core.view.ViewCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.AnimationUtils;
 import java.util.ArrayList;
 import java.util.List;
 

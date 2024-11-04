@@ -31,7 +31,7 @@ import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.LinearDividerItemDecoration;
 import com.hippo.ehviewer.R;
 import com.hippo.ripple.Ripple;
-import com.hippo.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.LayoutUtils;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;

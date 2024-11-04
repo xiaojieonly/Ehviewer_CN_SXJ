@@ -37,9 +37,9 @@ import com.hippo.ehviewer.ui.SetSecurityActivity;
 import com.hippo.hardware.ShakeDetector;
 import com.hippo.widget.lockpattern.LockPatternUtils;
 import com.hippo.widget.lockpattern.LockPatternView;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ObjectUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import java.util.List;
 
 public class SecurityScene extends SolidScene implements

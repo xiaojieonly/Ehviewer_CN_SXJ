@@ -25,7 +25,7 @@ import android.view.View;
 
 import com.hippo.ehviewer.R;
 import com.hippo.util.DrawableManager;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 /**
  * 5 stars, from 0 to 10

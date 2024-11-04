@@ -25,7 +25,7 @@ import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.JsoupUtils;
-import com.hippo.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
 import java.util.List;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

@@ -17,7 +17,6 @@
 package com.hippo.ehviewer.client;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Base64;
 import android.util.Pair;
 
@@ -31,8 +30,8 @@ import com.hippo.ehviewer.client.data.Tag;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.util.TextUrl;
-import com.hippo.yorozuya.FileUtils;
-import com.hippo.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,8 +39,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -57,13 +54,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okio.Buffer;
 import okio.BufferedSource;
-import okio.ByteString;
 import okio.Okio;
-import okio.Options;
-import okio.Sink;
-import okio.Timeout;
 
 public class EhTagDatabase {
 

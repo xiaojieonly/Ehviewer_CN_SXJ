@@ -17,7 +17,7 @@
 package com.hippo.lib.glview.anim;
 
 import com.hippo.lib.glview.glrenderer.GLCanvas;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 public class AlphaAnimation extends CanvasAnimation {
     private final float mStartAlpha;

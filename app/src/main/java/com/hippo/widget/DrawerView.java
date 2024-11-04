@@ -21,7 +21,7 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
-import com.hippo.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.LayoutUtils;
 
 public class DrawerView extends FrameLayout {
 

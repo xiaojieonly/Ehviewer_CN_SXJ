@@ -260,7 +260,7 @@ public final class ConacoTask<V> {
             return this;
         }
 
-        Builder<T> setOkHttpClient(OkHttpClient okHttpClient) {
+        public Builder<T> setOkHttpClient(OkHttpClient okHttpClient) {
             mOkHttpClient = okHttpClient;
             return this;
         }

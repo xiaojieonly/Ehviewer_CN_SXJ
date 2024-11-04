@@ -40,7 +40,7 @@ import com.hippo.ehviewer.client.EhFilter;
 import com.hippo.ehviewer.dao.Filter;
 import com.hippo.util.DrawableManager;
 import com.hippo.view.ViewTransition;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import java.util.List;
 
 public class FilterActivity extends ToolbarActivity {

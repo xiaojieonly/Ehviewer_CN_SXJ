@@ -32,7 +32,7 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ripple.Ripple;
 import com.hippo.widget.SensitiveCheckBox;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class ExcludedLanguagesActivity extends ToolbarActivity
         implements View.OnClickListener {

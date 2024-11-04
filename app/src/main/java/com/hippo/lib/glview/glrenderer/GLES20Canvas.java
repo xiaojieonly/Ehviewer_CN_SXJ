@@ -24,8 +24,8 @@ import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.collect.IntList;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.collect.IntList;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;

@@ -17,7 +17,6 @@
 package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.os.Bundle;
@@ -47,15 +46,14 @@ import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.userTag.UserTag;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
-import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.DrawableManager;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.ProgressView;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.util.ArrayList;
 

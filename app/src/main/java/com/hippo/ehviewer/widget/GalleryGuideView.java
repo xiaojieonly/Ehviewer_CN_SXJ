@@ -27,7 +27,7 @@ import android.widget.TextView;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class GalleryGuideView extends ViewGroup implements View.OnClickListener {
 

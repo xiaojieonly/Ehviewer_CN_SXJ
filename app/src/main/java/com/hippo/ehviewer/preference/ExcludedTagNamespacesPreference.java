@@ -24,8 +24,8 @@ import androidx.appcompat.app.AlertDialog;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.preference.DialogPreference;
-import com.hippo.yorozuya.NumberUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class ExcludedTagNamespacesPreference extends DialogPreference {
 

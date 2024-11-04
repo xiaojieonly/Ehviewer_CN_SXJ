@@ -118,12 +118,12 @@ import com.hippo.widget.ContentLayout;
 import com.hippo.widget.FabLayout;
 import com.hippo.widget.LoadImageViewNew;
 import com.hippo.widget.SearchBarMover;
-import com.hippo.yorozuya.AnimationUtils;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.SimpleAnimatorListener;
-import com.hippo.yorozuya.StringUtils;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.SimpleAnimatorListener;
+import com.hippo.lib.yorozuya.StringUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;

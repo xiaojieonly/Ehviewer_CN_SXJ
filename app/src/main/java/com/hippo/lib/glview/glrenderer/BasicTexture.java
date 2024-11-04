@@ -19,7 +19,7 @@ package com.hippo.lib.glview.glrenderer;
 import android.graphics.RectF;
 import android.util.Log;
 
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 import java.util.WeakHashMap;
 

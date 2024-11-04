@@ -35,7 +35,7 @@ import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
-import com.hippo.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;

@@ -18,8 +18,8 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.scene.Announcer;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;

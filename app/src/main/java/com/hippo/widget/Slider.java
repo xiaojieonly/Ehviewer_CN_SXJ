@@ -38,10 +38,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.graphics.drawable.DrawableCompat;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.AnimationUtils;
-import com.hippo.yorozuya.LayoutUtils;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.SimpleHandler;
 
 public class Slider extends View {
 

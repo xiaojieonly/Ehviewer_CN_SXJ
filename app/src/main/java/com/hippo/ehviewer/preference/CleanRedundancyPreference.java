@@ -25,7 +25,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.unifile.UniFile;
-import com.hippo.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
 
 public class CleanRedundancyPreference extends TaskPreference {
 

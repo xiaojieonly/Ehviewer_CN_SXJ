@@ -21,7 +21,7 @@ package com.hippo.network;
  */
 
 import com.hippo.util.HashCodeUtils;
-import com.hippo.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;

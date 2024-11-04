@@ -20,11 +20,10 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import androidx.annotation.IdRes;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 public class RadioGridGroup extends SimpleGridLayout {
 

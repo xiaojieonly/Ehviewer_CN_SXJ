@@ -16,7 +16,7 @@
 
 package com.hippo.lib.glview.anim;
 
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 public class FloatAnimation extends Animation {
 

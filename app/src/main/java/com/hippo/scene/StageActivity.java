@@ -30,8 +30,8 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.EhActivity;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.IntIdGenerator;
 
 import java.util.ArrayList;
 import java.util.Collections;

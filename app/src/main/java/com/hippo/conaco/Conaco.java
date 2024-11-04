@@ -23,8 +23,8 @@ import androidx.annotation.IntDef;
 import androidx.annotation.UiThread;
 
 import com.hippo.beerbelly.BeerBelly;
-import com.hippo.yorozuya.thread.PriorityThreadFactory;
-import com.hippo.yorozuya.thread.SerialThreadExecutor;
+import com.hippo.lib.yorozuya.thread.PriorityThreadFactory;
+import com.hippo.lib.yorozuya.thread.SerialThreadExecutor;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

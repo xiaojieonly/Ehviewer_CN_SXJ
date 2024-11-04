@@ -67,10 +67,10 @@ import com.hippo.util.BitmapUtils;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.util.ReadableTime;
-import com.hippo.yorozuya.FileUtils;
-import com.hippo.yorozuya.IntIdGenerator;
-import com.hippo.yorozuya.OSUtils;
-import com.hippo.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.OSUtils;
+import com.hippo.lib.yorozuya.SimpleHandler;
 
 import org.conscrypt.Conscrypt;
 

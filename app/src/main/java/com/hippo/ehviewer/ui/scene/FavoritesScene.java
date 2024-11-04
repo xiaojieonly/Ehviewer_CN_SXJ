@@ -96,10 +96,10 @@ import com.hippo.util.DrawableManager;
 import com.hippo.widget.ContentLayout;
 import com.hippo.widget.FabLayout;
 import com.hippo.widget.SearchBarMover;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.ObjectUtils;
-import com.hippo.yorozuya.SimpleHandler;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;

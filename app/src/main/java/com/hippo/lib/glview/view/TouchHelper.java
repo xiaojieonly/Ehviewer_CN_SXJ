@@ -22,8 +22,8 @@ import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
 
-import com.hippo.yorozuya.LayoutUtils;
-import com.hippo.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.LayoutUtils;
+import com.hippo.lib.yorozuya.SimpleHandler;
 
 public class TouchHelper {
 

@@ -5,7 +5,7 @@ import android.util.Log;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.ehviewer.client.data.HomeDetail;
 import com.hippo.ehviewer.client.exception.EhException;
-import com.hippo.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

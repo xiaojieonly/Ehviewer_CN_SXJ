@@ -16,8 +16,8 @@
 
 package com.hippo.util;
 
-import com.hippo.yorozuya.FileUtils;
-import com.hippo.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.IOUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

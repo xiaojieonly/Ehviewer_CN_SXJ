@@ -35,10 +35,10 @@ import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.streampipe.OutputStreamPipe;
 import com.hippo.unifile.FilenameFilter;
 import com.hippo.unifile.UniFile;
-import com.hippo.yorozuya.FileUtils;
-import com.hippo.yorozuya.IOUtils;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.Utilities;
+import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.Utilities;
 
 import java.io.File;
 import java.io.IOException;

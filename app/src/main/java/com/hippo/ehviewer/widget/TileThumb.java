@@ -20,7 +20,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 
 import com.hippo.widget.LoadImageView;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 
 public class TileThumb extends LoadImageView {
 

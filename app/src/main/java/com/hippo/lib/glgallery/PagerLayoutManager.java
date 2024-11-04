@@ -30,9 +30,9 @@ import com.hippo.lib.glview.view.GLView;
 import com.hippo.lib.glview.widget.GLEdgeView;
 import com.hippo.lib.glview.widget.GLProgressView;
 import com.hippo.lib.glview.widget.GLTextureView;
-import com.hippo.yorozuya.AnimationUtils;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

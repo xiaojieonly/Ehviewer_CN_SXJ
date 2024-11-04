@@ -26,7 +26,7 @@ import android.view.ViewGroup;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
 
 public class GalleryHeader extends ViewGroup {
 

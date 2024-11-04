@@ -27,9 +27,9 @@ import android.view.animation.Interpolator;
 import androidx.annotation.NonNull;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hippo.ehviewer.R;
-import com.hippo.yorozuya.AnimationUtils;
-import com.hippo.yorozuya.AssertUtils;
-import com.hippo.yorozuya.SimpleAnimatorListener;
+import com.hippo.lib.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.SimpleAnimatorListener;
 
 public class FabLayout extends ViewGroup implements View.OnClickListener {
 

@@ -22,7 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import androidx.annotation.NonNull;
 import com.hippo.streampipe.InputStreamPipe;
-import com.hippo.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.MathUtils;
 import java.io.IOException;
 
 public final class BitmapUtils {

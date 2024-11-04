@@ -21,7 +21,7 @@ package com.hippo.network;
  */
 
 import android.content.Context;
-import com.hippo.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;

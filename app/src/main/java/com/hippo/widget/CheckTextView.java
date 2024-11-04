@@ -35,9 +35,9 @@ import androidx.appcompat.widget.AppCompatTextView;
 import com.hippo.ehviewer.R;
 import com.hippo.hotspot.Hotspot;
 import com.hippo.hotspot.Hotspotable;
-import com.hippo.yorozuya.AnimationUtils;
-import com.hippo.yorozuya.MathUtils;
-import com.hippo.yorozuya.SimpleAnimatorListener;
+import com.hippo.lib.yorozuya.AnimationUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.SimpleAnimatorListener;
 
 public class CheckTextView extends AppCompatTextView implements OnClickListener, Hotspotable {
 

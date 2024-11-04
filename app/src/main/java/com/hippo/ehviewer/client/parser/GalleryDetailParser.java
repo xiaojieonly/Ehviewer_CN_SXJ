@@ -39,8 +39,8 @@ import com.hippo.ehviewer.client.exception.PiningException;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.JsoupUtils;
 import com.hippo.util.MutableBoolean;
-import com.hippo.yorozuya.NumberUtils;
-import com.hippo.yorozuya.StringUtils;
+import com.hippo.lib.yorozuya.NumberUtils;
+import com.hippo.lib.yorozuya.StringUtils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

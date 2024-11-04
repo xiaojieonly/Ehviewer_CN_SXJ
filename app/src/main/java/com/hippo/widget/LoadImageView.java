@@ -16,6 +16,9 @@
 
 package com.hippo.widget;
 
+import static com.hippo.ehviewer.client.EhUrl.DOMAIN_E;
+import static com.hippo.ehviewer.client.EhUrl.DOMAIN_EX;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -229,6 +232,9 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
                 .setKey(key)
                 .setUrl(url)
                 .setUseNetwork(useNetwork);
+        if (url.contains(DOMAIN_EX)||url.contains(DOMAIN_E)){
+            builder.setOkHttpClient(EhApplication.getOkHttpClient(getContext()));
+        }
 
 //        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
 //        builder.unikery = this;

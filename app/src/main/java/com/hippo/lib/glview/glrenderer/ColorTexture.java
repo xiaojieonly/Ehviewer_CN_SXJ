@@ -18,7 +18,7 @@ package com.hippo.lib.glview.glrenderer;
 
 import android.graphics.RectF;
 
-import com.hippo.yorozuya.ColorUtils;
+import com.hippo.lib.yorozuya.ColorUtils;
 
 // ColorTexture is a texture which fills the rectangle with the specified color.
 public class ColorTexture implements Texture {

@@ -6,11 +6,10 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryDetail;
-import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.GalleryDetailTagsSyncTask;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.scene.SceneFragment;
-import com.hippo.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.FileUtils;
 
 public class GetGalleryDetailListener extends EhCallback<GalleryDetailScene, GalleryDetail> {
 

@@ -36,7 +36,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+
 import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.MarginItemDecoration;
@@ -45,7 +45,7 @@ import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ripple.Ripple;
 import com.hippo.widget.RadioGridGroup;
-import com.hippo.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

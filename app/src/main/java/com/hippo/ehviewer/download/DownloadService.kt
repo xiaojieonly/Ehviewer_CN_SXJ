@@ -38,11 +38,11 @@ import com.hippo.ehviewer.ui.MainActivity
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene
 import com.hippo.scene.StageActivity
 import com.hippo.util.ReadableTime
-import com.hippo.yorozuya.FileUtils
-import com.hippo.yorozuya.SimpleHandler
-import com.hippo.yorozuya.collect.LongList
-import com.hippo.yorozuya.collect.SparseJBArray
-import com.hippo.yorozuya.collect.SparseJLArray
+import com.hippo.lib.yorozuya.FileUtils
+import com.hippo.lib.yorozuya.SimpleHandler
+import com.hippo.lib.yorozuya.collect.LongList
+import com.hippo.lib.yorozuya.collect.SparseJBArray
+import com.hippo.lib.yorozuya.collect.SparseJLArray
 
 @SuppressLint("UnspecifiedImmutableFlag")
 class DownloadService : Service(), DownloadManager.DownloadListener {
@@ -577,8 +577,10 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         private const val ID_DOWNLOADED = 2
         private const val ID_509 = 3
 
-        private val sItemStateArray = SparseJBArray()
-        private val sItemTitleArray = SparseJLArray<String>()
+        private val sItemStateArray =
+            SparseJBArray()
+        private val sItemTitleArray =
+            SparseJLArray<String>()
 
         private var sFailedCount = 0
         private var sFinishedCount = 0

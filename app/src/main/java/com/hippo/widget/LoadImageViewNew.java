@@ -16,6 +16,9 @@
 
 package com.hippo.widget;
 
+import static com.hippo.ehviewer.client.EhUrl.DOMAIN_E;
+import static com.hippo.ehviewer.client.EhUrl.DOMAIN_EX;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -235,6 +238,9 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
                 .setKey(key)
                 .setUrl(url)
                 .setUseNetwork(useNetwork);
+        if (url.contains(DOMAIN_EX)||url.contains(DOMAIN_E)){
+            builder.setOkHttpClient(EhApplication.getOkHttpClient(getContext()));
+        }
         mConaco.load(builder);
     }
 
