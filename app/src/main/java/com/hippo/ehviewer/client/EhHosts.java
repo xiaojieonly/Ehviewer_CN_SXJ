@@ -73,6 +73,7 @@ public class EhHosts implements Dns {
 
         if (Settings.getBuiltEXHosts()) {
             put(map, "exhentai.org",
+                    "104.24.56.202",
                     "178.175.128.251",
                     "178.175.128.252",
                     "178.175.128.253",
@@ -87,6 +88,7 @@ public class EhHosts implements Dns {
                     "178.175.132.22"
             );
             put(map, "s.exhentai.org",
+                    "104.24.56.202",
                     "178.175.128.251",
                     "178.175.128.252",
                     "178.175.128.253",
