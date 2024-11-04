@@ -1,7 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2024/10/29 : 紧急修复(不再支持Android 9以下手机)
+# 2024/11/04 : 紧急修复(不再支持Android 9以下手机)
  ###  新版发布1.9.9.1
  ###  紧急更新webp格式支持
 
