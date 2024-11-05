@@ -34,7 +34,6 @@ import androidx.core.graphics.drawable.toDrawable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import kotlin.math.max
 import kotlin.math.min
 
 class Image private constructor(
