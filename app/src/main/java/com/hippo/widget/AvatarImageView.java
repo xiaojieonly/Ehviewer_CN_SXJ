@@ -16,6 +16,7 @@
 
 package com.hippo.widget;
 
+import static android.graphics.Bitmap.Config.HARDWARE;
 import static com.hippo.ehviewer.client.EhUrl.DOMAIN_E;
 import static com.hippo.ehviewer.client.EhUrl.DOMAIN_EX;
 
@@ -108,7 +109,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         mRadius = a.getDimension(R.styleable.LoadImageView_image_radius, 0);
         mIsCircle = a.getBoolean(R.styleable.LoadImageView_image_circle, false);
 
-        if (attrs != null ){
+        if (attrs != null) {
             int srcResource = attrs.getAttributeResourceValue(
                     "http://schemas.android.com/apk/res/android", "src", 0);
             if (srcResource != 0)
@@ -135,7 +136,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         int width = getWidth() - getPaddingLeft() - getPaddingRight();
         int height = getHeight() - getPaddingTop() - getPaddingBottom();
         Bitmap image = drawableToBitmap(getDrawable());
-        if (image == null){
+        if (image == null) {
             super.onDraw(canvas);
             return;
         }
@@ -169,7 +170,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         if (!mLoadFromDrawable) {
             if (mFailed) {
                 onFailure();
-            /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */
+                /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */
             } else if (mTaskId == Unikery.INVALID_ID) {
                 load(mKey, mUrl, mUseNetwork);
             }
@@ -267,8 +268,8 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         load(key, url, true);
     }
 
-    public void load(String key, String url,boolean useNetwork) {
-        if (url == null || key == null ) {
+    public void load(String key, String url, boolean useNetwork) {
+        if (url == null || key == null) {
             return;
         }
 
@@ -285,7 +286,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
                 .setKey(key)
                 .setUrl(url)
                 .setUseNetwork(useNetwork);
-        if (url.contains(DOMAIN_EX)||url.contains(DOMAIN_E)){
+        if (url.contains(DOMAIN_EX) || url.contains(DOMAIN_E)) {
             builder.setOkHttpClient(EhApplication.getOkHttpClient(getContext()));
         }
 //        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
@@ -483,7 +484,14 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
                 paint);
         // 核心代码取两个图片的交集部分
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(source, (width - source.getWidth()) >> 1,
+        Bitmap src;
+        if (source.getConfig() == HARDWARE) {
+            src = source.copy(Bitmap.Config.ARGB_8888, false);
+        } else {
+            src = source;
+        }
+
+        canvas.drawBitmap(src, (width - source.getWidth()) >> 1,
                 (height - source.getHeight()) >> 1, paint);
         return target;
 
@@ -555,7 +563,11 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         int x = (newWidth - width) / 2;
         int y = (newHeight - height) / 2;
         if (x > 0 && y > 0) {
-            return Bitmap.createBitmap(bitmap, 0, 0, width, height, null, true);
+//            float scaleWidth = (float) newWidth /width;
+//            float scaleHeight = (float) newHeight /height;
+//            Matrix matrix = new Matrix();
+//            matrix.postScale(scaleWidth, scaleHeight);
+            return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
         }
 
         float scale;

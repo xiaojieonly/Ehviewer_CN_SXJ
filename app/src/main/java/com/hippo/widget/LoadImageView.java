@@ -232,18 +232,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
                 .setKey(key)
                 .setUrl(url)
                 .setUseNetwork(useNetwork);
-        if (url.contains(DOMAIN_EX)||url.contains(DOMAIN_E)){
-            builder.setOkHttpClient(EhApplication.getOkHttpClient(getContext()));
-        }
 
-//        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<>();
-//        builder.unikery = this;
-//        builder.key = key;
-//        builder.url = url;
-//        builder.dataContainer= container;
-//        builder.useNetwork= useNetwork;
-//        builder.okHttpClient= EhApplication.getOkHttpClient(getContext());
-//        builder.okHttpClient= EhApplication.getImageOkHttpClient(getContext());
         mConaco.load(builder);
     }
 

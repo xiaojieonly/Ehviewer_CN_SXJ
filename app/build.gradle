@@ -103,7 +103,7 @@ clean {
 
 dependencies {
 //    测试工具
-    implementation 'com.gu.android:toolargetool:0.3.0'
+//    debugCompileOnly 'com.gu.android:toolargetool:0.3.0'
 
     // 应用服务分发
     def appCenterSdkVersion = '4.4.5'

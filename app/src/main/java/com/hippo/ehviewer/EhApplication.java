@@ -39,7 +39,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.collection.LruCache;
 
 import com.hippo.Native;
-import com.gu.toolargetool.TooLargeTool;
+//import com.gu.toolargetool.TooLargeTool;
 import com.hippo.a7zip.A7Zip;
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.conaco.Conaco;
@@ -165,9 +165,9 @@ public class EhApplication extends RecordingApplication {
         });
 
         super.onCreate();
-        if(BuildConfig.DEBUG){
-            TooLargeTool.startLogging(this);
-        }
+//        if(BuildConfig.DEBUG){
+//            TooLargeTool.startLogging(this);
+//        }
 
         GetText.initialize(this);
         StatusCodeException.initialize(this);
