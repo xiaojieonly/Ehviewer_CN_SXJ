@@ -46,10 +46,6 @@ public abstract class EhPreferenceActivity extends PrettyPreferenceActivity {
             FirebaseAnalytics.getInstance(this);
         }
 
-//        Unnecessary; SDK_INT is always >= 23
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && Settings.getApplyNavBarThemeColor()) {
-//            getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, R.attr.colorPrimaryDark));
-//        }
         if (Settings.getApplyNavBarThemeColor()) {
             getWindow().setNavigationBarColor(AttrResources.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
         }

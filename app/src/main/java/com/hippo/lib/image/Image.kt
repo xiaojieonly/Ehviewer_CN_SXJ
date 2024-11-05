@@ -35,10 +35,11 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import kotlin.math.max
+import kotlin.math.min
 
 class Image private constructor(
     source: Source?, drawable: Drawable? = null,
-    val hardware: Boolean = true,
+    val hardware: Boolean = false,
     val release: () -> Unit? = {}
 ) {
     internal var mObtainedDrawable: Drawable?
@@ -48,18 +49,16 @@ class Image private constructor(
         mObtainedDrawable = null
         source?.let {
             mObtainedDrawable =
-                ImageDecoder.decodeDrawable(source) { decoder: ImageDecoder, info: ImageInfo, src: Source ->
+                ImageDecoder.decodeDrawable(source) { decoder: ImageDecoder, info: ImageInfo, _: Source ->
                     decoder.allocator = if (hardware) ALLOCATOR_DEFAULT else ALLOCATOR_SOFTWARE
                     // Sadly we must use software memory since we need copy it to tile buffer, fuck glgallery
                     // Idk it will cause how much performance regression
 
                     decoder.setTargetSampleSize(
-                        max(
-                            max(
-                                info.size.width / (2 * screenWidth),
-                                info.size.height / (2 * screenHeight)
-                            ), 1
-                        )
+                        min(
+                            info.size.width / (2 * screenWidth),
+                            info.size.height / (2 * screenHeight)
+                        ).coerceAtLeast(1)
                     )
                     // Don't
                 } // Should we lazy decode it?
@@ -78,6 +77,7 @@ class Image private constructor(
 
     @Synchronized
     fun recycle() {
+        if (mObtainedDrawable == null) return
         if (mObtainedDrawable is AnimatedImageDrawable) {
             (mObtainedDrawable as AnimatedImageDrawable?)?.stop()
         }
@@ -151,7 +151,7 @@ class Image private constructor(
     val delay: Int
         get() {
             if (animated)
-                return 100
+                return 50
             return 0
         }
 

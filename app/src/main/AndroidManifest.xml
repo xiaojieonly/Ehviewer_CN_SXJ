@@ -54,7 +54,8 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
-        tools:targetApi="n">
+        >
+<!--        tools:targetApi="n">-->
 
         <uses-library
             android:name="org.apache.http.legacy"
