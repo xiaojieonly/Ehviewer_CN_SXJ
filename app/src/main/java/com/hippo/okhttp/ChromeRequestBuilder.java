@@ -26,11 +26,12 @@ public class ChromeRequestBuilder extends Request.Builder {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
 
     private static final String CHROME_ACCEPT =
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;" +
-                    "q=0.8,application/signed-exchange;v=b3;q=0.9";
+            "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
+    private static final String CHROME_ACCEPT_ENCODING =
+            "gzip, deflate, br, zstd";
 
     private static final String CHROME_ACCEPT_LANGUAGE =
-            "en-US,en;q=0.9";
+            "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7";
 //    private static final String SOURCE_APP = "Ehviewer";
 
     private static final String CHROME_SEC_FETCH_DEST = "empty";
@@ -57,6 +58,7 @@ sec-ch-ua-platform: "Windows"
         addHeader("Host", host);
         addHeader("User-Agent", CHROME_USER_AGENT);
         addHeader("Accept", CHROME_ACCEPT);
+//        addHeader("Accept-Encoding", CHROME_ACCEPT_ENCODING);
         addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE);
 //        addHeader("Source-App", SOURCE_APP);
 //        addHeader("Sec-Fetch-Dest", CHROME_SEC_FETCH_DEST);
