@@ -380,9 +380,9 @@ public final class SpiderDen {
     @Nullable
     public InputStreamPipe openInputStreamPipe(int index) {
         if (mMode == SpiderQueen.MODE_READ) {
-            InputStreamPipe pipe = openCacheInputStreamPipe(index);
+            InputStreamPipe pipe = openDownloadInputStreamPipe(index);
             if (pipe == null) {
-                pipe = openDownloadInputStreamPipe(index);
+                pipe = openCacheInputStreamPipe(index);
             }
             return pipe;
         } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
