@@ -56,9 +56,9 @@ class ImageBitmap private constructor(image: Image) {
 
     companion object {
         @JvmStatic
-        fun decode(stream: FileInputStream): ImageBitmap {
+        fun decode(stream: FileInputStream): ImageBitmap? {
             val image = Image.decode(stream)
-            return ImageBitmap(image)
+            return image?.let { ImageBitmap(it) }
         }
     }
 }

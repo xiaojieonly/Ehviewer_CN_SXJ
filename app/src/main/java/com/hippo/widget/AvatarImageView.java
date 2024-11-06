@@ -33,6 +33,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.AnimatedImageDrawable;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -390,26 +391,47 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     @Override
     public void start() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            animatedImageDrawable.start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                animatedImageDrawable.start();
+            }
+        }else {
+            if (drawable instanceof AnimationDrawable animatedImageDrawable) {
+                animatedImageDrawable.start();
+            }
         }
+
     }
 
     @Override
     public void stop() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            animatedImageDrawable.stop();
+        if (Build.VERSION.SDK_INT>Build.VERSION_CODES.P){
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                animatedImageDrawable.stop();
+            }
+        }else {
+            if (drawable instanceof AnimationDrawable animatedImageDrawable) {
+                animatedImageDrawable.stop();
+            }
         }
     }
 
     @Override
     public boolean isRunning() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            return animatedImageDrawable.isRunning();
-        } else {
-            return false;
+        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.P){
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                return animatedImageDrawable.isRunning();
+            } else {
+                return false;
+            }
+        }else {
+            if (drawable instanceof AnimationDrawable animatedImageDrawable) {
+                return animatedImageDrawable.isRunning();
+            } else {
+                return false;
+            }
         }
     }
 
@@ -475,11 +497,20 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         // 核心代码取两个图片的交集部分
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         Bitmap src;
-        if (source.getConfig() == HARDWARE) {
-            src = source.copy(Bitmap.Config.ARGB_8888, false);
-        } else {
-            src = source;
+        if (Build.VERSION.SDK_INT>Build.VERSION_CODES.P){
+            if (source.getConfig() == HARDWARE) {
+                src = source.copy(Bitmap.Config.ARGB_8888, false);
+            } else {
+                src = source;
+            }
+        }else {
+            if (source.getConfig()== Bitmap.Config.ARGB_8888){
+                src = source;
+            }else {
+                src = source.copy(Bitmap.Config.ARGB_8888, false);
+            }
         }
+
 
         canvas.drawBitmap(src, (width - source.getWidth()) >> 1,
                 (height - source.getHeight()) >> 1, paint);

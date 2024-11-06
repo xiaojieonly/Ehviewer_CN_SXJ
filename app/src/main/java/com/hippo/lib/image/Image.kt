@@ -35,6 +35,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.graphics.drawable.toDrawable
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.EhApplication
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
 import kotlin.Exception
@@ -60,10 +61,11 @@ class Image private constructor(
                         source.available().toLong()
                     )
                 )
-                try{
+                try {
                     mObtainedDrawable =
                         ImageDecoder.decodeDrawable(src) { decoder: ImageDecoder, info: ImageInfo, _: Source ->
-                            decoder.allocator = if (hardware) ALLOCATOR_DEFAULT else ALLOCATOR_SOFTWARE
+                            decoder.allocator =
+                                if (hardware) ALLOCATOR_DEFAULT else ALLOCATOR_SOFTWARE
                             // Sadly we must use software memory since we need copy it to tile buffer, fuck glgallery
                             // Idk it will cause how much performance regression
 
@@ -75,16 +77,17 @@ class Image private constructor(
                             )
                             // Don't
                         }
-                }catch (e:DecodeException){
-                    throw Exception("Android 9 解码失败",e)
+                } catch (e: DecodeException) {
+                    throw Exception("Android 9 解码失败", e)
                 }
                 // Should we lazy decode it?
             } else {
-                mObtainedDrawable = Drawable.createFromStream(source, null);
+                mObtainedDrawable = Drawable.createFromStream(source, null)
             }
         }
         if (mObtainedDrawable == null) {
-            mObtainedDrawable = drawable!!
+//            mObtainedDrawable = drawable!!
+            throw IllegalArgumentException("数据解码出错")
         }
     }
 
@@ -175,9 +178,9 @@ class Image private constructor(
 
     fun start() {
         if (!started) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 (mObtainedDrawable as AnimatedImageDrawable?)?.start()
-            }else{
+            } else {
                 (mObtainedDrawable as AnimationDrawable?)?.start()
             }
 
@@ -201,20 +204,20 @@ class Image private constructor(
         var screenHeight: Int = 0
 
         @JvmStatic
-        fun initialize(context: Context) {
-            screenWidth = context.resources.displayMetrics.widthPixels
-            screenHeight = context.resources.displayMetrics.heightPixels
+        fun initialize(ehApplication: EhApplication) {
+            screenWidth = ehApplication.resources.displayMetrics.widthPixels
+            screenHeight = ehApplication.resources.displayMetrics.heightPixels
         }
 
         @JvmStatic
         fun decode(stream: FileInputStream, hardware: Boolean = true): Image? {
-           try {
-               return Image(stream, hardware = hardware)
-           }catch (e:Exception){
-               e.printStackTrace()
-               FirebaseCrashlytics.getInstance().recordException(e)
-               return null
-           }
+            try {
+                return Image(stream, hardware = hardware)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                FirebaseCrashlytics.getInstance().recordException(e)
+                return null
+            }
         }
 
 //        @JvmStatic
@@ -226,8 +229,13 @@ class Image private constructor(
 //        }
 
         @JvmStatic
-        fun create(bitmap: Bitmap): Image {
-            return Image(null, bitmap.toDrawable(Resources.getSystem()), false)
+        fun create(bitmap: Bitmap): Image? {
+            try {
+                return Image(null, bitmap.toDrawable(Resources.getSystem()), false)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return null
+            }
         }
 
         @JvmStatic
