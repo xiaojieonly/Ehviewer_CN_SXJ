@@ -153,7 +153,7 @@ public class EhHosts implements Dns {
         }
         if (Settings.getDoH()) {
             inetAddresses = dnsOverHttps.lookup(hostname);
-            if (inetAddresses.size() > 0) {
+            if (!inetAddresses.isEmpty()) {
                 Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
                 return inetAddresses;
             }
