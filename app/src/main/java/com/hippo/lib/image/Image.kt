@@ -24,50 +24,75 @@ import android.graphics.Canvas
 import android.graphics.ImageDecoder
 import android.graphics.ImageDecoder.ALLOCATOR_DEFAULT
 import android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+import android.graphics.ImageDecoder.DecodeException
 import android.graphics.ImageDecoder.ImageInfo
 import android.graphics.ImageDecoder.Source
 import android.graphics.PixelFormat
 import android.graphics.drawable.AnimatedImageDrawable
+import android.graphics.drawable.AnimationDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import androidx.core.graphics.drawable.toDrawable
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.FileInputStream
-import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.Exception
 import kotlin.math.min
 
 class Image private constructor(
-    source: Source?, drawable: Drawable? = null,
+    source: FileInputStream?,
+    drawable: Drawable? = null,
     val hardware: Boolean = false,
     val release: () -> Unit? = {}
 ) {
     internal var mObtainedDrawable: Drawable?
     private var mBitmap: Bitmap? = null
+//    public val MAX_BITMAP_SIZE = 100 * 1024 * 1024
 
     init {
         mObtainedDrawable = null
         source?.let {
-            mObtainedDrawable =
-                ImageDecoder.decodeDrawable(source) { decoder: ImageDecoder, info: ImageInfo, _: Source ->
-                    decoder.allocator = if (hardware) ALLOCATOR_DEFAULT else ALLOCATOR_SOFTWARE
-                    // Sadly we must use software memory since we need copy it to tile buffer, fuck glgallery
-                    // Idk it will cause how much performance regression
-
-                    decoder.setTargetSampleSize(
-                        min(
-                            info.size.width / (2 * screenWidth),
-                            info.size.height / (2 * screenHeight)
-                        ).coerceAtLeast(1)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val src = ImageDecoder.createSource(
+                    source.channel.map(
+                        FileChannel.MapMode.READ_ONLY, 0,
+                        source.available().toLong()
                     )
-                    // Don't
-                } // Should we lazy decode it?
+                )
+                try{
+                    mObtainedDrawable =
+                        ImageDecoder.decodeDrawable(src) { decoder: ImageDecoder, info: ImageInfo, _: Source ->
+                            decoder.allocator = if (hardware) ALLOCATOR_DEFAULT else ALLOCATOR_SOFTWARE
+                            // Sadly we must use software memory since we need copy it to tile buffer, fuck glgallery
+                            // Idk it will cause how much performance regression
+
+                            decoder.setTargetSampleSize(
+                                min(
+                                    info.size.width / (2 * screenWidth),
+                                    info.size.height / (2 * screenHeight)
+                                ).coerceAtLeast(1)
+                            )
+                            // Don't
+                        }
+                }catch (e:DecodeException){
+                    throw Exception("Android 9 解码失败",e)
+                }
+                // Should we lazy decode it?
+            } else {
+                mObtainedDrawable = Drawable.createFromStream(source, null);
+            }
         }
         if (mObtainedDrawable == null) {
             mObtainedDrawable = drawable!!
         }
     }
 
-    val animated = mObtainedDrawable is AnimatedImageDrawable
+    val animated = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        mObtainedDrawable is AnimatedImageDrawable
+    } else {
+        mObtainedDrawable is AnimationDrawable
+    }
     val width = mObtainedDrawable!!.intrinsicWidth
     val height = mObtainedDrawable!!.intrinsicHeight
     val isRecycled = mObtainedDrawable == null
@@ -77,9 +102,16 @@ class Image private constructor(
     @Synchronized
     fun recycle() {
         if (mObtainedDrawable == null) return
-        if (mObtainedDrawable is AnimatedImageDrawable) {
-            (mObtainedDrawable as AnimatedImageDrawable?)?.stop()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (mObtainedDrawable is AnimatedImageDrawable) {
+                (mObtainedDrawable as AnimatedImageDrawable?)?.stop()
+            }
+        } else {
+            if (mObtainedDrawable is AnimationDrawable) {
+                (mObtainedDrawable as AnimationDrawable?)?.stop()
+            }
         }
+
         if (mObtainedDrawable is BitmapDrawable) {
             (mObtainedDrawable as BitmapDrawable?)?.bitmap?.recycle()
         }
@@ -143,7 +175,12 @@ class Image private constructor(
 
     fun start() {
         if (!started) {
-            (mObtainedDrawable as AnimatedImageDrawable?)?.start()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+                (mObtainedDrawable as AnimatedImageDrawable?)?.start()
+            }else{
+                (mObtainedDrawable as AnimationDrawable?)?.start()
+            }
+
         }
     }
 
@@ -170,23 +207,23 @@ class Image private constructor(
         }
 
         @JvmStatic
-        fun decode(stream: FileInputStream, hardware: Boolean = true): Image {
-            val src = ImageDecoder.createSource(
-                stream.channel.map(
-                    FileChannel.MapMode.READ_ONLY, 0,
-                    stream.available().toLong()
-                )
-            )
-            return Image(src, hardware = hardware)
+        fun decode(stream: FileInputStream, hardware: Boolean = true): Image? {
+           try {
+               return Image(stream, hardware = hardware)
+           }catch (e:Exception){
+               e.printStackTrace()
+               FirebaseCrashlytics.getInstance().recordException(e)
+               return null
+           }
         }
 
-        @JvmStatic
-        fun decode(buffer: ByteBuffer, hardware: Boolean = true, release: () -> Unit? = {}): Image {
-            val src = ImageDecoder.createSource(buffer)
-            return Image(src, hardware = hardware) {
-                release()
-            }
-        }
+//        @JvmStatic
+//        fun decode(buffer: ByteBuffer, hardware: Boolean = true, release: () -> Unit? = {}): Image {
+//            val src = ImageDecoder.createSource(buffer)
+//            return Image(src, hardware = hardware) {
+//                release()
+//            }
+//        }
 
         @JvmStatic
         fun create(bitmap: Bitmap): Image {
