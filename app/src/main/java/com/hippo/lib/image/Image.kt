@@ -82,12 +82,12 @@ class Image private constructor(
                 }
                 // Should we lazy decode it?
             } else {
-                mObtainedDrawable = Drawable.createFromStream(source, null)
+                mObtainedDrawable = Drawable.createFromStream(source, "image")
             }
         }
         if (mObtainedDrawable == null) {
-//            mObtainedDrawable = drawable!!
-            throw IllegalArgumentException("数据解码出错")
+            mObtainedDrawable = drawable!!
+//            throw IllegalArgumentException("数据解码出错")
         }
     }
 

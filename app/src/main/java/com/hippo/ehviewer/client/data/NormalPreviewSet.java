@@ -122,7 +122,7 @@ public class NormalPreviewSet extends PreviewSet {
         this.mPageUrlList = in.createStringArrayList();
     }
 
-    public static final Creator<NormalPreviewSet> CREATOR = new Creator<NormalPreviewSet>() {
+    public static final Creator<NormalPreviewSet> CREATOR = new Creator<>() {
         @Override
         public NormalPreviewSet createFromParcel(Parcel source) {
             return new NormalPreviewSet(source);

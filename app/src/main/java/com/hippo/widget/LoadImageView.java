@@ -143,7 +143,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             }
         }
         if (drawable instanceof PreciselyClipDrawable) {
-            drawable = ((PreciselyClipDrawable) drawable).getWrappedDrawable();
+            drawable = ((PreciselyClipDrawable) drawable).getDrawable();
         }
         return drawable;
     }

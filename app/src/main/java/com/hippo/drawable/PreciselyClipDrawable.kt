@@ -13,92 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.drawable
 
-package com.hippo.drawable;
-
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
-
-import com.hippo.lib.yorozuya.MathUtils;
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.DrawableWrapper
+import androidx.core.graphics.withClip
 
 /**
  * Show a part of the original drawable
  */
-public class PreciselyClipDrawable extends DrawableWrapper {
+class PreciselyClipDrawable(
+    drawable: Drawable,
+    offsetX: Int,
+    offsetY: Int,
+    width: Int,
+    height: Int,
+) : DrawableWrapper(drawable) {
+    private val mScale: RectF
+    private val mTemp = Rect()
 
-    private final boolean mClip;
-    private RectF mScale;
-    private Rect mTemp;
-
-    public PreciselyClipDrawable(Drawable drawable, int offsetX, int offsetY, int width, int height) {
-        super(drawable);
-        float originWidth = drawable.getIntrinsicWidth();
-        float originHeight = drawable.getIntrinsicHeight();
-
-        if (originWidth <= 0 || originHeight <= 0) {
-            // Can not clip
-            mClip = false;
-        } else {
-            mClip = true;
-            mScale = new RectF();
-            mScale.set(MathUtils.clamp(offsetX / originWidth, 0.0f, 1.0f),
-                    MathUtils.clamp(offsetY / originHeight, 0.0f, 1.0f),
-                    MathUtils.clamp((offsetX + width) / originWidth, 0.0f, 1.0f),
-                    MathUtils.clamp((offsetY + height) / originHeight, 0.0f, 1.0f));
-            mTemp = new Rect();
-        }
+    init {
+        val originWidth = drawable.intrinsicWidth.toFloat()
+        val originHeight = drawable.intrinsicHeight.toFloat()
+        mScale = RectF(
+            (offsetX / originWidth).coerceIn(0.0f, 1.0f),
+            (offsetY / originHeight).coerceIn(0.0f, 1.0f),
+            ((offsetX + width) / originWidth).coerceIn(0.0f, 1.0f),
+            ((offsetY + height) / originHeight).coerceIn(0.0f, 1.0f),
+        )
     }
 
-    @Override
-    protected void onBoundsChange(Rect bounds) {
-        if (mClip) {
-            if (!mScale.isEmpty()) {
-                mTemp.left = (int) ((mScale.left * bounds.right - mScale.right * bounds.left) /
-                        (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
-                mTemp.right = (int) (((1 - mScale.right) * bounds.left - (1 - mScale.left) * bounds.right) /
-                        (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
-                mTemp.top = (int) ((mScale.top * bounds.bottom - mScale.bottom * bounds.top) /
-                        (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
-                mTemp.bottom = (int) (((1 - mScale.bottom) * bounds.top - (1 - mScale.top) * bounds.bottom) /
-                        (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
-                super.onBoundsChange(mTemp);
-            }
-        } else {
-            super.onBoundsChange(bounds);
-        }
+    override fun onBoundsChange(bounds: Rect) {
+        mTemp.left = ((mScale.left * bounds.right - mScale.right * bounds.left) / (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left))).toInt()
+        mTemp.right = (((1 - mScale.right) * bounds.left - (1 - mScale.left) * bounds.right) / (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left))).toInt()
+        mTemp.top = ((mScale.top * bounds.bottom - mScale.bottom * bounds.top) / (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top))).toInt()
+        mTemp.bottom = (((1 - mScale.bottom) * bounds.top - (1 - mScale.top) * bounds.bottom) / (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top))).toInt()
+        super.onBoundsChange(mTemp)
     }
 
-    @Override
-    public int getIntrinsicWidth() {
-        if (mClip) {
-            return (int) (super.getIntrinsicWidth() * mScale.width());
-        } else {
-            return super.getIntrinsicWidth();
-        }
-    }
+    override fun getIntrinsicWidth(): Int = (super.getIntrinsicWidth() * mScale.width()).toInt()
 
-    @Override
-    public int getIntrinsicHeight() {
-        if (mClip) {
-            return (int) (super.getIntrinsicHeight() * mScale.height());
-        } else {
-            return super.getIntrinsicHeight();
-        }
-    }
+    override fun getIntrinsicHeight(): Int = (super.getIntrinsicHeight() * mScale.height()).toInt()
 
-    @Override
-    public void draw(Canvas canvas) {
-        if (mClip) {
-            if (!mScale.isEmpty()) {
-                int saveCount = canvas.save();
-                canvas.clipRect(getBounds());
-                super.draw(canvas);
-                canvas.restoreToCount(saveCount);
-            }
-        } else {
-            super.draw(canvas);
-        }
+    override fun draw(canvas: Canvas) {
+        canvas.withClip(bounds) { super.draw(canvas) }
     }
 }

@@ -203,7 +203,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
             }
         }
         if (drawable instanceof PreciselyClipDrawable) {
-            drawable = ((PreciselyClipDrawable) drawable).getWrappedDrawable();
+            drawable = ((PreciselyClipDrawable) drawable).getDrawable();
         }
         return drawable;
     }
