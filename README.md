@@ -1,7 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2024/11/04 : 紧急修复(尝试支持Android 9以下手机)
+# 2024/11/06 : 紧急修复(尝试支持Android 9以下手机)
  ###  新版发布1.9.9.3
  ###  为低版本提供webp支持，但是解码webp动图会闪退
  ###  优化数据读取顺序，现在优先从下载目录读取数据
