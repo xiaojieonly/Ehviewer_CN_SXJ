@@ -49,7 +49,6 @@ class Image private constructor(
 ) {
     internal var mObtainedDrawable: Drawable?
     private var mBitmap: Bitmap? = null
-//    public val MAX_BITMAP_SIZE = 100 * 1024 * 1024
 
     init {
         mObtainedDrawable = null
@@ -82,11 +81,11 @@ class Image private constructor(
                 }
                 // Should we lazy decode it?
             } else {
-                mObtainedDrawable = Drawable.createFromStream(source, "image")
+                mObtainedDrawable=Drawable.createFromStream(source,null)
             }
         }
         if (mObtainedDrawable == null) {
-            mObtainedDrawable = drawable!!
+            mObtainedDrawable = drawable
 //            throw IllegalArgumentException("数据解码出错")
         }
     }
@@ -109,12 +108,7 @@ class Image private constructor(
             if (mObtainedDrawable is AnimatedImageDrawable) {
                 (mObtainedDrawable as AnimatedImageDrawable?)?.stop()
             }
-        } else {
-            if (mObtainedDrawable is AnimationDrawable) {
-                (mObtainedDrawable as AnimationDrawable?)?.stop()
-            }
         }
-
         if (mObtainedDrawable is BitmapDrawable) {
             (mObtainedDrawable as BitmapDrawable?)?.bitmap?.recycle()
         }
@@ -180,10 +174,7 @@ class Image private constructor(
         if (!started) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 (mObtainedDrawable as AnimatedImageDrawable?)?.start()
-            } else {
-                (mObtainedDrawable as AnimationDrawable?)?.start()
             }
-
         }
     }
 

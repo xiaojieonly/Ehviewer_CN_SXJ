@@ -157,7 +157,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         // Set drawable null
         setImageDrawable(null);
-        if (imageBitmap!=null){
+        if (imageBitmap != null) {
             imageBitmap.release();
             imageBitmap = null;
         }
@@ -305,6 +305,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         } else {
             setImageDrawable(drawable);
         }
+
         imageBitmap = value;
         return true;
     }
@@ -341,27 +342,32 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     @Override
     public void start() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            animatedImageDrawable.start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                animatedImageDrawable.start();
+            }
         }
     }
 
     @Override
     public void stop() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            animatedImageDrawable.stop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                animatedImageDrawable.stop();
+            }
         }
     }
 
     @Override
     public boolean isRunning() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            return animatedImageDrawable.isRunning();
-        } else {
-            return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                return animatedImageDrawable.isRunning();
+            }
         }
+        return false;
     }
 
     @Override

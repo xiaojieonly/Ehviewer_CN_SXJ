@@ -28,6 +28,7 @@ import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -49,7 +50,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 public class LoadImageViewNew extends FixedAspectImageView implements Unikery<ImageBitmap>,
-        View.OnClickListener, View.OnLongClickListener,Animatable {
+        View.OnClickListener, View.OnLongClickListener, Animatable {
 
     public static final int RETRY_TYPE_NONE = 0;
     public static final int RETRY_TYPE_CLICK = 1;
@@ -211,7 +212,7 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         mClipHeight = Integer.MIN_VALUE;
     }
 
-    public void load(){
+    public void load() {
         load(mKey, mUrl, true);
     }
 
@@ -221,7 +222,7 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
 
 
     public void load(String key, String url, boolean useNetwork) {
-        if (url == null || key == null ) {
+        if (url == null || key == null) {
             return;
         }
 
@@ -238,7 +239,7 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
                 .setKey(key)
                 .setUrl(url)
                 .setUseNetwork(useNetwork);
-        if (url.contains(DOMAIN_EX)||url.contains(DOMAIN_E)){
+        if (url.contains(DOMAIN_EX) || url.contains(DOMAIN_E)) {
             builder.setOkHttpClient(EhApplication.getOkHttpClient(getContext()));
         }
         mConaco.load(builder);
@@ -345,27 +346,34 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
     @Override
     public void start() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            animatedImageDrawable.start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                animatedImageDrawable.start();
+            }
         }
     }
 
     @Override
     public void stop() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            animatedImageDrawable.stop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                animatedImageDrawable.stop();
+            }
         }
+
     }
 
     @Override
     public boolean isRunning() {
         Drawable drawable = getImageDrawable();
-        if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
-            return animatedImageDrawable.isRunning();
-        } else {
-            return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (drawable instanceof AnimatedImageDrawable animatedImageDrawable) {
+                return animatedImageDrawable.isRunning();
+            }
         }
+        return false;
+
     }
 
     @Override
