@@ -26,8 +26,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.preference.Preference;
-import android.preference.PreferenceManager;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,8 +45,7 @@ import com.hippo.ehviewer.R;
  * actual preference controls.
  */
 public abstract class DialogPreference extends Preference implements
-        DialogInterface.OnClickListener, DialogInterface.OnDismissListener,
-        PreferenceManager.OnActivityDestroyListener {
+        DialogInterface.OnClickListener, DialogInterface.OnDismissListener{
 
     private AlertDialog.Builder mBuilder;
 
@@ -263,7 +262,7 @@ public abstract class DialogPreference extends Preference implements
 
         onPrepareDialogBuilder(mBuilder);
 
-        PreferenceUtils.registerOnActivityDestroyListener(this, this);
+//        PreferenceUtils.registerOnActivityDestroyListener(this, this);
 
         // Create the dialog
         final AlertDialog dialog = mDialog = mBuilder.create();
@@ -329,7 +328,7 @@ public abstract class DialogPreference extends Preference implements
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-        PreferenceUtils.unregisterOnActivityDestroyListener(this, this);
+//        PreferenceUtils.unregisterOnActivityDestroyListener(this, this);
 
         mDialog = null;
         onDialogClosed(mWhichButtonClicked == DialogInterface.BUTTON_POSITIVE);
@@ -354,8 +353,17 @@ public abstract class DialogPreference extends Preference implements
         return mDialog;
     }
 
+//    @Override
+//    public void onActivityDestroy() {
+//        if (mDialog == null || !mDialog.isShowing()) {
+//            return;
+//        }
+//
+//        mDialog.dismiss();
+//    }
     @Override
-    public void onActivityDestroy() {
+    public void onDetached() {
+        super.onDetached();
         if (mDialog == null || !mDialog.isShowing()) {
             return;
         }

@@ -20,12 +20,14 @@
     <com.hippo.ehviewer.preference.SignOutPreference
         android:key="sign_out"
         android:summary="@string/settings_eh_sign_out_summary"
-        android:title="@string/settings_eh_sign_out" />
+        android:title="@string/settings_eh_sign_out"
+        app:allowDividerAbove="true" />
 
     <com.hippo.ehviewer.preference.IdentityCookiePreference
         android:key="identity_cookie"
         android:summary="@string/settings_eh_identity_cookies_summary"
-        android:title="@string/settings_eh_identity_cookies" />
+        android:title="@string/settings_eh_identity_cookies"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
@@ -38,6 +40,7 @@
         android:key="gallery_site"
         android:summary="%s"
         android:title="@string/settings_eh_gallery_site"
+        app:allowDividerAbove="true"
         app:entries="@array/gallery_site_entries"
         app:entryValues="@array/gallery_site_entry_values" />
 
@@ -45,19 +48,22 @@
         android:key="u_config"
         android:summary="@string/settings_u_config_summary"
         android:title="@string/settings_u_config"
-        app:activity="com.hippo.ehviewer.ui.UConfigActivity" />
+        app:activity="com.hippo.ehviewer.ui.UConfigActivity"
+        app:allowDividerAbove="true" />
 
     <com.hippo.ehviewer.preference.SignInRequiredActivityPreference
         android:key="my_tags"
         android:summary="@string/settings_my_tags_summary"
         android:title="@string/settings_my_tags"
-        app:activity="com.hippo.ehviewer.ui.MyTagsActivity" />
+        app:activity="com.hippo.ehviewer.ui.MyTagsActivity"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="theme"
         android:summary="%s"
         android:title="@string/settings_eh_theme"
+        app:allowDividerAbove="true"
         app:entries="@array/theme_entries"
         app:entryValues="@array/theme_entry_values" />
 
@@ -71,6 +77,7 @@
         android:key="launch_page"
         android:summary="%s"
         android:title="@string/settings_eh_launch_page"
+        app:allowDividerAbove="true"
         app:entries="@array/launch_page_entries"
         app:entryValues="@array/launch_page_entry_values" />
 
@@ -79,20 +86,22 @@
         android:key="list_mode"
         android:summary="%s"
         android:title="@string/settings_eh_list_mode"
+        app:allowDividerAbove="true"
         app:entries="@array/list_mode_entries"
         app:entryValues="@array/list_mode_entry_values" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
         android:key="show_read_progress"
-        android:title="@string/settings_eh_list_show_read_progress"
-        android:summary="@string/settings_eh_list_show_read_progress_summary" />
+        android:summary="@string/settings_eh_list_show_read_progress_summary"
+        android:title="@string/settings_eh_list_show_read_progress" />
 
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="detail_size"
         android:summary="%s"
         android:title="@string/settings_eh_detail_size"
+        app:allowDividerAbove="true"
         app:entries="@array/detail_size_entries"
         app:entryValues="@array/detail_size_entry_values" />
 
@@ -101,6 +110,7 @@
         android:key="thumb_size"
         android:summary="%s"
         android:title="@string/settings_eh_thumb_size"
+        app:allowDividerAbove="true"
         app:entries="@array/thumb_size_entries"
         app:entryValues="@array/thumb_size_entry_values" />
 
@@ -109,6 +119,7 @@
         android:key="history_info_size"
         android:summary="%s"
         android:title="@string/settings_eh_history_size"
+        app:allowDividerAbove="true"
         app:entries="@array/history_info_size_entries"
         app:entryValues="@array/history_info_size_entry_values" />
 
@@ -117,6 +128,7 @@
         android:key="thumb_resolution"
         android:summary="@string/settings_eh_thumb_resolution_summary"
         android:title="@string/settings_eh_thumb_resolution"
+        app:allowDividerAbove="true"
         app:entries="@array/thumb_resolution_entries"
         app:entryValues="@array/thumb_resolution_entry_values" />
 
@@ -146,13 +158,15 @@
     <com.hippo.preference.UrlPreference
         android:key="tag_translations_source"
         android:title="@string/settings_eh_tag_translations_source"
+        app:allowDividerAbove="true"
         app:url="@string/settings_eh_tag_translations_source_url" />
 
     <com.hippo.preference.ActivityPreference
         android:key="filter"
         android:summary="@string/settings_eh_filter_summary"
         android:title="@string/settings_eh_filter"
-        app:activity="com.hippo.ehviewer.ui.FilterActivity" />
+        app:activity="com.hippo.ehviewer.ui.FilterActivity"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
@@ -163,7 +177,8 @@
         android:key="blickList"
         android:summary="@string/settings_eh_blacklist_summary"
         android:title="@string/settings_eh_blacklist"
-        app:activity="com.hippo.ehviewer.ui.BlackListActivity" />
+        app:activity="com.hippo.ehviewer.ui.BlackListActivity"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"

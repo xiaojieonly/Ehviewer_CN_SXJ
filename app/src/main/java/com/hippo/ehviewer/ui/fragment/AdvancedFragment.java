@@ -24,12 +24,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.preference.Preference;
 
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
@@ -44,7 +44,7 @@ import com.hippo.util.ReadableTime;
 import java.io.File;
 import java.util.Arrays;
 
-public class AdvancedFragment extends PreferenceFragment
+public class AdvancedFragment extends BasePreferenceFragmentCompat
         implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
     public static final int DB_LOADING = 0;
     public static final int DB_LOAD_FINISH = 1;
@@ -64,9 +64,8 @@ public class AdvancedFragment extends PreferenceFragment
     private Context context;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         context = getContext();
-        super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.advanced_settings);
 
         Preference dumpLogcat = findPreference(KEY_DUMP_LOGCAT);

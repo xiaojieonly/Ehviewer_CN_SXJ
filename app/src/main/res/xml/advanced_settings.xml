@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,82 +14,86 @@
   ~ limitations under the License.
   -->
 
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="@bool/beta"
         android:key="save_parse_error_body"
-        android:title="@string/settings_advanced_save_parse_error_body"
         android:summary="@string/settings_advanced_save_parse_error_body_summary"
-        android:defaultValue="@bool/beta"/>
+        android:title="@string/settings_advanced_save_parse_error_body" />
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
         android:key="save_crash_log"
-        android:title="@string/settings_advanced_save_crash_log"
         android:summary="@string/settings_advanced_save_crash_log_summary"
-        android:defaultValue="false"/>
+        android:title="@string/settings_advanced_save_crash_log" />
 
     <Preference
         android:key="dump_logcat"
+        android:summary="@string/settings_advanced_dump_logcat_summary"
         android:title="@string/settings_advanced_dump_logcat"
-        android:summary="@string/settings_advanced_dump_logcat_summary"/>
+        app:allowDividerAbove="true" />
 
     <com.hippo.ehviewer.preference.ClearDownloadPathCachePreference
         android:key="clear_download_path_cache"
+        android:summary="@string/settings_advanced_clear_download_path_cache_summary"
         android:title="@string/settings_advanced_clear_download_path_cache"
-        android:summary="@string/settings_advanced_clear_download_path_cache_summary"/>
+        app:allowDividerAbove="true" />
 
     <Preference
         android:key="clear_memory_cache"
+        android:summary="@string/settings_advanced_clear_memory_cache_summary"
         android:title="@string/settings_advanced_clear_memory_cache"
-        android:summary="@string/settings_advanced_clear_memory_cache_summary"/>
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.ListPreference
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:defaultValue="160"
         android:key="read_cache_size"
-        android:title="@string/settings_advanced_read_cache_size"
         android:summary="%s"
+        android:title="@string/settings_advanced_read_cache_size"
+        app:allowDividerAbove="true"
         app:entries="@array/read_cache_size_entries"
-        app:entryValues="@array/read_cache_size_entry_values"
-        android:defaultValue="160"/>
+        app:entryValues="@array/read_cache_size_entry_values" />
 
     <com.hippo.preference.ListPreference
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:defaultValue="zh-CN"
         android:key="app_language"
-        android:title="@string/settings_advanced_app_language_title"
         android:summary="%s"
+        android:title="@string/settings_advanced_app_language_title"
+        app:allowDividerAbove="true"
         app:entries="@array/app_language_entries"
-        app:entryValues="@array/app_language_entry_values"
-        android:defaultValue="zh-CN"/>
+        app:entryValues="@array/app_language_entry_values" />
 
     <com.hippo.ehviewer.preference.ProxyPreference
         android:key="proxy"
-        android:title="@string/settings_advanced_proxy"/>
+        android:title="@string/settings_advanced_proxy"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
         android:key="built_in_hosts"
-        android:title="@string/settings_advanced_built_in_hosts_title"
         android:summary="@string/settings_advanced_built_in_hosts_summary"
-        android:defaultValue="true"/>
+        android:title="@string/settings_advanced_built_in_hosts_title" />
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
         android:key="built_ex_hosts"
-        android:title="@string/settings_advanced_built_ex_hosts_title"
         android:summary="@string/settings_advanced_built_ex_hosts_summary"
-        android:defaultValue="true"/>
+        android:title="@string/settings_advanced_built_ex_hosts_title" />
 
     <com.hippo.preference.ActivityPreference
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:key="custom_hosts"
-        android:title="@string/settings_advanced_custom_hosts_title"
         android:summary="@string/settings_advanced_custom_hosts_summary"
-        app:activity="com.hippo.ehviewer.ui.HostsActivity"/>
+        android:title="@string/settings_advanced_custom_hosts_title"
+        app:activity="com.hippo.ehviewer.ui.HostsActivity"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
         android:key="dns_over_https"
-        android:title="@string/settings_advanced_dns_over_http_title"
         android:summary="@string/settings_advanced_dns_over_http_summary"
-        android:defaultValue="false"/>
+        android:title="@string/settings_advanced_dns_over_http_title" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
@@ -98,30 +101,34 @@
         android:summary="@string/settings_advanced_domain_fronting_summary"
         android:title="@string/settings_advanced_domain_fronting_title" />
 
-<!--    <com.hippo.preference.SwitchPreference-->
-<!--        android:defaultValue="false"-->
-<!--        android:key="url_replace"-->
-<!--        android:summary="@string/settings_advanced_url_replace_summary"-->
-<!--        android:title="@string/settings_advanced_url_replace_title" />-->
+    <!--    <com.hippo.preference.SwitchPreference-->
+    <!--        android:defaultValue="false"-->
+    <!--        android:key="url_replace"-->
+    <!--        android:summary="@string/settings_advanced_url_replace_summary"-->
+    <!--        android:title="@string/settings_advanced_url_replace_title" />-->
 
     <com.hippo.ehviewer.preference.ExportDataPreference
         android:key="export_data"
+        android:summary="@string/settings_advanced_export_data_summary"
         android:title="@string/settings_advanced_export_data"
-        android:summary="@string/settings_advanced_export_data_summary"/>
+        app:allowDividerAbove="true" />
 
     <Preference
         android:key="import_data"
+        android:summary="@string/settings_advanced_import_data_summary"
         android:title="@string/settings_advanced_import_data"
-        android:summary="@string/settings_advanced_import_data_summary"/>
+        app:allowDividerAbove="true" />
 
     <Preference
         android:key="wifi_server"
+        android:summary="@string/settings_advanced_wifi_sander_summary"
         android:title="@string/settings_advanced_wifi_sender"
-        android:summary="@string/settings_advanced_wifi_sander_summary"/>
+        app:allowDividerAbove="true" />
 
     <Preference
         android:key="wifi_client"
+        android:summary="@string/settings_advanced_wifi_client_summary"
         android:title="@string/settings_advanced_wifi_client"
-        android:summary="@string/settings_advanced_wifi_client_summary"/>
+        app:allowDividerAbove="true" />
 
 </PreferenceScreen>

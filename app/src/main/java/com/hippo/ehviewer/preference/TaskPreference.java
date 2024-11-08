@@ -81,10 +81,18 @@ public abstract class TaskPreference extends DialogPreference {
     @NonNull
     protected abstract Task onCreateTask();
 
-    @Override
-    public void onActivityDestroy() {
-        super.onActivityDestroy();
+//    @Override
+//    public void onActivityDestroy() {
+//        super.onActivityDestroy();
+//
+//        if (null != mTask) {
+//            mTask.setPreference(null);
+//        }
+//    }
 
+    @Override
+    public void onDetached() {
+        super.onDetached();
         if (null != mTask) {
             mTask.setPreference(null);
         }

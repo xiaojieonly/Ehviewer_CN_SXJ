@@ -21,6 +21,10 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.preference.PreferenceViewHolder;
+
 import com.google.android.material.snackbar.Snackbar;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
@@ -45,9 +49,15 @@ public class SignInRequiredActivityPreference extends ActivityPreference {
     super(context, attrs, defStyleAttr);
   }
 
+//  @Override
+//  protected View onCreateView(ViewGroup parent) {
+//    return view = super.onCreateView(parent);
+//  }
+
   @Override
-  protected View onCreateView(ViewGroup parent) {
-    return view = super.onCreateView(parent);
+  public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
+    super.onBindViewHolder(holder);
+    view = holder.itemView;
   }
 
   @Override

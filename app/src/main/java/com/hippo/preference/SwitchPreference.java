@@ -18,7 +18,10 @@ package com.hippo.preference;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.preference.TwoStatePreference;
+
+import androidx.annotation.NonNull;
+import androidx.preference.PreferenceViewHolder;
+import androidx.preference.TwoStatePreference;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Checkable;
@@ -91,10 +94,10 @@ public class SwitchPreference extends TwoStatePreference {
 
     @SuppressWarnings("TryWithIdenticalCatches")
     @Override
-    protected void onBindView(View view) {
-        super.onBindView(view);
+    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
+        super.onBindViewHolder(holder);
 
-        View checkableView = view.findViewById(R.id.switchWidget);
+        View checkableView = holder.findViewById(R.id.switchWidget);
         if (checkableView != null && checkableView instanceof Checkable) {
             if (checkableView instanceof SwitchCompat) {
                 final SwitchCompat switchView = (SwitchCompat) checkableView;
@@ -111,15 +114,15 @@ public class SwitchPreference extends TwoStatePreference {
             }
         }
 
-        if (sSyncSummaryViewMethod != null) {
-            try {
-                sSyncSummaryViewMethod.invoke(this, view);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
+//        if (sSyncSummaryViewMethod != null) {
+//            try {
+//                sSyncSummaryViewMethod.invoke(this, holder);
+//            } catch (IllegalAccessException e) {
+//                e.printStackTrace();
+//            } catch (InvocationTargetException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
 

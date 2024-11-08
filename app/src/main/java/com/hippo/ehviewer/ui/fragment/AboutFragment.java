@@ -24,8 +24,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
 import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
@@ -33,7 +31,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
@@ -49,7 +50,7 @@ import java.util.Objects;
 
 import com.microsoft.appcenter.distribute.Distribute;
 
-public class AboutFragment extends PreferenceFragment
+public class AboutFragment extends BasePreferenceFragmentCompat
         implements Preference.OnPreferenceClickListener {
 
     private static final String KEY_AUTHOR = "author";
@@ -57,8 +58,8 @@ public class AboutFragment extends PreferenceFragment
     private static final String KEY_CHECK_FOR_UPDATES = "check_for_updates";
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+
         addPreferencesFromResource(R.xml.about_settings);
 
         Preference author = findPreference(KEY_AUTHOR);

@@ -22,6 +22,7 @@
         android:key="screen_rotation"
         android:summary="%s"
         android:title="@string/settings_read_screen_rotation"
+        app:allowDividerAbove="true"
         app:entries="@array/screen_rotation_entries"
         app:entryValues="@array/screen_rotation_entry_values" />
 
@@ -30,6 +31,7 @@
         android:key="reading_direction"
         android:summary="%s"
         android:title="@string/settings_read_reading_direction"
+        app:allowDividerAbove="true"
         app:entries="@array/reading_direction_entries"
         app:entryValues="@array/reading_direction_entry_values" />
 
@@ -38,6 +40,7 @@
         android:key="page_scaling"
         android:summary="%s"
         android:title="@string/settings_read_page_scaling"
+        app:allowDividerAbove="true"
         app:entries="@array/page_scaling_entries"
         app:entryValues="@array/page_scaling_entry_values" />
 
@@ -46,6 +49,7 @@
         android:key="start_position"
         android:summary="%s"
         android:title="@string/settings_read_start_position"
+        app:allowDividerAbove="true"
         app:entries="@array/start_position_entries"
         app:entryValues="@array/start_position_values" />
 
@@ -53,6 +57,7 @@
         android:defaultValue="2"
         android:key="start_transfer_time"
         android:title="@string/settings_read_auto_transfer_time"
+        app:allowDividerAbove="true"
         app:max="15" />
 
     <com.hippo.preference.SwitchPreference

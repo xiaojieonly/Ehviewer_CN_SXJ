@@ -17,14 +17,13 @@
 package com.hippo.ehviewer.ui.fragment;
 
 import android.os.Bundle;
-import android.preference.PreferenceFragment;
-import android.view.LayoutInflater;
 
-import androidx.preference.Preference;
+import androidx.annotation.Nullable;
+import androidx.preference.PreferenceFragmentCompat;
 
 import com.hippo.ehviewer.R;
 
-public class ReadFragment extends PreferenceFragment {
+public class ReadFragment extends BasePreferenceFragmentCompat {
 
     /**
      * 设置->阅读界面
@@ -32,8 +31,7 @@ public class ReadFragment extends PreferenceFragment {
      * @param savedInstanceState
      */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         addPreferencesFromResource(R.xml.read_settings);
     }
 }

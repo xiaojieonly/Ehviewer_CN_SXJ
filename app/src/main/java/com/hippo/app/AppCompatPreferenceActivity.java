@@ -47,7 +47,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NavUtils;
 import androidx.core.app.TaskStackBuilder;
 
-public abstract class AppCompatPreferenceActivity extends PreferenceActivity implements AppCompatCallback,
+import com.hippo.ehviewer.ui.EhActivity;
+
+public abstract class AppCompatPreferenceActivity extends EhActivity implements AppCompatCallback,
     TaskStackBuilder.SupportParentable, ActionBarDrawerToggle.DelegateProvider {
 
     private AppCompatDelegate mDelegate;
@@ -64,11 +66,7 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
             // the changes to take effect. On API 23+, we should bypass
             // setTheme(), which will no-op if the theme ID is identical to the
             // current theme ID.
-            if (Build.VERSION.SDK_INT >= 23) {
-                onApplyThemeResource(getTheme(), mThemeId, false);
-            } else {
-                setTheme(mThemeId);
-            }
+            onApplyThemeResource(getTheme(), mThemeId, false);
         }
         super.onCreate(savedInstanceState);
     }
@@ -179,19 +177,19 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
         return getDelegate().findViewById(id);
     }
 
-    @Override
-    public final boolean onMenuItemSelected(int featureId, android.view.MenuItem item) {
-        if (super.onMenuItemSelected(featureId, item)) {
-            return true;
-        }
-
-        final ActionBar ab = getSupportActionBar();
-        if (item.getItemId() == android.R.id.home && ab != null &&
-            (ab.getDisplayOptions() & ActionBar.DISPLAY_HOME_AS_UP) != 0) {
-            return onSupportNavigateUp();
-        }
-        return false;
-    }
+//    @Override
+//    public final boolean onMenuItemSelected(int featureId, android.view.MenuItem item) {
+//        if (super.onMenuItemSelected(featureId, item)) {
+//            return true;
+//        }
+//
+//        final ActionBar ab = getSupportActionBar();
+//        if (item.getItemId() == android.R.id.home && ab != null &&
+//            (ab.getDisplayOptions() & ActionBar.DISPLAY_HOME_AS_UP) != 0) {
+//            return onSupportNavigateUp();
+//        }
+//        return false;
+//    }
 
     @Override
     protected void onDestroy() {
@@ -232,27 +230,27 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
         getDelegate().invalidateOptionsMenu();
     }
 
-    /**
-     * Notifies the Activity that a support action mode has been started.
-     * Activity subclasses overriding this method should call the superclass implementation.
-     *
-     * @param mode The new action mode.
-     */
-    @Override
-    @CallSuper
-    public void onSupportActionModeStarted(@NonNull ActionMode mode) {
-    }
+//    /**
+//     * Notifies the Activity that a support action mode has been started.
+//     * Activity subclasses overriding this method should call the superclass implementation.
+//     *
+//     * @param mode The new action mode.
+//     */
+//    @Override
+//    @CallSuper
+//    public void onSupportActionModeStarted(@NonNull ActionMode mode) {
+//    }
 
-    /**
-     * Notifies the activity that a support action mode has finished.
-     * Activity subclasses overriding this method should call the superclass implementation.
-     *
-     * @param mode The action mode that just finished.
-     */
-    @Override
-    @CallSuper
-    public void onSupportActionModeFinished(@NonNull ActionMode mode) {
-    }
+//    /**
+//     * Notifies the activity that a support action mode has finished.
+//     * Activity subclasses overriding this method should call the superclass implementation.
+//     *
+//     * @param mode The action mode that just finished.
+//     */
+//    @Override
+//    @CallSuper
+//    public void onSupportActionModeFinished(@NonNull ActionMode mode) {
+//    }
 
     /**
      * Called when a support action mode is being started for this window. Gives the

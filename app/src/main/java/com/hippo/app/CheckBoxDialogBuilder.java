@@ -34,8 +34,8 @@ public class CheckBoxDialogBuilder extends AlertDialog.Builder {
         super(context);
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_checkbox_builder, null);
         setView(view);
-        TextView messageView = (TextView) view.findViewById(R.id.message);
-        mCheckBox = (CheckBox) view.findViewById(R.id.checkbox);
+        TextView messageView = view.findViewById(R.id.message);
+        mCheckBox = view.findViewById(R.id.checkbox);
         messageView.setText(message);
         mCheckBox.setText(checkText);
         mCheckBox.setChecked(checked);

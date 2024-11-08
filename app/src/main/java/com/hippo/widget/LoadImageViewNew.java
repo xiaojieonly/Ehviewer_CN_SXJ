@@ -68,7 +68,6 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
     private int mRetryType;
     public boolean mFailed;
     private boolean mLoadFromDrawable;
-    private ImageBitmap imageBitmap;
 
 
     public LoadImageViewNew(Context context) {
@@ -158,11 +157,6 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
 
         // Set drawable null
         setImageDrawable(null);
-        // Recycle ImageDrawable
-        if (imageBitmap != null) {
-            imageBitmap.release();
-            imageBitmap = null;
-        }
     }
 
     private void clearRetry() {
@@ -314,7 +308,6 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         } else {
             setImageDrawable(drawable);
         }
-        imageBitmap = value;
         return true;
     }
 

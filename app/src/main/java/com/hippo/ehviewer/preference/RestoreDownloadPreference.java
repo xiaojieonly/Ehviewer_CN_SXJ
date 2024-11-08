@@ -19,7 +19,7 @@ package com.hippo.ehviewer.preference;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Parcel;
-import android.preference.Preference;
+import androidx.preference.Preference;
 import android.util.AttributeSet;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
