@@ -1793,7 +1793,9 @@ public final class SpiderQueen implements Runnable {
                 if (is != null) {
                     try {
                         image = Image.decode((FileInputStream) is, false);
-                    } finally {
+                    }catch (OutOfMemoryError e){
+                        FirebaseCrashlytics.getInstance().recordException(e);
+                    }finally {
                         try {
                             is.close();
                         } catch (IOException e) {
