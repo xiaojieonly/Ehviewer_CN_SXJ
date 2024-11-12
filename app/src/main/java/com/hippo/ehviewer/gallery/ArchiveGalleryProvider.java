@@ -17,6 +17,8 @@
 package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Process;
 import androidx.annotation.NonNull;
@@ -260,7 +262,7 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
         }
 
         try {
-          Image image = Image.decode((FileInputStream) stream, false);
+          Image image = Image.decode(BitmapDrawable.createFromStream(stream,null), false);
           if (image != null) {
             notifyPageSucceed(index, image);
           } else {

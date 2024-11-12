@@ -20,6 +20,7 @@ package com.hippo.lib.image
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.ImageDecoder
 import android.graphics.ImageDecoder.ALLOCATOR_DEFAULT
@@ -81,11 +82,11 @@ class Image private constructor(
                 }
                 // Should we lazy decode it?
             } else {
-                mObtainedDrawable=Drawable.createFromStream(source,null)
+                mObtainedDrawable=BitmapDrawable.createFromStream(source,null)
             }
         }
         if (mObtainedDrawable == null) {
-            mObtainedDrawable = drawable
+            mObtainedDrawable = drawable!!
 //            throw IllegalArgumentException("数据解码出错")
         }
     }
@@ -95,8 +96,8 @@ class Image private constructor(
     } else {
         mObtainedDrawable is AnimationDrawable
     }
-    val width = mObtainedDrawable!!.intrinsicWidth
-    val height = mObtainedDrawable!!.intrinsicHeight
+    val width = (mObtainedDrawable as? BitmapDrawable)?.bitmap?.width ?: mObtainedDrawable!!.intrinsicWidth
+    val height = (mObtainedDrawable as? BitmapDrawable)?.bitmap?.height ?: mObtainedDrawable!!.intrinsicHeight
     val isRecycled = mObtainedDrawable == null
 
     var started = false
@@ -129,28 +130,28 @@ class Image private constructor(
         mObtainedDrawable!!.draw(Canvas(mBitmap!!))
     }
 
-    fun render(
-        srcX: Int, srcY: Int, dst: Bitmap, dstX: Int, dstY: Int,
-        width: Int, height: Int
-    ) {
-        check(!hardware) { "Hardware buffer cannot be used in glgallery" }
-        val bitmap: Bitmap = if (animated) {
-            updateBitmap()
-            mBitmap!!
-        } else {
-            (mObtainedDrawable as BitmapDrawable).bitmap
-        }
-        nativeRender(
-            bitmap,
-            srcX,
-            srcY,
-            dst,
-            dstX,
-            dstY,
-            width,
-            height
-        )
-    }
+//    fun render(
+//        srcX: Int, srcY: Int, dst: Bitmap, dstX: Int, dstY: Int,
+//        width: Int, height: Int
+//    ) {
+//        check(!hardware) { "Hardware buffer cannot be used in glgallery" }
+//        val bitmap: Bitmap = if (animated) {
+//            updateBitmap()
+//            mBitmap!!
+//        } else {
+//            (mObtainedDrawable as BitmapDrawable).bitmap
+//        }
+//        nativeRender(
+//            bitmap,
+//            srcX,
+//            srcY,
+//            dst,
+//            dstX,
+//            dstY,
+//            width,
+//            height
+//        )
+//    }
 
     fun texImage(init: Boolean, offsetX: Int, offsetY: Int, width: Int, height: Int) {
         check(!hardware) { "Hardware buffer cannot be used in glgallery" }
@@ -204,6 +205,17 @@ class Image private constructor(
         fun decode(stream: FileInputStream, hardware: Boolean = true): Image? {
             try {
                 return Image(stream, hardware = hardware)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                FirebaseCrashlytics.getInstance().recordException(e)
+                return null
+            }
+        }
+
+        @JvmStatic
+        fun decode(drawable: Drawable?, hardware: Boolean = true): Image? {
+            try {
+                return Image(null,drawable, hardware = hardware)
             } catch (e: Exception) {
                 e.printStackTrace()
                 FirebaseCrashlytics.getInstance().recordException(e)

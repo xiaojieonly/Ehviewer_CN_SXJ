@@ -26,9 +26,9 @@ android {
 
     defaultConfig {
         applicationId "com.xjs.ehviewer"
-        minSdkVersion 23
+        minSdkVersion 24
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 111
         versionName "1.9.9.3"
         vectorDrawables.useSupportLibrary = true

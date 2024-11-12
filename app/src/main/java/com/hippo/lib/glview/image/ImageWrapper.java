@@ -122,14 +122,14 @@ public class ImageWrapper {
         return mCut.height();
     }
 
-    /**
-     * @see Image#render(int, int, Bitmap, int, int, int, int)
-     */
-    public void render(int srcX, int srcY, Bitmap dst, int dstX, int dstY,
-                       int width, int height, boolean fillBlank, int defaultColor) {
-        mImage.render(srcX + mCut.left, srcY + mCut.top, dst, dstX, dstY,
-                width, height);
-    }
+//    /**
+//     * @see Image#render(int, int, Bitmap, int, int, int, int)
+//     */
+//    public void render(int srcX, int srcY, Bitmap dst, int dstX, int dstY,
+//                       int width, int height, boolean fillBlank, int defaultColor) {
+//        mImage.render(srcX + mCut.left, srcY + mCut.top, dst, dstX, dstY,
+//                width, height);
+//    }
 
     /**
      * @see Image#texImage(boolean, int, int, int, int)

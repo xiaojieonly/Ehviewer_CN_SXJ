@@ -22,10 +22,12 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 import androidx.appcompat.widget.AppCompatImageView;
+
+import com.google.android.material.imageview.ShapeableImageView;
 import com.hippo.ehviewer.R;
 import com.hippo.lib.yorozuya.MathUtils;
 
-public class FixedAspectImageView extends AppCompatImageView {
+public class FixedAspectImageView extends ShapeableImageView {
 
     private static final int[] MIN_ATTRS = {
             android.R.attr.minWidth,

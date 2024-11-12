@@ -21,9 +21,11 @@ import static com.hippo.ehviewer.client.EhUrl.DOMAIN_EX;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.AnimatedImageDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
@@ -68,8 +70,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public boolean mFailed;
     private boolean mLoadFromDrawable;
 
-    private ImageBitmap imageBitmap;
-
     public LoadImageView(Context context) {
         super(context);
         init(context, null, 0);
@@ -93,6 +93,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         if (!isInEditMode()) {
             mConaco = EhApplication.getConaco(context);
         }
+//        setScaleType(ScaleType.FIT_CENTER);
     }
 
     @Override
@@ -157,10 +158,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         // Set drawable null
         setImageDrawable(null);
-        if (imageBitmap != null) {
-            imageBitmap.release();
-            imageBitmap = null;
-        }
     }
 
     private void clearRetry() {
@@ -288,7 +285,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             return false;
         }
 
-        clearDrawable();
+//        clearDrawable();
 
         if (Integer.MIN_VALUE != mOffsetX) {
             drawable = new PreciselyClipDrawable(drawable, mOffsetX, mOffsetY, mClipWidth, mClipHeight);
@@ -306,7 +303,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             setImageDrawable(drawable);
         }
 
-        imageBitmap = value;
         return true;
     }
 
