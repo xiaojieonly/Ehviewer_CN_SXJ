@@ -17,7 +17,6 @@
  */
 package com.hippo.lib.image
 
-import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -39,7 +38,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.EhApplication
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
-import kotlin.Exception
 import kotlin.math.min
 
 class Image private constructor(
@@ -54,6 +52,10 @@ class Image private constructor(
     init {
         mObtainedDrawable = null
         source?.let {
+            var simpleSize: Int? = null
+            if (source.available() > 5242880) {
+                simpleSize = source.available() / 5242880
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val src = ImageDecoder.createSource(
                     source.channel.map(
@@ -70,10 +72,11 @@ class Image private constructor(
                             // Idk it will cause how much performance regression
 
                             decoder.setTargetSampleSize(
-                                min(
-                                    info.size.width / (2 * screenWidth),
-                                    info.size.height / (2 * screenHeight)
-                                ).coerceAtLeast(1)
+                                simpleSize
+                                    ?: min(
+                                        info.size.width / (2 * screenWidth),
+                                        info.size.height / (2 * screenHeight)
+                                    ).coerceAtLeast(1)
                             )
                             // Don't
                         }
@@ -82,7 +85,16 @@ class Image private constructor(
                 }
                 // Should we lazy decode it?
             } else {
-                mObtainedDrawable=BitmapDrawable.createFromStream(source,null)
+                if (simpleSize != null) {
+                    val option = BitmapFactory.Options().apply {
+                        inSampleSize = simpleSize
+                    }
+                    val bitmap = BitmapFactory.decodeStream(source, null, option)
+                    mObtainedDrawable =
+                        BitmapDrawable(EhApplication.getInstance().resources, bitmap)
+                } else {
+                    mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
+                }
             }
         }
         if (mObtainedDrawable == null) {
@@ -96,8 +108,10 @@ class Image private constructor(
     } else {
         mObtainedDrawable is AnimationDrawable
     }
-    val width = (mObtainedDrawable as? BitmapDrawable)?.bitmap?.width ?: mObtainedDrawable!!.intrinsicWidth
-    val height = (mObtainedDrawable as? BitmapDrawable)?.bitmap?.height ?: mObtainedDrawable!!.intrinsicHeight
+    val width =
+        (mObtainedDrawable as? BitmapDrawable)?.bitmap?.width ?: mObtainedDrawable!!.intrinsicWidth
+    val height = (mObtainedDrawable as? BitmapDrawable)?.bitmap?.height
+        ?: mObtainedDrawable!!.intrinsicHeight
     val isRecycled = mObtainedDrawable == null
 
     var started = false
@@ -215,7 +229,7 @@ class Image private constructor(
         @JvmStatic
         fun decode(drawable: Drawable?, hardware: Boolean = true): Image? {
             try {
-                return Image(null,drawable, hardware = hardware)
+                return Image(null, drawable, hardware = hardware)
             } catch (e: Exception) {
                 e.printStackTrace()
                 FirebaseCrashlytics.getInstance().recordException(e)

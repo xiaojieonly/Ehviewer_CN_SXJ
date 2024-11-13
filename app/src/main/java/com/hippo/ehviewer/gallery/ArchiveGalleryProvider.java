@@ -17,6 +17,8 @@
 package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -24,6 +26,7 @@ import android.os.Process;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.a7zip.ArchiveException;
+import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.lib.glgallery.GalleryPageView;
@@ -262,6 +265,13 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
         }
 
         try {
+//          BitmapFactory.Options option = new BitmapFactory.Options();
+//          if (stream.available()>40960){
+//            option.inSampleSize = 4;
+//          }
+//          Bitmap bitmap = BitmapFactory.decodeStream(stream,null,option);
+//          BitmapDrawable drawable = new BitmapDrawable(EhApplication.getInstance().getResources(),bitmap);
+//          Image image = Image.decode(drawable, false);
           Image image = Image.decode(BitmapDrawable.createFromStream(stream,null), false);
           if (image != null) {
             notifyPageSucceed(index, image);
