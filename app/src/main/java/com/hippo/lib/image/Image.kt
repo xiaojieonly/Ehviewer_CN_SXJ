@@ -53,8 +53,8 @@ class Image private constructor(
         mObtainedDrawable = null
         source?.let {
             var simpleSize: Int? = null
-            if (source.available() > 5242880) {
-                simpleSize = source.available() / 5242880
+            if (source.available() > 8388608) {
+                simpleSize = source.available() / 8388608
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val src = ImageDecoder.createSource(
