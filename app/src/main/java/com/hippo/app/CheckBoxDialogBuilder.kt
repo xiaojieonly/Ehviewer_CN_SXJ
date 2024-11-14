@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.app
 
-package com.hippo.app;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.view.LayoutInflater
+import android.widget.CheckBox
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import com.hippo.ehviewer.R
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.CheckBox;
-import android.widget.TextView;
-import androidx.appcompat.app.AlertDialog;
-import com.hippo.ehviewer.R;
+class CheckBoxDialogBuilder @SuppressLint("InflateParams") constructor(
+    context: Context?,
+    message: String?,
+    checkText: String?,
+    checked: Boolean
+) : AlertDialog.Builder(
+    context!!
+) {
+    private val mCheckBox: CheckBox
 
-public class CheckBoxDialogBuilder extends AlertDialog.Builder {
-
-    private final CheckBox mCheckBox;
-
-    @SuppressLint("InflateParams")
-    public CheckBoxDialogBuilder(Context context, String message, String checkText, boolean checked) {
-        super(context);
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_checkbox_builder, null);
-        setView(view);
-        TextView messageView = view.findViewById(R.id.message);
-        mCheckBox = view.findViewById(R.id.checkbox);
-        messageView.setText(message);
-        mCheckBox.setText(checkText);
-        mCheckBox.setChecked(checked);
+    init {
+        val view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_checkbox_builder, null)
+        setView(view)
+        val messageView = view.findViewById<TextView>(R.id.message)
+        mCheckBox = view.findViewById(R.id.checkbox)
+        messageView.text = message
+        mCheckBox.text = checkText
+        mCheckBox.isChecked = checked
     }
 
-    public boolean isChecked() {
-        return mCheckBox.isChecked();
-    }
+    val isChecked: Boolean
+        get() = mCheckBox.isChecked
 }

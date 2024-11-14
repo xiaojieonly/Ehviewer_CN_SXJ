@@ -13,60 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.app
 
-package com.hippo.app;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.view.LayoutInflater
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.CheckBox
+import android.widget.ListView
+import androidx.appcompat.app.AlertDialog
+import com.hippo.ehviewer.R
+import com.hippo.lib.yorozuya.ViewUtils
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
-import android.widget.ListView;
-import androidx.appcompat.app.AlertDialog;
-import com.hippo.ehviewer.R;
-import com.hippo.lib.yorozuya.ViewUtils;
+class ListCheckBoxDialogBuilder @SuppressLint("InflateParams") constructor(
+    context: Context?, items: Array<CharSequence>?,
+    listener: OnItemClickListener?, checkText: String?, checked: Boolean
+) : AlertDialog.Builder(
+    context!!
+) {
+    private val mCheckBox: CheckBox
 
-public class ListCheckBoxDialogBuilder extends AlertDialog.Builder {
+    private var mDialog: AlertDialog? = null
 
-    private final CheckBox mCheckBox;
-
-    private AlertDialog mDialog;
-
-    @SuppressLint("InflateParams")
-    public ListCheckBoxDialogBuilder(Context context, CharSequence[] items,
-            final OnItemClickListener listener, String checkText, boolean checked) {
-        super(context);
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_list_checkbox_builder, null);
-        setView(view);
-        ListView listView = (ListView) ViewUtils.$$(view, R.id.list_view);
-        mCheckBox = (CheckBox) ViewUtils.$$(view, R.id.checkbox);
-        listView.setAdapter(new ArrayAdapter<>(getContext(), R.layout.item_select_dialog, items));
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (listener != null) {
-                    listener.onItemClick(ListCheckBoxDialogBuilder.this, mDialog, position);
-                }
-                mDialog.dismiss();
+    init {
+        val view =
+            LayoutInflater.from(getContext()).inflate(R.layout.dialog_list_checkbox_builder, null)
+        setView(view)
+        val listView = ViewUtils.`$$`(view, R.id.list_view) as ListView
+        mCheckBox = ViewUtils.`$$`(view, R.id.checkbox) as CheckBox
+        listView.adapter = ArrayAdapter(getContext(), R.layout.item_select_dialog, items!!)
+        listView.onItemClickListener =
+            AdapterView.OnItemClickListener { parent, view, position, id ->
+                listener?.onItemClick(this@ListCheckBoxDialogBuilder, mDialog, position)
+                mDialog!!.dismiss()
             }
-        });
-        mCheckBox.setText(checkText);
-        mCheckBox.setChecked(checked);
+        mCheckBox.text = checkText
+        mCheckBox.isChecked = checked
     }
 
-    public boolean isChecked() {
-        return mCheckBox.isChecked();
+    val isChecked: Boolean
+        get() = mCheckBox.isChecked
+
+    override fun create(): AlertDialog {
+        mDialog = super.create()
+        return mDialog!!
     }
 
-    @Override
-    public AlertDialog create() {
-        mDialog = super.create();
-        return mDialog;
-    }
-
-    public interface OnItemClickListener {
-        void onItemClick(ListCheckBoxDialogBuilder builder, AlertDialog dialog, int position);
+    interface OnItemClickListener {
+        fun onItemClick(builder: ListCheckBoxDialogBuilder?, dialog: AlertDialog?, position: Int)
     }
 }
