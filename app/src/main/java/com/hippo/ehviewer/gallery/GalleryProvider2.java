@@ -29,6 +29,7 @@ public abstract class GalleryProvider2 extends GalleryProvider {
             ".jpeg",
             ".png", // Portable Network Graphics
             ".gif", // Graphics Interchange Format
+            ".webp"
     };
 
     public int getStartPage() {

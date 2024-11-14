@@ -321,8 +321,12 @@ public final class SpiderDen {
         if (dir == null) {
             return null;
         }
+        if (extension==null||!extension.contains(".")){
+            extension = fixExtension('.' + extension);
+        }else {
+            extension = fixExtension(extension);
+        }
 
-        extension = fixExtension('.' + extension);
         UniFile file = dir.createFile(generateImageFilename(index, extension));
         if (file != null) {
             return new UniFileOutputStreamPipe(file);
