@@ -1,8 +1,6 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-
-
 # 2024/11/15 : 
  ###  新版发布1.9.9.4
  ###  设置模块从android.preference迁移至androidx.preference
@@ -21,6 +19,7 @@
    Torrent链接：magnet:?xt=urn:btih:dc287a52ec4d5d6e55081a31da981bdd7746dfa6&xt=urn:btmh:1220f3b838f0781787524a63a4900c6e67123ad41092442d7e1e6f4805c8c3454cb6&dn=EhViewer-1.9.9.4.apk     
    Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
    Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel
+
 # 2024/11/06 : 紧急修复(尝试支持Android 9以下手机)
  ###  新版发布1.9.9.3
  ###  为低版本提供webp支持，但是解码webp动图会闪退
