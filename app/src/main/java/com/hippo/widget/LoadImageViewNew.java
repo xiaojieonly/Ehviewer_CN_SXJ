@@ -280,6 +280,7 @@ public class LoadImageViewNew extends FixedAspectImageView implements Unikery<Im
         Drawable drawable;
         try {
             drawable = value.getDrawable();
+
         } catch (Exception e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);
