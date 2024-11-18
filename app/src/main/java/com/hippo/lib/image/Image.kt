@@ -46,8 +46,9 @@ class Image private constructor(
     val hardware: Boolean = false,
     val release: () -> Unit? = {}
 ) {
-    internal var mObtainedDrawable: Drawable?
+    private var mObtainedDrawable: Drawable?
     private var mBitmap: Bitmap? = null
+    private var mReferences = 0
 
     init {
         mObtainedDrawable = null
@@ -142,6 +143,29 @@ class Image private constructor(
     private fun updateBitmap() {
         prepareBitmap()
         mObtainedDrawable!!.draw(Canvas(mBitmap!!))
+    }
+
+    @Synchronized
+    fun obtain(): Boolean {
+        return if (isRecycled) {
+            false
+        } else {
+            ++mReferences
+            true
+        }
+    }
+
+    @Synchronized
+    fun release() {
+        --mReferences
+        if (mReferences <= 0 && isRecycled) {
+            recycle()
+        }
+    }
+
+    fun getDrawable(): Drawable {
+        check(obtain()) { "Recycled!" }
+        return mObtainedDrawable as Drawable
     }
 
 //    fun render(

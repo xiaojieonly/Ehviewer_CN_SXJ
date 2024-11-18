@@ -10,7 +10,7 @@ if (file('google-services.json').exists()) {
 android {
     namespace 'com.hippo.ehviewer'
     testNamespace 'com.hippo.ehviewer.debug'
-    compileSdk 34
+    compileSdk 35
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '25.1.8937393'
 
@@ -172,7 +172,7 @@ dependencies {
     implementation 'com.github.seven332:refreshlayout:0.1.0'
     implementation 'com.github.seven332:ripple:0.1.2'
     implementation 'com.github.seven332:streampipe:0.1.0'
-    implementation 'com.github.seven332:tuxiang:0.1.6'
+//    implementation 'com.github.seven332:tuxiang:0.1.6'
 //    implementation 'com.github.seven332:unifile:9ec57bcd8f'
 //    implementation 'com.github.seven332:yorozuya:0.1.2'
 //    implementation 'com.github.seven332:yorozuya-thread:0.1.1'

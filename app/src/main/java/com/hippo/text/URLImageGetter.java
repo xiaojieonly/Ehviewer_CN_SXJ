@@ -20,15 +20,15 @@ import android.graphics.drawable.Drawable;
 
 import com.hippo.conaco.Conaco;
 import com.hippo.drawable.UnikeryDrawable;
-import com.hippo.lib.image.ImageBitmap;
+import com.hippo.lib.image.Image;
 import com.hippo.widget.ObservedTextView;
 
 public class URLImageGetter implements Html.ImageGetter {
 
     private final ObservedTextView mTextView;
-    private final Conaco<ImageBitmap> mConaco;
+    private final Conaco<Image> mConaco;
 
-    public URLImageGetter(ObservedTextView textView, Conaco<ImageBitmap> conaco) {
+    public URLImageGetter(ObservedTextView textView, Conaco<Image> conaco) {
         mTextView = textView;
         mConaco = conaco;
     }

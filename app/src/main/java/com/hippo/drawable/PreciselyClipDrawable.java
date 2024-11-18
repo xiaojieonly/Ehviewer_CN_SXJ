@@ -36,17 +36,17 @@ public class PreciselyClipDrawable extends DrawableWrapper {
     private final boolean mClip;
     private RectF mScale;
     private Rect mTemp;
-    private int offsetX;
-    private  int offsetY;
-    private  int width;
-    private  int height;
+//    private int offsetX;
+//    private  int offsetY;
+//    private  int width;
+//    private  int height;
 
     public PreciselyClipDrawable(Drawable drawable, int offsetX, int offsetY, int width, int height) {
         super(drawable);
-        this.offsetX = offsetX;
-        this.offsetY = offsetY;
-        this.width = width;
-        this.height = height;
+//        this.offsetX = offsetX;
+//        this.offsetY = offsetY;
+//        this.width = width;
+//        this.height = height;
         float originWidth = drawable.getIntrinsicWidth();
         float originHeight = drawable.getIntrinsicHeight();
         if (originWidth <= 0 || originHeight <= 0) {
@@ -65,22 +65,19 @@ public class PreciselyClipDrawable extends DrawableWrapper {
 
     @Override
     protected void onBoundsChange(@NonNull Rect bounds) {
-        if (mClip) {
-            if (!mScale.isEmpty()) {
-                mTemp.left = (int) ((mScale.left * bounds.right - mScale.right * bounds.left) /
-                        (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
-                mTemp.right = (int) (((1 - mScale.right) * bounds.left - (1 - mScale.left) * bounds.right) /
-                        (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
-                mTemp.top = (int) ((mScale.top * bounds.bottom - mScale.bottom * bounds.top) /
-                        (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
-                mTemp.bottom = (int) (((1 - mScale.bottom) * bounds.top - (1 - mScale.top) * bounds.bottom) /
-                        (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
-                super.onBoundsChange(mTemp);
-            }
-        } else {
-            super.onBoundsChange(bounds);
+        if (mClip&&!mScale.isEmpty()) {
+            mTemp.left = (int) ((mScale.left * bounds.right - mScale.right * bounds.left) /
+                    (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
+            mTemp.right = (int) (((1 - mScale.right) * bounds.left - (1 - mScale.left) * bounds.right) /
+                    (mScale.left * (1 - mScale.right) - mScale.right * (1 - mScale.left)));
+            mTemp.top = (int) ((mScale.top * bounds.bottom - mScale.bottom * bounds.top) /
+                    (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
+            mTemp.bottom = (int) (((1 - mScale.bottom) * bounds.top - (1 - mScale.top) * bounds.bottom) /
+                    (mScale.top * (1 - mScale.bottom) - mScale.bottom * (1 - mScale.top)));
+            super.onBoundsChange(mTemp);
+            return;
         }
-//        super.onBoundsChange(bounds);
+        super.onBoundsChange(bounds);
     }
 
 
@@ -106,11 +103,9 @@ public class PreciselyClipDrawable extends DrawableWrapper {
     public void draw(@NonNull Canvas canvas) {
         if (mClip) {
             if (!mScale.isEmpty()) {
-//                int saveCount = canvas.save();
-                canvas.clipRect(getBounds());
+                Rect rect = getBounds();
+                canvas.clipRect(rect);
                 super.draw(canvas);
-//                canvas.restoreToCount(saveCount);
-                canvas.restore();
             }
         } else {
             super.draw(canvas);

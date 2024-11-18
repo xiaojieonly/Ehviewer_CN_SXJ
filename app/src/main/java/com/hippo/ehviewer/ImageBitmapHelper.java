@@ -19,23 +19,23 @@ package com.hippo.ehviewer;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.conaco.ValueHelper;
-import com.hippo.lib.image.ImageBitmap;
+import com.hippo.lib.image.Image;
 import com.hippo.streampipe.InputStreamPipe;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
+public class ImageBitmapHelper implements ValueHelper<Image> {
 
     private static final int MAX_CACHE_SIZE = 512 * 512;
 
     @Nullable
     @Override
-    public ImageBitmap decode(@NonNull InputStreamPipe isPipe) {
+    public Image decode(@NonNull InputStreamPipe isPipe) {
         try {
             isPipe.obtain();
             FileInputStream is = (FileInputStream) isPipe.open();
-            return ImageBitmap.decode(is);
+            return Image.decode(is,true);
         } catch (OutOfMemoryError e) {
             return null;
         } catch (IOException e) {
@@ -47,7 +47,7 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
     }
 
     @Override
-    public int sizeOf(@NonNull String key, @NonNull ImageBitmap value) {
+    public int sizeOf(@NonNull String key, @NonNull Image value) {
         return value.getWidth() * value.getHeight() * 4 /* value.getByteCount() TODO Update Image */;
     }
 
@@ -57,17 +57,17 @@ public class ImageBitmapHelper implements ValueHelper<ImageBitmap> {
 //    }
 
     @Override
-    public void onAddToMemoryCache(@NonNull ImageBitmap oldValue) {
+    public void onAddToMemoryCache(@NonNull Image oldValue) {
         oldValue.obtain();
     }
 
     @Override
-    public void onRemoveFromMemoryCache(@NonNull String key, @NonNull ImageBitmap oldValue) {
+    public void onRemoveFromMemoryCache(@NonNull String key, @NonNull Image oldValue) {
         oldValue.release();
     }
 
     @Override
-    public boolean useMemoryCache(@NonNull String key, ImageBitmap value) {
+    public boolean useMemoryCache(@NonNull String key, Image value) {
         if (value != null) {
             return value.getWidth() * value.getHeight() <= MAX_CACHE_SIZE
                     /* value.getByteCount() <= MAX_CACHE_BYTE_COUNT TODO Update Image */;
