@@ -101,7 +101,7 @@
     <string name="app_waring">이 앱의 내용은 인터넷에서 받아옵니다. 이 앱을 사용하기 위해서는 받아온 내용 중 일부가 사용자에게 가할 수 있는 신체적 또는 정신적 피해를 감수해야 합니다.</string>
     <string name="error_username_cannot_empty">사용자 이름은 비워둘 수 없습니다.</string>
     <string name="error_password_cannot_empty">비밀번호는 비워둘 수 없습니다.</string>
-    <string name="skip_signing_in">로그인 없이 사용</string>
+    <string name="guest_mode">게스트 모드</string>
     <string name="sign_in_failed">로그인 실패</string>
     <string name="sign_in_failed_tip">오류가 계속되면 WebView 또는 쿠키를 통한 로그인을 시도해보세요.</string>
     <string name="sign_in_failed_plain">뭔가가 잘못되었습니다. 웹사이트가 업데이트 중일 수 있습니다. WebView 또는 쿠키를 사용하여 로그인하거나 아래 버튼을 눌러 로그인을 건너뛸 수 있습니다. 그러나 로그인을 건너뛰면 "슬픈 팬더"를 보게 될 것입니다.</string>

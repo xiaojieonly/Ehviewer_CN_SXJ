@@ -89,7 +89,7 @@
     <string name="app_waring">Le contenu de l\'application provient de l\'Internet, dont quelque chose peut vous causer le dommage physique ou mentale. Vous l\'avez bien compris et voulez continuer quand même.</string>
     <string name="error_username_cannot_empty">Nom d\'ultilisateur ne doit pas être une chaîne vide</string>
     <string name="error_password_cannot_empty">Mot de passe ne doit pas être une chaîne vide</string>
-    <string name="skip_signing_in">Continuer sans se connecter</string>
+    <string name="guest_mode">Mode Invité</string>
     <string name="sign_in_failed">Impossible de se connecter</string>
     <string name="sign_in_failed_plain">Il se peut que ce soit une erreur causée par la mise à jour du site Web ou d\'autre chose. Vous pouvez essayer de vous connecter via WebView, à l\'aide de cookies, ou continuer sans vous connecter. Mais si vous ne vous connectez pas, vous pouvez devenir un panda triste. Essayez de vous connecter à l\'aide de cookies si vous vous êtes connecté(e) dans la version 0.6.x.</string>
     <string name="press_twice_exit">Appuyez encore une fois pour quitter</string>

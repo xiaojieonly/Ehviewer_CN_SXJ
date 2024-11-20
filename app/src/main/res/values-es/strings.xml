@@ -82,7 +82,7 @@
 
     <string name="app_waring">El contenido de esta aplicación es de Internet. Algunas de ellas pueden causarle daño psicológico. Ahora sabes los riesgos anteriormente mencionado y te gustaría asumirlos</string>
     <string name="error_username_cannot_empty">El usuario no puede estar vacío</string>
-    <string name="skip_signing_in">Saltar inicio de sesión</string>
+    <string name="guest_mode">Modo invitado</string>
     <string name="sign_in_failed">Inicio de sesión fallido</string>
     <string name="sign_in_failed_plain">Tal ves sea debido a un error de actualización de el sitio web o algo mal sucedió. Puedes intentar iniciar sesión vía WebView, ingresar una cookie o saltar el inicio de sesión presionando el botón de abajo.\nEs posible que te salga un \"Panda Triste\" después de saltar el inicio de sesión. Intente \"Ingresar vía cookies\" primero si ha iniciado sesión en la versión 0.6.x de HeViewer.</string>
     <string name="press_twice_exit">Presione una vez más para salir</string>

@@ -130,7 +130,7 @@
     <string name="app_waring">本應用程式中內容來自互聯網，部分內容可能對您的生理及心理造成難以恢復的傷害。本應用程式的作者不會對由其所造成的任何影響負責。\n\n未成年人應在監護人指導下使用本應用程式。</string>
     <string name="error_username_cannot_empty">用戶名不可以空白</string>
     <string name="error_password_cannot_empty">密碼不可以空白</string>
-    <string name="skip_signing_in">略過登入</string>
+    <string name="guest_mode">略過登入</string>
     <string name="sign_in_failed">登入失敗</string>
     <string name="sign_in_failed_tip">若持續出錯，請嘗試“通過網頁登入”或“通過 Cookie 登入”。</string>
     <string name="sign_in_failed_plain">這可能是因為網站更新或其他不明原因導致的錯誤。您可以在登入按鈕下方，選擇通過網頁登入；輸入 cookie 登入或略過登入。略過登入可能導致無法正常使用應用程式。如果你已經在 0.6.x 版登入過了，請優先嘗試選擇“通過 Cookie 登入”。</string>

@@ -138,11 +138,11 @@
                 android:textColor="?attr/textColorThemeAccent"/>
 
             <TextView
-                android:id="@+id/skip_signing_in"
+                android:id="@+id/guest_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="@string/skip_signing_in"
+                android:text="@string/guest_mode"
                 android:textColor="?attr/textColorThemeAccent"/>
 
         </LinearLayout>

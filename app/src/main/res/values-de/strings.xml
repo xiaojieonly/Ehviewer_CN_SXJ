@@ -474,7 +474,7 @@
     <string name="app_waring">Inhalt dieser App kommt aus dem Internet, von dem einige dir körperlichen oder emotionalen Schaden zufügen kann. Du hast es wirklich erfahrt und möchtest immer noch fortsetzen.</string>
     <string name="error_username_cannot_empty">Gibt den Nutzername ein</string>
     <string name="error_password_cannot_empty">Gibt das Passwort ein</string>
-    <string name="skip_signing_in">Anmeldung überspringen</string>
+    <string name="guest_mode">Gastmodus</string>
     <string name="sign_in_failed">Anmeldung fehlgeschlagen</string>
     <string name="sign_in_failed_plain">Der Fehler könnte wegen des Updates der Webseite aufgetretet werden. Versuche, dich anzumelden, indem du WebView benutzt oder Cookie eingeben, oder überspringe die Anmeldung mit der Taste unter ANMELDEN-Taste. Du könntest aber den Sad Panda sehen, wenn du dich nicht anmelden. Falls du dich mit Version unter 0.6.x anmeldetest, versuche, dich mit Cookie anzumelden.</string>
     <string name="content_layout_restore_tip">Zum Wiederholen antippen</string>

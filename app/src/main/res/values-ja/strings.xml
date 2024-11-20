@@ -76,7 +76,7 @@
     <string name="app_waring">このアプリの内容はインターネットから取得したものです。その内容の一部は使用者のお体や心理に傷つける恐れがあります。それでも続行しますか？</string>
     <string name="error_username_cannot_empty">ユーザー名を入力してください。</string>
     <string name="error_password_cannot_empty">パスワードを入力してください。</string>
-    <string name="skip_signing_in">ログインをスキップする</string>
+    <string name="guest_mode">ゲストモード</string>
     <string name="sign_in_failed">ログインに失敗しました。</string>
     <string name="sign_in_failed_plain">このエラーの原因は、ウェブサイトがメンテンス中か、または不明なエラーが発生したことである可能性があります。ログインボタンの下でウェブでログインするか、Cookieを入力してログインするか、またはログインをスキップしてみてください。ログインをスキップすると「Sad Panda」エラーが発生することがあります。0.6.xバージョンでログインした場合、Cookieでログインすることをおすすめします。</string>
     <string name="press_twice_exit">もう一度押して終了します。</string>
