@@ -150,11 +150,6 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     }
 
     private void clearDrawable() {
-//        // Recycle ImageDrawable
-//        ImageDrawable imageDrawable = getImageDrawable();
-//        if (imageDrawable != null) {
-//            imageDrawable.recycle();
-//        }
 
         // Set drawable null
         setImageDrawable(null);
@@ -278,21 +273,18 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public boolean onGetValue(@NonNull Image value, int source) {
         Drawable drawable;
         try {
-            Drawable.ConstantState state = value.getDrawable().getConstantState();
-            if (state!=null){
-                drawable = state.newDrawable();
-            }else {
-                drawable = value.getDrawable();
-            }
+            drawable = value.getDrawable();
         } catch (Exception e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);
             return false;
         }
 
-//        clearDrawable();
-
         if (Integer.MIN_VALUE != mOffsetX) {
+            Drawable.ConstantState state = value.getDrawable().getConstantState();
+            if (state!=null){
+                drawable = state.newDrawable();
+            }
             drawable = new PreciselyClipDrawable(drawable, mOffsetX, mOffsetY, mClipWidth, mClipHeight);
         }
 

@@ -197,6 +197,9 @@ class Image private constructor(
             updateBitmap()
             mBitmap!!
         } else {
+            if (mObtainedDrawable==null){
+                return
+            }
             (mObtainedDrawable as BitmapDrawable).bitmap
         }
         nativeTexImage(
