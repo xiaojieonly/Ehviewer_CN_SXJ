@@ -38,6 +38,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.EhApplication
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
+import kotlin.math.max
 import kotlin.math.min
 
 class Image private constructor(
@@ -53,9 +54,9 @@ class Image private constructor(
     init {
         mObtainedDrawable = null
         source?.let {
-            var simpleSize: Int? = null
-            if (source.available() > 8388608) {
-                simpleSize = source.available() / 8388608
+            var simpleSize = 1
+            if (source.available() > 10485760) {
+                simpleSize = source.available() / 10485760 + 1
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val src = ImageDecoder.createSource(
@@ -71,13 +72,12 @@ class Image private constructor(
                                 if (hardware) ALLOCATOR_DEFAULT else ALLOCATOR_SOFTWARE
                             // Sadly we must use software memory since we need copy it to tile buffer, fuck glgallery
                             // Idk it will cause how much performance regression
-
+                            val screenSize = min(
+                                info.size.width / (2 * screenWidth),
+                                info.size.height / (2 * screenHeight)
+                            ).coerceAtLeast(1)
                             decoder.setTargetSampleSize(
-                                simpleSize
-                                    ?: min(
-                                        info.size.width / (2 * screenWidth),
-                                        info.size.height / (2 * screenHeight)
-                                    ).coerceAtLeast(1)
+                                max(screenSize, simpleSize)
                             )
                             // Don't
                         }
@@ -197,7 +197,7 @@ class Image private constructor(
             updateBitmap()
             mBitmap!!
         } else {
-            if (mObtainedDrawable==null){
+            if (mObtainedDrawable == null) {
                 return
             }
             (mObtainedDrawable as BitmapDrawable).bitmap
