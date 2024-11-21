@@ -54,7 +54,7 @@ class Image private constructor(
     init {
         mObtainedDrawable = null
         source?.let {
-            var simpleSize = 1
+            var simpleSize: Int? = null
             if (source.available() > 10485760) {
                 simpleSize = source.available() / 10485760 + 1
             }
@@ -77,7 +77,7 @@ class Image private constructor(
                                 info.size.height / (2 * screenHeight)
                             ).coerceAtLeast(1)
                             decoder.setTargetSampleSize(
-                                max(screenSize, simpleSize)
+                                max(screenSize, simpleSize ?: 1)
                             )
                             // Don't
                         }
@@ -227,6 +227,7 @@ class Image private constructor(
             return 0
         }
 
+    @get:SuppressWarnings("deprecation")
     val isOpaque: Boolean
         get() {
             return mObtainedDrawable?.opacity == PixelFormat.OPAQUE
