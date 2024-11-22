@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.client;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
 
@@ -88,6 +89,7 @@ public class EhClient {
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     public class Task extends AsyncTask<Object, Void, Object> {
 
         private final int mMethod;

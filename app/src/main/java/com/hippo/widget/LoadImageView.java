@@ -37,14 +37,23 @@ import android.view.View;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.Unikery;
 import com.hippo.drawable.PreciselyClipDrawable;
 import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.client.EhCacheKeyFactory;
+import com.hippo.ehviewer.client.EhClient;
+import com.hippo.ehviewer.client.EhRequest;
+import com.hippo.ehviewer.client.EhUrl;
+import com.hippo.ehviewer.client.data.GalleryDetail;
+import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.lib.image.Image;
+import com.hippo.lib.yorozuya.IntIdGenerator;
 import com.hippo.util.DrawableManager;
 
 import java.lang.annotation.Retention;
@@ -52,6 +61,11 @@ import java.lang.annotation.RetentionPolicy;
 
 public class LoadImageView extends FixedAspectImageView implements Unikery<Image>,
         View.OnClickListener, View.OnLongClickListener, Animatable {
+
+    public enum LoadSource {
+        DOWNLOAD_LIST, DEFAULT
+    }
+
 
     public static final int RETRY_TYPE_NONE = 0;
     public static final int RETRY_TYPE_CLICK = 1;
@@ -69,6 +83,11 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     private int mRetryType;
     public boolean mFailed;
     private boolean mLoadFromDrawable;
+    private boolean secondTry = false;
+    @Nullable
+    private DownloadInfo downloadInfo = null;
+
+    private int mRequestId = IntIdGenerator.INVALID_ID;
 
     public LoadImageView(Context context) {
         super(context);
@@ -206,6 +225,11 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         load(key, url, true);
     }
 
+    public void load(String key, String url, boolean useNetwork, DownloadInfo downloadInfo) {
+        this.downloadInfo = downloadInfo;
+        load(key, url, useNetwork);
+    }
+
     public void load(String key, String url, boolean useNetwork) {
         if (url == null || key == null) {
             return;
@@ -282,7 +306,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         if (Integer.MIN_VALUE != mOffsetX) {
             Drawable.ConstantState state = value.getDrawable().getConstantState();
-            if (state!=null){
+            if (state != null) {
                 drawable = state.newDrawable();
             }
             drawable = new PreciselyClipDrawable(drawable, mOffsetX, mOffsetY, mClipWidth, mClipHeight);
@@ -321,10 +345,26 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         } else if (mRetryType == RETRY_TYPE_LONG_CLICK) {
             setOnLongClickListener(this);
         } else {
+            if (secondTry && downloadInfo != null) {
+                Context context = this.getContext();
+                if (EhApplication.getInstance().containGlobalStuff(mRequestId)) {
+                    // request exist
+                    return;
+                }
+                String detailUrl = EhUrl.getGalleryDetailUrl(downloadInfo.gid, downloadInfo.token);
+                GalleryDetailCallback callback = new GalleryDetailCallback(context);
+                mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
+                EhRequest request = new EhRequest()
+                        .setMethod(EhClient.METHOD_GET_GALLERY_DETAIL)
+                        .setArgs(detailUrl)
+                        .setCallback(callback);
+                EhApplication.getEhClient(context).execute(request);
+            }
             // Can't retry, so release
             mKey = null;
             mUrl = null;
         }
+
     }
 
     @Override
@@ -383,5 +423,41 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     @IntDef({RETRY_TYPE_NONE, RETRY_TYPE_CLICK, RETRY_TYPE_LONG_CLICK})
     @Retention(RetentionPolicy.SOURCE)
     private @interface RetryType {
+    }
+
+    private class GalleryDetailCallback implements EhClient.Callback<GalleryDetail> {
+        private final Context context;
+        private final EhApplication ehApplication;
+
+        private GalleryDetailCallback(Context context) {
+            this.context = context;
+            this.ehApplication = (EhApplication) context.getApplicationContext();
+        }
+
+        @Override
+        public void onSuccess(GalleryDetail result) {
+            ehApplication.removeGlobalStuff(this);
+            secondTry = true;
+            if (context == null||result == null || downloadInfo == null) {
+                return;
+            }
+            // Put gallery detail to cache
+            EhApplication.getGalleryDetailCache(context).put(result.gid, result);
+            if (downloadInfo.gid == result.gid && !downloadInfo.thumb.equals(result.thumb)) {
+                downloadInfo.updateInfo(result);
+                EhDB.putDownloadInfo(downloadInfo);
+                load(EhCacheKeyFactory.getThumbKey(downloadInfo.gid), downloadInfo.thumb, true);
+            }
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            ehApplication.removeGlobalStuff(this);
+        }
+
+        @Override
+        public void onCancel() {
+            ehApplication.removeGlobalStuff(this);
+        }
     }
 }

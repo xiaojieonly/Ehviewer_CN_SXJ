@@ -17,7 +17,10 @@
 package com.hippo.ehviewer.client;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.network.UrlBuilder;
 import java.util.List;
 import java.util.ListIterator;
@@ -287,7 +290,7 @@ public class EhUrl {
         HttpUrl url = HttpUrl.parse(originUrl);
         if (url == null) return originUrl;
         List<String> pathSegments = url.pathSegments();
-        if (pathSegments == null || pathSegments.size() < 3) return originUrl;
+        if (pathSegments.size() < 3) return originUrl;
 
         ListIterator<String> iterator = pathSegments.listIterator(pathSegments.size());
         // The last segments, like
@@ -312,4 +315,5 @@ public class EhUrl {
             return originUrl;
         }
     }
+
 }

@@ -408,6 +408,7 @@ public final class ConacoTask<V> {
                 Response response = mCall.execute();
                 ResponseBody body = response.body();
                 if (body == null) {
+
                     return null;
                 }
                 is = body.byteStream();
