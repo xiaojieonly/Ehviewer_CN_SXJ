@@ -92,9 +92,10 @@ class PreciselyClipDrawable(
     override fun draw(canvas: Canvas) {
         if (mClip) {
             if (!mScale.isEmpty) {
-                val rect = bounds
-                canvas.clipRect(rect)
+                val saveCount = canvas.save()
+                canvas.clipRect(bounds)
                 super.draw(canvas)
+                canvas.restoreToCount(saveCount)
             }
         } else {
             super.draw(canvas)

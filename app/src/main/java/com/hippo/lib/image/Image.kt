@@ -193,23 +193,36 @@ class Image private constructor(
 
     fun texImage(init: Boolean, offsetX: Int, offsetY: Int, width: Int, height: Int) {
         check(!hardware) { "Hardware buffer cannot be used in glgallery" }
-        val bitmap: Bitmap = if (animated) {
-            updateBitmap()
-            mBitmap!!
-        } else {
-            if (mObtainedDrawable == null) {
-                return
+        try {
+            val bitmap: Bitmap = if (animated) {
+                updateBitmap()
+                mBitmap!!
+            } else {
+                if (mObtainedDrawable == null) {
+                    return
+                }
+                if (mObtainedDrawable is BitmapDrawable){
+                    (mObtainedDrawable as BitmapDrawable).bitmap
+                }else{
+                    val stickerBitmap = Bitmap.createBitmap(mObtainedDrawable!!.intrinsicWidth, mObtainedDrawable!!.intrinsicHeight, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(stickerBitmap)
+                    mObtainedDrawable!!.setBounds(0, 0, stickerBitmap.width, stickerBitmap.height)
+                    mObtainedDrawable!!.draw(canvas)
+                    stickerBitmap
+                }
             }
-            (mObtainedDrawable as BitmapDrawable).bitmap
+            nativeTexImage(
+                bitmap,
+                init,
+                offsetX,
+                offsetY,
+                width,
+                height
+            )
+        }catch (e:ClassCastException){
+            FirebaseCrashlytics.getInstance().recordException(e)
+            return
         }
-        nativeTexImage(
-            bitmap,
-            init,
-            offsetX,
-            offsetY,
-            width,
-            height
-        )
     }
 
     fun start() {

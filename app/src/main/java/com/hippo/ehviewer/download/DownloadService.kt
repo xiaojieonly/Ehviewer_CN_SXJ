@@ -97,7 +97,11 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent == null) {
+            // Handle the case where the intent is null
+            return START_STICKY
+        }
         handleIntent(intent)
         return START_STICKY
     }
