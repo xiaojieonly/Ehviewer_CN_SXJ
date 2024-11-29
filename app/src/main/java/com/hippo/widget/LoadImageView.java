@@ -16,16 +16,11 @@
 
 package com.hippo.widget;
 
-import static com.hippo.ehviewer.client.EhUrl.DOMAIN_E;
-import static com.hippo.ehviewer.client.EhUrl.DOMAIN_EX;
-
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.AnimatedImageDrawable;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
@@ -61,11 +56,6 @@ import java.lang.annotation.RetentionPolicy;
 
 public class LoadImageView extends FixedAspectImageView implements Unikery<Image>,
         View.OnClickListener, View.OnLongClickListener, Animatable {
-
-    public enum LoadSource {
-        DOWNLOAD_LIST, DEFAULT
-    }
-
 
     public static final int RETRY_TYPE_NONE = 0;
     public static final int RETRY_TYPE_CLICK = 1;
@@ -156,8 +146,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
     private Drawable getImageDrawable() {
         Drawable drawable = getDrawable();
-        if (drawable instanceof TransitionDrawable) {
-            TransitionDrawable transitionDrawable = (TransitionDrawable) drawable;
+        if (drawable instanceof TransitionDrawable transitionDrawable) {
             if (transitionDrawable.getNumberOfLayers() == 2) {
                 drawable = transitionDrawable.getDrawable(1);
             }
