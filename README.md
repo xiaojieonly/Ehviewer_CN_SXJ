@@ -1,6 +1,20 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2024/12/01 : 紧急更新    
+ ###  新版发布1.9.9.6   
+ ###  修复一个因空指针导致的奔溃问题   
+ ###  修复下载列表因没有读取.thumb文件导致的略缩图丢失问题   
+
+[//]: # (   点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/2f4r195618&#41;   )
+   点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
+   点击前往下载：[百度云](https://pan.baidu.com/s/1rNOnfZ-1OMgM0RkJPojhkg)  密码:f7op   
+   点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouj.com/iOLr52gycm4b)  密码:4qan   
+   点击前往下载：[github](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)    
+   点击前往赏饭：[要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)    
+   Torrent链接：magnet:?xt=urn:btih:0b58fe56cbe5bc4315451a8bfd822b90c3564639&xt=urn:btmh:122068642b751c282987529940187ba93cb412304922a5e9632556cfe8ce082df40e&dn=EhViewer-1.9.9.6.apk     
+   Telegram群:https://t.me/+WyclP8pPlk-JfbwS    
+   Telegram通知群:https://t.me/Ehviewer_xiaojieonly_channel  
 # 2024/12/01 : 
  ###  新版发布1.9.9.5
  ###  修复略缩图因状态共用导致的重复显示同一张图片
