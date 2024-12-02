@@ -17,10 +17,9 @@
 package com.hippo.conaco;
 
 import android.os.Process;
-import android.util.Log;
-
 import androidx.annotation.IntDef;
 import androidx.annotation.UiThread;
+import android.util.Log;
 
 import com.hippo.beerbelly.BeerBelly;
 import com.hippo.lib.yorozuya.thread.PriorityThreadFactory;
@@ -36,17 +35,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
 
-@SuppressWarnings("rawtypes")
-public final class Conaco<V> {
+public class Conaco<V> {
+
+    private static final String TAG = Conaco.class.getSimpleName();
+
+    @IntDef({SOURCE_MEMORY, SOURCE_DISK, SOURCE_NETWORK})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Source {}
 
     public static final int SOURCE_MEMORY = 0;
     public static final int SOURCE_DISK = 1;
     public static final int SOURCE_NETWORK = 2;
-    private static final String TAG = Conaco.class.getSimpleName();
-    private final ValueHelper<V> mHelper;
-    private final ValueCache<V> mCache;
-    private final OkHttpClient mOkHttpClient;
-    private final Register<V> mRegister;
+
+    private ValueHelper<V> mHelper;
+    private ValueCache<V> mCache;
+    private OkHttpClient mOkHttpClient;
+    private Register<V> mRegister;
     private final SerialThreadExecutor mDiskExecutor;
     private final ThreadPoolExecutor mNetworkExecutor;
     private final AtomicInteger mIdGenerator;
@@ -186,11 +190,6 @@ public final class Conaco<V> {
         task.clearUnikery();
 
         onUnregisterConacoTask(task);
-    }
-
-    @IntDef({SOURCE_MEMORY, SOURCE_DISK, SOURCE_NETWORK})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Source {
     }
 
     public static class Builder<T> extends BeerBelly.BeerBellyParams {

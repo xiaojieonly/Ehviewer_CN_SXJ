@@ -16,8 +16,8 @@
 
 package com.hippo.conaco;
 
-import com.hippo.lib.yorozuya.collect.Multimap;
-import com.hippo.lib.yorozuya.collect.SparseILArray;
+import com.hippo.yorozuya.collect.Multimap;
+import com.hippo.yorozuya.collect.SparseILArray;
 
 import java.util.List;
 

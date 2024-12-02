@@ -23,18 +23,18 @@ public interface Unikery<V> {
     int INVALID_ID = -1;
 
     /**
-     * Get the conaco task id
-     *
-     * @return the conaco task id
-     */
-    int getTaskId();
-
-    /**
      * Store the conaco task id
      *
      * @param id the conaco task id
      */
     void setTaskId(int id);
+
+    /**
+     * Get the conaco task id
+     *
+     * @return the conaco task id
+     */
+    int getTaskId();
 
     /**
      * On miss in the source
@@ -60,8 +60,8 @@ public interface Unikery<V> {
      * On get the value
      *
      * @return {@code true} for the {@code Unikery} accepts the value
-     * and the task ends. {@code false} for the {@code Unikery}
-     * reject the value and the task goes on or failed
+     *          and the task ends. {@code false} for the {@code Unikery}
+     *          reject the value and the task goes on or failed
      */
     boolean onGetValue(@NonNull V value, @Conaco.Source int source);
 
