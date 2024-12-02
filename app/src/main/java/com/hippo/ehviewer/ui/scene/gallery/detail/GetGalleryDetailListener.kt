@@ -52,7 +52,10 @@ class GetGalleryDetailListener(
         application.removeGlobalStuff(this)
     }
 
-    override fun isInstance(scene: SceneFragment): Boolean {
+    override fun isInstance(scene: SceneFragment?): Boolean {
+        if (scene == null) {
+            return false;
+        }
         return scene is GalleryDetailScene
     }
 

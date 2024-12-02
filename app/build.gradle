@@ -10,7 +10,7 @@ if (file('google-services.json').exists()) {
 android {
     namespace 'com.hippo.ehviewer'
     testNamespace 'com.hippo.ehviewer.debug'
-    compileSdk 35
+    compileSdk 34
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '25.1.8937393'
 
