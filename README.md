@@ -1,7 +1,7 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
-# 2024/12/01 : 紧急更新    
+# 2024/12/02 : 紧急更新    
  ###  新版发布1.9.9.6   
  ###  修复一个因空指针导致的奔溃问题   
  ###  修复下载列表因没有读取.thumb文件导致的略缩图丢失问题   
