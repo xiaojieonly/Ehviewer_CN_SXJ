@@ -19,9 +19,16 @@ package com.hippo.ehviewer.ui;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.view.MenuItem;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.fragment.SettingsHeaders;
@@ -63,10 +70,12 @@ public final class SettingsActivity extends EhActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         setActionBarUpIndicator(DrawableManager.getVectorDrawable(this, R.drawable.v_arrow_left_dark_x24));
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.settings,new SettingsHeaders(this))
-                .commit();
+        if (savedInstanceState==null){
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.settings,new SettingsHeaders())
+                    .commit();
+        }
     }
 
     @Override
@@ -107,4 +116,6 @@ public final class SettingsActivity extends EhActivity {
         }
         setTitle(res);
     }
+
+
 }

@@ -15,10 +15,9 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.SettingsActivity;
 
 public class SettingsHeaders extends PreferenceFragmentCompat{
-    private final SettingsActivity settingsActivity;
-    public SettingsHeaders(SettingsActivity settingsActivity) {
+    private SettingsActivity activity;
+    public SettingsHeaders() {
         super();
-        this.settingsActivity = settingsActivity;
     }
 
     @Override
@@ -38,10 +37,15 @@ public class SettingsHeaders extends PreferenceFragmentCompat{
 
     @Override
     public boolean onPreferenceTreeClick(@NonNull Preference preference) {
-        if (settingsActivity.getSupportActionBar()!=null){
-            settingsActivity.getSupportActionBar().setTitle(preference.getTitle());
-        }else {
-            settingsActivity.setTitle(preference.getTitle());
+        if (activity==null){
+            activity = (SettingsActivity)getActivity();
+        }
+        if (activity!=null){
+            if (activity.getSupportActionBar()!=null){
+                activity.getSupportActionBar().setTitle(preference.getTitle());
+            }else {
+                activity.setTitle(preference.getTitle());
+            }
         }
         preference.setOnPreferenceChangeListener(this::onPreferenceChange);
         return super.onPreferenceTreeClick(preference);
