@@ -20,31 +20,37 @@
     <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sad_panda_primary_x24"
         android:title="@string/settings_eh"
+
         app:fragment="com.hippo.ehviewer.ui.fragment.EhFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_book_open_primary_x24"
         android:title="@string/settings_read"
+        app:allowDividerAbove="true"
         app:fragment="com.hippo.ehviewer.ui.fragment.ReadFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_download_primary_x24"
         android:title="@string/settings_download"
+        app:allowDividerAbove="true"
         app:fragment="com.hippo.ehviewer.ui.fragment.DownloadFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sec_primary_x24"
         android:title="@string/settings_privacy"
+        app:allowDividerAbove="true"
         app:fragment="com.hippo.ehviewer.ui.fragment.PrivacyFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_adb_primary_x24"
         android:title="@string/settings_advanced"
+        app:allowDividerAbove="true"
         app:fragment="com.hippo.ehviewer.ui.fragment.AdvancedFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_info_primary_x24"
         android:title="@string/settings_about"
+        app:allowDividerAbove="true"
         app:fragment="com.hippo.ehviewer.ui.fragment.AboutFragment" />
 
 </PreferenceScreen>
