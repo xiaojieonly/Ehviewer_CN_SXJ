@@ -43,6 +43,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.CompoundButton;
@@ -58,6 +59,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.AppConfig;
@@ -387,9 +392,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         // System UI helper
         if (Settings.getReadingFullscreen()) {
-            int systemUiLevel;
-            systemUiLevel = SystemUiHelper.LEVEL_IMMERSIVE;
-            mSystemUiHelper = new SystemUiHelper(this, systemUiLevel,
+            Window w = getWindow();
+            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
+                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
+                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            mSystemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE,
                     SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES | SystemUiHelper.FLAG_IMMERSIVE_STICKY);
             mSystemUiHelper.hide();
             mShowSystemUi = false;
@@ -655,7 +663,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             long initialDelay = Settings.getStartTransferTime();
             long waitTime = initialDelay * 2L;
             try {
-                transferService.scheduleAtFixedRate(
+                transferService.scheduleWithFixedDelay(
                         () -> transHandle.post(() -> {
                             if (mGalleryView == null) {
                                 return;
