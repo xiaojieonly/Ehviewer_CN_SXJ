@@ -32,7 +32,7 @@ android {
         versionCode 111
         versionName "1.9.9.6"
         vectorDrawables.useSupportLibrary = true
-        resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
+        resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
         multiDexEnabled true
         ndk {
