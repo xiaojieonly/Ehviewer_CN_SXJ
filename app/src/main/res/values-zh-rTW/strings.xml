@@ -468,8 +468,8 @@
     <string name="settings_eh_sign_out_tip">已登出，重新啟動程式以再次登入</string>
     <string name="settings_eh_identity_cookies">身份識別 Cookie</string>
     <string name="settings_eh_identity_cookies_summary">可用於登入</string>
-    <string name="settings_eh_lock_cookies_igneous">鎖定 Cookie igneous 欄位</string>
-    <string name="settings_eh_lock_cookies_igneous_summary">除非在特殊情況下，不建議啟用。</string>
+<!--    <string name="settings_eh_lock_cookies_igneous">鎖定 Cookie igneous 欄位</string>-->
+<!--    <string name="settings_eh_lock_cookies_igneous_summary">除非在特殊情況下，不建議啟用。</string>-->
     <string name="settings_eh_identity_cookies_signed">身份 Cookie 可用於登入該帳號。&lt;br&gt;&lt;b&gt;請注意資料安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">未登入</string>
     <string name="settings_eh_identity_cookies_copy">複製</string>

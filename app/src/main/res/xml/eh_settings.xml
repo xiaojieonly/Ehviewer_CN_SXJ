@@ -29,11 +29,11 @@
         android:title="@string/settings_eh_identity_cookies"
         app:allowDividerAbove="true" />
 
-    <com.hippo.preference.SwitchPreference
-        android:defaultValue="false"
-        android:key="lock_cookie_igneous"
-        android:summary="@string/settings_eh_lock_cookies_igneous_summary"
-        android:title="@string/settings_eh_lock_cookies_igneous" />
+<!--    <com.hippo.preference.SwitchPreference-->
+<!--        android:defaultValue="false"-->
+<!--        android:key="lock_cookie_igneous"-->
+<!--        android:summary="@string/settings_eh_lock_cookies_igneous_summary"-->
+<!--        android:title="@string/settings_eh_lock_cookies_igneous" />-->
 
     <com.hippo.preference.ListPreference
         android:defaultValue="1"

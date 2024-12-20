@@ -193,11 +193,11 @@ class CookieDatabase {
       Log.e(LOG_TAG, "Can't get id when update the cookie");
       return;
     }
-    if (from.name().equals("igneous")){
-      if (Settings.getLockCookieIgneous()){
-        return;
-      }
-    }
+//    if (from.name().equals("igneous")){
+//      if (Settings.getLockCookieIgneous()){
+//        return;
+//      }
+//    }
     ContentValues values = toContentValues(to);
     String whereClause = COLUMN_ID + " = ?";
     String[] whereArgs = { id.toString() };
