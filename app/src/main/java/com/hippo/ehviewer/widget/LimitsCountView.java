@@ -139,6 +139,8 @@ public class LimitsCountView extends FrameLayout {
         if (!Settings.getShowEhLimits()){
             this.setVisibility(GONE);
             return;
+        }else {
+            this.setVisibility(VISIBLE);
         }
         if (checkData && homeDetail != null) {
             return;

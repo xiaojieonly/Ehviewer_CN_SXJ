@@ -13,50 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer.preference
 
-package com.hippo.ehviewer.preference;
+import android.content.Context
+import android.content.Intent
+import android.util.AttributeSet
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import com.hippo.ehviewer.R
+import com.hippo.ehviewer.client.EhUtils
+import com.hippo.ehviewer.ui.splash.SplashActivity
+import com.hippo.preference.MessagePreference
+import java.lang.RuntimeException
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.client.EhUtils;
-import com.hippo.preference.MessagePreference;
-
-public class SignOutPreference extends MessagePreference {
-
-    public SignOutPreference(Context context) {
-        super(context);
-        init();
+class SignOutPreference : MessagePreference {
+    constructor(context: Context?) : super(context) {
+        init()
     }
 
-    public SignOutPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+        init()
     }
 
-    public SignOutPreference(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        init()
     }
 
-    private void init() {
-        setDialogMessage(getContext().getString(R.string.settings_eh_sign_out_warning));
+    private fun init() {
+        setDialogMessage(getContext().getString(R.string.settings_eh_sign_out_warning))
     }
 
-    @Override
-    protected void onPrepareDialogBuilder(AlertDialog.Builder builder) {
-        super.onPrepareDialogBuilder(builder);
-        builder.setPositiveButton(R.string.settings_eh_sign_out_yes, this);
+    override fun onPrepareDialogBuilder(builder: AlertDialog.Builder) {
+        super.onPrepareDialogBuilder(builder)
+        builder.setPositiveButton(R.string.settings_eh_sign_out_yes, this)
     }
 
-    @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        super.onDialogClosed(positiveResult);
+    override fun onDialogClosed(positiveResult: Boolean) {
+        super.onDialogClosed(positiveResult)
         if (positiveResult) {
-            EhUtils.signOut(getContext());
-            Toast.makeText(getContext(), R.string.settings_eh_sign_out_tip, Toast.LENGTH_SHORT).show();
+            EhUtils.signOut(context)
+            Toast.makeText(context, R.string.settings_eh_sign_out_restart, Toast.LENGTH_SHORT)
+                .show()
+            Thread(Runnable {
+                try {
+                    Thread.sleep(1500)
+                } catch (e: InterruptedException) {
+                    throw RuntimeException(e)
+                }
+                val intent = Intent(context, SplashActivity::class.java)
+                intent.putExtra(SplashActivity.KEY_RESTART, true)
+                context.startActivity(intent)
+            }).start()
         }
     }
 }

@@ -23,6 +23,8 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.util.AppHelper;
+
 import java.util.regex.Pattern;
 
 public class EhUtils {

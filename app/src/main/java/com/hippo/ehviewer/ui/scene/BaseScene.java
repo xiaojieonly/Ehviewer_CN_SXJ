@@ -289,7 +289,7 @@ public abstract class BaseScene extends SceneFragment {
     public void showSoftInput(@Nullable View view) {
         FragmentActivity activity = getActivity();
         if (null != activity && null != view) {
-            AppHelper.showSoftInput(activity, view);
+            AppHelper.showSoftInput(activity, view,true);
         }
     }
 

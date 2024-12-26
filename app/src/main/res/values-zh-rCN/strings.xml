@@ -925,5 +925,6 @@
     <string name="order">排序</string>
     <string name="sort_by_pub_time">按上传时间</string>
     <string name="sort_by_fav_time">按收藏时间</string>
+    <string name="settings_eh_sign_out_restart">正在为您自动重启，请稍候</string>
 
 </resources>

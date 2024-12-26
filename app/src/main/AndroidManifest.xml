@@ -53,7 +53,8 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:ignore="UnusedAttribute">
 <!--        tools:targetApi="n">-->
 
         <uses-library
@@ -70,7 +71,7 @@
             android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"
+            android:screenOrientation="fullSensor"
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="stateHidden|adjustPan">
             <intent-filter>
