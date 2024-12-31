@@ -1,6 +1,8 @@
 # [感谢名单](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/thankyou.md) 
 # [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 
+# 2025/01/01 : 祝大家元旦快乐~    
+
 # 2024/12/02 : 紧急更新    
  ###  新版发布1.9.9.6   
  ###  修复一个因空指针导致的奔溃问题   
