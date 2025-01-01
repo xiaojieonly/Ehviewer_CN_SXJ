@@ -1368,7 +1368,7 @@ public class Settings {
 
     public static File getUserImageFile(String key){
         String path = getString(key,"");
-        if (path.equals("")){
+        if (path.isEmpty()){
             return null;
         }
         File file = new File(path);
@@ -1385,10 +1385,8 @@ public class Settings {
 
     public static final String KEY_DOWNLOAD_ORDER_ASC = "download_order_asc";
 
-    private static boolean IS_DOWNLOAD_ORDER_ASC = true;
-
     public static boolean getDownloadOrder() {
-        return getBoolean(KEY_DOWNLOAD_ORDER_ASC, IS_DOWNLOAD_ORDER_ASC) ;
+        return getBoolean(KEY_DOWNLOAD_ORDER_ASC, true) ;
     }
 
     public static void setDownloadOrder(boolean value) {

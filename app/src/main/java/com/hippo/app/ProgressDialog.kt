@@ -13,339 +13,327 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.app
 
-package com.hippo.app;
-
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.StyleSpan;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import androidx.appcompat.app.AlertDialog;
-import com.hippo.ehviewer.R;
-import java.text.NumberFormat;
+import android.content.Context
+import android.content.DialogInterface
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.StyleSpan
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import com.hippo.ehviewer.R
+import java.text.NumberFormat
 
 /**
- * <p>A dialog showing a progress indicator and an optional text message or view.
- * Only a text message or a view can be used at the same time.</p>
- * <p>The dialog can be made cancelable on back key press.</p>
- * <p>The progress range is 0..10000.</p>
+ *
+ * A dialog showing a progress indicator and an optional text message or view.
+ * Only a text message or a view can be used at the same time.
+ *
+ * The dialog can be made cancelable on back key press.
+ *
+ * The progress range is 0..10000.
  */
-public class ProgressDialog extends AlertDialog {
+class ProgressDialog : AlertDialog {
+    private var mProgress: ProgressBar? = null
+    private var mMessageView: TextView? = null
 
-    /** Creates a ProgressDialog with a circular, spinning progress
-     * bar. This is the default.
-     */
-    public static final int STYLE_SPINNER = 0;
+    private var mProgressStyle: Int = STYLE_SPINNER
+    private var mProgressNumber: TextView? = null
+    private var mProgressNumberFormat: String? = null
+    private var mProgressPercent: TextView? = null
+    private var mProgressPercentFormat: NumberFormat? = null
 
-    /** Creates a ProgressDialog with a horizontal progress bar.
-     */
-    public static final int STYLE_HORIZONTAL = 1;
+    private var mMax = 0
+    private var mProgressVal = 0
+    private var mSecondaryProgressVal = 0
+    private var mIncrementBy = 0
+    private var mIncrementSecondaryBy = 0
+    private var mProgressDrawable: Drawable? = null
+    private var mIndeterminateDrawable: Drawable? = null
+    private var mMessage: CharSequence? = null
+    private var mIndeterminate = false
 
-    private ProgressBar mProgress;
-    private TextView mMessageView;
+    private var mHasStarted = false
+    private var mViewUpdateHandler: Handler? = null
 
-    private int mProgressStyle = STYLE_SPINNER;
-    private TextView mProgressNumber;
-    private String mProgressNumberFormat;
-    private TextView mProgressPercent;
-    private NumberFormat mProgressPercentFormat;
-
-    private int mMax;
-    private int mProgressVal;
-    private int mSecondaryProgressVal;
-    private int mIncrementBy;
-    private int mIncrementSecondaryBy;
-    private Drawable mProgressDrawable;
-    private Drawable mIndeterminateDrawable;
-    private CharSequence mMessage;
-    private boolean mIndeterminate;
-
-    private boolean mHasStarted;
-    private Handler mViewUpdateHandler;
-
-    public ProgressDialog(Context context) {
-        super(context);
-        initFormats();
+    constructor(context: Context) : super(context) {
+        initFormats()
     }
 
-    public ProgressDialog(Context context, int theme) {
-        super(context, theme);
-        initFormats();
+    constructor(context: Context, theme: Int) : super(context, theme) {
+        initFormats()
     }
 
-    private void initFormats() {
-        mProgressNumberFormat = "%1d/%2d";
-        mProgressPercentFormat = NumberFormat.getPercentInstance();
-        mProgressPercentFormat.setMaximumFractionDigits(0);
+    private fun initFormats() {
+        mProgressNumberFormat = "%1d/%2d"
+        mProgressPercentFormat = NumberFormat.getPercentInstance()
+        mProgressPercentFormat!!.setMaximumFractionDigits(0)
     }
 
-    public static ProgressDialog show(Context context, CharSequence title,
-            CharSequence message) {
-        return show(context, title, message, false);
-    }
-
-    public static ProgressDialog show(Context context, CharSequence title,
-            CharSequence message, boolean indeterminate) {
-        return show(context, title, message, indeterminate, false, null);
-    }
-
-    public static ProgressDialog show(Context context, CharSequence title,
-            CharSequence message, boolean indeterminate, boolean cancelable) {
-        return show(context, title, message, indeterminate, cancelable, null);
-    }
-
-    public static ProgressDialog show(Context context, CharSequence title,
-            CharSequence message, boolean indeterminate,
-            boolean cancelable, OnCancelListener cancelListener) {
-        ProgressDialog dialog = new ProgressDialog(context);
-        dialog.setTitle(title);
-        dialog.setMessage(message);
-        dialog.setIndeterminate(indeterminate);
-        dialog.setCancelable(cancelable);
-        dialog.setOnCancelListener(cancelListener);
-        dialog.show();
-        return dialog;
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        LayoutInflater inflater = LayoutInflater.from(getContext());
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val inflater = LayoutInflater.from(context)
         if (mProgressStyle == STYLE_HORIZONTAL) {
-
             /* Use a separate handler to update the text views as they
              * must be updated on the same thread that created them.
              */
-            mViewUpdateHandler = new Handler(Looper.getMainLooper()) {
-                @Override
-                public void handleMessage(Message msg) {
-                    super.handleMessage(msg);
+
+            mViewUpdateHandler = object : Handler(Looper.getMainLooper()) {
+                override fun handleMessage(msg: Message) {
+                    super.handleMessage(msg)
 
                     /* Update the number and percent */
-                    int progress = mProgress.getProgress();
-                    int max = mProgress.getMax();
+                    val progress = mProgress!!.progress
+                    val max = mProgress!!.max
                     if (mProgressNumberFormat != null) {
-                        String format = mProgressNumberFormat;
-                        mProgressNumber.setText(String.format(format, progress, max));
+                        val format = mProgressNumberFormat!!
+                        mProgressNumber!!.text = String.format(format, progress, max)
                     } else {
-                        mProgressNumber.setText("");
+                        mProgressNumber!!.text = ""
                     }
                     if (mProgressPercentFormat != null) {
-                        double percent = (double) progress / (double) max;
-                        SpannableString tmp = new SpannableString(mProgressPercentFormat.format(percent));
-                        tmp.setSpan(new StyleSpan(android.graphics.Typeface.BOLD),
-                                0, tmp.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        mProgressPercent.setText(tmp);
+                        val percent = progress.toDouble() / max.toDouble()
+                        val tmp = SpannableString(mProgressPercentFormat!!.format(percent))
+                        tmp.setSpan(
+                            StyleSpan(Typeface.BOLD),
+                            0, tmp.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                        mProgressPercent!!.text = tmp
                     } else {
-                        mProgressPercent.setText("");
+                        mProgressPercent!!.text = ""
                     }
                 }
-            };
-            View view = inflater.inflate(R.layout.alert_dialog_progress_material, null);
-            mProgress = (ProgressBar) view.findViewById(R.id.progress);
-            mProgressNumber = (TextView) view.findViewById(R.id.progress_number);
-            mProgressPercent = (TextView) view.findViewById(R.id.progress_percent);
-            setView(view);
+            }
+            val view = inflater.inflate(R.layout.alert_dialog_progress_material, null)
+            mProgress = view.findViewById<View?>(R.id.progress) as ProgressBar?
+            mProgressNumber = view.findViewById<View?>(R.id.progress_number) as TextView
+            mProgressPercent = view.findViewById<View?>(R.id.progress_percent) as TextView
+            setView(view)
         } else {
-            View view = inflater.inflate(R.layout.progress_dialog_material, null);
-            mProgress = (ProgressBar) view.findViewById(R.id.progress);
-            mMessageView = (TextView) view.findViewById(R.id.message);
-            setView(view);
+            val view = inflater.inflate(R.layout.progress_dialog_material, null)
+            mProgress = view.findViewById<View?>(R.id.progress) as ProgressBar?
+            mMessageView = view.findViewById<View?>(R.id.message) as TextView
+            setView(view)
         }
         if (mMax > 0) {
-            setMax(mMax);
+            setMax(mMax)
         }
         if (mProgressVal > 0) {
-            setProgress(mProgressVal);
+            setProgress(mProgressVal)
         }
         if (mSecondaryProgressVal > 0) {
-            setSecondaryProgress(mSecondaryProgressVal);
+            setSecondaryProgress(mSecondaryProgressVal)
         }
         if (mIncrementBy > 0) {
-            incrementProgressBy(mIncrementBy);
+            incrementProgressBy(mIncrementBy)
         }
         if (mIncrementSecondaryBy > 0) {
-            incrementSecondaryProgressBy(mIncrementSecondaryBy);
+            incrementSecondaryProgressBy(mIncrementSecondaryBy)
         }
         if (mProgressDrawable != null) {
-            setProgressDrawable(mProgressDrawable);
+            setProgressDrawable(mProgressDrawable)
         }
         if (mIndeterminateDrawable != null) {
-            setIndeterminateDrawable(mIndeterminateDrawable);
+            setIndeterminateDrawable(mIndeterminateDrawable)
         }
         if (mMessage != null) {
-            setMessage(mMessage);
+            setMessage(mMessage)
         }
-        setIndeterminate(mIndeterminate);
-        onProgressChanged();
-        super.onCreate(savedInstanceState);
+        setIndeterminate(mIndeterminate)
+        onProgressChanged()
+        super.onCreate(savedInstanceState)
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        mHasStarted = true;
+    public override fun onStart() {
+        super.onStart()
+        mHasStarted = true
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mHasStarted = false;
+    override fun onStop() {
+        super.onStop()
+        mHasStarted = false
     }
 
-    public void setProgress(int value) {
+    fun setProgress(value: Int) {
         if (mHasStarted) {
-            mProgress.setProgress(value);
-            onProgressChanged();
+            mProgress!!.progress = value
+            onProgressChanged()
         } else {
-            mProgressVal = value;
+            mProgressVal = value
         }
     }
 
-    public void setSecondaryProgress(int secondaryProgress) {
+    fun setSecondaryProgress(secondaryProgress: Int) {
         if (mProgress != null) {
-            mProgress.setSecondaryProgress(secondaryProgress);
-            onProgressChanged();
+            mProgress!!.setSecondaryProgress(secondaryProgress)
+            onProgressChanged()
         } else {
-            mSecondaryProgressVal = secondaryProgress;
+            mSecondaryProgressVal = secondaryProgress
         }
     }
 
-    public int getProgress() {
+    fun getProgress(): Int {
         if (mProgress != null) {
-            return mProgress.getProgress();
+            return mProgress!!.progress
         }
-        return mProgressVal;
+        return mProgressVal
     }
 
-    public int getSecondaryProgress() {
+    fun getSecondaryProgress(): Int {
         if (mProgress != null) {
-            return mProgress.getSecondaryProgress();
+            return mProgress!!.secondaryProgress
         }
-        return mSecondaryProgressVal;
+        return mSecondaryProgressVal
     }
 
-    public int getMax() {
+    fun getMax(): Int {
         if (mProgress != null) {
-            return mProgress.getMax();
+            return mProgress!!.max
         }
-        return mMax;
+        return mMax
     }
 
-    public void setMax(int max) {
+    fun setMax(max: Int) {
         if (mProgress != null) {
-            mProgress.setMax(max);
-            onProgressChanged();
+            mProgress!!.setMax(max)
+            onProgressChanged()
         } else {
-            mMax = max;
+            mMax = max
         }
     }
 
-    public void incrementProgressBy(int diff) {
+    fun incrementProgressBy(diff: Int) {
         if (mProgress != null) {
-            mProgress.incrementProgressBy(diff);
-            onProgressChanged();
+            mProgress!!.incrementProgressBy(diff)
+            onProgressChanged()
         } else {
-            mIncrementBy += diff;
+            mIncrementBy += diff
         }
     }
 
-    public void incrementSecondaryProgressBy(int diff) {
+    fun incrementSecondaryProgressBy(diff: Int) {
         if (mProgress != null) {
-            mProgress.incrementSecondaryProgressBy(diff);
-            onProgressChanged();
+            mProgress!!.incrementSecondaryProgressBy(diff)
+            onProgressChanged()
         } else {
-            mIncrementSecondaryBy += diff;
+            mIncrementSecondaryBy += diff
         }
     }
 
-    public void setProgressDrawable(Drawable d) {
+    fun setProgressDrawable(d: Drawable?) {
         if (mProgress != null) {
-            mProgress.setProgressDrawable(d);
+            mProgress!!.progressDrawable = d
         } else {
-            mProgressDrawable = d;
+            mProgressDrawable = d
         }
     }
 
-    public void setIndeterminateDrawable(Drawable d) {
+    fun setIndeterminateDrawable(d: Drawable?) {
         if (mProgress != null) {
-            mProgress.setIndeterminateDrawable(d);
+            mProgress!!.indeterminateDrawable = d
         } else {
-            mIndeterminateDrawable = d;
+            mIndeterminateDrawable = d
         }
     }
 
-    public void setIndeterminate(boolean indeterminate) {
+    fun setIndeterminate(indeterminate: Boolean) {
         if (mProgress != null) {
-            mProgress.setIndeterminate(indeterminate);
+            mProgress!!.isIndeterminate = indeterminate
         } else {
-            mIndeterminate = indeterminate;
+            mIndeterminate = indeterminate
         }
     }
 
-    public boolean isIndeterminate() {
+    fun isIndeterminate(): Boolean {
         if (mProgress != null) {
-            return mProgress.isIndeterminate();
+            return mProgress!!.isIndeterminate
         }
-        return mIndeterminate;
+        return mIndeterminate
     }
 
-    @Override
-    public void setMessage(CharSequence message) {
+    override fun setMessage(message: CharSequence?) {
         if (mProgress != null) {
             if (mProgressStyle == STYLE_HORIZONTAL) {
-                super.setMessage(message);
+                super.setMessage(message)
             } else {
-                mMessageView.setText(message);
+                mMessageView!!.text = message
             }
         } else {
-            mMessage = message;
+            mMessage = message
         }
     }
 
-    public void setProgressStyle(int style) {
-        mProgressStyle = style;
+    fun setProgressStyle(style: Int) {
+        mProgressStyle = style
     }
 
     /**
      * Change the format of the small text showing current and maximum units
      * of progress.  The default is "%1d/%2d".
      * Should not be called during the number is progressing.
-     * @param format A string passed to {@link String#format String.format()};
+     * @param format A string passed to [String.format()][String.format];
      * use "%1d" for the current number and "%2d" for the maximum.  If null,
      * nothing will be shown.
      */
-    public void setProgressNumberFormat(String format) {
-        mProgressNumberFormat = format;
-        onProgressChanged();
+    fun setProgressNumberFormat(format: String?) {
+        mProgressNumberFormat = format
+        onProgressChanged()
     }
 
     /**
      * Change the format of the small text showing the percentage of progress.
      * The default is
-     * {@link NumberFormat#getPercentInstance() NumberFormat.getPercentageInstnace().}
+     * [NumberFormat.getPercentageInstnace().][NumberFormat.getPercentInstance]
      * Should not be called during the number is progressing.
-     * @param format An instance of a {@link NumberFormat} to generate the
+     * @param format An instance of a [NumberFormat] to generate the
      * percentage text.  If null, nothing will be shown.
      */
-    public void setProgressPercentFormat(NumberFormat format) {
-        mProgressPercentFormat = format;
-        onProgressChanged();
+    fun setProgressPercentFormat(format: NumberFormat?) {
+        mProgressPercentFormat = format
+        onProgressChanged()
     }
 
-    private void onProgressChanged() {
+    private fun onProgressChanged() {
         if (mProgressStyle == STYLE_HORIZONTAL) {
-            if (mViewUpdateHandler != null && !mViewUpdateHandler.hasMessages(0)) {
-                mViewUpdateHandler.sendEmptyMessage(0);
+            if (mViewUpdateHandler != null && !mViewUpdateHandler!!.hasMessages(0)) {
+                mViewUpdateHandler!!.sendEmptyMessage(0)
             }
+        }
+    }
+
+    companion object {
+        /** Creates a ProgressDialog with a circular, spinning progress
+         * bar. This is the default.
+         */
+        const val STYLE_SPINNER: Int = 0
+
+        /** Creates a ProgressDialog with a horizontal progress bar.
+         */
+        const val STYLE_HORIZONTAL: Int = 1
+
+        @JvmOverloads
+        fun show(
+            context: Context, title: CharSequence?,
+            message: CharSequence?, indeterminate: Boolean = false,
+            cancelable: Boolean = false, cancelListener: DialogInterface.OnCancelListener? = null
+        ): ProgressDialog {
+            val dialog = ProgressDialog(context)
+            dialog.setTitle(title)
+            dialog.setMessage(message)
+            dialog.setIndeterminate(indeterminate)
+            dialog.setCancelable(cancelable)
+            dialog.setOnCancelListener(cancelListener)
+            dialog.show()
+            return dialog
         }
     }
 }
