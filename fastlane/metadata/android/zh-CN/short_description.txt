@@ -1,0 +1,1 @@
+这是一个 E-Hentai Android 平台的浏览器，由 SXJ LonelyDog 分叉自 seven332/EhViewer

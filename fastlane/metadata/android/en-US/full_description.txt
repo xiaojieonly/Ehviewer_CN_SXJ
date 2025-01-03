@@ -1,0 +1,3 @@
+An E-Hentai Application for Android, forked from Hippo Seven by SXJ LonelyDog.
+
+In F-Droid build, analytics is disabled no matter what you choose.
