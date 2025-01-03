@@ -11,7 +11,7 @@
  ###  优化退出登录，现在退出登录会自动回到登录页  
  ###  修复‘配额’视图在特殊情况下无法正确显示的问题  
 
-[//]: # (      点击前往下载：[EhViewer &#40;20.8 MB&#41;]&#40;https://appteka.store/app/2f4r195618&#41;   )
+   点击前往下载：[EhViewer (21.8 MB)](https://appteka.store/app/9b1r203934)   
    点击前往下载：[Microsoft App Center](install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)   
    点击前往下载：[百度云](https://pan.baidu.com/s/1GV7ltodLNyZwxKulmi5laQ)  密码:vt1y   
    点击前往下载（电脑端可正常下载）：[蓝奏云](https://wwsu.lanzouu.com/iOHZV2jlhjuj)  密码:4inm   
