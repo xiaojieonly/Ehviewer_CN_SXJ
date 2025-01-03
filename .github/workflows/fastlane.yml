@@ -1,0 +1,16 @@
+name: Validate Fastlane metadata
+
+on:
+  workflow_dispatch:
+  push:
+      branches: [ "BiLi_PC_Gamer" ]
+  pull_request:
+      branches: [ "BiLi_PC_Gamer" ]
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Fastlane Supply Metadata
+        uses: ashutoshgngwr/validate-fastlane-supply-metadata@v2.0.0

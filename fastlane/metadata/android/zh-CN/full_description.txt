@@ -1,0 +1,3 @@
+这是一个 E-Hentai Android 平台的浏览器，由 SXJ LonelyDog 分叉自 seven332/EhViewer。
+
+在 F-Droid 下载的版本中，无论您选择什么，分析和崩溃报告都会被禁用。

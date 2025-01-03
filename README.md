@@ -31,7 +31,7 @@
 
 # EhViewer
 
-![Icon](art/launcher_icon-web.png)
+![Icon](fastlane/metadata/android/en-US/images/icon.png)
 
 这是一个 E-Hentai Android 平台的浏览器。
 
@@ -40,7 +40,7 @@ An E-Hentai Application for Android.
 
 # Screenshot
 
-![screenshot-01](art/screenshot-01.png)
+![screenshot-01](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
 
 
 # Build
