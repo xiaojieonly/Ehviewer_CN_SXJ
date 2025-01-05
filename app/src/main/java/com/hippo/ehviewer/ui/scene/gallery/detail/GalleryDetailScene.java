@@ -87,6 +87,7 @@ import com.hippo.ehviewer.client.data.GalleryTagGroup;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.client.data.PreviewSet;
 import com.hippo.ehviewer.client.data.TorrentDownloadMessage;
+import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
@@ -103,6 +104,7 @@ import com.hippo.ehviewer.ui.scene.FavoritesScene;
 import com.hippo.ehviewer.ui.scene.GalleryCommentsScene;
 import com.hippo.ehviewer.ui.scene.GalleryInfoScene;
 import com.hippo.ehviewer.ui.scene.GalleryPreviewsScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListSceneDialog;
 import com.hippo.ehviewer.ui.scene.history.HistoryScene;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
@@ -321,8 +323,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private View torrentDownloadView;
     @Nullable
     private TextView downloadProgress;
-
     private GalleryUpdateDialog myUpdateDialog;
+    private GalleryListSceneDialog tagDialog;
     @Nullable
     private Handler torrentDownloadHandler = null;
 
@@ -332,6 +334,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private MainActivity activity;
 
     private ExecutorService executorService;
+    private EhTagDatabase ehTags;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
@@ -1087,7 +1090,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             mNoTags.setVisibility(View.GONE);
         }
 
-        EhTagDatabase ehTags = Settings.getShowTagTranslations() ? EhTagDatabase.getInstance(context) : null;
+        ehTags = Settings.getShowTagTranslations() ? EhTagDatabase.getInstance(context) : null;
 
         int colorTag = AttrResources.getAttrColor(context, R.attr.tagBackgroundColor);
         int colorName = AttrResources.getAttrColor(context, R.attr.tagGroupBackgroundColor);
@@ -1605,42 +1608,20 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     private void showTagDialog(final String tag) {
-        final Context context = getEHContext();
-        if (null == context) {
-            return;
+        if (tagDialog==null){
+            tagDialog = new GalleryListSceneDialog(this);
         }
-        String temp;
-        int index = tag.indexOf(':');
-        if (index >= 0) {
-            temp = tag.substring(index + 1);
-        } else {
-            temp = tag;
+        if (ehTags == null) {
+            ehTags = EhTagDatabase.getInstance(mContext);
         }
-        final String tag2 = temp;
-
-        new AlertDialog.Builder(context)
-                .setTitle(tag)
-                .setItems(R.array.tag_menu_entries, (dialog, which) -> {
-                    switch (which) {
-                        case 0:
-                            UrlOpener.openUrl(context, EhUrl.getTagDefinitionUrl(tag2), false);
-                            break;
-                        case 1:
-                            showFilterTagDialog(tag);
-                            break;
-                    }
-                })
-                .setNegativeButton(R.string.copy_tag, (dialog, which) -> copyTag(tag))
-                .show();
+        tagDialog.setTagName(tag);
+        tagDialog.showTagLongPressDialog(ehTags);
     }
 
-    private void copyTag(String tag) {
-        Context context = requireContext();
-        ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        manager.setPrimaryClip(ClipData.newPlainText(null, tag));
-        Toast.makeText(context, R.string.gallery_tag_copy, Toast.LENGTH_LONG).show();
+    @Override
+    public void setTagList(UserTagList result) {
+        super.setTagList(result);
     }
-
 
     @Override
     public boolean onLongClick(View v) {

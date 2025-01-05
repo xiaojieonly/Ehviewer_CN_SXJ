@@ -129,6 +129,15 @@ public class SubscriptionDraw {
         return subscriptionView;
     }
 
+    public void setUserTagList(UserTagList tagList){
+        if (this.userTagList == null){
+            this.userTagList = tagList;
+        }else {
+            this.userTagList.userTags = tagList.userTags;
+        }
+
+    }
+
     private void seeDetailPage() {
         if (!isLogin()) {
             Toast.makeText(context, R.string.settings_eh_identity_cookies_tourist, Toast.LENGTH_SHORT).show();

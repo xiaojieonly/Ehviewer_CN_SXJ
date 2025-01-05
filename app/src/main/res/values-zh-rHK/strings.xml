@@ -800,6 +800,7 @@
     <string name="can_not_use_this_tag">無法使用標籤</string>
     <string name="add_tag_dialog_title">新增標籤</string>
     <string name="tag_title">標籤欄</string>
+    <string name="subscription_success">%s成功</string>
 
     <string name="yes">是</string>
     <string name="cancel">取消</string>

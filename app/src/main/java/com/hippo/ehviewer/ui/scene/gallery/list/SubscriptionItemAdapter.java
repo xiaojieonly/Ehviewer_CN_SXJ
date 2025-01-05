@@ -25,7 +25,11 @@ public class SubscriptionItemAdapter extends BaseAdapter {
 
     public SubscriptionItemAdapter(Context context,UserTagList userTagList,EhTagDatabase ehTags){
         this.userTagList = userTagList;
-        this.ehTags = ehTags;
+        if (ehTags==null){
+            this.ehTags = EhTagDatabase.getInstance(context);
+        }else {
+            this.ehTags = ehTags;
+        }
         inflater = LayoutInflater.from(context);
     }
 
@@ -60,11 +64,8 @@ public class SubscriptionItemAdapter extends BaseAdapter {
         }
 
         TextView textView = view.findViewById(R.id.label);
-        if (Settings.getShowTagTranslations()){
-            textView.setText(userTag.getName(ehTags));
-        }else {
-            textView.setText(userTag.tagName);
-        }
+
+        textView.setText(userTag.getName(ehTags));
 
 
         return view;

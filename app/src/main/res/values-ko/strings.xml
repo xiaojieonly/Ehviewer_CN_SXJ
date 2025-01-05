@@ -762,6 +762,7 @@
     <string name="add_tag_dialog_title">태그 추가</string>
     <string name="tag_title">태그</string>
     <string name="empty_subscription">구독 목록이 비어 있음</string>
+    <string name="subscription_success">%s success</string>
 
     <!-- 下?通知   -->
     <string name="download_torrent_name">시드: %s</string>
@@ -807,4 +808,6 @@
     <string name="sort_by_pub_time">Published Time</string>
     <string name="sort_by_fav_time">Favorited Time</string>
     <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
+
+
 </resources>

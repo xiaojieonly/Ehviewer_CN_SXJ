@@ -21,13 +21,10 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
-import android.view.InputDevice;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -40,6 +37,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.Analytics;
+import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
@@ -309,6 +307,8 @@ public abstract class BaseScene extends SceneFragment {
             outState.putSparseParcelableArray(KEY_DRAWER_VIEW_STATE, drawerViewState);
         }
     }
+
+    public void setTagList(UserTagList result){}
 
 //    public boolean onGenericMotion(View view, MotionEvent motionEvent) {
 //        if (motionEvent.isFromSource(InputDevice.SOURCE_CLASS_POINTER)) {

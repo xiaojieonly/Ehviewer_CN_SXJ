@@ -833,6 +833,7 @@
     <string name="add_tag_dialog_title">添加標籤</string>
     <string name="tag_title">標籤欄</string>
     <string name="empty_subscription">訂閱內容為空</string>
+    <string name="subscription_success">%s成功</string>
 
     <string name="yes">是</string>
     <string name="cancel">取消</string>

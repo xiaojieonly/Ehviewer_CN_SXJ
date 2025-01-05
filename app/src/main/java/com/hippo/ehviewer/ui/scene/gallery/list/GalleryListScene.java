@@ -288,7 +288,7 @@ public final class GalleryListScene extends BaseScene
     private int popupWindowPosition = -1;
 
     private ShowcaseView mShowcaseView;
-
+    private GalleryListSceneDialog tagDialog;
     private DownloadManager mDownloadManager;
     private DownloadManager.DownloadInfoListener mDownloadInfoListener;
     private FavouriteStatusRouter mFavouriteStatusRouter;
@@ -409,8 +409,10 @@ public final class GalleryListScene extends BaseScene
             }
         };
         mFavouriteStatusRouter.addListener(mFavouriteStatusRouterListener);
+        if (ehTags==null){
+            ehTags = EhTagDatabase.getInstance(context);
+        }
 
-        ehTags = EhTagDatabase.getInstance(context);
 
         if (savedInstanceState == null) {
             onInit();
@@ -778,9 +780,14 @@ public final class GalleryListScene extends BaseScene
     }
 
     private boolean onTagLongClick(String tagName) {
-        GalleryListSecenDialog dialog = new GalleryListSecenDialog(this);
-        dialog.setTagName(tagName);
-        dialog.showTagLongPressDialog();
+        if (tagDialog==null){
+            tagDialog = new GalleryListSceneDialog(this);
+        }
+        if (ehTags==null){
+            ehTags = EhTagDatabase.getInstance(getContext());
+        }
+        tagDialog.setTagName(tagName);
+        tagDialog.showTagLongPressDialog(ehTags);
         return true;
     }
 
@@ -1057,6 +1064,13 @@ public final class GalleryListScene extends BaseScene
     private View subscriptionViewBuild(LayoutInflater inflater) {
         mSubscriptionDraw = new SubscriptionDraw(getEHContext(), inflater, mClient, getTag(), ehTags);
         return mSubscriptionDraw.onCreate(drawPager, getActivity2(), this);
+    }
+    @Override
+    public void setTagList(UserTagList tagList) {
+        if (mSubscriptionDraw==null){
+            return;
+        }
+         mSubscriptionDraw.setUserTagList(tagList);
     }
 
     @Override
