@@ -13,7 +13,6 @@ import com.hippo.ehviewer.ui.EhActivity
 import com.hippo.ehviewer.ui.MainActivity
 import com.hippo.ehviewer.ui.dialog.EhDistributeListener
 import com.microsoft.appcenter.AppCenter
-import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.distribute.Distribute
 import java.lang.Exception
 
@@ -34,7 +33,6 @@ class SplashActivity : EhActivity() {
         }
         AppCenter.start(
             application, "a47010fb-702a-415a-ad93-ab5c674093ca",
-            Analytics::class.java, Distribute::class.java
         )
         //        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
 //                Analytics.class, Crashes.class, Distribute.class);
