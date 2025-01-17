@@ -26,10 +26,6 @@ An E-Hentai Application for Android.
 Telegram群: https://t.me/+WyclP8pPlk-JfbwS    
 Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
-# Screenshot
-
-![screenshot-01](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
-
 # Changelog
 
 ## 2025/01/01 : 祝大家在2025年，身体健康，万事如意，长生不老，永远不死，打胶30分钟以上，越打越持久~  
@@ -50,6 +46,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - [2022年更新日志-成长](feedauthor/year2022-growing-up.md)  
 - [2021年更新日志-艰难起步](feedauthor/year2021-step-begin.md)  
 - [2020年更新日志-爱与痛的开始](feedauthor/year2020-love-begin.md)
+
+
+# Screenshot
+
+![screenshot-01](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
+
 
 # Build
 
