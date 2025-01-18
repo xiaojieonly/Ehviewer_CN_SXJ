@@ -3,9 +3,9 @@
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
-    "title": "祝大家在2025年，身体健康，万事如意，长生不老，永远不死，打胶30分钟以上，越打越持久~",
+    "fileDownloadUrl": "https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases/download/1.9.9.7/EhViewer-1.9.9.7.apk",
+    "title": "新版发布1.9.9.7  祝大家在2025年，身体健康，万事如意，长生不老，永远不死，打胶30分钟以上，越打越持久~",
     "content": [
-      "新版发布1.9.9.7",
       "为设置主页添加分割线",
       "修复设置页面切换主题时app奔溃的问题",
       "修复浏览画廊时全屏模式无法关闭的问题",
