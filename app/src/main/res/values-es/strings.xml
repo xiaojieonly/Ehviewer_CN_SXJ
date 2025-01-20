@@ -101,7 +101,9 @@
 
     <!-- Update -->
     <string name="update">Actualizar</string>
+    <string name="update_fail">Check for updates failed</string>
     <string name="update_plain">Versión: %1$s\nSize: %2$s\n\n%3$s</string>
+    <string name="update_fail_info">Click Yes to jump to Github homepage</string>
     <string name="update_to_date">EhViewer está actualizado</string>
     <string name="no_updates_available">Ya es la última versión</string>
 

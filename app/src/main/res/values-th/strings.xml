@@ -115,7 +115,9 @@
 
     <!-- Update -->
     <string name="update">อัพเดต</string>
+    <string name="update_fail">Check for updates failed</string>
     <string name="update_plain">เวอร์ชั่น: %1$s\nขนาดไฟล์: %2$s\n\n%3$s</string>
+    <string name="update_fail_info">Click Yes to jump to Github homepage</string>
     <string name="update_to_date">คุณกำลังใช้เวอร์ชั่นล่าสุดของ EhViewer.</string>
     <string name="update_ignore">ข้ามไป</string>
     <string name="no_updates_available">มันเป็นเวอร์ชั่นล่าสุด</string>

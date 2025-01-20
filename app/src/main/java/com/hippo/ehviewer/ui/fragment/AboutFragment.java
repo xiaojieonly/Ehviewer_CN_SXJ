@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.ui.fragment;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -39,6 +40,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.updater.AppUpdater;
 import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 
@@ -48,7 +50,7 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import com.microsoft.appcenter.distribute.Distribute;
+//import com.microsoft.appcenter.distribute.Distribute;
 
 public class AboutFragment extends BasePreferenceFragmentCompat
         implements Preference.OnPreferenceClickListener {
@@ -76,14 +78,16 @@ public class AboutFragment extends BasePreferenceFragmentCompat
     @Override
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
-        if (KEY_AUTHOR.equals(key)) {
-            AppHelper.sendEmail(getActivity(), EhApplication.getDeveloperEmail(),
+        Activity activity =getActivity();
+        if (KEY_AUTHOR.equals(key)&&activity!=null) {
+            AppHelper.sendEmail(activity, EhApplication.getDeveloperEmail(),
                     "About EhViewer", null);
         } else if (KEY_DONATE.equals(key)) {
             showDonationDialog();
-        } else if (KEY_CHECK_FOR_UPDATES.equals(key)) {
+        } else if (KEY_CHECK_FOR_UPDATES.equals(key)&&activity!=null) {
 //            Settings.setCheckUpdate(false);
-            Distribute.checkForUpdate();
+//            Distribute.checkForUpdate();
+            AppUpdater.update(activity,true);
         }
         return true;
     }

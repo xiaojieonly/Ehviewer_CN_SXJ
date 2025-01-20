@@ -11,9 +11,7 @@ import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.data.EhNewsDetail
 import com.hippo.ehviewer.ui.EhActivity
 import com.hippo.ehviewer.ui.MainActivity
-import com.hippo.ehviewer.ui.dialog.EhDistributeListener
-import com.microsoft.appcenter.AppCenter
-import com.microsoft.appcenter.distribute.Distribute
+//import com.hippo.ehviewer.ui.dialog.EhDistributeListener
 import java.lang.Exception
 
 class SplashActivity : EhActivity() {
@@ -27,16 +25,14 @@ class SplashActivity : EhActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (!checkUpdate) {
-            Distribute.setListener(EhDistributeListener())
-            checkUpdate = true
-        }
-        AppCenter.start(
-            application, "a47010fb-702a-415a-ad93-ab5c674093ca",
-        )
-        //        AppCenter.start(getApplication(), "feb52710-e245-4820-aebb-a57e00ed806d",
-//                Analytics.class, Crashes.class, Distribute.class);
-        Distribute.setEnabled(!Settings.getCloseAutoUpdate())
+//        if (!checkUpdate) {
+//            Distribute.setListener(EhDistributeListener())
+//            checkUpdate = true
+//        }
+//        AppCenter.start(
+//            application, "a47010fb-702a-415a-ad93-ab5c674093ca",
+//        )
+//        Distribute.setEnabled(!Settings.getCloseAutoUpdate())
         super.onCreate(savedInstanceState)
         setContentView(R.layout.splash_layout)
         Thread(Runnable {

@@ -207,7 +207,7 @@ public class EhTagDatabase {
 
     private static volatile EhTagDatabase instance;
     // TODO more lock for different language
-    private static Lock lock = new ReentrantLock();
+    private static final Lock lock = new ReentrantLock();
 
     @Nullable
     public static EhTagDatabase getInstance(Context context) {

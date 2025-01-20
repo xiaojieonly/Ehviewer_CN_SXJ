@@ -85,7 +85,9 @@
     <string name="select_scene_explain">e-hentai: für jeden verfügbar\nexhentai: nur für diejenigen verfügbar, die sich angemeldet haben</string>
     <string name="no_select">Wähle eine Webseite aus.</string>
     <string name="update">Update</string>
+    <string name="update_fail">Check for updates failed</string>
     <string name="update_plain">Version: %1$s\nGröße: %2$s\n\n%3$s</string>
+    <string name="update_fail_info">Click Yes jump to Github homepage</string>
     <string name="update_to_date">EhViewer ist auf dem neusten Stand.</string>
     <string name="no_updates_available">Da liegt das neueste raus</string>
     <string name="update_ignore">Ignorieren</string>

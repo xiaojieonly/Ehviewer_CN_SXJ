@@ -33,6 +33,8 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!--  使用系统自带下载器  -->
     <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" />
+    <!--  自动安装apk  -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -55,7 +57,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         tools:ignore="UnusedAttribute">
-<!--        tools:targetApi="n">-->
+        <!--        tools:targetApi="n">-->
 
         <uses-library
             android:name="org.apache.http.legacy"

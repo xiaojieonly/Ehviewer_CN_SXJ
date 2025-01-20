@@ -94,7 +94,9 @@
     <string name="no_select">サイトを選択してください</string>
     <!-- Update -->
     <string name="update">アップデート</string>
+    <string name="update_fail">Check for updates failed</string>
     <string name="update_plain">バージョン：%1$s\nサイズ：%2$s\n\n%3$s</string>
+    <string name="update_fail_info">Click Yes to jump to Github homepage</string>
     <string name="update_to_date">EhViewerは既に最新のバージョンです。</string>
     <string name="update_ignore">無視</string>
     <string name="no_updates_available">最新のバージョンです</string>

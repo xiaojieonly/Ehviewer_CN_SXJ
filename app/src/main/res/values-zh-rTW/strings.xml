@@ -126,7 +126,9 @@
     <!-- Update -->
     <string name="new_version">新版本</string>
     <string name="update">更新</string>
+    <string name="update_fail">检查更新失败</string>
     <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>
+    <string name="update_fail_info">点击 是 跳转至Github主页</string>
     <string name="update_to_date">EhViewer 已是最新版本</string>
     <string name="no_updates_available">已是最新版本</string>
     <string name="update_to">更新至</string>

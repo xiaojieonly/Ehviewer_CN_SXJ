@@ -530,6 +530,7 @@ public class EhConfig implements Cloneable {
      */
     public static final String CONTENT_WARNING_NOT_SHOW = "1";
 
+    public static final String UPDATE_PATH = "Ehviewer/Update/";
     public static final String ARCHIVER_PATH = "Ehviewer/Archiver/";
     public static final String TORRENT_PATH = "Ehviewer/Torrent/";
 

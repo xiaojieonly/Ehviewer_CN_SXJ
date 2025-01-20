@@ -105,12 +105,6 @@ dependencies {
 //    测试工具
 //    debugCompileOnly 'com.gu.android:toolargetool:0.3.0'
 
-    // 应用服务分发
-    def appCenterSdkVersion = '4.4.5'
-//    implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-//    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
-    implementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
-
     implementation 'com.google.android.material:material:1.12.0'
 
     // app使用情况数据收集
@@ -119,7 +113,7 @@ dependencies {
 
     // Add the dependencies for the Crashlytics and Analytics libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation 'com.google.firebase:firebase-crashlytics:19.2.1'
+    implementation 'com.google.firebase:firebase-crashlytics:19.3.0'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
 //    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
@@ -205,11 +199,11 @@ dependencies {
     testImplementation 'org.jooq:joor:0.9.6'
 
     // https://mvnrepository.com/artifact/androidx.webkit/webkit
-    runtimeOnly group: 'androidx.webkit', name: 'webkit', version: '1.4.0'
+    runtimeOnly group: 'androidx.webkit', name: 'webkit', version: '1.12.1'
 
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         force 'com.github.seven332:glgallery:25893283ca'
         force 'com.github.seven332:glview:ba6aee61d7'

@@ -383,4 +383,10 @@
         <item>@string/wifi_send_download</item>
     </string-array>
 
+    <string-array name="update_metadata">
+        <item>update_json</item>
+        <item>https://raw.githubusercontent.com/xiaojieonly/Ehviewer_CN_SXJ/refs/heads/BiLi_PC_Gamer/feedauthor/update.json</item>
+    </string-array>
+
+
 </resources>

@@ -146,5 +146,22 @@ class AppHelper {
             }
             return !result
         }
+
+        @JvmStatic
+        fun compareVersion(version1: String, version2: String): Int {
+            val parts1 = version1.split("\\.".toRegex()).toTypedArray()
+            val parts2 = version2.split("\\.".toRegex()).toTypedArray()
+            val length = parts1.size.coerceAtLeast(parts2.size)
+            for (i in 0 until length) {
+                val part1 = if (i < parts1.size) parts1[i].toInt() else 0
+                val part2 = if (i < parts2.size) parts2[i].toInt() else 0
+                if (part1 < part2) {
+                    return -1
+                } else if (part1 > part2) {
+                    return 1
+                }
+            }
+            return 0
+        }
     }
 }
