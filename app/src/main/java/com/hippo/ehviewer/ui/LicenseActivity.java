@@ -32,7 +32,7 @@ public class LicenseActivity extends ToolbarActivity {
         super.onCreate(savedInstanceState);
 
         mWebView = new WebView(this);
-        mWebView.loadUrl("file:///android_asset/NOTICE.html");
+        mWebView.loadUrl("file:///android_asset/open_source_licenses.html");
         setContentView(mWebView);
 
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
