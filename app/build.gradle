@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "org.jetbrains.kotlin.plugin.parcelize"
+apply plugin: "com.jaredsburrows.license"
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
     apply plugin: 'com.google.firebase.crashlytics'
@@ -87,19 +88,9 @@ android {
 
 }
 
-//task copyNotice(type: Copy) {
-//    from '../NOTICE.html'
-//    into './src/main/assets'
-//    finalizedBy ":daogenerator:executeDaoGenerator"
-//}
-
 //tasks.withType(JavaCompile) {
 //    task -> task.dependsOn copyNotice
 //}
-
-clean {
-    delete file('src/main/assets/NOTICE.html').absolutePath
-}
 
 dependencies {
 //    测试工具
