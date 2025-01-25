@@ -1,18 +1,15 @@
 {
-  "version": "1.9.9.7",
+  "version": "1.9.9.8",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
-    "fileDownloadUrl": "https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases/download/1.9.9.7/EhViewer-1.9.9.7.apk",
-    "title": "新版发布1.9.9.7  祝大家在2025年，身体健康，万事如意，长生不老，永远不死，打胶30分钟以上，越打越持久~",
+    "fileDownloadUrl": "",
+    "title": "新版发布1.9.9.8，提前祝大家春节快乐",
     "content": [
-      "为设置主页添加分割线",
-      "修复设置页面切换主题时app奔溃的问题",
-      "修复浏览画廊时全屏模式无法关闭的问题",
-      "gradle plugin更新",
-      "删除锁定Cookie igneous功能，此功能已不适用于当前E站账号政策",
-      "优化退出登录，现在退出登录会自动回到登录页",
-      "修复‘配额’视图在特殊情况下无法正确显示的问题"
+      "在标签长按弹窗中添加订阅和排除功能",
+      "由于微软APP center即将停止运营，检查更新更改为，从Github获取更新信息，然后跳转到Github，由用户自行下载更新",
+      "clean up androidTest",
+      "删除了所有和APP center相关的代码，这是最后一版自动更新的版本"
     ]
   }
 }

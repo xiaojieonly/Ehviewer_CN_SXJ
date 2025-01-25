@@ -1,41 +1,29 @@
 package com.hippo.ehviewer.ui.dialog
 
-import android.Manifest
 import android.app.Activity
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.database.Cursor
-import android.net.Uri
-import android.os.Environment
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.alibaba.fastjson.JSONObject
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.R
-import com.hippo.ehviewer.client.EhConfig
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.updater.AppUpdater
 import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.util.ExceptionUtils
-import com.hippo.util.IoThreadPoolExecutor
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.checkerframework.checker.units.qual.A
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URISyntaxException
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
 
