@@ -1,22 +1,3 @@
-/*
- * Copyright 2022 Tarsin Norbin
- *
- * This file is part of EhViewer
- *
- * EhViewer is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * EhViewer is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * EhViewer. If not, see <https://www.gnu.org/licenses/>.
- */
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,7 +16,7 @@
 
 static char tile_buffer[IMAGE_TILE_MAX_SIZE * 4];
 
-bool copy_pixels(const void *src, int src_w, int src_h, int src_x, int src_y,
+bool copyPixels(const void *src, int src_w, int src_h, int src_x, int src_y,
                  void *dst, int dst_w, int dst_h, int dst_x, int dst_y,
                  int width, int height) {
     int left;
@@ -131,7 +112,7 @@ Java_com_hippo_lib_image_ImageKt_nativeTexImage(JNIEnv *env, jclass clazz, jobje
     void *pixels = NULL;
     AndroidBitmap_lockPixels(env, bitmap, &pixels);
     AndroidBitmap_getInfo(env, bitmap, &info);
-    copy_pixels(pixels, info.width, info.height, offset_x, offset_y, tile_buffer, width, height, 0, 0, width, height);
+    copyPixels(pixels, info.width, info.height, offset_x, offset_y, tile_buffer, width, height, 0, 0, width, height);
     AndroidBitmap_unlockPixels(env, bitmap);
     if (init) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -156,7 +137,7 @@ Java_com_hippo_lib_image_Image_nativeRender(JNIEnv *env, jclass clazz, jobject s
     AndroidBitmap_getInfo(env, srcBitmap, &srcInfo);
     AndroidBitmap_getInfo(env, dst, &dstInfo);
 
-    copy_pixels(srcPixels, srcInfo.width, srcInfo.height, src_x, src_y, dstPixels, dstInfo.width,
+    copyPixels(srcPixels, srcInfo.width, srcInfo.height, src_x, src_y, dstPixels, dstInfo.width,
                 dstInfo.height, dst_x, dst_y,
                 width,
                 height);
@@ -174,7 +155,7 @@ Java_com_hippo_lib_image_Image_nativeTexImage(JNIEnv *env, jclass clazz, jobject
     void *pixels = NULL;
     AndroidBitmap_lockPixels(env, bitmap, &pixels);
     AndroidBitmap_getInfo(env, bitmap, &info);
-    copy_pixels(pixels, info.width, info.height, offset_x, offset_y, tile_buffer, width, height, 0, 0, width, height);
+    copyPixels(pixels, info.width, info.height, offset_x, offset_y, tile_buffer, width, height, 0, 0, width, height);
     AndroidBitmap_unlockPixels(env, bitmap);
     if (init) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
