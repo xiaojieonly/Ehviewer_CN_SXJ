@@ -24,6 +24,9 @@ import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
 import androidx.core.graphics.createBitmap
+import com.hippo.Native
+import okio.BufferedSource
+import java.nio.ByteBuffer
 
 class Image private constructor(
     source: FileInputStream?,
@@ -152,29 +155,6 @@ class Image private constructor(
         return mObtainedDrawable as Drawable
     }
 
-//    fun render(
-//        srcX: Int, srcY: Int, dst: Bitmap, dstX: Int, dstY: Int,
-//        width: Int, height: Int
-//    ) {
-//        check(!hardware) { "Hardware buffer cannot be used in glgallery" }
-//        val bitmap: Bitmap = if (animated) {
-//            updateBitmap()
-//            mBitmap!!
-//        } else {
-//            (mObtainedDrawable as BitmapDrawable).bitmap
-//        }
-//        nativeRender(
-//            bitmap,
-//            srcX,
-//            srcY,
-//            dst,
-//            dstX,
-//            dstY,
-//            width,
-//            height
-//        )
-//    }
-
     fun texImage(init: Boolean, offsetX: Int, offsetY: Int, width: Int, height: Int) {
         check(!hardware) { "Hardware buffer cannot be used in glgallery" }
         try {
@@ -223,7 +203,7 @@ class Image private constructor(
     val delay: Int
         get() {
             if (animated)
-                return 50
+                return 10
             return 0
         }
 

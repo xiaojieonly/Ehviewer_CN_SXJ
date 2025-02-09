@@ -11,7 +11,7 @@ if (file('google-services.json').exists()) {
 android {
     namespace 'com.hippo.ehviewer'
     testNamespace 'com.hippo.ehviewer.debug'
-    compileSdk 34
+    compileSdk 35
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '25.1.8937393'
 
@@ -104,8 +104,8 @@ dependencies {
 
     // Add the dependencies for the Crashlytics and Analytics libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation 'com.google.firebase:firebase-crashlytics:19.3.0'
-    implementation 'com.google.firebase:firebase-analytics:22.1.2'
+    implementation 'com.google.firebase:firebase-crashlytics:19.4.0'
+    implementation 'com.google.firebase:firebase-analytics:22.2.0'
 //    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -119,7 +119,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation 'org.conscrypt:conscrypt-android:2.5.1'
     // https://mvnrepository.com/artifact/androidx.core/core-ktx
-    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
 //    implementation 'com.android.support:recyclerview-v7:25.0.1'
 
 //     https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng
@@ -131,7 +131,6 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.2.83'
 
     implementation 'com.android.support:multidex:1.0.3'
-//    implementation 'com.github.bumptech.glide:glide:4.16.0'
     /**
      * 原始依赖
      */
@@ -139,29 +138,14 @@ dependencies {
     implementation 'com.github.seven332:android-recaptcha:2bbb3459a8'
     implementation 'com.github.seven332:android-resource:0.1.0'
     implementation 'com.github.seven332:animator:0.1.0'
-//    implementation 'com.github.seven332:beerbelly:0.2.0'
-//    implementation 'com.github.seven332:conaco:0.2.0'
-//    implementation 'com.github.seven332:beerbelly:0.1.4'
-//    implementation 'com.github.seven332:conaco:0.1.5-eh'
     implementation 'com.github.seven332:drawerlayout:ea2bb388f0'
     implementation 'com.github.seven332:easyrecyclerview:0.1.1'
 //    分页组件
     implementation 'com.github.xiaojieonly:Pagination_Sxj:8d2c34d8f53927aeaa1d405d8653969379cb37ec'
-//    implementation 'com.github.xiaojieonly:Pagination_Sxj:d8253ceefd6b02b73f9e9485cbb7dd89a6b89ba3'
-//    为方便扩展代码直接迁移至项目内
-//    implementation 'com.github.seven332:glgallery:0.1.2'
-//    implementation 'com.github.seven332:glview:0.1.0'
-//    implementation 'com.github.seven332:glview-image:0.1.0'
-//    implementation 'com.github.seven332:image:0.1.12'
     implementation 'com.github.seven332:hotspot:0.1.0'
     implementation 'com.github.seven332:refreshlayout:0.1.0'
     implementation 'com.github.seven332:ripple:0.1.2'
     implementation 'com.github.seven332:streampipe:0.1.0'
-//    implementation 'com.github.seven332:tuxiang:0.1.6'
-//    implementation 'com.github.seven332:unifile:9ec57bcd8f'
-//    implementation 'com.github.seven332:yorozuya:0.1.2'
-//    implementation 'com.github.seven332:yorozuya-thread:0.1.1'
-//    implementation 'com.github.seven332:yorozuya-collect:0.1.4'
 
 
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'
@@ -182,10 +166,10 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.15.3'
 
     //事件通知
-    implementation 'org.greenrobot:eventbus:3.1.1'
+    implementation 'org.greenrobot:eventbus:3.3.1'
 
 
-    testImplementation 'junit:junit:4.8.2'
+    testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.2.1'
     testImplementation 'org.jooq:joor:0.9.6'
 
