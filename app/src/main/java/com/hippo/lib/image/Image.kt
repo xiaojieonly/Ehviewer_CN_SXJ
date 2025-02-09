@@ -23,6 +23,7 @@ import java.io.FileInputStream
 import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
+import androidx.core.graphics.createBitmap
 
 class Image private constructor(
     source: FileInputStream?,
@@ -56,8 +57,8 @@ class Image private constructor(
                             // Sadly we must use software memory since we need copy it to tile buffer, fuck glgallery
                             // Idk it will cause how much performance regression
                             val screenSize = min(
-                                info.size.width / (2 * screenWidth),
-                                info.size.height / (2 * screenHeight)
+                                info.size.width / screenWidth,
+                                info.size.height / screenHeight
                             ).coerceAtLeast(1)
                             decoder.setTargetSampleSize(
                                 max(screenSize, simpleSize ?: 1)
@@ -98,7 +99,7 @@ class Image private constructor(
         ?: mObtainedDrawable!!.intrinsicHeight
     val isRecycled = mObtainedDrawable == null
 
-    var started = false
+    private var started = false
 
     @Synchronized
     fun recycle() {
@@ -120,7 +121,7 @@ class Image private constructor(
 
     private fun prepareBitmap() {
         if (mBitmap != null) return
-        mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        mBitmap = createBitmap(width, height)
     }
 
     private fun updateBitmap() {
@@ -184,10 +185,13 @@ class Image private constructor(
                 if (mObtainedDrawable == null) {
                     return
                 }
-                if (mObtainedDrawable is BitmapDrawable){
+                if (mObtainedDrawable is BitmapDrawable) {
                     (mObtainedDrawable as BitmapDrawable).bitmap
-                }else{
-                    val stickerBitmap = Bitmap.createBitmap(mObtainedDrawable!!.intrinsicWidth, mObtainedDrawable!!.intrinsicHeight, Bitmap.Config.ARGB_8888)
+                } else {
+                    val stickerBitmap = createBitmap(
+                        mObtainedDrawable!!.intrinsicWidth,
+                        mObtainedDrawable!!.intrinsicHeight
+                    )
                     val canvas = Canvas(stickerBitmap)
                     mObtainedDrawable!!.setBounds(0, 0, stickerBitmap.width, stickerBitmap.height)
                     mObtainedDrawable!!.draw(canvas)
@@ -202,7 +206,7 @@ class Image private constructor(
                 width,
                 height
             )
-        }catch (e:ClassCastException){
+        } catch (e: ClassCastException) {
             FirebaseCrashlytics.getInstance().recordException(e)
             return
         }
