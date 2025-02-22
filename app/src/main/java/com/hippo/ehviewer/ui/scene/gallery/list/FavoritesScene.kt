@@ -1034,6 +1034,14 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
     ) {
         if (view.getCheckedItemCount() == 0) {
             view.outOfCustomChoiceMode()
+        } else {
+            if (mAdapter != null && view.getCheckedItemCount() < mAdapter!!.getItemCount()) {
+                val fabB = mFabLayout!!.get(8) as FloatingActionButton
+                fabB.setImageResource(R.drawable.v_check_dark_x24)
+            }else{
+                val fabB = mFabLayout!!.get(8) as FloatingActionButton
+                fabB.setImageResource(R.drawable.v_check_all_dark_x24)
+            }
         }
     }
 
