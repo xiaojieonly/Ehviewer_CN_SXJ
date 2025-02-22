@@ -106,6 +106,7 @@
             style="@style/Widget.Design.FloatingActionButton.Mini"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             app:srcCompat="@drawable/v_check_dark_x24" />
 
