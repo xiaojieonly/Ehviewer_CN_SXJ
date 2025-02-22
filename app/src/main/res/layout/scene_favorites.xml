@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +14,9 @@
   ~ limitations under the License.
   -->
 
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -25,19 +24,18 @@
     <com.hippo.widget.ContentLayout
         android:id="@+id/content_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <com.hippo.ehviewer.widget.SearchBar
         android:id="@+id/search_bar"
+        style="@style/CardView.Normal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/gallery_search_bar_margin_h"
-        android:layout_marginRight="@dimen/gallery_search_bar_margin_h"
         android:layout_marginTop="@dimen/gallery_search_bar_margin_v"
-        style="@style/CardView.Normal"/>
+        android:layout_marginRight="@dimen/gallery_search_bar_margin_h" />
 
-    <com.hippo.widget.FabLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <com.hippo.widget.FabLayout xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/fab_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -45,71 +43,78 @@
         android:paddingBottom="@dimen/corner_fab_margin">
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_go_to_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_refresh_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_download_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
             style="@style/Widget.Design.FloatingActionButton.Mini"
-            android:visibility="gone"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_delete_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:srcCompat="@drawable/v_go_to_dark_x24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             style="@style/Widget.Design.FloatingActionButton.Mini"
-            android:visibility="gone"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_folder_move_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:srcCompat="@drawable/v_refresh_dark_x24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             style="@style/Widget.Design.FloatingActionButton.Mini"
-            android:visibility="gone"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/v_random_dark_x24"
+            android:visibility="gone"
             app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
+            app:srcCompat="@drawable/v_download_dark_x24" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton.Mini"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:srcCompat="@drawable/v_delete_dark_x24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton.Mini"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:srcCompat="@drawable/v_folder_move_dark_x24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton.Mini"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:srcCompat="@drawable/v_random_dark_x24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton.Mini"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleX="-1"
-            app:srcCompat="@drawable/v_random_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
+            app:srcCompat="@drawable/v_random_dark_x24" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton.Mini"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_twotone_sort_24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
-            style="@style/Widget.Design.FloatingActionButton.Mini"/>
+            app:srcCompat="@drawable/ic_twotone_sort_24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton.Mini"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:srcCompat="@drawable/v_check_dark_x24" />
 
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            style="@style/Widget.Design.FloatingActionButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:backgroundTint="?attr/widgetColorThemePrimary"
-            style="@style/Widget.Design.FloatingActionButton"/>
+            app:backgroundTint="?attr/widgetColorThemePrimary" />
 
     </com.hippo.widget.FabLayout>
 </FrameLayout>
