@@ -5,7 +5,6 @@ apply plugin: "com.jaredsburrows.license"
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
     apply plugin: 'com.google.firebase.crashlytics'
-//    apply plugin: 'io.fabric'
 }
 
 android {
@@ -17,12 +16,12 @@ android {
 
     flavorDimensions "distribute"
     productFlavors {
-        appCenter {
+        appRelease {
             dimension "distribute"
         }
-        googlePlay {
-            dimension "distribute"
-        }
+//        googlePlay {
+//            dimension "distribute"
+//        }
     }
 
     defaultConfig {

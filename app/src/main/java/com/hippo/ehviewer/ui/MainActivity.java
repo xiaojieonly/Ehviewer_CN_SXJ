@@ -72,7 +72,7 @@ import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.CookieSignInScene;
 import com.hippo.ehviewer.ui.scene.download.DownloadLabelsScene;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
-import com.hippo.ehviewer.ui.scene.FavoritesScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.FavoritesScene;
 import com.hippo.ehviewer.ui.scene.GalleryCommentsScene;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.GalleryInfoScene;

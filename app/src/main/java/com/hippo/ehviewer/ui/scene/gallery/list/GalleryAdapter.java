@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.annotation.SuppressLint;
 import android.content.res.Resources;
@@ -41,6 +41,8 @@ import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.ui.scene.GalleryHolder;
+import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.widget.TileThumb;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.lib.yorozuya.ViewUtils;

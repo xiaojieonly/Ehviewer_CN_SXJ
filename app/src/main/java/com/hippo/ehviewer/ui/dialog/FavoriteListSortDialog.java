@@ -7,7 +7,7 @@ import android.app.AlertDialog;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.parser.FavoritesParser;
-import com.hippo.ehviewer.ui.scene.FavoritesScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.FavoritesScene;
 
 public class FavoriteListSortDialog {
     private final FavoritesScene scene;

@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -107,8 +108,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener,
-        GalleryView.Listener {
+public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
 
     public static final String ACTION_DIR = "dir";
     public static final String ACTION_EH = "eh";
@@ -321,10 +321,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         if (Settings.getReadingFullscreen()) {
             Window w = getWindow();
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
         super.onCreate(savedInstanceState);
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
@@ -363,28 +361,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
         Resources resources = getResources();
-        mGalleryView = new GalleryView.Builder(this, mGalleryAdapter)
-                .setListener(this)
-                .setLayoutMode(Settings.getReadingDirection())
-                .setScaleMode(Settings.getPageScaling())
-                .setStartPosition(Settings.getStartPosition())
-                .setStartPage(startPage)
-                .setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground))
-                .setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000)
-                .setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0)
-                .setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0)
-                .setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height))
-                .setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval))
-                .setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary))
-                .setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size))
-                .setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary))
-                .setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size))
-                .setPageTextTypeface(Typeface.DEFAULT)
-                .setErrorTextColor(resources.getColor(R.color.red_500, null))
-                .setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size))
-                .setDefaultErrorString(resources.getString(R.string.error_unknown))
-                .setEmptyString(resources.getString(R.string.error_empty))
-                .build();
+        mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(Settings.getReadingDirection()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
         mGLRootView.setContentPane(mGalleryView);
         mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
         mGalleryProvider.setListener(mGalleryAdapter);
@@ -393,12 +370,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         // System UI helper
         if (Settings.getReadingFullscreen()) {
             Window w = getWindow();
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            mSystemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE,
-                    SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES | SystemUiHelper.FLAG_IMMERSIVE_STICKY);
+            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            mSystemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES | SystemUiHelper.FLAG_IMMERSIVE_STICKY);
             mSystemUiHelper.hide();
             mShowSystemUi = false;
         }
@@ -616,22 +590,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         // Check volume
         if (Settings.getVolumePage()) {
-            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                    keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
                 return true;
             }
         }
 
         // Check keyboard and Dpad
-        if (keyCode == KeyEvent.KEYCODE_PAGE_UP ||
-                keyCode == KeyEvent.KEYCODE_PAGE_DOWN ||
-                keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
-                keyCode == KeyEvent.KEYCODE_DPAD_UP ||
-                keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
-                keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
-                keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
-                keyCode == KeyEvent.KEYCODE_SPACE ||
-                keyCode == KeyEvent.KEYCODE_MENU) {
+        if (keyCode == KeyEvent.KEYCODE_PAGE_UP || keyCode == KeyEvent.KEYCODE_PAGE_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_SPACE || keyCode == KeyEvent.KEYCODE_MENU) {
             return true;
         }
 
@@ -663,19 +628,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             long initialDelay = Settings.getStartTransferTime();
             long waitTime = initialDelay * 2L;
             try {
-                transferService.scheduleWithFixedDelay(
-                        () -> transHandle.post(() -> {
-                            if (mGalleryView == null) {
-                                return;
-                            }
-                            if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
-                                mGalleryView.pageLeft();
-                            } else {
-                                mGalleryView.pageRight();
-                            }
-                        }),
-                        initialDelay, waitTime, TimeUnit.SECONDS
-                );
+                transferService.scheduleWithFixedDelay(() -> transHandle.post(() -> {
+                    if (mGalleryView == null) {
+                        return;
+                    }
+                    if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                        mGalleryView.pageLeft();
+                    } else {
+                        mGalleryView.pageRight();
+                    }
+                }), initialDelay, waitTime, TimeUnit.SECONDS);
             } catch (IllegalArgumentException ignore) {
 
             }
@@ -832,6 +794,29 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+//    @Override
+//    public boolean onGenericMotionEvent(MotionEvent event) {
+//        //The input source is a pointing device associated with a display.
+//        //输入源为可显示的指针设备，如：mouse pointing device(鼠标指针),stylus pointing device(尖笔设备)
+//        if (0 != (event.getSource() & InputDevice.SOURCE_CLASS_POINTER)) {
+//            switch (event.getAction()) {
+//                // process the scroll wheel movement...处理滚轮事件
+//                case MotionEvent.ACTION_SCROLL:
+//                    //获得垂直坐标上的滚动方向,也就是滚轮向下滚
+//                    if (event.getAxisValue(MotionEvent.AXIS_VSCROLL) < 0.0f) {
+//                        Log.i("fortest::onGenericMotionEvent", "down");
+//                    }
+//                    //获得垂直坐标上的滚动方向,也就是滚轮向上滚
+//                    else {
+//                        Log.i("fortest::onGenericMotionEvent", "up");
+//                    }
+//                    return true;
+//            }
+//        }
+//        return super.onGenericMotionEvent(event);
+//    }
+
+
     private void showSlider(View sliderPanel, ObjectAnimator animator) {
         if (null != mSeekBarPanelAnimator) {
             animator.cancel();
@@ -932,8 +917,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
 
-        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                MimeTypeMap.getFileExtensionFromUrl(filename));
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(filename));
         if (TextUtils.isEmpty(mimeType)) {
             mimeType = "image/jpeg";
         }
@@ -1082,11 +1066,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         builder.setTitle(resources.getString(R.string.page_menu_title, page + 1));
 
         final CharSequence[] items;
-        items = new CharSequence[]{
-                getString(R.string.page_menu_refresh),
-                getString(R.string.page_menu_share),
-                getString(R.string.page_menu_save),
-                getString(R.string.page_menu_save_to)};
+        items = new CharSequence[]{getString(R.string.page_menu_refresh), getString(R.string.page_menu_share), getString(R.string.page_menu_save), getString(R.string.page_menu_save_to)};
         pageDialogListener(builder, items, page);
         builder.show();
     }
@@ -1309,9 +1289,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private void onTapMenuArea() {
             AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
             GalleryMenuHelper helper = new GalleryMenuHelper(builder.getContext());
-            builder.setTitle(R.string.gallery_menu_title)
-                    .setView(helper.getView())
-                    .setPositiveButton(android.R.string.ok, helper).show();
+            builder.setTitle(R.string.gallery_menu_title).setView(helper.getView()).setPositiveButton(android.R.string.ok, helper).show();
         }
 
         private void onTapSliderArea() {

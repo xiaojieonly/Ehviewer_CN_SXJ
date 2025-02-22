@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.gallery.list;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -81,8 +81,9 @@ import com.hippo.ehviewer.ui.annotation.DrawerLifeCircle;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
 import com.hippo.ehviewer.ui.dialog.FavoriteListSortDialog;
+import com.hippo.ehviewer.ui.scene.BaseScene;
+import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
-import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.ehviewer.widget.JumpDateSelector;
@@ -451,69 +452,6 @@ public class FavoritesScene extends BaseScene implements
 
         mOldFavCat = null;
         mOldKeyword = null;
-    }
-
-    private class FavDrawerHolder extends RecyclerView.ViewHolder {
-
-        private final TextView key;
-        private final TextView value;
-
-        private FavDrawerHolder(View itemView) {
-            super(itemView);
-            key = (TextView) ViewUtils.$$(itemView, R.id.key);
-            value = (TextView) ViewUtils.$$(itemView, R.id.value);
-        }
-    }
-
-    private class FavDrawerAdapter extends RecyclerView.Adapter<FavDrawerHolder> {
-
-        private final LayoutInflater mInflater;
-
-        private FavDrawerAdapter(LayoutInflater inflater) {
-            mInflater = inflater;
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return position;
-        }
-
-        @NonNull
-        @Override
-        public FavDrawerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new FavDrawerHolder(mInflater.inflate(R.layout.item_drawer_favorites, parent, false));
-        }
-
-        @Override
-        @SuppressLint("SetTextI18n")
-        public void onBindViewHolder(@NonNull FavDrawerHolder holder, int position) {
-            if (0 == position) {
-                holder.key.setText(R.string.local_favorites);
-                holder.value.setText(Integer.toString(mFavLocalCount));
-                holder.itemView.setEnabled(true);
-            } else if (1 == position) {
-                holder.key.setText(R.string.cloud_favorites);
-                holder.value.setText(Integer.toString(mFavCountSum));
-                holder.itemView.setEnabled(true);
-            } else {
-                if (null == mFavCatArray || null == mFavCountArray ||
-                        mFavCatArray.length < (position - 1) ||
-                        mFavCountArray.length < (position - 1)) {
-                    return;
-                }
-                holder.key.setText(mFavCatArray[position - 2]);
-                holder.value.setText(Integer.toString(mFavCountArray[position - 2]));
-                holder.itemView.setEnabled(true);
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            if (null == mFavCatArray) {
-                return 2;
-            }
-            return 12;
-        }
     }
 
     @Override
@@ -987,7 +925,7 @@ public class FavoritesScene extends BaseScene implements
                 mFabLayout.setSecondaryFabVisibilityAt(4, false);
                 mFabLayout.setSecondaryFabVisibilityAt(5, true);
                 mFabLayout.setSecondaryFabVisibilityAt(6, true);
-                mFabLayout.setSecondaryFabVisibilityAt(7, false);
+                mFabLayout.setSecondaryFabVisibilityAt(7, true);
             }
         }
     };
@@ -1009,7 +947,7 @@ public class FavoritesScene extends BaseScene implements
             mFabLayout.setSecondaryFabVisibilityAt(4, true);
             mFabLayout.setSecondaryFabVisibilityAt(5, false);
             mFabLayout.setSecondaryFabVisibilityAt(6, false);
-            mFabLayout.setSecondaryFabVisibilityAt(7, true);
+            mFabLayout.setSecondaryFabVisibilityAt(7, false);
         }
     }
 
@@ -1669,6 +1607,69 @@ public class FavoritesScene extends BaseScene implements
             }
 
             onPostExecute(gInfoL.get((int) (Math.random() * gInfoL.size())));
+        }
+    }
+
+    private class FavDrawerHolder extends RecyclerView.ViewHolder {
+
+        private final TextView key;
+        private final TextView value;
+
+        private FavDrawerHolder(View itemView) {
+            super(itemView);
+            key = (TextView) ViewUtils.$$(itemView, R.id.key);
+            value = (TextView) ViewUtils.$$(itemView, R.id.value);
+        }
+    }
+
+    private class FavDrawerAdapter extends RecyclerView.Adapter<FavDrawerHolder> {
+
+        private final LayoutInflater mInflater;
+
+        private FavDrawerAdapter(LayoutInflater inflater) {
+            mInflater = inflater;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return position;
+        }
+
+        @NonNull
+        @Override
+        public FavDrawerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new FavDrawerHolder(mInflater.inflate(R.layout.item_drawer_favorites, parent, false));
+        }
+
+        @Override
+        @SuppressLint("SetTextI18n")
+        public void onBindViewHolder(@NonNull FavDrawerHolder holder, int position) {
+            if (0 == position) {
+                holder.key.setText(R.string.local_favorites);
+                holder.value.setText(Integer.toString(mFavLocalCount));
+                holder.itemView.setEnabled(true);
+            } else if (1 == position) {
+                holder.key.setText(R.string.cloud_favorites);
+                holder.value.setText(Integer.toString(mFavCountSum));
+                holder.itemView.setEnabled(true);
+            } else {
+                if (null == mFavCatArray || null == mFavCountArray ||
+                        mFavCatArray.length < (position - 1) ||
+                        mFavCountArray.length < (position - 1)) {
+                    return;
+                }
+                holder.key.setText(mFavCatArray[position - 2]);
+                holder.value.setText(Integer.toString(mFavCountArray[position - 2]));
+                holder.itemView.setEnabled(true);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            if (null == mFavCatArray) {
+                return 2;
+            }
+            return 12;
         }
     }
 }
