@@ -13,9 +13,8 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/9b1r203934&#41;)
-- [Microsoft App Center](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)
-- [百度云](https://pan.baidu.com/s/1bD8CNdtUf1UqyMWMhLidkQ) 提取码：r9pm
-- [蓝奏云](https://wwsu.lanzouu.com/iGQw12ly703i) 密码:7b4s
+- [百度云](https://pan.baidu.com/s/1AFJ-ZMx7sjg8GArG5GuawQ) 提取码：8jik
+- [蓝奏云](https://wwsu.lanzouu.com/iXlQc2p6sx2h) 提取码：3bq2
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 
 [//]: # (- Torrent链接: magnet:?xt=urn:btih:e35ff0f430a28d4b72aac752dbca8fc35589f8fe&xt=urn:btmh:12202d5b6eafc1cbac6f729b4f9e6370b7274679447fa38746e8b295d58bc4dad7a6&dn=EhViewer-1.9.9.7.apk)
@@ -29,6 +28,14 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/03/01 : 
+### 新版发布1.9.9.9
+
+- 修复原图浏览时解析部分大图显示不全的问题
+- 动图优化
+- 修复收藏列表排序按钮现实场景出错的问题
+- 为收藏列表添加了全选功能
+
 ## 2025/01/25 : 提前祝大家春节快乐
 ### 新版发布1.9.9.8
 
@@ -36,6 +43,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 由于微软APP center即将停止运营，检查更新更改为，从Github获取更新信息，然后跳转到Github，由用户自行下载更新
 - clean up androidTest
 - 删除了所有和APP center相关的代码，这是最后一版自动更新的版本
+
+- [Appteka](https://appteka.store/app/11dr207588)
+- [Microsoft App Center](https://install.appcenter.ms/users/xiaojieonly/apps/com.xjs.ehviewer/distribution_groups/let's%20roll)
+- [百度云](https://pan.baidu.com/s/1bD8CNdtUf1UqyMWMhLidkQ) 提取码：r9pm
+- [蓝奏云](https://wwsu.lanzouu.com/iGQw12ly703i) 密码:7b4s
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 
 ## 2025/01/01 : 祝大家在2025年，身体健康，万事如意，长生不老，永远不死，打胶30分钟以上，越打越持久~  
 ### 新版发布1.9.9.7

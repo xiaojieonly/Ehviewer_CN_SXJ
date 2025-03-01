@@ -108,7 +108,7 @@ class UpdateDialog(private val activity: Activity) {
         downloadUrl: String,
         version: String
     ) {
-        val uri = GITHUB_README_URL.toUri()
+        val uri = GITHUB_RELEASE_URL.toUri()
         val intent = Intent(Intent.ACTION_VIEW, uri)
         activity.startActivity(intent)
         dialog?.dismiss()
@@ -151,7 +151,7 @@ class UpdateDialog(private val activity: Activity) {
     }
 
     private fun gotoGithub(dialog: DialogInterface, id: Int) {
-        val uri = GITHUB_RELEASE_URL.toUri()
+        val uri = GITHUB_README_URL.toUri()
         val intent = Intent(Intent.ACTION_VIEW, uri)
         activity.startActivity(intent)
         dialog.dismiss()
