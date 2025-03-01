@@ -1,15 +1,16 @@
 {
-  "version": "1.9.9.8",
+  "version": "1.9.9.9",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布1.9.9.8，提前祝大家春节快乐",
+    "title": "新版发布1.9.9.9",
     "content": [
-      "在标签长按弹窗中添加订阅和排除功能",
-      "由于微软APP center即将停止运营，检查更新更改为，从Github获取更新信息，然后跳转到Github，由用户自行下载更新",
-      "clean up androidTest",
-      "删除了所有和APP center相关的代码，这是最后一版自动更新的版本"
+      "修复原图浏览时解析部分大图显示不全的问题",
+      "动图优化",
+      "修复收藏列表排序按钮现实场景出错的问题",
+      "为收藏列表添加了全选功能",
+      "由于微软APP center即将停止运营，检查更新更改为，从Github获取更新信息，然后跳转到Github，由用户自行下载更新"
     ]
   }
 }
