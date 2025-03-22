@@ -166,6 +166,8 @@ dependencies {
 
     //事件通知
     implementation 'org.greenrobot:eventbus:3.3.1'
+    //loading组件
+    implementation 'com.github.ybq:Android-SpinKit:1.4.0'
 
 
     testImplementation 'junit:junit:4.13.2'
