@@ -98,11 +98,13 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent == null) {
-            // Handle the case where the intent is null
-            return START_STICKY
+        try {
+            if (intent != null) {
+                // Handle the case where the intent is not null
+                handleIntent(intent)
+            }
+        } catch (_: NullPointerException) {
         }
-        handleIntent(intent)
         return START_STICKY
     }
 

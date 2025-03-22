@@ -22,6 +22,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Process;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -224,12 +225,12 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
           if (streams.get(index) != null) {
             continue;
           }
-          streams.put(index, pipe.getInputStream());
+          streams.put(index, pipe.inputStream);
           streams.notify();
         }
 
         try {
-          entries.get(index).extract(pipe.getOutputStream());
+          entries.get(index).extract(pipe.outputStream);
         } catch (ArchiveException e) {
           e.printStackTrace();
         } finally {
@@ -260,7 +261,13 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
           Map.Entry<Integer, InputStream> entry = iterator.next();
           iterator.remove();
           index = entry.getKey();
-          stream = entry.getValue();
+          try{
+            stream = entry.getValue();
+          } catch (ClassCastException e) {
+            notifyPageFailed(index, GetText.getString(R.string.error_decoding_failed));
+            decodingIndex.lazySet(index);
+            return;
+          }
           decodingIndex.lazySet(index);
         }
 

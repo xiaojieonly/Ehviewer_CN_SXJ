@@ -13,150 +13,142 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer.gallery
 
-package com.hippo.ehviewer.gallery;
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import kotlin.math.min
 
-import androidx.annotation.NonNull;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+internal class Pipe(private val capacity: Int) {
+    private val buffer = ByteArray(capacity)
 
-class Pipe {
+    private var head = 0
+    private var tail = 0
+    private var full = false
 
-  private final int capacity;
-  private final byte[] buffer;
+    private var inClosed = false
+    private var outClosed = false
 
-  private int head = 0;
-  private int tail = 0;
-  private boolean full = false;
-
-  private boolean inClosed = false;
-  private boolean outClosed = false;
-
-  private InputStream inputStream = new InputStream() {
-    @Override
-    public int read() throws IOException {
-      synchronized (Pipe.this) {
-        byte[] bytes = new byte[1];
-        if (read(bytes, 0, 1) != -1) {
-          return bytes[0];
-        } else {
-          return -1;
+    @JvmField
+    val inputStream: InputStream = object : InputStream() {
+        @Throws(IOException::class)
+        override fun read(): Int {
+            synchronized(this@Pipe) {
+                val bytes = ByteArray(1)
+                return if (read(bytes, 0, 1) != -1) {
+                    bytes[0].toInt()
+                } else {
+                    -1
+                }
+            }
         }
-      }
-    }
 
-    @Override
-    public int read(@NonNull byte[] b, int off, int len) throws IOException {
-      synchronized (Pipe.this) {
-        for (;;) {
-          if (inClosed) {
-            throw new IOException("The InputStream is closed");
-          }
-          if (len == 0) {
-            return 0;
-          }
+        @Throws(IOException::class)
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            synchronized(this@Pipe) {
+                while (true) {
+                    if (inClosed) {
+                        throw IOException("The InputStream is closed")
+                    }
+                    if (len == 0) {
+                        return 0
+                    }
 
-          if (head == tail && !full) {
-            if (outClosed) {
-              // No bytes available and the OutputStream is closed. So it's the end.
-              return -1;
-            } else {
-              // Wait for OutputStream write bytes
-              try {
-                Pipe.this.wait();
-              } catch (InterruptedException e) {
-                throw new IOException("The thread interrupted", e);
-              }
+                    if (head == tail && !full) {
+                        if (outClosed) {
+                            // No bytes available and the OutputStream is closed. So it's the end.
+                            return -1
+                        } else {
+                            // Wait for OutputStream write bytes
+                            try {
+                                (this@Pipe as Object).wait()
+                            } catch (e: InterruptedException) {
+                                throw IOException("The thread interrupted", e)
+                            }
+                        }
+                    } else {
+                        val read = min(
+                            len.toDouble(),
+                            ((if (head < tail) tail else capacity) - head).toDouble()
+                        ).toInt()
+                        System.arraycopy(buffer, head, b, off, read)
+                        head += read
+                        if (head == capacity) {
+                            head = 0
+                        }
+                        full = false
+                        (this@Pipe as Object).notifyAll()
+                        return read
+                    }
+                }
             }
-          } else {
-            int read = Math.min(len, (head < tail ? tail : capacity) - head);
-            System.arraycopy(buffer, head, b, off, read);
-            head += read;
-            if (head == capacity) {
-              head = 0;
-            }
-            full = false;
-            Pipe.this.notifyAll();
-            return read;
-          }
         }
-      }
-    }
 
-    @Override
-    public void close() {
-      synchronized (Pipe.this) {
-        inClosed = true;
-        Pipe.this.notifyAll();
-      }
-    }
-  };
-
-  private OutputStream outputStream = new OutputStream() {
-    @Override
-    public void write(int b) throws IOException {
-      synchronized (Pipe.this) {
-        byte[] bytes = new byte[] { (byte) b};
-        write(bytes, 0, 1);
-      }
-    }
-
-    @Override
-    public void write(@NonNull byte[] b, int off, int len) throws IOException {
-      synchronized (Pipe.this) {
-        while (len != 0) {
-          if (outClosed) {
-            throw new IOException("The OutputStream is closed");
-          }
-          if (inClosed) {
-            throw new IOException("The InputStream is closed");
-          }
-
-          if (head == tail && full) {
-            // The buffer is full, wait for InputStream read bytes
-            try {
-              Pipe.this.wait();
-            } catch (InterruptedException e) {
-              throw new IOException("The thread interrupted", e);
+        override fun close() {
+            synchronized(this@Pipe) {
+                inClosed = true
+                (this@Pipe as Object).notifyAll()
             }
-          } else {
-            int write = Math.min(len, (head <= tail ? capacity : head) - tail);
-            System.arraycopy(b, off, buffer, tail, write);
-            off += write;
-            len -= write;
-            tail += write;
-            if (tail == capacity) {
-              tail = 0;
-            }
-            if (head == tail) {
-              full = true;
-            }
-            Pipe.this.notifyAll();
-          }
         }
-      }
     }
 
-    @Override
-    public void close() {
-      synchronized (Pipe.this) {
-        outClosed = true;
-        Pipe.this.notifyAll();
-      }
+    @JvmField
+    val outputStream: OutputStream = object : OutputStream() {
+        @Throws(IOException::class)
+        override fun write(b: Int) {
+            synchronized(this@Pipe) {
+                val bytes = byteArrayOf(b.toByte())
+                write(bytes, 0, 1)
+            }
+        }
+
+        @Throws(IOException::class)
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            var off = off
+            var len = len
+            synchronized(this@Pipe) {
+                while (len != 0) {
+                    if (outClosed) {
+                        throw IOException("The OutputStream is closed")
+                    }
+                    if (inClosed) {
+                        throw IOException("The InputStream is closed")
+                    }
+
+                    if (head == tail && full) {
+                        // The buffer is full, wait for InputStream read bytes
+                        try {
+                            (this@Pipe as Object).wait()
+                        } catch (e: InterruptedException) {
+                            throw IOException("The thread interrupted", e)
+                        }
+                    } else {
+                        val write = min(
+                            len.toDouble(),
+                            ((if (head <= tail) capacity else head) - tail).toDouble()
+                        ).toInt()
+                        System.arraycopy(b, off, buffer, tail, write)
+                        off += write
+                        len -= write
+                        tail += write
+                        if (tail == capacity) {
+                            tail = 0
+                        }
+                        if (head == tail) {
+                            full = true
+                        }
+                        (this@Pipe as Object).notifyAll()
+                    }
+                }
+            }
+        }
+
+        override fun close() {
+            synchronized(this@Pipe) {
+                outClosed = true
+                (this@Pipe as Object).notifyAll()
+            }
+        }
     }
-  };
-
-  Pipe(int capacity) {
-    this.capacity = capacity;
-    this.buffer = new byte[capacity];
-  }
-
-  InputStream getInputStream() {
-    return inputStream;
-  }
-
-  OutputStream getOutputStream() {
-    return outputStream;
-  }
 }

@@ -24,9 +24,7 @@ import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
 import androidx.core.graphics.createBitmap
-import com.hippo.Native
-import okio.BufferedSource
-import java.nio.ByteBuffer
+
 
 class Image private constructor(
     source: FileInputStream?,
