@@ -134,7 +134,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
 
         int width = getWidth() - getPaddingLeft() - getPaddingRight();
         int height = getHeight() - getPaddingTop() - getPaddingBottom();
-        Bitmap image = drawableToBitmap(getDrawable());
+        Bitmap image = drawableToBitmap(getDrawable(),canvas);
         if (image == null) {
             super.onDraw(canvas);
             return;
@@ -527,9 +527,10 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
      * drawable转bitmap
      *
      * @param drawable
+     * @param canvas
      * @return
      */
-    private Bitmap drawableToBitmap(Drawable drawable) {
+    private Bitmap drawableToBitmap(Drawable drawable, Canvas canvas) {
         if (drawable == null) {
             if (mSrcBitmap != null) {
                 return mSrcBitmap;
@@ -539,12 +540,22 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         } else if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
         }
+        // Detect hardware acceleration availability
+        boolean isHardwareAccelerated = canvas.isHardwareAccelerated();
+
+        Bitmap.Config config = isHardwareAccelerated ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
+                drawable.getIntrinsicHeight(), config);
+        Canvas canvasNew = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvasNew.getWidth(), canvasNew.getHeight());
+        drawable.draw(canvasNew);
         return bitmap;
+    }
+
+    // Helper function to check hardware acceleration (adjust as needed for your app)
+    private boolean isInHardwareAccelerationMode() {
+        //  This is a placeholder - you need to replace this with your method for checking hardware acceleration.  Methods vary depending on the context (Activity, View, etc.). Look into `getWindow().isHardwareAccelerated()` or similar.
+        return true; // Replace with actual check
     }
 
     /**

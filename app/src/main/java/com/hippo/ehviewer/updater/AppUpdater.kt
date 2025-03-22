@@ -25,6 +25,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.BufferedSource
 import okio.Okio
+import okio.buffer
+import okio.source
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -113,7 +115,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                     // Read current AppUpdater
                     if (instance == null && dataFile.exists()) {
                         try {
-                            Okio.buffer(Okio.source(dataFile)).use { source ->
+                            dataFile.source().buffer().use { source ->
                                 instance = AppUpdater(dataName, source)
                             }
                         } catch (e: IOException) {
@@ -166,7 +168,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
 
                     // Read new AppUpdater
                     try {
-                        Okio.buffer(Okio.source(dataFile)).use { source ->
+                        dataFile.source().buffer().use { source ->
                             instance = AppUpdater(dataName, source)
                         }
                     } catch (e: IOException) {

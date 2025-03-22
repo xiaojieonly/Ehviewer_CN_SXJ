@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import androidx.annotation.IntDef;
@@ -39,6 +40,7 @@ import com.hippo.lib.glview.view.GLView;
 import com.hippo.lib.glview.widget.GLEdgeView;
 import com.hippo.lib.glview.widget.GLProgressView;
 import com.hippo.lib.glview.widget.GLTextureView;
+import com.hippo.lib.yorozuya.AssertError;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.Pool;
 import java.lang.annotation.Retention;
@@ -667,10 +669,13 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
     @RenderThread
     public void onDataChanged() {
-        GalleryUtils.assertInRenderThread();
-
-        if (mLayoutManager != null){
-            mLayoutManager.onDataChanged();
+        try{
+            GalleryUtils.assertInRenderThread();
+            if (mLayoutManager != null){
+                mLayoutManager.onDataChanged();
+            }
+        } catch (AssertError e) {
+            Log.e(this.getClass().getName(),e.getMessage(),e);
         }
     }
 
