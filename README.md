@@ -12,11 +12,11 @@ An E-Hentai Application for Android.
 
 点击前往下载：
 
-- [Appteka](https://appteka.store/app/d52r213275)
-- [百度云](https://pan.baidu.com/s/1AFJ-ZMx7sjg8GArG5GuawQ) 提取码：8jik
-- [蓝奏云](https://wwsu.lanzouu.com/iXlQc2p6sx2h) 提取码：3bq2
+[//]: # (- [Appteka]&#40;https://appteka.store/app/d52r213275&#41;)
+- [百度云](https://pan.baidu.com/s/1myf_N-8l3IL4cuF_38u_dw) 提取码：3ftd
+- [蓝奏云](https://wwsu.lanzouu.com/iItRt2scxc0d) 提取码：7yxi
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:c92339cb043af989dad4c464d47552b43119f9e2&xt=urn:btmh:1220e2fa66581a3120b3f7c0b874a044f264f85630181f210f7ac0753ce72052491d&dn=EhViewer-1.9.9.9.apk
+- Torrent链接: magnet:?xt=urn:btih:09b095aba750ad6d5ffc3a030d3901d098b61591&xt=urn:btmh:122029ddcece960b2b8638a7ffcd3384cd3f5e41cd4d9929203074900408d555101c&dn=EhViewer-1.9.9.10.apk
 
 点击前往赏饭：
 
@@ -28,6 +28,13 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/04/01 :
+### 新版发布1.9.9.10
+
+- 修复了因未开启硬件加速，导致头像渲染失败，从而导致APP崩溃的问题
+- 修复了一些可能导致崩溃的问题
+- gradle版本更新
+
 ## 2025/03/01 : 
 ### 新版发布1.9.9.9
 
@@ -35,6 +42,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 动图优化
 - 修复收藏列表排序按钮现实场景出错的问题
 - 为收藏列表添加了全选功能
+- [Appteka](https://appteka.store/app/d52r213275)
+- [百度云](https://pan.baidu.com/s/1AFJ-ZMx7sjg8GArG5GuawQ) 提取码：8jik
+- [蓝奏云](https://wwsu.lanzouu.com/iXlQc2p6sx2h) 提取码：3bq2
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:c92339cb043af989dad4c464d47552b43119f9e2&xt=urn:btmh:1220e2fa66581a3120b3f7c0b874a044f264f85630181f210f7ac0753ce72052491d&dn=EhViewer-1.9.9.9.apk
+
 
 ## 2025/01/25 : 提前祝大家春节快乐
 ### 新版发布1.9.9.8
