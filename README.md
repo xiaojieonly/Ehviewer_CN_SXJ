@@ -12,7 +12,7 @@ An E-Hentai Application for Android.
 
 点击前往下载：
 
-[//]: # (- [Appteka]&#40;https://appteka.store/app/d52r213275&#41;)
+- [Appteka](https://appteka.store/app/acdr168648)
 - [百度云](https://pan.baidu.com/s/1myf_N-8l3IL4cuF_38u_dw) 提取码：3ftd
 - [蓝奏云](https://wwsu.lanzouu.com/iItRt2scxc0d) 提取码：7yxi
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
