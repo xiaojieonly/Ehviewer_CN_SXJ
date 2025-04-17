@@ -1062,6 +1062,10 @@ public final class GalleryListScene extends BaseScene
     }
 
     private View subscriptionViewBuild(LayoutInflater inflater) {
+        Context context = getEHContext();
+        if (context==null){
+            return null;
+        }
         mSubscriptionDraw = new SubscriptionDraw(getEHContext(), inflater, mClient, getTag(), ehTags);
         return mSubscriptionDraw.onCreate(drawPager, getActivity2(), this);
     }

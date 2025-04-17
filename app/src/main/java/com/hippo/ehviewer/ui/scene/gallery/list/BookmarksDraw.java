@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.ui.scene.gallery.list;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -49,6 +50,7 @@ public class BookmarksDraw {
         ehApplication = (EhApplication) context.getApplicationContext();
     }
 
+    @SuppressLint("NonConstantResourceId")
     public View onCreate(GalleryListScene scene) {
         View bookmarksView = inflater.inflate(R.layout.bookmarks_draw, null, false);
 
@@ -62,7 +64,7 @@ public class BookmarksDraw {
         List<QuickSearch> quickSearchList = EhDB.getAllQuickSearch();
         //汉化标签
         final boolean judge = Settings.getShowTagTranslations();
-        if (judge && 0 != quickSearchList.size()) {
+        if (judge && !quickSearchList.isEmpty()) {
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过已翻译的标签
@@ -71,7 +73,7 @@ public class BookmarksDraw {
                     EhDB.updateQuickSearch(quickSearchList.get(i));
                 }
             }
-        } else if (!judge && 0 != quickSearchList.size()) {
+        } else if (!judge && !quickSearchList.isEmpty()) {
             for (int i = 0; i < quickSearchList.size(); i++) {
                 String name = quickSearchList.get(i).getName();
                 //重设标签名称,并跳过未翻译的标签
@@ -123,7 +125,7 @@ public class BookmarksDraw {
             return true;
         });
 
-        if (0 == list.size()) {
+        if (list.isEmpty()) {
             tip.setVisibility(View.VISIBLE);
             listView.setVisibility(View.GONE);
         } else {

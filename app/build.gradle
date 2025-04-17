@@ -154,9 +154,6 @@ dependencies {
     // 还是旧版稳定好用
     implementation 'com.squareup.okhttp3:okhttp:3.14.7'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
-//    https://github.com/acsbendi/Android-Request-Inspector-WebView
-//    implementation 'com.github.acsbendi:Android-Request-Inspector-WebView:1.0.5'
-//    https://github.com/xiaojieonly/Android-Request-Inspector-WebView
     implementation 'com.github.xiaojieonly:Android-Request-Inspector-WebView:70403bb'
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'

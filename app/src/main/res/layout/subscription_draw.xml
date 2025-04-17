@@ -1,46 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <androidx.appcompat.widget.Toolbar xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/toolbar"
-        android:layout_height="?attr/actionBarSize"
         android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
         android:background="?attr/toolbarColor"
         android:saveEnabled="false"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="?attr/toolbarPopupTheme"/>
+        app:popupTheme="?attr/toolbarPopupTheme">
+        <com.github.ybq.android.spinkit.SpinKitView
+            android:id="@+id/spin_kit"
+            style="@style/SpinKitView.Small.Pulse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            app:SpinKit_Color="?android:attr/textColorPrimary" />
+    </androidx.appcompat.widget.Toolbar>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
         <FrameLayout
+            android:id="@+id/tag_list_parent"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/tag_list_parent"
             android:layout_weight="1">
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="8dp"
-                android:background="@drawable/shadow_bottom"/>
+                android:background="@drawable/shadow_bottom" />
 
             <TextView
                 android:id="@+id/tip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:visibility="gone"/>
+                android:visibility="gone" />
 
             <ListView
                 android:id="@+id/list_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent" />
 
         </FrameLayout>
 
@@ -49,16 +56,16 @@
             style="@style/ProgressView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center" />
 
         <TextView
             android:id="@+id/not_login_text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:text="@string/settings_eh_identity_cookies_tourist"
             android:textSize="@dimen/text_super_large"
-            android:visibility="gone"
-            android:text="@string/settings_eh_identity_cookies_tourist"/>
+            android:visibility="gone" />
 
     </FrameLayout>
 </LinearLayout>
