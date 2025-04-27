@@ -1604,7 +1604,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     private void showTagDialog(final String tag) {
-        if (tagDialog==null){
+        if (tagDialog == null) {
             tagDialog = new GalleryListSceneDialog(this);
         }
         if (ehTags == null) {
@@ -1884,12 +1884,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
      * 这个方法写的跟屎一样
      */
     @SuppressLint("SetTextI18n")
-    private void showTorrentDownloadDialog(String url, String name, int progress, boolean success) {
+    private void showTorrentDownloadDialog(TorrentDownloadMessage message, boolean success) {
         Context context = getEHContext();
         if (!isAdded()) {
             return;
         }
-        if (progress == 100 || !success) {
+        if (message.progress == 100 || !success) {
             if (torrentDownloadView == null) {
                 return;
             }
@@ -1903,7 +1903,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             Button leftButton = torrentDownloadView.findViewById(R.id.leader);
             Button rightButton = torrentDownloadView.findViewById(R.id.action);
 
-            path.setText(getString(R.string.download_torrent_path, url));
+            path.setText(getString(R.string.download_torrent_path, message.path));
 
             rightButton.setText(R.string.sure);
 
@@ -1913,7 +1913,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 leftButton.setText(R.string.open_directory);
                 leftButton.setOnClickListener(l -> {
                     dismissTorrentDialog();
-                    FileUtils.openAssignFolder(url, context);
+                    FileUtils.openAssignFolder(message.dir, context);
                 });
                 state.setText(getString(R.string.download_torrent_state) + getString(R.string.download_state_finish));
             } else {
@@ -1928,7 +1928,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 downLoadAlertDialog.setCancelable(true);
             }
         } else {
-            String progressString = progress + "%";
+            String progressString = message.progress + "%";
             if (downLoadAlertDialog != null && downLoadAlertDialog.isShowing()) {
                 if (downloadProgress != null) {
                     downloadProgress.setText(progressString);
@@ -1949,7 +1949,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
 
         TextView tName = torrentDownloadView.findViewById(R.id.download_name);
-        tName.setText(name);
+        tName.setText(message.name);
         assert context != null;
         if (downLoadAlertDialog != null) {
             downLoadAlertDialog.show();
@@ -1980,15 +1980,16 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             TorrentDownloadMessage message = msg.getData().getParcelable("torrent_download_message");
             if (message.progress == 200) {
                 dismissTorrentDialog();
-                Toast.makeText(getEHContext(), R.string.torrent_exist, Toast.LENGTH_SHORT).show();
+                String text = mContext.getString(R.string.torrent_exist, message.path);
+                Toast.makeText(getEHContext(), text, Toast.LENGTH_SHORT).show();
                 return;
             }
             if (message.failed) {
                 dismissTorrentDialog();
-                showTorrentDownloadDialog(message.path, message.name, message.progress, false);
+                showTorrentDownloadDialog(message, false);
                 return;
             }
-            showTorrentDownloadDialog(message.path, message.name, message.progress, true);
+            showTorrentDownloadDialog(message, true);
         }
     }
 
@@ -2301,7 +2302,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             try {
                 String url = mTorrentList[position].first;
                 String name = mTorrentList[position].second + ".torrent";
-                String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+"/"+TORRENT_PATH;
+                String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/" + TORRENT_PATH;
                 DownloadTorrentManager downloadTorrentManager = DownloadTorrentManager.get(okHttpClient);
                 if (!EhApplication.addDownloadTorrent(context, url)) {
                     Toast.makeText(context, R.string.downloading, Toast.LENGTH_LONG).show();

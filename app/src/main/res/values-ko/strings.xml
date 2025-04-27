@@ -775,7 +775,7 @@
     <string name="try_again">잠시후 다시 시도하십시오.</string>
     <string name="open_directory">디렉터리 열기</string>
     <string name="downloading">다운로드 중… 나중에 다시 시도하십시오.</string>
-    <string name="torrent_exist">파일이 이미 존재합니다.</string>
+    <string name="torrent_exist">파일이 이미 존재합니다.: %s</string>
 
     <string name="yes">예</string>
     <string name="cancel">취소</string>

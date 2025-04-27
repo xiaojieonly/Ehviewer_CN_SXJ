@@ -29,7 +29,7 @@
                 android:id="@+id/download_path"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="@style/CardMessage" />
+                style="@style/CardMessageMultipleLines" />
 
             <TextView
                 android:id="@+id/download_state"

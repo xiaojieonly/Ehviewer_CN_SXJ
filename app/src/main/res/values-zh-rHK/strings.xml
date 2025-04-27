@@ -792,7 +792,7 @@
     <string name="try_again">再試一次</string>
     <string name="open_directory">開啟檔案目錄</string>
     <string name="downloading">下載中…… 請稍後再試</string>
-    <string name="torrent_exist">檔案已存在</string>
+    <string name="torrent_exist">檔案已存在: %s</string>
     <string name="empty_subscription">沒有任何訂閱</string>
 
     <!--  订阅服务 temporary -->

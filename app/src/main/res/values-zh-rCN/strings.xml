@@ -854,7 +854,7 @@
     <string name="try_again">再试一次</string>
     <string name="open_directory">打开目录</string>
     <string name="downloading">正在下载…… 请稍后再试</string>
-    <string name="torrent_exist">文件已存在</string>
+    <string name="torrent_exist">文件已存在: %s</string>
 
     <string name="yes">是</string>
     <string name="cancel">取消</string>

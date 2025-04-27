@@ -5,9 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.client.EhConfig
@@ -24,6 +27,29 @@ class FileUtils {
     companion object{
         private const val TAG = "FileUtils"
 
+        @JvmStatic
+        fun moveFile(sourceFile: File, destDir: File): Boolean {
+            if (!sourceFile.exists()) {
+                return false
+            }
+
+
+            // 确保目标目录存在
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            val newFile = File(destDir, sourceFile.name)
+
+            try {
+                // 重命名/移动文件
+                return sourceFile.renameTo(newFile)
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+                return false
+            }
+
+        }
         @JvmStatic
         fun copyFile(fromFile: File?, toFile: File?): Boolean {
             return copyFile(fromFile, toFile, false)
@@ -86,13 +112,24 @@ class FileUtils {
          */
         @JvmStatic
         fun openAssignFolder(path: String, context: Context) {
+            Log.d(TAG,path)
             val file = File(path)
             if (!file.exists()) {
                 return
             }
             val intent: Intent
+//            intent= Intent(Intent.ACTION_VIEW)
+//            intent.setDataAndType(path.toUri(), "vnd.android.document/directory");
+//
+//            if (intent.resolveActivity(context.getPackageManager()) != null) {
+//                context.startActivity(intent)
+//            } else {
+//                Handler(Looper.getMainLooper()).post {
+//                    Toast.makeText(context, "无法打开下载目录", Toast.LENGTH_SHORT).show();
+//                }
+//            }
 
-            //        Uri uri = Uri.parse(path);
+//                    Uri uri = Uri.parse(path);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val uri =
                     ("content://com.android.externalstorage.documents/document/primary%3ADownload/" + EhConfig.TORRENT_PATH).toUri()
@@ -106,7 +143,6 @@ class FileUtils {
                 intent.setType("*/*")
                 intent.setDataAndType(Uri.fromFile(file), "file/*")
             }
-
 
             try {
 //            context.startActivity(intent);

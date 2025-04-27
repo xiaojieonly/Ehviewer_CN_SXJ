@@ -107,6 +107,13 @@
         <item name="android:maxLines">1</item>
     </style>
 
+    <style name="CardMessageMultipleLines">
+        <item name="android:textAppearance">@style/TextAppearance.CardMessage</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">false</item>
+        <item name="android:maxLines">10</item>
+    </style>
+
     <style name="TextAppearance.ReadProgress">
         <item name="android:textSize">@dimen/text_small</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>

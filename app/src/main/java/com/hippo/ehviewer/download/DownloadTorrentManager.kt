@@ -1,177 +1,185 @@
-package com.hippo.ehviewer.download;
+package com.hippo.ehviewer.download
 
-import android.content.Context;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.client.data.TorrentDownloadMessage;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import android.content.Context
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Message
+import android.util.Log
+import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.client.data.TorrentDownloadMessage
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 
 /**
  * 文件下载工具
  */
-public class DownloadTorrentManager {
-    private static final String TAG = DownloadTorrentManager.class.getName();
-    private static DownloadTorrentManager downloadTorrentManager;
-    private final OkHttpClient okHttpClient;
-
-    private Handler handler;
-
-    public static DownloadTorrentManager get(OkHttpClient okHttpClient) {
-        if (downloadTorrentManager == null) {
-            downloadTorrentManager = new DownloadTorrentManager(okHttpClient);
-        }
-        return downloadTorrentManager;
-    }
-
-    private DownloadTorrentManager(OkHttpClient okHttpClient) {
-        this.okHttpClient = okHttpClient;
-    }
+class DownloadTorrentManager private constructor(private val okHttpClient: OkHttpClient) {
+    private var handler: Handler? = null
 
     /**
      * url 下载连接
      * saveDir 储存下载文件的SDCard目录
      * listener 下载监听
      */
-    public void download(final String url, final String saveDir, final String name, Handler handler, Context context) {
-        this.handler = handler;
-        Request request = new Request.Builder().url(url).build();
+    fun download(url: String, saveDir: String, name: String, handler: Handler?, context: Context) {
+        this.handler = handler
+        val request = Request.Builder().url(url).build()
         // 储存下载文件的目录
-        String savePath = null;
+        var savePath: String? = null
         try {
-            savePath = isExistDir(saveDir);
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
+            savePath = isExistDir(saveDir)
+        } catch (ioException: IOException) {
+            ioException.printStackTrace()
         }
-        File file = new File(savePath, name);
+        val file = File(savePath, name)
+        val path = file.path
         if (file.exists()) {
-            sendMessage(saveDir, name, 200, false);
-            return;
+            EhApplication.removeDownloadTorrent(context, url)
+            sendMessage(path, savePath, name, 100, false)
+            return
         }
-        sendMessage(url, name, 0, false);
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                // 下载失败
-                EhApplication.removeDownloadTorrent(context, url);
-                sendMessage(url, name, -1, true);
 
+        val dir = savePath
+        sendMessage(path, saveDir, name, 0, false)
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                // 下载失败
+                EhApplication.removeDownloadTorrent(context, url)
+                sendMessage(url, dir, name, -1, true)
             }
 
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                InputStream is = null;
-                byte[] buf = new byte[2048];
-                int len;
-                FileOutputStream fos = null;
+            @Throws(IOException::class)
+            override fun onResponse(call: Call, response: Response) {
+                var `is`: InputStream? = null
+                val buf = ByteArray(2048)
+                var len: Int
+                var fos: FileOutputStream? = null
                 try {
-                    is = response.body().byteStream();
-                    long total = response.body().contentLength();
-
-                    fos = new FileOutputStream(file);
-                    long sum = 0;
-                    while ((len = is.read(buf)) != -1) {
-                        fos.write(buf, 0, len);
-                        sum += len;
-                        int progress = (int) (sum * 1.0f / total * 100);
+                    `is` = response.body()!!.byteStream()
+                    val total = response.body()!!.contentLength()
+                    fos = FileOutputStream(file)
+                    var sum: Long = 0
+                    while ((`is`.read(buf).also { len = it }) != -1) {
+                        fos.write(buf, 0, len)
+                        sum += len.toLong()
+                        val progress = (sum * 1.0f / total * 100).toInt()
                         // 下载中
-                        sendMessage(url, name, progress, false);
+                        sendMessage(path, dir, name, progress, false)
                     }
-                    fos.flush();
+
+                    fos.flush()
                     // 下载完成
-                    EhApplication.removeDownloadTorrent(context, url);
-                    sendMessage(saveDir, name, 100, false);
-                } catch (Exception e) {
-                    EhApplication.removeDownloadTorrent(context, url);
-                    sendMessage(url, name, -1, true);
+                    EhApplication.removeDownloadTorrent(context, url)
+                    sendMessage(path, dir, name, 100, false)
+                } catch (e: Exception) {
+                    EhApplication.removeDownloadTorrent(context, url)
+                    sendMessage(path, dir, name, -1, true)
                 } finally {
                     try {
-                        if (is != null)
-                            is.close();
-                    } catch (IOException ignored) {
+                        `is`?.close()
+                    } catch (ignored: IOException) {
                     }
                     try {
-                        if (fos != null)
-                            fos.close();
-                    } catch (IOException e) {
+                        fos?.close()
+                    } catch (e: IOException) {
                     }
                 }
             }
-        });
+        })
     }
 
     /**
      * saveDir
      * 判断下载目录是否存在
      */
-    private String isExistDir(String saveDir) throws IOException {
+    @Throws(IOException::class)
+    private fun isExistDir(saveDir: String): String {
         // 下载位置
-        File downloadFile = new File(saveDir);
+        val downloadFile = File(saveDir)
         if (!downloadFile.mkdirs()) {
-            downloadFile.createNewFile();
+            downloadFile.createNewFile()
         }
-        return downloadFile.getAbsolutePath();
+        return downloadFile.absolutePath
     }
 
-    /**
-     * 获取SD卡路径
-     *
-     * @return
-     */
-    public static String getSDCardPath() {
-        String sdCardPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator;
-        Log.i(TAG, "getSDCardPath:" + sdCardPath);
-        return sdCardPath;
-    }
-
-    /**
-     * url
-     * 从下载连接中解析出文件名
-     */
-    @NonNull
-    public static String getNameFromUrl(String url) {
-        return url.substring(url.lastIndexOf("/") + 1);
-    }
-
-    private void sendMessage(String path, String name, int progress, boolean failed) {
-        Message message = torrentDownLoadMessage(path, name, progress, failed);
-        handler.sendMessage(message);
+    private fun sendMessage(
+        path: String,
+        dir: String?,
+        name: String,
+        progress: Int,
+        failed: Boolean
+    ) {
+        val message = torrentDownLoadMessage(path, dir, name, progress, failed)
+        handler!!.sendMessage(message)
     }
 
 
-    private Message torrentDownLoadMessage(String path, String name, int progress, boolean failed) {
+    private fun torrentDownLoadMessage(
+        path: String,
+        dir: String?,
+        name: String,
+        progress: Int,
+        failed: Boolean
+    ): Message {
+        val result = handler!!.obtainMessage()
+        val data = Bundle()
 
-        Message result = handler.obtainMessage();
-        Bundle data = new Bundle();
+        val message = TorrentDownloadMessage()
 
-        TorrentDownloadMessage message = new TorrentDownloadMessage();
+        message.failed = failed
+        message.progress = progress
+        message.dir = dir
+        message.path = path
+        message.name = name
 
-        message.failed = failed;
-        message.progress = progress;
-        message.path = path;
-        message.name = name;
+        data.putParcelable("torrent_download_message", message)
 
-        data.putParcelable("torrent_download_message", message);
+        result.data = data
 
-        result.setData(data);
-
-        return result;
+        return result
     }
 
+    companion object {
+        private val TAG: String = DownloadTorrentManager::class.java.name
+        private var downloadTorrentManager: DownloadTorrentManager? = null
+        @JvmStatic
+        fun get(okHttpClient: OkHttpClient): DownloadTorrentManager {
+            if (downloadTorrentManager == null) {
+                downloadTorrentManager = DownloadTorrentManager(okHttpClient)
+            }
+            return downloadTorrentManager!!
+        }
+
+        val sDCardPath: String
+            /**
+             * 获取SD卡路径
+             *
+             * @return
+             */
+            get() {
+                val sdCardPath = Environment.getExternalStorageDirectory()
+                    .absolutePath + File.separator
+                Log.i(
+                    TAG,
+                    "getSDCardPath:$sdCardPath"
+                )
+                return sdCardPath
+            }
+
+        /**
+         * url
+         * 从下载连接中解析出文件名
+         */
+        fun getNameFromUrl(url: String): String {
+            return url.substring(url.lastIndexOf("/") + 1)
+        }
+    }
 }

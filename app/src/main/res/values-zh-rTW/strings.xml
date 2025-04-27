@@ -825,7 +825,7 @@
     <string name="try_again">再試一次</string>
     <string name="open_directory">開啟目錄</string>
     <string name="downloading">正在下載…… 請稍後再試</string>
-    <string name="torrent_exist">檔案已存在</string>
+    <string name="torrent_exist">檔案已存在: %s</string>
 
     <!--  訂閱服務  -->
     <string name="subscription_watched">訂閱</string>

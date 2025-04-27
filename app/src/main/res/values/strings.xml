@@ -910,7 +910,7 @@
     <string name="try_again">Try Again</string>
     <string name="open_directory">Open Directory</string>
     <string name="downloading">Downloading…… Please Try Later</string>
-    <string name="torrent_exist">File already exists</string>
+    <string name="torrent_exist">File already exists: %s</string>
 
     <!--  订阅服务  -->
     <string name="subscription_watched">Watched</string>
