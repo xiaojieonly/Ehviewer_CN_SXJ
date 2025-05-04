@@ -12,11 +12,11 @@ An E-Hentai Application for Android.
 
 点击前往下载：
 
-- [Appteka](https://appteka.store/app/acdr168648)
-- [百度云](https://pan.baidu.com/s/1myf_N-8l3IL4cuF_38u_dw) 提取码：3ftd
-- [蓝奏云](https://wwsu.lanzouu.com/iItRt2scxc0d) 提取码：7yxi
+[//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
+- [百度云](https://pan.baidu.com/s/1Ur2ES2j41-udZ779JqYxkA?pwd=ucki) 提取码：ucki
+- [蓝奏云](https://wwsu.lanzouu.com/iiODe2vbjvaf) 提取码：gmbc
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:09b095aba750ad6d5ffc3a030d3901d098b61591&xt=urn:btmh:122029ddcece960b2b8638a7ffcd3384cd3f5e41cd4d9929203074900408d555101c&dn=EhViewer-1.9.9.10.apk
+- Torrent链接: magnet:?xt=urn:btih:5b352cc21c38473111fd0229159279421899b58b&xt=urn:btmh:12202b7a3bf181111f2b629261836c862646ed98943b567030ef3977acf3cc10a393&dn=EhViewer-1.9.9.11.apk&xl=23244515
 
 点击前往赏饭：
 
@@ -28,12 +28,26 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/05/04 : 祝大家54青年节快乐~ 
+### 新版发布1.9.9.11
+
+- 修复了因未开启硬件加速，导致头像渲染失败，从而导致APP崩溃的问题
+- 修复了一些可能导致崩溃的问题
+- gradle版本更新
+
 ## 2025/04/01 :
 ### 新版发布1.9.9.10
 
 - 修复了因未开启硬件加速，导致头像渲染失败，从而导致APP崩溃的问题
 - 修复了一些可能导致崩溃的问题
 - gradle版本更新
+
+- [Appteka](https://appteka.store/app/acdr168648)
+- [百度云](https://pan.baidu.com/s/1myf_N-8l3IL4cuF_38u_dw) 提取码：3ftd
+- [蓝奏云](https://wwsu.lanzouu.com/iItRt2scxc0d) 提取码：7yxi
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:09b095aba750ad6d5ffc3a030d3901d098b61591&xt=urn:btmh:122029ddcece960b2b8638a7ffcd3384cd3f5e41cd4d9929203074900408d555101c&dn=EhViewer-1.9.9.10.apk
+
 
 ## 2025/03/01 : 
 ### 新版发布1.9.9.9
