@@ -40,7 +40,11 @@ class AppUpdater(private val name: String, source: BufferedSource) {
 
 
     init {
-        val jsonObject = JSONObject.parseObject(source.readUtf8())
+        val jsonObject: JSONObject = try {
+            JSONObject.parseObject(source.readUtf8())
+        } catch (e: JSONException) {
+            JSONObject()
+        }
         updateData = jsonObject
     }
 
@@ -129,7 +133,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                     // Save new json data
                     val tempDataFile = File(dir, "$dataName.tmp")
                     if (!save(client, dataUrl, tempDataFile)) {
-                        if (manualChecking){
+                        if (manualChecking) {
                             UpdateDialog(activity).showCheckFailDialog()
                         }
                         FileUtils.delete(tempDataFile)
@@ -154,9 +158,10 @@ class AppUpdater(private val name: String, source: BufferedSource) {
 
                     if (!needUpdate) {
                         FileUtils.delete(tempDataFile)
-                        if (manualChecking){
+                        if (manualChecking) {
                             ContextCompat.getMainExecutor(activity).execute {
-                                Toast.makeText(activity,R.string.update_to_date,Toast.LENGTH_LONG).show()
+                                Toast.makeText(activity, R.string.update_to_date, Toast.LENGTH_LONG)
+                                    .show()
                             }
                         }
                         return@execute
