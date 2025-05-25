@@ -31,6 +31,7 @@ import android.os.Debug;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -74,6 +75,7 @@ import com.hippo.lib.yorozuya.SimpleHandler;
 import org.conscrypt.Conscrypt;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.ArrayList;
@@ -92,7 +94,9 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
 import okhttp3.ConnectionSpec;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Response;
 
 public class EhApplication extends RecordingApplication {
 
@@ -383,6 +387,19 @@ public class EhApplication extends RecordingApplication {
                         } catch (NullPointerException e) {
                             throw new NullPointerException(e.getMessage());
                         }
+                    })
+                    .addNetworkInterceptor(chain -> {
+                        Response response = chain.proceed(chain.request());
+                        // 同步Cookie到WebView
+                        if (response.headers("Set-Cookie") != null) {
+                            CookieManager cookieManager = CookieManager.getInstance();
+                            String url =chain.request().url().toString();
+                            for (String header : response.headers("Set-Cookie")) {
+                                cookieManager.setCookie(url, header);
+                            }
+                            cookieManager.flush();
+                        }
+                        return response;
                     })
                     .proxySelector(getEhProxySelector(application));
             if (Settings.getDF() && AppHelper.checkVPN(context)) {

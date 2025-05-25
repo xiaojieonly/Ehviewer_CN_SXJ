@@ -18,25 +18,48 @@ package com.hippo.ehviewer.ui.scene;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.acsbendi.requestinspectorwebview.RequestInspectorOptions;
+import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient;
+import com.acsbendi.requestinspectorwebview.WebViewRequest;
+import com.acsbendi.requestinspectorwebview.WebViewRequestType;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.EhCookieStore;
+import com.hippo.ehviewer.client.EhRequestBuilder;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.ui.UConfigActivity;
+import com.hippo.ehviewer.widget.DialogWebChromeClient;
 import com.hippo.lib.yorozuya.AssertUtils;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import okhttp3.Cookie;
+import okhttp3.FormBody;
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class WebViewSignInScene extends SolidScene {
 
@@ -45,7 +68,7 @@ public class WebViewSignInScene extends SolidScene {
      ---------------*/
     @Nullable
     private WebView mWebView;
-
+    private OkHttpClient okHttpClient;
     @Override
     public boolean needShowLeftDrawer() {
         return false;
@@ -60,7 +83,9 @@ public class WebViewSignInScene extends SolidScene {
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
-
+        if (okHttpClient == null) {
+            okHttpClient = EhApplication.getOkHttpClient(context.getApplicationContext());
+        }
         EhUtils.signOut(context);
 
         // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
@@ -68,11 +93,15 @@ public class WebViewSignInScene extends SolidScene {
         cookieManager.flush();
         cookieManager.removeAllCookies(null);
         cookieManager.removeSessionCookies(null);
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.setAcceptFileSchemeCookies(true);
 
         mWebView = new WebView(context);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-        mWebView.setWebViewClient(new LoginWebViewClient());
+        mWebView.setWebViewClient(new LoginWebViewClient(mWebView));
+//        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
+//        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
         mWebView.loadUrl(EhUrl.URL_SIGN_IN);
         return mWebView;
     }
@@ -87,7 +116,15 @@ public class WebViewSignInScene extends SolidScene {
         }
     }
 
-    private class LoginWebViewClient extends WebViewClient {
+    private class LoginWebViewClient extends RequestInspectorWebViewClient {
+
+        public LoginWebViewClient(@NonNull WebView webView, @NonNull RequestInspectorOptions options) {
+            super(webView, options);
+        }
+
+        public LoginWebViewClient(@NonNull WebView webView) {
+            super(webView);
+        }
 
         public List<Cookie> parseCookies(HttpUrl url, String cookieStrings) {
             if (cookieStrings == null) {
@@ -114,6 +151,47 @@ public class WebViewSignInScene extends SolidScene {
             EhApplication.getEhCookieStore(context).addCookie(EhCookieStore.newCookie(cookie, domain, true, true, true));
         }
 
+        @Nullable
+        @Override
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebViewRequest request) {
+            Request okRequest;
+            EhRequestBuilder builder = new EhRequestBuilder(request.getHeaders(),
+                    request.getUrl());
+            WebViewRequestType type = request.getType();
+            switch (type) {
+                case FETCH:
+                case HTML:
+                case XML_HTTP:
+                    break;
+                case FORM:
+                    FormBody formBody = buildForm(request);
+                    builder.post(formBody);
+                    break;
+            }
+            okRequest = builder.build();
+            try {
+                Response response = okHttpClient.newCall(okRequest).execute();
+                if (response.body() == null) {
+                    throw new IOException("请求结果为空");
+                }
+                return convertOkHttpResponse(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+            return null;
+        }
+
+        public FormBody buildForm(WebViewRequest request) {
+            Map<String, String> formMap = request.getFormParameters();
+            FormBody.Builder builder = new FormBody.Builder();
+
+            for (Map.Entry<String, String> entry : formMap.entrySet()) {
+                builder.add(entry.getKey(), entry.getValue());
+            }
+
+            return builder.build();
+        }
         @Override
         public void onPageFinished(WebView view, String url) {
             Context context = getEHContext();
@@ -124,8 +202,8 @@ public class WebViewSignInScene extends SolidScene {
             if (httpUrl == null) {
                 return;
             }
-
-            String cookieString = CookieManager.getInstance().getCookie(EhUrl.HOST_E);
+            CookieManager manager = CookieManager.getInstance();
+            String cookieString = manager.getCookie(EhUrl.HOST_E);
             List<Cookie> cookies = parseCookies(httpUrl, cookieString);
             boolean getId = false;
             boolean getHash = false;
@@ -143,6 +221,47 @@ public class WebViewSignInScene extends SolidScene {
                 setResult(RESULT_OK, null);
                 finish();
             }
+
+        }
+
+        public WebResourceResponse convertOkHttpResponse(Response okHttpResponse) {
+            // Get the content type
+            String contentType = "text/html"; // default
+            if (okHttpResponse.header("Content-Type") != null) {
+                contentType = okHttpResponse.header("Content-Type");
+            }
+
+            // Get the encoding (charset)
+            String encoding = "UTF-8"; // default
+            assert contentType != null;
+            if (contentType.contains("charset=")) {
+                encoding = contentType.split("charset=")[1];
+            }
+
+            // Get the MIME type
+            String mimeType = contentType.split(";")[0];
+
+            // Get the response code and message
+            int statusCode = okHttpResponse.code();
+            String reasonPhrase = okHttpResponse.message();
+
+            // Get headers as a Map
+            Map<String, String> responseHeaders = new HashMap<>();
+            for (String headerName : okHttpResponse.headers().names()) {
+                responseHeaders.put(headerName, okHttpResponse.header(headerName));
+            }
+
+            // Create the WebResourceResponse
+
+            return new WebResourceResponse(
+                    mimeType,
+                    encoding,
+                    statusCode,
+                    reasonPhrase,
+                    responseHeaders,
+                    okHttpResponse.body().byteStream()
+            );
         }
     }
+
 }
