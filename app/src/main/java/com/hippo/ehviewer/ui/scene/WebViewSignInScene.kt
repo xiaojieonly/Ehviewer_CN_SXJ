@@ -24,12 +24,14 @@ import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import com.acsbendi.requestinspectorwebview.RequestInspectorOptions
 import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient
 import com.acsbendi.requestinspectorwebview.WebViewRequest
 import com.acsbendi.requestinspectorwebview.WebViewRequestType
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
@@ -79,7 +81,12 @@ class WebViewSignInScene : SolidScene() {
         mWebView = WebView(context!!)
         val webSettings = mWebView!!.settings
         webSettings.javaScriptEnabled = true
-        mWebView!!.webViewClient = LoginWebViewClient(mWebView!!)
+        if (Settings.getDF()){
+            mWebView!!.webViewClient = LoginWebViewClientSNI(mWebView!!)
+        }else{
+            mWebView!!.webViewClient = LoginWebViewClient()
+        }
+
         //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
 //        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
         mWebView!!.loadUrl(EhUrl.URL_SIGN_IN)
@@ -95,7 +102,7 @@ class WebViewSignInScene : SolidScene() {
         }
     }
 
-    private inner class LoginWebViewClient : RequestInspectorWebViewClient {
+    private inner class LoginWebViewClientSNI : RequestInspectorWebViewClient {
         constructor(webView: WebView, options: RequestInspectorOptions) : super(webView, options)
 
         constructor(webView: WebView) : super(webView)
@@ -238,6 +245,56 @@ class WebViewSignInScene : SolidScene() {
                 responseHeaders,
                 okHttpResponse.body()!!.byteStream()
             )
+        }
+    }
+
+    private inner class LoginWebViewClient : WebViewClient() {
+        fun parseCookies(url: HttpUrl, cookieStrings: String?): List<Cookie> {
+            if (cookieStrings == null) {
+                return emptyList()
+            }
+
+            var cookies: MutableList<Cookie>? = null
+            val pieces =
+                cookieStrings.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            for (piece in pieces) {
+                val cookie = Cookie.parse(url, piece) ?: continue
+                if (cookies == null) {
+                    cookies = java.util.ArrayList()
+                }
+                cookies.add(cookie)
+            }
+
+            return cookies ?: emptyList()
+        }
+
+        fun addCookie(context: Context, domain: String?, cookie: Cookie) {
+            EhApplication.getEhCookieStore(context)
+                .addCookie(EhCookieStore.newCookie(cookie, domain, true, true, true))
+        }
+
+        override fun onPageFinished(view: WebView, url: String) {
+            val context: Context =  ehContext ?: return
+            val httpUrl = HttpUrl.parse(url) ?: return
+
+            val cookieString = CookieManager.getInstance().getCookie(EhUrl.HOST_E)
+            val cookies = parseCookies(httpUrl, cookieString)
+            var getId = false
+            var getHash = false
+            for (cookie in cookies) {
+                if (EhCookieStore.KEY_IPD_MEMBER_ID == cookie.name()) {
+                    getId = true
+                } else if (EhCookieStore.KEY_IPD_PASS_HASH == cookie.name()) {
+                    getHash = true
+                }
+                addCookie(context, EhUrl.DOMAIN_EX, cookie)
+                addCookie(context, EhUrl.DOMAIN_E, cookie)
+            }
+
+            if (getId && getHash) {
+                setResult(RESULT_OK, null)
+                finish()
+            }
         }
     }
 }
