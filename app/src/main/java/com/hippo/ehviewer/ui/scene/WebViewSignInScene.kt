@@ -13,255 +13,231 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer.ui.scene
 
-package com.hippo.ehviewer.ui.scene;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import com.acsbendi.requestinspectorwebview.RequestInspectorOptions
+import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient
+import com.acsbendi.requestinspectorwebview.WebViewRequest
+import com.acsbendi.requestinspectorwebview.WebViewRequestType
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.client.EhCookieStore
+import com.hippo.ehviewer.client.EhRequestBuilder
+import com.hippo.ehviewer.client.EhUrl
+import com.hippo.ehviewer.client.EhUtils
+import com.hippo.lib.yorozuya.AssertUtils
+import okhttp3.Cookie
+import okhttp3.FormBody
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import java.io.IOException
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.os.Build;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.webkit.CookieManager;
-import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.acsbendi.requestinspectorwebview.RequestInspectorOptions;
-import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient;
-import com.acsbendi.requestinspectorwebview.WebViewRequest;
-import com.acsbendi.requestinspectorwebview.WebViewRequestType;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.client.EhCookieStore;
-import com.hippo.ehviewer.client.EhRequestBuilder;
-import com.hippo.ehviewer.client.EhUrl;
-import com.hippo.ehviewer.client.EhUtils;
-import com.hippo.ehviewer.ui.UConfigActivity;
-import com.hippo.ehviewer.widget.DialogWebChromeClient;
-import com.hippo.lib.yorozuya.AssertUtils;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import okhttp3.Cookie;
-import okhttp3.FormBody;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-
-public class WebViewSignInScene extends SolidScene {
-
+class WebViewSignInScene : SolidScene() {
     /*---------------
-     View life cycle
-     ---------------*/
-    @Nullable
-    private WebView mWebView;
-    private OkHttpClient okHttpClient;
-    @Override
-    public boolean needShowLeftDrawer() {
-        return false;
+         View life cycle
+         ---------------*/
+    private var mWebView: WebView? = null
+    private var okHttpClient: OkHttpClient? = null
+
+    override fun needShowLeftDrawer(): Boolean {
+        return false
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    @Nullable
-    @Override
-    @SuppressWarnings("deprecation")
-
-    public View onCreateView2(LayoutInflater inflater,
-            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Context context = getEHContext();
-        AssertUtils.assertNotNull(context);
+    @Suppress("deprecation")
+    override fun onCreateView2(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val context = ehContext
+        AssertUtils.assertNotNull(context)
         if (okHttpClient == null) {
-            okHttpClient = EhApplication.getOkHttpClient(context.getApplicationContext());
+            okHttpClient = EhApplication.getOkHttpClient(context!!.applicationContext)
         }
-        EhUtils.signOut(context);
+        EhUtils.signOut(context)
 
         // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.flush();
-        cookieManager.removeAllCookies(null);
-        cookieManager.removeSessionCookies(null);
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.setAcceptFileSchemeCookies(true);
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.flush()
+        cookieManager.removeAllCookies(null)
+        cookieManager.removeSessionCookies(null)
+        CookieManager.getInstance().setAcceptCookie(true)
+        CookieManager.setAcceptFileSchemeCookies(true)
 
-        mWebView = new WebView(context);
-        WebSettings webSettings = mWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        mWebView.setWebViewClient(new LoginWebViewClient(mWebView));
-//        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
+        mWebView = WebView(context!!)
+        val webSettings = mWebView!!.settings
+        webSettings.javaScriptEnabled = true
+        mWebView!!.webViewClient = LoginWebViewClient(mWebView!!)
+        //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
 //        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
-        mWebView.loadUrl(EhUrl.URL_SIGN_IN);
-        return mWebView;
+        mWebView!!.loadUrl(EhUrl.URL_SIGN_IN)
+        return mWebView
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         if (null != mWebView) {
-            mWebView.destroy();
-            mWebView = null;
+            mWebView!!.destroy()
+            mWebView = null
         }
     }
 
-    private class LoginWebViewClient extends RequestInspectorWebViewClient {
+    private inner class LoginWebViewClient : RequestInspectorWebViewClient {
+        constructor(webView: WebView, options: RequestInspectorOptions) : super(webView, options)
 
-        public LoginWebViewClient(@NonNull WebView webView, @NonNull RequestInspectorOptions options) {
-            super(webView, options);
-        }
+        constructor(webView: WebView) : super(webView)
 
-        public LoginWebViewClient(@NonNull WebView webView) {
-            super(webView);
-        }
-
-        public List<Cookie> parseCookies(HttpUrl url, String cookieStrings) {
+        fun parseCookies(url: HttpUrl, cookieStrings: String?): List<Cookie> {
             if (cookieStrings == null) {
-                return Collections.emptyList();
+                return emptyList()
             }
 
-            List<Cookie> cookies = null;
-            String[] pieces = cookieStrings.split(";");
-            for (String piece: pieces) {
-                Cookie cookie = Cookie.parse(url, piece);
-                if (cookie == null) {
-                    continue;
-                }
+            var cookies: MutableList<Cookie>? = null
+            val pieces =
+                cookieStrings.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            for (piece in pieces) {
+                val cookie = Cookie.parse(url, piece) ?: continue
                 if (cookies == null) {
-                    cookies = new ArrayList<>();
+                    cookies = ArrayList()
                 }
-                cookies.add(cookie);
+                cookies.add(cookie)
             }
 
-            return cookies != null ? cookies : Collections.<Cookie>emptyList();
+            return cookies ?: emptyList()
         }
 
-        private void addCookie(Context context, String domain, Cookie cookie) {
-            EhApplication.getEhCookieStore(context).addCookie(EhCookieStore.newCookie(cookie, domain, true, true, true));
+        fun addCookie(context: Context, domain: String?, cookie: Cookie) {
+            EhApplication.getEhCookieStore(context)
+                .addCookie(EhCookieStore.newCookie(cookie, domain, true, true, true))
         }
 
-        @Nullable
-        @Override
-        public WebResourceResponse shouldInterceptRequest(WebView view, WebViewRequest request) {
-            Request okRequest;
-            EhRequestBuilder builder = new EhRequestBuilder(request.getHeaders(),
-                    request.getUrl());
-            WebViewRequestType type = request.getType();
-            switch (type) {
-                case FETCH:
-                case HTML:
-                case XML_HTTP:
-                    break;
-                case FORM:
-                    FormBody formBody = buildForm(request);
-                    builder.post(formBody);
-                    break;
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: WebViewRequest
+        ): WebResourceResponse? {
+            val okRequest: Request
+            val builder = EhRequestBuilder(
+                request.headers,
+                request.url
+            )
+            val type = request.type
+            when (type) {
+                WebViewRequestType.FETCH, WebViewRequestType.HTML, WebViewRequestType.XML_HTTP -> {}
+                WebViewRequestType.FORM -> {
+                    val formBody = buildForm(request)
+                    builder.post(formBody)
+                }
             }
-            okRequest = builder.build();
+            okRequest = builder.build()
             try {
-                Response response = okHttpClient.newCall(okRequest).execute();
+                val response = okHttpClient!!.newCall(okRequest).execute()
                 if (response.body() == null) {
-                    throw new IOException("请求结果为空");
+                    throw IOException("请求结果为空")
                 }
-                return convertOkHttpResponse(response);
-            } catch (IOException e) {
-                e.printStackTrace();
-                FirebaseCrashlytics.getInstance().recordException(e);
+                return convertOkHttpResponse(response)
+            } catch (e: IOException) {
+                e.printStackTrace()
+                FirebaseCrashlytics.getInstance().recordException(e)
             }
-            return null;
+            return null
         }
 
-        public FormBody buildForm(WebViewRequest request) {
-            Map<String, String> formMap = request.getFormParameters();
-            FormBody.Builder builder = new FormBody.Builder();
+        fun buildForm(request: WebViewRequest): FormBody {
+            val formMap: Map<String, String> = request.formParameters
+            val builder = FormBody.Builder()
 
-            for (Map.Entry<String, String> entry : formMap.entrySet()) {
-                builder.add(entry.getKey(), entry.getValue());
+            for ((key, value) in formMap) {
+                builder.add(key, value)
             }
 
-            return builder.build();
+            return builder.build()
         }
-        @Override
-        public void onPageFinished(WebView view, String url) {
-            Context context = getEHContext();
-            if (context == null) {
-                return;
-            }
-            HttpUrl httpUrl = HttpUrl.parse(url);
-            if (httpUrl == null) {
-                return;
-            }
-            CookieManager manager = CookieManager.getInstance();
-            String cookieString = manager.getCookie(EhUrl.HOST_E);
-            List<Cookie> cookies = parseCookies(httpUrl, cookieString);
-            boolean getId = false;
-            boolean getHash = false;
-            for (Cookie cookie: cookies) {
-                if (EhCookieStore.KEY_IPD_MEMBER_ID.equals(cookie.name())) {
-                    getId = true;
-                } else if (EhCookieStore.KEY_IPD_PASS_HASH.equals(cookie.name())) {
-                    getHash = true;
+
+        override fun onPageFinished(view: WebView, url: String) {
+            val context = ehContext ?: return
+            val httpUrl = HttpUrl.parse(url) ?: return
+            val manager = CookieManager.getInstance()
+            val cookieString = manager.getCookie(EhUrl.HOST_E)
+            val cookies = parseCookies(httpUrl, cookieString)
+            var getId = false
+            var getHash = false
+            for (cookie in cookies) {
+                if (EhCookieStore.KEY_IPD_MEMBER_ID == cookie.name()) {
+                    getId = true
+                } else if (EhCookieStore.KEY_IPD_PASS_HASH == cookie.name()) {
+                    getHash = true
                 }
-                addCookie(context, EhUrl.DOMAIN_EX, cookie);
-                addCookie(context, EhUrl.DOMAIN_E, cookie);
+                addCookie(context, EhUrl.DOMAIN_EX, cookie)
+                addCookie(context, EhUrl.DOMAIN_E, cookie)
             }
 
             if (getId && getHash) {
-                setResult(RESULT_OK, null);
-                finish();
+                setResult(RESULT_OK, null)
+                finish()
             }
-
         }
 
-        public WebResourceResponse convertOkHttpResponse(Response okHttpResponse) {
+        fun convertOkHttpResponse(okHttpResponse: Response): WebResourceResponse {
             // Get the content type
-            String contentType = "text/html"; // default
+            var contentType: String? = "text/html" // default
             if (okHttpResponse.header("Content-Type") != null) {
-                contentType = okHttpResponse.header("Content-Type");
+                contentType = okHttpResponse.header("Content-Type")
             }
 
             // Get the encoding (charset)
-            String encoding = "UTF-8"; // default
-            assert contentType != null;
+            var encoding = "UTF-8" // default
+            checkNotNull(contentType)
             if (contentType.contains("charset=")) {
-                encoding = contentType.split("charset=")[1];
+                encoding = contentType.split("charset=".toRegex()).dropLastWhile { it.isEmpty() }
+                    .toTypedArray()[1]
             }
 
             // Get the MIME type
-            String mimeType = contentType.split(";")[0];
+            val mimeType = contentType.split(";".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()[0]
 
             // Get the response code and message
-            int statusCode = okHttpResponse.code();
-            String reasonPhrase = okHttpResponse.message();
+            val statusCode = okHttpResponse.code()
+            val reasonPhrase = okHttpResponse.message()
 
             // Get headers as a Map
-            Map<String, String> responseHeaders = new HashMap<>();
-            for (String headerName : okHttpResponse.headers().names()) {
-                responseHeaders.put(headerName, okHttpResponse.header(headerName));
+            val responseHeaders: MutableMap<String, String?> = HashMap()
+            for (headerName in okHttpResponse.headers().names()) {
+                responseHeaders[headerName] = okHttpResponse.header(headerName)
             }
 
             // Create the WebResourceResponse
-
-            return new WebResourceResponse(
+            if (okHttpResponse.body() == null) {
+                return WebResourceResponse(
                     mimeType,
                     encoding,
                     statusCode,
                     reasonPhrase,
                     responseHeaders,
-                    okHttpResponse.body().byteStream()
-            );
+                    null
+                )
+            }
+            return WebResourceResponse(
+                mimeType,
+                encoding,
+                statusCode,
+                reasonPhrase,
+                responseHeaders,
+                okHttpResponse.body()!!.byteStream()
+            )
         }
     }
-
 }
