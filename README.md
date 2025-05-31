@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1Ur2ES2j41-udZ779JqYxkA?pwd=ucki) 提取码：ucki
-- [蓝奏云](https://wwsu.lanzouu.com/iiODe2vbjvaf) 提取码：gmbc
+- [百度云](https://pan.baidu.com/s/1LPi9G8CLakBt3Ruzv3_a4Q?pwd=br2j) 提取码：br2j
+- [蓝奏云](https://wwsu.lanzouu.com/iMWwX2xostbi) 提取码：axex
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:5b352cc21c38473111fd0229159279421899b58b&xt=urn:btmh:12202b7a3bf181111f2b629261836c862646ed98943b567030ef3977acf3cc10a393&dn=EhViewer-1.9.9.11.apk&xl=23244515
+- Torrent链接: magnet:?xt=urn:btih:4d10ec4b0eb9f9c1f65a5e7617ab37f43a6f03f4&xt=urn:btmh:122033484646d900c4894fc026daddb1c032387ad184593ae7b8d448758b1346ff5b&dn=EhViewer-1.9.9.12.apk&xl=23244510
 
 点击前往赏饭：
 
@@ -28,9 +28,16 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/06/01 : 祝大家六一儿童节快乐~
+### 新版发布1.9.9.12
+
+- 适配了裸连状态下的网页登录功能
+
 ## 2025/05/04 : 祝大家54青年节快乐~ 
 ### 新版发布1.9.9.11
-
+- [百度云](https://pan.baidu.com/s/1Ur2ES2j41-udZ779JqYxkA?pwd=ucki) 提取码：ucki
+- [蓝奏云](https://wwsu.lanzouu.com/iiODe2vbjvaf) 提取码：gmbc
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - 种子下载成功后路径显示由单行显示改为多行显示 
 - 下载成功的种子在重复下载时会直接跳转到成功弹窗
 - 更新内置host
