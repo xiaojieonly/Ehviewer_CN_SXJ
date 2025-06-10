@@ -90,26 +90,26 @@
     <string name="error_redirection">リダイレクトが多すぎます</string>
     <string name="error_socket">ネットワークエラー</string>
     <string name="error_unknown">不明なエラー</string>
-    <string name="error_cant_find_activity">アクティビティが見つかりません。</string>
-    <string name="error_cannot_parse_the_url">リンクを解析できません。</string>
-    <string name="error_not_folder_path">フォルダが見つかりません。</string>
-    <string name="error_no_provider">プロバイダーが見つかりません。</string>
-    <string name="error_decoding_failed">デコードに失敗しました。</string>
-    <string name="error_not_found">見つかりませんでした。</string>
+    <string name="error_cant_find_activity">アクティビティが見つかりません</string>
+    <string name="error_cannot_parse_the_url">リンクを解析できません</string>
+    <string name="error_not_folder_path">フォルダが見つかりません</string>
+    <string name="error_no_provider">プロバイダーが見つかりません</string>
+    <string name="error_decoding_failed">デコードに失敗しました</string>
+    <string name="error_not_found">見つかりませんでした</string>
     <string name="error_empty">空</string>
-    <string name="error_invalid_archive">無効なアーカイブファイルです。</string>
-    <string name="error_reading_failed">読み込めませんでした。</string>
-    <string name="error_out_of_range">範囲外です。</string>
+    <string name="error_invalid_archive">無効なアーカイブファイルです</string>
+    <string name="error_reading_failed">読み込めませんでした</string>
+    <string name="error_out_of_range">範囲外です</string>
     <string name="error_write_failed">書き込めませんでした。</string>
     <string name="error_parse_error">ファイル解析に失敗しました。</string>
     <string name="error_509">509 エラー</string>
     <string name="error_invalid_url">無効なリンクです。</string>
-    <string name="error_get_ptoken_error">pToken の取得に失敗しました。</string>
-    <string name="error_cant_create_temp_file">一時ファイルを作成できませんでした。</string>
-    <string name="error_cant_save_image">画像を保存できませんでした。</string>
+    <string name="error_get_ptoken_error">pToken の取得に失敗しました</string>
+    <string name="error_cant_create_temp_file">一時ファイルを作成できませんでした</string>
+    <string name="error_cant_save_image">画像を保存できませんでした</string>
     <string name="error_save_image_existed">画像は既に存在しています</string>
-    <string name="error_invalid_number">無効な数字です。</string>
-    <string name="error_please_login_first">ログインをしてください。</string>
+    <string name="error_invalid_number">無効な数字です</string>
+    <string name="error_please_login_first">ログインをしてください</string>
     <string name="error_empty_html">空のページ</string>
     <string name="error_cant_get_image">画像を取得できませんでした</string>
     <string name="kokomade_tip">設定 -&gt; Eh -&gt; ギャラリーサイト -&gt; E-Hentai</string>
@@ -131,7 +131,7 @@
     <string name="help_route">設定-&gt;このアプリについて-&gt;ヘルプ</string>
     <!-- Select scene -->
     <string name="select_scene">ギャラリーサイトを選択してください</string>
-    <string name="select_scene_explain">e-hentai: 誰にも公開です\nexhentai: ログインしないとアクセスできません</string>
+    <string name="select_scene_explain">E-Hentai: 誰でも閲覧可能です\nExHentai: ログインしないとアクセスできません</string>
     <string name="no_select">サイトを選択してください</string>
     <!-- Update -->
     <string name="new_version">新しいバージョン</string>
@@ -419,7 +419,7 @@
     <!-- My Tags Activity -->
     <string name="my_tags">マイタグ</string>
     <!-- Hosts Activity -->
-    <string name="hosts">カスタムのhosts.txt</string>
+    <string name="hosts">カスタム hosts.txt</string>
     <string name="hosts_tip">hosts.txt</string>
     <string name="hosts_host">ホスト</string>
     <string name="hosts_ip">IP</string>
@@ -429,7 +429,7 @@
     <string name="edit_host_confirm">適用</string>
     <string name="edit_host_delete">削除</string>
     <string name="invalid_host">無効なホストです</string>
-    <string name="invalid_ip">無効なIPです</string>
+    <string name="invalid_ip">無効な IP です</string>
     <!-- DirPickerActivity -->
     <string name="preset">プリセット</string>
     <string name="default_directory">デフォルトのディレクトリ</string>
@@ -443,7 +443,7 @@
     <string name="page_menu_add_bookmark">ブックマークに追加</string>
     <string name="gallery_menu_title">メニュー</string>
     <string name="share_image">画像を共有</string>
-    <string name="image_saved">画像は%sに保存されました</string>
+    <string name="image_saved">画像は「%s」に保存されました</string>
     <string name="settings_eh">EH</string>
     <string name="settings_eh_sign_out">ログアウト</string>
     <string name="settings_eh_sign_out_summary">ログアウト後にアプリを再起動して、もう一度ログインしてください。</string>
