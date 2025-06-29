@@ -641,6 +641,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             mComments.setVisibility(View.GONE);
             mCommentsText.setVisibility(View.GONE);
         }
+        if(!Settings.getShowGalleryRating()){
+            mRating.setVisibility(View.INVISIBLE);
+            mRatingText.setVisibility(View.INVISIBLE);
+        }
 
         Ripple.addRipple(mComments, isDarkTheme);
         mComments.setOnClickListener(this);

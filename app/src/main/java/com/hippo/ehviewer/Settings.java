@@ -1315,6 +1315,18 @@ public class Settings {
         putBoolean(KEY_SHOW_GALLERY_COMMENT, value);
     }
 
+    public static final String KEY_SHOW_GALLERY_RATING = "show_gallery_rating";
+
+    private static boolean IS_SHOW_GALLERY_Rating = true;
+
+    public static boolean getShowGalleryRating() {
+        return getBoolean(KEY_SHOW_GALLERY_RATING, IS_SHOW_GALLERY_Rating);
+    }
+
+    public static void setShowGalleryRating(boolean value) {
+        putBoolean(KEY_SHOW_GALLERY_RATING, value);
+    }
+
     public static final String KEY_CLOSE_AUTO_UPDATES = "close_auto_updates";
 
     private static boolean IS_CLOSE_AUTO_UPDATES = false;

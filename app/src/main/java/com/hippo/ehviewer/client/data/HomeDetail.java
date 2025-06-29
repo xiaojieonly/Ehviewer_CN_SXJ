@@ -1,5 +1,9 @@
 package com.hippo.ehviewer.client.data;
 
+import android.content.Context;
+
+import com.hippo.ehviewer.R;
+
 public class HomeDetail {
 
     private long used = 0L;
@@ -84,7 +88,10 @@ public class HomeDetail {
         this.currentModerationPower = currentModerationPower;
     }
 
-    public String getImageLimits() {
+    public String getImageLimits(Context context) {
+        if (total==0L){
+            return context.getString(R.string.ip_base_limits);
+        }
         return used + "/" + total;
     }
 

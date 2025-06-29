@@ -834,5 +834,6 @@
     <string name="add_tag_dialog_title">Add Tag</string>
     <string name="tag_title">Tag</string>
     <string name="subscription_success">%s success</string>
+    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
 
 </resources>

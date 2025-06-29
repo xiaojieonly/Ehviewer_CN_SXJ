@@ -173,6 +173,11 @@
         android:key="show_gallery_comment"
         android:title="@string/settings_eh_show_gallery_comment" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="show_gallery_rating"
+        android:title="@string/settings_eh_show_gallery_rating" />
+
     <com.hippo.preference.ActivityPreference
         android:key="blickList"
         android:summary="@string/settings_eh_blacklist_summary"

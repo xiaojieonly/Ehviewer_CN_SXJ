@@ -810,6 +810,7 @@
     <string name="sort_by_pub_time">Published Time</string>
     <string name="sort_by_fav_time">Favorited Time</string>
     <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
+    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
 
 
 </resources>

@@ -292,7 +292,7 @@ public class LimitsCountView extends FrameLayout {
         @Override
         public void onSuccess(HomeDetail result) {
             homeDetail = result;
-            limitsCount.setText(homeDetail.getImageLimits());
+            limitsCount.setText(homeDetail.getImageLimits(context));
             refreshIcon.setVisibility(VISIBLE);
             refreshing.setVisibility(GONE);
             bindingData();

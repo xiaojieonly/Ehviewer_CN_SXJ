@@ -624,24 +624,6 @@ public class ContentLayout extends FrameLayout {
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showEmptyString();
-
-//                if (true || mEndPage >= mPages) { // Not found
-//                    // Ui change, show empty string
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showEmptyString();
-//                } else {
-//                    // Ui change, show progress bar
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showProgressBar();
-//
-//                    // Get next page
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-//                    mCurrentTaskPage = mEndPage;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
             } else {
                 mData.clear();
                 onClearData();
@@ -701,34 +683,6 @@ public class ContentLayout extends FrameLayout {
                         onScrollToPosition(oldDataSize);
                     }
                 }
-//                if (true || mEndPage >= mPages) { // OK, that's all
-//                    if (mData.isEmpty()) {
-//                        // Ui change, show empty string
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showEmptyString();
-//                    } else {
-//                        // Ui change, show content
-//                        mRefreshLayout.setHeaderRefreshing(false);
-//                        mRefreshLayout.setFooterRefreshing(false);
-//                        showContent();
-//
-//                        if (mCurrentTaskType == TYPE_NEXT_PAGE && mRecyclerView.isAttachedToWindow()) {
-//                            // RecyclerView scroll
-//                            mRecyclerView.stopScroll();
-//                            LayoutManagerUtils.scrollToPositionWithOffset(mRecyclerView.getLayoutManager(), oldDataSize, 0);
-//                            onScrollToPosition(oldDataSize);
-//                        }
-//                    }
-//                } else {
-//                    // Keep UI
-//
-//                    // Get next page
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    // Keep mCurrentTaskType
-//                    mCurrentTaskPage = mEndPage;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
             } else {
                 mData.addAll(data);
                 onAddData(data);
@@ -834,23 +788,6 @@ public class ContentLayout extends FrameLayout {
                 mRefreshLayout.setHeaderRefreshing(false);
                 mRefreshLayout.setFooterRefreshing(false);
                 showEmptyString();
-//                if (true || mEndPage >= mPages) { // Not found
-//                    // Ui change, show empty string
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showEmptyString();
-//                } else {
-//                    // Ui change, show progress bar
-//                    mRefreshLayout.setHeaderRefreshing(false);
-//                    mRefreshLayout.setFooterRefreshing(false);
-//                    showProgressBar();
-//
-//                    // Get next page
-//                    mCurrentTaskId = mIdGenerator.nextId();
-//                    mCurrentTaskType = TYPE_NEXT_PAGE_KEEP_POS;
-//                    mCurrentTaskPage = mEndPage;
-//                    getPageData(mCurrentTaskId, mCurrentTaskType, mCurrentTaskPage);
-//                }
             } else {
                 mData.clear();
                 onClearData();

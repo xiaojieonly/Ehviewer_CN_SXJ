@@ -826,6 +826,7 @@
     <string name="from_hentai_home">%s 件の Hentai@Home</string>
     <string name="current_moderation_power">現在のモデレーションパワー %s</string>
     <string name="reset_cost">コスト %s をリセットする</string>
+    <string name="ip_base_limits">IP-based limits</string>
     <string name="limit_unneed_reset">現在、クオータをリセットする必要はありません。更新後にもう一度お試しください～</string>
     <string name="pagination_count">カウント</string>
     <string name="pagination_page_and_item">r/p</string>
@@ -864,4 +865,5 @@
     <string name="sort_by_pub_time">公開日時</string>
     <string name="sort_by_fav_time">お気に入りをした日時</string>
     <string name="settings_eh_sign_out_restart">自動で再起動中です。しばらくお待ちください。</string>
+    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
 </resources>
