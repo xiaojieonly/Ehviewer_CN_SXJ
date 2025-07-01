@@ -36,17 +36,18 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 添加了评分显示开关（设置-EH-显示画廊评分）
 - 修改了配额显示文本，现在未解锁单独配额的账号会显示‘ip基础限制’
 - 修复了挂梯子时登录APP导致崩溃的问题
-[百度云](https://pan.baidu.com/s/1LPi9G8CLakBt3Ruzv3_a4Q?pwd=br2j) 提取码：br2j
-[蓝奏云](https://wwsu.lanzouu.com/iMWwX2xostbi) 提取码：axex
-[GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-Torrent链接: magnet:?xt=urn:btih:4d10ec4b0eb9f9c1f65a5e7617ab37f43a6f03f4&xt=urn:btmh:122033484646d900c4894fc026daddb1c032387ad184593ae7b8d448758b1346ff5b&dn=EhViewer-1.9.9.12.apk&xl=23244510
+
 
 
 ## 2025/06/01 : 祝大家六一儿童节快乐~
 ### 新版发布1.9.9.12
 
 - 适配了裸连状态下的网页登录功能
-
+[百度云](https://pan.baidu.com/s/1LPi9G8CLakBt3Ruzv3_a4Q?pwd=br2j) 提取码：br2j  
+[蓝奏云](https://wwsu.lanzouu.com/iMWwX2xostbi) 提取码：axex  
+[GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+Torrent链接: magnet:?xt=urn:btih:4d10ec4b0eb9f9c1f65a5e7617ab37f43a6f03f4&xt=urn:btmh:122033484646d900c4894fc026daddb1c032387ad184593ae7b8d448758b1346ff5b&dn=EhViewer-1.9.9.12.apk&xl=23244510
+  
 ## 2025/05/04 : 祝大家54青年节快乐~ 
 ### 新版发布1.9.9.11
 [百度云](https://pan.baidu.com/s/1Ur2ES2j41-udZ779JqYxkA?pwd=ucki) 提取码：ucki
