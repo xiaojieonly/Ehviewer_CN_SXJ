@@ -42,7 +42,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 ## 2025/06/01 : 祝大家六一儿童节快乐~
 ### 新版发布1.9.9.12
 
-- 适配了裸连状态下的网页登录功能
+- 适配了裸连状态下的网页登录功能  
 [百度云](https://pan.baidu.com/s/1LPi9G8CLakBt3Ruzv3_a4Q?pwd=br2j) 提取码：br2j  
 [蓝奏云](https://wwsu.lanzouu.com/iMWwX2xostbi) 提取码：axex  
 [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
