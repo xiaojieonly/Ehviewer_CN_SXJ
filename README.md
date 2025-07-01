@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1LPi9G8CLakBt3Ruzv3_a4Q?pwd=br2j) 提取码：br2j
-- [蓝奏云](https://wwsu.lanzouu.com/iMWwX2xostbi) 提取码：axex
+- [百度云](https://pan.baidu.com/s/1_KGrPsuLkXGnSQdxcCn5yA) 提取码：mm56
+- [蓝奏云](https://wwsu.lanzouu.com/i4W6U301y3gd) 提取码：9qjm
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:4d10ec4b0eb9f9c1f65a5e7617ab37f43a6f03f4&xt=urn:btmh:122033484646d900c4894fc026daddb1c032387ad184593ae7b8d448758b1346ff5b&dn=EhViewer-1.9.9.12.apk&xl=23244510
+- Torrent链接: magnet:?xt=urn:btih:2a886cc0d6355dbe72e06fa4814ba32f383cc7a8&xt=urn:btmh:122042d5ba6460d3f60b04c975b01e994d748ab69091aa220ac17c3f1cee6d205672&dn=EhViewer-1.9.9.13.apk&xl=23251526
 
 点击前往赏饭：
 
@@ -28,6 +28,20 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/07/01 : bkgs！！
+### 新版发布1.9.9.13
+
+- Update Japanese & fix typo
+- update host
+- 添加了评分显示开关（设置-EH-显示画廊评分）
+- 修改了配额显示文本，现在未解锁单独配额的账号会显示‘ip基础限制’
+- 修复了挂梯子时登录APP导致崩溃的问题
+[百度云](https://pan.baidu.com/s/1LPi9G8CLakBt3Ruzv3_a4Q?pwd=br2j) 提取码：br2j
+[蓝奏云](https://wwsu.lanzouu.com/iMWwX2xostbi) 提取码：axex
+[GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+Torrent链接: magnet:?xt=urn:btih:4d10ec4b0eb9f9c1f65a5e7617ab37f43a6f03f4&xt=urn:btmh:122033484646d900c4894fc026daddb1c032387ad184593ae7b8d448758b1346ff5b&dn=EhViewer-1.9.9.12.apk&xl=23244510
+
+
 ## 2025/06/01 : 祝大家六一儿童节快乐~
 ### 新版发布1.9.9.12
 
@@ -35,9 +49,9 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 ## 2025/05/04 : 祝大家54青年节快乐~ 
 ### 新版发布1.9.9.11
-- [百度云](https://pan.baidu.com/s/1Ur2ES2j41-udZ779JqYxkA?pwd=ucki) 提取码：ucki
-- [蓝奏云](https://wwsu.lanzouu.com/iiODe2vbjvaf) 提取码：gmbc
-- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+[百度云](https://pan.baidu.com/s/1Ur2ES2j41-udZ779JqYxkA?pwd=ucki) 提取码：ucki
+[蓝奏云](https://wwsu.lanzouu.com/iiODe2vbjvaf) 提取码：gmbc
+[GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - 种子下载成功后路径显示由单行显示改为多行显示 
 - 下载成功的种子在重复下载时会直接跳转到成功弹窗
 - 更新内置host
@@ -51,11 +65,11 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 修复了一些可能导致崩溃的问题
 - gradle版本更新
 
-- [Appteka](https://appteka.store/app/acdr168648)
-- [百度云](https://pan.baidu.com/s/1myf_N-8l3IL4cuF_38u_dw) 提取码：3ftd
-- [蓝奏云](https://wwsu.lanzouu.com/iItRt2scxc0d) 提取码：7yxi
-- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:09b095aba750ad6d5ffc3a030d3901d098b61591&xt=urn:btmh:122029ddcece960b2b8638a7ffcd3384cd3f5e41cd4d9929203074900408d555101c&dn=EhViewer-1.9.9.10.apk
+[Appteka](https://appteka.store/app/acdr168648)
+[百度云](https://pan.baidu.com/s/1myf_N-8l3IL4cuF_38u_dw) 提取码：3ftd
+[蓝奏云](https://wwsu.lanzouu.com/iItRt2scxc0d) 提取码：7yxi
+[GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+Torrent链接: magnet:?xt=urn:btih:09b095aba750ad6d5ffc3a030d3901d098b61591&xt=urn:btmh:122029ddcece960b2b8638a7ffcd3384cd3f5e41cd4d9929203074900408d555101c&dn=EhViewer-1.9.9.10.apk
 
 
 ## 2025/03/01 : 
