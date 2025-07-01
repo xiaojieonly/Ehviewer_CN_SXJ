@@ -37,6 +37,7 @@ import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.lib.yorozuya.AssertUtils
+import com.hippo.util.AppHelper
 import okhttp3.Cookie
 import okhttp3.FormBody
 import okhttp3.HttpUrl
@@ -81,7 +82,7 @@ class WebViewSignInScene : SolidScene() {
         mWebView = WebView(context!!)
         val webSettings = mWebView!!.settings
         webSettings.javaScriptEnabled = true
-        if (Settings.getDF()){
+        if (Settings.getDF()&&AppHelper.checkVPN(context)){
             mWebView!!.webViewClient = LoginWebViewClientSNI(mWebView!!)
         }else{
             mWebView!!.webViewClient = LoginWebViewClient()
