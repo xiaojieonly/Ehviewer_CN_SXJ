@@ -1,16 +1,12 @@
 {
-  "version": "1.9.9.13",
+  "version": "1.9.9.14",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布1.9.9.13，bkgs!!",
+    "title": "新版发布1.9.9.14",
     "content": [
-      "Update Japanese & fix typo",
-      "update host",
-      "添加了评分显示开关（设置-EH-显示画廊评分）",
-      "修改了配额显示文本，现在未解锁单独配额的账号会显示‘ip基础限制’",
-      "修复了挂梯子时登录APP导致崩溃的问题"
+      "紧急修复表站host"
     ]
   }
 }
