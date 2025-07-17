@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1_KGrPsuLkXGnSQdxcCn5yA) 提取码：mm56
-- [蓝奏云](https://wwsu.lanzouu.com/i4W6U301y3gd) 提取码：9qjm
+- [百度云](https://pan.baidu.com/s/1GyUdcz92sFWNI6uocE4sYA) 提取码：xunu
+- [蓝奏云](https://wwsu.lanzouu.com/ihVy03195d7e)，电脑端可正常下载 提取码：87jv
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:2a886cc0d6355dbe72e06fa4814ba32f383cc7a8&xt=urn:btmh:122042d5ba6460d3f60b04c975b01e994d748ab69091aa220ac17c3f1cee6d205672&dn=EhViewer-1.9.9.13.apk&xl=23251526
+- Torrent链接: magnet:?xt=urn:btih:b59ab1c119efb86acfa27b27124b5660d6478829&xt=urn:btmh:1220505d4be49eed6e78c0325378b10da01cd4dcdc0d657bad75edb8bf39bc28e006&dn=EhViewer-1.9.9.14.apk&xl=23251511
 
 点击前往赏饭：
 
@@ -28,6 +28,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/07/17 : host更新   
+### 新版发布1.9.9.14
+
+- 紧急更新表站host
+
+
 ## 2025/07/01 : bkgs！！
 ### 新版发布1.9.9.13
 
@@ -36,6 +42,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 添加了评分显示开关（设置-EH-显示画廊评分）
 - 修改了配额显示文本，现在未解锁单独配额的账号会显示‘ip基础限制’
 - 修复了挂梯子时登录APP导致崩溃的问题
+
+[//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
+[百度云](https://pan.baidu.com/s/1_KGrPsuLkXGnSQdxcCn5yA) 提取码：mm56  
+[蓝奏云](https://wwsu.lanzouu.com/i4W6U301y3gd) 提取码：9qjm  
+[GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)  
+Torrent链接: magnet:?xt=urn:btih:2a886cc0d6355dbe72e06fa4814ba32f383cc7a8&xt=urn:btmh:122042d5ba6460d3f60b04c975b01e994d748ab69091aa220ac17c3f1cee6d205672&dn=EhViewer-1.9.9.13.apk&xl=23251526  
 
 
 
