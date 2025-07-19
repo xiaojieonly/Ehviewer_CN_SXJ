@@ -13,7 +13,7 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1GyUdcz92sFWNI6uocE4sYA) 提取码：xunu
+- [百度云](https://pan.baidu.com/s/1Vlc_g_Qi4N7ZamE-SRBbtg) 提取码：wykk
 - [蓝奏云](https://wwsu.lanzouu.com/ihVy03195d7e)，电脑端可正常下载 提取码：87jv
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - Torrent链接: magnet:?xt=urn:btih:b59ab1c119efb86acfa27b27124b5660d6478829&xt=urn:btmh:1220505d4be49eed6e78c0325378b10da01cd4dcdc0d657bad75edb8bf39bc28e006&dn=EhViewer-1.9.9.14.apk&xl=23251511
