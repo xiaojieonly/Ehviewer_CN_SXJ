@@ -66,20 +66,20 @@
         android:translationZ="-50dp"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/current_power"
-        android:layout_width="match_parent"
-        android:layout_height="24dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"
-        android:layout_marginVertical="@dimen/limits_layout_margin_v"
-        android:alpha="0"
-        android:background="@drawable/home_item_shape"
-        android:gravity="center"
-        android:text="@string/current_moderation_power"
-        android:textAlignment="center"
-        android:translationZ="-50dp"
-        android:visibility="gone" />
+<!--    <TextView-->
+<!--        android:id="@+id/current_power"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="24dp"-->
+<!--        android:layout_gravity="center_horizontal"-->
+<!--        android:layout_marginHorizontal="@dimen/limits_home_item_margin_h"-->
+<!--        android:layout_marginVertical="@dimen/limits_layout_margin_v"-->
+<!--        android:alpha="0"-->
+<!--        android:background="@drawable/home_item_shape"-->
+<!--        android:gravity="center"-->
+<!--        android:text="@string/current_moderation_power"-->
+<!--        android:textAlignment="center"-->
+<!--        android:translationZ="-50dp"-->
+<!--        android:visibility="gone" />-->
 
     <TextView
         android:id="@+id/reset_limits"

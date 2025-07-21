@@ -140,7 +140,7 @@ public class HostsActivity extends ToolbarActivity
     adapter.notifyDataSetChanged();
   }
 
-  private class HostsHolder extends RecyclerView.ViewHolder {
+  private static class HostsHolder extends RecyclerView.ViewHolder {
 
     public final TextView host;
     public final TextView ip;

@@ -1,314 +1,301 @@
-package com.hippo.ehviewer.widget;
+package com.hippo.ehviewer.widget
 
-import android.animation.Animator;
-import android.content.Context;
-import android.util.AttributeSet;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.animation.Animator
+import android.content.Context
+import android.util.AttributeSet
+import android.view.LayoutInflater
+import android.view.View
+import android.view.View.OnClickListener
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import com.github.ybq.android.spinkit.SpinKitView
+import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.R
+import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.client.EhClient
+import com.hippo.ehviewer.client.EhRequest
+import com.hippo.ehviewer.client.data.HomeDetail
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+class LimitsCountView : FrameLayout {
+    private val context: Context
+    private var refreshIcon: ImageView? = null
+    private var refreshing: SpinKitView? = null
+    private var limitsCount: TextView? = null
 
-import com.github.ybq.android.spinkit.SpinKitView;
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.Settings;
-import com.hippo.ehviewer.client.EhClient;
-import com.hippo.ehviewer.client.EhRequest;
-import com.hippo.ehviewer.client.data.HomeDetail;
+    private var fromGallery: TextView? = null
+    private var fromTorrent: TextView? = null
+    private var fromDownload: TextView? = null
+    private var fromHentai: TextView? = null
 
-import java.util.ArrayList;
-import java.util.List;
+    //    private TextView currentPower;
+    private var resetLimits: TextView? = null
 
-public class LimitsCountView extends FrameLayout {
+    private var homeDetail: HomeDetail? = null
 
-    private final Context context;
-    private ImageView refreshIcon;
-    private SpinKitView refreshing;
-    private TextView limitsCount;
+    private var onViewNeedGone: OnViewNeedGone? = null
+    private var onViewNeedVisible: OnViewNeedVisible? = null
 
-    private TextView fromGallery;
-    private TextView fromTorrent;
-    private TextView fromDownload;
-    private TextView fromHentai;
-    private TextView currentPower;
-    private TextView resetLimits;
+    var gone: Boolean = true
 
-    private HomeDetail homeDetail;
+    private var animating = false
 
-    private OnViewNeedGone onViewNeedGone;
-    private OnViewNeedVisible onViewNeedVisible;
+    private var index = 5
 
-    public boolean gone = true;
+    private val rows: MutableList<TextView?> = ArrayList()
 
-    private boolean animating = false;
-
-    private int index = 5;
-
-    private List<TextView> rows = new ArrayList<>();
-
-    public LimitsCountView(@NonNull Context context) {
-        super(context);
-        this.context = context;
-        init(context);
+    constructor(context: Context) : super(context) {
+        this.context = context
+        init(context)
     }
 
-    public LimitsCountView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        this.context = context;
-        init(context);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        this.context = context
+        init(context)
     }
 
-    public LimitsCountView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        this.context = context;
-        init(context);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        this.context = context
+        init(context)
     }
 
-    public LimitsCountView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        this.context = context;
-        init(context);
+    constructor(
+        context: Context,
+        attrs: AttributeSet?,
+        defStyleAttr: Int,
+        defStyleRes: Int
+    ) : super(context, attrs, defStyleAttr, defStyleRes) {
+        this.context = context
+        init(context)
     }
 
-    private void init(Context context) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        inflater.inflate(R.layout.limits_count_main, this);
-        boolean login = Settings.isLogin() && Settings.getShowEhLimits();
+    private fun init(context: Context) {
+        val inflater = LayoutInflater.from(context)
+        inflater.inflate(R.layout.limits_count_main, this)
+        val login = Settings.isLogin() && Settings.getShowEhLimits()
         if (!login) {
-            this.setVisibility(GONE);
-            return;
+            this.visibility = GONE
+            return
         }
 
-        refreshIcon = findViewById(R.id.refresh_icon);
-        refreshing = findViewById(R.id.refreshing);
-        limitsCount = findViewById(R.id.limits_count);
-        fromGallery = findViewById(R.id.from_gallery);
-        fromTorrent = findViewById(R.id.from_torrent);
-        fromDownload = findViewById(R.id.from_download);
-        fromHentai = findViewById(R.id.from_hentai);
-        currentPower = findViewById(R.id.current_power);
-        resetLimits = findViewById(R.id.reset_limits);
+        refreshIcon = findViewById(R.id.refresh_icon)
+        refreshing = findViewById(R.id.refreshing)
+        limitsCount = findViewById(R.id.limits_count)
+        fromGallery = findViewById(R.id.from_gallery)
+        fromTorrent = findViewById(R.id.from_torrent)
+        fromDownload = findViewById(R.id.from_download)
+        fromHentai = findViewById(R.id.from_hentai)
+        //        currentPower = findViewById(R.id.current_power);
+        resetLimits = findViewById(R.id.reset_limits)
 
 
-        rows.add(fromGallery);
-        rows.add(fromTorrent);
-        rows.add(fromDownload);
-        rows.add(fromHentai);
-        rows.add(currentPower);
-        rows.add(resetLimits);
+        rows.add(fromGallery)
+        rows.add(fromTorrent)
+        rows.add(fromDownload)
+        rows.add(fromHentai)
+        //        rows.add(currentPower);
+        rows.add(resetLimits)
 
-        setOnClickListener(this::onClick);
+        setOnClickListener { view: View -> this.onClick(view) }
 
-        resetLimits.setOnClickListener(this::resetLimit);
-        limitsCount.setOnClickListener(this::onClick);
-        refreshIcon.setOnClickListener(this::onLoadData);
+        resetLimits!!.setOnClickListener { view: View -> this.resetLimit(view) }
+        limitsCount!!.setOnClickListener { view: View -> this.onClick(view) }
+        refreshIcon!!.setOnClickListener { view: View -> this.onLoadData(view) }
 
         if (onViewNeedGone == null) {
-            onViewNeedGone = new OnViewNeedGone();
+            onViewNeedGone = OnViewNeedGone()
         }
         if (onViewNeedVisible == null) {
-            onViewNeedVisible = new OnViewNeedVisible();
+            onViewNeedVisible = OnViewNeedVisible()
         }
     }
 
-    private void resetLimit(View view) {
-        if (homeDetail.resetCost() == 0L) {
-            Toast.makeText(context, R.string.limit_unneed_reset, Toast.LENGTH_LONG).show();
-            onLoadData(view);
-            return;
+    private fun resetLimit(view: View) {
+        if (homeDetail!!.resetCost() == 0L) {
+            Toast.makeText(context, R.string.limit_unneed_reset, Toast.LENGTH_LONG).show()
+            onLoadData(view)
+            return
         }
-        refreshIcon.setVisibility(GONE);
-        refreshing.setVisibility(VISIBLE);
-        EhClient.Callback<HomeDetail> callback = new LimitsCountDataListener(context, view);
+        refreshIcon!!.visibility = GONE
+        refreshing!!.visibility = VISIBLE
+        val callback: EhClient.Callback<HomeDetail> = LimitsCountDataListener(context, view)
 
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_RESET_LIMIT)
-                .setCallback(callback);
-        EhApplication.getEhClient(context).execute(request);
+        val request = EhRequest()
+            .setMethod(EhClient.METHOD_RESET_LIMIT)
+            .setCallback(callback)
+        EhApplication.getEhClient(context).execute(request)
     }
 
-    public void onLoadData(View view, boolean checkData) {
-        if(!Settings.isLogin()){
-            return;
+    fun onLoadData(view: View, checkData: Boolean) {
+        if (!Settings.isLogin()) {
+            return
         }
-        if (!Settings.getShowEhLimits()){
-            this.setVisibility(GONE);
-            return;
-        }else {
-            this.setVisibility(VISIBLE);
+        if (!Settings.getShowEhLimits()) {
+            this.visibility = GONE
+            return
+        } else {
+            this.visibility = VISIBLE
         }
         if (checkData && homeDetail != null) {
-            return;
+            return
         }
-        if (refreshIcon==null||refreshing==null){
-            return;
+        if (refreshIcon == null || refreshing == null) {
+            return
         }
-        onLoadData(view);
+        onLoadData(view)
     }
 
-    private void onLoadData(View view) {
-        refreshIcon.setVisibility(GONE);
-        refreshing.setVisibility(VISIBLE);
-        EhClient.Callback<HomeDetail> callback;
-        if (view == this) {
-            callback = new LimitsCountDataListener(context, view);
+    private fun onLoadData(view: View) {
+        refreshIcon!!.visibility = GONE
+        refreshing!!.visibility = VISIBLE
+        val callback: EhClient.Callback<HomeDetail>
+        if (view === this) {
+            callback = LimitsCountDataListener(context, view)
         } else {
-            callback = new LimitsCountDataListener(context);
+            callback = LimitsCountDataListener(context)
         }
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_HOME)
-                .setCallback(callback);
-        EhApplication.getEhClient(context).execute(request);
+        val request = EhRequest()
+            .setMethod(EhClient.METHOD_GET_HOME)
+            .setCallback(callback)
+        EhApplication.getEhClient(context).execute(request)
     }
 
-    private void onClick(View view) {
+    private fun onClick(view: View) {
         if (homeDetail == null) {
-            onLoadData(this);
-            return;
+            onLoadData(this)
+            return
         }
         if (animating) {
-            return;
+            return
         }
-        animating = true;
+        animating = true
         if (gone) {
-            showNext();
+            showNext()
         } else {
-            removeNext();
+            removeNext()
         }
     }
 
-    private void showNext() {
-        rows.get(index).setVisibility(VISIBLE);
-        rows.get(index).animate().translationZ(-50f).alpha(1f).setDuration(100).setListener(onViewNeedVisible);
+    private fun showNext() {
+        rows[index]!!.visibility = VISIBLE
+        rows[index]!!.animate().translationZ(-50f).alpha(1f).setDuration(100)
+            .setListener(onViewNeedVisible)
     }
 
-    private void removeNext() {
-        rows.get(index).animate().translationZ(0f).alpha(0f).setDuration(100).setListener(onViewNeedGone);
+    private fun removeNext() {
+        rows[index]!!.animate().translationZ(0f).alpha(0f).setDuration(100)
+            .setListener(onViewNeedGone)
     }
 
-    private void bindingData() {
-        fromGallery.setText(getResources().getString(R.string.from_gallery_visits, homeDetail.getFromGalleryVisits()));
-        fromTorrent.setText(getResources().getString(R.string.from_torrent_completions, homeDetail.getFromTorrentCompletions()));
-        fromDownload.setText(getResources().getString(R.string.from_archive_download, homeDetail.getFromArchiveDownloads()));
-        fromHentai.setText(getResources().getString(R.string.from_hentai_home, homeDetail.getFromHentaiAtHome()));
-        currentPower.setText(getResources().getString(R.string.current_moderation_power, homeDetail.getCurrentModerationPower()));
-        resetLimits.setText(getResources().getString(R.string.reset_cost, homeDetail.getResetCost()));
+    private fun bindingData() {
+        fromGallery!!.text =
+            resources.getString(R.string.from_gallery_visits, homeDetail!!.fromGalleryVisits)
+        fromTorrent!!.text =
+            resources.getString(
+                R.string.from_torrent_completions,
+                homeDetail!!.fromTorrentCompletions
+            )
+        fromDownload!!.text =
+            resources.getString(R.string.from_archive_download, homeDetail!!.fromArchiveDownloads)
+        fromHentai!!.text =
+            resources.getString(R.string.from_hentai_home, homeDetail!!.fromHentaiAtHome)
+        //        currentPower.setText(getResources().getString(R.string.current_moderation_power, homeDetail.getCurrentModerationPower()));
+        resetLimits!!.text = resources.getString(R.string.reset_cost, homeDetail!!.resetCost)
     }
 
-    public void hide() {
+    fun hide() {
         if (animating || gone) {
-            return;
+            return
         }
-        animating = true;
-        removeNext();
+        animating = true
+        removeNext()
     }
 
-    public void show() {
+    fun show() {
         if (animating || !gone) {
-            return;
+            return
         }
-        animating = true;
-        showNext();
+        animating = true
+        showNext()
     }
 
-    private class OnViewNeedVisible implements Animator.AnimatorListener {
-
-        @Override
-        public void onAnimationStart(Animator animation) {
-
+    private inner class OnViewNeedVisible : Animator.AnimatorListener {
+        override fun onAnimationStart(animation: Animator) {
         }
 
-        @Override
-        public void onAnimationEnd(Animator animation) {
+        override fun onAnimationEnd(animation: Animator) {
             if (index == 0) {
-                gone = false;
-                animating = false;
-                return;
+                gone = false
+                animating = false
+                return
             }
-            index--;
-            showNext();
+            index--
+            showNext()
         }
 
-        @Override
-        public void onAnimationCancel(Animator animation) {
-
+        override fun onAnimationCancel(animation: Animator) {
         }
 
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-
+        override fun onAnimationRepeat(animation: Animator) {
         }
     }
 
-    private class OnViewNeedGone implements Animator.AnimatorListener {
-
-        @Override
-        public void onAnimationStart(Animator animation) {
-
+    private inner class OnViewNeedGone : Animator.AnimatorListener {
+        override fun onAnimationStart(animation: Animator) {
         }
 
-        @Override
-        public void onAnimationEnd(Animator animation) {
+        override fun onAnimationEnd(animation: Animator) {
 //            fromGallery.setVisibility(GONE);
-            rows.get(index).setVisibility(GONE);
-            if (index == rows.size() - 1) {
-                animating = false;
-                gone = true;
-                return;
+            rows[index]!!.visibility = GONE
+            if (index == rows.size - 1) {
+                animating = false
+                gone = true
+                return
             }
-            index++;
-            removeNext();
+            index++
+            removeNext()
         }
 
-        @Override
-        public void onAnimationCancel(Animator animation) {
-
+        override fun onAnimationCancel(animation: Animator) {
         }
 
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-
+        override fun onAnimationRepeat(animation: Animator) {
         }
     }
 
-    protected class LimitsCountDataListener implements EhClient.Callback<HomeDetail> {
-        private final Context context;
-        private View view = null;
+    protected inner class LimitsCountDataListener : EhClient.Callback<HomeDetail> {
+        private val context: Context
+        private var view: View? = null
 
-        public LimitsCountDataListener(Context context) {
-            this.context = context;
+        constructor(context: Context) {
+            this.context = context
         }
 
-        public LimitsCountDataListener(Context context, View view) {
-            this.context = context;
-            this.view = view;
+        constructor(context: Context, view: View?) {
+            this.context = context
+            this.view = view
         }
 
-        @Override
-        public void onSuccess(HomeDetail result) {
-            homeDetail = result;
-            limitsCount.setText(homeDetail.getImageLimits(context));
-            refreshIcon.setVisibility(VISIBLE);
-            refreshing.setVisibility(GONE);
-            bindingData();
+        override fun onSuccess(result: HomeDetail) {
+            homeDetail = result
+            limitsCount!!.text = homeDetail!!.getImageLimits(context)
+            refreshIcon!!.visibility = VISIBLE
+            refreshing!!.visibility = GONE
+            bindingData()
             if (view != null && gone) {
-                onClick(view);
+                onClick(view!!)
             }
         }
 
-        @Override
-        public void onFailure(Exception e) {
-
+        override fun onFailure(e: Exception) {
         }
 
-        @Override
-        public void onCancel() {
-
+        override fun onCancel() {
         }
     }
 }
