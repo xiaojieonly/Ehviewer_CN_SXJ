@@ -204,6 +204,7 @@ public class ArchiverDownloadDialog implements
             body.setVisibility(View.VISIBLE);
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
+            String fileName = galleryDetail.title.replaceAll("/","");
             Uri downloadUri = Uri.parse(downloadUrl);
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
@@ -212,7 +213,7 @@ public class ArchiverDownloadDialog implements
             request.setTitle(galleryDetail.title);
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH+galleryDetail.title + ".zip");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH+fileName + ".zip");
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -312,7 +313,8 @@ public class ArchiverDownloadDialog implements
                 return;
             }
             long downloadId = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID));
-            String tempFilePath = tempDir.getPath() + "/" + galleryDetail.title;
+            String fileName = galleryDetail.title.replaceAll("/","");
+            String tempFilePath = tempDir.getPath() + "/" + fileName;
             String zipFilePath = zipFile.getPath();
             new Thread(() -> {
                 boolean result = GZIPUtils.UnZipFolder(zipFilePath, tempFilePath);
