@@ -78,6 +78,31 @@ public class Hosts {
     }
   }
 
+  /**
+   * Gets a List<InetAddress> with the host.
+   */
+  @Nullable
+  public List<InetAddress> getList(String host) {
+    if (!isValidHost(host)) {
+      return null;
+    }
+
+    Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_HOSTS + " WHERE " + COLUMN_HOST  + " = ?;", new String[] {host});
+    List<InetAddress> list = new ArrayList<>();
+    try {
+      while (cursor.moveToNext()) {
+        String ip = SqlUtils.getString(cursor, COLUMN_IP, null);
+        InetAddress inetAddress = toInetAddress(host, ip);
+        if (inetAddress != null) {
+          list.add(inetAddress);
+        }
+      }
+      return list;
+    } finally {
+      cursor.close();
+    }
+  }
+
   private boolean contains(String host) {
     Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_HOSTS + " WHERE " + COLUMN_HOST  + " = ?;", new String[] {host});
     try {
