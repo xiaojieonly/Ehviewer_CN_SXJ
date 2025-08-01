@@ -1,12 +1,14 @@
 {
-  "version": "1.9.9.14",
+  "version": "1.9.9.15",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布1.9.9.14",
+    "title": "新版发布1.9.9.15",
     "content": [
-      "紧急修复表站host"
+      "修复了自定义host不生效的问题",
+      "修复了由画廊名称中的\"\/\"字符引起的档案下载路径不正常的问题",
+      "删除左侧栏多余的每分钟愿力信息"
     ]
   }
 }
