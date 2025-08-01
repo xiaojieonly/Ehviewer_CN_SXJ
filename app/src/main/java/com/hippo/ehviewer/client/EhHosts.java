@@ -140,20 +140,19 @@ public class EhHosts implements Dns {
     @Override
     public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
         List<InetAddress> inetAddresses = hosts.getList(hostname);
-        if(inetAddresses==null){
-            inetAddresses = new ArrayList<>();
-        }
-
-        if (Settings.getBuiltInHosts() || Settings.getBuiltEXHosts()) {
-            List<InetAddress> appHosts = builtInHosts.get(hostname);
-            if (appHosts != null) {
-                inetAddresses.addAll(appHosts);
-            }
+        if (inetAddresses != null && !inetAddresses.isEmpty()) {
             Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
             return inetAddresses;
         }
+        if (Settings.getBuiltInHosts() || Settings.getBuiltEXHosts()) {
+            inetAddresses = builtInHosts.get(hostname);
+            if (inetAddresses != null) {
+                Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
+                return inetAddresses;
+            }
+        }
         if (Settings.getDoH()) {
-            inetAddresses.addAll(dnsOverHttps.lookup(hostname));
+            inetAddresses = dnsOverHttps.lookup(hostname);
             if (!inetAddresses.isEmpty()) {
                 Collections.shuffle(inetAddresses, new Random(System.currentTimeMillis()));
                 return inetAddresses;

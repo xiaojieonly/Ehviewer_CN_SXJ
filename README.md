@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1MBFtcjHN6vp2yQK1ZTxqUQ) 提取码：d88a
-- [蓝奏云](https://wwsu.lanzouu.com/ifeBO32cjbbe)，电脑端可正常下载 提取码：5pou
+- [百度云](https://pan.baidu.com/s/1LQMq4CXMk6ohmVmZy49h1w) 提取码：jpwg
+- [蓝奏云](https://wwsu.lanzouu.com/iXuEe32cpd5g)，电脑端可正常下载 提取码：cxv9
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:cedbe595a33449eb257ebfd08b7c61ae3caa19bc&xt=urn:btmh:1220dbca79d109cf4886839b9703736878b3f4390590da78bbfef5096f3802d144cb&dn=EhViewer-1.9.9.15.apk&xl=23251453
+- Torrent链接: magnet:?xt=urn:btih:cef39f142b04060e7a8723b55316b0cc6b8bc3f7&xt=urn:btmh:122065135210c3ee03f602121fafce474fd05a1ce73b41b3a70fd854e06412195126&dn=EhViewer-1.9.9.16.apk&xl=23251454
 
 点击前往赏饭：
 
@@ -29,7 +29,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 # Changelog
 
 ## 2025/08/01 : 
-### 新版发布1.9.9.15
+### 新版发布1.9.9.16
 
 - 修复了自定义host不生效的问题
 - 修复了由画廊名称中的"/"字符引起的档案下载路径不正常的问题
