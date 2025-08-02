@@ -1,10 +1,10 @@
 {
-  "version": "1.9.9.16",
+  "version": "1.9.9.17",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布1.9.9.16",
+    "title": "新版发布1.9.9.17",
     "content": [
       "修复了自定义host不生效的问题",
       "修复了由画廊名称中的\"\/\"字符引起的档案下载路径不正常的问题",

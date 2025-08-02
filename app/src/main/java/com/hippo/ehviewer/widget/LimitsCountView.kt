@@ -41,7 +41,7 @@ class LimitsCountView : FrameLayout {
 
     private var animating = false
 
-    private var index = 5
+    private var index = 4
 
     private val rows: MutableList<TextView?> = ArrayList()
 
@@ -166,18 +166,22 @@ class LimitsCountView : FrameLayout {
     }
 
     private fun onClick(view: View) {
-        if (homeDetail == null) {
-            onLoadData(this)
-            return
-        }
-        if (animating) {
-            return
-        }
-        animating = true
-        if (gone) {
-            showNext()
-        } else {
-            removeNext()
+        try{
+            if (homeDetail == null) {
+                onLoadData(this)
+                return
+            }
+            if (animating) {
+                return
+            }
+            animating = true
+            if (gone) {
+                showNext()
+            } else {
+                removeNext()
+            }
+        }catch (e:Exception){
+            e.printStackTrace();
         }
     }
 
