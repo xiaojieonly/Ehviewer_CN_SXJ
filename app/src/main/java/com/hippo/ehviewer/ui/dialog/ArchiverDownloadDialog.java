@@ -204,7 +204,8 @@ public class ArchiverDownloadDialog implements
             body.setVisibility(View.VISIBLE);
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
-            String fileName = galleryDetail.title.replaceAll("/","");
+//            String fileName = galleryDetail.title.replaceAll("/","");
+            String fileName = createFileName(galleryDetail.title);
             Uri downloadUri = Uri.parse(downloadUrl);
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
@@ -313,7 +314,8 @@ public class ArchiverDownloadDialog implements
                 return;
             }
             long downloadId = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID));
-            String fileName = galleryDetail.title.replaceAll("/","");
+//            String fileName = galleryDetail.title.replaceAll("/","");
+            String fileName = createFileName(galleryDetail.title);
             String tempFilePath = tempDir.getPath() + "/" + fileName;
             String zipFilePath = zipFile.getPath();
             new Thread(() -> {
@@ -398,5 +400,25 @@ public class ArchiverDownloadDialog implements
                 Settings.deleteArchiverDownload(downloadId);
             });
         }
+    }
+
+/**
+ * 去除输入字符串中的'\'、'/'、'|'字符
+ * 创建文件名的静态私有方法
+ * @param name 原始名称参数
+ * @return 返回处理后的文件名字符串
+ */
+    static private String createFileName(String name){
+        if (name == null) {
+            throw new IllegalArgumentException("Input name cannot be null");
+        }
+        if (name.isEmpty()) {
+            return "";
+        }
+        String result = name.replaceAll("/","");
+        result = result.replaceAll("\\|","");
+        return result;
+        // 使用正则表达式替换非法字符
+//        return name.replaceAll("[\\\\/|]", "");
     }
 }
