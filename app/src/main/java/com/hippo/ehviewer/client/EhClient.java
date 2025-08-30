@@ -19,6 +19,7 @@ package com.hippo.ehviewer.client;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.ehviewer.EhApplication;
@@ -150,6 +151,7 @@ public class EhClient {
         @Override
         protected Object doInBackground(Object... params) {
             try {
+                Log.i(TAG, "doInBackground: "+mMethod);
                 switch (mMethod) {
                     case METHOD_SIGN_IN:
                         return EhEngine.signIn(this, mOkHttpClient, (String) params[0], (String) params[1]);

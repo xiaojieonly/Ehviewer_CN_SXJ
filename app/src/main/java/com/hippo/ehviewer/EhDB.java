@@ -116,9 +116,9 @@ public class EhDB {
                         "\"ENABLE\" INTEGER);");
                 db.execSQL("INSERT INTO \"FILTER2\" (" +
                         "_id, MODE, TEXT, ENABLE)" +
-                        "SELECT _id, MODE, TEXT, 1 FROM FILTER;");
-                db.execSQL("DROP TABLE FILTER");
-                db.execSQL("ALTER TABLE FILTER2 RENAME TO FILTER");
+                        "SELECT _id, MODE, TEXT, 1 FROM [FILTER];");
+                db.execSQL("DROP TABLE [FILTER]");
+                db.execSQL("ALTER TABLE FILTER2 RENAME TO [FILTER]");
             case 3: // 3 to 4, add PAGE_FROM and PAGE_TO column to QUICK_SEARCH
                 db.execSQL("CREATE TABLE " + "\"QUICK_SEARCH2\" (" +
                         "\"_id\" INTEGER PRIMARY KEY ," +
@@ -412,6 +412,28 @@ public class EhDB {
             }
         }
         return list;
+    }
+
+    public static synchronized void moveDownloadInfo(List<DownloadInfo> infos, int fromPosition, int toPosition){
+        if (fromPosition == toPosition) {
+            return;
+        }
+        DownloadsDao dao = sDaoSession.getDownloadsDao();
+        boolean reverse = fromPosition > toPosition;
+        int offset = reverse ? toPosition : fromPosition;
+        int limit = reverse ? fromPosition - toPosition + 1 : toPosition - fromPosition + 1;
+
+        List<DownloadInfo> list = infos.subList(offset, offset + limit);
+
+        int step = reverse ? 1 : -1;
+        int start = reverse ? limit - 1 : 0;
+        int end = reverse ? 0 : limit - 1;
+        long toTime = list.get(end).time;
+        for(int i = end; reverse ? i < start : i > start; i += step) {
+            list.get(i).setTime(list.get(i + step).getTime());
+        }
+        list.get(start).setTime(toTime);
+        dao.updateInTx(list);
     }
 
     // Insert or update
@@ -734,28 +756,46 @@ public class EhDB {
         dao.delete(quickSearch);
     }
 
+    /**
+     * 快速搜索项移动方法
+     * 用于调整快速搜索项的顺序，通过时间戳来实现位置调整
+     *
+     * @param fromPosition 起始位置
+     * @param toPosition   目标位置
+     */
     public static synchronized void moveQuickSearch(int fromPosition, int toPosition) {
+    // 如果起始位置和目标位置相同，则直接返回
         if (fromPosition == toPosition) {
             return;
         }
 
+    // 判断是否需要反向移动
         boolean reverse = fromPosition > toPosition;
+    // 计算偏移量，用于查询数据库时的起始位置
         int offset = reverse ? toPosition : fromPosition;
+    // 计算需要移动的项目数量
         int limit = reverse ? fromPosition - toPosition + 1 : toPosition - fromPosition + 1;
 
+    // 获取QuickSearchDao对象
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
+    // 查询需要移动的搜索项列表，按时间升序排列
         List<QuickSearch> list = dao.queryBuilder().orderAsc(QuickSearchDao.Properties.Time)
                 .offset(offset).limit(limit).list();
 
+    // 设置移动方向和起始、结束位置
         int step = reverse ? 1 : -1;
         int start = reverse ? limit - 1 : 0;
         int end = reverse ? 0 : limit - 1;
+    // 获取目标位置的时间戳
         long toTime = list.get(end).getTime();
+    // 遍历列表，交换相邻项的时间戳，实现位置移动
         for (int i = end; reverse ? i < start : i > start; i += step) {
             list.get(i).setTime(list.get(i + step).getTime());
         }
+    // 将起始项的时间设置为目标时间
         list.get(start).setTime(toTime);
 
+    // 在事务中更新所有更改
         dao.updateInTx(list);
     }
 

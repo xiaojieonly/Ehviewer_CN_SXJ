@@ -115,7 +115,7 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation "androidx.fragment:fragment:1.8.6"
     implementation "androidx.preference:preference-ktx:1.2.1"
-    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'org.conscrypt:conscrypt-android:2.5.1'
     // https://mvnrepository.com/artifact/androidx.core/core-ktx
     implementation 'androidx.core:core-ktx:1.15.0'
@@ -145,6 +145,10 @@ dependencies {
     implementation 'com.github.seven332:refreshlayout:0.1.0'
     implementation 'com.github.seven332:ripple:0.1.2'
     implementation 'com.github.seven332:streampipe:0.1.0'
+//   列表组件
+//    implementation "androidx.paging:paging-runtime:3.2.1"
+//    implementation "androidx.paging:paging-rxjava3:3.2.1" // 如果需要 RxJava
+//    implementation "androidx.paging:paging-guava:3.2.1" // 如果需要 Guava
 
 
     implementation 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0'

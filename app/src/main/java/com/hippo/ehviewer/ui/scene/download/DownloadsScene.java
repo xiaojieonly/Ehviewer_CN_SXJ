@@ -41,7 +41,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,9 +50,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.amlcurran.showcaseview.ShowcaseView;
@@ -63,8 +60,6 @@ import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.app.CheckBoxDialogBuilder;
-import com.hippo.conaco.DataContainer;
-import com.hippo.conaco.ProgressNotifier;
 import com.hippo.drawable.AddDeleteDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
@@ -76,8 +71,6 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
-import com.hippo.ehviewer.client.EhCacheKeyFactory;
-import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
@@ -91,40 +84,35 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
-import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
-import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
-import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.widget.SearchBar;
-import com.hippo.ehviewer.widget.SimpleRatingView;
-import com.hippo.io.UniFileInputStreamPipe;
-import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.ripple.Ripple;
-import com.hippo.scene.Announcer;
-import com.hippo.streampipe.InputStreamPipe;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.FabLayout;
-import com.hippo.widget.LoadImageView;
 import com.hippo.widget.ProgressView;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.lib.yorozuya.AssertUtils;
-import com.hippo.lib.yorozuya.FileUtils;
 import com.hippo.lib.yorozuya.ObjectUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.lib.yorozuya.collect.LongList;
 import com.sxj.paginationlib.PaginationIndicator;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
+import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
+
+// 拖拽排序相关导入
+import com.h6ah4i.android.widget.advrecyclerview.animator.DraggableItemAnimator;
+import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
+import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
+import android.graphics.drawable.NinePatchDrawable;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -135,7 +123,7 @@ public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
         EasyRecyclerView.OnItemClickListener,
         EasyRecyclerView.OnItemLongClickListener,
-        FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener {
+        FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener, DownloadAdapter.DownloadAdapterCallback {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
 
@@ -177,7 +165,7 @@ public class DownloadsScene extends ToolbarScene
     private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
 //    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
 
-    private final MyPageChangeListener myPageChangeListener = new MyPageChangeListener();
+    private MyPageChangeListener myPageChangeListener;
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
@@ -191,9 +179,15 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     private FabLayout mFabLayout;
     @Nullable
-    private DownloadAdapter mAdapter;
+    private RecyclerView.Adapter mAdapter;
+    @Nullable
+    private DownloadAdapter mOriginalAdapter;
     @Nullable
     private AutoStaggeredGridLayoutManager mLayoutManager;
+    
+    // 拖拽管理器
+    @Nullable
+    private RecyclerViewDragDropManager mDragDropManager;
 
     private ShowcaseView mShowcaseView;
 
@@ -345,6 +339,14 @@ public class DownloadsScene extends ToolbarScene
         mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
 //        mPaginationIndicator.setTotalCount();
         mPaginationIndicator.setListener(myPageChangeListener);
+        
+        // 同步分页监听器的状态
+        if (myPageChangeListener != null) {
+            myPageChangeListener.setIndexPage(indexPage);
+            myPageChangeListener.setPageSize(pageSize);
+            myPageChangeListener.setNeedInitPage(needInitPage);
+            myPageChangeListener.setDoNotScroll(doNotScroll);
+        }
     }
 
     @SuppressLint("StringFormatMatches")
@@ -408,12 +410,42 @@ public class DownloadsScene extends ToolbarScene
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
 
-        mAdapter = new DownloadAdapter();
-        mAdapter.setHasStableIds(true);
+        // 初始化拖拽管理器
+        mDragDropManager = new RecyclerViewDragDropManager();
+        mDragDropManager.setDraggingItemShadowDrawable(
+                (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
+
+        mOriginalAdapter = new DownloadAdapter(this, this);
+        mOriginalAdapter.setHasStableIds(true);
+        mAdapter = mDragDropManager.createWrappedAdapter(mOriginalAdapter); // 包装适配器以支持拖拽
         mRecyclerView.setAdapter(mAdapter);
+        
+        // 初始化分页监听器
+        myPageChangeListener = new MyPageChangeListener(indexPage, pageSize, needInitPage, doNotScroll, mOriginalAdapter, mRecyclerView);
+        
+        // 设置分页监听器的回调
+        myPageChangeListener.setPageChangeCallback(new MyPageChangeListener.PageChangeCallback() {
+            @Override
+            public void onPageChanged(int newIndexPage) {
+                indexPage = newIndexPage;
+            }
+            
+            @Override
+            public void onPageSizeChanged(int newPageSize) {
+                pageSize = newPageSize;
+            }
+        });
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
         mLayoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
         mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
+        
+        // 设置拖拽动画器
+        final GeneralItemAnimator animator = new DraggableItemAnimator();
+        mRecyclerView.setItemAnimator(animator);
+        
+        mRecyclerView.setItemViewCacheSize(100);
+        mRecyclerView.setDrawingCacheEnabled(true);
+        mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
@@ -425,8 +457,8 @@ public class DownloadsScene extends ToolbarScene
 //        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
         // Cancel change animation
         RecyclerView.ItemAnimator itemAnimator = mRecyclerView.getItemAnimator();
-        if (itemAnimator instanceof SimpleItemAnimator) {
-            ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
+        if (itemAnimator instanceof GeneralItemAnimator) {
+            ((GeneralItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
         }
         int interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval);
         int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_h);
@@ -434,6 +466,12 @@ public class DownloadsScene extends ToolbarScene
         MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
+        
+        // 将拖拽管理器附加到RecyclerView
+        if (mDragDropManager != null) {
+            mDragDropManager.attachRecyclerView(mRecyclerView);
+        }
+        
         if (mInitPosition >= 0 && indexPage != 1) {
             initPage(mInitPosition);
             mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
@@ -500,7 +538,7 @@ public class DownloadsScene extends ToolbarScene
         mShowcaseView = new ShowcaseView.Builder(activity)
                 .withMaterialShowcase()
                 .setStyle(R.style.Guide)
-                .setTarget(new ViewTarget(((DownloadHolder) holder).thumb))
+                .setTarget(new ViewTarget(((DownloadAdapter.DownloadHolder) holder).thumb))
                 .blockAllTouches()
                 .setContentTitle(R.string.guide_download_thumb_title)
                 .setContentText(R.string.guide_download_thumb_text)
@@ -572,7 +610,9 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView = null;
         mViewTransition = null;
         mAdapter = null;
+        mOriginalAdapter = null;
         mLayoutManager = null;
+        mDragDropManager = null;
         EventBus.getDefault().unregister(this);
     }
 
@@ -1067,90 +1107,64 @@ public class DownloadsScene extends ToolbarScene
         return mDownloadManager;
     }
 
-    private void bindForState(DownloadHolder holder, DownloadInfo info) {
-        Resources resources = getResources2();
-        if (null == resources) {
-            return;
-        }
-
-        switch (info.state) {
-            case DownloadInfo.STATE_NONE:
-                bindState(holder, info, resources.getString(R.string.download_state_none));
-                break;
-            case DownloadInfo.STATE_WAIT:
-                bindState(holder, info, resources.getString(R.string.download_state_wait));
-                break;
-            case DownloadInfo.STATE_DOWNLOAD:
-                bindProgress(holder, info);
-                break;
-            case DownloadInfo.STATE_FAILED:
-                String text;
-                if (info.legacy <= 0) {
-                    text = resources.getString(R.string.download_state_failed);
-                } else {
-                    text = resources.getString(R.string.download_state_failed_2, info.legacy);
-                }
-                bindState(holder, info, text);
-                break;
-            case DownloadInfo.STATE_FINISH:
-                bindState(holder, info, resources.getString(R.string.download_state_finish));
-                break;
-        }
+    // DownloadAdapterCallback 接口实现
+    @Override
+    public int getIndexPage() {
+        return indexPage;
     }
 
-    private void bindState(DownloadHolder holder, DownloadInfo info, String state) {
-        holder.uploader.setVisibility(View.VISIBLE);
-        holder.rating.setVisibility(View.VISIBLE);
-        holder.category.setVisibility(View.VISIBLE);
-        holder.readProgress.setVisibility(View.VISIBLE);
-        holder.state.setVisibility(View.VISIBLE);
-        holder.progressBar.setVisibility(View.GONE);
-        holder.percent.setVisibility(View.GONE);
-        holder.speed.setVisibility(View.GONE);
-        if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
-            holder.start.setVisibility(View.GONE);
-            holder.stop.setVisibility(View.VISIBLE);
-        } else {
-            holder.start.setVisibility(View.VISIBLE);
-            holder.stop.setVisibility(View.GONE);
-        }
-
-        holder.state.setText(state);
+    @Override
+    public int getPageSize() {
+        return pageSize;
     }
 
-    @SuppressLint("SetTextI18n")
-    private void bindProgress(DownloadHolder holder, DownloadInfo info) {
-        holder.uploader.setVisibility(View.GONE);
-        holder.rating.setVisibility(View.GONE);
-        holder.category.setVisibility(View.GONE);
-        holder.readProgress.setVisibility(View.GONE);
-        holder.state.setVisibility(View.GONE);
-        holder.progressBar.setVisibility(View.VISIBLE);
-        holder.percent.setVisibility(View.VISIBLE);
-        holder.speed.setVisibility(View.VISIBLE);
-        if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
-            holder.start.setVisibility(View.GONE);
-            holder.stop.setVisibility(View.VISIBLE);
-        } else {
-            holder.start.setVisibility(View.VISIBLE);
-            holder.stop.setVisibility(View.GONE);
-        }
-
-        if (info.total <= 0 || info.finished < 0) {
-            holder.percent.setText(null);
-            holder.progressBar.setIndeterminate(true);
-        } else {
-            holder.percent.setText(info.finished + "/" + info.total);
-            holder.progressBar.setIndeterminate(false);
-            holder.progressBar.setMax(info.total);
-            holder.progressBar.setProgress(info.finished);
-        }
-        long speed = info.speed;
-        if (speed < 0) {
-            speed = 0;
-        }
-        holder.speed.setText(FileUtils.humanReadableByteCount(speed, false) + "/S");
+    @Override
+    public int getPaginationSize() {
+        return paginationSize;
     }
+
+    @Override
+    public boolean isCanPagination() {
+        return canPagination;
+    }
+
+    @Override
+    public int positionInList(int position) {
+        if (mList != null && mList.size() > paginationSize && canPagination) {
+            return position + pageSize * (indexPage - 1);
+        }
+        return position;
+    }
+
+    @Override
+    public int listIndexInPage(int position) {
+        if (mList != null && mList.size() > paginationSize && canPagination) {
+            return position % pageSize;
+        }
+        return position;
+    }
+
+    @Override
+    public List<DownloadInfo> getList() {
+        return mList;
+    }
+
+    @Override
+    public Map<Long, SpiderInfo> getSpiderInfoMap() {
+        return mSpiderInfoMap;
+    }
+
+    @Override
+    public DownloadManager getDownloadManager() {
+        return mDownloadManager;
+    }
+
+    @Override
+    public EasyRecyclerView getRecyclerView() {
+        return mRecyclerView;
+    }
+
+
 
     private static void deleteFileAsync(UniFile... files) {
         new AsyncTask<UniFile, Void, Void>() {
@@ -1234,8 +1248,10 @@ public class DownloadsScene extends ToolbarScene
     }
 
     private void updateAdapter() {
-        mAdapter = new DownloadAdapter();
-        mAdapter.setHasStableIds(true);
+        mOriginalAdapter = new DownloadAdapter(this, this);
+        mOriginalAdapter.setHasStableIds(true);
+        // 避免重复创建包装适配器，直接使用原始适配器
+        mAdapter = mOriginalAdapter;
         if (mRecyclerView != null) {
             mRecyclerView.setAdapter(mAdapter);
         }
@@ -1262,7 +1278,7 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     @Override
     public RecyclerView getValidRecyclerView() {
-        return null;
+        return mRecyclerView;
     }
 
     @Override
@@ -1381,19 +1397,7 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView.scrollToPosition(listIndexInPage(position));
     }
 
-    private int positionInList(int position) {
-        if (mList != null && mList.size() > paginationSize && canPagination) {
-            return position + pageSize * (indexPage - 1);
-        }
-        return position;
-    }
 
-    private int listIndexInPage(int position) {
-        if (mList != null && mList.size() > paginationSize && canPagination) {
-            return position % pageSize;
-        }
-        return position;
-    }
 
     private int getPageSizePos(int pageSize) {
         int index = 0;
@@ -1519,184 +1523,35 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
-    private class DownloadHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        public final LoadImageView thumb;
-        public final TextView title;
-        public final TextView uploader;
-        public final SimpleRatingView rating;
-        public final TextView category;
-        public final TextView readProgress;
-        public final View start;
-        public final View stop;
-        public final TextView state;
-        public final ProgressBar progressBar;
-        public final TextView percent;
-        public final TextView speed;
 
-        public DownloadHolder(View itemView) {
-            super(itemView);
 
-            thumb = itemView.findViewById(R.id.thumb);
-            title = itemView.findViewById(R.id.title);
-            uploader = itemView.findViewById(R.id.uploader);
-            rating = itemView.findViewById(R.id.rating);
-            category = itemView.findViewById(R.id.category);
-            readProgress = itemView.findViewById(R.id.read_progress);
-            start = itemView.findViewById(R.id.start);
-            stop = itemView.findViewById(R.id.stop);
-            state = itemView.findViewById(R.id.state);
-            progressBar = itemView.findViewById(R.id.progress_bar);
-            percent = itemView.findViewById(R.id.percent);
-            speed = itemView.findViewById(R.id.speed);
 
-            // TODO cancel on click listener when select items
-            thumb.setOnClickListener(this);
-            start.setOnClickListener(this);
-            stop.setOnClickListener(this);
 
-            boolean isDarkTheme = !AttrResources.getAttrBoolean(getEHContext(), androidx.appcompat.R.attr.isLightTheme);
-            Ripple.addRipple(start, isDarkTheme);
-            Ripple.addRipple(stop, isDarkTheme);
+    /**
+     * 更新thumb和拖拽手柄的可见性
+     * @param isSelectionMode 是否处于选择模式
+     */
+    private void updateThumbAndDragHandlerVisibility(boolean isSelectionMode) {
+        if (mRecyclerView == null) {
+            return;
         }
-
-        @Override
-        public void onClick(View v) {
-            Context context = getEHContext();
-            Activity activity = getActivity2();
-            EasyRecyclerView recyclerView = mRecyclerView;
-            if (null == context || null == activity || null == recyclerView || recyclerView.isInCustomChoice()) {
-                return;
-            }
-            List<DownloadInfo> list = mList;
-            if (list == null) {
-                return;
-            }
-            int size = list.size();
-            int index = recyclerView.getChildAdapterPosition(itemView);
-            if (index < 0 || index >= size) {
-                return;
-            }
-
-            if (thumb == v) {
-                Bundle args = new Bundle();
-                args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
-                args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list.get(positionInList(index)));
-                Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
-                announcer.setTranHelper(new EnterGalleryDetailTransaction(thumb));
-                startScene(announcer);
-            } else if (start == v) {
-                final DownloadInfo info = list.get(positionInList(index));
-                Intent intent = new Intent(activity, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
-                activity.startService(intent);
-            } else if (stop == v) {
-                if (null != mDownloadManager) {
-                    mDownloadManager.stopDownload(list.get(positionInList(index)).gid);
+        
+        for (int i = 0; i < mRecyclerView.getChildCount(); i++) {
+            RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(mRecyclerView.getChildAt(i));
+            if (holder instanceof DownloadAdapter.DownloadHolder) {
+                DownloadAdapter.DownloadHolder downloadHolder = (DownloadAdapter.DownloadHolder) holder;
+                
+                if (isSelectionMode) {
+                    // 选择模式：显示拖拽手柄，隐藏thumb
+                    downloadHolder.dragHandler.setVisibility(View.VISIBLE);
+                    downloadHolder.thumb.setVisibility(View.GONE);
+                } else {
+                    // 正常模式：隐藏拖拽手柄，显示thumb
+                    downloadHolder.dragHandler.setVisibility(View.GONE);
+                    downloadHolder.thumb.setVisibility(View.VISIBLE);
                 }
             }
-        }
-    }
-
-    private class DownloadAdapter extends RecyclerView.Adapter<DownloadHolder> {
-
-        private final LayoutInflater mInflater;
-        private final int mListThumbWidth;
-        private final int mListThumbHeight;
-
-        public DownloadAdapter() {
-            LayoutInflater mInflater1;
-            try {
-                mInflater1 = getLayoutInflater2();
-            } catch (NullPointerException e) {
-                mInflater1 = getLayoutInflater();
-            }
-            mInflater = mInflater1;
-            AssertUtils.assertNotNull(mInflater);
-
-            View calculator = mInflater.inflate(R.layout.item_gallery_list_thumb_height, null);
-            ViewUtils.measureView(calculator, 1024, ViewGroup.LayoutParams.WRAP_CONTENT);
-            mListThumbHeight = calculator.getMeasuredHeight();
-            mListThumbWidth = mListThumbHeight * 2 / 3;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            int posInList = positionInList(position);
-            if (mList == null || posInList < 0 || posInList >= mList.size()) {
-                return 0;
-            }
-            return mList.get(posInList).gid;
-        }
-
-        @NonNull
-        @Override
-        public DownloadHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            DownloadHolder holder = new DownloadHolder(mInflater.inflate(R.layout.item_download, parent, false));
-
-            ViewGroup.LayoutParams lp = holder.thumb.getLayoutParams();
-            lp.width = mListThumbWidth;
-            lp.height = mListThumbHeight;
-            holder.thumb.setLayoutParams(lp);
-
-            return holder;
-        }
-
-        @Override
-        public void onBindViewHolder(DownloadHolder holder, int position) {
-            if (mList == null) {
-                return;
-            }
-
-            try {
-                int pos = positionInList(position);
-                DownloadInfo info = mList.get(pos);
-
-                String title = EhUtils.getSuitableTitle(info);
-
-//                holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb, true);
-                holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb, new ThumbDataContainer(info), true);
-
-                holder.title.setText(title);
-                holder.uploader.setText(info.uploader);
-                holder.rating.setRating(info.rating);
-
-                SpiderInfo spiderInfo = mSpiderInfoMap.get(info.gid);
-
-                if (spiderInfo != null) {
-                    int startPage = spiderInfo.startPage + 1;
-                    String readText = startPage + "/" + spiderInfo.pages;
-                    holder.readProgress.setText(readText);
-                }
-
-
-                TextView category = holder.category;
-                String newCategoryText = EhUtils.getCategory(info.category);
-                if (!newCategoryText.equals(category.getText())) {
-                    category.setText(newCategoryText);
-                    category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
-                }
-                bindForState(holder, info);
-
-                // Update transition name
-                ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
-            } catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            if (mList == null) {
-                return 0;
-            }
-            int listSize = mList.size();
-            if (listSize < paginationSize || !canPagination) {
-                return listSize;
-            }
-            int count = listSize - pageSize * (indexPage - 1);
-            return Math.min(count, pageSize);
         }
     }
 
@@ -1714,6 +1569,9 @@ public class DownloadsScene extends ToolbarScene
             // Lock drawer
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
+            
+            // 进入选择模式时，显示拖拽手柄，隐藏thumb
+            updateThumbAndDragHandlerVisibility(true);
         }
 
         @Override
@@ -1727,123 +1585,15 @@ public class DownloadsScene extends ToolbarScene
             // Unlock drawer
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
+            
+            // 退出选择模式时，隐藏拖拽手柄，显示thumb
+            updateThumbAndDragHandlerVisibility(false);
         }
 
         @Override
         public void onItemCheckedStateChanged(EasyRecyclerView view, int position, long id, boolean checked) {
             if (view.getCheckedItemCount() == 0) {
                 view.outOfCustomChoiceMode();
-            }
-        }
-    }
-
-    private class ThumbDataContainer implements DataContainer {
-
-        private final DownloadInfo mInfo;
-        @Nullable
-        private UniFile mFile;
-
-        public ThumbDataContainer(@NonNull DownloadInfo info) {
-            mInfo = info;
-        }
-
-        private void ensureFile() {
-            if (mFile == null) {
-                UniFile dir = getGalleryDownloadDir(mInfo);
-                if (dir != null && dir.isDirectory()) {
-                    mFile = dir.createFile(".thumb");
-                }
-            }
-        }
-
-        @Override
-        public boolean isEnabled() {
-            ensureFile();
-            return mFile != null;
-        }
-
-        @Override
-        public void onUrlMoved(String requestUrl, String responseUrl) {
-        }
-
-        @Override
-        public boolean save(InputStream is, long length, String mediaType, ProgressNotifier notify) {
-            ensureFile();
-            if (mFile == null) {
-                return false;
-            }
-
-            OutputStream os = null;
-            try {
-                os = mFile.openOutputStream();
-                IOUtils.copy(is, os);
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            } finally {
-                IOUtils.closeQuietly(os);
-            }
-        }
-
-        @Override
-        public InputStreamPipe get() {
-            ensureFile();
-            if (mFile != null) {
-                return new UniFileInputStreamPipe(mFile);
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        public void remove() {
-            if (mFile != null) {
-                mFile.delete();
-            }
-        }
-    }
-
-    public class MyPageChangeListener implements PaginationIndicator.OnChangedListener {
-
-        @Override
-        public void onPageSelectedChanged(int currentPagePos, int lastPagePos, int totalPageCount, int total) {
-            if (indexPage == currentPagePos) {
-                needInitPage = false;
-            }
-            if (needInitPage) {
-                if (mPaginationIndicator != null) {
-                    mPaginationIndicator.skip2Pos(indexPage);
-                }
-                return;
-            }
-            if (indexPage == currentPagePos) {
-                return;
-            }
-            indexPage = currentPagePos;
-            notifyAdapter();
-        }
-
-        @Override
-        public void onPerPageCountChanged(int perPageCount) {
-            if (pageSize == perPageCount) {
-                return;
-            }
-            pageSize = perPageCount;
-            notifyAdapter();
-        }
-
-        @SuppressLint("NotifyDataSetChanged")
-        public void notifyAdapter() {
-            if (mAdapter != null) {
-                mAdapter.notifyDataSetChanged();
-            }
-            if (mRecyclerView != null) {
-                if (doNotScroll) {
-                    doNotScroll = false;
-                    return;
-                }
-                mRecyclerView.scrollToPosition(0);
             }
         }
     }
