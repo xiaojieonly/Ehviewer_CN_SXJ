@@ -13,8 +13,8 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1C3PpSNkkz9vfAG9CsK2Qpg) 提取码：sfe8
-- [蓝奏云](https://wwsu.lanzouu.com/ir1PZ35563eh)，电脑端可正常下载 提取码：2b77
+- [百度云](https://pan.baidu.com/s/1uyBwzbf1n_dO1L_zWCYJvA) 提取码：sy3c
+- [蓝奏云](https://wwsu.lanzouu.com/iZB4g355985g)，电脑端可正常下载 提取码：ag8t
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - Torrent链接: magnet:?xt=urn:btih:63d82d54cb46a06c0b99be3899a1e4ecd4cd7118&xt=urn:btmh:1220a20ce8481107716add16ae2f4de80309bcfb1aaf1c1f3582c254528b9b08787d&dn=EhViewer-2.0.0.0.apk&xl=23252161
 
@@ -29,7 +29,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 # Changelog
 
 ## 2025/09/01 : 
-### 新版发布2.0.0.0
+### 新版发布2.0.0.1
 
 - 画廊名带“|”字符的都无法进行档案下载的问题
 - 搜索栏搜索时自动去除换行符

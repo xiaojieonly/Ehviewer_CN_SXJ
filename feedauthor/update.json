@@ -1,10 +1,10 @@
 {
-  "version": "1.0.0.0",
+  "version": "2.0.0.1",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.0",
+    "title": "新版发布2.0.0.1",
     "content": [
       "画廊名带“|”字符的都无法进行档案下载的问题",
       "搜索栏搜索时自动去除换行符",

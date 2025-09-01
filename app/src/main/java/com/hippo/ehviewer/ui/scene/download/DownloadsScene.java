@@ -1541,15 +1541,15 @@ public class DownloadsScene extends ToolbarScene
             RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(mRecyclerView.getChildAt(i));
             if (holder instanceof DownloadAdapter.DownloadHolder) {
                 DownloadAdapter.DownloadHolder downloadHolder = (DownloadAdapter.DownloadHolder) holder;
-                
+
                 if (isSelectionMode) {
                     // 选择模式：显示拖拽手柄，隐藏thumb
                     downloadHolder.dragHandler.setVisibility(View.VISIBLE);
-                    downloadHolder.thumb.setVisibility(View.GONE);
+//                    downloadHolder.thumb.setVisibility(View.GONE);
                 } else {
                     // 正常模式：隐藏拖拽手柄，显示thumb
                     downloadHolder.dragHandler.setVisibility(View.GONE);
-                    downloadHolder.thumb.setVisibility(View.VISIBLE);
+//                    downloadHolder.thumb.setVisibility(View.VISIBLE);
                 }
             }
         }

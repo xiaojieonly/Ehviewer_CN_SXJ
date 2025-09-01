@@ -43,11 +43,13 @@
                 android:id="@+id/drag_handler"
                 android:layout_width="@dimen/gallery_list_thumb_width"
                 android:layout_height="@dimen/gallery_list_thumb_height"
-                android:layout_alignLeft="@id/thumb"
+                android:layout_alignStart="@id/thumb"
                 android:layout_alignTop="@id/thumb"
                 android:background="@drawable/drag_handler_background"
                 android:scaleType="center"
                 app:srcCompat="@drawable/v_reorder_x24"
+                app:minAspect="0.333"
+                app:maxAspect="1.333"
                 android:visibility="gone"/>
 
             <TextView
