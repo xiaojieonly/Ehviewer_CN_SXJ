@@ -19,22 +19,18 @@ package com.hippo.ehviewer.ui;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.InputDevice;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.WindowManager;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.hippo.android.resource.AttrResources;
 import com.hippo.content.ContextLocalWrapper;
 import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import java.util.Locale;
 
@@ -96,5 +92,21 @@ public abstract class EhActivity extends AppCompatActivity {
         newBase = ContextLocalWrapper.wrap(newBase, locale);
         super.attachBaseContext(newBase);
         Context context = newBase;
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (Settings.isThemeAutoSwitchAvailable()) {
+            boolean is_dark = (newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            if ((Settings.getTheme() == 0) == is_dark) {
+                if (is_dark) {
+                    Settings.putTheme(Settings.THEME_DARK);
+                } else {
+                    Settings.putTheme(Settings.THEME_LIGHT);
+                }
+                ((EhApplication) getApplication()).recreate();
+            }
+        }
     }
 }

@@ -38,6 +38,7 @@ public class EhFragment extends BasePreferenceFragmentCompat
         addPreferencesFromResource(R.xml.eh_settings);
 
         Preference theme = findPreference(Settings.KEY_THEME);
+        Preference themeAutoSwitch = findPreference(Settings.KEY_THEME_AUTO_SWITCH);
         Preference applyNavBarThemeColor = findPreference(Settings.KEY_APPLY_NAV_BAR_THEME_COLOR);
         Preference gallerySite = findPreference(Settings.KEY_GALLERY_SITE);
         Preference listMode = findPreference(Settings.KEY_LIST_MODE);
@@ -49,6 +50,7 @@ public class EhFragment extends BasePreferenceFragmentCompat
         Preference tagTranslationsSource = findPreference("tag_translations_source");
 
         theme.setOnPreferenceChangeListener(this);
+        themeAutoSwitch.setOnPreferenceChangeListener(this);
         applyNavBarThemeColor.setOnPreferenceChangeListener(this);
         gallerySite.setOnPreferenceChangeListener(this);
         listMode.setOnPreferenceChangeListener(this);
@@ -103,6 +105,14 @@ public class EhFragment extends BasePreferenceFragmentCompat
             return true;
         } else if (Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
+            return true;
+        } else if (Settings.KEY_THEME_AUTO_SWITCH.equals(key) && Boolean.TRUE.equals(newValue)) {
+            if (Settings.getDarkModeStatus(getContext())) {
+                Settings.putTheme(Settings.THEME_DARK);
+            } else {
+                Settings.putTheme(Settings.THEME_LIGHT);
+            }
+            ((EhApplication) getActivity().getApplication()).recreate();
             return true;
         }
         return true;
