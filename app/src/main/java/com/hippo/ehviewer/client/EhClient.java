@@ -215,6 +215,16 @@ public class EhClient {
             }
         }
 
+        protected boolean checkFirebaseAvailable() {
+            boolean enabled;
+            try {
+                enabled = FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled();
+            } catch (IllegalStateException e) {
+                enabled = false;
+            }
+            return enabled;
+        }
+
         @SuppressWarnings("unchecked")
         @Override
         protected void onPostExecute(Object result) {
@@ -223,9 +233,10 @@ public class EhClient {
                 if (!(result instanceof CancelledException)) {
                     if (result instanceof Throwable) {
                         mCallback.onFailure((Exception) result);
-                        boolean enabled = FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled();
-                        if (enabled) {
+                        if (checkFirebaseAvailable()) {
                             FirebaseCrashlytics.getInstance().recordException((Throwable) result);
+                        } else {
+                            Log.e(TAG, result.toString());
                         }
                     } else {
                         mCallback.onSuccess(result);
