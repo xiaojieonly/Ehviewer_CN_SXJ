@@ -16,7 +16,7 @@ An E-Hentai Application for Android.
 - [百度云](https://pan.baidu.com/s/1uyBwzbf1n_dO1L_zWCYJvA) 提取码：sy3c
 - [蓝奏云](https://wwsu.lanzouu.com/iZB4g355985g)，电脑端可正常下载 提取码：ag8t
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:63d82d54cb46a06c0b99be3899a1e4ecd4cd7118&xt=urn:btmh:1220a20ce8481107716add16ae2f4de80309bcfb1aaf1c1f3582c254528b9b08787d&dn=EhViewer-2.0.0.0.apk&xl=23252161
+- Torrent链接: magnet:?xt=urn:btih:d297eb3575c9dd66b11fd1190da6de9ca99f13f4&xt=urn:btmh:1220bafa1275785022d096c4197f0b73c9d9302514841782dc155d4209967a2033e3&dn=EhViewer-2.0.0.1.apk&xl=23252182
 
 点击前往赏饭：
 
