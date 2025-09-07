@@ -35,7 +35,9 @@ public class ImageBitmapHelper implements ValueHelper<Image> {
         try {
             isPipe.obtain();
             FileInputStream is = (FileInputStream) isPipe.open();
-            return Image.decode(is,true);
+            // todo: fix `Software rendering doesn't support hardware bitmaps` when hardware arg is true.
+            // disable hardware canvas.
+            return Image.decode(is,false);
         } catch (OutOfMemoryError e) {
             return null;
         } catch (IOException e) {
