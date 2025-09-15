@@ -932,5 +932,8 @@
     <string name="sort_by_fav_time">按收藏时间</string>
     <string name="settings_eh_sign_out_restart">正在为您自动重启，请稍候</string>
 
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">上一页</string>
+    <string name="spen_next_page">下一页</string>
 
 </resources>

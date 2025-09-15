@@ -185,6 +185,14 @@
                 <data android:pathPattern=".*\\.rar" />
                 <data android:pathPattern=".*\\.zip" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="com.samsung.android.support.REMOTE_ACTION"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="com.samsung.android.support.REMOTE_ACTION"
+                android:resource="@xml/s_pen_actions"/>
         </activity>
 
         <activity
