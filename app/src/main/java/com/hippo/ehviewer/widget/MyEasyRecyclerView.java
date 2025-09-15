@@ -1,7 +1,10 @@
 package com.hippo.ehviewer.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 
@@ -18,5 +21,15 @@ public class MyEasyRecyclerView extends EasyRecyclerView {
         super(context, attrs, defStyle);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        try{
+            return super.onTouchEvent(ev);
+        }catch (IllegalArgumentException e){
+            Log.e("RecyclerView", "IllegalArgumentException",e);
+        }
+        return  true;
+    }
 
 }

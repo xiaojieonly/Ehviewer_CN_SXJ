@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
@@ -84,6 +85,7 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
+import com.hippo.ehviewer.widget.MyEasyRecyclerView;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ripple.Ripple;
 import com.hippo.unifile.UniFile;
@@ -121,8 +123,8 @@ import java.util.Map;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
-        EasyRecyclerView.OnItemClickListener,
-        EasyRecyclerView.OnItemLongClickListener,
+        MyEasyRecyclerView.OnItemClickListener,
+        MyEasyRecyclerView.OnItemLongClickListener,
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener, DownloadAdapter.DownloadAdapterCallback {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
@@ -173,7 +175,7 @@ public class DownloadsScene extends ToolbarScene
      View life cycle
      ---------------*/
     @Nullable
-    private EasyRecyclerView mRecyclerView;
+    private MyEasyRecyclerView mRecyclerView;
     @Nullable
     private ViewTransition mViewTransition;
     @Nullable
@@ -389,7 +391,7 @@ public class DownloadsScene extends ToolbarScene
 
         mProgressView = (ProgressView) ViewUtils.$$(view, R.id.download_progress_view);
         View content = ViewUtils.$$(view, R.id.content);
-        mRecyclerView = (EasyRecyclerView) ViewUtils.$$(content, R.id.recycler_view);
+        mRecyclerView = (MyEasyRecyclerView) ViewUtils.$$(content, R.id.recycler_view);
         FastScroller fastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
@@ -409,11 +411,15 @@ public class DownloadsScene extends ToolbarScene
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_download);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         tip.setCompoundDrawables(null, drawable, null, null);
-
         // 初始化拖拽管理器
         mDragDropManager = new RecyclerViewDragDropManager();
-        mDragDropManager.setDraggingItemShadowDrawable(
-                (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
+        try {
+            mDragDropManager.setDraggingItemShadowDrawable(
+                    (NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_8dp));
+        } catch (Exception e) {
+            // 忽略硬件位图相关错误
+            android.util.Log.w("DownloadsScene", "Error setting drag shadow: " + e.getMessage());
+        }
 
         mOriginalAdapter = new DownloadAdapter(this, this);
         mOriginalAdapter.setHasStableIds(true);
@@ -444,15 +450,20 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView.setItemAnimator(animator);
         
         mRecyclerView.setItemViewCacheSize(100);
-        mRecyclerView.setDrawingCacheEnabled(true);
-        mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+        try {
+            mRecyclerView.setDrawingCacheEnabled(true);
+            mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+        } catch (Exception e) {
+            // 忽略硬件位图相关错误
+            android.util.Log.w("DownloadsScene", "Error setting drawing cache: " + e.getMessage());
+        }
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setOnItemClickListener(this);
         mRecyclerView.setOnItemLongClickListener(this);
-        mRecyclerView.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM);
+        mRecyclerView.setChoiceMode(MyEasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM);
         mRecyclerView.setCustomCheckedListener(new DownloadChoiceListener());
 //        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
         // Cancel change animation
@@ -469,7 +480,12 @@ public class DownloadsScene extends ToolbarScene
         
         // 将拖拽管理器附加到RecyclerView
         if (mDragDropManager != null) {
-            mDragDropManager.attachRecyclerView(mRecyclerView);
+            try {
+                mDragDropManager.attachRecyclerView(mRecyclerView);
+            } catch (Exception e) {
+                // 忽略硬件位图相关错误
+                android.util.Log.w("DownloadsScene", "Error attaching drag manager: " + e.getMessage());
+            }
         }
         
         if (mInitPosition >= 0 && indexPage != 1) {
@@ -804,7 +820,7 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public boolean onItemClick(EasyRecyclerView parent, View view, int position, long id) {
         Activity activity = getActivity2();
-        EasyRecyclerView recyclerView = mRecyclerView;
+        MyEasyRecyclerView recyclerView = mRecyclerView;
         if (null == activity || null == recyclerView) {
             return false;
         }
@@ -832,7 +848,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public boolean onItemLongClick(EasyRecyclerView parent, View view, int position, long id) {
-        EasyRecyclerView recyclerView = mRecyclerView;
+        MyEasyRecyclerView recyclerView = mRecyclerView;
         if (recyclerView == null) {
             return false;
         }
@@ -880,7 +896,7 @@ public class DownloadsScene extends ToolbarScene
     public void onClickSecondaryFab(FabLayout view, FloatingActionButton fab, int position) {
         Context context = getEHContext();
         Activity activity = getActivity2();
-        EasyRecyclerView recyclerView = mRecyclerView;
+        MyEasyRecyclerView recyclerView = mRecyclerView;
         if (null == context || null == activity || null == recyclerView) {
             return;
         }
@@ -1160,7 +1176,7 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Override
-    public EasyRecyclerView getRecyclerView() {
+    public MyEasyRecyclerView getRecyclerView() {
         return mRecyclerView;
     }
 
@@ -1523,39 +1539,26 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+//    /**
+//     * 更新thumb的可见性（拖拽功能已直接附加到thumb上）
+//     * @param isSelectionMode 是否处于选择模式
+//     */
+//    private void updateThumbVisibility(boolean isSelectionMode) {
+//        if (mRecyclerView == null) {
+//            return;
+//        }
+//
+//        for (int i = 0; i < mRecyclerView.getChildCount(); i++) {
+//            RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(mRecyclerView.getChildAt(i));
+//            if (holder instanceof DownloadAdapter.DownloadHolder) {
+//                DownloadAdapter.DownloadHolder downloadHolder = (DownloadAdapter.DownloadHolder) holder;
+//                // thumb 始终可见，拖拽功能已直接附加到thumb上
+//                downloadHolder.thumb.setVisibility(View.VISIBLE);
+//            }
+//        }
+//    }
 
-
-
-
-
-    /**
-     * 更新thumb和拖拽手柄的可见性
-     * @param isSelectionMode 是否处于选择模式
-     */
-    private void updateThumbAndDragHandlerVisibility(boolean isSelectionMode) {
-        if (mRecyclerView == null) {
-            return;
-        }
-        
-        for (int i = 0; i < mRecyclerView.getChildCount(); i++) {
-            RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(mRecyclerView.getChildAt(i));
-            if (holder instanceof DownloadAdapter.DownloadHolder) {
-                DownloadAdapter.DownloadHolder downloadHolder = (DownloadAdapter.DownloadHolder) holder;
-
-                if (isSelectionMode) {
-                    // 选择模式：显示拖拽手柄，隐藏thumb
-                    downloadHolder.dragHandler.setVisibility(View.VISIBLE);
-//                    downloadHolder.thumb.setVisibility(View.GONE);
-                } else {
-                    // 正常模式：隐藏拖拽手柄，显示thumb
-                    downloadHolder.dragHandler.setVisibility(View.GONE);
-//                    downloadHolder.thumb.setVisibility(View.VISIBLE);
-                }
-            }
-        }
-    }
-
-    private class DownloadChoiceListener implements EasyRecyclerView.CustomChoiceListener {
+    private class DownloadChoiceListener implements MyEasyRecyclerView.CustomChoiceListener {
 
         @Override
         public void onIntoCustomChoice(EasyRecyclerView view) {
@@ -1570,8 +1573,8 @@ public class DownloadsScene extends ToolbarScene
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
             
-            // 进入选择模式时，显示拖拽手柄，隐藏thumb
-            updateThumbAndDragHandlerVisibility(true);
+//            // 进入选择模式时，thumb保持可见（拖拽功能已直接附加到thumb上）
+//            updateThumbVisibility(true);
         }
 
         @Override
@@ -1586,8 +1589,8 @@ public class DownloadsScene extends ToolbarScene
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
             
-            // 退出选择模式时，隐藏拖拽手柄，显示thumb
-            updateThumbAndDragHandlerVisibility(false);
+//            // 退出选择模式时，thumb保持可见（拖拽功能已直接附加到thumb上）
+//            updateThumbVisibility(false);
         }
 
         @Override

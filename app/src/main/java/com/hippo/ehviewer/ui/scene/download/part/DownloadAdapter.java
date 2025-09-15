@@ -23,6 +23,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,6 +76,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     private final int mListThumbHeight;
     private final DownloadsScene mScene;
     private final DownloadAdapterCallback mCallback;
+
+    private View movedItem = null;
 
     public interface DownloadAdapterCallback {
         int getIndexPage();
@@ -286,7 +289,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         public final android.widget.ProgressBar progressBar;
         public final TextView percent;
         public final TextView speed;
-        public final View dragHandler;
 
         public DownloadHolder(View itemView) {
             super(itemView);
@@ -303,7 +305,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             progressBar = itemView.findViewById(R.id.progress_bar);
             percent = itemView.findViewById(R.id.percent);
             speed = itemView.findViewById(R.id.speed);
-            dragHandler = itemView.findViewById(R.id.drag_handler);
 
             // TODO cancel on click listener when select items
             thumb.setOnClickListener(this);
@@ -357,15 +358,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     // 拖拽排序相关方法实现
     @Override
     public boolean onCheckCanStartDrag(DownloadHolder holder, int position, int x, int y) {
-        // 检查是否点击在拖拽手柄上，或者是否点击在thumb上且拖拽手柄可见
-        if (ViewUtils.isViewUnder(holder.dragHandler, x, y, 0) && holder.dragHandler.getVisibility() == View.VISIBLE) {
-            return true;
-        }
-        // 如果拖拽手柄不可见，检查是否点击在thumb上
-        if (ViewUtils.isViewUnder(holder.thumb, x, y, 0) && holder.dragHandler.getVisibility() == View.GONE) {
-            return true;
-        }
-        return false;
+        // 检查是否点击在thumb上
+        return ViewUtils.isViewUnder(holder.thumb, x, y, 0);
     }
 
     @Override
@@ -409,10 +403,49 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     @Override
     public void onItemDragStarted(int position) {
         // 拖拽开始时的处理
+        try {
+            // 设置RecyclerView为软件渲染模式以避免硬件位图问题
+            if (mCallback.getRecyclerView() != null) {
+                movedItem = mCallback.getRecyclerView().getChildAt(position);
+                movedItem.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+                Log.d("DownloadAdapter", "onItemDragStarted: " + position);
+            }
+        } catch (Exception e) {
+            // 忽略硬件位图相关错误
+            android.util.Log.e("DownloadAdapter", "Error in onItemDragStarted: " + e.getMessage());
+        }
     }
 
     @Override
     public void onItemDragFinished(int fromPosition, int toPosition, boolean result) {
         // 拖拽结束时的处理
+        try {
+            // 恢复RecyclerView为硬件加速模式
+            RecyclerView recyclerView = mCallback.getRecyclerView();
+            if (recyclerView != null) {
+//                if (recyclerView.getChildCount() >= toPosition + 1) {
+//                    recyclerView.getChildAt(toPosition + 1).setLayerType(View.LAYER_TYPE_HARDWARE, null);
+//                    Log.d("DownloadAdapter", "toPosition+1: " + (toPosition + 1));
+//                }
+
+//                if (toPosition >= 1) {
+//                    recyclerView.getChildAt(toPosition - 1).setLayerType(View.LAYER_TYPE_HARDWARE, null);
+//                    Log.d("DownloadAdapter", "toPosition-1: " + (toPosition - 1));
+//                }
+//                recyclerView.getChildAt(fromPosition).setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                if (movedItem != null) {
+                    movedItem.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                    Log.d("DownloadAdapter", "movedItem: " + movedItem);
+                } else {
+                    recyclerView.getChildAt(toPosition).setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                    Log.d("DownloadAdapter", "onItemDragFinished: " + toPosition);
+                }
+
+
+            }
+        } catch (Exception e) {
+            // 忽略硬件位图相关错误
+            android.util.Log.e("DownloadAdapter", "Error in onItemDragFinished: " + e.getMessage());
+        }
     }
 }

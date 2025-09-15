@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1uyBwzbf1n_dO1L_zWCYJvA) 提取码：sy3c
-- [蓝奏云](https://wwsu.lanzouu.com/iZB4g355985g)，电脑端可正常下载 提取码：ag8t
+- [百度云](https://pan.baidu.com/s/1qEUS4h1pEod8ifAHfsr3nA) 提取码：b2ga
+- [蓝奏云](https://wwsu.lanzouu.com/iSuEi368n53e)，电脑端可正常下载 提取码：h2y4
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:d297eb3575c9dd66b11fd1190da6de9ca99f13f4&xt=urn:btmh:1220bafa1275785022d096c4197f0b73c9d9302514841782dc155d4209967a2033e3&dn=EhViewer-2.0.0.1.apk&xl=23252182
+- Torrent链接: magnet:?xt=urn:btih:0f49565ab29fc7ab76ea313ca014442f2e9b0167&xt=urn:btmh:1220526f3b0ea65b5704625394e9ff546047e104e737c90e333a35b83ae1dc1beb5f&dn=EhViewer-2.0.0.2.apk&xl=23252086
 
 点击前往赏饭：
 
@@ -28,12 +28,23 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/09/15 :
+### 新版发布2.0.0.2
+
+- 修复了下载列表进行排序时UI状态出错的问题
+- 修复了下载列表尝试排序时APP崩溃的问题
+
 ## 2025/09/01 : 
 ### 新版发布2.0.0.1
 
 - 画廊名带“|”字符的都无法进行档案下载的问题
 - 搜索栏搜索时自动去除换行符
 - 千呼万唤始出来~下载列表添加排序功能，现在长按后即可拖动进行排序了
+- [百度云](https://pan.baidu.com/s/1uyBwzbf1n_dO1L_zWCYJvA) 提取码：sy3c
+- [蓝奏云](https://wwsu.lanzouu.com/iZB4g355985g)，电脑端可正常下载 提取码：ag8t
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:d297eb3575c9dd66b11fd1190da6de9ca99f13f4&xt=urn:btmh:1220bafa1275785022d096c4197f0b73c9d9302514841782dc155d4209967a2033e3&dn=EhViewer-2.0.0.1.apk&xl=23252182
+
 
 
 ## 2025/08/01 : 
