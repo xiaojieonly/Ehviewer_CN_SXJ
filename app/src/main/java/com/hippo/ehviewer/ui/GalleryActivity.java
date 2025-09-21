@@ -645,20 +645,22 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     public boolean onGenericMotion(View view, MotionEvent motionEvent) {
+        if (mGalleryView == null) {
+            return false;
+        }
+
         if (motionEvent.isFromSource(InputDevice.SOURCE_CLASS_POINTER)) {
             if (motionEvent.getAction() == MotionEvent.ACTION_SCROLL) {
-                float scrollX = motionEvent.getAxisValue(MotionEvent.AXIS_HSCROLL);
-                if (mGalleryView == null) {
-                    return false;
-                }
+                float scrollY = motionEvent.getAxisValue(MotionEvent.AXIS_VSCROLL);
+                if (scrollY == 0) return false;  // wrong input
                 if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
-                    if (scrollX > 0) {
+                    if (scrollY > 0) {
                         mGalleryView.pageLeft();
                     } else {
                         mGalleryView.pageRight();
                     }
                 } else {
-                    if (scrollX < 0) {
+                    if (scrollY < 0) {
                         mGalleryView.pageLeft();
                     } else {
                         mGalleryView.pageRight();
