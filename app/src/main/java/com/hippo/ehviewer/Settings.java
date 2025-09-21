@@ -64,6 +64,10 @@ public class Settings {
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
         sArchiverPre = context.getSharedPreferences("archiver_cache",Context.MODE_PRIVATE);
         sEhConfig = loadEhConfig();
+        if (getDarkModeStatus(context) && isThemeAutoSwitchAvailable()) {
+            putTheme(THEME_DARK);
+        } else putTheme(THEME_LIGHT);
+
         fixDefaultValue();
     }
 
@@ -324,6 +328,12 @@ public class Settings {
     public static boolean getDarkModeStatus(Context context) {
         int mode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         return mode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    public static final String KEY_THEME_AUTO_SWITCH = "theme_auto_switch";
+
+    public static boolean isThemeAutoSwitchAvailable() {
+        return getBoolean(KEY_THEME_AUTO_SWITCH, false);
     }
 
     public static final String KEY_APPLY_NAV_BAR_THEME_COLOR = "apply_nav_bar_theme_color";

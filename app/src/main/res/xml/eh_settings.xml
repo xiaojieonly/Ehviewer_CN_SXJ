@@ -69,6 +69,11 @@
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
+        android:key="theme_auto_switch"
+        android:title="@string/settings_eh_theme_auto_switch" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
         android:key="apply_nav_bar_theme_color"
         android:title="@string/settings_eh_apply_nav_bar_theme_color" />
 

@@ -1005,6 +1005,11 @@
     <string name="sort_by_pub_time">Published Time</string>
     <string name="sort_by_fav_time">Favorited Time</string>
     <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
+    <string name="settings_eh_theme_auto_switch">Follow system dark mode</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">Previous page</string>
+    <string name="spen_next_page">Next page</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Previous page</string>
