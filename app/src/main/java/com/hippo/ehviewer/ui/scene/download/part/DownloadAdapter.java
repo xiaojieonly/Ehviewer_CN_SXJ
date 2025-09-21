@@ -147,7 +147,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             String title = EhUtils.getSuitableTitle(info);
 
-            holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb, new ThumbDataContainer(info), true);
+            holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
+                    new ThumbDataContainer(info), true, false);
 
             holder.title.setText(title);
             holder.uploader.setText(info.uploader);

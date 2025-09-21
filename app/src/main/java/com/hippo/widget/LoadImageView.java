@@ -228,6 +228,10 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     }
 
     public void load(String key, String url, DataContainer dataContainer, boolean useNetwork) {
+        load(key, url, dataContainer, useNetwork, false);
+    }
+
+    public void load(String key, String url, DataContainer dataContainer, boolean useNetwork,boolean hardware) {
         if (url == null || key == null) {
             return;
         }
@@ -244,7 +248,8 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
                 .setUnikery(this)
                 .setKey(key)
                 .setUrl(url)
-                .setUseNetwork(useNetwork);
+                .setUseNetwork(useNetwork)
+                .setHardware(hardware);
         if (dataContainer!=null){
             builder.setDataContainer(dataContainer);
         }

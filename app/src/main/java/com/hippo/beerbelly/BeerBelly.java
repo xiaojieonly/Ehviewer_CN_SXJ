@@ -74,7 +74,7 @@ public abstract class BeerBelly<V> {
 
     protected abstract void memoryEntryRemoved(boolean evicted, String key, V oldValue, V newValue);
 
-    protected abstract V read(@NonNull InputStreamPipe isPipe);
+    protected abstract V read(@NonNull InputStreamPipe isPipe,boolean hardware);
 
     protected abstract boolean write(OutputStream os, V value);
 
@@ -190,6 +190,14 @@ public abstract class BeerBelly<V> {
         }
     }
 
+    public V getFromDisk(@NonNull String key,boolean hardware) {
+        if (mHasDiskCache && mDiskCache != null) {
+            return mDiskCache.get(key,hardware);
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Get value from memory cache and disk cache. If miss in memory cache and
      * get in disk cache, it will put value from disk cache to memory cache.
@@ -197,7 +205,7 @@ public abstract class BeerBelly<V> {
      * @param key the key to get value
      * @return the value you get
      */
-    public V get(@NonNull String key) {
+    public V get(@NonNull String key,boolean hardware) {
         V value = getFromMemory(key);
 
         if (value != null) {
@@ -205,7 +213,7 @@ public abstract class BeerBelly<V> {
             return value;
         }
 
-        value = getFromDisk(key);
+        value = getFromDisk(key,hardware);
 
         if (value != null) {
             // Get it in disk cache
@@ -418,11 +426,15 @@ public abstract class BeerBelly<V> {
         }
 
         public E get(String key) {
+            return get(key,true);
+        }
+
+        public E get(String key,boolean hardware) {
             InputStreamPipe isPipe = mDiskCache.getInputStreamPipe(key);
             if (isPipe == null) {
                 return null;
             } else {
-                return mParent.read(isPipe);
+                return mParent.read(isPipe,hardware);
             }
         }
 

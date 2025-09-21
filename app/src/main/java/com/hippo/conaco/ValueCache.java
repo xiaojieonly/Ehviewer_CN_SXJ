@@ -50,8 +50,8 @@ class ValueCache<V> extends BeerBelly<V> {
     }
 
     @Override
-    protected V read(@NonNull InputStreamPipe isPipe) {
-        return mHelper.decode(isPipe);
+    protected V read(@NonNull InputStreamPipe isPipe,boolean hardware) {
+        return mHelper.decode(isPipe,hardware);
     }
 
     @Override

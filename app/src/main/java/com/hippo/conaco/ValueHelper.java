@@ -32,6 +32,9 @@ public interface ValueHelper<V> {
     @Nullable
     V decode(@NonNull InputStreamPipe isPipe);
 
+    @Nullable
+    V decode(@NonNull InputStreamPipe isPipe, boolean hardware);
+
     /**
      * Get the size of the object
      */

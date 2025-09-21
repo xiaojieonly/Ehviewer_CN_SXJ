@@ -18,6 +18,8 @@ package com.hippo.ehviewer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.conaco.ValueHelper;
 import com.hippo.lib.image.Image;
 import com.hippo.streampipe.InputStreamPipe;
@@ -32,13 +34,17 @@ public class ImageBitmapHelper implements ValueHelper<Image> {
     @Nullable
     @Override
     public Image decode(@NonNull InputStreamPipe isPipe) {
+        return decode(isPipe,true);
+    }
+
+    @Nullable
+    public Image decode(@NonNull InputStreamPipe isPipe,boolean hardware) {
         try {
             isPipe.obtain();
             FileInputStream is = (FileInputStream) isPipe.open();
-            // todo: fix `Software rendering doesn't support hardware bitmaps` when hardware arg is true.
-            // disable hardware canvas.
-            return Image.decode(is,false);
+            return Image.decode(is,hardware);
         } catch (OutOfMemoryError e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
             return null;
         } catch (IOException e) {
             return null;

@@ -64,6 +64,7 @@ public class ConacoTask<V> {
     private NetworkLoadTask mNetworkLoadTask;
     private Call mCall;
     private boolean mStart;
+    private boolean hardware = true;
     private volatile boolean mStop;
 
     private ConacoTask(Builder<V> builder) {
@@ -81,6 +82,7 @@ public class ConacoTask<V> {
         mDiskExecutor = builder.mDiskExecutor;
         mNetworkExecutor = builder.mNetworkExecutor;
         mConaco = builder.mConaco;
+        hardware = builder.hardware;
     }
 
     int getId() {
@@ -223,14 +225,14 @@ public class ConacoTask<V> {
                 if (mDataContainer != null && mDataContainer.isEnabled()) {
                     InputStreamPipe isp = mDataContainer.get();
                     if (isp != null) {
-                        value = mHelper.decode(isp);
+                        value = mHelper.decode(isp,hardware);
                     }
                 }
 
                 // Then check disk cache
                 if (mKey != null) {
                     if (value == null && mUseDiskCache) {
-                        value = mCache.getFromDisk(mKey);
+                        value = mCache.getFromDisk(mKey,hardware);
                         // Put back to data container
                         if (value != null && mDataContainer != null && mDataContainer.isEnabled()) {
                             putFromDiskCacheToDataContainer(mKey, mCache, mDataContainer);
@@ -353,7 +355,7 @@ public class ConacoTask<V> {
                 if ((mDataContainer == null || !mDataContainer.isEnabled()) && mKey != null) {
                     if (putToDiskCache(is, body.contentLength())) {
                         // Get object from disk cache
-                        value = mCache.getFromDisk(mKey);
+                        value = mCache.getFromDisk(mKey,hardware);
                         if (value == null) {
                             // Maybe bad download, remove it from disk cache
                             mCache.removeFromDisk(mKey);
@@ -385,7 +387,7 @@ public class ConacoTask<V> {
                     if (isp == null) {
                         return null;
                     }
-                    value = mHelper.decode(isp);
+                    value = mHelper.decode(isp,hardware);
                     if (value == null) {
                         mDataContainer.remove();
                     } else if (mKey != null) {
@@ -462,6 +464,7 @@ public class ConacoTask<V> {
         private Executor mDiskExecutor;
         private Executor mNetworkExecutor;
         private Conaco<T> mConaco;
+        private boolean hardware = true;
 
         public Builder<T> setId(int id) {
             mId = id;
@@ -572,6 +575,15 @@ public class ConacoTask<V> {
 
         public ConacoTask<T> build() {
             return new ConacoTask<>(this);
+        }
+
+        public boolean isHardware() {
+            return hardware;
+        }
+
+        public Builder<T> setHardware(boolean hardware) {
+            this.hardware = hardware;
+            return this;
         }
     }
 }
