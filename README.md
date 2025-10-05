@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1qEUS4h1pEod8ifAHfsr3nA) 提取码：b2ga
-- [蓝奏云](https://wwsu.lanzouu.com/iSuEi368n53e)，电脑端可正常下载 提取码：h2y4
+- [百度云](https://pan.baidu.com/s/1fYqw1r5TJhGDbkEJ2Rh8_g) 提取码：3a3i
+- [蓝奏云](https://wwsu.lanzouu.com/iq4yI37qanuf)，电脑端可正常下载 提取码：4iy5
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:0f49565ab29fc7ab76ea313ca014442f2e9b0167&xt=urn:btmh:1220526f3b0ea65b5704625394e9ff546047e104e737c90e333a35b83ae1dc1beb5f&dn=EhViewer-2.0.0.2.apk&xl=23252086
+- Torrent链接: magnet:?xt=urn:btih:d560eff7c0a35b09b9d65d938eaa3c41c2534389&xt=urn:btmh:12206e25d57caede79b769ed2e71c9142980544d8e845a0674dab0e90c638862893a&dn=EhViewer-2.0.0.3.apk&xl=23252902
 
 点击前往赏饭：
 
@@ -28,11 +28,25 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/10/05 : 感谢nullcat的pr   
+### 新版发布2.0.0.3    
+
+- 修复下载列表排序功能在部分机型上会崩溃的问题    
+- add samsung Air action support (#2119)    
+- wrong direction on mouse scroll (#2130)    
+- add auto dark mode (#2126)    
+
 ## 2025/09/15 :
 ### 新版发布2.0.0.2
 
 - 修复了下载列表进行排序时UI状态出错的问题
 - 修复了下载列表尝试排序时APP崩溃的问题
+- [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
+- [百度云](https://pan.baidu.com/s/1qEUS4h1pEod8ifAHfsr3nA) 提取码：b2ga
+- [蓝奏云](https://wwsu.lanzouu.com/iSuEi368n53e)，电脑端可正常下载 提取码：h2y4
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:0f49565ab29fc7ab76ea313ca014442f2e9b0167&xt=urn:btmh:1220526f3b0ea65b5704625394e9ff546047e104e737c90e333a35b83ae1dc1beb5f&dn=EhViewer-2.0.0.2.apk&xl=23252086
+
 
 ## 2025/09/01 : 
 ### 新版发布2.0.0.1

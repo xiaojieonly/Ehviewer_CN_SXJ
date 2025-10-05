@@ -1,13 +1,15 @@
 {
-  "version": "2.0.0.2",
+  "version": "2.0.0.3",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.2",
+    "title": "新版发布2.0.0.3：感谢nullcat的pr",
     "content": [
-      "修复了下载列表进行排序时UI状态出错的问题",
-      "修复了下载列表尝试排序时APP崩溃的问题"
+      "修复下载列表排序功能在部分机型上会崩溃的问题",
+      "add samsung Air action support (#2119)",
+      "wrong direction on mouse scroll (#2130)",
+      "add auto dark mode (#2126)"
     ]
   }
 }
