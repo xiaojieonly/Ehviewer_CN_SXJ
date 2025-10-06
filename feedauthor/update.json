@@ -1,10 +1,10 @@
 {
-  "version": "2.0.0.3",
+  "version": "2.0.0.4",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.3：感谢nullcat的pr",
+    "title": "新版发布2.0.0.4：感谢nullcat的pr",
     "content": [
       "修复下载列表排序功能在部分机型上会崩溃的问题",
       "add samsung Air action support (#2119)",

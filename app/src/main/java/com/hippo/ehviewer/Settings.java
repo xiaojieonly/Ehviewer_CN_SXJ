@@ -66,7 +66,7 @@ public class Settings {
         sEhConfig = loadEhConfig();
         if (getDarkModeStatus(context) && isThemeAutoSwitchAvailable()) {
             putTheme(THEME_DARK);
-        } else putTheme(THEME_LIGHT);
+        }
 
         fixDefaultValue();
     }
