@@ -71,6 +71,8 @@ import java.util.Map;
 public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.DownloadHolder>
         implements DraggableItemAdapter<DownloadAdapter.DownloadHolder> {
 
+    public static boolean DRAG_ENABLE = false;
+
     private final LayoutInflater mInflater;
     private final int mListThumbWidth;
     private final int mListThumbHeight;
@@ -358,7 +360,10 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
     // 拖拽排序相关方法实现
     @Override
-    public boolean onCheckCanStartDrag(DownloadHolder holder, int position, int x, int y) {
+    public boolean onCheckCanStartDrag(@NonNull DownloadHolder holder, int position, int x, int y) {
+        if (!DRAG_ENABLE){
+            return false;
+        }
         // 检查是否点击在thumb上
         return ViewUtils.isViewUnder(holder.thumb, x, y, 0);
     }
@@ -398,7 +403,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
     @Override
     public boolean onCheckCanDrop(int draggingPosition, int dropPosition) {
-        return true;
+        return DRAG_ENABLE;
     }
 
     @Override

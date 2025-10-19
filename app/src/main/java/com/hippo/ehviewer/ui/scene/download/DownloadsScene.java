@@ -18,6 +18,7 @@ package com.hippo.ehviewer.ui.scene.download;
 
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
+import static com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter.DRAG_ENABLE;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -25,7 +26,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
@@ -51,6 +51,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -214,6 +215,7 @@ public class DownloadsScene extends ToolbarScene
 
     private boolean needInitPage = false;
     private boolean needInitPageSize = false;
+
     @NonNull
     private final ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -405,7 +407,7 @@ public class DownloadsScene extends ToolbarScene
         mViewTransition = new ViewTransition(content, tip);
 
         Context context = getEHContext();
-        AssertUtils.assertNotNull(content);
+        assert context != null;
         Resources resources = context.getResources();
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_download);
@@ -421,9 +423,11 @@ public class DownloadsScene extends ToolbarScene
             android.util.Log.w("DownloadsScene", "Error setting drag shadow: " + e.getMessage());
         }
 
+
         mOriginalAdapter = new DownloadAdapter(this, this);
         mOriginalAdapter.setHasStableIds(true);
         mAdapter = mDragDropManager.createWrappedAdapter(mOriginalAdapter); // 包装适配器以支持拖拽
+        mDragDropManager.setCheckCanDropEnabled(false);
         mRecyclerView.setAdapter(mAdapter);
         
         // 初始化分页监听器
@@ -999,8 +1003,23 @@ public class DownloadsScene extends ToolbarScene
                     onClickPrimaryFab(mFabLayout,null);
                     viewRandom();
                     break;
+                case 6:
+                    setDragEnable(fab);
+                    break;
             }
         }
+    }
+
+    private void setDragEnable(FloatingActionButton fab) {
+        DRAG_ENABLE = !DRAG_ENABLE;
+        Context context = getEHContext();
+        if (null == context) return;
+        if (DRAG_ENABLE) {
+            fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.v_mobile_hand_left_x24, context.getTheme()));
+        } else {
+            fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.v_mobile_hand_left_off_x24, context.getTheme()));
+        }
+//        mDragDropManager.cancelDrag(dragEnable);
     }
 
     private void viewRandom() {
