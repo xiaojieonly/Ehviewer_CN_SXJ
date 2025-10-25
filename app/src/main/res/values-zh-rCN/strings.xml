@@ -592,6 +592,8 @@
     <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
     <string name="settings_download_clean_redundancy_done">完成冗余清理，共清理 %d 项</string>
+    <string name="settings_download_clean_invalid_download_summary">清空任何无效的下载项，尤其是下载未完整的下载项，不会清空已完成的下载项</string>
+    <string name="settings_download_clean_invalid_download">清空无效的下载项</string>
 
     <string name="settings_advanced">高级</string>
     <string name="settings_advanced_save_parse_error_body">解析失败时保存页面内容</string>
@@ -932,6 +934,7 @@
     <string name="sort_by_fav_time">按收藏时间</string>
     <string name="settings_eh_sign_out_restart">正在为您自动重启，请稍候</string>
     <string name="settings_eh_theme_auto_switch">深色跟随系统</string>
+    <string name="settings_eh_system_theme">系统主题</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一页</string>

@@ -77,6 +77,11 @@
         android:key="apply_nav_bar_theme_color"
         android:title="@string/settings_eh_apply_nav_bar_theme_color" />
 
+    <Preference
+        android:key="system_theme"
+        android:title="@string/settings_eh_system_theme"
+        android:summary="未知" />
+
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="launch_page"

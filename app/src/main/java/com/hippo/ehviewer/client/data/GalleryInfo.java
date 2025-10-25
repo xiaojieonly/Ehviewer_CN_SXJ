@@ -135,6 +135,62 @@ public class GalleryInfo implements Parcelable {
     public int favoriteSlot = -2;
     public String favoriteName;
 
+    public String toCSV() {
+        return gid + "," +
+                token + "," +
+                title + "," +
+                titleJpn + "," +
+                thumb + "," +
+                category + "," +
+                posted + "," +
+                uploader + "," +
+                rating + "," +
+                rated + "," +
+                simpleLanguage + "," +
+                Arrays.toString(simpleTags) + "," +
+                thumbWidth + "," +
+                thumbHeight + "," +
+                spanSize + "," +
+                spanIndex + "," +
+                spanGroupIndex + "," +
+                favoriteSlot + "," +
+                favoriteName + "," +
+                pages + "\n";
+    }
+
+    public static GalleryInfo fromCSV(String csv) {
+        String[] values = csv.split(",");
+        if (values.length < 20) {
+            return null;
+        }
+        GalleryInfo gi = new GalleryInfo();
+        try {
+            gi.gid = Long.parseLong(values[0]);
+            gi.token = values[1];
+            gi.title = values[2];
+            gi.titleJpn = values[3];
+            gi.thumb = values[4];
+            gi.category = Integer.parseInt(values[5]);
+            gi.posted = values[6];
+            gi.uploader = values[7];
+            gi.rating = Float.parseFloat(values[8]);
+            gi.rated = Boolean.parseBoolean(values[9]);
+            gi.simpleLanguage = values[10];
+            gi.simpleTags = values[11].substring(1, values[11].length() - 1).split(", ");
+            gi.thumbWidth = Integer.parseInt(values[12]);
+            gi.thumbHeight = Integer.parseInt(values[13]);
+            gi.spanSize = Integer.parseInt(values[14]);
+            gi.spanIndex = Integer.parseInt(values[15]);
+            gi.spanGroupIndex = Integer.parseInt(values[16]);
+            gi.favoriteSlot = Integer.parseInt(values[17]);
+            gi.favoriteName = values[18];
+            gi.pages = Integer.parseInt(values[19].trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        return gi;
+    }
+
     public final void generateSLang() {
         if (simpleTags != null) {
             generateSLangFromTags();

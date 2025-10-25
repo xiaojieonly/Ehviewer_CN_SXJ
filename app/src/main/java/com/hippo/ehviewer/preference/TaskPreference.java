@@ -22,6 +22,8 @@ import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.view.View;
+import android.widget.ProgressBar;
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -164,7 +166,7 @@ public abstract class TaskPreference extends DialogPreference {
                 };
     }
 
-    public abstract static class Task extends AsyncTask<Void, Void, Object> {
+    public abstract static class Task extends AsyncTask<Void, int[], Object> {
 
         private final EhApplication mApplication;
         @Nullable
@@ -185,6 +187,30 @@ public abstract class TaskPreference extends DialogPreference {
 
         public void setPreference(@Nullable TaskPreference preference) {
             mPreference = preference;
+        }
+
+        @Override
+        protected void onProgressUpdate(int[]... values) {
+            // Expecting one int[] with {current, total}; when total <= 0, show indeterminate
+            if (mPreference == null) return;
+            Dialog dialog = mPreference.getDialog();
+            if (dialog == null) return;
+            ProgressBar bar = dialog.findViewById(R.id.task_progress);
+            if (bar == null) return;
+            if (values == null || values.length == 0 || values[0] == null || values[0].length < 2) return;
+            int current = values[0][0];
+            int total = values[0][1];
+            bar.setVisibility(View.VISIBLE);
+            if (total <= 0) {
+                bar.setIndeterminate(true);
+            } else {
+                bar.setIndeterminate(false);
+                // Ensure current in bounds
+                if (current < 0) current = 0;
+                if (current > total) current = total;
+                bar.setMax(total);
+                bar.setProgress(current);
+            }
         }
 
         @CallSuper

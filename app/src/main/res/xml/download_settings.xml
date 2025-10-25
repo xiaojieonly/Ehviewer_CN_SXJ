@@ -95,4 +95,9 @@
         android:title="@string/settings_download_clean_redundancy"
         app:allowDividerAbove="true" />
 
+    <Preference
+        android:key="clean_invalid_download"
+        android:summary="@string/settings_download_clean_invalid_download_summary"
+        android:title="@string/settings_download_clean_invalid_download"
+        app:allowDividerAbove="true" />
 </PreferenceScreen>
