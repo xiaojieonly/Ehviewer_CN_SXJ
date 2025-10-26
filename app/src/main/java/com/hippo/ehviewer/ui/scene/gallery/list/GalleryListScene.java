@@ -1896,9 +1896,15 @@ public final class GalleryListScene extends BaseScene
     private void onGetGalleryListSuccess(GalleryListParser.Result result, int taskId) {
         if (mHelper != null && mSearchBarMover != null &&
                 mHelper.isCurrentTask(taskId)) {
-            String emptyString = getResources2().getString(mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION && result.noWatchedTags
-                    ? R.string.gallery_list_empty_hit_subscription
-                    : R.string.gallery_list_empty_hit);
+            String emptyString;
+            if (result.customErrorString == null) {
+                emptyString = getResources2().getString(mUrlBuilder.getMode() == ListUrlBuilder.MODE_SUBSCRIPTION && result.noWatchedTags
+                        ? R.string.gallery_list_empty_hit_subscription
+                        : R.string.gallery_list_empty_hit);
+            } else {
+                emptyString = result.customErrorString;
+            }
+
             mHelper.setEmptyString(emptyString);
 //            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
             mHelper.onGetPageData(taskId, result, result.galleryInfoList);

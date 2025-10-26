@@ -75,6 +75,7 @@ public class GalleryListParser {
         public String prevHref;
         public String nextHref;
         public String lastHref;
+        public String customErrorString;
         public boolean noWatchedTags;
         public List<GalleryInfo> galleryInfoList = new ArrayList<>();
     }

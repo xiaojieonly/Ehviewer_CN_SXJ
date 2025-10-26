@@ -279,7 +279,7 @@ public class EhEngine {
             headers = response.headers();
             assert response.body() != null;
             body = response.body().string();
-            result = GalleryListParser.parse(body,mode);
+            result = GalleryListParser.parse(body, mode);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);
@@ -287,6 +287,10 @@ public class EhEngine {
         }
 
         fillGalleryList(task, okHttpClient, result.galleryInfoList, url, true);
+
+        if (code == 200 && url.equals("https://exhentai.org/") && body.isEmpty()) {
+            result.customErrorString = GetText.getString(R.string.error_igneous_wrong);
+        }
 
         return result;
     }
