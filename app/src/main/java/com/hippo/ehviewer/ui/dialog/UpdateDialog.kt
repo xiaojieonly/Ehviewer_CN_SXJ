@@ -12,7 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.alibaba.fastjson.JSONObject
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.updater.AppUpdater
@@ -59,7 +59,7 @@ class UpdateDialog(private val activity: Activity) {
                 alertDialog.show()
             }
         } catch (e: Exception) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            Analytics.recordException(e)
         }
     }
 
@@ -98,7 +98,7 @@ class UpdateDialog(private val activity: Activity) {
                 alertDialog.show()
             }
         } catch (e: Exception) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            Analytics.recordException(e)
         }
     }
 
@@ -235,7 +235,7 @@ class UpdateDialog(private val activity: Activity) {
             }
         } catch (t: Throwable) {
             ExceptionUtils.throwIfFatal(t)
-            FirebaseCrashlytics.getInstance().recordException(t)
+            Analytics.recordException(t)
             return false
         }
     }

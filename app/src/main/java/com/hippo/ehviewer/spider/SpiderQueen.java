@@ -32,6 +32,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
 import com.hippo.beerbelly.SimpleDiskCache;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
@@ -64,7 +65,6 @@ import com.hippo.lib.yorozuya.Utilities;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
 import com.hippo.lib.yorozuya.thread.PriorityThread;
 import com.hippo.lib.yorozuya.thread.PriorityThreadFactory;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -604,7 +604,7 @@ public final class SpiderQueen implements Runnable {
                     mWorkerPoolExecutor.execute(new SpiderWorker());
                 }
             } catch (OutOfMemoryError outOfMemoryError) {
-                FirebaseCrashlytics.getInstance().recordException(outOfMemoryError);
+                Analytics.recordException(outOfMemoryError);
                 notifyFinish();
             }
         }
@@ -811,7 +811,7 @@ public final class SpiderQueen implements Runnable {
             return spiderInfo;
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
-            FirebaseCrashlytics.getInstance().recordException(e);
+            Analytics.recordException(e);
             return null;
         }
     }
@@ -1309,7 +1309,7 @@ public final class SpiderQueen implements Runnable {
                     } catch (IOException e) {
                         error = "GP不足/Insufficient GP";
                         IOException ioException = new IOException("原图链接获取失败", e);
-                        FirebaseCrashlytics.getInstance().recordException(ioException);
+                        Analytics.recordException(ioException);
                         break;
                     }
                 } else {
@@ -1419,7 +1419,7 @@ public final class SpiderQueen implements Runnable {
                                         cancelDownload = false;
                                         downloadSpeedZeroTimeCount.schedule(new TimeCount(), 3000);
                                     } catch (Throwable e) {
-                                        FirebaseCrashlytics.getInstance().recordException(e);
+                                        Analytics.recordException(e);
                                     }
                                 }
                                 if (cancelDownload) {
@@ -1796,14 +1796,14 @@ public final class SpiderQueen implements Runnable {
                 if (is != null) {
                     try {
                         image = Image.decode((FileInputStream) is, false);
-                    }catch (OutOfMemoryError e){
-                        FirebaseCrashlytics.getInstance().recordException(e);
-                    }finally {
+                    } catch (OutOfMemoryError e){
+                        Analytics.recordException(e);
+                    } finally {
                         try {
                             is.close();
                         } catch (IOException e) {
                             Log.e(TAG, "解码失败", e);
-                            FirebaseCrashlytics.getInstance().recordException(e);
+                            Analytics.recordException(e);
                         }
                     }
                     if (image == null) {

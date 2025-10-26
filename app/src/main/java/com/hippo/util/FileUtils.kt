@@ -5,14 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.Toast
 import androidx.core.net.toUri
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.client.EhConfig
 import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.unifile.UniFile
@@ -74,7 +71,7 @@ class FileUtils {
                 return true
             } catch (ioException: IOException) {
                 ExceptionUtils.throwIfFatal(ioException)
-                FirebaseCrashlytics.getInstance().recordException(ioException)
+                Analytics.recordException(ioException)
                 return false
             }
         }
@@ -99,7 +96,7 @@ class FileUtils {
                 return true
             } catch (ioException: IOException) {
                 ExceptionUtils.throwIfFatal(ioException)
-                FirebaseCrashlytics.getInstance().recordException(ioException)
+                Analytics.recordException(ioException)
                 return false
             }
         }
@@ -180,7 +177,7 @@ class FileUtils {
                 `is` = FileInputStream(file)
                 return IOUtils.readString(`is`, "utf-8")
             } catch (e: IOException) {
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 Log.e(TAG, e.message, e)
                 return null
             } finally {

@@ -37,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
@@ -48,7 +49,6 @@ import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.util.PermissionRequester;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -286,7 +286,7 @@ public class WiFiClientActivity extends AppCompatActivity {
                    DownloadInfo info = DownloadInfo.downloadInfoFromJson(jsonArray.getJSONObject(i));
                    manager.addDownloadInfo(info,info.label);
                }catch (ClassCastException e){
-                   FirebaseCrashlytics.getInstance().recordException(e);
+                   Analytics.recordException(e);
                }
             }
             connectThread.dataProcessed(response);

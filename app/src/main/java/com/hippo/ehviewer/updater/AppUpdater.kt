@@ -4,12 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONException
 import com.alibaba.fastjson.JSONObject
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.AppConfig
 import com.hippo.ehviewer.BuildConfig
 import com.hippo.ehviewer.EhApplication
@@ -24,7 +23,6 @@ import com.hippo.util.IoThreadPoolExecutor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.BufferedSource
-import okio.Okio
 import okio.buffer
 import okio.source
 import java.io.File
@@ -222,7 +220,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                 } else currentVersionCode < tempUpdateData.getInteger(VERSION_CODE)
             } catch (e: JSONException) {
                 Log.e(TAG, e.message, e)
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 return false
             }
         }
@@ -246,7 +244,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                 }
             } catch (t: Throwable) {
                 ExceptionUtils.throwIfFatal(t)
-                FirebaseCrashlytics.getInstance().recordException(t)
+                Analytics.recordException(t)
                 return false
             }
         }

@@ -19,7 +19,12 @@ package com.hippo.ehviewer;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.scene.SceneFragment;
 import java.util.Locale;
 
@@ -28,6 +33,7 @@ import java.util.Locale;
  */
 public final class Analytics {
 
+    private static final String LOG_TAG = "Analytics";
     private static final String DEVICE_LANGUAGE = "device_language";
 
     private static FirebaseAnalytics analytics;
@@ -61,6 +67,20 @@ public final class Analytics {
             bundle.putString("scene_simple_class", scene.getClass().getSimpleName());
             bundle.putString("scene_class", scene.getClass().getName());
             analytics.logEvent("scene_view", bundle);
+        }
+    }
+
+    public static void recordException(@NonNull Throwable e) {
+        Log.e(LOG_TAG, "Unexpected error raised", e);
+
+        if (isEnabled()) {
+            try {
+                FirebaseCrashlytics.getInstance().recordException(e);
+            } catch (Exception ex) {
+                // firebase not init or others?
+                // just throw original error
+                Log.e(LOG_TAG, "Firebase error: " + ex);
+            }
         }
     }
 }

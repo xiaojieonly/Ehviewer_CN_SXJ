@@ -26,6 +26,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -44,7 +45,6 @@ import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.lib.yorozuya.collect.SparseIJArray;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -214,7 +214,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 return 0;
             }
         } catch (NullPointerException e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            Analytics.recordException(e);
             return 0;
         }
     }

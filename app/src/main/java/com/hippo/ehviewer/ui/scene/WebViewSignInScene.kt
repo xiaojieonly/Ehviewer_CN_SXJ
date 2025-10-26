@@ -29,7 +29,7 @@ import com.acsbendi.requestinspectorwebview.RequestInspectorOptions
 import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient
 import com.acsbendi.requestinspectorwebview.WebViewRequest
 import com.acsbendi.requestinspectorwebview.WebViewRequestType
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhCookieStore
@@ -157,8 +157,7 @@ class WebViewSignInScene : SolidScene() {
                 }
                 return convertOkHttpResponse(response)
             } catch (e: IOException) {
-                e.printStackTrace()
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
             }
             return null
         }
