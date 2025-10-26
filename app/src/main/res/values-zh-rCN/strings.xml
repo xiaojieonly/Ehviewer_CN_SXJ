@@ -926,7 +926,7 @@
     <string name="cookie_in_clipboard_incorrect">Cookie格式不正确</string>
     <string name="settings_download_timeout">下载超时时间</string>
     <string name="download_timeout_unlimited">无上限</string>
-    <string name="settings_download_timeout_summary">%s(S),下载一张图片的最大可用时长。</string>
+    <string name="settings_download_timeout_summary">%s 秒，下载一张图片的最大可用时长。</string>
     <string name="have_new_version">点击查看新的画廊版本</string>
     <string name="archiver_downloading">档案下载中 %s</string>
     <string name="order">排序</string>
@@ -939,5 +939,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一页</string>
     <string name="spen_next_page">下一页</string>
+    <string name="category_all">全部</string>
+
 
 </resources>

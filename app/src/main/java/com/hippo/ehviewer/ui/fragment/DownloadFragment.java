@@ -75,14 +75,36 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         addPreferencesFromResource(R.xml.download_settings);
 
         Preference mediaScan = findPreference(Settings.KEY_MEDIA_SCAN);
+        Preference downloadThread = findPreference("download_thread");
         Preference imageResolution = findPreference(Settings.KEY_IMAGE_RESOLUTION);
         Preference downloadTimeout = findPreference(Settings.KEY_DOWNLOAD_TIMEOUT);
         mDownloadLocation = findPreference(KEY_DOWNLOAD_LOCATION);
         Preference exportDownloadItems = findPreference(KEY_EXPORT_DOWNLOAD_ITEMS);
         Preference importDownloadItems = findPreference(KEY_IMPORT_DOWNLOAD_ITEMS);
         Preference cleanInvalidDownload = findPreference(KEY_CLEAN_INVALID_DOWNLOAD);
+        Preference preloadImage = findPreference("preload_image");
+        Preference imageResolutionPref = findPreference(Settings.KEY_IMAGE_RESOLUTION);
 
         onUpdateDownloadLocation();
+
+        // Initialize summaries with current settings
+        if (downloadThread != null) {
+            downloadThread.setSummary(getString(R.string.settings_download_multi_thread_download_summary, String.valueOf(Settings.getMultiThreadDownload())));
+        }
+        if (imageResolution != null) {
+            imageResolution.setSummary(getString(R.string.settings_download_image_resolution_summary, Settings.getImageResolution()));
+        }
+        if (downloadTimeout != null) {
+            String timeoutStr = Settings.getDownloadTimeout() == 0 ? getString(R.string.download_timeout_unlimited) : String.valueOf(Settings.getDownloadTimeout());
+            downloadTimeout.setSummary(getString(R.string.settings_download_timeout_summary, timeoutStr));
+        }
+        if(preloadImage != null){
+            preloadImage.setSummary(getString(R.string.settings_download_preload_image_summary, String.valueOf(Settings.getPreloadImage())));
+        }
+        if(imageResolutionPref != null){
+            imageResolutionPref.setSummary(getString(R.string.settings_download_image_resolution_summary, Settings.getImageResolution()));
+        }
+
 
         if (mediaScan != null) {
             mediaScan.setOnPreferenceChangeListener(this);
