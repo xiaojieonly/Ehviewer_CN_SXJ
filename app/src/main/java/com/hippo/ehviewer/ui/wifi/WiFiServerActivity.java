@@ -34,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.alibaba.fastjson.JSONArray;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -44,7 +45,6 @@ import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.ui.ToolbarActivity;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -345,8 +345,7 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                     try {
                         openSocket();
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        FirebaseCrashlytics.getInstance().recordException(e);
+                        Analytics.recordException(e);
                     }
                 }
                 connectThread.sendData(dataHand);

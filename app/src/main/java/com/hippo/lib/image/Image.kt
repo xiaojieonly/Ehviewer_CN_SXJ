@@ -17,13 +17,13 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.graphics.drawable.toDrawable
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.EhApplication
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
 import androidx.core.graphics.createBitmap
+import com.hippo.ehviewer.Analytics
 
 
 class Image private constructor(
@@ -185,7 +185,7 @@ class Image private constructor(
                 height
             )
         } catch (e: ClassCastException) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            Analytics.recordException(e)
             return
         }
     }
@@ -227,7 +227,7 @@ class Image private constructor(
                 return Image(stream, hardware = hardware)
             } catch (e: Exception) {
                 e.printStackTrace()
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 return null
             }
         }
@@ -238,7 +238,7 @@ class Image private constructor(
                 return Image(null, drawable, hardware = hardware)
             } catch (e: Exception) {
                 e.printStackTrace()
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 return null
             }
         }

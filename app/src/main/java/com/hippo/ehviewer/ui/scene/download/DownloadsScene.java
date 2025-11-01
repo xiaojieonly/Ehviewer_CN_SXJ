@@ -68,6 +68,7 @@ import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.FastScroller;
 import com.hippo.easyrecyclerview.HandlerDrawable;
 import com.hippo.easyrecyclerview.MarginItemDecoration;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
@@ -102,7 +103,6 @@ import com.hippo.lib.yorozuya.ObjectUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.lib.yorozuya.collect.LongList;
 import com.sxj.paginationlib.PaginationIndicator;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
 
@@ -360,8 +360,7 @@ public class DownloadsScene extends ToolbarScene
                     Integer.toString(mList == null ? 0 : mList.size()),
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         } catch (Exception e) {
-            e.printStackTrace();
-            FirebaseCrashlytics.getInstance().recordException(e);
+            Analytics.recordException(e);
             setTitle(getString(R.string.scene_download_title,
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         }
