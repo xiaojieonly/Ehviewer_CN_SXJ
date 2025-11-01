@@ -166,10 +166,10 @@ public class EhDB {
                         "\"UPDATE_TIME\" INTEGER);"); // 15: update_time
             case 6: // 6 to 7, add ARCHIVEURI column to DOWNLOADS table
                 try {
-                    db.execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVEURI\" TEXT");
+                    db.execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVE_URI\" TEXT");
                 } catch (Exception e) {
                     // Column might already exist, ignore the error
-                    Log.w("EhDB", "Failed to add ARCHIVEURI column, might already exist", e);
+                    Log.w("EhDB", "Failed to add ARCHIVE_URI column, might already exist", e);
                 }
         }
     }

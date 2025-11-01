@@ -17,37 +17,20 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
 
     public static final String TABLENAME = "DOWNLOADS";
 
-    /**
-     * Properties of entity DownloadInfo.<br/>
-     * Can be used for QueryBuilder and for referencing column names.
-    */
-    public static class Properties {
-        public final static Property Gid = new Property(0, long.class, "gid", true, "GID");
-        public final static Property Token = new Property(1, String.class, "token", false, "TOKEN");
-        public final static Property Title = new Property(2, String.class, "title", false, "TITLE");
-        public final static Property TitleJpn = new Property(3, String.class, "titleJpn", false, "TITLE_JPN");
-        public final static Property Thumb = new Property(4, String.class, "thumb", false, "THUMB");
-        public final static Property Category = new Property(5, int.class, "category", false, "CATEGORY");
-        public final static Property Posted = new Property(6, String.class, "posted", false, "POSTED");
-        public final static Property Uploader = new Property(7, String.class, "uploader", false, "UPLOADER");
-        public final static Property Rating = new Property(8, float.class, "rating", false, "RATING");
-        public final static Property SimpleLanguage = new Property(9, String.class, "simpleLanguage", false, "SIMPLE_LANGUAGE");
-        public final static Property State = new Property(10, int.class, "state", false, "STATE");
-        public final static Property Legacy = new Property(11, int.class, "legacy", false, "LEGACY");
-        public final static Property Time = new Property(12, long.class, "time", false, "TIME");
-        public final static Property Label = new Property(13, String.class, "label", false, "LABEL");
-    };
-
-
     public DownloadsDao(DaoConfig config) {
         super(config);
     }
-    
+
+    ;
+
+
     public DownloadsDao(DaoConfig config, DaoSession daoSession) {
         super(config, daoSession);
     }
 
-    /** Creates the underlying database table. */
+    /**
+     * Creates the underlying database table.
+     */
     public static void createTable(Database db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"DOWNLOADS\" (" + //
@@ -64,10 +47,13 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
                 "\"STATE\" INTEGER NOT NULL ," + // 10: state
                 "\"LEGACY\" INTEGER NOT NULL ," + // 11: legacy
                 "\"TIME\" INTEGER NOT NULL ," + // 12: time
-                "\"LABEL\" TEXT);"); // 13: label
+                "\"LABEL\" TEXT);" + // 13: label
+                "\"ARCHIVE_URI\" TEXT);"); // 13: label
     }
 
-    /** Drops the underlying database table. */
+    /**
+     * Drops the underlying database table.
+     */
     public static void dropTable(Database db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"DOWNLOADS\"";
         db.execSQL(sql);
@@ -77,39 +63,39 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
     protected final void bindValues(DatabaseStatement stmt, DownloadInfo entity) {
         stmt.clearBindings();
         stmt.bindLong(1, entity.getGid());
- 
+
         String token = entity.getToken();
         if (token != null) {
             stmt.bindString(2, token);
         }
- 
+
         String title = entity.getTitle();
         if (title != null) {
             stmt.bindString(3, title);
         }
- 
+
         String titleJpn = entity.getTitleJpn();
         if (titleJpn != null) {
             stmt.bindString(4, titleJpn);
         }
- 
+
         String thumb = entity.getThumb();
         if (thumb != null) {
             stmt.bindString(5, thumb);
         }
         stmt.bindLong(6, entity.getCategory());
- 
+
         String posted = entity.getPosted();
         if (posted != null) {
             stmt.bindString(7, posted);
         }
- 
+
         String uploader = entity.getUploader();
         if (uploader != null) {
             stmt.bindString(8, uploader);
         }
         stmt.bindDouble(9, entity.getRating());
- 
+
         String simpleLanguage = entity.getSimpleLanguage();
         if (simpleLanguage != null) {
             stmt.bindString(10, simpleLanguage);
@@ -117,10 +103,15 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         stmt.bindLong(11, entity.getState());
         stmt.bindLong(12, entity.getLegacy());
         stmt.bindLong(13, entity.getTime());
- 
+
         String label = entity.getLabel();
         if (label != null) {
             stmt.bindString(14, label);
+        }
+
+        String archiveUri = entity.getArchiveUri();
+        if (archiveUri != null) {
+            stmt.bindString(15, archiveUri);
         }
     }
 
@@ -128,39 +119,39 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
     protected final void bindValues(SQLiteStatement stmt, DownloadInfo entity) {
         stmt.clearBindings();
         stmt.bindLong(1, entity.getGid());
- 
+
         String token = entity.getToken();
         if (token != null) {
             stmt.bindString(2, token);
         }
- 
+
         String title = entity.getTitle();
         if (title != null) {
             stmt.bindString(3, title);
         }
- 
+
         String titleJpn = entity.getTitleJpn();
         if (titleJpn != null) {
             stmt.bindString(4, titleJpn);
         }
- 
+
         String thumb = entity.getThumb();
         if (thumb != null) {
             stmt.bindString(5, thumb);
         }
         stmt.bindLong(6, entity.getCategory());
- 
+
         String posted = entity.getPosted();
         if (posted != null) {
             stmt.bindString(7, posted);
         }
- 
+
         String uploader = entity.getUploader();
         if (uploader != null) {
             stmt.bindString(8, uploader);
         }
         stmt.bindDouble(9, entity.getRating());
- 
+
         String simpleLanguage = entity.getSimpleLanguage();
         if (simpleLanguage != null) {
             stmt.bindString(10, simpleLanguage);
@@ -168,17 +159,17 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         stmt.bindLong(11, entity.getState());
         stmt.bindLong(12, entity.getLegacy());
         stmt.bindLong(13, entity.getTime());
- 
+
         String label = entity.getLabel();
         if (label != null) {
             stmt.bindString(14, label);
         }
-    }
 
-    @Override
-    public Long readKey(Cursor cursor, int offset) {
-        return cursor.getLong(offset + 0);
-    }    
+        String archiveUri = entity.getArchiveUri();
+        if (archiveUri != null) {
+            stmt.bindString(15, archiveUri);
+        }
+    }
 
     @Override
     public DownloadInfo readEntity(Cursor cursor, int offset) {
@@ -196,9 +187,37 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
             cursor.getInt(offset + 10), // state
             cursor.getInt(offset + 11), // legacy
             cursor.getLong(offset + 12), // time
-            cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13) // label
+            cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13), // label
+            cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14) // archiveUri
         );
         return entity;
+    }
+
+    @Override
+    public Long readKey(Cursor cursor, int offset) {
+        return cursor.getLong(offset + 0);
+    }
+
+    /**
+     * Properties of entity DownloadInfo.<br/>
+     * Can be used for QueryBuilder and for referencing column names.
+     */
+    public static class Properties {
+        public final static Property Gid = new Property(0, long.class, "gid", true, "GID");
+        public final static Property Token = new Property(1, String.class, "token", false, "TOKEN");
+        public final static Property Title = new Property(2, String.class, "title", false, "TITLE");
+        public final static Property TitleJpn = new Property(3, String.class, "titleJpn", false, "TITLE_JPN");
+        public final static Property Thumb = new Property(4, String.class, "thumb", false, "THUMB");
+        public final static Property Category = new Property(5, int.class, "category", false, "CATEGORY");
+        public final static Property Posted = new Property(6, String.class, "posted", false, "POSTED");
+        public final static Property Uploader = new Property(7, String.class, "uploader", false, "UPLOADER");
+        public final static Property Rating = new Property(8, float.class, "rating", false, "RATING");
+        public final static Property SimpleLanguage = new Property(9, String.class, "simpleLanguage", false, "SIMPLE_LANGUAGE");
+        public final static Property State = new Property(10, int.class, "state", false, "STATE");
+        public final static Property Legacy = new Property(11, int.class, "legacy", false, "LEGACY");
+        public final static Property Time = new Property(12, long.class, "time", false, "TIME");
+        public final static Property Label = new Property(13, String.class, "label", false, "LABEL");
+        public final static Property ArchiveUri = new Property(14, String.class, "archiveUri", false, "ARCHIVE_URI");
     }
      
     @Override
@@ -217,6 +236,7 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         entity.setLegacy(cursor.getInt(offset + 11));
         entity.setTime(cursor.getLong(offset + 12));
         entity.setLabel(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
+        entity.setArchiveUri(cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14));
      }
     
     @Override
