@@ -1,15 +1,14 @@
 {
-  "version": "2.0.0.4",
+  "version": "2.0.0.5",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.4：感谢nullcat的pr",
+    "title": "新版发布2.0.0.5",
     "content": [
-      "修复下载列表排序功能在部分机型上会崩溃的问题",
-      "add samsung Air action support (#2119)",
-      "wrong direction on mouse scroll (#2130)",
-      "add auto dark mode (#2126)"
+      "在悬浮工具烂中添加拖动切换按钮，只有开启时才允许进行拖动排序",
+      "wyapx：use Analytics to manage all Firebase request (#2129)",
+      "添加本地压缩包导入功能：下载->右上菜单->导入本地压缩包"
     ]
   }
 }
