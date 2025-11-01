@@ -33,7 +33,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 - 在悬浮工具烂中添加拖动切换按钮，只有开启时才允许进行拖动排序
 - wyapx：use Analytics to manage all Firebase request (#2129)
-- 添加本地压缩包导入功能：下载->右上菜单->导入本地压缩包
+- West-Pavilion：添加本地压缩包导入功能：下载->右上菜单->导入本地压缩包
 
 ## 2025/10/05 : 感谢nullcat的pr   
 ### 新版发布2.0.0.4    
