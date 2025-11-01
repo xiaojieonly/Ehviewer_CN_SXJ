@@ -42,7 +42,7 @@ import java.util.List;
  * 正在寻求替代方案
  */
 @Deprecated
-class A7ZipArchive implements Closeable {
+public class A7ZipArchive implements Closeable {
 
     private InArchive archive;
 
@@ -64,7 +64,7 @@ class A7ZipArchive implements Closeable {
         return false;
     }
 
-    List<A7ZipArchiveEntry> getArchiveEntries() {
+    public List<A7ZipArchiveEntry> getArchiveEntries() {
         List<A7ZipArchiveEntry> entries = new ArrayList<>();
 
         for (int i = 0, n = archive.getNumberOfEntries(); i < n; i++) {
@@ -82,7 +82,7 @@ class A7ZipArchive implements Closeable {
         return entries;
     }
 
-    static A7ZipArchive create(UniRandomAccessFile file) throws ArchiveException {
+    public static A7ZipArchive create(UniRandomAccessFile file) throws ArchiveException {
         SeekableInputStream store = new UniRandomAccessFileInStream(file);
         InArchive archive = InArchive.open(store);
         if ((archive.getArchivePropertyType(PropID.ENCRYPTED) == PropType.BOOL && archive.getArchiveBooleanProperty(PropID.ENCRYPTED))
@@ -93,7 +93,7 @@ class A7ZipArchive implements Closeable {
         return new A7ZipArchive(archive);
     }
 
-    static class A7ZipArchiveEntry {
+    public static class A7ZipArchiveEntry {
 
         private InArchive archive;
         private int index;
@@ -105,11 +105,11 @@ class A7ZipArchive implements Closeable {
             this.path = path;
         }
 
-        String getPath() {
+        public String getPath() {
             return path;
         }
 
-        void extract(OutputStream os) throws ArchiveException {
+        public void extract(OutputStream os) throws ArchiveException {
             archive.extractEntry(index, new OutputStreamSequentialOutStream(os));
         }
     }

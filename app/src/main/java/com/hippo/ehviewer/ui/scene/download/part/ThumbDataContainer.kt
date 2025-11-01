@@ -13,90 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer.ui.scene.download.part
 
-package com.hippo.ehviewer.ui.scene.download.part;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import com.hippo.conaco.DataContainer;
-import com.hippo.conaco.ProgressNotifier;
-import com.hippo.ehviewer.dao.DownloadInfo;
-import com.hippo.ehviewer.spider.SpiderDen;
-import com.hippo.io.UniFileInputStreamPipe;
-import com.hippo.lib.yorozuya.IOUtils;
-import com.hippo.streampipe.InputStreamPipe;
-import com.hippo.unifile.UniFile;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.hippo.conaco.DataContainer
+import com.hippo.conaco.ProgressNotifier
+import com.hippo.ehviewer.dao.DownloadInfo
+import com.hippo.ehviewer.spider.SpiderDen
+import com.hippo.io.UniFileInputStreamPipe
+import com.hippo.lib.yorozuya.IOUtils
+import com.hippo.streampipe.InputStreamPipe
+import com.hippo.unifile.UniFile
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
 /**
  * 缩略图数据容器
  */
-public class ThumbDataContainer implements DataContainer {
+class ThumbDataContainer(private val mInfo: DownloadInfo) : DataContainer {
+    private var mFile: UniFile? = null
 
-    private final DownloadInfo mInfo;
-    @Nullable
-    private UniFile mFile;
-
-    public ThumbDataContainer(@NonNull DownloadInfo info) {
-        mInfo = info;
-    }
-
-    private void ensureFile() {
+    private fun ensureFile() {
         if (mFile == null) {
-            UniFile dir = SpiderDen.getGalleryDownloadDir(mInfo);
+            val dir = SpiderDen.getGalleryDownloadDir(mInfo)
             if (dir != null && dir.isDirectory()) {
-                mFile = dir.createFile(".thumb");
+                mFile = dir.createFile(".thumb")
             }
         }
     }
 
-    @Override
-    public boolean isEnabled() {
-        ensureFile();
-        return mFile != null;
+    override fun isEnabled(): Boolean {
+        ensureFile()
+        return mFile != null
     }
 
-    @Override
-    public void onUrlMoved(String requestUrl, String responseUrl) {
+    override fun onUrlMoved(requestUrl: String?, responseUrl: String?) {
     }
 
-    @Override
-    public boolean save(InputStream is, long length, String mediaType, ProgressNotifier notify) {
-        ensureFile();
+    override fun save(
+        `is`: InputStream,
+        length: Long,
+        mediaType: String?,
+        notify: ProgressNotifier?
+    ): Boolean {
+        ensureFile()
         if (mFile == null) {
-            return false;
+            return false
         }
 
-        OutputStream os = null;
+        var os: OutputStream? = null
         try {
-            os = mFile.openOutputStream();
-            IOUtils.copy(is, os);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+            os = mFile!!.openOutputStream()
+            IOUtils.copy(`is`, os)
+            return true
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return false
         } finally {
-            IOUtils.closeQuietly(os);
+            IOUtils.closeQuietly(os)
         }
     }
 
-    @Override
-    public InputStreamPipe get() {
-        ensureFile();
+    override fun get(): InputStreamPipe? {
+        ensureFile()
         if (mFile != null) {
-            return new UniFileInputStreamPipe(mFile);
+            return UniFileInputStreamPipe(mFile)
         } else {
-            return null;
+            return null
         }
     }
 
-    @Override
-    public void remove() {
+    override fun remove() {
         if (mFile != null) {
-            mFile.delete();
+            mFile!!.delete()
         }
     }
 }

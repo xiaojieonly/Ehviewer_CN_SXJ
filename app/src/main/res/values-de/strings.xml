@@ -610,4 +610,16 @@
     <string name="empty_subscription">Subscription is empty</string>
     <string name="subscription_success">%s success</string>
     <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
+    <string name="import_local_archive">Import local archive</string>
+    <string name="import_archive_title">Select archive file</string>
+    <string name="import_archive_failed">Failed to import archive</string>
+    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
+    <string name="import_archive_processing">Processing archive…</string>
+    <string name="import_archive_invalid_format">Unsupported archive format</string>
+    <string name="import_archive_already_imported">Archive already imported</string>
+    <string name="import_archive_success">Archive imported successfully</string>
+    <string name="archive_not_accessible">Archive file is not accessible</string>
+    <string name="imported_archive_info_title">Local Import Info</string>
+    <string name="imported_archive_info_message">This is an item imported from local storage</string>
+    <string name="imported_archive_category">Local Import</string>
 </resources>

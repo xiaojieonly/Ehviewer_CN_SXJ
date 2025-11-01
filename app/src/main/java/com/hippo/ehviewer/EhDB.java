@@ -164,13 +164,20 @@ public class EhDB {
                         "\"RECLASS\" TEXT," + // 13: reclass
                         "\"CREATE_TIME\" INTEGER," + // 14: create_time
                         "\"UPDATE_TIME\" INTEGER);"); // 15: update_time
+            case 6: // 6 to 7, add ARCHIVEURI column to DOWNLOADS table
+                try {
+                    db.execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVEURI\" TEXT");
+                } catch (Exception e) {
+                    // Column might already exist, ignore the error
+                    Log.w("EhDB", "Failed to add ARCHIVEURI column, might already exist", e);
+                }
         }
     }
 
     private static class OldDBHelper extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "data";
-        private static final int VERSION = 6;
+        private static final int VERSION = 7;
 
         private static final String TABLE_GALLERY = "gallery";
         private static final String TABLE_LOCAL_FAVOURITE = "local_favourite";

@@ -18,7 +18,7 @@ public class DownloadInfo extends GalleryInfo {
 	public int legacy;
 	public long time;
 	public String label;
-
+	public String archiveUri; // URI for imported archive files
 	public static final Creator<DownloadInfo> CREATOR = new Creator<DownloadInfo>() {
 		@Override
 		public DownloadInfo createFromParcel(Parcel source) {
@@ -42,6 +42,7 @@ public class DownloadInfo extends GalleryInfo {
 	public int downloaded;
 	public int total;
 
+
 	@Generated
 	public DownloadInfo() {
 	}
@@ -53,7 +54,7 @@ public class DownloadInfo extends GalleryInfo {
 	@Generated
 	public DownloadInfo(long gid, String token, String title, String titleJpn, String thumb, int category,
 			String posted, String uploader, float rating, String simpleLanguage, int state, int legacy, long time,
-			String label) {
+			String label, String archiveUri) {
 		this.gid = gid;
 		this.token = token;
 		this.title = title;
@@ -68,6 +69,7 @@ public class DownloadInfo extends GalleryInfo {
 		this.legacy = legacy;
 		this.time = time;
 		this.label = label;
+		this.archiveUri = archiveUri;
 	}
 
 	public long getGid() {
@@ -182,6 +184,14 @@ public class DownloadInfo extends GalleryInfo {
 		this.label = label;
 	}
 
+	public String getArchiveUri() {
+		return archiveUri;
+	}
+
+	public void setArchiveUri(String archiveUri) {
+		this.archiveUri = archiveUri;
+	}
+
 	@Override
 	public int describeContents() {
 		return 0;
@@ -194,6 +204,7 @@ public class DownloadInfo extends GalleryInfo {
 		dest.writeInt(this.legacy);
 		dest.writeLong(this.time);
 		dest.writeString(this.label);
+		dest.writeString(this.archiveUri);
 	}
 
 	protected DownloadInfo(Parcel in) {
@@ -202,6 +213,7 @@ public class DownloadInfo extends GalleryInfo {
 		this.legacy = in.readInt();
 		this.time = in.readLong();
 		this.label = in.readString();
+		this.archiveUri = in.readString();
 	}
 
 	public DownloadInfo(GalleryInfo galleryInfo) {
@@ -242,6 +254,7 @@ public class DownloadInfo extends GalleryInfo {
 		jsonObject.put("state", state);
 		jsonObject.put("time", time);
 		jsonObject.put("total", total);
+		jsonObject.put("archiveUri", archiveUri);
 		return jsonObject;
 	}
 
@@ -256,6 +269,7 @@ public class DownloadInfo extends GalleryInfo {
 		downloadInfo.state = object.getIntValue("state");
 		downloadInfo.time = object.getLongValue("time");
 		downloadInfo.total = object.getIntValue("total");
+		downloadInfo.archiveUri = object.getString("archiveUri");
 		return downloadInfo;
 	}
 

@@ -117,4 +117,9 @@
       android:title="@string/download_search_gallery"
       app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/import_local_archive"
+        android:title="@string/import_local_archive"
+        app:showAsAction="never"/>
+
 </menu>

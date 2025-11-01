@@ -7,10 +7,12 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.net.toUri
 import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.client.EhConfig
+import com.hippo.ehviewer.ui.scene.download.DownloadsScene
 import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.unifile.UniFile
 import java.io.File
@@ -183,6 +185,29 @@ class FileUtils {
             } finally {
                 IOUtils.closeQuietly(`is`)
             }
+        }
+
+        @JvmStatic
+        fun getFileName(context: Context, uri: Uri): String? {
+            var fileName: String? = null
+            if ("content" == uri.getScheme()) {
+                try {
+                    context.getContentResolver().query(uri, null, null, null, null).use { cursor ->
+                        if (cursor != null && cursor.moveToFirst()) {
+                            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                            if (nameIndex >= 0) {
+                                fileName = cursor.getString(nameIndex)
+                            }
+                        }
+                    }
+                } catch (e: java.lang.Exception) {
+                    Log.e(TAG, "Failed to get file name", e)
+                }
+            }
+            if (fileName == null) {
+                fileName = uri.getLastPathSegment()
+            }
+            return fileName
         }
     }
 }
