@@ -48,7 +48,7 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
                 "\"LEGACY\" INTEGER NOT NULL ," + // 11: legacy
                 "\"TIME\" INTEGER NOT NULL ," + // 12: time
                 "\"LABEL\" TEXT);" + // 13: label
-                "\"ARCHIVE_URI\" TEXT);"); // 13: label
+                "\"ARCHIVE_URI\" TEXT);"); // 14: archiveUri
     }
 
     /**
@@ -174,7 +174,7 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
     @Override
     public DownloadInfo readEntity(Cursor cursor, int offset) {
         DownloadInfo entity = new DownloadInfo( //
-            cursor.getLong(offset + 0), // gid
+            cursor.getLong(offset), // gid
             cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // token
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // title
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // titleJpn
@@ -222,7 +222,7 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
      
     @Override
     public void readEntity(Cursor cursor, DownloadInfo entity, int offset) {
-        entity.setGid(cursor.getLong(offset + 0));
+        entity.setGid(cursor.getLong(offset));
         entity.setToken(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
         entity.setTitle(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setTitleJpn(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
