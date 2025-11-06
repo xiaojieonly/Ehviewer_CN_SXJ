@@ -177,7 +177,7 @@ public class EhDB {
     private static class OldDBHelper extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "data";
-        private static final int VERSION = 7;
+        private static final int VERSION = 6;
 
         private static final String TABLE_GALLERY = "gallery";
         private static final String TABLE_LOCAL_FAVOURITE = "local_favourite";
