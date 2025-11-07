@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/12PfmkH62VJ8ZXyNINv0pYA) 提取码：k2vu
-- [蓝奏云](https://wwsu.lanzouu.com/ixNdx3adrd5c)，电脑端可正常下载 提取码：h9kx
+- [百度云](https://pan.baidu.com/s/1RMZxayk-6PNDiNd0UGQxXg) 提取码：y5dm
+- [蓝奏云](https://wwsu.lanzouu.com/igvfS3adz0if)，电脑端可正常下载 提取码：93ue
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:fb3b697a82a12ff900260bf9b012faa1c877874c&xt=urn:btmh:1220c00dc781688a021a5cc510b92b2cf3ac70c39a89d46945f49e2e6f2ee33b2e47&dn=EhViewer-2.0.0.6.apk&xl=23456667
+- Torrent链接: magnet:?xt=urn:btih:21e4e96429b7bf10996410d19649cc7633352bd5&xt=urn:btmh:122004926122fe4c055af92d79625937c81db84e50b31178976e63a50337cfe671b8&dn=EhViewer-2.0.0.7.apk&xl=23456666
 
 点击前往赏饭：
 
@@ -29,7 +29,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 # Changelog
 
 ## 2025/11/07
-### 新版发布2.0.0.6
+### 新版发布2.0.0.7
 
 - 移除不再使用的 Firebase Crashlytics 导入。
 - 在 EhDB 和 SpiderDen 中添加异常处理以避免应用崩溃。
