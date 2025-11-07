@@ -1,14 +1,17 @@
 {
-  "version": "2.0.0.5",
+  "version": "2.0.0.6",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.5",
+    "title": "新版发布2.0.0.6",
     "content": [
-      "在悬浮工具烂中添加拖动切换按钮，只有开启时才允许进行拖动排序",
-      "wyapx：use Analytics to manage all Firebase request (#2129)",
-      "West-Pavilion：添加本地压缩包导入功能：下载->右上菜单->导入本地压缩包"
+      "移除不再使用的 Firebase Crashlytics 导入。",
+      "在 EhDB 和 SpiderDen 中添加异常处理以避免应用崩溃。",
+      "增加在 TreeDocumentFile 中列出文件时的空值检查和异常处理。",
+      "为 WebViewSignInScene 中的 HTTP 响应添加默认的 reason phrase。",
+      "增强 GLRootView 中的 EGL 配置选择逻辑，增加备用方案以提高稳定性。",
+      "将 Analytics.java 迁移到 Kotlin。"
     ]
   }
 }
