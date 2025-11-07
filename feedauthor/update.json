@@ -1,10 +1,10 @@
 {
-  "version": "2.0.0.7",
+  "version": "2.0.0.8",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.7",
+    "title": "新版发布2.0.0.8",
     "content": [
       "移除不再使用的 Firebase Crashlytics 导入。",
       "在 EhDB 和 SpiderDen 中添加异常处理以避免应用崩溃。",
