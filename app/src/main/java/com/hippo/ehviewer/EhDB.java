@@ -895,9 +895,6 @@ public class EhDB {
             }
         } catch (IOException e) {
             return false;
-        } catch (SQLiteException e) {
-            Log.e(TAG, "Failed to copy DAO data", e);
-            return false;
         }
         return true;
     }
