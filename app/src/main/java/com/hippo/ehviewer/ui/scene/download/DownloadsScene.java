@@ -1415,7 +1415,7 @@ public class DownloadsScene extends ToolbarScene
                             downloadInfo.archiveUri.startsWith("content://");
                 }
 
-                if (!isImportedArchive) {
+                if (!isImportedArchive && info != null) {
                     // Only process SpiderInfo for regular downloads, not imported archives
                     mSpiderInfoMap.remove(info.gid);
                     SpiderInfo spiderInfo = getSpiderInfo(info);
@@ -1427,7 +1427,7 @@ public class DownloadsScene extends ToolbarScene
 //                mSpiderInfoMap.remove(info.gid);
 //                SpiderInfo spiderInfo = getSpiderInfo(info);
                 int position = -1;
-                if (mList == null || mAdapter == null) {
+                if (mList == null || mAdapter == null || info == null) {
                     return;
                 }
                 for (int i = 0; i < mList.size(); i++) {

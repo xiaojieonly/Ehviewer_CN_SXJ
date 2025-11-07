@@ -5,7 +5,6 @@ import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 
 import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.R;

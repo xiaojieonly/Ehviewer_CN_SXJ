@@ -75,7 +75,6 @@ import com.hippo.lib.yorozuya.SimpleHandler;
 import org.conscrypt.Conscrypt;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.ArrayList;
@@ -94,7 +93,6 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
 import okhttp3.ConnectionSpec;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
 

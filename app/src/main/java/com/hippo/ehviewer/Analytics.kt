@@ -13,73 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer
 
-package com.hippo.ehviewer;
-
-import android.content.Context;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-
-import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.hippo.scene.SceneFragment;
-import java.util.Locale;
+import android.content.Context
+import android.os.Bundle
+import android.text.TextUtils
+import android.util.Log
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.scene.SceneFragment
+import java.util.Locale
 
 /**
  * google监控
  */
-public final class Analytics {
+object Analytics {
+    private const val LOG_TAG = "Analytics"
+    private const val DEVICE_LANGUAGE = "device_language"
 
-    private static final String LOG_TAG = "Analytics";
-    private static final String DEVICE_LANGUAGE = "device_language";
+    private var analytics: FirebaseAnalytics? = null
 
-    private static FirebaseAnalytics analytics;
+    @JvmStatic
+    fun start(context: Context) {
+        analytics = FirebaseAnalytics.getInstance(context)
+        analytics!!.setUserId(Settings.getUserID())
 
-    private Analytics() {}
-
-    public static void start(Context context) {
-        analytics = FirebaseAnalytics.getInstance(context);
-        analytics.setUserId(Settings.getUserID());
-
-        Locale locale = Locale.getDefault();
-        String language = locale.getLanguage();
+        val locale = Locale.getDefault()
+        var language = locale.getLanguage()
         if (TextUtils.isEmpty(language)) {
-            language = "none";
+            language = "none"
         }
-        String country = locale.getCountry();
+        val country = locale.getCountry()
         if (!TextUtils.isEmpty(country)) {
-            language = language + "-" + country;
+            language = language + "-" + country
         }
-        language = language.toLowerCase();
-        analytics.setUserProperty(DEVICE_LANGUAGE, language);
+        language = language.lowercase(Locale.getDefault())
+        analytics!!.setUserProperty(DEVICE_LANGUAGE, language)
     }
 
-    public static boolean isEnabled() {
-        return analytics != null && Settings.getEnableAnalytics();
-    }
+    @JvmStatic
+    val isEnabled: Boolean
+        get() = analytics != null && Settings.getEnableAnalytics()
 
-    public static void onSceneView(SceneFragment scene) {
-        if (isEnabled()) {
-            Bundle bundle = new Bundle();
-            bundle.putString("scene_simple_class", scene.getClass().getSimpleName());
-            bundle.putString("scene_class", scene.getClass().getName());
-            analytics.logEvent("scene_view", bundle);
+    @JvmStatic
+    fun onSceneView(scene: SceneFragment) {
+        if (isEnabled) {
+            val bundle = Bundle()
+            bundle.putString("scene_simple_class", scene.javaClass.getSimpleName())
+            bundle.putString("scene_class", scene.javaClass.getName())
+            analytics!!.logEvent("scene_view", bundle)
         }
     }
 
-    public static void recordException(@NonNull Throwable e) {
-        Log.e(LOG_TAG, "Unexpected error raised", e);
+    @JvmStatic
+    fun recordException(e: Throwable) {
+        Log.e(LOG_TAG, "Unexpected error raised", e)
 
-        if (isEnabled()) {
+        if (isEnabled) {
             try {
-                FirebaseCrashlytics.getInstance().recordException(e);
-            } catch (Exception ex) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+            } catch (ex: Exception) {
                 // firebase not init or others?
                 // just throw original error
-                Log.e(LOG_TAG, "Firebase error: " + ex);
+                Log.e(LOG_TAG, "Firebase error: " + ex)
             }
         }
     }

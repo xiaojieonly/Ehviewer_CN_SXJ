@@ -23,6 +23,7 @@ import static com.hippo.ehviewer.ui.fragment.AdvancedFragment.LOADING_STATUS;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.os.Handler;
@@ -164,12 +165,13 @@ public class EhDB {
                         "\"RECLASS\" TEXT," + // 13: reclass
                         "\"CREATE_TIME\" INTEGER," + // 14: create_time
                         "\"UPDATE_TIME\" INTEGER);"); // 15: update_time
-            case 6: // 6 to 7, add ARCHIVEURI column to DOWNLOADS table
+            case 6: // 6 to 7, add ARCHIVE_URI column to DOWNLOADS table
                 try {
                     db.execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVE_URI\" TEXT");
                 } catch (Exception e) {
                     // Column might already exist, ignore the error
                     Log.w("EhDB", "Failed to add ARCHIVE_URI column, might already exist", e);
+                    Analytics.recordException(e);
                 }
         }
     }
@@ -411,7 +413,18 @@ public class EhDB {
 
     public static synchronized List<DownloadInfo> getAllDownloadInfo() {
         DownloadsDao dao = sDaoSession.getDownloadsDao();
-        List<DownloadInfo> list = dao.queryBuilder().orderDesc(DownloadsDao.Properties.Time).list();
+        List<DownloadInfo> list = new ArrayList<>();
+        try{
+            list = dao.queryBuilder().orderDesc(DownloadsDao.Properties.Time).list();
+        } catch (SQLiteException ignore) {
+            try {
+                sDaoSession.getDatabase().execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVE_URI\" TEXT");
+            } catch (Exception e) {
+                // Column might already exist, ignore the error
+                Log.w("EhDB", "Failed to add ARCHIVE_URI column, might already exist", e);
+                Analytics.recordException(e);
+            }
+        }
         // Fix state
         for (DownloadInfo info : list) {
             if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {

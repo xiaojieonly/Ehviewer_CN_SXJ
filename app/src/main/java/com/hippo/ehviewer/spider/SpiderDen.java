@@ -89,23 +89,29 @@ public final class SpiderDen {
 
             // Find it
             if (null == dirname) {
-                UniFile[] files = dir.listFiles(new StartWithFilenameFilter(galleryInfo.gid + "-"));
-                if (null != files) {
-                    // Get max-length-name dir
-                    int maxLength = -1;
-                    for (UniFile file : files) {
-                        if (file.isDirectory()) {
-                            String name = file.getName();
-                            int length = name.length();
-                            if (length > maxLength) {
-                                maxLength = length;
-                                dirname = name;
+                try {
+                    UniFile[] files = dir.listFiles(new StartWithFilenameFilter(galleryInfo.gid + "-"));
+                    if (null != files) {
+                        // Get max-length-name dir
+                        int maxLength = -1;
+                        for (UniFile file : files) {
+                            if (file.isDirectory()) {
+                                String name = file.getName();
+                                int length = name.length();
+                                if (length > maxLength) {
+                                    maxLength = length;
+                                    dirname = name;
+                                }
                             }
                         }
+                        if (null != dirname) {
+                            EhDB.putDownloadDirname(galleryInfo.gid, dirname);
+                        }
                     }
-                    if (null != dirname) {
-                        EhDB.putDownloadDirname(galleryInfo.gid, dirname);
-                    }
+                } catch (Exception e) {
+                    // Failed to list files, maybe storage is unavailable or permission lost
+                    // Continue to create new directory
+                    android.util.Log.w("SpiderDen", "Failed to list files in download directory", e);
                 }
             }
 

@@ -19,7 +19,6 @@ package com.hippo.ehviewer;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.hippo.ehviewer.Analytics;
 import com.hippo.conaco.ValueHelper;
 import com.hippo.lib.image.Image;
 import com.hippo.streampipe.InputStreamPipe;

@@ -12,7 +12,6 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.client.EhConfig
-import com.hippo.ehviewer.ui.scene.download.DownloadsScene
 import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.unifile.UniFile
 import java.io.File
