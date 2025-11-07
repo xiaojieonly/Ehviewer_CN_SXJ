@@ -47,7 +47,7 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
                 "\"STATE\" INTEGER NOT NULL ," + // 10: state
                 "\"LEGACY\" INTEGER NOT NULL ," + // 11: legacy
                 "\"TIME\" INTEGER NOT NULL ," + // 12: time
-                "\"LABEL\" TEXT);" + // 13: label
+                "\"LABEL\" TEXT," + // 13: label
                 "\"ARCHIVE_URI\" TEXT);"); // 14: archiveUri
     }
 

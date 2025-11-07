@@ -895,12 +895,23 @@ public class EhDB {
             }
         } catch (IOException e) {
             return false;
+        } catch (SQLiteException e) {
+            Log.e(TAG, "Failed to copy DAO data", e);
+            return false;
         }
         return true;
     }
 
     public static synchronized boolean exportDB(Context context, File file) {
         final String ehExportName = "eh.export.db";
+
+        // Ensure source database has ARCHIVE_URI column
+        try {
+            sDaoSession.getDatabase().execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVE_URI\" TEXT");
+        } catch (Exception e) {
+            // Column might already exist, ignore the error
+            Log.d(TAG, "ARCHIVE_URI column already exists or failed to add", e);
+        }
 
         // Delete old export db
         context.deleteDatabase(ehExportName);
@@ -912,7 +923,7 @@ public class EhDB {
             try (SQLiteDatabase db = helper.getWritableDatabase()) {
                 DaoMaster daoMaster = new DaoMaster(db);
                 DaoSession exportSession = daoMaster.newSession();
-                if (!copyDao(sDaoSession.getDownloadsDao(), exportSession.getDownloadsDao()))
+                if (! copyDao(sDaoSession.getDownloadsDao(), exportSession.getDownloadsDao()))
                     return false;
                 if (!copyDao(sDaoSession.getDownloadLabelDao(), exportSession.getDownloadLabelDao()))
                     return false;
