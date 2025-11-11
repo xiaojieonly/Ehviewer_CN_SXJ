@@ -17,6 +17,7 @@
 package com.hippo.ehviewer.ui.scene.download.part;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -112,8 +113,20 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         LayoutInflater mInflater1;
         try {
             mInflater1 = scene.getLayoutInflater2();
-        } catch (NullPointerException e) {
-            mInflater1 = scene.getLayoutInflater();
+        } catch (NullPointerException | IllegalStateException e) {
+            // Fragment 可能还未附加到 FragmentManager，使用 Context 获取 LayoutInflater
+            Context context = scene.getContext();
+            if (context != null) {
+                mInflater1 = LayoutInflater.from(context);
+            } else {
+                // 如果 Context 也为 null，尝试使用 Activity
+                Activity activity = scene.getActivity();
+                if (activity != null) {
+                    mInflater1 = LayoutInflater.from(activity);
+                } else {
+                    throw new IllegalStateException("Cannot get LayoutInflater: Fragment is not attached and Context/Activity is null");
+                }
+            }
         }
         mInflater = mInflater1;
         AssertUtils.assertNotNull(mInflater);

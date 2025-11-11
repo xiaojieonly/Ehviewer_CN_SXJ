@@ -1326,6 +1326,10 @@ public class DownloadsScene extends ToolbarScene
     }
 
     private void updateAdapter() {
+        // 检查 Fragment 是否已附加，如果未附加则延迟创建适配器
+        if (!isAdded()) {
+            return;
+        }
         mOriginalAdapter = new DownloadAdapter(this, this);
         mOriginalAdapter.setHasStableIds(true);
         // 避免重复创建包装适配器，直接使用原始适配器
@@ -1366,6 +1370,10 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onDownloadSearchSuccess(List<DownloadInfo> list) {
+        // 检查 Fragment 是否已附加，如果未附加则忽略回调
+        if (!isAdded()) {
+            return;
+        }
         mList = list;
         updateAdapter();
         mProgressView.setVisibility(View.GONE);
@@ -1378,6 +1386,10 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onDownloadListHandleSuccess(List<DownloadInfo> list) {
+        // 检查 Fragment 是否已附加，如果未附加则忽略回调
+        if (!isAdded()) {
+            return;
+        }
         mList = list;
         updateAdapter();
         mProgressView.setVisibility(View.GONE);

@@ -41,10 +41,16 @@ class UpdateDialog(private val activity: Activity) {
     private var myDownloadId by Delegates.notNull<Long>()
     private var downloadReceiver: DownloadReceiver? = null
 
+    private fun isActivityAlive(): Boolean {
+        return !(activity.isFinishing || activity.isDestroyed)
+    }
 
     fun showCheckFailDialog() {
         try {
             ContextCompat.getMainExecutor(activity).execute {
+                if (!isActivityAlive()) {
+                    return@execute
+                }
                 val alertDialog = AlertDialog.Builder(activity)
                     .setIcon(R.mipmap.ic_launcher)
                     .setTitle(R.string.update_fail)
@@ -56,7 +62,9 @@ class UpdateDialog(private val activity: Activity) {
                         dialog.dismiss()
                     }
                     .create()
-                alertDialog.show()
+                if (isActivityAlive()) {
+                    alertDialog.show()
+                }
             }
         } catch (e: Exception) {
             Analytics.recordException(e)
@@ -78,6 +86,9 @@ class UpdateDialog(private val activity: Activity) {
 
             val downloadUrl = updateContent.getString(AppUpdater.FILE_DOWNLOAD_URL)
             ContextCompat.getMainExecutor(activity).execute {
+                if (!isActivityAlive()) {
+                    return@execute
+                }
                 val alertDialog = AlertDialog.Builder(activity).apply {
                     setIcon(R.mipmap.ic_launcher)
                     setTitle(title)
@@ -95,7 +106,9 @@ class UpdateDialog(private val activity: Activity) {
                         setCancelable(false)
                     }
                 }.create()
-                alertDialog.show()
+                if (isActivityAlive()) {
+                    alertDialog.show()
+                }
             }
         } catch (e: Exception) {
             Analytics.recordException(e)
