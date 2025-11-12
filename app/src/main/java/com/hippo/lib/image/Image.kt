@@ -67,7 +67,24 @@ class Image private constructor(
                             // Don't
                         }
                 } catch (e: DecodeException) {
-                    throw Exception("Android 9 解码失败", e)
+                    // ImageDecoder 失败时回退到 BitmapFactory
+                    try {
+                        // 重置流位置以便重新读取
+                        source.channel.position(0)
+                        if (simpleSize != null) {
+                            val option = BitmapFactory.Options().apply {
+                                inSampleSize = simpleSize
+                            }
+                            val bitmap = BitmapFactory.decodeStream(source, null, option)
+                            mObtainedDrawable =
+                                BitmapDrawable(EhApplication.getInstance().resources, bitmap)
+                        } else {
+                            mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
+                        }
+                    } catch (fallbackException: Exception) {
+                        Analytics.recordException(fallbackException)
+                        throw Exception("Android 9 解码失败", e)
+                    }
                 }
                 // Should we lazy decode it?
             } else {
