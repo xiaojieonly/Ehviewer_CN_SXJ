@@ -275,7 +275,8 @@
 
         <service
             android:name="com.hippo.ehviewer.download.DownloadService"
-            android:label="@string/download_service_label" />
+            android:label="@string/download_service_label"
+            android:foregroundServiceType="dataSync" />
 
         <provider
             android:name="com.hippo.content.FileProvider"
