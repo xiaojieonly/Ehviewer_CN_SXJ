@@ -30,7 +30,7 @@ class Image private constructor(
     source: FileInputStream?,
     drawable: Drawable? = null,
     val hardware: Boolean = false,
-    val release: () -> Unit? = {}
+    val release: () -> Unit? = {},
 ) {
     private var mObtainedDrawable: Drawable?
     private var mBitmap: Bitmap? = null
@@ -77,7 +77,7 @@ class Image private constructor(
                             }
                             val bitmap = BitmapFactory.decodeStream(source, null, option)
                             mObtainedDrawable =
-                                BitmapDrawable(EhApplication.getInstance().resources, bitmap)
+                                bitmap?.toDrawable(EhApplication.getInstance().resources)
                         } else {
                             mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
                         }
@@ -282,7 +282,7 @@ class Image private constructor(
         private external fun nativeRender(
             bitmap: Bitmap,
             srcX: Int, srcY: Int, dst: Bitmap, dstX: Int, dstY: Int,
-            width: Int, height: Int
+            width: Int, height: Int,
         )
 
         @JvmStatic
@@ -292,7 +292,7 @@ class Image private constructor(
             offsetX: Int,
             offsetY: Int,
             width: Int,
-            height: Int
+            height: Int,
         )
     }
 }
