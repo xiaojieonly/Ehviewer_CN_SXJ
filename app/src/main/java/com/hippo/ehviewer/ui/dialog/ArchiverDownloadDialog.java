@@ -277,8 +277,10 @@ public class ArchiverDownloadDialog implements
         private void checkDownloadStatus(long downloadId, android.app.DownloadManager downloadManager) {
             android.app.DownloadManager.Query query = new android.app.DownloadManager.Query();
             query.setFilterById(downloadId);//筛选下载任务，传入任务ID，可变参数
-            try (Cursor c = downloadManager.query(query)) {
-                if (c.moveToFirst()) {
+            Cursor c = null;
+            try {
+                c = downloadManager.query(query);
+                if (c != null && c.moveToFirst()) {
                     int status = c.getInt(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS));
                     switch (status) {
                         case android.app.DownloadManager.STATUS_PAUSED:
@@ -300,8 +302,12 @@ public class ArchiverDownloadDialog implements
                             break;
                     }
                 }
-            } catch (IllegalArgumentException | URISyntaxException e) {
+            } catch (IllegalArgumentException | URISyntaxException | NullPointerException e) {
                 Log.e(TAG, e.getMessage(), e);
+            } finally {
+                if (c != null) {
+                    c.close();
+                }
             }
         }
 
