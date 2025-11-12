@@ -1969,7 +1969,20 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (downLoadAlertDialog == null) {
             return;
         }
-        downLoadAlertDialog.dismiss();
+        // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
+        if (!isAdded() || getActivity() == null) {
+            downLoadAlertDialog = null;
+            return;
+        }
+        try {
+            if (downLoadAlertDialog.isShowing()) {
+                downLoadAlertDialog.dismiss();
+            }
+        } catch (IllegalArgumentException e) {
+            // 对话框已经不再附加到窗口管理器，忽略异常
+            ExceptionUtils.throwIfFatal(e);
+        }
+        downLoadAlertDialog = null;
     }
 
     @SuppressLint("HandlerLeak")
@@ -1980,6 +1993,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         @Override
         public void handleMessage(Message msg) {
+            // 检查 Fragment 是否仍然附加，避免在 Activity 销毁后处理消息导致崩溃
+            if (!isAdded() || getActivity() == null) {
+                return;
+            }
             TorrentDownloadMessage message = msg.getData().getParcelable("torrent_download_message");
             if (message.progress == 200) {
                 dismissTorrentDialog();
