@@ -314,7 +314,6 @@ public class ArchiverDownloadDialog implements
         private void unzipAndImportFile(Cursor cursor) throws IllegalArgumentException, URISyntaxException {
             String path = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
             Uri uri = Uri.parse(path);
-            File zipFile = new File(new URI(uri.toString()));
             File tempDir = AppConfig.getExternalTempDir();
             if (tempDir == null) {
                 return;
@@ -323,13 +322,49 @@ public class ArchiverDownloadDialog implements
 //            String fileName = galleryDetail.title.replaceAll("/","");
             String fileName = createFileName(galleryDetail.title);
             String tempFilePath = tempDir.getPath() + "/" + fileName;
-            String zipFilePath = zipFile.getPath();
+            
+            // Handle content:// URI by copying to temp file first
             new Thread(() -> {
-                boolean result = GZIPUtils.UnZipFolder(zipFilePath, tempFilePath);
-                if (!result) {
-                    return;
+                String zipFilePath;
+                File tempZipFile = null;
+                try {
+                    if ("file".equals(uri.getScheme())) {
+                        // Direct file URI, can use directly
+                        File zipFile = new File(uri.getPath());
+                        zipFilePath = zipFile.getPath();
+                    } else {
+                        // Content URI, need to copy to temp file first
+                        tempZipFile = new File(tempDir, fileName + ".zip");
+                        UniFile sourceFile = UniFile.fromUri(context, uri);
+                        if (sourceFile == null) {
+                            Log.e(TAG, "Cannot access source file: " + uri);
+                            return;
+                        }
+                        UniFile destFile = UniFile.fromFile(tempZipFile);
+                        if (destFile == null) {
+                            Log.e(TAG, "Cannot create temp zip file");
+                            return;
+                        }
+                        if (!FileUtils.copyFile(sourceFile, destFile, false)) {
+                            Log.e(TAG, "Failed to copy zip file to temp location");
+                            return;
+                        }
+                        zipFilePath = tempZipFile.getPath();
+                    }
+                    
+                    boolean result = GZIPUtils.UnZipFolder(zipFilePath, tempFilePath);
+                    if (!result) {
+                        return;
+                    }
+                    importGallery(tempFilePath, downloadId);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in unzipAndImportFile", e);
+                } finally {
+                    // Clean up temporary zip file if it was created
+                    if (tempZipFile != null && tempZipFile.exists()) {
+                        tempZipFile.delete();
+                    }
                 }
-                importGallery(tempFilePath,downloadId);
             }).start();
         }
 
@@ -358,31 +393,43 @@ public class ArchiverDownloadDialog implements
                 return;
             }
             try {
-                File downloadFile = new File(new URI(downloadDir.getUri().toString()));
                 for (int i = 0; i < tempPictures.length; i++) {
                     File picture = tempPictures[i];
 
                     String fileName = picture.getName();
                     String[] nameArr = fileName.split("\\.");
                     String newName = SpiderDen.generateImageFilename(i, "." + nameArr[nameArr.length - 1]);
-                    String newPath = downloadFile.getPath() + "/" + newName;
-                    File moveToFile = new File(newPath);
-                    if (moveToFile.exists()) {
-                        if (!moveToFile.delete()) {
+                    
+                    // Use UniFile API instead of File
+                    UniFile destFile = downloadDir.findFile(newName);
+                    if (destFile != null && destFile.exists()) {
+                        if (!destFile.delete()) {
                             continue;
                         }
                     }
-                    boolean result = picture.renameTo(moveToFile);
-                    if (!result) {
-                        if (moveToFile.exists()) {
-                            if (!moveToFile.delete()) {
-                                continue;
-                            }
-                        }
-                        FileUtils.copyFile(picture, moveToFile);
+                    
+                    // Create the destination file
+                    destFile = downloadDir.createFile(newName);
+                    if (destFile == null) {
+                        Log.e(TAG, "Failed to create file: " + newName);
+                        continue;
+                    }
+                    
+                    // Copy from File to UniFile
+                    UniFile sourceFile = UniFile.fromFile(picture);
+                    if (sourceFile == null) {
+                        Log.e(TAG, "Failed to create UniFile from: " + picture.getPath());
+                        continue;
+                    }
+                    
+                    if (!FileUtils.copyFile(sourceFile, destFile, false)) {
+                        Log.e(TAG, "Failed to copy file: " + picture.getName() + " to " + newName);
+                        // Try to delete the created file if copy failed
+                        destFile.delete();
                     }
                 }
-            } catch (URISyntaxException ignored) {
+            } catch (Exception e) {
+                Log.e(TAG, "Error in importGallery", e);
             }
             boolean deleteTemp = tempFile.delete();
             if (!deleteTemp) {
