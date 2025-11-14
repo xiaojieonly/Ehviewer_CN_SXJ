@@ -14,9 +14,35 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
+<!-- 德语 -->
 <!-- German translations by UShimamura -->
 <resources>
+
+    <!--  black list  -->
+    <string name="blacklist_id">Benutzer-ID</string>
+    <string name="blacklist">Schwarze Liste</string>
+    <string name="join_in_blacklist">Zur schwarzen Liste hinzufügen</string>
+    <string name="add_blacklist">Benutzer blockieren</string>
+    <string name="blacklist_tip">Dieses Blockierungssystem blockiert Kommentare zusätzlich zum EHentai-Website-Kommentarsystem.\n\nKommentator-Blockierung: Kommentare dieses Kommentators ausschließen. Dies kann das Laden der Galerieliste länger dauern lassen.</string>
+    <string name="blacklist_text">Benutzer blockieren</string>
+    <string name="delete_blacklist">Benutzer \"%s\" entsperren?</string>
+    <string name="blacklist_reason_text">Blockierungsgrund</string>
+    <string name="settings_eh_blacklist">Kommentar-Schwarze Liste</string>
+    <string name="settings_eh_blacklist_summary">Kommentare nach Kontonamen blockieren</string>
+    <string name="settings_advanced_dns_over_http_title">Sicheres DNS (DoH)</string>
+    <string name="settings_advanced_dns_over_http_summary">Löst DNS-Verschmutzungsprobleme in bestimmten Regionen</string>
+    <string name="settings_advanced_domain_fronting_title">Domain Fronting</string>
+    <string name="settings_advanced_domain_fronting_summary">SNI-Blockierung umgehen</string>
+    <string name="settings_advanced_url_replace_title">URL-Verschleierung, SNI muss deaktiviert sein</string>
+    <string name="settings_advanced_url_replace_summary">URL-Verschleierung (Neustart erforderlich, Kontofunktionen werden nach Aktivierung deaktiviert)</string>
+    <string name="settings_about_donate_guide">Unterstützungsanleitung</string>
+    <string name="share_favorites_dialog_title">Favoriten teilen</string>
+    <string name="share_favorites_dialog_message">Favoriten %s teilen?</string>
+    <string name="add_favorites_dialog_message">Favoriten %s hinzufügen?</string>
+    <string name="settings_advanced_built_ex_hosts_title">Integrierte exhentai hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_summary">Von der App bereitgestellte Host-zu-IP-Zuordnung\nKann von benutzerdefinierter hosts.txt überschrieben werden</string>
+    <string name="network_remind">VPN wurde erkannt, bitte achte auf deine Netzwerksicherheit</string>
+    <string name="no_blicklist">Hier ist die schwarze Liste</string>
 
     <string name="app_name">EhViewer</string>
     <string name="homepage">Startseite</string>
@@ -27,6 +53,9 @@
     <string name="history">Verlauf</string>
     <string name="downloads">Downloads</string>
     <string name="settings">Einstellungen</string>
+    <string name="stub" translatable="false">Stub</string>
+    <string name="news">Neuigkeiten</string>
+
     <string name="username">Benutzername</string>
     <string name="password">Kennwort</string>
     <string name="recaptcha">Recaptcha (nicht erforderlich)</string>
@@ -74,8 +103,12 @@
     <string name="error_get_ptoken_error">Fehler beim Erhalten pTokens</string>
     <string name="error_cant_create_temp_file">Die Temporäre Datei konnte erstellt nicht werden</string>
     <string name="error_cant_save_image">Das Bild konnte nicht gespeichert werden</string>
+    <string name="error_save_image_existed">Bild existiert bereits</string>
     <string name="error_invalid_number">Nummer ungültig</string>
+    <string name="error_empty_html">Leere Seite</string>
+    <string name="error_cant_get_image">Bild konnte nicht abgerufen werden</string>
     <string name="error_please_login_first">Melde dich zuerst an.</string>
+    <string name="kokomade_tip">Einstellungen->EH->Galerie-Seite->e-hentai</string>
     <string name="analytics_explain">Darf der Entwickler die Informationen deines Geräts und deiner Nutzung sammeln? Diese Informationen sind für die Entwicklung sehr nützlich.&lt;br&gt;&lt;br&gt;Daten-Analyse ist von Google Analytics for Firebase zur Verfügung gestellt, dessen Datenschutz-Bestimmungen auf &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt;verfügbar sind.&lt;br&gt;&lt;br&gt;Wenn du die Daten-Analyse teilnimmst, werden Informationen deines Geräts und deiner Nutzung, z. B. die Android API-Version, das Gerätsmodell, die Sprache, die App-Version, die Sessionszeit, gesammelt. Der Entwickler verspricht, dass private Informationen wie deine Telefonnummer, deine E-Mail-Adresse, die IMEI usw., gesammelt nicht werden.&lt;br&gt;&lt;br&gt;Falls du die Daten-Analyse nicht teilnimmst, wird keine Information gesammelt.&lt;br&gt;&lt;br&gt;Die gesammelten Informationen werden von Google Analytics for Firebase analysiert. Nur der Entwickler kann auf den Analyse-Bericht zugreifen.</string>
     <string name="get_it">Verstanden</string>
     <string name="accept">Akzeptieren</string>
@@ -84,16 +117,37 @@
     <string name="select_scene">Wähle eine Galerie-Webseite aus.</string>
     <string name="select_scene_explain">e-hentai: für jeden verfügbar\nexhentai: nur für diejenigen verfügbar, die sich angemeldet haben</string>
     <string name="no_select">Wähle eine Webseite aus.</string>
+    <string name="new_version">Neue Version</string>
     <string name="update">Update</string>
-    <string name="update_fail">Check for updates failed</string>
+    <string name="update_fail">Update-Prüfung fehlgeschlagen</string>
+    <string name="update_to">Aktualisieren auf</string>
     <string name="update_plain">Version: %1$s\nGröße: %2$s\n\n%3$s</string>
-    <string name="update_fail_info">Click Yes jump to Github homepage</string>
+    <string name="update_fail_info">Auf Ja klicken, um zur Github-Startseite zu springen</string>
     <string name="update_to_date">EhViewer ist auf dem neusten Stand.</string>
     <string name="no_updates_available">Da liegt das neueste raus</string>
     <string name="update_ignore">Ignorieren</string>
     <string name="gallery_list_search_bar_hint_exhentai">ExHentai durchsuchen</string>
     <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai durchsuchen</string>
+    <string name="gallery_list_search_bar_open_gallery">Galerie öffnen</string>
     <string name="gallery_list_empty_hit">Die Welt ist so groß und der Panda sitzt ganz allein</string>
+    <string name="gallery_list_empty_hit_subscription">Abonniere Etiketten in Einstellungen->EH->Meine Etiketten</string>
+    <string name="gallery_list_no_preview_tag">Kein Vorschaue-Etikett</string>
+    <string name="gallery_list_action_url_missed">Nächste Seite nicht gefunden</string>
+    <string name="gallery_list_no_more_data">Es gibt keine weiteren Daten für die aktuelle Liste</string>
+    <string name="gallery_list_date_jump_1d">Gestern</string>
+    <string name="gallery_list_date_jump_3d">Vor drei Tagen</string>
+    <string name="gallery_list_date_jump_1w">Vor einer Woche</string>
+    <string name="gallery_list_date_jump_2w">Vor zwei Wochen</string>
+    <string name="gallery_list_date_jump_1m">Vor einem Monat</string>
+    <string name="gallery_list_date_jump_6m">Vor sechs Monaten</string>
+    <string name="gallery_list_date_jump_1y">Vor einem Jahr</string>
+    <string name="gallery_list_date_jump_2y">Vor zwei Jahren</string>
+    <string name="gallery_list_select_jump_date">Datumsauswahl verwenden</string>
+    <string name="gallery_list_select_jump_node">Knotenauswahl verwenden</string>
+    <string name="gallery_list_jump_now">Jetzt springen</string>
+    <string name="gallery_list_time_jump_dialog_title">Spring-Auswahl</string>
+    <string name="gallery_list_time_jump_dialog_found_message">%s Ergebnisse gefunden</string>
+    <string name="gallery_tag_copy">Etikett kopiert</string>
     <string name="search">Suchen</string>
     <string name="keyword_search">"Suche nach dem Schlüsselwort "</string>
     <string name="image_search">Suche nach einem Bild</string>
@@ -126,8 +180,9 @@
     <string name="search_se">Die gelöschten Galerien anzeigen</string>
     <string name="select_image_first">Wähle ein Bild</string>
     <string name="add_to_favourites">Zu den Favoriten hinzufügen</string>
-    <string name="stop_downloading">Download stoppen</string>
     <string name="remove_from_favourites">Aus den Favoriten entfernen</string>
+    <string name="stop_downloading">Download stoppen</string>
+    <string name="delete_downloads">Downloads löschen</string>
     <string name="quick_search">Sofortsuche</string>
     <string name="quick_search_tip">Tippe an +, um eine Sofortsuche hinzuzufügen</string>
     <string name="add_quick_search_dialog_title">Sofortsuche hinzufügen</string>
@@ -142,6 +197,10 @@
     <string name="duplicate_quick_search">Eine Sofortsuche, deren Name ist %s, bereits besteht.</string>
     <string name="duplicate_name">Dieser Name ist bereits besetzt.</string>
     <string name="go_to_hint">Seite %1$d, insgesamt %2$d Seiten</string>
+    <plurals name="page_count">
+        <item quantity="one">%d Seite</item>
+        <item quantity="other">%d Seiten</item>
+    </plurals>
     <string name="star_2">2 Sterne</string>
     <string name="star_3">3 Sterne</string>
     <string name="star_4">4 Sterne</string>
@@ -179,7 +238,9 @@
     <string name="filter_the_uploader">Uploader \"%s\" blockieren?</string>
     <string name="filter_the_tag">Etikett \"%s\" blockieren?</string>
     <string name="filter_added">Element wurde blockiert.</string>
+    <string name="copy_tag">Kopieren</string>
     <string name="rating10">EIN MEISTERSTÜCK</string>
+    <string name="rating_none" translatable="false">(´_ゝ`)</string>
     <string name="rating9">WUNDERVOLL</string>
     <string name="rating8">SEHR GUT</string>
     <string name="rating7">GUT</string>
@@ -231,8 +292,14 @@
     <string name="cancel_vote_down_successfully">Die negative Stimmung wurde abgebrochen</string>
     <string name="vote_failed">Stimmung gescheitert</string>
     <string name="check_vote_status">Details der Stimmungen anzeigen</string>
+    <string name="click_more_comments">Klicken, um weitere Kommentare zu laden</string>
+    <string name="last_edited">Zuletzt bearbeitet: %s</string>
+    <string name="edit_comment">Kommentar bearbeiten</string>
+    <string name="edit_comment_successfully">Kommentar wurde bearbeitet</string>
+    <string name="edit_comment_failed">Kommentar konnte nicht bearbeitet werden</string>
     <string name="gallery_previews">Vorschauen der Galerie</string>
     <string name="go_to">Gehe zu</string>
+    <string name="tag_filter">Etikett filtern</string>
     <string name="scene_download_title">%s Galleries - %s</string>
     <string name="no_download_info">Downloads werden hier angezeigt</string>
     <string name="download_state_none">Pausiert</string>
@@ -242,6 +309,24 @@
     <string name="download_state_failed">Gescheitert</string>
     <string name="download_state_failed_2">%d wurde noch nicht abgeschlossen</string>
     <string name="download_state_finish">Abgeschlossen</string>
+    <string name="download_sort_list">Sortieren</string>
+    <string name="download_filter_by_status">Nach Status filtern</string>
+    <string name="download_status_all">Alle</string>
+    <string name="download_status_not_started">Nicht gestartet</string>
+    <string name="default_sort">Standard</string>
+    <string name="sort_by_gallery_id_asc">Nach ID aufsteigend</string>
+    <string name="sort_by_gallery_id_desc">Nach ID absteigend</string>
+    <string name="sort_by_create_time_asc">Nach Erstellungszeit aufsteigend</string>
+    <string name="sort_by_create_time_desc">Nach Erstellungszeit absteigend</string>
+    <string name="sort_by_rating_asc">Nach Bewertung aufsteigend</string>
+    <string name="sort_by_rating_desc">Nach Bewertung absteigend</string>
+    <string name="sort_by_name_asc">Nach Name aufsteigend</string>
+    <string name="sort_by_name_desc">Nach Name absteigend</string>
+    <string name="sort_download_list">Liste sortieren</string>
+    <string name="download_search_gallery">Galerie suchen</string>
+    <string name="download_search_hint">Suchschlüssel eingeben</string>
+    <string name="download_searching">Suche läuft, bitte warten</string>
+    <string name="download_searching_failed">Suche fehlgeschlagen</string>
     <string name="stat_509_alert_title">509 Fehler</string>
     <string name="stat_509_alert_text">Die Genze der Downloads wurde erreichet. Versuche noch einmals später,</string>
     <string name="stat_download_done_title">Download abgeschlossen</string>
@@ -280,6 +365,7 @@
     <string name="clear_all">Verlaufdaten löschen</string>
     <string name="clear_all_history">Verlaufdaten löschen?</string>
     <string name="filter">Blocker</string>
+    <string name="no_filter">Blocker werden hier angezeigt</string>
     <string name="filter_title">Titel</string>
     <string name="filter_uploader">Uploader</string>
     <string name="filter_tag">Etikett</string>
@@ -298,6 +384,7 @@
     <string name="u_config">EHentai-Einstellungen</string>
     <string name="apply">Übernehmen</string>
     <string name="apply_tip">Zum Speichern der Einstellungen auf Häkchen tippen</string>
+    <string name="my_tags">Meine Etiketten</string>
     <string name="hosts">Angepasstes hosts.txt</string>
     <string name="hosts_tip">hosts.txt</string>
     <string name="hosts_host">Host</string>
@@ -353,14 +440,23 @@
     <string name="settings_eh_excluded_tag_namespaces">Ausgeschlossene Namensraum-Etiketten</string>
     <string name="settings_eh_excluded_tag_namespaces_summary">Galerie in der ausgeschlossenen Namensraum werden vom Standard-Etikett-Suchen versteckt</string>
     <string name="settings_eh_show_jpn_title">Japanische Titel anzeigen</string>
+    <string name="settings_eh_show_jpn_title_summary">Erfordert die Aktivierung von Japanischem Titel in den Einstellungen auf der EHentai-Website</string>
+    <string name="settings_eh_show_gallery_comment">Galeriekommentar anzeigen</string>
+    <string name="settings_eh_show_eh_event">EH-Ereignisse anzeigen</string>
+    <string name="settings_eh_show_eh_limits">EH-Limits anzeigen</string>
+    <string name="settings_eh_show_tag_translations">Etikettübersetzungen anzeigen</string>
+    <string name="settings_eh_show_tag_translations_summary">Etikettübersetzungen statt Originaltext anzeigen (Das Herunterladen der Datendatei dauert eine Weile)</string>
+    <string name="settings_eh_tag_translations_source">Platzhalter</string>
+    <string name="settings_eh_tag_translations_source_url">https://placeholder</string>
     <string name="settings_eh_filter">Galerie-Blocker</string>
     <string name="settings_eh_filter_summary">Nach Titel, Uploader order Etiketten die unerwünschten Galerien verstecken</string>
     <string name="settings_eh_cellular_network_warning">Achtung auf mobile Daten anzeigen</string>
     <string name="settings_read">Lesen</string>
     <string name="settings_read_screen_rotation">Richtung des Bildschirms</string>
     <string name="settings_read_screen_rotation_default">Standard</string>
-    <string name="settings_read_screen_rotation_portrait">Querformat</string>
-    <string name="settings_read_screen_rotation_landscape">Hochformat</string>
+    <string name="settings_read_screen_rotation_portrait">Hochformat</string>
+    <string name="settings_read_screen_rotation_landscape">Querformat</string>
+    <string name="settings_read_screen_rotation_sensor">Automatisch drehen</string>
     <string name="settings_read_reading_direction">Richtung des Lesens</string>
     <string name="settings_read_reading_direction_left_to_right">Von links nach rechts</string>
     <string name="settings_read_reading_direction_right_to_Left">Von rechts nach links</string>
@@ -377,7 +473,9 @@
     <string name="settings_read_start_position_bottom_left">Unter links</string>
     <string name="settings_read_start_position_bottom_right">Unter rechts</string>
     <string name="settings_read_start_position_center">Die Mitte</string>
+    <string name="settings_read_auto_transfer_time">Automatische Übertragung (s)</string>
     <string name="settings_read_keep_screen_on">Bildschirm wach bleiben lassen</string>
+    <string name="settings_read_reverse_volume_page">Lautstärketasten-Umblätterrichtung umkehren</string>
     <string name="settings_read_show_clock">Uhr anzeigen</string>
     <string name="settings_read_show_progress">Fortschritt anzeigen</string>
     <string name="settings_read_show_battery">Akku-Niveau anzeigen</string>
@@ -404,7 +502,11 @@
     <string name="settings_download_image_resolution_summary">%s. Auflösung über 1280x funktioniert möglicherweise nicht</string>
     <string name="settings_download_image_resolution_auto">Automatisch</string>
     <string name="settings_download_download_origin_image">Originale Bilder herunterladen</string>
-    <string name="settings_download_download_origin_image_summary">Wenn es aktiviert wird, wird der 509-Fehler dir schneller widerfahren</string>
+    <string name="settings_download_download_list_pagination">Seitenweise Liste</string>
+    <string name="settings_download_download_list_pagination_summary">Die Seitenfunktion wird nur wirksam, wenn die Listenlänge größer als 500 ist</string>
+    <string name="settings_download_download_origin_image_summary">Es ist gefährlich! Du könntest einen 509-Fehler bekommen</string>
+    <string name="settings_download_download_order_by_asc">Download-Reihenfolge aufsteigend</string>
+    <string name="settings_download_download_order_by_asc_summary">Beim Herunterladen aller Galerien in Reihenfolge herunterladen</string>
     <string name="settings_download_restore_download_items">Download-Elemente wiederherstellen</string>
     <string name="settings_download_restore_download_items_summary">Alle Download-Elemente im Downloadpfad wiederherstellen</string>
     <string name="settings_download_restoring">Elemente werden wiederhergestellt</string>
@@ -425,6 +527,8 @@
     <string name="settings_advanced_dump_logcat_failed">Speichern gescheitert</string>
     <string name="settings_advanced_dump_logcat_to">Protokolldatei wurde auf %s gespeichert.</string>
     <string name="settings_advanced_clear_download_path_cache">Downloadpfadzwischenspeicher löschen</string>
+    <string name="settings_advanced_clear_download_path_cache_summary">Der Galerie-Downloadpfad könnte falsch sein und muss möglicherweise erneut heruntergeladen werden. Das Löschen des Downloadpfad-Zwischenspeichers könnte das Problem lösen.</string>
+    <string name="settings_advanced_clear_download_path_cache_message">Downloadpfadzwischenspeicher löschen?</string>
     <string name="settings_advanced_proxy">Proxy</string>
     <string name="settings_advanced_proxy_summary_1">%1$s %2$s:%3$d</string>
     <string name="settings_advanced_proxy_summary_2">%1$s</string>
@@ -463,6 +567,34 @@
     <string name="just_now">Gerade</string>
     <string name="yesterday">Gestern</string>
     <string name="some_days_ago">Vor %d Tagen</string>
+    <plurals name="some_minutes_ago">
+        <item quantity="one">Vor einer Minute</item>
+        <item quantity="other">Vor %d Minuten</item>
+    </plurals>
+    <plurals name="some_hours_ago">
+        <item quantity="one">Vor einer Stunde</item>
+        <item quantity="other">Vor %d Stunden</item>
+    </plurals>
+    <plurals name="second">
+        <item quantity="one">Sek.</item>
+        <item quantity="other">Sek.</item>
+    </plurals>
+    <plurals name="minute">
+        <item quantity="one">Min.</item>
+        <item quantity="other">Min.</item>
+    </plurals>
+    <plurals name="hour">
+        <item quantity="one">Std.</item>
+        <item quantity="other">Std.</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="one">Tag</item>
+        <item quantity="other">Tage</item>
+    </plurals>
+    <plurals name="year">
+        <item quantity="one">Jahr</item>
+        <item quantity="other">Jahre</item>
+    </plurals>
     <string name="dialog_archive_title">H@H Downloader</string>
     <string name="no_archives">Keine Archivdatei</string>
     <string name="download_archive_started">Archivdatei wird heruntergeladen</string>
@@ -478,12 +610,11 @@
     <string name="error_password_cannot_empty">Gibt das Passwort ein</string>
     <string name="guest_mode">Gastmodus</string>
     <string name="sign_in_failed">Anmeldung fehlgeschlagen</string>
+    <string name="sign_in_failed_tip">Wenn dieses Problem weiterhin besteht, versuche \"Mit WebView anmelden\" oder \"Mit Cookies anmelden\"</string>
     <string name="sign_in_failed_plain">Der Fehler könnte wegen des Updates der Webseite aufgetretet werden. Versuche, dich anzumelden, indem du WebView benutzt oder Cookie eingeben, oder überspringe die Anmeldung mit der Taste unter ANMELDEN-Taste. Du könntest aber den Sad Panda sehen, wenn du dich nicht anmelden. Falls du dich mit Version unter 0.6.x anmeldetest, versuche, dich mit Cookie anzumelden.</string>
     <string name="content_layout_restore_tip">Zum Wiederholen antippen</string>
     <string name="write_rationale">EhViewer fordert jetzt die Genehmigung WRITE_EXTERNAL_STORAGE an, um die Galerie herunterzuladen. Die Genehmigung gewähren?</string>
     <string name="you_rejected_me">Mir ist weh ums Herz</string>
-    <string name="settings_advanced_clear_download_path_cache_summary">Wenn etwas dem Downloadpfad schiefgelaufen ist, den Downloadpfad reinigen, könnte das Problem lösen.</string>
-    <string name="settings_advanced_clear_download_path_cache_message">Downloadpfadszwischenspeicher löschen?</string>
     <string name="clipboard_gallery_url_snack_message">Ein Link von einen Galerie wurde in Zwischenablage erkennt.</string>
     <string name="clipboard_gallery_url_snack_action">Gehen</string>
     <string name="settings_advanced_clear_memory_cache">Zwischenspeicher löschen</string>
@@ -497,6 +628,7 @@
     <string name="settings_about_source">Quellcode</string>
     <string name="settings_about_changelog">Änderungsprotokoll</string>
     <string name="settings_about_help">Hilfe</string>
+    <string name="settings_about_issue_help">Problemhilfe</string>
     <string name="settings_about_license">Lizenzen</string>
     <string name="settings_about_license_summary">EhViewer wurde dank vieler Open Source-Projekte entwicklt.</string>
     <string name="settings_about_donate">Spenden</string>
@@ -530,6 +662,10 @@
     <string name="settings_advanced_import_data">Daten importieren</string>
     <string name="settings_advanced_import_data_summary">Gespeicherte Daten wiederherstellen</string>
     <string name="settings_advanced_import_data_successfully">Daten wurden erfolgreich importiert</string>
+    <string name="settings_advanced_wifi_sender">WiFi-Datenmigration</string>
+    <string name="settings_advanced_wifi_sander_summary">Datenmigration über Wi-Fi-Hotspot</string>
+    <string name="settings_advanced_wifi_client">WiFi-Migrationsdatenempfang</string>
+    <string name="settings_advanced_wifi_client_summary">Migrationsdaten von Wi-Fi-Hotspots empfangen</string>
     <string name="settings_about">Über die App</string>
     <string name="settings_about_author">Entwickler</string>
     <string name="settings_about_latest_release">Aktuelle Version</string>
@@ -548,16 +684,129 @@
     <string name="settings_about_donate_alipay">Alipay</string>
     <string name="settings_about_donate_paypal">PayPal</string>
     <string name="settings_about_donate_open">Öffnen</string>
-    <string name="settings_about_donate_copy">Kopieren</string>
+    <string name="settings_save_image_aliPay">Alipay-QR-Code speichern</string>
+    <string name="settings_save_image_weChat">WeChat-QR-Code speichern</string>
+    <string name="settings_about_donate_copy">E-Mail kopieren</string>
     <string name="settings_about_donate_copied">Kopiert</string>
+    <string name="settings_close_automatic_updates">Automatische Updates deaktivieren</string>
     <string name="settings_eh_identity_cookies">Konto-Cookies</string>
     <string name="settings_eh_identity_cookies_summary">Die Cookies, die dich angemeldet halten.</string>
     <string name="settings_eh_identity_cookies_signed">Wenn jemand die folgenden Informationen hat, kann er sich als du anmelden. &lt;br&gt;&lt;b&gt;ALSO GEHEIM HALTEN!&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">Du hast dich noch nicht angemeldet.</string>
     <string name="settings_eh_identity_cookies_copy">Kopieren</string>
+    <string name="settings_eh_theme_auto_switch">System-Dunkelmodus folgen</string>
     <string name="settings_eh_show_gallery_pages">Galerieseitenzahl anzeigen</string>
     <string name="settings_eh_show_gallery_pages_summary">Die Galerieseitenzahle in der Galerieliste anzeigen</string>
-    <string name="settings_about_donate_guide">guide</string>
+    <string name="settings_about_donate_guide">Anleitung</string>
+
+    <!-- ExcludedLanguagesScene -->
+    <string name="excluded_languages">Ausgeschlossene Sprachen</string>
+    <string name="select_all">Alle</string>
+    <string name="deselect_all">Keine</string>
+    <string name="invert_selection">Umkehren</string>
+    <string name="language">Sprache</string>
+    <string name="original">Original</string>
+    <string name="translated">Übersetzt</string>
+    <string name="rewrite">Umschreiben</string>
+    <string name="language_japanese">Japanisch</string>
+    <string name="language_english">Englisch</string>
+    <string name="language_chinese">Chinesisch</string>
+    <string name="language_dutch">Niederländisch</string>
+    <string name="language_french">Französisch</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_hungarian">Ungarisch</string>
+    <string name="language_italian">Italienisch</string>
+    <string name="language_korean">Koreanisch</string>
+    <string name="language_polish">Polnisch</string>
+    <string name="language_portuguese">Portugiesisch</string>
+    <string name="language_russian">Russisch</string>
+    <string name="language_spanish">Spanisch</string>
+    <string name="language_thai">Thailändisch</string>
+    <string name="language_vietnamese">Vietnamesisch</string>
+    <string name="language_na">N/V</string>
+    <string name="language_other">Andere</string>
+
+    <!-- DirPickerActivity -->
+    <string name="preset">Voreinstellung</string>
+    <string name="default_directory">Standardverzeichnis</string>
+    <string name="application_file_directory">App-Dateiverzeichnis %d (wird nach Deinstallation der App entfernt)</string>
+
+    <string name="download_service">Download-Dienst</string>
+    <string name="favorite_name">Favorit</string>
+    <string name="yes">Ja</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="dummy_button">Dummy-Button</string>
+    <string name="dummy_content">DUMMY\nINHALT</string>
+
+    <!--  侧滑栏头像和背景修改  -->
+    <string name="change_background_title">Möchtest du wirklich den Hintergrund ändern?</string>
+    <string name="change_background_message">Die Hintergrundänderung ist auf diese Software beschränkt und kann nicht mit E-hentai oder ähnlicher Software synchronisiert werden.</string>
+    <string name="change_avatar_title">Möchtest du wirklich dein Avatar ändern?</string>
+    <string name="change_avatar_message">Die Avatar-Änderung ist auf diese Software beschränkt und kann nicht mit E-hentai oder ähnlicher Software synchronisiert werden.</string>
+    <string name="take_a_photograph">Foto aufnehmen</string>
+    <string name="choose_from_the_album">Aus dem Album auswählen</string>
+    <string name="request_camera_permission">EhViewer wird Zugriff auf die Gerätekamera anfordern, um Fotos aufzunehmen. Möchtest du autorisieren?</string>
+    <string name="request_storage_permission">EhViewer wird Zugriff auf das Fotoalbum des Geräts anfordern, um Bilder zu erhalten. Möchtest du autorisieren?</string>
+
+    <!-- 下载通知   -->
+    <string name="download_torrent_name">Torrent: %s</string>
+    <string name="download_torrent_state">Status: </string>
+    <string name="download_torrent_path">Pfad: %s</string>
+    <string name="download_search">In Downloadliste suchen</string>
+    <string name="sure">OK</string>
+    <string name="try_again">Erneut versuchen</string>
+    <string name="open_directory">Verzeichnis öffnen</string>
+    <string name="downloading">Wird heruntergeladen…… Bitte später erneut versuchen</string>
+    <string name="torrent_exist">Datei existiert bereits: %s</string>
+
+    <!--  wifi server -->
+    <string name="wifi_server_name">WiFiServer</string>
+    <string name="wifi_server">WiFiServer</string>
+    <string name="wifi_client">WiFiClient</string>
+    <string name="wifi_send_bookmark">Lesezeichen migrieren</string>
+    <string name="wifi_send_favorite">Favoriten migrieren</string>
+    <string name="wifi_send_download">Download-Daten migrieren</string>
+    <string name="wifi_send_done">Datenmigration abgeschlossen</string>
+    <string name="wifi_send_start">Migration %s starten</string>
+    <string name="wifi_send_stop">Migration %s stoppen</string>
+    <string name="wifi_sending">Datenmigration läuft, bitte warten oder beenden und erneut versuchen</string>
+    <string name="wifi_send_text">Daten senden</string>
+    <string name="wifi_server_illustrate">Bitte stelle sicher, dass das Mobiltelefon zum Empfangen von Daten mit dem lokalen Hotspot verbunden ist, und trenne nicht oder kehre nicht zur übergeordneten Seite zurück, bevor die Migration abgeschlossen ist!</string>
+    <string name="wifi_server_connect">Verbinden</string>
+    <string name="wifi_server_connect_unable">Verbindung existiert nicht</string>
+    <string name="wifi_server_connection_succeeded">Das Gerät wurde erfolgreich verbunden. Nach dem Empfang der Daten bitte die App neu starten, damit die Daten wirksam werden.</string>
+    <string name="wifi_server_disconnect">Gerät getrennt</string>
+    <string name="wifi_server_connection_fail">Kommunikation konnte nicht erstellt werden</string>
+    <string name="wifi_server_send_success">Nachricht erfolgreich gesendet: %s</string>
+    <string name="wifi_server_send_fail">Nachricht konnte nicht gesendet werden: %s</string>
+    <string name="wifi_server_receive_message">Nachricht empfangen: %s</string>
+    <string name="wifi_server_receive_message_unknown">unbekannter Datentyp</string>
+    <string name="wifi_server_opened">Hotspot wurde geöffnet SSID: %1s \n%2s</string>
+    <string name="wifi_server_closed">Hotspot wurde geschlossen</string>
+    <string name="wifi_server_password">Passwort: %s</string>
+    <string name="wifi_server_no_permission">Unzureichende Berechtigung, bitte Berechtigung erteilen</string>
+    <!--  wifi server  -->
+
+    <!--  limits  -->
+    <string name="refresh_limits">Limits-Nutzung aktualisieren</string>
+    <string name="from_gallery_visits">%s von Galeriebesuchen</string>
+    <string name="from_torrent_completions">%s von Torrent-Abschlüssen</string>
+    <string name="from_archive_download">%s von Archiv-Downloads</string>
+    <string name="from_hentai_home">%s von Hentai@Home</string>
+    <string name="current_moderation_power">Aktuelle Moderationskraft %s</string>
+    <string name="reset_cost">Kosten %s zum Zurücksetzen</string>
+    <string name="ip_base_limits">IP-basierte Limits</string>
+    <string name="limit_unneed_reset">Es besteht derzeit keine Notwendigkeit, Kontingente zurückzusetzen, bitte nach dem Aktualisieren erneut versuchen~</string>
+
+    <string name="pagination_count">Anzahl</string>
+    <string name="pagination_page_and_item">r/p</string>
+    <string name="appwidget_text">BEISPIEL</string>
+    <string name="add_widget">Widget hinzufügen</string>
+    <string name="app_widget_description">Dies ist eine App-Widget-Beschreibung</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">Vorherige Seite</string>
+    <string name="spen_next_page">Nächste Seite</string>
 
     <!--  排行榜  -->
     <string name="gallery_toplists">Galerie Die Charts.</string>
@@ -568,58 +817,63 @@
     <string name="cleanup_toplists">Säuberungsaktion Die Charts.</string>
     <string name="rating_reviewing_toplists">Bewertung&#038;Nachprüfend Die Charts.</string>
     <string name="top_list">Die Charts.</string>
-    <string name="settings_eh_list_show_read_progress">Show reading progress</string>
-    <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
-    <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
-    <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
-    <string name="gallery_update_dialog_title">Update method</string>
-    <string name="gallery_update_dialog_message">Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.\nDownload as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.</string>
-    <string name="gallery_update_download_as_new">Download as new</string>
-    <string name="gallery_update_override_old">Overwrite old</string>
-    <string name="loading_db_file">Data Loading …</string>
-    <string name="settings_eh_history_size">Number of historical records</string>
-    <string name="history_info_unlimited">Unlimited</string>
+    <string name="all_time_top_list">Alle Zeiten TopList</string>
+    <string name="past_year_top_list">Vergangenes Jahr TopList</string>
+    <string name="past_month_top_list">Vergangener Monat TopList</string>
+    <string name="yesterday_top_list">Gestern TopList</string>
+    <string name="settings_eh_list_show_read_progress">Lesefortschritt anzeigen</string>
+    <string name="settings_eh_list_show_read_progress_summary">Lesefortschritt für jede Galerie im Detail-Listenmodus anzeigen</string>
+    <string name="cookie_login_import_in_clipboard">Aus Zwischenablage importieren</string>
+    <string name="no_cookie_in_clipboard">Keine gültigen Daten in der Zwischenablage gefunden</string>
+    <string name="gallery_update_dialog_title">Update-Methode</string>
+    <string name="gallery_update_dialog_message">Alte Galerie überschreiben: Nur die heruntergeladene Version wird behalten, die alte Version wird gelöscht.\nAls neue Galerie herunterladen: Die heruntergeladene Galerie existiert als neue Galerie, und sowohl die neue als auch die alte Galerie werden gespeichert.</string>
+    <string name="gallery_update_download_as_new">Als neu herunterladen</string>
+    <string name="gallery_update_override_old">Alte überschreiben</string>
+    <string name="loading_db_file">Daten werden geladen …</string>
+    <string name="settings_eh_history_size">Anzahl der Verlaufseinträge</string>
+    <string name="history_info_unlimited">Unbegrenzt</string>
     <string name="archiver">Archiver</string>
-    <string name="archiver_dialog_current_funds">Current Funds:</string>
-    <string name="archiver_dialog_download_original">Download Original Archive</string>
-    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
-    <string name="archiver_dialog_size">Estimated Size:  %s</string>
-    <string name="dialog_archiver_title">Archiver Downloader</string>
-    <string name="download_receiver_label">EhViewer Download Receiver</string>
-    <string name="decompressed_successfully">Decompressed successfully!</string>
-    <string name="decompression_failed">Decompression failed!</string>
+    <string name="archiver_dialog_current_funds">Aktuelle Mittel:</string>
+    <string name="archiver_dialog_cost">Download-Kosten:  %s</string>
+    <string name="archiver_dialog_download_original">Original-Archiv herunterladen</string>
+    <string name="archiver_dialog_download_resample">Neu abgetastetes Archiv herunterladen</string>
+    <string name="archiver_dialog_size">Geschätzte Größe:  %s</string>
+    <string name="dialog_archiver_title">Archiver-Downloader</string>
+    <string name="download_receiver_label">EhViewer Download-Empfänger</string>
+    <string name="decompressed_successfully">Erfolgreich dekomprimiert!</string>
+    <string name="decompression_failed">Dekomprimierung fehlgeschlagen!</string>
     <string name="download_label_archiver">Archiver</string>
-    <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
-    <string name="settings_download_timeout">Download timeout</string>
-    <string name="download_timeout_unlimited">Unlimited</string>
-    <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
-    <string name="have_new_version">Click to see new gallery version</string>
-    <string name="archiver_downloading">Arc Downloading %s</string>
-    <string name="order">Order</string>
-    <string name="sort_by_pub_time">Published Time</string>
-    <string name="sort_by_fav_time">Favorited Time</string>
-    <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
+    <string name="cookie_in_clipboard_incorrect">Cookie-Format ist falsch</string>
+    <string name="settings_download_timeout">Download-Timeout</string>
+    <string name="download_timeout_unlimited">Unbegrenzt</string>
+    <string name="settings_download_timeout_summary">%s(S), Maximale Zeit zum Herunterladen eines Bildes.</string>
+    <string name="have_new_version">Klicken, um neue Galerieversion zu sehen</string>
+    <string name="archiver_downloading">Archiv wird heruntergeladen %s</string>
+    <string name="order">Sortierung</string>
+    <string name="sort_by_pub_time">Veröffentlichungszeit</string>
+    <string name="sort_by_fav_time">Zu Favoriten hinzugefügt am</string>
+    <string name="settings_eh_sign_out_restart">Wird automatisch für dich neu gestartet, bitte warten</string>
 
     <!--  订阅服务  -->
-    <string name="subscription_watched">Watched</string>
-    <string name="subscription_hidden">Hidden</string>
-    <string name="delete_subscription_title">Remove Tag</string>
-    <string name="can_not_use_this_tag">Tags are not available</string>
-    <string name="add_tag_dialog_title">Add Tag</string>
-    <string name="tag_title">Tag</string>
-    <string name="empty_subscription">Subscription is empty</string>
-    <string name="subscription_success">%s success</string>
-    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
-    <string name="import_local_archive">Import local archive</string>
-    <string name="import_archive_title">Select archive file</string>
-    <string name="import_archive_failed">Failed to import archive</string>
-    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
-    <string name="import_archive_processing">Processing archive…</string>
-    <string name="import_archive_invalid_format">Unsupported archive format</string>
-    <string name="import_archive_already_imported">Archive already imported</string>
-    <string name="import_archive_success">Archive imported successfully</string>
-    <string name="archive_not_accessible">Archive file is not accessible</string>
-    <string name="imported_archive_info_title">Local Import Info</string>
-    <string name="imported_archive_info_message">This is an item imported from local storage</string>
-    <string name="imported_archive_category">Local Import</string>
+    <string name="subscription_watched">Beobachtet</string>
+    <string name="subscription_hidden">Versteckt</string>
+    <string name="delete_subscription_title">Etikett entfernen</string>
+    <string name="can_not_use_this_tag">Etiketten sind nicht verfügbar</string>
+    <string name="add_tag_dialog_title">Etikett hinzufügen</string>
+    <string name="tag_title">Etikett</string>
+    <string name="empty_subscription">Abonnement ist leer</string>
+    <string name="subscription_success">%s erfolgreich</string>
+    <string name="settings_eh_show_gallery_rating">Galeriebewertung anzeigen</string>
+    <string name="import_local_archive">Lokales Archiv importieren</string>
+    <string name="import_archive_title">Archivdatei auswählen</string>
+    <string name="import_archive_failed">Archivimport fehlgeschlagen</string>
+    <string name="archive_permission_lost">Berechtigung zum Zugriff auf das Archiv wurde verloren. Bitte die Archivdatei erneut importieren.</string>
+    <string name="import_archive_processing">Archiv wird verarbeitet…</string>
+    <string name="import_archive_invalid_format">Nicht unterstütztes Archivformat</string>
+    <string name="import_archive_already_imported">Archiv wurde bereits importiert</string>
+    <string name="import_archive_success">Archiv erfolgreich importiert</string>
+    <string name="archive_not_accessible">Archivdatei ist nicht zugänglich</string>
+    <string name="imported_archive_info_title">Lokaler Import-Info</string>
+    <string name="imported_archive_info_message">Dies ist ein Element, das aus dem lokalen Speicher importiert wurde</string>
+    <string name="imported_archive_category">Lokaler Import</string>
 </resources>
