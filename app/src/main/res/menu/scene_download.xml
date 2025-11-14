@@ -89,6 +89,14 @@
                         android:id="@+id/sort_by_rating_desc"
                         android:title="@string/sort_by_rating_desc"
                         app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/sort_by_name_asc"
+                        android:title="@string/sort_by_name_asc"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/sort_by_name_desc"
+                        android:title="@string/sort_by_name_desc"
+                        app:showAsAction="ifRoom"/>
                 </menu>
             </item>
 
