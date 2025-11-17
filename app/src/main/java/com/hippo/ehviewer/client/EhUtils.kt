@@ -13,191 +13,190 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer.client
 
-package com.hippo.ehviewer.client;
+import android.content.Context
+import android.graphics.Color
+import android.text.TextUtils
+import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.client.data.GalleryInfo
+import java.util.regex.Pattern
 
-import android.content.Context;
-import android.graphics.Color;
-import android.text.TextUtils;
-import androidx.annotation.Nullable;
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.Settings;
-import com.hippo.ehviewer.client.data.GalleryInfo;
-import com.hippo.util.AppHelper;
+object EhUtils {
+    @JvmField
+    val NONE: Int = -1 // Use it for homepage
+    const val UNKNOWN: Int = 0x400
 
-import java.util.regex.Pattern;
+    @JvmField
+    val ALL_CATEGORY: Int = UNKNOWN - 1
 
-public class EhUtils {
-
-    public static final int NONE = -1; // Use it for homepage
-    public static final int UNKNOWN = 0x400;
-
-    public static final int ALL_CATEGORY = EhUtils.UNKNOWN - 1;
     //DOUJINSHI|MANGA|ARTIST_CG|GAME_CG|WESTERN|NON_H|IMAGE_SET|COSPLAY|ASIAN_PORN|MISC;
-
-    public static final int BG_COLOR_DOUJINSHI = 0xfff44336;
-    public static final int BG_COLOR_MANGA = 0xffff9800;
-    public static final int BG_COLOR_ARTIST_CG = 0xfffbc02d;
-    public static final int BG_COLOR_GAME_CG = 0xff4caf50;
-    public static final int BG_COLOR_WESTERN = 0xff8bc34a;
-    public static final int BG_COLOR_NON_H = 0xff2196f3;
-    public static final int BG_COLOR_IMAGE_SET = 0xff3f51b5;
-    public static final int BG_COLOR_COSPLAY = 0xff9c27b0;
-    public static final int BG_COLOR_ASIAN_PORN = 0xff9575cd;
-    public static final int BG_COLOR_MISC = 0xfff06292;
-    public static final int BG_COLOR_UNKNOWN = Color.BLACK;
+    const val BG_COLOR_DOUJINSHI: Int = -0xbbcca
+    const val BG_COLOR_MANGA: Int = -0x6800
+    const val BG_COLOR_ARTIST_CG: Int = -0x43fd3
+    const val BG_COLOR_GAME_CG: Int = -0xb350b0
+    const val BG_COLOR_WESTERN: Int = -0x743cb6
+    const val BG_COLOR_NON_H: Int = -0xde690d
+    const val BG_COLOR_IMAGE_SET: Int = -0xc0ae4b
+    const val BG_COLOR_COSPLAY: Int = -0x63d850
+    const val BG_COLOR_ASIAN_PORN: Int = -0x6a8a33
+    const val BG_COLOR_MISC: Int = -0xf9d6e
+    val BG_COLOR_UNKNOWN: Int = Color.BLACK
 
     // Remove [XXX], (XXX), {XXX}, ~XXX~ stuff
-    public static final Pattern PATTERN_TITLE_PREFIX = Pattern.compile(
-            "^(?:(?:\\([^\\)]*\\))|(?:\\[[^\\]]*\\])|(?:\\{[^\\}]*\\})|(?:~[^~]*~)|\\s+)*");
+    val PATTERN_TITLE_PREFIX: Pattern = Pattern.compile(
+        "^(?:(?:\\([^\\)]*\\))|(?:\\[[^\\]]*\\])|(?:\\{[^\\}]*\\})|(?:~[^~]*~)|\\s+)*"
+    )
+
     // Remove [XXX], (XXX), {XXX}, ~XXX~ stuff and something like ch. 1-23
-    public static final Pattern PATTERN_TITLE_SUFFIX = Pattern.compile(
-            "(?:\\s+ch.[\\s\\d-]+)?(?:(?:\\([^\\)]*\\))|(?:\\[[^\\]]*\\])|(?:\\{[^\\}]*\\})|(?:~[^~]*~)|\\s+)*$",
-            Pattern.CASE_INSENSITIVE);
+    val PATTERN_TITLE_SUFFIX: Pattern = Pattern.compile(
+        "(?:\\s+ch.[\\s\\d-]+)?(?:(?:\\([^\\)]*\\))|(?:\\[[^\\]]*\\])|(?:\\{[^\\}]*\\})|(?:~[^~]*~)|\\s+)*$",
+        Pattern.CASE_INSENSITIVE
+    )
 
-    private static final int[] CATEGORY_VALUES = {
-            EhConfig.MISC,
-            EhConfig.DOUJINSHI,
-            EhConfig.MANGA,
-            EhConfig.ARTIST_CG,
-            EhConfig.GAME_CG,
-            EhConfig.IMAGE_SET,
-            EhConfig.COSPLAY,
-            EhConfig.ASIAN_PORN,
-            EhConfig.NON_H,
-            EhConfig.WESTERN,
-            UNKNOWN };
+    private val CATEGORY_VALUES = intArrayOf(
+        EhConfig.MISC,
+        EhConfig.DOUJINSHI,
+        EhConfig.MANGA,
+        EhConfig.ARTIST_CG,
+        EhConfig.GAME_CG,
+        EhConfig.IMAGE_SET,
+        EhConfig.COSPLAY,
+        EhConfig.ASIAN_PORN,
+        EhConfig.NON_H,
+        EhConfig.WESTERN,
+        UNKNOWN
+    )
 
-    private static final String[][] CATEGORY_STRINGS = {
-            new String[] { "misc" },
-            new String[] { "doujinshi" },
-            new String[] { "manga" },
-            new String[] { "artistcg", "Artist CG Sets", "Artist CG" },
-            new String[] { "gamecg", "Game CG Sets", "Game CG" },
-            new String[] { "imageset", "Image Sets", "Image Set" },
-            new String[] { "cosplay" },
-            new String[] { "asianporn", "Asian Porn" },
-            new String[] { "non-h" },
-            new String[] { "western" },
-            new String[] { "unknown" }
-    };
+    private val CATEGORY_STRINGS = arrayOf<Array<String>?>(
+        arrayOf<String>("misc"),
+        arrayOf<String>("doujinshi"),
+        arrayOf<String>("manga"),
+        arrayOf<String>("artistcg", "Artist CG Sets", "Artist CG"),
+        arrayOf<String>("gamecg", "Game CG Sets", "Game CG"),
+        arrayOf<String>("imageset", "Image Sets", "Image Set"),
+        arrayOf<String>("cosplay"),
+        arrayOf<String>("asianporn", "Asian Porn"),
+        arrayOf<String>("non-h"),
+        arrayOf<String>("western"),
+        arrayOf<String>("unknown")
+    )
 
-    public static int getCategory(String type) {
-        int i;
-        for (i = 0; i < CATEGORY_STRINGS.length - 1; i++) {
-            for (String str : CATEGORY_STRINGS[i])
-                if (str.equalsIgnoreCase(type))
-                    return CATEGORY_VALUES[i];
+    @JvmStatic
+    fun getCategory(type: String?): Int {
+        var i: Int
+        i = 0
+        while (i < CATEGORY_STRINGS.size - 1) {
+            for (str in CATEGORY_STRINGS[i]!!) if (str.equals(
+                    type,
+                    ignoreCase = true
+                )
+            ) return CATEGORY_VALUES[i]
+            i++
         }
 
-        return CATEGORY_VALUES[i];
+        return CATEGORY_VALUES[i]
     }
 
-    public static String getCategory(int type) {
-        int i;
-        for (i = 0; i < CATEGORY_VALUES.length - 1; i++) {
-            if (CATEGORY_VALUES[i] == type)
-                break;
+    @JvmStatic
+    fun getCategory(type: Int): String? {
+        var i: Int
+        i = 0
+        while (i < CATEGORY_VALUES.size - 1) {
+            if (CATEGORY_VALUES[i] == type) break
+            i++
         }
-        return CATEGORY_STRINGS[i][0];
+        return CATEGORY_STRINGS[i]!![0]
     }
 
-    public static int getCategoryColor(int category) {
-        switch (category) {
-            case EhConfig.DOUJINSHI:
-                return BG_COLOR_DOUJINSHI;
-            case EhConfig.MANGA:
-                return BG_COLOR_MANGA;
-            case EhConfig.ARTIST_CG:
-                return BG_COLOR_ARTIST_CG;
-            case EhConfig.GAME_CG:
-                return BG_COLOR_GAME_CG;
-            case EhConfig.WESTERN:
-                return BG_COLOR_WESTERN;
-            case EhConfig.NON_H:
-                return BG_COLOR_NON_H;
-            case EhConfig.IMAGE_SET:
-                return BG_COLOR_IMAGE_SET;
-            case EhConfig.COSPLAY:
-                return BG_COLOR_COSPLAY;
-            case EhConfig.ASIAN_PORN:
-                return BG_COLOR_ASIAN_PORN;
-            case EhConfig.MISC:
-                return BG_COLOR_MISC;
-            default:
-                return BG_COLOR_UNKNOWN;
+    @JvmStatic
+    fun getCategoryColor(category: Int): Int {
+        when (category) {
+            EhConfig.DOUJINSHI -> return BG_COLOR_DOUJINSHI
+            EhConfig.MANGA -> return BG_COLOR_MANGA
+            EhConfig.ARTIST_CG -> return BG_COLOR_ARTIST_CG
+            EhConfig.GAME_CG -> return BG_COLOR_GAME_CG
+            EhConfig.WESTERN -> return BG_COLOR_WESTERN
+            EhConfig.NON_H -> return BG_COLOR_NON_H
+            EhConfig.IMAGE_SET -> return BG_COLOR_IMAGE_SET
+            EhConfig.COSPLAY -> return BG_COLOR_COSPLAY
+            EhConfig.ASIAN_PORN -> return BG_COLOR_ASIAN_PORN
+            EhConfig.MISC -> return BG_COLOR_MISC
+            else -> return BG_COLOR_UNKNOWN
         }
     }
 
-    public static void signOut(Context context) {
-        EhApplication.getEhCookieStore(context).signOut();
-        Settings.putAvatar(null);
-        Settings.putDisplayName(null);
-        Settings.putNeedSignIn(true);
+    @JvmStatic
+    fun signOut(context: Context) {
+        EhApplication.getEhCookieStore(context).signOut()
+        Settings.putAvatar(null)
+        Settings.putDisplayName(null)
+        Settings.putNeedSignIn(true)
     }
 
-    public static boolean needSignedIn(Context context) {
-        return Settings.getNeedSignIn() && !EhApplication.getEhCookieStore(context).hasSignedIn();
+    @JvmStatic
+    fun needSignedIn(context: Context): Boolean {
+        return Settings.getNeedSignIn() && !EhApplication.getEhCookieStore(context).hasSignedIn()
     }
 
-    public static String getSuitableTitle(GalleryInfo gi) {
+    @JvmStatic
+    fun getSuitableTitle(gi: GalleryInfo): String? {
         if (Settings.getShowJpnTitle()) {
-            return TextUtils.isEmpty(gi.titleJpn) ? gi.title : gi.titleJpn;
+            return if (TextUtils.isEmpty(gi.titleJpn)) gi.title else gi.titleJpn
         } else {
-            return TextUtils.isEmpty(gi.title) ? gi.titleJpn : gi.title;
+            return if (TextUtils.isEmpty(gi.title)) gi.titleJpn else gi.title
         }
     }
 
-    public static boolean judgeSuitableTitle(GalleryInfo gi,String key) {
-        String titleB = gi.titleJpn+""+gi.title;
-        return titleB.contains(key);
+    @JvmStatic
+    fun judgeSuitableTitle(gi: GalleryInfo, key: String): Boolean {
+        val titleB = gi.titleJpn + "" + gi.title
+        return titleB.contains(key)
     }
 
-    @Nullable
-    public static String extractTitle(String title) {
+    @JvmStatic
+    fun extractTitle(title: String?): String? {
+        var title = title
         if (null == title) {
-            return null;
+            return null
         }
-        title = PATTERN_TITLE_PREFIX.matcher(title).replaceFirst("");
-        title = PATTERN_TITLE_SUFFIX.matcher(title).replaceFirst("");
+        title = PATTERN_TITLE_PREFIX.matcher(title).replaceFirst("")
+        title = PATTERN_TITLE_SUFFIX.matcher(title).replaceFirst("")
         // Sometimes title is combined by romaji and english translation.
         // Only need romaji.
         // TODO But not sure every '|' means that
-        int index = title.indexOf('|');
+        val index = title.indexOf('|')
         if (index >= 0) {
-            title = title.substring(0, index);
+            title = title.substring(0, index)
         }
         if (title.isEmpty()) {
-            return null;
+            return null
         } else {
-            return title;
+            return title
         }
     }
 
-    public static String handleThumbUrlResolution(String url) {
+    @JvmStatic
+    fun handleThumbUrlResolution(url: String?): String? {
         if (null == url) {
-            return null;
+            return null
         }
 
-        String resolution;
-        switch (Settings.getThumbResolution()) {
-            default:
-            case 0: // Auto
-                return url;
-            case 1: // 250
-                resolution = "250";
-                break;
-            case 2: // 300
-                resolution = "300";
-                break;
+        val resolution: String?
+        when (Settings.getThumbResolution()) {
+            0 -> return url
+            1 -> resolution = "250"
+            2 -> resolution = "300"
+            else -> return url
         }
 
-        int index1 = url.lastIndexOf('_');
-        int index2 = url.lastIndexOf('.');
+        val index1 = url.lastIndexOf('_')
+        val index2 = url.lastIndexOf('.')
         if (index1 >= 0 && index2 >= 0 && index1 < index2) {
-            return url.substring(0, index1 + 1) + resolution + url.substring(index2);
+            return url.substring(0, index1 + 1) + resolution + url.substring(index2)
         } else {
-            return url;
+            return url
         }
     }
 }

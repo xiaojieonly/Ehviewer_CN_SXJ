@@ -13,61 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.ehviewer.client
 
-package com.hippo.ehviewer.client;
+import android.os.Bundle
+import android.text.TextUtils
+import android.util.Log
+import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser
+import com.hippo.ehviewer.client.parser.GalleryListUrlParser
+import com.hippo.ehviewer.client.parser.GalleryPageUrlParser
+import com.hippo.ehviewer.ui.scene.ProgressScene
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene
+import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene
+import com.hippo.scene.Announcer
 
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import androidx.annotation.Nullable;
-import com.hippo.ehviewer.client.data.ListUrlBuilder;
-import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
-import com.hippo.ehviewer.client.parser.GalleryListUrlParser;
-import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
-import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
-import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
-import com.hippo.ehviewer.ui.scene.ProgressScene;
-import com.hippo.scene.Announcer;
+object EhUrlOpener {
+    private val TAG: String = EhUrlOpener::class.java.getSimpleName()
 
-public class EhUrlOpener {
-
-    private static final String TAG = EhUrlOpener.class.getSimpleName();
-
-    @Nullable
-    public static Announcer parseUrl(String url) {
+    @JvmStatic
+    fun parseUrl(url: String?): Announcer? {
         if (TextUtils.isEmpty(url)) {
-            return null;
+            return null
         }
 
-        ListUrlBuilder listUrlBuilder = GalleryListUrlParser.parse(url);
+        val listUrlBuilder = GalleryListUrlParser.parse(url)
         if (listUrlBuilder != null) {
-            Bundle args = new Bundle();
-            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_LIST_URL_BUILDER);
-            args.putParcelable(GalleryListScene.KEY_LIST_URL_BUILDER, listUrlBuilder);
-            return new Announcer(GalleryListScene.class).setArgs(args);
+            val args = Bundle()
+            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_LIST_URL_BUILDER)
+            args.putParcelable(GalleryListScene.KEY_LIST_URL_BUILDER, listUrlBuilder)
+            return Announcer(GalleryListScene::class.java).setArgs(args)
         }
 
-        GalleryDetailUrlParser.Result result1 = GalleryDetailUrlParser.parse(url);
+        val result1 = GalleryDetailUrlParser.parse(url)
         if (result1 != null) {
-            Bundle args = new Bundle();
-            args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GID_TOKEN);
-            args.putLong(GalleryDetailScene.KEY_GID, result1.gid);
-            args.putString(GalleryDetailScene.KEY_TOKEN, result1.token);
-            return new Announcer(GalleryDetailScene.class).setArgs(args);
+            val args = Bundle()
+            args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GID_TOKEN)
+            args.putLong(GalleryDetailScene.KEY_GID, result1.gid)
+            args.putString(GalleryDetailScene.KEY_TOKEN, result1.token)
+            return Announcer(GalleryDetailScene::class.java).setArgs(args)
         }
 
-        GalleryPageUrlParser.Result result2 = GalleryPageUrlParser.parse(url);
+        val result2 = GalleryPageUrlParser.parse(url)
         if (result2 != null) {
-            Bundle args = new Bundle();
-            args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN);
-            args.putLong(ProgressScene.KEY_GID, result2.gid);
-            args.putString(ProgressScene.KEY_PTOKEN, result2.pToken);
-            args.putInt(ProgressScene.KEY_PAGE, result2.page);
-            return new Announcer(ProgressScene.class).setArgs(args);
+            val args = Bundle()
+            args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN)
+            args.putLong(ProgressScene.KEY_GID, result2.gid)
+            args.putString(ProgressScene.KEY_PTOKEN, result2.pToken)
+            args.putInt(ProgressScene.KEY_PAGE, result2.page)
+            return Announcer(ProgressScene::class.java).setArgs(args)
         }
 
-        Log.i(TAG, "Can't parse url: " + url);
+        Log.i(TAG, "Can't parse url: " + url)
 
-        return null;
+        return null
     }
 }
