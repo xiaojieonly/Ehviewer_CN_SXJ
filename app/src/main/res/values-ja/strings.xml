@@ -230,6 +230,7 @@
     <string name="read">閲覧</string>
     <string name="more_information">詳細情報を見る</string>
     <plurals name="page_count">
+        <item quantity="one">%d ページ</item>
         <item quantity="other">%d ページ</item>
     </plurals>
     <string name="favored_times">\u2665 %d</string>
@@ -277,6 +278,7 @@
     <string name="rating2">目の障害になる</string>
     <string name="rating1">悪くて呼吸できない</string>
     <string name="rating0">…</string>
+    <string name="rating_none" translatable="false">(´_ゝ`)</string>
     <!-- Gallery Info -->
     <string name="gallery_info">ギャラリー詳細</string>
     <string name="copied_to_clipboard">クリップボードにコピーされました。</string>
@@ -365,6 +367,8 @@
     <string name="sort_by_create_time_desc">作成時間の降順</string>
     <string name="sort_by_rating_asc">評価の昇順</string>
     <string name="sort_by_rating_desc">評価の降順</string>
+    <string name="sort_by_name_asc">名前の昇順</string>
+    <string name="sort_by_name_desc">名前の降順</string>
     <string name="sort_download_list">リストを並べ替え</string>
     <string name="download_start_all">すべて開始</string>
     <string name="download_stop_all">すべて停止</string>
@@ -607,8 +611,11 @@
     <string name="settings_advanced_wifi_client">Wi-Fi で移行をするデータを受信</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi ホットスポット経由で移行をするデータを受信します</string>
     <string name="settings_about">このアプリについて</string>
+    <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer は E-Hentai.org と一切の関係がございません。</string>
     <string name="settings_about_author">開発者</string>
+    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">最新バージョン</string>
     <string name="settings_about_website">サイト</string>
     <string name="settings_about_source">ソース</string>
@@ -865,17 +872,20 @@
     <string name="sort_by_pub_time">公開日時</string>
     <string name="sort_by_fav_time">お気に入りをした日時</string>
     <string name="settings_eh_sign_out_restart">自動で再起動中です。しばらくお待ちください。</string>
-    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
-    <string name="import_local_archive">Import local archive</string>
-    <string name="import_archive_title">Select archive file</string>
-    <string name="import_archive_failed">Failed to import archive</string>
-    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
-    <string name="import_archive_processing">Processing archive…</string>
-    <string name="import_archive_invalid_format">Unsupported archive format</string>
-    <string name="import_archive_already_imported">Archive already imported</string>
-    <string name="import_archive_success">Archive imported successfully</string>
-    <string name="archive_not_accessible">Archive file is not accessible</string>
-    <string name="imported_archive_info_title">Local Import Info</string>
-    <string name="imported_archive_info_message">This is an item imported from local storage</string>
-    <string name="imported_archive_category">Local Import</string>
+    <string name="settings_eh_theme_auto_switch">システムのダークモードに従う</string>
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">前のページ</string>
+    <string name="spen_next_page">次のページ</string>
+    <string name="import_local_archive">ローカルアーカイブをインポート</string>
+    <string name="import_archive_title">アーカイブファイルを選択</string>
+    <string name="import_archive_failed">アーカイブのインポートに失敗しました</string>
+    <string name="archive_permission_lost">アーカイブへのアクセス権限が失われました。アーカイブファイルを再インポートしてください。</string>
+    <string name="import_archive_processing">アーカイブを処理中…</string>
+    <string name="import_archive_invalid_format">サポートされていないアーカイブ形式</string>
+    <string name="import_archive_already_imported">アーカイブは既にインポートされています</string>
+    <string name="import_archive_success">アーカイブのインポートが成功しました</string>
+    <string name="archive_not_accessible">アーカイブファイルにアクセスできません</string>
+    <string name="imported_archive_info_title">ローカルインポート情報</string>
+    <string name="imported_archive_info_message">これはローカルストレージからインポートされたアイテムです</string>
+    <string name="imported_archive_category">ローカルインポート</string>
 </resources>

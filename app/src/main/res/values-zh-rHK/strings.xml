@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
+<!-- 繁體中文 -->
 <resources>
 
     <!--  black list (temporary)  -->
@@ -39,11 +39,15 @@
     <string name="add_favorites_dialog_message">新增收藏 %s ？</string>
     <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">應用提供的主機到IP的映射\n可被自訂 hosts.txt 覆蓋</string>
+    <string name="network_remind">檢測到開啟了 VPN，請注意您的網絡安全</string>
 
     <string name="no_blicklist">這裏是黑名單</string>
 
 
     <string name="app_name">EhViewer</string>
+
+    <string name="site_e" translatable="false">e-hentai</string>
+    <string name="site_ex" translatable="false">exhentai</string>
 
     <!-- Theme -->
     <string name="theme_light">亮色主題</string>
@@ -57,7 +61,9 @@
     <string name="favourite">收藏</string>
     <string name="history">歷史</string>
     <string name="downloads">下載</string>
+    <string name="news">新聞</string>
     <string name="settings">設定</string>
+    <string name="stub" translatable="false">Stub</string>
 
     <string name="username">用戶名</string>
     <string name="password">密碼</string>
@@ -94,7 +100,33 @@
     <string name="clipboard_gallery_url_snack_action">檢視</string>
 
     <!-- Message -->
-    <string name="image_save_success">Picture saved successfully</string>
+    <string name="image_save_success">圖片已成功儲存</string>
+
+    <string name="error_status_code_400" translatable="false">Bad Request</string>
+    <string name="error_status_code_401" translatable="false">Unauthorized</string>
+    <string name="error_status_code_402" translatable="false">Payment Required</string>
+    <string name="error_status_code_403" translatable="false">Forbidden</string>
+    <string name="error_status_code_404" translatable="false">Not Found</string>
+    <string name="error_status_code_405" translatable="false">Method Not Allowed</string>
+    <string name="error_status_code_406" translatable="false">Not Acceptable</string>
+    <string name="error_status_code_407" translatable="false">Proxy Authentication Required</string>
+    <string name="error_status_code_408" translatable="false">Request Timeout</string>
+    <string name="error_status_code_409" translatable="false">Conflict</string>
+    <string name="error_status_code_410" translatable="false">Gone</string>
+    <string name="error_status_code_411" translatable="false">Length Required</string>
+    <string name="error_status_code_412" translatable="false">Precondition Failed</string>
+    <string name="error_status_code_413" translatable="false">Request Entity Too Large</string>
+    <string name="error_status_code_414" translatable="false">Request-URI Too Long</string>
+    <string name="error_status_code_415" translatable="false">Unsupported Media Type</string>
+    <string name="error_status_code_416" translatable="false">Requested Range Not Satisfiable</string>
+    <string name="error_status_code_417" translatable="false">Expectation Failed</string>
+
+    <string name="error_status_code_500" translatable="false">Internal Server Error</string>
+    <string name="error_status_code_501" translatable="false">Not Implemented</string>
+    <string name="error_status_code_502" translatable="false">Bad Gateway</string>
+    <string name="error_status_code_503" translatable="false">Service Unavailable</string>
+    <string name="error_status_code_504" translatable="false">Gateway Timeout</string>
+    <string name="error_status_code_505" translatable="false">HTTP Version Not Supported</string>
 
     <string name="error_bad_status_code">錯誤狀態碼：%d</string>
     <string name="error_timeout">逾時</string>
@@ -151,11 +183,13 @@
     <string name="no_select">請選擇一個站點</string>
 
     <!-- Update -->
+    <string name="new_version">新版本</string>
     <string name="update">更新</string>
-    <string name="update_fail">检查更新失败</string>
+    <string name="update_fail">檢查更新失敗</string>
+    <string name="update_to">更新至</string>
     <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>
-    <string name="update_fail_info">点击 是 跳转至Github主页</string>
-    <string name="update_to_date">EhViewer 已是最新版本</string>
+    <string name="update_fail_info">點擊「是」跳轉至 Github 主頁</string>
+    <string name="update_to_date">您正在使用最新版本的 EhViewer。</string>
     <string name="update_ignore">略過</string>
     <string name="no_updates_available">已是最新版本</string>
 
@@ -166,6 +200,23 @@
     <string name="gallery_list_empty_hit">甚麼都沒有找到</string>
     <string name="gallery_list_empty_hit_subscription">請至 設定->EH->我的標籤 訂閲標籤</string>
     <string name="gallery_list_no_preview_tag">暫無預覽標籤</string>
+
+    <string name="gallery_list_action_url_missed">找不到下一頁</string>
+    <string name="gallery_list_no_more_data">當前列表沒有更多數據</string>
+    <string name="gallery_list_date_jump_1d">昨天</string>
+    <string name="gallery_list_date_jump_3d">三天前</string>
+    <string name="gallery_list_date_jump_1w">一週前</string>
+    <string name="gallery_list_date_jump_2w">兩週前</string>
+    <string name="gallery_list_date_jump_1m">一個月前</string>
+    <string name="gallery_list_date_jump_6m">六個月前</string>
+    <string name="gallery_list_date_jump_1y">一年前</string>
+    <string name="gallery_list_date_jump_2y">兩年前</string>
+    <string name="gallery_list_select_jump_date">使用日期選擇器</string>
+    <string name="gallery_list_select_jump_node">使用節點選擇器</string>
+    <string name="gallery_list_jump_now">立即跳轉</string>
+    <string name="gallery_list_time_jump_dialog_title">跳轉選擇器</string>
+    <string name="gallery_list_time_jump_dialog_found_message">找到 %s 個結果</string>
+    <string name="gallery_tag_copy">標籤已複製</string>
 
     <string name="search">搜尋</string>
 
@@ -194,6 +245,8 @@
     <string name="search_sr">最低評分：</string>
     <string name="search_sp">頁數：</string>
     <string name="search_sp_to">到</string>
+    <!-- A placeholder for other languages -->
+    <string name="search_sp_suffix" />
     <string name="search_sf">禁用排除項：</string>
     <string name="search_sfl">語言</string>
     <string name="search_sfu">上傳者</string>
@@ -241,6 +294,7 @@
     <string name="read">閲讀</string>
     <string name="more_information">查看更多資訊</string>
     <plurals name="page_count">
+        <item quantity="one">%d 頁</item>
         <item quantity="other">%d 頁</item>
     </plurals>
     <string name="favored_times">\u2665 %d</string>
@@ -275,6 +329,7 @@
     <string name="filter_the_uploader">封鎖上傳者“%s”？</string>
     <string name="filter_the_tag">封鎖標籤“%s”？</string>
     <string name="filter_added">已新增封鎖項</string>
+    <string name="copy_tag">複製</string>
 
     <!-- Rating -->
     <string name="rating10">叔叔不行了</string>
@@ -288,6 +343,7 @@
     <string name="rating2">講還講唔好貼圖</string>
     <string name="rating1">想嘔</string>
     <string name="rating0">不如一槍打死我</string>
+    <string name="rating_none" translatable="false">(´_ゝ`)</string>
 
     <!-- Gallery Info -->
     <string name="gallery_info">畫廊資訊</string>
@@ -343,7 +399,7 @@
     <string name="tag_filter">過濾標籤</string>
 
     <!-- Download -->
-    <string name="scene_download_title">共%s个画廊 - %s</string>
+    <string name="scene_download_title">共 %s 個畫廊 - %s</string>
     <string name="no_download_info">下載項目會顯示在此</string>
     <string name="download_state_none">閒置中</string>
     <string name="download_state_wait">等待中</string>
@@ -369,9 +425,25 @@
     <string name="default_download_label_name">預設</string>
     <string name="download_move_dialog_title">移動</string>
     <string name="download_labels">下載標籤</string>
+    <string name="download_sort_list">排序</string>
+    <string name="download_filter_by_status">按狀態過濾</string>
+    <string name="download_status_all">全部</string>
+    <string name="download_status_not_started">未開始</string>
+    <string name="default_sort">預設</string>
+    <string name="sort_by_gallery_id_asc">按 ID 升序</string>
+    <string name="sort_by_gallery_id_desc">按 ID 降序</string>
+    <string name="sort_by_create_time_asc">按建立時間升序</string>
+    <string name="sort_by_create_time_desc">按建立時間降序</string>
+    <string name="sort_by_rating_asc">按評分升序</string>
+    <string name="sort_by_rating_desc">按評分降序</string>
+    <string name="sort_by_name_asc">按名稱升序</string>
+    <string name="sort_by_name_desc">按名稱降序</string>
+    <string name="sort_download_list">排序列表</string>
     <string name="download_start_all">全部開始</string>
     <string name="download_stop_all">全部停止</string>
     <string name="download_reset_reading_progress">重設閱讀進度</string>
+    <string name="download_search_gallery">搜尋畫廊</string>
+    <string name="download_search_hint">輸入搜尋關鍵字</string>
     <string name="reset_reading_progress_message">重設所有已下載圖庫的閱讀進度？</string>
     <string name="download_service_label">EhViewer 下載服務</string>
     <string name="download_speed_text">%s</string>
@@ -379,6 +451,8 @@
     <string name="remember_download_label">記住下載標籤</string>
     <string name="default_download_label">預設下載標籤</string>
     <string name="added_to_download_list">已新增至下載列表</string>
+    <string name="download_searching">搜尋中，請稍候</string>
+    <string name="download_searching_failed">搜尋失敗</string>
 
     <!-- Download label -->
     <string name="no_download_label">這裏是下載標籤</string>
@@ -497,6 +571,10 @@
     <string name="settings_eh_excluded_languages">排除語言</string>
     <string name="settings_eh_excluded_languages_summary">在主頁與搜尋中隱藏指定語言的畫廊</string>
     <string name="settings_eh_show_jpn_title">顯示日文標題</string>
+    <string name="settings_eh_show_gallery_comment">顯示畫廊留言</string>
+    <string name="settings_eh_show_gallery_rating">顯示畫廊評分</string>
+    <string name="settings_eh_show_eh_event">顯示 EH 活動</string>
+    <string name="settings_eh_show_eh_limits">顯示 EH 配額</string>
     <string name="settings_eh_show_jpn_title_summary">需同時在 EHentai 網站設定中啟用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">顯示畫廊頁數</string>
     <string name="settings_eh_show_gallery_pages_summary">在畫廊列表中顯示頁數</string>
@@ -535,7 +613,9 @@
     <string name="settings_read_show_progress">顯示進度</string>
     <string name="settings_read_show_battery">顯示電量</string>
     <string name="settings_read_show_page_interval">顯示頁面間隔</string>
+    <string name="settings_read_auto_transfer_time">自動翻頁時間（秒）</string>
     <string name="settings_read_volume_page">使用音量鍵翻頁</string>
+    <string name="settings_read_reverse_volume_page">反轉音量鍵翻頁方向</string>
     <string name="settings_read_reading_fullscreen">全螢幕</string>
     <string name="settings_read_custom_screen_lightness">自訂義螢幕亮度</string>
     <string name="settings_read_screen_lightness">螢幕亮度</string>
@@ -556,7 +636,11 @@
     <string name="settings_download_image_resolution_summary">%s，大於 1280x 的解析度可能不會生效</string>
     <string name="settings_download_image_resolution_auto">自動</string>
     <string name="settings_download_download_origin_image">下載原圖</string>
-    <string name="settings_download_download_origin_image_summary">這很危險！點選此項會快速耗用下載配額與GP</string>
+    <string name="settings_download_download_list_pagination">分頁列表</string>
+    <string name="settings_download_download_list_pagination_summary">僅當列表長度大於 500 時分頁功能才會生效</string>
+    <string name="settings_download_download_origin_image_summary">這很危險！您可能會收到 509 錯誤</string>
+    <string name="settings_download_download_order_by_asc">按升序下載</string>
+    <string name="settings_download_download_order_by_asc_summary">下載所有畫廊時按順序下載</string>
     <string name="settings_download_media_scan">允許媒體掃描</string>
     <string name="settings_download_media_scan_summary_on">請避免他人翻看你的圖庫應用</string>
     <string name="settings_download_media_scan_summary_off">大多數圖庫應用將不會顯示下載目錄中的圖片</string>
@@ -604,15 +688,23 @@
     <string name="settings_advanced_import_data">匯入數據</string>
     <string name="settings_advanced_import_data_summary">從外置儲存裝置匯入數據</string>
     <string name="settings_advanced_import_data_successfully">匯入數據成功</string>
+    <string name="settings_advanced_wifi_sender">WiFi 數據遷移</string>
+    <string name="settings_advanced_wifi_sander_summary">通過 Wi-Fi 熱點進行數據遷移</string>
+    <string name="settings_advanced_wifi_client">WiFi 遷移數據接收</string>
+    <string name="settings_advanced_wifi_client_summary">從 Wi-Fi 熱點接收遷移數據</string>
 
     <string name="settings_about">關於</string>
+    <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer 與 E-Hentai.org 無任何聯繫</string>
     <string name="settings_about_author">作者</string>
+    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">最新版本</string>
     <string name="settings_about_website">網站</string>
     <string name="settings_about_source">源碼</string>
     <string name="settings_about_changelog">更新日誌</string>
     <string name="settings_about_help">幫助</string>
+    <string name="settings_about_issue_help">問題幫助</string>
     <string name="settings_about_license">授權</string>
     <string name="settings_about_license_summary">EhViewer 的誕生全賴一眾開源專案</string>
     <string name="settings_about_donate">捐贈</string>
@@ -629,6 +721,7 @@
     <string name="settings_privacy_about_analytics">關於數據統計</string>
     <string name="settings_about_version">版本號碼</string>
     <string name="settings_about_check_for_updates">檢查更新</string>
+    <string name="settings_close_automatic_updates">關閉自動更新</string>
     <string name="settings_about_beta_update_channel">更新測試版</string>
     <string name="settings_about_beta_update_channel_summary">測試版可能會出現不可預期的錯誤</string>
 
@@ -676,6 +769,16 @@
     <string name="cant_read_the_file">無法讀取檔案</string>
 
     <string name="app_language_system">系統語言（預設）</string>
+    <string name="app_language_de" translatable="false">Deutsch</string>
+    <string name="app_language_en" translatable="false">English</string>
+    <string name="app_language_es" translatable="false">Español</string>
+    <string name="app_language_fr" translatable="false">Français</string>
+    <string name="app_language_ja" translatable="false">日本語</string>
+    <string name="app_language_ko" translatable="false">한국어</string>
+    <string name="app_language_th" translatable="false">ไทย</string>
+    <string name="app_language_zh_cn" translatable="false">中文（大陆）</string>
+    <string name="app_language_zh_hk" translatable="false">中文（香港）</string>
+    <string name="app_language_zh_tw" translatable="false">中文（臺灣）</string>
 
     <!-- License -->
     <string name="license">授權</string>
@@ -722,27 +825,34 @@
     <string name="from_the_future">來自未來</string>
     <string name="just_now">剛剛</string>
     <plurals name="some_minutes_ago">
+        <item quantity="one">一分鐘前</item>
         <item quantity="other">%d 分鐘前</item>
     </plurals>
     <plurals name="some_hours_ago">
+        <item quantity="one">一小時前</item>
         <item quantity="other">%d 小時前</item>
     </plurals>
     <string name="yesterday">昨天</string>
     <string name="some_days_ago">%d 天前</string>
 
     <plurals name="second">
+        <item quantity="one">秒</item>
         <item quantity="other">秒</item>
     </plurals>
     <plurals name="minute">
+        <item quantity="one">分鐘</item>
         <item quantity="other">分鐘</item>
     </plurals>
     <plurals name="hour">
+        <item quantity="one">小時</item>
         <item quantity="other">小時</item>
     </plurals>
     <plurals name="day">
+        <item quantity="one">天</item>
         <item quantity="other">天</item>
     </plurals>
     <plurals name="year">
+        <item quantity="one">年</item>
         <item quantity="other">年</item>
     </plurals>
     <string name="dialog_archive_title">通過 H@H 下載</string>
@@ -788,67 +898,122 @@
     <string name="download_torrent_name">種子: %s</string>
     <string name="download_torrent_state">狀態: </string>
     <string name="download_torrent_path">路徑: %s</string>
+    <string name="download_search">在下載列表內搜尋</string>
     <string name="sure">好</string>
     <string name="try_again">再試一次</string>
     <string name="open_directory">開啟檔案目錄</string>
     <string name="downloading">下載中…… 請稍後再試</string>
     <string name="torrent_exist">檔案已存在: %s</string>
-    <string name="empty_subscription">沒有任何訂閱</string>
 
-    <!--  订阅服务 temporary -->
-    <string name="subscription_watched">已看過</string>
+    <!--  订阅服务  -->
+    <string name="empty_subscription">訂閱為空</string>
+
+    <!--  订阅服务  -->
+    <string name="subscription_watched">已觀看</string>
     <string name="subscription_hidden">已隱藏</string>
     <string name="delete_subscription_title">移除標籤</string>
-    <string name="can_not_use_this_tag">無法使用標籤</string>
+    <string name="can_not_use_this_tag">標籤不可用</string>
     <string name="add_tag_dialog_title">新增標籤</string>
-    <string name="tag_title">標籤欄</string>
-    <string name="subscription_success">%s成功</string>
+    <string name="tag_title">標籤</string>
+    <string name="subscription_success">%s 成功</string>
 
     <string name="yes">是</string>
     <string name="cancel">取消</string>
-    <string name="settings_eh_list_show_read_progress">Show reading progress</string>
-    <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
-    <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
-    <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
-    <string name="gallery_update_dialog_title">Update method</string>
-    <string name="gallery_update_dialog_message"><![CDATA[Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.&#xA;Download as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.]]></string>
-    <string name="gallery_update_download_as_new">Download as new</string>
-    <string name="gallery_update_override_old">Overwrite old</string>
-    <string name="loading_db_file">Data Loading …</string>
-    <string name="settings_eh_history_size">Number of historical records</string>
-    <string name="history_info_unlimited">Unlimited</string>
-    <string name="archiver">Archiver</string>
-    <string name="archiver_dialog_current_funds">Current Funds:</string>
-    <string name="archiver_dialog_download_original">Download Original Archive</string>
-    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
-    <string name="archiver_dialog_size">Estimated Size:  %s</string>
-    <string name="dialog_archiver_title">Archiver Downloader</string>
-    <string name="download_receiver_label">EhViewer Download Receiver</string>
-    <string name="decompressed_successfully">Decompressed successfully!</string>
-    <string name="decompression_failed">Decompression failed!</string>
-    <string name="download_label_archiver">Archiver</string>
-    <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
-    <string name="settings_download_timeout">Download timeout</string>
-    <string name="download_timeout_unlimited">Unlimited</string>
-    <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
-    <string name="have_new_version">Click to see new gallery version</string>
-    <string name="archiver_downloading">Arc Downloading %s</string>
-    <string name="order">Order</string>
-    <string name="sort_by_pub_time">Published Time</string>
-    <string name="sort_by_fav_time">Favorited Time</string>
-    <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
-    <string name="settings_eh_show_gallery_rating">Show Gallery Stars</string>
-    <string name="import_local_archive">Import local archive</string>
-    <string name="import_archive_title">Select archive file</string>
-    <string name="import_archive_failed">Failed to import archive</string>
-    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
-    <string name="import_archive_processing">Processing archive…</string>
-    <string name="import_archive_invalid_format">Unsupported archive format</string>
-    <string name="import_archive_already_imported">Archive already imported</string>
-    <string name="import_archive_success">Archive imported successfully</string>
-    <string name="archive_not_accessible">Archive file is not accessible</string>
-    <string name="imported_archive_info_title">Local Import Info</string>
-    <string name="imported_archive_info_message">This is an item imported from local storage</string>
-    <string name="imported_archive_category">Local Import</string>
+    <string name="dummy_button">虛擬按鈕</string>
+    <string name="dummy_content">虛擬\n內容</string>
+
+    <!--  wifi server -->
+    <string name="wifi_server_name">WiFiServer</string>
+    <string name="wifi_server">WiFi 伺服器</string>
+    <string name="wifi_client">WiFi 客戶端</string>
+    <string name="wifi_send_bookmark">遷移書籤</string>
+    <string name="wifi_send_favorite">遷移收藏</string>
+    <string name="wifi_send_download">遷移下載數據</string>
+    <string name="wifi_send_done">數據遷移完成</string>
+    <string name="wifi_send_start">開始遷移 %s</string>
+    <string name="wifi_send_stop">停止遷移 %s</string>
+    <string name="wifi_sending">數據遷移中請稍候或退出重試</string>
+    <string name="wifi_send_text">發送數據</string>
+    <string name="wifi_server_illustrate">請確保接收數據的手機已連接到本地熱點，在遷移完成前請勿斷開連接或返回上一頁！</string>
+    <string name="wifi_server_connect">連接</string>
+    <string name="wifi_server_connect_unable">連接不存在</string>
+    <string name="wifi_server_connection_succeeded">裝置已成功連接。接收數據後，請重啟應用程式以使數據生效。</string>
+    <string name="wifi_server_disconnect">裝置已斷開連接</string>
+    <string name="wifi_server_connection_fail">建立通訊失敗</string>
+    <string name="wifi_server_send_success">發送訊息成功: %s</string>
+    <string name="wifi_server_send_fail">發送訊息失敗: %s</string>
+    <string name="wifi_server_receive_message">收到訊息: %s</string>
+    <string name="wifi_server_receive_message_unknown">未知數據類型</string>
+    <string name="wifi_server_opened">熱點已開啟 SSID: %1$s \n%2$s</string>
+    <string name="wifi_server_closed">熱點已關閉</string>
+    <string name="wifi_server_password">密碼: %s</string>
+    <string name="wifi_server_no_permission">權限不足，請授予權限</string>
+    <!--  wifi server  -->
+
+    <!--  limits  -->
+    <string name="refresh_limits">重新整理配額使用情況</string>
+    <string name="from_gallery_visits">%s 來自畫廊訪問</string>
+    <string name="from_torrent_completions">%s 來自種子完成</string>
+    <string name="from_archive_download">%s 來自歸檔下載</string>
+    <string name="from_hentai_home">%s 來自 Hentai@Home</string>
+    <string name="current_moderation_power">當前審核權力 %s</string>
+    <string name="reset_cost">重置成本 %s</string>
+    <string name="ip_base_limits">基於 IP 的配額</string>
+    <string name="limit_unneed_reset">目前無需重置配額，請在重新整理後再試～</string>
+
+    <string name="pagination_count">數量</string>
+    <string name="pagination_page_and_item">r/p</string>
+    <string name="settings_eh_list_show_read_progress">顯示閱讀進度</string>
+    <string name="settings_eh_list_show_read_progress_summary">在詳細列表模式下顯示每個畫廊的閱讀進度</string>
+    <string name="cookie_login_import_in_clipboard">從剪貼簿匯入</string>
+    <string name="no_cookie_in_clipboard">剪貼簿中找不到有效數據</string>
+    <string name="gallery_update_dialog_title">更新方式</string>
+    <string name="gallery_update_dialog_message">覆蓋舊畫廊：只保留下載的版本，舊版本將被刪除。\n下載為新畫廊：下載的畫廊將作為新畫廊存在，新畫廊和舊畫廊都將被保存。</string>
+    <string name="gallery_update_download_as_new">下載為新畫廊</string>
+    <string name="gallery_update_override_old">覆蓋舊畫廊</string>
+    <string name="loading_db_file">數據載入中…</string>
+    <string name="settings_eh_history_size">歷史記錄數量</string>
+    <string name="history_info_unlimited">無限制</string>
+    <string name="archiver">歸檔器</string>
+    <string name="archiver_dialog_current_funds">當前資金：</string>
+    <string name="archiver_dialog_cost">下載成本：%s</string>
+    <string name="archiver_dialog_download_original">下載原始歸檔</string>
+    <string name="archiver_dialog_download_resample">下載重新採樣歸檔</string>
+    <string name="archiver_dialog_size">預估大小：%s</string>
+    <string name="dialog_archiver_title">歸檔下載器</string>
+    <string name="download_receiver_label">EhViewer 下載接收器</string>
+    <string name="decompressed_successfully">解壓縮成功！</string>
+    <string name="decompression_failed">解壓縮失敗！</string>
+    <string name="download_label_archiver">歸檔器</string>
+    <string name="cookie_in_clipboard_incorrect">Cookie 格式不正確</string>
+    <string name="settings_download_timeout">下載逾時</string>
+    <string name="download_timeout_unlimited">無限制</string>
+    <string name="settings_download_timeout_summary">%s（秒），允許下載一張圖片的最大時間。</string>
+    <string name="have_new_version">點擊查看新畫廊版本</string>
+    <string name="appwidget_text">範例</string>
+    <string name="add_widget">新增小工具</string>
+    <string name="app_widget_description">這是應用程式小工具的描述</string>
+    <string name="archiver_downloading">歸檔下載中 %s</string>
+    <string name="order">排序</string>
+    <string name="sort_by_pub_time">發佈時間</string>
+    <string name="sort_by_fav_time">收藏時間</string>
+    <string name="settings_eh_sign_out_restart">正在為您自動重啟，請稍候</string>
+    <string name="settings_eh_theme_auto_switch">跟隨系統深色模式</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">上一頁</string>
+    <string name="spen_next_page">下一頁</string>
+    <string name="import_local_archive">匯入本機歸檔</string>
+    <string name="import_archive_title">選擇歸檔檔案</string>
+    <string name="import_archive_failed">匯入歸檔失敗</string>
+    <string name="archive_permission_lost">已失去存取歸檔的權限。請重新匯入歸檔檔案。</string>
+    <string name="import_archive_processing">處理歸檔中…</string>
+    <string name="import_archive_invalid_format">不支援的歸檔格式</string>
+    <string name="import_archive_already_imported">歸檔已匯入</string>
+    <string name="import_archive_success">歸檔匯入成功</string>
+    <string name="archive_not_accessible">無法存取歸檔檔案</string>
+    <string name="imported_archive_info_title">本機匯入資訊</string>
+    <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
+    <string name="imported_archive_category">本機匯入</string>
 
 </resources>

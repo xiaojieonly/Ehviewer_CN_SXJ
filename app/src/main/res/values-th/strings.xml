@@ -14,8 +14,33 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<!--  -->
+<!-- 泰语 -->
 <resources>
+    <!--  black list  -->
+    <string name="blacklist_id">ID ผู้ใช้</string>
+    <string name="blacklist">รายชื่อดำ</string>
+    <string name="join_in_blacklist">เพิ่มเข้าในรายชื่อดำ</string>
+    <string name="add_blacklist">เพิ่มผู้ใช้ที่ต้องการบล็อก</string>
+    <string name="blacklist_tip">ระบบบล็อกนี้จะบล็อกความคิดเห็นต่อจากระบบบล็อกความคิดเห็นของเว็บไซต์ EHentai\n\nบล็อกผู้แสดงความคิดเห็น: แยกความคิดเห็นที่ผู้ใช้คนนั้นอัพโหลดออกไป ซึ่งจะทำให้การโหลดรายการแกลเลอรี่ใช้เวลามากขึ้น</string>
+    <string name="blacklist_text">บล็อกผู้ใช้</string>
+    <string name="delete_blacklist">ยกเลิกการบล็อกผู้ใช้ \"%s\" หรือไม่?</string>
+    <string name="blacklist_reason_text">เหตุผลในการบล็อก</string>
+    <string name="settings_eh_blacklist">รายชื่อดำความคิดเห็น</string>
+    <string name="settings_eh_blacklist_summary">บล็อกความคิดเห็นของผู้อื่นตามชื่อบัญชี</string>
+    <string name="settings_advanced_dns_over_http_title">DNS ปลอดภัย (DoH)</string>
+    <string name="settings_advanced_dns_over_http_summary">แก้ปัญหาการปนเปื้อน DNS ในบางพื้นที่</string>
+    <string name="settings_advanced_domain_fronting_title">โดเมนฟรอนติ้ง</string>
+    <string name="settings_advanced_domain_fronting_summary">หลีกเลี่ยงการบล็อก SNI</string>
+    <string name="settings_advanced_url_replace_title">ปลอมแปลง URL, ต้องปิด SNI</string>
+    <string name="settings_advanced_url_replace_summary">ปลอมแปลง URL (ต้องรีสตาร์ท, เปิดใช้งานแล้วฟังก์ชันบัญชีจะไม่ทำงาน)</string>
+    <string name="settings_about_donate_guide">คู่มือการสนับสนุน</string>
+    <string name="share_favorites_dialog_title">แชร์รายการโปรด</string>
+    <string name="share_favorites_dialog_message">แชร์รายการโปรด %s หรือไม่?</string>
+    <string name="add_favorites_dialog_message">เพิ่มรายการโปรด %s หรือไม่?</string>
+    <string name="settings_advanced_built_ex_hosts_title">hosts.txt ของ exhentai ที่มีอยู่แล้ว</string>
+    <string name="settings_advanced_built_ex_hosts_summary">การแมปโฮสต์ไปยัง IP ที่แอปให้มา\nสามารถถูกแทนที่ด้วย hosts.txt ที่ปรับแต่งเอง</string>
+    <string name="network_remind">ตรวจพบว่าเปิดใช้งาน VPN แล้ว โปรดระวังความปลอดภัยเครือข่ายของคุณ</string>
+    <string name="no_blicklist">นี่คือรายชื่อดำ</string>
 
     <string name="app_name">EhViewer</string>
 
@@ -25,11 +50,13 @@
     <string name="theme_black">ธีมสีดำ</string>
 
     <string name="homepage">หน้าหลัก</string>
+    <string name="subscription">การสมัครสมาชิก</string>
     <string name="whats_hot">เรื่องที่กำลังมาแรงมากๆ</string>
     <string name="top_lists">รายการยอดนิยม</string>
     <string name="favourite">รายการโปรด</string>
     <string name="history">ประวัติเข้าชม</string>
     <string name="downloads">ดาวน์โหลด</string>
+    <string name="news">ข่าวสาร</string>
     <string name="settings">การตั้งค่า</string>
 
     <string name="username">ชื่อผู้ใช้</string>
@@ -66,6 +93,9 @@
     <string name="clipboard_gallery_url_snack_message">มีลิงค์ของเว็บแกลเลอรี่อยู่ในคลิปบอร์ด</string>
     <string name="clipboard_gallery_url_snack_action">ดู</string>
 
+    <!-- Message -->
+    <string name="image_save_success">บันทึกรูปภาพสำเร็จแล้ว</string>
+
     <string name="error_bad_status_code">รหัสข้อผิดพลาด: %d</string>
     <string name="error_timeout">หมดเวลา</string>
     <string name="error_unknown_host">ไม่รู้จักโฮสต์</string>
@@ -89,13 +119,20 @@
     <string name="error_get_ptoken_error">การรับ pToken มีปัญหา</string>
     <string name="error_cant_create_temp_file">ไม่สามารถสร้างไฟล์ชั่วคราวได้</string>
     <string name="error_cant_save_image">ไม่สามารถบันทึกรูปภาพได้</string>
-    <string name="error_invalid_number">จำนวนไม่ถูกต้อง</string> 
+    <string name="error_save_image_existed">รูปภาพมีอยู่แล้ว</string>
+    <string name="error_invalid_number">จำนวนไม่ถูกต้อง</string>
+    <string name="error_please_login_first">โปรดลงชื่อเข้าใช้ก่อน</string>
+    <string name="error_empty_html">หน้าเว็บว่างเปล่า</string>
+    <string name="error_cant_get_image">ไม่สามารถรับรูปภาพได้</string>
+
+    <string name="kokomade_tip">การตั้งค่า->Eh->เว็บไซต์แกลเลอรี่->e-hentai</string>
 
     <string name="app_waring">เนื้อหาภายในแอปพลิเคชั่นนี้มาจากอินเทอร์เน็ตทั้งหมด อาจมีเนื้อหาบางอย่างที่มีผลต่อร่างกายหรือจิตใจของคุณ คุณจะต้องยอมรับความเสี่ยงที่ดังกล่าว และดำเนินการต่อไป</string>
     <string name="error_username_cannot_empty">ชื่อผู้ใช้ห้ามเว้นว่างไว้</string>
     <string name="error_password_cannot_empty">รหัสผ่านห้ามเว้นว่างไว้</string>
     <string name="guest_mode">โหมดผู้มาเยือน</string>
     <string name="sign_in_failed">การลงชื่อเข้าใช้ล้มเหลว</string>
+    <string name="sign_in_failed_tip">หากปัญหานี้ยังคงอยู่ ลอง \"ลงชื่อเข้าใช้ผ่านมุมมองเว็บไซต์\" หรือ \"ลงชื่อเข้าใช้ผ่านคุกกี้\"</string>
     <string name="sign_in_failed_plain">บางทีนี้เป็นข้อผิดพลาดเนื่องจากเว็บไซต์มีการอัพเดตหรือมีบางอย่างเกิดขึ้น คุณจะต้องลองวิธีลงชื่อเข้าใช้ผ่านมุมมองเว็บไซต์ หรือวิธีแบบคุกกี๊ หรือกดปุ่มข้ามไปก่อน แต่คุณอาจจะเจอ "แพนด้าผู้เดียวดาย" ได้หลังจากข้ามการลงชื่อเข้าใช้ อันดับแรกลอง "ลงชื่อเข้าใช้ผ่านคุกกี้" ถ้าคุณเคยเข้าสู่ระบบแล้วในเวอร์ชั่น 0.6.x</string>
     <string name="press_twice_exit">กดสองครั้งเพื่อออก</string>
     <string name="content_layout_restore_tip">แตะเพื่อลองอีกครั้ง</string>
@@ -114,10 +151,12 @@
     <string name="no_select">โปรดเลือกหนึ่งเว็บไซต์</string>
 
     <!-- Update -->
+    <string name="new_version">เวอร์ชั่นใหม่</string>
     <string name="update">อัพเดต</string>
-    <string name="update_fail">Check for updates failed</string>
+    <string name="update_fail">ตรวจสอบการอัพเดตล้มเหลว</string>
+    <string name="update_to">อัพเดตเป็น</string>
     <string name="update_plain">เวอร์ชั่น: %1$s\nขนาดไฟล์: %2$s\n\n%3$s</string>
-    <string name="update_fail_info">Click Yes to jump to Github homepage</string>
+    <string name="update_fail_info">คลิกใช่เพื่อไปยังหน้าแรกของ Github</string>
     <string name="update_to_date">คุณกำลังใช้เวอร์ชั่นล่าสุดของ EhViewer.</string>
     <string name="update_ignore">ข้ามไป</string>
     <string name="no_updates_available">มันเป็นเวอร์ชั่นล่าสุด</string>
@@ -127,6 +166,25 @@
     <string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน E-Hentai</string>
     <string name="gallery_list_search_bar_open_gallery">เปิดแกลเลอรี่</string>
     <string name="gallery_list_empty_hit">โลกนั้นนะมันกว้างงงงงใหญ่ไพรศาล และแพนด้านั่งโดดเดี่ยวเดียวดายในโลกกลมๆ</string>
+    <string name="gallery_list_empty_hit_subscription">สมัครสมาชิกแท็กในการตั้งค่า->EH->แท็กของฉัน</string>
+    <string name="gallery_list_no_preview_tag">ไม่มีแท็กตัวอย่าง</string>
+
+    <string name="gallery_list_action_url_missed">ไม่พบหน้าถัดไป</string>
+    <string name="gallery_list_no_more_data">ไม่มีข้อมูลเพิ่มเติมสำหรับรายการปัจจุบัน</string>
+    <string name="gallery_list_date_jump_1d">เมื่อวาน</string>
+    <string name="gallery_list_date_jump_3d">สามวันที่แล้ว</string>
+    <string name="gallery_list_date_jump_1w">หนึ่งสัปดาห์ที่แล้ว</string>
+    <string name="gallery_list_date_jump_2w">สองสัปดาห์ที่แล้ว</string>
+    <string name="gallery_list_date_jump_1m">หนึ่งเดือนที่แล้ว</string>
+    <string name="gallery_list_date_jump_6m">หกเดือนที่แล้ว</string>
+    <string name="gallery_list_date_jump_1y">หนึ่งปีที่แล้ว</string>
+    <string name="gallery_list_date_jump_2y">สองปีที่แล้ว</string>
+    <string name="gallery_list_select_jump_date">ใช้ตัวเลือกวันที่</string>
+    <string name="gallery_list_select_jump_node">ใช้ตัวเลือกโหนด</string>
+    <string name="gallery_list_jump_now">ข้ามไปตอนนี้</string>
+    <string name="gallery_list_time_jump_dialog_title">ตัวเลือกการข้าม</string>
+    <string name="gallery_list_time_jump_dialog_found_message">พบ %s ผลลัพธ์</string>
+    <string name="gallery_tag_copy">คัดลอกแท็กแล้ว</string>
 
     <string name="search">ค้นหา</string>
 
@@ -137,6 +195,7 @@
     <string name="search_advance">ตัวเลือกขั้นสูง</string>
     <string name="search_image">ค้นหาด้วยรูปภาพ</string>
     <string name="search_normal_search">ค้นหาแบบธรรมดา</string>
+    <string name="search_subscription_search">ค้นหาการสมัครสมาชิก</string>
     <string name="search_specify_uploader">ระบุผู้อัพโหลด</string>
     <string name="search_specify_tag">ระบุป้ายกำกับ</string>
     <string name="search_enable_advance">เปิดโหมดค้นหาขั้นสูง</string>
@@ -152,6 +211,13 @@
     <string name="search_sdt2">ค้นหาแท็กที่ถูกโหวตไม่เห็นด้วย</string>
     <string name="search_sh">แสดงแกลเลอรี่ที่ถูกลบออก</string>
     <string name="search_sr">เรตติ้งขั้นต่ำ:</string>
+    <string name="search_sp">หน้า:</string>
+    <string name="search_sp_to">ถึง</string>
+    <string name="search_sp_suffix" />
+    <string name="search_sf">ปิดตัวกรองเริ่มต้นสำหรับ:</string>
+    <string name="search_sfl">ภาษา</string>
+    <string name="search_sfu">ผู้อัพโหลด</string>
+    <string name="search_sft">แท็ก</string>
 
     <string name="select_image">เลือกรูปภาพ</string>
     <string name="search_uss">ใช้สแกนหาความเหมือน</string>
@@ -160,6 +226,10 @@
     <string name="select_image_first">โปรดเลือกรูปภาพก่อน</string>
 
     <string name="add_to_favourites">เพิ่มเข้าในรายการโปรด</string>
+    <string name="remove_from_favourites">ลบออกจากรายการโปรด</string>
+
+    <string name="stop_downloading">หยุดการดาวน์โหลด</string>
+    <string name="delete_downloads">ลบการดาวน์โหลด</string>
 
     <string name="quick_search">ค้นหาอย่างด่วน</string>
     <string name="quick_search_tip">แตะ \"+\" เพื่อเพิ่มการค้นหาอย่างด่วน</string>
@@ -174,6 +244,8 @@
     <string name="image_search_not_quick_search">ไม่สามารถเพิ่มรูปในการค้นหาให้เป็นการค้นหาอย่างด่วนได้</string>
     <string name="duplicate_quick_search">มีตัวค้นหาอย่างด่วนอยู่แล้วในชื่อ \"%s\".</string>
     <string name="duplicate_name">ชื่อนี้มีการใช้งานอยู่แล้ว</string>
+
+    <string name="subscription_tip">คลิก \"+\" เพื่อเพิ่มการสมัครสมาชิก</string>
 
     <string name="go_to_hint">หน้า %1$d, มีทั้งหมด %2$d หน้า</string>
 
@@ -203,6 +275,8 @@
     <string name="no_comments">ไม่มีความคิดเห็น</string>
     <string name="no_more_comments">ไม่มีความเห็นเพิ่มเติมแล้ว</string>
     <string name="more_comment">ความคิดเห็นเพิ่มเติม</string>
+    <string name="click_more_comments">คลิกเพื่อโหลดความคิดเห็นเพิ่มเติม</string>
+    <string name="last_edited">แก้ไขล่าสุด: %s</string>
     <string name="no_previews">ไม่มีรูปตัวอย่าง</string>
     <string name="no_more_previews">ไม่มีรูปตัวอย่างเพิ่มเติมอีกแล้ว</string>
     <string name="more_previews">มีรูปตัวอย่าง</string>
@@ -276,10 +350,14 @@
     <string name="cancel_vote_down_successfully">ยกเลิกโหวดไม่ถูกใจแล้ว</string>
     <string name="vote_failed">การโหวตล้มเหลว</string>
     <string name="check_vote_status">ดูรายละเอียดการโหวต</string>
+    <string name="edit_comment">แก้ไขความคิดเห็น</string>
+    <string name="edit_comment_successfully">แก้ไขความคิดเห็นแล้ว</string>
+    <string name="edit_comment_failed">แก้ไขความคิดเห็นล้มเหลว</string>
 
     <!-- Gallery Previews -->
     <string name="gallery_previews">ตัวอย่างแกลเลอรี่</string>
     <string name="go_to">ไปที่</string>
+    <string name="tag_filter">กรองแท็ก</string>
 
     <!-- Download -->
     <string name="scene_download_title">%s แกลเลอรี่- %s</string>
@@ -291,6 +369,20 @@
     <string name="download_state_failed">ล้มเหลว</string>
     <string name="download_state_failed_2">%d ที่ไม่เสร็จ</string>
     <string name="download_state_finish">เสร็จ</string>
+    <string name="download_sort_list">เรียงลำดับ</string>
+    <string name="download_filter_by_status">กรองตามสถานะ</string>
+    <string name="download_status_all">ทั้งหมด</string>
+    <string name="download_status_not_started">ยังไม่เริ่ม</string>
+    <string name="default_sort">ค่าเริ่มต้น</string>
+    <string name="sort_by_gallery_id_asc">ตาม Id จากน้อยไปมาก</string>
+    <string name="sort_by_gallery_id_desc">ตาม Id จากมากไปน้อย</string>
+    <string name="sort_by_create_time_asc">ตามเวลาสร้าง จากน้อยไปมาก</string>
+    <string name="sort_by_create_time_desc">ตามเวลาสร้าง จากมากไปน้อย</string>
+    <string name="sort_by_rating_asc">ตามคะแนน จากน้อยไปมาก</string>
+    <string name="sort_by_rating_desc">ตามคะแนน จากมากไปน้อย</string>
+    <string name="sort_by_name_asc">ตามชื่อ จากน้อยไปมาก</string>
+    <string name="sort_by_name_desc">ตามชื่อ จากมากไปน้อย</string>
+    <string name="sort_download_list">เรียงลำดับรายการ</string>
     <string name="stat_509_alert_title">คำเตือน 509</string>
     <string name="stat_509_alert_text">การลิมิตของรูปภาพต่อวันถึงลิมิตแล้ว กรุณาหยุดโหลดและพักผ่อนบ้างนะ</string>
     <string name="stat_download_done_title">ดาวน์โหลดเสร็จสิ้น</string>
@@ -314,10 +406,14 @@
     <string name="reset_reading_progress_message">รีเซ็ตตำแหน่งที่อ่านค้างไว้ทั้งหมดในแกลเลอรี่ที่โหลดไว้ทั้งหมดหรือไม่?</string>
     <string name="download_service_label">บริการดาวน์โหลดของ EhViewer</string>
     <string name="download_speed_text">%s</string>
-    <string name="download_speed_text_2">%1$s, %2$s left</string>
+    <string name="download_speed_text_2">%1$s, เหลือ %2$s</string>
     <string name="remember_download_label">จดจำป้ายชื่อดาวน์โหลด</string>
     <string name="default_download_label">ป้ายชื่อดาวน์โหลดเริ่มต้น</string>
     <string name="added_to_download_list">เพิ่มเข้าในรายการดาวน์โหลดแล้ว</string>
+    <string name="download_searching">กำลังค้นหา กรุณารอสักครู่</string>
+    <string name="download_searching_failed">การค้นหาล้มเหลว</string>
+    <string name="download_search_gallery">ค้นหาแกลเลอรี่</string>
+    <string name="download_search_hint">กรอกคำค้นหา</string>
 
     <!-- Download label -->
     <string name="no_download_label">ชื่อป้ายดาวน์โหลดจะอยู่ตรงนี้</string>
@@ -336,12 +432,22 @@
     <string name="clear_all_history">จะลบประวัติทั้งหมดเลยหรือไม่?</string>
 
     <!-- Filter -->
+    <string name="filter">บล็อกแกลเลอรี่</string>
+    <string name="no_filter">ตัวบล็อกจะแสดงอยู่ตรงนี้</string>
     <string name="filter_title">ชื่อเรื่อง</string>
     <string name="filter_uploader">ผู้อัพโหลด</string>
     <string name="filter_tag">แท็ก</string>
     <string name="filter_tag_namespace">ชื่อของแท็ก</string>
+    <string name="delete_filter">ลบตัวบล็อก \"%s\" หรือไม่?</string>
     <string name="tip">คำแนะนำ</string>
+    <string name="add_filter">เพิ่มตัวบล็อก</string>
     <string name="show_definition">แสดงความหมาย</string>
+    <string name="filter_text">ข้อความตัวบล็อก</string>
+    <string name="filter_tip">ระบบบล็อกนี้จะกรองผลลัพธ์ของระบบบล็อกของเว็บไซต์ EHentai\n\nบล็อกชื่อเรื่อง: แยกแกลเลอรี่ที่มีชื่อเรื่องประกอบด้วยคำนั้น\n\nบล็อกผู้อัพโหลด: แยกแกลเลอรี่ที่ถูกอัพโหลดโดยผู้อัพโหลดนั้น\n\nบล็อกแท็ก: แยกแกลเลอรี่ที่มีแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่\n\nบล็อกเนมสเปซแท็ก: แยกแกลเลอรี่ที่มีเนมสเปซแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่</string>
+    <string name="filter_the_uploader">บล็อกผู้อัพโหลด \"%s\" หรือไม่?</string>
+    <string name="filter_the_tag">บล็อกแท็ก \"%s\" หรือไม่?</string>
+    <string name="filter_added">เพิ่มตัวบล็อกแล้ว</string>
+    <string name="copy_tag">คัดลอก</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">ตั้้งการป้องกันแบบรูปแบบ</string>
@@ -389,14 +495,19 @@
     <string name="settings_eh_identity_cookies_signed">คุกกี๊ยืนยันตัวตนสามารถใช้ลงชื่อเข้าสู่ระบบสำหรับบัญชีนี้เท่านั้น&lt;br&gt;&lt;b&gt;เก็บ รักษา ให้ ปลอดภัย&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">ยังไม่ลงชื่อเข้าสู่ระบบ</string>
     <string name="settings_eh_identity_cookies_copy">คัดลอก</string>
+    <string name="settings_eh_sign_out_restart">กำลังรีสตาร์ทอัตโนมัติให้คุณ กรุณารอสักครู่</string>
     <string name="settings_u_config">การตั้งค่า EHentai</string>
     <string name="settings_u_config_summary">การตั้งค่าบนเว็บไซต์ EHentai</string>
+    <string name="settings_my_tags">แท็กของฉัน</string>
+    <string name="settings_my_tags_summary">แท็กของฉันบนเว็บไซต์ EHentai</string>
     <string name="settings_eh_theme">ธีม</string>
     <string name="settings_eh_theme_light">สว่าง</string>
     <string name="settings_eh_theme_dark">มืด</string>
     <string name="settings_eh_theme_black">ดำ</string>
+    <string name="settings_eh_theme_auto_switch">ติดตามโหมดมืดของระบบ</string>
     <string name="settings_eh_apply_nav_bar_theme_color">ใช้สีของธีมบนแถบนำทางด้วย</string>
     <string name="settings_eh_gallery_site">เว็บไซต์หลักของแกลเลอรี่</string>
+    <string name="settings_eh_launch_page">หน้าเริ่มต้น</string>
     <string name="settings_eh_list_mode">มุมองแบบรายการ</string>
     <string name="settings_eh_list_mode_detail">แสดงรายละเอียด</string>
     <string name="settings_eh_list_mode_thumb">ภาพตัวอย่าง</string>
@@ -418,6 +529,10 @@
     <string name="settings_eh_excluded_tag_namespaces">แท็กเนมสเปซที่ยกเว้น</string>
     <string name="settings_eh_excluded_tag_namespaces_summary">แยกเนมสเปซที่ตั้งไว้ออกจากที่ค้นหาแท็กที่เป็นค่าเริ่มต้น</string>
     <string name="settings_eh_show_jpn_title">แสดงชื่อเรื่องญี่ปุ่น</string>
+    <string name="settings_eh_show_gallery_comment">แสดงความคิดเห็นแกลเลอรี่</string>
+    <string name="settings_eh_show_eh_event">แสดงกิจกรรม EH</string>
+    <string name="settings_eh_show_eh_limits">แสดงขีดจำกัด EH</string>
+    <string name="settings_eh_show_jpn_title_summary">ต้องเปิดใช้งานชื่อเรื่องญี่ปุ่นในการตั้งค่าบนเว็บไซต์ EHentai</string>
     <string name="settings_eh_show_gallery_pages">แสดงจำนวนหน้าของแกลเลอรี่</string>
     <string name="settings_eh_show_gallery_pages_summary">แสดงจำนวนหน้าที่มีอยู่ในแต่ละแกลเลอรี่</string>
     <string name="settings_eh_show_tag_translations">แสดงแท็กการแปลภาษา</string>
@@ -425,6 +540,8 @@
     <string name="settings_eh_tag_translations_source">Placeholder</string>
     <string name="settings_eh_tag_translations_source_url">https://placeholder</string>
     <string name="settings_eh_cellular_network_warning">เตือนการใช้เครือข่ายมือถือ</string>
+    <string name="settings_eh_filter">บล็อกแกลเลอรี่</string>
+    <string name="settings_eh_filter_summary">บล็อกแกลเลอรี่ตามชื่อเรื่อง ผู้อัพโหลด และแท็ก</string>
 
     <string name="settings_read">การอ่าน</string>
     <string name="settings_read_screen_rotation">ทิศทางของหน้าจอ</string>
@@ -476,7 +593,11 @@
     <string name="settings_download_image_resolution_summary">ค่าตอนนี้เป็น %s. ความละเอียดตั้งแต่ 1280x ขึ้นไปอาจจะไม่ทำงาน</string>
     <string name="settings_download_image_resolution_auto">อัตโนมัติ</string>
     <string name="settings_download_download_origin_image">ดาวน์โหลดรูปภาพต้นฉบับ</string>
+    <string name="settings_download_download_list_pagination">รายการแบบแบ่งหน้า</string>
+    <string name="settings_download_download_list_pagination_summary">ฟังก์ชันแบ่งหน้าจะมีผลเฉพาะเมื่อความยาวรายการมากกว่า 500</string>
     <string name="settings_download_download_origin_image_summary">อันตรายนะ! คุณอาจจะเจอรหัสข้อผิดพลาด 509 ได้</string>
+    <string name="settings_download_download_order_by_asc">ลำดับการดาวน์โหลดจากน้อยไปมาก</string>
+    <string name="settings_download_download_order_by_asc_summary">ดาวน์โหลดตามลำดับเมื่อดาวน์โหลดแกลเลอรี่ทั้งหมด</string>
     <string name="settings_download_restore_download_items">คืนรายการดาวน์โหลด</string>
     <string name="settings_download_restore_download_items_summary">คืนรายการดาวน์โหลดทั้งหมดในแหล่งดาวน์โหลด</string>
     <string name="settings_download_restoring">กำลังคืนค่า</string>
@@ -521,6 +642,10 @@
     <string name="settings_advanced_import_data">นำเข้าข้อมูล</string>
     <string name="settings_advanced_import_data_summary">ดึงข้อมูลต่างๆจากไฟล์สำเนาที่ทำมาก่อนหน้านี้</string>
     <string name="settings_advanced_import_data_successfully">การนำเข้าข้อมูลสำเร็จ</string>
+    <string name="settings_advanced_wifi_sender">การย้ายข้อมูลผ่าน WiFi</string>
+    <string name="settings_advanced_wifi_sander_summary">การย้ายข้อมูลผ่าน Wi-Fi Hotspot</string>
+    <string name="settings_advanced_wifi_client">การรับข้อมูลการย้ายผ่าน WiFi</string>
+    <string name="settings_advanced_wifi_client_summary">รับข้อมูลการย้ายจาก Wi-Fi Hotspot</string>
 
     <string name="settings_about">เกี่ยวกับ</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -540,11 +665,14 @@
     <string name="settings_about_donate_paypal">PayPal</string>
     <string name="settings_about_donate_open">เปิดลิงค์</string>
     <string name="settings_about_donate_copy">คัดลอก</string>
+    <string name="settings_save_image_aliPay">บันทึกรหัส QR Alipay</string>
+    <string name="settings_save_image_weChat">บันทึกรหัส QR WeChat</string>
     <string name="settings_about_donate_copied">คัดลอกแล้ว</string>
     <string name="settings_privacy_enable_analytics">เปิดการวิเคราะห์ข้อมูล</string>
     <string name="settings_privacy_about_analytics">เกี่ยวกับการวิเคราะห์ข้อมูล</string>
     <string name="settings_about_version">เวอร์ชั่นแอป</string>
     <string name="settings_about_check_for_updates">ตรวจสอบการอัพเดต</string>
+    <string name="settings_close_automatic_updates">ปิดการอัพเดตอัตโนมัติ</string>
     <string name="settings_about_beta_update_channel">ใช้เวอร์ชั่นทดสอบ (Beta)</string>
     <string name="settings_about_beta_update_channel_summary">ในเวอร์ชั่นทดสอบอาจมีบัคที่ยังไม่ได้แก้ไข</string>
 
@@ -682,58 +810,134 @@
     <string name="cleanup_toplists">ล้างข้อมูล อันดับ</string>
     <string name="rating_reviewing_toplists">การจัด อันดับ&#038;กำลังตรวจสอบ อันดับ</string>
     <string name="top_list">อันดับ</string>
-    <string name="settings_eh_list_show_read_progress">Show reading progress</string>
-    <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
-    <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
-    <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
-    <string name="gallery_update_dialog_title">Update method</string>
-    <string name="gallery_update_dialog_message"><![CDATA[Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.&#xA;Download as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.]]></string>
-    <string name="gallery_update_download_as_new">Download as new</string>
-    <string name="gallery_update_override_old">Overwrite old</string>
-    <string name="loading_db_file">Data Loading …</string>
-    <string name="settings_eh_history_size">Number of historical records</string>
-    <string name="history_info_unlimited">Unlimited</string>
+    <string name="settings_eh_list_show_read_progress">แสดงความคืบหน้าการอ่าน</string>
+    <string name="settings_eh_list_show_read_progress_summary">แสดงความคืบหน้าการอ่านสำหรับแต่ละแกลเลอรี่ในโหมดรายการแบบละเอียด</string>
+    <string name="cookie_login_import_in_clipboard">นำเข้าจากคลิปบอร์ด</string>
+    <string name="no_cookie_in_clipboard">ไม่พบข้อมูลที่ถูกต้องจากคลิปบอร์ด</string>
+    <string name="gallery_update_dialog_title">วิธีการอัพเดต</string>
+    <string name="gallery_update_dialog_message">เขียนทับแกลเลอรี่เก่า: จะเก็บเฉพาะเวอร์ชั่นที่ดาวน์โหลดไว้ เวอร์ชั่นเก่าจะถูกลบ\nดาวน์โหลดเป็นแกลเลอรี่ใหม่: แกลเลอรี่ที่ดาวน์โหลดจะอยู่เป็นแกลเลอรี่ใหม่ และทั้งแกลเลอรี่ใหม่และเก่าจะถูกบันทึกไว้</string>
+    <string name="gallery_update_download_as_new">ดาวน์โหลดเป็นใหม่</string>
+    <string name="gallery_update_override_old">เขียนทับเก่า</string>
+    <string name="loading_db_file">กำลังโหลดข้อมูล …</string>
+    <string name="settings_eh_history_size">จำนวนบันทึกประวัติ</string>
+    <string name="history_info_unlimited">ไม่จำกัด</string>
     <string name="archiver">Archiver</string>
-    <string name="archiver_dialog_current_funds">Current Funds:</string>
-    <string name="archiver_dialog_download_original">Download Original Archive</string>
-    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
-    <string name="archiver_dialog_size">Estimated Size:  %s</string>
+    <string name="archiver_dialog_current_funds">เงินทุนปัจจุบัน:</string>
+    <string name="archiver_dialog_cost">ค่าใช้จ่ายในการดาวน์โหลด:  %s</string>
+    <string name="archiver_dialog_download_original">ดาวน์โหลดไฟล์บีบอัดต้นฉบับ</string>
+    <string name="archiver_dialog_download_resample">ดาวน์โหลดไฟล์บีบอัดที่ปรับขนาดแล้ว</string>
+    <string name="archiver_dialog_size">ขนาดโดยประมาณ:  %s</string>
     <string name="dialog_archiver_title">Archiver Downloader</string>
     <string name="download_receiver_label">EhViewer Download Receiver</string>
-    <string name="decompressed_successfully">Decompressed successfully!</string>
-    <string name="decompression_failed">Decompression failed!</string>
+    <string name="decompressed_successfully">ขยายไฟล์สำเร็จแล้ว!</string>
+    <string name="decompression_failed">การขยายไฟล์ล้มเหลว!</string>
     <string name="download_label_archiver">Archiver</string>
-    <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
-    <string name="settings_download_timeout">Download timeout</string>
-    <string name="download_timeout_unlimited">Unlimited</string>
-    <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
-    <string name="have_new_version">Click to see new gallery version</string>
-    <string name="archiver_downloading">Arc Downloading %s</string>
-    <string name="order">Order</string>
-    <string name="sort_by_pub_time">Published Time</string>
-    <string name="sort_by_fav_time">Favorited Time</string>
-    <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
+    <string name="cookie_in_clipboard_incorrect">รูปแบบ Cookie ไม่ถูกต้อง</string>
+    <string name="settings_download_timeout">หมดเวลาการดาวน์โหลด</string>
+    <string name="download_timeout_unlimited">ไม่จำกัด</string>
+    <string name="settings_download_timeout_summary">%s(วินาที), เวลาสูงสุดที่อนุญาตให้ดาวน์โหลดรูปภาพหนึ่งรูป</string>
+    <string name="have_new_version">คลิกเพื่อดูเวอร์ชั่นแกลเลอรี่ใหม่</string>
+    <string name="appwidget_text">ตัวอย่าง</string>
+    <string name="add_widget">เพิ่มวิดเจ็ต</string>
+    <string name="app_widget_description">นี่คือคำอธิบายวิดเจ็ตแอป</string>
+    <string name="archiver_downloading">กำลังดาวน์โหลด Arc %s</string>
+    <string name="order">ลำดับ</string>
+    <string name="sort_by_pub_time">เวลาที่เผยแพร่</string>
+    <string name="sort_by_fav_time">เวลาที่เพิ่มในรายการโปรด</string>
     <!--  订阅服务  -->
-    <string name="subscription_watched">Watched</string>
-    <string name="subscription_hidden">Hidden</string>
-    <string name="delete_subscription_title">Remove Tag</string>
-    <string name="can_not_use_this_tag">Tags are not available</string>
-    <string name="add_tag_dialog_title">Add Tag</string>
-    <string name="tag_title">Tag</string>
-    <string name="empty_subscription">Subscription is empty</string>
-    <string name="subscription_success">%s success</string>
-    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
-    <string name="import_local_archive">Import local archive</string>
-    <string name="import_archive_title">Select archive file</string>
-    <string name="import_archive_failed">Failed to import archive</string>
-    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
-    <string name="import_archive_processing">Processing archive…</string>
-    <string name="import_archive_invalid_format">Unsupported archive format</string>
-    <string name="import_archive_already_imported">Archive already imported</string>
-    <string name="import_archive_success">Archive imported successfully</string>
-    <string name="archive_not_accessible">Archive file is not accessible</string>
-    <string name="imported_archive_info_title">Local Import Info</string>
-    <string name="imported_archive_info_message">This is an item imported from local storage</string>
-    <string name="imported_archive_category">Local Import</string>
+    <string name="subscription_watched">ดูแล้ว</string>
+    <string name="subscription_hidden">ซ่อน</string>
+    <string name="delete_subscription_title">ลบแท็ก</string>
+    <string name="can_not_use_this_tag">แท็กไม่สามารถใช้งานได้</string>
+    <string name="add_tag_dialog_title">เพิ่มแท็ก</string>
+    <string name="tag_title">แท็ก</string>
+    <string name="empty_subscription">การสมัครสมาชิกว่างเปล่า</string>
+    <string name="subscription_success">%s สำเร็จ</string>
+    <string name="settings_eh_show_gallery_rating">แสดงคะแนนแกลเลอรี่</string>
+    <string name="import_local_archive">นำเข้าไฟล์บีบอัดท้องถิ่น</string>
+    <string name="import_archive_title">เลือกไฟล์บีบอัด</string>
+    <string name="import_archive_failed">การนำเข้าไฟล์บีบอัดล้มเหลว</string>
+    <string name="archive_permission_lost">สิทธิ์ในการเข้าถึงไฟล์บีบอัดสูญหายแล้ว กรุณานำเข้าไฟล์บีบอัดอีกครั้ง</string>
+    <string name="import_archive_processing">กำลังประมวลผลไฟล์บีบอัด…</string>
+    <string name="import_archive_invalid_format">รูปแบบไฟล์บีบอัดไม่รองรับ</string>
+    <string name="import_archive_already_imported">ไฟล์บีบอัดถูกนำเข้าแล้ว</string>
+    <string name="import_archive_success">นำเข้าไฟล์บีบอัดสำเร็จแล้ว</string>
+    <string name="archive_not_accessible">ไม่สามารถเข้าถึงไฟล์บีบอัดได้</string>
+    <string name="imported_archive_info_title">ข้อมูลการนำเข้าท้องถิ่น</string>
+    <string name="imported_archive_info_message">นี่คือรายการที่นำเข้าจากที่เก็บข้อมูลท้องถิ่น</string>
+    <string name="imported_archive_category">การนำเข้าท้องถิ่น</string>
+
+    <!--  排行榜  -->
+    <string name="all_time_top_list">รายการอันดับตลอดกาล</string>
+    <string name="past_year_top_list">รายการอันดับปีที่แล้ว</string>
+    <string name="past_month_top_list">รายการอันดับเดือนที่แล้ว</string>
+    <string name="yesterday_top_list">รายการอันดับเมื่อวาน</string>
+
+    <!--  侧滑栏头像和背景修改  -->
+    <string name="change_background_title">คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนพื้นหลัง?</string>
+    <string name="change_background_message">การแก้ไขพื้นหลังจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง E-hentai หรือซอฟต์แวร์ที่คล้ายกันได้</string>
+    <string name="change_avatar_title">คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนอวตาร?</string>
+    <string name="change_avatar_message">การแก้ไขอวตารจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง E-hentai หรือซอฟต์แวร์ที่คล้ายกันได้</string>
+    <string name="take_a_photograph">ถ่ายภาพ</string>
+    <string name="choose_from_the_album">เลือกจากอัลบั้ม</string>
+    <string name="request_camera_permission">EhViewer จะขอสิทธิ์เข้าถึงกล้องของอุปกรณ์เพื่อถ่ายภาพ คุณต้องการอนุญาตหรือไม่?</string>
+    <string name="request_storage_permission">EhViewer จะขอสิทธิ์เข้าถึงอัลบั้มภาพของอุปกรณ์เพื่อรับภาพ คุณต้องการอนุญาตหรือไม่?</string>
+
+    <!-- 下载通知   -->
+    <string name="download_torrent_name">torrent: %s</string>
+    <string name="download_torrent_state">สถานะ: </string>
+    <string name="download_torrent_path">เส้นทาง: %s</string>
+    <string name="download_search">ค้นหาในรายการดาวน์โหลด</string>
+    <string name="sure">ตกลง</string>
+    <string name="try_again">ลองอีกครั้ง</string>
+    <string name="open_directory">เปิดโฟลเดอร์</string>
+    <string name="downloading">กำลังดาวน์โหลด…… กรุณาลองอีกครั้งภายหลัง</string>
+    <string name="torrent_exist">ไฟล์มีอยู่แล้ว: %s</string>
+
+    <!--  wifi server -->
+    <string name="wifi_server_name">WiFiServer</string>
+    <string name="wifi_server">WiFiServer</string>
+    <string name="wifi_client">WiFiClient</string>
+    <string name="wifi_send_bookmark">ย้ายบุคมาร์ก</string>
+    <string name="wifi_send_favorite">ย้ายรายการโปรด</string>
+    <string name="wifi_send_download">ย้ายข้อมูลดาวน์โหลด</string>
+    <string name="wifi_send_done">ย้ายข้อมูลเสร็จแล้ว</string>
+    <string name="wifi_send_start">เริ่มย้าย%s</string>
+    <string name="wifi_send_stop">หยุดย้าย%s</string>
+    <string name="wifi_sending">กำลังย้ายข้อมูล กรุณารอสักครู่หรือออกแล้วลองอีกครั้ง</string>
+    <string name="wifi_send_text">ส่งข้อมูล</string>
+    <string name="wifi_server_illustrate">โปรดตรวจสอบให้แน่ใจว่าโทรศัพท์มือถือที่จะรับข้อมูลเชื่อมต่อกับฮอตสปอตท้องถิ่นแล้ว และอย่าตัดการเชื่อมต่อหรือกลับไปหน้าหลักก่อนการย้ายจะเสร็จสมบูรณ์!</string>
+    <string name="wifi_server_connect">เชื่อมต่อ</string>
+    <string name="wifi_server_connect_unable">การเชื่อมต่อไม่มีอยู่</string>
+    <string name="wifi_server_connection_succeeded">อุปกรณ์เชื่อมต่อสำเร็จแล้ว หลังจากรับข้อมูลแล้ว กรุณารีสตาร์ทแอปเพื่อให้ข้อมูลมีผล</string>
+    <string name="wifi_server_disconnect">อุปกรณ์ตัดการเชื่อมต่อ</string>
+    <string name="wifi_server_connection_fail">สร้างการสื่อสารล้มเหลว</string>
+    <string name="wifi_server_send_success">ส่งข้อความสำเร็จ: %s</string>
+    <string name="wifi_server_send_fail">ส่งข้อความล้มเหลว: %s</string>
+    <string name="wifi_server_receive_message">ได้รับข้อความ: %s</string>
+    <string name="wifi_server_receive_message_unknown">ประเภทข้อมูลไม่ทราบ</string>
+    <string name="wifi_server_opened">ฮอตสปอตเปิดแล้ว SSID: %1$s \n%2$s</string>
+    <string name="wifi_server_closed">ฮอตสปอตปิดแล้ว</string>
+    <string name="wifi_server_password">รหัสผ่าน: %s</string>
+    <string name="wifi_server_no_permission">สิทธิ์ไม่เพียงพอ กรุณาอนุญาตสิทธิ์</string>
+    <!--  wifi server  -->
+
+    <!--  limits  -->
+    <string name="refresh_limits">รีเฟรชการใช้งานขีดจำกัด</string>
+    <string name="from_gallery_visits">%s จากการเข้าชมแกลเลอรี่</string>
+    <string name="from_torrent_completions">%s จากการเสร็จสิ้น torrent</string>
+    <string name="from_archive_download">%s จากการดาวน์โหลดไฟล์บีบอัด</string>
+    <string name="from_hentai_home">%s จาก Hentai@Home</string>
+    <string name="current_moderation_power">พลังการดูแลปัจจุบัน %s</string>
+    <string name="reset_cost">ค่าใช้จ่าย %s เพื่อรีเซ็ต</string>
+    <string name="ip_base_limits">ขีดจำกัดตาม IP</string>
+    <string name="limit_unneed_reset">ปัจจุบันไม่จำเป็นต้องรีเซ็ตโควต้า กรุณาลองอีกครั้งหลังจากรีเฟรช~</string>
+
+    <string name="pagination_count">จำนวน</string>
+    <string name="pagination_page_and_item">r/p</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">หน้าก่อนหน้า</string>
+    <string name="spen_next_page">หน้าถัดไป</string>
 
 </resources>

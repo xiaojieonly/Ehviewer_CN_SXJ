@@ -19,6 +19,9 @@
 
     <string name="app_name">EhViewer</string>
 
+    <string name="site_e" translatable="false">e-hentai</string>
+    <string name="site_ex" translatable="false">exhentai</string>
+
     <!-- Theme -->
     <string name="theme_light">亮色主題</string>
     <string name="theme_dark">暗色主題</string>
@@ -33,6 +36,7 @@
     <string name="downloads">下載</string>
     <string name="news">新聞</string>
     <string name="settings">設定</string>
+    <string name="stub" translatable="false">Stub</string>
 
     <string name="username">使用者名稱</string>
     <string name="password">密碼</string>
@@ -186,6 +190,8 @@
     <string name="search_sr">最低評分：</string>
     <string name="search_sp">頁數：</string>
     <string name="search_sp_to">到</string>
+    <!-- A placeholder for other languages -->
+    <string name="search_sp_suffix"/>
     <string name="search_sf">禁用排除項：</string>
     <string name="search_sfl">語言</string>
     <string name="search_sfu">上傳者</string>
@@ -281,6 +287,7 @@
     <string name="rating2">快瞎了</string>
     <string name="rating1">快要窒息了</string>
     <string name="rating0">下去 !</string>
+    <string name="rating_none" translatable="false">(´_ゝ`)</string>
 
     <!-- Gallery Info -->
     <string name="gallery_info">圖庫資訊</string>
@@ -379,6 +386,8 @@
     <string name="sort_by_create_time_desc">依建立時間降序</string>
     <string name="sort_by_rating_asc">依評分升序</string>
     <string name="sort_by_rating_desc">依評分降序</string>
+    <string name="sort_by_name_asc">依名稱升序</string>
+    <string name="sort_by_name_desc">依名稱降序</string>
     <string name="sort_download_list">排序列表</string>
     <string name="download_search_gallery">搜尋圖庫</string>
     <string name="download_search_hint">輸入搜尋關鍵字</string>
@@ -387,6 +396,7 @@
     <string name="download_sort_list">排序</string>
     <string name="download_filter_by_status">照狀態篩選</string>
     <string name="download_status_all">全部</string>
+    <string name="download_status_not_started">未開始</string>
 
     <!-- Download label -->
     <string name="no_download_label">下載標籤將會顯示在這裡</string>
@@ -483,6 +493,7 @@
     <string name="settings_eh_theme_light">亮色</string>
     <string name="settings_eh_theme_dark">暗色</string>
     <string name="settings_eh_theme_black">黑色</string>
+    <string name="settings_eh_theme_auto_switch">跟隨系統暗色模式</string>
     <string name="settings_eh_apply_nav_bar_theme_color">導航欄應用主題配色</string>
     <string name="settings_eh_gallery_site">圖庫站台</string>
     <string name="settings_eh_launch_page">啟動頁</string>
@@ -508,7 +519,9 @@
     <string name="settings_eh_excluded_languages_summary">在首頁與搜尋中隱藏指定語言的圖庫</string>
     <string name="settings_eh_show_jpn_title">顯示日文標題</string>
     <string name="settings_eh_show_gallery_comment">顯示圖庫留言</string>
+    <string name="settings_eh_show_gallery_rating">顯示圖庫評分</string>
     <string name="settings_eh_show_eh_event">顯示 EH 事件</string>
+    <string name="settings_eh_show_eh_limits">顯示 EH 限制</string>
     <string name="settings_eh_show_jpn_title_summary">需同時在 EHentai 網站設定中啟用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">顯示圖庫頁數</string>
     <string name="settings_eh_show_gallery_pages_summary">在圖庫列表中顯示頁數</string>
@@ -550,6 +563,7 @@
     <string name="settings_read_volume_page">使用音量鍵翻頁</string>
     <string name="settings_read_reverse_volume_page">反轉音量鍵翻頁方向</string>
     <string name="settings_read_reading_fullscreen">全螢幕</string>
+    <string name="settings_read_auto_transfer_time">自動切換時間（秒）</string>
     <string name="settings_read_custom_screen_lightness">自訂螢幕亮度</string>
     <string name="settings_read_screen_lightness">螢幕亮度</string>
 
@@ -570,6 +584,8 @@
     <string name="settings_download_image_resolution_auto">自動</string>
     <string name="settings_download_download_origin_image">下載原圖</string>
     <string name="settings_download_download_origin_image_summary">這很危險！勾選這個選項會導致圖片流量配額與GP快速耗用</string>
+    <string name="settings_download_download_list_pagination">分頁列表</string>
+    <string name="settings_download_download_list_pagination_summary">分頁功能僅在列表長度大於 500 時生效</string>
     <string name="settings_download_download_order_by_asc">以升序下載</string>
     <string name="settings_download_download_order_by_asc_summary">當下載全部圖庫時照順序下載</string>
     <string name="settings_download_media_scan">允許其他程式進行媒體掃描</string>
@@ -625,8 +641,11 @@
     <string name="settings_advanced_wifi_client_summary">接收來自Wi-Fi熱點的遷移資料</string>
 
     <string name="settings_about">關於</string>
+    <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer 與 E-Hentai.org 無任何聯繫</string>
     <string name="settings_about_author">作者</string>
+    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">最新版本</string>
     <string name="settings_about_website">網站</string>
     <string name="settings_about_source">原始碼</string>
@@ -642,6 +661,8 @@
     <string name="settings_about_donate_guide">支持指南</string>
     <string name="settings_about_donate_open">開啟</string>
     <string name="settings_about_donate_copy">複製</string>
+    <string name="settings_save_image_aliPay">儲存支付寶二維碼</string>
+    <string name="settings_save_image_weChat">儲存微信二維碼</string>
     <string name="settings_about_donate_copied">已複製</string>
     <string name="settings_privacy_enable_analytics">啟用資料統計</string>
     <string name="settings_privacy_about_analytics">關於資料統計</string>
@@ -886,51 +907,64 @@
     <string name="from_hentai_home">%s 來自 Hentai@Home</string>
     <string name="current_moderation_power">當前願力 %s</string>
     <string name="reset_cost">花費 %s 重置</string>
-    <string name="ip_base_limits">IP基础限制</string>
+    <string name="ip_base_limits">IP 基礎限制</string>
     <string name="limit_unneed_reset">目前無需重置配額，請重新整理後再試試~</string>
-    <string name="settings_eh_list_show_read_progress">Show reading progress</string>
-    <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
-    <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
-    <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
-    <string name="gallery_update_dialog_title">Update method</string>
-    <string name="gallery_update_dialog_message"><![CDATA[Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.&#xA;Download as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.]]></string>
-    <string name="gallery_update_download_as_new">Download as new</string>
-    <string name="gallery_update_override_old">Overwrite old</string>
-    <string name="loading_db_file">Data Loading …</string>
-    <string name="settings_eh_history_size">Number of historical records</string>
-    <string name="history_info_unlimited">Unlimited</string>
-    <string name="archiver">Archiver</string>
-    <string name="archiver_dialog_current_funds">Current Funds:</string>
-    <string name="archiver_dialog_download_original">Download Original Archive</string>
-    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
-    <string name="archiver_dialog_size">Estimated Size:  %s</string>
-    <string name="dialog_archiver_title">Archiver Downloader</string>
-    <string name="download_receiver_label">EhViewer Download Receiver</string>
-    <string name="decompressed_successfully">Decompressed successfully!</string>
-    <string name="decompression_failed">Decompression failed!</string>
-    <string name="download_label_archiver">Archiver</string>
-    <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
-    <string name="settings_download_timeout">Download timeout</string>
-    <string name="download_timeout_unlimited">Unlimited</string>
-    <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
-    <string name="have_new_version">Click to see new gallery version</string>
-    <string name="archiver_downloading">Arc Downloading %s</string>
-    <string name="order">Order</string>
-    <string name="sort_by_pub_time">Published Time</string>
-    <string name="sort_by_fav_time">Favorited Time</string>
-    <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
-    <string name="settings_eh_show_gallery_rating">Show Gallery Stars</string>
-    <string name="import_local_archive">Import local archive</string>
-    <string name="import_archive_title">Select archive file</string>
-    <string name="import_archive_failed">Failed to import archive</string>
-    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
-    <string name="import_archive_processing">Processing archive…</string>
-    <string name="import_archive_invalid_format">Unsupported archive format</string>
-    <string name="import_archive_already_imported">Archive already imported</string>
-    <string name="import_archive_success">Archive imported successfully</string>
-    <string name="archive_not_accessible">Archive file is not accessible</string>
-    <string name="imported_archive_info_title">Local Import Info</string>
-    <string name="imported_archive_info_message">This is an item imported from local storage</string>
-    <string name="imported_archive_category">Local Import</string>
+
+    <string name="pagination_count">計數</string>
+    <string name="pagination_page_and_item">r/p</string>
+    <string name="settings_eh_list_show_read_progress">顯示閱讀進度</string>
+    <string name="settings_eh_list_show_read_progress_summary">在詳細列表模式中顯示每個圖庫的閱讀進度</string>
+    <string name="cookie_login_import_in_clipboard">從剪貼簿匯入</string>
+    <string name="no_cookie_in_clipboard">剪貼簿中找不到有效資料</string>
+    <string name="gallery_update_dialog_title">更新方式</string>
+    <string name="gallery_update_dialog_message">覆蓋舊圖庫：僅保留下載的版本，舊版本將被刪除。\n下載為新圖庫：下載的圖庫將作為新圖庫存在，新圖庫和舊圖庫都將被保存。</string>
+    <string name="gallery_update_download_as_new">下載為新圖庫</string>
+    <string name="gallery_update_override_old">覆蓋舊圖庫</string>
+    <string name="loading_db_file">資料載入中…</string>
+    <string name="settings_eh_history_size">歷史記錄數量</string>
+    <string name="history_info_unlimited">無限制</string>
+    <string name="archiver">歸檔器</string>
+    <string name="archiver_dialog_current_funds">當前資金：</string>
+    <string name="archiver_dialog_cost">下載成本：  %s</string>
+    <string name="archiver_dialog_download_original">下載原始歸檔</string>
+    <string name="archiver_dialog_download_resample">下載重採樣歸檔</string>
+    <string name="archiver_dialog_size">預估大小：  %s</string>
+    <string name="dialog_archiver_title">歸檔下載器</string>
+    <string name="download_receiver_label">EhViewer 下載接收器</string>
+    <string name="decompressed_successfully">解壓縮成功！</string>
+    <string name="decompression_failed">解壓縮失敗！</string>
+    <string name="download_label_archiver">歸檔器</string>
+    <string name="cookie_in_clipboard_incorrect">Cookie 格式不正確</string>
+    <string name="settings_download_timeout">下載逾時</string>
+    <string name="download_timeout_unlimited">無限制</string>
+    <string name="settings_download_timeout_summary">%s（秒），允許下載一張圖片的最大時間。</string>
+    <string name="have_new_version">點擊查看新圖庫版本</string>
+    <string name="appwidget_text">範例</string>
+    <string name="add_widget">新增小工具</string>
+    <string name="app_widget_description">這是應用程式小工具的描述</string>
+    <string name="archiver_downloading">歸檔下載中 %s</string>
+    <string name="order">順序</string>
+    <string name="sort_by_pub_time">發布時間</string>
+    <string name="sort_by_fav_time">收藏時間</string>
+    <string name="settings_eh_sign_out_restart">正在為您自動重新啟動，請稍候</string>
+    <string name="import_local_archive">匯入本機歸檔</string>
+    <string name="import_archive_title">選擇歸檔檔案</string>
+    <string name="import_archive_failed">匯入歸檔失敗</string>
+    <string name="archive_permission_lost">歸檔檔案的存取權限已遺失。請重新匯入歸檔檔案。</string>
+    <string name="import_archive_processing">處理歸檔中…</string>
+    <string name="import_archive_invalid_format">不支援的歸檔格式</string>
+    <string name="import_archive_already_imported">歸檔已匯入</string>
+    <string name="import_archive_success">歸檔匯入成功</string>
+    <string name="archive_not_accessible">無法存取歸檔檔案</string>
+    <string name="imported_archive_info_title">本機匯入資訊</string>
+    <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
+    <string name="imported_archive_category">本機匯入</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">上一頁</string>
+    <string name="spen_next_page">下一頁</string>
+
+    <string name="dummy_button">虛擬按鈕</string>
+    <string name="dummy_content">虛擬\n內容</string>
 
 </resources>

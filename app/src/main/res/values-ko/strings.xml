@@ -13,8 +13,35 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+<!-- 韩语翻译 -->
 <!-- 한국어 -->
 <resources>
+    <!--  black list  -->
+    <string name="blacklist_id">사용자 ID</string>
+    <string name="blacklist">차단 목록</string>
+    <string name="join_in_blacklist">차단 목록에 추가</string>
+    <string name="add_blacklist">사용자 차단 추가</string>
+    <string name="blacklist_tip">이 차단 시스템은 EHentai 웹사이트 댓글 시스템을 기반으로 댓글을 계속 차단합니다.\n\n댓글 작성자 차단 항목: 해당 댓글 작성자가 업로드한 댓글을 제외합니다. 이로 인해 갤러리 목록을 불러오는 데 더 많은 시간이 걸립니다.</string>
+    <string name="blacklist_text">사용자 차단</string>
+    <string name="delete_blacklist">사용자 \"%s\" 차단을 해제하시겠습니까?</string>
+    <string name="blacklist_reason_text">차단 사유</string>
+    <string name="settings_eh_blacklist">댓글 차단 목록</string>
+    <string name="settings_eh_blacklist_summary">계정 이름으로 다른 사람의 댓글 차단</string>
+    <string name="settings_advanced_dns_over_http_title">보안 DNS (DoH)</string>
+    <string name="settings_advanced_dns_over_http_summary">특정 지역의 DNS 오염 문제 해결</string>
+    <string name="settings_advanced_domain_fronting_title">도메인 프론팅</string>
+    <string name="settings_advanced_domain_fronting_summary">SNI 차단 우회</string>
+    <string name="settings_advanced_url_replace_title">URL 위장, SNI를 닫아야 함</string>
+    <string name="settings_advanced_url_replace_summary">URL 위장 (재시작 필요, 활성화 후 계정 기능이 작동하지 않음)</string>
+    <string name="settings_about_donate_guide">지원 가이드</string>
+    <string name="share_favorites_dialog_title">즐겨찾기 공유</string>
+    <string name="share_favorites_dialog_message">즐겨찾기 %s을(를) 공유하시겠습니까?</string>
+    <string name="add_favorites_dialog_message">즐겨찾기에 %s을(를) 추가하시겠습니까?</string>
+    <string name="settings_advanced_built_ex_hosts_title">내장 exhentai hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_summary">앱에서 제공하는 호스트-IP 매핑\n사용자 지정 hosts.txt로 덮어쓸 수 있음</string>
+    <string name="network_remind">VPN이 활성화된 것으로 감지되었습니다. 네트워크 보안에 주의하세요</string>
+
+    <string name="no_blicklist">여기는 차단 목록입니다</string>
 
     <string name="app_name">EhViewer</string>
 
@@ -30,13 +57,14 @@
     <string name="favourite">즐겨찾기</string>
     <string name="history">방문 기록</string>
     <string name="downloads">다운로드</string>
+    <string name="news">뉴스</string>
     <string name="settings">설정</string>
 
     <string name="username">사용자 이름</string>
     <string name="password">비밀번호</string>
     <string name="recaptcha">Recaptcha (선택)</string>
 
-    <string name="recaptcha_none">Recaptcha 불러오기</string>
+    <string name="recaptcha_none">여기를 누르세요</string>
     <string name="recaptcha_loading">불러오는 중…</string>
     <string name="recaptcha_failure">실패</string>
 
@@ -67,6 +95,8 @@
     <string name="clipboard_gallery_url_snack_action">보기</string>
 
     <!-- Message -->
+    <string name="image_save_success">사진이 성공적으로 저장되었습니다</string>
+
     <string name="error_bad_status_code">비정상 상태 코드: %d</string>
     <string name="error_timeout">시간 초과</string>
     <string name="error_unknown_host">알 수 없는 호스트</string>
@@ -122,10 +152,12 @@
     <string name="no_select">두 사이트 중 하나를 선택하세요.</string>
 
     <!-- Update -->
+    <string name="new_version">새 버전</string>
     <string name="update">업데이트</string>
-    <string name="update_fail">Check for updates failed</string>
+    <string name="update_fail">업데이트 확인 실패</string>
+    <string name="update_to">업데이트</string>
     <string name="update_plain">버전: %1$s\n파일 크기: %2$s\n\n%3$s</string>
-    <string name="update_fail_info">Click Yes to jump to Github homepage</string>
+    <string name="update_fail_info">예를 클릭하여 Github 홈페이지로 이동</string>
     <string name="update_to_date">최신 버전의 EhViewer를 사용 중입니다.</string>
     <string name="update_ignore">무시</string>
     <string name="no_updates_available">최신 버전입니다</string>
@@ -140,7 +172,21 @@
     <string name="search">검색</string>
 
     <string name="gallery_list_action_url_missed">다음 페이지를 찾을 수 없습니다</string>
-    <string name="gallery_list_no_more_data">현재 점프할 수 없음</string>
+    <string name="gallery_list_no_more_data">현재 목록에 더 이상 데이터가 없습니다</string>
+    <string name="gallery_list_date_jump_1d">어제</string>
+    <string name="gallery_list_date_jump_3d">3일 전</string>
+    <string name="gallery_list_date_jump_1w">일주일 전</string>
+    <string name="gallery_list_date_jump_2w">2주 전</string>
+    <string name="gallery_list_date_jump_1m">한 달 전</string>
+    <string name="gallery_list_date_jump_6m">6개월 전</string>
+    <string name="gallery_list_date_jump_1y">1년 전</string>
+    <string name="gallery_list_date_jump_2y">2년 전</string>
+    <string name="gallery_list_select_jump_date">날짜 선택기 사용</string>
+    <string name="gallery_list_select_jump_node">노드 선택기 사용</string>
+    <string name="gallery_list_jump_now">지금 이동</string>
+    <string name="gallery_list_time_jump_dialog_title">이동 선택기</string>
+    <string name="gallery_list_time_jump_dialog_found_message">%s개 결과 발견</string>
+    <string name="gallery_tag_copy">태그 복사됨</string>
 
     <string name="keyword_search">키워드 검색</string>
     <string name="image_search">이미지 검색</string>
@@ -166,6 +212,13 @@
     <string name="search_sh">Expunged 갤러리 표시</string>
     <string name="search_sr">최소 평점:</string>
     <string name="search_sp">페이지 수:</string>
+    <string name="search_sp_to">부터</string>
+    <!-- A placeholder for other languages -->
+    <string name="search_sp_suffix" />
+    <string name="search_sf">기본 필터 비활성화:</string>
+    <string name="search_sfl">언어</string>
+    <string name="search_sfu">업로더</string>
+    <string name="search_sft">태그</string>
     
     <string name="select_image">이미지 선택</string>
     <string name="search_uss">유사한 검색 사용</string>
@@ -209,6 +262,7 @@
     <string name="read">읽기</string>
     <string name="more_information">추가 정보</string>
     <plurals name="page_count">
+        <item quantity="one">%d 페이지</item>
         <item quantity="other">%d 페이지</item>
     </plurals>
     <string name="favored_times">\u2665 %d</string>
@@ -243,6 +297,7 @@
     <string name="filter_the_uploader">업로더 \"%s\"을(를) 차단하시겠습니까?</string>
     <string name="filter_the_tag">태그 \"%s\"을(를) 차단하시겠습니까?</string>
     <string name="filter_added">차단 항목 추가됨</string>
+    <string name="copy_tag">복사</string>
 
     <!-- Rating -->
     <string name="rating10">최고</string>
@@ -337,6 +392,20 @@
     <string name="default_download_label_name">기본</string>
     <string name="download_move_dialog_title">이동</string>
     <string name="download_labels">다운로드 레이블</string>
+    <string name="download_sort_list">정렬</string>
+    <string name="download_filter_by_status">상태별 필터</string>
+    <string name="download_status_all">전체</string>
+    <string name="download_status_not_started">시작 안 함</string>
+    <string name="default_sort">기본값</string>
+    <string name="sort_by_gallery_id_asc">ID 오름차순</string>
+    <string name="sort_by_gallery_id_desc">ID 내림차순</string>
+    <string name="sort_by_create_time_asc">생성 시간 오름차순</string>
+    <string name="sort_by_create_time_desc">생성 시간 내림차순</string>
+    <string name="sort_by_rating_asc">평점 오름차순</string>
+    <string name="sort_by_rating_desc">평점 내림차순</string>
+    <string name="sort_by_name_asc">이름 오름차순</string>
+    <string name="sort_by_name_desc">이름 내림차순</string>
+    <string name="sort_download_list">목록 정렬</string>
     <string name="download_start_all">모두 시작</string>
     <string name="download_stop_all">모두 중지</string>
     <string name="download_reset_reading_progress">독서 진행도 초기화</string>
@@ -470,6 +539,9 @@
     <string name="settings_eh_excluded_languages_summary">갤러리 목록과 검색에서 특정 언어 숨기기</string>
     <string name="settings_eh_show_jpn_title">일본어 제목 표시</string>
     <string name="settings_eh_show_gallery_comment">갤러리 코멘트 보이기</string>
+    <string name="settings_eh_show_gallery_rating">갤러리 평점 표시</string>
+    <string name="settings_eh_show_eh_event">EH 이벤트 표시</string>
+    <string name="settings_eh_show_eh_limits">EH 제한 표시</string>
     <string name="settings_eh_show_jpn_title_summary">EHentai 웹 사이트 설정에서 Japanese Title을 사용하도록 설정해야 함</string>
     <string name="settings_eh_show_gallery_pages">갤러리 페이지 수 표시</string>
     <string name="settings_eh_show_gallery_pages_summary">갤러리 목록에 해당 갤러리의 페이지 수를 표시합니다</string>
@@ -502,6 +574,7 @@
     <string name="settings_read_start_position_top_right">오른쪽 상단</string>
     <string name="settings_read_start_position_bottom_left">왼쪽 하단</string>
     <string name="settings_read_start_position_bottom_right">오른쪽 하단</string>
+    <string name="settings_read_auto_transfer_time">자동 전환 시간(초)</string>
     <string name="settings_read_start_position_center">중앙</string>
     <string name="settings_read_keep_screen_on">화면 켜짐 유지</string>
     <string name="settings_read_show_clock">시계 표시</string>
@@ -509,6 +582,7 @@
     <string name="settings_read_show_battery">배터리 표시</string>
     <string name="settings_read_show_page_interval">페이지 간격 표시</string>
     <string name="settings_read_volume_page">볼륨 키로 페이지 넘기기</string>
+    <string name="settings_read_reverse_volume_page">볼륨 키 전환 방향 반전</string>
     <string name="settings_read_reading_fullscreen">전체 화면</string>
     <string name="settings_read_custom_screen_lightness">화면 밝기 사용자 지정</string>
     <string name="settings_read_screen_lightness">화면 밝기</string>
@@ -529,7 +603,11 @@
     <string name="settings_download_image_resolution_summary">1280x 이상으로 설정하면 작동하지 않을 수 있습니다. 현재 설정\u003a \u005b%s\u005d</string>
     <string name="settings_download_image_resolution_auto">자동</string>
     <string name="settings_download_download_origin_image">원본 이미지 다운로드</string>
+    <string name="settings_download_download_list_pagination">페이지 목록</string>
+    <string name="settings_download_download_list_pagination_summary">페이지 기능은 목록 길이가 500보다 클 때만 작동합니다</string>
     <string name="settings_download_download_origin_image_summary">이 옵션은 위험합니다! 509 오류가 발생할 수 있습니다.</string>
+    <string name="settings_download_download_order_by_asc">오름차순으로 다운로드</string>
+    <string name="settings_download_download_order_by_asc_summary">모든 갤러리를 다운로드할 때 순서대로 다운로드</string>
     <string name="settings_download_media_scan">미디어 스캔 허용</string>
     <string name="settings_download_media_scan_summary_on">다른 사람들에게 갤러리 앱을 들키지 마세요.</string>
     <string name="settings_download_media_scan_summary_off">대부분의 갤러리 앱에서 다운로드 경로에 있는 사진을 무시합니다.</string>
@@ -577,10 +655,17 @@
     <string name="settings_advanced_import_data">데이터 가져오기</string>
     <string name="settings_advanced_import_data_summary">이전에 저장한 데이터 불러오기</string>
     <string name="settings_advanced_import_data_successfully">데이터를 가져왔습니다.</string>
+    <string name="settings_advanced_wifi_sender">WiFi 데이터 마이그레이션</string>
+    <string name="settings_advanced_wifi_sander_summary">Wi-Fi 핫스팟을 통한 데이터 마이그레이션</string>
+    <string name="settings_advanced_wifi_client">WiFi 마이그레이션 데이터 수신</string>
+    <string name="settings_advanced_wifi_client_summary">Wi-Fi 핫스팟에서 마이그레이션 데이터 수신</string>
 
     <string name="settings_about">앱 정보</string>
+    <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer는 E-Hentai.org 사이트와 아무런 관계가 없습니다.</string>
     <string name="settings_about_author">개발자</string>
+    <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_about_telegram" translatable="false">Telegram</string>
     <string name="settings_about_latest_release">최신 버전</string>
     <string name="settings_about_website">웹사이트</string>
     <string name="settings_about_source">소스 코드</string>
@@ -590,17 +675,20 @@
     <string name="settings_about_license">라이선스</string>
     <string name="settings_about_license_summary">EhViewer는 많은 오픈 소스 프로젝트 덕분에 만들 수 있었습니다.</string>
     <string name="settings_about_donate">후원</string>
-    <string name="settings_about_donate_message">이제는 훖원깂능을 잆용핪싮면 짱껪 제작자에게 후원을 할 수 있습니다.</string>
+    <string name="settings_about_donate_message">후원은 특권을 가져다주지 않습니다. 하지만 이 앱을 유지하는 데 도움이 됩니다.</string>
     <string name="settings_about_donate_alipay">알리페이</string>
     <string name="settings_about_donate_paypal">PayPal</string>
-    <string name="settings_about_donate_guide">지원 가이드</string>
     <string name="settings_about_donate_open">열기</string>
-    <string name="settings_about_donate_copy">복사</string>
+    <string name="settings_about_donate_copy">이메일 복사</string>
+    <string name="settings_save_image_aliPay">알리페이 QR 코드 저장</string>
+    <string name="settings_save_image_weChat">위챗 QR 코드 저장</string>
+    <string name="settings_about_donate_guide">지원 가이드</string>
     <string name="settings_about_donate_copied">클립보드에 복사했습니다.</string>
     <string name="settings_privacy_enable_analytics">데이터 분석 사용</string>
     <string name="settings_privacy_about_analytics">데이터 분석 정보</string>
     <string name="settings_about_version">빌드 버전</string>
     <string name="settings_about_check_for_updates">업데이트 확인</string>
+    <string name="settings_close_automatic_updates">자동 업데이트 끄기</string>
     <string name="settings_about_beta_update_channel">베타 업데이트 채널</string>
     <string name="settings_about_beta_update_channel_summary">베타 버전은 해결되지 않은 문제가 발생할 수 있습니다.</string>
 
@@ -694,27 +782,34 @@
     <string name="from_the_future">미래에</string>
     <string name="just_now">방금</string>
     <plurals name="some_minutes_ago">
+        <item quantity="one">1분 전</item>
         <item quantity="other">%d분 전</item>
     </plurals>
     <plurals name="some_hours_ago">
+        <item quantity="one">1시간 전</item>
         <item quantity="other">%d시간 전</item>
     </plurals>
     <string name="yesterday">어제</string>
     <string name="some_days_ago">%d일 전</string>
 
     <plurals name="second">
+        <item quantity="one">초</item>
         <item quantity="other">초</item>
     </plurals>
     <plurals name="minute">
+        <item quantity="one">분</item>
         <item quantity="other">분</item>
     </plurals>
     <plurals name="hour">
+        <item quantity="one">시간</item>
         <item quantity="other">시간</item>
     </plurals>
     <plurals name="day">
+        <item quantity="one">일</item>
         <item quantity="other">일</item>
     </plurals>
     <plurals name="year">
+        <item quantity="one">년</item>
         <item quantity="other">년</item>
     </plurals>
     <string name="dialog_archive_title">H@H 다운로더</string>
@@ -764,7 +859,7 @@
     <string name="add_tag_dialog_title">태그 추가</string>
     <string name="tag_title">태그</string>
     <string name="empty_subscription">구독 목록이 비어 있음</string>
-    <string name="subscription_success">%s success</string>
+    <string name="subscription_success">%s 성공</string>
 
     <!-- 下?通知   -->
     <string name="download_torrent_name">시드: %s</string>
@@ -779,50 +874,60 @@
 
     <string name="yes">예</string>
     <string name="cancel">취소</string>
-    <string name="settings_eh_list_show_read_progress">Show reading progress</string>
-    <string name="settings_eh_list_show_read_progress_summary">Display reading progress for each gallery in detail list mode</string>
-    <string name="cookie_login_import_in_clipboard">Import from clipboard</string>
-    <string name="no_cookie_in_clipboard">No valid data found from clipboard</string>
-    <string name="gallery_update_dialog_title">Update method</string>
-    <string name="gallery_update_dialog_message"><![CDATA[Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.&#xA;Download as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.]]></string>
-    <string name="gallery_update_download_as_new">Download as new</string>
-    <string name="gallery_update_override_old">Overwrite old</string>
-    <string name="loading_db_file">Data Loading …</string>
-    <string name="settings_eh_history_size">Number of historical records</string>
-    <string name="history_info_unlimited">Unlimited</string>
-    <string name="archiver">Archiver</string>
-    <string name="archiver_dialog_current_funds">Current Funds:</string>
-    <string name="archiver_dialog_download_original">Download Original Archive</string>
-    <string name="archiver_dialog_download_resample">Download Resample Archive</string>
-    <string name="archiver_dialog_size">Estimated Size:  %s</string>
-    <string name="dialog_archiver_title">Archiver Downloader</string>
-    <string name="download_receiver_label">EhViewer Download Receiver</string>
-    <string name="decompressed_successfully">Decompressed successfully!</string>
-    <string name="decompression_failed">Decompression failed!</string>
-    <string name="download_label_archiver">Archiver</string>
-    <string name="cookie_in_clipboard_incorrect">Cookie format is incorrect</string>
-    <string name="settings_download_timeout">Download timeout</string>
-    <string name="download_timeout_unlimited">Unlimited</string>
-    <string name="settings_download_timeout_summary">%s(S),Maximum time allowed to download an image.</string>
-    <string name="have_new_version">Click to see new gallery version</string>
-    <string name="archiver_downloading">Arc Downloading %s</string>
-    <string name="order">Order</string>
-    <string name="sort_by_pub_time">Published Time</string>
-    <string name="sort_by_fav_time">Favorited Time</string>
-    <string name="settings_eh_sign_out_restart">Automatically restarting for you, please wait</string>
-    <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
-    <string name="import_local_archive">Import local archive</string>
-    <string name="import_archive_title">Select archive file</string>
-    <string name="import_archive_failed">Failed to import archive</string>
-    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
-    <string name="import_archive_processing">Processing archive…</string>
-    <string name="import_archive_invalid_format">Unsupported archive format</string>
-    <string name="import_archive_already_imported">Archive already imported</string>
-    <string name="import_archive_success">Archive imported successfully</string>
-    <string name="archive_not_accessible">Archive file is not accessible</string>
-    <string name="imported_archive_info_title">Local Import Info</string>
-    <string name="imported_archive_info_message">This is an item imported from local storage</string>
-    <string name="imported_archive_category">Local Import</string>
+    <string name="dummy_button">더미 버튼</string>
+    <string name="dummy_content">더미\n내용</string>
+    <string name="settings_eh_list_show_read_progress">독서 진행도 표시</string>
+    <string name="settings_eh_list_show_read_progress_summary">상세 목록 모드에서 각 갤러리의 독서 진행도 표시</string>
+    <string name="cookie_login_import_in_clipboard">클립보드에서 가져오기</string>
+    <string name="no_cookie_in_clipboard">클립보드에서 유효한 데이터를 찾을 수 없습니다</string>
+    <string name="gallery_update_dialog_title">업데이트 방법</string>
+    <string name="gallery_update_dialog_message">기존 갤러리 덮어쓰기: 다운로드된 버전만 유지되고 기존 버전은 삭제됩니다.\n새 갤러리로 다운로드: 다운로드된 갤러리가 새 갤러리로 존재하며 새 갤러리와 기존 갤러리가 모두 저장됩니다.</string>
+    <string name="gallery_update_download_as_new">새 갤러리로 다운로드</string>
+    <string name="gallery_update_override_old">기존 갤러리 덮어쓰기</string>
+    <string name="loading_db_file">데이터 로딩 중…</string>
+    <string name="settings_eh_history_size">기록 수</string>
+    <string name="history_info_unlimited">무제한</string>
+    <string name="archiver">아카이버</string>
+    <string name="archiver_dialog_current_funds">현재 자금:</string>
+    <string name="archiver_dialog_cost">다운로드 비용:  %s</string>
+    <string name="archiver_dialog_download_original">원본 아카이브 다운로드</string>
+    <string name="archiver_dialog_download_resample">리샘플 아카이브 다운로드</string>
+    <string name="archiver_dialog_size">예상 크기:  %s</string>
+    <string name="dialog_archiver_title">아카이버 다운로더</string>
+    <string name="download_receiver_label">EhViewer 다운로드 수신기</string>
+    <string name="decompressed_successfully">압축 해제 성공!</string>
+    <string name="decompression_failed">압축 해제 실패!</string>
+    <string name="download_label_archiver">아카이버</string>
+    <string name="cookie_in_clipboard_incorrect">쿠키 형식이 올바르지 않습니다</string>
+    <string name="settings_download_timeout">다운로드 타임아웃</string>
+    <string name="download_timeout_unlimited">무제한</string>
+    <string name="settings_download_timeout_summary">%s(초), 이미지 다운로드에 허용되는 최대 시간.</string>
+    <string name="have_new_version">새 갤러리 버전 보기</string>
+    <string name="appwidget_text">예제</string>
+    <string name="add_widget">위젯 추가</string>
+    <string name="app_widget_description">이것은 앱 위젯 설명입니다</string>
+    <string name="archiver_downloading">아카이브 다운로드 중 %s</string>
+    <string name="order">순서</string>
+    <string name="sort_by_pub_time">게시 시간</string>
+    <string name="sort_by_fav_time">즐겨찾기 시간</string>
+    <string name="settings_eh_sign_out_restart">자동으로 재시작 중입니다. 잠시만 기다려주세요</string>
+    <string name="settings_eh_theme_auto_switch">시스템 다크 모드 따르기</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">이전 페이지</string>
+    <string name="spen_next_page">다음 페이지</string>
+    <string name="import_local_archive">로컬 아카이브 가져오기</string>
+    <string name="import_archive_title">아카이브 파일 선택</string>
+    <string name="import_archive_failed">아카이브 가져오기 실패</string>
+    <string name="archive_permission_lost">아카이브 접근 권한이 손실되었습니다. 아카이브 파일을 다시 가져오세요.</string>
+    <string name="import_archive_processing">아카이브 처리 중…</string>
+    <string name="import_archive_invalid_format">지원하지 않는 아카이브 형식</string>
+    <string name="import_archive_already_imported">이미 가져온 아카이브입니다</string>
+    <string name="import_archive_success">아카이브를 성공적으로 가져왔습니다</string>
+    <string name="archive_not_accessible">아카이브 파일에 접근할 수 없습니다</string>
+    <string name="imported_archive_info_title">로컬 가져오기 정보</string>
+    <string name="imported_archive_info_message">로컬 저장소에서 가져온 항목입니다</string>
+    <string name="imported_archive_category">로컬 가져오기</string>
 
 
 </resources>
