@@ -69,7 +69,7 @@ class WebViewSignInScene : SolidScene() {
         if (okHttpClient == null) {
             okHttpClient = EhApplication.getOkHttpClient(context!!.applicationContext)
         }
-        EhUtils.signOut(context)
+        EhUtils.signOut(context!!)
 
         // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
         val cookieManager = CookieManager.getInstance()

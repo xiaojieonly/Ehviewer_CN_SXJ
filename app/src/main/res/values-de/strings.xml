@@ -35,7 +35,7 @@
     <string name="settings_advanced_domain_fronting_summary">SNI-Blockierung umgehen</string>
     <string name="settings_advanced_url_replace_title">URL-Verschleierung, SNI muss deaktiviert sein</string>
     <string name="settings_advanced_url_replace_summary">URL-Verschleierung (Neustart erforderlich, Kontofunktionen werden nach Aktivierung deaktiviert)</string>
-    <string name="settings_about_donate_guide">Unterstützungsanleitung</string>
+    <string name="settings_about_donate_guide">guide</string>
     <string name="share_favorites_dialog_title">Favoriten teilen</string>
     <string name="share_favorites_dialog_message">Favoriten %s teilen?</string>
     <string name="add_favorites_dialog_message">Favoriten %s hinzufügen?</string>
@@ -697,7 +697,6 @@
     <string name="settings_eh_theme_auto_switch">System-Dunkelmodus folgen</string>
     <string name="settings_eh_show_gallery_pages">Galerieseitenzahl anzeigen</string>
     <string name="settings_eh_show_gallery_pages_summary">Die Galerieseitenzahle in der Galerieliste anzeigen</string>
-    <string name="settings_about_donate_guide">Anleitung</string>
 
     <!-- ExcludedLanguagesScene -->
     <string name="excluded_languages">Ausgeschlossene Sprachen</string>

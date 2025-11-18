@@ -682,7 +682,6 @@
     <string name="settings_about_donate_copy">이메일 복사</string>
     <string name="settings_save_image_aliPay">알리페이 QR 코드 저장</string>
     <string name="settings_save_image_weChat">위챗 QR 코드 저장</string>
-    <string name="settings_about_donate_guide">지원 가이드</string>
     <string name="settings_about_donate_copied">클립보드에 복사했습니다.</string>
     <string name="settings_privacy_enable_analytics">데이터 분석 사용</string>
     <string name="settings_privacy_about_analytics">데이터 분석 정보</string>
