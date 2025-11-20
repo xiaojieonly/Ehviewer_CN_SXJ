@@ -195,11 +195,9 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                 val currentVersionCode = BuildConfig.VERSION_CODE
                 var updateResult: Int
                 if (updateData != null) {
-                    updateResult = compareVersion(
-                        updateData.getString(VERSION), tempUpdateData.getString(
-                            VERSION
-                        )
-                    )
+                    val version1 = updateData.getString(VERSION) ?: "0.0.0"
+                    val version2 = tempUpdateData.getString(VERSION) ?: "0.0.0"
+                    updateResult = compareVersion(version1, version2)
                     if (updateResult < 0) {
                         return true
                     } else if (updateResult == 0) {
