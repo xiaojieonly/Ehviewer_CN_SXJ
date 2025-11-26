@@ -217,6 +217,11 @@ public class EhApplication extends RecordingApplication {
                     ExceptionUtils.throwIfFatal(t);
                 }
 
+                try{
+                    AppConfig.deleteOldParseErrorFiles();
+                } catch (Throwable ignored) {
+                }
+
                 return null;
             }
         }.executeOnExecutor(IoThreadPoolExecutor.getInstance());

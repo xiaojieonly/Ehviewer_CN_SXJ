@@ -22,6 +22,7 @@ import android.os.Environment;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.util.ReadableTime;
+import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.lib.yorozuya.FileUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import java.io.File;
@@ -29,6 +30,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 
 public class AppConfig {
 
@@ -42,6 +46,9 @@ public class AppConfig {
     private static final String LOGCAT = "logcat";
     private static final String DATA = "data";
     private static final String CRASH = "crash";
+
+    private static volatile boolean sDeletingOldParseErrorFiles = false;
+    private static final Object sDeleteOldParseErrorFilesLock = new Object();
 
     @SuppressLint("StaticFieldLeak")
     private static Context sContext;
@@ -103,7 +110,13 @@ public class AppConfig {
 
     @Nullable
     public static File getExternalParseErrorDir() {
-        return getDirInExternalAppDir(PARSE_ERROR);
+        Calendar calendar = Calendar.getInstance();
+
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1; // 注意：月份从0开始
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        String dirName = year + "-" + month + "-" + day+"+"+PARSE_ERROR;
+        return getDirInExternalAppDir(dirName);
     }
 
     @Nullable
@@ -178,6 +191,41 @@ public class AppConfig {
         } finally {
             IOUtils.closeQuietly(os);
         }
+    }
+
+    public static void deleteOldParseErrorFiles() {
+        File dir = getExternalParseErrorDir();
+        if (dir == null || !dir.isDirectory()) {
+            return;
+        }
+        
+        synchronized (sDeleteOldParseErrorFilesLock) {
+            if (sDeletingOldParseErrorFiles) {
+                return;
+            }
+            sDeletingOldParseErrorFiles = true;
+        }
+        
+        IoThreadPoolExecutor.getInstance().execute(() -> {
+            try {
+                File[] files = dir.listFiles();
+                if (files == null) {
+                    return;
+                }
+                
+                long threeDaysAgo = System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000;
+                
+                for (File file : files) {
+                    if (file.isFile() && file.lastModified() < threeDaysAgo) {
+                        file.delete();
+                    }
+                }
+            } finally {
+                synchronized (sDeleteOldParseErrorFilesLock) {
+                    sDeletingOldParseErrorFiles = false;
+                }
+            }
+        });
     }
 
     @Nullable
