@@ -101,6 +101,7 @@
     <string name="error_please_login_first">請先登陸</string>
     <string name="error_empty_html">頁面內容為空</string>
     <string name="error_cant_get_image">無法獲取圖片</string>
+    <string name="error_igneous_wrong">錯誤的igneous\n檢查帳號權限後重新登入</string>
 
     <string name="kokomade_tip">設定->Eh->圖庫站台->e-hentai</string>
 
