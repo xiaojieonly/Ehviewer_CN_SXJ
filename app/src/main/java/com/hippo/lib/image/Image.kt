@@ -17,20 +17,20 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.graphics.drawable.toDrawable
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.EhApplication
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
 import androidx.core.graphics.createBitmap
+import com.hippo.ehviewer.Analytics
 
 
 class Image private constructor(
     source: FileInputStream?,
     drawable: Drawable? = null,
     val hardware: Boolean = false,
-    val release: () -> Unit? = {}
+    val release: () -> Unit? = {},
 ) {
     private var mObtainedDrawable: Drawable?
     private var mBitmap: Bitmap? = null
@@ -67,7 +67,24 @@ class Image private constructor(
                             // Don't
                         }
                 } catch (e: DecodeException) {
-                    throw Exception("Android 9 解码失败", e)
+                    // ImageDecoder 失败时回退到 BitmapFactory
+                    try {
+                        // 重置流位置以便重新读取
+                        source.channel.position(0)
+                        if (simpleSize != null) {
+                            val option = BitmapFactory.Options().apply {
+                                inSampleSize = simpleSize
+                            }
+                            val bitmap = BitmapFactory.decodeStream(source, null, option)
+                            mObtainedDrawable =
+                                bitmap?.toDrawable(EhApplication.getInstance().resources)
+                        } else {
+                            mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
+                        }
+                    } catch (fallbackException: Exception) {
+                        Analytics.recordException(fallbackException)
+                        throw Exception("Android 9 解码失败", e)
+                    }
                 }
                 // Should we lazy decode it?
             } else {
@@ -185,7 +202,7 @@ class Image private constructor(
                 height
             )
         } catch (e: ClassCastException) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            Analytics.recordException(e)
             return
         }
     }
@@ -227,7 +244,7 @@ class Image private constructor(
                 return Image(stream, hardware = hardware)
             } catch (e: Exception) {
                 e.printStackTrace()
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 return null
             }
         }
@@ -238,7 +255,7 @@ class Image private constructor(
                 return Image(null, drawable, hardware = hardware)
             } catch (e: Exception) {
                 e.printStackTrace()
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 return null
             }
         }
@@ -265,7 +282,7 @@ class Image private constructor(
         private external fun nativeRender(
             bitmap: Bitmap,
             srcX: Int, srcY: Int, dst: Bitmap, dstX: Int, dstY: Int,
-            width: Int, height: Int
+            width: Int, height: Int,
         )
 
         @JvmStatic
@@ -275,7 +292,7 @@ class Image private constructor(
             offsetX: Int,
             offsetY: Int,
             width: Int,
-            height: Int
+            height: Int,
         )
     }
 }

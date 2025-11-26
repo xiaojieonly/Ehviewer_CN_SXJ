@@ -202,13 +202,21 @@ class TreeDocumentFile extends UniFile {
 
     @Override
     public UniFile[] listFiles() {
-        final Uri[] result = DocumentsContractApi21.listFiles(mContext, mUri);
-        final UniFile[] resultFiles = new UniFile[result.length];
-        for (int i = 0, n = result.length; i < n; i++) {
-            Uri uri = result[i];
-            resultFiles[i] = new TreeDocumentFile(this, mContext, uri, getFilenameForUri(uri));
+        try {
+            final Uri[] result = DocumentsContractApi21.listFiles(mContext, mUri);
+            if (result == null) {
+                return new UniFile[0];
+            }
+            final UniFile[] resultFiles = new UniFile[result.length];
+            for (int i = 0, n = result.length; i < n; i++) {
+                Uri uri = result[i];
+                resultFiles[i] = new TreeDocumentFile(this, mContext, uri, getFilenameForUri(uri));
+            }
+            return resultFiles;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to listFiles: " + mUri, e);
+            return new UniFile[0];
         }
-        return resultFiles;
     }
 
     @Override
@@ -217,16 +225,24 @@ class TreeDocumentFile extends UniFile {
             return listFiles();
         }
 
-        final Uri[] result = DocumentsContractApi21.listFiles(mContext, mUri);
-        final ArrayList<UniFile> results = new ArrayList<>();
-        for (int i = 0, n = result.length; i < n; i++) {
-            Uri uri = result[i];
-            String name = getFilenameForUri(uri);
-            if (filter.accept(this, name)) {
-                results.add(new TreeDocumentFile(this, mContext, uri, name));
+        try {
+            final Uri[] result = DocumentsContractApi21.listFiles(mContext, mUri);
+            if (result == null) {
+                return new UniFile[0];
             }
+            final ArrayList<UniFile> results = new ArrayList<>();
+            for (int i = 0, n = result.length; i < n; i++) {
+                Uri uri = result[i];
+                String name = getFilenameForUri(uri);
+                if (filter.accept(this, name)) {
+                    results.add(new TreeDocumentFile(this, mContext, uri, name));
+                }
+            }
+            return results.toArray(new UniFile[results.size()]);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to listFiles with filter: " + mUri, e);
+            return new UniFile[0];
         }
-        return results.toArray(new UniFile[results.size()]);
     }
 
     @Override

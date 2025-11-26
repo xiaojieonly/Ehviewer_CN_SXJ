@@ -18,6 +18,8 @@ package com.hippo.ehviewer.download;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,6 +28,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -44,7 +47,6 @@ import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.lib.yorozuya.collect.SparseIJArray;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -120,6 +122,17 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         for (int i = 0, n = allInfoList.size(); i < n; i++) {
             DownloadInfo info = allInfoList.get(i);
+
+            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+                try {
+                    Uri uri = Uri.parse(info.archiveUri);
+                    mContext.getContentResolver().takePersistableUriPermission(uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception e) {
+                    // Permission might already be taken or URI might be invalid
+                    android.util.Log.w("DownloadManager", "Failed to restore URI permission for " + info.archiveUri, e);
+                }
+            }
 
             // Add to all info map
             allInfoMap.put(info.gid, info);
@@ -217,7 +230,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 return 0;
             }
         } catch (NullPointerException e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            Analytics.recordException(e);
             return 0;
         }
     }
@@ -340,8 +353,16 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             return;
         }
 
+        // Do nothing in the case of a local compressed file.
+        if (galleryInfo instanceof DownloadInfo downloadInfo) {
+            if (downloadInfo.archiveUri != null && downloadInfo.archiveUri.startsWith("content://")){
+                return;
+            }
+        }
+
         // Check in download list
         DownloadInfo info = mAllInfoMap.get(galleryInfo.gid);
+
         if (info != null) { // Get it in download list
             if (info.state != DownloadInfo.STATE_WAIT) {
                 // Set state DownloadInfo.STATE_WAIT

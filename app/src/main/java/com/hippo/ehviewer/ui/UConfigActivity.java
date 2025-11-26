@@ -41,6 +41,7 @@ import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient;
 import com.acsbendi.requestinspectorwebview.WebViewRequest;
 import com.acsbendi.requestinspectorwebview.WebViewRequestType;
 import com.google.android.material.snackbar.Snackbar;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.EhCookieStore;
@@ -48,7 +49,6 @@ import com.hippo.ehviewer.client.EhRequestBuilder;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.widget.DialogWebChromeClient;
 import com.hippo.widget.ProgressView;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.util.Map;
@@ -248,8 +248,7 @@ public class UConfigActivity extends ToolbarActivity {
                 }
                 return new WebResourceResponse(mimeType, encoding, body.byteStream());
             } catch (IOException e) {
-                e.printStackTrace();
-                FirebaseCrashlytics.getInstance().recordException(e);
+                Analytics.recordException(e);
             }
             return null;
         }

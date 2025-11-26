@@ -27,6 +27,7 @@ import android.util.SparseArray;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -38,7 +39,6 @@ import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.NumberUtils;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -321,7 +321,7 @@ public class SpiderInfo {
             readPreviews(info, 0, spiderInfo);
             return spiderInfo;
         } catch (ParseException e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            Analytics.recordException(e);
         }
         return null;
     }

@@ -98,6 +98,7 @@
     <string name="error_please_login_first">请先登陆</string>
     <string name="error_empty_html">页面内容为空</string>
     <string name="error_cant_get_image">无法获取图片</string>
+    <string name="error_igneous_wrong">错误的igneous\n检查账号里站权限后重新登录</string>
 
     <string name="kokomade_tip">设置->Eh->画廊站点->e-hentai</string>
 
@@ -373,6 +374,8 @@
     <string name="sort_by_create_time_desc">按创建时间降序</string>
     <string name="sort_by_rating_asc">按评分升序</string>
     <string name="sort_by_rating_desc">按评分降序</string>
+    <string name="sort_by_name_asc">按名称升序</string>
+    <string name="sort_by_name_desc">按名称降序</string>
     <string name="download_start_all">全部开始</string>
     <string name="download_stop_all">全部停止</string>
     <string name="download_reset_reading_progress">重置阅读进度</string>
@@ -941,5 +944,17 @@
     <string name="spen_next_page">下一页</string>
     <string name="category_all">全部</string>
 
+    <string name="import_local_archive">导入本地压缩包</string>
+    <string name="import_archive_title">选择压缩包文件</string>
+    <string name="import_archive_failed">压缩包导入失败</string>
+    <string name="archive_permission_lost">访问压缩包的权限已丢失，请重新导入压缩包文件。</string>
+    <string name="import_archive_processing">正在处理压缩包…</string>
+    <string name="import_archive_invalid_format">不支持的压缩包格式</string>
+    <string name="import_archive_already_imported">压缩包已导入</string>
+    <string name="import_archive_success">压缩包导入成功</string>
+    <string name="archive_not_accessible">压缩包文件无法访问</string>
+    <string name="imported_archive_info_title">本地导入信息</string>
+    <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>
+    <string name="imported_archive_category">本地导入</string>
 
 </resources>

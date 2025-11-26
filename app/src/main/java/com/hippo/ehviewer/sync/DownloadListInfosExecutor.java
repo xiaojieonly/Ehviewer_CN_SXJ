@@ -99,6 +99,8 @@ public class DownloadListInfosExecutor {
                 case R.id.sort_by_create_time_desc:
                 case R.id.sort_by_rating_asc:
                 case R.id.sort_by_rating_desc:
+                case R.id.sort_by_name_asc:
+                case R.id.sort_by_name_desc:
                     resultList = sortByType(id);
                     break;
                 case R.id.all:
@@ -202,6 +204,46 @@ public class DownloadListInfosExecutor {
                         a[k++] = arr[j++];
                     }
                     break;
+                case R.id.sort_by_name_asc: {
+                    String titleI = arr[i].title;
+                    String titleJ = arr[j].title;
+                    // null 值排在最后
+                    if (titleI == null && titleJ == null) {
+                        a[k++] = arr[i++];
+                    } else if (titleI == null) {
+                        a[k++] = arr[j++];
+                    } else if (titleJ == null) {
+                        a[k++] = arr[i++];
+                    } else {
+                        // 使用 compareToIgnoreCase 进行不区分大小写的比较
+                        if (titleI.compareToIgnoreCase(titleJ) < 0) {
+                            a[k++] = arr[i++];
+                        } else {
+                            a[k++] = arr[j++];
+                        }
+                    }
+                    break;
+                }
+                case R.id.sort_by_name_desc: {
+                    String titleI = arr[i].title;
+                    String titleJ = arr[j].title;
+                    // null 值排在最后
+                    if (titleI == null && titleJ == null) {
+                        a[k++] = arr[i++];
+                    } else if (titleI == null) {
+                        a[k++] = arr[j++];
+                    } else if (titleJ == null) {
+                        a[k++] = arr[i++];
+                    } else {
+                        // 使用 compareToIgnoreCase 进行不区分大小写的比较
+                        if (titleI.compareToIgnoreCase(titleJ) > 0) {
+                            a[k++] = arr[i++];
+                        } else {
+                            a[k++] = arr[j++];
+                        }
+                    }
+                    break;
+                }
             }
 
         }

@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.MarginItemDecoration;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
@@ -58,7 +59,6 @@ import com.hippo.widget.recyclerview.AutoGridLayoutManager;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.LayoutUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -247,7 +247,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                     startActivity(intent);
                     EventBus.getDefault().postSticky(new GalleryActivityEvent(p.getPosition(), mGalleryInfo));
                 } catch (RuntimeException e) {
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    Analytics.recordException(e);
                 }
             }
         }

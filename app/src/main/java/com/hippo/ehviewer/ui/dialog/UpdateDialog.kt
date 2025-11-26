@@ -12,7 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.alibaba.fastjson.JSONObject
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.updater.AppUpdater
@@ -41,10 +41,16 @@ class UpdateDialog(private val activity: Activity) {
     private var myDownloadId by Delegates.notNull<Long>()
     private var downloadReceiver: DownloadReceiver? = null
 
+    private fun isActivityAlive(): Boolean {
+        return !(activity.isFinishing || activity.isDestroyed)
+    }
 
     fun showCheckFailDialog() {
         try {
             ContextCompat.getMainExecutor(activity).execute {
+                if (!isActivityAlive()) {
+                    return@execute
+                }
                 val alertDialog = AlertDialog.Builder(activity)
                     .setIcon(R.mipmap.ic_launcher)
                     .setTitle(R.string.update_fail)
@@ -56,10 +62,12 @@ class UpdateDialog(private val activity: Activity) {
                         dialog.dismiss()
                     }
                     .create()
-                alertDialog.show()
+                if (isActivityAlive()) {
+                    alertDialog.show()
+                }
             }
         } catch (e: Exception) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            Analytics.recordException(e)
         }
     }
 
@@ -78,6 +86,9 @@ class UpdateDialog(private val activity: Activity) {
 
             val downloadUrl = updateContent.getString(AppUpdater.FILE_DOWNLOAD_URL)
             ContextCompat.getMainExecutor(activity).execute {
+                if (!isActivityAlive()) {
+                    return@execute
+                }
                 val alertDialog = AlertDialog.Builder(activity).apply {
                     setIcon(R.mipmap.ic_launcher)
                     setTitle(title)
@@ -95,10 +106,12 @@ class UpdateDialog(private val activity: Activity) {
                         setCancelable(false)
                     }
                 }.create()
-                alertDialog.show()
+                if (isActivityAlive()) {
+                    alertDialog.show()
+                }
             }
         } catch (e: Exception) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            Analytics.recordException(e)
         }
     }
 
@@ -235,7 +248,7 @@ class UpdateDialog(private val activity: Activity) {
             }
         } catch (t: Throwable) {
             ExceptionUtils.throwIfFatal(t)
-            FirebaseCrashlytics.getInstance().recordException(t)
+            Analytics.recordException(t)
             return false
         }
     }

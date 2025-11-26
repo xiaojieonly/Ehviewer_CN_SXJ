@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "org.jetbrains.kotlin.plugin.parcelize"
+apply plugin: "org.jetbrains.kotlin.kapt"
 apply plugin: "com.jaredsburrows.license"
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
@@ -30,7 +31,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "2.0.0.4.1"
+        versionName "2.0.0.8"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
@@ -103,8 +104,8 @@ dependencies {
 
     // Add the dependencies for the Crashlytics and Analytics libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation 'com.google.firebase:firebase-crashlytics:19.4.2'
-    implementation 'com.google.firebase:firebase-analytics:22.4.0'
+    implementation 'com.google.firebase:firebase-crashlytics:20.0.3'
+    implementation 'com.google.firebase:firebase-analytics:23.0.0'
 //    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -163,7 +164,11 @@ dependencies {
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
     implementation 'org.greenrobot:greendao:3.0.0'
     // https://mvnrepository.com/artifact/org.jsoup/jsoup
-    implementation 'org.jsoup:jsoup:1.15.3'
+    implementation 'org.jsoup:jsoup:1.21.2'
+
+    // Glide 图片加载库
+//    implementation 'com.github.bumptech.glide:glide:5.0.5'
+//    kapt 'com.github.bumptech.glide:compiler:5.0.5'
 
     //事件通知
     implementation 'org.greenrobot:eventbus:3.3.1'

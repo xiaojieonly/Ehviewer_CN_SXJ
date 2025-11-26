@@ -182,6 +182,7 @@
     <string name="error_please_login_first">Please login first</string>
     <string name="error_empty_html">Empty page</string>
     <string name="error_cant_get_image">Can\'t get image</string>
+    <string name="error_igneous_wrong">Wrong igneous\nmake sure you have permission and re-login</string>
 
     <string name="kokomade_tip">Settings->Eh->Gallery Site->e-hentai</string>
 
@@ -462,6 +463,8 @@
     <string name="sort_by_create_time_desc">By Create Time Desc</string>
     <string name="sort_by_rating_asc">By Rating Asc</string>
     <string name="sort_by_rating_desc">By Rating Desc</string>
+    <string name="sort_by_name_asc">By Name Asc</string>
+    <string name="sort_by_name_desc">By Name Desc</string>
     <string name="sort_download_list">Sort List</string>
     <string name="download_start_all">Start all</string>
     <string name="download_stop_all">Stop all</string>
@@ -1028,5 +1031,17 @@
     <string name="spen_next_page">Next page</string>
     <string name="category_all">All</string>
 
+    <string name="import_local_archive">Import local archive</string>
+    <string name="import_archive_title">Select archive file</string>
+    <string name="import_archive_failed">Failed to import archive</string>
+    <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>
+    <string name="import_archive_processing">Processing archive…</string>
+    <string name="import_archive_invalid_format">Unsupported archive format</string>
+    <string name="import_archive_already_imported">Archive already imported</string>
+    <string name="import_archive_success">Archive imported successfully</string>
+    <string name="archive_not_accessible">Archive file is not accessible</string>
+    <string name="imported_archive_info_title">Local Import Info</string>
+    <string name="imported_archive_info_message">This is an item imported from local storage</string>
+    <string name="imported_archive_category">Local Import</string>
 
 </resources>

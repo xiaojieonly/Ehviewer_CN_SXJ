@@ -89,6 +89,14 @@
                         android:id="@+id/sort_by_rating_desc"
                         android:title="@string/sort_by_rating_desc"
                         app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/sort_by_name_asc"
+                        android:title="@string/sort_by_name_asc"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/sort_by_name_desc"
+                        android:title="@string/sort_by_name_desc"
+                        app:showAsAction="ifRoom"/>
                 </menu>
             </item>
 
@@ -116,5 +124,10 @@
       android:id="@+id/search_download_gallery"
       android:title="@string/download_search_gallery"
       app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/import_local_archive"
+        android:title="@string/import_local_archive"
+        app:showAsAction="never"/>
 
 </menu>

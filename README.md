@@ -13,10 +13,10 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1R_XrMkZEOpgEJpA_sR4cFw) 提取码：yf3w
-- [蓝奏云](https://wwsu.lanzouu.com/ih0XT37rz82d)，电脑端可正常下载 提取码：h0mw
+- [百度云](https://pan.baidu.com/s/1c0bCCgfiTa4G9hwopSyAOw) 提取码：4vu2
+- [蓝奏云](https://wwsu.lanzouu.com/iYYrU3adzm5e)，电脑端可正常下载 提取码：f6f0
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:3aae02c07f1ac4f814c6583cc1074cbfb70dcda6&xt=urn:btmh:1220b3bf79110dc6daef678013a40c67492fc0cdf25460466b1a459f4479607127b0&dn=EhViewer-2.0.0.4.apk&xl=23252893
+- Torrent链接: magnet:?xt=urn:btih:002aea861f2af0bc84618bdf23acf5558ca1f665&xt=urn:btmh:1220648f8a4ad80b944ea1e9437d0021034205eb7c60b918a6f6d57bf36e47ecb247&dn=EhViewer-2.0.0.8.apk&xl=23456665
 
 点击前往赏饭：
 
@@ -28,6 +28,29 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/11/07
+### 新版发布2.0.0.8
+
+- 移除不再使用的 Firebase Crashlytics 导入。
+- 在 EhDB 和 SpiderDen 中添加异常处理以避免应用崩溃。
+- 增加在 TreeDocumentFile 中列出文件时的空值检查和异常处理。
+- 为 WebViewSignInScene 中的 HTTP 响应添加默认的 reason phrase。
+- 增强 GLRootView 中的 EGL 配置选择逻辑，增加备用方案以提高稳定性。
+- 将 Analytics.java 迁移到 Kotlin。
+
+## 2025/11/01 
+### 新版发布2.0.0.5
+
+- 在悬浮工具烂中添加拖动切换按钮，只有开启时才允许进行拖动排序
+- wyapx：use Analytics to manage all Firebase request (#2129)
+- West-Pavilion：添加本地压缩包导入功能：下载->右上菜单->导入本地压缩包
+  [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
+- [百度云](https://pan.baidu.com/s/1ocYZZ0j5gmb2KUkcJM1Wnw) 提取码：xem5
+- [蓝奏云](https://wwsu.lanzouu.com/iPadd39veuyh)，电脑端可正常下载 提取码：en1v
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:2f123b5c605e8c8f487989049f8f00c6aa3ab169&xt=urn:btmh:122046c1e5bfa7fb7a5520e93be932576211d01b5760d8b1fc8081d48410e5e9e486&dn=EhViewer-2.0.0.5.apk&xl=23260086
+
+
 ## 2025/10/05 : 感谢nullcat的pr   
 ### 新版发布2.0.0.4    
 
@@ -35,6 +58,11 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - add samsung Air action support (#2119)    
 - wrong direction on mouse scroll (#2130)    
 - add auto dark mode (#2126)    
+- [百度云](https://pan.baidu.com/s/1R_XrMkZEOpgEJpA_sR4cFw) 提取码：yf3w
+- [蓝奏云](https://wwsu.lanzouu.com/ih0XT37rz82d)，电脑端可正常下载 提取码：h0mw
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:3aae02c07f1ac4f814c6583cc1074cbfb70dcda6&xt=urn:btmh:1220b3bf79110dc6daef678013a40c67492fc0cdf25460466b1a459f4479607127b0&dn=EhViewer-2.0.0.4.apk&xl=23252893
+
 
 ## 2025/09/15 :
 ### 新版发布2.0.0.2

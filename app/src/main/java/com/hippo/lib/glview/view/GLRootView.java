@@ -621,10 +621,49 @@ public class GLRootView extends GLSurfaceView
 
         @Override
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+            // Check if display is valid
+            if (display == null || display == EGL10.EGL_NO_DISPLAY) {
+                int error = egl.eglGetError();
+                throw new IllegalArgumentException("Invalid EGL display, error: 0x" + 
+                        Integer.toHexString(error));
+            }
+
+            // Try with OpenGL ES 2.0 compatible config first
+            int[] configSpec = new int[]{
+                    EGL10.EGL_RED_SIZE, 8,
+                    EGL10.EGL_GREEN_SIZE, 8,
+                    EGL10.EGL_BLUE_SIZE, 8,
+                    EGL10.EGL_ALPHA_SIZE, 8,
+                    EGL10.EGL_RENDERABLE_TYPE, 0x0004, // EGL_OPENGL_ES2_BIT
+                    EGL10.EGL_NONE
+            };
+
             int[] num_config = new int[1];
-            int[] configSpec = new int[]{EGL10.EGL_NONE};
             if (!egl.eglChooseConfig(display, configSpec, null, 0, num_config)) {
-                throw new IllegalArgumentException("eglChooseConfig failed");
+                int error = egl.eglGetError();
+                Log.e(TAG, "eglChooseConfig failed with error: 0x" + Integer.toHexString(error));
+                
+                // Fallback: try with minimal config
+                configSpec = new int[]{
+                        EGL10.EGL_RED_SIZE, 5,
+                        EGL10.EGL_GREEN_SIZE, 6,
+                        EGL10.EGL_BLUE_SIZE, 5,
+                        EGL10.EGL_ALPHA_SIZE, 0,
+                        EGL10.EGL_NONE
+                };
+                
+                if (!egl.eglChooseConfig(display, configSpec, null, 0, num_config)) {
+                    error = egl.eglGetError();
+                    Log.e(TAG, "eglChooseConfig fallback failed with error: 0x" + Integer.toHexString(error));
+                    
+                    // Last resort: try with EGL_NONE only
+                    configSpec = new int[]{EGL10.EGL_NONE};
+                    if (!egl.eglChooseConfig(display, configSpec, null, 0, num_config)) {
+                        error = egl.eglGetError();
+                        throw new IllegalArgumentException("eglChooseConfig failed with error: 0x" + 
+                                Integer.toHexString(error));
+                    }
+                }
             }
 
             int numConfigs = num_config[0];
@@ -636,7 +675,9 @@ public class GLRootView extends GLSurfaceView
 
             EGLConfig[] configs = new EGLConfig[numConfigs];
             if (!egl.eglChooseConfig(display, configSpec, configs, numConfigs, num_config)) {
-                throw new IllegalArgumentException("eglChooseConfig#2 failed");
+                int error = egl.eglGetError();
+                throw new IllegalArgumentException("eglChooseConfig#2 failed with error: 0x" + 
+                        Integer.toHexString(error));
             }
             EGLConfig config = chooseConfig(egl, display, configs);
             if (config == null) {

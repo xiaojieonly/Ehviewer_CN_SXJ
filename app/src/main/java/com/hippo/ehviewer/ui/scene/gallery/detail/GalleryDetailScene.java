@@ -24,7 +24,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -54,7 +53,6 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.resources.*;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ViewCompat;
@@ -66,6 +64,7 @@ import com.hippo.android.resource.AttrResources;
 import com.hippo.beerbelly.BeerBelly;
 import com.hippo.drawable.RoundSideRectDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
+import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
@@ -135,7 +134,6 @@ import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.ViewUtils;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import com.hippo.ehviewer.spider.SpiderQueen;
 
@@ -1850,8 +1848,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     protected void onGetGalleryDetailUpdateFailure(Exception e) {
-        e.printStackTrace();
-        FirebaseCrashlytics.getInstance().recordException(e);
+        Analytics.recordException(e);
         adjustViewVisibility(STATE_NORMAL, true);
     }
 
@@ -1972,7 +1969,20 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (downLoadAlertDialog == null) {
             return;
         }
-        downLoadAlertDialog.dismiss();
+        // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
+        if (!isAdded() || getActivity() == null) {
+            downLoadAlertDialog = null;
+            return;
+        }
+        try {
+            if (downLoadAlertDialog.isShowing()) {
+                downLoadAlertDialog.dismiss();
+            }
+        } catch (IllegalArgumentException e) {
+            // 对话框已经不再附加到窗口管理器，忽略异常
+            ExceptionUtils.throwIfFatal(e);
+        }
+        downLoadAlertDialog = null;
     }
 
     @SuppressLint("HandlerLeak")
@@ -1983,6 +1993,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         @Override
         public void handleMessage(Message msg) {
+            // 检查 Fragment 是否仍然附加，避免在 Activity 销毁后处理消息导致崩溃
+            if (!isAdded() || getActivity() == null) {
+                return;
+            }
             TorrentDownloadMessage message = msg.getData().getParcelable("torrent_download_message");
             if (message.progress == 200) {
                 dismissTorrentDialog();

@@ -1,15 +1,17 @@
 {
-  "version": "2.0.0.4.1",
+  "version": "2.0.0.8",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.4：感谢nullcat的pr",
+    "title": "新版发布2.0.0.8",
     "content": [
-      "修复下载列表排序功能在部分机型上会崩溃的问题",
-      "add samsung Air action support (#2119)",
-      "wrong direction on mouse scroll (#2130)",
-      "add auto dark mode (#2126)"
+      "移除不再使用的 Firebase Crashlytics 导入。",
+      "在 EhDB 和 SpiderDen 中添加异常处理以避免应用崩溃。",
+      "增加在 TreeDocumentFile 中列出文件时的空值检查和异常处理。",
+      "为 WebViewSignInScene 中的 HTTP 响应添加默认的 reason phrase。",
+      "增强 GLRootView 中的 EGL 配置选择逻辑，增加备用方案以提高稳定性。",
+      "将 Analytics.java 迁移到 Kotlin。"
     ]
   }
 }

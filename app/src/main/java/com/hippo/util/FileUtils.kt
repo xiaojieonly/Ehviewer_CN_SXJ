@@ -5,14 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
-import android.widget.Toast
 import androidx.core.net.toUri
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.client.EhConfig
 import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.unifile.UniFile
@@ -74,7 +72,7 @@ class FileUtils {
                 return true
             } catch (ioException: IOException) {
                 ExceptionUtils.throwIfFatal(ioException)
-                FirebaseCrashlytics.getInstance().recordException(ioException)
+                Analytics.recordException(ioException)
                 return false
             }
         }
@@ -99,7 +97,7 @@ class FileUtils {
                 return true
             } catch (ioException: IOException) {
                 ExceptionUtils.throwIfFatal(ioException)
-                FirebaseCrashlytics.getInstance().recordException(ioException)
+                Analytics.recordException(ioException)
                 return false
             }
         }
@@ -180,12 +178,35 @@ class FileUtils {
                 `is` = FileInputStream(file)
                 return IOUtils.readString(`is`, "utf-8")
             } catch (e: IOException) {
-                FirebaseCrashlytics.getInstance().recordException(e)
+                Analytics.recordException(e)
                 Log.e(TAG, e.message, e)
                 return null
             } finally {
                 IOUtils.closeQuietly(`is`)
             }
+        }
+
+        @JvmStatic
+        fun getFileName(context: Context, uri: Uri): String? {
+            var fileName: String? = null
+            if ("content" == uri.getScheme()) {
+                try {
+                    context.getContentResolver().query(uri, null, null, null, null).use { cursor ->
+                        if (cursor != null && cursor.moveToFirst()) {
+                            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                            if (nameIndex >= 0) {
+                                fileName = cursor.getString(nameIndex)
+                            }
+                        }
+                    }
+                } catch (e: java.lang.Exception) {
+                    Log.e(TAG, "Failed to get file name", e)
+                }
+            }
+            if (fileName == null) {
+                fileName = uri.getLastPathSegment()
+            }
+            return fileName
         }
     }
 }

@@ -21,6 +21,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
@@ -531,7 +532,15 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
                 if (now - mLastTime > DELAY) {
                     // Wait long enough, do it now
                     if (mService != null) {
-                        mService!!.startForeground(mId, mBuilder.build())
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            mService!!.startForeground(
+                                mId,
+                                mBuilder.build(),
+                                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                            )
+                        } else {
+                            mService!!.startForeground(mId, mBuilder.build())
+                        }
                     }
                 } else {
                     // Too quick, post delay
@@ -548,7 +557,15 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
                 OPS_NOTIFY -> mNotifyManager!!.notify(mId, mBuilder.build())
                 OPS_CANCEL -> mNotifyManager!!.cancel(mId)
                 OPS_START_FOREGROUND -> if (mService != null) {
-                    mService!!.startForeground(mId, mBuilder.build())
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        mService!!.startForeground(
+                            mId,
+                            mBuilder.build(),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                        )
+                    } else {
+                        mService!!.startForeground(mId, mBuilder.build())
+                    }
                 }
             }
         }
