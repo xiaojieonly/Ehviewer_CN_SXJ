@@ -110,13 +110,13 @@ public class AppConfig {
 
     @Nullable
     public static File getExternalParseErrorDir() {
-        Calendar calendar = Calendar.getInstance();
-
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1; // 注意：月份从0开始
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        String dirName = year + "-" + month + "-" + day+"+"+PARSE_ERROR;
-        return getDirInExternalAppDir(dirName);
+//        Calendar calendar = Calendar.getInstance();
+//
+//        int year = calendar.get(Calendar.YEAR);
+//        int month = calendar.get(Calendar.MONTH) + 1; // 注意：月份从0开始
+//        int day = calendar.get(Calendar.DAY_OF_MONTH);
+//        String dirName = year + "-" + month + "-" + day+"+"+PARSE_ERROR;
+        return getDirInExternalAppDir(PARSE_ERROR);
     }
 
     @Nullable
