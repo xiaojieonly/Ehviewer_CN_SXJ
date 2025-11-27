@@ -19,9 +19,9 @@
 #include <string_view>
 
 #include "./fuzz_utils.h"
-#include "src/webp/decode.h"
-#include "src/webp/demux.h"
-#include "src/webp/mux_types.h"
+#include "../src/webp/decode.h"
+#include "../webp/demux.h"
+#include "../src/webp/mux_types.h"
 
 namespace {
 

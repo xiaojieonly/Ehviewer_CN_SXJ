@@ -15,12 +15,12 @@
 #ifndef WEBP_DSP_LOSSLESS_H_
 #define WEBP_DSP_LOSSLESS_H_
 
-#include "src/webp/types.h"
-#include "src/webp/decode.h"
+#include "../src/webp/types.h"
+#include "../src/webp/decode.h"
 
-#include "src/dsp/dsp.h"
-#include "src/enc/histogram_enc.h"
-#include "src/utils/utils.h"
+#include "../src/dsp/dsp.h"
+#include "../src/enc/histogram_enc.h"
+#include "../src/utils/utils.h"
 
 #ifdef __cplusplus
 extern "C" {

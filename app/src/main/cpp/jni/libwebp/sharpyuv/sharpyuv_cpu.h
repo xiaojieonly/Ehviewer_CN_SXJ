@@ -10,13 +10,13 @@
 #ifndef WEBP_SHARPYUV_SHARPYUV_CPU_H_
 #define WEBP_SHARPYUV_SHARPYUV_CPU_H_
 
-#include "sharpyuv/sharpyuv.h"
+#include "../sharpyuv/sharpyuv.h"
 
 // Avoid exporting SharpYuvGetCPUInfo in shared object / DLL builds.
 // SharpYuvInit() replaces the use of the function pointer.
 #undef WEBP_EXTERN
 #define WEBP_EXTERN extern
 #define VP8GetCPUInfo SharpYuvGetCPUInfo
-#include "src/dsp/cpu.h"
+#include "../src/dsp/cpu.h"
 
 #endif  // WEBP_SHARPYUV_SHARPYUV_CPU_H_

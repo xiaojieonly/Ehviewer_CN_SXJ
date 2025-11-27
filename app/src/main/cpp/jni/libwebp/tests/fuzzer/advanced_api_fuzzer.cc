@@ -20,9 +20,9 @@
 #include <string_view>
 
 #include "./fuzz_utils.h"
-#include "src/dec/webpi_dec.h"
-#include "src/utils/rescaler_utils.h"
-#include "src/webp/decode.h"
+#include "../dec/webpi_dec.h"
+#include "../src/utils/rescaler_utils.h"
+#include "../src/webp/decode.h"
 
 namespace {
 

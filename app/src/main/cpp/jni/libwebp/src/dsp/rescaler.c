@@ -13,8 +13,8 @@
 
 #include <assert.h>
 
-#include "src/dsp/dsp.h"
-#include "src/utils/rescaler_utils.h"
+#include "../src/dsp/dsp.h"
+#include "../src/utils/rescaler_utils.h"
 
 //------------------------------------------------------------------------------
 // Implementations of critical functions ImportRow / ExportRow

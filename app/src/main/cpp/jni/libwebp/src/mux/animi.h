@@ -14,7 +14,7 @@
 #ifndef WEBP_MUX_ANIMI_H_
 #define WEBP_MUX_ANIMI_H_
 
-#include "src/webp/mux.h"
+#include "../src/webp/mux.h"
 
 #ifdef __cplusplus
 extern "C" {

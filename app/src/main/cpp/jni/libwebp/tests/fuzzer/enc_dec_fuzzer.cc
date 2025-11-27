@@ -19,9 +19,9 @@
 #include <cstdio>
 
 #include "./fuzz_utils.h"
-#include "src/dsp/cpu.h"
-#include "src/webp/decode.h"
-#include "src/webp/encode.h"
+#include "../src/dsp/cpu.h"
+#include "../src/webp/decode.h"
+#include "../src/webp/encode.h"
 
 namespace {
 

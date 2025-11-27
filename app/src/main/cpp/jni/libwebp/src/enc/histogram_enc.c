@@ -10,17 +10,17 @@
 // Author: Jyrki Alakuijala (jyrki@google.com)
 //
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
 #include <string.h>
 
-#include "src/dsp/lossless.h"
-#include "src/dsp/lossless_common.h"
-#include "src/enc/backward_references_enc.h"
-#include "src/enc/histogram_enc.h"
-#include "src/enc/vp8i_enc.h"
-#include "src/utils/utils.h"
+#include "../src/dsp/lossless.h"
+#include "../src/dsp/lossless_common.h"
+#include "../src/enc/backward_references_enc.h"
+#include "../src/enc/histogram_enc.h"
+#include "../src/enc/vp8i_enc.h"
+#include "../src/utils/utils.h"
 
 // Number of partitions for the three dominant (literal, red and blue) symbol
 // costs.

@@ -17,15 +17,15 @@
 #define WEBP_UTILS_BIT_READER_INL_UTILS_H_
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
 #include <string.h>  // for memcpy
 
-#include "src/dsp/dsp.h"
-#include "src/utils/bit_reader_utils.h"
-#include "src/utils/endian_inl_utils.h"
-#include "src/utils/utils.h"
+#include "../src/dsp/dsp.h"
+#include "../src/utils/bit_reader_utils.h"
+#include "../src/utils/endian_inl_utils.h"
+#include "../src/utils/utils.h"
 
 #ifdef __cplusplus
 extern "C" {

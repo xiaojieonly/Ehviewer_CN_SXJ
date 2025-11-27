@@ -17,11 +17,11 @@
 #include <assert.h>
 #include <string.h>
 
-#include "src/dsp/lossless_common.h"
-#include "src/enc/backward_references_enc.h"
-#include "src/enc/histogram_enc.h"
-#include "src/utils/color_cache_utils.h"
-#include "src/utils/utils.h"
+#include "../src/dsp/lossless_common.h"
+#include "../src/enc/backward_references_enc.h"
+#include "../src/enc/histogram_enc.h"
+#include "../src/utils/color_cache_utils.h"
+#include "../src/utils/utils.h"
 
 #define VALUES_IN_BYTE 256
 

@@ -12,11 +12,11 @@
 // Author(s):  Djordje Pesut    (djordje.pesut@imgtec.com)
 //             Jovan Zelincevic (jovan.zelincevic@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MIPS32)
 
-#include "src/dsp/mips_macro.h"
+#include "../dsp/mips_macro.h"
 
 static const int kC1 = WEBP_TRANSFORM_AC3_C1;
 static const int kC2 = WEBP_TRANSFORM_AC3_C2;

@@ -12,11 +12,11 @@
 // Author(s):  Branimir Vasic (branimir.vasic@imgtec.com)
 //             Djordje Pesut  (djordje.pesut@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MIPS_DSP_R2)
 
-#include "src/dsp/yuv.h"
+#include "../src/dsp/yuv.h"
 
 //------------------------------------------------------------------------------
 // simple point-sampling

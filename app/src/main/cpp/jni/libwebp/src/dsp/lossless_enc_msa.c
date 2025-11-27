@@ -11,12 +11,12 @@
 //
 // Authors: Prashant Patil (Prashant.Patil@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MSA)
 
-#include "src/dsp/lossless.h"
-#include "src/dsp/msa_macro.h"
+#include "../src/dsp/lossless.h"
+#include "../dsp/msa_macro.h"
 
 #define TRANSFORM_COLOR_8(src0, src1, dst0, dst1, c0, c1, mask0, mask1) do {  \
   v8i16 g0, g1, t0, t1, t2, t3;                                               \

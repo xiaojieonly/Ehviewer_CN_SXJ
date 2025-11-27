@@ -23,7 +23,7 @@ set(IMAGE_SOURCES
     image_png.c
     image_gif.c
     image_webp.c
-    filter/clahe.c
+        filter/clahe.c
     filter/gray.c
     java_wrapper.c
 )
@@ -43,5 +43,8 @@ set(IMAGE_LIBRARIES
 )
 
 add_library(image SHARED ${IMAGE_SOURCES})
-#target_include_directories(image PRIVATE ${IMAGE_INCLUDES})
+target_include_directories(image PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libwebp/src
+)
 target_link_libraries(image PRIVATE ${IMAGE_LIBRARIES})

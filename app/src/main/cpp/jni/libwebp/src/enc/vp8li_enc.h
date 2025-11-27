@@ -15,7 +15,7 @@
 #define WEBP_ENC_VP8LI_ENC_H_
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 // Either WEBP_NEAR_LOSSLESS is defined as 0 in config.h when compiling to
 // disable near-lossless, or it is enabled by default.
@@ -23,11 +23,11 @@
 #define WEBP_NEAR_LOSSLESS 1
 #endif
 
-#include "src/enc/backward_references_enc.h"
-#include "src/enc/histogram_enc.h"
-#include "src/utils/bit_writer_utils.h"
-#include "src/webp/encode.h"
-#include "src/webp/format_constants.h"
+#include "../src/enc/backward_references_enc.h"
+#include "../src/enc/histogram_enc.h"
+#include "../src/utils/bit_writer_utils.h"
+#include "../src/webp/encode.h"
+#include "../src/webp/format_constants.h"
 
 #ifdef __cplusplus
 extern "C" {

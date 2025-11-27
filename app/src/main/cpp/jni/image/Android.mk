@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-SUPPORT_FORMAT := plain jpeg png gif
+SUPPORT_FORMAT := plain jpeg png gif webp
 
 LOCAL_MODULE := image
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../stream
@@ -55,6 +55,14 @@ ifeq ($(filter gif, $(SUPPORT_FORMAT)), gif)
   LOCAL_STATIC_LIBRARIES += gif
 else
   LOCAL_CFLAGS += -DIMAGE_NOT_SUPPORT_GIF
+endif
+
+ifeq ($(filter webp, $(SUPPORT_FORMAT)), webp)
+  LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libwebp/src
+  LOCAL_SRC_FILES += image_webp.c
+  LOCAL_STATIC_LIBRARIES += webp webpdemux
+else
+  LOCAL_CFLAGS += -DIMAGE_NOT_SUPPORT_WEBP
 endif
 
 include $(BUILD_SHARED_LIBRARY)

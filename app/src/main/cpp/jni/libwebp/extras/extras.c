@@ -17,9 +17,9 @@
 #include <string.h>
 
 #include "extras/sharpyuv_risk_table.h"
-#include "sharpyuv/sharpyuv.h"
-#include "src/dsp/dsp.h"
-#include "src/utils/utils.h"
+#include "../sharpyuv/sharpyuv.h
+#include "../src/dsp/dsp.h"
+#include "../src/utils/utils.h"
 #include "webp/format_constants.h"
 #include "webp/types.h"
 

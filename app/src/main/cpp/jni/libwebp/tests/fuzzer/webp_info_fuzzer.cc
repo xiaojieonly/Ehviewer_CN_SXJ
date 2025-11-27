@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-#include "src/webp/mux_types.h"
+#include "../src/webp/mux_types.h"
 #include "tests/fuzzer/fuzz_utils.h"
 
 // Don't do that at home!

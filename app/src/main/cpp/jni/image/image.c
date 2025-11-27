@@ -160,6 +160,10 @@ bool complete(JNIEnv *env, void *image, int format) {
         case IMAGE_FORMAT_GIF:
             return GIF_complete(env, (GIF *) image);
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_complete(env, (WEBP *) image);
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
             return false;
@@ -183,6 +187,10 @@ bool is_completed(void *image, int format) {
 #ifdef IMAGE_SUPPORT_GIF
         case IMAGE_FORMAT_GIF:
             return GIF_is_completed((GIF *) image);
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_is_completed((WEBP *) image);
 #endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
@@ -208,6 +216,10 @@ int get_width(void *image, int format) {
         case IMAGE_FORMAT_GIF:
             return GIF_get_width((GIF *) image);
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_get_width((WEBP *) image);
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
             return -1;
@@ -232,6 +244,10 @@ int get_height(void *image, int format) {
         case IMAGE_FORMAT_GIF:
             return GIF_get_height((GIF *) image);
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_get_height((WEBP *) image);
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
             return -1;
@@ -255,6 +271,10 @@ int get_byte_count(void *image, int format) {
 #ifdef IMAGE_SUPPORT_GIF
         case IMAGE_FORMAT_GIF:
             return GIF_get_byte_count((GIF *) image);
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_get_byte_count((WEBP *) image);
 #endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
@@ -294,6 +314,13 @@ void render(void *image, int format, int src_x, int src_y,
                        width, height, fill_blank, default_color);
             break;
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            WEBP_render((WEBP *) image, src_x, src_y,
+                        dst, dst_w, dst_h, dst_x, dst_y,
+                        width, height, fill_blank, default_color);
+            break;
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
             break;
@@ -322,6 +349,11 @@ void advance(void *image, int format) {
             GIF_advance((GIF *) image);
             break;
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            WEBP_advance((WEBP *) image);
+            break;
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
     }
@@ -344,6 +376,10 @@ int get_delay(void *image, int format) {
 #ifdef IMAGE_SUPPORT_GIF
         case IMAGE_FORMAT_GIF:
             return GIF_get_delay((GIF *) image);
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_get_delay((WEBP *) image);
 #endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
@@ -369,6 +405,10 @@ int get_frame_count(void *image, int format) {
         case IMAGE_FORMAT_GIF:
             return GIF_get_frame_count((GIF *) image);
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_get_frame_count((WEBP *) image);
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
             return false;
@@ -392,6 +432,10 @@ bool is_opaque(void *image, int format) {
 #ifdef IMAGE_SUPPORT_GIF
         case IMAGE_FORMAT_GIF:
             return GIF_is_opaque((GIF *) image);
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return WEBP_is_opaque((WEBP *) image);
 #endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
@@ -434,6 +478,15 @@ static void get_image_data(void *image, int format, void **pixel, int *width, in
             *pixel = GIF_get_pixels(gif);
             *width = GIF_get_width(gif);
             *height = GIF_get_height(gif);
+            break;
+        }
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP: {
+            WEBP *webp = (WEBP *) image;
+            *pixel = WEBP_get_pixels(webp);
+            *width = WEBP_get_width(webp);
+            *height = WEBP_get_height(webp);
             break;
         }
 #endif
@@ -495,6 +548,11 @@ void recycle(JNIEnv *env, void *image, int format) {
             GIF_recycle(env, (GIF *) image);
             break;
 #endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            WEBP_recycle(env, (WEBP *) image);
+            break;
+#endif
         default:
             LOGE(MSG("Can't detect format %d"), format);
     }
@@ -510,6 +568,9 @@ int get_supported_formats(int *formats) {
 #endif
 #ifdef IMAGE_SUPPORT_GIF
     formats[i++] = IMAGE_FORMAT_GIF;
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+    formats[i++] = IMAGE_FORMAT_WEBP;
 #endif
     return i;
 }
@@ -527,6 +588,10 @@ const char *get_decoder_description(int format) {
 #ifdef IMAGE_SUPPORT_GIF
         case IMAGE_FORMAT_GIF:
             return IMAGE_GIF_DECODER_DESCRIPTION;
+#endif
+#ifdef IMAGE_SUPPORT_WEBP
+        case IMAGE_FORMAT_WEBP:
+            return IMAGE_WEBP_DECODER_DESCRIPTION;
 #endif
         default:
             return NULL;

@@ -9,7 +9,7 @@
 //
 // Precomputed data for 420 risk estimation.
 
-#include "src/webp/types.h"
+#include "../src/webp/types.h"
 
 const int kSharpYuvPrecomputedRiskYuvSampling = 7;
 

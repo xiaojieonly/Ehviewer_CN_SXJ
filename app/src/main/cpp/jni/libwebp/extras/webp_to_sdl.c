@@ -12,7 +12,7 @@
 // Author: James Zern (jzern@google.com)
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
 #if defined(WEBP_HAVE_SDL)
@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include "src/webp/decode.h"
+#include "../src/webp/decode.h"
 
 #if defined(WEBP_HAVE_JUST_SDL_H)
 #include <SDL.h>

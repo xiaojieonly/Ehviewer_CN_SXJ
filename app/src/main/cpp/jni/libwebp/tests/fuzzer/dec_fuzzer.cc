@@ -18,7 +18,7 @@
 #include <cstdio>
 #include <string_view>
 
-#include "src/webp/decode.h"
+#include "../src/webp/decode.h"
 #include "tests/fuzzer/fuzz_utils.h"
 
 namespace {

@@ -13,7 +13,7 @@
 #define WEBP_EXAMPLES_ANIM_UTIL_H_
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
 #include <stdint.h>

@@ -23,7 +23,7 @@
 
 #include "imageio/image_dec.h"
 #include "imageio/metadata.h"
-#include "src/webp/encode.h"
+#include "../src/webp/encode.h"
 #include "tests/fuzzer/fuzz_utils.h"
 
 namespace {

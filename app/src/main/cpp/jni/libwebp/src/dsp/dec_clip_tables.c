@@ -11,7 +11,7 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 // define to 0 to have run-time table initialization
 #if !defined(USE_STATIC_TABLES)

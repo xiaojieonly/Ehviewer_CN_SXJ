@@ -15,13 +15,13 @@
 #define WEBP_ENC_VP8I_ENC_H_
 
 #include <string.h>     // for memcpy()
-#include "src/dec/common_dec.h"
-#include "src/dsp/cpu.h"
-#include "src/dsp/dsp.h"
-#include "src/utils/bit_writer_utils.h"
-#include "src/utils/thread_utils.h"
-#include "src/utils/utils.h"
-#include "src/webp/encode.h"
+#include "../src/dec/common_dec.h"
+#include "../src/dsp/cpu.h"
+#include "../src/dsp/dsp.h"
+#include "../src/utils/bit_writer_utils.h"
+#include "../src/utils/thread_utils.h"
+#include "../src/utils/utils.h"
+#include "../src/webp/encode.h"
 
 #ifdef __cplusplus
 extern "C" {

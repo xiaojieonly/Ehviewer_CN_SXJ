@@ -17,10 +17,10 @@
 #include <stddef.h>
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
-#include "src/webp/types.h"
+#include "../src/webp/types.h"
 
 #if defined(__GNUC__)
 #define LOCAL_GCC_VERSION ((__GNUC__ << 8) | __GNUC_MINOR__)

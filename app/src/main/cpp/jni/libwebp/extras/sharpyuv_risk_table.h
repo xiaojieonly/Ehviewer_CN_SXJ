@@ -12,7 +12,7 @@
 #ifndef WEBP_EXTRAS_SHARPYUV_RISK_TABLE_H_
 #define WEBP_EXTRAS_SHARPYUV_RISK_TABLE_H_
 
-#include "src/webp/types.h"
+#include "../src/webp/types.h"
 
 extern const int kSharpYuvPrecomputedRiskYuvSampling;
 // Table of precomputed risk scores when chroma subsampling images with two

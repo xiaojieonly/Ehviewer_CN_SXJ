@@ -28,7 +28,7 @@
 #include "../imageio/imageio_util.h"
 #include "./stopwatch.h"
 #include "./unicode.h"
-#include "sharpyuv/sharpyuv.h"
+#include "../sharpyuv/sharpyuv.h
 #include "webp/encode.h"
 #include "webp/mux.h"
 

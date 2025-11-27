@@ -16,7 +16,7 @@
 #include <string.h>  // for 'strcmp'.
 
 #include "./anim_util.h"
-#include "src/webp/decode.h"
+#include "../src/webp/decode.h"
 #include "../imageio/image_enc.h"
 #include "./unicode.h"
 

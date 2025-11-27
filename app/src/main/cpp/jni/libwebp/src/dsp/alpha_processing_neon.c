@@ -15,7 +15,7 @@
 
 #if defined(WEBP_USE_NEON)
 
-#include "src/dsp/neon.h"
+#include "neon.h"
 
 //------------------------------------------------------------------------------
 

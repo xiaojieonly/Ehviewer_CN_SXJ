@@ -18,14 +18,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/dsp/lossless.h"
-#include "src/dsp/lossless_common.h"
-#include "src/enc/vp8i_enc.h"
-#include "src/enc/vp8li_enc.h"
-#include "src/utils/utils.h"
-#include "src/webp/encode.h"
-#include "src/webp/format_constants.h"
-#include "src/webp/types.h"
+#include "../src/dsp/lossless.h"
+#include "../src/dsp/lossless_common.h"
+#include "../src/enc/vp8i_enc.h"
+#include "../src/enc/vp8li_enc.h"
+#include "../src/utils/utils.h"
+#include "../src/webp/encode.h"
+#include "../src/webp/format_constants.h"
+#include "../src/webp/types.h"
 
 #define HISTO_SIZE (4 * 256)
 static const int64_t kSpatialPredictorBias = 15ll << LOG_2_PRECISION_BITS;

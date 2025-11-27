@@ -11,7 +11,7 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "sharpyuv/sharpyuv_dsp.h"
+#include "../sharpyuv/sharpyuv_dsp.h"
 
 #if defined(WEBP_USE_NEON)
 #include <assert.h>

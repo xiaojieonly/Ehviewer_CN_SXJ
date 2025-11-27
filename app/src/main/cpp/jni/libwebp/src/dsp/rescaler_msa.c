@@ -11,14 +11,14 @@
 //
 // Author: Prashant Patil (prashant.patil@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MSA) && !defined(WEBP_REDUCE_SIZE)
 
 #include <assert.h>
 
-#include "src/utils/rescaler_utils.h"
-#include "src/dsp/msa_macro.h"
+#include "../src/utils/rescaler_utils.h"
+#include "../dsp/msa_macro.h"
 
 #define ROUNDER (WEBP_RESCALER_ONE >> 1)
 #define MULT_FIX(x, y) (((uint64_t)(x) * (y) + ROUNDER) >> WEBP_RESCALER_RFIX)

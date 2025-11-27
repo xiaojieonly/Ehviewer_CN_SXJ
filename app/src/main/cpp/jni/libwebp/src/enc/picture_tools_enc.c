@@ -13,8 +13,8 @@
 
 #include <assert.h>
 
-#include "src/enc/vp8i_enc.h"
-#include "src/dsp/yuv.h"
+#include "../src/enc/vp8i_enc.h"
+#include "../src/dsp/yuv.h"
 
 //------------------------------------------------------------------------------
 // Helper: clean up fully transparent area to help compressibility.

@@ -12,7 +12,7 @@
 #ifndef WEBP_SHARPYUV_SHARPYUV_CSP_H_
 #define WEBP_SHARPYUV_SHARPYUV_CSP_H_
 
-#include "sharpyuv/sharpyuv.h"
+#include "../sharpyuv/sharpyuv.h"
 
 #ifdef __cplusplus
 extern "C" {

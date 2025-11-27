@@ -11,13 +11,13 @@
 //
 // Author:  Prashant Patil   (prashant.patil@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MSA)
 
 #include <stdlib.h>
-#include "src/dsp/msa_macro.h"
-#include "src/enc/vp8i_enc.h"
+#include "../dsp/msa_macro.h"
+#include "../src/enc/vp8i_enc.h"
 
 //------------------------------------------------------------------------------
 // Transforms

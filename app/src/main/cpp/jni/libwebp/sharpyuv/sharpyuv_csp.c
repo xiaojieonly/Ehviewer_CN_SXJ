@@ -9,7 +9,7 @@
 //
 // Colorspace utilities.
 
-#include "sharpyuv/sharpyuv_csp.h"
+#include "../sharpyuv/sharpyuv_csp.h"
 
 #include <assert.h>
 #include <math.h>

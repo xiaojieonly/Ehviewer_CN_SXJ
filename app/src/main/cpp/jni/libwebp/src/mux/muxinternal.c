@@ -13,8 +13,8 @@
 //          Vikas (vikasa@google.com)
 
 #include <assert.h>
-#include "src/mux/muxi.h"
-#include "src/utils/utils.h"
+#include "../src/mux/muxi.h"
+#include "../src/utils/utils.h"
 
 #define UNDEFINED_CHUNK_SIZE ((uint32_t)(-1))
 

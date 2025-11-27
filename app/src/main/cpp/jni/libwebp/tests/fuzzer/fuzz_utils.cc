@@ -31,10 +31,10 @@
 #include "./img_alpha.h"
 #include "./img_grid.h"
 #include "./img_peak.h"
-#include "src/dsp/cpu.h"
-#include "src/webp/decode.h"
-#include "src/webp/encode.h"
-#include "src/webp/types.h"
+#include "../src/dsp/cpu.h"
+#include "../src/webp/decode.h"
+#include "../src/webp/encode.h"
+#include "../src/webp/types.h"
 
 namespace fuzz_utils {
 

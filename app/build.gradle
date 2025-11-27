@@ -12,7 +12,8 @@ android {
     testNamespace 'com.hippo.ehviewer.debug'
     compileSdk 33
 //    buildToolsVersion "30.0.3"
-//    ndkVersion '23.1.7779620'
+    ndkVersion '23.1.7779620'
+//    ndkVersion '29.0.14206865'
 
     flavorDimensions "distribute"
     productFlavors {
@@ -32,7 +33,7 @@ android {
         versionCode 111
         versionName "1.9.8.8"
         vectorDrawables.useSupportLibrary = true
-        resConfigs 'zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th'
+        resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
         multiDexEnabled true
         ndk {
@@ -41,6 +42,7 @@ android {
         }
         externalNativeBuild {
             cmake {
+                version '3.30.5'
                 cppFlags ''
             }
         }
@@ -66,6 +68,7 @@ android {
 
     externalNativeBuild {
         cmake {
+            version '3.30.5'
             path file('src/main/cpp/CMakeLists.txt')
         }
     }

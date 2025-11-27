@@ -14,7 +14,7 @@
 #ifndef WEBP_UTILS_PALETTE_H_
 #define WEBP_UTILS_PALETTE_H_
 
-#include "src/webp/types.h"
+#include "../src/webp/types.h"
 
 struct WebPPicture;
 

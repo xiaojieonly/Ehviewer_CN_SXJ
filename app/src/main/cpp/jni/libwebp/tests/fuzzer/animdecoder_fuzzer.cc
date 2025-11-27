@@ -20,9 +20,9 @@
 
 #include "./fuzz_utils.h"
 #include "imageio/imageio_util.h"
-#include "src/webp/decode.h"
-#include "src/webp/demux.h"
-#include "src/webp/mux_types.h"
+#include "../src/webp/decode.h"
+#include "../webp/demux.h"
+#include "../src/webp/mux_types.h"
 
 namespace {
 

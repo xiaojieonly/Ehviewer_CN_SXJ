@@ -22,10 +22,10 @@
 #include <string_view>
 
 #include "imageio/image_dec.h"
-#include "src/dsp/cpu.h"
-#include "src/webp/decode.h"
-#include "src/webp/encode.h"
-#include "src/webp/types.h"
+#include "../src/dsp/cpu.h"
+#include "../src/webp/decode.h"
+#include "../src/webp/encode.h"
+#include "../src/webp/types.h"
 #include "tests/fuzzer/fuzz_utils.h"
 
 namespace {

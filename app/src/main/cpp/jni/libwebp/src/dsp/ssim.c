@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <stdlib.h>  // for abs()
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if !defined(WEBP_REDUCE_SIZE)
 

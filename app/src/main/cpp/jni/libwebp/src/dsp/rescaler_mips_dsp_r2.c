@@ -11,12 +11,12 @@
 //
 // Author(s): Djordje Pesut (djordje.pesut@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MIPS_DSP_R2) && !defined(WEBP_REDUCE_SIZE)
 
 #include <assert.h>
-#include "src/utils/rescaler_utils.h"
+#include "../src/utils/rescaler_utils.h"
 
 #define ROUNDER (WEBP_RESCALER_ONE >> 1)
 #define MULT_FIX(x, y) (((uint64_t)(x) * (y) + ROUNDER) >> WEBP_RESCALER_RFIX)

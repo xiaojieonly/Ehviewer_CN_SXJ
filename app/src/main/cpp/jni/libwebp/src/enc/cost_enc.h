@@ -16,7 +16,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "src/enc/vp8i_enc.h"
+#include "../src/enc/vp8i_enc.h"
 
 #ifdef __cplusplus
 extern "C" {

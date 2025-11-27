@@ -13,13 +13,13 @@
 //            Jovan Zelincevic (jovan.zelincevic@imgtec.com)
 //            Slobodan Prijic  (slobodan.prijic@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MIPS32)
 
-#include "src/dsp/mips_macro.h"
-#include "src/enc/vp8i_enc.h"
-#include "src/enc/cost_enc.h"
+#include "../dsp/mips_macro.h"
+#include "../src/enc/vp8i_enc.h"
+#include "../src/enc/cost_enc.h"
 
 static const int kC1 = WEBP_TRANSFORM_AC3_C1;
 static const int kC2 = WEBP_TRANSFORM_AC3_C2;

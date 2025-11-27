@@ -11,11 +11,11 @@
 //
 // Author: Prashant Patil (prashant.patil@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MSA)
 
-#include "src/dsp/msa_macro.h"
+#include "../dsp/msa_macro.h"
 
 #include <assert.h>
 

@@ -11,14 +11,14 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_NEON)
 
 #include <arm_neon.h>
 
-#include "src/dsp/lossless.h"
-#include "src/dsp/neon.h"
+#include "../src/dsp/lossless.h"
+#include "../src/dsp/neon.h"
 
 //------------------------------------------------------------------------------
 // Subtract-Green Transform

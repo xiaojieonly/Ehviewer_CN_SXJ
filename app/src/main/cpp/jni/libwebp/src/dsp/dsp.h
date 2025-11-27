@@ -15,11 +15,11 @@
 #define WEBP_DSP_DSP_H_
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
-#include "src/dsp/cpu.h"
-#include "src/webp/types.h"
+#include "../src/dsp/cpu.h"
+#include "../src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {

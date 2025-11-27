@@ -29,8 +29,8 @@
 #include "./img_alpha.h"
 #include "./img_grid.h"
 #include "./img_peak.h"
-#include "src/dsp/cpu.h"
-#include "src/webp/encode.h"
+#include "../src/dsp/cpu.h"
+#include "../src/webp/encode.h"
 #include "fuzztest/fuzztest.h"
 
 namespace fuzz_utils {

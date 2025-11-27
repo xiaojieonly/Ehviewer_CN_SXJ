@@ -12,7 +12,7 @@
 // Author: Skal (pascal.massimino@gmail.com)
 
 #include <string.h>
-#include "src/utils/random_utils.h"
+#include "../src/utils/random_utils.h"
 
 //------------------------------------------------------------------------------
 

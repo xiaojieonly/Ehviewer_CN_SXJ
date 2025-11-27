@@ -15,10 +15,10 @@
 #define WEBP_UTILS_THREAD_UTILS_H_
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "../webp/config.h"
 #endif
 
-#include "src/webp/types.h"
+#include "../src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {

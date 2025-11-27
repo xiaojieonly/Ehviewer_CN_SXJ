@@ -12,11 +12,11 @@
 // Author(s):  Djordje Pesut    (djordje.pesut@imgtec.com)
 //             Jovan Zelincevic (jovan.zelincevic@imgtec.com)
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MIPS32)
 
-#include "src/dsp/yuv.h"
+#include "../src/dsp/yuv.h"
 
 //------------------------------------------------------------------------------
 // simple point-sampling

@@ -23,10 +23,10 @@
 #include <vector>
 
 #include "./fuzz_utils.h"
-#include "src/dsp/cpu.h"
-#include "src/webp/encode.h"
-#include "src/webp/mux.h"
-#include "src/webp/mux_types.h"
+#include "../src/dsp/cpu.h"
+#include "../src/webp/encode.h"
+#include "../src/webp/mux.h"
+#include "../src/webp/mux_types.h"
 
 namespace {
 

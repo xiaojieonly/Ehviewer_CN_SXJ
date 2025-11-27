@@ -11,15 +11,15 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "src/dsp/yuv.h"
+#include "../src/dsp/yuv.h"
 
 #if defined(WEBP_USE_SSE41)
 
 #include <stdlib.h>
 #include <smmintrin.h>
 
-#include "src/dsp/common_sse41.h"
-#include "src/utils/utils.h"
+#include "../dsp/common_sse41.h"
+#include "../src/utils/utils.h"
 
 //-----------------------------------------------------------------------------
 // Convert spans of 32 pixels to various RGB formats for the fancy upsampler.

@@ -11,7 +11,7 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "src/enc/vp8i_enc.h"
+#include "../src/enc/vp8i_enc.h"
 
 //------------------------------------------------------------------------------
 // Default probabilities

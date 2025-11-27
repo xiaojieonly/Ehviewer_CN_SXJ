@@ -14,7 +14,7 @@
 #ifndef WEBP_DSP_MSA_MACRO_H_
 #define WEBP_DSP_MSA_MACRO_H_
 
-#include "src/dsp/dsp.h"
+#include "../src/dsp/dsp.h"
 
 #if defined(WEBP_USE_MSA)
 

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.18.1)
 project(root)
 
 add_subdirectory(cpufeatures)
-add_subdirectory(image)
 add_subdirectory(stream)
 add_subdirectory(libjpeg-turbo)
 add_subdirectory(libpng)
 add_subdirectory(giflib)
 add_subdirectory(libwebp)
+add_subdirectory(image)

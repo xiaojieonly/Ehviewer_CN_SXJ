@@ -17,8 +17,8 @@
 
 #include <assert.h>
 
-#include "src/dsp/dsp.h"
-#include "src/webp/types.h"
+#include "../src/dsp/dsp.h"
+#include "../src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {

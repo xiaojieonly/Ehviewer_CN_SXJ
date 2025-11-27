@@ -13,8 +13,8 @@
 
 #include <string.h>
 
-#include "src/dsp/cpu.h"
-#include "src/enc/vp8i_enc.h"
+#include "../src/dsp/cpu.h"
+#include "../src/enc/vp8i_enc.h"
 
 //------------------------------------------------------------------------------
 // VP8Iterator

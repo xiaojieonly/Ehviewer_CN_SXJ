@@ -13,7 +13,7 @@
 
 #if defined(WEBP_USE_MIPS32)
 
-#include "src/enc/cost_enc.h"
+#include "../src/enc/cost_enc.h"
 
 static int GetResidualCost_MIPS32(int ctx0, const VP8Residual* const res) {
   int temp0, temp1;
