@@ -125,6 +125,7 @@
     <string name="error_please_login_first">로그인이 필요함</string>
     <string name="error_empty_html">페이지 내용이 비어있음</string>
     <string name="error_cant_get_image">이미지를 가져올 수 없음</string>
+    <string name="error_igneous_wrong">잘못된 igneous\n권한을 확인하고 다시 로그인하세요</string>
 
     <string name="kokomade_tip">설정->EH->갤러리 사이트->e-hentai</string>
 

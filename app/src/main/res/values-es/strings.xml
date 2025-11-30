@@ -113,6 +113,7 @@
     <string name="error_please_login_first">Por favor inicie sesión primero</string>
     <string name="error_empty_html">Página vacía</string>
     <string name="error_cant_get_image">No se puede obtener la imagen</string>
+    <string name="error_igneous_wrong">igneous incorrecto\nasegúrate de tener permisos y vuelve a iniciar sesión</string>
     <string name="error_invalid_archive">Archivo inválido</string>
     <string name="error_save_image_existed">La imagen ya existe</string>
 

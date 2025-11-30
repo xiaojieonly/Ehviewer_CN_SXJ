@@ -148,6 +148,7 @@
     <string name="error_please_login_first">Please login first</string>
     <string name="error_empty_html">Empty page</string>
     <string name="error_cant_get_image">Can\'t get image</string>
+    <string name="error_igneous_wrong">Wrong igneous\nmake sure you have permission and re-login</string>
 
     <string name="kokomade_tip">Settings->Eh->Gallery Site->e-hentai</string>
 

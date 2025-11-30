@@ -124,6 +124,7 @@
     <string name="error_please_login_first">โปรดลงชื่อเข้าใช้ก่อน</string>
     <string name="error_empty_html">หน้าเว็บว่างเปล่า</string>
     <string name="error_cant_get_image">ไม่สามารถรับรูปภาพได้</string>
+    <string name="error_igneous_wrong">igneous ผิดพลาด\nตรวจสอบสิทธิ์และเข้าสู่ระบบอีกครั้ง</string>
 
     <string name="kokomade_tip">การตั้งค่า->Eh->เว็บไซต์แกลเลอรี่->e-hentai</string>
 
