@@ -49,6 +49,12 @@ public class EhFragment extends BasePreferenceFragmentCompat
         Preference showGalleryComment = findPreference(Settings.KEY_SHOW_GALLERY_COMMENT);
         Preference tagTranslationsSource = findPreference("tag_translations_source");
 
+        // System theme display
+        Preference systemTheme = findPreference("system_theme");
+        if (systemTheme != null) {
+            systemTheme.setSummary(getSystemThemeSummary());
+        }
+
         theme.setOnPreferenceChangeListener(this);
         themeAutoSwitch.setOnPreferenceChangeListener(this);
         applyNavBarThemeColor.setOnPreferenceChangeListener(this);
@@ -116,5 +122,23 @@ public class EhFragment extends BasePreferenceFragmentCompat
             return true;
         }
         return true;
+    }
+
+    private String getSystemThemeSummary() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            int uiMode = getContext().getResources().getConfiguration().uiMode;
+            int nightMode = uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            switch (nightMode) {
+                case android.content.res.Configuration.UI_MODE_NIGHT_YES:
+                    return "深色";
+                case android.content.res.Configuration.UI_MODE_NIGHT_NO:
+                    return "浅色";
+                case android.content.res.Configuration.UI_MODE_NIGHT_UNDEFINED:
+                default:
+                    return "不可用";
+            }
+        } else {
+            return "不可用";
+        }
     }
 }

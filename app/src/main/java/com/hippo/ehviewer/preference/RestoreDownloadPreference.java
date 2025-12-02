@@ -17,7 +17,9 @@
 package com.hippo.ehviewer.preference;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Parcel;
 import androidx.preference.Preference;
 import android.util.AttributeSet;
@@ -43,11 +45,9 @@ import java.util.Collections;
 import java.util.List;
 import okhttp3.OkHttpClient;
 
-public class RestoreDownloadPreference extends TaskPreference {
+public class RestoreDownloadPreference extends Preference {
 
-    public RestoreDownloadPreference(Context context) {
-        super(context);
-    }
+    private AsyncTask<Void, Object, Object> mTask;
 
     public RestoreDownloadPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -57,23 +57,38 @@ public class RestoreDownloadPreference extends TaskPreference {
         super(context, attrs, defStyleAttr);
     }
 
-    @NonNull
     @Override
-    protected Task onCreateTask() {
-        return new RestoreTask(getContext());
+    protected void onClick() {
+        super.onClick();
+        if (mTask == null) {
+            mTask = new RestoreTask(getContext()).execute();
+        }
     }
 
-    private static class RestoreTask extends Task {
+    private class RestoreTask extends AsyncTask<Void, Object, Object> {
 
+        private final Context mContext;
         private final EhApplication mApplication;
         private final DownloadManager mManager;
         private final OkHttpClient mHttpClient;
+        private ProgressDialog mProgressDialog;
 
         public RestoreTask(@NonNull Context context) {
-            super(context);
+            mContext = context;
             mApplication = (EhApplication) context.getApplicationContext();
             mManager = EhApplication.getDownloadManager(mApplication);
             mHttpClient = EhApplication.getOkHttpClient(mApplication);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mProgressDialog = new ProgressDialog(mContext);
+            mProgressDialog.setTitle(R.string.settings_download_restore_download_items);
+            mProgressDialog.setIndeterminate(false);
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.show();
         }
 
         private RestoreItem getRestoreItem(UniFile file) {
@@ -123,16 +138,23 @@ public class RestoreDownloadPreference extends TaskPreference {
                 return null;
             }
 
-            for (UniFile file: files) {
+            int total = files.length;
+            publishProgress(0, total);
+
+            for (int i = 0; i < total; i++) {
+                UniFile file = files[i];
                 RestoreItem restoreItem = getRestoreItem(file);
                 if (null != restoreItem) {
                     restoreItemList.add(restoreItem);
                 }
+                publishProgress(i + 1, total);
             }
 
-            if (0 == restoreItemList.size()) {
+            if (restoreItemList.isEmpty()) {
                 return Collections.EMPTY_LIST;
             }
+
+            publishProgress(-1, -1);
 
             try {
                 return EhEngine.fillGalleryListByApi(null, mHttpClient, new ArrayList<GalleryInfo>(restoreItemList), EhUrl.getReferer());
@@ -144,8 +166,29 @@ public class RestoreDownloadPreference extends TaskPreference {
         }
 
         @Override
+        protected void onProgressUpdate(Object... values) {
+            super.onProgressUpdate(values);
+            if (mProgressDialog != null) {
+                int progress = (Integer) values[0];
+                int max = (Integer) values[1];
+                if (progress == -1 && max == -1) {
+                    mProgressDialog.setIndeterminate(true);
+                    mProgressDialog.setMessage(mApplication.getString(R.string.settings_download_restore_download_items_get_gallery_info));
+                } else {
+                    mProgressDialog.setIndeterminate(false);
+                    mProgressDialog.setMax(max);
+                    mProgressDialog.setProgress(progress);
+                }
+            }
+        }
+
+        @Override
         @SuppressWarnings("unchecked")
         protected void onPostExecute(Object o) {
+            mTask = null;
+            if (mProgressDialog != null) {
+                mProgressDialog.dismiss();
+            }
             if (!(o instanceof List)) {
                 Toast.makeText(mApplication, R.string.settings_download_restore_failed, Toast.LENGTH_SHORT).show();
             } else {
@@ -169,16 +212,11 @@ public class RestoreDownloadPreference extends TaskPreference {
                             mApplication.getString(R.string.settings_download_restore_successfully, count),
                             Toast.LENGTH_SHORT).show();
 
-                    Preference preference = getPreference();
-                    if (null != preference) {
-                        Context context = preference.getContext();
-                        if (context instanceof Activity) {
-                            ((Activity) context).setResult(Activity.RESULT_OK);
-                        }
+                    if (mContext instanceof Activity) {
+                        ((Activity) mContext).setResult(Activity.RESULT_OK);
                     }
                 }
             }
-            super.onPostExecute(o);
         }
     }
 

@@ -595,6 +595,8 @@
     <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
     <string name="settings_download_clean_redundancy_done">完成冗余清理，共清理 %d 项</string>
+    <string name="settings_download_clean_invalid_download_summary">清空任何无效的下载项，尤其是下载未完整的下载项，不会清空已完成的下载项</string>
+    <string name="settings_download_clean_invalid_download">清空无效的下载项</string>
 
     <string name="settings_advanced">高级</string>
     <string name="settings_advanced_save_parse_error_body">解析失败时保存页面内容</string>
@@ -927,7 +929,7 @@
     <string name="cookie_in_clipboard_incorrect">Cookie格式不正确</string>
     <string name="settings_download_timeout">下载超时时间</string>
     <string name="download_timeout_unlimited">无上限</string>
-    <string name="settings_download_timeout_summary">%s(S),下载一张图片的最大可用时长。</string>
+    <string name="settings_download_timeout_summary">%s 秒，下载一张图片的最大可用时长。</string>
     <string name="have_new_version">点击查看新的画廊版本</string>
     <string name="archiver_downloading">档案下载中 %s</string>
     <string name="order">排序</string>
@@ -935,10 +937,13 @@
     <string name="sort_by_fav_time">按收藏时间</string>
     <string name="settings_eh_sign_out_restart">正在为您自动重启，请稍候</string>
     <string name="settings_eh_theme_auto_switch">深色跟随系统</string>
+    <string name="settings_eh_system_theme">系统主题</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一页</string>
     <string name="spen_next_page">下一页</string>
+    <string name="category_all">全部</string>
+
     <string name="import_local_archive">导入本地压缩包</string>
     <string name="import_archive_title">选择压缩包文件</string>
     <string name="import_archive_failed">压缩包导入失败</string>

@@ -43,6 +43,20 @@
 
     <string name="no_blicklist">这里是黑名单</string>
 
+    <string name="settings_download_clean_invalid_download_confirm">确定清空无效的下载项？</string>
+    <string name="settings_download_cleaning">正在清理下载项</string>
+    <string name="settings_download_clean_invalid_done">完成清理 %d 个下载项</string>
+    <string name="settings_download_clean_invalid_no_invalid">没有需要清空的下载项</string>
+    <string name="settings_download_restore_download_items_get_gallery_info">恢复在画廊中的下载项</string>
+    <string name="settings_download_export_no_items">没有导出项目</string>
+    <string name="settings_download_export_failed">导出下载项失败</string>
+    <string name="settings_download_export_succeed">成功导出下载项到 %s</string>
+    <string name="settings_download_import_items">导入下载项</string>
+    <string name="settings_download_import_no_items">没有导入项目</string>
+    <string name="settings_download_import_failed">导入下载项失败</string>
+    <string name="settings_download_import_succeed">成功导入 %d 个下载项</string>
+    <string name="settings_eh_system_theme">系统主题</string>
+
 
     <string name="app_name">EhViewer</string>
 
@@ -668,6 +682,8 @@
     <string name="settings_download_clean_redundancy_summary">Remove gallery images which are not in download list but in download location</string>
     <string name="settings_download_clean_redundancy_no_redundancy">No redundancy</string>
     <string name="settings_download_clean_redundancy_done">Redundancy cleaning completed, clean-up %d items totally</string>
+    <string name="settings_download_clean_invalid_download_summary">Remove download items which are invalid</string>
+    <string name="settings_download_clean_invalid_download">Clean invaild download</string>
 
     <string name="settings_advanced">Advanced</string>
     <string name="settings_advanced_save_parse_error_body">Save html content when parsing error</string>
@@ -1013,6 +1029,8 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Previous page</string>
     <string name="spen_next_page">Next page</string>
+    <string name="category_all">All</string>
+
     <string name="import_local_archive">Import local archive</string>
     <string name="import_archive_title">Select archive file</string>
     <string name="import_archive_failed">Failed to import archive</string>

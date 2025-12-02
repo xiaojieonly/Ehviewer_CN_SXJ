@@ -20,7 +20,8 @@
     <Preference
         android:key="download_location"
         android:title="@string/settings_download_download_location"
-        app:allowDividerAbove="true" />
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
@@ -29,6 +30,7 @@
         app:summaryOff="@string/settings_download_media_scan_summary_off"
         app:summaryOn="@string/settings_download_media_scan_summary_on" />
 
+    <!-- Default value for debugging: 3 -->
     <com.hippo.preference.ListPreference
         android:defaultValue="3"
         android:key="download_thread"
@@ -36,7 +38,8 @@
         android:title="@string/settings_download_multi_thread_download"
         app:allowDividerAbove="true"
         app:entries="@array/multi_thread_download_entries"
-        app:entryValues="@array/multi_thread_download_entry_values" />
+        app:entryValues="@array/multi_thread_download_entry_values"
+        app:iconSpaceReserved="false" />
 
     <com.hippo.preference.ListPreference
         android:defaultValue="5"
@@ -45,7 +48,8 @@
         android:title="@string/settings_download_preload_image"
         app:allowDividerAbove="true"
         app:entries="@array/preload_image_entries"
-        app:entryValues="@array/preload_image_entry_values" />
+        app:entryValues="@array/preload_image_entry_values"
+        app:iconSpaceReserved="false" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
@@ -53,6 +57,7 @@
         android:summary="@string/settings_download_download_list_pagination_summary"
         android:title="@string/settings_download_download_list_pagination" />
 
+    <!-- Default value for debugging: a -->
     <com.hippo.preference.ListPreference
         android:defaultValue="a"
         android:key="image_size"
@@ -60,7 +65,8 @@
         android:title="@string/settings_download_image_resolution"
         app:allowDividerAbove="true"
         app:entries="@array/image_resolution_entries"
-        app:entryValues="@array/image_resolution_entry_values" />
+        app:entryValues="@array/image_resolution_entry_values"
+        app:iconSpaceReserved="false" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
@@ -68,6 +74,7 @@
         android:summary="@string/settings_download_download_origin_image_summary"
         android:title="@string/settings_download_download_origin_image" />
 
+    <!-- Default value for debugging: 0 -->
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="download_timeout"
@@ -75,7 +82,8 @@
         android:title="@string/settings_download_timeout"
         app:allowDividerAbove="true"
         app:entries="@array/download_timeout_entries"
-        app:entryValues="@array/download_timeout_entries_values" />
+        app:entryValues="@array/download_timeout_entries_values"
+        app:iconSpaceReserved="false" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
@@ -87,12 +95,20 @@
         android:key="restore_download_items"
         android:summary="@string/settings_download_restore_download_items_summary"
         android:title="@string/settings_download_restore_download_items"
-        app:allowDividerAbove="true" />
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
 
     <com.hippo.ehviewer.preference.CleanRedundancyPreference
         android:key="clean_redundancy"
         android:summary="@string/settings_download_clean_redundancy_summary"
         android:title="@string/settings_download_clean_redundancy"
-        app:allowDividerAbove="true" />
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
 
+    <Preference
+        android:key="clean_invalid_download"
+        android:summary="@string/settings_download_clean_invalid_download_summary"
+        android:title="@string/settings_download_clean_invalid_download"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
 </PreferenceScreen>
