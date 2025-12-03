@@ -1957,6 +1957,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (downLoadAlertDialog != null) {
             downLoadAlertDialog.show();
         } else {
+            if (torrentDownloadView.getParent() != null) {
+                ((android.view.ViewGroup) torrentDownloadView.getParent()).removeView(torrentDownloadView);
+            }
             downLoadAlertDialog = new AlertDialog.Builder(context)
                     .setView(torrentDownloadView)
                     .setCancelable(false)
