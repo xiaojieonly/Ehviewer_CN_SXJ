@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
+import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.GalleryTags;
@@ -93,6 +94,19 @@ public class DownloadListInfosExecutor {
                 case R.id.failed:
                     resultList = filterDownloadState(DownloadInfo.STATE_FAILED);
                     break;
+                case R.id.filter_by_category_all:
+                case R.id.filter_by_category_doujinshi:
+                case R.id.filter_by_category_manga:
+                case R.id.filter_by_category_artist_cg:
+                case R.id.filter_by_category_game_cg:
+                case R.id.filter_by_category_western:
+                case R.id.filter_by_category_non_h:
+                case R.id.filter_by_category_image_set:
+                case R.id.filter_by_category_cosplay:
+                case R.id.filter_by_category_asian_porn:
+                case R.id.filter_by_category_misc:
+                    resultList = filterByCategory(id);
+                    break;
                 case R.id.sort_by_gallery_id_asc:
                 case R.id.sort_by_gallery_id_desc:
                 case R.id.sort_by_create_time_asc:
@@ -117,6 +131,59 @@ public class DownloadListInfosExecutor {
                 mDownloadSearchCallback.onDownloadSearchSuccess(resultList);
             });
         });
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    private List<DownloadInfo> filterByCategory(int type) {
+        List<DownloadInfo> list = new ArrayList<>();
+        if (mList == null) {
+            return list;
+        }
+
+        int state = EhUtils.UNKNOWN;
+        if (type == R.id.filter_by_category_all) {
+            return mList; // no filter
+        }
+
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo info = mList.get(i);
+            switch (type) {
+                case R.id.filter_by_category_doujinshi:
+                    state = EhConfig.DOUJINSHI;
+                    break;
+                case R.id.filter_by_category_manga:
+                    state = EhConfig.MANGA;
+                    break;
+                case R.id.filter_by_category_artist_cg:
+                    state = EhConfig.ARTIST_CG;
+                    break;
+                case R.id.filter_by_category_game_cg:
+                    state = EhConfig.GAME_CG;
+                    break;
+                case R.id.filter_by_category_western:
+                    state = EhConfig.WESTERN;
+                    break;
+                case R.id.filter_by_category_non_h:
+                    state = EhConfig.NON_H;
+                    break;
+                case R.id.filter_by_category_image_set:
+                    state = EhConfig.IMAGE_SET;
+                    break;
+                case R.id.filter_by_category_cosplay:
+                    state = EhConfig.COSPLAY;
+                    break;
+                case R.id.filter_by_category_asian_porn:
+                    state = EhConfig.ASIAN_PORN;
+                    break;
+                case R.id.filter_by_category_misc:
+                    state = EhConfig.MISC;
+                    break;
+            }
+            if (info.category == state) {
+                list.add(info);
+            }
+        }
+        return list;
     }
 
     private List<DownloadInfo> sortByType(int type) {
