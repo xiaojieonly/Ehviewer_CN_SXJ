@@ -759,6 +759,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             if (list != null) {
                 list.remove(info);
             }
+
+            // don't process non tag, they are in mDefaultInfoList
+            if (info.label != null) {
+                mLabelCountMap.put(info.label, mLabelCountMap.get(info.label) - 1L);
+            }
         }
 
         // Update listener
@@ -923,6 +928,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 continue;
             }
 
+            srcList.remove(info);
+            dstList.add(info);
+            info.label = label;
+            Collections.sort(dstList, DATE_DESC_COMPARATOR);
+
             // don't process non tag, they are in mDefaultInfoList
             if (info.label != null) {
                 mLabelCountMap.put(info.label, mLabelCountMap.get(info.label) - 1L);
@@ -935,10 +945,6 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     mLabelCountMap.put(label, mLabelCountMap.get(label) + 1L);
                 }
             }
-            srcList.remove(info);
-            dstList.add(info);
-            info.label = label;
-            Collections.sort(dstList, DATE_DESC_COMPARATOR);
 
             // Save to DB
             EhDB.putDownloadInfo(info);
