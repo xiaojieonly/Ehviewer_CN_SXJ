@@ -1,17 +1,22 @@
 {
-  "version": "2.0.0.8",
+  "version": "2.0.0.9",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
     "title": "新版发布2.0.0.8",
     "content": [
-      "移除不再使用的 Firebase Crashlytics 导入。",
-      "在 EhDB 和 SpiderDen 中添加异常处理以避免应用崩溃。",
-      "增加在 TreeDocumentFile 中列出文件时的空值检查和异常处理。",
-      "为 WebViewSignInScene 中的 HTTP 响应添加默认的 reason phrase。",
-      "增强 GLRootView 中的 EGL 配置选择逻辑，增加备用方案以提高稳定性。",
-      "将 Analytics.java 迁移到 Kotlin。"
+      "- 修复界面更新相关的崩溃问题",
+      "- 添加Android 9图片解码失败时的回退机制",
+      "- 优化图片处理和渲染参数格式化",
+      "- 修复关闭种子下载对话框时可能发生的崩溃",
+      "- 修复归档下载器在某些情况下崩溃的问题",
+      "- 适配 Android 14 前台服务类型变更",
+      "- 增加对content URI方案下导入归档的支持",
+      "- 为下载列表添加按名称排序支持",
+      "- 同步德语、西班牙语、法语、韩语、泰语、日语和繁体中文翻译",
+      "- 修复版本更新时因空安全导致的崩溃","- nullcat*：add error detail for wrong igneous",
+      "- 应用程序启动时，异步删除三天前的解析错误日志文件。"
     ]
   }
 }
