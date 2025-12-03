@@ -923,6 +923,18 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 continue;
             }
 
+            // don't process non tag, they are in mDefaultInfoList
+            if (info.label != null) {
+                mLabelCountMap.put(info.label, mLabelCountMap.get(info.label) - 1L);
+            }
+            if (label != null) {
+                // if new create label, avoid NPE
+                if (!mLabelCountMap.containsKey(label)) {
+                    mLabelCountMap.put(label, 1L);
+                } else {
+                    mLabelCountMap.put(label, mLabelCountMap.get(label) + 1L);
+                }
+            }
             srcList.remove(info);
             dstList.add(info);
             info.label = label;
@@ -998,6 +1010,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
         // Put list back with new label
         mMap.put(to, list);
+
+        // 如果修改一个新创建的Label, 则不做任何事
+        if (mLabelCountMap.containsKey(from)) {
+            // RenameLabelDialogHelper防住了重名覆盖问题, 这里也无需考虑
+            long value = mLabelCountMap.remove(from);
+            mLabelCountMap.put(to, value);
+        }
 
         // Notify listener
         for (DownloadInfoListener l : mDownloadInfoListeners) {
