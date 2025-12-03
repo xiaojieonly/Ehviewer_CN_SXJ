@@ -62,6 +62,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     private static final String TAG = DownloadManager.class.getSimpleName();
 
+    public static final String DOWNLOAD_INFO_FILENAME = ".ehviewer";
+    public static final String DOWNLOAD_INFO_HEADER = "gid,token,title,title_jpn,thumb,category,posted,uploader,rating,rated,simple_lang,simple_tags,thumb_width,thumb_height,span_size,span_index,span_group_index,favorite_slot,favorite_name,pages";
+
     private final Context mContext;
 
     // All download info list
@@ -254,6 +257,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     @Nullable
     public List<DownloadInfo> getLabelDownloadInfoList(String label) {
         return mMap.get(label);
+    }
+
+    public List<GalleryInfo> getDownloadInfoList() {
+        return new ArrayList<>(mAllInfoList);
     }
 
     @Nullable

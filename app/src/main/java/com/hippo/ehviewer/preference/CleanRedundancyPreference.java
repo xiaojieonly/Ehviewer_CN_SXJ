@@ -83,18 +83,23 @@ public class CleanRedundancyPreference extends TaskPreference {
         protected Object doInBackground(Void... params) {
             UniFile dir = Settings.getDownloadLocation();
             if (null == dir) {
+                publishProgress(new int[]{0, 0});
                 return 0;
             }
             UniFile[] files = dir.listFiles();
             if (null == files) {
+                publishProgress(new int[]{0, 0});
                 return 0;
             }
 
+            int total = files.length;
             int count = 0;
-            for (UniFile f: files) {
+            for (int i = 0; i < total; i++) {
+                UniFile f = files[i];
                 if (clearFile(f)) {
                     ++count;
                 }
+                publishProgress(new int[]{i + 1, total});
             }
 
             return count;

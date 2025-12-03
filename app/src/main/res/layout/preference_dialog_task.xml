@@ -17,7 +17,7 @@
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingLeft="?attr/dialogPreferredPadding"
@@ -25,16 +25,33 @@
     android:paddingBottom="@dimen/abc_dialog_padding_top_material"
     android:paddingRight="?attr/dialogPreferredPadding">
 
-    <com.hippo.widget.ProgressView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        style="@style/ProgressView"/>
-
-    <TextView
+    <!-- Existing spinner row -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:text="@string/please_wait"/>
+        android:orientation="horizontal">
+
+        <com.hippo.widget.ProgressView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            style="@style/ProgressView"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/please_wait"/>
+    </LinearLayout>
+
+    <!-- Newly added determinate progress bar (initially hidden) -->
+    <ProgressBar
+        android:id="@+id/task_progress"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:indeterminate="true"
+        android:visibility="gone"/>
 
 </LinearLayout>

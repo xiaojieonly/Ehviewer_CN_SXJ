@@ -43,7 +43,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,6 +81,8 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.client.EhConfig;
+import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
@@ -124,6 +129,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class DownloadsScene extends ToolbarScene
@@ -219,6 +225,10 @@ public class DownloadsScene extends ToolbarScene
 
     private boolean needInitPage = false;
     private boolean needInitPageSize = false;
+
+    @Nullable
+    private Spinner mCategorySpinner;
+    private int mSelectedCategory = EhUtils.ALL_CATEGORY;
 
     @NonNull
     private final ActivityResultLauncher<Intent> galleryActivityLauncher = registerForActivityResult(
@@ -334,6 +344,7 @@ public class DownloadsScene extends ToolbarScene
             mAdapter.notifyDataSetChanged();
         }
         mBackList = mList;
+        filterByCategory();
         updateTitle();
         updatePaginationIndicator();
         Settings.putRecentDownloadLabel(mLabel);
@@ -400,6 +411,82 @@ public class DownloadsScene extends ToolbarScene
                               @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_download, container, false);
 
+        Context context = getEHContext();
+        assert context != null;
+
+        mCategorySpinner = (Spinner) ViewUtils.$$(view, R.id.category_spinner);
+        // Initialize category spinner
+        List<String> categoryList = new ArrayList<>();
+        categoryList.add(getString(R.string.category_all)); // Add "All" option
+        categoryList.add(EhUtils.getCategory(EhConfig.DOUJINSHI).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.MANGA).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.ARTIST_CG).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.GAME_CG).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.WESTERN).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.NON_H).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.IMAGE_SET).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.COSPLAY).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.ASIAN_PORN).toUpperCase(Locale.ROOT));
+        categoryList.add(EhUtils.getCategory(EhConfig.MISC).toUpperCase(Locale.ROOT));
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, categoryList);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mCategorySpinner.setAdapter(categoryAdapter);
+        mCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int selectedCategory;
+                switch (position) {
+                    case 0:
+                        selectedCategory = EhUtils.ALL_CATEGORY;
+                        break;
+                    case 1:
+                        selectedCategory = EhConfig.DOUJINSHI;
+                        break;
+                    case 2:
+                        selectedCategory = EhConfig.MANGA;
+                        break;
+                    case 3:
+                        selectedCategory = EhConfig.ARTIST_CG;
+                        break;
+                    case 4:
+                        selectedCategory = EhConfig.GAME_CG;
+                        break;
+                    case 5:
+                        selectedCategory = EhConfig.WESTERN;
+                        break;
+                    case 6:
+                        selectedCategory = EhConfig.NON_H;
+                        break;
+                    case 7:
+                        selectedCategory = EhConfig.IMAGE_SET;
+                        break;
+                    case 8:
+                        selectedCategory = EhConfig.COSPLAY;
+                        break;
+                    case 9:
+                        selectedCategory = EhConfig.ASIAN_PORN;
+                        break;
+                    case 10:
+                        selectedCategory = EhConfig.MISC;
+                        break;
+                    default:
+                        selectedCategory = EhUtils.ALL_CATEGORY;
+                        break;
+                }
+                if (selectedCategory != mSelectedCategory) {
+                    mSelectedCategory = selectedCategory;
+                    filterByCategory();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+        // Set default selection
+        mCategorySpinner.setSelection(0);
+
         mProgressView = (ProgressView) ViewUtils.$$(view, R.id.download_progress_view);
         View content = ViewUtils.$$(view, R.id.content);
         mRecyclerView = (MyEasyRecyclerView) ViewUtils.$$(content, R.id.recycler_view);
@@ -415,8 +502,6 @@ public class DownloadsScene extends ToolbarScene
 
         mViewTransition = new ViewTransition(content, tip);
 
-        Context context = getEHContext();
-        assert context != null;
         Resources resources = context.getResources();
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_download);
@@ -1873,5 +1958,28 @@ public class DownloadsScene extends ToolbarScene
                 view.outOfCustomChoiceMode();
             }
         }
+    }
+
+    private void filterByCategory() {
+        if (mBackList == null) {
+            return;
+        }
+        if (mSelectedCategory == EhUtils.ALL_CATEGORY) {
+            mList = new ArrayList<>(mBackList);
+        } else {
+            mList = new ArrayList<>();
+            for (DownloadInfo info : mBackList) {
+                if (info.category == mSelectedCategory) {
+                    mList.add(info);
+                }
+            }
+        }
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
+        }
+        updateTitle();
+        updatePaginationIndicator();
+        updateView();
+        queryUnreadSpiderInfo();
     }
 }

@@ -474,7 +474,7 @@ public class ArchiverDownloadDialog implements
         // 限制文件名长度，避免"File name too long"错误
         // 考虑到 ARCHIVER_PATH (18字符) + ".zip" (4字符) + 路径分隔符
         // 限制文件名在 200 个字符以内，为路径预留空间
-        final int MAX_FILENAME_LENGTH = 200;
+        final int MAX_FILENAME_LENGTH = 150;
         if (result.length() > MAX_FILENAME_LENGTH) {
             result = result.substring(0, MAX_FILENAME_LENGTH);
         }
