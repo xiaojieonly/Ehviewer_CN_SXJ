@@ -13,10 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1c0bCCgfiTa4G9hwopSyAOw) 提取码：4vu2
-- [蓝奏云](https://wwsu.lanzouu.com/iYYrU3adzm5e)，电脑端可正常下载 提取码：f6f0
+- [百度云](https://pan.baidu.com/s/1hVYpBeA7WSrU7Y6314WrSw) 提取码：pdmt
+- [夸克网盘](https://pan.quark.cn/s/4b81666facaf) 提取码：LwLk
+- [蓝奏云](https://wwbfg.lanzouu.com/i4HWk3cmb5xc)，电脑端可正常下载 提取码：coat
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:002aea861f2af0bc84618bdf23acf5558ca1f665&xt=urn:btmh:1220648f8a4ad80b944ea1e9437d0021034205eb7c60b918a6f6d57bf36e47ecb247&dn=EhViewer-2.0.0.8.apk&xl=23456665
+- Torrent链接: magnet:?xt=urn:btih:30a9cbafcd80d3b102f03ccbb8ede39e77ea12d7&xt=urn:btmh:1220f0e3b378843bb2c77c148b4519d2531958b5998c0d6b49a609ab998de9cc3755&dn=EhViewer-2.0.0.9.apk&xl=23534115
 
 点击前往赏饭：
 
@@ -28,6 +29,22 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2025/12/01
+### 新版发布2.0.0.9
+
+- 修复界面更新相关的崩溃问题
+- 添加Android 9图片解码失败时的回退机制
+- 优化图片处理和渲染参数格式化
+- 修复关闭种子下载对话框时可能发生的崩溃
+- 修复归档下载器在某些情况下崩溃的问题
+- 适配 Android 14 前台服务类型变更
+- 增加对content URI方案下导入归档的支持
+- 为下载列表添加按名称排序支持
+- 同步德语、西班牙语、法语、韩语、泰语、日语和繁体中文翻译
+- 修复版本更新时因空安全导致的崩溃
+- nullcat*：add error detail for wrong igneous
+- 应用程序启动时，异步删除三天前的解析错误日志文件。
+
 ## 2025/11/07
 ### 新版发布2.0.0.8
 
@@ -37,6 +54,11 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 为 WebViewSignInScene 中的 HTTP 响应添加默认的 reason phrase。
 - 增强 GLRootView 中的 EGL 配置选择逻辑，增加备用方案以提高稳定性。
 - 将 Analytics.java 迁移到 Kotlin。
+- [百度云](https://pan.baidu.com/s/1c0bCCgfiTa4G9hwopSyAOw) 提取码：4vu2
+- [蓝奏云](https://wwsu.lanzouu.com/iYYrU3adzm5e)，电脑端可正常下载 提取码：f6f0
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:002aea861f2af0bc84618bdf23acf5558ca1f665&xt=urn:btmh:1220648f8a4ad80b944ea1e9437d0021034205eb7c60b918a6f6d57bf36e47ecb247&dn=EhViewer-2.0.0.8.apk&xl=23456665
+
 
 ## 2025/11/01 
 ### 新版发布2.0.0.5
