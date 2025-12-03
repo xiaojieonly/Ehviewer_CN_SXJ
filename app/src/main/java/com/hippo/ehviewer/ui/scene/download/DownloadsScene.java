@@ -1864,6 +1864,18 @@ public class DownloadsScene extends ToolbarScene
                 // Delete file
                 deleteFileAsync(files);
             }
+
+            // 更新标题同步画廊计数
+            updateTitle();
+            // 更新Label抽屉计数
+            if (downloadLabelDraw!=null){
+                downloadLabelDraw.updateDownloadLabels();
+            }
+            // 如果分页, 更新分页计数
+            if (mPaginationIndicator != null &&
+                    mPaginationIndicator.getVisibility() == View.VISIBLE) {
+                mPaginationIndicator.setTotalCount(mList == null ? 0 : mList.size());
+            }
         }
     }
 
@@ -1895,6 +1907,18 @@ public class DownloadsScene extends ToolbarScene
                 label = mLabels[which];
             }
             EhApplication.getDownloadManager(context).changeLabel(mDownloadInfoList, label);
+
+            // 更新标题同步画廊计数
+            updateTitle();
+            // 更新Label抽屉计数
+            if (downloadLabelDraw!=null){
+                downloadLabelDraw.updateDownloadLabels();
+            }
+            // 如果分页, 更新分页计数
+            if (mPaginationIndicator != null &&
+                    mPaginationIndicator.getVisibility() == View.VISIBLE) {
+                mPaginationIndicator.setTotalCount(mList == null ? 0 : mList.size());
+            }
         }
     }
 
