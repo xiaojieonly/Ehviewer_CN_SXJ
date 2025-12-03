@@ -144,41 +144,23 @@ public class DownloadListInfosExecutor {
         if (type == R.id.filter_by_category_all) {
             return mList; // no filter
         }
+        // translate category
+        state = switch (type) {
+            case R.id.filter_by_category_doujinshi -> EhConfig.DOUJINSHI;
+            case R.id.filter_by_category_manga -> EhConfig.MANGA;
+            case R.id.filter_by_category_artist_cg -> EhConfig.ARTIST_CG;
+            case R.id.filter_by_category_game_cg -> EhConfig.GAME_CG;
+            case R.id.filter_by_category_western -> EhConfig.WESTERN;
+            case R.id.filter_by_category_non_h -> EhConfig.NON_H;
+            case R.id.filter_by_category_image_set -> EhConfig.IMAGE_SET;
+            case R.id.filter_by_category_cosplay -> EhConfig.COSPLAY;
+            case R.id.filter_by_category_asian_porn -> EhConfig.ASIAN_PORN;
+            case R.id.filter_by_category_misc -> EhConfig.MISC;
+            default -> state;
+        };
 
         for (int i = 0; i < mList.size(); i++) {
             DownloadInfo info = mList.get(i);
-            switch (type) {
-                case R.id.filter_by_category_doujinshi:
-                    state = EhConfig.DOUJINSHI;
-                    break;
-                case R.id.filter_by_category_manga:
-                    state = EhConfig.MANGA;
-                    break;
-                case R.id.filter_by_category_artist_cg:
-                    state = EhConfig.ARTIST_CG;
-                    break;
-                case R.id.filter_by_category_game_cg:
-                    state = EhConfig.GAME_CG;
-                    break;
-                case R.id.filter_by_category_western:
-                    state = EhConfig.WESTERN;
-                    break;
-                case R.id.filter_by_category_non_h:
-                    state = EhConfig.NON_H;
-                    break;
-                case R.id.filter_by_category_image_set:
-                    state = EhConfig.IMAGE_SET;
-                    break;
-                case R.id.filter_by_category_cosplay:
-                    state = EhConfig.COSPLAY;
-                    break;
-                case R.id.filter_by_category_asian_porn:
-                    state = EhConfig.ASIAN_PORN;
-                    break;
-                case R.id.filter_by_category_misc:
-                    state = EhConfig.MISC;
-                    break;
-            }
             if (info.category == state) {
                 list.add(info);
             }
