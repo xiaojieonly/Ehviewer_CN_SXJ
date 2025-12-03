@@ -395,6 +395,7 @@
     <string name="download_searching">搜尋中請稍後</string>
     <string name="download_searching_failed">搜尋失敗</string>
     <string name="download_sort_list">排序</string>
+    <string name="download_filter_by_category">照分類篩選</string>
     <string name="download_filter_by_status">照狀態篩選</string>
     <string name="download_status_all">全部</string>
     <string name="download_status_not_started">未開始</string>

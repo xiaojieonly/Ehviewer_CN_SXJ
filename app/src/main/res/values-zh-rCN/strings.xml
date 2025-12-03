@@ -364,6 +364,7 @@
     <string name="download_move_dialog_title">移动</string>
     <string name="download_labels">下载标签</string>
     <string name="download_sort_list">排序</string>
+    <string name="download_filter_by_category">根据分类过滤</string>
     <string name="download_filter_by_status">根据状态过滤</string>
     <string name="download_status_all">全部</string>
     <string name="sort_download_list">对内容排序</string>
