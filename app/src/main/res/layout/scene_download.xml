@@ -19,14 +19,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Spinner
-        android:id="@+id/category_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:background="?attr/selectableItemBackground"
-        android:padding="8dp" />
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">

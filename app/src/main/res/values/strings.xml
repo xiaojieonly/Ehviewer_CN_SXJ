@@ -453,6 +453,18 @@
     <string name="download_move_dialog_title">Move</string>
     <string name="download_labels">Download labels</string>
     <string name="download_sort_list">Sort</string>
+    <string name="download_filter_by_category">Filter by category</string>
+    <string name="download_category_all" translatable="false">All</string>
+    <string name="download_category_doujinshi" translatable="false">Doujinshi</string>
+    <string name="download_category_manga" translatable="false">Manga</string>
+    <string name="download_category_artist_cg" translatable="false">Artist CG</string>
+    <string name="download_category_game_cg" translatable="false">Game CG</string>
+    <string name="download_category_western" translatable="false">Western</string>
+    <string name="download_category_non_h" translatable="false">Non-H</string>
+    <string name="download_category_image_set" translatable="false">Image Set</string>
+    <string name="download_category_cosplay" translatable="false">Cosplay</string>
+    <string name="download_category_asian_porn" translatable="false">Asian Porn</string>
+    <string name="download_category_misc" translatable="false">Misc</string>
     <string name="download_filter_by_status">Filter by status</string>
     <string name="download_status_all">All</string>
     <string name="download_status_not_started">Not </string>

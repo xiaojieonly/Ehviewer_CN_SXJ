@@ -427,6 +427,7 @@
     <string name="download_move_dialog_title">移動</string>
     <string name="download_labels">下載標籤</string>
     <string name="download_sort_list">排序</string>
+    <string name="download_filter_by_category">按分類過濾</string>
     <string name="download_filter_by_status">按狀態過濾</string>
     <string name="download_status_all">全部</string>
     <string name="download_status_not_started">未開始</string>

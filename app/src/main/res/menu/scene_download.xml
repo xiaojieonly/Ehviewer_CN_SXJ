@@ -57,6 +57,58 @@
                 </menu>
             </item>
 
+            <item
+                android:id="@+id/filter_by_category"
+                android:title="@string/download_filter_by_category"
+                app:showAsAction="ifRoom">
+                <menu>
+                    <item
+                        android:id="@+id/filter_by_category_all"
+                        android:title="@string/download_category_all"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_doujinshi"
+                        android:title="@string/download_category_doujinshi"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_manga"
+                        android:title="@string/download_category_manga"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_artist_cg"
+                        android:title="@string/download_category_artist_cg"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_game_cg"
+                        android:title="@string/download_category_game_cg"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_western"
+                        android:title="@string/download_category_western"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_non_h"
+                        android:title="@string/download_category_non_h"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_image_set"
+                        android:title="@string/download_category_image_set"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_cosplay"
+                        android:title="@string/download_category_cosplay"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_asian_porn"
+                        android:title="@string/download_category_asian_porn"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/filter_by_category_misc"
+                        android:title="@string/download_category_misc"
+                        app:showAsAction="ifRoom"/>
+                </menu>
+            </item>
+
             <item android:id="@+id/sort"
                 android:title="@string/sort_download_list"
                 app:showAsAction="always">
