@@ -188,9 +188,10 @@ public final class SpiderQueen implements Runnable {
             mDecodeIndexArray[i] = GalleryPageView.INVALID_INDEX;
         }
 
+        // Use default priority to avoid aggressive throttling when app moves to background
         mWorkerPoolExecutor = new ThreadPoolExecutor(mWorkerMaxCount, mWorkerMaxCount,
-                0, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
-                new PriorityThreadFactory(SpiderWorker.class.getSimpleName(), Process.THREAD_PRIORITY_BACKGROUND));
+            0, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
+            new PriorityThreadFactory(SpiderWorker.class.getSimpleName(), Process.THREAD_PRIORITY_DEFAULT));
         mDownloadDelay = Settings.getDownloadDelay();
         downloadTimeout = Settings.getDownloadTimeout();
     }
@@ -1518,9 +1519,14 @@ public final class SpiderQueen implements Runnable {
                         Log.d(TAG, "Start download image " + index);
                     }
 
-                    // disable Call Timeout for image-downloading requests
-                    Call call = mHttpClient.newBuilder()
-                            .callTimeout(downloadTimeout, TimeUnit.SECONDS).build()
+                        // 扩大连接/读/写超时，避免 10s 连接超时导致频繁失败
+                        int timeoutSec = downloadTimeout <= 0 ? 30 : downloadTimeout;
+                        Call call = mHttpClient.newBuilder()
+                            .connectTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .readTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .writeTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .callTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .build()
                             .newCall(new EhRequestBuilder(targetImageUrl, referer).build());
                     Response response = call.execute();
                     ResponseBody responseBody = response.body();

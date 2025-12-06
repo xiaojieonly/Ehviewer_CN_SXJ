@@ -1883,6 +1883,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         return mCurrentTask == null && mWaitList.isEmpty();
     }
 
+    /**
+     * 是否有正在进行的下载任务（包括当前任务或等待队列）
+     */
+    public boolean hasActiveDownload() {
+        return mCurrentTask != null || !mWaitList.isEmpty();
+    }
+
     @Override
     public void onGetPages(int pages) {
         if (mCurrentTask != null) {
@@ -2380,6 +2387,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         Log.d(TAG, "应用进入后台，维持下载优先级");
         if (mCurrentSpider != null && mCurrentTask != null) {
             Log.d(TAG, "正在下载: " + mCurrentTask.title + ", 保持优先级避免速度下降");
+            // Ensure foreground notification stays alive while app is backgrounded
+            if (mDownloadListener != null) {
+                mDownloadListener.onDownload(mCurrentTask);
+            }
         }
     }
 

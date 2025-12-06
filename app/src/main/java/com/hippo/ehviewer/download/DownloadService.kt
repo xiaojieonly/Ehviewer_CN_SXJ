@@ -74,6 +74,12 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         }
         mDownloadManager = EhApplication.getDownloadManager(applicationContext)
         mDownloadManager!!.setDownloadListener(this)
+
+        // 如果启动时已经有任务，立即提升为前台以防被系统回收
+        if (mDownloadManager != null && mDownloadManager!!.hasActiveDownload()) {
+            ensureDownloadingBuilder()
+            mDownloadingDelay!!.startForeground()
+        }
     }
 
     override fun onDestroy() {
@@ -105,6 +111,12 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
                 handleIntent(intent)
             }
         } catch (_: NullPointerException) {
+        }
+
+        // 前台保活兜底：如果仍有任务且尚未在前台，确保前台通知存在
+        if (mDownloadManager != null && mDownloadManager!!.hasActiveDownload()) {
+            ensureDownloadingBuilder()
+            mDownloadingDelay!!.startForeground()
         }
         return START_STICKY
     }
