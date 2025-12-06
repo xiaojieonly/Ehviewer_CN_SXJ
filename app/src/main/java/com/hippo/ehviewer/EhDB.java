@@ -123,8 +123,24 @@ public class EhDB {
             
             try {
                 // 执行升级
+                if (oldVersion < 7) {
+                    // 添加DOWNLOADED_FILES表
+                    android.util.Log.i("EhDB", "Creating DOWNLOADED_FILES table");
+                    db.execSQL("CREATE TABLE IF NOT EXISTS \"DOWNLOADED_FILES\" (" +
+                            "\"TOKEN\" TEXT PRIMARY KEY NOT NULL ," +
+                            "\"GID\" INTEGER NOT NULL ," +
+                            "\"FILENAME\" TEXT NOT NULL ," +
+                            "\"MD5\" TEXT," +
+                            "\"PATH\" TEXT NOT NULL ," +
+                            "\"SIZE\" INTEGER," +
+                            "\"DOWNLOAD_TIME\" INTEGER NOT NULL ," +
+                            "\"LAST_ACCESSED\" INTEGER," +
+                            "\"STATUS\" INTEGER NOT NULL );");
+                    android.util.Log.i("EhDB", "DOWNLOADED_FILES table created successfully");
+                }
+                
                 if (oldVersion < 8) {
-                    // 添加新表
+                    // 添加GALLERY_VERSION_MAP表
                     android.util.Log.i("EhDB", "Creating GALLERY_VERSION_MAP table");
                     db.execSQL("CREATE TABLE IF NOT EXISTS \"GALLERY_VERSION_MAP\" (" +
                             "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," +
@@ -135,6 +151,19 @@ public class EhDB {
                             "\"UPDATE_TIME\" INTEGER NOT NULL );");
                     
                     android.util.Log.i("EhDB", "GALLERY_VERSION_MAP table created successfully");
+                    
+                    // 确保DOWNLOADED_FILES表存在（以防从旧版本升级）
+                    android.util.Log.i("EhDB", "Ensuring DOWNLOADED_FILES table exists");
+                    db.execSQL("CREATE TABLE IF NOT EXISTS \"DOWNLOADED_FILES\" (" +
+                            "\"TOKEN\" TEXT PRIMARY KEY NOT NULL ," +
+                            "\"GID\" INTEGER NOT NULL ," +
+                            "\"FILENAME\" TEXT NOT NULL ," +
+                            "\"MD5\" TEXT," +
+                            "\"PATH\" TEXT NOT NULL ," +
+                            "\"SIZE\" INTEGER," +
+                            "\"DOWNLOAD_TIME\" INTEGER NOT NULL ," +
+                            "\"LAST_ACCESSED\" INTEGER," +
+                            "\"STATUS\" INTEGER NOT NULL );");
                 }
                 
                 // 执行旧的升级逻辑
@@ -238,6 +267,54 @@ public class EhDB {
                 }
             }
         }
+
+        @Override
+        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            android.util.Log.i("EhDB", "Downgrading database from version " + oldVersion + " to " + newVersion);
+            
+            // 备份数据库
+            Context context = mContextRef.get();
+            if (context != null) {
+                boolean backupSuccess = backupDatabase(context);
+                android.util.Log.i("EhDB", "Database backup " + (backupSuccess ? "successful" : "failed"));
+            }
+            
+            try {
+                // 处理降级：删除新版本的表或列，但保留核心表
+                if (oldVersion > 8 && newVersion == 8) {
+                    // 如果未来有版本 9+，在这里处理降级到版本 8
+                    android.util.Log.i("EhDB", "Downgrade from future version to 8");
+                }
+                
+                // 注意：不删除 DOWNLOADED_FILES 表，它是版本 7 的一部分
+                // 只有版本 8+ 添加的新特性才在降级时删除
+                
+                android.util.Log.i("EhDB", "Database downgrade completed successfully");
+                
+            } catch (Exception e) {
+                android.util.Log.e("EhDB", "Error during database downgrade", e);
+                
+                // 降级失败，尝试还原数据库
+                if (context != null) {
+                    android.util.Log.i("EhDB", "Attempting to restore database due to downgrade failure");
+                    File backupDir = new File(context.getCacheDir(), "db_backup");
+                    File[] backupFiles = backupDir.listFiles();
+                    
+                    if (backupFiles != null && backupFiles.length > 0) {
+                        // 找到最新的备份文件
+                        File latestBackup = backupFiles[0];
+                        for (File backup : backupFiles) {
+                            if (backup.getName().compareTo(latestBackup.getName()) > 0) {
+                                latestBackup = backup;
+                            }
+                        }
+                        
+                        boolean restoreSuccess = restoreDatabase(context, latestBackup.getName());
+                        android.util.Log.i("EhDB", "Database restore " + (restoreSuccess ? "successful" : "failed"));
+                    }
+                }
+            }
+        }
     }
 
     private static class OldDBHelper extends SQLiteOpenHelper {
@@ -267,16 +344,33 @@ public class EhDB {
     }
 
     public static void initialize(Context context) {
+        Log.i(TAG, "Initializing EhDB...");
         sHasOldDB = context.getDatabasePath("data").exists();
+        Log.i(TAG, "Old database exists: " + sHasOldDB);
 
         DBOpenHelper helper = new DBOpenHelper(
                 context.getApplicationContext(), "eh.db", null);
 
+        Log.i(TAG, "Getting writable database...");
         SQLiteDatabase db = helper.getWritableDatabase();
+        Log.i(TAG, "Database obtained, version: " + db.getVersion() + 
+              ", path: " + db.getPath() + ", isOpen: " + db.isOpen());
+        
         DaoMaster daoMaster = new DaoMaster(db);
+        Log.i(TAG, "DaoMaster created, schema version: " + DaoMaster.SCHEMA_VERSION);
 
         sDaoSession = daoMaster.newSession();
+        Log.i(TAG, "DaoSession created");
+        
         MAX_HISTORY_COUNT = Settings.getHistoryInfoSize();
+        Log.i(TAG, "EhDB initialization completed");
+    }
+
+    /**
+     * 获取DaoSession
+     */
+    public static DaoSession getDaoSession() {
+        return sDaoSession;
     }
 
     /**

@@ -32,7 +32,7 @@ public class EhDaoGenerator {
     private static final String OUT_DIR = "app/src/main/java";
     private static final String DELETE_DIR = OUT_DIR+"/com/hippo/ehviewer/dao";
 
-    private static final int VERSION = 6;
+    private static final int VERSION = 7;
 
     private static final String DOWNLOAD_INFO_PATH = OUT_DIR+"/com/hippo/ehviewer/dao/DownloadInfo.java";
     private static final String HISTORY_INFO_PATH = OUT_DIR+"/com/hippo/ehviewer/dao/HistoryInfo.java";
@@ -59,6 +59,7 @@ public class EhDaoGenerator {
         addDownloads(schema);
         addDownloadLabel(schema);
         addDownloadDirname(schema);
+        addDownloadedFiles(schema);
         addHistoryInfo(schema);
         addQuickSearch(schema);
         addBlackList(schema);
@@ -207,6 +208,30 @@ public class EhDaoGenerator {
         entity.setClassNameDao("DownloadDirnameDao");
         entity.addLongProperty("gid").primaryKey().notNull();
         entity.addStringProperty("dirname");
+    }
+
+    private static void addDownloadedFiles(Schema schema) {
+        Entity entity = schema.addEntity("DownloadedFile");
+        entity.setTableName("DOWNLOADED_FILES");
+        entity.setClassNameDao("DownloadedFilesDao");
+        // 主键使用文件token（短码）
+        entity.addStringProperty("token").primaryKey().notNull();
+        // 关联的画廊GID
+        entity.addLongProperty("gid").notNull();
+        // 文件名
+        entity.addStringProperty("filename").notNull();
+        // 文件MD5哈希值
+        entity.addStringProperty("md5");
+        // 文件路径
+        entity.addStringProperty("path").notNull();
+        // 文件大小
+        entity.addLongProperty("size");
+        // 下载时间
+        entity.addLongProperty("download_time").notNull();
+        // 最后访问时间
+        entity.addLongProperty("last_accessed");
+        // 文件状态 0-正常 1-已删除 2-画廊已移除
+        entity.addIntProperty("status").notNull();
     }
 
     private static void addHistoryInfo(Schema schema) {

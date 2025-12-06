@@ -600,6 +600,8 @@
     <string name="settings_download_incremental_update_summary">下载时检测同名画廊，保留旧版本并创建更新记录</string>
     <string name="settings_download_merge_duplicate_gallery">合并重复画廊</string>
     <string name="settings_download_merge_duplicate_gallery_summary">扫描并合并具有版本递进关系的重复画廊</string>
+    <string name="settings_download_scan_download_files">扫描下载文件</string>
+    <string name="settings_download_scan_download_files_summary">扫描所有下载目录并重建文件信息表，用于优化下载和避免重复</string>
     <string name="merge_duplicate_gallery_confirm">发现重复画廊组: %1$s (%2$d 个版本)，是否合并？</string>
     <string name="merge_duplicate_gallery_merge_all">全部是</string>
     <string name="merge_duplicate_gallery_skip_all">全部否</string>

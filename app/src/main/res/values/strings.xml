@@ -689,6 +689,8 @@
     <string name="settings_download_incremental_update_summary">Detect same-name galleries when downloading, keep old versions and create update records</string>
     <string name="settings_download_merge_duplicate_gallery">Merge duplicate galleries</string>
     <string name="settings_download_merge_duplicate_gallery_summary">Scan and merge duplicate galleries with version progression</string>
+    <string name="settings_download_scan_download_files">Scan download files</string>
+    <string name="settings_download_scan_download_files_summary">Scan all download directories and rebuild file info table to optimize downloads and avoid duplicates</string>
     <string name="merge_duplicate_gallery_confirm">Found duplicate gallery group: %1$s (%2$d versions), merge them?</string>
     <string name="merge_duplicate_gallery_merge_all">Yes to all</string>
     <string name="merge_duplicate_gallery_skip_all">No to all</string>
@@ -1082,5 +1084,25 @@
     <string name="dialog_search_download_title">搜索下载画廊</string>
     <string name="dialog_search_options_label">搜索选项</string>
     <string name="reset">重置</string>
+
+    <!-- Background task manager -->
+    <string name="background_tasks_channel_name">后台任务</string>
+    <string name="background_tasks_channel_description">扫描下载文件、合并重复画廊等后台任务通知</string>
+    <string name="background_task_running">后台任务运行中</string>
+    <string name="background_task_running_description">任务完成后通知会自动消失</string>
+
+    <!-- Download scan strings -->
+    <string name="scan_download_files_scanning">正在扫描下载目录...</string>
+    <string name="scan_download_files_scanning_progress">正在扫描下载目录... (%d/%d)</string>
+    <string name="scan_download_files_completed">扫描完成！</string>
+    <string name="scan_download_files_failed">扫描失败</string>
+    <string name="scan_download_files_failed_title">扫描失败</string>
+    
+    <!-- Clean invalid download strings -->
+    <string name="clean_invalid_download_empty_directory">空目录: %s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">缺少 .ehviewer 文件: %s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">无效的 .ehviewer 文件: %s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">文件数量不一致: %s, 预期: %d, 实际: %d</string>
+    <string name="clean_invalid_download_error_processing_directory">处理目录时出错: %s - %s</string>
 
 </resources>

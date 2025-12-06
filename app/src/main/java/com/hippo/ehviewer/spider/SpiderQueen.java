@@ -33,6 +33,8 @@ import androidx.annotation.UiThread;
 
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.ehviewer.Analytics;
+import com.hippo.ehviewer.DownloadedFileManager;
+import com.hippo.ehviewer.dao.DownloadedFile;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
@@ -48,6 +50,7 @@ import com.hippo.ehviewer.client.parser.GalleryDetailParser;
 import com.hippo.ehviewer.client.parser.GalleryPageApiParser;
 import com.hippo.ehviewer.client.parser.GalleryPageParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
+import com.hippo.ehviewer.dao.DownloadedFile;
 import com.hippo.ehviewer.dao.GalleryVersionMap;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
@@ -1046,6 +1049,148 @@ public final class SpiderQueen implements Runnable {
         }
     }
 
+    /**
+     * 添加下载文件信息到DownloadedFileManager
+     */
+    private void addDownloadedFileInfo(int index) {
+        try {
+            SpiderInfo spiderInfo = mSpiderInfo.get();
+            if (spiderInfo == null || spiderInfo.pTokenMap == null) {
+                return;
+            }
+
+            String token = spiderInfo.pTokenMap.get(index);
+            if (token == null || SpiderInfo.TOKEN_FAILED.equals(token)) {
+                return;
+            }
+
+            // 获取文件路径
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            if (downloadDir == null) {
+                return;
+            }
+
+            // 构建文件名（index-token.ext）
+            String filename = index + "-" + token + ".jpg";
+            UniFile file = downloadDir.findFile(filename);
+            if (file == null) {
+                // 尝试其他扩展名
+                String[] extensions = {".png", ".gif", ".webp", ".bmp"};
+                for (String ext : extensions) {
+                    filename = index + "-" + token + ext;
+                    file = downloadDir.findFile(filename);
+                    if (file != null) {
+                        break;
+                    }
+                }
+            }
+
+            if (file == null) {
+                Log.w(TAG, "Downloaded file not found: " + index + "-" + token);
+                return;
+            }
+
+            // 添加到DownloadedFileManager
+            DownloadedFileManager manager = DownloadedFileManager.getInstance();
+            String path = file.getUri().getPath();
+            long size = file.length();
+            manager.addOrUpdateFile(token, spiderInfo.gid, filename, path, size);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding downloaded file info", e);
+        }
+    }
+
+    /**
+     * 复制已存在的文件
+     */
+    private boolean copyExistingFile(DownloadedFile downloadedFile, int index) {
+        try {
+            // 源文件
+            String sourcePath = downloadedFile.getPath();
+            UniFile sourceFile = UniFile.fromFile(new java.io.File(sourcePath));
+            if (sourceFile == null || !sourceFile.exists()) {
+                Log.w(TAG, "Source file not found: " + sourcePath);
+                return false;
+            }
+
+            // 目标目录
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            if (downloadDir == null) {
+                return false;
+            }
+
+            // 构建目标文件名
+            String token = downloadedFile.getToken();
+            String sourceFilename = downloadedFile.getFilename();
+            String extension = "";
+            int dotIndex = sourceFilename.lastIndexOf('.');
+            if (dotIndex > 0) {
+                extension = sourceFilename.substring(dotIndex);
+            }
+            String targetFilename = index + "-" + token + extension;
+
+            // 检查目标文件是否已存在
+            UniFile targetFile = downloadDir.findFile(targetFilename);
+            if (targetFile != null && targetFile.exists()) {
+                Log.d(TAG, "Target file already exists: " + targetFilename);
+                return true;
+            }
+
+            // 复制文件
+            targetFile = downloadDir.createFile(targetFilename);
+            if (targetFile == null) {
+                Log.e(TAG, "Failed to create target file: " + targetFilename);
+                return false;
+            }
+
+            // 执行复制
+            java.io.InputStream in = null;
+            java.io.OutputStream out = null;
+            try {
+                in = sourceFile.openInputStream();
+                out = targetFile.openOutputStream();
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                out.flush();
+                Log.d(TAG, "File copied successfully: " + sourceFilename + " -> " + targetFilename);
+                return true;
+            } finally {
+                try {
+                    if (in != null) in.close();
+                    if (out != null) out.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing streams", e);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error copying existing file", e);
+            return false;
+        }
+    }
+
+    /**
+     * 检查是否是画廊已移除的错误
+     */
+    private boolean isGalleryRemovedError(String error) {
+        if (error == null) {
+            return false;
+        }
+        
+        // 检查错误消息中是否包含画廊已移除的关键词
+        error = error.toLowerCase();
+        return error.contains("gallery removed") ||
+               error.contains("gallery not found") ||
+               error.contains("404") ||
+               error.contains("not found") ||
+               error.contains("removed") ||
+               error.contains("deleted") ||
+               error.contains("expunged");
+    }
+
     private void updatePageState(int index, @State int state) {
         updatePageState(index, state, null);
     }
@@ -1091,6 +1236,8 @@ public final class SpiderQueen implements Runnable {
         if (state == STATE_FAILED) {
             notifyPageFailure(index, error);
         } else if (state == STATE_FINISHED) {
+            // 添加文件信息到DownloadedFileManager
+            addDownloadedFileInfo(index);
             notifyPageSuccess(index);
         }
     }
@@ -1553,6 +1700,12 @@ public final class SpiderQueen implements Runnable {
             // Remove download failed image
             mSpiderDen.remove(index);
 
+            // 检查是否是画廊已移除的错误
+            if (isGalleryRemovedError(error)) {
+                DownloadedFileManager manager = DownloadedFileManager.getInstance();
+                manager.markGalleryRemoved(mGalleryInfo.gid);
+            }
+
             updatePageState(index, STATE_FAILED, error);
             return !interrupt;
         }
@@ -1611,6 +1764,24 @@ public final class SpiderQueen implements Runnable {
             if (!force && mSpiderDen.contain(index)) {
                 updatePageState(index, STATE_FINISHED);
                 return true;
+            }
+
+            // Check if file already exists in DownloadedFileManager
+            if (!force) {
+                if (spiderInfo != null && spiderInfo.pTokenMap != null) {
+                    String token = spiderInfo.pTokenMap.get(index);
+                    if (token != null && !SpiderInfo.TOKEN_FAILED.equals(token)) {
+                        DownloadedFileManager manager = DownloadedFileManager.getInstance();
+                        DownloadedFile downloadedFile = manager.getFileByToken(token);
+                        if (downloadedFile != null) {
+                            // 文件已存在，尝试复制文件
+                            if (copyExistingFile(downloadedFile, index)) {
+                                updatePageState(index, STATE_FINISHED);
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
 
             // Clear TOKEN_FAILED for force request

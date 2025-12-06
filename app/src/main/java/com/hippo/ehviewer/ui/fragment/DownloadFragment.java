@@ -83,6 +83,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference importDownloadItems = findPreference(KEY_IMPORT_DOWNLOAD_ITEMS);
         Preference cleanInvalidDownload = findPreference(KEY_CLEAN_INVALID_DOWNLOAD);
         Preference mergeDuplicateGallery = findPreference("merge_duplicate_gallery");
+        Preference scanDownloadFiles = findPreference("scan_download_files");
         Preference preloadImage = findPreference("preload_image");
         Preference imageResolutionPref = findPreference(Settings.KEY_IMAGE_RESOLUTION);
 
@@ -131,6 +132,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
         if (mergeDuplicateGallery != null) {
             mergeDuplicateGallery.setOnPreferenceClickListener(this);
+        }
+        if (scanDownloadFiles != null) {
+            scanDownloadFiles.setOnPreferenceClickListener(this);
         }
     }
 
@@ -181,6 +185,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         } else if ("merge_duplicate_gallery".equals(key)) {
             new MergeDuplicateGalleryTask(this).execute();
             return true;
+        } else if ("scan_download_files".equals(key)) {
+            showScanDownloadFilesDialog();
+            return true;
         }
         return false;
     }
@@ -205,6 +212,18 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_l)
                 .setPositiveButton(R.string.settings_download_continue, listener)
                 .setNeutralButton(R.string.settings_download_document, listener)
+                .show();
+    }
+
+    private void showScanDownloadFilesDialog() {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_scan_download_files)
+                .setMessage(R.string.settings_download_scan_download_files_summary)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    ScanDownloadFilesTask task = new ScanDownloadFilesTask(this);
+                    task.execute();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
 
@@ -449,7 +468,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
     }
 
-    private static class CleanInvalidDownloadTask extends AsyncTask<Void, Integer, Integer> {
+    private class CleanInvalidDownloadTask extends AsyncTask<Void, Integer, Integer> {
 
         private final WeakReference<DownloadFragment> mFragment;
         private ProgressDialog mProgressDialog;
@@ -501,7 +520,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
                 UniFile[] subFiles = dir.listFiles();
                 if (subFiles == null || subFiles.length == 0) {
-                    mLogs.add("Empty directory: " + dir.getName());
+                    mLogs.add(getString(R.string.clean_invalid_download_empty_directory, dir.getName()));
                     invalidCount++;
                     dir.delete();
                     continue;
@@ -509,7 +528,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
                 UniFile ehViewerFile = dir.findFile(DownloadManager.DOWNLOAD_INFO_FILENAME);
                 if (ehViewerFile == null) {
-                    mLogs.add("Missing .ehviewer file: " + dir.getName());
+                    mLogs.add(getString(R.string.clean_invalid_download_missing_ehviewer_file, dir.getName()));
                     invalidCount++;
                     continue;
                 }
@@ -518,7 +537,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     String content = IOUtils.readString(ehViewerFile.openInputStream(), StandardCharsets.UTF_8.name());
                     String[] lines = content.split("\n");
                     if (lines.length < 8) {
-                        mLogs.add("Invalid .ehviewer file: " + dir.getName());
+                        mLogs.add(getString(R.string.clean_invalid_download_invalid_ehviewer_file, dir.getName()));
                         invalidCount++;
                         // Try to reset if possible
                         long gid;
@@ -546,7 +565,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     }
 
                     if (imageFileCount != pageCount) {
-                        mLogs.add("Inconsistent file count: " + dir.getName() + ", expected: " + pageCount + ", actual: " + imageFileCount);
+                        mLogs.add(getString(R.string.clean_invalid_download_inconsistent_file_count, dir.getName(), pageCount, imageFileCount));
                         invalidCount++;
                         for (UniFile subFile : subFiles) {
                             String name = subFile.getName();
@@ -570,7 +589,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         }
                     }
                 } catch (IOException | NumberFormatException e) {
-                    mLogs.add("Error processing directory: " + dir.getName() + " - " + e.getMessage());
+                    mLogs.add(getString(R.string.clean_invalid_download_error_processing_directory, dir.getName(), e.getMessage()));
                     invalidCount++;
                 }
             }

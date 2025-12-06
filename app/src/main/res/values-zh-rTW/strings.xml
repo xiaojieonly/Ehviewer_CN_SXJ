@@ -986,4 +986,18 @@
     <string name="dummy_button">虛擬按鈕</string>
     <string name="dummy_content">虛擬\n內容</string>
 
+    <!-- Download scan strings -->
+    <string name="scan_download_files_scanning">正在掃描下載目錄...</string>
+    <string name="scan_download_files_scanning_progress">正在掃描下載目錄... (%d/%d)</string>
+    <string name="scan_download_files_completed">掃描完成！</string>
+    <string name="scan_download_files_failed">掃描失敗</string>
+    <string name="scan_download_files_failed_title">掃描失敗</string>
+    
+    <!-- Clean invalid download strings -->
+    <string name="clean_invalid_download_empty_directory">空目錄: %s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">缺少 .ehviewer 檔案: %s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">無效的 .ehviewer 檔案: %s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">檔案數量不一致: %s, 預期: %d, 實際: %d</string>
+    <string name="clean_invalid_download_error_processing_directory">處理目錄時出錯: %s - %s</string>
+
 </resources>

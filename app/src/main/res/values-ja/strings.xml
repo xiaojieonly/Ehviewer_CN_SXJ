@@ -898,4 +898,18 @@
     <string name="dialog_search_download_title">Search downloads</string>
     <string name="dialog_search_options_label">Search options</string>
     <string name="reset">Reset</string>
+
+    <!-- Download scan strings -->
+    <string name="scan_download_files_scanning">ダウンロードディレクトリをスキャン中...</string>
+    <string name="scan_download_files_scanning_progress">ダウンロードディレクトリをスキャン中... (%d/%d)</string>
+    <string name="scan_download_files_completed">スキャン完了！</string>
+    <string name="scan_download_files_failed">スキャン失敗</string>
+    <string name="scan_download_files_failed_title">スキャン失敗</string>
+    
+    <!-- Clean invalid download strings -->
+    <string name="clean_invalid_download_empty_directory">空のディレクトリ: %s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">.ehviewer ファイルがありません: %s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">無効な .ehviewer ファイル: %s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">ファイル数が一致しません: %s, 予想: %d, 実際: %d</string>
+    <string name="clean_invalid_download_error_processing_directory">ディレクトリ処理中にエラーが発生しました: %s - %s</string>
 </resources>

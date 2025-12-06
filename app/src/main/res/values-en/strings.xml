@@ -858,4 +858,18 @@
     <string name="dialog_search_options_label">Search options</string>
     <string name="reset">Reset</string>
 
+    <!-- Download scan strings -->
+    <string name="scan_download_files_scanning">Scanning download directory...</string>
+    <string name="scan_download_files_scanning_progress">Scanning download directory... (%d/%d)</string>
+    <string name="scan_download_files_completed">Scan completed!</string>
+    <string name="scan_download_files_failed">Scan failed</string>
+    <string name="scan_download_files_failed_title">Scan failed</string>
+    
+    <!-- Clean invalid download strings -->
+    <string name="clean_invalid_download_empty_directory">Empty directory: %s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">Missing .ehviewer file: %s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">Invalid .ehviewer file: %s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">Inconsistent file count: %s, expected: %d, actual: %d</string>
+    <string name="clean_invalid_download_error_processing_directory">Error processing directory: %s - %s</string>
+
 </resources>
