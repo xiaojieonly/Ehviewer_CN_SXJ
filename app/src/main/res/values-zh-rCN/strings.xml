@@ -663,6 +663,8 @@
     <string name="settings_advanced_wifi_sander_summary">通过WiFi热点迁移数据</string>
     <string name="settings_advanced_wifi_client">WiFi 迁移数据接收</string>
     <string name="settings_advanced_wifi_client_summary">接收来自WiFi热点的迁移数据</string>
+    <string name="settings_advanced_database_viewer">数据库查看器</string>
+    <string name="settings_advanced_database_viewer_summary">查看数据库版本、表和数据内容</string>
 
     <string name="settings_about">更新与支持</string>
     <string name="settings_about_declaration_summary">EhViewer 与 E-Hentai.org 无任何联系</string>

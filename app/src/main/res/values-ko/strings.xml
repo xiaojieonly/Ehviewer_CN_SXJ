@@ -660,6 +660,8 @@
     <string name="settings_advanced_wifi_sander_summary">Wi-Fi 핫스팟을 통한 데이터 마이그레이션</string>
     <string name="settings_advanced_wifi_client">WiFi 마이그레이션 데이터 수신</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi 핫스팟에서 마이그레이션 데이터 수신</string>
+    <string name="settings_advanced_database_viewer">데이터베이스 뷰어</string>
+    <string name="settings_advanced_database_viewer_summary">데이터베이스 버전, 테이블 및 데이터 내용보기</string>
 
     <string name="settings_about">앱 정보</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>

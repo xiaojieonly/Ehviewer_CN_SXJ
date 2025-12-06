@@ -611,6 +611,8 @@
     <string name="settings_advanced_wifi_sander_summary">Migración de datos vía punto de acceso Wi-Fi</string>
     <string name="settings_advanced_wifi_client">Recepción de datos de migración WiFi</string>
     <string name="settings_advanced_wifi_client_summary">Recibir datos de migración desde puntos de acceso Wi-Fi</string>
+    <string name="settings_advanced_database_viewer">Visor de base de datos</string>
+    <string name="settings_advanced_database_viewer_summary">Ver versión de base de datos, tablas y contenido de datos</string>
 
     <string name="settings_about">Acerca de</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>

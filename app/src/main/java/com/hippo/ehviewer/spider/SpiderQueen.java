@@ -441,6 +441,7 @@ public final class SpiderQueen implements Runnable {
                 Process.THREAD_PRIORITY_BACKGROUND);
         mQueenThread = queenThread;
         queenThread.start();
+        Log.d(TAG, "SpiderQueen thread started with THREAD_PRIORITY_BACKGROUND");
     }
 
     private void stop() {
@@ -1023,6 +1024,16 @@ public final class SpiderQueen implements Runnable {
     public void run() {
         if (DEBUG_LOG) {
             Log.i(TAG, Thread.currentThread().getName() + ": start");
+        }
+
+        // 如果是下载模式，提高线程优先级以保证后台下载速度
+        if (mDownloadReference > 0) {
+            try {
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+                Log.d(TAG, "SpiderQueen main thread priority raised to THREAD_PRIORITY_DEFAULT for background download");
+            } catch (SecurityException e) {
+                Log.w(TAG, "Failed to set SpiderQueen thread priority", e);
+            }
         }
 
         runInternal();
@@ -1886,6 +1897,16 @@ public final class SpiderQueen implements Runnable {
         public void run() {
             if (DEBUG_LOG) {
                 Log.i(TAG, Thread.currentThread().getName() + ": start");
+            }
+
+            // 为下载线程设置更高的优先级，确保后台下载速度不会因应用后台而降低
+            // 将线程优先级从 THREAD_PRIORITY_BACKGROUND 提升到 THREAD_PRIORITY_DEFAULT
+            // 这样即使应用进入后台，下载线程仍能保持较好的性能
+            try {
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+                Log.d(TAG, "SpiderWorker thread priority raised to THREAD_PRIORITY_DEFAULT for better download performance");
+            } catch (SecurityException e) {
+                Log.w(TAG, "Failed to set thread priority, falling back to default", e);
             }
 
             while (mSpiderDen.isReady() && !Thread.currentThread().isInterrupted() && runInternal())

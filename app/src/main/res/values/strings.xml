@@ -750,6 +750,8 @@
     <string name="settings_advanced_wifi_sander_summary">Data Migration via Wi-Fi Hotspot</string>
     <string name="settings_advanced_wifi_client">WiFi migration data reception</string>
     <string name="settings_advanced_wifi_client_summary">Receive migration data from Wi Fi hotspots</string>
+    <string name="settings_advanced_database_viewer">Database Viewer</string>
+    <string name="settings_advanced_database_viewer_summary">View database versions, tables, and content</string>
 
     <string name="settings_about">About</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>

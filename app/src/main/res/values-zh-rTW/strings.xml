@@ -649,6 +649,8 @@
     <string name="settings_advanced_wifi_sander_summary">透過Wi-Fi熱點來資料遷移</string>
     <string name="settings_advanced_wifi_client">WiFi遷移資料接受</string>
     <string name="settings_advanced_wifi_client_summary">接收來自Wi-Fi熱點的遷移資料</string>
+    <string name="settings_advanced_database_viewer">資料庫查看器</string>
+    <string name="settings_advanced_database_viewer_summary">查看資料庫版本、表和資料內容</string>
 
     <string name="settings_about">關於</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>

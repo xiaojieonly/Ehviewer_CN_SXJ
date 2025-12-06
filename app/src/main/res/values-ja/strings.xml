@@ -611,6 +611,8 @@
     <string name="settings_advanced_wifi_sander_summary">Wi-Fi ホットスポット経由で移行をするデータを送信します</string>
     <string name="settings_advanced_wifi_client">Wi-Fi で移行をするデータを受信</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi ホットスポット経由で移行をするデータを受信します</string>
+    <string name="settings_advanced_database_viewer">データベースビューア</string>
+    <string name="settings_advanced_database_viewer_summary">データベースバージョン、テーブル、データの内容を表示します</string>
     <string name="settings_about">このアプリについて</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer は E-Hentai.org と一切の関係がございません。</string>

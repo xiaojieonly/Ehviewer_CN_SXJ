@@ -84,54 +84,43 @@ public class CheckboxAdapter extends RecyclerView.Adapter<CheckboxAdapter.ViewHo
         int itemId = itemIds.get(position);
         boolean isSelected = selectedItems.contains(itemId);
         
+        // 移除旧的监听器，避免重复触发
+        holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(isSelected);
         holder.textView.setText(item);
         
+        // 统一使用itemView点击事件
         holder.itemView.setOnClickListener(v -> {
+            boolean currentSelected = selectedItems.contains(itemId);
+            
             if (isMutuallyExclusive) {
                 // 互斥选择模式：清除其他选择，只选择当前项
-                selectedItems.clear();
-                selectedItems.add(itemId);
-                // 使用post方法延迟通知，避免在RecyclerView计算布局时调用
-                holder.itemView.post(() -> notifyDataSetChanged());
+                if (!currentSelected) {
+                    selectedItems.clear();
+                    selectedItems.add(itemId);
+                    notifyDataSetChanged();
+                    
+                    if (listener != null) {
+                        listener.onSelectionChanged(selectedItems);
+                    }
+                }
             } else {
                 // 多选模式
-                if (isSelected) {
+                if (currentSelected) {
                     selectedItems.remove(itemId);
                 } else {
                     selectedItems.add(itemId);
                 }
-                // 使用post方法延迟通知，避免在RecyclerView计算布局时调用
-                holder.itemView.post(() -> notifyItemChanged(position));
-            }
-            
-            if (listener != null) {
-                listener.onSelectionChanged(selectedItems);
+                notifyItemChanged(position);
+                
+                if (listener != null) {
+                    listener.onSelectionChanged(selectedItems);
+                }
             }
         });
         
-        holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isMutuallyExclusive) {
-                // 互斥选择模式
-                if (isChecked) {
-                    selectedItems.clear();
-                    selectedItems.add(itemId);
-                    // 使用post方法延迟通知，避免在RecyclerView计算布局时调用
-                    holder.itemView.post(() -> notifyDataSetChanged());
-                }
-            } else {
-                // 多选模式
-                if (isChecked) {
-                    selectedItems.add(itemId);
-                } else {
-                    selectedItems.remove(itemId);
-                }
-            }
-            
-            if (listener != null) {
-                listener.onSelectionChanged(selectedItems);
-            }
-        });
+        // CheckBox点击也触发itemView点击
+        holder.checkBox.setOnClickListener(v -> holder.itemView.performClick());
     }
     
     @Override

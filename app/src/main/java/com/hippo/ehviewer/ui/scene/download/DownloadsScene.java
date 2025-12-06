@@ -846,6 +846,14 @@ public class DownloadsScene extends ToolbarScene
         }
         searchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
         
+        // 设置SearchBar为搜索状态，使EditText可以点击和编辑
+        searchBar.setState(SearchBar.STATE_SEARCH, false);
+        
+        // 确保EditText可以获取焦点和点击
+        searchBar.mEditText.setFocusable(true);
+        searchBar.mEditText.setFocusableInTouchMode(true);
+        searchBar.mEditText.setClickable(true);
+        
         // 设置默认搜索选项
         advanceSearchTable.setAdvanceSearch(AdvanceSearchTable.SNAME | AdvanceSearchTable.STAGS);
         
@@ -859,10 +867,8 @@ public class DownloadsScene extends ToolbarScene
                 .setCancelable(true)
                 .setOnDismissListener(this::onSearchDialogDismiss)
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                    // 取消搜索，不执行任何搜索操作
                     searchKey = null;
-                    searchBar.setText(null);
-                    searchBar.setTitle(null);
-                    searchBar.applySearch(true);
                     dialog.dismiss();
                 })
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
@@ -1539,6 +1545,12 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onApplySearch(String query) {
+        // 检查mSearchBar是否为空，避免空指针异常
+        if (mSearchBar == null) {
+            Log.d("DownloadsScene", "onApplySearch: mSearchBar为null，可能对话框已关闭");
+            return;
+        }
+        
         searchKey = query;
         mSearchBar.hideKeyBoard();
         searching = true;
@@ -2239,6 +2251,19 @@ public class DownloadsScene extends ToolbarScene
         mStatusAdapter.setMutuallyExclusive(true);
         mSortAdapter.setMutuallyExclusive(true);
 
+        // 设置选择变更监听器
+        mStatusAdapter.setOnSelectionChangedListener(selectedItems -> {
+            Log.d("DownloadsScene", "状态选择已变更: " + selectedItems);
+            mSelectedStatuses.clear();
+            mSelectedStatuses.addAll(selectedItems);
+        });
+        
+        mSortAdapter.setOnSelectionChangedListener(selectedItems -> {
+            Log.d("DownloadsScene", "排序选择已变更: " + selectedItems);
+            mSelectedSorts.clear();
+            mSelectedSorts.addAll(selectedItems);
+        });
+
         // 设置适配器
         statusRecyclerView.setAdapter(mStatusAdapter);
         sortRecyclerView.setAdapter(mSortAdapter);
@@ -2323,6 +2348,9 @@ public class DownloadsScene extends ToolbarScene
         if (mSelectedCategories != null && !mSelectedCategories.isEmpty()) {
             selectedCategories.addAll(mSelectedCategories);
             Log.d("DownloadsScene", "applySortAndFilter: 选中的分类ID = " + selectedCategories);
+        } else {
+            // 如果没有选择分类，默认为全部
+            selectedCategories.add(EhUtils.ALL_CATEGORY);
         }
         
         if (!mSelectedStatuses.isEmpty()) {
@@ -2337,8 +2365,11 @@ public class DownloadsScene extends ToolbarScene
             Log.d("DownloadsScene", "applySortAndFilter: 选中的排序ID = " + selectedSort);
         }
         
+        // 检查是否只选择了ALL_CATEGORY（即全选状态）
+        boolean isAllCategories = selectedCategories.size() == 1 && selectedCategories.contains(EhUtils.ALL_CATEGORY);
+        
         // 如果需要应用任何过滤或排序
-        if (!selectedCategories.contains(EhUtils.ALL_CATEGORY) || selectedStatus != R.id.all || selectedSort != R.id.sort_by_default) {
+        if (!isAllCategories || selectedStatus != R.id.all || selectedSort != R.id.sort_by_default) {
             Log.d("DownloadsScene", "applySortAndFilter: 需要应用过滤或排序");
             mProgressView.setVisibility(View.VISIBLE);
             if (mRecyclerView != null) {

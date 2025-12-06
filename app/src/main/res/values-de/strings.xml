@@ -667,6 +667,8 @@
     <string name="settings_advanced_wifi_sander_summary">Datenmigration über Wi-Fi-Hotspot</string>
     <string name="settings_advanced_wifi_client">WiFi-Migrationsdatenempfang</string>
     <string name="settings_advanced_wifi_client_summary">Migrationsdaten von Wi-Fi-Hotspots empfangen</string>
+    <string name="settings_advanced_database_viewer">Datenbankbetrachter</string>
+    <string name="settings_advanced_database_viewer_summary">Datenbankversion, Tabellen und Dateninhalt anzeigen</string>
     <string name="settings_about">Über die App</string>
     <string name="settings_about_author">Entwickler</string>
     <string name="settings_about_latest_release">Aktuelle Version</string>

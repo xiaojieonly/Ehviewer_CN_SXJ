@@ -647,6 +647,8 @@
     <string name="settings_advanced_wifi_sander_summary">การย้ายข้อมูลผ่าน Wi-Fi Hotspot</string>
     <string name="settings_advanced_wifi_client">การรับข้อมูลการย้ายผ่าน WiFi</string>
     <string name="settings_advanced_wifi_client_summary">รับข้อมูลการย้ายจาก Wi-Fi Hotspot</string>
+    <string name="settings_advanced_database_viewer">เครื่องมือดูฐานข้อมูล</string>
+    <string name="settings_advanced_database_viewer_summary">ดูเวอร์ชันฐานข้อมูล ตารางและเนื้อหาข้อมูล</string>
 
     <string name="settings_about">เกี่ยวกับ</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>

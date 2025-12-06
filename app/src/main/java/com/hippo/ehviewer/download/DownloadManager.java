@@ -21,8 +21,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -139,7 +141,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 } catch (Exception e) {
                     // Permission might already be taken or URI might be invalid
-                    android.util.Log.w("DownloadManager", "Failed to restore URI permission for " + info.archiveUri, e);
+                    Log.w("DownloadManager", "Failed to restore URI permission for " + info.archiveUri, e);
                 }
             }
 
@@ -724,8 +726,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 int processedCount = 0;
                 
                 // 预计算总数
-                totalCount = (int) allInfoList.stream().filter(info -> info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED).count();
-                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    totalCount = (int) allInfoList.stream().filter(info -> info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED).count();
+                } else {
+                    totalCount = 0;
+                }
+
                 if (downloadOrder) {
                     for (DownloadInfo info : allInfoList) {
                         if (info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED) {
@@ -2347,6 +2353,34 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         void onProgress(int current, int total, String title);
         void onComplete(int totalStarted);
         void onError(String error);
+    }
+
+    /**
+     * 当应用进入前台时调用，可以恢复下载优先级
+     * 提高用户体验
+     */
+    public void onAppForeground() {
+        Log.d(TAG, "应用进入前台，可以优化下载性能");
+        if (mCurrentSpider != null) {
+            try {
+                // 允许系统优化线程优先级
+                Process.setThreadPriority(Process.getThreadPriority(Process.THREAD_PRIORITY_BACKGROUND), Process.THREAD_PRIORITY_DEFAULT);
+                Log.d(TAG, "前台下载线程优先级已优化");
+            } catch (Exception e) {
+                Log.w(TAG, "无法优化前台下载优先级", e);
+            }
+        }
+    }
+
+    /**
+     * 当应用进入后台时调用，维持下载优先级以保证下载速度
+     * 这很重要，否则后台下载可能会变得非常慢
+     */
+    public void onAppBackground() {
+        Log.d(TAG, "应用进入后台，维持下载优先级");
+        if (mCurrentSpider != null && mCurrentTask != null) {
+            Log.d(TAG, "正在下载: " + mCurrentTask.title + ", 保持优先级避免速度下降");
+        }
     }
 
 }

@@ -137,4 +137,10 @@
         android:title="@string/settings_advanced_wifi_client"
         app:allowDividerAbove="true" />
 
+    <com.hippo.ehviewer.preference.DatabaseViewerPreference
+        android:key="database_viewer"
+        android:summary="@string/settings_advanced_database_viewer_summary"
+        android:title="@string/settings_advanced_database_viewer"
+        app:allowDividerAbove="true" />
+
 </PreferenceScreen>
