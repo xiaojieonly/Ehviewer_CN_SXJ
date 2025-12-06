@@ -30,6 +30,13 @@
         app:summaryOff="@string/settings_download_media_scan_summary_off"
         app:summaryOn="@string/settings_download_media_scan_summary_on" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="incremental_download_update"
+        android:title="@string/settings_download_incremental_update"
+        android:summary="@string/settings_download_incremental_update_summary"
+        app:allowDividerAbove="true" />
+
     <!-- Default value for debugging: 3 -->
     <com.hippo.preference.ListPreference
         android:defaultValue="3"
@@ -102,6 +109,13 @@
         android:key="clean_redundancy"
         android:summary="@string/settings_download_clean_redundancy_summary"
         android:title="@string/settings_download_clean_redundancy"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
+    <com.hippo.ehviewer.preference.MergeDuplicateGalleryPreference
+        android:key="merge_duplicate_gallery"
+        android:summary="@string/settings_download_merge_duplicate_gallery_summary"
+        android:title="@string/settings_download_merge_duplicate_gallery"
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 

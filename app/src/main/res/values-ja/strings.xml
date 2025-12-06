@@ -889,4 +889,13 @@
     <string name="imported_archive_info_title">ローカルインポート情報</string>
     <string name="imported_archive_info_message">これはローカルストレージからインポートされたアイテムです</string>
     <string name="imported_archive_category">ローカルインポート</string>
+
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">Sort &amp; Filter</string>
+    <string name="dialog_category_filter_label">Category filter (multi-select)</string>
+    <string name="dialog_status_filter_label">Status filter</string>
+    <string name="dialog_sort_method_label">Sort order</string>
+    <string name="dialog_search_download_title">Search downloads</string>
+    <string name="dialog_search_options_label">Search options</string>
+    <string name="reset">Reset</string>
 </resources>

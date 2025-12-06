@@ -150,6 +150,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 
 import okhttp3.OkHttpClient;
@@ -1294,6 +1295,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         request();
                     }
                     break;
+                case R.id.action_version_history:
+                    checkVersionHistory();
+                    break;
             }
             return true;
         });
@@ -1691,6 +1695,17 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
         adjustViewVisibility(STATE_REFRESH, false);
         request(updateUrl, GetGalleryDetailListener.RESULT_DETAIL);
+    }
+
+    private void checkVersionHistory() {
+        if (mGalleryDetail == null || mGalleryDetail.newVersions == null || mGalleryDetail.newVersions.length == 0) {
+            showTip(R.string.no_version_history_found, LENGTH_SHORT);
+            return;
+        }
+        
+        // 显示版本历史对话框
+        GalleryUpdateDialog updateDialog = new GalleryUpdateDialog(this, getContext());
+        updateDialog.showSelectDialog(mGalleryDetail);
     }
 
     @Override

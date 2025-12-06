@@ -82,7 +82,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
     private ImageView mMenuButton;
     private TextView mTitleTextView;
     private ImageView mActionButton;
-    private SearchEditText mEditText;
+    public SearchEditText mEditText;
     private ListView mListView;
     private View mListContainer;
     private View mListHeader;

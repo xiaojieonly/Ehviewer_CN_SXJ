@@ -82,6 +82,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference exportDownloadItems = findPreference(KEY_EXPORT_DOWNLOAD_ITEMS);
         Preference importDownloadItems = findPreference(KEY_IMPORT_DOWNLOAD_ITEMS);
         Preference cleanInvalidDownload = findPreference(KEY_CLEAN_INVALID_DOWNLOAD);
+        Preference mergeDuplicateGallery = findPreference("merge_duplicate_gallery");
         Preference preloadImage = findPreference("preload_image");
         Preference imageResolutionPref = findPreference(Settings.KEY_IMAGE_RESOLUTION);
 
@@ -128,6 +129,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         if (cleanInvalidDownload != null) {
             cleanInvalidDownload.setOnPreferenceClickListener(this);
         }
+        if (mergeDuplicateGallery != null) {
+            mergeDuplicateGallery.setOnPreferenceClickListener(this);
+        }
     }
 
     @Override
@@ -173,6 +177,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> new CleanInvalidDownloadTask(this).execute())
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
+            return true;
+        } else if ("merge_duplicate_gallery".equals(key)) {
+            new MergeDuplicateGalleryTask(this).execute();
             return true;
         }
         return false;

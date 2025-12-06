@@ -252,6 +252,19 @@
     <string name="no_more_previews">已显示所有预览</string>
     <string name="more_previews">查看更多预览</string>
     <string name="refresh">刷新</string>
+    <string name="refreshed">已刷新</string>
+    <string name="refresh_current_page">刷新当前页</string>
+    <string name="start_all_download">开始全部</string>
+    <string name="pause_all_download">暂停全部</string>
+    <string name="move_download">移动</string>
+    <string name="random_download">随机</string>
+    <string name="drag_mode">拖拽模式</string>
+    <string name="version_history">版本历史</string>
+    <string name="checking_version_history">正在检查版本历史...</string>
+    <string name="no_version_history_found">未找到版本历史</string>
+    <string name="version_history_found">找到该画廊的 %d 个版本</string>
+    <string name="gallery_update_available">画廊有更新可用！</string>
+    <string name="view_update_versions">查看更新版本</string>
     <string name="open_in_other_app">在其他应用中打开</string>
     <string name="rate_successfully">评分成功</string>
     <string name="rate_failed">评分失败</string>
@@ -583,6 +596,15 @@
     <string name="settings_download_download_order_by_asc">正序下载</string>
     <string name="settings_download_download_order_by_asc_summary">下载全部画廊时正序下载</string>
     <string name="settings_download_media_scan">允许媒体扫描</string>
+    <string name="settings_download_incremental_update">增量下载更新画廊</string>
+    <string name="settings_download_incremental_update_summary">下载时检测同名画廊，保留旧版本并创建更新记录</string>
+    <string name="settings_download_merge_duplicate_gallery">合并重复画廊</string>
+    <string name="settings_download_merge_duplicate_gallery_summary">扫描并合并具有版本递进关系的重复画廊</string>
+    <string name="merge_duplicate_gallery_confirm">发现重复画廊组: %1$s (%2$d 个版本)，是否合并？</string>
+    <string name="merge_duplicate_gallery_merge_all">全部是</string>
+    <string name="merge_duplicate_gallery_skip_all">全部否</string>
+    <string name="merge_duplicate_gallery_backup_success">数据库备份成功</string>
+    <string name="merge_duplicate_gallery_backup_failed">数据库备份失败</string>
     <string name="settings_download_media_scan_summary_on">请避免他人翻看你的图库应用</string>
     <string name="settings_download_media_scan_summary_off">大多数图库应用将不会显示下载目录中的图片</string>
     <string name="settings_download_restore_download_items">恢复下载项</string>
@@ -628,6 +650,10 @@
     <string name="settings_advanced_export_data_summary">保存数据至外置存储器，例如下载列表，书签列表</string>
     <string name="settings_advanced_export_data_to">已导出数据至 %s</string>
     <string name="settings_advanced_export_data_failed">导出数据失败</string>
+    <string name="settings_advanced_export_data_legacy">导出数据（兼容旧版）</string>
+    <string name="settings_advanced_export_data_legacy_summary">导出兼容旧版本的数据库文件，可直接在旧版APP中使用</string>
+    <string name="settings_advanced_export_data_legacy_to">已导出兼容旧版数据至 %s</string>
+    <string name="settings_advanced_export_data_legacy_failed">导出兼容旧版数据失败</string>
     <string name="settings_advanced_import_data">导入数据</string>
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
     <string name="settings_advanced_import_data_successfully">导入数据成功</string>
@@ -956,5 +982,17 @@
     <string name="imported_archive_info_title">本地导入信息</string>
     <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>
     <string name="imported_archive_category">本地导入</string>
+    <string name="incremental_update_category">增量更新</string>
+    <string name="download_state_download">下载状态</string>
+    <string name="sort_by_default">默认排序</string>
+    <string name="delete_download">删除下载</string>
 
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">排序和过滤</string>
+    <string name="dialog_category_filter_label">分类过滤（可多选）</string>
+    <string name="dialog_status_filter_label">状态过滤</string>
+    <string name="dialog_sort_method_label">排序方式</string>
+    <string name="dialog_search_download_title">搜索下载画廊</string>
+    <string name="dialog_search_options_label">搜索选项</string>
+    <string name="reset">重置</string>
 </resources>

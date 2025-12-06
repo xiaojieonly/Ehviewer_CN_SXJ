@@ -48,6 +48,8 @@ import com.hippo.ehviewer.client.parser.GalleryDetailParser;
 import com.hippo.ehviewer.client.parser.GalleryPageApiParser;
 import com.hippo.ehviewer.client.parser.GalleryPageParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
+import com.hippo.ehviewer.dao.GalleryVersionMap;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.glgallery.GalleryProvider;
@@ -58,6 +60,8 @@ import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.lib.yorozuya.IOUtils;
+
+import java.util.List;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.OSUtils;
 import com.hippo.lib.yorozuya.StringUtils;
@@ -742,6 +746,30 @@ public final class SpiderQueen implements Runnable {
         // Read from download dir
         UniFile downloadDir = mSpiderDen.getDownloadDir();
         if (downloadDir != null) {
+            // 首先尝试读取备份的SpiderInfo文件（.ehviewer.[原始ID]）
+            if (Settings.getIncrementalDownloadUpdate()) {
+                GalleryVersionMap versionMap = EhDB.getGalleryVersionMap(mGalleryInfo.gid);
+                if (versionMap != null) {
+                    // 获取所有版本的画廊信息
+                    List<GalleryVersionMap> allVersions = EhDB.getAllVersionsOfGallery(versionMap.getOriginalGid());
+                    for (GalleryVersionMap version : allVersions) {
+                        if (version.getCurrentGid() != mGalleryInfo.gid) {
+                            // 尝试读取备份的SpiderInfo文件
+                            String backupFileName = SPIDER_INFO_FILENAME + "." + version.getCurrentGid();
+                            UniFile backupFile = downloadDir.findFile(backupFileName);
+                            if (backupFile != null) {
+                                spiderInfo = SpiderInfo.read(backupFile);
+                                if (spiderInfo != null) {
+                                    // 找到有效的备份文件，直接返回
+                                    return spiderInfo;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 读取标准的SpiderInfo文件
             UniFile file = downloadDir.findFile(SPIDER_INFO_FILENAME);
             spiderInfo = SpiderInfo.read(file);
             if (spiderInfo != null && spiderInfo.gid == mGalleryInfo.gid &&

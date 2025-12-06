@@ -340,6 +340,19 @@
     <string name="no_more_previews">No more previews</string>
     <string name="more_previews">More previews</string>
     <string name="refresh">Refresh</string>
+    <string name="refreshed">Refreshed</string>
+    <string name="refresh_current_page">Refresh Current Page</string>
+    <string name="start_all_download">Start All</string>
+    <string name="pause_all_download">Pause All</string>
+    <string name="move_download">Move</string>
+    <string name="random_download">Random</string>
+    <string name="drag_mode">Drag Mode</string>
+    <string name="version_history">Version History</string>
+    <string name="checking_version_history">Checking version history...</string>
+    <string name="no_version_history_found">No version history found</string>
+    <string name="version_history_found">Found %d version(s) of this gallery</string>
+    <string name="gallery_update_available">Gallery update available!</string>
+    <string name="view_update_versions">View Update Versions</string>
     <string name="open_in_other_app">Open with other app</string>
     <string name="rate_successfully">Rate successfully</string>
     <string name="rate_failed">Rate failed</string>
@@ -672,6 +685,15 @@
     <string name="settings_download_download_origin_image_summary">It is dangerous! You may get 509 error</string>
     <string name="settings_download_download_order_by_asc">Download order by asc</string>
     <string name="settings_download_download_order_by_asc_summary">Download in sequence when downloading all galleries</string>
+    <string name="settings_download_incremental_update">Incremental download update</string>
+    <string name="settings_download_incremental_update_summary">Detect same-name galleries when downloading, keep old versions and create update records</string>
+    <string name="settings_download_merge_duplicate_gallery">Merge duplicate galleries</string>
+    <string name="settings_download_merge_duplicate_gallery_summary">Scan and merge duplicate galleries with version progression</string>
+    <string name="merge_duplicate_gallery_confirm">Found duplicate gallery group: %1$s (%2$d versions), merge them?</string>
+    <string name="merge_duplicate_gallery_merge_all">Yes to all</string>
+    <string name="merge_duplicate_gallery_skip_all">No to all</string>
+    <string name="merge_duplicate_gallery_backup_success">Database backup successful</string>
+    <string name="merge_duplicate_gallery_backup_failed">Database backup failed</string>
     <string name="settings_download_restore_download_items">Restore download items</string>
     <string name="settings_download_restore_download_items_summary">Restore all download items in download location</string>
     <string name="settings_download_restoring">Restoring</string>
@@ -715,6 +737,10 @@
     <string name="settings_advanced_export_data_summary">Save data like download list, quick search list, to external storage</string>
     <string name="settings_advanced_export_data_to">Exported data to %s</string>
     <string name="settings_advanced_export_data_failed">Failed to export data</string>
+    <string name="settings_advanced_export_data_legacy">Export data (Legacy compatible)</string>
+    <string name="settings_advanced_export_data_legacy_summary">Export database file compatible with old versions, can be used directly in old APP</string>
+    <string name="settings_advanced_export_data_legacy_to">Exported legacy compatible data to %s</string>
+    <string name="settings_advanced_export_data_legacy_failed">Failed to export legacy compatible data</string>
     <string name="settings_advanced_import_data">Import data</string>
     <string name="settings_advanced_import_data_summary">Load data which were previously saved</string>
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>
@@ -1043,5 +1069,18 @@
     <string name="imported_archive_info_title">Local Import Info</string>
     <string name="imported_archive_info_message">This is an item imported from local storage</string>
     <string name="imported_archive_category">Local Import</string>
+    <string name="incremental_update_category">Incremental Update</string>
+    <string name="download_state_download">Download State</string>
+    <string name="sort_by_default">Default Order</string>
+    <string name="delete_download">Delete Download</string>
+
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">排序和过滤</string>
+    <string name="dialog_category_filter_label">分类过滤（可多选）</string>
+    <string name="dialog_status_filter_label">状态过滤</string>
+    <string name="dialog_sort_method_label">排序方式</string>
+    <string name="dialog_search_download_title">搜索下载画廊</string>
+    <string name="dialog_search_options_label">搜索选项</string>
+    <string name="reset">重置</string>
 
 </resources>

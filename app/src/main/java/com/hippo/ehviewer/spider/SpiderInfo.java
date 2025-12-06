@@ -157,15 +157,27 @@ public class SpiderInfo {
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
             while (true) { // EOFException will raise
                 line = IOUtils.readAsciiLine(is);
-                int pos = line.indexOf(" ");
-                if (pos > 0) {
-                    int index = Integer.parseInt(line.substring(0, pos));
-                    String pToken = line.substring(pos + 1);
-                    if (!TextUtils.isEmpty(pToken)) {
-                        spiderInfo.pTokenMap.put(index, pToken);
+                if (line == null || line.length() == 0) {
+                    continue;
+                }
+                int pos = line.indexOf(' ');
+                if (pos > 0 && pos < line.length() - 1) {
+                    try {
+                        int index = Integer.parseInt(line.substring(0, pos));
+                        // 避免创建过大的子字符串，限制pToken长度
+                        String pToken = line.substring(pos + 1);
+                        if (pToken.length() > 1000) {
+                            pToken = pToken.substring(0, 1000);
+                            Log.w(TAG, "PToken too long, truncated to 1000 chars");
+                        }
+                        if (!TextUtils.isEmpty(pToken)) {
+                            spiderInfo.pTokenMap.put(index, pToken);
+                        }
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Can't parse index: " + line.substring(0, Math.min(pos, 20)));
                     }
                 } else {
-                    Log.e(TAG, "Can't parse index and pToken, index = " + pos);
+                    Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + line.length());
                 }
             }
         } catch (IOException | NumberFormatException e) {

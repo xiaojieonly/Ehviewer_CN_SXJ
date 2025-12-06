@@ -767,6 +767,17 @@ public class Settings {
         putString(KEY_DEFAULT_DOWNLOAD_LABEL, value);
     }
 
+    private static final String KEY_INCREMENTAL_DOWNLOAD_UPDATE = "incremental_download_update";
+    private static final boolean DEFAULT_INCREMENTAL_DOWNLOAD_UPDATE = false;
+
+    public static boolean getIncrementalDownloadUpdate() {
+        return getBoolean(KEY_INCREMENTAL_DOWNLOAD_UPDATE, DEFAULT_INCREMENTAL_DOWNLOAD_UPDATE);
+    }
+
+    public static void putIncrementalDownloadUpdate(boolean value) {
+        putBoolean(KEY_INCREMENTAL_DOWNLOAD_UPDATE, value);
+    }
+
     private static final String KEY_MULTI_THREAD_DOWNLOAD = "download_thread";
     private static final int DEFAULT_MULTI_THREAD_DOWNLOAD = 3;
 

@@ -590,6 +590,15 @@
     <string name="settings_download_download_order_by_asc">以升序下載</string>
     <string name="settings_download_download_order_by_asc_summary">當下載全部圖庫時照順序下載</string>
     <string name="settings_download_media_scan">允許其他程式進行媒體掃描</string>
+    <string name="settings_download_incremental_update">增量下載更新畫廊</string>
+    <string name="settings_download_incremental_update_summary">下載時檢測同名畫廊，保留舊版本並創建更新記錄</string>
+    <string name="settings_download_merge_duplicate_gallery">合併重複畫廊</string>
+    <string name="settings_download_merge_duplicate_gallery_summary">掃描並合併具有版本遞進關係的重複畫廊</string>
+    <string name="merge_duplicate_gallery_confirm">發現重複畫廊組: %1$s (%2$d 個版本)，是否合併？</string>
+    <string name="merge_duplicate_gallery_merge_all">全部是</string>
+    <string name="merge_duplicate_gallery_skip_all">全部否</string>
+    <string name="merge_duplicate_gallery_backup_success">數據庫備份成功</string>
+    <string name="merge_duplicate_gallery_backup_failed">數據庫備份失敗</string>
     <string name="settings_download_media_scan_summary_on">請別讓別人看到你的相簿</string>
     <string name="settings_download_media_scan_summary_off">大部分相簿軟體將會忽略顯示下載路徑中的影像</string>
     <string name="settings_download_restore_download_items">回復下載的檔案</string>
@@ -960,6 +969,15 @@
     <string name="imported_archive_info_title">本機匯入資訊</string>
     <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
     <string name="imported_archive_category">本機匯入</string>
+
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">排序和過濾</string>
+    <string name="dialog_category_filter_label">分類過濾（可多選）</string>
+    <string name="dialog_status_filter_label">狀態過濾</string>
+    <string name="dialog_sort_method_label">排序方式</string>
+    <string name="dialog_search_download_title">搜尋下載畫廊</string>
+    <string name="dialog_search_options_label">搜尋選項</string>
+    <string name="reset">重置</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一頁</string>

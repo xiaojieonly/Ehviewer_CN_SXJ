@@ -48,6 +48,7 @@ import com.hippo.ehviewer.client.wifi.ListenerThread;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.util.ExecutorManager;
 import com.hippo.util.PermissionRequester;
 
 import org.greenrobot.eventbus.EventBus;
@@ -131,7 +132,7 @@ public class WiFiClientActivity extends AppCompatActivity {
     }
 
     private void connectSocket() {
-        new Thread(() -> {
+        ExecutorManager.getNetworkExecutor().execute(() -> {
             try {
                 Socket socket = new Socket(getWifiRouteIPAddress(WiFiClientActivity.this), PORT);
                 connectThread = new ConnectThread(getApplicationContext(), socket, handler, IS_CLIENT);
@@ -147,8 +148,7 @@ public class WiFiClientActivity extends AppCompatActivity {
                     ex.printStackTrace();
                 }
             }
-
-        }).start();
+        });
     }
 
     private void connect(View view) {
@@ -268,13 +268,13 @@ public class WiFiClientActivity extends AppCompatActivity {
 
     private void dealWithFavoriteInfo(WiFiDataHand response) {
         JSONArray jsonArray = response.getData().getJSONArray(FAVORITE_INFO_DATA_KEY);
-        new Thread(()->{
+        ExecutorManager.getIoExecutor().execute(() -> {
             for (int i = 0; i < jsonArray.size(); i++) {
                 EhDB.putLocalFavorite(GalleryInfo.galleryInfoFromJson(jsonArray.getJSONObject(i)));
             }
             connectThread.dataProcessed(response);
             updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
-        }).start();
+        });
     }
 
     private void dealWithDownloadInfo(WiFiDataHand response) {
@@ -297,14 +297,14 @@ public class WiFiClientActivity extends AppCompatActivity {
     private void dealWithDownloadLabel(WiFiDataHand response) {
         JSONArray jsonArray = response.getData().getJSONArray(DOWNLOAD_LABEL_KEY);
         DownloadManager manager = EhApplication.getDownloadManager();
-        new Thread(()->{
+        ExecutorManager.getBackgroundExecutor().execute(() -> {
             for (int i = 0; i < jsonArray.size(); i++) {
                 manager.addLabelInSyncThread(jsonArray.getString(i));
             }
             connectThread.dataProcessed(response);
             updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
             EventBus.getDefault().post(downloadInfoNeedRefresh());
-       }).start();
+       });
     }
 
     private void dealWithQuickSearch(WiFiDataHand response) {
@@ -316,12 +316,12 @@ public class WiFiClientActivity extends AppCompatActivity {
             JSONObject object = jsonArray.getJSONObject(i);
             quickSearchList.add(QuickSearch.quickSearchFromJson(object));
         }
-        new Thread(()->{
+        ExecutorManager.getIoExecutor().execute(() -> {
             EhDB.takeOverQuickSearchList(quickSearchList);
             connectThread.dataProcessed(response);
             updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
             EventBus.getDefault().post(bookmarkDrawNeedRefresh());
-        }).start();
+        });
     }
 
     public void updateReceiveMessage(String message){

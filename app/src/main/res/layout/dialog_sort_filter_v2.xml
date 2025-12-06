@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="排序和过滤"
+        android:text="@string/dialog_sort_filter_title"
         android:textSize="18sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -19,7 +19,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="分类过滤（可多选）"
+        android:text="@string/dialog_category_filter_label"
         android:textSize="14sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp">
 
-        <com.hippo.ehviewer.widget.CategoryTable
+        <com.hippo.ehviewer.ui.scene.download.part.DownloadCategoryTable
             android:id="@+id/category_table"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
@@ -40,7 +40,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="状态过滤"
+        android:text="@string/dialog_status_filter_label"
         android:textSize="14sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
@@ -57,7 +57,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="排序方式"
+        android:text="@string/dialog_sort_method_label"
         android:textSize="14sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
@@ -82,7 +82,7 @@
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="重置"
+            android:text="@string/reset"
             android:textColor="?android:textColorPrimary" />
 
         <Button
@@ -90,7 +90,7 @@
             style="@style/Widget.AppCompat.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="应用"
+            android:text="@string/apply"
             android:layout_marginStart="8dp" />
 
     </LinearLayout>

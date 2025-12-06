@@ -1017,4 +1017,13 @@
     <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
     <string name="imported_archive_category">本機匯入</string>
 
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">排序和過濾</string>
+    <string name="dialog_category_filter_label">分類過濾（可多選）</string>
+    <string name="dialog_status_filter_label">狀態過濾</string>
+    <string name="dialog_sort_method_label">排序方式</string>
+    <string name="dialog_search_download_title">搜尋下載畫廊</string>
+    <string name="dialog_search_options_label">搜尋選項</string>
+    <string name="reset">重置</string>
+
 </resources>
