@@ -1608,6 +1608,11 @@ public class DownloadsScene extends ToolbarScene
         if (mRecyclerView != null) {
             mRecyclerView.setAdapter(mAdapter);
         }
+        // 同步分页监听器持有的适配器与 RecyclerView，避免换适配器后页码点击无效
+        if (myPageChangeListener != null) {
+            myPageChangeListener.setAdapter(mOriginalAdapter);
+            myPageChangeListener.setRecyclerView(mRecyclerView);
+        }
     }
 
     @Override
@@ -1649,7 +1654,13 @@ public class DownloadsScene extends ToolbarScene
         
         Log.d("DownloadsScene", "onDownloadSearchSuccess: 收到回调，列表大小=" + list.size());
         mList = list;
+        // 过滤或排序后重置分页到第一页，重新初始化分页指示器
+        indexPage = 1;
+        needInitPage = true;
+        doNotScroll = false;
         updateAdapter();
+        updatePaginationIndicator(true);
+        updateTitle();
         mProgressView.setVisibility(View.GONE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.VISIBLE);
@@ -1674,7 +1685,13 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         mList = list;
+        // 处理列表成功后同样重置分页并刷新指示器
+        indexPage = 1;
+        needInitPage = true;
+        doNotScroll = false;
         updateAdapter();
+        updatePaginationIndicator(true);
+        updateTitle();
         mProgressView.setVisibility(View.GONE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.VISIBLE);
@@ -1686,7 +1703,13 @@ public class DownloadsScene extends ToolbarScene
     public void onDownloadSearchFailed(List<DownloadInfo> list) {
         Toast.makeText(getEHContext(), R.string.download_searching_failed, Toast.LENGTH_LONG).show();
         mList = list;
+        // 异常时也重置分页，避免页码停留在无效页
+        indexPage = 1;
+        needInitPage = true;
+        doNotScroll = false;
         updateAdapter();
+        updatePaginationIndicator(true);
+        updateTitle();
         mProgressView.setVisibility(View.GONE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.VISIBLE);
