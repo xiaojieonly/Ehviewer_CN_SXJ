@@ -168,112 +168,133 @@ public final class CommonOperations {
 
     // TODO Add context if activity and context are different style
     public static void startDownload(final MainActivity activity, final List<GalleryInfo> galleryInfos, boolean forceDefault) {
-        final DownloadManager dm = EhApplication.getDownloadManager(activity);
+        // 显示准备下载的Toast提示，避免用户感觉界面卡死
+        SimpleHandler.getInstance().post(() -> {
+            Toast.makeText(activity, activity.getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
+        });
+        
+        // 在后台线程执行耗时操作，避免阻塞主线程
+        SimpleHandler.getInstance().post(() -> {
+            try {
+                final DownloadManager dm = EhApplication.getDownloadManager(activity);
 
-        LongList toStart = new LongList();
-        List<GalleryInfo> toAdd = new ArrayList<>();
-        for (GalleryInfo gi : galleryInfos) {
-            if (dm.containDownloadInfo(gi.gid)) {
-                toStart.add(gi.gid);
-            } else {
-                // 检查是否为增量更新
-                if (Settings.getIncrementalDownloadUpdate()) {
-                    Long oldGid = findSameNameGallery(gi);
-                    if (oldGid != null && oldGid != gi.gid) {
-                        // 找到同名画廊，进行增量更新处理
-                        Log.i("CommonOperations", "检测到增量更新: " + EhUtils.getSuitableTitle(gi) + 
-                              " (旧GID: " + oldGid + ", 新GID: " + gi.gid + ")");
-                        
-                        // 显示增量更新提示
-                        SimpleHandler.getInstance().post(() -> {
-                            Toast.makeText(activity, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-                        });
-                        
-                        // 处理增量下载更新
-                        handleIncrementalUpdate(activity, gi, oldGid);
-                    }
-                }
-                toAdd.add(gi);
-            }
-        }
-
-        if (!toStart.isEmpty()) {
-            Intent intent = new Intent(activity, DownloadService.class);
-            intent.setAction(DownloadService.ACTION_START_RANGE);
-            intent.putExtra(DownloadService.KEY_GID_LIST, toStart);
-            activity.startService(intent);
-        }
-
-        if (toAdd.isEmpty()) {
-            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
-            return;
-        }
-
-        boolean justStart = forceDefault;
-        String label = null;
-        // Get default download label
-        if (!justStart && Settings.getHasDefaultDownloadLabel()) {
-            label = Settings.getDefaultDownloadLabel();
-            justStart = label == null || dm.containLabel(label);
-        }
-        // If there is no other label, just use null label
-        if (!justStart && 0 == dm.getLabelList().size()) {
-            justStart = true;
-            label = null;
-        }
-
-        if (justStart) {
-            // Got default label
-            for (GalleryInfo gi : toAdd) {
-                Intent intent = new Intent(activity, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_LABEL, label);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                activity.startService(intent);
-            }
-            // Notify
-            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
-        } else {
-            // Let use chose label
-            List<DownloadLabel> list = dm.getLabelList();
-            final String[] items = new String[list.size() + 1];
-            items[0] = activity.getString(R.string.default_download_label_name);
-            for (int i = 0, n = list.size(); i < n; i++) {
-                items[i + 1] = list.get(i).getLabel();
-            }
-
-            new ListCheckBoxDialogBuilder(activity, items,
-                    (builder, dialog, position) -> {
-                        String label1;
-                        if (position == 0) {
-                            label1 = null;
-                        } else {
-                            label1 = items[position];
-                            if (!dm.containLabel(label1)) {
-                                label1 = null;
+                LongList toStart = new LongList();
+                List<GalleryInfo> toAdd = new ArrayList<>();
+                for (GalleryInfo gi : galleryInfos) {
+                    if (dm.containDownloadInfo(gi.gid)) {
+                        toStart.add(gi.gid);
+                    } else {
+                        // 检查是否为增量更新
+                        if (Settings.getIncrementalDownloadUpdate()) {
+                            Long oldGid = findSameNameGallery(gi);
+                            if (oldGid != null && oldGid != gi.gid) {
+                                // 找到同名画廊，进行增量更新处理
+                                Log.i("CommonOperations", "检测到增量更新: " + EhUtils.getSuitableTitle(gi) + 
+                                      " (旧GID: " + oldGid + ", 新GID: " + gi.gid + ")");
+                                
+                                // 显示增量更新提示
+                                SimpleHandler.getInstance().post(() -> {
+                                    Toast.makeText(activity, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
+                                });
+                                
+                                // 处理增量下载更新
+                                handleIncrementalUpdate(activity, gi, oldGid);
                             }
                         }
-                        // Start download
-                        for (GalleryInfo gi : toAdd) {
-                            Intent intent = new Intent(activity, DownloadService.class);
-                            intent.setAction(DownloadService.ACTION_START);
-                            intent.putExtra(DownloadService.KEY_LABEL, label1);
-                            intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                            activity.startService(intent);
-                        }
-                        // Save settings
-                        if (builder.isChecked()) {
-                            Settings.putHasDefaultDownloadLabel(true);
-                            Settings.putDefaultDownloadLabel(label1);
-                        } else {
-                            Settings.putHasDefaultDownloadLabel(false);
-                        }
-                        // Notify
+                        toAdd.add(gi);
+                    }
+                }
+
+                if (!toStart.isEmpty()) {
+                    Intent intent = new Intent(activity, DownloadService.class);
+                    intent.setAction(DownloadService.ACTION_START_RANGE);
+                    intent.putExtra(DownloadService.KEY_GID_LIST, toStart);
+                    activity.startService(intent);
+                }
+
+                if (toAdd.isEmpty()) {
+                    SimpleHandler.getInstance().post(() -> {
                         activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
-                    }, activity.getString(R.string.remember_download_label), false)
-                    .setTitle(R.string.download)
-                    .show();
-        }
+                    });
+                    return;
+                }
+
+                boolean justStart = forceDefault;
+                String label = null;
+                // Get default download label
+                if (!justStart && Settings.getHasDefaultDownloadLabel()) {
+                    label = Settings.getDefaultDownloadLabel();
+                    justStart = label == null || dm.containLabel(label);
+                }
+                // If there is no other label, just use null label
+                if (!justStart && 0 == dm.getLabelList().size()) {
+                    justStart = true;
+                    label = null;
+                }
+
+                if (justStart) {
+                    // Got default label
+                    for (GalleryInfo gi : toAdd) {
+                        Intent intent = new Intent(activity, DownloadService.class);
+                        intent.setAction(DownloadService.ACTION_START);
+                        intent.putExtra(DownloadService.KEY_LABEL, label);
+                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
+                        activity.startService(intent);
+                    }
+                    // Notify
+                    SimpleHandler.getInstance().post(() -> {
+                        activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                    });
+                } else {
+                    // Let use chose label - 需要在主线程显示对话框
+                    SimpleHandler.getInstance().post(() -> {
+                        List<DownloadLabel> list = dm.getLabelList();
+                        final String[] items = new String[list.size() + 1];
+                        items[0] = activity.getString(R.string.default_download_label_name);
+                        for (int i = 0, n = list.size(); i < n; i++) {
+                            items[i + 1] = list.get(i).getLabel();
+                        }
+
+                        new ListCheckBoxDialogBuilder(activity, items,
+                                (builder, dialog, position) -> {
+                                    String label1;
+                                    if (position == 0) {
+                                        label1 = null;
+                                    } else {
+                                        label1 = items[position];
+                                        if (!dm.containLabel(label1)) {
+                                            label1 = null;
+                                        }
+                                    }
+                                    // Start download
+                                    for (GalleryInfo gi : toAdd) {
+                                        Intent intent = new Intent(activity, DownloadService.class);
+                                        intent.setAction(DownloadService.ACTION_START);
+                                        intent.putExtra(DownloadService.KEY_LABEL, label1);
+                                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
+                                        activity.startService(intent);
+                                    }
+                                    // Save settings
+                                    if (builder.isChecked()) {
+                                        Settings.putHasDefaultDownloadLabel(true);
+                                        Settings.putDefaultDownloadLabel(label1);
+                                    } else {
+                                        Settings.putHasDefaultDownloadLabel(false);
+                                    }
+                                    // Notify
+                                    activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                                }, activity.getString(R.string.remember_download_label), false)
+                                .setTitle(R.string.download)
+                                .show();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e("CommonOperations", "Error starting download", e);
+                SimpleHandler.getInstance().post(() -> {
+                    Toast.makeText(activity, "启动下载失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
     }
 
     /**

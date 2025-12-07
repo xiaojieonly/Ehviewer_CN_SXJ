@@ -1136,6 +1136,7 @@
     
     <!-- Download scene strings -->
     <string name="starting_download">Starting download...</string>
+    <string name="preparing_download">Preparing download, please wait...</string>
     <string name="please_wait">Please wait...</string>
     <string name="background_processing">Background processing</string>
     <string name="background_processing_please_wait">Processing in background, please check results later</string>

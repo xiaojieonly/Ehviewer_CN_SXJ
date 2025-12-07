@@ -1670,6 +1670,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         GalleryInfo galleryInfo = getGalleryInfo();
         if (galleryInfo != null) {
             if (EhApplication.getDownloadManager(mContext).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
+                // 显示准备下载的Toast提示
+                Toast.makeText(mContext, getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
                 CommonOperations.startDownload(activity, galleryInfo, false);
             } else {
                 new AlertDialog.Builder(mContext)
