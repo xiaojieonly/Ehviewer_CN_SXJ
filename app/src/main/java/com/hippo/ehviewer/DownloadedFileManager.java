@@ -239,6 +239,136 @@ public class DownloadedFileManager {
     }
     
     /**
+     * 批量检查画廊文件是否存在
+     * @param gid 画廊GID
+     * @return 文件存在性检查结果
+     */
+    public GalleryFileCheckResult checkGalleryFilesExist(long gid) {
+        Log.d(TAG, "Checking gallery files existence for GID: " + gid);
+        
+        GalleryFileCheckResult result = new GalleryFileCheckResult(gid);
+        List<DownloadedFile> files = getGalleryFiles(gid);
+        
+        result.totalFiles = files.size();
+        
+        for (DownloadedFile file : files) {
+            String filePath = file.getPath();
+            java.io.File physicalFile = new java.io.File(filePath);
+            
+            if (physicalFile.exists() && physicalFile.canRead()) {
+                result.existingFiles++;
+                result.existingFileList.add(file);
+                
+                // 检查文件大小
+                long expectedSize = file.getSize() != null ? file.getSize() : 0;
+                long actualSize = physicalFile.length();
+                
+                if (expectedSize > 0 && actualSize == expectedSize) {
+                    result.validFiles++;
+                } else {
+                    result.invalidFiles++;
+                    result.invalidFileList.add(file);
+                    Log.w(TAG, "File size mismatch: " + file.getFilename() + 
+                              " - expected: " + expectedSize + ", actual: " + actualSize);
+                }
+            } else {
+                result.missingFiles++;
+                result.missingFileList.add(file);
+                Log.w(TAG, "Missing file: " + file.getFilename() + " at " + filePath);
+            }
+        }
+        
+        Log.d(TAG, "Gallery file check completed for GID " + gid + 
+                  " - Total: " + result.totalFiles + 
+                  ", Existing: " + result.existingFiles + 
+                  ", Valid: " + result.validFiles + 
+                  ", Missing: " + result.missingFiles + 
+                  ", Invalid: " + result.invalidFiles);
+        
+        return result;
+    }
+    
+    /**
+     * 画廊文件检查结果
+     */
+    public static class GalleryFileCheckResult {
+        public final long gid;
+        public int totalFiles = 0;
+        public int existingFiles = 0;
+        public int validFiles = 0;
+        public int missingFiles = 0;
+        public int invalidFiles = 0;
+        
+        public final List<DownloadedFile> existingFileList = new ArrayList<>();
+        public final List<DownloadedFile> missingFileList = new ArrayList<>();
+        public final List<DownloadedFile> invalidFileList = new ArrayList<>();
+        
+        public GalleryFileCheckResult(long gid) {
+            this.gid = gid;
+        }
+        
+        public boolean isComplete() {
+            return totalFiles > 0 && validFiles == totalFiles;
+        }
+        
+        public boolean hasMissingFiles() {
+            return missingFiles > 0;
+        }
+        
+        public boolean hasInvalidFiles() {
+            return invalidFiles > 0;
+        }
+        
+        public double getCompletionRate() {
+            return totalFiles > 0 ? (double) validFiles / totalFiles : 0.0;
+        }
+    }
+    
+    /**
+     * 获取总文件数量
+     */
+    public int getTotalFilesCount() {
+        try {
+            return (int) mDownloadedFilesDao.queryBuilder()
+                    .where(DownloadedFilesDao.Properties.Status.eq(DownloadedFile.STATUS_NORMAL))
+                    .count();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting total files count", e);
+            return 0;
+        }
+    }
+    
+    /**
+     * 清理无效文件记录
+     * @return 清理的文件数量
+     */
+    public int cleanupInvalidFiles() {
+        Log.d(TAG, "开始清理无效文件记录");
+        
+        List<DownloadedFile> allFiles = mDownloadedFilesDao.queryBuilder()
+                .where(DownloadedFilesDao.Properties.Status.eq(DownloadedFile.STATUS_NORMAL))
+                .list();
+        
+        int cleanedCount = 0;
+        
+        for (DownloadedFile file : allFiles) {
+            java.io.File physicalFile = new java.io.File(file.getPath());
+            
+            if (!physicalFile.exists() || !physicalFile.canRead()) {
+                Log.w(TAG, "发现无效文件记录: " + file.getFilename() + " (路径: " + file.getPath() + ")");
+                
+                // 标记为已删除而不是直接删除，保留历史记录
+                file.setStatus(DownloadedFile.STATUS_DELETED);
+                mDownloadedFilesDao.update(file);
+                cleanedCount++;
+            }
+        }
+        
+        Log.i(TAG, "清理完成，删除了 " + cleanedCount + " 个无效文件记录");
+        return cleanedCount;
+    }
+    
+    /**
      * 计算文件MD5
      * @param filePath 文件路径
      * @return MD5字符串，失败返回null

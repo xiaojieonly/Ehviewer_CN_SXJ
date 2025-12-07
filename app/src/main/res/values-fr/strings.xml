@@ -668,8 +668,6 @@
     <string name="language_na">N/A</string>
     <string name="language_other">Autres</string>
 
-    <string name="please_wait">Merci de patienter</string>
-
     <!-- License -->
     <string name="license">Licence</string>
 
@@ -870,6 +868,58 @@
     <string name="dialog_search_download_title">Search downloads</string>
     <string name="dialog_search_options_label">Search options</string>
     <string name="reset">Reset</string>
+    
+    <!-- Theme strings -->
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
+    <string name="unavailable">Indisponible</string>
+    
+    <!-- Merge duplicate gallery strings -->
+    <string name="merge_scanning_galleries">Balayage des galeries téléchargées...</string>
+    <string name="merge_start_scan">Démarrage du balayage des galeries téléchargées...</string>
+    <string name="merge_scan_failed">Échec du balayage des galeries téléchargées</string>
+    <string name="merge_scan_complete">Balayage terminé, %d groupes de galeries en double trouvés</string>
+    <string name="merge_start_analyze">Démarrage de l\'analyse des relations de version des galeries...</string>
+    <string name="merge_analyzing_versions">Analyse des relations de version des galeries...</string>
+    <string name="merge_analyze_failed">Échec de l\'analyse des relations de version des galeries</string>
+    <string name="merge_analyze_complete">Analyse terminée</string>
+    <string name="merge_no_duplicates_found">Aucune galerie en double trouvée nécessitant une fusion</string>
+    <string name="merge_start_backup">Démarrage de la sauvegarde de la base de données...</string>
+    <string name="merge_backing_database">Sauvegarde de la base de données...</string>
+    <string name="merge_backup_failed">Échec de la sauvegarde de la base de données</string>
+    <string name="merge_backup_success">Sauvegarde de la base de données réussie</string>
+    <string name="merge_start_merge">Démarrage de la fusion des galeries...</string>
+    <string name="merge_merging_galleries">Fusion des galeries...</string>
+    <string name="merge_merge_failed">Échec de la fusion des galeries</string>
+    <string name="merge_merge_success">Fusion des galeries réussie</string>
+    <string name="merge_exception_occurred">Exception survenue lors de la fusion : %s</string>
+    <string name="merge_exception_stack">Pile d\'exceptions : %s</string>
+    <string name="merge_success_summary">%d groupes de galeries en double fusionnés avec succès, %d groupes ignorés</string>
+    <string name="merge_failure_summary">Échec de la fusion, %d groupes fusionnés, %d groupes ignorés, rapport d\'erreur généré</string>
+    <string name="merge_duplicate_gallery_title">Fusionner les galeries en double</string>
+    
+    <!-- Download scene strings -->
+    <string name="starting_download">Démarrage du téléchargement...</string>
+    <string name="please_wait">Veuillez patienter...</string>
+    <string name="background_processing">Traitement en arrière-plan</string>
+    <string name="background_processing_please_wait">Traitement en arrière-plan, veuillez consulter les résultats plus tard</string>
+    <string name="processing_progress">Traitement: %s (%d/%d)</string>
+    <string name="download_tasks_started">%d tâches de téléchargement démarrées</string>
+    <string name="no_download_tasks_to_start">Aucune tâche de téléchargement à démarrer</string>
+    <string name="start_failed">Échec du démarrage: %s</string>
+    
+    <!-- Database viewer strings -->
+    <string name="table_info">Table: %s (%d lignes)</string>
+    <string name="column_info">Info colonne:</string>
+    <string name="data_sample_preview">Exemple de données (10 premières lignes):</string>
+    
+    <!-- WiFi client strings -->
+    <string name="wifi_connected_info">Connecté à: %s\nIP:%s\nRouteur:%s</string>
+    <string name="wifi_connection_failed">Échec de la connexion de communication</string>
+    <string name="wifi_try_reconnect">Tentative de reconnexion</string>
+    <string name="wifi_please_enter_ip">Veuillez entrer l\'adresse IP</string>
+    <string name="wifi_invalid_ip_format">Format d\'adresse IP invalide</string>
+    <string name="wifi_connecting_to_custom_ip">Tentative de connexion à l\'IP spécifiée: %s\nIP locale:%s</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Page précédente</string>

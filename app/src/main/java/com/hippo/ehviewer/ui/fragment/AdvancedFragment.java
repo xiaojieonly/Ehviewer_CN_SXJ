@@ -127,10 +127,10 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 return;
             }
             
-            // 创建兼容旧版的数据库文件
+            // Create database file compatible with old version
             File file = new File(dir, "ehviewer_legacy_" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".db");
             
-            // 获取原始数据库文件
+            // Get original database file
             File dbFile = getActivity().getDatabasePath("eh.db");
             if (!dbFile.exists()) {
                 new Handler(Looper.getMainLooper()).post(() -> 

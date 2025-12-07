@@ -116,14 +116,14 @@ public class DatabaseExpandableAdapter extends BaseExpandableListAdapter {
 
         // 表名和行数
         TextView tableNameView = new TextView(mContext);
-        tableNameView.setText("表: " + tableName + " (共 " + rowCount + " 行)");
+        tableNameView.setText(mContext.getString(R.string.table_info, tableName, rowCount));
         tableNameView.setTextSize(14);
         tableNameView.setTextColor(0xFF1976D2);
         layout.addView(tableNameView);
 
         // 列信息表格
         TextView columnHeaderView = new TextView(mContext);
-        columnHeaderView.setText("\n列信息:");
+        columnHeaderView.setText("\n" + mContext.getString(R.string.column_info));
         columnHeaderView.setTextSize(12);
         columnHeaderView.setTextColor(0xFF424242);
         layout.addView(columnHeaderView);
@@ -159,7 +159,7 @@ public class DatabaseExpandableAdapter extends BaseExpandableListAdapter {
         // 数据样本（最多显示前10行）
         if (!data.isEmpty()) {
             TextView dataHeaderView = new TextView(mContext);
-            dataHeaderView.setText("\n数据样本 (前10行):");
+            dataHeaderView.setText("\n" + mContext.getString(R.string.data_sample_preview));
             dataHeaderView.setTextSize(12);
             dataHeaderView.setTextColor(0xFF424242);
             layout.addView(dataHeaderView);

@@ -31,12 +31,46 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
+    <!-- IP地址输入区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_ip_address_label"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"/>
+
+        <EditText
+            android:id="@+id/ip_address_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/wifi_ip_address_hint"
+            android:inputType="text"
+            android:text="192.168.1.100"
+            android:maxLines="1"/>
+
+        <Button
+            android:id="@+id/connect_custom_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/wifi_connect_custom_ip"
+            android:textAllCaps="false"/>
+
+    </LinearLayout>
+
     <Button
         android:id="@+id/connect_server"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:text="@string/wifi_server_connect"
+        android:text="@string/wifi_connect_auto"
         android:textAllCaps="false"/>
 
     <TextView

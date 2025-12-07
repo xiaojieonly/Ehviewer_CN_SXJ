@@ -35,7 +35,7 @@
     <string name="settings_advanced_domain_fronting_summary">SNI-Blockierung umgehen</string>
     <string name="settings_advanced_url_replace_title">URL-Verschleierung, SNI muss deaktiviert sein</string>
     <string name="settings_advanced_url_replace_summary">URL-Verschleierung (Neustart erforderlich, Kontofunktionen werden nach Aktivierung deaktiviert)</string>
-    <string name="settings_about_donate_guide">guide</string>
+    <string name="settings_about_donate_guide">Spendenanleitung</string>
     <string name="share_favorites_dialog_title">Favoriten teilen</string>
     <string name="share_favorites_dialog_message">Favoriten %s teilen?</string>
     <string name="add_favorites_dialog_message">Favoriten %s hinzufügen?</string>
@@ -81,7 +81,7 @@
     <string name="invalid_download_location">Der Downloadpfad ist nicht verfügbar. Geh zu die Einstellungen und stelle einen neue Pfad fest.</string>
     <string name="cellular_network_warning">Zu den mobilen Daten verbunden.</string>
     <string name="error_bad_status_code">Inkorrekter Statuscode: %d</string>
-    <string name="error_timeout">Timeout</string>
+    <string name="error_timeout">Zeitüberschreitung</string>
     <string name="error_unknown_host">Unbekannter Hostcomputer</string>
     <string name="error_redirection">Zu viele Umleitungen</string>
     <string name="error_socket">Netwerkfehler</string>
@@ -119,8 +119,8 @@
     <string name="select_scene_explain">e-hentai: für jeden verfügbar\nexhentai: nur für diejenigen verfügbar, die sich angemeldet haben</string>
     <string name="no_select">Wähle eine Webseite aus.</string>
     <string name="new_version">Neue Version</string>
-    <string name="update">Update</string>
     <string name="update_fail">Update-Prüfung fehlgeschlagen</string>
+    <string name="update">Aktualisieren</string>
     <string name="update_to">Aktualisieren auf</string>
     <string name="update_plain">Version: %1$s\nGröße: %2$s\n\n%3$s</string>
     <string name="update_fail_info">Auf Ja klicken, um zur Github-Startseite zu springen</string>
@@ -182,7 +182,7 @@
     <string name="select_image_first">Wähle ein Bild</string>
     <string name="add_to_favourites">Zu den Favoriten hinzufügen</string>
     <string name="remove_from_favourites">Aus den Favoriten entfernen</string>
-    <string name="stop_downloading">Download stoppen</string>
+    <string name="stop_downloading">Herunterladen stoppen</string>
     <string name="delete_downloads">Downloads löschen</string>
     <string name="quick_search">Sofortsuche</string>
     <string name="quick_search_tip">Tippe an +, um eine Sofortsuche hinzuzufügen</string>
@@ -193,7 +193,7 @@
     <string name="delete_quick_search_message">%s löschen?</string>
     <string name="no_quick_search">Deine Sofortsuchen werden hier angezeigt</string>
     <string name="add_quick_search_tip">Das Suchergebnis wird als eine Sofortsuche gespeichert. Suche etwas zuerst, um das Ergebnis zu speichern.</string>
-    <string name="readme">README</string>
+    <string name="readme">Liesmich</string>
     <string name="image_search_not_quick_search">Die Bildsuchen können als Sofortsuchen gespeichert nicht werden.</string>
     <string name="duplicate_quick_search">Eine Sofortsuche, deren Name ist %s, bereits besteht.</string>
     <string name="duplicate_name">Dieser Name ist bereits besetzt.</string>
@@ -270,8 +270,8 @@
     <string name="key_language">Sprache</string>
     <string name="key_pages">Seiten</string>
     <string name="key_size">Größe</string>
-    <string name="key_favorite_count">Zahl der Hzfg zu Fav.</string>
-    <string name="key_favorited">Zu Fav. hinzugefügt</string>
+    <string name="key_favorite_count">Anzahl der Favoriten</string>
+    <string name="key_favorited">Zu Favoriten hinzugefügt</string>
     <string name="key_rating_count">Zahl der Bewertungen</string>
     <string name="key_rating">Bewertung</string>
     <string name="key_torrents">Zahl der Torrents</string>
@@ -301,7 +301,7 @@
     <string name="gallery_previews">Vorschauen der Galerie</string>
     <string name="go_to">Gehe zu</string>
     <string name="tag_filter">Etikett filtern</string>
-    <string name="scene_download_title">%s Galleries - %s</string>
+    <string name="scene_download_title">%s Galerien - %s</string>
     <string name="no_download_info">Downloads werden hier angezeigt</string>
     <string name="download_state_none">Pausiert</string>
     <string name="download_state_wait">In der Warteschlange</string>
@@ -652,7 +652,6 @@
     <string name="cant_find_any_data">Keine Daten gefunden</string>
     <string name="cant_read_the_file">Datei kann nicht gelesen werden</string>
     <string name="app_language_system">Sprache des Systems (Standard)</string>
-    <string name="please_wait">Bitte warte</string>
     <string name="settings_privacy_pattern_protection_title">Sperrmuster</string>
     <string name="settings_privacy_pattern_protection_not_set">Kein Sperrmuster festgelegt</string>
     <string name="settings_privacy_pattern_protection_set">Sperrmuster festgelegt</string>
@@ -819,10 +818,10 @@
     <string name="cleanup_toplists">Säuberungsaktion Die Charts.</string>
     <string name="rating_reviewing_toplists">Bewertung&#038;Nachprüfend Die Charts.</string>
     <string name="top_list">Die Charts.</string>
-    <string name="all_time_top_list">Alle Zeiten TopList</string>
-    <string name="past_year_top_list">Vergangenes Jahr TopList</string>
-    <string name="past_month_top_list">Vergangener Monat TopList</string>
-    <string name="yesterday_top_list">Gestern TopList</string>
+    <string name="all_time_top_list">Beste aller Zeiten</string>
+    <string name="past_year_top_list">Beste des vergangenen Jahres</string>
+    <string name="past_month_top_list">Beste des vergangenen Monats</string>
+    <string name="yesterday_top_list">Beste von gestern</string>
     <string name="settings_eh_list_show_read_progress">Lesefortschritt anzeigen</string>
     <string name="settings_eh_list_show_read_progress_summary">Lesefortschritt für jede Galerie im Detail-Listenmodus anzeigen</string>
     <string name="cookie_login_import_in_clipboard">Aus Zwischenablage importieren</string>
@@ -834,17 +833,17 @@
     <string name="loading_db_file">Daten werden geladen …</string>
     <string name="settings_eh_history_size">Anzahl der Verlaufseinträge</string>
     <string name="history_info_unlimited">Unbegrenzt</string>
-    <string name="archiver">Archiver</string>
+    <string name="archiver">Archivierer</string>
     <string name="archiver_dialog_current_funds">Aktuelle Mittel:</string>
     <string name="archiver_dialog_cost">Download-Kosten:  %s</string>
     <string name="archiver_dialog_download_original">Original-Archiv herunterladen</string>
     <string name="archiver_dialog_download_resample">Neu abgetastetes Archiv herunterladen</string>
     <string name="archiver_dialog_size">Geschätzte Größe:  %s</string>
-    <string name="dialog_archiver_title">Archiver-Downloader</string>
+    <string name="dialog_archiver_title">Archivierer-Downloader</string>
     <string name="download_receiver_label">EhViewer Download-Empfänger</string>
     <string name="decompressed_successfully">Erfolgreich dekomprimiert!</string>
     <string name="decompression_failed">Dekomprimierung fehlgeschlagen!</string>
-    <string name="download_label_archiver">Archiver</string>
+    <string name="download_label_archiver">Archivierer</string>
     <string name="cookie_in_clipboard_incorrect">Cookie-Format ist falsch</string>
     <string name="settings_download_timeout">Download-Timeout</string>
     <string name="download_timeout_unlimited">Unbegrenzt</string>
@@ -887,4 +886,179 @@
     <string name="dialog_search_download_title">Search downloads</string>
     <string name="dialog_search_options_label">Search options</string>
     <string name="reset">Reset</string>
+    
+    <!-- Theme strings -->
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="unavailable">Nicht verfügbar</string>
+    
+    <!-- Merge duplicate gallery strings -->
+    <string name="merge_scanning_galleries">Heruntergeladene Galerien werden gescannt...</string>
+    <string name="merge_start_scan">Starte Scan der heruntergeladenen Galerien...</string>
+    <string name="merge_scan_failed">Scan der heruntergeladenen Galerien fehlgeschlagen</string>
+    <string name="merge_scan_complete">Scan abgeschlossen, %d Gruppen doppelter Galerien gefunden</string>
+    <string name="merge_start_analyze">Starte Analyse der Galerie-Versionsbeziehungen...</string>
+    <string name="merge_analyzing_versions">Analysiere Galerie-Versionsbeziehungen...</string>
+    <string name="merge_analyze_failed">Analyse der Galerie-Versionsbeziehungen fehlgeschlagen</string>
+    <string name="merge_analyze_complete">Analyse abgeschlossen</string>
+    <string name="merge_no_duplicates_found">Keine doppelten Galerien gefunden, die zusammengeführt werden müssen</string>
+    <string name="merge_start_backup">Starte Datenbank-Backup...</string>
+    <string name="merge_backing_database">Datenbank wird gesichert...</string>
+    <string name="merge_backup_failed">Datenbank-Backup fehlgeschlagen</string>
+    <string name="merge_backup_success">Datenbank-Backup erfolgreich</string>
+    <string name="merge_start_merge">Starte Zusammenführung der Galerien...</string>
+    <string name="merge_merging_galleries">Galerien werden zusammengeführt...</string>
+    <string name="merge_merge_failed">Zusammenführung der Galerien fehlgeschlagen</string>
+    <string name="merge_merge_success">Zusammenführung der Galerien erfolgreich</string>
+    <string name="merge_exception_occurred">Ausnahme während Zusammenführung aufgetreten: %s</string>
+    <string name="merge_exception_stack">Ausnahme-Stack: %s</string>
+    <string name="merge_success_summary">%d Gruppen doppelter Galerien erfolgreich zusammengeführt, %d Gruppen übersprungen</string>
+    <string name="merge_failure_summary">Zusammenführung fehlgeschlagen, %d Gruppen zusammengeführt, %d Gruppen übersprungen, Fehlerbericht generiert</string>
+    <string name="merge_duplicate_gallery_title">Doppelte Galerien zusammenführen</string>
+    
+    <!-- Download scene strings -->
+    <string name="starting_download">Download wird gestartet...</string>
+    <string name="please_wait">Bitte warten...</string>
+    <string name="background_processing">Hintergrundverarbeitung</string>
+    <string name="background_processing_please_wait">Verarbeitung im Hintergrund, bitte Ergebnisse später überprüfen</string>
+    <string name="processing_progress">Verarbeitung: %s (%d/%d)</string>
+    <string name="download_tasks_started">%d Download-Aufgaben gestartet</string>
+    <string name="no_download_tasks_to_start">Keine Download-Aufgaben zu starten</string>
+    <string name="start_failed">Start fehlgeschlagen: %s</string>
+    
+    <!-- Database viewer strings -->
+    <string name="table_info">Tabelle: %s (%d Zeilen)</string>
+    <string name="column_info">Spalteninfo:</string>
+    <string name="data_sample_preview">Datenbeispiel (erste 10 Zeilen):</string>
+    
+    <!-- WiFi client strings -->
+    <string name="wifi_connected_info">Verbunden mit: %s\nIP:%s\nRouter:%s</string>
+    <string name="wifi_connection_failed">Kommunikationsverbindung fehlgeschlagen</string>
+    <string name="wifi_try_reconnect">Versuche neu zu verbinden</string>
+    <string name="wifi_please_enter_ip">Bitte IP-Adresse eingeben</string>
+    <string name="wifi_invalid_ip_format">Ungültiges IP-Adressformat</string>
+    <string name="wifi_connecting_to_custom_ip">Versuche mit angegebener IP zu verbinden: %s\nLokale IP:%s</string>
+
+    <!-- 应用语言设置 -->
+    <string name="app_language_de">Deutsch</string>
+    <string name="app_language_en">Englisch</string>
+    <string name="app_language_es">Spanisch</string>
+    <string name="app_language_fr">Französisch</string>
+    <string name="app_language_ja">Japanisch</string>
+    <string name="app_language_ko">Koreanisch</string>
+    <string name="app_language_th">Thailändisch</string>
+    <string name="app_language_zh_cn">Chinesisch (Vereinfacht)</string>
+    <string name="app_language_zh_hk">Chinesisch (Hongkong)</string>
+    <string name="app_language_zh_tw">Chinesisch (Taiwan)</string>
+
+    <!-- 分类 -->
+    <string name="artist_cg">ARTIST CG</string>
+    <string name="asian_porn">ASIAN PORN</string>
+    <string name="category_all">Alle</string>
+    <string name="cosplay">COSPLAY</string>
+    <string name="doujinshi">DOUJINSHI</string>
+
+    <!-- 错误状态码 -->
+    <string name="clean_invalid_download_error_processing_directory">Error processing directory: %s - %s</string>
+    <string name="error_status_code_400">Bad Request</string>
+    <string name="error_status_code_401">Unauthorized</string>
+    <string name="error_status_code_402">Payment Required</string>
+    <string name="error_status_code_403">Forbidden</string>
+    <string name="error_status_code_404">Not Found</string>
+    <string name="error_status_code_405">Method Not Allowed</string>
+    <string name="error_status_code_406">Not Acceptable</string>
+    <string name="error_status_code_407">Proxy Authentication Required</string>
+    <string name="error_status_code_408">Request Timeout</string>
+    <string name="error_status_code_409">Conflict</string>
+    <string name="error_status_code_410">Gone</string>
+    <string name="error_status_code_411">Length Required</string>
+    <string name="error_status_code_412">Precondition Failed</string>
+    <string name="error_status_code_413">Request Entity Too Large</string>
+    <string name="error_status_code_414">Request-URI Too Long</string>
+    <string name="error_status_code_415">Unsupported Media Type</string>
+    <string name="error_status_code_416">Requested Range Not Satisfiable</string>
+    <string name="error_status_code_417">Expectation Failed</string>
+    <string name="error_status_code_500">Internal Server Error</string>
+    <string name="error_status_code_501">Not Implemented</string>
+    <string name="error_status_code_502">Bad Gateway</string>
+    <string name="error_status_code_503">Service Unavailable</string>
+    <string name="error_status_code_504">Gateway-Zeitüberschreitung</string>
+    <string name="error_status_code_505">HTTP-Version nicht unterstützt</string>
+
+    <!-- 分类 (剩余) -->
+    <string name="game_cg">GAME CG</string>
+    <string name="image_set">IMAGE SET</string>
+    <string name="manga">MANGA</string>
+    <string name="misc">MISC</string>
+    <string name="non_h">NON-H</string>
+    <string name="western">WESTERN</string>
+    <string name="site_e">e-hentai</string>
+    <string name="site_ex">exhentai</string>
+
+    <!-- 主题 -->
+    <string name="settings_eh_system_theme">System-Theme</string>
+    <string name="theme_black">Schwarzes Theme</string>
+
+    <!-- 版本和更新 -->
+    <string name="gallery_update_available">Galerie-Update verfügbar!</string>
+    <string name="image_save_success">Bild erfolgreich gespeichert</string>
+    <string name="incremental_update_category">Inkrementelles Update</string>
+    <string name="no_version_history_found">Kein Versionsverlauf gefunden</string>
+    <string name="refresh_current_page">Aktuelle Seite aktualisieren</string>
+    <string name="refreshed">Aktualisiert</string>
+    <string name="version_history">Versionsverlauf</string>
+    <string name="version_history_found">%d Version(en) dieser Galerie gefunden</string>
+    <string name="view_update_versions">Update-Versionen anzeigen</string>
+
+    <!-- 下载相关 -->
+    <string name="move_download">Verschieben</string>
+    <string name="pause_all_download">Alle pausieren</string>
+    <string name="random_download">Zufällig</string>
+    <string name="scan_download_files_completed">Scan abgeschlossen!</string>
+    <string name="scan_download_files_failed">Scan fehlgeschlagen</string>
+    <string name="scan_download_files_failed_title">Scan fehlgeschlagen</string>
+    <string name="scan_download_files_scanning">Download-Verzeichnis wird gescannt...</string>
+    <string name="scan_download_files_scanning_progress">Download-Verzeichnis wird gescannt... (%d/%d)</string>
+    <string name="settings_download_clean_invalid_done">Bereinigung von %d Download-Elementen abgeschlossen</string>
+    <string name="settings_download_clean_invalid_download">Ungültige Downloads bereinigen</string>
+    <string name="settings_download_clean_invalid_download_confirm">Ungültige Download-Elemente bereinigen bestätigen?</string>
+    <string name="settings_download_clean_invalid_download_summary">Ungültige Download-Elemente entfernen</string>
+    <string name="settings_download_clean_invalid_no_invalid">Keine ungültigen Download-Elemente zum Bereinigen</string>
+    <string name="settings_download_cleaning">Download-Elemente werden bereinigt</string>
+    <string name="settings_download_export_failed">Export von Download-Elementen fehlgeschlagen</string>
+    <string name="settings_download_export_no_items">Keine Elemente zum Exportieren</string>
+    <string name="settings_download_export_succeed">Download-Elemente erfolgreich nach %s exportiert</string>
+    <string name="settings_download_import_failed">Import von Download-Elementen fehlgeschlagen</string>
+    <string name="settings_download_import_items">Download-Elemente importieren</string>
+    <string name="settings_download_import_no_items">Keine Elemente zum Importieren</string>
+    <string name="settings_download_import_succeed">%d Download-Elemente erfolgreich importiert</string>
+    <string name="settings_download_incremental_update">Inkrementelles Download-Update</string>
+    <string name="settings_download_incremental_update_summary">Galerien mit gleichem Namen beim Herunterladen erkennen, alte Versionen behalten und Update-Aufzeichnungen erstellen</string>
+    <string name="settings_download_merge_duplicate_gallery">Doppelte Galerien zusammenführen</string>
+    <string name="settings_download_merge_duplicate_gallery_summary">Doppelte Galerien scannen und mit Versionsfortschritt zusammenführen</string>
+    <string name="settings_download_restore_download_items_get_gallery_info">Download-Elemente in Galerie wiederherstellen</string>
+    <string name="settings_download_scan_download_files">Download-Dateien scannen</string>
+    <string name="settings_download_scan_download_files_summary">Alle Download-Verzeichnisse scannen und Datei-Info-Tabelle neu aufbauen, um Downloads zu optimieren und Duplikate zu vermeiden</string>
+    <string name="start_all_download">Alle starten</string>
+
+    <!-- 合并重复画廊 -->
+    <string name="merge_duplicate_gallery_backup_failed">Datenbank-Backup fehlgeschlagen</string>
+    <string name="merge_duplicate_gallery_backup_success">Datenbank-Backup erfolgreich</string>
+    <string name="merge_duplicate_gallery_confirm">Doppelte Galerie-Gruppe gefunden: %1$s (%2$d Versionen), zusammenführen?</string>
+    <string name="merge_duplicate_gallery_merge_all">Alle bestätigen</string>
+    <string name="merge_duplicate_gallery_skip_all">Alle ablehnen</string>
+
+    <!-- 其他 -->
+    <string name="search_sp_suffix"></string>
+    <string name="settings_about_author_summary">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
+    <string name="settings_advanced_export_data_legacy">Daten exportieren (Legacy-kompatibel)</string>
+    <string name="settings_advanced_export_data_legacy_failed">Export von Legacy-kompatiblen Daten fehlgeschlagen</string>
+    <string name="settings_advanced_export_data_legacy_summary">Datenbankdatei exportieren, die mit alten Versionen kompatibel ist, kann direkt in alter APP verwendet werden</string>
+    <string name="settings_advanced_export_data_legacy_to">Legacy-kompatible Daten nach %s exportiert</string>
+    <string name="sort_by_default">Standardreihenfolge</string>
+    <string name="subscription_tip">Auf "+" klicken, um Abonnement hinzuzufügen</string>
+    <string name="wifi_connect_auto">Automatisch verbinden</string>
+    <string name="wifi_connect_custom_ip">Mit angegebener IP verbinden</string>
+    <string name="wifi_ip_address_hint">192.168.1.100</string>
+    <string name="wifi_ip_address_label">IP-Adresse:</string>
 </resources>

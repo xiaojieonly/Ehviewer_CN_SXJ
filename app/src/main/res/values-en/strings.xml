@@ -708,8 +708,6 @@
     <string name="language_na">N/A</string>
     <string name="language_other">Other</string>
 
-    <string name="please_wait">Pleas wait</string>
-
     <!-- License -->
     <string name="license">License</string>
 
@@ -871,5 +869,55 @@
     <string name="clean_invalid_download_invalid_ehviewer_file">Invalid .ehviewer file: %s</string>
     <string name="clean_invalid_download_inconsistent_file_count">Inconsistent file count: %s, expected: %d, actual: %d</string>
     <string name="clean_invalid_download_error_processing_directory">Error processing directory: %s - %s</string>
+    
+    <!-- Theme strings -->
+    <string name="unavailable">Unavailable</string>
+    
+    <!-- Merge duplicate gallery strings -->
+    <string name="merge_scanning_galleries">Scanning downloaded galleries...</string>
+    <string name="merge_start_scan">Starting to scan downloaded galleries...</string>
+    <string name="merge_scan_failed">Failed to scan downloaded galleries</string>
+    <string name="merge_scan_complete">Scan completed, found %d groups of duplicate galleries</string>
+    <string name="merge_start_analyze">Starting to analyze gallery version relationships...</string>
+    <string name="merge_analyzing_versions">Analyzing gallery version relationships...</string>
+    <string name="merge_analyze_failed">Failed to analyze gallery version relationships</string>
+    <string name="merge_analyze_complete">Analysis completed</string>
+    <string name="merge_no_duplicates_found">No duplicate galleries found that need merging</string>
+    <string name="merge_start_backup">Starting database backup...</string>
+    <string name="merge_backing_database">Backing up database...</string>
+    <string name="merge_backup_failed">Database backup failed</string>
+    <string name="merge_backup_success">Database backup successful</string>
+    <string name="merge_start_merge">Starting to merge galleries...</string>
+    <string name="merge_merging_galleries">Merging galleries...</string>
+    <string name="merge_merge_failed">Gallery merge failed</string>
+    <string name="merge_merge_success">Gallery merge successful</string>
+    <string name="merge_exception_occurred">Exception occurred during merge: %s</string>
+    <string name="merge_exception_stack">Exception stack: %s</string>
+    <string name="merge_success_summary">Successfully merged %d groups of duplicate galleries, skipped %d groups</string>
+    <string name="merge_failure_summary">Merge failed, merged %d groups, skipped %d groups, error report generated</string>
+    <string name="merge_duplicate_gallery_title">Merge Duplicate Galleries</string>
+    
+    <!-- Download scene strings -->
+    <string name="starting_download">Starting download...</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="background_processing">Background processing</string>
+    <string name="background_processing_please_wait">Processing in background, please check results later</string>
+    <string name="processing_progress">Processing: %s (%d/%d)</string>
+    <string name="download_tasks_started">Started %d download tasks</string>
+    <string name="no_download_tasks_to_start">No download tasks to start</string>
+    <string name="start_failed">Start failed: %s</string>
+    
+    <!-- Database viewer strings -->
+    <string name="table_info">Table: %s (%d rows)</string>
+    <string name="column_info">Column info:</string>
+    <string name="data_sample_preview">Data sample (first 10 rows):</string>
+    
+    <!-- WiFi client strings -->
+    <string name="wifi_connected_info">Connected to: %s\nIP:%s\nRouter:%s</string>
+    <string name="wifi_connection_failed">Communication connection failed</string>
+    <string name="wifi_try_reconnect">Trying to reconnect</string>
+    <string name="wifi_please_enter_ip">Please enter IP address</string>
+    <string name="wifi_invalid_ip_format">Invalid IP address format</string>
+    <string name="wifi_connecting_to_custom_ip">Trying to connect to specified IP: %s\nLocal IP:%s</string>
 
 </resources>

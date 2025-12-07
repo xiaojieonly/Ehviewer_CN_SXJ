@@ -32,12 +32,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.hippo.ehviewer.Analytics;
+import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
+import com.hippo.ehviewer.dao.DownloadedFile;
 import com.hippo.ehviewer.dao.GalleryVersionMap;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderInfo;
@@ -2391,6 +2393,184 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             if (mDownloadListener != null) {
                 mDownloadListener.onDownload(mCurrentTask);
             }
+        }
+    }
+
+    /**
+     * 检查画廊文件的完整性
+     * @param gid 画廊GID
+     * @return 文件检查结果
+     */
+    public DownloadedFileManager.GalleryFileCheckResult checkGalleryFilesIntegrity(long gid) {
+        Log.d(TAG, "[INTEGRITY] 开始检查画廊文件完整性: GID " + gid);
+        
+        DownloadedFileManager manager = DownloadedFileManager.getInstance();
+        DownloadedFileManager.GalleryFileCheckResult result = manager.checkGalleryFilesExist(gid);
+        
+        // 记录详细的检查结果
+        if (result.isComplete()) {
+            Log.i(TAG, "[INTEGRITY] 画廊文件完整性检查通过: GID " + gid + 
+                      " (" + result.validFiles + "/" + result.totalFiles + " 文件完整)");
+        } else {
+            Log.w(TAG, "[INTEGRITY] 画廊文件完整性检查发现问题: GID " + gid + 
+                      " - 总计: " + result.totalFiles + 
+                      ", 存在: " + result.existingFiles + 
+                      ", 有效: " + result.validFiles + 
+                      ", 缺失: " + result.missingFiles + 
+                      ", 损坏: " + result.invalidFiles);
+            
+            // 记录缺失的文件
+            if (result.hasMissingFiles()) {
+                Log.w(TAG, "[INTEGRITY] 缺失文件列表:");
+                for (DownloadedFile file : result.missingFileList) {
+                    Log.w(TAG, "[INTEGRITY]   - " + file.getFilename() + " (路径: " + file.getPath() + ")");
+                }
+            }
+            
+            // 记录损坏的文件
+            if (result.hasInvalidFiles()) {
+                Log.w(TAG, "[INTEGRITY] 损坏文件列表:");
+                for (DownloadedFile file : result.invalidFileList) {
+                    Log.w(TAG, "[INTEGRITY]   - " + file.getFilename() + " (路径: " + file.getPath() + ")");
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 尝试修复画廊的缺失文件
+     * @param gid 画廊GID
+     * @return 修复的文件数量
+     */
+    public int repairMissingFiles(long gid) {
+        Log.d(TAG, "[REPAIR] 开始修复画廊缺失文件: GID " + gid);
+        
+        DownloadedFileManager manager = DownloadedFileManager.getInstance();
+        DownloadedFileManager.GalleryFileCheckResult checkResult = manager.checkGalleryFilesExist(gid);
+        
+        if (!checkResult.hasMissingFiles()) {
+            Log.d(TAG, "[REPAIR] 没有缺失文件需要修复: GID " + gid);
+            return 0;
+        }
+        
+        int repairedCount = 0;
+        DownloadInfo downloadInfo = getDownloadInfo(gid);
+        
+        if (downloadInfo != null) {
+            for (DownloadedFile missingFile : checkResult.missingFileList) {
+                // 尝试从其他位置查找文件
+                if (attemptFileRepair(missingFile, downloadInfo)) {
+                    repairedCount++;
+                    Log.i(TAG, "[REPAIR] 成功修复文件: " + missingFile.getFilename());
+                } else {
+                    Log.w(TAG, "[REPAIR] 无法修复文件: " + missingFile.getFilename());
+                }
+            }
+        }
+        
+        Log.i(TAG, "[REPAIR] 修复完成: GID " + gid + ", 修复了 " + repairedCount + " 个文件");
+        return repairedCount;
+    }
+    
+    /**
+     * 获取下载统计信息
+     */
+    public DownloadStatistics getDownloadStatistics() {
+        DownloadStatistics stats = new DownloadStatistics();
+        
+        // 统计所有下载任务
+        for (DownloadInfo info : mAllInfoList) {
+            stats.totalGalleries++;
+            
+            switch (info.state) {
+                case DownloadInfo.STATE_NONE:
+                    stats.noneCount++;
+                    break;
+                case DownloadInfo.STATE_WAIT:
+                    stats.waitCount++;
+                    break;
+                case DownloadInfo.STATE_DOWNLOAD:
+                    stats.downloadCount++;
+                    break;
+                case DownloadInfo.STATE_FINISH:
+                    stats.finishCount++;
+                    break;
+                case DownloadInfo.STATE_FAILED:
+                    stats.failedCount++;
+                    break;
+            }
+            
+            // 统计文件数量
+            if (info.total > 0) {
+                stats.totalImages += info.total;
+                stats.finishedImages += info.finished;
+                stats.downloadedImages += info.downloaded;
+            }
+        }
+        
+        // 统计已下载文件
+        DownloadedFileManager fileManager = DownloadedFileManager.getInstance();
+        stats.downloadedFilesCount = fileManager.getTotalFilesCount();
+        
+        Log.d(TAG, "[STATS] 下载统计 - 总画廊: " + stats.totalGalleries + 
+                  ", 完成: " + stats.finishCount + 
+                  ", 下载中: " + stats.downloadCount + 
+                  ", 等待: " + stats.waitCount + 
+                  ", 失败: " + stats.failedCount + 
+                  ", 总图片: " + stats.totalImages + 
+                  ", 已完成图片: " + stats.finishedImages);
+        
+        return stats;
+    }
+    
+    /**
+     * 下载统计信息
+     */
+    public static class DownloadStatistics {
+        public int totalGalleries = 0;
+        public int noneCount = 0;
+        public int waitCount = 0;
+        public int downloadCount = 0;
+        public int finishCount = 0;
+        public int failedCount = 0;
+        
+        public int totalImages = 0;
+        public int finishedImages = 0;
+        public int downloadedImages = 0;
+        public int downloadedFilesCount = 0;
+        
+        public double getCompletionRate() {
+            return totalImages > 0 ? (double) finishedImages / totalImages : 0.0;
+        }
+        
+        public int getActiveDownloads() {
+            return downloadCount + waitCount;
+        }
+    }
+
+    /**
+     * 尝试修复单个文件
+     */
+    private boolean attemptFileRepair(DownloadedFile missingFile, DownloadInfo downloadInfo) {
+        try {
+            // 检查文件是否在其他位置存在
+            java.io.File file = new java.io.File(missingFile.getPath());
+            if (file.exists()) {
+                Log.d(TAG, "[REPAIR] 文件实际存在，可能是数据库记录问题: " + missingFile.getFilename());
+                return true;
+            }
+            
+            // 可以在这里添加更多的修复逻辑，比如：
+            // 1. 从备份目录恢复
+            // 2. 从临时目录恢复
+            // 3. 重新下载标记
+            
+            return false;
+        } catch (Exception e) {
+            Log.e(TAG, "[REPAIR] 修复文件时发生错误: " + missingFile.getFilename(), e);
+            return false;
         }
     }
 

@@ -1,5 +1,7 @@
 package com.hippo.ehviewer.ui.fragment;
 
+import static com.hippo.ehviewer.GetText.getString;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -103,7 +105,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
 
         mProgressDialog = new ProgressDialog(mContext);
         mProgressDialog.setTitle(R.string.settings_download_merge_duplicate_gallery);
-        mProgressDialog.setMessage("正在扫描已下载的画廊...");
+        mProgressDialog.setMessage(getString(R.string.merge_scanning_galleries));
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setCancelable(false);
@@ -118,24 +120,20 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
         
         try {
             // 步骤1：扫描已下载的画廊
-            logInfo("开始扫描已下载的画廊...");
-            publishProgress(STEP_SCAN, "正在扫描已下载的画廊...");
+            logInfo(getString(R.string.merge_start_scan));
+            publishProgress(STEP_SCAN, getString(R.string.merge_scanning_galleries));
             if (!scanDownloadedGalleries()) {
-                logError("扫描已下载的画廊失败");
+                logError(getString(R.string.merge_scan_failed));
                 return false;
-            }
-            logInfo("扫描完成，发现 " + mGalleryGroups.size() + " 组重复画廊");
-            
-            // 步骤2：分析版本递进关系
-            logInfo("开始分析画廊版本关系...");
-            publishProgress(STEP_ANALYZE, "正在分析画廊版本关系...");
+ }
+            logInfo(getString(R.string.merge_scan_complete, mGalleryGroups.size()));            // 步骤2：分析版本递进关系
+            logInfo(getString(R.string.merge_start_analyze));
+            publishProgress(STEP_ANALYZE, getString(R.string.merge_analyzing_versions));
             if (!analyzeGalleryVersions()) {
-                logError("分析画廊版本关系失败");
+                logError(getString(R.string.merge_analyze_failed));
                 return false;
-            }
-            logInfo("分析完成");
-            
-            if (mGalleryGroups.isEmpty()) {
+ }
+            logInfo(getString(R.string.merge_analyze_complete));            if (mGalleryGroups.isEmpty()) {
                 logInfo("未发现需要合并的重复画廊");
                 publishProgress("未发现需要合并的重复画廊");
                 // 即使没有需要合并的画廊，也导出日志
@@ -156,24 +154,22 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             logInfo("数据库备份成功");
             
             // 步骤4：合并画廊
-            logInfo("开始合并画廊...");
-            publishProgress(STEP_MERGE, "正在合并画廊...");
+            logInfo(getString(R.string.merge_start_merge));
+            publishProgress(STEP_MERGE, getString(R.string.merge_merging_galleries));
             if (!mergeGalleries()) {
-                logError("合并画廊失败");
+                logError(getString(R.string.merge_merge_failed));
                 // 即使合并失败，也导出日志
                 exportMergeLog();
                 return false;
-            }
-            logInfo("合并画廊成功");
-            
-            // 导出合并日志
+ }
+            logInfo(getString(R.string.merge_merge_success));            // 导出合并日志
             exportMergeLog();
             
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Error merging duplicate galleries", e);
-            logError("合并过程中发生异常: " + e.getMessage());
-            logError("异常堆栈: " + Log.getStackTraceString(e));
+            logError(getString(R.string.merge_exception_occurred, e.getMessage()));
+            logError(getString(R.string.merge_exception_stack, Log.getStackTraceString(e)));
             // 即使发生异常，也导出日志
             exportMergeLog();
             return false;
@@ -233,13 +229,13 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
 
         if (success) {
             if (mGalleryGroups.isEmpty()) {
-                Toast.makeText(mContext, "未发现需要合并的重复画廊", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, R.string.merge_no_duplicates_found, Toast.LENGTH_SHORT).show();
             } else {
-                String message = String.format("成功合并 %d 组重复画廊，跳过 %d 组", mMergedCount, mSkippedCount);
+                String message = getString(R.string.merge_success_summary, mMergedCount, mSkippedCount);
                 Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
             }
         } else {
-            String message = String.format("合并失败，已合并 %d 组，跳过 %d 组，已生成错误报告", mMergedCount, mSkippedCount);
+            String message = getString(R.string.merge_failure_summary, mMergedCount, mSkippedCount);
             Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
             // 生成错误报告文件
             generateErrorReport();
@@ -267,7 +263,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
                 String message = mContext.getString(R.string.merge_duplicate_gallery_confirm, title, group.galleries.size());
                 
                 new AlertDialog.Builder(activity)
-                        .setTitle("合并重复画廊")
+                        .setTitle(getString(R.string.merge_duplicate_gallery_title))
                         .setMessage(message)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             @Override

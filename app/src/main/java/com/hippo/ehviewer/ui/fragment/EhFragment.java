@@ -130,15 +130,15 @@ public class EhFragment extends BasePreferenceFragmentCompat
             int nightMode = uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
             switch (nightMode) {
                 case android.content.res.Configuration.UI_MODE_NIGHT_YES:
-                    return "深色";
+                    return getString(R.string.theme_dark);
                 case android.content.res.Configuration.UI_MODE_NIGHT_NO:
-                    return "浅色";
+                    return getString(R.string.theme_light);
                 case android.content.res.Configuration.UI_MODE_NIGHT_UNDEFINED:
                 default:
-                    return "不可用";
+                    return getString(R.string.unavailable);
             }
         } else {
-            return "不可用";
+            return getString(R.string.unavailable);
         }
     }
 }

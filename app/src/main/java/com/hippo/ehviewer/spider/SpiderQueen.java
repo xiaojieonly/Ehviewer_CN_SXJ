@@ -1168,8 +1168,17 @@ public final class SpiderQueen implements Runnable {
                     out.write(buffer, 0, bytesRead);
                 }
                 out.flush();
-                Log.d(TAG, "File copied successfully: " + sourceFilename + " -> " + targetFilename);
-                return true;
+                
+                // 验证文件完整性
+                if (verifyFileIntegrity(sourceFile, targetFile)) {
+                    Log.d(TAG, "File copied and verified successfully: " + sourceFilename + " -> " + targetFilename);
+                    return true;
+                } else {
+                    Log.e(TAG, "File integrity check failed after copying: " + sourceFilename + " -> " + targetFilename);
+                    // 删除损坏的目标文件
+                    targetFile.delete();
+                    return false;
+                }
             } finally {
                 try {
                     if (in != null) in.close();
@@ -1181,6 +1190,65 @@ public final class SpiderQueen implements Runnable {
         } catch (Exception e) {
             Log.e(TAG, "Error copying existing file", e);
             return false;
+        }
+    }
+
+    /**
+     * 验证文件完整性
+     */
+    private boolean verifyFileIntegrity(UniFile sourceFile, UniFile targetFile) {
+        try {
+            // 检查文件大小
+            long sourceSize = sourceFile.length();
+            long targetSize = targetFile.length();
+            
+            if (sourceSize != targetSize) {
+                Log.w(TAG, "File size mismatch - source: " + sourceSize + ", target: " + targetSize);
+                return false;
+            }
+            
+            // 对于小文件进行MD5验证
+            if (sourceSize < 10 * 1024 * 1024) { // 小于10MB的文件
+                String sourceMd5 = calculateFileMD5(sourceFile);
+                String targetMd5 = calculateFileMD5(targetFile);
+                
+                if (sourceMd5 == null || targetMd5 == null || !sourceMd5.equals(targetMd5)) {
+                    Log.w(TAG, "File MD5 mismatch - source: " + sourceMd5 + ", target: " + targetMd5);
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Error verifying file integrity", e);
+            return false;
+        }
+    }
+    
+    /**
+     * 计算文件MD5
+     */
+    private String calculateFileMD5(UniFile file) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            java.io.InputStream is = file.openInputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            
+            while ((bytesRead = is.read(buffer)) != -1) {
+                md.update(buffer, 0, bytesRead);
+            }
+            is.close();
+            
+            byte[] hash = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            Log.e(TAG, "Error calculating MD5 for file: " + file.getName(), e);
+            return null;
         }
     }
 
@@ -1788,17 +1856,34 @@ public final class SpiderQueen implements Runnable {
                 if (spiderInfo != null && spiderInfo.pTokenMap != null) {
                     String token = spiderInfo.pTokenMap.get(index);
                     if (token != null && !SpiderInfo.TOKEN_FAILED.equals(token)) {
+                        Log.d(TAG, "[FILE_CHECK] 检查文件是否存在 - 页面: " + index + ", token: " + token);
+                        
                         DownloadedFileManager manager = DownloadedFileManager.getInstance();
                         DownloadedFile downloadedFile = manager.getFileByToken(token);
+                        
                         if (downloadedFile != null) {
+                            Log.d(TAG, "[FILE_CHECK] 在数据库中找到文件记录: " + downloadedFile.getFilename() + 
+                                      " (GID: " + downloadedFile.getGid() + ", 路径: " + downloadedFile.getPath() + ")");
+                            
                             // 文件已存在，尝试复制文件
                             if (copyExistingFile(downloadedFile, index)) {
+                                Log.i(TAG, "[FILE_CHECK] 文件复制成功，页面 " + index + " 标记为完成");
                                 updatePageState(index, STATE_FINISHED);
                                 return true;
+                            } else {
+                                Log.w(TAG, "[FILE_CHECK] 文件复制失败，页面 " + index + " 将重新下载");
                             }
+                        } else {
+                            Log.d(TAG, "[FILE_CHECK] 未找到文件记录，页面 " + index + " 将从网络下载");
                         }
+                    } else {
+                        Log.d(TAG, "[FILE_CHECK] token为空或失败，页面 " + index + " 将从网络下载");
                     }
+                } else {
+                    Log.d(TAG, "[FILE_CHECK] spiderInfo或pTokenMap为空，页面 " + index + " 将从网络下载");
                 }
+            } else {
+                Log.d(TAG, "[FILE_CHECK] 强制下载模式，页面 " + index + " 将从网络下载");
             }
 
             // Clear TOKEN_FAILED for force request

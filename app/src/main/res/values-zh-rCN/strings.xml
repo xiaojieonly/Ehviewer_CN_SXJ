@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-  ~ Copyright 2016 Hippo Sevenerror_please_login_first
+  ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -350,7 +350,7 @@
     <string name="tag_filter">标签过滤</string>
 
     <!-- Download -->
-    <string name="scene_download_title">共%s个画廊 - %s</string>
+    <string name="scene_download_title">共%1$s个画廊 - %2$s</string>
     <string name="no_download_info">这里是下载项目</string>
     <string name="download_state_none">未启动</string>
     <string name="download_state_wait">等待中</string>
@@ -744,8 +744,6 @@
     <string name="language_na">N/A</string>
     <string name="language_other">其他</string>
 
-    <string name="please_wait">请稍候</string>
-
     <string name="proxy_enable">启用</string>
     <string name="proxy_enabled">已启用</string>
     <string name="proxy_disabled">未启用</string>
@@ -909,6 +907,10 @@
     <string name="wifi_send_text">发送数据</string>
     <string name="wifi_server_illustrate">请确保要接收数据的手机链接上本机热点，并且在迁移完成前请勿断开链接或者返回上级页面！ </string>
     <string name="wifi_server_connect">连接</string>
+    <string name="wifi_connect_auto">自动连接</string>
+    <string name="wifi_connect_custom_ip">连接指定IP</string>
+    <string name="wifi_ip_address_label">IP地址:</string>
+    <string name="wifi_ip_address_hint">192.168.1.100</string>
     <string name="wifi_server_connect_unable">连接不存在</string>
     <string name="wifi_server_connection_succeeded">设备连接成功，数据接受完毕后请重启app使数据生效</string>
     <string name="wifi_server_disconnect">设备连接断开</string>
@@ -917,7 +919,7 @@
     <string name="wifi_server_send_fail">发送消息失败: %s</string>
     <string name="wifi_server_receive_message">收到消息: %s</string>
     <string name="wifi_server_receive_message_unknown">未知数据类型</string>
-    <string name="wifi_server_opened">热点已开启 SSID: %1s \n%2s</string>
+    <string name="wifi_server_opened">热点已开启 SSID: %1$s \n%2$s</string>
     <string name="wifi_server_closed">热点已关闭</string>
     <string name="wifi_server_password">密码: %s</string>
     <string name="wifi_server_no_permission">权限不足，请授予权限</string>
@@ -999,4 +1001,54 @@
     <string name="dialog_search_download_title">搜索下载画廊</string>
     <string name="dialog_search_options_label">搜索选项</string>
     <string name="reset">重置</string>
+    
+    <!-- Theme strings -->
+    <string name="unavailable">不可用</string>
+    
+    <!-- Merge duplicate gallery strings -->
+    <string name="merge_scanning_galleries">正在扫描已下载的画廊...</string>
+    <string name="merge_start_scan">开始扫描已下载的画廊...</string>
+    <string name="merge_scan_failed">扫描已下载的画廊失败</string>
+    <string name="merge_scan_complete">扫描完成，发现 %d 组重复画廊</string>
+    <string name="merge_start_analyze">开始分析画廊版本关系...</string>
+    <string name="merge_analyzing_versions">正在分析画廊版本关系...</string>
+    <string name="merge_analyze_failed">分析画廊版本关系失败</string>
+    <string name="merge_analyze_complete">分析完成</string>
+    <string name="merge_no_duplicates_found">未发现需要合并的重复画廊</string>
+    <string name="merge_start_backup">开始备份数据库...</string>
+    <string name="merge_backing_database">正在备份数据库...</string>
+    <string name="merge_backup_failed">备份数据库失败</string>
+    <string name="merge_backup_success">数据库备份成功</string>
+    <string name="merge_start_merge">开始合并画廊...</string>
+    <string name="merge_merging_galleries">正在合并画廊...</string>
+    <string name="merge_merge_failed">合并画廊失败</string>
+    <string name="merge_merge_success">合并画廊成功</string>
+    <string name="merge_exception_occurred">合并过程中发生异常: %s</string>
+    <string name="merge_exception_stack">异常堆栈: %s</string>
+    <string name="merge_success_summary">成功合并 %1$d 组重复画廊，跳过 %2$d 组</string>
+    <string name="merge_failure_summary">合并失败，已合并 %1$d 组，跳过 %2$d 组，已生成错误报告</string>
+    <string name="merge_duplicate_gallery_title">合并重复画廊</string>
+    
+    <!-- Download scene strings -->
+    <string name="starting_download">正在启动下载...</string>
+    <string name="please_wait">请稍候...</string>
+    <string name="background_processing">后台处理</string>
+    <string name="background_processing_please_wait">正在后台处理，请稍后查看结果</string>
+    <string name="processing_progress">正在处理: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">已启动 %d 个下载任务</string>
+    <string name="no_download_tasks_to_start">没有需要启动的下载任务</string>
+    <string name="start_failed">启动失败: %s</string>
+    
+    <!-- Database viewer strings -->
+    <string name="table_info">表: %1$s (共 %2$d 行)</string>
+    <string name="column_info">列信息:</string>
+    <string name="data_sample_preview">数据样本 (前10行):</string>
+    
+    <!-- WiFi client strings -->
+    <string name="wifi_connected_info">已连接到：%1$s\nIP:%2$s\n路由：%3$s</string>
+    <string name="wifi_connection_failed">通信连接失败</string>
+    <string name="wifi_try_reconnect">尝试重新链接</string>
+    <string name="wifi_please_enter_ip">请输入IP地址</string>
+    <string name="wifi_invalid_ip_format">IP地址格式不正确</string>
+    <string name="wifi_connecting_to_custom_ip">尝试连接到指定IP：%1$s\n本机IP:%2$s</string>
 </resources>

@@ -238,6 +238,7 @@ public class DownloadsScene extends ToolbarScene
     @ViewLifeCircle
     private SearchBarMover mSearchBarMover;
     private boolean mSearchMode = false;
+    private boolean isFilteringOrSearching = false;  // 标记是否处于筛选或搜索状态
     public String searchKey = null;
 
     private int mInitPosition = -1;
@@ -364,6 +365,7 @@ public class DownloadsScene extends ToolbarScene
             mAdapter.notifyDataSetChanged();
         }
         mBackList = mList;
+        isFilteringOrSearching = false;  // 切换标签时退出筛选状态
         filterByCategory();
         updateTitle();
         updatePaginationIndicator(true); // 标签变化时强制重新初始化
@@ -379,7 +381,12 @@ public class DownloadsScene extends ToolbarScene
         if (mPaginationIndicator == null || mList == null) {
             return;
         }
-        if (mList.size() < paginationSize || !canPagination) {
+        
+        // 如果处于筛选或搜索模式，使用当前结果列表大小；否则检查是否需要分页
+        int currentListSize = mList.size();
+        
+        // 判断是否需要显示分页：列表大小要超过阈值且支持分页
+        if (currentListSize < paginationSize || !canPagination) {
             mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
@@ -388,7 +395,8 @@ public class DownloadsScene extends ToolbarScene
         if (forceReinit || needInitPageSize) {
             mPaginationIndicator.setVisibility(View.VISIBLE);
             needInitPageSize = false;
-            mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
+            // 使用当前结果列表的大小初始化分页，而非原始列表
+            mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, currentListSize, indexPage);
             
             // 只在第一次或强制重新初始化时设置监听器
             if (myPageChangeListener != null) {
@@ -727,7 +735,7 @@ public class DownloadsScene extends ToolbarScene
                 progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "后台处理", 
                     (dialog, which) -> {
                         dialog.dismiss();
-                        Toast.makeText(activity, "正在后台处理，请稍后查看结果", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, getString(R.string.background_processing_please_wait), Toast.LENGTH_SHORT).show();
                     });
                 progressDialog.show();
                 
@@ -745,7 +753,7 @@ public class DownloadsScene extends ToolbarScene
                         if (progressDialog.isShowing()) {
                             progressDialog.setMax(total);
                             progressDialog.setProgress(current);
-                            progressDialog.setMessage("正在处理: " + title + " (" + current + "/" + total + ")");
+                            progressDialog.setMessage(getString(R.string.processing_progress, title, current, total));
                         }
                     }
                     
@@ -755,9 +763,9 @@ public class DownloadsScene extends ToolbarScene
                             progressDialog.dismiss();
                         }
                         if (totalStarted > 0) {
-                            Toast.makeText(activity, "已启动 " + totalStarted + " 个下载任务", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.download_tasks_started, totalStarted), Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(activity, "没有需要启动的下载任务", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, getString(R.string.no_download_tasks_to_start), Toast.LENGTH_SHORT).show();
                         }
                     }
                     
@@ -766,7 +774,7 @@ public class DownloadsScene extends ToolbarScene
                         if (progressDialog.isShowing()) {
                             progressDialog.dismiss();
                         }
-                        Toast.makeText(activity, "启动失败: " + error, Toast.LENGTH_LONG).show();
+                        Toast.makeText(activity, getString(R.string.start_failed, error), Toast.LENGTH_LONG).show();
                     }
                 });
                 
@@ -846,8 +854,8 @@ public class DownloadsScene extends ToolbarScene
         }
         searchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
         
-        // 设置SearchBar为搜索状态，使EditText可以点击和编辑
-        searchBar.setState(SearchBar.STATE_SEARCH, false);
+        // 设置SearchBar为搜索列表状态，启用自动补全建议功能
+        searchBar.setState(SearchBar.STATE_SEARCH_LIST, false);
         
         // 确保EditText可以获取焦点和点击
         searchBar.mEditText.setFocusable(true);
@@ -892,6 +900,7 @@ public class DownloadsScene extends ToolbarScene
     private void performAdvancedSearch(String keyword, int searchOption, Set<Integer> categories) {
         Log.d("DownloadsScene", "performAdvancedSearch: keyword=" + keyword + ", searchOption=" + searchOption + ", categories=" + categories);
         
+        isFilteringOrSearching = true;  // 标记进入搜索状态
         mProgressView.setVisibility(View.VISIBLE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.GONE);
@@ -1554,6 +1563,7 @@ public class DownloadsScene extends ToolbarScene
         searchKey = query;
         mSearchBar.hideKeyBoard();
         searching = true;
+        isFilteringOrSearching = true;  // 标记进入搜索状态
         startSearching();
     }
 
@@ -1565,6 +1575,7 @@ public class DownloadsScene extends ToolbarScene
 
         if (mSearchMode && mSearchBar != null) {
             mSearchMode = false;
+            isFilteringOrSearching = false;  // 退出搜索模式时清除标记
             mSearchBar.setTitle(searchKey);
             mSearchBar.setState(SearchBar.STATE_NORMAL);
         }
@@ -2394,6 +2405,7 @@ public class DownloadsScene extends ToolbarScene
         // 如果需要应用任何过滤或排序
         if (!isAllCategories || selectedStatus != R.id.all || selectedSort != R.id.sort_by_default) {
             Log.d("DownloadsScene", "applySortAndFilter: 需要应用过滤或排序");
+            isFilteringOrSearching = true;  // 标记进入筛选状态
             mProgressView.setVisibility(View.VISIBLE);
             if (mRecyclerView != null) {
                 mRecyclerView.setVisibility(View.GONE);
@@ -2408,6 +2420,7 @@ public class DownloadsScene extends ToolbarScene
             executor.executeFilterAndSort(selectedCategories, selectedStatus, selectedSort);
         } else {
             Log.d("DownloadsScene", "applySortAndFilter: 不需要任何过滤或排序，使用原始列表");
+            isFilteringOrSearching = false;  // 标记退出筛选状态
             // 不需要任何过滤或排序，直接使用原始列表
             mList = new ArrayList<>(mBackList);
             updateAdapter();
