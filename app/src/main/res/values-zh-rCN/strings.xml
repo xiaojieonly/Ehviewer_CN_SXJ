@@ -923,6 +923,13 @@
     <string name="wifi_server_closed">热点已关闭</string>
     <string name="wifi_server_password">密码: %s</string>
     <string name="wifi_server_no_permission">权限不足，请授予权限</string>
+    <string name="wifi_server_ip_addresses">本机IP地址: %s</string>
+    <string name="wifi_please_select_data_type">请至少选择一种数据类型</string>
+    <string name="wifi_server_reconnecting">连接已断开，尝试重新连接...</string>
+    <string name="wifi_server_reconnect_failed">重新连接失败: %s</string>
+    <string name="wifi_server_hotspot_not_enabled">WiFi热点未开启，请先开启WiFi热点</string>
+    <string name="wifi_server_hotspot_enabled">WiFi热点已开启，等待设备连接...</string>
+    <string name="wifi_server_please_enable_hotspot">请先开启WiFi热点</string>
     <!--  wifi server  -->
 
     <!--  limits  -->

@@ -19,20 +19,64 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Spinner
-        android:id="@+id/migrate_spinner"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:entries="@array/migrate_data_types"
-        android:paddingHorizontal="@dimen/spinner_horizontal_padding" />
+        android:orientation="horizontal"
+        android:layout_margin="10dp">
 
-    <Button
-        android:id="@+id/status_change"
+        <CheckBox
+            android:id="@+id/checkbox_bookmark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_send_bookmark" />
+
+        <CheckBox
+            android:id="@+id/checkbox_favorite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/wifi_send_favorite" />
+
+        <CheckBox
+            android:id="@+id/checkbox_download"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/wifi_send_download" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="10dp">
+
+        <Button
+            android:id="@+id/status_change"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textAllCaps="false" />
+
+        <ProgressBar
+            android:id="@+id/loading_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:visibility="gone"
+            style="?android:attr/progressBarStyleSmall" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/ip_addresses"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:text=""
-        android:textAllCaps="false" />
+        android:text="@string/wifi_server_ip_addresses"
+        android:textColor="@color/colorPrimary"
+        android:textSize="14sp" />
 
     <!--    <LinearLayout-->
     <!--        android:layout_width="wrap_content"-->

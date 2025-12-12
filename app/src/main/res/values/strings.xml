@@ -1005,6 +1005,13 @@
     <string name="wifi_server_closed">Hotspot closed</string>
     <string name="wifi_server_password">Password: %s</string>
     <string name="wifi_server_no_permission">Insufficient permission, please grant permission</string>
+    <string name="wifi_server_ip_addresses">Local IP addresses: %s</string>
+    <string name="wifi_please_select_data_type">Please select at least one data type</string>
+    <string name="wifi_server_reconnecting">Connection lost, trying to reconnect...</string>
+    <string name="wifi_server_reconnect_failed">Failed to reconnect: %s</string>
+    <string name="wifi_server_hotspot_not_enabled">WiFi hotspot is not enabled, please enable WiFi hotspot first</string>
+    <string name="wifi_server_hotspot_enabled">WiFi hotspot is enabled, waiting for device connection...</string>
+    <string name="wifi_server_please_enable_hotspot">Please enable WiFi hotspot first</string>
     <!--  wifi server  -->
 
     <!--  limits  -->

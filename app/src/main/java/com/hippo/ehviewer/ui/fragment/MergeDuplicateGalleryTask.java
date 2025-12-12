@@ -342,6 +342,13 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
                     long gid = Long.parseLong(dirName.substring(0, dashIndex));
                     String title = dirName.substring(dashIndex + 1);
                     
+                    // 处理带🔄标识的标题
+                    String originalTitle = title;
+                    if (title.startsWith("🔄 ")) {
+                        originalTitle = title.substring(3); // 移除"🔄 "前缀
+                        logInfo("发现带🔄标识的文件夹，已移除标识: " + title + " -> " + originalTitle);
+                    }
+                    
                     // 检查是否有.ehviewer文件
                     UniFile ehviewerFile = file.findFile(".ehviewer");
                     if (ehviewerFile == null) {
@@ -350,16 +357,16 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
                     }
                     
                     validGalleryCount++;
-                    logInfo("发现有效画廊: " + title + " (GID: " + gid + ")");
+                    logInfo("发现有效画廊: " + originalTitle + " (GID: " + gid + ")");
                     
                     // 创建GalleryInfo对象
                     GalleryInfo galleryInfo = new GalleryInfo();
                     galleryInfo.gid = gid;
-                    galleryInfo.title = title;
+                    galleryInfo.title = originalTitle; // 使用处理后的标题
                     galleryInfo.token = ""; // 这里可以从.ehviewer文件读取
                     
                     // 按标题分组
-                    String normalizedTitle = normalizeTitle(title);
+                    String normalizedTitle = normalizeTitle(originalTitle);
                     if (!titleMap.containsKey(normalizedTitle)) {
                         titleMap.put(normalizedTitle, new ArrayList<>());
                     }
@@ -840,8 +847,14 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
      * 标准化标题，用于比较
      */
     private String normalizeTitle(String title) {
+        // 处理带🔄标识的标题
+        String normalizedTitle = title;
+        if (title.startsWith("🔄 ")) {
+            normalizedTitle = title.substring(3); // 移除"🔄 "前缀
+        }
+        
         // 移除特殊字符和空格，转换为小写
-        return title.replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", "").toLowerCase();
+        return normalizedTitle.replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", "").toLowerCase();
     }
     
     /**

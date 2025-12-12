@@ -312,6 +312,54 @@ public class DownloadListInfosExecutor {
         });
     }
 
+    // 新增方法：同时应用分类过滤、多状态过滤和排序（支持多选分类和多选状态）
+    public void executeFilterAndSort(Set<Integer> categoryIds, Set<Integer> statusIds, int sortId) {
+        Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 开始, categoryIds=" + categoryIds + ", statusIds=" + statusIds + ", sortId=" + sortId);
+        Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 输入列表大小=" + (mList != null ? mList.size() : 0));
+        
+        service.execute(() -> {
+            // 先应用分类过滤
+            List<DownloadInfo> filteredList = mList;
+            if (categoryIds != null && !categoryIds.contains(EhUtils.ALL_CATEGORY)) {
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 应用分类过滤, categoryIds=" + categoryIds);
+                filteredList = filterByCategories(categoryIds);
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 分类过滤完成，列表大小=" + filteredList.size());
+            }
+
+            // 再应用状态过滤
+            if (statusIds != null && !statusIds.isEmpty() && statusIds.size() < 5) { // 5是所有状态的数量
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 应用状态过滤, statusIds=" + statusIds);
+                filteredList = filterByStates(statusIds, filteredList);
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 状态过滤完成，列表大小=" + filteredList.size());
+            }
+
+            // 最后应用排序
+            List<DownloadInfo> resultList;
+            if (sortId != R.id.sort_by_default) {
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 应用排序, sortId=" + sortId);
+                // 临时保存mList并设置为过滤后的列表
+                List<DownloadInfo> originalList = this.mList;
+                this.mList = filteredList;
+                resultList = sortByType(sortId);
+                // 恢复原始列表
+                this.mList = originalList;
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 排序完成，结果列表大小=" + resultList.size());
+            } else {
+                resultList = filteredList;
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 使用默认排序，结果列表大小=" + resultList.size());
+            }
+
+            handler.post(() -> {
+                if (mDownloadSearchCallback == null) {
+                    Log.e("DownloadListInfos", "executeFilterAndSort(多状态): 回调为null");
+                    return;
+                }
+                Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 调用成功回调，结果列表大小=" + resultList.size());
+                mDownloadSearchCallback.onDownloadSearchSuccess(resultList);
+            });
+        });
+    }
+
     public List<DownloadInfo> sortByType(int type) {
         Log.d("DownloadListInfos", "sortByType: 开始排序, type=" + type);
         if (mList == null) {
@@ -517,6 +565,51 @@ public class DownloadListInfosExecutor {
         }
         
         Log.d("DownloadListInfos", "filterByCategories: 过滤后列表大小=" + list.size());
+        return list;
+    }
+
+    // 新增方法：按多个状态过滤
+    private List<DownloadInfo> filterByStates(Set<Integer> statusIds, List<DownloadInfo> sourceList) {
+        List<DownloadInfo> list = new ArrayList<>();
+        if (sourceList == null || statusIds == null) {
+            return list;
+        }
+        
+        Log.d("DownloadListInfos", "filterByStates: 输入状态=" + statusIds + ", 列表大小=" + sourceList.size());
+        
+        for (int i = 0; i < sourceList.size(); i++) {
+            DownloadInfo info = sourceList.get(i);
+            // 检查每个状态ID对应的下载状态
+            for (Integer statusId : statusIds) {
+                int state = -1;
+                switch (statusId) {
+                    case R.id.download_done:
+                        state = DownloadInfo.STATE_FINISH;
+                        break;
+                    case R.id.not_started:
+                        state = DownloadInfo.STATE_NONE;
+                        break;
+                    case R.id.waiting:
+                        state = DownloadInfo.STATE_WAIT;
+                        break;
+                    case R.id.downloading:
+                        state = DownloadInfo.STATE_DOWNLOAD;
+                        break;
+                    case R.id.failed:
+                        state = DownloadInfo.STATE_FAILED;
+                        break;
+                    default:
+                        continue;
+                }
+                if (info.state == state) {
+                    list.add(info);
+                    Log.d("DownloadListInfos", "filterByStates: 匹配成功，状态=" + state + ", 标题=" + info.title);
+                    break; // 只要匹配一个状态就添加，避免重复
+                }
+            }
+        }
+        
+        Log.d("DownloadListInfos", "filterByStates: 过滤后列表大小=" + list.size());
         return list;
     }
 

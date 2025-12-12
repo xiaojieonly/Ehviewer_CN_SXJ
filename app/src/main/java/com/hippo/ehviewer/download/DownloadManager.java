@@ -979,7 +979,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 }
 
                 String dirTitle = dirName.substring(dashIndex + 1);
-                if (!dirTitle.equals(sanitizedTitle)) {
+                
+                // 处理带🔄标识的文件夹名
+                String normalizedDirTitle = dirTitle;
+                if (dirTitle.startsWith("🔄 ")) {
+                    normalizedDirTitle = dirTitle.substring(3); // 移除"🔄 "前缀
+                }
+                
+                if (!normalizedDirTitle.equals(sanitizedTitle)) {
                     continue;
                 }
 
@@ -1335,9 +1342,6 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             existingInfo.total = oldDownloadInfo.total;
                             existingInfo.legacy = oldDownloadInfo.legacy;
                             
-                            // 在标题前添加增量更新标识
-                            existingInfo.title = "🔄 " + EhUtils.getSuitableTitle(existingInfo);
-                            
                             // 更新状态
                             existingInfo.state = state;
                             existingInfo.time = System.currentTimeMillis();
@@ -1415,9 +1419,6 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             info.downloaded = oldDownloadInfo.downloaded;
             info.total = oldDownloadInfo.total;
             info.legacy = oldDownloadInfo.legacy;
-            
-            // 在标题前添加增量更新标识
-            info.title = "🔄 " + EhUtils.getSuitableTitle(info);
             
             Log.d(TAG, "[DOWNLOAD] 增量更新 - 保留的进度信息: 完成=" + info.finished + 
                       ", 下载=" + info.downloaded + ", 总计=" + info.total + ", 剩余=" + info.legacy);

@@ -2239,11 +2239,9 @@ public class DownloadsScene extends ToolbarScene
         statusRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         sortRecyclerView.setLayoutManager(new LinearLayoutManager(context));
 
-        // 准备状态数据
+        // 准备状态数据（去除全部选项）
         List<String> statusItems = new ArrayList<>();
         List<Integer> statusIds = new ArrayList<>();
-        statusItems.add(getString(R.string.download_status_all));
-        statusIds.add(R.id.all);
         statusItems.add(getString(R.string.download_state_downloaded));
         statusIds.add(R.id.download_done);
         statusItems.add(getString(R.string.download_state_none));
@@ -2281,8 +2279,8 @@ public class DownloadsScene extends ToolbarScene
         mStatusAdapter = new CheckboxAdapter(statusItems, statusIds);
         mSortAdapter = new CheckboxAdapter(sortItems, sortIds);
         
-        // 设置互斥选择
-        mStatusAdapter.setMutuallyExclusive(true);
+        // 设置互斥选择 - 状态改为多选，排序保持互斥
+        mStatusAdapter.setMutuallyExclusive(false);
         mSortAdapter.setMutuallyExclusive(true);
 
         // 设置选择变更监听器
@@ -2315,7 +2313,12 @@ public class DownloadsScene extends ToolbarScene
 
         // 设置默认选中项
         if (mSelectedStatuses.isEmpty()) {
-            mSelectedStatuses.add(R.id.all);
+            // 默认全选所有状态
+            mSelectedStatuses.add(R.id.download_done);
+            mSelectedStatuses.add(R.id.not_started);
+            mSelectedStatuses.add(R.id.waiting);
+            mSelectedStatuses.add(R.id.downloading);
+            mSelectedStatuses.add(R.id.failed);
         }
         if (mSelectedSorts.isEmpty()) {
             mSelectedSorts.add(R.id.sort_by_default);
@@ -2335,6 +2338,25 @@ public class DownloadsScene extends ToolbarScene
         // 设置按钮点击事件
         Button resetButton = dialogView.findViewById(R.id.reset_button);
         Button applyButton = dialogView.findViewById(R.id.apply_button);
+        Button selectAllStatusButton = dialogView.findViewById(R.id.select_all_status_button);
+        Button selectNoneStatusButton = dialogView.findViewById(R.id.select_none_status_button);
+        
+        // 全选按钮点击事件
+        selectAllStatusButton.setOnClickListener(v -> {
+            mSelectedStatuses.clear();
+            mSelectedStatuses.add(R.id.download_done);
+            mSelectedStatuses.add(R.id.not_started);
+            mSelectedStatuses.add(R.id.waiting);
+            mSelectedStatuses.add(R.id.downloading);
+            mSelectedStatuses.add(R.id.failed);
+            mStatusAdapter.setSelectedItems(mSelectedStatuses);
+        });
+        
+        // 全不选按钮点击事件
+        selectNoneStatusButton.setOnClickListener(v -> {
+            mSelectedStatuses.clear();
+            mStatusAdapter.setSelectedItems(mSelectedStatuses);
+        });
 
         resetButton.setOnClickListener(v -> {
             // 重置所有选择
@@ -2343,7 +2365,12 @@ public class DownloadsScene extends ToolbarScene
             mSelectedSorts.clear();
             
             mSelectedCategories.add(EhUtils.ALL_CATEGORY);
-            mSelectedStatuses.add(R.id.all);
+            // 重置为全选所有状态
+            mSelectedStatuses.add(R.id.download_done);
+            mSelectedStatuses.add(R.id.not_started);
+            mSelectedStatuses.add(R.id.waiting);
+            mSelectedStatuses.add(R.id.downloading);
+            mSelectedStatuses.add(R.id.failed);
             mSelectedSorts.add(R.id.sort_by_default);
             
             // 重置CategoryTable - 确保所有按钮都是亮起的
@@ -2387,11 +2414,8 @@ public class DownloadsScene extends ToolbarScene
             selectedCategories.add(EhUtils.ALL_CATEGORY);
         }
         
-        if (!mSelectedStatuses.isEmpty()) {
-            // 取第一个选中的状态（现在是互斥的，只会有一个）
-            selectedStatus = mSelectedStatuses.iterator().next();
-            Log.d("DownloadsScene", "applySortAndFilter: 选中的状态ID = " + selectedStatus);
-        }
+        // 状态现在是多选的，不需要取第一个，直接传递集合
+        Log.d("DownloadsScene", "applySortAndFilter: 选中的状态ID集合 = " + mSelectedStatuses);
         
         if (!mSelectedSorts.isEmpty()) {
             // 取第一个选中的排序（现在是互斥的，只会有一个）
@@ -2403,7 +2427,8 @@ public class DownloadsScene extends ToolbarScene
         boolean isAllCategories = selectedCategories.size() == 1 && selectedCategories.contains(EhUtils.ALL_CATEGORY);
         
         // 如果需要应用任何过滤或排序
-        if (!isAllCategories || selectedStatus != R.id.all || selectedSort != R.id.sort_by_default) {
+        boolean hasStatusFilter = !mSelectedStatuses.isEmpty() && mSelectedStatuses.size() < 5; // 5是所有状态的数量
+        if (!isAllCategories || hasStatusFilter || selectedSort != R.id.sort_by_default) {
             Log.d("DownloadsScene", "applySortAndFilter: 需要应用过滤或排序");
             isFilteringOrSearching = true;  // 标记进入筛选状态
             mProgressView.setVisibility(View.VISIBLE);
@@ -2416,8 +2441,8 @@ public class DownloadsScene extends ToolbarScene
             executor.setDownloadSearchingListener(this);
             
             // 同时应用分类过滤、状态过滤和排序
-            Log.d("DownloadsScene", "applySortAndFilter: 调用executeFilterAndSort, categories=" + selectedCategories + ", status=" + selectedStatus + ", sort=" + selectedSort);
-            executor.executeFilterAndSort(selectedCategories, selectedStatus, selectedSort);
+            Log.d("DownloadsScene", "applySortAndFilter: 调用executeFilterAndSort, categories=" + selectedCategories + ", statuses=" + mSelectedStatuses + ", sort=" + selectedSort);
+            executor.executeFilterAndSort(selectedCategories, mSelectedStatuses, selectedSort);
         } else {
             Log.d("DownloadsScene", "applySortAndFilter: 不需要任何过滤或排序，使用原始列表");
             isFilteringOrSearching = false;  // 标记退出筛选状态
