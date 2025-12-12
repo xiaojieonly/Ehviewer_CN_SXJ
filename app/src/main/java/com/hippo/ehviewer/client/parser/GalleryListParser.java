@@ -95,7 +95,7 @@ public class GalleryListParser {
         try {
             d = Jsoup.parse(body);
             return parse(d, body, mode);
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             return new Result();
         }
     }

@@ -4,7 +4,7 @@
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.0.8",
+    "title": "新版发布2.0.0.9",
     "content": [
       "- 修复界面更新相关的崩溃问题",
       "- 添加Android 9图片解码失败时的回退机制",
