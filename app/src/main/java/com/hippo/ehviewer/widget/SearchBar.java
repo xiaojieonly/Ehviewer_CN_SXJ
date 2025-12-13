@@ -104,6 +104,9 @@ public class SearchBar extends CardView implements View.OnClickListener,
     private boolean showTranslation;
 
     private boolean isComeFromDownload = false;
+    
+    // 标志位：建议列表是否被手动控制
+    private boolean mSuggestionsListManuallyControlled = false;
 
     public SearchBar(Context context) {
         super(context);
@@ -145,6 +148,11 @@ public class SearchBar extends CardView implements View.OnClickListener,
         
         // 添加焦点变化监听器
         mEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            // 如果建议列表被手动控制，则不受焦点变化影响
+            if (mSuggestionsListManuallyControlled) {
+                return;
+            }
+            
             if (hasFocus && mState == STATE_SEARCH) {
                 // 获得焦点且当前是搜索状态，显示建议列表
                 showImeAndSuggestionsList(true);
@@ -376,7 +384,12 @@ public class SearchBar extends CardView implements View.OnClickListener,
         if (v == mTitleTextView) {
             mHelper.onClickTitle();
         } else if (v == mMenuButton) {
-            mHelper.onClickLeftIcon();
+            // 在搜索状态下，点击菜单按钮切换建议列表的显示/隐藏
+            if (mState == STATE_SEARCH || mState == STATE_SEARCH_LIST) {
+                toggleSuggestionsList();
+            } else {
+                mHelper.onClickLeftIcon();
+            }
         } else if (v == mActionButton) {
             mHelper.onClickRightIcon();
         }
@@ -406,6 +419,9 @@ public class SearchBar extends CardView implements View.OnClickListener,
         if (mState != state) {
             int oldState = mState;
             mState = state;
+            
+            // 状态改变时重置手动控制标志
+            mSuggestionsListManuallyControlled = false;
 
             switch (oldState) {
                 default:
@@ -513,6 +529,33 @@ public class SearchBar extends CardView implements View.OnClickListener,
     // 公共方法：隐藏建议列表
     public void hideSuggestionsList() {
         hideImeAndSuggestionsList(false);
+    }
+    
+    // 公共方法：切换建议列表的显示/隐藏
+    public void toggleSuggestionsList() {
+        if (mState != STATE_SEARCH && mState != STATE_SEARCH_LIST) {
+            return;
+        }
+        
+        mSuggestionsListManuallyControlled = true;
+        
+        if (mListContainer.getVisibility() == View.VISIBLE) {
+            // 当前显示，则隐藏
+            hideImeAndSuggestionsList(false);
+        } else {
+            // 当前隐藏，则显示
+            showImeAndSuggestionsList(true);
+        }
+    }
+    
+    // 公共方法：检查建议列表是否可见
+    public boolean isSuggestionsListVisible() {
+        return mListContainer.getVisibility() == View.VISIBLE;
+    }
+    
+    // 公共方法：重置手动控制状态，恢复自动行为
+    public void resetManualControl() {
+        mSuggestionsListManuallyControlled = false;
     }
 
     @Override

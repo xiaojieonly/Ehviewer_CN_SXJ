@@ -1644,7 +1644,10 @@ public class DownloadsScene extends ToolbarScene
         if (mSearchMode) {
             mSearchMode = false;
         }
-        mSearchBar.setState(SearchBar.STATE_NORMAL, true);
+        // 防止空指针异常
+        if (mSearchBar != null) {
+            mSearchBar.setState(SearchBar.STATE_NORMAL, true);
+        }
     }
 
     @Override
