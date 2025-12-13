@@ -142,6 +142,17 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mEditText.setSearchEditTextListener(this);
         mEditText.setOnEditorActionListener(this);
         mEditText.addTextChangedListener(this);
+        
+        // 添加焦点变化监听器
+        mEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && mState == STATE_SEARCH) {
+                // 获得焦点且当前是搜索状态，显示建议列表
+                showImeAndSuggestionsList(true);
+            } else if (!hasFocus && mState == STATE_SEARCH_LIST) {
+                // 失去焦点且当前是搜索列表状态，隐藏建议列表
+                hideSuggestionsList();
+            }
+        });
 
         // Get base height
         ViewUtils.measureView(this, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -402,9 +413,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
                     mViewTransition.showView(1, animation);
                     mEditText.requestFocus();
 
-                    if (state == STATE_SEARCH_LIST) {
-                        showImeAndSuggestionsList(animation);
-                    }
+                    // 移除自动显示建议列表的代码，等待焦点事件触发
                     if (mOnStateChangeListener != null) {
                         mOnStateChangeListener.onStateChange(this, state, oldState, animation);
                     }
@@ -499,6 +508,11 @@ public class SearchBar extends CardView implements View.OnClickListener,
             setProgress(0f);
             mListContainer.setVisibility(View.GONE);
         }
+    }
+
+    // 公共方法：隐藏建议列表
+    public void hideSuggestionsList() {
+        hideImeAndSuggestionsList(false);
     }
 
     @Override

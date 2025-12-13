@@ -854,8 +854,8 @@ public class DownloadsScene extends ToolbarScene
         }
         searchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
         
-        // 设置SearchBar为搜索列表状态，启用自动补全建议功能
-        searchBar.setState(SearchBar.STATE_SEARCH_LIST, false);
+        // 设置SearchBar为搜索状态，但不立即显示建议列表
+        searchBar.setState(SearchBar.STATE_SEARCH, false);
         
         // 确保EditText可以获取焦点和点击
         searchBar.mEditText.setFocusable(true);
@@ -877,6 +877,8 @@ public class DownloadsScene extends ToolbarScene
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
                     // 取消搜索，不执行任何搜索操作
                     searchKey = null;
+                    // 隐藏建议列表
+                    searchBar.hideSuggestionsList();
                     dialog.dismiss();
                 })
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
@@ -890,10 +892,21 @@ public class DownloadsScene extends ToolbarScene
                     // 获取选中的分类
                     Set<Integer> selectedCategories = categoryTable.getSelectedCategories();
                     
+                    // 隐藏建议列表
+                    searchBar.hideSuggestionsList();
+                    
                     // 执行搜索
                     performAdvancedSearch(searchKey, searchOption, selectedCategories);
                     dialog.dismiss();
-                }).show();
+                })
+                .setOnDismissListener(dialog -> {
+                    // 对话框关闭时隐藏建议列表
+                    if (searchBar != null) {
+                        searchBar.hideSuggestionsList();
+                    }
+                    onSearchDialogDismiss(dialog);
+                })
+                .show();
     }
     
     // 新增方法：执行高级搜索
