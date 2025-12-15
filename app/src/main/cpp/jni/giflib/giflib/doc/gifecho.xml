@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifecho.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifecho</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifecho</refname>
+<refpurpose>generate a GIF from ASCII text</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifecho</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-s <replaceable>colormap-size</replaceable></arg>
+      <arg choice='opt'>-f <replaceable>foreground</replaceable></arg>
+      <arg choice='opt'>-c 
+      		<replaceable>R</replaceable>
+      		<replaceable>G</replaceable>
+      		<replaceable>B</replaceable></arg>
+      <arg choice='opt'>-t <replaceable>text</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to generate GIF images out of regular text.  Text can
+be one line or multi-line, and is converted using 8 by 8 fixed
+font.</para>
+
+<para>This program reads stdin if no text is provided on the command line (-t),
+and will dump the created GIF file to stdout.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress).
+Enables printout of running scan lines. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-s colormap-size</term>
+<listitem>
+<para>Explicitly defines the size of the color map of the resulting gif image.  Usually the image will be bicolor with fg as color 1, unless [-f] is explicitly given in case the color map size will be big enough to hold it.  However it is sometimes convenient to set the color map size to certain size while the fg color is small mainly so this image may be merged with another (images must match color map size).</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-f foreground</term>
+<listitem>
+<para> Select foreground index (background is always 0).  By default it is one and therefore the image result is bicolored. if FG is set to n then color map will be created with 2^k entries where 2^k &gt; n for minimum k, assuming k &lt;= 8.  This color map will be all zeros except this forground index. This option is useful if this text image should be integrated into other image colormap using their colors.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-c R G B</term>
+<listitem>
+<para> The color to use as the foreground color.  White by default.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-t text</term>
+<listitem>
+<para> One line of text can be provided on the command line.  Note you must encapsulate the Text within quotes if it has spaces (The quotes themselves are not treated as part of the text).  If no -t option is provided, stdin is read until end of file.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para> Print one line command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+<refsect1><title>Notes</title>
+
+<para>There is a hardcoded limit of 100 the number of lines.</para>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

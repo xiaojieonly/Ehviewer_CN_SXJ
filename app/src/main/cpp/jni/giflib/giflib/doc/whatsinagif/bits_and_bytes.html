@@ -1,0 +1,687 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<title>What's In A GIF - Bits and Bytes</title>
+<script type="text/javascript"></script>
+<link rel="stylesheet" href="../proj.css" />
+<style type="text/css">
+.byte {font-family: Courier, fixed;
+	padding: .2em}
+.gif_header {background-color: #f9E89D}
+.gif_screen {background-color: #C8DBD9}
+.gif_color {background-color: #E1E1E1}
+.gif_graphic {background-color: #F9EB9D}
+.gif_imgdesc {background-color: #C2D1DC}
+.gif_imgdata {background-color: #D0C4C4}
+.gif_trailer {background-color: #f9E89D}
+.gif_ext {background-color: #D0CFAE}
+#global_color_size {margin-left: auto; margin-right:auto; border:1px solid black;}
+#global_color_size td {text-align:center;}
+</style>
+</head>
+<body>
+<table width='100%' cellpadding='0' summary='Canned page header' bgcolor="#ddd">
+<tr>
+<td><h2>What's In A GIF</h2></td>
+<td align="center"><img src="../giflib-logo.gif"></td>
+<td align="right">(Bits and bytes)</td>
+</tr>
+</table>
+
+<div id="body">
+<div style="text-align:center; margin-top: 10px; padding-top: 10px; border-top: #cecece 1px solid">
+<p><a href="index.html">Back to the What's In A GIF index page.</a></p>
+</div>
+
+<p>The authority on the content of GIFs is the <a
+href="../gif89.txt">GIF89a specification</a>. Originally developed at
+CompuServe in the late 1980s, it is now a W3C standard.</p>
+
+<p>A GIF file is made up of a sequence of data blocks.  The first two
+blocks are fixed length and fixed format. Later ones are variable
+length but self-describing; they consisting of a byte identifying the block
+type, followed by a payload length byte, followed by payload.</p>
+
+<p>The following railroad diagram shows all of the different types of
+blocks and where they can be in the file. Every path following the
+arrows corresponds to a valid block sequence. The large middle 
+secction, in particular, can be repeated any number of times.</p>
+
+<p style="text-align:center"><img src="gif_file_stream.gif" alt="GIF file stream diagram" style="border: 1px solid black" / WIDTH="700" HEIGHT="220"></p>
+
+<p>We will learn more by walking through a sample GIF file. You can
+see the sample file and its corresponding bytes below. </p>
+	
+<table>
+<tr>
+<td style="text-align:center; vertical-align: top; padding: 5px; width:20%"><h3>Actual Size</h3><img src="sample_1.gif" alt="sample gif, actual size" title="Actual Size" style="padding: 20px" / WIDTH="10" HEIGHT="10"><br/>(10x10)</td>
+<td style="text-align:center; vertical-align: top; padding: 5px;; width:20%"><h3>Enlarged</h3><img src="sample_1_enlarged.gif" alt="sample gif, enlarged" title="Enlarged" / WIDTH="100" HEIGHT="100"><br/>(100x100)</td>
+<td style="vertical-align: top; padding: 5px; width:60%"><h3>Bytes</h3>
+
+<span class="byte gif_header"> 47 </span>
+<span class="byte gif_header"> 49 </span>
+<span class="byte gif_header"> 46 </span>
+<span class="byte gif_header"> 38 </span>
+<span class="byte gif_header"> 39 </span>
+<span class="byte gif_header"> 61 </span>
+<span class="byte gif_screen"> 0A </span>
+<span class="byte gif_screen"> 00 </span>
+<span class="byte gif_screen"> 0A </span>
+<span class="byte gif_screen"> 00 </span>
+<span class="byte gif_screen"> 91 </span>
+<span class="byte gif_screen"> 00 </span>
+<span class="byte gif_screen"> 00 </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_graphic"> 21 </span>
+<span class="byte gif_graphic"> F9 </span>
+<span class="byte gif_graphic"> 04 </span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_imgdesc"> 2C </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 0A </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 0A </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdata"> 02 </span>
+<span class="byte gif_imgdata"> 16 </span>
+<span class="byte gif_imgdata"> 8C </span>
+<span class="byte gif_imgdata"> 2D </span>
+<span class="byte gif_imgdata"> 99 </span>
+<span class="byte gif_imgdata"> 87 </span>
+<span class="byte gif_imgdata"> 2A </span>
+<span class="byte gif_imgdata"> 1C </span>
+<span class="byte gif_imgdata"> DC </span>
+<span class="byte gif_imgdata"> 33 </span>
+<span class="byte gif_imgdata"> A0 </span>
+<span class="byte gif_imgdata"> 02 </span>
+<span class="byte gif_imgdata"> 75 </span>
+<span class="byte gif_imgdata"> EC </span>
+<span class="byte gif_imgdata"> 95 </span>
+<span class="byte gif_imgdata"> FA </span>
+<span class="byte gif_imgdata"> A8 </span>
+<span class="byte gif_imgdata"> DE </span>
+<span class="byte gif_imgdata"> 60 </span>
+<span class="byte gif_imgdata"> 8C </span>
+<span class="byte gif_imgdata"> 04 </span>
+<span class="byte gif_imgdata"> 91 </span>
+<span class="byte gif_imgdata"> 4C </span>
+<span class="byte gif_imgdata"> 01 </span>
+<span class="byte gif_imgdata"> 00 </span>
+<span class="byte gif_trailer"> 3B </span>
+</td>
+</tr>
+</table>
+	
+<p>Note that not all possible block types are represented in this
+sample file. Later we'll provide samples of missing block types where
+appropriate. The different types of blocks include: <a
+href="#header_block">header</a>, <a
+href="#logical_screen_descriptor_block">logical screen descriptor</a>,
+<a href="#global_color_table_block">global color table</a>, <a
+href="#graphics_control_extension_block">graphics control
+extension</a>, <a href="#image_descriptor_block">image descriptor</a>,
+<a href="#local_color_table_block">local color table</a>, <a
+href="#image_data_block">image data</a>, <a
+href="#plain_text_extension_block">plain text extension</a>, <a
+href="#application_extension_block">application extension</a>, <a
+href="#comment_extension_block">comment extension</a>, and <a
+href="#trailer_block">trailer</a>.  Let's get started with the first
+block!</p>
+	
+<h2><a name="header_block">Header Block</a></h2>
+
+<p>From the sample file:
+<span class="byte gif_header"> 47 </span>
+<span class="byte gif_header"> 49 </span>
+<span class="byte gif_header"> 46 </span>
+<span class="byte gif_header"> 38 </span>
+<span class="byte gif_header"> 39 </span>
+<span class="byte gif_header"> 61 </span>
+</p>
+
+<p>All GIF files must start with a header block. The header takes up
+the first six bytes of the file. These bytes should all correspond to
+<a href="http://www.ascii.cl/">ASCII character codes</a>. The first
+three bytes are called the <strong>signature</strong>.  These should
+always be &quot;GIF&quot; (ie 47=&quot;G&quot;, 49=&quot;I&quot;,
+46=&quot;F&quot;). The next three specify the <strong>version</strong>
+of the specification that was used to encode the image.
+
+<p>Normally the version string will be either &quot;89a&quot; (ie
+38=&quot;8&quot;, 39=&quot;9&quot;,61=&quot;a&quot;) or &quot;87a&quot; (ie
+38=&quot;8&quot;, 37=&quot;7&quot;,61=&quot;a&quot;).  All modern
+GIF-processing software recognizes both versions, For maximum
+compatibility, GIFLIB will normally write an 87a signature unless the
+file contains GIF89 features.</p>
+
+<p style="text-align:center"><img src="header_block.gif" alt="GIF header block layout" style="border: 1px solid black" /></p>
+
+<h2><a name="logical_screen_descriptor_block">Logical Screen Descriptor</a></h2>
+<p>From Sample File: <span class="byte gif_screen"> 0A </span>
+<span class="byte gif_screen"> 00 </span><span class="byte gif_screen"> 0A </span><span class="byte gif_screen"> 00 </span><span class="byte gif_screen"> 91 </span><span class="byte gif_screen"> 00 </span><span class="byte gif_screen"> 00 </span></p>
+
+<p>The logical screen descriptor always immediately follows the
+header. This block tells the decoder how much room this image will
+take up. It is exactly seven bytes long. It starts with the
+<strong>canvas width</strong> and <strong>canvas height</strong>. 
+These value can be found in the first two pairs of two bytes each.
+Both are 16-bit, nonnegative integers (0-65,535).</p>
+
+<p>As with all the other multi-byte values in the GIF format, the
+least significant byte is stored first (little-endian format). This
+means where we would read <span class="byte"> 0A </span><span
+class="byte"> 00 </span> from the byte stream, we would normally write
+it as <span class="byte">000A</span> which is the same as 10. Thus the
+width of our sample image is 10 pixels. As a further example 255 would
+be stored as <span class="byte"> FF </span><span class="byte"> 00
+</span> but 256 would be <span class="byte"> 00 </span><span
+class="byte"> 01 </span>.</p>
+
+<p>The canvas width and height are usually ignored by modern viewers.
+The GIF format seems to have been designed with the idea that viewers
+would render multiple images in a GIF on a common canvas, giving an
+effect like a picture wall. But nowadays multiple-image GIFs are
+generally used either as animations in which each sub-image is a frame
+or as image libraries, with the GIF client handling compositing into
+some canvas about which the GIF format holds no information.Thus, the
+canvas width and height are mainly fossils. GIFLIB does extract them
+and allow you to set them, however.</p>
+
+<p>The next byte contains four fields of packed data, the "logical
+screen descriptor". To understand these, we need to expand the byte
+<span class="byte"> 91 </span> to binary as <span
+class="byte">10010001</span> and look at the fields inside it.</p>
+
+<p style="text-align:center"><img src="logical_screen_desc_block.gif" alt="GIF logical screen descriptor block layout" style="border: 1px solid black" /></p>
+
+<p>The first (most-significant) bit is the <strong>global color table
+flag</strong>. If it's 0, then there is no global color table. If it's
+1, then a global color table will follow. In our sample image, we can
+see that we will have a global color table (as will usually be the
+case).<p>
+
+<p>The next three bits are the <strong>color resolution</strong>. They
+are only meaningful if there is a global color table, and allow you to
+compute its size.  If the value of this filed is N, the number of
+entries in the global color table will be 2 ^ (N+1) - that is, two
+raised to the power (N+1). Thus, the <span class="byte">001</span> in
+the sample image represents 2 bits/pixel; <span
+class="byte">111</span> would represent 8 bits/pixel.</p>
+
+<p>The GIF format shows its age here. A more modern design would
+simply have allocated a byte or two for color table length. But GIF 
+was designed when memory was much more expensive than it is today,
+and the designers felt strong pressure to economize on every bit.  
+The consequence is that color table lengths have to be an exact power
+of two. Perversely, this can force a waste of memory space in images
+with odd color counts.</p>
+
+<p>The next single bit is the <strong>sort flag</strong>. If the
+values is 1, then the colors in the global color table are sorted in
+order of &quot;decreasing importance,&quot; which typically means
+&quot;decreasing frequency&quot; in the image. This can help the image
+decoder, but is not required. In the sample file this value has been
+left at 0.</p>
+
+<p>The sort flag reflected the high cost of dual-port memory at the
+time the GIF specification was written in the late 1980s.  That kind
+of limit disappeared in the mid-1990s, and modern GIF software ignores
+this flag.  Until version 5.0, GIFLIB ignored it on input and zeroed
+it on output; 5.0 and later versions read and preserve it.</p>
+
+<p>The next byte gives us the <strong>background color
+index</strong>. This byte is only meaningful if the global color table
+flag is 1, and if there is no global color table, this byte should be
+0.. To understand it you have to remember the original "picture wall"
+rendering model for GIFs in which sub-images are composited onto a
+larger canvas.  It represents which index in the global color table
+should be used for pixels on the virtual canvas that aren't overlayed
+by an image. GIFLIB supports reading and setting this byte, but modern
+viewers and browsers generally have no use for it.</p>
+
+<p>The last byte of the logical screen descriptor is the <strong>pixel
+aspect ratio</strong>. Modern viewers don't use this.  Until 5.0,
+GIFLIB ignored this flag on input and zeroed it on output; now it is
+read and preserved if present. The GIF standard doesn't give a
+rationale for it, but it seems likely that the designers intended it
+for representing image captures from the analog television of the day,
+which had rectangular pixel-equivalents. The GIF specification says
+that if there was a value specified in this byte, N, the actual ratio
+used would be (N + 15) / 64 for all N&lt;&gt;0.</p>
+
+<h2><a name="global_color_table_block">Global Color Table</a></h2>
+
+<p>From the sample file: 
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> FF </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+<span class="byte gif_color"> 00 </span>
+</p>
+
+<p>GIFs can have either a <strong>global color table</strong> or local
+color tables for each sub-image.  Each color table consists of a list
+of RGB (Red-Green-Blue) color component intensities, three bytes for
+each color, with intensities ranging from 0 (least) to 255 (most). The
+color (0,0,0) is deepest black, the color (255,255,255) brightest
+white. The other extreme colors are red at (255,0,0), green at
+(0,255,0) and blue at (0,0,255).</p>
+
+<p>As previously noted, the length of the global color table is
+2^(N+1) entries where N is the value of the color depth field in the
+logical screen descriptor. The table will take up 3*2^(N+1) bytes in
+the stream.</p>
+
+<div style="text-align:center">
+<table id="global_color_size">
+<tr><th>Size In Logical<br/>Screen Desc</th><th>Number Of<br/>Colors</th><th>Byte<br/>Length</th></tr>
+<tr><td>0</td><td>2</td><td>6</td></tr>
+<tr><td>1</td><td>4</td><td>12</td></tr>
+<tr><td>2</td><td>8</td><td>24</td></tr>
+<tr><td>3</td><td>16</td><td>48</td></tr>
+<tr><td>4</td><td>32</td><td>96</td></tr>
+<tr><td>5</td><td>64</td><td>192</td></tr>
+<tr><td>6</td><td>128</td><td>384</td></tr>
+<tr><td>7</td><td>256</td><td>768</td></tr>
+</table>
+</div>
+
+<p>Our sample file has a global color table size of 1. This means it
+holds 2^(1+1)=2^2=4 colors.  We can see that it takes up 12, (3*4),
+bytes as expected. We read the bytes three at a time to get each of
+the colors. The first color is #FFFFFF (white). This value is given an
+index of 0.  The second color is #FF0000 (red). The color with an
+index value of 2 is #0000FF (blue).  The last color is #000000
+(black). The index numbers will be important when we decode the actual
+image data.</p>
+
+<p>Note that this block is labeled as &quot;optional.&quot; Not every
+GIF has to specify a global color table. However, if the global color
+table flag is set to 1 in the logical screen descriptor block, the
+color table is then required to immediately follow that block.
+</p>
+
+<p style="text-align:center"><img src="global_color_table.gif" alt="GIF global color table block layout" style="border: 1px solid black" /></p>	
+
+<h2><a name="graphics_control_extension_block">Graphics Control Extension</a></h2>
+
+<p>From the sample file: 
+<span class="byte gif_graphic"> 21</span>
+<span class="byte gif_graphic"> F9 </span>
+<span class="byte gif_graphic"> 04 </span>
+<span class="byte gif_graphic"> 00</span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_graphic"> 00 </span>
+<span class="byte gif_graphic"> 00</span>
+<span class="byte gif_graphic"> 00 </span>
+</p>
+
+<p>Graphic control extension blocks are used to specify transparency
+settings and control animations. They are an optional GIF89 extension.
+The semantics of this extension will be described in detail in a later section
+(see <a href="animation_and_transparency.html">Transparency and Animation</a>); 
+for completeness we'll describe the data fields here.</p>
+
+<p>The first byte is the <strong>extension introducer</strong>. All
+<em>extension</em> blocks begin with <span
+class="byte">21</span>. Next is the <strong>graphic control
+label</strong>, <span class="byte">F9</span>, which is the value that
+flags this as a graphic control extension. Third up is the total
+<strong>block size</strong> in bytes. Next is a packed field. Bits 1-3
+are reserved for future use. Bits 4-6 indicate <strong>disposal
+method</strong>. The penultimate bit is the <strong>user input
+flag</strong> and the last is the <strong>transparent color
+flag</strong>. The <strong>delay time</strong> value follows in the
+next two bytes stored in unsigned format. After that we have the
+<strong>transparent color index</strong> byte. Finally we have the
+<strong>block terminator</strong> which is always <span
+class="byte">00</span>.</p>
+
+<p style="text-align:center"><img src="graphic_control_ext.gif"
+alt="GIF graphic control extension block layout" style="border: 1px
+solid black" /></p>
+	
+<h2><a name="image_descriptor_block">Image Descriptor</a></h2>
+
+<p>From the sample file: 
+
+<span class="byte gif_imgdesc"> 2C </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 0A </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 0A </span>
+<span class="byte gif_imgdesc"> 00 </span>
+<span class="byte gif_imgdesc"> 00 </span>
+</p>
+
+<p>A single GIF file may contain multiple images.  In the original GIF
+rendering model these wwere meant to be composited onto a larger
+virtual canvas. Nowadays nultiple images are normally used for animations.</p>
+
+<p>Each image begins with an image descriptor block. This block is
+exactly 10 bytes long.</p>
+
+<p>The first byte is the <strong>image separator</strong>. Every image
+descriptor begins with the value <span class="byte">2C</span>. The
+next 8 bytes represent the location and size of the following
+image.</p>
+
+<p>An image in the stream may not necessarily take up the entire
+canvas size defined by the logical screen descriptor. Therefore, the
+image descriptor specifies the <strong>image left position</strong>
+and <strong>image top position</strong> of where the image should
+begin on the canvas. Both these fields are usually ignored by modern
+viewers and browsers.</p>
+
+<p>Next, this block specifies the <strong>image width</strong> and
+<strong>image height</strong>. Each of these values is in the
+two-byte, unsigned little-endian format. Our sample image indicates
+that the image starts at (0,0) and is 10 pixels wide by 10 pixels
+tall. (This image does take up the whole canvas size.)</p>
+
+<p>The last byte is another packed field. In our sample file this byte is 0 so
+all of the sub-values will be zero. The first (most significant) bit in 
+the byte is the <strong>local color table flag</strong>. Setting this flag
+to 1 allows you to specify that the image data that follows uses a different
+color table than the global color table. (More information on the local
+color table follows.)</p>
+
+<p>The second bit is the <strong>interlace flag</strong>. Interlacing
+changes the way images are rendered onto the screen in a way that may
+reduce annoying visual flicker. The effect of interlacing on a display
+is that the first pass of appears immediately, displaying the graphic
+as a first as a blur and then sharpenining it up as later passes fill
+in lines. That allows the human viewer to at least get an idea of
+what's coming up rather than waiting for the entire image to be
+painted, line by line. <a
+href="http://webtutor.tamu.edu/lesson6/interlace.html">See an
+example</a>.  To support this, the scan lines of the image need to be
+stored in a different order than the normal top-down, separated into
+sections that will be rendered in four separate passes.</p>
+
+<p style="text-align:center"><img src="image_descriptor_block.gif"
+alt="GIF image descriptor block layout" style="border: 1px solid
+black" /></p>
+
+<h2><a name="local_color_table_block">Local Color Table</a></h2>
+<p>A local color table is organized the same as a global color table. The local
+color table would always immediately follow an image descriptor but will only
+be there if the local color table flag is set to 1. It is effective only for the
+block of image data that immediately follows it. If no local color table
+is specified, the global color table is used for the following image data.</p>
+
+<p>The size of the local color table can be calculated by the value
+given in the image descriptor. Just like with the global color table,
+if the image descriptor specifies a size of N, the color table will
+contain 2^(N+1) colors and will take up 3*2^(N+1) bytes.</p>
+
+<h2><a name="image_data_block">Image Data</a></h2>
+
+<p>From the sample file:
+<span class="byte gif_imgdata"> 02 </span>
+<span class="byte gif_imgdata"> 16 </span>
+<span class="byte gif_imgdata"> 8C </span>
+<span class="byte gif_imgdata"> 2D </span>
+<span class="byte gif_imgdata"> 99 </span>
+<span class="byte gif_imgdata"> 87 </span>
+<span class="byte gif_imgdata"> 2A </span>
+<span class="byte gif_imgdata"> 1C </span>
+<span class="byte gif_imgdata"> DC </span>
+<span class="byte gif_imgdata"> 33 </span>
+<span class="byte gif_imgdata"> A0 </span>
+<span class="byte gif_imgdata"> 02 </span>
+<span class="byte gif_imgdata"> 75 </span>
+<span class="byte gif_imgdata"> EC </span>
+<span class="byte gif_imgdata"> 95 </span>
+<span class="byte gif_imgdata"> FA </span>
+<span class="byte gif_imgdata"> A8 </span>
+<span class="byte gif_imgdata"> DE </span>
+<span class="byte gif_imgdata"> 60 </span>
+<span class="byte gif_imgdata"> 8C </span>
+<span class="byte gif_imgdata"> 04 </span>
+<span class="byte gif_imgdata"> 91 </span>
+<span class="byte gif_imgdata"> 4C </span>
+<span class="byte gif_imgdata"> 01 </span>
+<span class="byte gif_imgdata"> 00 </span></p>
+
+<p>Finally we get to the actual image data. The image data is composed of
+a series of output codes which tell the decoder which colors to emit
+to the canvas. These codes are combined into the bytes that make up
+the block.</p>
+
+<p>There's another section on decoding these output code into an image
+(see <a href="lzw_image_data.html">LZW Image Data</a>).  Here we'll 
+just see how to determine how long the block will be. </p>
+
+<p>The first byte of this block is the <strong>LZW minimum code
+size</strong>.  This value is used to decode the compressed output
+codes. (Again, see the section on <a href="lzw_image_data.html">LZW
+compression</a> to see how this works.)  The rest of the bytes
+represent <em>data sub-blocks</em>. Data sub-blocks are are groups of
+1 - 256 bytes. The first byte in the sub-block tells you how many
+bytes of actual data follow. This can be a value from 0 (<span
+class="byte">00</span>) it 255 (<span class="byte">FF</span>). After
+you've read those bytes, the next byte you read will tell you now many
+more bytes of data follow that one. You continue to read until you
+reach a sub-block that says that zero bytes follow.
+</p>
+
+<p>You can see our sample file has a LZW minimum code size of 2. The
+next byte tells us that 22 bytes of data follow it (<span
+class="byte">16</span> hex = 22).  After we've read those 22 bytes, we
+see the next value is 0. This means that no bytes follow and we have
+read all the data in this block.</p>
+
+<p style="text-align:center"><img src="image_data_block.gif" alt="GIF image data block layout" style="border: 1px solid black" /></p>
+
+<h2><a name="plain_text_extension_block">Plain Text Extension</a></h2>
+<p>Example (not in the sample file):
+
+<span class="byte gif_ext"> 21 </span>
+<span class="byte gif_ext"> 01 </span>
+<span class="byte gif_ext"> 0C </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 64 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 64 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 14 </span>
+<span class="byte gif_ext"> 14 </span>
+<span class="byte gif_ext"> 01 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 0B </span>
+<span class="byte gif_ext"> 68 </span>
+<span class="byte gif_ext"> 65 </span>
+<span class="byte gif_ext"> 6C </span>
+<span class="byte gif_ext"> 6C </span>
+<span class="byte gif_ext"> 6F </span>
+<span class="byte gif_ext"> 20 </span>
+<span class="byte gif_ext"> 77 </span>
+<span class="byte gif_ext"> 6F </span>
+<span class="byte gif_ext"> 72 </span>
+<span class="byte gif_ext"> 6C </span>
+<span class="byte gif_ext"> 64 </span>
+<span class="byte gif_ext"> 00 </span></p>
+
+<p>The GIF89 specification allows you to specify text captions to be
+overlayed on the following image.  This feature never took off; 
+browsers and image-processing applications such as Photoshop ignore
+it, and GIFLIB doesn't try to interpret it.</p>
+
+<p>The block begins with an <strong>extension introducer</strong> as all
+extension block types do. This value is always <span class="byte">21</span>.
+The next byte is the <strong>plain text label</strong>. This value of
+<span class="byte">01</span> is used to distinguish plain text extensions
+from all other extensions. The next byte is the <strong>block size</strong>.
+This tells you how many bytes there are until the actual text data begins, or
+in other words, how many bytes you can now skip. The byte value will probably be
+<span class="byte">0C</span> which means you should jump forward 12 bytes. The
+text that follows is encoded in data sub-blocks 
+(see <a href="#image_data_block">Image Data</a> to see how
+these sub-blocks are formed). The block ends when you reach a sub-block of
+length 0.</p>
+
+<h2><a name="application_extension_block">Application Extension</a></h2>
+<p>Example (not in sample file): 
+<span class="byte gif_ext"> 21 </span>
+<span class="byte gif_ext"> FF </span>
+<span class="byte gif_ext"> 0B </span>
+<span class="byte gif_ext"> 4E </span>
+<span class="byte gif_ext"> 45 </span>
+<span class="byte gif_ext"> 54 </span>
+<span class="byte gif_ext"> 53 </span>
+<span class="byte gif_ext"> 43 </span>
+<span class="byte gif_ext"> 41 </span>
+<span class="byte gif_ext"> 50 </span>
+<span class="byte gif_ext"> 45 </span>
+<span class="byte gif_ext"> 32 </span>
+<span class="byte gif_ext"> 2E </span>
+<span class="byte gif_ext"> 30 </span>
+<span class="byte gif_ext"> 03 </span>
+<span class="byte gif_ext"> 01 </span>
+<span class="byte gif_ext"> 05 </span>
+<span class="byte gif_ext"> 00 </span>
+<span class="byte gif_ext"> 00 </span>
+</p>
+
+<p>The GIF89 specification allows for application-specific information
+to be embedded in the GIF file itself. This capability is not much
+used.  About the only known public one is the Netscape 2.0</a>
+extension (described below) which is used to loop an animated GIF
+file. We'll go into more detail on looping in when we talk about <a
+href="animation_and_transparency.html">animation</a>.</p>
+
+<p>The Netscape 2.0 looping block must appear immediately after the
+global color table of the logical screen descriptor.  It is
+19 bytes long.
+
+<pre>
+byte  1        : 33 (hex 0x21) GIF Extension code
+byte  2        : 255 (hex 0xFF) Application Extension Label
+byte  3        : 11 (hex 0x0B) Length of Application Block
+                 (eleven bytes of data to follow)
+bytes 4 to 11  : "NETSCAPE"
+bytes 12 to 14 : "2.0"
+byte  15       : 3 (hex 0x03) Length of Data Sub-Block
+                 (three bytes of data to follow)
+byte  16       : 1 (hex 0x01)
+bytes 17 to 18 : 0 to 65535, an unsigned integer in
+                 little-endian byte format. This specifies the
+                 number of times the loop should
+                 be executed.
+byte  19       : 0 (hex 0x00) a Data Sub-Block Terminator.
+</pre>
+</p>
+
+<p>As with all extensions, we start with <span class="byte">21</span>
+which is the <strong>extension introducer</strong>. Next is the
+<strong>extension label</strong> which for application extensions is
+<span class="byte">FF</span>. The next value is the <strong>block
+size</strong> which tells you how many bytes there are before the
+actual application data begins. This byte value should be <span
+class="byte">0B</span> which indicates 11 bytes. These 11 bytes hold
+two pieces of information. First is the <strong>application
+identifier</strong> which takes up the first 8 bytes. These bytes
+should contain ASCII character codes that identify to which
+application the extension belongs. In the case of the example above,
+the application identifier is &quot;NETSCAPE&quot; which is
+conveniently 8 characters long. The next three bytes are the
+<strong>application authentication code</strong>. The spec says these
+bytes can be used to &quot;authenticate the application
+identifier.&quot; With the Netscape 2.0 extension, this value is simply
+a version number, &quot;2.0&quot;, hence the extensions name. What
+follows is the application data broken into data sub-blocks. As with
+the other extensions, the block terminates when you read a sub-block
+that has zero bytes of data.</p>
+
+<h2><a name="comment_extension_block">Comment Extension</a></h2>
+
+<p>Example (not in sample file): 
+<span class="byte gif_ext"> 21 </span>
+<span class="byte gif_ext"> FE </span>
+<span class="byte gif_ext"> 09 </span>
+<span class="byte gif_ext"> 62 </span>
+<span class="byte gif_ext"> 6C </span>
+<span class="byte gif_ext"> 75 </span>
+<span class="byte gif_ext"> 65 </span>
+<span class="byte gif_ext"> 62 </span>
+<span class="byte gif_ext"> 65 </span>
+<span class="byte gif_ext"> 72 </span>
+<span class="byte gif_ext"> 72 </span>
+<span class="byte gif_ext"> 79 </span>
+<span class="byte gif_ext"> 00 </span></p>
+
+<p>One last GIF89 extension type is the comment extension. This allows you
+to embed ASCII text in a GIF file, and is sometimes used to include an
+image description, image credit, or other human-readable metadata such as
+the GPS location of the image capture.</p>
+
+<p>It's probably no surprise by now that the first byte is the
+<strong>extension introducer</strong> which is <span
+class="byte">21</span>. The next byte is always <span
+class="byte">FE</span> which is the <strong>comment label</strong>.
+Then we jump right to data sub-blocks containing ASCII character codes
+for your comment. As you can see from the example we have one data
+sub-block that is 9 bytes long. If you translate the character codes
+you see that the comment is &quot;blueberry.&quot; The final byte,
+<span class="byte">00</span>, indicates a sub-block with zero bytes
+that follow which let's us know we have reached the end of the block.</p>
+
+<p style="text-align:center"><img src="comment_ext.gif" alt="GIF comment extension block layout" style="border: 1px solid black" /></p>
+
+<h2><a name="trailer_block">Trailer</a></h2>
+
+<p>From sample file: <span class="byte gif_trailer"> 3B </span></p>
+
+<p>The trailer block indicates when you've reached the end of the file.
+It is always a byte with a value of <span class="byte">3B</span>.</p>
+
+<p style="text-align:center"><img src="trailer_block.gif" alt="GIF
+trailer block layout" style="border: 1px solid black" /></p>
+
+<h2>Next: LZW Image Data</h2>
+
+<p>Now that you know what the basic parts of a GIF file are, let's next
+focus our attention on how the actual image data is stored and compressed.<p>
+
+<p><a href="lzw_image_data.html">Continue...</a></p>
+</div>
+
+<div style="text-align:center; margin-top: 10px; padding-top: 10px; border-top: #cecece 1px solid">
+<a href="../index.html">Back to GIFLIB documentation</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH GIF2WEBP 1 "July 18, 2024"
+.SH NAME
+gif2webp \- Convert a GIF image to WebP
+.SH SYNOPSIS
+.B gif2webp
+.RI [ options ] " input_file.gif \-o output_file.webp
+.br
+.SH DESCRIPTION
+This manual page documents the
+.B gif2webp
+command.
+.PP
+\fBgif2webp\fP converts a GIF image to a WebP image.
+.SH OPTIONS
+The basic options are:
+.TP
+.BI \-o " string
+Specify the name of the output WebP file. If omitted, \fBgif2webp\fP will
+perform conversion but only report statistics.
+Using "\-" as output name will direct output to 'stdout'.
+.TP
+.BI \-\- " string
+Explicitly specify the input file. This option is useful if the input
+file starts with an '\-' for instance. This option must appear \fBlast\fP.
+Any other options afterward will be ignored. If the input file is "\-",
+the data will be read from \fIstdin\fP instead of a file.
+.TP
+.B \-h, \-help
+Usage information.
+.TP
+.B \-version
+Print the version number (as major.minor.revision) and exit.
+.TP
+.B \-lossy
+Encode the image using lossy compression.
+.TP
+.B \-mixed
+Mixed compression mode: optimize compression of the image by picking either
+lossy or lossless compression for each frame heuristically.
+.TP
+.BI \-q " float
+Specify the compression factor for RGB channels between 0 and 100. The default
+is 75.
+.br
+In case of lossless compression (default), a small factor enables faster
+compression speed, but produces a larger file. Maximum compression is achieved
+by using a value of 100.
+.br
+In case of lossy compression (specified by the \-lossy option), a small factor
+produces a smaller file with lower quality. Best quality is achieved by using a
+value of 100.
+.TP
+.BI \-m " int
+Specify the compression method to use. This parameter controls the
+trade off between encoding speed and the compressed file size and quality.
+Possible values range from 0 to 6. Default value is 4.
+When higher values are used, the encoder will spend more time inspecting
+additional encoding possibilities and decide on the quality gain.
+Lower value can result is faster processing time at the expense of
+larger file size and lower compression quality.
+.TP
+.BI \-min_size
+Encode image to achieve smallest size. This disables key frame insertion and
+picks the dispose method resulting in the smallest output for each frame. It
+uses lossless compression by default, but can be combined with \-q, \-m,
+\-lossy or \-mixed options.
+.TP
+.BI \-kmin " int
+.TP
+.BI \-kmax " int
+Specify the minimum and maximum distance between consecutive key frames
+(independently decodable frames) in the output animation. The tool will insert
+some key frames into the output animation as needed so that this criteria is
+satisfied.
+.br
+A 'kmax' value of 0 will turn off insertion of key frames. A 'kmax' value of 1
+will result in all frames being key frames. 'kmin' value is not taken into
+account in both these special cases.
+Typical values are in the range 3 to 30. Default values are kmin = 9,
+kmax = 17 for lossless compression and kmin = 3, kmax = 5 for lossy compression.
+.br
+These two options are relevant only for animated images with large number of
+frames (>50).
+.br
+When lower values are used, more frames will be converted to key frames. This
+may lead to smaller number of frames required to decode a frame on average,
+thereby improving the decoding performance. But this may lead to slightly bigger
+file sizes.
+Higher values may lead to worse decoding performance, but smaller file sizes.
+.br
+Some restrictions:
+.br
+(i) kmin < kmax,
+.br
+(ii) kmin >= kmax / 2 + 1 and
+.br
+(iii) kmax - kmin <= 30.
+.br
+If any of these restrictions are not met, they will be enforced automatically.
+.TP
+.BI \-metadata " string
+A comma separated list of metadata to copy from the input to the output if
+present.
+Valid values: \fBall\fP, \fBnone\fP, \fBicc\fP, \fBxmp\fP.
+The default is \fBxmp\fP.
+.TP
+.BI \-f " int
+For lossy encoding only (specified by the \-lossy option). Specify the strength
+of the deblocking filter, between 0 (no filtering) and 100 (maximum filtering).
+A value of 0 will turn off any filtering. Higher value will increase the
+strength of the filtering process applied after decoding the picture. The higher
+the value the smoother the picture will appear. Typical values are usually in
+the range of 20 to 50.
+.TP
+.B \-mt
+Use multi-threading for encoding, if possible.
+.TP
+.B \-loop_compatibility
+If enabled, handle the loop information in a compatible fashion for Chrome
+version prior to M62 (inclusive) and Firefox.
+.TP
+.B \-v
+Print extra information.
+.TP
+.B \-quiet
+Do not print anything.
+
+.SH EXIT STATUS
+If there were no problems during execution, \fBgif2webp\fP exits with the value
+of the C constant \fBEXIT_SUCCESS\fP. This is usually zero.
+.PP
+If an error occurs, \fBgif2webp\fP exits with the value of the C constant
+\fBEXIT_FAILURE\fP. This is usually one.
+
+.SH EXAMPLES
+gif2webp picture.gif \-o picture.webp
+.br
+gif2webp \-q 70 picture.gif \-o picture.webp
+.br
+gif2webp \-lossy \-m 3 picture.gif \-o picture_lossy.webp
+.br
+gif2webp \-lossy \-f 50 picture.gif \-o picture.webp
+.br
+gif2webp \-q 70 \-o picture.webp \-\- \-\-\-picture.gif
+.br
+cat picture.gif | gif2webp \-o \- \-\- \- > output.webp
+
+.SH AUTHORS
+\fBgif2webp\fP is a part of libwebp and was written by the WebP team.
+.br
+The latest source tree is available at
+https://chromium.googlesource.com/webm/libwebp
+.PP
+This manual page was written by Urvang Joshi <urvang@google.com>, for the
+Debian project (and may be used by others).
+
+.SH REPORTING BUGS
+Please report all bugs to the issue tracker:
+https://issues.webmproject.org
+.br
+Patches welcome! See this page to get started:
+https://www.webmproject.org/code/contribute/submitting\-patches/
+
+.SH SEE ALSO
+.BR cwebp (1),
+.BR dwebp (1),
+.BR webpmux (1)
+.br
+Please refer to https://developers.google.com/speed/webp/ for additional
+information.

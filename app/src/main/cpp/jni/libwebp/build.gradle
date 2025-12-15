@@ -1,0 +1,444 @@
+// Define dependencies.
+buildscript {
+  repositories {
+    maven {
+      url "https://jcenter.bintray.com"
+    }
+  }
+  dependencies {
+    classpath "com.android.tools.build:gradle:${ANDROID_GRADLE_PLUGIN_VERSION}"
+  }
+}
+
+// Define versions in the project.
+project.ext {
+  buildToolsVersion = "${BUILD_TOOLS_VERSION}"
+  compileSdkVersion = COMPILE_SDK_VERSION.toInteger()
+}
+
+// Core libraries and executables.
+apply plugin: "c"
+def NEON
+model {
+  buildTypes {
+    debug
+    release
+  }
+  platforms {
+    arm {
+      architecture "arm"
+    }
+    arm64 {
+      architecture "arm64"
+    }
+    x86 {
+      architecture "x86"
+    }
+    x64 {
+      architecture "x86_64"
+    }
+    mips32r2
+    mips32r5
+    mips64r6
+  }
+  toolChains {
+    gcc(Gcc) {
+      target("mips32r2") {
+        cCompiler.args "-mips32r2"
+      }
+      target("mips32r5") {
+        cCompiler.args "-mips32r5"
+      }
+      target("mips64r6") {
+        cCompiler.args "-mips64r6"
+      }
+    }
+  }
+  binaries {
+    all {
+      if (toolChain in Gcc) {
+        cCompiler.args "-fPIC"
+        cCompiler.args "-Wall"
+        cCompiler.define "ANDROID"
+        cCompiler.define "HAVE_MALLOC_H"
+      }
+      // Optimizations.
+      if (buildType == buildTypes.release) {
+        if (toolChain in Gcc) {
+          cCompiler.args "-finline-functions"
+          cCompiler.args "-ffast-math"
+          cCompiler.args "-ffunction-sections"
+          cCompiler.args "-fdata-sections"
+        }
+        if (toolChain in Clang) {
+          cCompiler.args "-frename-registers -s"
+        }
+      }
+      // mips32 fails to build with clang from r14b
+      // https://bugs.chromium.org/p/webp/issues/detail?id=343
+      if (toolChain in Clang) {
+        if (getTargetPlatform() == "mips") {
+          cCompiler.args "-no-integrated-as"
+        }
+      }
+      // Check for NEON usage.
+      if (getTargetPlatform() == "arm") {
+        NEON = "c.neon"
+        cCompiler.define "HAVE_CPU_FEATURES_H"
+      } else {
+        NEON = "c"
+      }
+
+      cCompiler.args "-I" + file(".").absolutePath
+    }
+    // Link to pthread for shared libraries.
+    withType(SharedLibraryBinarySpec) {
+      if (toolChain in Gcc) {
+        cCompiler.define "HAVE_PTHREAD"
+        cCompiler.define "WEBP_USE_THREAD"
+        linker.args "-pthread"
+      }
+    }
+  }
+  components {
+    webp(NativeLibrarySpec) {
+      sources {
+        c {
+          source {
+            srcDir "sharpyuv"
+            include "sharpyuv.c"
+            include "sharpyuv_cpu.c"
+            include "sharpyuv_csp.c"
+            include "sharpyuv_dsp.c"
+            include "sharpyuv_gamma.c"
+            include "sharpyuv_neon.c"
+            include "sharpyuv_sse2.c"
+            srcDir "src/dec"
+            include "alpha_dec.c"
+            include "buffer_dec.c"
+            include "frame_dec.c"
+            include "idec_dec.c"
+            include "io_dec.c"
+            include "quant_dec.c"
+            include "tree_dec.c"
+            include "vp8_dec.c"
+            include "vp8l_dec.c"
+            include "webp_dec.c"
+            srcDir "src/dsp"
+            include "alpha_processing.c"
+            include "alpha_processing_mips_dsp_r2.c"
+            include "alpha_processing_neon.$NEON"
+            include "alpha_processing_sse2.c"
+            include "alpha_processing_sse41.c"
+            include "cpu.c"
+            include "dec.c"
+            include "dec_clip_tables.c"
+            include "dec_mips32.c"
+            include "dec_mips_dsp_r2.c"
+            include "dec_msa.c"
+            include "dec_neon.$NEON"
+            include "dec_sse2.c"
+            include "dec_sse41.c"
+            include "filters.c"
+            include "filters_mips_dsp_r2.c"
+            include "filters_msa.c"
+            include "filters_neon.$NEON"
+            include "filters_sse2.c"
+            include "lossless.c"
+            include "lossless_mips_dsp_r2.c"
+            include "lossless_msa.c"
+            include "lossless_neon.$NEON"
+            include "lossless_sse2.c"
+            include "lossless_sse41.c"
+            include "rescaler.c"
+            include "rescaler_mips32.c"
+            include "rescaler_mips_dsp_r2.c"
+            include "rescaler_msa.c"
+            include "rescaler_neon.$NEON"
+            include "rescaler_sse2.c"
+            include "upsampling.c"
+            include "upsampling_mips_dsp_r2.c"
+            include "upsampling_msa.c"
+            include "upsampling_neon.$NEON"
+            include "upsampling_sse2.c"
+            include "upsampling_sse41.c"
+            include "yuv.c"
+            include "yuv_mips32.c"
+            include "yuv_mips_dsp_r2.c"
+            include "yuv_neon.$NEON"
+            include "yuv_sse2.c"
+            include "yuv_sse41.c"
+            srcDir "src/utils"
+            include "bit_reader_utils.c"
+            include "color_cache_utils.c"
+            include "filters_utils.c"
+            include "huffman_utils.c"
+            include "palette.c"
+            include "quant_levels_dec_utils.c"
+            include "random_utils.c"
+            include "rescaler_utils.c"
+            include "thread_utils.c"
+            include "utils.c"
+            srcDir "src/dsp"
+            include "cost.c"
+            include "cost_mips32.c"
+            include "cost_mips_dsp_r2.c"
+            include "cost_neon.$NEON"
+            include "cost_sse2.c"
+            include "enc.c"
+            include "enc_mips32.c"
+            include "enc_mips_dsp_r2.c"
+            include "enc_msa.c"
+            include "enc_neon.$NEON"
+            include "enc_sse2.c"
+            include "enc_sse41.c"
+            include "lossless_enc.c"
+            include "lossless_enc_mips32.c"
+            include "lossless_enc_mips_dsp_r2.c"
+            include "lossless_enc_msa.c"
+            include "lossless_enc_neon.$NEON"
+            include "lossless_enc_sse2.c"
+            include "lossless_enc_sse41.c"
+            include "ssim.c"
+            include "ssim_sse2.c"
+            srcDir "src/enc"
+            include "alpha_enc.c"
+            include "analysis_enc.c"
+            include "backward_references_cost_enc.c"
+            include "backward_references_enc.c"
+            include "config_enc.c"
+            include "cost_enc.c"
+            include "filter_enc.c"
+            include "frame_enc.c"
+            include "histogram_enc.c"
+            include "iterator_enc.c"
+            include "near_lossless_enc.c"
+            include "picture_enc.c"
+            include "picture_csp_enc.c"
+            include "picture_psnr_enc.c"
+            include "picture_rescale_enc.c"
+            include "picture_tools_enc.c"
+            include "predictor_enc.c"
+            include "quant_enc.c"
+            include "syntax_enc.c"
+            include "token_enc.c"
+            include "tree_enc.c"
+            include "vp8l_enc.c"
+            include "webp_enc.c"
+            srcDir "src/utils"
+            include "bit_writer_utils.c"
+            include "huffman_encode_utils.c"
+            include "quant_levels_utils.c"
+          }
+          exportedHeaders {
+            srcDir "src"
+          }
+        }
+      }
+    }
+
+    webpdemux(NativeLibrarySpec) {
+      sources {
+        c {
+          source {
+            srcDir "src/demux"
+            include "anim_decode.c"
+            include "demux.c"
+          }
+        }
+      }
+    }
+
+    webpmux(NativeLibrarySpec) {
+      sources {
+        c {
+          source {
+            srcDir "src/mux/"
+            include "anim_encode.c"
+            include "muxedit.c"
+            include "muxinternal.c"
+            include "muxread.c"
+          }
+        }
+      }
+    }
+
+    // Executables from examples.
+    example_util(NativeLibrarySpec) {
+      binaries {
+        all {
+          lib library: "webp", linkage: "static"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./examples"
+            include "example_util.c"
+          }
+        }
+      }
+    }
+
+    imageio_util(NativeLibrarySpec) {
+      binaries {
+        all {
+          lib library: "webp", linkage: "static"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./imageio"
+            include "imageio_util.c"
+          }
+        }
+      }
+    }
+
+    imagedec(NativeLibrarySpec) {
+      binaries {
+        all {
+          lib library: "webpdemux", linkage: "static"
+          lib library: "webp", linkage: "static"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./imageio"
+            include "image_dec.c"
+            include "jpegdec.c"
+            include "metadata.c"
+            include "pngdec.c"
+            include "pnmdec.c"
+            include "tiffdec.c"
+            include "webpdec.c"
+          }
+        }
+      }
+    }
+
+    imageenc(NativeLibrarySpec) {
+      binaries {
+        all {
+          lib library: "webp", linkage: "static"
+          lib library: "imageio_util", linkage: "static"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./imageio"
+            include "image_enc.c"
+          }
+        }
+      }
+    }
+
+    cwebp(NativeExecutableSpec) {
+      binaries {
+        all {
+          lib library: "example_util", linkage: "static"
+          lib library: "imagedec", linkage: "static"
+          lib library: "imageio_util", linkage: "static"
+          lib library: "webpdemux", linkage: "static"
+          lib library: "webp", linkage: "static"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./examples"
+            include "cwebp.c"
+          }
+        }
+      }
+    }
+
+    dwebp(NativeExecutableSpec) {
+      binaries {
+        all {
+          lib library: "example_util", linkage: "static"
+          lib library: "imagedec", linkage: "static"
+          lib library: "imageenc", linkage: "static"
+          lib library: "imageio_util", linkage: "static"
+          lib library: "webpdemux", linkage: "static"
+          lib library: "webp"
+        }
+      }
+      sources {
+        c {
+          source {
+              srcDir "./examples"
+              include "dwebp.c"
+          }
+        }
+      }
+    }
+
+    webpmux_example(NativeExecutableSpec) {
+      binaries {
+        all {
+          lib library: "example_util", linkage: "static"
+          lib library: "imageio_util", linkage: "static"
+          lib library: "webpmux", linkage: "static"
+          lib library: "webp"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./examples"
+            include "webpmux.c"
+          }
+        }
+      }
+    }
+
+    img2webp_example(NativeExecutableSpec) {
+      binaries {
+        all {
+          lib library: "example_util", linkage: "static"
+          lib library: "imagedec", linkage: "static"
+          lib library: "imageio_util", linkage: "static"
+          lib library: "webpmux", linkage: "static"
+          lib library: "webpdemux", linkage: "static"
+          lib library: "webp"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./examples"
+            include "img2webp.c"
+          }
+        }
+      }
+    }
+
+    webpinfo_example(NativeExecutableSpec) {
+      binaries {
+        all {
+          lib library: "example_util", linkage: "static"
+          lib library: "imageio_util", linkage: "static"
+          lib library: "webp"
+        }
+      }
+      sources {
+        c {
+          source {
+            srcDir "./examples"
+            include "webpinfo.c"
+          }
+        }
+      }
+    }
+  }
+  tasks {
+    // Task to test all possible configurations.
+    buildAllExecutables(Task) {
+      dependsOn $.binaries.findAll { it.buildable }
+    }
+  }
+}

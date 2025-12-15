@@ -1,0 +1,19 @@
+# This is not a real Debian control file, though the syntax is compatible.
+# It's project metadata for the shipper tool
+
+Package: giflib
+
+Destinations: ~,sourceforge
+
+Description: a library for rendering and generating GIF image files.
+ This is the GIF service code in C used for over two decades by graphics
+ applications, web browsers, game consoles, ATMs, and pretty much anything
+ else that throws pixels on a display. Simple, stable, and bulletproof.
+
+XBS-Web-Directory: doc/staging
+XBS-Logo: doc/staging/giflib-logo.gif
+XBS-SourceForge-Folder: giflib-5.x
+
+XBS-VC-Tag-Template: %(version)s
+
+#XBS-Project-Tags: GIF, graphics

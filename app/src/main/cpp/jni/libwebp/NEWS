@@ -1,0 +1,330 @@
+- 4/12/2024: version 1.4.0
+  This is a binary compatible release.
+  * API changes:
+    - libwebpmux: WebPAnimEncoderSetChunk, WebPAnimEncoderGetChunk,
+                  WebPAnimEncoderDeleteChunk
+    - libsharpyuv: SharpYuvOptionsInit, SharpYuvConvertWithOptions
+    - extras: SharpYuvEstimate420Risk
+  * further security related hardening in libwebp & examples
+  * some minor optimizations in the lossless encoder
+  * added WEBP_NODISCARD to report unused result warnings; enable with
+    -DWEBP_ENABLE_NODISCARD=1
+  * improvements and corrections in webp-container-spec.txt and
+    webp-lossless-bitstream-spec.txt (#611)
+  * miscellaneous warning, bug & build fixes (#615, #619, #632, #635)
+
+- 9/13/2023: version 1.3.2
+  This is a binary compatible release.
+  * security fix for lossless decoder (chromium: #1479274, CVE-2023-4863)
+
+- 6/23/2023: version 1.3.1
+  This is a binary compatible release.
+  * security fixes for lossless encoder (#603, chromium: #1420107, #1455619,
+    CVE-2023-1999)
+  * improve error reporting through WebPPicture error codes
+  * fix upsampling for RGB565 and RGBA4444 in NEON builds
+  * img2webp: add -sharp_yuv & -near_lossless
+  * Windows builds:
+    - fix compatibility with clang-cl (#607)
+    - improve Arm64 performance with cl.exe
+    - add Arm64EC support
+  * fix webp_js with emcc >= 3.1.27 (stack size change, #614)
+  * CMake fixes (#592, #610, #612)
+  * further updates to the container and lossless bitstream docs (#581, #611)
+
+- 12/16/2022: version 1.3.0
+  This is a binary compatible release.
+  * add libsharpyuv, which exposes -sharp_yuv/config.use_sharp_yuv
+    functionality to other libraries; libwebp now depends on this library
+  * major updates to the container and lossless bitstream docs (#448, #546,
+    #551)
+  * miscellaneous warning, bug & build fixes (#576, #583, #584)
+
+- 8/4/2022: version 1.2.4
+  This is a binary compatible release.
+  * restore CMake libwebpmux target name for compatibility with 1.2.2 (#575)
+  * fix lossless crunch mode encoding with WEBP_REDUCE_SIZE
+    (chromium: #1345547, #1345595, #1345772, #1345804)
+
+- 6/30/2022: version 1.2.3
+  This is a binary compatible release.
+  * security fix for lossless encoder (#565, chromium:1313709)
+  * improved progress granularity in WebPReportProgress() when using lossless
+  * improved precision in Sharp YUV (-sharp_yuv) conversion
+  * many corrections to webp-lossless-bitstream-spec.txt (#551)
+  * crash/leak fixes on error/OOM and other bug fixes (#558, #563, #569, #573)
+
+- 1/11/2022: version 1.2.2
+  This is a binary compatible release.
+  * webpmux: add "-set bgcolor A,R,G,B"
+  * add ARM64 NEON support for MSVC builds (#539)
+  * fix duplicate include error in Xcode when using multiple XCFrameworks in a
+    project (#542)
+  * doc updates and bug fixes (#538, #544, #548, #550)
+
+- 7/20/2021: version 1.2.1
+  This is a binary compatible release.
+  * minor lossless encoder improvements and x86 color conversion speed up
+  * add ARM64 simulator support to xcframeworkbuild.sh (#510)
+  * further security related hardening in libwebp & examples
+    (issues: #497, #508, #518)
+    (chromium: #1196480, #1196773, #1196775, #1196777, #1196778, #1196850)
+    (oss-fuzz: #28658, #28978)
+  * toolchain updates and bug fixes (#498, #501, #502, #504, #505, #506, #509,
+                                     #533)
+  * use more inclusive language within the source (#507)
+
+- 12/23/2020: version 1.2.0
+  * API changes:
+    - libwebp:
+      encode.h: add a qmin / qmax range for quality factor (cwebp adds -qrange)
+  * lossless encoder improvements
+  * SIMD support for Wasm builds
+  * add xcframeworkbuild.sh, supports Mac Catalyst builds
+  * import fuzzers from oss-fuzz & chromium (#409)
+  * webpmux: add an '-set loop <value>' option (#494)
+  * toolchain updates and bug fixes (#449, #463, #470, #475, #477, #478, #479,
+    #488, #491)
+
+- 12/18/2019: version 1.1.0
+  * API changes:
+    - libwebp:
+      WebPMalloc (issue #442)
+    - extras:
+      WebPUnmultiplyARGB
+  * alpha decode fix (issue #439)
+  * toolchain updates and bug fixes
+    (chromium: #1026858, #1027136, #1027409, #1028620, #1028716, #995200)
+    (oss-fuzz: #19430, #19447)
+
+- 7/4/2019: version 1.0.3
+  This is a binary compatible release.
+  * resize fixes for Nx1 sizes and the addition of non-opaque alpha values for
+    odd sizes (issues #418, #434)
+  * lossless encode/decode performance improvements
+  * lossy compression performance improvement at low quality levels with flat
+    content (issue #432)
+  * python swig files updated to support python 3
+  Tool updates:
+    vwebp will now preserve the aspect ratio of images that exceed monitor
+    resolution by scaling the image to fit (issue #433)
+
+- 1/14/2019: version 1.0.2
+  This is a binary compatible release.
+  * (Windows) unicode file support in the tools (linux and mac already had
+    support, issue #398)
+  * lossless encoder speedups
+  * lossy encoder speedup on ARM
+  * lossless multi-threaded security fix (chromium:917029)
+
+- 11/2/2018: version 1.0.1
+  This is a binary compatible release.
+  * lossless encoder speedups
+  * big-endian fix for alpha decoding (issue #393)
+  * gif2webp fix for loop count=65535 transcode (issue #382)
+  * further security related hardening in libwebp & libwebpmux
+    (issues #383, #385, #386, #387, #388, #391)
+    (oss-fuzz #9099, #9100, #9105, #9106, #9111, #9112, #9119, #9123, #9170,
+              #9178, #9179, #9183, #9186, #9191, #9364, #9417, #9496, #10349,
+              #10423, #10634, #10700, #10838, #10922, #11021, #11088, #11152)
+  * miscellaneous bug & build fixes (issues #381, #394, #396, #397, #400)
+
+- 4/2/2018: version 1.0.0
+  This is a binary compatible release.
+  * lossy encoder improvements to avoid chroma shifts in various circumstances
+    (issues #308, #340)
+  * big-endian fixes for decode, RGBA import and WebPPictureDistortion
+  Tool updates:
+    gifwebp, anim_diff - default duration behavior (<= 10ms) changed to match
+                         web browsers, transcoding tools (issue #379)
+    img2webp, webpmux - allow options to be passed in via a file (issue #355)
+
+- 11/24/2017: version 0.6.1
+  This is a binary compatible release.
+  * lossless performance and compression improvements + a new 'cruncher' mode
+    (-m 6 -q 100)
+  * ARM performance improvements with clang (15-20% w/ndk r15c, issue #339)
+  * webp-js: emscripten/webassembly based javascript decoder
+  * miscellaneous bug & build fixes (issue #329, #332, #343, #353, #360, #361,
+    #363)
+  Tool updates / additions:
+    added webpinfo - prints file format information (issue #330)
+    gif2webp - loop behavior modified to match Chrome M63+ (crbug.com/649264);
+               '-loop_compatibility' can be used for the old behavior
+
+- 1/26/2017: version 0.6.0
+  * lossless performance and compression improvements
+  * miscellaneous performance improvements (SSE2, NEON, MSA)
+  * webpmux gained a -duration option allowing for frame timing modification
+  * new img2webp utility allowing a sequence of images to be converted to
+    animated webp
+  * API changes:
+    - libwebp:
+      WebPPictureSharpARGBToYUVA
+      WebPPlaneDistortion
+    - libwebpmux / gif2webp:
+      WebPAnimEncoderOptions: kmax <= 0 now disables keyframes, kmax == 1
+                              forces all keyframes. See mux.h and the gif2webp
+                              manpage for details.
+
+- 12/13/2016: version 0.5.2
+  This is a binary compatible release.
+  This release covers CVE-2016-8888 and CVE-2016-9085.
+  * further security related hardening in the tools; fixes to
+    gif2webp/AnimEncoder (issues #310, #314, #316, #322), cwebp/libwebp (issue
+    #312)
+  * full libwebp (encoder & decoder) iOS framework; libwebpdecoder
+    WebP.framework renamed to WebPDecoder.framework (issue #307)
+  * CMake support for Android Studio (2.2)
+  * miscellaneous build related fixes (issue #306, #313)
+  * miscellaneous documentation improvements (issue #225)
+  * minor lossy encoder fixes and improvements
+
+- 6/14/2016: version 0.5.1
+  This is a binary compatible release.
+  * miscellaneous bug fixes (issues #280, #289)
+  * reverted alpha plane encoding with color cache for compatibility with
+    libwebp 0.4.0->0.4.3 (issues #291, #298)
+  * lossless encoding performance improvements
+  * memory reduction in both lossless encoding and decoding
+  * force mux output to be in the extended format (VP8X) when undefined chunks
+    are present (issue #294)
+  * gradle, cmake build support
+  * workaround for compiler bug causing 64-bit decode failures on android
+    devices using clang-3.8 in the r11c NDK
+  * various WebPAnimEncoder improvements
+
+- 12/17/2015: version 0.5.0
+  * miscellaneous bug & build fixes (issues #234, #258, #274, #275, #278)
+  * encoder & decoder speed-ups on x86/ARM/MIPS for lossy & lossless
+    - note! YUV->RGB conversion was sped-up, but the results will be slightly
+      different from previous releases
+  * various lossless encoder improvements
+  * gif2webp improvements, -min_size option added
+  * tools fully support input from stdin and output to stdout (issue #168)
+  * New WebPAnimEncoder API for creating animations
+  * New WebPAnimDecoder API for decoding animations
+  * other API changes:
+    - libwebp:
+      WebPPictureSmartARGBToYUVA() (-pre 4 in cwebp)
+      WebPConfig::exact (-exact in cwebp; -alpha_cleanup is now the default)
+      WebPConfig::near_lossless (-near_lossless in cwebp)
+      WebPFree() (free'ing webp allocated memory in other languages)
+      WebPConfigLosslessPreset()
+      WebPMemoryWriterClear()
+    - libwebpdemux: removed experimental fragment related fields and functions
+    - libwebpmux: WebPMuxSetCanvasSize()
+  * new libwebpextras library with some uncommon import functions:
+    WebPImportGray/WebPImportRGB565/WebPImportRGB4444
+
+- 10/15/15: version 0.4.4
+  This is a binary compatible release.
+  * rescaling out-of-bounds read fix (issue #254)
+  * various build fixes and improvements (issues #253, #259, #262, #267, #268)
+  * container documentation update
+  * gif2webp transparency fix (issue #245)
+
+- 3/3/15: version 0.4.3
+  This is a binary compatible release.
+  * Android / gcc / iOS / MSVS build fixes and improvements
+  * lossless decode fix (issue #239 -- since 0.4.0)
+  * documentation / vwebp updates for animation
+  * multi-threading fix (issue #234)
+
+- 10/13/14: version 0.4.2
+  This is a binary compatible release.
+  * Android / gcc build fixes
+  * (Windows) fix reading from stdin and writing to stdout
+  * gif2webp: miscellaneous fixes
+  * fix 'alpha-leak' with lossy compression (issue #220)
+  * the lossless bitstream spec has been amended to reflect the current code
+
+- 7/24/14: version 0.4.1
+  This is a binary compatible release.
+  * AArch64 (arm64) & MIPS support/optimizations
+  * NEON assembly additions:
+    - ~25% faster lossy decode / encode (-m 4)
+    - ~10% faster lossless decode
+    - ~5-10% faster lossless encode (-m 3/4)
+  * dwebp/vwebp can read from stdin
+  * cwebp/gif2webp can write to stdout
+  * cwebp can read webp files; useful if storing sources as webp lossless
+
+- 12/19/13: version 0.4.0
+  * improved gif2webp tool
+  * numerous fixes, compression improvement and speed-up
+  * dither option added to decoder (dwebp -dither 50 ...)
+  * improved multi-threaded modes (-mt option)
+  * improved filtering strength determination
+  * New function: WebPMuxGetCanvasSize
+  * BMP and TIFF format output added to 'dwebp'
+  * Significant memory reduction for decoding lossy images with alpha.
+  * Intertwined decoding of RGB and alpha for a shorter
+    time-to-first-decoded-pixel.
+  * WebPIterator has a new member 'has_alpha' denoting whether the frame
+    contains transparency.
+  * Container spec amended with new 'blending method' for animation.
+
+- 6/13/13: version 0.3.1
+  This is a binary compatible release.
+  * Add incremental decoding support for images containing ALPH and ICCP chunks.
+  * Python bindings via swig for the simple encode/decode interfaces similar to
+    Java.
+
+- 3/20/13: version 0.3.0
+  This is a binary compatible release.
+  * WebPINewRGB/WebPINewYUVA accept being passed a NULL output buffer
+    and will perform auto-allocation.
+  * default filter option is now '-strong -f 60'
+  * encoding speed-up for lossy methods 3 to 6
+  * alpha encoding can be done in parallel to lossy using 'cwebp -mt ...'
+  * color profile, metadata (XMP/EXIF) and animation support finalized in the
+    container.
+  * various NEON assembly additions
+  Tool updates / additions:
+    * gif2webp added
+    * vwebp given color profile & animation support
+    * cwebp can preserve color profile / metadata with '-metadata'
+
+- 10/30/12: version 0.2.1
+  * Various security related fixes
+  * cwebp.exe: fix import errors on Windows XP
+  * enable DLL builds for mingw targets
+
+- 8/3/12: version 0.2.0
+  * Add support for ARGB -> YUVA conversion for lossless decoder
+    New functions: WebPINewYUVA, WebPIDecGetYUVA
+  * Add stats for lossless and alpha encoding
+  * Security related hardening: allocation and size checks
+  * Add PAM output support to dwebp
+
+- 7/19/12: version 0.1.99
+  * This is a pre-release of 0.2.0, not an rc to allow for further
+    incompatible changes based on user feedback.
+  * Alpha channel encode/decode support.
+  * Lossless encoder/decoder.
+  * Add TIFF input support to cwebp.
+  Incompatible changes:
+    * The encode ABI has been modified to support alpha encoding.
+    * Deprecated function WebPINew() has been removed.
+    * Decode function signatures have changed to consistently use size_t over
+      int/uint32_t.
+    * decode_vp8.h is no longer installed system-wide.
+    * cwebp will encode the alpha channel if present.
+
+- 9/19/11: version 0.1.3
+  * Advanced decoding APIs.
+  * On-the-fly cropping and rescaling of images.
+  * SSE2 instructions for decoding performance optimizations on x86 based
+    platforms.
+  * Support Multi-threaded decoding.
+  * 40% improvement in Decoding performance.
+  * Add support for RGB565, RGBA4444 & ARGB image colorspace.
+  * Better handling of large picture encoding.
+
+- 3/25/11: version 0.1.2
+  * Incremental decoding: picture can be decoded byte-by-byte if needs be.
+  * lot of bug-fixes, consolidation and stabilization
+
+- 2/23/11: initial release of version 0.1, with the new encoder
+- 9/30/10: initial release version with only the lightweight decoder

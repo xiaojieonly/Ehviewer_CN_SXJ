@@ -1,0 +1,87 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH WEBPINFO 1 "July 18, 2024"
+.SH NAME
+webpinfo \- print out the chunk level structure of WebP files
+along with basic integrity checks.
+.SH SYNOPSIS
+.B webpinfo
+.I OPTIONS
+.I INPUT
+.br
+.B webpinfo [\-h|\-help|\-H|\-longhelp]
+.br
+
+.SH DESCRIPTION
+This manual page documents the
+.B webpinfo
+command.
+.PP
+\fBwebpinfo\fP can be used to print out the chunk level structure and bitstream
+header information of WebP files. It can also check if the files are of valid
+WebP format.
+
+.SH OPTIONS
+.TP
+.B \-version
+Print the version number (as major.minor.revision) and exit.
+.TP
+.B \-quiet
+Do not show chunk parsing information.
+.TP
+.B \-diag
+Show parsing error diagnosis.
+.TP
+.B \-summary
+Show chunk stats summary.
+.TP
+.BI \-bitstream_info
+Parse bitstream header.
+.TP
+.B \-h, \-help
+A short usage summary.
+.TP
+.B \-H, \-longhelp
+Detailed usage instructions.
+
+.SH INPUT
+Input files in WebP format. Input files must come last, following
+options (if any). There can be multiple input files.
+
+.SH EXIT STATUS
+If there were no problems during execution, \fBwebpinfo\fP exits with the value
+of the C constant \fBEXIT_SUCCESS\fP. This is usually zero.
+.PP
+If an error occurs, \fBwebpinfo\fP exits with the value of the C constant
+\fBEXIT_FAILURE\fP. This is usually one.
+
+.SH EXAMPLES
+.br
+webpinfo \-h
+.br
+webpinfo \-diag \-summary input_file.webp
+.br
+webpinfo \-bitstream_info input_file_1.webp input_file_2.webp
+.br
+webpinfo *.webp
+
+.SH AUTHORS
+\fBwebpinfo\fP is a part of libwebp and was written by the WebP team.
+.br
+The latest source tree is available at
+https://chromium.googlesource.com/webm/libwebp
+.PP
+This manual page was written by Hui Su <huisu@google.com>,
+for the Debian project (and may be used by others).
+
+.SH REPORTING BUGS
+Please report all bugs to the issue tracker:
+https://issues.webmproject.org
+.br
+Patches welcome! See this page to get started:
+https://www.webmproject.org/code/contribute/submitting\-patches/
+
+.SH SEE ALSO
+.BR webpmux (1)
+.br
+Please refer to https://developers.google.com/speed/webp/ for additional
+information.

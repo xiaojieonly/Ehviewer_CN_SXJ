@@ -1,0 +1,45 @@
+PNG REFERENCE LIBRARY AUTHORS
+=============================
+
+This is the list of PNG Reference Library ("libpng") Contributing
+Authors, for copyright and licensing purposes.
+
+ * Andreas Dilger
+ * Cosmin Truta
+ * Dave Martindale
+ * Eric S. Raymond
+ * Gilles Vollant
+ * Glenn Randers-Pehrson
+ * Greg Roelofs
+ * Guy Eric Schalnat
+ * James Yu
+ * John Bowler
+ * Kevin Bracey
+ * Magnus Holmgren
+ * Mandar Sahastrabuddhe
+ * Mans Rullgard
+ * Matt Sarett
+ * Mike Klein
+ * Paul Schmidt
+ * Sam Bushell
+ * Samuel Williams
+ * Simon-Pierre Cadieux
+ * Tim Wegner
+ * Tom Lane
+ * Tom Tanner
+ * Vadim Barkov
+ * Willem van Schaik
+ * Zhijie Liang
+ * Arm Holdings
+   - Richard Townsend
+ * Google Inc.
+   - Matt Sarett
+   - Mike Klein
+
+The build projects, the build scripts, the test scripts, and other
+files in the "projects", "scripts" and "tests" directories, have other
+copyright owners, but are released under the libpng license.
+
+Some files in the "contrib" directory, and some tools-generated files
+that are distributed with libpng, have other copyright owners, and are
+released under other open source licenses.

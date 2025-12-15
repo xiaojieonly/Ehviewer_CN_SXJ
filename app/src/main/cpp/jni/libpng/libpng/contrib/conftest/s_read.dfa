@@ -1,0 +1,35 @@
+# s_read.dfa
+#  Build time configuration of libpng
+#
+# Author: John Bowler
+# Copyright: (c) John Bowler, 2013
+# Usage rights:
+#  To the extent possible under law, the author has waived all copyright and
+#  related or neighboring rights to this work.  This work is published from:
+#  United States.
+#
+# Build libpng with simplified read support (only).  This builds a minimal
+# libpng able to read all PNG formats and convert them into a small number of
+# well understood memory formats.
+#
+
+everything = off
+
+option SIMPLIFIED_READ on
+
+# It isn't necessary to chose fixed or floating point for the APIs because the
+# simplified API doesn't need fixed or floating point numbers.  It is necessary
+# to chose an internal math implementation.  The default (because of 'everything
+# = off') is fixed point - turn the floating point implementation on if you have
+# hardware floating point or prefer your software floating point implementation.
+option FLOATING_ARITHMETIC on
+
+# This is not strictly necessary, but without it the message strings in the API
+# will not be filled in
+option ERROR_TEXT on
+
+# Switching these options on enables the 'AFIRST' and 'BGR' formats - you don't
+# need this if you don't use them, they just allow the in-memory layout to be
+# changed to match common hardware formats.
+option SIMPLIFIED_READ_AFIRST on
+option SIMPLIFIED_READ_BGR on

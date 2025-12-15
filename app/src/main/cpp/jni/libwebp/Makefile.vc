@@ -1,0 +1,531 @@
+#
+# Stem for static libs and DLLs
+#
+LIBWEBPDECODER_BASENAME = libwebpdecoder
+LIBWEBP_BASENAME = libwebp
+LIBWEBPMUX_BASENAME = libwebpmux
+LIBWEBPDEMUX_BASENAME = libwebpdemux
+LIBSHARPYUV_BASENAME = libsharpyuv
+
+!IFNDEF ARCH
+!IF ! [ cl 2>&1 | find "x86" > NUL ]
+ARCH = x86
+!ELSE IF ! [ cl 2>&1 | find "x64" > NUL ]
+ARCH = x64
+!ELSE IF ! [ cl 2>&1 | find "ARM64" > NUL ]
+ARCH = ARM64
+!ELSE IF ! [ cl 2>&1 | find "ARM" > NUL ]
+ARCH = ARM
+!ELSE
+!ERROR Unable to auto-detect toolchain architecture! \
+If cl.exe is in your PATH rerun nmake with ARCH=<arch>.
+!ENDIF
+!ENDIF
+
+!IF "$(ARCH)" == "x86"
+PLATFORM_LDFLAGS = /SAFESEH
+!ENDIF
+
+#############################################################
+## Nothing more to do below this line!
+
+NOLOGO     = /nologo
+CCNODBG    = cl.exe $(NOLOGO) /O2 /DNDEBUG
+CCDEBUG    = cl.exe $(NOLOGO) /Od /Zi /D_DEBUG /RTC1
+CFLAGS     = /I. /Isrc $(NOLOGO) /W3 /EHsc /c
+CFLAGS     = $(CFLAGS) /DWIN32 /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN
+LDFLAGS    = /LARGEADDRESSAWARE /MANIFEST:EMBED /NXCOMPAT /DYNAMICBASE
+LDFLAGS    = $(LDFLAGS) $(PLATFORM_LDFLAGS)
+LNKDLL     = link.exe /DLL $(NOLOGO)
+LNKEXE     = link.exe $(NOLOGO)
+LNKLIB     = lib.exe $(NOLOGO)
+RCNODBG    = rc.exe $(NOLOGO) /l"0x0409"  # 0x409 = U.S. English
+RCDEBUG    = $(RCNODBG) /D_DEBUG
+
+!IF "$(ARCH)" == "ARM"
+CFLAGS = $(CFLAGS) /DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP /DWEBP_USE_THREAD
+!ELSE
+CFLAGS = $(CFLAGS) /DHAVE_WINCODEC_H /DWEBP_USE_THREAD
+!ENDIF
+
+CFGSET     = FALSE
+!IF "$(OBJDIR)" == ""
+OUTDIR = ..\obj\
+!ELSE
+OUTDIR = $(OBJDIR)
+!ENDIF
+
+##############################################################
+# Runtime library configuration
+!IF "$(RTLIBCFG)" == "static"
+RTLIB  = /MT
+RTLIBD = /MTd
+!ELSE IF "$(RTLIBCFG)" == "legacy"
+RTLIBCFG = static
+RTLIB  = /MT
+RTLIBD = /MTd
+CFLAGS = $(CFLAGS) /GS- /arch:IA32
+!ELSE
+RTLIB   = /MD
+RTLIBD  = /MDd
+!ENDIF
+DIRBASE = $(OUTDIR)\$(CFG)\$(ARCH)
+DIROBJ = $(DIRBASE)\obj
+DIRLIB = $(DIRBASE)\lib
+DIRINC = $(DIRBASE)\include
+DIRBIN = $(DIRBASE)\bin
+LIBWEBP_PDBNAME = $(DIROBJ)\$(LIBWEBP_BASENAME).pdb
+OUTPUT_DIRS = $(DIRBIN) $(DIRINC) $(DIRLIB) \
+              $(DIROBJ)\dec \
+              $(DIROBJ)\demux \
+              $(DIROBJ)\dsp \
+              $(DIROBJ)\enc \
+              $(DIROBJ)\examples \
+              $(DIROBJ)\extras \
+              $(DIROBJ)\imageio \
+              $(DIROBJ)\mux \
+              $(DIROBJ)\sharpyuv \
+              $(DIROBJ)\utils \
+
+# Target configuration
+!IF "$(CFG)" == "release-static"
+CC             = $(CCNODBG)
+STATICLIBBUILD = TRUE
+!ELSE IF "$(CFG)" == "debug-static"
+CC             = $(CCDEBUG)
+RTLIB          = $(RTLIBD)
+STATICLIBBUILD = TRUE
+LIBWEBPDECODER_BASENAME = $(LIBWEBPDECODER_BASENAME)_debug
+LIBWEBP_BASENAME = $(LIBWEBP_BASENAME)_debug
+LIBWEBPMUX_BASENAME = $(LIBWEBPMUX_BASENAME)_debug
+LIBWEBPDEMUX_BASENAME = $(LIBWEBPDEMUX_BASENAME)_debug
+LIBSHARPYUV_BASENAME = $(LIBSHARPYUV_BASENAME)_debug
+!ELSE IF "$(CFG)" == "release-dynamic"
+CC        = $(CCNODBG)
+RC        = $(RCNODBG)
+DLLBUILD  = TRUE
+!ELSE IF "$(CFG)" == "debug-dynamic"
+CC        = $(CCDEBUG)
+RC        = $(RCDEBUG)
+RTLIB     = $(RTLIBD)
+DLLBUILD  = TRUE
+LIBWEBPDECODER_BASENAME = $(LIBWEBPDECODER_BASENAME)_debug
+LIBWEBP_BASENAME = $(LIBWEBP_BASENAME)_debug
+LIBWEBPMUX_BASENAME = $(LIBWEBPMUX_BASENAME)_debug
+LIBWEBPDEMUX_BASENAME = $(LIBWEBPDEMUX_BASENAME)_debug
+LIBSHARPYUV_BASENAME = $(LIBSHARPYUV_BASENAME)_debug
+!ENDIF
+
+!IF "$(STATICLIBBUILD)" == "TRUE"
+CC     = $(CC) $(RTLIB)
+CFGSET = TRUE
+LIBWEBPDECODER = $(DIRLIB)\$(LIBWEBPDECODER_BASENAME).lib
+LIBWEBP = $(DIRLIB)\$(LIBWEBP_BASENAME).lib
+LIBWEBPMUX = $(DIRLIB)\$(LIBWEBPMUX_BASENAME).lib
+LIBWEBPDEMUX = $(DIRLIB)\$(LIBWEBPDEMUX_BASENAME).lib
+LIBSHARPYUV = $(DIRLIB)\$(LIBSHARPYUV_BASENAME).lib
+!ELSE IF "$(DLLBUILD)" == "TRUE"
+CC     = $(CC) /I$(DIROBJ) $(RTLIB) /DWEBP_DLL
+LIBWEBPDECODER = $(DIRLIB)\$(LIBWEBPDECODER_BASENAME)_dll.lib
+LIBWEBP = $(DIRLIB)\$(LIBWEBP_BASENAME)_dll.lib
+LIBWEBPMUX = $(DIRLIB)\$(LIBWEBPMUX_BASENAME)_dll.lib
+LIBWEBPDEMUX = $(DIRLIB)\$(LIBWEBPDEMUX_BASENAME)_dll.lib
+LIBSHARPYUV = $(DIRLIB)\$(LIBSHARPYUV_BASENAME)_dll.lib
+LIBWEBP_PDBNAME = $(DIROBJ)\$(LIBWEBP_BASENAME)_dll.pdb
+CFGSET = TRUE
+!ENDIF
+
+!IF "$(UNICODE)" == "1"
+CFLAGS = $(CFLAGS) /D_UNICODE /DUNICODE
+!ENDIF
+
+#######################
+# Usage
+#
+!IF "$(CFGSET)" == "FALSE"
+!MESSAGE Usage: nmake /f Makefile.vc [CFG=<config>]
+!MESSAGE .          [OBJDIR=<path>] [RTLIBCFG=<rtlib>] [UNICODE=1] [<target>]
+!MESSAGE
+!MESSAGE where <config> is one of:
+!MESSAGE -  release-static                - release static library
+!MESSAGE -  debug-static                  - debug static library
+!MESSAGE -  release-dynamic               - release dynamic link library (DLL)
+!MESSAGE -  debug-dynamic                 - debug dynamic link library (DLL)
+!MESSAGE
+!MESSAGE <target> may be:
+!MESSAGE -  clean                         - perform a clean for CFG
+!MESSAGE -  experimental                  - build CFG with experimental
+!MESSAGE .                                  features enabled.
+!MESSAGE - (empty)                        - build libwebp-based targets for CFG
+!MESSAGE - all                            - build (de)mux-based targets for CFG
+!MESSAGE - gif2webp                       - requires libgif & >= VS2013
+!MESSAGE - anim_diff                      - requires libgif & >= VS2013
+!MESSAGE - anim_dump
+!MESSAGE
+!MESSAGE RTLIBCFG controls the runtime library linkage - 'static' or 'dynamic'.
+!MESSAGE   'legacy' will produce a Windows 2000 compatible library.
+!MESSAGE OBJDIR is the path where you like to build (obj, bins, etc.),
+!MESSAGE   defaults to ..\obj
+
+!IF "$(CFG)" != ""
+!MESSAGE
+!ERROR please choose a valid configuration instead of "$(CFG)"
+!ENDIF
+!ENDIF
+
+#######################
+# Rules
+#
+!IF "$(CFGSET)" == "TRUE"
+# A config was provided, so the library can be built.
+#
+
+SHARPYUV_OBJS = \
+    $(DIROBJ)\sharpyuv\sharpyuv.obj \
+    $(DIROBJ)\sharpyuv\sharpyuv_cpu.obj \
+    $(DIROBJ)\sharpyuv\sharpyuv_csp.obj \
+    $(DIROBJ)\sharpyuv\sharpyuv_dsp.obj \
+    $(DIROBJ)\sharpyuv\sharpyuv_gamma.obj \
+    $(DIROBJ)\sharpyuv\sharpyuv_neon.obj \
+    $(DIROBJ)\sharpyuv\sharpyuv_sse2.obj \
+
+DEC_OBJS = \
+    $(DIROBJ)\dec\alpha_dec.obj \
+    $(DIROBJ)\dec\buffer_dec.obj \
+    $(DIROBJ)\dec\frame_dec.obj \
+    $(DIROBJ)\dec\idec_dec.obj \
+    $(DIROBJ)\dec\io_dec.obj \
+    $(DIROBJ)\dec\quant_dec.obj \
+    $(DIROBJ)\dec\tree_dec.obj \
+    $(DIROBJ)\dec\vp8_dec.obj \
+    $(DIROBJ)\dec\vp8l_dec.obj \
+    $(DIROBJ)\dec\webp_dec.obj \
+
+DEMUX_OBJS = \
+    $(DIROBJ)\demux\anim_decode.obj \
+    $(DIROBJ)\demux\demux.obj \
+
+DSP_DEC_OBJS = \
+    $(DIROBJ)\dsp\alpha_processing.obj \
+    $(DIROBJ)\dsp\alpha_processing_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\alpha_processing_neon.obj \
+    $(DIROBJ)\dsp\alpha_processing_sse2.obj \
+    $(DIROBJ)\dsp\alpha_processing_sse41.obj \
+    $(DIROBJ)\dsp\cpu.obj \
+    $(DIROBJ)\dsp\dec.obj \
+    $(DIROBJ)\dsp\dec_clip_tables.obj \
+    $(DIROBJ)\dsp\dec_mips32.obj \
+    $(DIROBJ)\dsp\dec_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\dec_msa.obj \
+    $(DIROBJ)\dsp\dec_neon.obj \
+    $(DIROBJ)\dsp\dec_sse2.obj \
+    $(DIROBJ)\dsp\dec_sse41.obj \
+    $(DIROBJ)\dsp\filters.obj \
+    $(DIROBJ)\dsp\filters_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\filters_msa.obj \
+    $(DIROBJ)\dsp\filters_neon.obj \
+    $(DIROBJ)\dsp\filters_sse2.obj \
+    $(DIROBJ)\dsp\lossless.obj \
+    $(DIROBJ)\dsp\lossless_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\lossless_msa.obj \
+    $(DIROBJ)\dsp\lossless_neon.obj \
+    $(DIROBJ)\dsp\lossless_sse2.obj \
+    $(DIROBJ)\dsp\lossless_sse41.obj \
+    $(DIROBJ)\dsp\rescaler.obj \
+    $(DIROBJ)\dsp\rescaler_mips32.obj \
+    $(DIROBJ)\dsp\rescaler_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\rescaler_msa.obj \
+    $(DIROBJ)\dsp\rescaler_neon.obj \
+    $(DIROBJ)\dsp\rescaler_sse2.obj \
+    $(DIROBJ)\dsp\upsampling.obj \
+    $(DIROBJ)\dsp\upsampling_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\upsampling_msa.obj \
+    $(DIROBJ)\dsp\upsampling_neon.obj \
+    $(DIROBJ)\dsp\upsampling_sse2.obj \
+    $(DIROBJ)\dsp\upsampling_sse41.obj \
+    $(DIROBJ)\dsp\yuv.obj \
+    $(DIROBJ)\dsp\yuv_mips32.obj \
+    $(DIROBJ)\dsp\yuv_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\yuv_neon.obj \
+    $(DIROBJ)\dsp\yuv_sse2.obj \
+    $(DIROBJ)\dsp\yuv_sse41.obj \
+
+DSP_ENC_OBJS = \
+    $(DIROBJ)\dsp\cost.obj \
+    $(DIROBJ)\dsp\cost_mips32.obj \
+    $(DIROBJ)\dsp\cost_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\cost_neon.obj \
+    $(DIROBJ)\dsp\cost_sse2.obj \
+    $(DIROBJ)\dsp\enc.obj \
+    $(DIROBJ)\dsp\enc_mips32.obj \
+    $(DIROBJ)\dsp\enc_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\enc_msa.obj \
+    $(DIROBJ)\dsp\enc_neon.obj \
+    $(DIROBJ)\dsp\enc_sse2.obj \
+    $(DIROBJ)\dsp\enc_sse41.obj \
+    $(DIROBJ)\dsp\lossless_enc.obj \
+    $(DIROBJ)\dsp\lossless_enc_mips32.obj \
+    $(DIROBJ)\dsp\lossless_enc_mips_dsp_r2.obj \
+    $(DIROBJ)\dsp\lossless_enc_msa.obj \
+    $(DIROBJ)\dsp\lossless_enc_neon.obj \
+    $(DIROBJ)\dsp\lossless_enc_sse2.obj \
+    $(DIROBJ)\dsp\lossless_enc_sse41.obj \
+    $(DIROBJ)\dsp\ssim.obj \
+    $(DIROBJ)\dsp\ssim_sse2.obj \
+
+EX_ANIM_UTIL_OBJS = \
+    $(DIROBJ)\examples\anim_util.obj \
+
+IMAGEIO_DEC_OBJS = \
+    $(DIROBJ)\imageio\image_dec.obj \
+    $(DIROBJ)\imageio\jpegdec.obj \
+    $(DIROBJ)\imageio\metadata.obj \
+    $(DIROBJ)\imageio\pngdec.obj \
+    $(DIROBJ)\imageio\pnmdec.obj \
+    $(DIROBJ)\imageio\tiffdec.obj \
+    $(DIROBJ)\imageio\webpdec.obj \
+    $(DIROBJ)\imageio\wicdec.obj \
+
+IMAGEIO_ENC_OBJS = \
+    $(DIROBJ)\imageio\image_enc.obj \
+
+EX_GIF_DEC_OBJS = \
+    $(DIROBJ)\examples\gifdec.obj \
+
+EX_UTIL_OBJS = \
+    $(DIROBJ)\examples\example_util.obj \
+
+ENC_OBJS = \
+    $(DIROBJ)\enc\alpha_enc.obj \
+    $(DIROBJ)\enc\analysis_enc.obj \
+    $(DIROBJ)\enc\backward_references_cost_enc.obj \
+    $(DIROBJ)\enc\backward_references_enc.obj \
+    $(DIROBJ)\enc\config_enc.obj \
+    $(DIROBJ)\enc\cost_enc.obj \
+    $(DIROBJ)\enc\filter_enc.obj \
+    $(DIROBJ)\enc\frame_enc.obj \
+    $(DIROBJ)\enc\histogram_enc.obj \
+    $(DIROBJ)\enc\iterator_enc.obj \
+    $(DIROBJ)\enc\near_lossless_enc.obj \
+    $(DIROBJ)\enc\picture_enc.obj \
+    $(DIROBJ)\enc\picture_csp_enc.obj \
+    $(DIROBJ)\enc\picture_psnr_enc.obj \
+    $(DIROBJ)\enc\picture_rescale_enc.obj \
+    $(DIROBJ)\enc\picture_tools_enc.obj \
+    $(DIROBJ)\enc\predictor_enc.obj \
+    $(DIROBJ)\enc\quant_enc.obj \
+    $(DIROBJ)\enc\syntax_enc.obj \
+    $(DIROBJ)\enc\token_enc.obj \
+    $(DIROBJ)\enc\tree_enc.obj \
+    $(DIROBJ)\enc\vp8l_enc.obj \
+    $(DIROBJ)\enc\webp_enc.obj \
+
+EXTRAS_OBJS = \
+    $(DIROBJ)\extras\extras.obj \
+    $(DIROBJ)\extras\quality_estimate.obj \
+    $(DIROBJ)\extras\sharpyuv_risk_table.obj \
+
+IMAGEIO_UTIL_OBJS = \
+    $(DIROBJ)\imageio\imageio_util.obj \
+
+MUX_OBJS = \
+    $(DIROBJ)\mux\anim_encode.obj \
+    $(DIROBJ)\mux\muxedit.obj \
+    $(DIROBJ)\mux\muxinternal.obj \
+    $(DIROBJ)\mux\muxread.obj \
+
+UTILS_DEC_OBJS = \
+    $(DIROBJ)\utils\bit_reader_utils.obj \
+    $(DIROBJ)\utils\color_cache_utils.obj \
+    $(DIROBJ)\utils\filters_utils.obj \
+    $(DIROBJ)\utils\huffman_utils.obj \
+    $(DIROBJ)\utils\palette.obj \
+    $(DIROBJ)\utils\quant_levels_dec_utils.obj \
+    $(DIROBJ)\utils\rescaler_utils.obj \
+    $(DIROBJ)\utils\random_utils.obj \
+    $(DIROBJ)\utils\thread_utils.obj \
+    $(DIROBJ)\utils\utils.obj \
+
+UTILS_ENC_OBJS = \
+    $(DIROBJ)\utils\bit_writer_utils.obj \
+    $(DIROBJ)\utils\huffman_encode_utils.obj \
+    $(DIROBJ)\utils\quant_levels_utils.obj \
+
+LIBWEBPDECODER_OBJS = $(DEC_OBJS) $(DSP_DEC_OBJS) $(UTILS_DEC_OBJS)
+LIBWEBP_OBJS = $(LIBWEBPDECODER_OBJS) $(ENC_OBJS) \
+               $(DSP_ENC_OBJS) $(UTILS_ENC_OBJS) $(DLL_OBJS)
+LIBWEBPMUX_OBJS = $(MUX_OBJS) $(LIBWEBPMUX_OBJS)
+LIBWEBPDEMUX_OBJS = $(DEMUX_OBJS) $(LIBWEBPDEMUX_OBJS)
+LIBSHARPYUV_OBJS = $(SHARPYUV_OBJS)
+
+OUT_LIBS = $(LIBWEBPDECODER) $(LIBWEBP) $(LIBSHARPYUV)
+!IF "$(ARCH)" == "ARM"
+ex: $(OUT_LIBS)
+all: ex
+!ELSE
+OUT_EXAMPLES = $(DIRBIN)\cwebp.exe $(DIRBIN)\dwebp.exe
+EXTRA_EXAMPLES = $(DIRBIN)\vwebp.exe $(DIRBIN)\webpmux.exe \
+                 $(DIRBIN)\img2webp.exe $(DIRBIN)\get_disto.exe \
+                 $(DIRBIN)\webp_quality.exe $(DIRBIN)\vwebp_sdl.exe \
+                 $(DIRBIN)\webpinfo.exe
+
+ex: $(OUT_LIBS) $(OUT_EXAMPLES)
+all: ex $(EXTRA_EXAMPLES)
+# NB: gif2webp.exe and anim_diff.exe are excluded from 'all' as libgif requires
+# C99 support which is only available from VS2013 onward.
+gif2webp: $(DIRBIN)\gif2webp.exe
+anim_diff: $(DIRBIN)\anim_diff.exe
+anim_dump: $(DIRBIN)\anim_dump.exe
+
+$(DIRBIN)\anim_diff.exe: $(DIROBJ)\examples\anim_diff.obj $(EX_ANIM_UTIL_OBJS)
+$(DIRBIN)\anim_diff.exe: $(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\anim_diff.exe: $(EX_GIF_DEC_OBJS) $(LIBWEBPDEMUX) $(LIBWEBP)
+$(DIRBIN)\anim_dump.exe: $(DIROBJ)\examples\anim_dump.obj $(EX_ANIM_UTIL_OBJS)
+$(DIRBIN)\anim_dump.exe: $(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\anim_dump.exe: $(EX_GIF_DEC_OBJS) $(LIBWEBPDEMUX) $(LIBWEBP)
+$(DIRBIN)\anim_dump.exe: $(IMAGEIO_ENC_OBJS)
+$(DIRBIN)\cwebp.exe: $(DIROBJ)\examples\cwebp.obj $(IMAGEIO_DEC_OBJS)
+$(DIRBIN)\cwebp.exe: $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\cwebp.exe: $(LIBWEBPDEMUX) $(LIBSHARPYUV)
+$(DIRBIN)\dwebp.exe: $(DIROBJ)\examples\dwebp.obj $(IMAGEIO_DEC_OBJS)
+$(DIRBIN)\dwebp.exe: $(IMAGEIO_ENC_OBJS)
+$(DIRBIN)\dwebp.exe: $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\dwebp.exe: $(LIBWEBPDEMUX)
+$(DIRBIN)\gif2webp.exe: $(DIROBJ)\examples\gif2webp.obj $(EX_GIF_DEC_OBJS)
+$(DIRBIN)\gif2webp.exe: $(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS) $(LIBWEBPMUX)
+$(DIRBIN)\gif2webp.exe: $(LIBWEBP)
+$(DIRBIN)\vwebp.exe: $(DIROBJ)\examples\vwebp.obj $(EX_UTIL_OBJS)
+$(DIRBIN)\vwebp.exe: $(IMAGEIO_UTIL_OBJS) $(LIBWEBPDEMUX) $(LIBWEBP)
+$(DIRBIN)\vwebp_sdl.exe: $(DIROBJ)\extras\vwebp_sdl.obj
+$(DIRBIN)\vwebp_sdl.exe: $(DIROBJ)\extras\webp_to_sdl.obj
+$(DIRBIN)\vwebp_sdl.exe: $(IMAGEIO_UTIL_OBJS) $(LIBWEBP)
+$(DIRBIN)\webpmux.exe: $(DIROBJ)\examples\webpmux.obj $(LIBWEBPMUX)
+$(DIRBIN)\webpmux.exe: $(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS) $(LIBWEBP)
+$(DIRBIN)\img2webp.exe: $(DIROBJ)\examples\img2webp.obj $(LIBWEBPMUX)
+$(DIRBIN)\img2webp.exe: $(IMAGEIO_DEC_OBJS)
+$(DIRBIN)\img2webp.exe: $(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\img2webp.exe: $(LIBWEBPDEMUX) $(LIBWEBP) $(LIBSHARPYUV)
+$(DIRBIN)\get_disto.exe: $(DIROBJ)\extras\get_disto.obj
+$(DIRBIN)\get_disto.exe: $(IMAGEIO_DEC_OBJS) $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\get_disto.exe: $(LIBWEBPDEMUX) $(LIBWEBP)
+$(DIRBIN)\webp_quality.exe: $(DIROBJ)\extras\webp_quality.obj
+$(DIRBIN)\webp_quality.exe: $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\webp_quality.exe: $(EXTRAS_OBJS)
+# EXTRA_OBJS requires private symbols from dsp. Explicitly add those when
+# building libwebp as a dll.
+!IF "$(DLLBUILD)" == "TRUE"
+$(DIRBIN)\webp_quality.exe: $(DSP_DEC_OBJS)
+!ENDIF
+$(DIRBIN)\webp_quality.exe: $(LIBWEBP)
+$(DIRBIN)\webpinfo.exe: $(DIROBJ)\examples\webpinfo.obj
+$(DIRBIN)\webpinfo.exe: $(IMAGEIO_DEC_OBJS)
+$(DIRBIN)\webpinfo.exe: $(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS)
+$(DIRBIN)\webpinfo.exe: $(LIBWEBPDEMUX) $(LIBWEBP)
+
+$(OUT_EXAMPLES): $(EX_UTIL_OBJS) $(LIBWEBP)
+$(EX_UTIL_OBJS) $(IMAGEIO_UTIL_OBJS): $(OUTPUT_DIRS)
+$(IMAGEIO_DEC_OBJS) $(IMAGEIO_ENC_OBJS) $(EXTRAS_OBJS): $(OUTPUT_DIRS)
+!ENDIF  # ARCH == ARM
+
+$(LIBSHARPYUV): $(LIBSHARPYUV_OBJS)
+$(LIBWEBPDECODER): $(LIBWEBPDECODER_OBJS)
+$(LIBWEBP): $(LIBWEBP_OBJS) $(LIBSHARPYUV)
+$(LIBWEBPMUX): $(LIBWEBPMUX_OBJS)
+$(LIBWEBPDEMUX): $(LIBWEBPDEMUX_OBJS)
+
+$(LIBWEBP_OBJS) $(LIBWEBPMUX_OBJS) $(LIBWEBPDEMUX_OBJS) $(LIBSHARPYUV_OBJS): \
+    $(OUTPUT_DIRS)
+
+!IF "$(DLLBUILD)" == "TRUE"
+{$(DIROBJ)}.c{$(DIROBJ)}.obj:
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$@  $<
+
+{src}.rc{$(DIROBJ)}.res:
+	$(RC) /fo$@ $<
+{src\demux}.rc{$(DIROBJ)\demux}.res:
+	$(RC) /fo$@ $<
+{src\mux}.rc{$(DIROBJ)\mux}.res:
+	$(RC) /fo$@ $<
+{sharpyuv}.rc{$(DIROBJ)\sharpyuv}.res:
+	$(RC) /fo$@ $<
+
+$(LIBSHARPYUV): $(DIROBJ)\sharpyuv\$(LIBSHARPYUV_BASENAME:_debug=).res
+$(LIBWEBP): $(LIBSHARPYUV) $(DIROBJ)\$(LIBWEBP_BASENAME:_debug=).res
+$(LIBWEBPDECODER): $(DIROBJ)\$(LIBWEBPDECODER_BASENAME:_debug=).res
+$(LIBWEBPMUX): $(LIBWEBP) $(DIROBJ)\mux\$(LIBWEBPMUX_BASENAME:_debug=).res
+$(LIBWEBPDEMUX): $(LIBWEBP) $(DIROBJ)\demux\$(LIBWEBPDEMUX_BASENAME:_debug=).res
+
+$(LIBWEBPDECODER) $(LIBWEBP) $(LIBWEBPMUX) $(LIBWEBPDEMUX) $(LIBSHARPYUV):
+	$(LNKDLL) /out:$(DIRBIN)\$(@B:_dll=.dll) /implib:$@ $(LFLAGS) $**
+	-xcopy $(DIROBJ)\*.pdb $(DIRLIB) /y
+!ELSE
+$(LIBWEBPDECODER) $(LIBWEBP) $(LIBWEBPMUX) $(LIBWEBPDEMUX) $(LIBSHARPYUV):
+	$(LNKLIB) /out:$@ $**
+	-xcopy $(DIROBJ)\*.pdb $(DIRLIB) /y
+!ENDIF
+
+$(OUTPUT_DIRS):
+	@if not exist "$(@)" mkdir "$(@)"
+
+.SUFFIXES: .c .obj .res .exe
+# File-specific flag builds. Note batch rules take precedence over wildcards,
+# so for now name each file individually.
+$(DIROBJ)\examples\anim_diff.obj: examples\anim_diff.c
+	$(CC) $(CFLAGS) /DWEBP_HAVE_GIF /Fd$(LIBWEBP_PDBNAME) \
+	  /Fo$(DIROBJ)\examples\ examples\$(@B).c
+$(DIROBJ)\examples\anim_dump.obj: examples\anim_dump.c
+	$(CC) $(CFLAGS) /DWEBP_HAVE_GIF /Fd$(LIBWEBP_PDBNAME) \
+	  /Fo$(DIROBJ)\examples\ examples\$(@B).c
+$(DIROBJ)\examples\anim_util.obj: examples\anim_util.c
+	$(CC) $(CFLAGS) /DWEBP_HAVE_GIF /Fd$(LIBWEBP_PDBNAME) \
+	  /Fo$(DIROBJ)\examples\ examples\$(@B).c
+$(DIROBJ)\examples\gif2webp.obj: examples\gif2webp.c
+	$(CC) $(CFLAGS) /DWEBP_HAVE_GIF /Fd$(LIBWEBP_PDBNAME) \
+	  /Fo$(DIROBJ)\examples\ examples\$(@B).c
+$(DIROBJ)\examples\gifdec.obj: examples\gifdec.c
+	$(CC) $(CFLAGS) /DWEBP_HAVE_GIF /Fd$(LIBWEBP_PDBNAME) \
+	  /Fo$(DIROBJ)\examples\ examples\$(@B).c
+# Batch rules
+{examples}.c{$(DIROBJ)\examples}.obj::
+	$(CC) $(CFLAGS) /Fd$(DIROBJ)\examples\ /Fo$(DIROBJ)\examples\ $<
+{extras}.c{$(DIROBJ)\extras}.obj::
+	$(CC) $(CFLAGS) /Fd$(DIROBJ)\extras\ /Fo$(DIROBJ)\extras\ $<
+{imageio}.c{$(DIROBJ)\imageio}.obj::
+	$(CC) $(CFLAGS) /Fd$(DIROBJ)\imageio\ /Fo$(DIROBJ)\imageio\ $<
+{sharpyuv}.c{$(DIROBJ)\sharpyuv}.obj::
+	$(CC) $(CFLAGS) /Fd$(DIROBJ)\sharpyuv\ /Fo$(DIROBJ)\sharpyuv\ $<
+{src\dec}.c{$(DIROBJ)\dec}.obj::
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$(DIROBJ)\dec\ $<
+{src\demux}.c{$(DIROBJ)\demux}.obj::
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$(DIROBJ)\demux\ $<
+{src\dsp}.c{$(DIROBJ)\dsp}.obj::
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$(DIROBJ)\dsp\ $<
+{src\enc}.c{$(DIROBJ)\enc}.obj::
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$(DIROBJ)\enc\ $<
+{src\mux}.c{$(DIROBJ)\mux}.obj::
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$(DIROBJ)\mux\ $<
+{src\utils}.c{$(DIROBJ)\utils}.obj::
+	$(CC) $(CFLAGS) /Fd$(LIBWEBP_PDBNAME) /Fo$(DIROBJ)\utils\ $<
+
+LNKLIBS     = ole32.lib windowscodecs.lib shlwapi.lib
+!IF "$(UNICODE)" == "1"
+LNKLIBS     = $(LNKLIBS) Shell32.lib
+!ENDIF
+
+{$(DIROBJ)\examples}.obj{$(DIRBIN)}.exe:
+	$(LNKEXE) $(LDFLAGS) /OUT:$@ $** $(LNKLIBS)
+
+{$(DIROBJ)\extras}.obj{$(DIRBIN)}.exe:
+	$(LNKEXE) $(LDFLAGS) /OUT:$@ $** $(LNKLIBS)
+
+clean::
+	@-erase /s $(DIROBJ)\*.dll 2> NUL
+	@-erase /s $(DIROBJ)\*.exp 2> NUL
+	@-erase /s $(DIROBJ)\*.idb 2> NUL
+	@-erase /s $(DIROBJ)\*.lib 2> NUL
+	@-erase /s $(DIROBJ)\*.obj 2> NUL
+	@-erase /s $(DIROBJ)\*.pch 2> NUL
+	@-erase /s $(DIROBJ)\*.pdb 2> NUL
+	@-erase /s $(DIROBJ)\*.res 2> NUL
+
+!ENDIF  # End of case where a config was provided.

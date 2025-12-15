@@ -1,0 +1,65 @@
+TURBOJPEG_1.0
+{
+  global:
+    tjInitCompress;
+    tjCompress;
+    TJBUFSIZE;
+    tjInitDecompress;
+    tjDecompressHeader;
+    tjDecompress;
+    tjDestroy;
+    tjGetErrorStr;
+  local:
+    *;
+};
+
+TURBOJPEG_1.1
+{
+  global:
+    TJBUFSIZEYUV;
+    tjDecompressHeader2;
+    tjDecompressToYUV;
+    tjEncodeYUV;
+} TURBOJPEG_1.0;
+
+TURBOJPEG_1.2
+{
+  global:
+    tjAlloc;
+    tjBufSize;
+    tjBufSizeYUV;
+    tjCompress2;
+    tjDecompress2;
+    tjEncodeYUV2;
+    tjFree;
+    tjGetScalingFactors;
+    tjInitTransform;
+    tjTransform;
+} TURBOJPEG_1.1;
+
+TURBOJPEG_1.4
+{
+  global:
+    tjBufSizeYUV2;
+    tjCompressFromYUV;
+    tjCompressFromYUVPlanes;
+    tjDecodeYUV;
+    tjDecodeYUVPlanes;
+    tjDecompressHeader3;
+    tjDecompressToYUV2;
+    tjDecompressToYUVPlanes;
+    tjEncodeYUV3;
+    tjEncodeYUVPlanes;
+    tjPlaneHeight;
+    tjPlaneSizeYUV;
+    tjPlaneWidth;
+} TURBOJPEG_1.2;
+
+TURBOJPEG_2.0
+{
+  global:
+    tjGetErrorCode;
+    tjGetErrorStr2;
+    tjLoadImage;
+    tjSaveImage;
+} TURBOJPEG_1.4;

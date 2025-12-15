@@ -1,0 +1,127 @@
+#! /bin/sh
+
+# libpng-config
+# provides configuration info for libpng.
+
+# Copyright (C) 2002, 2004, 2006, 2007 Glenn Randers-Pehrson
+
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
+
+# Modeled after libxml-config.
+
+version="@PNGLIB_VERSION@"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+libdir="@libdir@"
+includedir="@includedir@/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@"
+libs="-lpng@PNGLIB_MAJOR@@PNGLIB_MINOR@"
+all_libs="-lpng@PNGLIB_MAJOR@@PNGLIB_MINOR@ @LIBS@"
+I_opts="-I${includedir}"
+L_opts="-L${libdir}"
+R_opts=""
+cppflags=""
+ccopts=""
+ldopts=""
+
+usage()
+{
+    cat <<EOF
+Usage: $0 [OPTION] ...
+
+Known values for OPTION are:
+
+  --prefix        print libpng prefix
+  --libdir        print path to directory containing library
+  --libs          print library linking information
+  --ccopts        print compiler options
+  --cppflags      print pre-processor flags
+  --cflags        print preprocessor flags, I_opts, and compiler options
+  --I_opts        print "-I" include options
+  --L_opts        print linker "-L" flags for dynamic linking
+  --R_opts        print dynamic linker "-R" or "-rpath" flags
+  --ldopts        print linker options
+  --ldflags       print linker flags (ldopts, L_opts, R_opts, and libs)
+  --static        revise subsequent outputs for static linking
+  --help          print this help and exit
+  --version       print version information
+EOF
+
+    exit $1
+}
+
+if test $# -eq 0; then
+    usage 1
+fi
+
+while test $# -gt 0; do
+    case "$1" in
+
+    --prefix)
+        echo ${prefix}
+        ;;
+
+    --version)
+        echo ${version}
+        exit 0
+        ;;
+
+    --help)
+        usage 0
+        ;;
+
+    --ccopts)
+        echo ${ccopts}
+        ;;
+
+    --cppflags)
+        echo ${cppflags}
+        ;;
+
+    --cflags)
+        echo ${I_opts} ${cppflags} ${ccopts}
+        ;;
+
+    --libdir)
+        echo ${libdir}
+        ;;
+
+    --libs)
+        echo ${libs}
+        ;;
+
+    --I_opts)
+        echo ${I_opts}
+        ;;
+
+    --L_opts)
+        echo ${L_opts}
+        ;;
+
+    --R_opts)
+        echo ${R_opts}
+        ;;
+
+    --ldopts)
+        echo ${ldopts}
+        ;;
+
+    --ldflags)
+        echo ${ldopts} ${L_opts} ${R_opts} ${libs}
+        ;;
+
+    --static)
+        R_opts=""
+        libs=${all_libs}
+        ;;
+
+    *)
+        usage
+        exit 1
+        ;;
+    esac
+    shift
+done
+
+exit 0

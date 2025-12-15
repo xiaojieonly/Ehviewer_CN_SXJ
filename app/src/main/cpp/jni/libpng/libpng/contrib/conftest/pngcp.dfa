@@ -1,0 +1,57 @@
+# pngcp.dfa
+#  Build time configuration of libpng
+#
+# Author: John Bowler
+# Copyright: (c) John Bowler, 2016
+# Usage rights:
+#  To the extent possible under law, the author has waived all copyright and
+#  related or neighboring rights to this work.  This work is published from:
+#  United States.
+#
+# Build libpng with support for pngcp.  This means just png_read_png,
+# png_write_png and small number of configuration settings.
+#
+everything = off
+
+# This option is specific to this configuration; it adds a #define to the
+# generated pnglibconf.h which turns on the (not portable) timing option for
+# pngcp.  Note that any option is automatically preceded by PNG_; there is no
+# way round this and this is deliberate.
+option PNGCP_TIMING
+
+# Because of the everything off above the option must also be turned on.  This
+# may not be done in one step because it is safer and avoids mis-spelled options
+# in user .dfa files to error out if an unrecognized option is turned on.
+option PNGCP_TIMING on
+
+# Options to turn on png_read_png and png_write_png:
+option INFO_IMAGE on
+option SEQUENTIAL_READ on
+option EASY_ACCESS on
+option WRITE on
+option WRITE_16BIT on
+option WRITE_FILTER on
+
+# pngcp needs this to preserve unknown chunks, switching all these on means that
+# pngcp can work without explicit known chunk reading support
+option UNKNOWN_CHUNKS on
+option SET_UNKNOWN_CHUNKS on
+option HANDLE_AS_UNKNOWN on
+option SAVE_UNKNOWN_CHUNKS on
+option WRITE_UNKNOWN_CHUNKS on
+
+# pngcp needs this to handle palette files with invalid indices:
+option CHECK_FOR_INVALID_INDEX on
+option GET_PALETTE_MAX on
+
+# Pre-libpng 1.7 pngcp has to stash text chunks manually, post 1.7 without this
+# text chunks should be handled as unknown ok.
+option TEXT on
+
+# this is used to turn off limits:
+option USER_LIMITS on
+option SET_USER_LIMITS on
+
+# these are just required for specific customizations
+option WRITE_CUSTOMIZE_ZTXT_COMPRESSION on
+option WRITE_CUSTOMIZE_COMPRESSION on

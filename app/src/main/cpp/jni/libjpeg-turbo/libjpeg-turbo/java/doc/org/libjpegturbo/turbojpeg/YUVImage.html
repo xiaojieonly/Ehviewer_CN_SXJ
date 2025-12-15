@@ -1,0 +1,765 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- NewPage -->
+<html lang="en">
+<head>
+<title>YUVImage</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<script type="text/javascript"><!--
+    try {
+        if (location.href.indexOf('is-external=true') == -1) {
+            parent.document.title="YUVImage";
+        }
+    }
+    catch(err) {
+    }
+//-->
+</script>
+<noscript>
+<div>JavaScript is disabled on your browser.</div>
+</noscript>
+<!-- ========= START OF TOP NAVBAR ======= -->
+<div class="topNav"><a name="navbar_top">
+<!--   -->
+</a><a href="#skip-navbar_top" title="Skip navigation links"></a><a name="navbar_top_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../org/libjpegturbo/turbojpeg/package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../index-all.html">Index</a></li>
+<li><a href="../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li><a href="../../../org/libjpegturbo/turbojpeg/TJTransformer.html" title="class in org.libjpegturbo.turbojpeg"><span class="strong">Prev Class</span></a></li>
+<li>Next Class</li>
+</ul>
+<ul class="navList">
+<li><a href="../../../index.html?org/libjpegturbo/turbojpeg/YUVImage.html" target="_top">Frames</a></li>
+<li><a href="YUVImage.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_top">
+<li><a href="../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_top");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#field_summary">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_summary">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li><a href="#field_detail">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_detail">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_detail">Method</a></li>
+</ul>
+</div>
+<a name="skip-navbar_top">
+<!--   -->
+</a></div>
+<!-- ========= END OF TOP NAVBAR ========= -->
+<!-- ======== START OF CLASS DATA ======== -->
+<div class="header">
+<div class="subTitle">org.libjpegturbo.turbojpeg</div>
+<h2 title="Class YUVImage" class="title">Class YUVImage</h2>
+</div>
+<div class="contentContainer">
+<ul class="inheritance">
+<li>java.lang.Object</li>
+<li>
+<ul class="inheritance">
+<li>org.libjpegturbo.turbojpeg.YUVImage</li>
+</ul>
+</li>
+</ul>
+<div class="description">
+<ul class="blockList">
+<li class="blockList">
+<hr>
+<br>
+<pre>public class <span class="strong">YUVImage</span>
+extends java.lang.Object</pre>
+<div class="block">This class encapsulates a YUV planar image and the metadata
+ associated with it.  The TurboJPEG API allows both the JPEG compression and
+ decompression pipelines to be split into stages:  YUV encode, compress from
+ YUV, decompress to YUV, and YUV decode.  A <code>YUVImage</code> instance
+ serves as the destination image for YUV encode and decompress-to-YUV
+ operations and as the source image for compress-from-YUV and YUV decode
+ operations.
+ <p>
+ Technically, the JPEG format uses the YCbCr colorspace (which technically is
+ not a "colorspace" but rather a "color transform"), but per the convention
+ of the digital video community, the TurboJPEG API uses "YUV" to refer to an
+ image format consisting of Y, Cb, and Cr image planes.
+ <p>
+ Each plane is simply a 2D array of bytes, each byte representing the value
+ of one of the components (Y, Cb, or Cr) at a particular location in the
+ image.  The width and height of each plane are determined by the image
+ width, height, and level of chrominance subsampling.  The luminance plane
+ width is the image width padded to the nearest multiple of the horizontal
+ subsampling factor (2 in the case of 4:2:0 and 4:2:2, 4 in the case of
+ 4:1:1, 1 in the case of 4:4:4 or grayscale.)  Similarly, the luminance plane
+ height is the image height padded to the nearest multiple of the vertical
+ subsampling factor (2 in the case of 4:2:0 or 4:4:0, 1 in the case of 4:4:4
+ or grayscale.)  The chrominance plane width is equal to the luminance plane
+ width divided by the horizontal subsampling factor, and the chrominance
+ plane height is equal to the luminance plane height divided by the vertical
+ subsampling factor.
+ <p>
+ For example, if the source image is 35 x 35 pixels and 4:2:2 subsampling is
+ used, then the luminance plane would be 36 x 35 bytes, and each of the
+ chrominance planes would be 18 x 35 bytes.  If you specify a line padding of
+ 4 bytes on top of this, then the luminance plane would be 36 x 35 bytes, and
+ each of the chrominance planes would be 20 x 35 bytes.</div>
+</li>
+</ul>
+</div>
+<div class="summary">
+<ul class="blockList">
+<li class="blockList">
+<!-- =========== FIELD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field_summary">
+<!--   -->
+</a>
+<h3>Field Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Field and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected long</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#handle">handle</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvHeight">yuvHeight</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected int[]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvOffsets">yuvOffsets</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvPad">yuvPad</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected byte[][]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvPlanes">yuvPlanes</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected int[]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvStrides">yuvStrides</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvSubsamp">yuvSubsamp</a></strong></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#yuvWidth">yuvWidth</a></strong></code>&nbsp;</td>
+</tr>
+</table>
+</li>
+</ul>
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+<ul class="blockList">
+<li class="blockList"><a name="constructor_summary">
+<!--   -->
+</a>
+<h3>Constructor Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Constructor Summary table, listing constructors, and an explanation">
+<caption><span>Constructors</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colOne" scope="col">Constructor and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colOne"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#YUVImage(byte[][],%20int[],%20int,%20int[],%20int,%20int)">YUVImage</a></strong>(byte[][]&nbsp;planes,
+        int[]&nbsp;offsets,
+        int&nbsp;width,
+        int[]&nbsp;strides,
+        int&nbsp;height,
+        int&nbsp;subsamp)</code>
+<div class="block">Create a new <code>YUVImage</code> instance from a set of existing image
+ planes.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colOne"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#YUVImage(byte[],%20int,%20int,%20int,%20int)">YUVImage</a></strong>(byte[]&nbsp;yuvImage,
+        int&nbsp;width,
+        int&nbsp;pad,
+        int&nbsp;height,
+        int&nbsp;subsamp)</code>
+<div class="block">Create a new <code>YUVImage</code> instance from an existing unified image
+ buffer.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colOne"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#YUVImage(int,%20int[],%20int,%20int)">YUVImage</a></strong>(int&nbsp;width,
+        int[]&nbsp;strides,
+        int&nbsp;height,
+        int&nbsp;subsamp)</code>
+<div class="block">Create a new <code>YUVImage</code> instance backed by separate image
+ planes, and allocate memory for the image planes.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colOne"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#YUVImage(int,%20int,%20int,%20int)">YUVImage</a></strong>(int&nbsp;width,
+        int&nbsp;pad,
+        int&nbsp;height,
+        int&nbsp;subsamp)</code>
+<div class="block">Create a new <code>YUVImage</code> instance backed by a unified image
+ buffer, and allocate memory for the image buffer.</div>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+<!-- ========== METHOD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method_summary">
+<!--   -->
+</a>
+<h3>Method Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
+<caption><span>Methods</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Method and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>byte[]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getBuf()">getBuf</a></strong>()</code>
+<div class="block">Returns the YUV image buffer (if this image is stored in a unified
+ buffer rather than separate image planes.)</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getHeight()">getHeight</a></strong>()</code>
+<div class="block">Returns the height of the YUV image (or subregion.)</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>int[]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getOffsets()">getOffsets</a></strong>()</code>
+<div class="block">Returns the offsets (in bytes) of each plane within the planes of a larger
+ YUV image.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getPad()">getPad</a></strong>()</code>
+<div class="block">Returns the line padding used in the YUV image buffer (if this image is
+ stored in a unified buffer rather than separate image planes.)</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>byte[][]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getPlanes()">getPlanes</a></strong>()</code>
+<div class="block">Returns the YUV image planes.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getSize()">getSize</a></strong>()</code>
+<div class="block">Returns the size (in bytes) of the YUV image buffer (if this image is
+ stored in a unified buffer rather than separate image planes.)</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>int[]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getStrides()">getStrides</a></strong>()</code>
+<div class="block">Returns the number of bytes per line of each plane in the YUV image.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getSubsamp()">getSubsamp</a></strong>()</code>
+<div class="block">Returns the level of chrominance subsampling used in the YUV image.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#getWidth()">getWidth</a></strong>()</code>
+<div class="block">Returns the width of the YUV image (or subregion.)</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#setBuf(byte[][],%20int[],%20int,%20int[],%20int,%20int)">setBuf</a></strong>(byte[][]&nbsp;planes,
+      int[]&nbsp;offsets,
+      int&nbsp;width,
+      int[]&nbsp;strides,
+      int&nbsp;height,
+      int&nbsp;subsamp)</code>
+<div class="block">Assign a set of image planes to this <code>YUVImage</code> instance.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html#setBuf(byte[],%20int,%20int,%20int,%20int)">setBuf</a></strong>(byte[]&nbsp;yuvImage,
+      int&nbsp;width,
+      int&nbsp;pad,
+      int&nbsp;height,
+      int&nbsp;subsamp)</code>
+<div class="block">Assign a unified image buffer to this <code>YUVImage</code> instance.</div>
+</td>
+</tr>
+</table>
+<ul class="blockList">
+<li class="blockList"><a name="methods_inherited_from_class_java.lang.Object">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;java.lang.Object</h3>
+<code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="details">
+<ul class="blockList">
+<li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field_detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a name="handle">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>handle</h4>
+<pre>protected&nbsp;long handle</pre>
+</li>
+</ul>
+<a name="yuvPlanes">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>yuvPlanes</h4>
+<pre>protected&nbsp;byte[][] yuvPlanes</pre>
+</li>
+</ul>
+<a name="yuvOffsets">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>yuvOffsets</h4>
+<pre>protected&nbsp;int[] yuvOffsets</pre>
+</li>
+</ul>
+<a name="yuvStrides">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>yuvStrides</h4>
+<pre>protected&nbsp;int[] yuvStrides</pre>
+</li>
+</ul>
+<a name="yuvPad">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>yuvPad</h4>
+<pre>protected&nbsp;int yuvPad</pre>
+</li>
+</ul>
+<a name="yuvWidth">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>yuvWidth</h4>
+<pre>protected&nbsp;int yuvWidth</pre>
+</li>
+</ul>
+<a name="yuvHeight">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>yuvHeight</h4>
+<pre>protected&nbsp;int yuvHeight</pre>
+</li>
+</ul>
+<a name="yuvSubsamp">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>yuvSubsamp</h4>
+<pre>protected&nbsp;int yuvSubsamp</pre>
+</li>
+</ul>
+</li>
+</ul>
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+<ul class="blockList">
+<li class="blockList"><a name="constructor_detail">
+<!--   -->
+</a>
+<h3>Constructor Detail</h3>
+<a name="YUVImage(int, int[], int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>YUVImage</h4>
+<pre>public&nbsp;YUVImage(int&nbsp;width,
+        int[]&nbsp;strides,
+        int&nbsp;height,
+        int&nbsp;subsamp)</pre>
+<div class="block">Create a new <code>YUVImage</code> instance backed by separate image
+ planes, and allocate memory for the image planes.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>width</code> - width (in pixels) of the YUV image</dd><dd><code>strides</code> - an array of integers, each specifying the number of bytes
+ per line in the corresponding plane of the YUV image.  Setting the stride
+ for any plane to 0 is the same as setting it to the plane width (see
+ <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>above</code></a>.)  If <code>strides</code> is null, then the
+ strides for all planes will be set to their respective plane widths.  When
+ using this constructor, the stride for each plane must be equal to or
+ greater than the plane width.</dd><dd><code>height</code> - height (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling to be used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>)</dd></dl>
+</li>
+</ul>
+<a name="YUVImage(int, int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>YUVImage</h4>
+<pre>public&nbsp;YUVImage(int&nbsp;width,
+        int&nbsp;pad,
+        int&nbsp;height,
+        int&nbsp;subsamp)</pre>
+<div class="block">Create a new <code>YUVImage</code> instance backed by a unified image
+ buffer, and allocate memory for the image buffer.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>width</code> - width (in pixels) of the YUV image</dd><dd><code>pad</code> - Each line of each plane in the YUV image buffer will be padded
+ to this number of bytes (must be a power of 2.)</dd><dd><code>height</code> - height (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling to be used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>)</dd></dl>
+</li>
+</ul>
+<a name="YUVImage(byte[][], int[], int, int[], int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>YUVImage</h4>
+<pre>public&nbsp;YUVImage(byte[][]&nbsp;planes,
+        int[]&nbsp;offsets,
+        int&nbsp;width,
+        int[]&nbsp;strides,
+        int&nbsp;height,
+        int&nbsp;subsamp)</pre>
+<div class="block">Create a new <code>YUVImage</code> instance from a set of existing image
+ planes.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>planes</code> - an array of buffers representing the Y, U (Cb), and V (Cr)
+ image planes (or just the Y plane, if the image is grayscale.)   These
+ planes can be contiguous or non-contiguous in memory.  Plane
+ <code>i</code> should be at least <code>offsets[i] +
+ <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#planeSizeYUV(int,%20int,%20int,%20int,%20int)"><code>TJ.planeSizeYUV</code></a>(i, width, strides[i], height, subsamp)</code>
+ bytes in size.</dd><dd><code>offsets</code> - If this <code>YUVImage</code> instance represents a
+ subregion of a larger image, then <code>offsets[i]</code> specifies the
+ offset (in bytes) of the subregion within plane <code>i</code> of the
+ larger image.  Setting this to null is the same as setting the offsets for
+ all planes to 0.</dd><dd><code>width</code> - width (in pixels) of the new YUV image (or subregion)</dd><dd><code>strides</code> - an array of integers, each specifying the number of bytes
+ per line in the corresponding plane of the YUV image.  Setting the stride
+ for any plane to 0 is the same as setting it to the plane width (see
+ <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>above</code></a>.)  If <code>strides</code> is null, then the
+ strides for all planes will be set to their respective plane widths.  You
+ can adjust the strides in order to add an arbitrary amount of line padding
+ to each plane or to specify that this <code>YUVImage</code> instance is a
+ subregion of a larger image (in which case, <code>strides[i]</code> should
+ be set to the plane width of plane <code>i</code> in the larger image.)</dd><dd><code>height</code> - height (in pixels) of the new YUV image (or subregion)</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>)</dd></dl>
+</li>
+</ul>
+<a name="YUVImage(byte[], int, int, int, int)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>YUVImage</h4>
+<pre>public&nbsp;YUVImage(byte[]&nbsp;yuvImage,
+        int&nbsp;width,
+        int&nbsp;pad,
+        int&nbsp;height,
+        int&nbsp;subsamp)</pre>
+<div class="block">Create a new <code>YUVImage</code> instance from an existing unified image
+ buffer.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>yuvImage</code> - image buffer that contains or will contain YUV planar
+ image data.  Use <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSizeYUV(int,%20int,%20int,%20int)"><code>TJ.bufSizeYUV(int, int, int, int)</code></a> to determine the minimum size for
+ this buffer.  The Y, U (Cb), and V (Cr) image planes are stored
+ sequentially in the buffer (see <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>above</code></a> for a description
+ of the image format.)</dd><dd><code>width</code> - width (in pixels) of the YUV image</dd><dd><code>pad</code> - the line padding used in the YUV image buffer.  For
+ instance, if each line in each plane of the buffer is padded to the
+ nearest multiple of 4 bytes, then <code>pad</code> should be set to 4.</dd><dd><code>height</code> - height (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>)</dd></dl>
+</li>
+</ul>
+</li>
+</ul>
+<!-- ============ METHOD DETAIL ========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method_detail">
+<!--   -->
+</a>
+<h3>Method Detail</h3>
+<a name="setBuf(byte[][], int[], int, int[], int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setBuf</h4>
+<pre>public&nbsp;void&nbsp;setBuf(byte[][]&nbsp;planes,
+          int[]&nbsp;offsets,
+          int&nbsp;width,
+          int[]&nbsp;strides,
+          int&nbsp;height,
+          int&nbsp;subsamp)</pre>
+<div class="block">Assign a set of image planes to this <code>YUVImage</code> instance.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>planes</code> - an array of buffers representing the Y, U (Cb), and V (Cr)
+ image planes (or just the Y plane, if the image is grayscale.)  These
+ planes can be contiguous or non-contiguous in memory.  Plane
+ <code>i</code> should be at least <code>offsets[i] +
+ <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#planeSizeYUV(int,%20int,%20int,%20int,%20int)"><code>TJ.planeSizeYUV</code></a>(i, width, strides[i], height, subsamp)</code>
+ bytes in size.</dd><dd><code>offsets</code> - If this <code>YUVImage</code> instance represents a
+ subregion of a larger image, then <code>offsets[i]</code> specifies the
+ offset (in bytes) of the subregion within plane <code>i</code> of the
+ larger image.  Setting this to null is the same as setting the offsets for
+ all planes to 0.</dd><dd><code>width</code> - width (in pixels) of the YUV image (or subregion)</dd><dd><code>strides</code> - an array of integers, each specifying the number of bytes
+ per line in the corresponding plane of the YUV image.  Setting the stride
+ for any plane to 0 is the same as setting it to the plane width (see
+ <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>above</code></a>.)  If <code>strides</code> is null, then the
+ strides for all planes will be set to their respective plane widths.  You
+ can adjust the strides in order to add an arbitrary amount of line padding
+ to each plane or to specify that this <code>YUVImage</code> image is a
+ subregion of a larger image (in which case, <code>strides[i]</code> should
+ be set to the plane width of plane <code>i</code> in the larger image.)</dd><dd><code>height</code> - height (in pixels) of the YUV image (or subregion)</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>)</dd></dl>
+</li>
+</ul>
+<a name="setBuf(byte[], int, int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setBuf</h4>
+<pre>public&nbsp;void&nbsp;setBuf(byte[]&nbsp;yuvImage,
+          int&nbsp;width,
+          int&nbsp;pad,
+          int&nbsp;height,
+          int&nbsp;subsamp)</pre>
+<div class="block">Assign a unified image buffer to this <code>YUVImage</code> instance.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>yuvImage</code> - image buffer that contains or will contain YUV planar
+ image data.  Use <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSizeYUV(int,%20int,%20int,%20int)"><code>TJ.bufSizeYUV(int, int, int, int)</code></a> to determine the minimum size for
+ this buffer.  The Y, U (Cb), and V (Cr) image planes are stored
+ sequentially in the buffer (see <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>above</code></a> for a description
+ of the image format.)</dd><dd><code>width</code> - width (in pixels) of the YUV image</dd><dd><code>pad</code> - the line padding used in the YUV image buffer.  For
+ instance, if each line in each plane of the buffer is padded to the
+ nearest multiple of 4 bytes, then <code>pad</code> should be set to 4.</dd><dd><code>height</code> - height (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>)</dd></dl>
+</li>
+</ul>
+<a name="getWidth()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getWidth</h4>
+<pre>public&nbsp;int&nbsp;getWidth()</pre>
+<div class="block">Returns the width of the YUV image (or subregion.)</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the width of the YUV image (or subregion)</dd></dl>
+</li>
+</ul>
+<a name="getHeight()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getHeight</h4>
+<pre>public&nbsp;int&nbsp;getHeight()</pre>
+<div class="block">Returns the height of the YUV image (or subregion.)</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the height of the YUV image (or subregion)</dd></dl>
+</li>
+</ul>
+<a name="getPad()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPad</h4>
+<pre>public&nbsp;int&nbsp;getPad()</pre>
+<div class="block">Returns the line padding used in the YUV image buffer (if this image is
+ stored in a unified buffer rather than separate image planes.)</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the line padding used in the YUV image buffer</dd></dl>
+</li>
+</ul>
+<a name="getStrides()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getStrides</h4>
+<pre>public&nbsp;int[]&nbsp;getStrides()</pre>
+<div class="block">Returns the number of bytes per line of each plane in the YUV image.</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the number of bytes per line of each plane in the YUV image</dd></dl>
+</li>
+</ul>
+<a name="getOffsets()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getOffsets</h4>
+<pre>public&nbsp;int[]&nbsp;getOffsets()</pre>
+<div class="block">Returns the offsets (in bytes) of each plane within the planes of a larger
+ YUV image.</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the offsets (in bytes) of each plane within the planes of a larger
+ YUV image</dd></dl>
+</li>
+</ul>
+<a name="getSubsamp()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getSubsamp</h4>
+<pre>public&nbsp;int&nbsp;getSubsamp()</pre>
+<div class="block">Returns the level of chrominance subsampling used in the YUV image.  See
+ <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>TJ.SAMP_*</code></a>.</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the level of chrominance subsampling used in the YUV image</dd></dl>
+</li>
+</ul>
+<a name="getPlanes()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPlanes</h4>
+<pre>public&nbsp;byte[][]&nbsp;getPlanes()</pre>
+<div class="block">Returns the YUV image planes.  If the image is stored in a unified buffer,
+ then all image planes will point to that buffer.</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the YUV image planes</dd></dl>
+</li>
+</ul>
+<a name="getBuf()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getBuf</h4>
+<pre>public&nbsp;byte[]&nbsp;getBuf()</pre>
+<div class="block">Returns the YUV image buffer (if this image is stored in a unified
+ buffer rather than separate image planes.)</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the YUV image buffer</dd></dl>
+</li>
+</ul>
+<a name="getSize()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getSize</h4>
+<pre>public&nbsp;int&nbsp;getSize()</pre>
+<div class="block">Returns the size (in bytes) of the YUV image buffer (if this image is
+ stored in a unified buffer rather than separate image planes.)</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>the size (in bytes) of the YUV image buffer</dd></dl>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<!-- ========= END OF CLASS DATA ========= -->
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<div class="bottomNav"><a name="navbar_bottom">
+<!--   -->
+</a><a href="#skip-navbar_bottom" title="Skip navigation links"></a><a name="navbar_bottom_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../org/libjpegturbo/turbojpeg/package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../index-all.html">Index</a></li>
+<li><a href="../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li><a href="../../../org/libjpegturbo/turbojpeg/TJTransformer.html" title="class in org.libjpegturbo.turbojpeg"><span class="strong">Prev Class</span></a></li>
+<li>Next Class</li>
+</ul>
+<ul class="navList">
+<li><a href="../../../index.html?org/libjpegturbo/turbojpeg/YUVImage.html" target="_top">Frames</a></li>
+<li><a href="YUVImage.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_bottom">
+<li><a href="../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_bottom");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#field_summary">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_summary">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li><a href="#field_detail">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_detail">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_detail">Method</a></li>
+</ul>
+</div>
+<a name="skip-navbar_bottom">
+<!--   -->
+</a></div>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+</body>
+</html>

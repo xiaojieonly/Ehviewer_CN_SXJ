@@ -1,0 +1,55 @@
+# (Note: this is not presently used, there's an autoconf build.)
+#
+# This is the make file for the lib subdirectory of the GIF library
+# You'll need GNU gcc or some other ANSI-complient compiler.
+#
+LIBVERSION = 3.0
+
+SHLIB = libgif.so.$(LIBVERSION)
+
+# Where all the include files are:
+INCS = -I.
+
+LIBDIR = /usr/lib
+
+CC = gcc
+#CFLAGS = -fno-builtin -O -c -W -Wreturn-type -Wcomment
+CFLAGS = -fno-builtin -g -c -W -Wreturn-type -Wcomment
+
+OBJS = egif_lib.o dgif_lib.o gifalloc.o gif_font.o gif_hash.o \
+	gif_err.o quantize.o qprintf.o getarg.o
+
+.c.o:
+	$(CC) $(INCS) $(CFLAGS) $<
+
+all: static shared
+
+static: libgif.a
+shared: $(SHLIB)
+
+libgif.a: $(OBJS)
+	rm -f libgif.a
+	ar rcv libgif.a $(OBJS)
+	-ranlib libgif.a
+
+$(SHLIB): $(OBJS)
+	rm -f libgif.so.$(LIBVERSION)
+	gcc -shared -o $(SHLIB) $(OBJS)
+
+egif_lib.o: gif_lib.h gif_hash.h
+dgif_lib.o: gif_lib.h gif_hash.h
+gif_hash.o: gif_lib.h gif_hash.h
+gif_err.o: gif_lib.h
+gifalloc.o: gif_lib.h
+gif_font.o: gif_lib.h
+quantize.o: gif_lib.h
+qprintf.o: gif_lib.h
+getarg.o: getarg.h
+
+install-lib: libgif.a
+	cp libgif.a libgif.so.$(LIBVERSION) $(LIBDIR)
+
+uninstall-lib: shared static
+	rm -f $(LIBDIR)/libgif.a $(LIBDIR)/$(SHLIB)
+clean:
+	rm -f *.[oa] *~ libgif.so.$(LIBVERSION)

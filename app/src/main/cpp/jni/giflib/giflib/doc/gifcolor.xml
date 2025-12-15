@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifcolor.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifcolor</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifcolor</refname>
+<refpurpose>generate color test-pattern GIFs</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifcolor</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-b <replaceable>background</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>colormap-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to generate color test patterns.  Feed it a color map file (as
+generated, say, by the -s option of gifclrmp) and it will generate a GIF
+containing lines of the form.</para>
+
+<programlisting>
+Color %-3d: [%-3d, %-3d, %-3d]:
+</programlisting>
+
+<para>where the first number is the zero-based color index, and the
+triple is the index's [Red, Green, Blue] value.  There will be one
+such line for each color.  Each line will be set in a simple 8x8 font
+in the color it describes; thus, any lines corresponding to the GIF's
+background color will be blank.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress).
+Enables printout of running scan lines. </para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-b</term>
+<listitem>
+<para>Set the image's backround color to a given numeric index.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para>Print one line of command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>If no colormap file is specified, the color map will be read from stdin.</para>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

@@ -1,0 +1,14 @@
+# pngusr.dfa
+#
+# Build time configuration of libpng
+#
+# Enter build configuration options in this file
+#
+# Security settings: by default these limits are unset, you can change them
+# here by entering the appropriate values as #defines preceded by '@' (to cause,
+# them to be passed through to the build of pnglibconf.h), for example:
+#
+# @# define PNG_USER_WIDTH_MAX 65535
+# @# define PNG_USER_HEIGHT_MAX 65535
+# @# define PNG_USER_CHUNK_CACHE_MAX 256
+# @# define PNG_USER_CHUNK_MALLOC_MAX 640000

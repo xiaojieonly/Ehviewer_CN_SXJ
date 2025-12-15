@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>simple Javascript WebP decoding demo</title>
+  <script type="text/javascript">
+    var Module = {
+      noInitialRun : true
+    };
+  </script>
+  <script type="text/javascript" src="./webp.js"></script>
+  <script type="text/javascript">
+
+'use strict';
+
+// main wrapper for the function decoding a WebP into a canvas object
+var WebpToCanvas;
+
+function init() {
+  WebpToCanvas = Module.cwrap('WebPToSDL', 'number', ['array', 'number']);
+}
+window.onload = init;
+
+function decode(webp_data, canvas_id) {
+  // get the canvas to decode into
+  var canvas = document.getElementById(canvas_id);
+  if (canvas == null) return;
+  // clear previous picture (if any)
+  Module.canvas = canvas;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  // Map this canvas to the default selector used by emscripten/SDL2.
+  specialHTMLTargets["#canvas"] = Module.canvas;
+  // decode and measure timing
+  var start = new Date();
+  var ret = WebpToCanvas(webp_data, webp_data.length);
+  var end = new Date();
+  var speed_result = document.getElementById('timing');
+  // display timing result
+  if (speed_result != null) {
+    var decode_time = end - start;
+    speed_result.innerHTML = '<p>decoding time: ' + decode_time +' ms.</p>';
+  }
+}
+
+function loadfile(filename, canvas_id) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', filename);
+  xhr.responseType = 'arraybuffer';
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4 && xhr.status == 200) {
+      var webp_data = new Uint8Array(xhr.response);
+      decode(webp_data, canvas_id);
+    }
+  };
+  xhr.send();
+}
+  </script>
+</head>
+
+<body>
+  <p>
+    <strong>WebP in JavaScript demo</strong> -
+  </p>
+  <p>
+    WebP decoder in JavaScript, using libwebp compiled with
+    <a href="https://github.com/kripken/emscripten/wiki">Emscripten</a>.
+  </p>
+  <p id="image_buttons">
+    <input type="button" value="test image!" name="./test_webp_js.webp"
+           onclick="loadfile(this.name, 'output_canvas')">
+  </p>
+  <p id="timing">Timing: N/A</p>
+  <canvas id="output_canvas">Your browser does not support canvas</canvas>
+
+</body>
+</html>

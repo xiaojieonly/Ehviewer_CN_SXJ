@@ -1,0 +1,2 @@
+cd tests
+make

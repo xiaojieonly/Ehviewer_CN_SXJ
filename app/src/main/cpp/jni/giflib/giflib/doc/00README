@@ -1,0 +1,16 @@
+This directory contains documentation on the API and tools. 
+The most convenient way to view it is with a browser pointed
+at the project website, but...
+
+An introduction to the package is in intro.xml
+
+API documentation lives in gif_lib.xml
+
+gif89.txt and lzgif.txt are the relevant format and compression standards.
+
+For completeness, the original GIF87 specification is also included as
+gif87.txt.
+
+
+
+

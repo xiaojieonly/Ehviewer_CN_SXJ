@@ -3,9 +3,13 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.18.1)
 
+#project(root)
 project("ehviewer")
+
+add_subdirectory(jni)
+
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -13,13 +17,10 @@ project("ehviewer")
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-        ehviewer
-
+#        root
+        "ehviewer"
         # Sets the library as a shared library.
         SHARED
-        gifutils.c
-        fdutils.c
-        image.c
         gif/native-lib.cpp
         gif/dgif_lib.c
         gif/gifalloc.c)
@@ -49,5 +50,4 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}
-        ${jnigraphics-lib}
-        GLESv2)
+        ${jnigraphics-lib})

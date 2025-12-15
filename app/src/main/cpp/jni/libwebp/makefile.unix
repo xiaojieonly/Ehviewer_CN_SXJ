@@ -1,0 +1,539 @@
+# This makefile is a simpler alternative to the autoconf-based build
+# system, for simple local building of the libraries and tools.
+# It will not install the libraries system-wide, but just create the 'cwebp'
+# and 'dwebp' tools in the examples/ directory, along with the static
+# libraries 'src/libwebp.a', 'src/libwebpdecoder.a', 'src/mux/libwebpmux.a',
+# 'src/demux/libwebpdemux.a', 'extras/libwebpextras.a' and
+# 'sharpyuv/libsharpyuv.a'.
+#
+# To build the library and examples, use:
+#    make -f makefile.unix
+# from this top directory.
+
+#### Customizable part ####
+
+# These flags assume you have libpng, libjpeg, libtiff and libgif installed. If
+# not, either follow the install instructions below or just comment out the next
+# four lines.
+EXTRA_FLAGS= -DWEBP_HAVE_PNG -DWEBP_HAVE_JPEG -DWEBP_HAVE_TIFF
+DWEBP_LIBS= -lpng -lz
+CWEBP_LIBS= $(DWEBP_LIBS) -ljpeg -ltiff
+GIF_LIBS = -lgif
+
+ifeq ($(strip $(shell uname)), Darwin)
+  # Work around a problem linking tables marked as common symbols,
+  # cf., src/enc/yuv.[hc]
+  # Failure observed with: gcc 4.2.1 and 4.0.1.
+  EXTRA_FLAGS += -fno-common
+  EXTRA_FLAGS += -DHAVE_GLUT_GLUT_H
+  EXTRA_FLAGS += -Wno-deprecated-declarations
+  EXTRA_FLAGS += -I/opt/local/include
+  EXTRA_LIBS  += -L/opt/local/lib
+  GL_LIBS = -framework GLUT -framework OpenGL
+else
+  EXTRA_FLAGS += -I/usr/local/include
+  EXTRA_LIBS  += -L/usr/local/lib
+  GL_LIBS = -lglut -lGL
+endif
+
+# SDL flags: use sdl-config if it exists
+SDL_CONFIG = $(shell sdl2-config --version 2> /dev/null)
+ifneq ($(SDL_CONFIG),)
+  SDL_LIBS = $(shell sdl2-config --libs)
+  SDL_FLAGS = $(shell sdl2-config --cflags)
+else
+  # use best-guess
+  SDL_LIBS = -lSDL2
+  SDL_FLAGS =
+endif
+
+# To install libraries on Mac OS X:
+# 1. Install MacPorts (https://www.macports.org/install.php)
+# 2. Run "sudo port install jpeg"
+# 3. Run "sudo port install libpng"
+# 4. Run "sudo port install tiff"
+# 5. Run "sudo port install giflib"
+
+# To install libraries on Linux:
+# 1. Run "sudo apt-get install libjpeg62-dev"
+# 2. Run "sudo apt-get install libpng12-dev"
+# 3. Run "sudo apt-get install libtiff4-dev"
+# 4. Run "sudo apt-get install libgif-dev"
+
+# Uncomment for build for 32bit platform
+# Alternatively, you can just use the command
+# 'make -f makefile.unix EXTRA_FLAGS=-m32' to that effect.
+# EXTRA_FLAGS += -m32
+
+# Extra flags to enable byte swap for 16 bit colorspaces.
+# EXTRA_FLAGS += -DWEBP_SWAP_16BIT_CSP=1
+
+# Extra flags to enable multi-threading
+EXTRA_FLAGS += -DWEBP_USE_THREAD
+EXTRA_LIBS += -lpthread
+
+# Control symbol visibility. Comment out if your compiler doesn't support it.
+EXTRA_FLAGS += -fvisibility=hidden
+
+# Extra flags to emulate C89 strictness with the full ANSI
+EXTRA_FLAGS += -Wextra -Wold-style-definition
+EXTRA_FLAGS += -Wmissing-prototypes
+EXTRA_FLAGS += -Wmissing-declarations
+EXTRA_FLAGS += -Wdeclaration-after-statement
+EXTRA_FLAGS += -Wshadow
+EXTRA_FLAGS += -Wformat-security -Wformat-nonliteral
+# EXTRA_FLAGS += -Wvla
+
+# SSE4.1-specific flags:
+ifeq ($(HAVE_SSE41), 1)
+EXTRA_FLAGS += -DWEBP_HAVE_SSE41
+src/dsp/%_sse41.o: EXTRA_FLAGS += -msse4.1
+endif
+
+# NEON-specific flags:
+# EXTRA_FLAGS += -march=armv7-a -mfloat-abi=hard -mfpu=neon -mtune=cortex-a8
+# -> seems to make the overall lib slower: -fno-split-wide-types
+
+# MIPS (MSA) 32-bit build specific flags for mips32r5 (p5600):
+# EXTRA_FLAGS += -mips32r5 -mabi=32 -mtune=p5600 -mmsa -mfp64
+# EXTRA_FLAGS += -msched-weight -mload-store-pairs
+
+# MIPS (MSA) 64-bit build specific flags for mips64r6 (i6400):
+# EXTRA_FLAGS += -mips64r6 -mabi=64 -mtune=i6400 -mmsa -mfp64
+# EXTRA_FLAGS += -msched-weight -mload-store-pairs
+
+#### Nothing should normally be changed below this line ####
+
+AR = ar
+ARFLAGS = r
+CPPFLAGS = -I. -Isrc/ -Wall
+ifeq ($(DEBUG), 1)
+  CFLAGS = -g
+else
+  CFLAGS = -O3 -DNDEBUG
+endif
+CFLAGS += $(EXTRA_FLAGS)
+CC = gcc
+INSTALL = install
+GROFF = /usr/bin/groff
+COL = /usr/bin/col
+LDFLAGS = $(EXTRA_LIBS) $(EXTRA_FLAGS) -lm
+
+ifdef BITTRACE
+CFLAGS += -DBITTRACE=$(BITTRACE)
+endif
+
+ANIM_UTIL_OBJS = \
+    examples/anim_util.o \
+
+SHARPYUV_OBJS = \
+    sharpyuv/sharpyuv.o \
+    sharpyuv/sharpyuv_cpu.o \
+    sharpyuv/sharpyuv_csp.o \
+    sharpyuv/sharpyuv_dsp.o \
+    sharpyuv/sharpyuv_gamma.o \
+    sharpyuv/sharpyuv_neon.o \
+    sharpyuv/sharpyuv_sse2.o \
+
+DEC_OBJS = \
+    src/dec/alpha_dec.o \
+    src/dec/buffer_dec.o \
+    src/dec/frame_dec.o \
+    src/dec/idec_dec.o \
+    src/dec/io_dec.o \
+    src/dec/quant_dec.o \
+    src/dec/tree_dec.o \
+    src/dec/vp8_dec.o \
+    src/dec/vp8l_dec.o \
+    src/dec/webp_dec.o \
+
+DEMUX_OBJS = \
+    src/demux/anim_decode.o \
+    src/demux/demux.o \
+
+DSP_DEC_OBJS = \
+    src/dsp/alpha_processing.o \
+    src/dsp/alpha_processing_mips_dsp_r2.o \
+    src/dsp/alpha_processing_neon.o \
+    src/dsp/alpha_processing_sse2.o \
+    src/dsp/alpha_processing_sse41.o \
+    src/dsp/cpu.o \
+    src/dsp/dec.o \
+    src/dsp/dec_clip_tables.o \
+    src/dsp/dec_mips32.o \
+    src/dsp/dec_mips_dsp_r2.o \
+    src/dsp/dec_msa.o \
+    src/dsp/dec_neon.o \
+    src/dsp/dec_sse2.o \
+    src/dsp/dec_sse41.o \
+    src/dsp/filters.o \
+    src/dsp/filters_mips_dsp_r2.o \
+    src/dsp/filters_msa.o \
+    src/dsp/filters_neon.o \
+    src/dsp/filters_sse2.o \
+    src/dsp/lossless.o \
+    src/dsp/lossless_mips_dsp_r2.o \
+    src/dsp/lossless_msa.o \
+    src/dsp/lossless_neon.o \
+    src/dsp/lossless_sse2.o \
+    src/dsp/lossless_sse41.o \
+    src/dsp/rescaler.o \
+    src/dsp/rescaler_mips32.o \
+    src/dsp/rescaler_mips_dsp_r2.o \
+    src/dsp/rescaler_msa.o \
+    src/dsp/rescaler_neon.o \
+    src/dsp/rescaler_sse2.o \
+    src/dsp/upsampling.o \
+    src/dsp/upsampling_mips_dsp_r2.o \
+    src/dsp/upsampling_msa.o \
+    src/dsp/upsampling_neon.o \
+    src/dsp/upsampling_sse2.o \
+    src/dsp/upsampling_sse41.o \
+    src/dsp/yuv.o \
+    src/dsp/yuv_mips32.o \
+    src/dsp/yuv_mips_dsp_r2.o \
+    src/dsp/yuv_neon.o \
+    src/dsp/yuv_sse2.o \
+    src/dsp/yuv_sse41.o \
+
+DSP_ENC_OBJS = \
+    src/dsp/cost.o \
+    src/dsp/cost_mips32.o \
+    src/dsp/cost_mips_dsp_r2.o \
+    src/dsp/cost_neon.o \
+    src/dsp/cost_sse2.o \
+    src/dsp/enc.o \
+    src/dsp/enc_mips32.o \
+    src/dsp/enc_mips_dsp_r2.o \
+    src/dsp/enc_msa.o \
+    src/dsp/enc_neon.o \
+    src/dsp/enc_sse2.o \
+    src/dsp/enc_sse41.o \
+    src/dsp/lossless_enc.o \
+    src/dsp/lossless_enc_mips32.o \
+    src/dsp/lossless_enc_mips_dsp_r2.o \
+    src/dsp/lossless_enc_msa.o \
+    src/dsp/lossless_enc_neon.o \
+    src/dsp/lossless_enc_sse2.o \
+    src/dsp/lossless_enc_sse41.o \
+    src/dsp/ssim.o \
+    src/dsp/ssim_sse2.o \
+
+ENC_OBJS = \
+    src/enc/alpha_enc.o \
+    src/enc/analysis_enc.o \
+    src/enc/backward_references_cost_enc.o \
+    src/enc/backward_references_enc.o \
+    src/enc/config_enc.o \
+    src/enc/cost_enc.o \
+    src/enc/filter_enc.o \
+    src/enc/frame_enc.o \
+    src/enc/histogram_enc.o \
+    src/enc/iterator_enc.o \
+    src/enc/near_lossless_enc.o \
+    src/enc/picture_enc.o \
+    src/enc/picture_csp_enc.o \
+    src/enc/picture_psnr_enc.o \
+    src/enc/picture_rescale_enc.o \
+    src/enc/picture_tools_enc.o \
+    src/enc/predictor_enc.o \
+    src/enc/quant_enc.o \
+    src/enc/syntax_enc.o \
+    src/enc/token_enc.o \
+    src/enc/tree_enc.o \
+    src/enc/vp8l_enc.o \
+    src/enc/webp_enc.o \
+
+EX_FORMAT_DEC_OBJS = \
+    imageio/image_dec.o \
+    imageio/jpegdec.o \
+    imageio/metadata.o \
+    imageio/pngdec.o \
+    imageio/pnmdec.o \
+    imageio/tiffdec.o \
+    imageio/webpdec.o \
+
+EX_FORMAT_ENC_OBJS = \
+    imageio/image_enc.o \
+
+EX_UTIL_OBJS = \
+    examples/example_util.o \
+
+GIFDEC_OBJS = \
+    examples/gifdec.o \
+
+IMAGE_UTIL_OBJS = \
+    imageio/imageio_util.o \
+
+MUX_OBJS = \
+    src/mux/anim_encode.o \
+    src/mux/muxedit.o \
+    src/mux/muxinternal.o \
+    src/mux/muxread.o \
+
+UTILS_DEC_OBJS = \
+    src/utils/bit_reader_utils.o \
+    src/utils/color_cache_utils.o \
+    src/utils/filters_utils.o \
+    src/utils/huffman_utils.o \
+    src/utils/palette.o \
+    src/utils/quant_levels_dec_utils.o \
+    src/utils/random_utils.o \
+    src/utils/rescaler_utils.o \
+    src/utils/thread_utils.o \
+    src/utils/utils.o \
+
+UTILS_ENC_OBJS = \
+    src/utils/bit_writer_utils.o \
+    src/utils/huffman_encode_utils.o \
+    src/utils/quant_levels_utils.o \
+
+EXTRA_OBJS = \
+    extras/extras.o \
+    extras/quality_estimate.o \
+    extras/sharpyuv_risk_table.o \
+
+LIBWEBPDECODER_OBJS = $(DEC_OBJS) $(DSP_DEC_OBJS) $(UTILS_DEC_OBJS)
+LIBWEBP_OBJS = $(LIBWEBPDECODER_OBJS) $(ENC_OBJS) \
+               $(DSP_ENC_OBJS) $(UTILS_ENC_OBJS)
+LIBWEBPMUX_OBJS = $(MUX_OBJS)
+LIBWEBPDEMUX_OBJS = $(DEMUX_OBJS)
+LIBWEBPEXTRA_OBJS = $(EXTRA_OBJS)
+LIBSHARPYUV_OBJS = $(SHARPYUV_OBJS)
+
+HDRS_INSTALLED = \
+    src/webp/decode.h \
+    src/webp/demux.h \
+    src/webp/encode.h \
+    src/webp/mux.h \
+    src/webp/mux_types.h \
+    src/webp/types.h \
+
+SHARPYUV_HDRS_INSTALLED = \
+    sharpyuv/sharpyuv.h \
+    sharpyuv/sharpyuv_cpu.h \
+    sharpyuv/sharpyuv_csp.h \
+
+HDRS = \
+    src/dec/alphai_dec.h \
+    src/dec/common_dec.h \
+    src/dec/vp8_dec.h \
+    src/dec/vp8i_dec.h \
+    src/dec/vp8li_dec.h \
+    src/dec/webpi_dec.h \
+    src/dsp/common_sse2.h \
+    src/dsp/cpu.h \
+    src/dsp/dsp.h \
+    src/dsp/lossless.h \
+    src/dsp/lossless_common.h \
+    src/dsp/mips_macro.h \
+    src/dsp/msa_macro.h \
+    src/dsp/neon.h \
+    src/dsp/yuv.h \
+    src/enc/backward_references_enc.h \
+    src/enc/cost_enc.h \
+    src/enc/histogram_enc.h \
+    src/enc/vp8i_enc.h \
+    src/enc/vp8li_enc.h \
+    src/mux/animi.h \
+    src/mux/muxi.h \
+    src/utils/bit_reader_utils.h \
+    src/utils/bit_reader_inl_utils.h \
+    src/utils/bit_writer_utils.h \
+    src/utils/color_cache_utils.h \
+    src/utils/endian_inl_utils.h \
+    src/utils/filters_utils.h \
+    src/utils/huffman_utils.h \
+    src/utils/huffman_encode_utils.h \
+    src/utils/palette.h \
+    src/utils/quant_levels_utils.h \
+    src/utils/quant_levels_dec_utils.h \
+    src/utils/random_utils.h \
+    src/utils/rescaler_utils.h \
+    src/utils/thread_utils.h \
+    src/utils/utils.h \
+    src/webp/format_constants.h \
+    $(HDRS_INSTALLED) \
+    $(SHARPYUV_HDRS_INSTALLED) \
+
+OUT_LIBS = examples/libexample_util.a
+OUT_LIBS += imageio/libimageio_util.a
+OUT_LIBS += imageio/libimagedec.a
+OUT_LIBS += imageio/libimageenc.a
+OUT_LIBS += src/libwebpdecoder.a
+OUT_LIBS += src/libwebp.a
+OUT_LIBS += sharpyuv/libsharpyuv.a
+EXTRA_LIB = extras/libwebpextras.a
+OUT_EXAMPLES = examples/cwebp examples/dwebp
+EXTRA_EXAMPLES = examples/gif2webp examples/vwebp examples/webpmux \
+                 examples/anim_diff examples/anim_dump \
+                 examples/img2webp examples/webpinfo
+OTHER_EXAMPLES = extras/get_disto extras/webp_quality extras/vwebp_sdl
+
+OUTPUT = $(OUT_LIBS) $(OUT_EXAMPLES)
+ifeq ($(MAKECMDGOALS),clean)
+  OUTPUT += $(EXTRA_EXAMPLES) $(OTHER_EXAMPLES)
+  OUTPUT += src/demux/libwebpdemux.a src/mux/libwebpmux.a $(EXTRA_LIB)
+  OUTPUT += examples/libgifdec.a examples/libanim_util.a
+endif
+
+ex: $(OUT_EXAMPLES)
+all: ex $(EXTRA_EXAMPLES) $(OTHER_EXAMPLES)
+extras: $(EXTRA_LIB)
+
+$(EX_FORMAT_DEC_OBJS): %.o: %.h
+
+# special dependencies:
+#   tree_dec.c/vp8_dec.c/bit_reader_utils.c <->
+#     bit_reader_inl_utils.h, endian_inl_utils.h
+#   bit_writer_utils.c <-> endian_inl_utils.h
+src/dec/tree_dec.o: src/utils/bit_reader_inl_utils.h
+src/dec/tree_dec.o: src/utils/endian_inl_utils.h
+src/dec/vp8_dec.o: src/utils/bit_reader_inl_utils.h src/utils/endian_inl_utils.h
+src/utils/bit_reader_utils.o: src/utils/bit_reader_inl_utils.h
+src/utils/bit_reader_utils.o: src/utils/endian_inl_utils.h
+src/utils/bit_writer_utils.o: src/utils/endian_inl_utils.h
+
+%.o: %.c $(HDRS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+examples/libanim_util.a: $(ANIM_UTIL_OBJS)
+examples/libexample_util.a: $(EX_UTIL_OBJS)
+examples/libgifdec.a: $(GIFDEC_OBJS)
+extras/libwebpextras.a: $(LIBWEBPEXTRA_OBJS)
+imageio/libimagedec.a: $(EX_FORMAT_DEC_OBJS)
+imageio/libimageenc.a: $(EX_FORMAT_ENC_OBJS)
+imageio/libimageio_util.a: $(IMAGE_UTIL_OBJS)
+src/libwebpdecoder.a: $(LIBWEBPDECODER_OBJS)
+src/libwebp.a: $(LIBWEBP_OBJS)
+src/mux/libwebpmux.a: $(LIBWEBPMUX_OBJS)
+src/demux/libwebpdemux.a: $(LIBWEBPDEMUX_OBJS)
+sharpyuv/libsharpyuv.a: $(LIBSHARPYUV_OBJS)
+
+%.a:
+	$(AR) $(ARFLAGS) $@ $^
+
+examples/anim_diff: examples/anim_diff.o $(ANIM_UTIL_OBJS) $(GIFDEC_OBJS)
+examples/anim_dump: examples/anim_dump.o $(ANIM_UTIL_OBJS) $(GIFDEC_OBJS)
+examples/cwebp: examples/cwebp.o
+examples/dwebp: examples/dwebp.o
+examples/gif2webp: examples/gif2webp.o $(GIFDEC_OBJS)
+examples/vwebp: examples/vwebp.o
+examples/webpmux: examples/webpmux.o
+examples/img2webp: examples/img2webp.o
+examples/webpinfo: examples/webpinfo.o
+
+examples/anim_diff: examples/libanim_util.a examples/libgifdec.a
+examples/anim_diff: src/demux/libwebpdemux.a examples/libexample_util.a
+examples/anim_diff: imageio/libimageio_util.a src/libwebp.a
+examples/anim_diff: sharpyuv/libsharpyuv.a
+examples/anim_diff: override EXTRA_LIBS += $(GIF_LIBS)
+examples/anim_diff: EXTRA_FLAGS += -DWEBP_HAVE_GIF
+examples/anim_dump: examples/libanim_util.a examples/libgifdec.a
+examples/anim_dump: src/demux/libwebpdemux.a
+examples/anim_dump: examples/libexample_util.a
+examples/anim_dump: imageio/libimageio_util.a
+examples/anim_dump: imageio/libimageenc.a
+examples/anim_dump: src/libwebp.a
+examples/anim_dump: sharpyuv/libsharpyuv.a
+examples/anim_dump: override EXTRA_LIBS += $(GIF_LIBS) $(DWEBP_LIBS)
+examples/cwebp: examples/libexample_util.a
+examples/cwebp: imageio/libimagedec.a
+examples/cwebp: src/demux/libwebpdemux.a
+examples/cwebp: imageio/libimageio_util.a
+examples/cwebp: src/libwebp.a
+examples/cwebp: sharpyuv/libsharpyuv.a
+examples/cwebp: override EXTRA_LIBS += $(CWEBP_LIBS)
+examples/dwebp: examples/libexample_util.a
+examples/dwebp: imageio/libimagedec.a
+examples/dwebp: src/demux/libwebpdemux.a
+examples/dwebp: imageio/libimageenc.a
+examples/dwebp: imageio/libimageio_util.a
+examples/dwebp: src/libwebp.a
+examples/dwebp: sharpyuv/libsharpyuv.a
+examples/dwebp: override EXTRA_LIBS += $(DWEBP_LIBS)
+examples/gif2webp: examples/libexample_util.a imageio/libimageio_util.a
+examples/gif2webp: examples/libgifdec.a src/mux/libwebpmux.a src/libwebp.a
+examples/gif2webp: sharpyuv/libsharpyuv.a
+examples/gif2webp: override EXTRA_LIBS += $(GIF_LIBS)
+examples/gif2webp: EXTRA_FLAGS += -DWEBP_HAVE_GIF
+examples/vwebp: examples/libexample_util.a src/demux/libwebpdemux.a
+examples/vwebp: imageio/libimageio_util.a src/libwebp.a
+examples/vwebp: sharpyuv/libsharpyuv.a
+examples/vwebp: override EXTRA_LIBS += $(GL_LIBS)
+examples/vwebp: EXTRA_FLAGS += -DWEBP_HAVE_GL
+examples/webpmux: examples/libexample_util.a imageio/libimageio_util.a
+examples/webpmux: src/mux/libwebpmux.a src/libwebpdecoder.a
+examples/img2webp: examples/libexample_util.a imageio/libimageio_util.a
+examples/img2webp: imageio/libimagedec.a
+examples/img2webp: src/demux/libwebpdemux.a
+examples/img2webp: src/mux/libwebpmux.a
+examples/img2webp: src/libwebp.a
+examples/img2webp: sharpyuv/libsharpyuv.a
+examples/img2webp: override EXTRA_LIBS += $(CWEBP_LIBS)
+examples/webpinfo: examples/libexample_util.a imageio/libimageio_util.a
+examples/webpinfo: src/libwebpdecoder.a
+
+extras/get_disto: extras/get_disto.o
+extras/get_disto: imageio/libimagedec.a
+extras/get_disto: src/demux/libwebpdemux.a
+extras/get_disto: imageio/libimageio_util.a
+extras/get_disto: src/libwebp.a
+extras/get_disto: sharpyuv/libsharpyuv.a
+extras/get_disto: override EXTRA_LIBS += $(CWEBP_LIBS)
+
+extras/webp_quality: extras/webp_quality.o
+extras/webp_quality: imageio/libimageio_util.a
+extras/webp_quality: $(EXTRA_LIB) src/libwebp.a
+extras/webp_quality: sharpyuv/libsharpyuv.a
+
+extras/vwebp_sdl: extras/vwebp_sdl.o
+extras/vwebp_sdl: extras/webp_to_sdl.o
+extras/vwebp_sdl: imageio/libimageio_util.a
+extras/vwebp_sdl: src/libwebp.a
+extras/vwebp_sdl: sharpyuv/libsharpyuv.a
+extras/vwebp_sdl: EXTRA_FLAGS += -DWEBP_HAVE_SDL $(SDL_FLAGS)
+extras/vwebp_sdl: override EXTRA_LIBS += $(SDL_LIBS)
+
+$(OUT_EXAMPLES) $(EXTRA_EXAMPLES) $(OTHER_EXAMPLES):
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+dist: DESTDIR := dist
+dist: OUT_EXAMPLES += $(EXTRA_EXAMPLES)
+dist: all
+	$(INSTALL) -m755 -d $(DESTDIR)/include/webp \
+	            $(DESTDIR)/include/webp/sharpyuv \
+	            $(DESTDIR)/bin $(DESTDIR)/doc $(DESTDIR)/lib
+	$(INSTALL) -m755 -s $(OUT_EXAMPLES) $(DESTDIR)/bin
+	$(INSTALL) -m644 $(HDRS_INSTALLED) $(DESTDIR)/include/webp
+	$(INSTALL) -m644 $(SHARPYUV_HDRS_INSTALLED) $(DESTDIR)/include/webp/sharpyuv
+	$(INSTALL) -m644 src/libwebp.a $(DESTDIR)/lib
+	$(INSTALL) -m644 src/demux/libwebpdemux.a $(DESTDIR)/lib
+	$(INSTALL) -m644 src/mux/libwebpmux.a $(DESTDIR)/lib
+	$(INSTALL) -m644 sharpyuv/libsharpyuv.a $(DESTDIR)/lib
+	umask 022; \
+	for m in man/[cdv]webp.1 man/gif2webp.1 man/webpmux.1 \
+                 man/img2webp.1 man/webpinfo.1; do \
+	  basenam=$$(basename $$m .1); \
+	  $(GROFF) -t -e -man -T ascii $$m \
+	    | $(COL) -bx >$(DESTDIR)/doc/$${basenam}.txt; \
+	  $(GROFF) -t -e -man -T html $$m \
+	    | $(COL) -bx >$(DESTDIR)/doc/$${basenam}.html; \
+	done
+
+clean:
+	$(RM) $(OUTPUT) *~ \
+              examples/*.o examples/*~ \
+              extras/*.o extras/*~ \
+              imageio/*.o imageio/*~ \
+              sharpyuv/*.o sharpyuv/*~ \
+              src/dec/*.o src/dec/*~ \
+              src/demux/*.o src/demux/*~ \
+              src/dsp/*.o src/dsp/*~ \
+              src/enc/*.o src/enc/*~ \
+              src/mux/*.o src/mux/*~ \
+              src/utils/*.o src/utils/*~ \
+              src/webp/*~ man/*~ doc/*~ swig/*~ \
+
+.PHONY: all clean dist ex
+.SUFFIXES:

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN'
+    'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>
+<html>
+<head>
+<link rev='made' href='mailto:esr@snark.thyrsus.com' />
+<meta name='MSSmartTagsPreventParsing' content='TRUE' />
+<title>The GIFLIB project</title>
+<script type="text/javascript">
+// JavaScript to generate a compact date representation
+
+//
+// format date as dd-mmm-yyyyy
+// example: 12-Jan-1999
+//
+function date_ddmmmyyyy(date)
+{
+  var d = date.getDate();
+  var m = date.getMonth() + 1;
+  var y = date.getFullYear();
+
+  // could use splitString() here 
+  // but the following method is 
+  // more compatible
+  var mmm = 
+    ( 1==m)?'Jan':( 2==m)?'Feb':(3==m)?'Mar':
+    ( 4==m)?'Apr':( 5==m)?'May':(6==m)?'Jun':
+    ( 7==m)?'Jul':( 8==m)?'Aug':(9==m)?'Sep':
+    (10==m)?'Oct':(11==m)?'Nov':'Dec';
+
+  return "" +
+    (d<10?"0"+d:d) + " " + mmm + " " + y;
+}
+
+
+//
+// get last modified date of the 
+// current document.
+//
+function date_lastmodified()
+{
+  var lmd = document.lastModified;
+  var s   = "Unknown";
+  var d1;
+
+  // check if we have a valid date
+  // before proceeding
+  if(0 != (d1=Date.parse(lmd)))
+  {
+    s = "" + date_ddmmmyyyy(new Date(d1));
+  }
+
+  return s;
+}
+// End
+</script>
+</head>
+<body>
+<table width='100%' cellpadding='0' summary='Canned page header' bgcolor="#ddd">
+<tr>
+<td><h2>The GIFLIB project</h2></td>
+<td align="center"><img src="giflib-logo.gif"></td>
+<td align='right'><script type="text/javascript">
+document.write(date_lastmodified());
+</script></td>
+</tr>
+</table>
+
+<p>The GIFLIB project maintains the giflib service library, which has
+been pulling images out of GIFs since 1989. It is deployed everywhere
+you can think of and some places you probably can't - graphics
+applications and web browsers on multiple operating systems, game
+consoles, smartphones, and likely your ATM too.</p>
+
+<p>Yes, this code is he reason GIFs were in Mosaic, the first web
+browser that could do inline graphics; it is the implementation
+Andreesen and Bina used.</p>
+
+<p>This is very mature, stable, small-footprint code with minimal
+dependencies (suitable for use in embedded deployments) that needs only
+occasional very minor bugfixes. Test reports from odd platforms and
+better regression tests are particularly welcome. Don't try to
+redesign it, applications beyond counting would break if you did.</p>
+
+<p>It's "GIFLIB" in caps as a nod to the code's origins in the dark
+and backward abysm of MS-DOS, but Unix hackers are encouraged to spell it 
+"giflib" in deference to local conventions. :-)
+
+<p>You can read GIFLIB's documentation <a href="intro.html">here</a>
+and a very detailed description of GIF <a
+href="whatsinagif/index.html">here</a>. People to thank for this code:
+Gershon Elber, Eric S. Raymond, Toshio Kuratomi.</p>
+
+<p>Before October 2006 the GIF format was encumbered by patents on the
+LZW compression it uses.  This first became an issue in 1993 when the
+patent-holders made ambiguous noises about requiring royalties.  For
+some time a subset of this code travelled as "libungif", supporting
+decompression but not compression. You can read a more detailed
+history <a href="history.html">here</a>.</p>
+
+<p>Note: The 5.x versions change the API slightly in a way that isn't
+compatible with older shared libraries.  This was required to fix 
+some known problems with the extensions API and with thread-safety.</p>
+
+<p>If you require shared-library compatibility back to ancient
+versions, build from 4.2. 4.2 and the 5.0 version are behaviorally
+almost identical; the few differences are explained <a
+href="gif_lib.html#compatibility">here</a>.
+
+<p>The SourceForge summary page (where you can download the source,
+review the project, find links to the bugtracker  and mailing list
+pages, or ask to join the project as a developer) is <a
+href="https://sourceforge.net/projects/giflib/">here</a>.
+
+<p>If you appreciate this project, and especially if you make money
+from it, please <a href="https://www.patreon.com/esr">support
+continuing maintainance on Patreon</a>.</p>
+
+</body>
+</html>

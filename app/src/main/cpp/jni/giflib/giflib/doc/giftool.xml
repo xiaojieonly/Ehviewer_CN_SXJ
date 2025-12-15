@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='giftool.1'>
+<refentryinfo><date>3 June 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>giftool</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>giftool</refname>
+<refpurpose>GIF transformation tool</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>giftool</command>
+      <arg choice='opt'>-a <replaceable>aspect</replaceable></arg>
+      <arg choice='opt'>-b <replaceable>bgcolor</replaceable></arg>
+      <arg choice='opt'>-d <replaceable>delaytime</replaceable></arg>
+      <arg choice='opt'>-i <replaceable>interlacing</replaceable></arg>
+      <arg choice='opt'>-n <replaceable>imagelist</replaceable></arg>
+      <arg choice='opt'>-p <replaceable>left,top</replaceable></arg>
+      <arg choice='opt'>-s <replaceable>width,height</replaceable></arg>
+      <arg choice='opt'>-t <replaceable>transcolor</replaceable></arg>
+      <arg choice='opt'>-u <replaceable>sort-flag</replaceable></arg>
+      <arg choice='opt'>-x <replaceable>disposal</replaceable></arg>
+      <arg choice='opt'>-z <replaceable>sort-flag</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A filter for transforming GIFS. With no options, it's an expensive 
+copy of a GIF in standard input to standard output.  Options specify
+filtering operations and are performed in the order specified on the command 
+line.</para>
+
+<para>The -n option selects images, allowing the tool to act on a
+subset of images in a multi-image GIF.  This option takes a
+comma-separated list of decimal integers which are interpreted as
+1-origin image indices; these are the images that will be acted on.
+If no -n option is specified, the tool will select and transform all
+images.</para>
+
+<para>The -b option takes a decimal integer argument and uses it to
+set the (0-origin) screen background color index.</para>
+
+<para>The -f option accepts a printf-style format string and
+substitutes into it the values of image-descriptor and graphics-control
+fields. The string is formatted and output once for each selected
+image.  Normal C-style escapes \b, \f, \n, \r, \t. \v, and \xNN are
+interpreted; also \e produces ESC (ASCII 0x1b).  The following format
+cookies are substituted:</para>
+
+<variablelist>
+<varlistentry>
+<term>%a</term>
+<listitem><para>Pixel aspect byte.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%b</term>
+<listitem><para>Screen background color.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%d</term>
+<listitem><para>Image delay time</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%h</term>
+<listitem><para>Image height (y dimension)</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%n</term>
+<listitem><para>Image index</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%p</term>
+<listitem><para>Image position (as an x,y pair)</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%s</term>
+<listitem><para>Screen size (as an x,y pair)</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%t</term>
+<listitem><para>Image transparent-color index</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%u</term>
+<listitem><para>Image user-input flag (boolean)</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%v</term>
+<listitem><para>GIF version string</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%w</term>
+<listitem><para>Image width (x dimension)</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%x</term>
+<listitem><para>Image GIF89 disposal mode</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>%z</term>
+<listitem><para>Image's color table sort flag (boolean, 
+false if no local color map)</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>Boolean substitutions may take a prefix to modify how they are
+displayed:</para>
+
+<variablelist>
+<varlistentry>
+<term>1</term>
+<listitem><para>"1" or "0"</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>o</term>
+<listitem><para>"on" or "off"</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>t</term>
+<listitem><para>"t" or "f"</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>y</term>
+<listitem><para>"yes" or "no"</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>Thus, for example, "%oz" displays image sort flags using the
+strings "on" and "off". The default with no prefix is numeric.</para>
+
+<para>The -a option takes an unsigned decimal integer argument and
+uses it to set the aspect-ratio bye in the logical screen descriptor
+block.</para>
+
+<para>The -b option takes an unsigned decimal integer argument and
+uses it to set the background color index in the logical screen
+descriptor block.</para>
+
+<para>The -d option takes a decimal integer argument and uses it to set a delay
+time, in hundredths of a second, on selected images.</para>
+
+<para>The -i option sets or clears interlaccing in selected images. Acceptable arguments are "1", "0", "yes", "no", "on", "off", "t", "f"</para>
+
+<para>The -p option takes a (0-origin) x,y coordinate-pair and sets it
+as the preferred upper-left-corner coordinates of selected
+images.</para>
+
+<para>The -s option takes a (0-origin) x,y coordinate-pair and sets it
+as the expected display screen size.</para>
+
+<para>The -t option takes a decimal integer argument and uses it to set the 
+(0-origin) index of the transparency color in selected images.</para>
+
+<para>The -u option sets or clears the user-input flag in selected
+images.  Acceptable arguments are "1", "0", "yes", "no", "on", "off",
+"t", "f".</para>
+
+<para>The -x option takes a decimal integer argument and uses it to set the
+GIF89 disposal mode in selected images.</para>
+
+<para>The -z option sets or clears the color-table sort flag in
+selected images.  Acceptable arguments are "1", "0", "yes", "no",
+"on", "off", "t", "f".</para>
+
+<para>Note that the -a, -b, -p, -s, and -z options are included to
+complete the ability to modify all fields defined in the GIF standard,
+but should have no effect on how an image renders on browsers or
+modern viewers.</para>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Eric S. Raymond.</para>
+
+</refsect1>
+</refentry>
+

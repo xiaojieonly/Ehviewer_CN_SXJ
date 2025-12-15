@@ -1,0 +1,58 @@
+# read.dfa
+#  Build time configuration of libpng
+#
+# Author: John Bowler
+# Copyright: (c) John Bowler, 2013
+# Usage rights:
+#  To the extent possible under law, the author has waived all copyright and
+#  related or neighboring rights to this work.  This work is published from:
+#  United States.
+#
+# Build libpng with basic read support.  This enables the lowest level libpng
+# read API - the one where the calling code has to use a loop to read each row.
+# At present this is the API used by most programs.
+#
+# Support is enabled only for those chunks and transformations that are
+# typically required - others can be added easily.
+#
+
+everything = off
+
+# The sequential read code is enabled here; the progressive code can be used
+# instead but there is no point enabling both.
+
+option SEQUENTIAL_READ on
+
+# Likewise it is pointless enabling both fixed and floating point APIs.  Choose
+# one or the other for both the API and the internal math.
+
+#Fixed point:
+#option FIXED_POINT on
+#option FLOATING_ARITHMETIC off
+
+#Floating point:
+option FLOATING_POINT on
+option FLOATING_ARITHMETIC on
+
+# Basic error handling, IO and user memory support.  The latter allows the
+# application program to provide its own implementations of 'malloc' and 'free'.
+option SETJMP on
+option STDIO on
+option USER_MEM on
+
+# To read the full set of PNG images correctly interlace, transparency and
+# 16-bit support is required.  The application can implement interlace itself,
+# but very few do and it's no longer possible to disable it when READ is
+# enabled.
+option READ_tRNS on
+option READ_16BIT on
+
+# Everything else is application dependent.  This file assumes the app handles
+# all the native PNG bit layouts, so it doesn't need any of layout change
+# transforms, but needs libpng to perform gamma correction.  It doesn't do any
+# colorspace stuff and ignores the 'significant bit' information.
+#
+# If your app always expands the image to a limited set of bit layouts you
+# probably want to consider using the simplified API instead of the low level
+# one - see png.h and s_read.dfa.
+option READ_GAMMA on

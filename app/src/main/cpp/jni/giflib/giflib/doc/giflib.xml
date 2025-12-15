@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY project   "http://sourceforge.net/projects/giflib/?source=directory">
+]>
+<refentry id='giflib.1'>
+<refentryinfo><date>3 June 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>giflib</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>giflib</refname>
+<refpurpose>GIFLIB utilities</refpurpose>
+</refnamediv>
+
+<refsect1><title>Description</title>
+
+<para>GIFLIB is a linkable service library and a set of utilities for
+processing images encoded using GIF (Graphics Interchange Format).</para>
+
+<para>These utilities are not intended to compete with or replace
+multi-format graphics toolkits like ImageMagick or the Python Imaging
+Library, or graphics editors such as the GIMP. Find one of those, or
+an equivalent, if you need to crop, scale, rotate, toggle interlacing,
+or perform other conventional image transformations. Rather, these are
+intended to facilitate GIF-specific operations which multi-format tools
+may not adequately support.</para>
+
+<para>API documentation for the service library is best viewed through
+a browser at the project website: &project;.</para>
+
+</refsect1>
+<refsect1><title>See Also</title>
+
+<para>
+<citerefentry><refentrytitle>gif2raw</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gif2rgb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gifbuild</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gifecho</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>giffix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gifinter</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gifinto</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>giftext</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>giftool</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gifclrmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsect1>
+<refsect1><title>Authors</title>
+
+<para>Gershon Elber, Eric S. Raymond, Toshio Kuratomi.</para>
+
+</refsect1>
+</refentry>
+
