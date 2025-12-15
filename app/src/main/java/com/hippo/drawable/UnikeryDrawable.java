@@ -26,9 +26,11 @@ import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.Unikery;
 import com.hippo.lib.image.Image;
+import com.hippo.lib.image.ImageBitmap;
+import com.hippo.lib.image.ImageDrawable;
 import com.hippo.widget.ObservedTextView;
 
-public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
+public class UnikeryDrawable extends WrapDrawable implements Unikery<ImageBitmap>,
         ObservedTextView.OnWindowAttachListener {
 
     private static final String TAG = UnikeryDrawable.class.getSimpleName();
@@ -36,12 +38,12 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
     private int mTaskId = Unikery.INVALID_ID;
 
     private final ObservedTextView mTextView;
-    private final Conaco<Image> mConaco;
+    private final Conaco<ImageBitmap> mConaco;
     private String mUrl;
 
-    private Image mImage;
+    private ImageBitmap mImage;
 
-    public UnikeryDrawable(ObservedTextView textView, Conaco<Image> conaco) {
+    public UnikeryDrawable(ObservedTextView textView, Conaco<ImageBitmap> conaco) {
         mTextView = textView;
         mTextView.setOnWindowAttachListener(this);
         mConaco = conaco;
@@ -61,7 +63,7 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
     public void load(String url) {
         if (url != null) {
             mUrl = url;
-            mConaco.load(new ConacoTask.Builder<Image>().setUnikery(this).setUrl(url).setKey(url));
+            mConaco.load(new ConacoTask.Builder<ImageBitmap>().setUnikery(this).setUrl(url).setKey(url));
 //            ConacoTask.Builder<ImageBitmap> builder =new ConacoTask.Builder<>();
 //            builder.url = url;
 //            builder.unikery = this;
@@ -136,10 +138,10 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
     public void onWait() {}
 
     @Override
-    public boolean onGetValue(@NonNull Image value, int source) {
+    public boolean onGetValue(@NonNull ImageBitmap value, int source) {
         Drawable drawable;
         try {
-            drawable =value.getDrawable();
+            drawable = new ImageDrawable(value);
         } catch (Exception e) {
             Log.d(TAG, "The ImageBitmap is recycled", e);
             return false;
