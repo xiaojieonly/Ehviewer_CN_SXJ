@@ -1142,6 +1142,7 @@ public class DownloadsScene extends ToolbarScene
 
     private void setDragEnable(FloatingActionButton fab) {
         DRAG_ENABLE = !DRAG_ENABLE;
+        Settings.setDragDownloadGallery(DRAG_ENABLE);
         Context context = getEHContext();
         if (null == context) return;
         if (DRAG_ENABLE) {

@@ -1428,6 +1428,17 @@ public class Settings {
         putBoolean(KEY_SHOW_READ_PROGRESS, value);
     }
 
+    public static final String KEY_DRAG_DOWNLOAD_GALLERY = "drag_download_gallery";
+
+    public static boolean getDragDownloadGallery() {
+        boolean IS_ENABLE_DRAG_DOWNLOAD_GALLERY = false;
+        return getBoolean(KEY_DRAG_DOWNLOAD_GALLERY, IS_ENABLE_DRAG_DOWNLOAD_GALLERY) ;
+    }
+
+    public static void setDragDownloadGallery(boolean value) {
+        putBoolean(KEY_DRAG_DOWNLOAD_GALLERY, value);
+    }
+
     public static final String KEY_HISTORY_INFO_SIZE = "history_info_size";
 
     public static int DEFAULT_HISTORY_INFO_SIZE = 100;
