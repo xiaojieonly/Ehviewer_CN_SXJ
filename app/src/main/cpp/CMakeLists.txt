@@ -25,6 +25,12 @@ add_library( # Sets the name of the library.
         gif/dgif_lib.c
         gif/gifalloc.c)
 
+# Ensure generated binary aligns segments for 16KB page size devices.
+target_link_options(
+        ehviewer
+        PRIVATE
+        -Wl,-z,max-page-size=16384)
+
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
 # default, you only need to specify the name of the public NDK library
