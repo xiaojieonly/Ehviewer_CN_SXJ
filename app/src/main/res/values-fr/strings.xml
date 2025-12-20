@@ -390,6 +390,8 @@
     <string name="sort_by_rating_desc">Par note décroissante</string>
     <string name="sort_by_name_asc">Par nom croissant</string>
     <string name="sort_by_name_desc">Par nom décroissant</string>
+    <string name="sort_by_file_size_asc">Par taille de fichier croissante</string>
+    <string name="sort_by_file_size_desc">Par taille de fichier décroissante</string>
     <string name="sort_download_list">Trier la liste</string>
     <string name="download_start_all">Commencer tout</string>
     <string name="download_stop_all">Arrêter tout</string>

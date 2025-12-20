@@ -406,6 +406,8 @@
     <string name="sort_by_rating_desc">평점 내림차순</string>
     <string name="sort_by_name_asc">이름 오름차순</string>
     <string name="sort_by_name_desc">이름 내림차순</string>
+    <string name="sort_by_file_size_asc">파일 크기 오름차순</string>
+    <string name="sort_by_file_size_desc">파일 크기 내림차순</string>
     <string name="sort_download_list">목록 정렬</string>
     <string name="download_start_all">모두 시작</string>
     <string name="download_stop_all">모두 중지</string>

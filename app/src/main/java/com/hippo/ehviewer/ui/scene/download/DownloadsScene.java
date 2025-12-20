@@ -805,6 +805,8 @@ public class DownloadsScene extends ToolbarScene
             case R.id.sort_by_rating_desc:
             case R.id.sort_by_name_asc:
             case R.id.sort_by_name_desc:
+            case R.id.sort_by_file_size_asc:
+            case R.id.sort_by_file_size_desc:
                 gotoFilterAndSort(id);
                 return true;
             case R.id.import_local_archive:

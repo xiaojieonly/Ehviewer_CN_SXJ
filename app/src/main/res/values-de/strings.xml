@@ -323,6 +323,8 @@
     <string name="sort_by_rating_desc">Nach Bewertung absteigend</string>
     <string name="sort_by_name_asc">Nach Name aufsteigend</string>
     <string name="sort_by_name_desc">Nach Name absteigend</string>
+    <string name="sort_by_file_size_asc">Nach Dateigröße aufsteigend</string>
+    <string name="sort_by_file_size_desc">Nach Dateigröße absteigend</string>
     <string name="sort_download_list">Liste sortieren</string>
     <string name="download_search_gallery">Galerie suchen</string>
     <string name="download_search_hint">Suchschlüssel eingeben</string>

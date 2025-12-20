@@ -383,6 +383,8 @@
     <string name="sort_by_rating_desc">ตามคะแนน จากมากไปน้อย</string>
     <string name="sort_by_name_asc">ตามชื่อ จากน้อยไปมาก</string>
     <string name="sort_by_name_desc">ตามชื่อ จากมากไปน้อย</string>
+    <string name="sort_by_file_size_asc">ตามขนาดไฟล์ จากน้อยไปมาก</string>
+    <string name="sort_by_file_size_desc">ตามขนาดไฟล์ จากมากไปน้อย</string>
     <string name="sort_download_list">เรียงลำดับรายการ</string>
     <string name="stat_509_alert_title">คำเตือน 509</string>
     <string name="stat_509_alert_text">การลิมิตของรูปภาพต่อวันถึงลิมิตแล้ว กรุณาหยุดโหลดและพักผ่อนบ้างนะ</string>
