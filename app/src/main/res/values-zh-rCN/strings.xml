@@ -652,10 +652,6 @@
     <string name="settings_advanced_export_data_summary">保存数据至外置存储器，例如下载列表，书签列表</string>
     <string name="settings_advanced_export_data_to">已导出数据至 %s</string>
     <string name="settings_advanced_export_data_failed">导出数据失败</string>
-    <string name="settings_advanced_export_data_legacy">导出数据（兼容旧版）</string>
-    <string name="settings_advanced_export_data_legacy_summary">导出兼容旧版本的数据库文件，可直接在旧版APP中使用</string>
-    <string name="settings_advanced_export_data_legacy_to">已导出兼容旧版数据至 %s</string>
-    <string name="settings_advanced_export_data_legacy_failed">导出兼容旧版数据失败</string>
     <string name="settings_advanced_import_data">导入数据</string>
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
     <string name="settings_advanced_import_data_successfully">导入数据成功</string>

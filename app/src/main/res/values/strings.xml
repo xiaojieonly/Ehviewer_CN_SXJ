@@ -739,10 +739,6 @@
     <string name="settings_advanced_export_data_summary">Save data like download list, quick search list, to external storage</string>
     <string name="settings_advanced_export_data_to">Exported data to %s</string>
     <string name="settings_advanced_export_data_failed">Failed to export data</string>
-    <string name="settings_advanced_export_data_legacy">Export data (Legacy compatible)</string>
-    <string name="settings_advanced_export_data_legacy_summary">Export database file compatible with old versions, can be used directly in old APP</string>
-    <string name="settings_advanced_export_data_legacy_to">Exported legacy compatible data to %s</string>
-    <string name="settings_advanced_export_data_legacy_failed">Failed to export legacy compatible data</string>
     <string name="settings_advanced_import_data">Import data</string>
     <string name="settings_advanced_import_data_summary">Load data which were previously saved</string>
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>

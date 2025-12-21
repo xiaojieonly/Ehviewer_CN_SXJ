@@ -1051,10 +1051,6 @@
     <!-- 其他 -->
     <string name="search_sp_suffix"></string>
     <string name="settings_about_author_summary">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
-    <string name="settings_advanced_export_data_legacy">Daten exportieren (Legacy-kompatibel)</string>
-    <string name="settings_advanced_export_data_legacy_failed">Export von Legacy-kompatiblen Daten fehlgeschlagen</string>
-    <string name="settings_advanced_export_data_legacy_summary">Datenbankdatei exportieren, die mit alten Versionen kompatibel ist, kann direkt in alter APP verwendet werden</string>
-    <string name="settings_advanced_export_data_legacy_to">Legacy-kompatible Daten nach %s exportiert</string>
     <string name="sort_by_default">Standardreihenfolge</string>
     <string name="subscription_tip">Auf "+" klicken, um Abonnement hinzuzufügen</string>
     <string name="wifi_connect_auto">Automatisch verbinden</string>

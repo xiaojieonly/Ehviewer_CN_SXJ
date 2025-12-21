@@ -114,12 +114,6 @@
         app:allowDividerAbove="true" />
 
     <Preference
-        android:key="export_data_legacy"
-        android:summary="@string/settings_advanced_export_data_legacy_summary"
-        android:title="@string/settings_advanced_export_data_legacy"
-        app:allowDividerAbove="true" />
-
-    <Preference
         android:key="import_data"
         android:summary="@string/settings_advanced_import_data_summary"
         android:title="@string/settings_advanced_import_data"

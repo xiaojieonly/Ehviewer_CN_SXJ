@@ -59,7 +59,6 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_CLEAR_MEMORY_CACHE = "clear_memory_cache";
     private static final String KEY_APP_LANGUAGE = "app_language";
     private static final String KEY_IMPORT_DATA = "import_data";
-    private static final String KEY_EXPORT_DATA_LEGACY = "export_data_legacy";
     private static final String KEY_WIFI_SERVER = "wifi_server";
     private static final String KEY_WIFI_CLIENT = "wifi_client";
 
@@ -76,14 +75,12 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Preference clearMemoryCache = findPreference(KEY_CLEAR_MEMORY_CACHE);
         Preference appLanguage = findPreference(KEY_APP_LANGUAGE);
         Preference importData = findPreference(KEY_IMPORT_DATA);
-        Preference exportDataLegacy = findPreference(KEY_EXPORT_DATA_LEGACY);
         Preference socketData = findPreference(KEY_WIFI_SERVER);
         Preference clientData = findPreference(KEY_WIFI_CLIENT);
 
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
         importData.setOnPreferenceClickListener(this);
-        exportDataLegacy.setOnPreferenceClickListener(this);
         socketData.setOnPreferenceClickListener(this);
         clientData.setOnPreferenceClickListener(this);
 
@@ -107,8 +104,6 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 importData(getActivity());
                 getActivity().setResult(Activity.RESULT_OK);
                 return true;
-            case KEY_EXPORT_DATA_LEGACY:
-                return exportDataLegacy();
             case KEY_WIFI_SERVER:
                 return gotoWiFiServerActivity();
             case KEY_WIFI_CLIENT:
@@ -116,53 +111,6 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
             default:
                 return false;
         }
-    }
-
-    private boolean exportDataLegacy() {
-        new Thread(() -> {
-            File dir = AppConfig.getExternalDataDir();
-            if (dir == null) {
-                new Handler(Looper.getMainLooper()).post(() -> 
-                    Toast.makeText(getActivity(), R.string.cant_get_data_dir, Toast.LENGTH_SHORT).show());
-                return;
-            }
-            
-            // Create database file compatible with old version
-            File file = new File(dir, "ehviewer_legacy_" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".db");
-            
-            // Get original database file
-            File dbFile = getActivity().getDatabasePath("eh.db");
-            if (!dbFile.exists()) {
-                new Handler(Looper.getMainLooper()).post(() -> 
-                    Toast.makeText(getActivity(), R.string.settings_advanced_export_data_legacy_failed, Toast.LENGTH_SHORT).show());
-                return;
-            }
-            
-            // 复制数据库文件
-            try (FileInputStream fis = new FileInputStream(dbFile);
-                 FileOutputStream fos = new FileOutputStream(file)) {
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = fis.read(buffer)) > 0) {
-                    fos.write(buffer, 0, length);
-                }
-                fos.flush();
-                
-                // 成功导出
-                String filePath = file.getPath();
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    Toast.makeText(getActivity(), 
-                        getString(R.string.settings_advanced_export_data_legacy_to, filePath), 
-                        Toast.LENGTH_SHORT).show();
-                });
-            } catch (IOException e) {
-                // 导出失败
-                new Handler(Looper.getMainLooper()).post(() -> 
-                    Toast.makeText(getActivity(), R.string.settings_advanced_export_data_legacy_failed, Toast.LENGTH_SHORT).show());
-            }
-        }).start();
-        
-        return true;
     }
 
     private boolean gotoWiFiClientActivity() {
