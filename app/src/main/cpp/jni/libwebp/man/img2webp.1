@@ -1,0 +1,129 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH IMG2WEBP 1 "September 17, 2024"
+.SH NAME
+img2webp \- create animated WebP file from a sequence of input images.
+.SH SYNOPSIS
+.B img2webp
+[file_options] [[frame_options] frame_file]... [\-o webp_file]
+.br
+.B img2webp argument_file_name
+.br
+.SH DESCRIPTION
+This manual page documents the
+.B img2webp
+command.
+.PP
+\fBimg2webp\fP compresses a sequence of images using the animated WebP format.
+Input images can either be PNG, JPEG, TIFF or WebP.
+If a single file name (not starting with the character '\-') is supplied as
+the argument, the command line arguments are actually tokenized from this file.
+This allows for easy scripting or using a large number of arguments.
+.SH FILE-LEVEL OPTIONS
+The file-level options are applied at the beginning of the compression process,
+before the input frames are read.
+.TP
+.BI \-o " string
+Specify the name of the output WebP file.
+.TP
+.BI \-min_size
+Encode images to achieve smallest size. This disables key frame insertion and
+picks the parameters resulting in the smallest output for each frame. It uses
+lossless compression by default, but can be combined with \-q, \-m, \-lossy or
+\-mixed options.
+.TP
+.BI \-kmin " int
+.TP
+.BI \-kmax " int
+Specify the minimum and maximum distance between consecutive key frames
+(independently decodable frames) in the output animation. The tool will insert
+some key frames into the output animation as needed so that this criteria is
+satisfied.
+.br
+.B \-mixed
+Mixed compression mode: optimize compression of the image by picking either
+lossy or lossless compression for each frame heuristically. This global
+option disables the local option \fB-lossy\fP and \fB-lossless\fP .
+.TP
+.BI \-near_lossless " int
+Specify the level of near\-lossless image preprocessing. This option adjusts
+pixel values to help compressibility, but has minimal impact on the visual
+quality. It triggers lossless compression mode automatically. The range is 0
+(maximum preprocessing) to 100 (no preprocessing, the default). The typical
+value is around 60. Note that lossy with \fB\-q 100\fP can at times yield
+better results.
+.TP
+.B \-sharp_yuv
+Use more accurate and sharper RGB->YUV conversion. Note that this process is
+slower than the default 'fast' RGB->YUV conversion.
+.TP
+.BI \-loop " int
+Specifies the number of times the animation should loop. Using '0'
+means 'loop indefinitely'.
+.TP
+.BI \-v
+Be more verbose.
+.TP
+.B \-h, \-help
+A short usage summary.
+.TP
+.B \-version
+Print the version numbers of the relevant libraries used.
+
+.SH PER-FRAME OPTIONS
+The per-frame options are applied for the images following as arguments in the
+command line. They can be modified any number of times preceding each particular
+input image.
+.TP
+.BI \-d " int
+Specify the image duration in milliseconds.
+.TP
+.B \-lossless, \-lossy
+Compress the next image(s) using lossless or lossy compression mode. The
+default mode is lossless.
+.TP
+.BI \-q " float
+Specify the compression factor between 0 and 100. The default is 75.
+.TP
+.BI \-m " int
+Specify the compression method to use. This parameter controls the
+trade off between encoding speed and the compressed file size and quality.
+Possible values range from 0 to 6. Default value is 4.
+.TP
+.B \-exact, \-noexact
+Preserve or alter RGB values in transparent area. The default is
+\fB-noexact\fP, to help compressibility. Note \fB\-noexact\fP may cause
+artifacts in frames compressed with \fB\-lossy\fP.
+
+.SH EXIT STATUS
+If there were no problems during execution, \fBimg2webp\fP exits with the value
+of the C constant \fBEXIT_SUCCESS\fP. This is usually zero.
+.PP
+If an error occurs, \fBimg2webp\fP exits with the value of the C constant
+\fBEXIT_FAILURE\fP. This is usually one.
+
+.SH EXAMPLE
+img2webp -loop 2 in0.png -lossy in1.jpg -d 80 in2.tiff -o out.webp
+.br
+
+.SH AUTHORS
+\fBimg2webp\fP is a part of libwebp and was written by the WebP team.
+.br
+The latest source tree is available at
+https://chromium.googlesource.com/webm/libwebp
+.PP
+This manual page was written by Pascal Massimino <pascal.massimino@gmail.com>,
+for the Debian project (and may be used by others).
+
+.SH REPORTING BUGS
+Please report all bugs to the issue tracker:
+https://issues.webmproject.org
+.br
+Patches welcome! See this page to get started:
+https://www.webmproject.org/code/contribute/submitting\-patches/
+
+.SH SEE ALSO
+.BR webpmux (1),
+.BR gif2webp (1)
+.br
+Please refer to https://developers.google.com/speed/webp/ for additional
+information.

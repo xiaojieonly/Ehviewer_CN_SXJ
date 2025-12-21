@@ -1,0 +1,448 @@
+
+Stdin:
+
+	Screen Size - Width = 30, Height = 60.
+	ColorResolution = 8, BitsPerPixel = 8, BackGround = 0, Aspect = 0.
+	Has Global Color Map.
+
+
+GIF89 application block (Ext Code = 255 [ ]):
+
+GIF89 comment (Ext Code = 254 [ ]):
+
+00000:  2                                                                  
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #1:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #2:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #3:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #4:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #5:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #6:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #7:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #8:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #9:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #10:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #11:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #12:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #13:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #14:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #15:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #16:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #17:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #18:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #19:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #20:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #21:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #22:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #23:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #24:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #25:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #26:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #27:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #28:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #29:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #30:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #31:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #32:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 1
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 5
+	Transparent Index: -1
+
+Image #33:
+
+	Image Size - Left = 0, Top = 0, Width = 30, Height = 60.
+	Image is Interlaced.
+	No Image Color Map.
+
+GIF89 comment (Ext Code = 254 [ ]):
+
+00000:  4                                                 Don't flame me!  
+00010:  7                                                 polder@xs4all.nl 
+00020:  0                                                  (c) 1996 Demon  
+GIF file terminated normally.

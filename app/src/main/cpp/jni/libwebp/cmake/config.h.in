@@ -1,0 +1,116 @@
+/* Adapted from the autotools src/webp/config.h.in.  */
+
+/* Define if building universal (internal helper macro) */
+/* TODO: handle properly in CMake */
+#cmakedefine AC_APPLE_UNIVERSAL_BUILD 1
+
+/* Set to 1 if __builtin_bswap16 is available */
+#cmakedefine HAVE_BUILTIN_BSWAP16 1
+
+/* Set to 1 if __builtin_bswap32 is available */
+#cmakedefine HAVE_BUILTIN_BSWAP32 1
+
+/* Set to 1 if __builtin_bswap64 is available */
+#cmakedefine HAVE_BUILTIN_BSWAP64 1
+
+/* Define to 1 if you have the <cpu-features.h> header file. */
+#cmakedefine HAVE_CPU_FEATURES_H 1
+
+/* Define to 1 if you have the <GLUT/glut.h> header file. */
+#cmakedefine HAVE_GLUT_GLUT_H 1
+
+/* Define to 1 if you have the <GL/glut.h> header file. */
+#cmakedefine HAVE_GL_GLUT_H 1
+
+/* Define to 1 if you have the <OpenGL/glut.h> header file. */
+#cmakedefine HAVE_OPENGL_GLUT_H 1
+
+/* Define to 1 if you have the <shlwapi.h> header file. */
+#cmakedefine HAVE_SHLWAPI_H 1
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the <wincodec.h> header file. */
+#cmakedefine HAVE_WINCODEC_H 1
+
+/* Define to 1 if you have the <windows.h> header file. */
+#cmakedefine HAVE_WINDOWS_H 1
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+/* TODO: handle properly in CMake */
+#cmakedefine LT_OBJDIR "@LT_OBJDIR@"
+
+/* Name of package */
+#cmakedefine PACKAGE "@PROJECT_NAME@"
+
+/* Define to the address where bug reports for this package should be sent. */
+#cmakedefine PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+
+/* Define to the full name of this package. */
+#cmakedefine PACKAGE_NAME "@PACKAGE_NAME@"
+
+/* Define to the full name and version of this package. */
+#cmakedefine PACKAGE_STRING "@PACKAGE_STRING@"
+
+/* Define to the one symbol short name of this package. */
+#cmakedefine PACKAGE_TARNAME "@PACKAGE_TARNAME@"
+
+/* Define to the home page for this package. */
+#cmakedefine PACKAGE_URL "@PACKAGE_URL@"
+
+/* Define to the version of this package. */
+#cmakedefine PACKAGE_VERSION "@PACKAGE_VERSION@"
+
+/* Version number of package */
+#cmakedefine VERSION "@VERSION@"
+
+/* Set to 1 if GIF library is installed */
+#cmakedefine WEBP_HAVE_GIF 1
+
+/* Set to 1 if OpenGL is supported */
+#cmakedefine WEBP_HAVE_GL 1
+
+/* Set to 1 if JPEG library is installed */
+#cmakedefine WEBP_HAVE_JPEG 1
+
+/* Set to 1 if NEON is supported */
+#cmakedefine WEBP_HAVE_NEON
+
+/* Set to 1 if runtime detection of NEON is enabled */
+/* TODO: handle properly in CMake */
+#cmakedefine WEBP_HAVE_NEON_RTCD
+
+/* Set to 1 if PNG library is installed */
+#cmakedefine WEBP_HAVE_PNG 1
+
+/* Set to 1 if SDL library is installed */
+#cmakedefine WEBP_HAVE_SDL 1
+
+/* Set to 1 if SSE2 is supported */
+#cmakedefine WEBP_HAVE_SSE2 1
+
+/* Set to 1 if SSE4.1 is supported */
+#cmakedefine WEBP_HAVE_SSE41 1
+
+/* Set to 1 if TIFF library is installed */
+#cmakedefine WEBP_HAVE_TIFF 1
+
+/* Enable near lossless encoding */
+#cmakedefine WEBP_NEAR_LOSSLESS 1
+
+/* Undefine this to disable thread support. */
+#cmakedefine WEBP_USE_THREAD 1
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif

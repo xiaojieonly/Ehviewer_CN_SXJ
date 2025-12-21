@@ -1,0 +1,22 @@
+
+Stdin:
+
+	Screen Size - Width = 100, Height = 100.
+	ColorResolution = 3, BitsPerPixel = 3, BackGround = 0, Aspect = 0.
+	Has Global Color Map.
+
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 0
+	User Input Flag: 0
+	Transparency on: no
+	DelayTime: 0
+	Transparent Index: -1
+
+Image #1:
+
+	Image Size - Left = 0, Top = 0, Width = 100, Height = 100.
+	Image is Non Interlaced.
+	No Image Color Map.
+
+GIF file terminated normally.

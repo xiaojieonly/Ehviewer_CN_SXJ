@@ -1,0 +1,39 @@
+#
+# AFL dictionary for PNG images
+# -----------------------------
+#
+# Just the basic, standard-originating sections; does not include vendor
+# extensions.
+#
+# Created by Michal Zalewski <lcamtuf@google.com>
+#
+
+header_png="\x89PNG\x0d\x0a\x1a\x0a"
+
+section_IDAT="IDAT"
+section_IEND="IEND"
+section_IHDR="IHDR"
+section_PLTE="PLTE"
+section_bKGD="bKGD"
+section_cHRM="cHRM"
+section_eXIf="eXIf"
+section_fRAc="fRAc"
+section_gAMA="gAMA"
+section_gIFg="gIFg"
+section_gIFt="gIFt"
+section_gIFx="gIFx"
+section_hIST="hIST"
+section_iCCP="iCCP"
+section_iTXt="iTXt"
+section_oFFs="oFFs"
+section_pCAL="pCAL"
+section_pHYs="pHYs"
+section_sBIT="sBIT"
+section_sCAL="sCAL"
+section_sPLT="sPLT"
+section_sRGB="sRGB"
+section_sTER="sTER"
+section_tEXt="tEXt"
+section_tIME="tIME"
+section_tRNS="tRNS"
+section_zTXt="zTXt"

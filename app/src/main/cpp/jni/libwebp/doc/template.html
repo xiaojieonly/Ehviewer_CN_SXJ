@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WebP Container Specification</title>
+  <meta name="generator" content="kramdown <%= ::Kramdown::VERSION %>" />
+  <style type="text/css">
+  body {
+    color: #000;
+    background-color: #fff;
+    margin: 10%;
+    font-family: "Liberation Sans", "DejaVu Sans", "Bitstream Vera Sans", Arial, sans-serif;
+    line-height: 1.4;
+  }
+  h2 {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid #999;
+    padding: .5em .7em;;
+  }
+  th {
+    color: #fff;
+    background-color: #000;
+  }
+  td {
+  }
+  hr {
+  }
+  code {
+    color: #000;
+    background-color: #f7f7f7;
+    padding: 0 3px;
+    font-family: "Liberation Mono", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Consolata, monospace;
+  }
+  pre {
+    background-color: #f7f7f7;
+    padding: 1em;
+    border: 1px solid #ccc;
+    width: 42em;
+    overflow: auto;
+    font-family: "Liberation Mono", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Consolata, monospace;
+  }
+  pre code {
+    background-color: #f7f7f7;
+    padding: 0; /* Only want padding on inline code, not blocks */
+  }
+  pre.terminal {
+    color: #fff;
+    background-color: #000;
+    border: 1px solid #ccc;
+    max-height: 30em;
+  }
+  pre.terminal code {
+    color: #fff;
+    background-color: #000;
+    font-size: smaller;
+  }
+  #markdown-toc ul {
+    list-style-type: disc;
+  }
+  ul#markdown-toc {
+    margin-top: -1em;
+    visibility: hidden;
+    -webkit-padding-start: 0;
+  }
+  ul#markdown-toc ul {
+    visibility: visible;
+  }
+  ul#markdown-toc ul ul{
+    visibility: visible;
+  }
+  ul#markdown-toc + hr {
+    margin-bottom: 4em;
+  }
+  ol ol { /* Format nested ordered lists */
+    list-style-type: lower-alpha;
+  }
+  dt {
+    font-style: italic;
+    font-weight: bold;
+  }
+  .caption {
+  }
+  </style>
+</head>
+<body>
+<%= @body %>
+</body>
+</html>

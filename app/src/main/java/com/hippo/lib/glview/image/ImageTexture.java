@@ -232,8 +232,10 @@ public class ImageTexture implements Texture, Animatable {
             }
         }
 
-        boolean end = mReleased.get() || mImage.isImageRecycled() || mNeedRelease.get() ||
-                (!mImage.getAnimated()) || mRunning.get();
+//        boolean end = mReleased.get() || mImage.isImageRecycled() || mNeedRelease.get() ||
+//                (!mImage.getAnimated()) || mRunning.get();
+        boolean end = mReleased.get() || mNeedRelease.get() ||
+                (mImage.isCompleted() && mImage.getFrameCount() <= 1) || mRunning.get();
 
         synchronized (mImage) {
             mImageBusy = false;
@@ -590,12 +592,26 @@ public class ImageTexture implements Texture, Animatable {
                 // Obtain image
                 mImageBusy = true;
             }
+            if (!mImage.isCompleted()) {
+                try {
+                    sPVLock.p();
+                } catch (InterruptedException e) {
+                    // Ignore
+                }
+                if (!mNeedRelease.get()) {
+                    mImage.complete();
+                }
+                sPVLock.v();
+            }
 
+            int frameCount = mImage.getFrameCount();
             synchronized (mImage) {
                 // Release image
                 mImageBusy = false;
                 // Check need release, frameCount <= 1
-                if (mNeedRelease.get() || !mImage.getAnimated()) {
+//                if (mNeedRelease.get() || !mImage.getAnimated()) {
+                // Check need release, frameCount <= 1
+                if (mNeedRelease.get() || frameCount <= 1) {
                     mAnimateRunnable = null;
                     return;
                 }
@@ -617,7 +633,8 @@ public class ImageTexture implements Texture, Animatable {
                     mImageBusy = true;
                 }
 
-                mImage.start();
+//                mImage.start();
+                mImage.advance();
                 long delay = mImage.getDelay();
                 long time = System.nanoTime();
                 if (-1L != lastDelay) {

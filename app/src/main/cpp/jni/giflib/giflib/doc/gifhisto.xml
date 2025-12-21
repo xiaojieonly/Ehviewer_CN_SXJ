@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifhisto.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifhisto</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifhisto</refname>
+<refpurpose>make a color histogram from GIF colr frequencies</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifhisto</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-t</arg>
+      <arg choice='opt'>-s 
+      		<replaceable>width</replaceable>
+      		<replaceable>height</replaceable></arg>
+      <arg choice='opt'>-n <replaceable>image-number</replaceable></arg>
+      <arg choice='opt'>-b</arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to create histogram of number of pixels using each
+color.  The output can be formatted into a GIF histogram file, or as
+text file - both go to stdout.</para>
+
+<para>If no GIF file is given, gifhisto will try to read a GIF file
+from stdin.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress). Enables printout of running scan lines. </para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-t</term>
+<listitem>
+<para>Force output to be text file of the following form: (colormap size) lines each containing two integers: number of times color appeared, and color index.  Lines are in increasing color index order. This output can be fed directly to a sort program if ordering by color frequency is desired.</para>
+<para>The colormap picked is the one to be used for the image to
+generate histogram for, as defined in GIF format.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-s width height</term>
+<listitem>
+<para>Size of GIF histogram file.  The height of the histogram should be power of 2 dividable by number of colors in colormap.</para>
+<para>Width sets the resolution (accuracy if you like) of the histogram as
+the maximum histogram bar is scaled to fit it.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-n image-number</term>
+<listitem>
+<para>Image number to test.  Default is one.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-b</term>
+<listitem>
+<para>Zeros the background color count.  As only linear scale bars are
+supported and usually the background appears much more often then
+other colors, deleting the background count will improve the scaling
+of other colors.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para>Print one line of command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber</para>
+
+</refsect1>
+</refentry>

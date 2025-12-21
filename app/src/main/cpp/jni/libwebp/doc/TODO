@@ -1,0 +1,13 @@
+<louquillio@google.com>, 20111004
+
+* Determine that normative RFC 2119 terms (MUST, SHOULD, MAY, etc.) are
+  truly intended in all cases where capitalized.
+
+* Several passages could be made clearer.
+
+  * Overall edit for scope.  Portions are phrased as an introduction to
+    the 0.1.3 RIFF container additions, rather than a holistic guide to
+    WebP.
+
+  * To wit, suggest s/[spec|specification]/guide/g .  "Spec" can imply a
+    standards track; in any case it's too formal for a work in progress.

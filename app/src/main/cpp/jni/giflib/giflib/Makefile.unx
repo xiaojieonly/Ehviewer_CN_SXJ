@@ -1,0 +1,33 @@
+# (Note: this is not presently used, there's an autoconf build.)
+#
+# Top-level Unix makefile for the GIFLIB package
+# Should work for all Unix versions
+#
+VERSION=3.0
+
+all:
+	cd lib; make static shared
+	cd util; make all
+
+install:
+	cd lib; make install-lib
+	cd util; make install-all
+
+uninstall:
+	cd lib; make uninstall-lib
+	cd util; make uninstall-all
+
+clean:
+	cd lib; make clean
+	cd util; make clean
+	rm -f giflib-$(VERSION).tar.gz core
+
+giflib-$(VERSION).tar:
+	(cd ..; tar cvf giflib-$(VERSION)/giflib-$(VERSION).tar `cat giflib-$(VERSION)/MANIFEST | sed "/\(^\| \)/s// giflib-$(VERSION)\//g"`)
+giflib-$(VERSION).tar.gz: giflib-$(VERSION).tar
+	gzip -f giflib-$(VERSION).tar
+
+dist: Makefile
+	make giflib-$(VERSION).tar.gz
+	ls -l giflib-$(VERSION).tar.gz
+

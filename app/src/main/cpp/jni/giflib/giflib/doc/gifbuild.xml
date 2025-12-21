@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY email         "esr@thyrsus.com">
+]>
+<refentry id='gifbuild.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifbuild</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifbuild</refname>
+<refpurpose>dump GIF data in a textual format, or undump it to a GIF</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifbuild</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-a</arg>
+      <arg choice='opt'>-d</arg>
+      <arg choice='opt'>-t <replaceable>translation-table</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Options</title>
+
+<para>A program to convert a series of editable text GIF icon specifications and
+named GIF files into a multi-image GIF, usable as a graphic resource file.
+It can also dump existing GIFs in this format.  When dumping a GIF,
+certain sanity checks are performed which may result in a warning
+emitted to standard error.</para>
+
+<para>If no GIF file is given, gifbuild will try to read a text input
+from stdin.</para>
+
+</refsect1>
+<refsect1><title>Specification Syntax</title>
+
+<para>Here is a syntax summary in informal BNF.  The token `NL' represents a
+required newline.</para>
+
+<programlisting>
+&lt;gif-spec&gt; ::= &lt;header-block&gt; &lt;image-block&gt;...
+
+&lt;header-block&gt; ::= &lt;header-declaration&gt;...
+
+&lt;header-declaration ::=
+		| screen width &lt;digits&gt; NL
+		| screen height &lt;digits&gt; NL
+		| screen colors &lt;digits&gt; NL
+		| screen background &lt;digits&gt; NL
+		| pixel aspect byte &lt;digits&gt; NL
+		| screen map &lt;color-table&gt; NL
+
+&lt;color-table&gt; ::= &lt;color-declaration&gt;... end NL
+
+&lt;color-declaration&gt; ::= rgb &lt;digits&gt; &lt;digits&gt; &lt;digits&gt; [ is &lt;key&gt;] NL
+                | sort flag {on|off} NL
+
+&lt;image-block&gt; ::= include &lt;file-name&gt; NL
+		| image NL
+			&lt;image-declaration&gt;...
+			&lt;raster-picture&gt;
+			[ &lt;extension&gt; ]
+
+&lt;image-declarations&gt; ::= image top &lt;digits&gt; NL
+			| image left &lt;digits&gt; NL
+			| image interlaced NL
+			| image map &lt;color-table&gt; NL
+			| image bits &lt;digits&gt; by &lt;digits&gt; [hex|ascii] NL &lt;raster-block&gt;
+
+&lt;extension&gt; := &lt;comment&gt; NL &lt;extension-block&gt; NL end NL
+		| &lt;plaintext&gt; NL &lt;extension-block&gt; NL end NL
+                | graphics control NL &lt;GCB-part&gt; NL end NL
+                | netscape loop  &lt;digits&gt; NL
+		| extension &lt;hex-digits&gt; NL &lt;extension-block&gt; NL end NL
+
+&lt;GCB-part&gt; ::= disposal mode &lt;digits&gt; NL
+                | user input flag {on|off} NL
+                | delay &lt;digits&gt; NL
+                | transparent index &lt;digits&gt; NL
+
+</programlisting>
+
+<para>If the data types of the <quote>screen height</quote>,
+<quote>screen width</quote>, <quote>screen background</quote>,
+<quote>image top</quote>, and <quote>image left</quote> declarations
+aren't obvious to you, what are you doing with this software?</para>
+
+<para>The <quote>pixel aspect byte</quote> declaration sets an integer 
+denominator for a fraction expressing the puxel aspect ratio.  See the
+GIF standard for details; this field is actually long obsolete.</para>
+
+<para>A color table declares color indices (in ascending order from 0)
+and may associate them with key characters (these associations are
+absent when the map is more than 94 colors lang and raster blocks
+using it must use hex pairs).  These characters can later be used in
+raster blocks.  As these must be printable and non-whitespace, you can
+only specify 94 colors per icon.  Life is like that sometimes.</para>
+
+<para>A color table declaration can also set the table's sort flag with 
+"sort flag on" or "sort flag off" on any line before the end.</para>
+
+<para>An <quote>ascii</quote> raster block is just a block of key
+characters (used for a color map of 94 or fewer colors).  A
+<quote>hex</quote> raster block uses hex digit pairs instead (used for
+a color map with more than 94 colors). The default is ASCII.  It
+should be sized correctly for the <quote>image bits</quote>
+declaration that leads it. Raster blocks from interlaced GIFs are
+dumped with the lines in non-interlaced order.</para>
+
+<para>The <quote>comment</quote>, <quote>plaintext</quote> or
+<quote>ggraphics control</quote> keywords lead defined GIF89 extension
+record data. The final GIF89 type, graphics control and application
+block, are not yet supported, but the codecdies recognize a Netscape
+loop block.  You can also say <quote>extension</quote> followed by a
+hexadecimal record type.  All of these extension declarations must be
+followed by an extension block, which is terminated by the keyword
+<quote>end</quote> on its own line.</para>
+
+<para>An extension block is a series of text lines, each interpreted
+as a string of bytes to fill an extension block (the terminating
+newline is stripped).  Text may include standard C-style octal and hex
+escapes preceded by a backslash.</para>
+
+<para>A graphics control block declaration creates a graphics control
+extension block; for the field semantics see the GIF89 standard, part
+23.</para>
+
+<para>A netscape loop declaration creates an application extension
+block containing a NETSCAPE 2.0 animation loop control with a
+specified repeat count (repeat count 0 means loop forever). This must
+be immediately after the header declaration. These loop blocks are
+interpreted by the Netscape/Mozilla/Firefox line of browsers.</para> 
+
+<para>All &lt;digits&gt; tokens are interpreted as decimal numerals;
+&lt;hex-digits&gt; tokens are interpreted as two hex digits (a byte). All
+coordinates are zero-origin with the top left corner (0,0).  Range
+checking is weak and signedness checking nonexistent; caveat
+hacker!</para>
+
+<para>In general, the amount of whitespace and order of declarations within a 
+header or image block is not significant, except that a raster picture
+must immediately follow its <quote>image bits</quote> bits declaration.</para>
+
+<para>The <quote>include</quote> declaration includes a named GIF as
+the next image.  The global color maps of included GIFs are merged
+with the base table defined by any <quote>screen color</quote>
+declaration.  All images of an included multi-image GIF will be
+included in order.</para>
+
+<para>Comments (preceded with <quote>#</quote>) will be ignored.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress).
+Enables printout of running scan lines.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-d</term>
+<listitem>
+<para> Dump the input GIF file(s) into the text form described
+above.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-t</term>
+<listitem>
+<para>Specify name characters to use when dumping raster blocks.  Only
+valid with -d option.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para>Print one line of command line help, similar to Usage
+above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+<refsect1><title>Bugs</title>
+
+<para>Error checking is rudimentary.</para>
+
+</refsect1>
+<refsect1><title>Example:</title>
+
+<para>A sample icon file called <filename>sample.ico</filename> is
+included in the pic directory of the GIFLIB source
+distribution.</para>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Eric S. Raymond <email>&email;</email></para>
+
+</refsect1>
+</refentry>

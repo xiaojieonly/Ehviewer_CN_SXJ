@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gif2rgb.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gif2rgb</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gif2rgb</refname>
+<refpurpose>convert images saved as GIF to 24-bit RGB triplets</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gif2rgb</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-1</arg>
+      <arg choice='opt'>-c <replaceable>colors</replaceable></arg>
+      <arg choice='opt'>-s 
+      		<replaceable>width</replaceable>
+      		<replaceable>height</replaceable></arg>
+      <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress). 
+Enables printout of running scan lines.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-1</term>
+<listitem>
+<para>Only one file in the format of RGBRGB... triplets (Each of R,
+G,B is a byte) is being read or written.  This file size is 3 * Width
+* Height. If stdin is used for input or stdout for output, this option
+is implicitly applied. The default (if not `-1') is 3 files with the
+names OutFileName.R, OutFileName.G, OutFileName.B, each of which is
+Width * Height bytes.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-c colors </term>
+<listitem>
+<para> Specifies number of colors to use in RGB-to-GIF conversions, in
+bits per pixels, so '-c 8' actually specifies 256 colors (maximum and
+default).</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-s width height</term>
+<listitem>
+<para> Sets RGB-to-GIF conversion mode and specifies the size of the image 
+to read. </para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-o</term>
+<listitem>
+<para> specifies the name of the out file (see also `-1' above).</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para> Print one line of command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>By default, convert a GIF input file to RGB triplets.  If -s is 
+specified, convert RGB input to a GIF.</para>
+
+<para>If no input file is given, gif2rgb will try to read data
+from stdin.</para>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

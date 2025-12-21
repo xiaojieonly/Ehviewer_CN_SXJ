@@ -1,0 +1,88 @@
+# makefile for libpng
+# Copyright (C) 2007-2009, 2014 Glenn Randers-Pehrson
+# Copyright (C) 1995 Guy Eric Schalnat, Group 42, Inc.
+#
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
+
+PREFIX?= /usr/local
+LIBDIR=	${PREFIX}/lib
+MANDIR= ${PREFIX}/man/cat
+
+SHLIB_MAJOR=	16
+SHLIB_MINOR=	1.6.36
+
+LIB=	png
+SRCS=	png.c pngerror.c pngget.c pngmem.c pngpread.c \
+	pngread.c pngrio.c pngrtran.c pngrutil.c pngset.c pngtrans.c \
+	pngwio.c pngwrite.c pngwtran.c pngwutil.c
+
+HDRS=	png.h pngconf.h pnglibconf.h
+
+CFLAGS+= -W -Wall
+CPPFLAGS+= -I${.CURDIR}
+
+NOPROFILE= Yes
+
+CLEANFILES+= pngtest.o pngtest pnglibconf.h
+
+MAN=	libpng.3 libpngpf.3 png.5
+DOCS=	ANNOUNCE CHANGES INSTALL KNOWNBUG LICENSE README TODO \
+	libpng-manual.txt
+
+# Pre-built configuration
+# See scripts/pnglibconf.mak for more options
+PNGLIBCONF_H_PREBUILT= scripts/pnglibconf.h.prebuilt
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+pnglibconf.h: $(PNGLIBCONF_H_PREBUILT)
+	cp $(PNGLIBCONF_H_PREBUILT) $@
+
+pngtest.o:	pngtest.c
+	${CC} ${CPPFLAGS} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+
+pngtest:	pngtest.o
+	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} -L${.OBJDIR} -lpng -lz -lm
+
+test:	pngtest
+	cd ${.OBJDIR} && env \
+		LD_LIBRARY_PATH="${.OBJDIR}" ${.OBJDIR}/pngtest
+
+beforeinstall:
+	if [ ! -d ${DESTDIR}${PREFIX}/include/libpng ]; then \
+	  ${INSTALL} -d -o root -g wheel ${DESTDIR}${PREFIX}/include; \
+	fi
+	if [ ! -d ${DESTDIR}${LIBDIR} ]; then \
+	  ${INSTALL} -d -o root -g wheel ${DESTDIR}${LIBDIR}; \
+	fi
+	if [ ! -d ${DESTDIR}${LIBDIR}/debug ]; then \
+	  ${INSTALL} -d -o root -g wheel ${DESTDIR}${LIBDIR}/debug; \
+	fi
+	if [ ! -d ${DESTDIR}${MANDIR}3 ]; then \
+	  ${INSTALL} -d -o root -g wheel ${DESTDIR}${MANDIR}3; \
+	fi
+	if [ ! -d ${DESTDIR}${MANDIR}5 ]; then \
+	  ${INSTALL} -d -o root -g wheel ${DESTDIR}${MANDIR}5; \
+	fi
+	if [ ! -d ${DESTDIR}${PREFIX}/share/doc/png ]; then \
+	  ${INSTALL} -d -o root -g wheel ${DESTDIR}${PREFIX}/share/doc/png; \
+	fi
+
+afterinstall:
+	@rm -f ${DESTDIR}${LIBDIR}/libpng_pic.a
+	@rm -f ${DESTDIR}${LIBDIR}/debug/libpng.a
+	@rm -f ${DESTDIR}${PREFIX}/include/png.h
+	@rm -f ${DESTDIR}${PREFIX}/include/pngconf.h
+	@rm -f ${DESTDIR}${PREFIX}/include/pnglibconf.h
+	@rmdir ${DESTDIR}${LIBDIR}/debug 2>/dev/null || true
+	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} \
+		-m ${NONBINMODE} ${HDRS} ${DESTDIR}${PREFIX}/include
+	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} \
+		-m ${NONBINMODE} ${HDRS} ${DESTDIR}${PREFIX}/include
+	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} \
+		-m ${NONBINMODE} ${DOCS} ${DESTDIR}${PREFIX}/share/doc/png
+
+.include <bsd.lib.mk>

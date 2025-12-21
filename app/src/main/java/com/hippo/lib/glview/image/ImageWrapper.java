@@ -102,14 +102,37 @@ public class ImageWrapper {
     }
 
     /**
-     * @see Image#getAnimated()
+     * @see Image#complete()
      */
-    public Boolean getAnimated() {
-        return mImage.getAnimated();
+    public boolean complete() {
+        synchronized (mImage) {
+            return mImage.complete();
+        }
     }
 
     /**
-     * @see Image#getAnimated()
+     * @see Image#isCompleted()
+     */
+    public boolean isCompleted() {
+        return mImage.isCompleted();
+    }
+
+    /**
+     * @see Image#getFrameCount()
+     */
+    public int getFrameCount() {
+        return mImage.getFrameCount();
+    }
+
+//    /**
+//     * @see Image#getAnimated()
+//     */
+//    public Boolean getAnimated() {
+//        return mImage.getAnimated();
+//    }
+
+    /**
+     * @see Image#getWidth()
      */
     public int getWidth() {
         return mCut.width();
@@ -138,13 +161,18 @@ public class ImageWrapper {
         mImage.texImage(init, offsetX + mCut.left, offsetY + mCut.top, width, height);
     }
 
+//    /**
+//     * @see Image#start()
+//     */
+//    public void start() {
+//        mImage.start();
+//    }
     /**
-     * @see Image#start()
+     * @see Image#getFormat()
      */
-    public void start() {
-        mImage.start();
+    public int getFormat() {
+        return mImage.getFormat();
     }
-
     /**
      * @see Image#getDelay()
      */
@@ -164,5 +192,21 @@ public class ImageWrapper {
      */
     public boolean isRecycled() {
         return mImage.isRecycled();
+    }
+
+    /**
+     * @see Image#render(int, int, Bitmap, int, int, int, int, boolean, int)
+     */
+    public void render(int srcX, int srcY, Bitmap dst, int dstX, int dstY,
+                       int width, int height, boolean fillBlank, int defaultColor) {
+        mImage.render(srcX, srcY, dst, dstX, dstY,
+                width, height, fillBlank, defaultColor);
+    }
+
+    /**
+     * @see Image#advance()
+     */
+    public void advance() {
+        mImage.advance();
     }
 }

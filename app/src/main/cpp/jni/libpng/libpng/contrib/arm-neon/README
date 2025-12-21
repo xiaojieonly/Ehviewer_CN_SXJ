@@ -1,0 +1,83 @@
+OPERATING SYSTEM SPECIFIC ARM NEON DETECTION
+--------------------------------------------
+
+Detection of the ability to execute ARM NEON on an ARM processor requires
+operating system support.  (The information is not available in user mode.)
+
+HOW TO USE THIS
+---------------
+
+This directory contains C code fragments that can be included in arm/arm_init.c
+by setting the macro PNG_ARM_NEON_FILE to the file name in "" or <> at build
+time.  This setting is not recorded in pnglibconf.h and can be changed simply by
+rebuilding arm/arm_init.o with the required macro definition.
+
+For any of this code to be used the ARM NEON code must be enabled and run time
+checks must be supported.  I.e.:
+
+#if PNG_ARM_NEON_OPT > 0
+#ifdef PNG_ARM_NEON_CHECK_SUPPORTED
+
+This is done in a 'configure' build by passing configure the argument:
+
+   --enable-arm-neon=check
+
+Apart from the basic Linux implementation in contrib/arm-neon/linux.c this code
+is unsupported.  That means that it is not even compiled on a regular basis and
+may be broken in any given minor release.
+
+FILE FORMAT
+-----------
+
+Each file documents its testing status as of the last time it was tested (which
+may have been a long time ago):
+
+STATUS: one of:
+   SUPPORTED: This indicates that the file is included in the regularly
+         performed test builds and bugs are fixed when discovered.
+   COMPILED: This indicates that the code did compile at least once.  See the
+         more detailed description for the extent to which the result was
+         successful.
+   TESTED: This means the code was fully compiled into the libpng test programs
+         and these were run at least once.
+
+BUG REPORTS: an email address to which to send reports of problems
+
+The file is a fragment of C code. It should not define any 'extern' symbols;
+everything should be static.  It must define the function:
+
+static int png_have_neon(png_structp png_ptr);
+
+That function must return 1 if ARM NEON instructions are supported, 0 if not.
+It must not execute png_error unless it detects a bug.  A png_error will prevent
+the reading of the PNG and in the future, writing too.
+
+BUG REPORTS
+-----------
+
+If you mail a bug report for any file that is not SUPPORTED there may only be
+limited response.  Consider fixing it and sending a patch to fix the problem -
+this is more likely to result in action.
+
+CONTRIBUTIONS
+-------------
+
+You may send contributions of new implementations to
+png-mng-implement@sourceforge.net.  Please write code in strict C90 C where
+possible.  Obviously OS dependencies are to be expected.  If you submit code you
+must have the authors permission and it must have a license that is acceptable
+to the current maintainer; in particular that license must permit modification
+and redistribution.
+
+Please try to make the contribution a single file and give the file a clear and
+unambiguous name that identifies the target OS.  If multiple files really are
+required put them all in a sub-directory.
+
+You must also be prepared to handle bug reports from users of the code, either
+by joining the png-mng-implement mailing list or by providing an email for the
+"BUG REPORTS" entry or both.  Please make sure that the header of the file
+contains the STATUS and BUG REPORTS fields as above.
+
+Please list the OS requirements as precisely as possible.  Ideally you should
+also list the environment in which the code has been tested and certainly list
+any environments where you suspect it might not work.

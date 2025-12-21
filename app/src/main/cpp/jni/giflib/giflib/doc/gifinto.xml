@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifinto.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifinto</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifinto</refname>
+<refpurpose>save GIF on stdin to file if size over set threshold</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifinto</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-s <replaceable>minsize</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <group><replaceable>outfile</replaceable></group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to save stdin into a file with given name, iff the
+result file has size bigger than specified (see below).  This can be
+used to save a result under the same filename we started with in a
+chain of pipes.</para>
+
+<para>Always reads a GIF file from stdin.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress).  
+Enables printout of running scan lines.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-s MinFileSize</term>
+<listitem>
+<para>If file is less than MinFileSize, it is deleted and not renamed
+to the given name.  This will prevent killing the file we started with if
+the result is an empty file, or the pipeline did not
+complete.</para>
+<para>The default file threshold size is 14 bytes, which is 1 bigger
+than GIF file stamp (6 bytes) plus a GIF file screen descriptor (7
+bytes), so a GIF file with only GIF stamp and screen descriptor will
+not be renamed.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para>Print one line of command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

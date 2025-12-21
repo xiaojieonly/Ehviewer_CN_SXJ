@@ -1,0 +1,157 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH DWEBP 1 "July 18, 2024"
+.SH NAME
+dwebp \- decompress a WebP file to an image file
+.SH SYNOPSIS
+.B dwebp
+.RI [ options ] " input_file.webp
+.br
+.SH DESCRIPTION
+This manual page documents the
+.B dwebp
+command.
+.PP
+\fBdwebp\fP decompresses WebP files into PNG, PAM, PPM or PGM images.
+Note: Animated WebP files are not supported.
+.SH OPTIONS
+The basic options are:
+.TP
+.B \-h
+Print usage summary.
+.TP
+.B \-version
+Print the version number (as major.minor.revision) and exit.
+.TP
+.BI \-o " string
+Specify the name of the output file (as PNG format by default).
+Using "-" as output name will direct output to 'stdout'.
+.TP
+.BI \-\- " string
+Explicitly specify the input file. This option is useful if the input
+file starts with an '\-' for instance. This option must appear \fBlast\fP.
+Any other options afterward will be ignored. If the input file is "\-",
+the data will be read from \fIstdin\fP instead of a file.
+.TP
+.B \-bmp
+Change the output format to uncompressed BMP.
+.TP
+.B \-tiff
+Change the output format to uncompressed TIFF.
+.TP
+.B \-pam
+Change the output format to PAM (retains alpha).
+.TP
+.B \-ppm
+Change the output format to PPM (discards alpha).
+.TP
+.B \-pgm
+Change the output format to PGM. The output consists of luma/chroma
+samples instead of RGB, using the IMC4 layout. This option is mainly
+for verification and debugging purposes.
+.TP
+.B \-yuv
+Change the output format to raw YUV. The output consists of
+luma/chroma-U/chroma-V samples instead of RGB, saved sequentially as
+individual planes. This option is mainly for verification and debugging
+purposes.
+.TP
+.B \-nofancy
+Don't use the fancy upscaler for YUV420. This may lead to jaggy
+edges (especially the red ones), but should be faster.
+.TP
+.B \-nofilter
+Don't use the in-loop filtering process even if it is required by
+the bitstream. This may produce visible blocks on the non-compliant output,
+but it will make the decoding faster.
+.TP
+.BI \-dither " strength
+Specify a dithering \fBstrength\fP between 0 and 100. Dithering is a
+post-processing effect applied to chroma components in lossy compression.
+It helps by smoothing gradients and avoiding banding artifacts.
+.TP
+.BI \-alpha_dither
+If the compressed file contains a transparency plane that was quantized
+during compression, this flag will allow dithering the reconstructed plane
+in order to generate smoother transparency gradients.
+.TP
+.B \-nodither
+Disable all dithering (default).
+.TP
+.B \-mt
+Use multi-threading for decoding, if possible.
+.TP
+.BI \-crop " x_position y_position width height
+Crop the decoded picture to a rectangle with top-left corner at coordinates
+(\fBx_position\fP, \fBy_position\fP) and size \fBwidth\fP x \fBheight\fP.
+This cropping area must be fully contained within the source rectangle.
+The top-left corner will be snapped to even coordinates if needed.
+This option is meant to reduce the memory needed for cropping large images.
+Note: the cropping is applied \fIbefore\fP any scaling.
+.TP
+.B \-flip
+Flip decoded image vertically (can be useful for OpenGL textures for instance).
+.TP
+\fB\-resize\fR, \fB\-scale\fI width height\fR
+Rescale the decoded picture to dimension \fBwidth\fP x \fBheight\fP. This
+option is mostly intended to reducing the memory needed to decode large images,
+when only a small version is needed (thumbnail, preview, etc.). Note: scaling
+is applied \fIafter\fP cropping.
+If either (but not both) of the \fBwidth\fP or \fBheight\fP parameters is 0,
+the value will be calculated preserving the aspect-ratio.
+.TP
+.B \-quiet
+Do not print anything.
+.TP
+.B \-v
+Print extra information (decoding time in particular).
+.TP
+.B \-noasm
+Disable all assembly optimizations.
+
+.SH EXIT STATUS
+If there were no problems during execution, \fBdwebp\fP exits with the value of
+the C constant \fBEXIT_SUCCESS\fP. This is usually zero.
+.PP
+If an error occurs, \fBdwebp\fP exits with the value of the C constant
+\fBEXIT_FAILURE\fP. This is usually one.
+
+.SH EXAMPLES
+dwebp picture.webp \-o output.png
+.br
+dwebp picture.webp \-ppm \-o output.ppm
+.br
+dwebp \-o output.ppm \-\- \-\-\-picture.webp
+.br
+cat picture.webp | dwebp \-o \- \-\- \- > output.ppm
+
+.SH AUTHORS
+\fBdwebp\fP is a part of libwebp and was written by the WebP team.
+.br
+The latest source tree is available at
+https://chromium.googlesource.com/webm/libwebp
+.PP
+This manual page was written by Pascal Massimino <pascal.massimino@gmail.com>,
+for the Debian project (and may be used by others).
+
+.SH REPORTING BUGS
+Please report all bugs to the issue tracker:
+https://issues.webmproject.org
+.br
+Patches welcome! See this page to get started:
+https://www.webmproject.org/code/contribute/submitting\-patches/
+
+.SH SEE ALSO
+.BR cwebp (1),
+.BR gif2webp (1),
+.BR webpmux (1)
+.br
+Please refer to https://developers.google.com/speed/webp/ for additional
+information.
+.SS Output file format details
+PAM: http://netpbm.sourceforge.net/doc/pam.html
+.br
+PGM: http://netpbm.sourceforge.net/doc/pgm.html
+.br
+PPM: http://netpbm.sourceforge.net/doc/ppm.html
+.br
+PNG: http://www.libpng.org/pub/png/png-sitemap.html#info

@@ -1,0 +1,56 @@
+# makefile for libpng for NetBSD for the standard
+# make obj && make depend && make && make test
+# make includes && make install
+# Copyright (C) 2002 Patrick R.L. Welche
+# Copyright (C) 2007-2009, 2014 Glenn Randers-Pehrson
+#
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
+
+# You should also run makefile.ne16bsd
+
+LOCALBASE?=/usr/local
+LIBDIR=	${LOCALBASE}/lib
+MANDIR= ${LOCALBASE}/man
+INCSDIR=${LOCALBASE}/include
+
+LIB=	png
+SHLIB_MAJOR=	16
+SHLIB_MINOR=	1.6.36
+SRCS=	png.c pngset.c pngget.c pngrutil.c pngtrans.c pngwutil.c \
+	pngread.c pngrio.c pngwio.c pngwrite.c pngrtran.c \
+	pngwtran.c pngmem.c pngerror.c pngpread.c
+INCS=	png.h pngconf.h pnglibconf.h
+MAN=	libpng.3 libpngpf.3 png.5
+
+CPPFLAGS+=-I${.CURDIR}
+
+# Pre-built configuration
+# See scripts/pnglibconf.mak for more options
+PNGLIBCONF_H_PREBUILT= scripts/pnglibconf.h.prebuilt
+
+# We should be able to do something like this instead of the manual
+# uncommenting, but it core dumps for me at the moment:
+# .if ${MACHINE_ARCH} == "i386"
+#   MKLINT= no
+# .endif
+
+CLEANFILES+=pngtest.o pngtest pnglibconf.h
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+pnglibconf.h: $(PNGLIBCONF_H_PREBUILT)
+	cp $(PNGLIBCONF_H_PREBUILT) $@
+
+pngtest.o:	pngtest.c
+	${CC} -c ${CPPFLAGS} ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
+
+pngtest:	pngtest.o libpng.a
+	${CC} ${LDFLAGS} ${.ALLSRC} -o${.TARGET} -lz -lm
+
+test:	pngtest
+	cd ${.CURDIR} && ${.OBJDIR}/pngtest
+
+.include <bsd.lib.mk>

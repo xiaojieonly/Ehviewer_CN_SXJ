@@ -1,0 +1,1244 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE article PUBLIC 
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY homepage      "http://catb.org/~esr/">
+<!ENTITY email         "esr@thyrsus.com">
+]>
+<article><title>The GIFLIB Library</title>
+
+<articleinfo>
+
+<author>
+  <firstname>Eric</firstname>
+  <othername>Steven</othername>
+  <surname>Raymond</surname>
+  <affiliation>
+    <orgname><ulink url="&homepage;">
+    Thyrsus Enterprises</ulink></orgname> 
+    <address>
+    <email>&email;</email>
+    </address>
+  </affiliation>
+</author>
+<copyright>
+  <year>2012</year>
+  <holder role="mailto:&email;">Eric S. Raymond</holder> 
+</copyright>
+
+</articleinfo>
+
+<!--
+Gershon Elber, May 1991
+Eric S. Raymond, Sep 1992
+Toshio Kuratomi, May 2004
+-->
+
+<sect1><title>Introduction</title>
+
+<para>The Graphics Interchange Format(c) is the Copyright property of
+CompuServe Incorporated.  GIF(sm) is a Service Mark property of CompuServe
+Incorporated.</para>
+
+<para>This document explains the GIF library code in directory `lib'.  The
+code is collected into a service library which is used in all the utilities in
+`util'.  It can be used in any application needs to read/write the GIF
+file format.  This document does <emphasis>not</emphasis> explain the GIF file
+format and assumes you know it, at least to the level of the GIF file
+structure.</para>
+
+</sect1>
+<sect1><title>Credit and Blame</title>
+
+<para>Gershon wrote: "This library was written because I couldn't find
+anything similar and I wanted one.  I was inspired by the RLE Utah tool kit,
+which I hoped to port to an IBM PC, but found it to be too machine specific,
+and its compression ratio too low.  I compromised on the GIF format, but I am
+not sure how long 8 bits per pixel will be enough."</para>
+
+<para>During his first spell of maintainership between 1989 and 1994, Eric
+S. Raymond (aka "ESR") ported the code to Unix, wrote the high-level
+DGIfSlurp()/EGifSpew() interface, rationalized the internal data
+structures, and did a lot of general cleanup and refactoring to
+improve the code quality.</para>
+
+<para>Between 1994 and 2012 Toshio Kuratomi fixed various tool bugs,
+build-recipe problems and rare segfaults. He partially untangled the
+somewhat misdesigned extension-block handling in earlier versions. 
+The core code was very stable during this period.</para>
+
+<para>During his second spell of maintainership, ESR fixed the
+extension API, made the library re-entrant and thread-safe, wrote a
+regression-test suite, greatly improved the documentation, and
+discarded a lot of obsolete code.</para>
+
+</sect1>
+<sect1><title>The GIF descriptor</title>
+
+<para>When a GIF file is opened, a GIF file descriptor is created which
+is a pointer to GifFileType structure as follows:</para>
+
+<programlisting>
+typedef struct GifFileType {
+    GifWord SWidth, SHeight;         /* Size of virtual canvas */
+    GifWord SColorResolution;        /* How many colors can we generate? */
+    GifWord SBackGroundColor;        /* Background color for virtual canvas */
+    GifByteType AspectByte;	     /* Used to compute pixel aspect ratio */
+    ColorMapObject *SColorMap;       /* Global colormap, NULL if nonexistent. */
+    int ImageCount;                  /* Number of current image (both APIs) */
+    GifImageDesc Image;              /* Current image (low-level API) */
+    SavedImage *SavedImages;         /* Image sequence (high-level API) */
+    int ExtensionBlockCount;         /* Count extensions past last image */
+    ExtensionBlock *ExtensionBlocks; /* Extensions past last image */    
+    int Error;			     /* Last error condition reported */
+    void *UserData;                  /* hook to attach user data (TVT) */
+    void *Private;                   /* Don't mess with this! */
+} GifFileType;
+</programlisting>
+
+<para>This structure was copied from gif_lib.h - the header file for the GIF
+library.  Any application program that uses the libgif.a library should
+include it.  Members beginning with S refer to the GIF screen; others hold
+properties of the current image (a GIF file may have more than one image)
+or point to allocated store used by various routines.</para>
+
+<para>The user almost never writes into this structure (exception: it
+may occasionally be useful to alter things in the SavedImages array and
+Trailing member), but can read any of these items at any time it is
+valid (Image information is invalid until the first image has been read;
+read; SavedImages information is valid only after a DGifSlurp() call).</para>
+
+<para>As the library needs to keep its own internal data, a Private pointer
+to hidden data is included. Applications should ignore this.</para>
+
+<para>The library allocates its own memory dynamically, on opening of files,
+and releases that once closed.  The user is never required to allocate
+any memory for any of the functions of this library, and is almost never
+required to free them directly. The "almost" in the latter clause is because
+one manual free() call may be required on a failed file close; see the
+documentation of DGifClose() and EGifClose() for details.</para>
+
+<para>Here is a module summary:</para>
+
+<variablelist>
+<varlistentry>
+<term>egif_lib.c</term>
+<listitem>
+<para>Encoding routines, all prefixed with E.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>dgif_lib.c</term>
+<listitem>
+<para>Decoding routines, all prefixed with D.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>gifalloc.c</term>
+<listitem>
+<para>Routines for colormap handling and GIF record allocation.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>gif_font.c</term>
+<listitem>
+<para>The 8x8 font table for the GIF utility font.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>The library includes a sixth file of hash-function code which is accessed
+internally only.</para>
+
+<para>Most of the routines return GIF_ERROR (see gif_lib.h) if something
+went wrong, GIF_OK otherwise.  After an error return, all routines that
+take a pointer-to-GifFileType argument set the Error member with a code that
+can be interpreted into an explanatory string with the function 
+GifErrorString() in gif_err.c. (The exception to this is the
+DGifClose() and EGifClose() routines, which deallocate that structure
+and must therefore return any error code through a pointer argument.)</para>
+
+</sect1>
+<sect1><title>Decoding (dgif_lib.c)</title>
+
+<para>The following functions are used to set up input from a GIF:</para>
+
+<programlisting id="DGifOpenFileName">
+GifFileType *DGifOpenFileName(char *GifFileName, int *ErrorCode)
+</programlisting>
+
+<para>Open a new GIF file (in binary mode, if under Windows) using the
+given GifFileName, and read its Screen information.</para>
+
+<para>If any error occurs, NULL is returned and ErrorCode is set (if
+non-NULL).</para>
+
+<programlisting id="DGifOpenFileHandle">
+GifFileType *DGifOpenFileHandle(int FileHandle, int *ErrorCode)
+</programlisting>
+
+<para>Open a new GIF file using the given FileHandle, and read its Screen
+information.</para>
+
+<para>If any error occurs, NULL is returned and ErrorCode is set (if
+non-NULL).</para>
+
+<para>Once you have acquired a handle on a GIF, the high-level
+function</para>
+
+<programlisting id="DGifSlurp">
+int DGifSlurp(GifFileType)
+</programlisting>
+
+<para>reads the rest of a complete (possibly multi-image) GIF file from the
+indicated file handle into in-core allocated structures.  It returns
+GIF_OK on success, GIF_ERROR on failure; on failure, the Error member 
+will be set.</para>
+
+<para>Once you have done this, all image, raster, and extension-block
+data in the GIF is accessable in the SavedImages member (see the
+structures in gif_lib.h).  When you have modified the image to taste,
+write it out with EGifSpew().</para>
+
+<para>One detail that may not be clear from just looking at the
+structures is how extension blocks and sub-blocks are stored.  Each
+ExtensionBlock structure represents an extension data block.  Those
+with a zero function code represent continuation data blocks attached
+to previous blocks with nonzero function codes.</para>
+
+<para>You can read from a GIF file through a function hook. Initialize
+with </para>
+
+<programlisting id="DGifOpen">
+GifFileType *DGifOpen(void *userPtr, InputFunc readFunc, int *ErrorCode)
+</programlisting>
+
+<para>and see the library header file for the type of InputFunc.</para>
+
+<para>There is also a set of deprecated functions for sequential I/O,
+described in a later section.</para>
+</sect1>
+<sect1><title>Encoding (egif_lib.c)</title>
+
+<para>The high-level function</para>
+
+<programlisting id="EGifSpew">
+int EGifSpew(GifFileType *GifFile)
+</programlisting>
+
+<para>writes a complete (possibly multi-image) GIF file to the indicated file
+handle from in-core allocated structures created by a previous DGifSlurp()
+or equivalent operations.  Its argument is a GIF file descriptor, which
+imnplicitly points to storage previously allocated by DGifSlurp().</para>
+
+<para>The file is written with a GIF87 stamp unless it contains one of the four
+special extension blocks defined in GIF89, in which case it is written
+with a GIF89 stamp.</para>
+
+<para>EGifSpew() finishes by closing the GIF (writing a termination
+record to it) and deallocating the associated storage.</para>
+
+<para>You can write to a GIF file through a function hook. Initialize
+with </para>
+
+<programlisting id="EGifOpen">
+GifFileType *EGifOpen(void *userPtr, OutputFunc writeFunc, int *ErrorCode)
+</programlisting>
+
+<para>and see the library header file for the type of OutputFunc.</para>
+
+<para>There is also a set of deprecated functions for sequential I/O,
+described in a later section.</para>
+</sect1>
+<sect1><title>Color map handling and allocation routines</title>
+
+<programlisting id="GifMakeMapObject">
+ColorMapObject *GifMakeMapObject(int ColorCount, GifColorType *ColorMap)
+</programlisting>
+
+<para>Allocate storage for a color map object with the given number of
+RGB triplet slots.  If the second argument is non-NULL, initialize
+the color table portion of the new map from it.  Returns NULL if
+memory is exhausted or if the size is not a power of 2 &lt;= 256.</para>
+
+<programlisting id="GifFreeMapObject">
+void GifFreeMapObject(ColorMapObject *Object)
+</programlisting>
+
+<para>Free the storage occupied by a ColorMapObject that is no longer
+needed.</para>
+
+<programlisting id="GifUnionColorMap">
+ColorMapObject *GifUnionColorMap(
+        ColorMapObject *ColorIn1, ColorMapObject *ColorIn2,
+        GifPixelType ColorTransIn2[])
+</programlisting>
+
+<para>Create the union of two given color maps and return it.  If the result
+won't fit into 256 colors, NULL is returned, the allocated union
+otherwise.  ColorIn1 is copied as it to ColorUnion, while colors from
+ColorIn2 are copied iff they didn't exist before.  ColorTransIn2 maps
+the old ColorIn2 into ColorUnion color map table.</para>
+
+<programlisting id="GifAttachImage">
+SavedImage *GifAttachImage(GifFileType *GifFile)
+</programlisting>
+
+<para>Add an image block to the SavedImages array.  The image block is
+initially zeroed out.  This image block will be seen by any following
+EGifSpew() calls.</para>
+
+</sect1>
+<sect1><title>Graphics control extension handling</title>
+
+<para>GIF89 added a graphics control extension block, but versions
+of GIFLIB before 5.0 weren't much help in reading or modifying them.  
+This lack has been remedied with the following structure and functions:</para>
+
+<programlisting>
+typedef struct GraphicsControlBlock {
+    int DisposalMode;
+#define DISPOSAL_UNSPECIFIED      0       /* No disposal specified. */
+#define DISPOSE_DO_NOT            1       /* Leave image in place */
+#define DISPOSE_BACKGROUND        2       /* Set area too background color */
+#define DISPOSE_PREVIOUS          3       /* Restore to previous content */
+    bool UserInputFlag;      /* User confirmation required before disposal */
+    int DelayTime;           /* pre-display delay in 0.01sec units */
+    int TransparentColor;    /* Palette index for transparency, -1 if none */
+#define NO_TRANSPARENT_COLOR	-1
+} GraphicsControlBlock;
+
+int DGifSavedExtensionToGCB(GifFileType *GifFile, 
+			    int ImageIndex, 
+			    GraphicsControlBlock *GCB);
+int EGifGCBToSavedExtension(const GraphicsControlBlock *GCB, 
+			    GifFileType *GifFile, 
+			    int ImageIndex);
+</programlisting>
+
+<para>With these functions you can extract the data from a graphics
+control extension associated with a saved image into a
+GraphicsControlBlock, modify it, and write it back out.  Note that if
+the specified saved image doesn't have a graphics control extension,
+DGifSavedExtensionToGCB() will fill the GCB with default values and
+return GIF_ERROR (which can be ignored); EGifGCBToSavedExtension()
+will create a new leading extension block.</para>
+
+</sect1>
+<sect1><title>Error Handling (gif_err.c)</title>
+
+<programlisting>
+int GifErrorString(int ErrCode)
+</programlisting>
+
+<para>Returns a sting describing the specified GIFLIB error code.
+Return NULL if the argument is not a valid error code.</para>
+
+</sect1>
+<sect1><title>The GIF Utility Font</title>
+
+<para>The 8x8 utility font used in gifecho and gifcolor lives in the library
+module gif_font.c, in a table called GifAsciiTable.  The library header file
+includes suitable externs and defines.</para>
+
+<para>The GIF utility font support includes entry points for drawing legends
+on in-core images, drawing boxes and rectangles, and boxing text.
+These entry points are as follows:</para>
+
+<programlisting id="GifDrawText">
+void GifDrawText8x8(
+        SavedImage *Image,
+        const int x, const int y,
+        const char *legend,
+        const int color)
+</programlisting>
+
+<para>Draw text using the 8x8 utility font on the saved image.  Upper
+left corner of the text is at image pixel (x, y).  Use the specified
+color index.</para>
+
+<programlisting id="GifDrawBox">
+void GifDrawBox(SavedImage *Image,
+        const int x, const int y,
+        const int w, const int h,
+        const int color)
+</programlisting>
+
+<para>Draw a box on the saved image.  Upper left corner of the box is at
+image pixels (x, y), width is w, height is h.  Use the specified color
+index.</para>
+
+<programlisting id="GifDrawRectangle">
+void GifDrawRectangle(SavedImage *Image,
+        const int x, const int y,
+        const int w, const int h,
+        const int color)
+</programlisting>
+
+<para>Draw a (filled) rectangle on the saved image.  Upper left corner of
+the box is at image pixels (x, y), width is w, height is h.  Use the
+specified color index.</para>
+
+<programlisting id="GifDrawBoxedText">
+void GifDrawBoxedText8x8(SavedImage *Image,
+        const int x, const int y,
+        const char *legend,
+        const int border,
+        const int bg, const int fg)
+</programlisting>
+
+<para>Draw text on a filled rectangle.  The rectangle will be sized to fit
+the text, with upper left hand corner at (x, y) on the saved image.
+The `border' argument specifies a pixel margin around the text.  The
+`bg' argument is the color table index to fill the rectangle with;
+`fg' is the color table index to draw the text with.</para>
+
+<para>This function interprets some characters in the legend string
+specially.  A tab (\t) is interpreted as a command to center the
+following text in the box.  A carriage return (\r) is interpreted
+as a request for a line break.</para>
+
+</sect1>
+<sect1><title>Error codes</title>
+
+<para>Errors as reported from the GIFLIB library are divided to two major
+categories: the encoder (errors prefixed by E_GIF_ERR), and the
+decoder (errors prefixed by D_GIF_ERR).  This document explains them
+briefly.</para>
+
+<sect2><title>Encoding errors</title>
+
+<variablelist>
+<varlistentry>
+<term><errorname>E_GIF_ERR_OPEN_FAILED</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to open given file"
+   IO error result when attempt to open the given GIF file.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_WRITE_FAILED</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to Write to given file"
+   IO error result when attempt to write to the given GIF file.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_HAS_SCRN_DSCR</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Screen Descriptor
+   already been set" Attempt to write second screen descriptor to same
+   GIF file. GIF file should have exactly one screen descriptor which
+   should be set directly after the file is opened.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_HAS_IMAG_DSCR</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Image Descriptor is still active"
+   Image descriptor should be sent before and image dump, and no second
+   image descriptor should be sent before current image dump ended. This error
+   occurred probably because current image was not complete.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_NO_COLOR_MAP</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Neither Global Nor
+   Local color map" An image must have either global (screen) or local
+   (image) color map.  Neither were given in this case.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_DATA_TOO_BIG</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "#Pixels bigger than
+   Width * Height" The number of pixels dumped for this image is
+   bigger than specified by image Height times image Width.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_NOT_ENOUGH_MEM</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Fail to allocate
+   required memory" Once an attemp is made to open GIF file, special
+   structures are allocated to hold internal data for it. If
+   allocation fails this error is returned.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_DISK_IS_FULL</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Write failed (disk full?)"
+   Writing encoded data failed.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>E_GIF_ERR_CLOSE_FAILED</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to close given file"
+   Closing file failed.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname> E_GIF_ERR_NOT_WRITEABLE</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Given file was not
+   opened for write" GIF files can be opened both for read (DGIF part
+   of library) and write (EGIF part of library). This error occurs
+   when a file is opened for read (using DGIF) is given to one of the
+   encoding (EGIF) routines.</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+</sect2>
+<sect2><title>Decoding errors</title>
+
+<variablelist>
+<varlistentry>
+<term><errorname>D_GIF_ERR_OPEN_FAILED</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to open given file"
+   IO error result when attempt to open the given GIF file.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_READ_FAILED</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to read from given file"
+   IO error result when attempt to write to the given GIF file.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_NOT_GIF_FILE</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Data is not a GIF file"
+   GIF files should have special stamp identifies them as such, If that stamp
+   is not found, this error is issued.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_NO_SCRN_DSCR</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "No screen descriptor detected"
+   Each GIF file should have screen descriptor in its header. This error will
+   be generated if no such descriptor was found.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_NO_IMAG_DSCR</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "No image descriptor detected"
+   Each image should have image descriptor in its header. This error will
+   be generated if no such descriptor was found.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_NO_COLOR_MAP</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Neither global nor
+   local color map" An image must have either global (screen) or local
+   (image) color map.  Neither were given in this case.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_WRONG_RECORD</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Wrong record type detected"
+   Each record in a GIF file has a special identifier in its header. If the
+   record has an unrecognized identifier, this error is generated.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+  <term><errorname>D_GIF_ERR_DATA_TOO_BIG</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Number of pixels bigger than
+   width * height" The number of pixels dumped for this image is
+   bigger than specified by image Height times image Width.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_NOT_ENOUGH_MEM</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to allocate
+   required memory" Once an attemp is made to open GIF file, special
+   structures are allocated to hold internal data for it. If
+   allocation fails this error is returned.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_CLOSE_FAILED</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Failed to close given file"
+   Closing file failed.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_NOT_READABLE</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Given file was not
+   opened for read" GIF files can be opened both for read (DGIF part
+   of library) and write (EGIF part of library). This error occurs
+   when a file is opened for write (using EGIF) is given to one of the
+   decoding (DGIF) routines.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_IMAGE_DEFECT</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Image is defective,
+   decoding aborted" This error is generated, once the decoding failed
+   - probably image is defect.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><errorname>D_GIF_ERR_EOF_TOO_SOON</errorname></term>
+<listitem>
+   <para>Message printed using PrintGifError: "Image EOF detected,
+   before image complete" This error is generated once EOF errorname
+   is detected in encoded image before all the pixels (Width *
+   Height) has be decoded.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
+</sect1>
+<sect1><title>Utility support library</title>
+
+<para>These functions are not part of the core GIF library.  They are part
+of the getarg library that supports the utilities.</para>
+
+<sect2><title>Error Handling</title>
+
+<programlisting id="PrintGifError">
+void PrintGifError(void)
+</programlisting>
+
+<para>Print a one-line diagnostic on the last giflib error to stderr.</para>
+
+</sect2>
+<sect2><title>Command Line Parsing</title>
+
+<programlisting id="GAGetArgs">
+bool GAGetArgs(int argc, char **argv, char *CtrlStr, ...)
+</programlisting>
+
+<para>Main routine of this module.  Given argc &amp; argv as received by
+the main procedure, the command line CtrlStr, and the addresses of
+all parameters, parse the command line, and update the parameters.</para>
+
+<para>The CtrlStr defines what types of variables should follow. Look at the
+beginning of getarg.c for exact usage.</para>
+
+<para>Returns false if successful, returns true on failure.</para>
+
+<programlisting id="GAPrintErrMsg">
+void GAPrintErrMsg(int Error)
+</programlisting>
+
+<para>If an error occurred in GAGetARgs, this routine may be used to print
+one line diagnostic to stderr.</para>
+
+<programlisting id="GAPrintHowTo">
+void GAPrintHowTo(char *CtrlStr)
+</programlisting>
+
+<para>Given the same CtrlStr as for GAGetArgs, can be used to print a one line
+'how to use'. </para>
+
+</sect2>
+</sect1>
+<sect1 id="sequential"><title>Sequential access</title>
+
+<para>If you are handling large images on an extremely memory-limited
+machine, you may need to use the following functions for sequential
+read and write. It's better to avoid them and use the simpler 
+DGifSlurp()/EGifSpew() interface.</para>
+
+<sect2><title>Sequential reading</title>
+
+<programlisting id="DGifGetScreenDesc">
+int DGifGetScreenDesc(GifFileType *GifFile)
+</programlisting>
+
+<para>Reads the screen information into the GifFile structure. Note this
+routine is automatically called once a file is opened, and therefore
+usually need not be called explicitly.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="DGifGetRecordType">
+int DGifGetRecordType(GifFileType *GifFile, GifRecordType *GifType)
+</programlisting>
+
+<para>As the GIF file can have different records in arbitrary order, this
+routine should be called once the file was open to detect the next
+record type, and act upon it.  It can return these types in GifType:</para>
+
+<variablelist>
+<varlistentry>
+<term>1. UndefinedRecordType </term>
+<listitem>
+<para>something is wrong!</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>2. ScreenDescRecordType </term>
+<listitem>
+<para>screen information.  As the screen info is automatically read in when the file is open, this should not happen.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>3. ImageDescRecordType </term>
+<listitem>
+<para> next record is an image descriptor.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>4. ExtensionRecordType</term>
+<listitem>
+<para> next record is extension block.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>5. TrailerRecordType</term>
+<listitem>
+<para>last record reached, can close the file.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>The first two types can usually be ignored. The function
+returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="DGifGetImageDesc">
+int DGifGetImageDesc(GifFileType *GifFile)
+</programlisting>
+
+<para>Reads image information into the GifFile structure.
+Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="DGifGetLine">
+int DGifGetLine(GifFileType *GifFile, PixelType *GifLine, int GifLineLen)
+</programlisting>
+
+<para>Load a block of pixels from the GIF file.  The line can be
+of any length.  More than that, this routine may be interleaved with
+DGifGetPixel until all pixels have been read.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting>
+int DGifGetPixel(GifFileType *GifFile, PixelType GifPixel)
+</programlisting>
+
+<para>Loads one pixel from the GIF file.  This routine may be interleaved
+with <link linkend="DGifGetLine">DGifGetLine()</link>, until all pixels are
+read.  Because of the overhead per each call, use of this routine is
+not recommended.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="DGifGetComment">
+int DGifGetComment(GifFileType *GifFile, char *GifComment)
+</programlisting>
+
+<para>Load a comment from the GIF file.  Because DGifGetRecordType will
+only tell if the record is of type extension, this routine should be
+called iff it is known %100 that is must be a comment.</para>
+
+<para>For the definition of a comment, see <link
+linkend="EGifPutComment">EGifPutComment()</link>.  Returns GIF_ERROR
+if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting>
+int DGifGetExtension(
+        GifFileType *GifFile,
+        int *GifExtCode,
+        ByteType **GifExtension)
+</programlisting>
+
+<para>Loads an extension block from the GIF file.  Extension blocks
+are optional in GIF files.  This routine should be followed by
+<link linkend="DGifGetExtensionNext">DGifGetExtensionNext</link>.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<para><programlisting id="DGifGetExtensionNext">
+int DGifGetExtensionNext(GifFileType *GifFile, ByteType **GifExtension)
+</programlisting>
+
+As extensions may contain more than one block, use this routine to
+continue after DGifGetExtension, until *GifExtension is NULL.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting>
+int DGifGetCode(
+        GifFileType *GifFile, 
+        int *GifCodeSize, ByteType **GifCodeBlock)
+</programlisting>
+
+<para>It sometimes may be desired to read the compressed code as is
+without decoding it.  This routine does exactly that (with
+DGifGetCodeNext), and can be used instead of DGifGetLine.</para>
+
+<para>This compressed code information can be written out using the
+EGifPutCode/EGifPutCodeNext sequence (see gifpos.c for example).
+Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="DGifGetCodeNext">
+int DGifGetCodeNext(GifFileType *GifFile, ByteType **GifCodeBlock)
+</programlisting>
+
+<para>See DGifGetCode above.</para>
+	  
+<programlisting id="DGifGetLZCodes">
+int DGifGetLZCodes(GifFileType *GifFile, int *GifCode)
+</programlisting>
+
+<para>This routine can be called instead of DGifGetLine/DGifGetPixel or
+DGifGetCode/DGifGetCodeNext to get the 12 bits LZ codes of the images.
+It will be used mainly for debugging purposes (see GifText.c for
+example).</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="DGifCloseFile">
+int DGifCloseFile(GifFileType *GifFile, int *ErrorCode)
+</programlisting>
+
+<para>Write a termination block to the GIF, close the GIF file and
+free all memory allocated for managing it. GifFile should not be used after
+this routine has been called.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise. When
+GIF_ERROR is returned, the diagnostic error code is left in ErrorCode.
+The GifFile structure is unconditionally freed.</para>
+
+<para>(Note: In versions before 5.1.0, the ErrorCode argument was
+absent and the GifFile structure was not freed so that the
+diagnostic error code will remain accessible in GifFile->Error.
+This behavior was changed because it caused problems for the
+implementation of library wrappers in dynamic languages.)</para>
+
+</sect2>
+<sect2><title>Sequential writing</title>
+
+<para>If you are handling large images on a memory-limited machine, you may need
+to use the following functions for sequential write.</para>
+
+<programlisting id="EGifOpenFileName">
+GifFileType *EGifOpenFileName(char *GifFileName, bool GifTestExistance, int *ErrorCode)
+</programlisting>
+
+<para>Open a new GIF file using the given GifFileName (in binary mode,
+if under Windows).  If GifTestExistance is TRUE, and file exists, the
+file is not destroyed, and NULL returned.</para>
+
+<para>If any error occurs, NULL is returned and the ErrorCode is set.</para>
+
+<programlisting id="EGifOpenFileHandle">
+GifFileType *EGifOpenFileHandle(int GifFileHandle, int *ErrorCode)
+</programlisting>
+
+<para>Open a new GIF file using the given GifFileHandle.</para>
+
+<para>If any error occurs, NULL is returned and ErrorCode is set.</para>
+
+<para>The file is opened in binary mode, and its buffer size is set to
+FILE_BUFFER_SIZE bytes.</para>
+
+<programlisting>
+char *EGifGetGifVersion(GifFileType *GifFile)
+</programlisting>
+
+<para>That version computation is available through this function.</para>
+
+<programlisting id="EGifSetGifVersion">
+void EGifSetGifVersion(GifFileType *GifFile, bool gif89)
+</programlisting>
+
+<para>Set the GIF type, to GIF89 if the argument is true and GIF87 if
+it is false.  The default type is GIF87. This function may be called
+aftert the GifFile record is allocated but before
+EGifPutScreenDesc().</para>
+
+<programlisting>
+int EGifPutScreenDesc(GifFileType *GifFile,
+        const int GifWidth, const GifHeight,
+        const int GifColorRes, const int GifBackGround,
+        ColorMapObject *GifColorMap)
+</programlisting>
+
+<para>Update the GifFile Screen parameters, in GifFile structure and in
+the real file.  If error occurs, returns GIF_ERROR (see gif_lib.h),
+otherwise GIF_OK.</para>
+
+<para>This routine should be called immediately after the GIF file was
+opened.</para>
+
+<programlisting>
+int EGifPutImageDesc(GifFileType *GifFile,
+        const int GifLeft, const int GifTop,
+        const int GifWidth, const GifHeight,
+        const bool GifInterlace,
+        ColorMapObject *GifColorMap)
+</programlisting>
+
+<para>Update GifFile Image parameters, in GifFile structure and in the real
+file. if error occurs returns GIF_ERROR (see gif_lib.h), otherwise
+GIF_OK.</para>
+
+<para>This routine should be called each time a new image must be
+dumped to the file.</para>
+
+<programlisting id="EGifPutLine">
+int EGifPutLine(GifFileType *GifFile, PixelType *GifLine, int GifLineLen)
+</programlisting>
+
+<para>Dumps a block of pixels out to the GIF file.  The slab can be of
+any length.  More than that, this routine may be interleaved with
+<link linkend="EGifPutPixel">EGifPutPixel()</link>, until all pixels
+have been sent.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutPixel">
+int EGifPutPixel(GifFileType *GifFile, const PixelType GifPixel)
+</programlisting>
+
+<para>Dumps one pixel to the GIF file.  This routine may be interleaved with
+<link linkend="EGifPutLine">EGifPutLine()</link>, until all pixels were sent.
+Because of the overhead for each call, use of this routine is not
+recommended.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutComment">
+int EGifPutComment(GifFileType *GifFile, char *GifComment)
+</programlisting>
+
+<para>Uses extension GIF records to save a string as a comment is the file.
+The extension code is 'C' (for Comment).</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutExtension">
+int EGifPutExtension(
+        GifFileType *GifFile,
+        const int GifExtCode,
+        const int GifExtLen,
+        void *GifExtension)
+</programlisting>
+
+<para>Dumps the given extension block into the GIF file. Extension blocks
+are optional in GIF file. Extension blocks of more than 255 bytes or
+more than one block are not supported in this function.  Please use
+EGifPutExtensionFirst, EGifPutExtensionBlock, and EGifPutExtensionTrailer
+if your extension blocks may fall into this category.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutExtensionLeader">
+int EGifPutExtensionLeader(
+        GifFileType * GifFile,
+        const int GifExtCode)
+</programlisting>
+
+<para>Dumps the beginning of a GIF extension block to a GIF file.
+Extension blocks are optional in GIF files.  This function outputs the
+type code information necessary for a GIF extension block.</para>
+
+<para>Further blocks of the GIF Extension should be dumped using
+EGifPutExtensionBlock.  When finished with this extension block,
+EGifPutExtensionTrailer should be called to output the block termination.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutExtensionBlock">
+int EGifPutExtensionBlock(
+        GifFileType * GifFile,
+        const int GifExtLen,
+        const VoidPtr GifExtension)
+</programlisting>
+
+<para>Dumps a subblock of a GIF extension to a GIF File; should be
+used only following an initializing call to EGifPutExtensionLeader().
+Extension blocks are optional in GIF files.  This function will write
+the Extension Data in GifExtension to the file as a subblock of the
+preceding Extension Block.  Repeat calling of this function until all
+data subblocks have been output.</para>
+
+<para>Note that EGifPutExtensionLeader needs to be called before any
+calls to this function.  EGifPutExtensionTrailer should be called to
+finish the Extension block after all data subblocks have been
+output.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutExtensionTrailer">
+int EGifPutExtensionTrailer(
+        GifFileType * GifFile,
+        const VoidPtr GifExtension)
+</programlisting>
+
+<para>Dumps the GIF extension block terminator to a GIF File to end
+the current Extension block.</para>
+
+<para>Note that a call to EGifPutExtensionLeader is needed to open the GIF
+Extension Block prior to calling this function.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutCode">
+int EGifPutCode(
+        GifFileType *GifFile,
+        int *GifCodeSize,
+        ByteType **GifCodeBlock)
+</programlisting>
+
+<para>It sometimes may be desired to write the compressed code as is
+without decoding it.  For example a filter for a GIF file that change
+only screen size (GifPos), does not need the exact pixel values.
+Piping out the compressed image as is makes this process much
+faster.</para>
+
+<para>This routine does exactly that (with EGifPutCodeNext), and can be
+used instead of EGifPutLine.  You'll usually use this with the
+DGifGetCode/DgifGetCodeNext routines, which reads the compressed
+code, while EGifPutCode/EGifPutCodeNext write it out.  See gifpos.c
+for example.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise.</para>
+
+<programlisting id="EGifPutCodeNext">
+int EGifPutCodeNext(GifFileType *GifFile, ByteType **GifCodeBlock)
+</programlisting>
+
+<para>See EGifPutCode above.</para>
+
+<programlisting id="EGifCloseFile">
+int EGifCloseFile(GifFileType *GifFile)
+</programlisting>
+
+<para>Write a termination block to the GIF, close the GIF file, and
+free all memory allocated for managing it. GifFile should not be used
+after this routine has been called.</para>
+
+<para>Returns GIF_ERROR if something went wrong, GIF_OK otherwise. When
+GIF_ERROR is returned, the diagnostic error code is left in ErrorCode.
+The GifFile structure is unconditionally freed.</para>
+
+<para>(Note: In versions before 5.1.0, the ErrorCode argument was
+absent and the GifFile structure was not freed so that the
+diagnostic error code will remain accessible in GifFile->Error.
+This behavior was changed because it caused problems for the
+implementation of library wrappers in dynamic languages.)</para>
+</sect2>
+
+</sect1>
+<sect1 id="compatibility"><title>Forward and Backward Compatibility</title>
+
+<para>Except for some details of extension-block handling and the addition
+of read/write function hooks, the DGifSlurp()/EGifSpew() interface has
+been stable since 1990.  It is expected to remain so.</para>
+
+<para>However, the signatures of the file-opener functions were changed in 5.0
+in order to make the library fully reentrant and thread-safe - earlier library
+versions did not feature the final pointer-to-error-code argument in 
+DGifOpen() and friends.  For the same reason, the static storage queried by
+GifLastError() in older versions is gone, and that function abolished.</para>
+
+<para>The library header contains some version #defines you can use if you
+need to condition your code so it can compile with different library 
+versions</para>
+
+<para>Versions up to 4.1.6 defined a GIF_LIB_VERSION macro that was
+string-valued with a tricky format to parse.  This macro has been
+retired.</para>
+
+<para>Versions after 4.1.6 define integer-valued GIFLIB_MAJOR, GIFLIB_MINOR,
+and GIFLIB_RELEASE macros for the three components of the version. See the
+NEWS file in the GIFLIB distribution to track API changes.</para>
+
+<para>The following functions are entirely new:</para>
+
+<itemizedlist>
+<listitem><para>New functions DGifSavedExtensionToGCB() and
+EGifGCBToSavedExtension() make it easy to read and edit GIF89 graphics
+control blocks in saved images.</para></listitem>
+</itemizedlist>
+
+<para>A few changes in behavior were introduced in 5.0:</para>
+
+<sect2><title>General behavior</title>
+
+<itemizedlist>
+<listitem><para>The library is now fully re-entrant and
+thread-safe.</para></listitem>
+</itemizedlist>
+<itemizedlist>
+<listitem><para>  All functions exported by this library now have DGif,
+EGif, or Gif as a name prefix.</para></listitem>
+<listitem><para>The default GIF version to write is now computed at
+write time from the types of an image's extension blocks. (Formerly
+EGifSpew() behaved this way, but the sequential-writing code didn't.)
+The result of this computation is available through the new function
+EGifGetGifVersion().</para></listitem>
+</itemizedlist>
+
+</sect2>
+<sect2><title>In documented functions:</title>
+
+<itemizedlist>
+<listitem><para>GIF file openers and closers - DGifOpenFileName(),
+DGifOpenFileHandle(), DGifOpen(), DGifClose(), EGifOpenFileName(),
+EGifOpenFileHandle(), EGifOpen(), and EGifClose() - all now take a
+final integer address argument.  If non-null, this is used to pass
+back an error code when the function returns NULL.</para></listitem>
+<listitem><para>EGifSlurp() and EGifSpew() read and write
+extension blocks trailing after the last image, handle interlaced 
+images properly.</para></listitem>
+<listitem><para>EGifPutExtensionFirst() has been replaced by
+EGifPutExtensionLeader(); the difference is the new function doesn't
+take an optional block, it just writes a block
+leader.</para></listitem>
+<listitem><para>EGifPutExtensionNext() has been replaced by
+EGifPutExtensionBlock(); the difference is that the new function does
+not take and then discard a function code argument.</para></listitem>
+<listitem><para>EGifPutExtensionLast() has been replaced by
+EGifPutExtensionTrailer(); all it does is write the terminator
+block.  Split your old EGifPutExtensionLast() calls into
+EGifPutExtensionBlock() followed by
+EGifPutExtensionTrailer().</para></listitem>
+</itemizedlist>
+
+</sect2>
+<sect2><title>In undocumented functions:</title>
+
+<itemizedlist>
+<listitem><para>Some undocumented functions have been renamed. 
+AddExtensionBlock() is now GifAddExtensionBlock(), and takes an additional
+function code argument.  ApplyTranslation() is now GifApplyTranslation();
+FreeExtension() has become GifFreeExtensions() and takes a different argument
+type; MakeSavedImage() is now GifMakeSavedImage(), FreeSavedImages() is
+now GifFreeSavedImages(), and BitSize() is now GifBitSize().</para></listitem>
+<listitem><para>Three documented functions - MakeMapObject(),
+FreeMapObject(), and UnionColorMap() - have been renamed to
+GifMakeMapObject(), GifFreeMapObject(), and GifUnionColorMap()
+respectively.</para></listitem>
+</itemizedlist>
+
+</sect2>
+<sect2><title>Error handling:</title>
+
+<itemizedlist>
+<listitem><para>Library error handling no longer uses a static cell to
+store the last error code registered; that made the library
+thread-unsafe.</para></listitem>
+<listitem><para>For functions other than GIF file openers, the Error
+code is now put in an Error member of the GifFileType
+structure.</para></listitem>
+<listitem><para>The GifError() and
+GifLastError() functions that referenced that static cell are gone,
+and the GifErrorString() function introduced in the 4.2 release now
+takes an explicit error code argument.</para></listitem>
+</itemizedlist>
+</sect2>
+</sect1>
+<sect1><title>Skeletons of GIF filters</title>
+
+<para>If you are developing on a virtual-memory OS such as most flavors of
+UNIX, or are otherwise sure of having enough memory to keep all of GIFs you
+need to operate in core, writing a filter is trivial.   See the file
+gifsponge.c in util.</para>
+
+<para>A sequential filter skeleton will usually look like the example file
+giffilter.c in util.</para>
+
+<para>Please look at the utilities in the util directory for more ideas once
+you feel comfortable with these skeletons.  Also try to follow the coding
+standards of this package if you want the maintainer to officially add your new
+utility to it.</para>
+
+</sect1>
+<sect1><title>Unimplemented features</title>
+
+<para>Some features of the original GIF specification have not stood the
+test of time.  This library mostly ignores them, but they are described
+here for completeness.</para>
+
+<para>The GIF standard fails to be explicit about a small but crucial detail:
+the unsigned two-byte integer fields in it are little-endian.</para>
+
+<para>The GIF format seems to have been designed with the idea that viewers
+would render multiple images in a GIF on a common canvas, giving an effect like
+a picture wall.  The 'logical screen descriptor block' (LSDB), 6 bytes right
+after the 6-byte GIF stamp and version header at the beginning of a
+GIF file, includes both two-byte canvas width and canvas height
+fields and a canvas background color.  Each image, besides height and
+width, also has 'left' and 'top' cordinates specifying where it is to
+be placed on the canvas.</para>
+
+<para>GIFLIB can read and set these fields; the gifpos and giftool
+utilities will enable you to script such changes.  But browsers and
+modern image viewers ignore them. Nowadays multiple-image GIFs are 
+generally used either as animations in which each sub-image is a frame
+or as image libraries, with the GIF client handling compositing into
+some canvas about which the GIF format holds no information.</para>
+
+<para>Another feature of the LSDB that is generally ignored is the
+pixel aspect ratio byte.  Until 5.0, GIFLIB ignored this flag on input
+and zeroed it on output; now it is read and preserved if present.  The
+GIF standard doesn't give a rationale for it, but it seems likely that
+the designers intended it for representing image captures from the
+analog television of the day, which had rectangular pixel-equivalents.</para>
+
+<para>Yet another ignored feature of both the LSDB and sub-images is
+the sort flag, which is supposed to signal whether the colors in the
+associated color map are sorted by decreasing importance in case the
+display device can only render a limited number of them.  This feature
+reflected the high cost of dual-port memory at the time the GIF
+specification was written in the late 1980s.  That kind of limit
+disappeared in the mid-1990s.  Until 5.0, GIFLIB ignored this flag on
+input and zeroed it on output; now it is read and preserved if
+present.</para>
+
+<para>Finally, the plaintext extension block. This is an extension block 
+that contains instructions for overlaying text captions on a following image.
+GIFLIB treats these blocks as raw data, not attempting to parse out the 
+location and text data.</para>
+</sect1>
+</article>

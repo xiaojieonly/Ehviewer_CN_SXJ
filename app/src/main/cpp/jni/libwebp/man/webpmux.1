@@ -1,0 +1,278 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH WEBPMUX 1 "July 18, 2024"
+.SH NAME
+webpmux \- create animated WebP files from non\-animated WebP images, extract
+frames from animated WebP images, and manage XMP/EXIF metadata and ICC profile.
+.SH SYNOPSIS
+.B webpmux \-get
+.I GET_OPTIONS
+.I INPUT
+.B \-o
+.I OUTPUT
+.br
+.B webpmux \-set
+.I SET_OPTIONS
+.I INPUT
+.B \-o
+.I OUTPUT
+.br
+.B webpmux \-strip
+.I STRIP_OPTIONS
+.I INPUT
+.B \-o
+.I OUTPUT
+.br
+.B webpmux \-frame
+.I FRAME_OPTIONS
+.B [ \-frame ... ] [ \-loop
+.I LOOP_COUNT
+.B ]
+.br
+.RS 8
+.B [ \-bgcolor
+.I BACKGROUND_COLOR
+.B ] \-o
+.I OUTPUT
+.RE
+.br
+.B webpmux \-duration
+.I DURATION OPTIONS
+.B [ \-duration ... ]
+.I INPUT
+.B \-o
+.I OUTPUT
+.br
+.B webpmux \-info
+.I INPUT
+.br
+.B webpmux [\-h|\-help]
+.br
+.B webpmux \-version
+.br
+.B webpmux argument_file_name
+.SH DESCRIPTION
+This manual page documents the
+.B webpmux
+command.
+.PP
+\fBwebpmux\fP can be used to create/extract from animated WebP files, as well as
+to add/extract/strip XMP/EXIF metadata and ICC profile.
+If a single file name (not starting with the character '\-') is supplied as
+the argument, the command line arguments are actually tokenized from this file.
+This allows for easy scripting or using a large number of arguments.
+.SH OPTIONS
+.SS GET_OPTIONS (\-get):
+.TP
+.B icc
+Get ICC profile.
+.TP
+.B exif
+Get EXIF metadata.
+.TP
+.B xmp
+Get XMP metadata.
+.TP
+.BI frame " n
+Get nth frame from an animated image. (n = 0 has a special meaning: last frame).
+
+.SS SET_OPTIONS (\-set)
+.TP
+.BI loop " loop_count
+Set loop count on an animated file.
+.P
+Where: 'loop_count' must be in range [0, 65535].
+.TP
+.BI bgcolor " A,R,G,B
+Set the background color of the canvas on an animated file.
+.P
+where: 'A', 'R', 'G' and 'B' are integers in the range 0 to 255 specifying the
+Alpha, Red, Green and Blue component values respectively.
+.TP
+.BI icc " file.icc
+Set ICC profile.
+.P
+Where: 'file.icc' contains the ICC profile to be set.
+.TP
+.BI exif " file.exif
+Set EXIF metadata.
+.P
+Where: 'file.exif' contains the EXIF metadata to be set.
+.TP
+.BI xmp " file.xmp
+Set XMP metadata.
+.P
+Where: 'file.xmp' contains the XMP metadata to be set.
+
+.SS STRIP_OPTIONS (\-strip)
+.TP
+.B icc
+Strip ICC profile.
+.TP
+.B exif
+Strip EXIF metadata.
+.TP
+.B xmp
+Strip XMP metadata.
+
+.SS DURATION_OPTIONS (\-duration)
+Amend the duration of a specific interval of frames. This option is only
+effective on animated WebP and has no effect on a single-frame file.
+.TP
+.I duration[,start[,end]]
+Where:
+.br
+.B duration
+is the duration for the interval in milliseconds (mandatory).
+Must be non-negative.
+.br
+.B start
+is the starting frame index of the interval (optional).
+.br
+.B end
+is the ending frame index (inclusive) of the interval (optional).
+.TP
+The three typical usages of this option are:
+.br
+.B -duration d
+     set the duration to 'd' for the whole animation.
+.br
+.B -duration d,f
+     set the duration of frame 'f' to 'd'.
+.br
+.B -duration d,start,end
+     set the duration to 'd' for the whole [start,end] interval.
+.TP
+.P
+Note that the frames outside of the [start, end] interval will remain untouched.
+The 'end' value '0' has the special meaning 'last frame of the animation'.
+.TP
+.I Reminder:
+frame indexing starts at '1'.
+.br
+
+.SS FRAME_OPTIONS (\-frame)
+Create an animated WebP file from multiple (non\-animated) WebP images.
+.TP
+.I file_i +di[+xi+yi[+mi[bi]]]
+Where: 'file_i' is the i'th frame (WebP format), 'xi','yi' specify the image
+offset for this frame, 'di' is the pause duration before next frame, 'mi' is
+the dispose method for this frame (0 for NONE or 1 for BACKGROUND) and 'bi' is
+the blending method for this frame (+b for BLEND or \-b for NO_BLEND).
+Argument 'bi' can be omitted and will default to +b (BLEND).
+Also, 'mi' can be omitted if 'bi' is omitted and will default to 0 (NONE).
+Finally, if 'mi' and 'bi' are omitted then 'xi' and 'yi' can be omitted and will
+default to +0+0.
+.TP
+.BI \-loop " n
+Loop the frames n number of times. 0 indicates the frames should loop forever.
+Valid range is 0 to 65535 [Default: 0 (infinite)].
+.TP
+.BI \-bgcolor " A,R,G,B
+Background color of the canvas.
+.br
+where: 'A', 'R', 'G' and 'B' are integers in the range 0 to 255 specifying the
+Alpha, Red, Green and Blue component values respectively
+[Default: 255,255,255,255].
+
+.SS INPUT
+.TP
+Input file in WebP format.
+
+.SS OUTPUT (\-o)
+.TP
+Output file in WebP format.
+
+.SS Note:
+.TP
+The nature of EXIF, XMP and ICC data is not checked and is assumed to be valid.
+
+.SH EXIT STATUS
+If there were no problems during execution, \fBwebpmux\fP exits with the value
+of the C constant \fBEXIT_SUCCESS\fP. This is usually zero.
+.PP
+If an error occurs, \fBwebpmux\fP exits with the value of the C constant
+\fBEXIT_FAILURE\fP. This is usually one.
+
+.SH EXAMPLES
+.P
+Add ICC profile:
+.br
+webpmux \-set icc image_profile.icc in.webp \-o icc_container.webp
+.P
+Extract ICC profile:
+.br
+webpmux \-get icc icc_container.webp \-o image_profile.icc
+.P
+Strip ICC profile:
+.br
+webpmux \-strip icc icc_container.webp \-o without_icc.webp
+.P
+Add XMP metadata:
+.br
+webpmux \-set xmp image_metadata.xmp in.webp \-o xmp_container.webp
+.P
+Extract XMP metadata:
+.br
+webpmux \-get xmp xmp_container.webp \-o image_metadata.xmp
+.P
+Strip XMP metadata:
+.br
+webpmux \-strip xmp xmp_container.webp \-o without_xmp.webp
+.P
+Add EXIF metadata:
+.br
+webpmux \-set exif image_metadata.exif in.webp \-o exif_container.webp
+.P
+Extract EXIF metadata:
+.br
+webpmux \-get exif exif_container.webp \-o image_metadata.exif
+.P
+Strip EXIF metadata:
+.br
+webpmux \-strip exif exif_container.webp \-o without_exif.webp
+.P
+Create an animated WebP file from 3 (non\-animated) WebP images:
+.br
+webpmux \-frame 1.webp +100 \-frame 2.webp +100+50+50
+.br
+.RS 8
+\-frame 3.webp +100+50+50+1+b \-loop 10 \-bgcolor 255,255,255,255
+.br
+\-o anim_container.webp
+.RE
+.P
+Get the 2nd frame from an animated WebP file:
+.br
+webpmux \-get frame 2 anim_container.webp \-o frame_2.webp
+.P
+Using \-get/\-set/\-strip with input file name starting with '\-':
+.br
+webpmux \-set icc image_profile.icc \-o icc_container.webp \-\- \-\-\-in.webp
+.br
+webpmux \-get icc \-o image_profile.icc \-\- \-\-\-icc_container.webp
+.br
+webpmux \-strip icc \-o without_icc.webp \-\- \-\-\-icc_container.webp
+
+.SH AUTHORS
+\fBwebpmux\fP is a part of libwebp and was written by the WebP team.
+.br
+The latest source tree is available at
+https://chromium.googlesource.com/webm/libwebp
+.PP
+This manual page was written by Vikas Arora <vikaas.arora@gmail.com>,
+for the Debian project (and may be used by others).
+
+.SH REPORTING BUGS
+Please report all bugs to the issue tracker:
+https://issues.webmproject.org
+.br
+Patches welcome! See this page to get started:
+https://www.webmproject.org/code/contribute/submitting\-patches/
+
+.SH SEE ALSO
+.BR cwebp (1),
+.BR dwebp (1),
+.BR gif2webp (1)
+.br
+Please refer to https://developers.google.com/speed/webp/ for additional
+information.

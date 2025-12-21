@@ -1,0 +1,1356 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- NewPage -->
+<html lang="en">
+<head>
+<title>TJ</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<script type="text/javascript"><!--
+    try {
+        if (location.href.indexOf('is-external=true') == -1) {
+            parent.document.title="TJ";
+        }
+    }
+    catch(err) {
+    }
+//-->
+</script>
+<noscript>
+<div>JavaScript is disabled on your browser.</div>
+</noscript>
+<!-- ========= START OF TOP NAVBAR ======= -->
+<div class="topNav"><a name="navbar_top">
+<!--   -->
+</a><a href="#skip-navbar_top" title="Skip navigation links"></a><a name="navbar_top_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../org/libjpegturbo/turbojpeg/package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../index-all.html">Index</a></li>
+<li><a href="../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li>Prev Class</li>
+<li><a href="../../../org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg"><span class="strong">Next Class</span></a></li>
+</ul>
+<ul class="navList">
+<li><a href="../../../index.html?org/libjpegturbo/turbojpeg/TJ.html" target="_top">Frames</a></li>
+<li><a href="TJ.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_top">
+<li><a href="../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_top");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#field_summary">Field</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method_summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li><a href="#field_detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method_detail">Method</a></li>
+</ul>
+</div>
+<a name="skip-navbar_top">
+<!--   -->
+</a></div>
+<!-- ========= END OF TOP NAVBAR ========= -->
+<!-- ======== START OF CLASS DATA ======== -->
+<div class="header">
+<div class="subTitle">org.libjpegturbo.turbojpeg</div>
+<h2 title="Class TJ" class="title">Class TJ</h2>
+</div>
+<div class="contentContainer">
+<ul class="inheritance">
+<li>java.lang.Object</li>
+<li>
+<ul class="inheritance">
+<li>org.libjpegturbo.turbojpeg.TJ</li>
+</ul>
+</li>
+</ul>
+<div class="description">
+<ul class="blockList">
+<li class="blockList">
+<hr>
+<br>
+<pre>public final class <span class="strong">TJ</span>
+extends java.lang.Object</pre>
+<div class="block">TurboJPEG utility class (cannot be instantiated)</div>
+</li>
+</ul>
+</div>
+<div class="summary">
+<ul class="blockList">
+<li class="blockList">
+<!-- =========== FIELD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field_summary">
+<!--   -->
+</a>
+<h3>Field Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Field and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#CS_CMYK">CS_CMYK</a></strong></code>
+<div class="block">CMYK colorspace.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#CS_GRAY">CS_GRAY</a></strong></code>
+<div class="block">Grayscale colorspace.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#CS_RGB">CS_RGB</a></strong></code>
+<div class="block">RGB colorspace.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#CS_YCbCr">CS_YCbCr</a></strong></code>
+<div class="block">YCbCr colorspace.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#CS_YCCK">CS_YCCK</a></strong></code>
+<div class="block">YCCK colorspace.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#ERR_FATAL">ERR_FATAL</a></strong></code>
+<div class="block">The error was fatal and non-recoverable.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#ERR_WARNING">ERR_WARNING</a></strong></code>
+<div class="block">The error was non-fatal and recoverable, but the image may still be
+ corrupt.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_ACCURATEDCT">FLAG_ACCURATEDCT</a></strong></code>
+<div class="block">Use the most accurate DCT/IDCT algorithm available in the underlying
+ codec.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_BOTTOMUP">FLAG_BOTTOMUP</a></strong></code>
+<div class="block">The uncompressed source/destination image is stored in bottom-up (Windows,
+ OpenGL) order, not top-down (X11) order.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_FASTDCT">FLAG_FASTDCT</a></strong></code>
+<div class="block">Use the fastest DCT/IDCT algorithm available in the underlying codec.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_FASTUPSAMPLE">FLAG_FASTUPSAMPLE</a></strong></code>
+<div class="block">When decompressing an image that was compressed using chrominance
+ subsampling, use the fastest chrominance upsampling algorithm available in
+ the underlying codec.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_FORCEMMX">FLAG_FORCEMMX</a></strong></code>
+<div class="block"><strong>Deprecated.</strong>&nbsp;</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_FORCESSE">FLAG_FORCESSE</a></strong></code>
+<div class="block"><strong>Deprecated.</strong>&nbsp;</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_FORCESSE2">FLAG_FORCESSE2</a></strong></code>
+<div class="block"><strong>Deprecated.</strong>&nbsp;</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_FORCESSE3">FLAG_FORCESSE3</a></strong></code>
+<div class="block"><strong>Deprecated.</strong>&nbsp;</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_PROGRESSIVE">FLAG_PROGRESSIVE</a></strong></code>
+<div class="block">Use progressive entropy coding in JPEG images generated by compression and
+ transform operations.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#FLAG_STOPONWARNING">FLAG_STOPONWARNING</a></strong></code>
+<div class="block">Immediately discontinue the current compression/decompression/transform
+ operation if the underlying codec throws a warning (non-fatal error).</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#NUMCS">NUMCS</a></strong></code>
+<div class="block">The number of JPEG colorspaces</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#NUMERR">NUMERR</a></strong></code>
+<div class="block">The number of error codes</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#NUMPF">NUMPF</a></strong></code>
+<div class="block">The number of pixel formats</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#NUMSAMP">NUMSAMP</a></strong></code>
+<div class="block">The number of chrominance subsampling options</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_ABGR">PF_ABGR</a></strong></code>
+<div class="block">ABGR pixel format.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_ARGB">PF_ARGB</a></strong></code>
+<div class="block">ARGB pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_BGR">PF_BGR</a></strong></code>
+<div class="block">BGR pixel format.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_BGRA">PF_BGRA</a></strong></code>
+<div class="block">BGRA pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_BGRX">PF_BGRX</a></strong></code>
+<div class="block">BGRX pixel format.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_CMYK">PF_CMYK</a></strong></code>
+<div class="block">CMYK pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_GRAY">PF_GRAY</a></strong></code>
+<div class="block">Grayscale pixel format.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_RGB">PF_RGB</a></strong></code>
+<div class="block">RGB pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_RGBA">PF_RGBA</a></strong></code>
+<div class="block">RGBA pixel format.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_RGBX">PF_RGBX</a></strong></code>
+<div class="block">RGBX pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_XBGR">PF_XBGR</a></strong></code>
+<div class="block">XBGR pixel format.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_XRGB">PF_XRGB</a></strong></code>
+<div class="block">XRGB pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_411">SAMP_411</a></strong></code>
+<div class="block">4:1:1 chrominance subsampling.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_420">SAMP_420</a></strong></code>
+<div class="block">4:2:0 chrominance subsampling.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_422">SAMP_422</a></strong></code>
+<div class="block">4:2:2 chrominance subsampling.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_440">SAMP_440</a></strong></code>
+<div class="block">4:4:0 chrominance subsampling.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444">SAMP_444</a></strong></code>
+<div class="block">4:4:4 chrominance subsampling (no chrominance subsampling).</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_GRAY">SAMP_GRAY</a></strong></code>
+<div class="block">Grayscale.</div>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+<!-- ========== METHOD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method_summary">
+<!--   -->
+</a>
+<h3>Method Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
+<caption><span>Methods</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Method and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSize(int,%20int,%20int)">bufSize</a></strong>(int&nbsp;width,
+       int&nbsp;height,
+       int&nbsp;jpegSubsamp)</code>
+<div class="block">Returns the maximum size of the buffer (in bytes) required to hold a JPEG
+ image with the given width, height, and level of chrominance subsampling.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSizeYUV(int,%20int,%20int)">bufSizeYUV</a></strong>(int&nbsp;width,
+          int&nbsp;height,
+          int&nbsp;subsamp)</code>
+<div class="block"><strong>Deprecated.</strong>&nbsp;
+<div class="block"><i>Use <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSizeYUV(int,%20int,%20int,%20int)"><code>bufSizeYUV(int, int, int, int)</code></a> instead.</i></div>
+</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSizeYUV(int,%20int,%20int,%20int)">bufSizeYUV</a></strong>(int&nbsp;width,
+          int&nbsp;pad,
+          int&nbsp;height,
+          int&nbsp;subsamp)</code>
+<div class="block">Returns the size of the buffer (in bytes) required to hold a YUV planar
+ image with the given width, height, and level of chrominance subsampling.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getAlphaOffset(int)">getAlphaOffset</a></strong>(int&nbsp;pixelFormat)</code>
+<div class="block">For the given pixel format, returns the number of bytes that the alpha
+ component is offset from the start of the pixel.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getBlueOffset(int)">getBlueOffset</a></strong>(int&nbsp;pixelFormat)</code>
+<div class="block">For the given pixel format, returns the number of bytes that the blue
+ component is offset from the start of the pixel.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getGreenOffset(int)">getGreenOffset</a></strong>(int&nbsp;pixelFormat)</code>
+<div class="block">For the given pixel format, returns the number of bytes that the green
+ component is offset from the start of the pixel.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getMCUHeight(int)">getMCUHeight</a></strong>(int&nbsp;subsamp)</code>
+<div class="block">Returns the MCU block height for the given level of chrominance
+ subsampling.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getMCUWidth(int)">getMCUWidth</a></strong>(int&nbsp;subsamp)</code>
+<div class="block">Returns the MCU block width for the given level of chrominance
+ subsampling.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getPixelSize(int)">getPixelSize</a></strong>(int&nbsp;pixelFormat)</code>
+<div class="block">Returns the pixel size (in bytes) for the given pixel format.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getRedOffset(int)">getRedOffset</a></strong>(int&nbsp;pixelFormat)</code>
+<div class="block">For the given pixel format, returns the number of bytes that the red
+ component is offset from the start of the pixel.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static <a href="../../../org/libjpegturbo/turbojpeg/TJScalingFactor.html" title="class in org.libjpegturbo.turbojpeg">TJScalingFactor</a>[]</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getScalingFactors()">getScalingFactors</a></strong>()</code>
+<div class="block">Returns a list of fractional scaling factors that the JPEG decompressor in
+ this implementation of TurboJPEG supports.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#planeHeight(int,%20int,%20int)">planeHeight</a></strong>(int&nbsp;componentID,
+           int&nbsp;height,
+           int&nbsp;subsamp)</code>
+<div class="block">Returns the plane height of a YUV image plane with the given parameters.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#planeSizeYUV(int,%20int,%20int,%20int,%20int)">planeSizeYUV</a></strong>(int&nbsp;componentID,
+            int&nbsp;width,
+            int&nbsp;stride,
+            int&nbsp;height,
+            int&nbsp;subsamp)</code>
+<div class="block">Returns the size of the buffer (in bytes) required to hold a YUV image
+ plane with the given parameters.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#planeWidth(int,%20int,%20int)">planeWidth</a></strong>(int&nbsp;componentID,
+          int&nbsp;width,
+          int&nbsp;subsamp)</code>
+<div class="block">Returns the plane width of a YUV image plane with the given parameters.</div>
+</td>
+</tr>
+</table>
+<ul class="blockList">
+<li class="blockList"><a name="methods_inherited_from_class_java.lang.Object">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;java.lang.Object</h3>
+<code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="details">
+<ul class="blockList">
+<li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field_detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a name="NUMSAMP">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>NUMSAMP</h4>
+<pre>public static final&nbsp;int NUMSAMP</pre>
+<div class="block">The number of chrominance subsampling options</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.NUMSAMP">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="SAMP_444">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>SAMP_444</h4>
+<pre>public static final&nbsp;int SAMP_444</pre>
+<div class="block">4:4:4 chrominance subsampling (no chrominance subsampling).  The JPEG
+ or YUV image will contain one chrominance component for every pixel in the
+ source image.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.SAMP_444">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="SAMP_422">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>SAMP_422</h4>
+<pre>public static final&nbsp;int SAMP_422</pre>
+<div class="block">4:2:2 chrominance subsampling.  The JPEG or YUV image will contain one
+ chrominance component for every 2x1 block of pixels in the source image.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.SAMP_422">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="SAMP_420">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>SAMP_420</h4>
+<pre>public static final&nbsp;int SAMP_420</pre>
+<div class="block">4:2:0 chrominance subsampling.  The JPEG or YUV image will contain one
+ chrominance component for every 2x2 block of pixels in the source image.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.SAMP_420">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="SAMP_GRAY">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>SAMP_GRAY</h4>
+<pre>public static final&nbsp;int SAMP_GRAY</pre>
+<div class="block">Grayscale.  The JPEG or YUV image will contain no chrominance components.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.SAMP_GRAY">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="SAMP_440">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>SAMP_440</h4>
+<pre>public static final&nbsp;int SAMP_440</pre>
+<div class="block">4:4:0 chrominance subsampling.  The JPEG or YUV image will contain one
+ chrominance component for every 1x2 block of pixels in the source image.
+ Note that 4:4:0 subsampling is not fully accelerated in libjpeg-turbo.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.SAMP_440">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="SAMP_411">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>SAMP_411</h4>
+<pre>public static final&nbsp;int SAMP_411</pre>
+<div class="block">4:1:1 chrominance subsampling.  The JPEG or YUV image will contain one
+ chrominance component for every 4x1 block of pixels in the source image.
+ JPEG images compressed with 4:1:1 subsampling will be almost exactly the
+ same size as those compressed with 4:2:0 subsampling, and in the
+ aggregate, both subsampling methods produce approximately the same
+ perceptual quality.  However, 4:1:1 is better able to reproduce sharp
+ horizontal features.  Note that 4:1:1 subsampling is not fully accelerated
+ in libjpeg-turbo.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.SAMP_411">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="NUMPF">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>NUMPF</h4>
+<pre>public static final&nbsp;int NUMPF</pre>
+<div class="block">The number of pixel formats</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.NUMPF">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_RGB">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_RGB</h4>
+<pre>public static final&nbsp;int PF_RGB</pre>
+<div class="block">RGB pixel format.  The red, green, and blue components in the image are
+ stored in 3-byte pixels in the order R, G, B from lowest to highest byte
+ address within each pixel.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_RGB">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_BGR">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_BGR</h4>
+<pre>public static final&nbsp;int PF_BGR</pre>
+<div class="block">BGR pixel format.  The red, green, and blue components in the image are
+ stored in 3-byte pixels in the order B, G, R from lowest to highest byte
+ address within each pixel.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_BGR">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_RGBX">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_RGBX</h4>
+<pre>public static final&nbsp;int PF_RGBX</pre>
+<div class="block">RGBX pixel format.  The red, green, and blue components in the image are
+ stored in 4-byte pixels in the order R, G, B from lowest to highest byte
+ address within each pixel.  The X component is ignored when compressing
+ and undefined when decompressing.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_RGBX">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_BGRX">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_BGRX</h4>
+<pre>public static final&nbsp;int PF_BGRX</pre>
+<div class="block">BGRX pixel format.  The red, green, and blue components in the image are
+ stored in 4-byte pixels in the order B, G, R from lowest to highest byte
+ address within each pixel.  The X component is ignored when compressing
+ and undefined when decompressing.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_BGRX">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_XBGR">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_XBGR</h4>
+<pre>public static final&nbsp;int PF_XBGR</pre>
+<div class="block">XBGR pixel format.  The red, green, and blue components in the image are
+ stored in 4-byte pixels in the order R, G, B from highest to lowest byte
+ address within each pixel.  The X component is ignored when compressing
+ and undefined when decompressing.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_XBGR">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_XRGB">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_XRGB</h4>
+<pre>public static final&nbsp;int PF_XRGB</pre>
+<div class="block">XRGB pixel format.  The red, green, and blue components in the image are
+ stored in 4-byte pixels in the order B, G, R from highest to lowest byte
+ address within each pixel.  The X component is ignored when compressing
+ and undefined when decompressing.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_XRGB">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_GRAY">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_GRAY</h4>
+<pre>public static final&nbsp;int PF_GRAY</pre>
+<div class="block">Grayscale pixel format.  Each 1-byte pixel represents a luminance
+ (brightness) level from 0 to 255.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_GRAY">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_RGBA">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_RGBA</h4>
+<pre>public static final&nbsp;int PF_RGBA</pre>
+<div class="block">RGBA pixel format.  This is the same as <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_RGBX"><code>PF_RGBX</code></a>, except that when
+ decompressing, the X byte is guaranteed to be 0xFF, which can be
+ interpreted as an opaque alpha channel.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_RGBA">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_BGRA">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_BGRA</h4>
+<pre>public static final&nbsp;int PF_BGRA</pre>
+<div class="block">BGRA pixel format.  This is the same as <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_BGRX"><code>PF_BGRX</code></a>, except that when
+ decompressing, the X byte is guaranteed to be 0xFF, which can be
+ interpreted as an opaque alpha channel.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_BGRA">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_ABGR">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_ABGR</h4>
+<pre>public static final&nbsp;int PF_ABGR</pre>
+<div class="block">ABGR pixel format.  This is the same as <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_XBGR"><code>PF_XBGR</code></a>, except that when
+ decompressing, the X byte is guaranteed to be 0xFF, which can be
+ interpreted as an opaque alpha channel.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_ABGR">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_ARGB">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_ARGB</h4>
+<pre>public static final&nbsp;int PF_ARGB</pre>
+<div class="block">ARGB pixel format.  This is the same as <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#PF_XRGB"><code>PF_XRGB</code></a>, except that when
+ decompressing, the X byte is guaranteed to be 0xFF, which can be
+ interpreted as an opaque alpha channel.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_ARGB">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="PF_CMYK">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_CMYK</h4>
+<pre>public static final&nbsp;int PF_CMYK</pre>
+<div class="block">CMYK pixel format.  Unlike RGB, which is an additive color model used
+ primarily for display, CMYK (Cyan/Magenta/Yellow/Key) is a subtractive
+ color model used primarily for printing.  In the CMYK color model, the
+ value of each color component typically corresponds to an amount of cyan,
+ magenta, yellow, or black ink that is applied to a white background.  In
+ order to convert between CMYK and RGB, it is necessary to use a color
+ management system (CMS.)  A CMS will attempt to map colors within the
+ printer's gamut to perceptually similar colors in the display's gamut and
+ vice versa, but the mapping is typically not 1:1 or reversible, nor can it
+ be defined with a simple formula.  Thus, such a conversion is out of scope
+ for a codec library.  However, the TurboJPEG API allows for compressing
+ CMYK pixels into a YCCK JPEG image (see <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#CS_YCCK"><code>CS_YCCK</code></a>) and
+ decompressing YCCK JPEG images into CMYK pixels.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_CMYK">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="NUMCS">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>NUMCS</h4>
+<pre>public static final&nbsp;int NUMCS</pre>
+<div class="block">The number of JPEG colorspaces</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.NUMCS">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="CS_RGB">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>CS_RGB</h4>
+<pre>public static final&nbsp;int CS_RGB</pre>
+<div class="block">RGB colorspace.  When compressing the JPEG image, the R, G, and B
+ components in the source image are reordered into image planes, but no
+ colorspace conversion or subsampling is performed.  RGB JPEG images can be
+ decompressed to any of the extended RGB pixel formats or grayscale, but
+ they cannot be decompressed to YUV images.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.CS_RGB">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="CS_YCbCr">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>CS_YCbCr</h4>
+<pre>public static final&nbsp;int CS_YCbCr</pre>
+<div class="block">YCbCr colorspace.  YCbCr is not an absolute colorspace but rather a
+ mathematical transformation of RGB designed solely for storage and
+ transmission.  YCbCr images must be converted to RGB before they can
+ actually be displayed.  In the YCbCr colorspace, the Y (luminance)
+ component represents the black & white portion of the original image, and
+ the Cb and Cr (chrominance) components represent the color portion of the
+ original image.  Originally, the analog equivalent of this transformation
+ allowed the same signal to drive both black & white and color televisions,
+ but JPEG images use YCbCr primarily because it allows the color data to be
+ optionally subsampled for the purposes of reducing bandwidth or disk
+ space.  YCbCr is the most common JPEG colorspace, and YCbCr JPEG images
+ can be compressed from and decompressed to any of the extended RGB pixel
+ formats or grayscale, or they can be decompressed to YUV planar images.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.CS_YCbCr">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="CS_GRAY">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>CS_GRAY</h4>
+<pre>public static final&nbsp;int CS_GRAY</pre>
+<div class="block">Grayscale colorspace.  The JPEG image retains only the luminance data (Y
+ component), and any color data from the source image is discarded.
+ Grayscale JPEG images can be compressed from and decompressed to any of
+ the extended RGB pixel formats or grayscale, or they can be decompressed
+ to YUV planar images.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.CS_GRAY">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="CS_CMYK">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>CS_CMYK</h4>
+<pre>public static final&nbsp;int CS_CMYK</pre>
+<div class="block">CMYK colorspace.  When compressing the JPEG image, the C, M, Y, and K
+ components in the source image are reordered into image planes, but no
+ colorspace conversion or subsampling is performed.  CMYK JPEG images can
+ only be decompressed to CMYK pixels.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.CS_CMYK">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="CS_YCCK">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>CS_YCCK</h4>
+<pre>public static final&nbsp;int CS_YCCK</pre>
+<div class="block">YCCK colorspace.  YCCK (AKA "YCbCrK") is not an absolute colorspace but
+ rather a mathematical transformation of CMYK designed solely for storage
+ and transmission.  It is to CMYK as YCbCr is to RGB.  CMYK pixels can be
+ reversibly transformed into YCCK, and as with YCbCr, the chrominance
+ components in the YCCK pixels can be subsampled without incurring major
+ perceptual loss.  YCCK JPEG images can only be compressed from and
+ decompressed to CMYK pixels.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.CS_YCCK">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_BOTTOMUP">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_BOTTOMUP</h4>
+<pre>public static final&nbsp;int FLAG_BOTTOMUP</pre>
+<div class="block">The uncompressed source/destination image is stored in bottom-up (Windows,
+ OpenGL) order, not top-down (X11) order.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_BOTTOMUP">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_FORCEMMX">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_FORCEMMX</h4>
+<pre>@Deprecated
+public static final&nbsp;int FLAG_FORCEMMX</pre>
+<div class="block"><span class="strong">Deprecated.</span>&nbsp;</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_FORCEMMX">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_FORCESSE">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_FORCESSE</h4>
+<pre>@Deprecated
+public static final&nbsp;int FLAG_FORCESSE</pre>
+<div class="block"><span class="strong">Deprecated.</span>&nbsp;</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_FORCESSE">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_FORCESSE2">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_FORCESSE2</h4>
+<pre>@Deprecated
+public static final&nbsp;int FLAG_FORCESSE2</pre>
+<div class="block"><span class="strong">Deprecated.</span>&nbsp;</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_FORCESSE2">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_FORCESSE3">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_FORCESSE3</h4>
+<pre>@Deprecated
+public static final&nbsp;int FLAG_FORCESSE3</pre>
+<div class="block"><span class="strong">Deprecated.</span>&nbsp;</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_FORCESSE3">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_FASTUPSAMPLE">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_FASTUPSAMPLE</h4>
+<pre>public static final&nbsp;int FLAG_FASTUPSAMPLE</pre>
+<div class="block">When decompressing an image that was compressed using chrominance
+ subsampling, use the fastest chrominance upsampling algorithm available in
+ the underlying codec.  The default is to use smooth upsampling, which
+ creates a smooth transition between neighboring chrominance components in
+ order to reduce upsampling artifacts in the decompressed image.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_FASTUPSAMPLE">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_FASTDCT">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_FASTDCT</h4>
+<pre>public static final&nbsp;int FLAG_FASTDCT</pre>
+<div class="block">Use the fastest DCT/IDCT algorithm available in the underlying codec.  The
+ default if this flag is not specified is implementation-specific.  For
+ example, the implementation of TurboJPEG for libjpeg[-turbo] uses the fast
+ algorithm by default when compressing, because this has been shown to have
+ only a very slight effect on accuracy, but it uses the accurate algorithm
+ when decompressing, because this has been shown to have a larger effect.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_FASTDCT">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_ACCURATEDCT">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_ACCURATEDCT</h4>
+<pre>public static final&nbsp;int FLAG_ACCURATEDCT</pre>
+<div class="block">Use the most accurate DCT/IDCT algorithm available in the underlying
+ codec.  The default if this flag is not specified is
+ implementation-specific.  For example, the implementation of TurboJPEG for
+ libjpeg[-turbo] uses the fast algorithm by default when compressing,
+ because this has been shown to have only a very slight effect on accuracy,
+ but it uses the accurate algorithm when decompressing, because this has
+ been shown to have a larger effect.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_ACCURATEDCT">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_STOPONWARNING">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_STOPONWARNING</h4>
+<pre>public static final&nbsp;int FLAG_STOPONWARNING</pre>
+<div class="block">Immediately discontinue the current compression/decompression/transform
+ operation if the underlying codec throws a warning (non-fatal error).  The
+ default behavior is to allow the operation to complete unless a fatal
+ error is encountered.
+ <p>
+ NOTE: due to the design of the TurboJPEG Java API, only certain methods
+ (specifically, <a href="../../../org/libjpegturbo/turbojpeg/TJDecompressor.html" title="class in org.libjpegturbo.turbojpeg"><code>TJDecompressor.decompress*()</code></a> methods
+ with a void return type) will complete and leave the output image in a
+ fully recoverable state after a non-fatal error occurs.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_STOPONWARNING">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="FLAG_PROGRESSIVE">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>FLAG_PROGRESSIVE</h4>
+<pre>public static final&nbsp;int FLAG_PROGRESSIVE</pre>
+<div class="block">Use progressive entropy coding in JPEG images generated by compression and
+ transform operations.  Progressive entropy coding will generally improve
+ compression relative to baseline entropy coding (the default), but it will
+ reduce compression and decompression performance considerably.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.FLAG_PROGRESSIVE">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="NUMERR">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>NUMERR</h4>
+<pre>public static final&nbsp;int NUMERR</pre>
+<div class="block">The number of error codes</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.NUMERR">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="ERR_WARNING">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ERR_WARNING</h4>
+<pre>public static final&nbsp;int ERR_WARNING</pre>
+<div class="block">The error was non-fatal and recoverable, but the image may still be
+ corrupt.
+ <p>
+ NOTE: due to the design of the TurboJPEG Java API, only certain methods
+ (specifically, <a href="../../../org/libjpegturbo/turbojpeg/TJDecompressor.html" title="class in org.libjpegturbo.turbojpeg"><code>TJDecompressor.decompress*()</code></a> methods
+ with a void return type) will complete and leave the output image in a
+ fully recoverable state after a non-fatal error occurs.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.ERR_WARNING">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="ERR_FATAL">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>ERR_FATAL</h4>
+<pre>public static final&nbsp;int ERR_FATAL</pre>
+<div class="block">The error was fatal and non-recoverable.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.ERR_FATAL">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+</li>
+</ul>
+<!-- ============ METHOD DETAIL ========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method_detail">
+<!--   -->
+</a>
+<h3>Method Detail</h3>
+<a name="getMCUWidth(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getMCUWidth</h4>
+<pre>public static&nbsp;int&nbsp;getMCUWidth(int&nbsp;subsamp)</pre>
+<div class="block">Returns the MCU block width for the given level of chrominance
+ subsampling.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>subsamp</code> - the level of chrominance subsampling (one of
+ <code>SAMP_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the MCU block width for the given level of chrominance
+ subsampling.</dd></dl>
+</li>
+</ul>
+<a name="getMCUHeight(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getMCUHeight</h4>
+<pre>public static&nbsp;int&nbsp;getMCUHeight(int&nbsp;subsamp)</pre>
+<div class="block">Returns the MCU block height for the given level of chrominance
+ subsampling.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>subsamp</code> - the level of chrominance subsampling (one of
+ <code>SAMP_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the MCU block height for the given level of chrominance
+ subsampling.</dd></dl>
+</li>
+</ul>
+<a name="getPixelSize(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPixelSize</h4>
+<pre>public static&nbsp;int&nbsp;getPixelSize(int&nbsp;pixelFormat)</pre>
+<div class="block">Returns the pixel size (in bytes) for the given pixel format.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>pixelFormat</code> - the pixel format (one of <code>PF_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the pixel size (in bytes) for the given pixel format.</dd></dl>
+</li>
+</ul>
+<a name="getRedOffset(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getRedOffset</h4>
+<pre>public static&nbsp;int&nbsp;getRedOffset(int&nbsp;pixelFormat)</pre>
+<div class="block">For the given pixel format, returns the number of bytes that the red
+ component is offset from the start of the pixel.  For instance, if a pixel
+ of format <code>TJ.PF_BGRX</code> is stored in <code>char pixel[]</code>,
+ then the red component will be
+ <code>pixel[TJ.getRedOffset(TJ.PF_BGRX)]</code>.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>pixelFormat</code> - the pixel format (one of <code>PF_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the red offset for the given pixel format, or -1 if the pixel
+ format does not have a red component.</dd></dl>
+</li>
+</ul>
+<a name="getGreenOffset(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getGreenOffset</h4>
+<pre>public static&nbsp;int&nbsp;getGreenOffset(int&nbsp;pixelFormat)</pre>
+<div class="block">For the given pixel format, returns the number of bytes that the green
+ component is offset from the start of the pixel.  For instance, if a pixel
+ of format <code>TJ.PF_BGRX</code> is stored in <code>char pixel[]</code>,
+ then the green component will be
+ <code>pixel[TJ.getGreenOffset(TJ.PF_BGRX)]</code>.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>pixelFormat</code> - the pixel format (one of <code>PF_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the green offset for the given pixel format, or -1 if the pixel
+ format does not have a green component.</dd></dl>
+</li>
+</ul>
+<a name="getBlueOffset(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getBlueOffset</h4>
+<pre>public static&nbsp;int&nbsp;getBlueOffset(int&nbsp;pixelFormat)</pre>
+<div class="block">For the given pixel format, returns the number of bytes that the blue
+ component is offset from the start of the pixel.  For instance, if a pixel
+ of format <code>TJ.PF_BGRX</code> is stored in <code>char pixel[]</code>,
+ then the blue component will be
+ <code>pixel[TJ.getBlueOffset(TJ.PF_BGRX)]</code>.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>pixelFormat</code> - the pixel format (one of <code>PF_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the blue offset for the given pixel format, or -1 if the pixel
+ format does not have a blue component.</dd></dl>
+</li>
+</ul>
+<a name="getAlphaOffset(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getAlphaOffset</h4>
+<pre>public static&nbsp;int&nbsp;getAlphaOffset(int&nbsp;pixelFormat)</pre>
+<div class="block">For the given pixel format, returns the number of bytes that the alpha
+ component is offset from the start of the pixel.  For instance, if a pixel
+ of format <code>TJ.PF_BGRA</code> is stored in <code>char pixel[]</code>,
+ then the alpha component will be
+ <code>pixel[TJ.getAlphaOffset(TJ.PF_BGRA)]</code>.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>pixelFormat</code> - the pixel format (one of <code>PF_*</code>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the alpha offset for the given pixel format, or -1 if the pixel
+ format does not have a alpha component.</dd></dl>
+</li>
+</ul>
+<a name="bufSize(int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>bufSize</h4>
+<pre>public static&nbsp;int&nbsp;bufSize(int&nbsp;width,
+          int&nbsp;height,
+          int&nbsp;jpegSubsamp)</pre>
+<div class="block">Returns the maximum size of the buffer (in bytes) required to hold a JPEG
+ image with the given width, height, and level of chrominance subsampling.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>width</code> - the width (in pixels) of the JPEG image</dd><dd><code>height</code> - the height (in pixels) of the JPEG image</dd><dd><code>jpegSubsamp</code> - the level of chrominance subsampling to be used when
+ generating the JPEG image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg"><code>TJ.SAMP_*</code></a>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the maximum size of the buffer (in bytes) required to hold a JPEG
+ image with the given width, height, and level of chrominance subsampling.</dd></dl>
+</li>
+</ul>
+<a name="bufSizeYUV(int, int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>bufSizeYUV</h4>
+<pre>public static&nbsp;int&nbsp;bufSizeYUV(int&nbsp;width,
+             int&nbsp;pad,
+             int&nbsp;height,
+             int&nbsp;subsamp)</pre>
+<div class="block">Returns the size of the buffer (in bytes) required to hold a YUV planar
+ image with the given width, height, and level of chrominance subsampling.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>width</code> - the width (in pixels) of the YUV image</dd><dd><code>pad</code> - the width of each line in each plane of the image is padded to
+ the nearest multiple of this number of bytes (must be a power of 2.)</dd><dd><code>height</code> - the height (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg"><code>TJ.SAMP_*</code></a>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the size of the buffer (in bytes) required to hold a YUV planar
+ image with the given width, height, and level of chrominance subsampling.</dd></dl>
+</li>
+</ul>
+<a name="bufSizeYUV(int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>bufSizeYUV</h4>
+<pre>@Deprecated
+public static&nbsp;int&nbsp;bufSizeYUV(int&nbsp;width,
+                        int&nbsp;height,
+                        int&nbsp;subsamp)</pre>
+<div class="block"><span class="strong">Deprecated.</span>&nbsp;<i>Use <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#bufSizeYUV(int,%20int,%20int,%20int)"><code>bufSizeYUV(int, int, int, int)</code></a> instead.</i></div>
+</li>
+</ul>
+<a name="planeSizeYUV(int, int, int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>planeSizeYUV</h4>
+<pre>public static&nbsp;int&nbsp;planeSizeYUV(int&nbsp;componentID,
+               int&nbsp;width,
+               int&nbsp;stride,
+               int&nbsp;height,
+               int&nbsp;subsamp)</pre>
+<div class="block">Returns the size of the buffer (in bytes) required to hold a YUV image
+ plane with the given parameters.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>componentID</code> - ID number of the image plane (0 = Y, 1 = U/Cb,
+ 2 = V/Cr)</dd><dd><code>width</code> - width (in pixels) of the YUV image.  NOTE: this is the width
+ of the whole image, not the plane width.</dd><dd><code>stride</code> - bytes per line in the image plane.</dd><dd><code>height</code> - height (in pixels) of the YUV image.  NOTE: this is the
+ height of the whole image, not the plane height.</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV
+ image (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg"><code>TJ.SAMP_*</code></a>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the size of the buffer (in bytes) required to hold a YUV planar
+ image with the given parameters.</dd></dl>
+</li>
+</ul>
+<a name="planeWidth(int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>planeWidth</h4>
+<pre>public static&nbsp;int&nbsp;planeWidth(int&nbsp;componentID,
+             int&nbsp;width,
+             int&nbsp;subsamp)</pre>
+<div class="block">Returns the plane width of a YUV image plane with the given parameters.
+ Refer to <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>YUVImage</code></a> for a description of plane width.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>componentID</code> - ID number of the image plane (0 = Y, 1 = U/Cb,
+ 2 = V/Cr)</dd><dd><code>width</code> - width (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV image
+ (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg"><code>TJ.SAMP_*</code></a>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the plane width of a YUV image plane with the given parameters.</dd></dl>
+</li>
+</ul>
+<a name="planeHeight(int, int, int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>planeHeight</h4>
+<pre>public static&nbsp;int&nbsp;planeHeight(int&nbsp;componentID,
+              int&nbsp;height,
+              int&nbsp;subsamp)</pre>
+<div class="block">Returns the plane height of a YUV image plane with the given parameters.
+ Refer to <a href="../../../org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>YUVImage</code></a> for a description of plane height.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>componentID</code> - ID number of the image plane (0 = Y, 1 = U/Cb,
+ 2 = V/Cr)</dd><dd><code>height</code> - height (in pixels) of the YUV image</dd><dd><code>subsamp</code> - the level of chrominance subsampling used in the YUV image
+ (one of <a href="../../../org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg"><code>TJ.SAMP_*</code></a>)</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the plane height of a YUV image plane with the given parameters.</dd></dl>
+</li>
+</ul>
+<a name="getScalingFactors()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getScalingFactors</h4>
+<pre>public static&nbsp;<a href="../../../org/libjpegturbo/turbojpeg/TJScalingFactor.html" title="class in org.libjpegturbo.turbojpeg">TJScalingFactor</a>[]&nbsp;getScalingFactors()</pre>
+<div class="block">Returns a list of fractional scaling factors that the JPEG decompressor in
+ this implementation of TurboJPEG supports.</div>
+<dl><dt><span class="strong">Returns:</span></dt><dd>a list of fractional scaling factors that the JPEG decompressor in
+ this implementation of TurboJPEG supports.</dd></dl>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<!-- ========= END OF CLASS DATA ========= -->
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<div class="bottomNav"><a name="navbar_bottom">
+<!--   -->
+</a><a href="#skip-navbar_bottom" title="Skip navigation links"></a><a name="navbar_bottom_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../org/libjpegturbo/turbojpeg/package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../index-all.html">Index</a></li>
+<li><a href="../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li>Prev Class</li>
+<li><a href="../../../org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg"><span class="strong">Next Class</span></a></li>
+</ul>
+<ul class="navList">
+<li><a href="../../../index.html?org/libjpegturbo/turbojpeg/TJ.html" target="_top">Frames</a></li>
+<li><a href="TJ.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_bottom">
+<li><a href="../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_bottom");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#field_summary">Field</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method_summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li><a href="#field_detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method_detail">Method</a></li>
+</ul>
+</div>
+<a name="skip-navbar_bottom">
+<!--   -->
+</a></div>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+</body>
+</html>

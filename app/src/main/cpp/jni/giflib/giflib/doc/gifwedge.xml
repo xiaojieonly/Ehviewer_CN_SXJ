@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifwedge.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifwedge</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifwedge</refname>
+<refpurpose>create a GIF test pattern</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifwedge</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-l <replaceable>lvls</replaceable></arg>
+      <arg choice='opt'>-s 
+      		<replaceable>sizex</replaceable>
+      		<replaceable>sizey</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to create a test GIF image with intensity levels of
+the RGB colors YCM colors and white.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para>Verbose mode (show progress).
+Enables printout of running scan lines. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-l lvls</term>
+<listitem>
+<para>Set number of intensity levels per color.  This number must be
+power of two up to 32, as Gif format can only have 256 color
+simultaneously and 7 basic colors are to be displayed.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-s sizex sizey</term>
+<listitem>
+<para>Force image size to be SizeX by SizeY pixels. Image size will be
+rounded down to be a multiple of number of intensities horizontally,
+and 7 (colors) vertically.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para>Print one line command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

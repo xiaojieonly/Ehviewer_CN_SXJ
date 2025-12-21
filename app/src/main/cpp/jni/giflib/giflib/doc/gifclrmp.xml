@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifclrmp.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifclrmp</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifclrmp</refname>
+<refpurpose>extract colormaps from GIF images</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifclrmp</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-s</arg>
+      <arg choice='opt'>-l <replaceable>mapfile</replaceable></arg>
+      <arg choice='opt'>-t <replaceable>trans</replaceable></arg>
+      <arg choice='opt'>-g <replaceable>gamma</replaceable></arg>
+      <arg choice='opt'>-i <replaceable>image</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to modify GIF image colormaps.  Any local colormap in
+a GIF file can be modified at a time, or the global screen one.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para> Verbose mode (show progress).  
+Enables printout of running scan lines. </para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-s</term>
+<listitem>
+<para>Select the global screen color map.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-l mapfile</term>
+<listitem>
+<para> Load color map from this file instead of selected color
+map.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-t trans</term>
+<listitem>
+<para>Change color index values.  The change is made to both the
+selected color table and the raster bits of the selected image.  A
+translation file is a list of pairs of `before' and `after' index
+values. At present, the `before' index values must be in ascending
+order starting from 0.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-g gamma</term>
+<listitem>
+<para>Apply gamma correction to selected color map.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-i image</term>
+<listitem>
+<para>Select the color map of the numbered image.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para>Print one command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>If no GIF file is given, gifclip will try to read a GIF file
+from stdin.</para>
+
+</refsect1>
+<refsect1><title>Notes</title>
+
+<itemizedlist>
+<listitem>
+<para>The default operation is to dump out the selected color map in text
+format.</para>
+</listitem>
+<listitem>
+<para>The file to load/dump is simply one color map entry per line.  Each such
+entry line has four integers: "ColorIndex Red Green Blue", where color
+index is in ascending order starting from 1.</para>
+</listitem>
+</itemizedlist>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

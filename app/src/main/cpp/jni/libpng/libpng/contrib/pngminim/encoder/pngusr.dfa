@@ -1,0 +1,39 @@
+# pngminim/encoder/pngusr.dfa
+#
+# Copyright (c) 2010-2013 Glenn Randers-Pehrson
+#
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
+
+# First all the build options off:
+
+everything = off
+
+# Switch on the write code - this makes a minimalist encoder
+
+option WRITE on
+
+# These 2 options are required if you need to read PBM (P1 or P4) files.
+option WRITE_INVERT on
+option WRITE_PACK on
+
+# You must choose fixed or floating point arithmetic:
+# option FLOATING_POINT on
+
+option FIXED_POINT on
+
+# You must chose the internal fixed point implementation or to
+# use the system floating point.  The latter is considerably
+# smaller (by about 1kbyte on an x86 system):
+# option FLOATING_ARITHMETIC on
+
+option FLOATING_ARITHMETIC off
+
+# Your program will probably need other options.  The example
+# program here, pnm2pngm, requires the following.  Take a look
+# at pnglibconf.h to find out the full set of what has to be
+# enabled to make the following work.
+
+option SETJMP on
+option STDIO on

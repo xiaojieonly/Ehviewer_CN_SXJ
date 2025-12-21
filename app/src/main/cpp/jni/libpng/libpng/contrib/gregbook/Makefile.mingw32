@@ -1,0 +1,131 @@
+# Sample makefile for rpng-win / rpng2-win / wpng using mingw32-gcc and make.
+# Greg Roelofs
+# Last modified:  2 June 2007
+#
+#	The programs built by this makefile are described in the book,
+#	"PNG:  The Definitive Guide," by Greg Roelofs (O'Reilly and
+#	Associates, 1999).  Go buy a copy, eh?  Well, OK, it's not
+#	generally for sale anymore, but it's the thought that counts,
+#	right?  (Hint:  http://www.libpng.org/pub/png/book/ )
+#
+# Invoke this makefile from a DOS-prompt window via:
+#
+#	make -f Makefile.mingw32
+#
+# This makefile assumes libpng and zlib have already been built or downloaded
+# and are in subdirectories at the same level as the current subdirectory
+# (as indicated by the PNGDIR and ZDIR macros below).  It makes no assumptions
+# at all about the mingw32 installation tree (W32DIR).  Edit as appropriate.
+#
+# Note that the names of the dynamic and static libpng and zlib libraries
+# used below may change in later releases of the libraries.  This makefile
+# builds both statically and dynamically linked executables by default.
+# (You need only one set, but for testing it can be handy to have both.)
+
+
+# macros --------------------------------------------------------------------
+
+#PNGDIR = ../..#		for libpng-x.y.z/contrib/gregbook builds
+PNGDIR = ../libpng-win32
+PNGINC = -I$(PNGDIR)
+PNGLIBd = $(PNGDIR)/libpng.dll.a	# dynamically linked
+PNGLIBs = $(PNGDIR)/libpng.a		# statically linked, local libpng
+
+#ZDIR = ../../../zlib-win32#	for libpng-x.y.z/contrib/gregbook builds
+ZDIR = ../zlib-win32
+ZINC = -I$(ZDIR)
+ZLIBd = $(ZDIR)/libzdll.a
+ZLIBs = $(ZDIR)/libz.a
+
+# change this to be the path where mingw32 installs its stuff:
+W32DIR =
+#W32DIR = /usr/local/cross-tools/i386-mingw32msvc
+W32INC = -I$(W32DIR)/include
+W32LIB = $(W32DIR)/lib/libuser32.a $(W32DIR)/lib/libgdi32.a
+
+CC = gcc
+#CC = i386-mingw32msvc-gcc #	e.g., Linux -> Win32 cross-compilation
+LD = $(CC)
+RM = rm -f
+CPPFLAGS = $(INCS)
+CFLAGS = -O -Wall $(MINGW_CCFLAGS)
+# [note that -Wall is a gcc-specific compilation flag ("most warnings on")]
+# [-ansi, -pedantic and -W can also be used]
+LDFLAGS = $(MINGW_LDFLAGS)
+O = .o
+E = .exe
+
+INCS = $(PNGINC) $(ZINC) $(W32INC)
+RLIBSd = $(PNGLIBd) $(ZLIBd) $(W32LIB) -lm
+RLIBSs = $(PNGLIBs) $(ZLIBs) $(W32LIB) -lm
+WLIBSd = $(PNGLIBd) $(ZLIBd)
+WLIBSs = $(PNGLIBs) $(ZLIBs)
+
+RPNG   = rpng-win
+RPNG2  = rpng2-win
+WPNG   = wpng
+
+ROBJSd  = $(RPNG)$(O) readpng.pic$(O)
+ROBJS2d = $(RPNG2)$(O) readpng2.pic$(O)
+WOBJSd  = $(WPNG)$(O) writepng.pic$(O)
+
+RPNGs  = $(RPNG)-static
+RPNG2s = $(RPNG2)-static
+WPNGs  = $(WPNG)-static
+
+ROBJSs  = $(RPNG)$(O) readpng$(O)
+ROBJS2s = $(RPNG2)$(O) readpng2$(O)
+WOBJSs  = $(WPNG)$(O) writepng$(O)
+
+STATIC_EXES  = $(RPNGs)$(E) $(RPNG2s)$(E) $(WPNGs)$(E)
+DYNAMIC_EXES = $(RPNG)$(E) $(RPNG2)$(E) $(WPNG)$(E)
+
+EXES = $(STATIC_EXES) $(DYNAMIC_EXES)
+
+
+# implicit make rules -------------------------------------------------------
+
+.c$(O):
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+
+%.pic$(O): %.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -DPNG_BUILD_DLL -o $@ $<
+
+
+# dependencies --------------------------------------------------------------
+
+all:  $(EXES)
+
+$(RPNGs)$(E): $(ROBJSs)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJSs) $(RLIBSs)
+
+$(RPNG)$(E): $(ROBJSd)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJSd) $(RLIBSd)
+
+$(RPNG2s)$(E): $(ROBJS2s)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS2s) $(RLIBSs)
+
+$(RPNG2)$(E): $(ROBJS2d)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS2d) $(RLIBSd)
+
+$(WPNGs)$(E): $(WOBJSs)
+	$(LD) $(LDFLAGS) -o $@ $(WOBJSs) $(WLIBSs)
+
+$(WPNG)$(E): $(WOBJSd)
+	$(LD) $(LDFLAGS) -o $@ $(WOBJSd) $(WLIBSd)
+
+$(RPNG)$(O):	$(RPNG).c readpng.h
+$(RPNG2)$(O):	$(RPNG2).c readpng2.h
+$(WPNG)$(O):	$(WPNG).c writepng.h
+
+readpng$(O) readpng.pic$(O):	readpng.c readpng.h
+readpng2$(O) readpng2.pic$(O):	readpng2.c readpng2.h
+writepng$(O) writepng.pic$(O):	writepng.c writepng.h
+
+
+# maintenance ---------------------------------------------------------------
+
+clean:
+	$(RM) $(EXES)
+	$(RM) $(ROBJSs) $(ROBJS2s) $(WOBJSs)
+	$(RM) $(ROBJSd) $(ROBJS2d) $(WOBJSd)

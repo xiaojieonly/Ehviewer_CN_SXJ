@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='gifbg.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>gifbg</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>gifbg</refname>
+<refpurpose>generate a test-pattern GIF</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>gifbg</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-d <replaceable>dir</replaceable></arg>
+      <arg choice='opt'>-l <replaceable>lvls</replaceable></arg>
+      <arg choice='opt'>-c 
+      		<replaceable>R</replaceable>
+      		<replaceable>G</replaceable>
+      		<replaceable>B</replaceable></arg>
+      <arg choice='opt'>-m <replaceable>min</replaceable></arg>
+      <arg choice='opt'>-o <replaceable>max</replaceable></arg>
+      <arg choice='opt'>-s 
+      		<replaceable>w</replaceable>
+		<replaceable>h</replaceable></arg>
+      <arg choice='opt'>-h</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to generate a single-color test pattern GIF with
+gradually changing intensity in any of the basic 8 directions.</para>
+
+<para>The gifbg program reads no input, and will dump the created GIF file
+to stdout.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para> Verbose mode (show progress). 
+Enables printout of running scan lines.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>-d dir</term>
+<listitem>
+<para>Select direction the intensity of the background should
+increase. Direction can be one of the 8 principal directions:</para>
+<variablelist>
+<varlistentry>
+<term>"T"</term>
+<listitem><para>for Top</para></listitem></varlistentry>
+<varlistentry>
+<term>"TR"</term>
+<listitem><para>for Top Right</para></listitem></varlistentry>
+<varlistentry>
+<term>"R"</term>
+<listitem><para>for Right</para></listitem></varlistentry>
+<varlistentry>
+<term>"BR"</term>
+<listitem><para>for Bottom Right</para></listitem></varlistentry>
+<varlistentry>
+<term>"B"</term>
+<listitem><para>for Bottom</para></listitem></varlistentry>
+<varlistentry>
+<term>"BL"</term>
+<listitem><para>for Bottom Left</para></listitem></varlistentry>
+<varlistentry>
+<term>"L"</term>
+<listitem><para>for left</para></listitem></varlistentry>
+<varlistentry>
+<term>"TL"</term>
+<listitem><para>for Top Left</para></listitem></varlistentry>
+</variablelist>
+<para>The compass directions may be use as synonyms for the above directions, so
+for example "NE" is equal to "TR".</para>
+<para>Direction is case insensitive. The default direction is Top
+(North).</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term> -l lvls</term>
+<listitem>
+<para> Numeric, nmber of levels the color will be scaled to. Default is 16.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term> -c R G B</term>
+<listitem>
+<para> What to use as the primary background color to scale. This
+color is scaled between the minimum intensity (min) and maximum
+intensity (max) from one end of the screen to the other as defined by
+dir.  See below (-m &amp; -M) for min &amp; max. Default is Blue (0,
+0, 255).</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term> -m min</term>
+<listitem>
+<para> Minimum intensity (in percent) to scale color.  Default 10%</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term> [-M max</term>
+<listitem>
+<para> Maximum intensity (in percent) to scale color.  Default 100%</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term> -s W H</term>
+<listitem>
+<para> Size of image to create.  Default 640 by 350.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term> -h</term>
+<listitem>
+<para> Print one line of command line help, similar to Usage above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>If min == max = 100 (%) and lvls == 2 then boolean mask image
+of specified size will be created - all foreground.</para>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

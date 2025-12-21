@@ -1,0 +1,40 @@
+# pngminim/decoder/pngusr.dfa
+#
+# Copyright (c) 2010-2013 Glenn Randers-Pehrson
+#
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
+
+# First all the build options off:
+
+everything = off
+
+# All that is required is some read code. This example switches
+# on the sequential read code (see ../preader for a progressive
+# read example).
+
+option SEQUENTIAL_READ on
+
+# You must choose fixed or floating point arithmetic:
+# option FLOATING_POINT on
+
+option FIXED_POINT on
+
+# You must chose the internal fixed point implementation or to
+# use the system floating point.  The latter is considerably
+# smaller (by about 1kbyte on an x86 system):
+# option FLOATING_ARITHMETIC on
+
+option FLOATING_ARITHMETIC off
+
+# Your program will probably need other options.  The example
+# program here, pngm2pnm, requires the following.  Take a look
+# at pnglibconf.h to find out the full set of what has to be
+# enabled to make the following work.
+
+option SETJMP on
+option STDIO on
+option READ_EXPAND on
+option READ_STRIP_16_TO_8 on
+option USER_LIMITS on

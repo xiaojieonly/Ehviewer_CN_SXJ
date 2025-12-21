@@ -1,0 +1,43 @@
+# (Note: this is not presently used, there's an autoconf build.)
+#
+# This is the make file for the util subdirectory of the GIF library
+# The compiler must be GNU gcc or ANSI-compliant.
+#
+# To make test versions in the utils directory:
+#
+#	make -f makefile.unx [all]
+#
+# To install them in the /usr/bin directory:
+#
+#	make -f makefile.unx [install-all]
+#
+
+# Declare the include files and libraries for the GIF utils:
+INC = -I../lib
+GIF_LIB = ../lib/libgif.a
+GIF_INC_DEPEND = ../lib/libgif.a ../lib/gif_lib.h ../util/getarg.h
+
+# Where to copy executables to:
+DEST = /usr/bin
+
+CC = gcc
+#CFLAGS = $(INC) -fno-builtin -O -s -W -Wreturn-type -Wcomment
+CFLAGS = $(INC) -fno-builtin -g -W -Wreturn-type -Wcomment
+
+BINARIES = gif2rgb gifbg gifclrmp giffix gifhisto \
+	gifinter gifinto giftext gifwedge gif2raw gifecho gifsponge giffilter \
+	gifbuild gifcolor giftool
+
+all: $(BINARIES)
+
+install-all:
+	cp $(BINARIES) $(SCRIPTS) $(DEST)
+
+.c:
+	$(CC) $(CFLAGS) $< $(GIF_LIB) -lm $(LDFLAGS) -o $*
+
+uninstall-utils:
+	(cd $(DEST); rm -f $(BINARIES))
+
+clean:
+	rm -f $(BINARIES)

@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE article PUBLIC 
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY homepage      "http://catb.org/~esr/">
+<!ENTITY email         "esr@thyrsus.com">
+]>
+<article><title>Introduction to GIFLIB</title>
+
+<articleinfo>
+
+<author>
+  <firstname>Eric</firstname>
+  <othername>Steven</othername>
+  <surname>Raymond</surname>
+  <affiliation>
+    <orgname><ulink url="&homepage;">
+    Thyrsus Enterprises</ulink></orgname> 
+    <address>
+    <email>&email;</email>
+    </address>
+  </affiliation>
+</author>
+<copyright>
+  <year>2012</year>
+  <holder role="mailto:&email;">Eric S. Raymond</holder> 
+</copyright>
+
+</articleinfo>
+
+<para>GIFLIB is a package of portable tools and library routines for
+working with GIF images.</para>
+
+<para>The Graphics Interchange Format(c) specification is the copyrighted
+property of CompuServe Incorporated.  GIF(sm) is a service mark
+property of CompuServe Incorporated.</para>
+
+<para>This package has been released under an X Consortium-like open-source
+license.  Use and copy as you see fit.  If you make useful changes,
+add new tools, or find and fix bugs, please send your mods to the
+maintainers for general distribution.</para>
+
+<para>The util directory includes programs to clip, rotate, scale, and
+position GIF images.  These are no replacement for an interactive graphics
+editor, but they can be very useful for scripted image generation or
+transformation.</para>
+
+<para>The library includes program-callable entry points for reading and writing
+GIF files, an 8x8 utility font for embedding text in GIFs, and an error
+handler.  GIF manipulation can be done at a relatively low level by
+sequential I/O (which automatically does/undoes image compression) or at
+a higher level by slurping an entire GIF into allocated core.</para>
+
+<para>This library speaks both GIF87a and GIF89.  The differences
+between GIF87 and GIF89 are minor: in the latter, the interpretation
+of some extension block types is defined.  The library never needs to
+actually interpret these, but <ulink
+url="giftext.html">giftext</ulink> notices them and there are
+functions in the API to read and modify them.</para>
+
+<sect1><title>Utilities</title>
+
+<para>Here is a summary of the utilities in this package.  If you're looking
+at this page through a web browser, each utility name should be a
+hotlink to HTML documentation.</para>
+
+<para>Most utilities have a -v (verbose) option that will cause them to print
+the current input scan line number (counting up) whenever they read
+image input, and will print output image line number (counting down)
+when they dump output.  Utilities that only read or write always print
+in increasing order.</para>
+
+<!--
+Note: the giflib.1 man page is deliberately omitted from the following
+list of references. It's meant to be seen through man(1) only as part
+of a local installation of the tools.
+-->
+
+<sect2><title>Conversion Utilities</title>
+
+<variablelist>
+<varlistentry>
+<term><ulink url="gif2rgb.html">gif2rgb</ulink></term>
+<listitem>
+<para>convert images saved as GIF to 24-bit RGB image(s) or vice-versa</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
+<sect2><title>Test Pattern Generators</title>
+
+<variablelist>
+<varlistentry>
+<term><ulink url="gifbg.html">gifbg</ulink></term>
+<listitem>
+<para>generate a single-color test pattern GIF</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="gifcolor.html">gifcolor</ulink></term>
+<listitem>
+<para>generate color test patterns</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="gifwedge.html">gifwedge</ulink></term>
+<listitem>
+<para>create a test GIF image resembling a color monitor test pattern</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
+<sect2><title>Image Manipulation Components</title>
+
+<variablelist>
+<varlistentry>
+<term><ulink url="gifclrmp.html">gifclrmp</ulink></term>
+<listitem>
+<para>modify GIF image colormaps</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="giffix.html">giffix</ulink></term>
+<listitem>
+<para>clumsily attempts to fix truncated GIF images</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
+<sect2><title>Report Generators</title>
+
+<variablelist>
+<varlistentry>
+<term><ulink url="giftext.html">giftext</ulink></term>
+<listitem>
+<para>print (text only) general information about a GIF</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="gifhisto.html">gifhisto</ulink></term>
+<listitem>
+<para>generate color-frequency histogram from a GIF</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
+<sect2><title>GIF Composition Tools</title>
+
+<variablelist>
+<varlistentry>
+<term><ulink url="gifbuild.html">gifbuild</ulink></term>
+<listitem>
+<para>converter/deconverter to/from an editable text format</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="gifecho.html">gifecho</ulink></term>
+<listitem>
+<para>generate GIF images out of regular text in 8x8 font</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="gifinto.html">gifinto</ulink></term>
+<listitem>
+<para>end-of-pipe fitting for GIF-processing pipelines</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><ulink url="giftool.html">giftool</ulink></term>
+<listitem>
+<para>GIF transformation tool</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</sect2>
+</sect1>
+<sect1><title>Library Functions</title>
+
+<para>The library contains two groups of C functions.  One group does
+sequential I/O on the stream-oriented GIF format.  The other supports
+grabbing an entire GIF into allocated core, operating on it in core,
+and then writing the modified in-core GIF out to disk.</para>
+
+<para>Unless you are on extremely memory-limited machine, you probably want
+to use the second group.</para>
+
+<para>Detailed documentation on the library entry points is in <ulink
+url="gif_lib.html">gif_lib.html</ulink>.</para>
+
+</sect1>
+<sect1><title>The GIF Standard</title>
+
+<para>The doc subdirectory includes flat-ASCII descriptions of <ulink
+url="gif89.txt">GIF89 format</ulink> and <ulink
+url="lzgif.txt">Lempel-Ziv Compression</ulink>. For historical
+completeness, we also include a copy of the <ulink
+url="gif87.txt">GIF87 standard.</ulink></para>
+
+<para>You can also read a <ulink url="whatsinagif/index.html">
+detailed narrative description</ulink> of how GIFs are laid out.  It
+clarifies some points on which the standard is obscure.</para>
+
+</sect1>
+<sect1><title>Package Status</title>
+
+<para>GIFLIB's current maintainer is Eric S. Raymond.  You can find his home
+page at <ulink url="&homepage;">&homepage;</ulink>.</para>
+
+<para>GIFLIB is not under active development, but bug fixes are being
+accepted.</para>
+
+</sect1>
+</article>

@@ -574,6 +574,12 @@ public class DownloadsScene extends ToolbarScene
         // 为FloatingActionButton添加标签
         setupFabLabels();
         
+        FloatingActionButton fab = mFabLayout.getSecondaryFabAt(6);
+        if (DRAG_ENABLE) {
+            fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.v_mobile_hand_left_x24, context.getTheme()));
+        } else {
+            fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.v_mobile_hand_left_off_x24, context.getTheme()));
+        }
         addAboveSnackView(mFabLayout);
 
         updateView();
@@ -1213,6 +1219,7 @@ public class DownloadsScene extends ToolbarScene
 
     private void setDragEnable(FloatingActionButton fab) {
         DRAG_ENABLE = !DRAG_ENABLE;
+        Settings.setDragDownloadGallery(DRAG_ENABLE);
         Context context = getEHContext();
         if (null == context) return;
         if (DRAG_ENABLE) {

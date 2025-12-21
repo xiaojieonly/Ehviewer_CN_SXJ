@@ -1,0 +1,110 @@
+
+Stdin:
+
+	Screen Size - Width = 290, Height = 48.
+	ColorResolution = 8, BitsPerPixel = 8, BackGround = 0, Aspect = 0.
+	Has Global Color Map.
+
+
+GIF89 application block (Ext Code = 255 [ ]):
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 2
+	User Input Flag: 0
+	Transparency on: yes
+	DelayTime: 100
+	Transparent Index: 0
+
+Image #1:
+
+	Image Size - Left = 0, Top = 0, Width = 290, Height = 48.
+	Image is Non Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 2
+	User Input Flag: 0
+	Transparency on: yes
+	DelayTime: 100
+	Transparent Index: 210
+
+Image #2:
+
+	Image Size - Left = 0, Top = 0, Width = 290, Height = 48.
+	Image is Non Interlaced, BitsPerPixel = 8.
+	Image Has Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 2
+	User Input Flag: 0
+	Transparency on: yes
+	DelayTime: 100
+	Transparent Index: 0
+
+Image #3:
+
+	Image Size - Left = 0, Top = 0, Width = 290, Height = 48.
+	Image is Non Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 2
+	User Input Flag: 0
+	Transparency on: yes
+	DelayTime: 100
+	Transparent Index: 210
+
+Image #4:
+
+	Image Size - Left = 0, Top = 0, Width = 290, Height = 48.
+	Image is Non Interlaced, BitsPerPixel = 8.
+	Image Has Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 2
+	User Input Flag: 0
+	Transparency on: yes
+	DelayTime: 100
+	Transparent Index: 0
+
+Image #5:
+
+	Image Size - Left = 0, Top = 0, Width = 290, Height = 48.
+	Image is Non Interlaced.
+	No Image Color Map.
+
+GIF89 graphics control (Ext Code = 249 [ ]):
+	Disposal Mode: 2
+	User Input Flag: 0
+	Transparency on: yes
+	DelayTime: 100
+	Transparent Index: 210
+
+Image #6:
+
+	Image Size - Left = 0, Top = 0, Width = 290, Height = 48.
+	Image is Non Interlaced, BitsPerPixel = 8.
+	Image Has Color Map.
+
+GIF89 comment (Ext Code = 254 [ ]):
+
+00000:  5                                                 This animated GI 
+00010:  4                                                 F is created by  
+00020:  4                                                 Fairy Suryana  h 
+00030:  7                                                 ttp://members.ao 
+00040:  6                                                 l.com/BeatFacto/ 
+00050:  0                                                   http://www.dew 
+00060:  6                                                 a.com/    Fairy  
+00070:  5                                                 Suryana DJ palin 
+00080:  6                                                 g jago se dunia! 
+GIF89 application block (Ext Code = 255 [ ]):
+
+00000:  4                                                 GIFCONnb1.0      
+00010:  0                                                            new-6 
+00020:  2                                                 .gif             
+00030:  0                                                    New-5.gif     
+00040:  0                                                            new-6 
+00050:  2                                                 .gif             
+00060:  0                                                    New-5.gif     
+00070:  0                                                            new-6 
+GIF file terminated normally.

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" []>
+<refentry id='giftext.1'>
+<refentryinfo><date>2 May 2012</date></refentryinfo>
+<refmeta>
+<refentrytitle>giftext</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">GIFLIB</refmiscinfo>
+<refmiscinfo class="manual">GIFLIB Documentation</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>giftext</refname>
+<refpurpose>dump GIF pixels and metadata as text</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>giftext</command>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-c</arg>
+      <arg choice='opt'>-e</arg>
+      <arg choice='opt'>-z</arg>
+      <arg choice='opt'>-p</arg>
+      <arg choice='opt'>-r</arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'><replaceable>gif-file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>A program to dump (text only) general information about GIF file.</para>
+
+<para>If no GIF file is given, giftext will try to read a GIF file
+from stdin.</para>
+
+</refsect1>
+<refsect1><title>Options</title>
+
+<variablelist>
+<varlistentry>
+<term>-v</term>
+<listitem>
+<para> Verbose mode (show progress).
+Enables printout of running scan lines. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-c</term>
+<listitem>
+<para> Dumps the color maps.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-e</term>
+<listitem>
+<para> Dumps encoded bytes - the pixels after compressed using LZ
+algorithm and chained to form bytes.  This is the form the data is
+saved in the GIF file.  Dumps in hex - 2 digit per byte.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-z</term>
+<listitem>
+<para> Dumps the LZ codes of the image.  Dumps in hex - 3 digits per
+code (as we are limited to 12 bits).</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-p</term>
+<listitem>
+<para> Dumps the pixels of the image.  Dumps in hex - 2 digit per
+pixel (&lt;=byte).</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-r</term>
+<listitem>
+<para> Dumps raw pixels as one byte per pixel.  This option inhibits
+all other options and only the pixels are dumped.  This option may be
+used to convert GIF files into raw data.  Note: the color map can be
+extracted by gifclrmp utility.  If more than one image is included in
+the file, all images will be dumped in order.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>-h</term>
+<listitem>
+<para> Print one line of command line help, similar to Usage
+above.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+<refsect1><title>Author</title>
+
+<para>Gershon Elber.</para>
+
+</refsect1>
+</refentry>

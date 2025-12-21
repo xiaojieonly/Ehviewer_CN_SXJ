@@ -234,14 +234,22 @@ public abstract class GalleryProvider {
         }
 
         public void add(Integer key, ImageWrapper value) {
-            if (!value.getAnimated() && value.obtain()) {
+//            if (!value.getAnimated() && value.obtain()) {
+//                put(key, value);
+//            }
+            if (value.getFormat() != Image.FORMAT_GIF && value.getFormat() == Image.FORMAT_WEBP && value.obtain()) {
                 put(key, value);
             }
         }
 
         @Override
         protected int sizeOf(Integer key, ImageWrapper value) {
-            return value.getWidth() * value.getHeight() * 4;
+            int size = value.getWidth() * value.getHeight() * 4;
+            if (value.getFormat() == Image.FORMAT_GIF || value.getFormat() == Image.FORMAT_WEBP) {
+                size *= 5;
+            }
+            return size;
+//            return value.getWidth() * value.getHeight() * 4;
         }
 
         @Override

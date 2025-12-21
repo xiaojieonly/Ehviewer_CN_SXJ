@@ -1,0 +1,90 @@
+# Makefile for libpng (static)
+# IBM C version 3.x for Win32 and OS/2
+# Copyright (C) 2006, 2014 Glenn Randers-Pehrson
+# Copyright (C) 2000 Cosmin Truta
+#
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
+#
+# Notes:
+#   Derived from makefile.std
+#   All modules are compiled in C mode
+#   Tested under Win32, expected to work under OS/2
+#   Can be easily adapted for IBM VisualAge/C++ for AIX
+
+# Location of the zlib library and include files
+ZLIBINC = ../zlib
+ZLIBLIB = ../zlib
+
+# Compiler, linker, lib and other tools
+CC = icc
+LD = ilink
+AR = ilib
+CP = copy
+RM = del
+
+CPPFLAGS = -I$(ZLIBINC)
+CFLAGS = -Mc -O2 -W3
+LDFLAGS =
+
+# Pre-built configuration
+# See scripts/pnglibconf.mak for more options
+PNGLIBCONF_H_PREBUILT = scripts/pnglibconf.h.prebuilt
+
+# File extensions
+O=.obj
+A=.lib
+E=.exe
+
+# Variables
+OBJS = png$(O) pngerror$(O) pngget$(O) pngmem$(O) pngpread$(O) \
+	pngread$(O) pngrio$(O) pngrtran$(O) pngrutil$(O) pngset$(O) \
+	pngtrans$(O) pngwio$(O) pngwrite$(O) pngwtran$(O) pngwutil$(O)
+
+LIBS = libpng$(A) $(ZLIBLIB)/zlib$(A)
+
+# Targets
+.c$(O):
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+
+all: libpng$(A) pngtest$(E)
+
+pnglibconf.h: $(PNGLIBCONF_H_PREBUILT)
+	$(CP) $(PNGLIBCONF_H_PREBUILT) $@
+
+libpng$(A): $(OBJS)
+	$(AR) -out:$@ $(OBJS)
+
+test: pngtest$(E)
+	pngtest$(E)
+
+pngtest: pngtest$(E)
+
+pngtest$(E): pngtest$(O) libpng$(A)
+	$(LD) $(LDFLAGS) pngtest$(O) $(LIBS)
+
+clean:
+	$(RM) *$(O)
+	$(RM) libpng$(A)
+	$(RM) pnglibconf.h
+	$(RM) pngtest$(E)
+	$(RM) pngout.png
+
+png$(O):      png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngerror$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngget$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngmem$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngpread$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngread$(O):  png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngrio$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngrtran$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngrutil$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngset$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngtrans$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwio$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwrite$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwtran$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwutil$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+
+pngtest$(O):  png.h pngconf.h pnglibconf.h

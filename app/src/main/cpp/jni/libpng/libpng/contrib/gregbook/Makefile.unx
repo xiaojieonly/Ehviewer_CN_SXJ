@@ -1,0 +1,134 @@
+# Sample makefile for rpng-x / rpng2-x / wpng using gcc and make.
+# Greg Roelofs
+# Last modified:  2 June 2007
+#
+#	The programs built by this makefile are described in the book,
+#	"PNG:  The Definitive Guide," by Greg Roelofs (O'Reilly and
+#	Associates, 1999).  Go buy a copy, eh?  Well, OK, it's not
+#	generally for sale anymore, but it's the thought that counts,
+#	right?  (Hint:  http://www.libpng.org/pub/png/book/ )
+#
+# Invoke this makefile from a shell prompt in the usual way; for example:
+#
+#	make -f Makefile.unx
+#
+# This makefile assumes libpng and zlib have already been built or downloaded
+# and are installed in /usr/local/{include,lib} or as otherwise indicated by
+# the PNG* and Z* macros below.  Edit as appropriate--choose only ONE each of
+# the PNGINC, PNGLIBd, PNGLIBs, ZINC, ZLIBd and ZLIBs lines.
+#
+# This makefile builds both dynamically and statically linked executables
+# (against libpng and zlib, that is), but that can be changed by modifying
+# the "EXES =" line.  (You need only one set, but for testing it can be handy
+# to have both.)
+
+
+# macros --------------------------------------------------------------------
+
+#PNGDIR = /usr/local/lib
+#PNGINC = -I/usr/local/include/libpng16
+#PNGLIBd = -L$(PNGDIR) -lpng16 # dynamically linked, installed libpng
+#PNGLIBs = $(PNGDIR)/libpng16.a # statically linked, installed libpng
+# or:
+PNGDIR = ../..#	this one is for libpng-x.y.z/contrib/gregbook builds
+#PNGDIR = ../libpng
+PNGINC = -I$(PNGDIR)
+PNGLIBd = -Wl,-rpath,$(PNGDIR) -L$(PNGDIR) -lpng16	# dynamically linked
+PNGLIBs = $(PNGDIR)/libpng.a		# statically linked, local libpng
+
+ZDIR = /usr/local/lib
+#ZDIR = /usr/lib64
+ZINC = -I/usr/local/include
+ZLIBd = -L$(ZDIR) -lz			# dynamically linked against zlib
+ZLIBs = $(ZDIR)/libz.a			# statically linked against zlib
+# or:
+#ZDIR = ../zlib
+#ZINC = -I$(ZDIR)
+#ZLIBd = -Wl,-rpath,$(ZDIR) -L$(ZDIR) -lz  # -rpath allows in-place testing
+#ZLIBs = $(ZDIR)/libz.a
+
+#XINC = -I/usr/include			# old-style, stock X distributions
+#XLIB = -L/usr/lib/X11 -lX11		#  (including SGI IRIX)
+#XINC = -I/usr/openwin/include		# Sun workstations (OpenWindows)
+#XLIB = -L/usr/openwin/lib -lX11
+XINC = -I/usr/X11R6/include		# new X distributions (X.org, etc.)
+XLIB = -L/usr/X11R6/lib -lX11
+#XLIB = -L/usr/X11R6/lib64 -lX11	# e.g., Red Hat on AMD64
+
+INCS = $(PNGINC) $(ZINC) $(XINC)
+RLIBSd = $(PNGLIBd) $(ZLIBd) $(XLIB) -lm
+RLIBSs = $(PNGLIBs) $(ZLIBs) $(XLIB) -lm
+WLIBSd = $(PNGLIBd) $(ZLIBd) -lm
+WLIBSs = $(PNGLIBs) $(ZLIBs) -lm
+
+CC = gcc
+LD = gcc
+RM = rm -f
+CPPFLAGS = $(INCS) -DFEATURE_LOOP
+CFLAGS = -O -Wall
+#CFLAGS = -O -W -Wall -Wextra -pedantic -ansi
+# [note that -Wall is a gcc-specific compilation flag ("most warnings on")]
+# [-ansi, -pedantic, -Wextra, and -W can also be used]
+LDFLAGS =
+O = .o
+E =
+
+RPNG   = rpng-x
+RPNG2  = rpng2-x
+WPNG   = wpng
+
+RPNGs  = $(RPNG)-static
+RPNG2s = $(RPNG2)-static
+WPNGs  = $(WPNG)-static
+
+ROBJS  = $(RPNG)$(O) readpng$(O)
+ROBJS2 = $(RPNG2)$(O) readpng2$(O)
+WOBJS  = $(WPNG)$(O) writepng$(O)
+
+STATIC_EXES  = $(RPNGs)$(E) $(RPNG2s)$(E) $(WPNGs)$(E)
+DYNAMIC_EXES = $(RPNG)$(E) $(RPNG2)$(E) $(WPNG)$(E)
+
+EXES = $(STATIC_EXES) $(DYNAMIC_EXES)
+
+
+# implicit make rules -------------------------------------------------------
+
+.c$(O):
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+
+
+# dependencies --------------------------------------------------------------
+
+all:  $(EXES)
+
+$(RPNGs)$(E): $(ROBJS)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS) $(RLIBSs)
+
+$(RPNG)$(E): $(ROBJS)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS) $(RLIBSd)
+
+$(RPNG2s)$(E): $(ROBJS2)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS2) $(RLIBSs)
+
+$(RPNG2)$(E): $(ROBJS2)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS2) $(RLIBSd)
+
+$(WPNGs)$(E): $(WOBJS)
+	$(LD) $(LDFLAGS) -o $@ $(WOBJS) $(WLIBSs)
+
+$(WPNG)$(E): $(WOBJS)
+	$(LD) $(LDFLAGS) -o $@ $(WOBJS) $(WLIBSd)
+
+$(RPNG)$(O):	$(RPNG).c readpng.h
+$(RPNG2)$(O):	$(RPNG2).c readpng2.h
+$(WPNG)$(O):	$(WPNG).c writepng.h
+
+readpng$(O):	readpng.c readpng.h
+readpng2$(O):	readpng2.c readpng2.h
+writepng$(O):	writepng.c writepng.h
+
+
+# maintenance ---------------------------------------------------------------
+
+clean:
+	$(RM) $(EXES) $(ROBJS) $(ROBJS2) $(WOBJS)
