@@ -391,6 +391,8 @@
     <string name="sort_by_rating_desc">Por valoración Desc</string>
     <string name="sort_by_name_asc">Por nombre Asc</string>
     <string name="sort_by_name_desc">Por nombre Desc</string>
+    <string name="sort_by_file_size_asc">Por tamaño de archivo Asc</string>
+    <string name="sort_by_file_size_desc">Por tamaño de archivo Desc</string>
     <string name="sort_download_list">Ordenar lista</string>
     <string name="download_start_all">Iniciar todo</string>
     <string name="download_stop_all">Detener todo</string>

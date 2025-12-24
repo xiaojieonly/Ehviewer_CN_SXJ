@@ -465,6 +465,8 @@
     <string name="sort_by_rating_desc">By Rating Desc</string>
     <string name="sort_by_name_asc">By Name Asc</string>
     <string name="sort_by_name_desc">By Name Desc</string>
+    <string name="sort_by_file_size_asc">By File Size Asc</string>
+    <string name="sort_by_file_size_desc">By File Size Desc</string>
     <string name="sort_download_list">Sort List</string>
     <string name="download_start_all">Start all</string>
     <string name="download_stop_all">Stop all</string>

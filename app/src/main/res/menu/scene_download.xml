@@ -97,6 +97,14 @@
                         android:id="@+id/sort_by_name_desc"
                         android:title="@string/sort_by_name_desc"
                         app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/sort_by_file_size_asc"
+                        android:title="@string/sort_by_file_size_asc"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/sort_by_file_size_desc"
+                        android:title="@string/sort_by_file_size_desc"
+                        app:showAsAction="ifRoom"/>
                 </menu>
             </item>
 

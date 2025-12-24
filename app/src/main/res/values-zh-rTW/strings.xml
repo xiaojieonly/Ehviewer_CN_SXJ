@@ -389,6 +389,8 @@
     <string name="sort_by_rating_desc">依評分降序</string>
     <string name="sort_by_name_asc">依名稱升序</string>
     <string name="sort_by_name_desc">依名稱降序</string>
+    <string name="sort_by_file_size_asc">依檔案大小升序</string>
+    <string name="sort_by_file_size_desc">依檔案大小降序</string>
     <string name="sort_download_list">排序列表</string>
     <string name="download_search_gallery">搜尋圖庫</string>
     <string name="download_search_hint">輸入搜尋關鍵字</string>

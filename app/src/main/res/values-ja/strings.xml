@@ -370,6 +370,8 @@
     <string name="sort_by_rating_desc">評価の降順</string>
     <string name="sort_by_name_asc">名前の昇順</string>
     <string name="sort_by_name_desc">名前の降順</string>
+    <string name="sort_by_file_size_asc">ファイルサイズの昇順</string>
+    <string name="sort_by_file_size_desc">ファイルサイズの降順</string>
     <string name="sort_download_list">リストを並べ替え</string>
     <string name="download_start_all">すべて開始</string>
     <string name="download_stop_all">すべて停止</string>

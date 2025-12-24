@@ -13,6 +13,8 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.GalleryTags;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.spider.SpiderDen;
+import com.hippo.unifile.UniFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +29,8 @@ public class DownloadListInfosExecutor {
     private static final int sortByCreateTimeDesc = 4;
     private static final int sortByRatingAsc = 5;
     private static final int sortByRatingDesc = 6;
+    private static final int sortByFileSizeAsc = 7;
+    private static final int sortByFileSizeDesc = 8;
 
 
     private final String TAG = "DownloadSearchingExecutor";
@@ -101,6 +105,8 @@ public class DownloadListInfosExecutor {
                 case R.id.sort_by_rating_desc:
                 case R.id.sort_by_name_asc:
                 case R.id.sort_by_name_desc:
+                case R.id.sort_by_file_size_asc:
+                case R.id.sort_by_file_size_desc:
                     resultList = sortByType(id);
                     break;
                 case R.id.all:
@@ -125,6 +131,15 @@ public class DownloadListInfosExecutor {
         }
         DownloadInfo[] arr = new DownloadInfo[mList.size()];
         mList.toArray(arr);
+
+        // 如果是按文件大小排序，先计算所有文件大小
+        if (type == R.id.sort_by_file_size_asc || type == R.id.sort_by_file_size_desc) {
+            for (DownloadInfo info : arr) {
+                if (info.fileSize < 0) { // 未计算过
+                    info.fileSize = calculateDownloadDirSize(info);
+                }
+            }
+        }
 
         int n = arr.length;
         // 子数组的大小分别为1，2，4，8...
@@ -244,6 +259,34 @@ public class DownloadListInfosExecutor {
                     }
                     break;
                 }
+                case R.id.sort_by_file_size_asc:
+                    // 未计算的文件大小(-1)排在最后
+                    if (arr[i].fileSize < 0 && arr[j].fileSize < 0) {
+                        a[k++] = arr[i++];
+                    } else if (arr[i].fileSize < 0) {
+                        a[k++] = arr[j++];
+                    } else if (arr[j].fileSize < 0) {
+                        a[k++] = arr[i++];
+                    } else if (arr[i].fileSize < arr[j].fileSize) {
+                        a[k++] = arr[i++];
+                    } else {
+                        a[k++] = arr[j++];
+                    }
+                    break;
+                case R.id.sort_by_file_size_desc:
+                    // 未计算的文件大小(-1)排在最后
+                    if (arr[i].fileSize < 0 && arr[j].fileSize < 0) {
+                        a[k++] = arr[i++];
+                    } else if (arr[i].fileSize < 0) {
+                        a[k++] = arr[j++];
+                    } else if (arr[j].fileSize < 0) {
+                        a[k++] = arr[i++];
+                    } else if (arr[i].fileSize > arr[j].fileSize) {
+                        a[k++] = arr[i++];
+                    } else {
+                        a[k++] = arr[j++];
+                    }
+                    break;
             }
 
         }
@@ -355,6 +398,46 @@ public class DownloadListInfosExecutor {
         }
 
         return list;
+    }
+
+    /**
+     * 计算下载目录的总大小
+     */
+    private long calculateDownloadDirSize(DownloadInfo info) {
+        try {
+            UniFile downloadDir = SpiderDen.getGalleryDownloadDir(info);
+            if (downloadDir == null || !downloadDir.isDirectory()) {
+                return -1;
+            }
+            return calculateFolderSize(downloadDir);
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    /**
+     * 递归计算文件夹大小
+     */
+    private long calculateFolderSize(UniFile folder) {
+        long totalSize = 0;
+        UniFile[] files = folder.listFiles();
+        
+        if (files == null) {
+            return 0;
+        }
+        
+        for (UniFile file : files) {
+            if (file.isFile()) {
+                long fileSize = file.length();
+                if (fileSize > 0) {
+                    totalSize += fileSize;
+                }
+            } else if (file.isDirectory()) {
+                totalSize += calculateFolderSize(file); // 递归计算子文件夹
+            }
+        }
+        
+        return totalSize;
     }
 
 }
