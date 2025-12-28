@@ -918,6 +918,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">이전 페이지</string>
     <string name="spen_next_page">다음 페이지</string>
+    <string name="category_all">전체</string>
     <string name="import_local_archive">로컬 아카이브 가져오기</string>
     <string name="import_archive_title">아카이브 파일 선택</string>
     <string name="import_archive_failed">아카이브 가져오기 실패</string>

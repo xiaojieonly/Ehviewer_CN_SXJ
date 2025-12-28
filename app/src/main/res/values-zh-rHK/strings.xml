@@ -1006,6 +1006,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一頁</string>
     <string name="spen_next_page">下一頁</string>
+    <string name="category_all">全部</string>
     <string name="import_local_archive">匯入本機歸檔</string>
     <string name="import_archive_title">選擇歸檔檔案</string>
     <string name="import_archive_failed">匯入歸檔失敗</string>

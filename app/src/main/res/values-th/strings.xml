@@ -942,5 +942,6 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">หน้าก่อนหน้า</string>
     <string name="spen_next_page">หน้าถัดไป</string>
+    <string name="category_all">ทั้งหมด</string>
 
 </resources>

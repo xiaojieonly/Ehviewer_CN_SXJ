@@ -865,5 +865,6 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Page précédente</string>
     <string name="spen_next_page">Page suivante</string>
+    <string name="category_all">Tout</string>
 
 </resources>

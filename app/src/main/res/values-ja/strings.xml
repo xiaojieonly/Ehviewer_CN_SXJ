@@ -879,6 +879,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">前のページ</string>
     <string name="spen_next_page">次のページ</string>
+    <string name="category_all">すべて</string>
     <string name="import_local_archive">ローカルアーカイブをインポート</string>
     <string name="import_archive_title">アーカイブファイルを選択</string>
     <string name="import_archive_failed">アーカイブのインポートに失敗しました</string>

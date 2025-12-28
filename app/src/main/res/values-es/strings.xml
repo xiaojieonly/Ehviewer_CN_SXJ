@@ -870,6 +870,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Página anterior</string>
     <string name="spen_next_page">Página siguiente</string>
+    <string name="category_all">Todo</string>
     <!--  订阅服务  -->
     <string name="subscription_watched">Visto</string>
     <string name="subscription_hidden">Oculto</string>

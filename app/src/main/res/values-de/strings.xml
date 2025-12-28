@@ -809,6 +809,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Vorherige Seite</string>
     <string name="spen_next_page">Nächste Seite</string>
+    <string name="category_all">Alle</string>
 
     <!--  排行榜  -->
     <string name="gallery_toplists">Galerie Die Charts.</string>

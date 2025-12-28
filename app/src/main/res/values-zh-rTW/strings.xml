@@ -966,6 +966,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一頁</string>
     <string name="spen_next_page">下一頁</string>
+    <string name="category_all">全部</string>
 
     <string name="dummy_button">虛擬按鈕</string>
     <string name="dummy_content">虛擬\n內容</string>
