@@ -1216,7 +1216,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, LinkedList<DownloadInfo> mWaitList) {
-        if (mList != list || !mList.contains(info)) {
+        if (mList != list && !mList.contains(info)) {
             return;
         }
         int index = mList.indexOf(info);
