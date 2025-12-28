@@ -1,6 +1,7 @@
-# 本APP有且仅在Github更新，所有自诩“官网”的均属虚假信息，请注意甄别
 # EhViewer
-## [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
+## 本APP有且仅在Github更新，所有自诩“官网”的均属虚假信息，请注意甄别
+
+### [常见问题汇总](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/EhviewerIssue.md)
 ![Icon](fastlane/metadata/android/en-US/images/icon.png)
 
 这是一个 E-Hentai Android 平台的浏览器。

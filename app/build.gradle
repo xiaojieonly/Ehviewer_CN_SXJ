@@ -97,7 +97,7 @@ dependencies {
 //    测试工具
 //    debugCompileOnly 'com.gu.android:toolargetool:0.3.0'
 
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'com.google.android.material:material:1.13.0'
 
     // app使用情况数据收集
     // Import the BoM for the Firebase platform
@@ -135,7 +135,7 @@ dependencies {
     /**
      * 原始依赖
      */
-    implementation 'com.github.seven332.a7zip:extract-lite:1b21783'
+    implementation 'com.github.xiaojieonly.a7zip_XJ:extract-lite:1.0.3'
     implementation 'com.github.seven332:android-recaptcha:2bbb3459a8'
     implementation 'com.github.seven332:android-resource:0.1.0'
     implementation 'com.github.seven332:animator:0.1.0'
