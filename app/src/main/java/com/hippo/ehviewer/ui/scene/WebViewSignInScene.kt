@@ -79,7 +79,7 @@ class WebViewSignInScene : SolidScene() {
         CookieManager.getInstance().setAcceptCookie(true)
         CookieManager.setAcceptFileSchemeCookies(true)
 
-        mWebView = WebView(context!!)
+        mWebView = WebView(context)
         val webSettings = mWebView!!.settings
         webSettings.javaScriptEnabled = true
         if (Settings.getDF()&&AppHelper.checkVPN(context)){

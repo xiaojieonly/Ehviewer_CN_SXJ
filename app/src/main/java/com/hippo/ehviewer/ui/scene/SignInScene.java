@@ -281,7 +281,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         // Clean up for sign in
         EhUtils.signOut(context);
 
-        EhCallback callback = new SignInListener(context,
+        EhCallback<SignInScene, String> callback = new SignInListener(context,
                 activity.getStageId(), getTag());
         mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
         EhRequest request = new EhRequest()
