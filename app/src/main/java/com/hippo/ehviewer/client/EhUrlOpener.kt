@@ -16,8 +16,10 @@
 package com.hippo.ehviewer.client
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.TextUtils
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser
 import com.hippo.ehviewer.client.parser.GalleryListUrlParser
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser
@@ -34,8 +36,12 @@ object EhUrlOpener {
         if (TextUtils.isEmpty(url)) {
             return null
         }
-
-        val listUrlBuilder = GalleryListUrlParser.parse(url)
+        var listUrlBuilder: Parcelable? = null
+        try{
+            listUrlBuilder = GalleryListUrlParser.parse(url)
+        }catch (e: Exception){
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
         if (listUrlBuilder != null) {
             val args = Bundle()
             args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_LIST_URL_BUILDER)
