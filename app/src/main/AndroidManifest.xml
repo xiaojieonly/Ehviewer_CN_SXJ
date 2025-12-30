@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!--  用于获取wifi状态  -->
@@ -59,8 +60,8 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
-        tools:ignore="UnusedAttribute">
-        <!--        tools:targetApi="n">-->
+        tools:ignore="UnusedAttribute"
+        tools:targetApi="35">
 
         <uses-library
             android:name="org.apache.http.legacy"

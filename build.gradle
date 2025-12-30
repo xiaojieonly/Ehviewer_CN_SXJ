@@ -1,51 +1,15 @@
-//buildscript {
-//    repositories {
-//        google()
-//        jcenter()
-//
-//        maven { url "https://maven.fabric.io/public" }
-//        maven { url "https://jitpack.io" }
-//    }
-//    dependencies {
-//        classpath 'com.android.tools.build:gradle:4.1.3'
-////        classpath 'com.google.gms:google-services:4.3.0'
-//        classpath 'com.google.gms:google-services:4.3.10'
-//        classpath 'io.fabric.tools:gradle:1.28.0'
-//        // Add the dependency for the Crashlytics Gradle plugin
-//        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.5'
-//        // NOTE: Do not place your application dependencies here; they belong
-//        // in the individual module build.gradle files
-//    }
-//}
-
-//allprojects {
-//    repositories {
-//        google()
-//        mavenCentral()
-//        maven { url "https://jitpack.io" }
-//
-//        maven{ url 'https://maven.aliyun.com/repository/google'}
-//
-//        maven{ url 'https://maven.aliyun.com/repository/gradle-plugin'}
-//
-//        maven{ url 'https://maven.aliyun.com/repository/public'}
-//
-//        maven{ url 'https://maven.aliyun.com/repository/jcenter'}
-//    }
-//}
-
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     id 'com.android.application' version '8.13.2' apply false
     id 'com.android.library' version '8.13.2' apply false
-    id 'com.google.gms.google-services' version '4.4.2' apply false
-    id "org.jetbrains.kotlin.android" version "2.1.0" apply false
-    id "org.jetbrains.kotlin.plugin.parcelize" version "2.1.0" apply false
-    id "com.google.firebase.crashlytics" version "3.0.2" apply false
+    id 'com.google.gms.google-services' version '4.4.4' apply false
+    id "org.jetbrains.kotlin.android" version "2.3.0" apply false
+    id "org.jetbrains.kotlin.plugin.parcelize" version "2.3.0" apply false
+    id "com.google.firebase.crashlytics" version "3.0.6" apply false
     id "com.jaredsburrows.license" version "0.9.8" apply false
 }
 
 
 tasks.register('clean', Delete) {
-    delete rootProject.buildDir
+    delete rootProject.layout.buildDirectory
 }

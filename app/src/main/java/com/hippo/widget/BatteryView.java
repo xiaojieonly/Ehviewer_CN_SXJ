@@ -168,7 +168,11 @@ public class BatteryView extends AppCompatTextView {
     private void registerReceiver() {
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            getContext().registerReceiver(mIntentReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+        }
     }
 
     private void unregisterReceiver() {

@@ -23,7 +23,8 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Point
 import android.graphics.drawable.ColorDrawable
-import android.os.AsyncTask
+import androidx.core.content.ContextCompat
+import androidx.core.os.BundleCompat
 import android.os.Bundle
 import android.text.InputType
 import android.text.Spannable
@@ -41,6 +42,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -212,7 +216,7 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
     }
 
     private fun onRestore(savedInstanceState: Bundle) {
-        mUrlBuilder = savedInstanceState.getParcelable<FavListUrlBuilder?>(KEY_URL_BUILDER)
+        mUrlBuilder = BundleCompat.getParcelable(savedInstanceState, KEY_URL_BUILDER, FavListUrlBuilder::class.java)
         if (mUrlBuilder == null) {
             mUrlBuilder = FavListUrlBuilder()
         }
@@ -285,13 +289,41 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mRecyclerView!!.setOnItemLongClickListener(this)
         mRecyclerView!!.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM)
         mRecyclerView!!.setCustomCheckedListener(this)
+        
+        // 为RecyclerView设置WindowInsets监听器，使列表内容可以延伸到状态栏和导航栏下方
+        ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView!!) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // 计算搜索栏的总高度 = 状态栏高度 + 搜索栏自身高度(约48dp) + 上下边距(8dp * 2) + 额外间隔
+            val searchBarHeight = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar)
+            v.setPadding(
+                v.paddingLeft,
+                systemBars.top + searchBarHeight,
+                v.paddingRight,
+                systemBars.bottom
+            )
+            insets
+        }
 
-        fastScroller.setPadding(
-            fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
-            fastScroller.getPaddingRight(), fastScroller.getPaddingBottom()
-        )
-
-        refreshLayout.setHeaderTranslationY(paddingTopSB.toFloat())
+        // 为FastScroller设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(fastScroller) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val searchBarHeight = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar)
+            v.setPadding(
+                v.paddingLeft,
+                systemBars.top + searchBarHeight,
+                v.paddingRight,
+                v.paddingBottom
+            )
+            insets
+        }
+        
+        // 为RefreshLayout设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(refreshLayout) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val searchBarHeight = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar)
+            refreshLayout.setHeaderTranslationY((systemBars.top + searchBarHeight).toFloat())
+            insets
+        }
 
         mLeftDrawable = DrawerArrowDrawable(
             context,
@@ -307,10 +339,20 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mSearchBar!!.setHelper(this)
         mSearchBar!!.setAllowEmptySearch(false)
         updateSearchBar()
+        
+        // 为SearchBar设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(mSearchBar!!) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = v.layoutParams as ViewGroup.MarginLayoutParams
+            params.topMargin = systemBars.top + resources.getDimensionPixelOffset(R.dimen.gallery_search_bar_margin_v)
+            v.layoutParams = params
+            insets
+        }
+        
         mSearchBarMover = SearchBarMover(this, mSearchBar, mRecyclerView)
 
         mActionFabDrawable =
-            AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark))
+            AddDeleteDrawable(context, ContextCompat.getColor(context, R.color.primary_drawable_dark))
         mFabLayout!!.getPrimaryFab().setImageDrawable(mActionFabDrawable)
         mFabLayout!!.setExpanded(false, false)
         mFabLayout!!.setAutoCancel(true)
@@ -318,6 +360,18 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mFabLayout!!.setOnClickFabListener(this)
         mFabLayout!!.setOnExpandListener(this)
         addAboveSnackView(mFabLayout)
+        
+        // 为FAB布局设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(mFabLayout!!) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(
+                v.paddingLeft,
+                v.paddingTop,
+                resources.getDimensionPixelOffset(R.dimen.corner_fab_margin),
+                systemBars.bottom + resources.getDimensionPixelOffset(R.dimen.corner_fab_margin)
+            )
+            insets
+        }
 
         // Restore search mode
         if (mSearchMode) {
@@ -342,14 +396,12 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
             return
         }
 
-        val display = activity.getWindowManager().getDefaultDisplay()
-        val point = Point()
-        display.getSize(point)
+        val displayMetrics = resources.displayMetrics
 
         mShowcaseView = ShowcaseView.Builder(activity)
             .withMaterialShowcase()
             .setStyle(R.style.Guide)
-            .setTarget(PointTarget(point.x, point.y / 3))
+            .setTarget(PointTarget(displayMetrics.widthPixels, displayMetrics.heightPixels / 3))
             .blockAllTouches()
             .setContentTitle(R.string.guide_collections_title)
             .setContentText(R.string.guide_collections_text)
@@ -520,7 +572,7 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
             mFabLayout!!.toggle()
         } else if (mSearchMode) {
             exitSearchMode(true)
-        } else {
+        } else if (!checkDoubleClickExit()) {
             finish()
         }
     }
@@ -1574,7 +1626,7 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         }
     }
 
-    private inner class RandomFavorite : AsyncTask<Void?, Void?, GalleryInfo?> {
+    private inner class RandomFavorite {
         var mOkHttpClient: OkHttpClient? = null
 
         internal constructor(context: Context) {
@@ -1583,8 +1635,22 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
 
         constructor()
 
-        override fun doInBackground(vararg v: Void?): GalleryInfo? {
-            publishProgress()
+        fun execute() {
+            mHelper!!.showProgressBar(true)
+            executorService?.execute {
+                val result = try {
+                    doInBackground()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+                SimpleHandler.getInstance().post {
+                    onPostExecute(result)
+                }
+            }
+        }
+
+        private fun doInBackground(): GalleryInfo? {
             if (mUrlBuilder == null) {
                 return GalleryInfo()
             }
@@ -1642,19 +1708,13 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
                 ).galleryInfoList
                 return rGInfoL.get((Math.random() * rGInfoL.size).toInt())
             } catch (e: Throwable) {
-                throw RuntimeException(e)
+                // throw RuntimeException(e)
+                e.printStackTrace()
+                return null
             }
         }
 
-        @Deprecated("Deprecated in Java")
-        override fun onProgressUpdate(vararg values: Void?) {
-            mHelper!!.showProgressBar(true)
-        }
-
-        @Deprecated("Deprecated in Java")
-        override fun onPostExecute(info: GalleryInfo?) {
-            super.onPostExecute(info)
-
+        private fun onPostExecute(info: GalleryInfo?) {
             //抄onItemClick(EasyRecyclerView parent, View view, int position, long id)的跳轉功能
             if (info == null) return
             val args = Bundle()

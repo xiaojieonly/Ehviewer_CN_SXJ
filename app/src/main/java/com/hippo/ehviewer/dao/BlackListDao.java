@@ -178,4 +178,13 @@ public class BlackListDao extends AbstractDao<BlackList, Long> {
         return true;
     }
     
+    @Override
+    public boolean hasKey(BlackList entity) {
+        if (entity == null) {
+            return false;
+        }
+        Long key = entity.getId();
+        return key != null && key != 0L;
+    }
+    
 }

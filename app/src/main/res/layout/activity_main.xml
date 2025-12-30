@@ -22,8 +22,7 @@
     <com.hippo.ehviewer.widget.EhDrawerLayout
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
         <com.hippo.ehviewer.widget.EhStageLayout
             android:id="@+id/fragment_container"

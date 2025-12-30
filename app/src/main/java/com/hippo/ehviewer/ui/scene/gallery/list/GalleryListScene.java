@@ -52,6 +52,9 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
@@ -150,8 +153,6 @@ public final class GalleryListScene extends BaseScene
     @Retention(RetentionPolicy.SOURCE)
     private @interface State {
     }
-
-    private static final int BACK_PRESSED_INTERVAL = 2000;
 
     public final static int REQUEST_CODE_SELECT_IMAGE = 0;
 
@@ -277,9 +278,6 @@ public final class GalleryListScene extends BaseScene
 
     @State
     private int mState = STATE_NORMAL;
-
-    // Double click back exit
-    private long mPressBackTime = 0;
 
     private boolean mHasFirstRefresh = false;
 
@@ -643,10 +641,41 @@ public final class GalleryListScene extends BaseScene
         assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
 //        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
-        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
-                fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
-
-        refreshLayout.setHeaderTranslationY(paddingTopSB);
+        
+        // 设置WindowInsets监听器，使RecyclerView内容可以延伸到状态栏和导航栏下方
+        ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            // 计算搜索栏的总高度 = 状态栏高度 + 搜索栏自身高度(约48dp) + 上下边距(8dp * 2) + 额外间隔
+            int searchBarHeight = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
+            v.setPadding(
+                v.getPaddingLeft(),
+                systemBars.top + searchBarHeight,
+                v.getPaddingRight(),
+                systemBars.bottom + paddingBottomFab
+            );
+            return insets;
+        });
+        
+        // 为FastScroller设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(fastScroller, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int searchBarHeight = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
+            v.setPadding(
+                v.getPaddingLeft(),
+                systemBars.top + searchBarHeight,
+                v.getPaddingRight(),
+                v.getPaddingBottom()
+            );
+            return insets;
+        });
+        
+        // 为RefreshLayout设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(refreshLayout, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int searchBarHeight = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
+            refreshLayout.setHeaderTranslationY(systemBars.top + searchBarHeight);
+            return insets;
+        });
 
         mLeftDrawable = new DrawerArrowDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
         mRightDrawable = new AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
@@ -656,10 +685,29 @@ public final class GalleryListScene extends BaseScene
         mSearchBar.setOnStateChangeListener(this);
         setSearchBarHint(context, mSearchBar);
         setSearchBarSuggestionProvider(mSearchBar);
+        
+        // 为SearchBar设置WindowInsets监听器，使其根据状态栏高度调整顶部margin
+        ViewCompat.setOnApplyWindowInsetsListener(mSearchBar, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            params.topMargin = systemBars.top + resources.getDimensionPixelOffset(R.dimen.gallery_search_bar_margin_v);
+            v.setLayoutParams(params);
+            return insets;
+        });
 
         mSearchLayout.setHelper(this);
-        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop() + paddingTopSB,
-                mSearchLayout.getPaddingRight(), mSearchLayout.getPaddingBottom() + paddingBottomFab);
+        
+        // 为SearchLayout设置WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(mSearchLayout, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                v.getPaddingLeft(),
+                systemBars.top + paddingTopSB,
+                v.getPaddingRight(),
+                systemBars.bottom + paddingBottomFab
+            );
+            return insets;
+        });
 
         mFabLayout.setAutoCancel(true);
         mFabLayout.setExpanded(false);
@@ -670,6 +718,18 @@ public final class GalleryListScene extends BaseScene
 
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
+        
+        // 为FAB布局设置WindowInsets监听器，使其根据导航栏高度调整底部padding
+        ViewCompat.setOnApplyWindowInsetsListener(mFabLayout, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                v.getPaddingLeft(),
+                v.getPaddingTop(),
+                resources.getDimensionPixelOffset(R.dimen.corner_fab_margin),
+                systemBars.bottom + resources.getDimensionPixelOffset(R.dimen.corner_fab_margin)
+            );
+            return insets;
+        });
 
         mSearchFab.setOnClickListener(this);
 
@@ -1136,21 +1196,7 @@ public final class GalleryListScene extends BaseScene
         drawPager.setAdapter(pagerAdapter);
     }
 
-    private boolean checkDoubleClickExit() {
-        if (getStackIndex() != 0) {
-            return false;
-        }
 
-        long time = System.currentTimeMillis();
-        if (time - mPressBackTime > BACK_PRESSED_INTERVAL) {
-            // It is the last scene
-            mPressBackTime = time;
-            showTip(R.string.press_twice_exit, LENGTH_SHORT);
-            return true;
-        } else {
-            return false;
-        }
-    }
 
 
     @Override

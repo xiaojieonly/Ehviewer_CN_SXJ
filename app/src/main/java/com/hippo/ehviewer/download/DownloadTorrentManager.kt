@@ -63,8 +63,8 @@ class DownloadTorrentManager private constructor(private val okHttpClient: OkHtt
                 var len: Int
                 var fos: FileOutputStream? = null
                 try {
-                    `is` = response.body()!!.byteStream()
-                    val total = response.body()!!.contentLength()
+                    `is` = response.body!!.byteStream()
+                    val total = response.body!!.contentLength()
                     fos = FileOutputStream(file)
                     var sum: Long = 0
                     while ((`is`.read(buf).also { len = it }) != -1) {

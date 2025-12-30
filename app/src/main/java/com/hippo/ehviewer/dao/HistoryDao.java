@@ -219,4 +219,13 @@ public class HistoryDao extends AbstractDao<HistoryInfo, Long> {
         return true;
     }
     
+    @Override
+    public boolean hasKey(HistoryInfo entity) {
+        if (entity == null) {
+            return false;
+        }
+        long key = entity.getGid();
+        return key != 0L;
+    }
+    
 }

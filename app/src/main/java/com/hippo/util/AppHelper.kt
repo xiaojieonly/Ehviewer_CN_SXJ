@@ -134,10 +134,9 @@ class AppHelper {
                 context.getSystemService<ConnectivityManager>(ConnectivityManager::class.java)
 
             val network = connectivityManager.activeNetwork
-            //don't know why always returns null:
-            val networkInfo = connectivityManager.getNetworkInfo(network)
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
             val result =
-                networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_VPN
+                capabilities != null && capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)
             if (result) {
                 try {
                     Toast.makeText(context, R.string.network_remind, Toast.LENGTH_LONG).show()

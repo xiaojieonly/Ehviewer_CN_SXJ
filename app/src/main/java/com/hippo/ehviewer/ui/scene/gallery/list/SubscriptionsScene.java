@@ -162,6 +162,13 @@ public final class SubscriptionsScene extends ToolbarScene {
         onBackPressed();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (!checkDoubleClickExit()) {
+            finish();
+        }
+    }
+
     private void bindSecond() {
         progressView.setVisibility(View.GONE);
         if (mRecyclerView == null){

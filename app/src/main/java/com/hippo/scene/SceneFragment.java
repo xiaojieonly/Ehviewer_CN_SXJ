@@ -96,12 +96,11 @@ public class SceneFragment extends Fragment {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         view.setTag(R.id.fragment_tag, getTag());
-        view.setBackgroundDrawable(AttrResources.getAttrDrawable(getContext(), android.R.attr.windowBackground));
+        view.setBackground(AttrResources.getAttrDrawable(getContext(), android.R.attr.windowBackground));
 
         // Notify
         FragmentActivity activity = getActivity();

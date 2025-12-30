@@ -30,6 +30,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.IntDef
 import androidx.core.app.NotificationCompat
+import androidx.core.content.IntentCompat
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.client.EhUtils
@@ -121,7 +122,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         when (action) {
             ACTION_CLEAR -> clear()
             ACTION_DELETE_RANGE -> {
-                val gidList = intent!!.getParcelableExtra<LongList>(KEY_GID_LIST)
+                val gidList = IntentCompat.getParcelableExtra(intent!!, KEY_GID_LIST, LongList::class.java)
                 if (gidList != null && mDownloadManager != null) {
                     mDownloadManager!!.deleteRangeDownload(gidList)
                 }
@@ -139,7 +140,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
             }
 
             ACTION_STOP_RANGE -> {
-                val gidListS = intent!!.getParcelableExtra<LongList>(KEY_GID_LIST)
+                val gidListS = IntentCompat.getParcelableExtra(intent!!, KEY_GID_LIST, LongList::class.java)
                 if (gidListS != null && mDownloadManager != null) {
                     mDownloadManager!!.stopRangeDownload(gidListS)
                 }
@@ -161,14 +162,14 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
             }
 
             ACTION_START_RANGE -> {
-                val gidListSR = intent!!.getParcelableExtra<LongList>(KEY_GID_LIST)
+                val gidListSR = IntentCompat.getParcelableExtra(intent!!, KEY_GID_LIST, LongList::class.java)
                 if (gidListSR != null && mDownloadManager != null) {
                     mDownloadManager!!.startRangeDownload(gidListSR)
                 }
             }
 
             ACTION_START -> {
-                val gi = intent!!.getParcelableExtra<GalleryInfo>(KEY_GALLERY_INFO)
+                val gi = IntentCompat.getParcelableExtra(intent!!, KEY_GALLERY_INFO, GalleryInfo::class.java)
                 val label = intent.getStringExtra(KEY_LABEL)
                 if (gi != null && mDownloadManager != null) {
                     mDownloadManager!!.startDownload(gi, label)
@@ -190,7 +191,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         val stopAllIntent = Intent(this, DownloadService::class.java)
         stopAllIntent.setAction(ACTION_STOP_ALL)
-        val piStopAll = PendingIntent.getService(this, 0, stopAllIntent, 0)
+        val piStopAll = PendingIntent.getService(this, 0, stopAllIntent, PendingIntent.FLAG_IMMUTABLE)
 
         mDownloadingBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID!!)
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -217,7 +218,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         val clearIntent = Intent(this, DownloadService::class.java)
         clearIntent.setAction(ACTION_CLEAR)
-        val piClear = PendingIntent.getService(this, 0, clearIntent, 0)
+        val piClear = PendingIntent.getService(this, 0, clearIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val bundle = Bundle()
         bundle.putString(DownloadsScene.KEY_ACTION, DownloadsScene.ACTION_CLEAR_DOWNLOAD_SERVICE)
@@ -227,7 +228,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         mDownloadedBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID!!)
@@ -287,7 +288,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         mDownloadingBuilder!!.setContentTitle(EhUtils.getSuitableTitle(info))

@@ -41,6 +41,7 @@ import com.hippo.util.AppHelper
 import okhttp3.Cookie
 import okhttp3.FormBody
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -152,7 +153,7 @@ class WebViewSignInScene : SolidScene() {
             okRequest = builder.build()
             try {
                 val response = okHttpClient!!.newCall(okRequest).execute()
-                if (response.body() == null) {
+                if (response.body == null) {
                     throw IOException("请求结果为空")
                 }
                 return convertOkHttpResponse(response)
@@ -175,16 +176,16 @@ class WebViewSignInScene : SolidScene() {
 
         override fun onPageFinished(view: WebView, url: String) {
             val context = ehContext ?: return
-            val httpUrl = HttpUrl.parse(url) ?: return
+            val httpUrl = url.toHttpUrlOrNull() ?: return
             val manager = CookieManager.getInstance()
             val cookieString = manager.getCookie(EhUrl.HOST_E)
             val cookies = parseCookies(httpUrl, cookieString)
             var getId = false
             var getHash = false
             for (cookie in cookies) {
-                if (EhCookieStore.KEY_IPD_MEMBER_ID == cookie.name()) {
+                if (EhCookieStore.KEY_IPD_MEMBER_ID == cookie.name) {
                     getId = true
-                } else if (EhCookieStore.KEY_IPD_PASS_HASH == cookie.name()) {
+                } else if (EhCookieStore.KEY_IPD_PASS_HASH == cookie.name) {
                     getHash = true
                 }
                 addCookie(context, EhUrl.DOMAIN_EX, cookie)
@@ -217,18 +218,18 @@ class WebViewSignInScene : SolidScene() {
                 .toTypedArray()[0]
 
             // Get the response code and message
-            val statusCode = okHttpResponse.code()
-            val reasonPhraseRaw = okHttpResponse.message()
+            val statusCode = okHttpResponse.code
+            val reasonPhraseRaw = okHttpResponse.message
             val reasonPhrase = if (reasonPhraseRaw.isNullOrEmpty()) defaultReasonPhrase(statusCode) else reasonPhraseRaw
 
             // Get headers as a Map
             val responseHeaders: MutableMap<String, String?> = HashMap()
-            for (headerName in okHttpResponse.headers().names()) {
+            for (headerName in okHttpResponse.headers.names()) {
                 responseHeaders[headerName] = okHttpResponse.header(headerName)
             }
 
             // Create the WebResourceResponse
-            if (okHttpResponse.body() == null) {
+            if (okHttpResponse.body == null) {
                 return WebResourceResponse(
                     mimeType,
                     encoding,
@@ -244,7 +245,7 @@ class WebViewSignInScene : SolidScene() {
                 statusCode,
                 reasonPhrase,
                 responseHeaders,
-                okHttpResponse.body()!!.byteStream()
+                okHttpResponse.body!!.byteStream()
             )
         }
 
@@ -338,16 +339,16 @@ class WebViewSignInScene : SolidScene() {
 
         override fun onPageFinished(view: WebView, url: String) {
             val context: Context =  ehContext ?: return
-            val httpUrl = HttpUrl.parse(url) ?: return
+            val httpUrl = url.toHttpUrlOrNull() ?: return
 
             val cookieString = CookieManager.getInstance().getCookie(EhUrl.HOST_E)
             val cookies = parseCookies(httpUrl, cookieString)
             var getId = false
             var getHash = false
             for (cookie in cookies) {
-                if (EhCookieStore.KEY_IPD_MEMBER_ID == cookie.name()) {
+                if (EhCookieStore.KEY_IPD_MEMBER_ID == cookie.name) {
                     getId = true
-                } else if (EhCookieStore.KEY_IPD_PASS_HASH == cookie.name()) {
+                } else if (EhCookieStore.KEY_IPD_PASS_HASH == cookie.name) {
                     getHash = true
                 }
                 addCookie(context, EhUrl.DOMAIN_EX, cookie)

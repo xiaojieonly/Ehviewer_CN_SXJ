@@ -219,4 +219,13 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
         return true;
     }
     
+    @Override
+    public boolean hasKey(BookmarkInfo entity) {
+        if (entity == null) {
+            return false;
+        }
+        long key = entity.getGid();
+        return key != 0L;
+    }
+    
 }

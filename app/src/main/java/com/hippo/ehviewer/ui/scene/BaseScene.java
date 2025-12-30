@@ -33,10 +33,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.StyleRes;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.Analytics;
+import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.scene.SceneFragment;
@@ -56,6 +60,25 @@ public abstract class BaseScene extends SceneFragment {
     private View drawerView;
     @Nullable
     private SparseArray<Parcelable> drawerViewState;
+
+    private long mPressBackTime = 0;
+    private static final int BACK_PRESSED_INTERVAL = 2000;
+
+    public boolean checkDoubleClickExit() {
+        if (getStackIndex() != 0) {
+            return false;
+        }
+
+        long time = System.currentTimeMillis();
+        if (time - mPressBackTime > BACK_PRESSED_INTERVAL) {
+            // It is the last scene
+            mPressBackTime = time;
+            showTip(R.string.press_twice_exit, LENGTH_SHORT);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     public void updateAvatar() {
         FragmentActivity activity = getActivity();

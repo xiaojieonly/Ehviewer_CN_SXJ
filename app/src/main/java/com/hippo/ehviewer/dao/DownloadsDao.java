@@ -259,4 +259,13 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         return true;
     }
     
+    @Override
+    public boolean hasKey(DownloadInfo entity) {
+        if (entity == null) {
+            return false;
+        }
+        long key = entity.getGid();
+        return key != 0L;
+    }
+    
 }

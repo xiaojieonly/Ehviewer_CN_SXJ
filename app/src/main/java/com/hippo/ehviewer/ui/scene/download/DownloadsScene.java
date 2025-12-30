@@ -57,6 +57,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -742,6 +745,26 @@ public class DownloadsScene extends ToolbarScene
     }
 
     @Override
+    public void onBackPressed() {
+        if (mShowcaseView != null) {
+            return;
+        }
+
+        if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
+            mRecyclerView.outOfCustomChoiceMode();
+        } else if (mFabLayout != null && mFabLayout.isExpanded()) {
+            mFabLayout.setExpanded(false);
+        } else if (mSearchMode) {
+            mSearchMode = false;
+            mSearchBar.setState(SearchBar.STATE_NORMAL, true);
+        } else {
+            if (!checkDoubleClickExit()) {
+                finish();
+            }
+        }
+    }
+
+    @Override
     public int getMenuResId() {
         return R.menu.scene_download;
     }
@@ -901,18 +924,7 @@ public class DownloadsScene extends ToolbarScene
         return downloadLabelDraw.createView();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (null != mShowcaseView) {
-            return;
-        }
 
-        if (mRecyclerView != null && mRecyclerView.isInCustomChoice()) {
-            mRecyclerView.outOfCustomChoiceMode();
-        } else {
-            super.onBackPressed();
-        }
-    }
 
     @Override
     public void onStartDragHandler() {

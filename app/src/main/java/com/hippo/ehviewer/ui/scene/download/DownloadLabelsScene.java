@@ -30,6 +30,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
@@ -110,8 +113,21 @@ public class DownloadLabelsScene extends ToolbarScene {
         final GeneralItemAnimator animator = new SwipeDismissItemAnimator();
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        mRecyclerView.setClipToPadding(false);
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setItemAnimator(animator);
+        
+        // 为RecyclerView添加WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                v.getPaddingLeft(),
+                v.getPaddingTop(),
+                v.getPaddingRight(),
+                systemBars.bottom
+            );
+            return insets;
+        });
 
         dragDropManager.attachRecyclerView(mRecyclerView);
 

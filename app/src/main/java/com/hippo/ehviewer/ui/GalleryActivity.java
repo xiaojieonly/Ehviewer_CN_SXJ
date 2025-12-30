@@ -58,6 +58,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
@@ -337,6 +338,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         onCreateView(savedInstanceState);
         //注册事件
         EventBus.getDefault().register(this);
+        
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent intent = new Intent();
+                intent.putExtra("info", mGalleryInfo);
+                setResult(LOCAL_GALLERY_INFO_CHANGE, intent);
+                finish();
+            }
+        });
     }
 
     private void onCreateView(@Nullable Bundle savedInstanceState) {
@@ -485,13 +496,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         EventBus.getDefault().unregister(this);
     }
 
-    @Override
-    public void onBackPressed() {
-        Intent intent = new Intent();
-        intent.putExtra("info", mGalleryInfo);
-        setResult(LOCAL_GALLERY_INFO_CHANGE, intent);
-        super.onBackPressed();
-    }
+
 
     @Override
     protected void onPause() {

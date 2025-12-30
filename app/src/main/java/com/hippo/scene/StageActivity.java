@@ -18,6 +18,7 @@ package com.hippo.scene;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import androidx.activity.OnBackPressedCallback;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -177,6 +178,13 @@ public abstract class StageActivity extends EhActivity {
         } else {
             ((SceneApplication) getApplicationContext()).registerStageActivity(this, mStageId);
         }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                processBackPressed();
+            }
+        });
 
         // Create layout
         onCreate2(savedInstanceState);
@@ -573,23 +581,26 @@ public abstract class StageActivity extends EhActivity {
         onTransactScene();
     }
 
-    @Override
-    public void onBackPressed() {
+    protected void processBackPressed() {
         int size = mSceneTagList.size();
-        String tag = mSceneTagList.get(size - 1);
-        SceneFragment scene;
-        Fragment fragment = getSupportFragmentManager().findFragmentByTag(tag);
-        if (fragment == null) {
-            Log.e(TAG, "onBackPressed: Can't find scene by tag: " + tag);
-            return;
-        }
-        if (!(fragment instanceof SceneFragment)) {
-            Log.e(TAG, "onBackPressed: The fragment is not SceneFragment");
-            return;
-        }
+        if (size > 0) {
+            String tag = mSceneTagList.get(size - 1);
+            SceneFragment scene;
+            Fragment fragment = getSupportFragmentManager().findFragmentByTag(tag);
+            if (fragment == null) {
+                Log.e(TAG, "onBackPressed: Can't find scene by tag: " + tag);
+                return;
+            }
+            if (!(fragment instanceof SceneFragment)) {
+                Log.e(TAG, "onBackPressed: The fragment is not SceneFragment");
+                return;
+            }
 
-        scene = (SceneFragment) fragment;
-        scene.onBackPressed();
+            scene = (SceneFragment) fragment;
+            scene.onBackPressed();
+        } else {
+            finish();
+        }
     }
 
     public SceneFragment findSceneByTag(String tag) {

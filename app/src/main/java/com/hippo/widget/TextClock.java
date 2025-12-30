@@ -243,7 +243,11 @@ public class TextClock extends AppCompatTextView {
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
 
-        getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getContext().registerReceiver(mIntentReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+        }
     }
 
     private void registerObserver() {

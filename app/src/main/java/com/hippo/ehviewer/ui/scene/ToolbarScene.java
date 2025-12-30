@@ -29,6 +29,9 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.hippo.ehviewer.R;
 
 public abstract class ToolbarScene extends BaseScene {
@@ -58,6 +61,25 @@ public abstract class ToolbarScene extends BaseScene {
         } else {
             mToolbar = toolbar;
             contentPanel.addView(contentView, 0);
+            
+            // 为根视图设置WindowInsets监听器,使Toolbar和内容区域能够适应透明的状态栏和导航栏
+            ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                
+                // 为Toolbar设置顶部padding以适应状态栏
+                toolbar.setPadding(
+                    toolbar.getPaddingLeft(),
+                    systemBars.top,
+                    toolbar.getPaddingRight(),
+                    toolbar.getPaddingBottom()
+                );
+                
+                // 注意：不再给contentPanel设置底部padding，以便列表内容可以延伸到导航栏下方。
+                // 子Scene（如QuickSearchScene）需要自己处理RecyclerView的底部padding。
+                
+                return insets;
+            });
+            
             return view;
         }
     }

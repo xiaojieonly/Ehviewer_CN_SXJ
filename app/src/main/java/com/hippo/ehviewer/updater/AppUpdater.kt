@@ -231,7 +231,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                     if (!response.isSuccessful) {
                         return false
                     }
-                    val body = response.body() ?: return false
+                    val body = response.body ?: return false
 
                     body.byteStream().use { `is` ->
                         FileOutputStream(file).use { os ->

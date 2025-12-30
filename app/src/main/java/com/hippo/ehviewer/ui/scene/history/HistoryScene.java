@@ -31,7 +31,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
@@ -138,6 +140,19 @@ public class HistoryScene extends ToolbarScene
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setOnItemClickListener(this);
         mRecyclerView.setOnItemLongClickListener(this);
+        
+        // 为RecyclerView添加WindowInsets监听器
+        ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                v.getPaddingLeft(),
+                v.getPaddingTop(),
+                v.getPaddingRight(),
+                systemBars.bottom
+            );
+            return insets;
+        });
+
         int interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval);
         int paddingH = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_h);
         int paddingV = resources.getDimensionPixelOffset(R.dimen.gallery_list_margin_v);
@@ -209,6 +224,13 @@ public class HistoryScene extends ToolbarScene
     @Override
     public void onNavigationClick(View view) {
         onBackPressed();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!checkDoubleClickExit()) {
+            finish();
+        }
     }
 
     @Override

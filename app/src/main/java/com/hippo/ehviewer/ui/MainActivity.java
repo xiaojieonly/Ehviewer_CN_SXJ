@@ -18,6 +18,7 @@ package com.hippo.ehviewer.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import androidx.core.view.WindowCompat;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -122,6 +123,7 @@ public final class MainActivity extends StageActivity
         implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack, DrawerLayout.DrawerListener {
 
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
+    private static final int PERMISSION_REQUEST_POST_NOTIFICATIONS = 1;
 
     private static final int REQUEST_CODE_SETTINGS = 0;
 
@@ -380,6 +382,7 @@ public final class MainActivity extends StageActivity
             }
         }
         setContentView(R.layout.activity_main);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
         mDrawerLayout.setDrawerListener(this);
@@ -397,7 +400,7 @@ public final class MainActivity extends StageActivity
 
         limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
 
-        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
+//        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
 //        mDrawerLayout.setStatusBarColor(0);
 
         if (mNavView != null) {
@@ -524,9 +527,16 @@ public final class MainActivity extends StageActivity
 
     private void onInit() {
         // Check permission
-        PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            PermissionRequester.request(this, Manifest.permission.POST_NOTIFICATIONS,
+                    getString(R.string.write_rationale), PERMISSION_REQUEST_POST_NOTIFICATIONS);
+        } else {
+            PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+
         EhCookieStore store = EhApplication.getEhCookieStore(getApplicationContext());
+
         List<Cookie> eCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_E));
         List<Cookie> exCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_EX));
         List<Cookie> cookies = new LinkedList<>(eCookies);
@@ -848,12 +858,12 @@ public final class MainActivity extends StageActivity
 
     @SuppressLint("RtlHardcoded")
     @Override
-    public void onBackPressed() {
+    protected void processBackPressed() {
         if (mDrawerLayout != null && (mDrawerLayout.isDrawerOpen(Gravity.LEFT) ||
                 mDrawerLayout.isDrawerOpen(Gravity.RIGHT))) {
             mDrawerLayout.closeDrawers();
         } else {
-            super.onBackPressed();
+            super.processBackPressed();
         }
     }
 

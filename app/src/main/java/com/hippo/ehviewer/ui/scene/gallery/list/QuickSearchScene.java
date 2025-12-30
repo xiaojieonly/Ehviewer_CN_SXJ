@@ -28,6 +28,9 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -114,6 +117,18 @@ public final class QuickSearchScene extends ToolbarScene {
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setItemAnimator(animator);
 
+        // 为RecyclerView添加WindowInsets监听器,保持原有的keyline_margin padding
+        ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int keylineMargin = context.getResources().getDimensionPixelOffset(R.dimen.keyline_margin);
+            v.setPadding(
+                keylineMargin,
+                keylineMargin,
+                keylineMargin,
+                keylineMargin + systemBars.bottom // 加上底部导航栏高度
+            );
+            return insets;
+        });
 
 
 
@@ -146,6 +161,13 @@ public final class QuickSearchScene extends ToolbarScene {
     @Override
     public void onNavigationClick(View view) {
         onBackPressed();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!checkDoubleClickExit()) {
+            finish();
+        }
     }
 
     private void updateView() {

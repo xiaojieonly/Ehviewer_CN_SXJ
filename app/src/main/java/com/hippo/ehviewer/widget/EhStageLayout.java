@@ -47,11 +47,11 @@ public class EhStageLayout extends StageLayout implements DrawerLayoutChild {
 
     @Override
     public int getAdditionalTopMargin() {
-        return mWindowPaddingTop;
+        return 0;
     }
 
     @Override
     public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
+        return 0;
     }
 }

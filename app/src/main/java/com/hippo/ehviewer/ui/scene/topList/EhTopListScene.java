@@ -54,8 +54,7 @@ public class EhTopListScene extends BaseScene {
 
     private static int mPosition = 0;
 
-    private long mPressBackTime = 0;
-    private static final int BACK_PRESSED_INTERVAL = 2000;
+
 
     @State
     private int mState = STATE_INIT;
@@ -157,21 +156,7 @@ public class EhTopListScene extends BaseScene {
         }
     }
 
-    private boolean checkDoubleClickExit() {
-        if (getStackIndex() != 0) {
-            return false;
-        }
 
-        long time = System.currentTimeMillis();
-        if (time - mPressBackTime > BACK_PRESSED_INTERVAL) {
-            // It is the last scene
-            mPressBackTime = time;
-            showTip(R.string.press_twice_exit, LENGTH_SHORT);
-            return true;
-        } else {
-            return false;
-        }
-    }
 
 
     /**
