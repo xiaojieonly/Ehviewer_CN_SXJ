@@ -79,6 +79,7 @@
     <string name="cosplay" translatable="false">COSPLAY</string>
     <string name="asian_porn" translatable="false">ASIAN PORN</string>
     <string name="misc" translatable="false">MISC</string>
+    <string name="unknown" translatable="false">UNKNOWN</string>
 
     <string name="homepage">Homepage</string>
     <string name="subscription">Subscription</string>
@@ -454,6 +455,7 @@
     <string name="download_labels">Download labels</string>
     <string name="download_sort_list">Sort</string>
     <string name="download_filter_by_status">Filter by status</string>
+    <string name="download_filter_by_kind">Filter by kind</string>
     <string name="download_status_all">All</string>
     <string name="download_status_not_started">Not </string>
     <string name="default_sort">Default</string>

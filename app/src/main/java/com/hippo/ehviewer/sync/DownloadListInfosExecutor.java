@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
+import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.GalleryTags;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;;
+import java.util.concurrent.Executors;
 
 public class DownloadListInfosExecutor {
     private static final int sortByIdAsc = 1;
@@ -108,6 +109,20 @@ public class DownloadListInfosExecutor {
                 case R.id.sort_by_file_size_asc:
                 case R.id.sort_by_file_size_desc:
                     resultList = sortByType(id);
+                    break;
+                case R.id.all_kind:
+                case R.id.misc:
+                case R.id.doujinshi:
+                case R.id.manga:
+                case R.id.artist_cg:
+                case R.id.game_cg:
+                case R.id.image_set:
+                case R.id.cosplay:
+                case R.id.asian_porn:
+                case R.id.non_h:
+                case R.id.western:
+                case R.id.unknown:
+                    resultList = filterDownloadKind(id);
                     break;
                 case R.id.all:
                 case R.id.sort_by_default:
@@ -312,6 +327,26 @@ public class DownloadListInfosExecutor {
         return list;
     }
 
+    private List<DownloadInfo> filterDownloadKind(int state) {
+        int kind = kindValue(state);
+        List<DownloadInfo> list = new ArrayList<>();
+
+        if (mList == null) {
+            return null;
+        }
+        if (kind == EhUtils.ALL_CATEGORY) {
+            return mList;
+        }
+        mList.forEach((info) -> {
+                    if (info.category == kind) {
+                        list.add(info);
+                    }
+                }
+        );
+
+        return list;
+    }
+
 
     protected List<DownloadInfo> searchingInBackground() {
         if (mDownloadSearchCallback == null) {
@@ -421,11 +456,11 @@ public class DownloadListInfosExecutor {
     private long calculateFolderSize(UniFile folder) {
         long totalSize = 0;
         UniFile[] files = folder.listFiles();
-        
+
         if (files == null) {
             return 0;
         }
-        
+
         for (UniFile file : files) {
             if (file.isFile()) {
                 long fileSize = file.length();
@@ -436,8 +471,25 @@ public class DownloadListInfosExecutor {
                 totalSize += calculateFolderSize(file); // 递归计算子文件夹
             }
         }
-        
+
         return totalSize;
+    }
+
+
+    private int kindValue(int id) {
+        return switch (id) {
+            case R.id.doujinshi -> EhConfig.DOUJINSHI;
+            case R.id.manga -> EhConfig.MANGA;
+            case R.id.artist_cg -> EhConfig.ARTIST_CG;
+            case R.id.game_cg -> EhConfig.GAME_CG;
+            case R.id.western -> EhConfig.WESTERN;
+            case R.id.non_h -> EhConfig.NON_H;
+            case R.id.image_set -> EhConfig.IMAGE_SET;
+            case R.id.cosplay -> EhConfig.COSPLAY;
+            case R.id.asian_porn -> EhConfig.ASIAN_PORN;
+            case R.id.misc -> EhConfig.MISC;
+            default -> EhUtils.ALL_CATEGORY;
+        };
     }
 
 }

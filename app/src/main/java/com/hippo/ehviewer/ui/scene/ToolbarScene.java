@@ -49,8 +49,8 @@ public abstract class ToolbarScene extends BaseScene {
     public final View onCreateView2(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_toolbar, container, false);
-        Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        FrameLayout contentPanel = (FrameLayout) view.findViewById(R.id.content_panel);
+        Toolbar toolbar = view.findViewById(R.id.toolbar);
+        FrameLayout contentPanel = view.findViewById(R.id.content_panel);
 
         View contentView = onCreateView3(inflater, contentPanel, savedInstanceState);
         if (contentView == null) {

@@ -25,8 +25,7 @@
         android:title="@string/download_sort_list"
         app:showAsAction="ifRoom">
         <menu>
-            <item
-                android:id="@+id/filter_by_status"
+            <item android:id="@+id/filter_by_status"
                 android:title="@string/download_filter_by_status"
                 app:showAsAction="ifRoom">
                 <menu>
@@ -53,6 +52,60 @@
                     <item
                         android:id="@+id/failed"
                         android:title="@string/download_state_failed"
+                        app:showAsAction="ifRoom"/>
+                </menu>
+            </item>
+            <item android:id="@+id/filter_by_kind"
+                android:title="@string/download_filter_by_kind"
+                app:showAsAction="ifRoom">
+                <menu>
+                    <item
+                        android:id="@+id/all_kind"
+                        android:title="@string/download_status_all"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/misc"
+                        android:title="@string/misc"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/doujinshi"
+                        android:title="@string/doujinshi"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/manga"
+                        android:title="@string/manga"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/artist_cg"
+                        android:title="@string/artist_cg"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/game_cg"
+                        android:title="@string/game_cg"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/image_set"
+                        android:title="@string/image_set"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/cosplay"
+                        android:title="@string/cosplay"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/asian_porn"
+                        android:title="@string/asian_porn"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/non_h"
+                        android:title="@string/non_h"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/western"
+                        android:title="@string/western"
+                        app:showAsAction="ifRoom"/>
+                    <item
+                        android:id="@+id/unknown"
+                        android:title="@string/unknown"
                         app:showAsAction="ifRoom"/>
                 </menu>
             </item>

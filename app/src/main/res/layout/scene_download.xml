@@ -25,6 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginVertical="3.dp"
         android:background="?attr/selectableItemBackground"
+        android:visibility="gone"
         android:padding="4dp" />
 
     <FrameLayout
