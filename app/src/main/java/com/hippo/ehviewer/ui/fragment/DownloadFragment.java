@@ -427,10 +427,21 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
         @Override
         protected void onPostExecute(Integer result) {
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
             DownloadFragment fragment = mFragment.get();
+            if (mProgressDialog != null) {
+                // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
+                if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
+                    try {
+                        if (mProgressDialog.isShowing()) {
+                            mProgressDialog.dismiss();
+                        }
+                    } catch (IllegalArgumentException e) {
+                        // 对话框已经不再附加到窗口管理器，忽略异常
+                        ExceptionUtils.throwIfFatal(e);
+                    }
+                }
+                mProgressDialog = null;
+            }
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
@@ -585,10 +596,21 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
         @Override
         protected void onPostExecute(Integer result) {
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
             DownloadFragment fragment = mFragment.get();
+            if (mProgressDialog != null) {
+                // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
+                if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
+                    try {
+                        if (mProgressDialog.isShowing()) {
+                            mProgressDialog.dismiss();
+                        }
+                    } catch (IllegalArgumentException e) {
+                        // 对话框已经不再附加到窗口管理器，忽略异常
+                        ExceptionUtils.throwIfFatal(e);
+                    }
+                }
+                mProgressDialog = null;
+            }
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }

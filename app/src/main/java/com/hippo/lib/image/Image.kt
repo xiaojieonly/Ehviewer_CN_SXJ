@@ -78,8 +78,12 @@ class Image private constructor(
          * Is the image decoding completed
          */
         get() {
-            checkRecycled()
-            return nativeIsCompleted(mNativePtr, this.format)
+            try{
+                checkRecycled()
+                return nativeIsCompleted(mNativePtr, this.format)
+            }catch (e:Exception){
+                return false
+            }
         }
 
     /**

@@ -337,13 +337,11 @@ public class DownloadListInfosExecutor {
         if (kind == EhUtils.ALL_CATEGORY) {
             return mList;
         }
-        mList.forEach((info) -> {
-                    if (info.category == kind) {
-                        list.add(info);
-                    }
-                }
-        );
-
+        for(DownloadInfo info : mList){
+            if (info.category == kind) {
+                list.add(info);
+            }
+        }
         return list;
     }
 

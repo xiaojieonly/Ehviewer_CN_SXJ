@@ -619,6 +619,9 @@
     <string name="settings_eh_cellular_network_warning">Cellular network warning</string>
 
     <string name="settings_read">Read</string>
+    <string name="settings_read_picture_decoding_method">Picture decoding method</string>
+    <string name="settings_read_picture_decoding_method_origin">System Decoding</string>
+    <string name="settings_read_picture_decoding_method_native">Open source C++ decoding library</string>
     <string name="settings_read_screen_rotation">Screen orientation</string>
     <string name="settings_read_screen_rotation_default">Default</string>
     <string name="settings_read_screen_rotation_portrait">Portrait</string>

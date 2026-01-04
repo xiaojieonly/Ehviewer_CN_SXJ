@@ -364,7 +364,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         if (fromPosition == toPosition) {
             return;
         }
-        List<DownloadInfo> list = mCallback.getList();
+        final List<DownloadInfo> list = mCallback.getList();
         if (list == null) {
             return;
         }
@@ -404,7 +404,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             }
         } catch (Exception e) {
             // 忽略硬件位图相关错误
-            android.util.Log.e("DownloadAdapter", "Error in onItemDragStarted: " + e.getMessage());
+            Log.e("DownloadAdapter", "Error in onItemDragStarted: " + e.getMessage());
         }
     }
 
@@ -437,7 +437,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             }
         } catch (Exception e) {
             // 忽略硬件位图相关错误
-            android.util.Log.e("DownloadAdapter", "Error in onItemDragFinished: " + e.getMessage());
+            Log.e("DownloadAdapter", "Error in onItemDragFinished: " + e.getMessage());
         }
     }
 

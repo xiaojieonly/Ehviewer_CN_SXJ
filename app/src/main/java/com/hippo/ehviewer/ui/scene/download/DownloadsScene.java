@@ -342,7 +342,7 @@ public class DownloadsScene extends ToolbarScene
             mAdapter.notifyDataSetChanged();
         }
         mBackList = mList;
-        filterByCategory();
+//        filterByCategory();
         updateTitle();
         updatePaginationIndicator();
         Settings.putRecentDownloadLabel(mLabel);
@@ -991,6 +991,7 @@ public class DownloadsScene extends ToolbarScene
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     } catch (Exception ex) {
                         Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+                        Analytics.recordException(ex);
                         return true;
                     }
                 } catch (Exception e) {

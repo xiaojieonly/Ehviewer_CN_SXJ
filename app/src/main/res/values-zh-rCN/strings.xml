@@ -531,6 +531,9 @@
     <string name="settings_eh_cellular_network_warning">移动网络警告</string>
 
     <string name="settings_read">阅读</string>
+    <string name="settings_read_picture_decoding_method">图片解码方式</string>
+    <string name="settings_read_picture_decoding_method_origin">系统解码</string>
+    <string name="settings_read_picture_decoding_method_native">开源C++解码库</string>
     <string name="settings_read_screen_rotation">屏幕方向</string>
     <string name="settings_read_screen_rotation_default">系统默认</string>
     <string name="settings_read_screen_rotation_portrait">竖屏</string>

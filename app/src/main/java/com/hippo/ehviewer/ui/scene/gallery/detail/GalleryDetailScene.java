@@ -91,25 +91,32 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.download.DownloadTorrentManager;
+import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
 import com.hippo.ehviewer.ui.dialog.ArchiverDownloadDialog;
 import com.hippo.ehviewer.ui.scene.BaseScene;
-import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
-import com.hippo.ehviewer.ui.scene.gallery.list.FavoritesScene;
 import com.hippo.ehviewer.ui.scene.GalleryCommentsScene;
 import com.hippo.ehviewer.ui.scene.GalleryInfoScene;
 import com.hippo.ehviewer.ui.scene.GalleryPreviewsScene;
+import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
+import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.FavoritesScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListSceneDialog;
 import com.hippo.ehviewer.ui.scene.history.HistoryScene;
-import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
-import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.ArchiverDownloadProgress;
 import com.hippo.ehviewer.widget.GalleryRatingBar;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.SimpleHandler;
+import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.reveal.ViewAnimationUtils;
 import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
@@ -118,7 +125,6 @@ import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
 import com.hippo.util.AppHelper;
-import com.hippo.ehviewer.download.DownloadTorrentManager;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.FileUtils;
@@ -129,13 +135,6 @@ import com.hippo.widget.LoadImageView;
 import com.hippo.widget.ObservedTextView;
 import com.hippo.widget.ProgressView;
 import com.hippo.widget.SimpleGridAutoSpanLayout;
-import com.hippo.lib.yorozuya.AssertUtils;
-import com.hippo.lib.yorozuya.IOUtils;
-import com.hippo.lib.yorozuya.IntIdGenerator;
-import com.hippo.lib.yorozuya.SimpleHandler;
-import com.hippo.lib.yorozuya.ViewUtils;
-
-import com.hippo.ehviewer.spider.SpiderQueen;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -531,8 +530,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             private void transformPointToViewLocal(int[] point, View child) {
                 ViewParent viewParent = child.getParent();
 
-                while (viewParent instanceof View) {
-                    View view = (View) viewParent;
+                while (viewParent instanceof View view) {
                     point[0] += view.getScrollX() - child.getLeft();
                     point[1] += view.getScrollY() - child.getTop();
 
@@ -641,7 +639,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             mComments.setVisibility(View.GONE);
             mCommentsText.setVisibility(View.GONE);
         }
-        if(!Settings.getShowGalleryRating()){
+        if (!Settings.getShowGalleryRating()) {
             mRating.setVisibility(View.INVISIBLE);
             mRatingText.setVisibility(View.INVISIBLE);
         }
@@ -1180,30 +1178,76 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mGridLayout.removeAllViews();
         PreviewSet previewSet = gd.previewSet;
+
+
+        int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+        mGridLayout.setColumnSize(columnWidth);
+        mGridLayout.setStrategy(SimpleGridAutoSpanLayout.STRATEGY_SUITABLE_SIZE);
+
+        // 限制初始显示的预览数量，避免创建过多视图导致滚动卡顿
+        // 只显示前27个预览（约3-4行，每行约6-9个），其余通过点击"查看更多"跳转
+        final int totalSize = previewSet.size();
+        final int maxDisplayCount = 40; // 限制显示数量
+        final int displayCount = Math.min(totalSize, maxDisplayCount);
+        final long gid = gd.gid;
+
         if (gd.previewPages <= 0 || previewSet == null || previewSet.size() == 0) {
             mPreviewText.setText(R.string.no_previews);
             return;
-        } else if (gd.previewPages == 1) {
+        } else if (gd.previewPages == 1 && totalSize <= maxDisplayCount) {
             mPreviewText.setText(R.string.no_more_previews);
         } else {
             mPreviewText.setText(R.string.more_previews);
         }
 
-        int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
-        mGridLayout.setColumnSize(columnWidth);
-        mGridLayout.setStrategy(SimpleGridAutoSpanLayout.STRATEGY_SUITABLE_SIZE);
-        for (int i = 0, size = previewSet.size(); i < size; i++) {
+        // 只创建限制数量的视图，大幅减少视图数量以提升滚动性能
+        for (int i = 0; i < displayCount; i++) {
             View view = inflater.inflate(R.layout.item_gallery_preview, mGridLayout, false);
-            mGridLayout.addView(view);
-
             LoadImageView image = view.findViewById(R.id.image);
-            previewSet.load(image, gd.gid, i);
             image.setTag(R.id.index, i);
             image.setOnClickListener(this);
             TextView text = view.findViewById(R.id.text);
             text.setText(Integer.toString(previewSet.getPosition(i) + 1));
+            mGridLayout.addView(view);
+        }
+
+        // 分批加载图片：优先加载前12个（约前2行，通常可见），延迟加载后面的
+        // 这样可以减少初始加载压力，提升滚动性能
+        final int immediateLoadCount = 12; // 立即加载的数量
+
+        for (int i = 0; i < displayCount; i++) {
+            View view = mGridLayout.getChildAt(i);
+            if (view == null) {
+                continue;
+            }
+
+            LoadImageView image = view.findViewById(R.id.image);
+            if (image == null) {
+                continue;
+            }
+
+            final int index = i;
+
+            if (i < immediateLoadCount) {
+                // 前12个：立即加载（通常可见区域）
+                image.post(() -> {
+                    if (image.getParent() != null && mGridLayout != null) {
+                        previewSet.load(image, gid, index);
+                    }
+                });
+            } else {
+                // 后面的：延迟加载，根据索引调整延迟时间
+                int delay = (i - immediateLoadCount) * 50; // 每个延迟50ms
+                delay = Math.min(delay, 500); // 最大延迟500ms
+                handler.postDelayed(() -> {
+                    if (image.getParent() != null && mGridLayout != null) {
+                        previewSet.load(image, gid, index);
+                    }
+                }, delay);
+            }
         }
     }
+
 
     private static String getRatingText(float rating, Resources resources) {
         int resId;
@@ -1540,8 +1584,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             }
         } else {
             Object o = v.getTag(R.id.tag);
-            if (o instanceof String) {
-                String tag = (String) o;
+            if (o instanceof String tag) {
                 ListUrlBuilder lub = new ListUrlBuilder();
                 lub.setMode(ListUrlBuilder.MODE_TAG);
                 lub.setKeyword(tag);
@@ -2016,37 +2059,31 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
-    private static class ExitTransaction implements TransitionHelper {
-
-        private final View mThumb;
-
-        public ExitTransaction(View thumb) {
-            mThumb = thumb;
-        }
+    private record ExitTransaction(View mThumb) implements TransitionHelper {
 
         @Override
-        public boolean onTransition(Context context,
-                                    FragmentTransaction transaction, Fragment exit, Fragment enter) {
-            if (!(enter instanceof GalleryListScene) && !(enter instanceof DownloadsScene) &&
-                    !(enter instanceof FavoritesScene) && !(enter instanceof HistoryScene)) {
-                return false;
-            }
+            public boolean onTransition(Context context,
+                                        FragmentTransaction transaction, Fragment exit, Fragment enter) {
+                if (!(enter instanceof GalleryListScene) && !(enter instanceof DownloadsScene) &&
+                        !(enter instanceof FavoritesScene) && !(enter instanceof HistoryScene)) {
+                    return false;
+                }
 
-            String transitionName = ViewCompat.getTransitionName(mThumb);
-            if (transitionName != null) {
-                exit.setSharedElementReturnTransition(
-                        TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
-                exit.setExitTransition(
-                        TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
-                enter.setSharedElementEnterTransition(
-                        TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
-                enter.setEnterTransition(
-                        TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
-                transaction.addSharedElement(mThumb, transitionName);
+                String transitionName = ViewCompat.getTransitionName(mThumb);
+                if (transitionName != null) {
+                    exit.setSharedElementReturnTransition(
+                            TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
+                    exit.setExitTransition(
+                            TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
+                    enter.setSharedElementEnterTransition(
+                            TransitionInflater.from(context).inflateTransition(R.transition.trans_move));
+                    enter.setEnterTransition(
+                            TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
+                    transaction.addSharedElement(mThumb, transitionName);
+                }
+                return true;
             }
-            return true;
         }
-    }
 
     private static class ModifyFavoritesListener extends EhCallback<GalleryDetailScene, Void> {
 

@@ -107,7 +107,7 @@ class ImageBitmap : Animatable, Runnable {
     @Synchronized
     fun release() {
         --mReferences
-        if (mReferences <= 0 && !mBitmap.isRecycled()) {
+        if (mReferences <= 0 && !mBitmap.isRecycled) {
             mBitmap.recycle()
             if (mImage != null) {
                 mImage!!.recycle()
@@ -176,7 +176,7 @@ class ImageBitmap : Animatable, Runnable {
      * Draw image to canvas
      */
     fun draw(canvas: Canvas, left: Float, top: Float, paint: Paint?) {
-        if (!mBitmap.isRecycled()) {
+        if (!mBitmap.isRecycled) {
             canvas.drawBitmap(mBitmap, left, top, paint)
         }
     }
@@ -185,7 +185,7 @@ class ImageBitmap : Animatable, Runnable {
      * Draw image to canvas
      */
     fun draw(canvas: Canvas, src: Rect?, dst: Rect, paint: Paint?) {
-        if (!mBitmap.isRecycled()) {
+        if (!mBitmap.isRecycled) {
             canvas.drawBitmap(mBitmap, src, dst, paint)
         }
     }
@@ -194,7 +194,7 @@ class ImageBitmap : Animatable, Runnable {
      * Draw image to canvas
      */
     fun draw(canvas: Canvas, src: Rect?, dst: RectF, paint: Paint?) {
-        if (!mBitmap.isRecycled()) {
+        if (!mBitmap.isRecycled) {
             canvas.drawBitmap(mBitmap, src, dst, paint)
         }
     }
@@ -204,7 +204,7 @@ class ImageBitmap : Animatable, Runnable {
      */
     override fun start() {
         mAnimationReferences++
-        if (mBitmap.isRecycled() || mImage == null || mRunning) {
+        if (mBitmap.isRecycled || mImage == null || mRunning) {
             return
         }
         mRunning = true
@@ -250,7 +250,7 @@ class ImageBitmap : Animatable, Runnable {
 
     override fun run() {
         // Check recycled
-        if (mBitmap.isRecycled() || mImage == null) {
+        if (mBitmap.isRecycled || mImage == null) {
             mRunning = false
             return
         }

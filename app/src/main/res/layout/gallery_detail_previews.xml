@@ -30,6 +30,7 @@
         android:id="@+id/grid_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layerType="hardware"
         app:columnCount="3"
         app:itemMargin="8dp"/>
 

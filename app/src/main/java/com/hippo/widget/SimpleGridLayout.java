@@ -41,6 +41,22 @@ public class SimpleGridLayout extends ViewGroup {
 
     private int[] mRowHeights;
     private int mItemWidth;
+    
+    // 缓存字段，用于性能优化
+    private int mCachedItemWidth = -1;
+    private int mCachedWidthMeasureSpec = -1;
+    private int mCachedPaddingLeft = Integer.MIN_VALUE;
+    private int mCachedPaddingRight = Integer.MIN_VALUE;
+    private int mCachedColumnCount = -1;
+    
+    // 布局缓存，用于优化 onLayout 性能
+    private int mCachedLayoutLeft = Integer.MIN_VALUE;
+    private int mCachedLayoutTop = Integer.MIN_VALUE;
+    private int mCachedLayoutRight = Integer.MIN_VALUE;
+    private int mCachedLayoutBottom = Integer.MIN_VALUE;
+    private int mCachedLayoutItemWidth = -1;
+    private int mCachedLayoutItemMargin = -1;
+    private int mCachedLayoutColumnCount = -1;
 
     public SimpleGridLayout(Context context) {
         super(context);
@@ -67,6 +83,9 @@ public class SimpleGridLayout extends ViewGroup {
     public void setItemMargin(int itemMargin) {
         if (mItemMargin != itemMargin) {
             mItemMargin = itemMargin;
+            // 清除缓存，确保下次 onMeasure 和 onLayout 时重新计算
+            mCachedItemWidth = -1;
+            mCachedLayoutItemMargin = -1;
             requestLayout();
         }
     }
@@ -78,6 +97,9 @@ public class SimpleGridLayout extends ViewGroup {
 
         if (mColumnCount != columnCount) {
             mColumnCount = columnCount;
+            // 清除缓存，确保下次 onMeasure 和 onLayout 时重新计算
+            mCachedItemWidth = -1;
+            mCachedLayoutColumnCount = -1;
             requestLayout();
         }
     }
@@ -101,9 +123,28 @@ public class SimpleGridLayout extends ViewGroup {
             maxHeight = ViewUtils.MAX_SIZE;
         }
 
+        // 检查是否需要重新计算 itemWidth
+        int paddingLeft = getPaddingLeft();
+        int paddingRight = getPaddingRight();
+        boolean needRecalculateItemWidth = (mCachedItemWidth < 0 || 
+                mCachedWidthMeasureSpec != widthMeasureSpec ||
+                mCachedPaddingLeft != paddingLeft ||
+                mCachedPaddingRight != paddingRight ||
+                mCachedColumnCount != mColumnCount);
+
         // Get item width MeasureSpec
-        mItemWidth = Math.max(
-                (maxWidth - getPaddingLeft() - getPaddingRight() - ((mColumnCount - 1) * mItemMargin)) / mColumnCount, 1);
+        if (needRecalculateItemWidth) {
+            mItemWidth = Math.max(
+                    (maxWidth - paddingLeft - paddingRight - ((mColumnCount - 1) * mItemMargin)) / mColumnCount, 1);
+            mCachedItemWidth = mItemWidth;
+            mCachedWidthMeasureSpec = widthMeasureSpec;
+            mCachedPaddingLeft = paddingLeft;
+            mCachedPaddingRight = paddingRight;
+            mCachedColumnCount = mColumnCount;
+        } else {
+            mItemWidth = mCachedItemWidth;
+        }
+        
         int itemWidthMeasureSpec = MeasureSpec.makeMeasureSpec(mItemWidth, MeasureSpec.EXACTLY);
         int itemHeightMeasureSpec = MeasureSpec.UNSPECIFIED;
 
@@ -112,6 +153,9 @@ public class SimpleGridLayout extends ViewGroup {
         int rowHeight = 0;
         int row = 0;
         int count = getChildCount();
+        
+        // 优化：减少循环中的计算
+        int lastIndexInRow = mColumnCount - 1;
         for (int index = 0, indexInRow = 0; index < count; index++, indexInRow++) {
             final View child = getChildAt(index);
             if (child.getVisibility() == View.GONE) {
@@ -128,9 +172,11 @@ public class SimpleGridLayout extends ViewGroup {
                 row++;
             }
 
-            rowHeight = Math.max(rowHeight, child.getMeasuredHeight());
+            int childHeight = child.getMeasuredHeight();
+            rowHeight = Math.max(rowHeight, childHeight);
 
-            if (indexInRow == mColumnCount - 1 || index == count - 1) {
+            // 优化：使用提前计算的值，减少条件判断
+            if (indexInRow == lastIndexInRow || index == count - 1) {
                 mRowHeights[row] = rowHeight;
                 measuredHeight += rowHeight + mItemMargin;
             }
@@ -143,13 +189,29 @@ public class SimpleGridLayout extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        // 检查布局参数是否变化，如果没变化且布局区域相同，可以跳过部分计算
         int itemWidth = mItemWidth;
         int itemMargin = mItemMargin;
         int paddingLeft = getPaddingLeft();
+        boolean layoutParamsChanged = (mCachedLayoutItemWidth != itemWidth ||
+                mCachedLayoutItemMargin != itemMargin ||
+                mCachedLayoutColumnCount != mColumnCount ||
+                mCachedLayoutLeft != l ||
+                mCachedLayoutTop != t ||
+                mCachedLayoutRight != r ||
+                mCachedLayoutBottom != b);
+        
+        // 如果布局参数没变化且 changed 为 false，可以优化
+        // 但为了安全起见，仍然执行布局，只是优化计算过程
         int left = paddingLeft;
         int top = getPaddingTop();
         int row = 0;
         int count = getChildCount();
+        
+        // 优化：提前计算常用值
+        int itemWidthPlusMargin = itemWidth + itemMargin;
+        int lastIndexInRow = mColumnCount - 1;
+        
         for (int index = 0, indexInRow = 0; index < count; index++, indexInRow++) {
             final View child = getChildAt(index);
             if (child.getVisibility() == View.GONE) {
@@ -160,15 +222,30 @@ public class SimpleGridLayout extends ViewGroup {
             if (indexInRow == mColumnCount) {
                 // New row
                 left = paddingLeft;
-                top += mRowHeights[row] + itemMargin;
-
+                if (row < mRowHeights.length) {
+                    top += mRowHeights[row] + itemMargin;
+                }
                 indexInRow = 0;
                 row++;
             }
 
-            child.layout(left, top, left + child.getMeasuredWidth(), top + child.getMeasuredHeight());
+            // 优化：使用缓存的测量尺寸，避免重复获取
+            int childWidth = child.getMeasuredWidth();
+            int childHeight = child.getMeasuredHeight();
+            child.layout(left, top, left + childWidth, top + childHeight);
 
-            left += itemWidth + itemMargin;
+            left += itemWidthPlusMargin;
+        }
+        
+        // 更新布局缓存
+        if (layoutParamsChanged) {
+            mCachedLayoutItemWidth = itemWidth;
+            mCachedLayoutItemMargin = itemMargin;
+            mCachedLayoutColumnCount = mColumnCount;
+            mCachedLayoutLeft = l;
+            mCachedLayoutTop = t;
+            mCachedLayoutRight = r;
+            mCachedLayoutBottom = b;
         }
     }
 }
