@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1EPEqfeklH0Pdk_mEiuJ8rQ) 提取码：9cas
-- [夸克网盘](https://pan.quark.cn/s/cb19c11bcb6d) 提取码：WJWs
-- [蓝奏云](https://wwbfg.lanzouu.com/ipmeo3fa1umh)，电脑端可正常下载 提取码：4jop
+- [百度云](https://pan.baidu.com/s/1NknN9MMrH0MHu4rUn2AlEw) 提取码：me7s
+- [夸克网盘](https://pan.quark.cn/s/eac116ff2ea7) 提取码：BwZs
+- [蓝奏云](https://wwbfg.lanzouu.com/idZNL3fds6ta)，电脑端可正常下载 提取码：eb9o
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:a547ca192aada5109bbf891bc5ea21b04d50972e&xt=urn:btmh:12209bc1fe78c6f1b431a120f2a24dc89556f5a8da767f710d8b6840a461146fc434&dn=EhViewer-2.0.1.1.apk&xl=27606911
+- Torrent链接: magnet:?xt=urn:btih:e6863130babb9a0c97c2cbaa234119ce46f0f03b&xt=urn:btmh:1220c55289147a3a8372f3be2b215834c810a215c98a5a61a0a62f286382f4acac14&dn=EhViewer-2.0.1.2.apk&xl=27606898
 
 点击前往赏饭：
 
@@ -29,12 +29,23 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2026/01/05 紧急修复
+### 新版发布2.0.1.2
+
+- 暂时回滚图片解码方式，等后续优化好了再上
+
 ## 2026/01/04 紧急修复
 ### 新版发布2.0.1.1
 
 - 限制了详情页初始加载的预览图数量为40张，以减少初次创建视图的开销。
 - 修复了 `DownloadFragment` 中因 Activity 销毁后关闭对话框可能导致的崩溃问题
 - 修复了下载列表画廊的删除和拖拽排序无法及时生效的问题
+- [百度云](https://pan.baidu.com/s/1EPEqfeklH0Pdk_mEiuJ8rQ) 提取码：9cas
+- [夸克网盘](https://pan.quark.cn/s/cb19c11bcb6d) 提取码：WJWs
+- [蓝奏云](https://wwbfg.lanzouu.com/ipmeo3fa1umh)，电脑端可正常下载 提取码：4jop
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:a547ca192aada5109bbf891bc5ea21b04d50972e&xt=urn:btmh:12209bc1fe78c6f1b431a120f2a24dc89556f5a8da767f710d8b6840a461146fc434&dn=EhViewer-2.0.1.1.apk&xl=27606911
+
 
 ## 2026/01/01 祝大家新年快乐~
 ### 新版发布2.0.1.0

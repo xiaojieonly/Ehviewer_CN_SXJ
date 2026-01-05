@@ -1,14 +1,12 @@
 {
-  "version": "2.0.1.1",
+  "version": "2.0.1.2",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.1.1，紧急修复",
+    "title": "新版发布2.0.1.2，紧急修复",
     "content": [
-      "- 限制了详情页初始加载的预览图数量为40张，以减少初次创建视图的开销。",
-      "- 修复了 `DownloadFragment` 中因 Activity 销毁后关闭对话框可能导致的崩溃问题",
-      "- 修复了下载列表画廊的删除和拖拽排序功能无法及时生效的问题"
+      "暂时回滚图片解码方式，等后续优化好了再上"
     ]
   }
 }
