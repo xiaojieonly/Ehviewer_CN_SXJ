@@ -53,14 +53,14 @@ import com.hippo.drawable.PreciselyClipDrawable;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.lib.image.Image;
-import com.hippo.lib.image.ImageBitmap;
-import com.hippo.lib.image.ImageDrawable;
+//import com.hippo.lib.image.ImageBitmap;
+//import com.hippo.lib.image.ImageDrawable;
 import com.hippo.util.DrawableManager;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-public class AvatarImageView extends FixedAspectImageView implements Unikery<ImageBitmap>,
+public class AvatarImageView extends FixedAspectImageView implements Unikery<Image>,
         View.OnClickListener, View.OnLongClickListener, Animatable {
 
     public static final int RETRY_TYPE_NONE = 0;
@@ -68,7 +68,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     public static final int RETRY_TYPE_LONG_CLICK = 2;
     private static final String TAG = AvatarImageView.class.getSimpleName();
     private int mTaskId = Unikery.INVALID_ID;
-    private Conaco<ImageBitmap> mConaco;
+    private Conaco<Image> mConaco;
     private String mKey;
     private String mUrl;
     private boolean mUseNetwork;
@@ -86,7 +86,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
      */
     private float mRadius;
     private boolean mIsCircle;
-    private ImageBitmap mImage;
+    private Image mImage;
 
     public AvatarImageView(Context context) {
         super(context);
@@ -282,7 +282,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         mUrl = url;
         mUseNetwork = useNetwork;
 
-        ConacoTask.Builder<ImageBitmap> builder = new ConacoTask.Builder<ImageBitmap>()
+        ConacoTask.Builder<Image> builder = new ConacoTask.Builder<Image>()
                 .setUnikery(this)
                 .setKey(key)
                 .setUrl(url)
@@ -332,11 +332,11 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
     }
 
     @Override
-    public boolean onGetValue(@NonNull ImageBitmap value, int source) {
+    public boolean onGetValue(@NonNull Image value, int source) {
         Drawable drawable;
         try {
-//            drawable = value.getDrawable();
-            drawable = new ImageDrawable(value);
+            drawable = value.getDrawable();
+//            drawable = new ImageDrawable(value);
         } catch (Exception e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);

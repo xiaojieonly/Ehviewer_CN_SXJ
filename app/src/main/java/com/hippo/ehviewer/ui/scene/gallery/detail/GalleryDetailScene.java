@@ -1187,21 +1187,21 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         // 限制初始显示的预览数量，避免创建过多视图导致滚动卡顿
         // 只显示前27个预览（约3-4行，每行约6-9个），其余通过点击"查看更多"跳转
         final int totalSize = previewSet.size();
-        final int maxDisplayCount = 40; // 限制显示数量
-        final int displayCount = Math.min(totalSize, maxDisplayCount);
+//        final int maxDisplayCount = 40; // 限制显示数量
+//        final int displayCount = Math.min(totalSize, maxDisplayCount);
         final long gid = gd.gid;
 
         if (gd.previewPages <= 0 || previewSet == null || previewSet.size() == 0) {
             mPreviewText.setText(R.string.no_previews);
             return;
-        } else if (gd.previewPages == 1 && totalSize <= maxDisplayCount) {
+        } else if (gd.previewPages == 1 ) {
             mPreviewText.setText(R.string.no_more_previews);
         } else {
             mPreviewText.setText(R.string.more_previews);
         }
 
         // 只创建限制数量的视图，大幅减少视图数量以提升滚动性能
-        for (int i = 0; i < displayCount; i++) {
+        for (int i = 0; i < totalSize; i++) {
             View view = inflater.inflate(R.layout.item_gallery_preview, mGridLayout, false);
             LoadImageView image = view.findViewById(R.id.image);
             image.setTag(R.id.index, i);
@@ -1215,7 +1215,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         // 这样可以减少初始加载压力，提升滚动性能
         final int immediateLoadCount = 12; // 立即加载的数量
 
-        for (int i = 0; i < displayCount; i++) {
+        for (int i = 0; i < totalSize; i++) {
             View view = mGridLayout.getChildAt(i);
             if (view == null) {
                 continue;

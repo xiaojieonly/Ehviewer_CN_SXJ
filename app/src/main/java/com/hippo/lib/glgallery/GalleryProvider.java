@@ -25,6 +25,7 @@ import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.image.ImageWrapper;
 import com.hippo.lib.glview.view.GLRoot;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.Image1;
 import com.hippo.lib.yorozuya.ConcurrentPool;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.OSUtils;
@@ -234,22 +235,22 @@ public abstract class GalleryProvider {
         }
 
         public void add(Integer key, ImageWrapper value) {
-//            if (!value.getAnimated() && value.obtain()) {
-//                put(key, value);
-//            }
-            if (value.getFormat() != Image.FORMAT_GIF && value.getFormat() == Image.FORMAT_WEBP && value.obtain()) {
+            if (!value.getAnimated() && value.obtain()) {
                 put(key, value);
             }
+//            if (value.getFormat() != Image1.FORMAT_GIF && value.getFormat() == Image1.FORMAT_WEBP && value.obtain()) {
+//                put(key, value);
+//            }
         }
 
         @Override
         protected int sizeOf(Integer key, ImageWrapper value) {
             int size = value.getWidth() * value.getHeight() * 4;
-            if (value.getFormat() == Image.FORMAT_GIF || value.getFormat() == Image.FORMAT_WEBP) {
-                size *= 5;
-            }
-            return size;
-//            return value.getWidth() * value.getHeight() * 4;
+//            if (value.getFormat() == Image1.FORMAT_GIF || value.getFormat() == Image1.FORMAT_WEBP) {
+//                size *= 5;
+//            }
+//            return size;
+            return value.getWidth() * value.getHeight() * 4;
         }
 
         @Override

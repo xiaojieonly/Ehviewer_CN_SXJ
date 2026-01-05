@@ -38,6 +38,7 @@ import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.Image1;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.lib.yorozuya.ConcurrentPool;
