@@ -1,10 +1,10 @@
 {
-  "version": "2.0.1.2",
+  "version": "2.0.1.3",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.1.2，紧急修复",
+    "title": "新版发布2.0.1.3，紧急修复",
     "content": [
       "暂时回滚图片解码方式，等后续优化好了再上"
     ]

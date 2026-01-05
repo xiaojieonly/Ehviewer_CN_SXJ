@@ -31,7 +31,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 111
-        versionName "2.0.1.2"
+        versionName "2.0.1.3"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
