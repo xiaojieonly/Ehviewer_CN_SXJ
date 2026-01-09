@@ -1,19 +1,4 @@
-/*
- * Copyright 2016 Hippo Seven
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.hippo.ehviewer.ui.scene
+package com.hippo.ehviewer.ui.scene.sign
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -36,6 +21,7 @@ import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
+import com.hippo.ehviewer.ui.scene.SolidScene
 import com.hippo.lib.yorozuya.AssertUtils
 import com.hippo.util.AppHelper
 import okhttp3.Cookie
@@ -45,6 +31,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
+import kotlin.collections.iterator
 
 class WebViewSignInScene : SolidScene() {
     /*---------------
@@ -82,7 +69,7 @@ class WebViewSignInScene : SolidScene() {
         mWebView = WebView(context)
         val webSettings = mWebView!!.settings
         webSettings.javaScriptEnabled = true
-        if (Settings.getDF()&&AppHelper.checkVPN(context)){
+        if (Settings.getDF()&& AppHelper.Companion.checkVPN(context)){
             mWebView!!.webViewClient = LoginWebViewClientSNI(mWebView!!)
         }else{
             mWebView!!.webViewClient = LoginWebViewClient()

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hippo.ehviewer.ui.scene;
+package com.hippo.ehviewer.ui.scene.sign;
 
 import android.content.Context;
 import android.graphics.Paint;
@@ -41,6 +41,8 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.parser.ProfileParser;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.scene.EhCallback;
+import com.hippo.ehviewer.ui.scene.SolidScene;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.ExceptionUtils;
@@ -55,6 +57,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     private static final int REQUEST_CODE_WEBVIEW = 0;
     private static final int REQUEST_CODE_COOKIE = 0;
+    private static final int REQUEST_CODE_PROFILE = 0;
 
     /*---------------
      View life cycle
@@ -300,16 +303,18 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
             return;
         }
 
-        hideSoftInput();
-        showProgress(true);
+        startScene(new Announcer(GetProfileScene.class).setRequestCode(this, REQUEST_CODE_PROFILE));
 
-        EhCallback callback = new GetProfileListener(context,
-                activity.getStageId(), getTag());
-        mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
-        EhRequest request = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_PROFILE)
-                .setCallback(callback);
-        EhApplication.getEhClient(context).execute(request);
+//        hideSoftInput();
+//        showProgress(true);
+//
+//        EhCallback callback = new GetProfileListener(context,
+//                activity.getStageId(), getTag());
+//        mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
+//        EhRequest request = new EhRequest()
+//                .setMethod(EhClient.METHOD_GET_PROFILE)
+//                .setCallback(callback);
+//        EhApplication.getEhClient(context).execute(request);
     }
 
     private void redirectTo() {

@@ -22,6 +22,7 @@ import android.util.Log;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
+import com.hippo.ehviewer.ui.scene.sign.SignInScene;
 import com.hippo.scene.Announcer;
 
 /**
