@@ -274,6 +274,18 @@
             android:theme="@style/AppTheme.Toolbar" />
 
         <activity
+            android:name="com.hippo.ehviewer.ui.transfer.TransferActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_transfer"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <service
+            android:name="com.hippo.ehviewer.transfer.TransferService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <activity
             android:name="com.hippo.ehviewer.ui.DatabaseViewerActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/settings_advanced_database_viewer"

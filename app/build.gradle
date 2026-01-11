@@ -30,8 +30,8 @@ android {
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 2000901
-        versionName "2.0.0.9.1"
+        versionCode 2000902
+        versionName "2.0.9.2"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
@@ -179,6 +179,9 @@ dependencies {
     implementation 'org.greenrobot:eventbus:3.3.1'
     //loading组件
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
+
+    // 内置轻量级HTTP服务器，用于本地REST端点
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
 
 
     testImplementation 'junit:junit:4.13.2'

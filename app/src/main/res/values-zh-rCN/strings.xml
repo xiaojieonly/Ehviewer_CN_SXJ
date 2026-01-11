@@ -36,6 +36,27 @@
     <string name="username">用户名</string>
     <string name="password">密码</string>
     <string name="recaptcha">验证码（非必需）</string>
+    
+        <!-- Transfer service -->
+        <string name="transfer_service">传输服务</string>
+        <string name="transfer_service_description">WIFI 数据传输服务</string>
+        <string name="transfer_service_summary">通过 WIFI 传输书签、下载等数据</string>
+        <string name="transfer_start_service">启动传输服务</string>
+        <string name="transfer_start_service_summary">启动 WIFI 数据传输服务</string>
+        <string name="transfer_stop_service">停止服务</string>
+        <string name="transfer_open_manager">打开传输管理器</string>
+        <string name="transfer_open_manager_summary">管理传输任务和已连接客户端</string>
+        <string name="transfer_advanced">高级选项</string>
+        <string name="transfer_auto_start">自动启动服务</string>
+        <string name="transfer_auto_start_summary">应用启动时自动启动传输服务</string>
+        <string name="transfer_enable_encryption">启用加密</string>
+        <string name="transfer_enable_encryption_summary">为传输启用 TLS 加密</string>
+        <string name="transfer_enable_compression">启用压缩</string>
+        <string name="transfer_enable_compression_summary">传输时压缩数据以提高速度</string>
+        <string name="transfer_service_not_running">传输服务未运行</string>
+        <string name="transfer_connected_clients">已连接客户端</string>
+        <string name="transfer_client_count_default">已连接客户端：0</string>
+
 
     <string name="recaptcha_none">点我</string>
     <string name="recaptcha_loading">加载中…</string>
@@ -661,6 +682,9 @@
     <string name="settings_advanced_wifi_client_summary">接收来自WiFi热点的迁移数据</string>
     <string name="settings_advanced_database_viewer">数据库查看器</string>
     <string name="settings_advanced_database_viewer_summary">查看数据库版本、表和数据内容</string>
+
+    <!-- Transfer Settings -->
+    <string name="settings_transfer">数据传输</string>
 
     <string name="settings_about">更新与支持</string>
     <string name="settings_about_declaration_summary">EhViewer 与 E-Hentai.org 无任何联系</string>

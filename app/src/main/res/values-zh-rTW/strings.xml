@@ -652,6 +652,9 @@
     <string name="settings_advanced_database_viewer">資料庫查看器</string>
     <string name="settings_advanced_database_viewer_summary">查看資料庫版本、表和資料內容</string>
 
+    <!-- Transfer Settings -->
+    <string name="settings_transfer">資料傳輸</string>
+
     <string name="settings_about">關於</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer 與 E-Hentai.org 無任何聯繫</string>
@@ -1001,5 +1004,25 @@
     <string name="clean_invalid_download_invalid_ehviewer_file">無效的 .ehviewer 檔案: %s</string>
     <string name="clean_invalid_download_inconsistent_file_count">檔案數量不一致: %s, 預期: %d, 實際: %d</string>
     <string name="clean_invalid_download_error_processing_directory">處理目錄時出錯: %s - %s</string>
+
+    <!-- Transfer service -->
+    <string name="transfer_service">傳輸服務</string>
+    <string name="transfer_service_description">WIFI 資料傳輸服務</string>
+    <string name="transfer_service_summary">透過 WIFI 傳輸書籤、下載等資料</string>
+    <string name="transfer_start_service">啟動傳輸服務</string>
+    <string name="transfer_start_service_summary">啟動 WIFI 資料傳輸服務</string>
+    <string name="transfer_stop_service">停止服務</string>
+    <string name="transfer_open_manager">開啟傳輸管理器</string>
+    <string name="transfer_open_manager_summary">管理傳輸任務與已連線用戶端</string>
+    <string name="transfer_advanced">進階選項</string>
+    <string name="transfer_auto_start">自動啟動服務</string>
+    <string name="transfer_auto_start_summary">應用啟動時自動啟動傳輸服務</string>
+    <string name="transfer_enable_encryption">啟用加密</string>
+    <string name="transfer_enable_encryption_summary">為傳輸啟用 TLS 加密</string>
+    <string name="transfer_enable_compression">啟用壓縮</string>
+    <string name="transfer_enable_compression_summary">傳輸時壓縮資料以提升速度</string>
+    <string name="transfer_service_not_running">傳輸服務未運行</string>
+    <string name="transfer_connected_clients">已連線用戶端</string>
+    <string name="transfer_client_count_default">已連線用戶端：0</string>
 
 </resources>

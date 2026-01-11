@@ -749,6 +749,33 @@
     <string name="settings_advanced_database_viewer">Database Viewer</string>
     <string name="settings_advanced_database_viewer_summary">View database versions, tables, and content</string>
 
+    <!-- Transfer Settings -->
+    <string name="settings_transfer">Data Transfer</string>
+    <string name="transfer_service">Transfer Service</string>
+    <string name="transfer_service_description">WIFI Data Transfer Service</string>
+    <string name="transfer_service_summary">Transfer bookmarks, downloads, and other data via WIFI</string>
+    <string name="transfer_start_service">Start Transfer Service</string>
+    <string name="transfer_start_service_summary">Start the WIFI data transfer service</string>
+    <string name="transfer_stop_service">Stop Service</string>
+    <string name="transfer_open_manager">Open Transfer Manager</string>
+    <string name="transfer_open_manager_summary">Manage transfer tasks and connected clients</string>
+    <string name="transfer_advanced">Advanced Options</string>
+    <string name="transfer_auto_start">Auto Start Service</string>
+    <string name="transfer_auto_start_summary">Automatically start transfer service at app startup</string>
+    <string name="transfer_enable_encryption">Enable Encryption</string>
+    <string name="transfer_enable_encryption_summary">Enable TLS encryption for data transfer</string>
+    <string name="transfer_enable_compression">Enable Compression</string>
+    <string name="transfer_enable_compression_summary">Compress data during transfer for faster speed</string>
+    <string name="transfer_service_not_running">Transfer service is not running</string>
+    <string name="transfer_connected_clients">Connected Clients</string>
+    <string name="transfer_client_count_default">Connected clients: 0</string>
+    <string name="transfer_client_operations">Client Operations</string>
+    <string name="transfer_send_bookmarks">Send Bookmarks</string>
+    <string name="transfer_send_downloads">Send Downloads</string>
+    <string name="transfer_send_favorites">Send Favorites</string>
+    <string name="transfer_send_export">Send Export Data</string>
+    <string name="transfer_client_push_requested">Requested client push: %1$s (task %2$s)</string>
+
     <string name="settings_about">About</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer is not affiliated with E-Hentai.org in any way</string>
