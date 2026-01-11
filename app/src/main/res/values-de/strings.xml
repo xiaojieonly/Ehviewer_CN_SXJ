@@ -323,6 +323,8 @@
     <string name="sort_by_rating_desc">Nach Bewertung absteigend</string>
     <string name="sort_by_name_asc">Nach Name aufsteigend</string>
     <string name="sort_by_name_desc">Nach Name absteigend</string>
+    <string name="sort_by_file_size_asc">Nach Dateigröße aufsteigend</string>
+    <string name="sort_by_file_size_desc">Nach Dateigröße absteigend</string>
     <string name="sort_download_list">Liste sortieren</string>
     <string name="download_search_gallery">Galerie suchen</string>
     <string name="download_search_hint">Suchschlüssel eingeben</string>
@@ -808,6 +810,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">Vorherige Seite</string>
     <string name="spen_next_page">Nächste Seite</string>
+    <string name="category_all">Alle</string>
 
     <!--  排行榜  -->
     <string name="gallery_toplists">Galerie Die Charts.</string>

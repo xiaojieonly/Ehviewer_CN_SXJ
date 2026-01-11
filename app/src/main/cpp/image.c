@@ -125,8 +125,8 @@ Java_com_hippo_lib_image_ImageKt_nativeTexImage(JNIEnv *env, jclass clazz, jobje
 
 JNIEXPORT void JNICALL
 Java_com_hippo_lib_image_Image_nativeRender(JNIEnv *env, jclass clazz, jobject srcBitmap, jint src_x,
-                                        jint src_y, jobject dst, jint dst_x, jint dst_y, jint width,
-                                        jint height) {
+                                            jint src_y, jobject dst, jint dst_x, jint dst_y, jint width,
+                                            jint height) {
     AndroidBitmapInfo dstInfo;
     AndroidBitmapInfo srcInfo;
     void *srcPixels = NULL;
@@ -148,7 +148,7 @@ Java_com_hippo_lib_image_Image_nativeRender(JNIEnv *env, jclass clazz, jobject s
 
 JNIEXPORT void JNICALL
 Java_com_hippo_lib_image_Image_nativeTexImage(JNIEnv *env, jclass clazz, jobject bitmap, jboolean init,
-                                          jint offset_x, jint offset_y, jint width, jint height) {
+                                              jint offset_x, jint offset_y, jint width, jint height) {
     if (width * height > IMAGE_TILE_MAX_SIZE)
         return;
     AndroidBitmapInfo info;

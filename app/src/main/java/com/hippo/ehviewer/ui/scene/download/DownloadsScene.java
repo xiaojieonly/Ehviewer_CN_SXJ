@@ -31,6 +31,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -68,6 +69,9 @@ import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.h6ah4i.android.widget.advrecyclerview.animator.DraggableItemAnimator;
+import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
+import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.app.CheckBoxDialogBuilder;
 import com.hippo.drawable.AddDeleteDrawable;
@@ -82,10 +86,9 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
-import com.hippo.ehviewer.client.EhUtils;
-import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
@@ -98,10 +101,16 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
+import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
+import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
 import com.hippo.ehviewer.widget.MyEasyRecyclerView;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadCategoryTable;
 import com.hippo.ehviewer.widget.AdvanceSearchTable;
+import com.hippo.lib.yorozuya.AssertUtils;
+import com.hippo.lib.yorozuya.ObjectUtils;
+import com.hippo.lib.yorozuya.ViewUtils;
+import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.ripple.Ripple;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.DrawableManager;
@@ -111,10 +120,6 @@ import com.hippo.widget.FabLayout;
 import com.hippo.widget.ProgressView;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
-import com.hippo.lib.yorozuya.AssertUtils;
-import com.hippo.lib.yorozuya.ObjectUtils;
-import com.hippo.lib.yorozuya.ViewUtils;
-import com.hippo.lib.yorozuya.collect.LongList;
 import com.sxj.paginationlib.PaginationIndicator;
 import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
@@ -144,6 +149,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
@@ -219,7 +225,7 @@ public class DownloadsScene extends ToolbarScene
     private DownloadAdapter mOriginalAdapter;
     @Nullable
     private AutoStaggeredGridLayoutManager mLayoutManager;
-    
+
     // 拖拽管理器
     @Nullable
     private RecyclerViewDragDropManager mDragDropManager;
@@ -366,7 +372,7 @@ public class DownloadsScene extends ToolbarScene
         }
         mBackList = mList;
         isFilteringOrSearching = false;  // 切换标签时退出筛选状态
-        filterByCategory();
+//        filterByCategory();
         updateTitle();
         updatePaginationIndicator(true); // 标签变化时强制重新初始化
         Settings.putRecentDownloadLabel(mLabel);
@@ -452,6 +458,80 @@ public class DownloadsScene extends ToolbarScene
 
         Context context = getEHContext();
         assert context != null;
+
+        mCategorySpinner = (Spinner) ViewUtils.$$(view, R.id.category_spinner);
+        // Initialize category spinner
+        List<String> categoryList = new ArrayList<>();
+        categoryList.add(getString(R.string.category_all)); // Add "All" option
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.DOUJINSHI)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.MANGA)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.ARTIST_CG)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.GAME_CG)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.WESTERN)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.NON_H)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.IMAGE_SET)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.COSPLAY)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.ASIAN_PORN)).toUpperCase(Locale.ROOT));
+        categoryList.add(Objects.requireNonNull(EhUtils.getCategory(EhConfig.MISC)).toUpperCase(Locale.ROOT));
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, categoryList);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mCategorySpinner.setAdapter(categoryAdapter);
+        mCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int selectedCategory;
+                switch (position) {
+                    case 0:
+                        selectedCategory = EhUtils.ALL_CATEGORY;
+                        break;
+                    case 1:
+                        selectedCategory = EhConfig.DOUJINSHI;
+                        break;
+                    case 2:
+                        selectedCategory = EhConfig.MANGA;
+                        break;
+                    case 3:
+                        selectedCategory = EhConfig.ARTIST_CG;
+                        break;
+                    case 4:
+                        selectedCategory = EhConfig.GAME_CG;
+                        break;
+                    case 5:
+                        selectedCategory = EhConfig.WESTERN;
+                        break;
+                    case 6:
+                        selectedCategory = EhConfig.NON_H;
+                        break;
+                    case 7:
+                        selectedCategory = EhConfig.IMAGE_SET;
+                        break;
+                    case 8:
+                        selectedCategory = EhConfig.COSPLAY;
+                        break;
+                    case 9:
+                        selectedCategory = EhConfig.ASIAN_PORN;
+                        break;
+                    case 10:
+                        selectedCategory = EhConfig.MISC;
+                        break;
+                    default:
+                        selectedCategory = EhUtils.ALL_CATEGORY;
+                        break;
+                }
+                if (selectedCategory != mSelectedCategory) {
+                    mSelectedCategory = selectedCategory;
+                    filterByCategory();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+        // Set default selection
+        mCategorySpinner.setSelection(0);
+
         mProgressView = (ProgressView) ViewUtils.$$(view, R.id.download_progress_view);
         View content = ViewUtils.$$(view, R.id.content);
         mRecyclerView = (MyEasyRecyclerView) ViewUtils.$$(content, R.id.recycler_view);
@@ -488,17 +568,17 @@ public class DownloadsScene extends ToolbarScene
         mAdapter = mDragDropManager.createWrappedAdapter(mOriginalAdapter); // 包装适配器以支持拖拽
         mDragDropManager.setCheckCanDropEnabled(false);
         mRecyclerView.setAdapter(mAdapter);
-        
+
         // 初始化分页监听器
         myPageChangeListener = new MyPageChangeListener(indexPage, pageSize, needInitPage, doNotScroll, mOriginalAdapter, mRecyclerView);
-        
+
         // 设置分页监听器的回调
         myPageChangeListener.setPageChangeCallback(new MyPageChangeListener.PageChangeCallback() {
             @Override
             public void onPageChanged(int newIndexPage) {
                 indexPage = newIndexPage;
             }
-            
+
             @Override
             public void onPageSizeChanged(int newPageSize) {
                 pageSize = newPageSize;
@@ -507,11 +587,11 @@ public class DownloadsScene extends ToolbarScene
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
         mLayoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
         mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
-        
+
         // 设置拖拽动画器
         final GeneralItemAnimator animator = new DraggableItemAnimator();
         mRecyclerView.setItemAnimator(animator);
-        
+
         mRecyclerView.setItemViewCacheSize(100);
         try {
             mRecyclerView.setDrawingCacheEnabled(true);
@@ -540,7 +620,7 @@ public class DownloadsScene extends ToolbarScene
         MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
-        
+
         // 将拖拽管理器附加到RecyclerView
         if (mDragDropManager != null) {
             try {
@@ -550,7 +630,7 @@ public class DownloadsScene extends ToolbarScene
                 android.util.Log.w("DownloadsScene", "Error attaching drag manager: " + e.getMessage());
             }
         }
-        
+
         if (mInitPosition >= 0 && indexPage != 1) {
             initPage(mInitPosition);
             mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
@@ -819,6 +899,36 @@ public class DownloadsScene extends ToolbarScene
                 gotoSearch(context);
                 return true;
             }
+            case R.id.all:
+            case R.id.sort_by_default:
+            case R.id.download_done:
+            case R.id.not_started:
+            case R.id.waiting:
+            case R.id.downloading:
+            case R.id.failed:
+            case R.id.sort_by_gallery_id_asc:
+            case R.id.sort_by_gallery_id_desc:
+            case R.id.sort_by_create_time_asc:
+            case R.id.sort_by_create_time_desc:
+            case R.id.sort_by_rating_asc:
+            case R.id.sort_by_rating_desc:
+            case R.id.sort_by_name_asc:
+            case R.id.sort_by_name_desc:
+            case R.id.sort_by_file_size_asc:
+            case R.id.sort_by_file_size_desc:
+            case R.id.all_kind:
+            case R.id.misc:
+            case R.id.doujinshi:
+            case R.id.manga:
+            case R.id.artist_cg:
+            case R.id.game_cg:
+            case R.id.image_set:
+            case R.id.cosplay:
+            case R.id.asian_porn:
+            case R.id.non_h:
+            case R.id.western:
+            case R.id.unknown:
+                gotoFilterAndSort(id);
             case R.id.sort_download_list: {
                 Log.d("DownloadsScene", "onOptionsItemSelected: 排序按钮被点击");
                 showSortFilterDialog();
@@ -827,7 +937,19 @@ public class DownloadsScene extends ToolbarScene
             case R.id.import_local_archive:
                 importLocalArchive();
                 return true;
-
+//            case R.id.misc:
+//            case R.id.doujinshi:
+//            case R.id.manga:
+//            case R.id.artist_cg:
+//            case R.id.game_cg:
+//            case R.id.image_set:
+//            case R.id.cosplay:
+//            case R.id.asian_porn:
+//            case R.id.non_h:
+//            case R.id.western:
+//            case R.id.unknown:
+//
+//                return true;
         }
         return false;
     }
@@ -1035,6 +1157,7 @@ public class DownloadsScene extends ToolbarScene
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     } catch (Exception ex) {
                         Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+                        Analytics.recordException(ex);
                         return true;
                     }
                 } catch (Exception e) {
@@ -1043,7 +1166,7 @@ public class DownloadsScene extends ToolbarScene
                 }
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setData(archiveUri);
-            }else {
+            } else {
                 // This is a normal download, use ACTION_EH
                 intent.setAction(GalleryActivity.ACTION_EH);
                 intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, downloadInfo);
@@ -1143,7 +1266,7 @@ public class DownloadsScene extends ToolbarScene
 
             switch (position) {
                 case 1: { // Start
-                    if (gidList.isEmpty()){
+                    if (gidList.isEmpty()) {
                         break;
                     }
                     Intent intent = new Intent(activity, DownloadService.class);
@@ -1155,7 +1278,7 @@ public class DownloadsScene extends ToolbarScene
                     break;
                 }
                 case 2: { // Stop
-                    if (gidList.isEmpty()){
+                    if (gidList.isEmpty()) {
                         break;
                     }
                     if (null != mDownloadManager) {
@@ -1166,7 +1289,7 @@ public class DownloadsScene extends ToolbarScene
                     break;
                 }
                 case 3: { // Delete
-                    if (downloadInfoList.isEmpty()){
+                    if (downloadInfoList.isEmpty()) {
                         break;
                     }
                     CheckBoxDialogBuilder builder = new CheckBoxDialogBuilder(context,
@@ -1181,7 +1304,7 @@ public class DownloadsScene extends ToolbarScene
                     break;
                 }
                 case 4: {// Move
-                    if (downloadInfoList.isEmpty()){
+                    if (downloadInfoList.isEmpty()) {
                         break;
                     }
                     List<DownloadLabel> labelRawList = EhApplication.getDownloadManager(context).getLabelList();
@@ -1204,7 +1327,7 @@ public class DownloadsScene extends ToolbarScene
                     if (mList == null || mList.isEmpty()) {
                         return;
                     }
-                    onClickPrimaryFab(mFabLayout,null);
+                    onClickPrimaryFab(mFabLayout, null);
                     viewRandom();
                     break;
                 case 6:
@@ -1272,7 +1395,7 @@ public class DownloadsScene extends ToolbarScene
         }
         int position = (int) (Math.random() * list.size());
         if (position < 0 || position >= list.size()) {
-            return ;
+            return;
         }
         Activity activity = getActivity2();
         if (null == activity || null == mRecyclerView) {
@@ -1327,7 +1450,7 @@ public class DownloadsScene extends ToolbarScene
         if (mAdapter != null) {
             mAdapter.notifyItemInserted(position);
         }
-        if (downloadLabelDraw!=null){
+        if (downloadLabelDraw != null) {
             downloadLabelDraw.updateDownloadLabels();
         }
         updateView();
@@ -1530,7 +1653,6 @@ public class DownloadsScene extends ToolbarScene
     public MyEasyRecyclerView getRecyclerView() {
         return mRecyclerView;
     }
-
 
 
     private static void deleteFileAsync(UniFile... files) {
@@ -1761,8 +1883,7 @@ public class DownloadsScene extends ToolbarScene
 
                 // Check if this is an imported archive - skip SpiderInfo processing
                 boolean isImportedArchive = false;
-                if (info instanceof DownloadInfo) {
-                    DownloadInfo downloadInfo = (DownloadInfo) info;
+                if (info instanceof DownloadInfo downloadInfo) {
                     isImportedArchive = downloadInfo.archiveUri != null &&
                             downloadInfo.archiveUri.startsWith("content://");
                 }
@@ -1840,7 +1961,6 @@ public class DownloadsScene extends ToolbarScene
         }
         mRecyclerView.scrollToPosition(listIndexInPage(position));
     }
-
 
 
     private int getPageSizePos(int pageSize) {
@@ -2184,7 +2304,7 @@ public class DownloadsScene extends ToolbarScene
             // Lock drawer
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
-            
+
 //            // 进入选择模式时，thumb保持可见（拖拽功能已直接附加到thumb上）
 //            updateThumbVisibility(true);
         }
@@ -2200,7 +2320,7 @@ public class DownloadsScene extends ToolbarScene
             // Unlock drawer
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
-            
+
 //            // 退出选择模式时，thumb保持可见（拖拽功能已直接附加到thumb上）
 //            updateThumbVisibility(false);
         }

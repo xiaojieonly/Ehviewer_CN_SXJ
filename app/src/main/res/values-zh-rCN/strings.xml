@@ -399,6 +399,7 @@
     <string name="download_labels">下载标签</string>
     <string name="download_sort_list">排序</string>
     <string name="download_filter_by_status">根据状态过滤</string>
+    <string name="download_filter_by_kind">根据类型过滤</string>
     <string name="download_status_all">全部</string>
     <string name="sort_download_list">对内容排序</string>
     <string name="default_sort">默认</string>
@@ -410,6 +411,8 @@
     <string name="sort_by_rating_desc">按评分降序</string>
     <string name="sort_by_name_asc">按名称升序</string>
     <string name="sort_by_name_desc">按名称降序</string>
+    <string name="sort_by_file_size_asc">按文件大小升序</string>
+    <string name="sort_by_file_size_desc">按文件大小降序</string>
     <string name="download_start_all">全部开始</string>
     <string name="download_stop_all">全部停止</string>
     <string name="download_reset_reading_progress">重置阅读进度</string>
@@ -562,6 +565,9 @@
     <string name="settings_eh_cellular_network_warning">移动网络警告</string>
 
     <string name="settings_read">阅读</string>
+    <string name="settings_read_picture_decoding_method">图片解码方式</string>
+    <string name="settings_read_picture_decoding_method_origin">系统解码</string>
+    <string name="settings_read_picture_decoding_method_native">开源C++解码库</string>
     <string name="settings_read_screen_rotation">屏幕方向</string>
     <string name="settings_read_screen_rotation_default">系统默认</string>
     <string name="settings_read_screen_rotation_portrait">竖屏</string>

@@ -24,6 +24,7 @@ import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
 import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.Image1;
 import com.hippo.unifile.FilenameFilter;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.NaturalComparator;
@@ -225,6 +226,7 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
                 is = files[index].openInputStream();
 //                Image image = Image.decode(is, true);
                 Image image = Image.decode((FileInputStream) is, false);
+//                Image1 image1 = Image1.decode((FileInputStream) is, false);
                 mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
                 if (image != null) {
                     notifyPageSucceed(index, image);

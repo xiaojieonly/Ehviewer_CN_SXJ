@@ -57,7 +57,8 @@ import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.lib.image.Image;
-import com.hippo.lib.image.ImageBitmap;
+//import com.hippo.lib.image.Image1;
+//import com.hippo.lib.image.ImageBitmap;
 import com.hippo.network.EhSSLSocketFactory;
 import com.hippo.network.EhSSLSocketFactoryLowSDK;
 import com.hippo.network.EhX509TrustManager;
@@ -124,7 +125,7 @@ public class EhApplication extends RecordingApplication {
     private OkHttpClient mImageOkHttpClient;
     private Cache mOkHttpCache;
     private ImageBitmapHelper mImageBitmapHelper;
-    private Conaco<ImageBitmap> mConaco;
+    private Conaco<Image> mConaco;
     private LruCache<Long, GalleryDetail> mGalleryDetailCache;
     private SimpleDiskCache mSpiderInfoCache;
     private DownloadManager mDownloadManager;
@@ -184,6 +185,7 @@ public class EhApplication extends RecordingApplication {
         BackgroundTaskManager.initialize(this);
         EhEngine.initialize();
         BitmapUtils.initialize(this);
+//        Image1.initialize(this);
         Image.initialize(this);
         Native.initialize();
         // 实际作用不确定，但是与64位应用有冲突
@@ -533,10 +535,10 @@ public class EhApplication extends RecordingApplication {
     }
 
     @NonNull
-    public static Conaco<ImageBitmap> getConaco(@NonNull Context context) {
+    public static Conaco<Image> getConaco(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
         if (application.mConaco == null) {
-            Conaco.Builder<ImageBitmap> builder = new Conaco.Builder<>();
+            Conaco.Builder<Image> builder = new Conaco.Builder<>();
             builder.hasMemoryCache = true;
             builder.memoryCacheMaxSize = getMemoryCacheMaxSize();
             builder.hasDiskCache = true;

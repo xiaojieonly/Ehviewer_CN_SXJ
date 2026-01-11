@@ -135,8 +135,10 @@ public class SecurityScene extends SolidScene implements
                             mFingerprintIcon.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
-                                    finish();
+                                    if (getEHContext() != null && isAdded()) {
+                                        startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
+                                        finish();
+                                    }
                                 }
                             }, SUCCESS_DELAY_MILLIS);
 
@@ -208,8 +210,10 @@ public class SecurityScene extends SolidScene implements
         String targetPatter = Settings.getSecurity();
 
         if (ObjectUtils.equal(enteredPatter, targetPatter)) {
-            startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
-            finish();
+            if (getEHContext() != null && isAdded()) {
+                startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
+                finish();
+            }
         } else {
             mPatternView.setDisplayMode(LockPatternView.DisplayMode.Wrong);
             mRetryTimes--;
@@ -227,8 +231,10 @@ public class SecurityScene extends SolidScene implements
                 return;
             }
             Settings.putSecurity("");
-            startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
-            finish();
+            if (getEHContext() != null && isAdded()) {
+                startSceneForCheckStep(CHECK_STEP_SECURITY, getArguments());
+                finish();
+            }
         }
     }
 

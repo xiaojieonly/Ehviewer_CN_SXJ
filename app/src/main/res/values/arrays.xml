@@ -235,6 +235,16 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="picture_decoding_method">
+        <item>@string/settings_read_picture_decoding_method_origin</item>
+        <item>@string/settings_read_picture_decoding_method_native</item>
+    </string-array>
+
+    <string-array name="picture_decoding_method_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
     <string-array name="reading_direction_entries">
         <item>@string/settings_read_reading_direction_left_to_right</item>
         <item>@string/settings_read_reading_direction_right_to_Left</item>

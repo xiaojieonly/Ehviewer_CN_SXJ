@@ -439,6 +439,8 @@
     <string name="sort_by_rating_desc">按評分降序</string>
     <string name="sort_by_name_asc">按名稱升序</string>
     <string name="sort_by_name_desc">按名稱降序</string>
+    <string name="sort_by_file_size_asc">按檔案大小升序</string>
+    <string name="sort_by_file_size_desc">按檔案大小降序</string>
     <string name="sort_download_list">排序列表</string>
     <string name="download_start_all">全部開始</string>
     <string name="download_stop_all">全部停止</string>
@@ -1009,6 +1011,7 @@
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一頁</string>
     <string name="spen_next_page">下一頁</string>
+    <string name="category_all">全部</string>
     <string name="import_local_archive">匯入本機歸檔</string>
     <string name="import_archive_title">選擇歸檔檔案</string>
     <string name="import_archive_failed">匯入歸檔失敗</string>

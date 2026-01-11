@@ -16,11 +16,13 @@
 
 package com.hippo.ehviewer.ui.scene;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
+import com.hippo.ehviewer.ui.scene.sign.SignInScene;
 import com.hippo.scene.Announcer;
 
 /**
@@ -52,8 +54,13 @@ public class SolidScene extends BaseScene {
                     break;
                 }
             case CHECK_STEP_ANALYTICS:
-                if (EhUtils.needSignedIn(getEHContext())) {
+                Context context = getEHContext();
+                if (context != null && EhUtils.needSignedIn(context)) {
                     startScene(new Announcer(SignInScene.class).setArgs(args));
+                    break;
+                }
+                if (context == null) {
+                    Log.w(TAG, "Context is null, cannot check sign in status");
                     break;
                 }
             case CHECK_STEP_SIGN_IN:

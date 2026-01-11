@@ -79,6 +79,7 @@
     <string name="cosplay" translatable="false">COSPLAY</string>
     <string name="asian_porn" translatable="false">ASIAN PORN</string>
     <string name="misc" translatable="false">MISC</string>
+    <string name="unknown" translatable="false">UNKNOWN</string>
 
     <string name="homepage">Homepage</string>
     <string name="subscription">Subscription</string>
@@ -467,6 +468,7 @@
     <string name="download_labels">Download labels</string>
     <string name="download_sort_list">Sort</string>
     <string name="download_filter_by_status">Filter by status</string>
+    <string name="download_filter_by_kind">Filter by kind</string>
     <string name="download_status_all">All</string>
     <string name="download_status_not_started">Not </string>
     <string name="default_sort">Default</string>
@@ -478,6 +480,8 @@
     <string name="sort_by_rating_desc">By Rating Desc</string>
     <string name="sort_by_name_asc">By Name Asc</string>
     <string name="sort_by_name_desc">By Name Desc</string>
+    <string name="sort_by_file_size_asc">By File Size Asc</string>
+    <string name="sort_by_file_size_desc">By File Size Desc</string>
     <string name="sort_download_list">Sort List</string>
     <string name="download_start_all">Start all</string>
     <string name="download_stop_all">Stop all</string>
@@ -628,6 +632,9 @@
     <string name="settings_eh_cellular_network_warning">Cellular network warning</string>
 
     <string name="settings_read">Read</string>
+    <string name="settings_read_picture_decoding_method">Picture decoding method</string>
+    <string name="settings_read_picture_decoding_method_origin">System Decoding</string>
+    <string name="settings_read_picture_decoding_method_native">Open source C++ decoding library</string>
     <string name="settings_read_screen_rotation">Screen orientation</string>
     <string name="settings_read_screen_rotation_default">Default</string>
     <string name="settings_read_screen_rotation_portrait">Portrait</string>

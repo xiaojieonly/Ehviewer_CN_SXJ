@@ -128,7 +128,19 @@ elseif (${ANDROID_ABI} STREQUAL "x86")
       libjpeg-turbo/simd/i386/jquanti-avx2.asm
   )
 
-  set(CMAKE_ASM_NASM_FLAGS "-DELF -DPIC -I${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/simd/nasm")
+  # Convert paths to use forward slashes for yasm compatibility on Windows
+  file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/simd/nasm" NASM_INC_DIR)
+  file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/simd/i386" I386_INC_DIR)
+  string(REPLACE "\\" "/" NASM_INC_DIR "${NASM_INC_DIR}")
+  string(REPLACE "\\" "/" I386_INC_DIR "${I386_INC_DIR}")
+  # Add quotes if path contains spaces (for Windows compatibility)
+  if(NASM_INC_DIR MATCHES " ")
+    set(NASM_INC_DIR "\"${NASM_INC_DIR}\"")
+  endif()
+  if(I386_INC_DIR MATCHES " ")
+    set(I386_INC_DIR "\"${I386_INC_DIR}\"")
+  endif()
+  set(CMAKE_ASM_NASM_FLAGS "-DELF -DPIC -I${NASM_INC_DIR} -I${I386_INC_DIR}")
 
 elseif (${ANDROID_ABI} STREQUAL "x86_64")
 
@@ -166,7 +178,19 @@ elseif (${ANDROID_ABI} STREQUAL "x86_64")
       libjpeg-turbo/simd/x86_64/jquanti-avx2.asm
   )
 
-  set(CMAKE_ASM_NASM_FLAGS "-D__x86_64__ -DELF -DPIC -I${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/simd/nasm")
+  # Convert paths to use forward slashes for yasm compatibility on Windows
+  file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/simd/nasm" NASM_INC_DIR)
+  file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/simd/x86_64" X86_64_INC_DIR)
+  string(REPLACE "\\" "/" NASM_INC_DIR "${NASM_INC_DIR}")
+  string(REPLACE "\\" "/" X86_64_INC_DIR "${X86_64_INC_DIR}")
+  # Add quotes if path contains spaces (for Windows compatibility)
+  if(NASM_INC_DIR MATCHES " ")
+    set(NASM_INC_DIR "\"${NASM_INC_DIR}\"")
+  endif()
+  if(X86_64_INC_DIR MATCHES " ")
+    set(X86_64_INC_DIR "\"${X86_64_INC_DIR}\"")
+  endif()
+  set(CMAKE_ASM_NASM_FLAGS "-D__x86_64__ -DELF -DPIC -I${NASM_INC_DIR} -I${X86_64_INC_DIR}")
 
 else ()
 

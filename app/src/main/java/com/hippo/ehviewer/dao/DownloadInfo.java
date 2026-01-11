@@ -43,6 +43,7 @@ public class DownloadInfo extends GalleryInfo {
 	public int finished;
 	public int downloaded;
 	public int total;
+	public long fileSize = -1; // 文件夹总大小（字节），-1表示未计算
 
 
 	@Generated

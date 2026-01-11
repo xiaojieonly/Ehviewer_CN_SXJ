@@ -17,6 +17,15 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+<!--    <com.hippo.preference.ListPreference-->
+<!--        android:defaultValue="0"-->
+<!--        android:key="screen_rotation"-->
+<!--        android:summary="%s"-->
+<!--        android:title="@string/settings_read_picture_decoding_method"-->
+<!--        app:allowDividerAbove="true"-->
+<!--        app:entries="@array/picture_decoding_method"-->
+<!--        app:entryValues="@array/picture_decoding_method_values" />-->
+
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
         android:key="screen_rotation"
