@@ -55,6 +55,13 @@
     <string name="settings_download_import_no_items">No items to import</string>
     <string name="settings_download_import_failed">Failed to import download items</string>
     <string name="settings_download_import_succeed">Successfully imported %d download items</string>
+    <string name="settings_download_import_read_failed">Failed to read import file</string>
+    <string name="settings_download_import_succeed_with_details">Import completed: %1$d succeeded, %2$d failed</string>
+    <string name="settings_download_import_failed_all">Import failed: all items failed to import</string>
+    <string name="settings_download_import_check_logs">Please check logs for details</string>
+    <string name="settings_download_restore_successfully_with_details">Restore completed: %1$d succeeded, %2$d failed</string>
+    <string name="settings_download_restore_failed_all">Restore failed: all items failed to restore</string>
+    <string name="settings_download_restore_check_logs">Please check logs for details</string>
     <string name="settings_eh_system_theme">System theme</string>
 
 
@@ -198,6 +205,7 @@
     <string name="content_layout_restore_tip">Tap to retry</string>
     <string name="write_rationale">EhViewer will request WRITE_EXTERNAL_STORAGE permission for downloading gallery. Do you want to grant the permission?</string>
     <string name="you_rejected_me">It hurts</string>
+    <string name="show_details">Show Details</string>
     <string name="analytics_explain">Would you mind if the developer collected your device information and your usage? It will help the developer a lot.&lt;br&gt;&lt;br&gt;Data analysis service is provided by Google Analytics for Firebase. Its privacy policy can be found at &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt;.&lt;br&gt;&lt;br&gt;If you agree to join data analysis, your device information and your usage will be collected, including but not limited to Android API version, equipment model, language residence, the application version, conversion time, function times. The developer promise that these information will NOT be collected, including phone number, e-mail address, IMEI.&lt;br&gt;&lt;br&gt;Your information will not be collected until you agree to join data analysis.&lt;br&gt;&lt;br&gt;The collected information will be analyzed by Google Analytics for Firebase. The analysis report can only be viewed by the developer of this application.</string>
     <string name="get_it">Got it</string>
     <string name="accept">Accept</string>
@@ -740,7 +748,14 @@
     <string name="settings_download_clean_redundancy_summary">Remove gallery images which are not in download list but in download location</string>
     <string name="settings_download_clean_redundancy_no_redundancy">No redundancy</string>
     <string name="settings_download_clean_redundancy_done">Redundancy cleaning completed, clean-up %d items totally</string>
-    <string name="settings_download_clean_invalid_download_summary">Remove download items which are invalid</string>
+    <string name="settings_download_clean_invalid_download_summary">Remove download items which are invalid
+
+<b>Implementation Principle:</b>
+• Scan all folders in the download directory
+• Check download integrity for each folder
+• <b>Send network request to confirm if gallery is deleted before removal</b>
+• Skip deleted galleries to avoid accidental deletion
+• Only delete incomplete downloads where the gallery still exists</string>
     <string name="settings_download_clean_invalid_download">Clean invaild download</string>
     <string name="settings_download_rebuild_download_records">Rebuild download records</string>
     <string name="settings_download_rebuild_download_records_summary">Scan all folders in download path, rebuild from .ehviewer files or create local records for folders without metadata</string>
@@ -1373,6 +1388,41 @@
     <string name="clean_invalid_download_progress">Processing: %1$d/%2$d (Cleaned: %3$d, Errors: %4$d)</string>
     <string name="clean_invalid_download_finalizing">Finalizing...</string>
     <string name="clean_invalid_download_completed">Cleanup completed</string>
+    <string name="clean_invalid_download_completed_with_skipped">Cleanup completed, cleaned %1$d invalid downloads, skipped %2$d deleted galleries</string>
+    <string name="clean_invalid_download_gallery_deleted">Detected deleted gallery, skipping cleanup</string>
+    <string name="clean_invalid_download_checking_gallery">Checking gallery status: %s</string>
+    <string name="clean_invalid_download_gallery_still_exists">Gallery still exists, preparing to clean incomplete download</string>
+    <string name="clean_invalid_download_error_checking">Error checking gallery status: %s</string>
+    <string name="clean_invalid_download_detail_title">Clean Invalid Downloads Details</string>
+    <string name="clean_invalid_download_detail_message"><b>Feature Description:</b>
+
+This feature intelligently cleans invalid download items with the following workflow:
+
+1. <b>Scanning Phase</b>
+   • Traverse all folders in the download directory
+   • Identify download items containing .ehviewer files
+
+2. <b>Verification Phase</b>
+   • Check download integrity (file count, file validity, etc.)
+   • <b>Key Feature: Send network request to verify gallery status before deletion</b>
+   • Use gallery GID and Token to query if the gallery still exists
+
+3. <b>Cleanup Phase</b>
+   • Skip deleted galleries (keep local files)
+   • Only delete incomplete downloads where the gallery still exists
+   • Statistics and report cleanup results
+
+<b>Why check gallery status?</b>
+
+• Avoid accidentally deleting files from deleted galleries
+• Preserve files that are incomplete but the gallery no longer exists
+• Prevent users from losing content that may be unrecoverable
+
+<b>Notes:</b>
+
+• Network connection required for gallery status checking
+• The checking process may increase execution time
+• Default to preserving downloads on network errors for safety</string>
     
     <!-- Rebuild download records task -->
     <string name="rebuild_download_records_initializing">Initializing rebuild...</string>

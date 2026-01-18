@@ -134,6 +134,7 @@
     <string name="content_layout_restore_tip">点击重试</string>
     <string name="write_rationale">EhViewer 将申请设备存储空间访问权限以便下载画廊。您愿意授权吗？</string>
     <string name="you_rejected_me">好痛</string>
+    <string name="show_details">查看详情</string>
     <string name="analytics_explain">您同意让开发者收集您的设备信息与使用情况吗？这将对开发有很大帮助。&lt;br&gt;&lt;br&gt;数据统计服务由 Google Analytics for Firebase 提供，其隐私政策可在 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 查看。&lt;br&gt;&lt;br&gt;若您同意参与数据统计，您的设备信息与应用使用情况将会被记录，其包括但不限于：Android API 版本、设备型号、语言所在地、本应用版本号、会话时长、应用功能使用次数。开发者承诺以下信息并不会被记录：电话号码、电子邮件地址、IMEI。&lt;br&gt;&lt;br&gt;在您同意参与数据统计之前，您的信息不会被记录。&lt;br&gt;&lt;br&gt;被记录的数据会由 Google Analytics for Firebase 进行分析，分析报表仅可被本应用开发者访问。</string>
     <string name="get_it">知道了</string>
     <string name="accept">接受</string>
@@ -669,11 +670,21 @@
     <string name="settings_download_restore_not_found">未找到可恢复下载项</string>
     <string name="settings_download_restore_failed">恢复失败</string>
     <string name="settings_download_restore_successfully">成功恢复 %d 项</string>
+    <string name="settings_download_restore_successfully_with_details">恢复完成：%1$d 个成功，%2$d 个失败</string>
+    <string name="settings_download_restore_failed_all">恢复失败：所有项目都无法恢复</string>
+    <string name="settings_download_restore_check_logs">请查看日志了解详细信息</string>
     <string name="settings_download_clean_redundancy">清理下载冗余</string>
     <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
     <string name="settings_download_clean_redundancy_done">完成冗余清理，共清理 %d 项</string>
-    <string name="settings_download_clean_invalid_download_summary">清空任何无效的下载项，尤其是下载未完整的下载项，不会清空已完成的下载项</string>
+    <string name="settings_download_clean_invalid_download_summary">清空任何无效的下载项，尤其是下载未完整的下载项，不会清空已完成的下载项
+
+<b>实现原理：</b>
+• 扫描下载目录中的所有文件夹
+• 检查每个文件夹的下载完整性
+• <b>在删除前发送网络请求确认画廊是否已被删除</b>
+• 跳过已被删除的画廊，避免误删
+• 仅删除不完整且画廊仍存在的下载项</string>
     <string name="settings_download_clean_invalid_download">清空无效的下载项</string>
     <string name="settings_download_rebuild_download_records">重建下载记录</string>
     <string name="settings_download_rebuild_download_records_summary">扫描下载路径中的所有文件夹，从.ehviewer文件重建记录或为没有元数据的文件夹创建本地记录</string>
@@ -1279,8 +1290,43 @@
     <string name="clean_invalid_download_progress">正在处理: %1$d/%2$d 个目录，已清理 %3$d 个，错误 %4$d 个</string>
     <string name="clean_invalid_download_finalizing">正在完成清理...</string>
     <string name="clean_invalid_download_completed">清理完成，共清理 %d 个无效下载</string>
+    <string name="clean_invalid_download_completed_with_skipped">清理完成，共清理 %1$d 个无效下载，跳过已删除画廊 %2$d 个</string>
     <string name="clean_invalid_download_no_files">没有找到需要清理的文件</string>
     <string name="clean_invalid_download_invalid_dir">下载目录无效</string>
+    <string name="clean_invalid_download_gallery_deleted">检测到已删除画廊，跳过清理</string>
+    <string name="clean_invalid_download_checking_gallery">正在检查画廊状态: %s</string>
+    <string name="clean_invalid_download_gallery_still_exists">画廊仍存在，准备清理不完整下载</string>
+    <string name="clean_invalid_download_error_checking">检查画廊状态时出错: %s</string>
+    <string name="clean_invalid_download_detail_title">清空无效下载项详情</string>
+    <string name="clean_invalid_download_detail_message"><b>功能说明：</b>
+
+此功能会智能清理无效的下载项，具体流程如下：
+
+1. <b>扫描阶段</b>
+   • 遍历下载目录中的所有文件夹
+   • 识别包含 .ehviewer 文件的下载项
+
+2. <b>验证阶段</b>
+   • 检查下载完整性（文件数量、文件有效性等）
+   • <b>关键特性：在删除前发送网络请求验证画廊状态</b>
+   • 使用画廊 GID 和 Token 查询画廊是否仍存在
+
+3. <b>清理阶段</b>
+   • 跳过已被删除的画廊（保留本地文件）
+   • 仅删除不完整且画廊仍存在的下载项
+   • 统计并报告清理结果
+
+<b>为什么要检查画廊状态？</b>
+
+• 避免误删已被删除的画廊文件
+• 保留那些虽然下载不完整但画廊已不存在的文件
+• 防止用户丢失可能无法再次获取的内容
+
+<b>注意事项：</b>
+
+• 需要网络连接才能进行画廊状态检查
+• 检查过程可能会增加一些执行时间
+• 网络错误时默认保留下载项，确保安全</string>
     
     <!-- Start All Download Task -->
     <string name="start_all_download_initializing">正在初始化下载任务...</string>

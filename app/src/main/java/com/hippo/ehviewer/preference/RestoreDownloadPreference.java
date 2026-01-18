@@ -239,9 +239,20 @@ public class RestoreDownloadPreference extends Preference {
                         
                         // 在主线程显示Toast
                         taskManager.runOnUiThread(() -> {
-                            Toast.makeText(application,
-                                    application.getString(R.string.settings_download_restore_successfully, successCount),
-                                    Toast.LENGTH_SHORT).show();
+                            int failCount = foundCount - successCount;
+                            String message;
+                            if (successCount > 0) {
+                                message = application.getString(R.string.settings_download_restore_successfully_with_details, 
+                                    successCount, failCount);
+                                if (failCount > 0) {
+                                    message += "\n" + application.getString(R.string.settings_download_restore_check_logs);
+                                }
+                            } else {
+                                message = application.getString(R.string.settings_download_restore_failed_all);
+                                message += "\n" + application.getString(R.string.settings_download_restore_check_logs);
+                            }
+                            
+                            Toast.makeText(application, message, Toast.LENGTH_LONG).show();
 
                             if (context instanceof Activity) {
                                 ((Activity) context).setResult(Activity.RESULT_OK);

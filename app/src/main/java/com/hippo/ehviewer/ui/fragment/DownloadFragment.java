@@ -313,6 +313,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         TaskExecutor.executeTask(task);
                     })
                     .setNegativeButton(android.R.string.cancel, null)
+                    .setNeutralButton(R.string.show_details, (dialog, which) -> {
+                        showCleanInvalidDownloadDetails();
+                    })
                     .show();
             return true;
         } else if (KEY_REPAIR_ALL_DOWNLOADED_GALLERY.equals(key)) {
@@ -808,6 +811,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         private ProgressDialog mProgressDialog;
         private volatile boolean isCancelled = false;
         private boolean isDialogShown = true;
+        private int mTotalCount = 0;
+        private int mFailCount = 0;
 
         public ImportDownloadTask(DownloadFragment fragment, Uri uri) {
             mFragment = new WeakReference<>(fragment);
@@ -873,25 +878,40 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 }
 
                 DownloadManager downloadManager = EhApplication.getDownloadManager(fragment.requireActivity());
-                int importCount = 0;
+                int successCount = 0;
+                int failCount = 0;
                 int total = galleryInfos.size();
-                publishProgress(0, total);
+                mTotalCount = total;
+                mFailCount = 0; // 重置失败计数
+                publishProgress(0, total, 0, 0);
 
                 for (int i = 0; i < total && !isCancelled; i++) {
                     GalleryInfo gi = galleryInfos.get(i);
-                    if (downloadManager.getDownloadInfo(gi.gid) == null) {
-                        downloadManager.addDownload(gi, null);
-                        importCount++;
+                    try {
+                        if (downloadManager.getDownloadInfo(gi.gid) == null) {
+                            downloadManager.addDownload(gi, null);
+                            successCount++;
+                        } else {
+                            failCount++; // 已存在，算作失败
+                            mFailCount++;
+                        }
+                    } catch (Exception e) {
+                        failCount++;
+                        mFailCount++;
+                        // 记录错误日志
+                        Log.e("ImportDownloadTask", "Failed to import gallery: " + gi.title + " (GID: " + gi.gid + ")", e);
                     }
-                    publishProgress(i + 1, total);
+                    publishProgress(i + 1, total, successCount, failCount);
                 }
-                return importCount;
+                // 返回成功个数
+                return successCount;
             } catch (IOException e) {
-                return 0;
+                Log.e("ImportDownloadTask", "Failed to read import file", e);
+                return -1; // 使用-1表示读取文件失败
             }
         }
 
-        private void publishProgress(int progress, int max) {
+        private void publishProgress(int progress, int max, int successCount, int failCount) {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || !fragment.isAdded() || fragment.getActivity() == null) {
                 return;
@@ -906,7 +926,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             });
             
             // 更新通知栏进度
-            String content = "正在导入下载记录... (" + progress + "/" + max + ")";
+            String content = "正在导入下载记录... (" + progress + "/" + max + ") - 成功:" + successCount + " 失败:" + failCount;
             fragment.updateNotification(NOTIFICATION_ID_IMPORT, 
                 fragment.getString(R.string.settings_download_import_items), 
                 content, progress, max);
@@ -937,10 +957,26 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
-            if (result > 0) {
-                Toast.makeText(fragment.getActivity(), fragment.getString(R.string.settings_download_import_succeed, result), Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(fragment.getActivity(), R.string.settings_download_import_failed, Toast.LENGTH_SHORT).show();
+            
+            if (result == -1) {
+                // 文件读取失败
+                Toast.makeText(fragment.getActivity(), 
+                    fragment.getString(R.string.settings_download_import_read_failed), 
+                    Toast.LENGTH_LONG).show();
+            } else if (result >= 0) {
+                // 显示详细的成功/失败信息
+                String message;
+                if (result > 0) {
+                    message = fragment.getString(R.string.settings_download_import_succeed_with_details, 
+                        result, mFailCount);
+                    if (mFailCount > 0) {
+                        message += "\n" + fragment.getString(R.string.settings_download_import_check_logs);
+                    }
+                } else {
+                    message = fragment.getString(R.string.settings_download_import_failed_all);
+                    message += "\n" + fragment.getString(R.string.settings_download_import_check_logs);
+                }
+                Toast.makeText(fragment.getActivity(), message, Toast.LENGTH_LONG).show();
             }
         }
 
@@ -1824,6 +1860,17 @@ private class RebuildDownloadRecordsTask {
         }
         String name = "repair_gallery_" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".log";
         return new File(dir, name);
+    }
+    
+    /**
+     * 显示清空无效下载项的详细信息
+     */
+    private void showCleanInvalidDownloadDetails() {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.clean_invalid_download_detail_title)
+                .setMessage(R.string.clean_invalid_download_detail_message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 }
 

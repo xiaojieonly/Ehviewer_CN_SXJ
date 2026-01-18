@@ -140,6 +140,7 @@
     <string name="content_layout_restore_tip">다시 시도하려면 누르기</string>
     <string name="write_rationale">앱이 갤러리를 다운로드하려면 WRITE_EXTERNAL_STORAGE 권한이 필요합니다. 권한을 허용하시겠습니까?</string>
     <string name="you_rejected_me">안돼요</string>
+    <string name="show_details">세부 정보 표시</string>
     <string name="analytics_explain">앱 개발자에게 기기 및 사용 정보를 보내시겠습니까? 앱 개발에 굉장한 도움이 됩니다. &lt;br&gt;&lt;br&gt;데이터 분석 서비스는 Google Analytics for Firebase를 사용하며, 개인 정보 보호 정책은 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 에서 확인하실 수 있습니다.&lt;br&gt;&lt;br&gt;데이터 분석을 허용하면 사용자의 기기 및 앱 사용 정보가 수집됩니다. 전화번호나 이메일 주소, IMEI와 같은 개인 정보는 수집하지 않습니다.&lt;br&gt;&lt;br&gt;데이터 분석을 허용하기 전까지는 정보를 수집하지 않습니다.&lt;br&gt;&lt;br&gt;수집한 정보는 Google Analytics for Firebase에 의해 분석됩니다. 분석된 정보는 이 애플리케이션의 개발자만 볼 수 있습니다.</string>
     <string name="get_it">알겠습니다</string>
     <string name="accept">동의</string>
@@ -621,6 +622,17 @@
     <string name="settings_download_restore_not_found">복구할 다운로드 항목을 찾을 수 없습니다.</string>
     <string name="settings_download_restore_failed">복구하지 못했습니다.</string>
     <string name="settings_download_restore_successfully">%d개 항목을 복구했습니다.</string>
+    <string name="settings_download_restore_successfully_with_details">복구 완료: %1$d개 성공, %2$d개 실패</string>
+    <string name="settings_download_restore_failed_all">복구 실패: 모든 항목을 복구할 수 없습니다</string>
+    <string name="settings_download_restore_check_logs">자세한 정보는 로그를 확인하세요</string>
+    <string name="settings_download_import_items">다운로드 항목 가져오기</string>
+    <string name="settings_download_import_no_items">가져올 항목이 없습니다</string>
+    <string name="settings_download_import_failed">다운로드 항목 가져오기 실패</string>
+    <string name="settings_download_import_succeed">%d개 다운로드 항목을 성공적으로 가져왔습니다</string>
+    <string name="settings_download_import_read_failed">가져오기 파일 읽기 실패</string>
+    <string name="settings_download_import_succeed_with_details">가져오기 완료: %1$d개 성공, %2$d개 실패</string>
+    <string name="settings_download_import_failed_all">가져오기 실패: 모든 항목을 가져올 수 없습니다</string>
+    <string name="settings_download_import_check_logs">자세한 정보는 로그를 확인하세요</string>
     <string name="settings_download_clean_redundancy">잉여 파일 삭제</string>
     <string name="settings_download_clean_redundancy_summary">다운로드 위치에 존재하지만 다운로드 목록에는 없는 갤러리 이미지 제거</string>
     <string name="settings_download_clean_redundancy_no_redundancy">잉여 파일이 없습니다.</string>
@@ -983,5 +995,48 @@
     <string name="clean_invalid_download_invalid_ehviewer_file">잘못된 .ehviewer 파일: %s</string>
     <string name="clean_invalid_download_inconsistent_file_count">파일 수 불일치: %s, 예상: %d, 실제: %d</string>
     <string name="clean_invalid_download_error_processing_directory">디렉토리 처리 중 오류: %s - %s</string>
+    <string name="clean_invalid_download_initializing">정리 초기화 중...</string>
+    <string name="clean_invalid_download_scanning">다운로드 디렉토리 스캔 중...</string>
+    <string name="clean_invalid_download_processing">무효 다운로드 정리 중...</string>
+    <string name="clean_invalid_download_progress">처리 중: %1$d/%2$d 디렉토리, 정리됨 %3$d, 오류 %4$d</string>
+    <string name="clean_invalid_download_finalizing">완료 중...</string>
+    <string name="clean_invalid_download_completed">정리 완료, 총 %d개의 무효 다운로드 정리됨</string>
+    <string name="clean_invalid_download_completed_with_skipped">정리 완료, 총 %1$d개의 무효 다운로드 정리됨, 삭제된 갤러리 %2$d개 건너뜀</string>
+    <string name="clean_invalid_download_no_files">정리할 파일을 찾지 못함</string>
+    <string name="clean_invalid_download_invalid_dir">잘못된 다운로드 디렉토리</string>
+    <string name="clean_invalid_download_gallery_deleted">삭제된 갤러리 감지, 정리 건너뜀</string>
+    <string name="clean_invalid_download_checking_gallery">갤러리 상태 확인 중: %s</string>
+    <string name="clean_invalid_download_gallery_still_exists">갤러리가 여전히 존재함, 불완전한 다운로드 정리 준비</string>
+    <string name="clean_invalid_download_error_checking">갤러리 상태 확인 중 오류: %s</string>
+    <string name="clean_invalid_download_detail_title">무효 다운로드 정리 세부 정보</string>
+    <string name="clean_invalid_download_detail_message"><b>기능 설명:</b>
+
+이 기능은 무효 다운로드 항목을 지능적으로 정리합니다. 작업 흐름은 다음과 같습니다:
+
+1. <b>스캔 단계</b>
+   • 다운로드 디렉토리의 모든 폴더를 순회
+   • .ehviewer 파일이 포함된 다운로드 항목 식별
+
+2. <b>검증 단계</b>
+   • 다운로드 무결성 확인 (파일 수, 파일 유효성 등)
+   • <b>핵심 기능: 삭제 전 네트워크 요청을 보내 갤러리 상태 확인</b>
+   • 갤러리 GID와 Token을 사용하여 갤러리 존재 여부 쿼리
+
+3. <b>정리 단계</b>
+   • 삭제된 갤러리 건너뛰기 (로컬 파일 보존)
+   • 갤러리가 여전히 존재하는 불완전한 다운로드만 삭제
+   • 통계 및 정리 결과 보고
+
+<b>왜 갤러리 상태를 확인해야 하나요?</b>
+
+• 삭제된 갤러리의 파일을 실수로 삭제하는 것 방지
+• 다운로드는 불완전하지만 갤러리가 더 이상 존재하지 않는 파일 보존
+• 사용자가 복구 불가능한 콘텐츠를 잃어버리는 것 방지
+
+<b>주의사항:</b>
+
+• 갤러리 상태 확인을 위해 네트워크 연결 필요
+• 확인 과정으로 인해 실행 시간이 다소 증가할 수 있음
+• 네트워크 오류 시 안전을 위해 기본적으로 다운로드 항목 보존</string>
 
 </resources>

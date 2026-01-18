@@ -9,13 +9,22 @@ import com.hippo.ehviewer.task.TaskState
 import com.hippo.ehviewer.task.BackgroundTask.TaskType
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.client.EhEngine
+import com.hippo.ehviewer.client.EhUrl
+import com.hippo.ehviewer.client.data.GalleryDetail
+import com.hippo.ehviewer.dao.DownloadInfo
+import com.hippo.ehviewer.EhDB
 import com.hippo.unifile.UniFile
 import kotlinx.coroutines.delay
+import okhttp3.OkHttpClient
+import android.util.Log
 
 /**
  * 清理无效下载任务
  */
 class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
+    
+    private val TAG = "CleanInvalidDownload"
     
     override fun getTaskId(): String = "clean_invalid_download"
     
@@ -59,6 +68,7 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
             var processedFiles = 0
             var cleanedCount = 0
             var errorCount = 0
+            var skippedCount = 0 // 新增：跳过的计数
             
             for (file in files) {
                 try {
@@ -74,9 +84,21 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
                             // 检查下载完整性
                             val isComplete = checkDownloadIntegrity(file)
                             if (!isComplete) {
-                                val deleted = deleteDirectory(file)
-                                if (deleted) {
-                                    cleanedCount++
+                                // 在删除前检查画廊是否已被删除
+                                val galleryDeleted = isGalleryDeleted(file)
+                                if (galleryDeleted) {
+                                    // 画廊已被删除，跳过删除此下载项
+                                    skippedCount++
+                                    Log.d(TAG, context.getString(R.string.clean_invalid_download_gallery_deleted) + 
+                                          ": ${file.name}")
+                                } else {
+                                    // 画廊仍然存在，删除不完整的下载
+                                    Log.d(TAG, context.getString(R.string.clean_invalid_download_gallery_still_exists) + 
+                                          ": ${file.name}")
+                                    val deleted = deleteDirectory(file)
+                                    if (deleted) {
+                                        cleanedCount++
+                                    }
                                 }
                             }
                         }
@@ -99,7 +121,14 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
             // 清理数据库中的无效记录
             // downloadManager.cleanInvalidDownloadInfo()
             
-            updateProgress(100, context.getString(R.string.clean_invalid_download_completed, cleanedCount))
+            val completionMessage = if (skippedCount > 0) {
+                context.getString(R.string.clean_invalid_download_completed_with_skipped, 
+                    cleanedCount, skippedCount)
+            } else {
+                context.getString(R.string.clean_invalid_download_completed, cleanedCount)
+            }
+            
+            updateProgress(100, completionMessage)
             delay(1000)
             
             notifyCompleted()
@@ -118,6 +147,103 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
         // 这里应该实现实际的完整性检查逻辑
         // 检查图片数量是否与记录一致，文件是否完整等
         return true
+    }
+    
+    /**
+     * 检查画廊是否已被删除
+     * @param dir 下载目录
+     * @return true 如果画廊已被删除，false 如果画廊仍然存在
+     */
+    private fun isGalleryDeleted(dir: UniFile): Boolean {
+        try {
+            // 读取.ehviewer文件获取画廊信息
+            val ehViewerFile = dir.findFile(DownloadManager.DOWNLOAD_INFO_FILENAME)
+            if (ehViewerFile == null) {
+                return false
+            }
+            
+            val content = ehViewerFile.openInputStream().use { inputStream ->
+                inputStream.bufferedReader().use { reader ->
+                    reader.readText()
+                }
+            }
+            
+            // 解析第一行获取gid和token
+            val lines = content.split("\n")
+            if (lines.isEmpty()) return false
+            
+            val firstLine = lines[0]
+            val parts = firstLine.split(",")
+            if (parts.size < 2) return false
+            
+            val gid = parts[0].toLongOrNull() ?: return false
+            val token = parts[1].trim()
+            
+            // 在协程作用域内检查画廊状态
+            return runCatching {
+                // 使用 kotlinx.coroutines.runBlocking 在非协程上下文中调用 suspend 函数
+                kotlinx.coroutines.runBlocking {
+                    checkGalleryStatus(gid, token)
+                }
+            }.getOrElse { e ->
+                Log.e(TAG, "检查画廊状态时出错", e)
+                false // 出错时默认不删除
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "检查画廊状态时出错", e)
+            return false // 出错时默认不删除
+        }
+    }
+    
+    /**
+     * 检查画廊状态
+     * @param gid 画廊ID
+     * @param token 画廊token
+     * @return true 如果画廊已被删除，false 如果画廊仍然存在
+     */
+    private suspend fun checkGalleryStatus(gid: Long, token: String): Boolean {
+        return try {
+            Log.d(TAG, context.getString(R.string.clean_invalid_download_checking_gallery, "GID=$gid"))
+            
+            val url = EhUrl.getGalleryDetailUrl(gid, token)
+            val okHttpClient = EhApplication.getOkHttpClient(context)
+            
+            // 使用EhEngine获取画廊详情
+            val galleryDetail = EhEngine.getGalleryDetail(null, okHttpClient, url)
+            
+            if (galleryDetail == null) {
+                Log.d(TAG, "无法获取画廊信息: GID=$gid")
+                return true // 假设已被删除
+            }
+            
+            // 检查画廊是否被标记为删除
+            if (galleryDetail.visible == "deleted" || 
+                galleryDetail.title.contains("Gallery Not Found") ||
+                galleryDetail.title.contains("Removed")) {
+                Log.d(TAG, context.getString(R.string.clean_invalid_download_gallery_deleted) + 
+                      ": GID=$gid, Title=${galleryDetail.title}")
+                return true
+            }
+            
+            false // 画廊仍然存在
+            
+        } catch (e: Exception) {
+            // 检查是否是画廊不存在的错误
+            val errorMessage = e.message
+            if (errorMessage != null && 
+                (errorMessage.contains("Gallery Not Found") || 
+                 errorMessage.contains("404") || 
+                 errorMessage.contains("This gallery has been removed") ||
+                 errorMessage.contains("Gallery unavailable"))) {
+                Log.d(TAG, context.getString(R.string.clean_invalid_download_gallery_deleted) + 
+                      "（网络错误）: GID=$gid, Error=$errorMessage")
+                return true
+            }
+            
+            Log.e(TAG, "检查画廊状态时出错: GID=$gid", e)
+            false // 其他错误默认不删除
+        }
     }
     
     /**

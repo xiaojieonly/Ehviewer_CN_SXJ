@@ -116,6 +116,7 @@
     <string name="content_layout_restore_tip">點擊重試</string>
     <string name="write_rationale">EhViewer 將請求裝置外部儲存空間的存取許可以下載圖庫。您願意授權嗎？</string>
     <string name="you_rejected_me">好難過</string>
+    <string name="show_details">查看詳情</string>
     <string name="analytics_explain">您同意讓開發者收集您的裝置資訊與使用方式嗎？這對開發有很大幫助。&lt;br&gt;&lt;br&gt;資料統計服務由 Google Analytics for Firebase 提供，其隱私政策可在 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 檢視。&lt;br&gt;&lt;br&gt;若您同意參與資料統計，您的裝置資訊與應用使用情況將會被記錄，其包括但不限於：Android API 版本、裝置型號、語言所在地、本應用版本號、會話時長、應用功能使用次數。開發者承諾以下資訊並不會被記錄：電話號碼、電子郵件地址、IMEI。&lt;br&gt;&lt;br&gt;在您同意參與資料統計之前，您的資訊不會被記錄。&lt;br&gt;&lt;br&gt;被記錄的資料會由 Google Analytics for Firebase 進行分析，分析報表僅由此應用程式開發者存取。</string>
     <string name="get_it">知道了</string>
     <string name="accept">接受</string>
@@ -610,6 +611,17 @@
     <string name="settings_download_restore_not_found">未尋獲可回復的已下載檔案</string>
     <string name="settings_download_restore_failed">回復失敗</string>
     <string name="settings_download_restore_successfully">成功回復 %d 項</string>
+    <string name="settings_download_restore_successfully_with_details">回復完成：%1$d 個成功，%2$d 個失敗</string>
+    <string name="settings_download_restore_failed_all">回復失敗：所有項目都無法回復</string>
+    <string name="settings_download_restore_check_logs">請查看日誌了解詳細信息</string>
+    <string name="settings_download_import_items">匯入下載項目</string>
+    <string name="settings_download_import_no_items">沒有項目可匯入</string>
+    <string name="settings_download_import_failed">匯入下載項目失敗</string>
+    <string name="settings_download_import_succeed">成功匯入 %d 個下載項目</string>
+    <string name="settings_download_import_read_failed">讀取匯入檔案失敗</string>
+    <string name="settings_download_import_succeed_with_details">匯入完成：%1$d 個成功，%2$d 個失敗</string>
+    <string name="settings_download_import_failed_all">匯入失敗：所有項目都無法匯入</string>
+    <string name="settings_download_import_check_logs">請查看日誌了解詳細資訊</string>
     <string name="settings_download_clean_redundancy">清除冗餘的檔案</string>
     <string name="settings_download_clean_redundancy_summary">清除已下載但不在下載列表中的圖檔</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未發現冗餘檔案</string>
@@ -1064,6 +1076,49 @@
     <string name="clean_invalid_download_invalid_ehviewer_file">無效的 .ehviewer 檔案: %s</string>
     <string name="clean_invalid_download_inconsistent_file_count">檔案數量不一致: %s, 預期: %d, 實際: %d</string>
     <string name="clean_invalid_download_error_processing_directory">處理目錄時出錯: %s - %s</string>
+    <string name="clean_invalid_download_initializing">正在初始化清理...</string>
+    <string name="clean_invalid_download_scanning">正在掃描下載目錄...</string>
+    <string name="clean_invalid_download_processing">正在清理無效下載...</string>
+    <string name="clean_invalid_download_progress">正在處理: %1$d/%2$d 個目錄，已清理 %3$d 個，錯誤 %4$d 個</string>
+    <string name="clean_invalid_download_finalizing">正在完成清理...</string>
+    <string name="clean_invalid_download_completed">清理完成，共清理 %d 個無效下載</string>
+    <string name="clean_invalid_download_completed_with_skipped">清理完成，共清理 %1$d 個無效下載，跳過已刪除畫廊 %2$d 個</string>
+    <string name="clean_invalid_download_no_files">沒有找到需要清理的檔案</string>
+    <string name="clean_invalid_download_invalid_dir">下載目錄無效</string>
+    <string name="clean_invalid_download_gallery_deleted">檢測到已刪除畫廊，跳過清理</string>
+    <string name="clean_invalid_download_checking_gallery">正在檢查畫廊狀態: %s</string>
+    <string name="clean_invalid_download_gallery_still_exists">畫廊仍存在，準備清理不完整下載</string>
+    <string name="clean_invalid_download_error_checking">檢查畫廊狀態時出錯: %s</string>
+    <string name="clean_invalid_download_detail_title">清空無效下載項詳情</string>
+    <string name="clean_invalid_download_detail_message"><b>功能說明：</b>
+
+此功能會智能清理無效的下載項，具體流程如下：
+
+1. <b>掃描階段</b>
+   • 遍歷下載目錄中的所有資料夾
+   • 識別包含 .ehviewer 檔案的下載項
+
+2. <b>驗證階段</b>
+   • 檢查下載完整性（檔案數量、檔案有效性等）
+   • <b>關鍵特性：在刪除前發送網絡請求驗證畫廊狀態</b>
+   • 使用畫廊 GID 和 Token 查詢畫廊是否仍存在
+
+3. <b>清理階段</b>
+   • 跳過已被刪除的畫廊（保留本地檔案）
+   • 僅刪除不完整且畫廊仍存在的下載項
+   • 統計並報告清理結果
+
+<b>為什麼要檢查畫廊狀態？</b>
+
+• 避免誤刪已被刪除的畫廊檔案
+• 保留那些雖然下載不完整但畫廊已不存在的檔案
+• 防止用戶丟失可能無法再次獲取的內容
+
+<b>注意事項：</b>
+
+• 需要網絡連接才能進行畫廊狀態檢查
+• 檢查過程可能會增加一些執行時間
+• 網絡錯誤時默認保留下載項，確保安全</string>
 
     <!-- Transfer service -->
     <string name="transfer_service">傳輸服務</string>
