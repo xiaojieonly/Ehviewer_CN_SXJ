@@ -62,6 +62,8 @@
     <string name="settings_download_restore_successfully_with_details">Restore completed: %1$d succeeded, %2$d failed</string>
     <string name="settings_download_restore_failed_all">Restore failed: all items failed to restore</string>
     <string name="settings_download_restore_check_logs">Please check logs for details</string>
+    <string name="settings_download_restore_started">Restore task started</string>
+    <string name="settings_download_restore_already_running">Restore task is already running</string>
     <string name="settings_eh_system_theme">System theme</string>
 
 

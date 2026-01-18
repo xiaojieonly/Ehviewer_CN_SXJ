@@ -625,6 +625,8 @@
     <string name="settings_download_restore_successfully_with_details">복구 완료: %1$d개 성공, %2$d개 실패</string>
     <string name="settings_download_restore_failed_all">복구 실패: 모든 항목을 복구할 수 없습니다</string>
     <string name="settings_download_restore_check_logs">자세한 정보는 로그를 확인하세요</string>
+    <string name="settings_download_restore_started">복구 작업이 시작되었습니다</string>
+    <string name="settings_download_restore_already_running">복구 작업이 이미 실행 중입니다</string>
     <string name="settings_download_import_items">다운로드 항목 가져오기</string>
     <string name="settings_download_import_no_items">가져올 항목이 없습니다</string>
     <string name="settings_download_import_failed">다운로드 항목 가져오기 실패</string>

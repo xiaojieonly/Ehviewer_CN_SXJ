@@ -16,6 +16,7 @@ import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.EhDB
 import com.hippo.unifile.UniFile
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import android.util.Log
 
@@ -137,6 +138,46 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
         } catch (e: Exception) {
             notifyError(e)
             Result.failure(e)
+        }
+    }
+    
+    /**
+     * 同步执行清理任务并返回清理的数量
+     */
+    fun executeSync(): Int? {
+        return try {
+            runBlocking {
+                // 执行清理逻辑并返回清理的数量
+                val downloadManager = EhApplication.getDownloadManager(context)
+                val downloadDir = Settings.getDownloadLocation()
+                
+                if (downloadDir == null || !downloadDir.isDirectory) {
+                    return@runBlocking 0
+                }
+                
+                val files = downloadDir.listFiles()
+                if (files == null || files.isEmpty()) {
+                    return@runBlocking 0
+                }
+                
+                var cleanedCount = 0
+                for (file in files) {
+                    if (file.isDirectory) {
+                        val ehViewerFile = file.findFile(DownloadManager.DOWNLOAD_INFO_FILENAME)
+                        if (ehViewerFile == null) {
+                            val deleted = deleteDirectory(file)
+                            if (deleted) {
+                                cleanedCount++
+                            }
+                        }
+                    }
+                }
+                
+                cleanedCount
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Clean invalid download failed", e)
+            null
         }
     }
     

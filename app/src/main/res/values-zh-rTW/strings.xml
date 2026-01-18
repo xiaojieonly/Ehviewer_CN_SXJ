@@ -614,6 +614,8 @@
     <string name="settings_download_restore_successfully_with_details">回復完成：%1$d 個成功，%2$d 個失敗</string>
     <string name="settings_download_restore_failed_all">回復失敗：所有項目都無法回復</string>
     <string name="settings_download_restore_check_logs">請查看日誌了解詳細信息</string>
+    <string name="settings_download_restore_started">回復任務已啟動</string>
+    <string name="settings_download_restore_already_running">回復任務正在運行中</string>
     <string name="settings_download_import_items">匯入下載項目</string>
     <string name="settings_download_import_no_items">沒有項目可匯入</string>
     <string name="settings_download_import_failed">匯入下載項目失敗</string>

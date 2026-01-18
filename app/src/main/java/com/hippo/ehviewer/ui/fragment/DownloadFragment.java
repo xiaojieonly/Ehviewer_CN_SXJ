@@ -309,8 +309,51 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     .setTitle(R.string.settings_download_clean_invalid_download)
                     .setMessage(R.string.settings_download_clean_invalid_download_confirm)
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                        com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask task = new com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask(requireActivity());
-                        TaskExecutor.executeTask(task);
+                        String taskName = getString(R.string.settings_download_clean_invalid_download);
+                        String taskDesc = getString(R.string.settings_download_clean_invalid_download_summary);
+                        
+                        // 使用后台任务框架
+                        com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask task = 
+                            new com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask(requireActivity());
+                        
+                        com.hippo.ehviewer.BackgroundTaskManager taskManager = 
+                            com.hippo.ehviewer.BackgroundTaskManager.getInstance();
+                        com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager statusManager = 
+                            taskManager.getTaskStatusManager();
+                        
+                        // 添加任务到状态管理器
+                        String taskId = statusManager.addTask(taskName, taskDesc, null);
+                        
+                        // 执行任务
+                        taskManager.submitIoTask(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    // 执行清理任务
+                                    Integer result = task.executeSync();
+                                    
+                                    // 在主线程显示结果
+                                    requireActivity().runOnUiThread(() -> {
+                                        if (result != null && result >= 0) {
+                                            Toast.makeText(requireActivity(), 
+                                                getString(R.string.clean_invalid_download_completed, result),
+                                                Toast.LENGTH_LONG).show();
+                                        } else {
+                                            Toast.makeText(requireActivity(), 
+                                                getString(R.string.clean_invalid_download_no_files),
+                                                Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                                } catch (Exception e) {
+                                    // 在主线程显示错误
+                                    requireActivity().runOnUiThread(() -> {
+                                        Toast.makeText(requireActivity(), 
+                                            getString(R.string.error_unknown) + ": " + e.getMessage(),
+                                            Toast.LENGTH_LONG).show();
+                                    });
+                                }
+                            }
+                        });
                     })
                     .setNegativeButton(android.R.string.cancel, null)
                     .setNeutralButton(R.string.show_details, (dialog, which) -> {

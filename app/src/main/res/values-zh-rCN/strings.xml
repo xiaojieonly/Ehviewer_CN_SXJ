@@ -673,6 +673,8 @@
     <string name="settings_download_restore_successfully_with_details">恢复完成：%1$d 个成功，%2$d 个失败</string>
     <string name="settings_download_restore_failed_all">恢复失败：所有项目都无法恢复</string>
     <string name="settings_download_restore_check_logs">请查看日志了解详细信息</string>
+    <string name="settings_download_restore_started">恢复任务已启动</string>
+    <string name="settings_download_restore_already_running">恢复任务正在运行中</string>
     <string name="settings_download_clean_redundancy">清理下载冗余</string>
     <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
@@ -686,6 +688,13 @@
 • 跳过已被删除的画廊，避免误删
 • 仅删除不完整且画廊仍存在的下载项</string>
     <string name="settings_download_clean_invalid_download">清空无效的下载项</string>
+    <string name="settings_download_clean_invalid_download_confirm">确认清空无效的下载项？
+
+<b>注意：</b>
+• 此操作将删除所有未完整下载的画廊
+• 在删除前会检查画廊是否已被删除
+• 已被删除的画廊将被保留，不会被删除
+• 此操作不可撤销</string>
     <string name="settings_download_rebuild_download_records">重建下载记录</string>
     <string name="settings_download_rebuild_download_records_summary">扫描下载路径中的所有文件夹，从.ehviewer文件重建记录或为没有元数据的文件夹创建本地记录</string>
     <string name="settings_download_rebuild_download_records_detail">处理所有文件夹，为没有.ehviewer文件的文件夹创建本地备用记录</string>

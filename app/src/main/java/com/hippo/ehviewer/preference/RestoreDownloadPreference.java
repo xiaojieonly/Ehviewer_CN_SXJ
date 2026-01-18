@@ -68,6 +68,15 @@ public class RestoreDownloadPreference extends Preference {
                 mTaskManager = BackgroundTaskManager.getInstance();
                 RestoreDownloadTask task = new RestoreDownloadTask(context);
                 mTask = task.execute();
+                
+                // 显示任务开始的提示
+                Toast.makeText(context, R.string.settings_download_restore_started, Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // 任务正在运行
+            Context context = getContext();
+            if (context != null) {
+                Toast.makeText(context, R.string.settings_download_restore_already_running, Toast.LENGTH_SHORT).show();
             }
         }
     }
