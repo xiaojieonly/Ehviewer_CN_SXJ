@@ -394,6 +394,7 @@
     <string name="sort_by_file_size_asc">Por tamaño de archivo Asc</string>
     <string name="sort_by_file_size_desc">Por tamaño de archivo Desc</string>
     <string name="sort_download_list">Ordenar lista</string>
+    <string name="advanced_filter">Filtro avanzado</string>
     <string name="download_start_all">Iniciar todo</string>
     <string name="download_stop_all">Detener todo</string>
     <string name="download_search_gallery">Buscar galería</string>
@@ -883,6 +884,12 @@
     <string name="empty_subscription">La suscripción está vacía</string>
     <string name="subscription_success">%s exitoso</string>
     <string name="import_local_archive">Importar archivo local</string>
+    <string name="repair_gallery_info">Reparar info de galería</string>
+    <string name="repair_gallery_info_success">Info de galería reparada con éxito</string>
+    <string name="repair_gallery_info_failed">Error al reparar info de galería</string>
+    <string name="repair_gallery_info_confirm">¿Está seguro de que desea reparar la info de las galerías seleccionadas?</string>
+    <string name="gallery_deleted_alert">Galería eliminada</string>
+    <string name="gallery_deleted_message">Esta galería ha sido eliminada en E-Hentai, pero se preserva la información en caché local.</string>
     <string name="import_archive_title">Seleccionar archivo</string>
     <string name="import_archive_failed">Error al importar archivo</string>
     <string name="archive_permission_lost">Se ha perdido el permiso para acceder al archivo. Por favor, vuelva a importar el archivo.</string>
@@ -944,12 +951,32 @@
     <string name="my_tags">Mis etiquetas</string>
 
     <!-- Download filter/search dialogs -->
-    <string name="dialog_sort_filter_title">Sort &amp; Filter</string>
-    <string name="dialog_category_filter_label">Category filter (multi-select)</string>
-    <string name="dialog_status_filter_label">Status filter</string>
-    <string name="dialog_sort_method_label">Sort order</string>
-    <string name="dialog_search_download_title">Search downloads</string>
-    <string name="dialog_search_options_label">Search options</string>
-    <string name="reset">Reset</string>
+    <string name="dialog_sort_filter_title">Ordenar y filtrar</string>
+    <string name="dialog_category_filter_label">Filtro de categoría (selección múltiple)</string>
+    <string name="dialog_status_filter_label">Filtro de estado</string>
+    <string name="dialog_sort_method_label">Método de ordenación</string>
+    <string name="dialog_search_download_title">Buscar descargas</string>
+    <string name="dialog_search_options_label">Opciones de búsqueda</string>
+    <string name="reset">Restablecer</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">Filtrar descargas por categoría, estado y orden de clasificación</string>
+    <string name="category_filter_description">Seleccionar una o más categorías para filtrar descargas</string>
+    <string name="status_filter_description">Seleccionar estados de descarga para mostrar (ej: completado, descargando)</string>
+    <string name="sort_method_description">Elegir cómo ordenar las descargas filtradas</string>
+    <string name="no_filters_applied">No se aplicaron filtros</string>
+    <string name="filters_applied">Filtros aplicados: %d</string>
+    <string name="filter_by_all_categories">Todas las categorías</string>
+    <string name="filter_by_selected_categories">Categorías seleccionadas: %d</string>
+    <string name="filter_by_all_statuses">Todos los estados</string>
+    <string name="filter_by_selected_statuses">Estados seleccionados: %d</string>
+    <string name="sort_by_default_order">Orden predeterminado</string>
+    <string name="sort_by_custom_order">Orden personalizado: %s</string>
+    <string name="advanced_filter_tip">Consejo: Puedes combinar múltiples filtros para resultados precisos</string>
+    <string name="advanced_filter_empty_result">No hay descargas que coincidan con los criterios de filtro actuales</string>
+    <string name="advanced_filter_clear_all">Limpiar todos los filtros</string>
+    <string name="advanced_filter_apply_changes">Aplicar cambios de filtro</string>
+    <string name="advanced_filter_discard_changes">Descartar cambios</string>
+    <string name="advanced_filter_confirm_reset">¿Restablecer todos los filtros a los valores predeterminados?</string>
 
 </resources>

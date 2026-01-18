@@ -393,6 +393,7 @@
     <string name="sort_by_file_size_asc">Par taille de fichier croissante</string>
     <string name="sort_by_file_size_desc">Par taille de fichier décroissante</string>
     <string name="sort_download_list">Trier la liste</string>
+    <string name="advanced_filter">Filtre avancé</string>
     <string name="download_start_all">Commencer tout</string>
     <string name="download_stop_all">Arrêter tout</string>
     <string name="download_reset_reading_progress">Réinitialiser les progrès de lecture</string>
@@ -850,6 +851,12 @@
     <string name="empty_subscription">L\'abonnement est vide</string>
     <string name="subscription_success">%s réussi</string>
     <string name="import_local_archive">Importer une archive locale</string>
+    <string name="repair_gallery_info">Réparer les infos de la galerie</string>
+    <string name="repair_gallery_info_success">Infos de la galerie réparées avec succès</string>
+    <string name="repair_gallery_info_failed">Échec de la réparation des infos de la galerie</string>
+    <string name="repair_gallery_info_confirm">Êtes-vous sûr de vouloir réparer les infos des galeries sélectionnées ?</string>
+    <string name="gallery_deleted_alert">Galerie supprimée</string>
+    <string name="gallery_deleted_message">Cette galerie a été supprimée sur E-Hentai, mais les informations en cache local sont préservées.</string>
     <string name="import_archive_title">Sélectionner le fichier d\'archive</string>
     <string name="import_archive_failed">Échec de l\'importation de l\'archive</string>
     <string name="archive_permission_lost">L\'autorisation d\'accès à l\'archive a été perdue. Veuillez réimporter le fichier d\'archive.</string>
@@ -863,13 +870,33 @@
     <string name="imported_archive_category">Importation locale</string>
 
     <!-- Download filter/search dialogs -->
-    <string name="dialog_sort_filter_title">Sort &amp; Filter</string>
-    <string name="dialog_category_filter_label">Category filter (multi-select)</string>
-    <string name="dialog_status_filter_label">Status filter</string>
-    <string name="dialog_sort_method_label">Sort order</string>
-    <string name="dialog_search_download_title">Search downloads</string>
-    <string name="dialog_search_options_label">Search options</string>
-    <string name="reset">Reset</string>
+    <string name="dialog_sort_filter_title">Trier et filtrer</string>
+    <string name="dialog_category_filter_label">Filtre de catégorie (sélection multiple)</string>
+    <string name="dialog_status_filter_label">Filtre de statut</string>
+    <string name="dialog_sort_method_label">Méthode de tri</string>
+    <string name="dialog_search_download_title">Rechercher les téléchargements</string>
+    <string name="dialog_search_options_label">Options de recherche</string>
+    <string name="reset">Réinitialiser</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">Filtrer les téléchargements par catégorie, statut et ordre de tri</string>
+    <string name="category_filter_description">Sélectionner une ou plusieurs catégories pour filtrer les téléchargements</string>
+    <string name="status_filter_description">Sélectionner les états de téléchargement à afficher (ex: terminé, en cours)</string>
+    <string name="sort_method_description">Choisir comment ordonner les téléchargements filtrés</string>
+    <string name="no_filters_applied">Aucun filtre appliqué</string>
+    <string name="filters_applied">%d filtres appliqués</string>
+    <string name="filter_by_all_categories">Toutes les catégories</string>
+    <string name="filter_by_selected_categories">%d catégories sélectionnées</string>
+    <string name="filter_by_all_statuses">Tous les statuts</string>
+    <string name="filter_by_selected_statuses">%d statuts sélectionnés</string>
+    <string name="sort_by_default_order">Ordre par défaut</string>
+    <string name="sort_by_custom_order">Ordre personnalisé : %s</string>
+    <string name="advanced_filter_tip">Astuce : Vous pouvez combiner plusieurs filtres pour des résultats précis</string>
+    <string name="advanced_filter_empty_result">Aucun téléchargement ne correspond aux critères de filtre actuels</string>
+    <string name="advanced_filter_clear_all">Effacer tous les filtres</string>
+    <string name="advanced_filter_apply_changes">Appliquer les changements de filtre</string>
+    <string name="advanced_filter_discard_changes">Annuler les changements</string>
+    <string name="advanced_filter_confirm_reset">Réinitialiser tous les filtres aux valeurs par défaut ?</string>
     
     <!-- Theme strings -->
     <string name="theme_light">Clair</string>

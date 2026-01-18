@@ -23,6 +23,7 @@ import static com.hippo.util.FileUtils.getFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -97,6 +98,7 @@ import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.DownloadListInfosExecutor;
 import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
+// removed unused background task imports
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
@@ -125,6 +127,10 @@ import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
 import com.hippo.ehviewer.ui.scene.download.part.CheckboxAdapter;
 import com.hippo.util.ExecutorManager;
+import com.hippo.lib.yorozuya.SimpleHandler;
+import com.hippo.ehviewer.ui.progress.ProgressDialogManager;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.StartAllDownloadTask;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -153,8 +159,8 @@ import java.util.Objects;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
-        MyEasyRecyclerView.OnItemClickListener,
-        MyEasyRecyclerView.OnItemLongClickListener,
+        EasyRecyclerView.OnItemClickListener,
+        EasyRecyclerView.OnItemLongClickListener,
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener, DownloadAdapter.DownloadAdapterCallback {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
@@ -198,6 +204,7 @@ public class DownloadsScene extends ToolbarScene
     private AlertDialog mSortFilterDialog;
     private CheckboxAdapter mCategoryAdapter;
     private CheckboxAdapter mStatusAdapter;
+    private Spinner mCategorySpinner;
     private CheckboxAdapter mSortAdapter;
     private Set<Integer> mSelectedCategories = new HashSet<>();
     private Set<Integer> mSelectedStatuses = new HashSet<>();
@@ -752,6 +759,24 @@ public class DownloadsScene extends ToolbarScene
                 }).build();
     }
 
+    private void showStartAllProgressDialog() {
+        Activity activity = getActivity2();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        
+        // 创建新的下载任务
+        StartAllDownloadTask task = new StartAllDownloadTask(activity);
+        
+        // 使用统一的进度对话框管理器
+        boolean isNewDialog = ProgressDialogManager.showOrUpdateDialog(activity, task);
+        
+        if (isNewDialog) {
+            // 如果是新对话框，启动任务
+            TaskExecutor.executeTask(task);
+        }
+    }
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -783,6 +808,9 @@ public class DownloadsScene extends ToolbarScene
         mLayoutManager = null;
         mDragDropManager = null;
         EventBus.getDefault().unregister(this);
+        
+        // 清理进度对话框
+        ProgressDialogManager.dismissAll();
     }
 
     @Override
@@ -811,59 +839,8 @@ public class DownloadsScene extends ToolbarScene
                     return false;
                 }
                 
-                // 显示加载对话框
-                android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
-                progressDialog.setTitle("正在启动下载...");
-                progressDialog.setMessage("请稍候...");
-                progressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
-                progressDialog.setCancelable(true);
-                progressDialog.setCanceledOnTouchOutside(false);
-                progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "后台处理", 
-                    (dialog, which) -> {
-                        dialog.dismiss();
-                        Toast.makeText(activity, getString(R.string.background_processing_please_wait), Toast.LENGTH_SHORT).show();
-                    });
-                progressDialog.show();
-                
-                // 异步启动所有下载
-                mDownloadManager.startAllDownload(new DownloadManager.StartAllDownloadListener() {
-                    @Override
-                    public void onStart() {
-                        if (progressDialog.isShowing()) {
-                            progressDialog.setProgress(0);
-                        }
-                    }
-                    
-                    @Override
-                    public void onProgress(int current, int total, String title) {
-                        if (progressDialog.isShowing()) {
-                            progressDialog.setMax(total);
-                            progressDialog.setProgress(current);
-                            progressDialog.setMessage(getString(R.string.processing_progress, title, current, total));
-                        }
-                    }
-                    
-                    @Override
-                    public void onComplete(int totalStarted) {
-                        if (progressDialog.isShowing()) {
-                            progressDialog.dismiss();
-                        }
-                        if (totalStarted > 0) {
-                            Toast.makeText(activity, getString(R.string.download_tasks_started, totalStarted), Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(activity, getString(R.string.no_download_tasks_to_start), Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                    
-                    @Override
-                    public void onError(String error) {
-                        if (progressDialog.isShowing()) {
-                            progressDialog.dismiss();
-                        }
-                        Toast.makeText(activity, getString(R.string.start_failed, error), Toast.LENGTH_LONG).show();
-                    }
-                });
-                
+                // 显示进度条对话框
+                showStartAllProgressDialog();
                 return true;
             }
             case R.id.action_stop_all: {
@@ -930,7 +907,11 @@ public class DownloadsScene extends ToolbarScene
             case R.id.unknown:
                 gotoFilterAndSort(id);
             case R.id.sort_download_list: {
-                Log.d("DownloadsScene", "onOptionsItemSelected: 排序按钮被点击");
+                // 不再显示排序窗口，直接使用菜单中的排序选项
+                return true;
+            }
+            case R.id.advanced_filter: {
+                Log.d("DownloadsScene", "onOptionsItemSelected: 高级过滤按钮被点击");
                 showSortFilterDialog();
                 return true;
             }
@@ -2290,7 +2271,7 @@ public class DownloadsScene extends ToolbarScene
 //        }
 //    }
 
-    private class DownloadChoiceListener implements MyEasyRecyclerView.CustomChoiceListener {
+    private class DownloadChoiceListener implements EasyRecyclerView.CustomChoiceListener {
 
         @Override
         public void onIntoCustomChoice(EasyRecyclerView view) {
@@ -2417,6 +2398,10 @@ public class DownloadsScene extends ToolbarScene
         sortIds.add(R.id.sort_by_name_asc);
         sortItems.add(getString(R.string.sort_by_name_desc));
         sortIds.add(R.id.sort_by_name_desc);
+        sortItems.add(getString(R.string.sort_by_file_size_asc));
+        sortIds.add(R.id.sort_by_file_size_asc);
+        sortItems.add(getString(R.string.sort_by_file_size_desc));
+        sortIds.add(R.id.sort_by_file_size_desc);
 
         // 初始化适配器
         mStatusAdapter = new CheckboxAdapter(statusItems, statusIds);
@@ -2475,6 +2460,7 @@ public class DownloadsScene extends ToolbarScene
 
         // 创建弹窗
         mSortFilterDialog = new AlertDialog.Builder(context)
+                .setTitle(R.string.advanced_filter)
                 .setView(dialogView)
                 .create();
 

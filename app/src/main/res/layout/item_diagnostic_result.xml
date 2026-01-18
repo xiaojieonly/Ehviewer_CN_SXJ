@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="?attr/colorSurface"
+    android:layout_marginBottom="8dp">
+
+    <!-- 域名 -->
+    <TextView
+        android:id="@+id/site_domain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="domain.org"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnBackground" />
+
+    <!-- IP地址 -->
+    <TextView
+        android:id="@+id/site_ip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="IP: 0.0.0.0"
+        android:textSize="13sp"
+        android:textColor="?attr/colorOnBackground"
+        android:layout_marginTop="4dp" />
+
+    <!-- 可访问状态 -->
+    <TextView
+        android:id="@+id/site_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="✓ 可访问"
+        android:textSize="13sp"
+        android:textColor="@android:color/holo_green_light"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

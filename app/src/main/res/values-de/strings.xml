@@ -326,6 +326,7 @@
     <string name="sort_by_file_size_asc">Nach Dateigröße aufsteigend</string>
     <string name="sort_by_file_size_desc">Nach Dateigröße absteigend</string>
     <string name="sort_download_list">Liste sortieren</string>
+    <string name="advanced_filter">Erweiterter Filter</string>
     <string name="download_search_gallery">Galerie suchen</string>
     <string name="download_search_hint">Suchschlüssel eingeben</string>
     <string name="download_searching">Suche läuft, bitte warten</string>
@@ -869,6 +870,12 @@
     <string name="subscription_success">%s erfolgreich</string>
     <string name="settings_eh_show_gallery_rating">Galeriebewertung anzeigen</string>
     <string name="import_local_archive">Lokales Archiv importieren</string>
+    <string name="repair_gallery_info">Galerie-Info reparieren</string>
+    <string name="repair_gallery_info_success">Galerie-Info erfolgreich repariert</string>
+    <string name="repair_gallery_info_failed">Reparatur der Galerie-Info fehlgeschlagen</string>
+    <string name="repair_gallery_info_confirm">Sind Sie sicher, dass Sie die Info der ausgewählten Galerien reparieren möchten?</string>
+    <string name="gallery_deleted_alert">Galerie gelöscht</string>
+    <string name="gallery_deleted_message">Diese Galerie wurde auf E-Hentai gelöscht, aber lokale Cache-Informationen bleiben erhalten.</string>
     <string name="import_archive_title">Archivdatei auswählen</string>
     <string name="import_archive_failed">Archivimport fehlgeschlagen</string>
     <string name="archive_permission_lost">Berechtigung zum Zugriff auf das Archiv wurde verloren. Bitte die Archivdatei erneut importieren.</string>
@@ -882,13 +889,33 @@
     <string name="imported_archive_category">Lokaler Import</string>
 
     <!-- Download filter/search dialogs -->
-    <string name="dialog_sort_filter_title">Sort &amp; Filter</string>
-    <string name="dialog_category_filter_label">Category filter (multi-select)</string>
-    <string name="dialog_status_filter_label">Status filter</string>
-    <string name="dialog_sort_method_label">Sort order</string>
-    <string name="dialog_search_download_title">Search downloads</string>
-    <string name="dialog_search_options_label">Search options</string>
-    <string name="reset">Reset</string>
+    <string name="dialog_sort_filter_title">Sortieren und filtern</string>
+    <string name="dialog_category_filter_label">Kategorie-Filter (Mehrfachauswahl)</string>
+    <string name="dialog_status_filter_label">Status-Filter</string>
+    <string name="dialog_sort_method_label">Sortiermethode</string>
+    <string name="dialog_search_download_title">Downloads durchsuchen</string>
+    <string name="dialog_search_options_label">Suchoptionen</string>
+    <string name="reset">Zurücksetzen</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">Downloads nach Kategorie, Status und Sortierreihenfolge filtern</string>
+    <string name="category_filter_description">Eine oder mehrere Kategorien auswählen, um Downloads zu filtern</string>
+    <string name="status_filter_description">Download-Status zum Anzeigen auswählen (z.B.: abgeschlossen, ladend)</string>
+    <string name="sort_method_description">Auswählen, wie gefilterte Downloads sortiert werden sollen</string>
+    <string name="no_filters_applied">Keine Filter angewendet</string>
+    <string name="filters_applied">Filter angewendet: %d</string>
+    <string name="filter_by_all_categories">Alle Kategorien</string>
+    <string name="filter_by_selected_categories">Ausgewählte Kategorien: %d</string>
+    <string name="filter_by_all_statuses">Alle Status</string>
+    <string name="filter_by_selected_statuses">Ausgewählte Status: %d</string>
+    <string name="sort_by_default_order">Standardreihenfolge</string>
+    <string name="sort_by_custom_order">Benutzerdefinierte Reihenfolge: %s</string>
+    <string name="advanced_filter_tip">Tipp: Sie können mehrere Filter für präzise Ergebnisse kombinieren</string>
+    <string name="advanced_filter_empty_result">Keine Downloads entsprechen den aktuellen Filterkriterien</string>
+    <string name="advanced_filter_clear_all">Alle Filter löschen</string>
+    <string name="advanced_filter_apply_changes">Filteränderungen anwenden</string>
+    <string name="advanced_filter_discard_changes">Änderungen verwerfen</string>
+    <string name="advanced_filter_confirm_reset">Alle Filter auf Standardwerte zurücksetzen?</string>
     
     <!-- Theme strings -->
     <string name="theme_light">Hell</string>
@@ -957,7 +984,6 @@
     <!-- 分类 -->
     <string name="artist_cg">ARTIST CG</string>
     <string name="asian_porn">ASIAN PORN</string>
-    <string name="category_all">Alle</string>
     <string name="cosplay">COSPLAY</string>
     <string name="doujinshi">DOUJINSHI</string>
 

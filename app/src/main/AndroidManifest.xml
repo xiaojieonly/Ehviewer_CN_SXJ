@@ -249,6 +249,24 @@
             android:theme="@style/AppTheme.Toolbar" />
 
         <activity
+            android:name="com.hippo.ehviewer.ui.task.BackgroundTaskActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/background_task_management"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.NetworkDiagnosticActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_advanced_network_diagnostic"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.task.BackgroundTaskDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/background_task_detail"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
             android:name="com.hippo.ehviewer.ui.HostsActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/hosts"

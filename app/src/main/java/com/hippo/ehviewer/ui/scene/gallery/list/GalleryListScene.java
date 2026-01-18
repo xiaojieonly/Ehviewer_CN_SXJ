@@ -28,6 +28,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.Spannable;
@@ -52,8 +53,12 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.os.AsyncTask;
 
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
@@ -258,6 +263,12 @@ public final class GalleryListScene extends BaseScene
 
     private int mHideActionFabSlop;
     private boolean mShowActionFab = true;
+
+    // 多选下载相关
+    private boolean mMultiSelectMode = false;
+    private final List<GalleryInfo> mSelectedGalleryList = new ArrayList<>();
+    private MenuItem mMultiSelectMenuItem;
+    private MenuItem mDownloadSelectedMenuItem;
 
     @Nullable
     private final RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
@@ -670,6 +681,15 @@ public final class GalleryListScene extends BaseScene
 
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
+        
+        // 为主FAB添加长按事件，用于退出多选模式
+        mFabLayout.getPrimaryFab().setOnLongClickListener(v -> {
+            if (mMultiSelectMode) {
+                toggleMultiSelectMode();
+                return true;
+            }
+            return false;
+        });
 
         mSearchFab.setOnClickListener(this);
 
@@ -1230,6 +1250,16 @@ public final class GalleryListScene extends BaseScene
             alertDialog.dismiss();
         }
 
+        // 多选模式下的处理
+        if (mMultiSelectMode) {
+            toggleGallerySelection(gi);
+            // 通知适配器更新该项目的显示
+            if (mHelper != null) {
+                mHelper.notifyDataSetChanged();
+            }
+            return true;
+        }
+
         Bundle args = new Bundle();
         args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GALLERY_INFO);
         args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, gi);
@@ -1343,7 +1373,12 @@ public final class GalleryListScene extends BaseScene
     @Override
     public void onClickPrimaryFab(FabLayout view, FloatingActionButton fab) {
         if (STATE_NORMAL == mState) {
-            view.toggle();
+            if (mMultiSelectMode) {
+                // 多选模式下，主FAB用于下载选中的画廊
+                downloadSelected();
+            } else {
+                view.toggle();
+            }
         }
     }
 
@@ -1451,6 +1486,9 @@ public final class GalleryListScene extends BaseScene
                     return;
                 }
                 onItemClick(null, gInfoL.get((int) (Math.random() * gInfoL.size())));
+                break;
+            case 4: // 多选下载
+                toggleMultiSelectMode();
                 break;
         }
 
@@ -2019,6 +2057,27 @@ public final class GalleryListScene extends BaseScene
             return null != mHelper ? mHelper.getDataAtEx(position) : null;
         }
 
+        @Override
+        public void onBindViewHolder(GalleryAdapterNew.GalleryHolder holder, int position) {
+            super.onBindViewHolder(holder, position);
+            
+            // 处理多选模式的显示
+            GalleryInfo gi = getDataAt(position);
+            if (gi != null && mMultiSelectMode) {
+                // 显示选择状态
+                if (isGallerySelected(gi)) {
+                    holder.itemView.setAlpha(0.7f);
+                    // 可以添加选中标记，比如在右上角显示一个勾选图标
+                    holder.selected.setVisibility(View.VISIBLE);
+                } else {
+                    holder.itemView.setAlpha(1.0f);
+                    holder.selected.setVisibility(View.GONE);
+                }
+            } else {
+                holder.itemView.setAlpha(1.0f);
+                holder.selected.setVisibility(View.GONE);
+            }
+        }
     }
 
     class GalleryListHelper extends GalleryInfoContentHelper {
@@ -2216,5 +2275,110 @@ public final class GalleryListScene extends BaseScene
         public boolean isInstance(SceneFragment scene) {
             return scene instanceof GalleryListScene;
         }
+    }
+
+    private void toggleMultiSelectMode() {
+        mMultiSelectMode = !mMultiSelectMode;
+        mSelectedGalleryList.clear();
+        
+        if (mMultiSelectMode) {
+            // 进入多选模式
+            String tipMessage = getString(R.string.multi_select_mode_enabled) + 
+                              "\n点击画廊选择，长按主FAB退出，点击下载按钮开始下载";
+            showTip(tipMessage, LENGTH_LONG);
+            
+            // 更新FAB图标为删除图标（表示可以退出）
+            mActionFabDrawable.setAdd(ANIMATE_TIME);
+            
+            // 展开 FAB 菜单显示下载按钮
+            if (mFabLayout != null) {
+                mFabLayout.setExpanded(true);
+            }
+        } else {
+            // 退出多选模式
+            showTip(R.string.multi_select_mode_disabled, LENGTH_SHORT);
+            
+            // 恢复FAB图标
+            mActionFabDrawable.setDelete(ANIMATE_TIME);
+            
+            // 收起 FAB 菜单
+            if (mFabLayout != null) {
+                mFabLayout.setExpanded(false);
+            }
+        }
+        
+        // 通知适配器更新显示
+        if (mHelper != null) {
+            mHelper.notifyDataSetChanged();
+        }
+    }
+    
+    /**
+     * 更新多选模式的选中数量显示
+     */
+    private void updateMultiSelectCount() {
+        if (mMultiSelectMode && isAdded()) {
+            int count = mSelectedGalleryList.size();
+            String message = "已选择 " + count + " 个画廊";
+            showTip(message, LENGTH_SHORT);
+        }
+    }
+
+    private void downloadSelected() {
+        if (mSelectedGalleryList.isEmpty()) {
+            showTip(R.string.no_gallery_selected, LENGTH_SHORT);
+            return;
+        }
+
+        // 确认对话框
+        new AlertDialog.Builder(getEHContext())
+                .setTitle(R.string.download_selected)
+                .setMessage(getString(R.string.download_selected_confirm, mSelectedGalleryList.size()))
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    // 直接批量加入下载管理器
+                    showTip("正在添加 " + mSelectedGalleryList.size() + " 个下载任务...", LENGTH_SHORT);
+                    for (com.hippo.ehviewer.client.data.GalleryInfo gi : new ArrayList<>(mSelectedGalleryList)) {
+                        if (mDownloadManager != null) {
+                            mDownloadManager.addDownload(gi, null);
+                        }
+                    }
+
+                    // 立即退出多选模式，不阻塞UI
+                    toggleMultiSelectMode();
+
+                    // 延迟显示成功提示
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        showTip("已添加 " + mSelectedGalleryList.size() + " 个下载任务", LENGTH_SHORT);
+                    }, 500);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    public boolean isInMultiSelectMode() {
+        return mMultiSelectMode;
+    }
+
+    public void toggleGallerySelection(GalleryInfo galleryInfo) {
+        if (!mMultiSelectMode) {
+            return;
+        }
+
+        if (mSelectedGalleryList.contains(galleryInfo)) {
+            mSelectedGalleryList.remove(galleryInfo);
+        } else {
+            mSelectedGalleryList.add(galleryInfo);
+        }
+        
+        // 更新选中数量显示
+        updateMultiSelectCount();
+    }
+
+    public boolean isGallerySelected(GalleryInfo galleryInfo) {
+        return mSelectedGalleryList.contains(galleryInfo);
+    }
+
+    public int getSelectedCount() {
+        return mSelectedGalleryList.size();
     }
 }

@@ -176,6 +176,7 @@
     <color name="shadow_light">#38000000</color>
 
     <!-- Gallery Activity -->
+    <color name="gallery_slider_background_light">@color/white</color>
     <color name="gallery_slider_background_dark">@color/grey_800</color>
     <color name="gallery_slider_background_black">@color/grey_900</color>
 

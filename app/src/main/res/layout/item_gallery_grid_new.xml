@@ -50,4 +50,13 @@
         android:textStyle="bold"
         tools:ignore="SpUsage"/>
 
+    <ImageView
+        android:id="@+id/selected"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|left"
+        android:layout_margin="4dp"
+        android:visibility="gone"
+        app:srcCompat="@drawable/v_download_primary_x24" />
+
 </androidx.cardview.widget.CardView>

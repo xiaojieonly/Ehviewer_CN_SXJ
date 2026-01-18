@@ -409,6 +409,7 @@
     <string name="sort_by_file_size_asc">파일 크기 오름차순</string>
     <string name="sort_by_file_size_desc">파일 크기 내림차순</string>
     <string name="sort_download_list">목록 정렬</string>
+    <string name="advanced_filter">고급 필터</string>
     <string name="download_start_all">모두 시작</string>
     <string name="download_stop_all">모두 중지</string>
     <string name="download_reset_reading_progress">독서 진행도 초기화</string>
@@ -922,6 +923,12 @@
     <string name="spen_next_page">다음 페이지</string>
     <string name="category_all">전체</string>
     <string name="import_local_archive">로컬 아카이브 가져오기</string>
+    <string name="repair_gallery_info">갤러리 정보 복구</string>
+    <string name="repair_gallery_info_success">갤러리 정보 복구 성공</string>
+    <string name="repair_gallery_info_failed">갤러리 정보 복구 실패</string>
+    <string name="repair_gallery_info_confirm">선택한 갤러리 정보를 복구하시겠습니까?</string>
+    <string name="gallery_deleted_alert">갤러리 삭제됨</string>
+    <string name="gallery_deleted_message">이 갤러리는 E-Hentai에서 삭제되었지만 로컬 캐시 정보는 보존됩니다.</string>
     <string name="import_archive_title">아카이브 파일 선택</string>
     <string name="import_archive_failed">아카이브 가져오기 실패</string>
     <string name="archive_permission_lost">아카이브 접근 권한이 손실되었습니다. 아카이브 파일을 다시 가져오세요.</string>
@@ -935,13 +942,33 @@
     <string name="imported_archive_category">로컬 가져오기</string>
 
     <!-- Download filter/search dialogs -->
-    <string name="dialog_sort_filter_title">Sort &amp; Filter</string>
-    <string name="dialog_category_filter_label">Category filter (multi-select)</string>
-    <string name="dialog_status_filter_label">Status filter</string>
-    <string name="dialog_sort_method_label">Sort order</string>
-    <string name="dialog_search_download_title">Search downloads</string>
-    <string name="dialog_search_options_label">Search options</string>
-    <string name="reset">Reset</string>
+    <string name="dialog_sort_filter_title">정렬 및 필터</string>
+    <string name="dialog_category_filter_label">카테고리 필터(다중 선택)</string>
+    <string name="dialog_status_filter_label">상태 필터</string>
+    <string name="dialog_sort_method_label">정렬 방식</string>
+    <string name="dialog_search_download_title">다운로드 검색</string>
+    <string name="dialog_search_options_label">검색 옵션</string>
+    <string name="reset">재설정</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">카테고리, 상태, 정렬 순서로 다운로드 필터링</string>
+    <string name="category_filter_description">다운로드를 필터링할 카테고리를 하나 이상 선택</string>
+    <string name="status_filter_description">표시할 다운로드 상태 선택(예: 완료, 다운로드 중)</string>
+    <string name="sort_method_description">필터링된 다운로드의 정렬 방식 선택</string>
+    <string name="no_filters_applied">필터 적용되지 않음</string>
+    <string name="filters_applied">%d개 필터 적용됨</string>
+    <string name="filter_by_all_categories">모든 카테고리</string>
+    <string name="filter_by_selected_categories">%d개 카테고리 선택됨</string>
+    <string name="filter_by_all_statuses">모든 상태</string>
+    <string name="filter_by_selected_statuses">%d개 상태 선택됨</string>
+    <string name="sort_by_default_order">기본 순서</string>
+    <string name="sort_by_custom_order">사용자 정의 순서: %s</string>
+    <string name="advanced_filter_tip">팁: 여러 필터를 결합하여 정확한 결과를 얻을 수 있습니다</string>
+    <string name="advanced_filter_empty_result">현재 필터 조건에 맞는 다운로드가 없습니다</string>
+    <string name="advanced_filter_clear_all">모든 필터 지우기</string>
+    <string name="advanced_filter_apply_changes">필터 변경사항 적용</string>
+    <string name="advanced_filter_discard_changes">변경사항 취소</string>
+    <string name="advanced_filter_confirm_reset">모든 필터를 기본값으로 재설정하시겠습니까?</string>
 
     <!-- Download scan strings -->
     <string name="scan_download_files_scanning">다운로드 디렉토리 스캔 중...</string>

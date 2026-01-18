@@ -112,6 +112,13 @@
                 android:visibility="gone"
                 app:srcCompat="@drawable/v_heart_x16" />
 
+            <ImageView
+                android:id="@+id/selected"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/v_download_x16" />
+
             <TextView
                 android:id="@+id/simple_language"
                 style="@style/CardMessage"

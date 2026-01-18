@@ -392,6 +392,7 @@
     <string name="sort_by_file_size_asc">依檔案大小升序</string>
     <string name="sort_by_file_size_desc">依檔案大小降序</string>
     <string name="sort_download_list">排序列表</string>
+    <string name="advanced_filter">高級過濾</string>
     <string name="download_search_gallery">搜尋圖庫</string>
     <string name="download_search_hint">輸入搜尋關鍵字</string>
     <string name="download_searching">搜尋中請稍後</string>
@@ -604,7 +605,7 @@
     <string name="settings_download_media_scan_summary_on">請別讓別人看到你的相簿</string>
     <string name="settings_download_media_scan_summary_off">大部分相簿軟體將會忽略顯示下載路徑中的影像</string>
     <string name="settings_download_restore_download_items">回復下載的檔案</string>
-    <string name="settings_download_restore_download_items_summary">回復下載路徑中的所有下載的檔案</string>
+    <string name="settings_download_restore_download_items_summary">回復下載路徑中有完整.ehviewer元數據檔案的下載項</string>
     <string name="settings_download_restoring">回復中</string>
     <string name="settings_download_restore_not_found">未尋獲可回復的已下載檔案</string>
     <string name="settings_download_restore_failed">回復失敗</string>
@@ -953,6 +954,36 @@
     <string name="download_label_archiver">歸檔器</string>
     <string name="cookie_in_clipboard_incorrect">Cookie 格式不正確</string>
     <string name="settings_download_timeout">下載逾時</string>
+    
+    <!-- Background task management -->
+    <string name="background_task_management">後台任務</string>
+    <string name="background_task_detail">任務詳情</string>
+    <string name="active_tasks">活躍任務</string>
+    <string name="completed_tasks">已完成任務</string>
+    <string name="no_background_tasks">無後台任務</string>
+    <string name="no_description">無描述</string>
+    <string name="task_progress_label">進度</string>
+    <string name="task_status_label">狀態</string>
+    <string name="task_time_label">運行時間</string>
+    <string name="task_progress_format">%1$d/%2$d (%3$d%%)</string>
+    <string name="task_progress_indeterminate">不確定</string>
+    <string name="task_running_time">運行時間：%s</string>
+    <string name="task_status_running">運行中</string>
+    <string name="task_status_completed">已完成</string>
+    <string name="task_status_failed">失敗</string>
+    <string name="task_status_cancelled">已取消</string>
+    <string name="task_error_format">錯誤：%s</string>
+    <string name="task_progress_detail_label">進度詳情</string>
+    <string name="task_log_label">任務日誌</string>
+    <string name="task_log_empty">暫無日誌</string>
+    <string name="task_log_save_to">日誌已保存到 %s</string>
+    <string name="task_log_file_missing">未找到日誌文件</string>
+    <string name="settings_advanced_background_tasks">後台任務</string>
+    <string name="settings_advanced_background_tasks_summary">查看和管理正在運行的後台任務</string>
+    <string name="settings_transfer_summary">管理數據傳輸設置</string>
+    <string name="settings_download_rebuild_download_records">重建下載記錄</string>
+    <string name="settings_download_rebuild_download_records_summary">掃描下載路徑並從.ehviewer文件重建下載記錄</string>
+    <string name="settings_download_rebuild_complete">重建完成，已添加 %d 條下載記錄</string>
     <string name="download_timeout_unlimited">無限制</string>
     <string name="settings_download_timeout_summary">%s（秒），允許下載一張圖片的最大時間。</string>
     <string name="have_new_version">點擊查看新圖庫版本</string>
@@ -965,6 +996,12 @@
     <string name="sort_by_fav_time">收藏時間</string>
     <string name="settings_eh_sign_out_restart">正在為您自動重新啟動，請稍候</string>
     <string name="import_local_archive">匯入本機歸檔</string>
+    <string name="repair_gallery_info">修復畫廊資訊</string>
+    <string name="repair_gallery_info_success">畫廊資訊修復成功</string>
+    <string name="repair_gallery_info_failed">畫廊資訊修復失敗</string>
+    <string name="repair_gallery_info_confirm">確定要修復選取的畫廊資訊嗎？</string>
+    <string name="gallery_deleted_alert">畫廊已刪除</string>
+    <string name="gallery_deleted_message">該畫廊在E-Hentai上已被刪除，但保留了本地快取資訊。</string>
     <string name="import_archive_title">選擇歸檔檔案</string>
     <string name="import_archive_failed">匯入歸檔失敗</string>
     <string name="archive_permission_lost">歸檔檔案的存取權限已遺失。請重新匯入歸檔檔案。</string>
@@ -985,6 +1022,26 @@
     <string name="dialog_search_download_title">搜尋下載畫廊</string>
     <string name="dialog_search_options_label">搜尋選項</string>
     <string name="reset">重置</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">按分類、狀態和排序順序過濾下載內容</string>
+    <string name="category_filter_description">選擇一個或多個分類來過濾下載內容</string>
+    <string name="status_filter_description">選擇要顯示的下載狀態（如：已完成、下載中）</string>
+    <string name="sort_method_description">選擇如何排序過濾後的下載內容</string>
+    <string name="no_filters_applied">未應用過濾器</string>
+    <string name="filters_applied">已應用 %d 個過濾器</string>
+    <string name="filter_by_all_categories">所有分類</string>
+    <string name="filter_by_selected_categories">已選擇 %d 個分類</string>
+    <string name="filter_by_all_statuses">所有狀態</string>
+    <string name="filter_by_selected_statuses">已選擇 %d 個狀態</string>
+    <string name="sort_by_default_order">預設順序</string>
+    <string name="sort_by_custom_order">自訂順序：%s</string>
+    <string name="advanced_filter_tip">提示：您可以組合多個過濾器以獲得精確結果</string>
+    <string name="advanced_filter_empty_result">沒有下載內容符合當前的過濾條件</string>
+    <string name="advanced_filter_clear_all">清除所有過濾器</string>
+    <string name="advanced_filter_apply_changes">應用過濾器更改</string>
+    <string name="advanced_filter_discard_changes">放棄更改</string>
+    <string name="advanced_filter_confirm_reset">確定要將所有過濾器重置為預設值嗎？</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一頁</string>

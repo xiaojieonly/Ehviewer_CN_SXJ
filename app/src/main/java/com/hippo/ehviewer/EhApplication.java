@@ -53,6 +53,7 @@ import com.hippo.ehviewer.client.data.EhNewsDetail;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.download.DownloadLogger;
 import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.CommonOperations;
@@ -182,6 +183,7 @@ public class EhApplication extends RecordingApplication {
         SpiderDen.initialize(this);
         EhDB.initialize(this);
         DownloadedFileManager.initialize(this);
+        DownloadLogger.initialize(this);
         BackgroundTaskManager.initialize(this);
         EhEngine.initialize();
         BitmapUtils.initialize(this);
@@ -292,6 +294,16 @@ public class EhApplication extends RecordingApplication {
 
         if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             clearMemoryCache();
+            
+            // 刷新下载日志
+            try {
+                DownloadLogger logger = DownloadLogger.getInstance();
+                if (logger != null) {
+                    logger.flushLogs();
+                }
+            } catch (Exception e) {
+                // 忽略异常，避免影响应用正常运行
+            }
         }
     }
 

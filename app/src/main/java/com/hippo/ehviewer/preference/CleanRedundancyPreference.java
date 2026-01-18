@@ -24,6 +24,8 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.BackgroundTaskManager;
+import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 import com.hippo.unifile.UniFile;
 import com.hippo.lib.yorozuya.NumberUtils;
 

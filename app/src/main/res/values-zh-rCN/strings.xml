@@ -402,6 +402,7 @@
     <string name="download_filter_by_kind">根据类型过滤</string>
     <string name="download_status_all">全部</string>
     <string name="sort_download_list">对内容排序</string>
+    <string name="advanced_filter">高级过滤</string>
     <string name="default_sort">默认</string>
     <string name="sort_by_gallery_id_asc">按ID升序</string>
     <string name="sort_by_gallery_id_desc">按ID降序</string>
@@ -541,6 +542,9 @@
     <string name="settings_eh_thumb_resolution">缩略图分辨率</string>
     <string name="settings_eh_thumb_resolution_summary">%s，指定分辨率可能使获取缩略图失败</string>
     <string name="settings_eh_thumb_resolution_auto">自动</string>
+    <string name="settings_eh_manual_thumb_resolution">手动缩略图分辨率</string>
+    <string name="settings_eh_manual_thumb_resolution_summary">启用手动缩略图分辨率设置</string>
+    <string name="settings_eh_custom_thumb_resolution">自定义缩略图分辨率</string>
     <string name="settings_eh_fix_thumb_url">修正缩略图链接</string>
     <string name="settings_eh_default_categories">主页分类显示</string>
     <string name="settings_eh_default_categories_summary">默认在主页所显示的分类</string>
@@ -550,6 +554,9 @@
     <string name="settings_eh_excluded_languages_summary">在主页与搜索中隐藏指定语言的画廊</string>
     <string name="settings_eh_show_jpn_title">显示日文标题</string>
     <string name="settings_eh_show_gallery_comment">显示画廊评论</string>
+    <string name="settings_eh_enable_comment_rating_filter">启用评论评分过滤</string>
+    <string name="settings_eh_enable_comment_rating_filter_summary">根据评分阈值过滤评论</string>
+    <string name="settings_eh_comment_rating_threshold">评论评分阈值</string>
     <string name="settings_eh_show_gallery_rating">显示画廊评分</string>
     <string name="settings_eh_show_eh_event">显示E站事件</string>
     <string name="settings_eh_show_eh_limits">显示E站配额</string>
@@ -611,22 +618,43 @@
     <string name="settings_download_continue">继续</string>
     <string name="settings_download_multi_thread_download">下载线程数</string>
     <string name="settings_download_multi_thread_download_summary">最多同时下载 %s 张图片</string>
+    <string name="settings_download_enable_download_timeout">启用下载超时</string>
+    <string name="settings_download_enable_download_timeout_summary">启用下载请求的超时限制</string>
     <string name="settings_download_preload_image">预载图片</string>
     <string name="settings_download_preload_image_summary">向后预载 %s 张图片</string>
     <string name="settings_download_image_resolution">图片分辨率</string>
     <string name="settings_download_image_resolution_summary">%s，大于 1280x 的分辨率可能不好使</string>
     <string name="settings_download_image_resolution_auto">自动</string>
     <string name="settings_download_download_origin_image">下载原图</string>
+    <string name="settings_download_download_queue_order">下载队列顺序</string>
+    <string name="settings_download_download_queue_order_summary">设置下载任务的队列顺序策略</string>
+    <string name="download_queue_order_default">默认（按添加顺序）</string>
+    <string name="download_queue_order_fewest_first">少图画廊优先</string>
+    <string name="download_queue_order_most_first">多图画廊优先</string>
     <string name="settings_download_download_list_pagination">列表分页</string>
     <string name="settings_download_download_list_pagination_summary">在列表长度大于500时分页功能才会生效</string>
     <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额与GP迅速流失</string>
     <string name="settings_download_download_order_by_asc">正序下载</string>
     <string name="settings_download_download_order_by_asc_summary">下载全部画廊时正序下载</string>
     <string name="settings_download_media_scan">允许媒体扫描</string>
+    <string name="settings_download_media_scan_summary_on">请避免他人翻看你的图库应用</string>
+    <string name="settings_download_media_scan_summary_off">大多数图库应用将不会显示下载目录中的图片</string>
+    <string name="settings_download_reset_media_scan">重置媒体扫描</string>
+    <string name="settings_download_reset_media_scan_summary">刷新系统媒体扫描以更新相册应用</string>
+    <string name="settings_download_enable_min_download_speed">启用最低下载速度限制</string>
+    <string name="settings_download_enable_min_download_speed_summary">当下载速度低于阈值持续3分钟时停止所有下载任务</string>
+    <string name="settings_download_min_download_speed">最低下载速度</string>
+    <string name="settings_download_logging_enabled">启用下载日志</string>
+    <string name="settings_download_logging_enabled_summary">记录下载过程的详细信息并保存到日志文件</string>
+    <string name="settings_download_view_logs">查看下载日志</string>
+    <string name="settings_download_view_logs_summary">查看和管理下载日志文件</string>
+    <string name="settings_download_clean_logs">清理旧日志</string>
+    <string name="settings_download_clean_logs_summary">删除7天前的旧日志文件</string>
     <string name="settings_download_incremental_update">增量下载更新画廊</string>
     <string name="settings_download_incremental_update_summary">下载时检测同名画廊，保留旧版本并创建更新记录</string>
     <string name="settings_download_merge_duplicate_gallery">合并重复画廊</string>
     <string name="settings_download_merge_duplicate_gallery_summary">扫描并合并具有版本递进关系的重复画廊</string>
+    <string name="merge_duplicate_gallery_title">合并重复画廊</string>
     <string name="settings_download_scan_download_files">扫描下载文件</string>
     <string name="settings_download_scan_download_files_summary">扫描所有下载目录并重建文件信息表，用于优化下载和避免重复</string>
     <string name="merge_duplicate_gallery_confirm">发现重复画廊组: %1$s (%2$d 个版本)，是否合并？</string>
@@ -634,10 +662,9 @@
     <string name="merge_duplicate_gallery_skip_all">全部否</string>
     <string name="merge_duplicate_gallery_backup_success">数据库备份成功</string>
     <string name="merge_duplicate_gallery_backup_failed">数据库备份失败</string>
-    <string name="settings_download_media_scan_summary_on">请避免他人翻看你的图库应用</string>
-    <string name="settings_download_media_scan_summary_off">大多数图库应用将不会显示下载目录中的图片</string>
     <string name="settings_download_restore_download_items">恢复下载项</string>
-    <string name="settings_download_restore_download_items_summary">恢复下载目录里的所有下载项</string>
+    <string name="settings_download_restore_download_items_summary">恢复下载目录中有完整.ehviewer元数据文件的下载项</string>
+    <string name="settings_download_restore_download_items_detail">通过API获取完整画廊信息，恢复有效的.ehviewer文件对应的下载项</string>
     <string name="settings_download_restoring">恢复中</string>
     <string name="settings_download_restore_not_found">未找到可恢复下载项</string>
     <string name="settings_download_restore_failed">恢复失败</string>
@@ -648,10 +675,28 @@
     <string name="settings_download_clean_redundancy_done">完成冗余清理，共清理 %d 项</string>
     <string name="settings_download_clean_invalid_download_summary">清空任何无效的下载项，尤其是下载未完整的下载项，不会清空已完成的下载项</string>
     <string name="settings_download_clean_invalid_download">清空无效的下载项</string>
+    <string name="settings_download_rebuild_download_records">重建下载记录</string>
+    <string name="settings_download_rebuild_download_records_summary">扫描下载路径中的所有文件夹，从.ehviewer文件重建记录或为没有元数据的文件夹创建本地记录</string>
+    <string name="settings_download_rebuild_download_records_detail">处理所有文件夹，为没有.ehviewer文件的文件夹创建本地备用记录</string>
+    <string name="settings_download_rebuild_complete">重建完成，已添加 %d 条下载记录</string>
+    <string name="settings_download_rebuilding">正在重建下载记录</string>
+    <string name="settings_download_rebuild_success">重建完成，添加了%d条记录</string>
+    <string name="settings_download_rebuild_failed">重建失败</string>
+    <string name="settings_download_rebuild_no_records">未找到有效的下载记录</string>
+    <string name="settings_download_rebuild_confirm">确定要从下载路径重建下载记录吗？这将扫描所有文件夹并将有效的画廊添加到下载列表中。没有.ehviewer文件的文件夹将被创建为本地画廊记录。</string>
+    <string name="settings_download_rebuild_download_records_started">重建任务已启动，请在任务管理器中查看进度</string>
+    <string name="settings_download_clean_redundancy_started">清理冗余任务已启动，请在任务管理器中查看进度</string>
 
     <string name="settings_advanced">高级</string>
     <string name="settings_advanced_save_parse_error_body">解析失败时保存页面内容</string>
     <string name="settings_advanced_save_parse_error_body_summary">页面内容可能含有隐私敏感信息</string>
+    <string name="settings_advanced_user_agent">用户代理</string>
+    <string name="settings_advanced_user_agent_summary">自定义网络请求的用户代理</string>
+    <string name="settings_advanced_user_agent_restore_default">恢复默认</string>
+    <string name="settings_advanced_user_agent_save">保存</string>
+    <string name="settings_advanced_user_agent_saved">用户代理已保存</string>
+    <string name="settings_advanced_user_agent_restored">用户代理已恢复默认</string>
+    <string name="settings_advanced_user_agent_empty">用户代理不能为空</string>
     <string name="settings_advanced_save_crash_log">应用崩溃时保存错误日志</string>
     <string name="settings_advanced_save_crash_log_summary">错误日志可以帮助开发者修正问题</string>
     <string name="settings_advanced_dump_logcat">导出日志</string>
@@ -675,9 +720,27 @@
     <string name="settings_privacy_pattern_protection_title">图案保护</string>
     <string name="settings_privacy_pattern_protection_not_set">未设置图案保护</string>
     <string name="settings_privacy_pattern_protection_set">已设置图案保护</string>
+    <string name="settings_advanced_network_diagnostic">网络诊断</string>
+    <string name="settings_advanced_network_diagnostic_summary">测试站点连通性和网络状态</string>
+    
+    <!-- Network Diagnostic strings -->
+    <string name="network_diagnostic_title">网络连通性诊断</string>
+    <string name="network_status_connected">已连接</string>
+    <string name="network_status_disconnected">未连接</string>
+    <string name="network_info_format">网络状态: %s\n网络类型: %s\n本地IP: %s</string>
+    <string name="network_type_wifi">WiFi</string>
+    <string name="network_type_mobile">移动网络</string>
+    <string name="network_type_unknown">未知</string>
+    <string name="diagnostic_error">诊断出错: %s</string>
+    <string name="dns_resolution_failed">DNS解析失败</string>
+    <string name="site_accessible">✓ 可访问 (%dms)</string>
+    <string name="site_inaccessible">✗ 不可访问</string>
+    <string name="site_inaccessible_with_error">✗ 不可访问 (%s)</string>
+    <string name="ip_address_format">IP: %s</string>
+    <string name="refresh_diagnostic">刷新诊断</string>
     <string name="settings_advanced_export_data">导出数据</string>
-    <string name="settings_advanced_export_data_summary">保存数据至外置存储器，例如下载列表，书签列表</string>
-    <string name="settings_advanced_export_data_to">已导出数据至 %s</string>
+    <string name="settings_advanced_export_data_summary">将下载列表、快速搜索列表等数据保存到外置存储</string>
+    <string name="settings_advanced_export_data_to">已导出数据到 %s</string>
     <string name="settings_advanced_export_data_failed">导出数据失败</string>
     <string name="settings_advanced_import_data">导入数据</string>
     <string name="settings_advanced_import_data_summary">从外置存储器导入数据</string>
@@ -1010,6 +1073,58 @@
     <string name="category_all">全部</string>
 
     <string name="import_local_archive">导入本地压缩包</string>
+    <string name="repair_gallery_info">修复画廊信息</string>
+    <string name="repair_gallery_info_success">画廊信息修复成功</string>
+    <string name="repair_gallery_info_failed">画廊信息修复失败</string>
+    <string name="repair_gallery_info_confirm">确定要修复选中的画廊信息吗？</string>
+    <string name="settings_download_repair_all_downloaded_gallery">修复全部已下载画廊信息</string>
+    <string name="settings_download_repair_all_downloaded_gallery_summary">扫描并修复所有已下载画廊的信息</string>
+    <string name="repair_all_downloaded_gallery_confirm">确定要修复全部已下载画廊信息吗？此操作可能需要较长时间。</string>
+    <string name="repair_all_downloaded_gallery_success">全部已下载画廊信息修复成功</string>
+    <string name="repair_all_downloaded_gallery_failed">修复过程中出现错误</string>
+    <string name="repair_all_downloaded_gallery_processing">正在修复全部已下载画廊信息...</string>
+    <string name="settings_download_repair_unknown_category_gallery">修复分类未知的下载项</string>
+    <string name="settings_download_repair_unknown_category_gallery_summary">扫描并修复所有分类显示为未知的已下载画廊信息</string>
+    <string name="repair_unknown_category_gallery_confirm">确定要修复分类未知的下载项吗？此操作可能需要较长时间。</string>
+    <string name="repair_unknown_category_gallery_success">分类未知下载项修复成功</string>
+    <string name="repair_unknown_category_gallery_failed">修复过程中出现错误</string>
+    <string name="repair_unknown_category_gallery_processing">正在修复分类未知的下载项...</string>
+    <string name="error_cant_find_gallery">找不到画廊</string>
+    <string name="multi_select_mode_enabled">多选模式已开启</string>
+    <string name="multi_select_mode_disabled">多选模式已关闭</string>
+    <string name="download_selected">下载选中的画廊</string>
+    
+    <!-- Background task management -->
+    <string name="background_task_management">后台任务</string>
+    <string name="background_task_detail">任务详情</string>
+    <string name="active_tasks">活跃任务</string>
+    <string name="completed_tasks">已完成任务</string>
+    <string name="no_background_tasks">无后台任务</string>
+    <string name="no_description">无描述</string>
+    <string name="task_progress_label">进度</string>
+    <string name="task_status_label">状态</string>
+    <string name="task_time_label">运行时间</string>
+    <string name="task_progress_format">%1$d/%2$d (%3$d%%)</string>
+    <string name="task_progress_indeterminate">不确定</string>
+    <string name="task_running_time">运行时间：%s</string>
+    <string name="task_status_running">运行中</string>
+    <string name="task_status_completed">已完成</string>
+    <string name="task_status_failed">失败</string>
+    <string name="task_status_cancelled">已取消</string>
+    <string name="task_error_format">错误：%s</string>
+    <string name="task_progress_detail_label">进度详情</string>
+    <string name="task_log_label">任务日志</string>
+    <string name="task_log_empty">暂无日志</string>
+    <string name="task_log_save_to">日志已保存到 %s</string>
+    <string name="task_log_file_missing">未找到日志文件</string>
+    <string name="settings_advanced_background_tasks">后台任务</string>
+    <string name="settings_advanced_background_tasks_summary">查看和管理正在运行的后台任务</string>
+    <string name="settings_transfer_summary">管理数据传输设置</string>
+    <string name="download_selected_confirm">确定要下载选中的 %d 个画廊吗？</string>
+    <string name="download_selected_result">成功下载 %d/%d 个画廊</string>
+    <string name="no_gallery_selected">请先选择要下载的画廊</string>
+    <string name="gallery_deleted_alert">画廊已删除</string>
+    <string name="gallery_deleted_message">该画廊在E-Hentai上已被删除，但保留了本地缓存信息。</string>
     <string name="import_archive_title">选择压缩包文件</string>
     <string name="import_archive_failed">压缩包导入失败</string>
     <string name="archive_permission_lost">访问压缩包的权限已丢失，请重新导入压缩包文件。</string>
@@ -1035,6 +1150,26 @@
     <string name="dialog_search_options_label">搜索选项</string>
     <string name="reset">重置</string>
     
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">按分类、状态和排序顺序过滤下载内容</string>
+    <string name="category_filter_description">选择一个或多个分类来过滤下载内容</string>
+    <string name="status_filter_description">选择要显示的下载状态（如：已完成、下载中）</string>
+    <string name="sort_method_description">选择如何排序过滤后的下载内容</string>
+    <string name="no_filters_applied">未应用过滤器</string>
+    <string name="filters_applied">已应用 %d 个过滤器</string>
+    <string name="filter_by_all_categories">所有分类</string>
+    <string name="filter_by_selected_categories">已选择 %d 个分类</string>
+    <string name="filter_by_all_statuses">所有状态</string>
+    <string name="filter_by_selected_statuses">已选择 %d 个状态</string>
+    <string name="sort_by_default_order">默认顺序</string>
+    <string name="sort_by_custom_order">自定义顺序：%s</string>
+    <string name="advanced_filter_tip">提示：您可以组合多个过滤器以获得精确结果</string>
+    <string name="advanced_filter_empty_result">没有下载内容符合当前的过滤条件</string>
+    <string name="advanced_filter_clear_all">清除所有过滤器</string>
+    <string name="advanced_filter_apply_changes">应用过滤器更改</string>
+    <string name="advanced_filter_discard_changes">放弃更改</string>
+    <string name="advanced_filter_confirm_reset">确定要将所有过滤器重置为默认值吗？</string>
+    
     <!-- Theme strings -->
     <string name="unavailable">不可用</string>
     
@@ -1045,22 +1180,23 @@
     <string name="merge_scan_complete">扫描完成，发现 %d 组重复画廊</string>
     <string name="merge_start_analyze">开始分析画廊版本关系...</string>
     <string name="merge_analyzing_versions">正在分析画廊版本关系...</string>
+    <string name="merge_analyzing_galleries">正在分析画廊重复情况...</string>
     <string name="merge_analyze_failed">分析画廊版本关系失败</string>
     <string name="merge_analyze_complete">分析完成</string>
     <string name="merge_no_duplicates_found">未发现需要合并的重复画廊</string>
+    <string name="merge_backing_up_database">正在备份数据库...</string>
+    <string name="merge_merging_galleries">正在合并重复画廊...</string>
+    <string name="merge_success_summary">合并完成：%d 个已合并，%d 个已跳过</string>
+    <string name="merge_failure_summary">合并失败：%d 个已合并，%d 个已跳过</string>
     <string name="merge_start_backup">开始备份数据库...</string>
     <string name="merge_backing_database">正在备份数据库...</string>
     <string name="merge_backup_failed">备份数据库失败</string>
     <string name="merge_backup_success">数据库备份成功</string>
     <string name="merge_start_merge">开始合并画廊...</string>
-    <string name="merge_merging_galleries">正在合并画廊...</string>
     <string name="merge_merge_failed">合并画廊失败</string>
     <string name="merge_merge_success">合并画廊成功</string>
     <string name="merge_exception_occurred">合并过程中发生异常: %s</string>
     <string name="merge_exception_stack">异常堆栈: %s</string>
-    <string name="merge_success_summary">成功合并 %1$d 组重复画廊，跳过 %2$d 组</string>
-    <string name="merge_failure_summary">合并失败，已合并 %1$d 组，跳过 %2$d 组，已生成错误报告</string>
-    <string name="merge_duplicate_gallery_title">合并重复画廊</string>
     
     <!-- Download scene strings -->
     <string name="starting_download">正在启动下载...</string>
@@ -1084,4 +1220,78 @@
     <string name="wifi_please_enter_ip">请输入IP地址</string>
     <string name="wifi_invalid_ip_format">IP地址格式不正确</string>
     <string name="wifi_connecting_to_custom_ip">尝试连接到指定IP：%1$s\n本机IP:%2$s</string>
+
+    <!-- Background Task Management -->
+    <string name="background_tasks_channel_name">后台任务</string>
+    <string name="background_tasks_channel_description">后台任务通知</string>
+    <string name="background_task_running">后台任务正在运行</string>
+    <string name="background_task_running_description">有后台任务正在进行</string>
+    <plurals name="background_tasks_running">
+        <item quantity="one">%d 个任务正在运行</item>
+        <item quantity="other">%d 个任务正在运行</item>
+    </plurals>
+    <string name="task_state_pending">等待中</string>
+    <string name="task_state_running">运行中</string>
+    <string name="task_state_paused">已暂停</string>
+    <string name="task_state_completed">已完成</string>
+    <string name="task_state_failed">失败</string>
+    <string name="task_state_cancelled">已取消</string>
+    <string name="task_progress_unknown">进度不确定</string>
+    <string name="task_completed">任务完成</string>
+    <string name="pause">暂停</string>
+    <string name="resume">恢复</string>
+    <string name="stop">停止</string>
+    <string name="stop_all">全部停止</string>
+    <string name="task_detail">任务详情</string>
+    <string name="task_id">任务ID</string>
+    <string name="task_name">任务名称</string>
+    <string name="task_description">任务描述</string>
+    <string name="task_state">状态</string>
+    <string name="task_progress">进度</string>
+    <string name="task_created_time">创建时间</string>
+    <string name="task_start_time">开始时间</string>
+    <string name="task_end_time">结束时间</string>
+    <string name="task_error">错误</string>
+    <string name="task_no_error">无错误</string>
+    
+    <!-- Scan Download Files Task -->
+    <string name="scan_download_files_initializing">正在初始化扫描...</string>
+    <string name="scan_download_files_counting">正在统计文件数量...</string>
+    <string name="scan_download_files_progress">正在扫描: %1$d/%2$d 个文件</string>
+    <string name="scan_download_files_completed">扫描完成</string>
+    <string name="scan_download_files_failed">扫描失败</string>
+    
+    <!-- Rebuild Download Records Task -->
+    <string name="rebuild_download_records_initializing">正在初始化重建...</string>
+    <string name="rebuild_download_records_scanning">正在扫描下载目录...</string>
+    <string name="rebuild_download_records_processing">正在处理下载记录...</string>
+    <string name="rebuild_download_records_progress">正在处理: %1$d/%2$d 个目录，已添加 %3$d 个记录</string>
+    <string name="rebuild_download_records_finalizing">正在完成重建...</string>
+    <string name="rebuild_download_records_completed">重建完成，共添加 %d 个记录</string>
+    <string name="rebuild_download_records_invalid_dir">下载目录无效</string>
+    <string name="rebuild_download_records_empty_dir">下载目录为空</string>
+    <string name="rebuild_download_records_no_metadata">未找到元数据文件</string>
+    
+    <!-- Clean Invalid Download Task -->
+    <string name="clean_invalid_download_initializing">正在初始化清理...</string>
+    <string name="clean_invalid_download_scanning">正在扫描下载目录...</string>
+    <string name="clean_invalid_download_processing">正在清理无效下载...</string>
+    <string name="clean_invalid_download_progress">正在处理: %1$d/%2$d 个目录，已清理 %3$d 个，错误 %4$d 个</string>
+    <string name="clean_invalid_download_finalizing">正在完成清理...</string>
+    <string name="clean_invalid_download_completed">清理完成，共清理 %d 个无效下载</string>
+    <string name="clean_invalid_download_no_files">没有找到需要清理的文件</string>
+    <string name="clean_invalid_download_invalid_dir">下载目录无效</string>
+    
+    <!-- Start All Download Task -->
+    <string name="start_all_download_initializing">正在初始化下载任务...</string>
+    <string name="start_all_download_starting">准备启动 %d 个下载任务</string>
+    <string name="start_all_download_progress">正在启动: %1$d/%2$d - %3$s</string>
+    <string name="start_all_download_finalizing">正在完成启动...</string>
+    <string name="start_all_download_completed">启动完成，共启动 %d 个下载任务</string>
+    <string name="start_all_download_no_tasks">没有需要启动的下载任务</string>
+    <string name="download_start_all_summary">批量启动所有未开始的下载任务</string>
+    
+    <!-- Task strings -->
+    <string name="loading">加载中…</string>
+    <string name="show">显示</string>
 </resources>

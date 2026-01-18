@@ -373,6 +373,7 @@
     <string name="sort_by_file_size_asc">ファイルサイズの昇順</string>
     <string name="sort_by_file_size_desc">ファイルサイズの降順</string>
     <string name="sort_download_list">リストを並べ替え</string>
+    <string name="advanced_filter">高度なフィルター</string>
     <string name="download_start_all">すべて開始</string>
     <string name="download_stop_all">すべて停止</string>
     <string name="download_reset_reading_progress">閲覧進捗をリセット</string>
@@ -883,6 +884,12 @@
     <string name="spen_next_page">次のページ</string>
     <string name="category_all">すべて</string>
     <string name="import_local_archive">ローカルアーカイブをインポート</string>
+    <string name="repair_gallery_info">ギャラリー情報を修復</string>
+    <string name="repair_gallery_info_success">ギャラリー情報の修復に成功しました</string>
+    <string name="repair_gallery_info_failed">ギャラリー情報の修復に失敗しました</string>
+    <string name="repair_gallery_info_confirm">選択したギャラリー情報を修復してもよろしいですか？</string>
+    <string name="gallery_deleted_alert">ギャラリーが削除されました</string>
+    <string name="gallery_deleted_message">このギャラリーはE-Hentaiで削除されていますが、ローカルキャッシュ情報は保持されています。</string>
     <string name="import_archive_title">アーカイブファイルを選択</string>
     <string name="import_archive_failed">アーカイブのインポートに失敗しました</string>
     <string name="archive_permission_lost">アーカイブへのアクセス権限が失われました。アーカイブファイルを再インポートしてください。</string>
@@ -896,13 +903,33 @@
     <string name="imported_archive_category">ローカルインポート</string>
 
     <!-- Download filter/search dialogs -->
-    <string name="dialog_sort_filter_title">Sort &amp; Filter</string>
-    <string name="dialog_category_filter_label">Category filter (multi-select)</string>
-    <string name="dialog_status_filter_label">Status filter</string>
-    <string name="dialog_sort_method_label">Sort order</string>
-    <string name="dialog_search_download_title">Search downloads</string>
-    <string name="dialog_search_options_label">Search options</string>
-    <string name="reset">Reset</string>
+    <string name="dialog_sort_filter_title">並び替えとフィルター</string>
+    <string name="dialog_category_filter_label">カテゴリフィルター（複数選択）</string>
+    <string name="dialog_status_filter_label">ステータスフィルター</string>
+    <string name="dialog_sort_method_label">並び替え方法</string>
+    <string name="dialog_search_download_title">ダウンロードを検索</string>
+    <string name="dialog_search_options_label">検索オプション</string>
+    <string name="reset">リセット</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">カテゴリ、ステータス、並び替え順でダウンロードをフィルター</string>
+    <string name="category_filter_description">ダウンロードをフィルターするカテゴリを1つ以上選択</string>
+    <string name="status_filter_description">表示するダウンロードステータスを選択（例：完了、ダウンロード中）</string>
+    <string name="sort_method_description">フィルター後のダウンロードの並び替え方法を選択</string>
+    <string name="no_filters_applied">フィルター未適用</string>
+    <string name="filters_applied">%d個のフィルター適用中</string>
+    <string name="filter_by_all_categories">すべてのカテゴリ</string>
+    <string name="filter_by_selected_categories">%d個のカテゴリ選択中</string>
+    <string name="filter_by_all_statuses">すべてのステータス</string>
+    <string name="filter_by_selected_statuses">%d個のステータス選択中</string>
+    <string name="sort_by_default_order">デフォルト順</string>
+    <string name="sort_by_custom_order">カスタム順：%s</string>
+    <string name="advanced_filter_tip">ヒント：複数のフィルターを組み合わせることで、精度の高い結果が得られます</string>
+    <string name="advanced_filter_empty_result">現在のフィルター条件に一致するダウンロードがありません</string>
+    <string name="advanced_filter_clear_all">すべてのフィルターをクリア</string>
+    <string name="advanced_filter_apply_changes">フィルター変更を適用</string>
+    <string name="advanced_filter_discard_changes">変更を破棄</string>
+    <string name="advanced_filter_confirm_reset">すべてのフィルターをデフォルト値にリセットしますか？</string>
 
     <!-- Download scan strings -->
     <string name="scan_download_files_scanning">ダウンロードディレクトリをスキャン中...</string>

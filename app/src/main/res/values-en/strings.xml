@@ -835,6 +835,12 @@
     <string name="subscription_success">%s success</string>
     <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
     <string name="import_local_archive">Import local archive</string>
+    <string name="repair_gallery_info">Repair gallery info</string>
+    <string name="repair_gallery_info_success">Gallery info repaired successfully</string>
+    <string name="repair_gallery_info_failed">Failed to repair gallery info</string>
+    <string name="repair_gallery_info_confirm">Are you sure you want to repair the selected gallery info?</string>
+    <string name="gallery_deleted_alert">Gallery Deleted</string>
+    <string name="gallery_deleted_message">This gallery has been deleted on E-Hentai, but local cached information is preserved.</string>
     <string name="import_archive_title">Select archive file</string>
     <string name="import_archive_failed">Failed to import archive</string>
     <string name="archive_permission_lost">Permission to access archive has been lost. Please re-import the archive file.</string>

@@ -23,6 +23,12 @@
         android:summary="@string/settings_advanced_save_parse_error_body_summary"
         android:title="@string/settings_advanced_save_parse_error_body" />
 
+    <Preference
+        android:key="user_agent"
+        android:title="@string/settings_advanced_user_agent"
+        android:summary="@string/settings_advanced_user_agent_summary"
+        app:allowDividerAbove="true" />
+
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
         android:key="save_crash_log"
@@ -129,6 +135,24 @@
         android:key="wifi_client"
         android:summary="@string/settings_advanced_wifi_client_summary"
         android:title="@string/settings_advanced_wifi_client"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="background_tasks"
+        android:summary="@string/settings_advanced_background_tasks_summary"
+        android:title="@string/settings_advanced_background_tasks"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="transfer_service"
+        android:summary="@string/settings_transfer_summary"
+        android:title="@string/settings_transfer"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="network_diagnostic"
+        android:summary="@string/settings_advanced_network_diagnostic_summary"
+        android:title="@string/settings_advanced_network_diagnostic"
         app:allowDividerAbove="true" />
 
     <com.hippo.ehviewer.preference.DatabaseViewerPreference

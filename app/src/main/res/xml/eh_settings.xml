@@ -133,14 +133,22 @@
         app:entries="@array/history_info_size_entries"
         app:entryValues="@array/history_info_size_entry_values" />
 
-    <com.hippo.preference.ListPreference
-        android:defaultValue="0"
-        android:key="thumb_resolution"
-        android:summary="@string/settings_eh_thumb_resolution_summary"
-        android:title="@string/settings_eh_thumb_resolution"
-        app:allowDividerAbove="true"
-        app:entries="@array/thumb_resolution_entries"
-        app:entryValues="@array/thumb_resolution_entry_values" />
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="manual_thumb_resolution"
+        android:title="@string/settings_eh_manual_thumb_resolution"
+        android:summary="@string/settings_eh_manual_thumb_resolution_summary"
+        app:allowDividerAbove="true" />
+
+    <com.hippo.ehviewer.preference.SliderPreference
+        android:key="custom_thumb_resolution"
+        android:title="@string/settings_eh_custom_thumb_resolution"
+        android:dependency="manual_thumb_resolution"
+        app:minValue="250"
+        app:maxValue="350"
+        app:stepSize="100"
+        app:unit="px"
+        app:showValue="true" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
@@ -182,6 +190,22 @@
         android:defaultValue="true"
         android:key="show_gallery_comment"
         android:title="@string/settings_eh_show_gallery_comment" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="enable_comment_rating_filter"
+        android:title="@string/settings_eh_enable_comment_rating_filter"
+        android:summary="@string/settings_eh_enable_comment_rating_filter_summary" />
+
+    <com.hippo.ehviewer.preference.SliderPreference
+        android:key="comment_rating_threshold"
+        android:title="@string/settings_eh_comment_rating_threshold"
+        android:dependency="enable_comment_rating_filter"
+        app:minValue="-100"
+        app:maxValue="100"
+        app:stepSize="10"
+        app:unit="分"
+        app:showValue="true" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"

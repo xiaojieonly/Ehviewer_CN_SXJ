@@ -17,9 +17,7 @@
 package com.hippo.ehviewer.preference;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Parcel;
 import androidx.preference.Preference;
 import android.util.AttributeSet;
@@ -27,6 +25,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
+import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhEngine;
@@ -35,6 +34,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
+import com.hippo.ehviewer.task.BackgroundTask;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.IOUtils;
@@ -43,11 +43,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 import okhttp3.OkHttpClient;
 
 public class RestoreDownloadPreference extends Preference {
 
-    private AsyncTask<Void, Object, Object> mTask;
+    private Future<?> mTask;
+    private BackgroundTaskManager mTaskManager;
 
     public RestoreDownloadPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -61,162 +63,265 @@ public class RestoreDownloadPreference extends Preference {
     protected void onClick() {
         super.onClick();
         if (mTask == null) {
-            mTask = new RestoreTask(getContext()).execute();
+            Context context = getContext();
+            if (context != null) {
+                mTaskManager = BackgroundTaskManager.getInstance();
+                RestoreDownloadTask task = new RestoreDownloadTask(context);
+                mTask = task.execute();
+            }
         }
     }
 
-    private class RestoreTask extends AsyncTask<Void, Object, Object> {
+    /**
+     * 恢复下载项任务
+     * 恢复有完整.ehviewer元数据文件的下载项
+     */
+    private static class RestoreDownloadTask {
+        
+        private final Context context;
+        private final EhApplication application;
+        private final DownloadManager downloadManager;
+        private final OkHttpClient httpClient;
+        private final BackgroundTaskManager taskManager;
+        
+        private volatile boolean isPaused = false;
+        private volatile boolean isCancelled = false;
+        private BackgroundTask.ProgressListener progressListener;
+        private LogListener logListener;
+        
+        private int currentProgress = 0;
+        private int totalProgress = 0;
+        private int successCount = 0;
+        private int foundCount = 0;
 
-        private final Context mContext;
-        private final EhApplication mApplication;
-        private final DownloadManager mManager;
-        private final OkHttpClient mHttpClient;
-        private ProgressDialog mProgressDialog;
-
-        public RestoreTask(@NonNull Context context) {
-            mContext = context;
-            mApplication = (EhApplication) context.getApplicationContext();
-            mManager = EhApplication.getDownloadManager(mApplication);
-            mHttpClient = EhApplication.getOkHttpClient(mApplication);
+        public RestoreDownloadTask(@NonNull Context context) {
+            this.context = context;
+            this.application = (EhApplication) context.getApplicationContext();
+            this.downloadManager = EhApplication.getDownloadManager(application);
+            this.httpClient = EhApplication.getOkHttpClient(application);
+            this.taskManager = BackgroundTaskManager.getInstance();
         }
+        
+        /**
+         * 执行任务并返回Future对象
+         */
+        public Future<?> execute() {
+            String taskName = application.getString(R.string.settings_download_restore_download_items);
+            String taskDesc = application.getString(R.string.settings_download_restore_download_items_summary);
+            
+            // 添加到任务状态管理器
+            String taskId = taskManager.getTaskStatusManager().addTask(taskName, taskDesc, null);
+            
+            return taskManager.submitRestoreDownloadTask(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        taskManager.getTaskStatusManager().appendTaskLog(taskId, "开始恢复下载项");
+                        
+                        UniFile downloadDir = Settings.getDownloadLocation();
+                        if (downloadDir == null) {
+                            taskManager.getTaskStatusManager().appendTaskLog(taskId, "下载目录无效");
+                            taskManager.getTaskStatusManager().markTaskError(taskId, "下载目录无效");
+                            return;
+                        }
+                        
+                        UniFile[] files = downloadDir.listFiles();
+                        if (files == null) {
+                            taskManager.getTaskStatusManager().appendTaskLog(taskId, "无法列出下载目录文件");
+                            taskManager.getTaskStatusManager().markTaskError(taskId, "无法列出下载目录文件");
+                            return;
+                        }
+                        
+                        totalProgress = files.length;
+                        currentProgress = 0;
+                        foundCount = 0;
+                        successCount = 0;
+                        
+                        List<RestoreItem> restoreItemList = new ArrayList<>();
+                        
+                        // 扫描阶段
+                        taskManager.getTaskStatusManager().appendTaskLog(taskId, 
+                            "开始扫描下载目录，共 " + files.length + " 个文件夹");
+                        
+                        for (int i = 0; i < files.length; i++) {
+                            if (isCancelled) {
+                                taskManager.getTaskStatusManager().appendTaskLog(taskId, "任务已取消");
+                                taskManager.getTaskStatusManager().markTaskError(taskId, "任务已取消");
+                                return;
+                            }
+                            
+                            // 检查暂停状态
+                            while (isPaused && !isCancelled) {
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    taskManager.getTaskStatusManager().appendTaskLog(taskId, "任务被中断");
+                                    taskManager.getTaskStatusManager().markTaskError(taskId, "任务被中断");
+                                    return;
+                                }
+                            }
+                            
+                            UniFile file = files[i];
+                            RestoreItem restoreItem = getRestoreItem(file);
+                            if (restoreItem != null) {
+                                restoreItemList.add(restoreItem);
+                                foundCount++;
+                            }
+                            
+                            currentProgress = i + 1;
+                            String progressDetail = "扫描中 " + currentProgress + "/" + totalProgress + "，找到 " + foundCount + " 个可恢复项";
+                            taskManager.getTaskStatusManager().updateTaskProgress(taskId, currentProgress, totalProgress, progressDetail);
+                        }
+                        
+                        if (restoreItemList.isEmpty()) {
+                            taskManager.getTaskStatusManager().appendTaskLog(taskId, "未找到可恢复的下载项");
+                            taskManager.getTaskStatusManager().markTaskCompleted(taskId);
+                            
+                            // 在主线程显示Toast
+                            taskManager.runOnUiThread(() -> {
+                                Toast.makeText(application, R.string.settings_download_restore_not_found, 
+                                    Toast.LENGTH_SHORT).show();
+                            });
+                            return;
+                        }
+                        
+                        // 第二阶段：获取画廊信息
+                        taskManager.getTaskStatusManager().appendTaskLog(taskId, 
+                            "找到 " + foundCount + " 个可恢复项，正在获取画廊信息...");
+                        taskManager.getTaskStatusManager().updateTaskProgress(taskId, -1, -1, "获取画廊信息中...");
+                        
+                        List<GalleryInfo> galleryList;
+                        try {
+                            galleryList = EhEngine.fillGalleryListByApi(null, httpClient, 
+                                new ArrayList<GalleryInfo>(restoreItemList), EhUrl.getReferer());
+                        } catch (Throwable e) {
+                            ExceptionUtils.throwIfFatal(e);
+                            taskManager.getTaskStatusManager().appendTaskLog(taskId, "获取画廊信息失败: " + e.getMessage());
+                            taskManager.getTaskStatusManager().markTaskError(taskId, e.getMessage());
+                            
+                            // 在主线程显示Toast
+                            taskManager.runOnUiThread(() -> {
+                                Toast.makeText(application, R.string.settings_download_restore_failed, 
+                                    Toast.LENGTH_SHORT).show();
+                            });
+                            return;
+                        }
+                        
+                        // 第三阶段：添加到下载管理器
+                        if (galleryList != null) {
+                            for (int i = 0; i < restoreItemList.size() && i < galleryList.size(); i++) {
+                                RestoreItem item = restoreItemList.get(i);
+                                GalleryInfo gallery = galleryList.get(i);
+                                if (gallery != null && gallery.title != null) {
+                                    // 复制画廊信息
+                                    item.title = gallery.title;
+                                    item.thumb = gallery.thumb;
+                                    item.category = gallery.category;
+                                    item.posted = gallery.posted;
+                                    item.uploader = gallery.uploader;
+                                    item.rating = gallery.rating;
+                                    item.pages = gallery.pages;
+                                    
+                                    // 添加到下载管理器
+                                    downloadManager.addDownload(item, null);
+                                    EhDB.putDownloadDirname(item.gid, item.dirname);
+                                    successCount++;
+                                    
+                                    taskManager.getTaskStatusManager().appendTaskLog(taskId, 
+                                        "已恢复: " + item.title + " (GID: " + item.gid + ")");
+                                }
+                            }
+                        }
+                        
+                        String finalResult = "恢复完成: 成功 " + successCount + "/" + foundCount + " 个";
+                        taskManager.getTaskStatusManager().appendTaskLog(taskId, finalResult);
+                        taskManager.getTaskStatusManager().markTaskCompleted(taskId);
+                        
+                        // 在主线程显示Toast
+                        taskManager.runOnUiThread(() -> {
+                            Toast.makeText(application,
+                                    application.getString(R.string.settings_download_restore_successfully, successCount),
+                                    Toast.LENGTH_SHORT).show();
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mProgressDialog = new ProgressDialog(mContext);
-            mProgressDialog.setTitle(R.string.settings_download_restore_download_items);
-            mProgressDialog.setIndeterminate(false);
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mProgressDialog.setCancelable(false);
-            mProgressDialog.show();
+                            if (context instanceof Activity) {
+                                ((Activity) context).setResult(Activity.RESULT_OK);
+                            }
+                        });
+                        
+                    } catch (Exception e) {
+                        taskManager.getTaskStatusManager().appendTaskLog(taskId, "恢复任务出错: " + e.getMessage());
+                        taskManager.getTaskStatusManager().markTaskError(taskId, e.getMessage());
+                        
+                        // 在主线程显示Toast
+                        taskManager.runOnUiThread(() -> {
+                            Toast.makeText(application, R.string.settings_download_restore_failed, 
+                                Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+            });
         }
-
+        
         private RestoreItem getRestoreItem(UniFile file) {
-            if (null == file || !file.isDirectory()) {
+            if (file == null || !file.isDirectory()) {
                 return null;
             }
+            
             UniFile siFile = file.findFile(SpiderQueen.SPIDER_INFO_FILENAME);
-            if (null == siFile) {
+            if (siFile == null) {
                 return null;
             }
-
-            InputStream is = null;
+            
+            InputStream inputStream = null;
             try {
-                is = siFile.openInputStream();
-                SpiderInfo spiderInfo = SpiderInfo.read(is);
+                inputStream = siFile.openInputStream();
+                SpiderInfo spiderInfo = SpiderInfo.read(inputStream);
                 if (spiderInfo == null) {
                     return null;
                 }
+                
                 long gid = spiderInfo.gid;
-                if (mManager.containDownloadInfo(gid)) {
+                if (downloadManager.containDownloadInfo(gid)) {
                     return null;
                 }
-                String token = spiderInfo.token;
+                
                 RestoreItem restoreItem = new RestoreItem();
                 restoreItem.gid = gid;
-                restoreItem.token = token;
+                restoreItem.token = spiderInfo.token;
                 restoreItem.dirname = file.getName();
                 return restoreItem;
             } catch (IOException e) {
                 return null;
             } finally {
-                IOUtils.closeQuietly(is);
+                IOUtils.closeQuietly(inputStream);
             }
         }
-
-        @Override
-        protected Object doInBackground(Void... params) {
-            UniFile dir = Settings.getDownloadLocation();
-            if (null == dir) {
-                return null;
-            }
-
-            List<RestoreItem> restoreItemList = new ArrayList<>();
-
-            UniFile[] files = dir.listFiles();
-            if (files == null) {
-                return null;
-            }
-
-            int total = files.length;
-            publishProgress(0, total);
-
-            for (int i = 0; i < total; i++) {
-                UniFile file = files[i];
-                RestoreItem restoreItem = getRestoreItem(file);
-                if (null != restoreItem) {
-                    restoreItemList.add(restoreItem);
-                }
-                publishProgress(i + 1, total);
-            }
-
-            if (restoreItemList.isEmpty()) {
-                return Collections.EMPTY_LIST;
-            }
-
-            publishProgress(-1, -1);
-
-            try {
-                return EhEngine.fillGalleryListByApi(null, mHttpClient, new ArrayList<GalleryInfo>(restoreItemList), EhUrl.getReferer());
-            } catch (Throwable e) {
-                ExceptionUtils.throwIfFatal(e);
-                e.printStackTrace();
-                return null;
+        
+        private void logStep(String message) {
+            if (logListener != null) {
+                logListener.onLog(message);
             }
         }
-
-        @Override
-        protected void onProgressUpdate(Object... values) {
-            super.onProgressUpdate(values);
-            if (mProgressDialog != null) {
-                int progress = (Integer) values[0];
-                int max = (Integer) values[1];
-                if (progress == -1 && max == -1) {
-                    mProgressDialog.setIndeterminate(true);
-                    mProgressDialog.setMessage(mApplication.getString(R.string.settings_download_restore_download_items_get_gallery_info));
-                } else {
-                    mProgressDialog.setIndeterminate(false);
-                    mProgressDialog.setMax(max);
-                    mProgressDialog.setProgress(progress);
-                }
+        
+        /**
+         * 获取恢复结果统计
+         */
+        public RestoreResult getRestoreResult() {
+            return new RestoreResult(foundCount, successCount);
+        }
+        
+        public static class RestoreResult {
+            public final int foundCount;
+            public final int successCount;
+            
+            public RestoreResult(int foundCount, int successCount) {
+                this.foundCount = foundCount;
+                this.successCount = successCount;
             }
         }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        protected void onPostExecute(Object o) {
-            mTask = null;
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
-            if (!(o instanceof List)) {
-                Toast.makeText(mApplication, R.string.settings_download_restore_failed, Toast.LENGTH_SHORT).show();
-            } else {
-                List<RestoreItem> list = (List<RestoreItem>) o;
-                if (list.isEmpty()) {
-                    Toast.makeText(mApplication, R.string.settings_download_restore_not_found, Toast.LENGTH_SHORT).show();
-                } else {
-                    int count = 0;
-                    for (int i = 0, n = list.size(); i < n; i++) {
-                        RestoreItem item = list.get(i);
-                        // Avoid failed gallery info
-                        if (null != item.title) {
-                            // Put to download
-                            mManager.addDownload(item, null);
-                            // Put download dir to DB
-                            EhDB.putDownloadDirname(item.gid, item.dirname);
-                            count++;
-                        }
-                    }
-                    Toast.makeText(mApplication,
-                            mApplication.getString(R.string.settings_download_restore_successfully, count),
-                            Toast.LENGTH_SHORT).show();
-
-                    if (mContext instanceof Activity) {
-                        ((Activity) mContext).setResult(Activity.RESULT_OK);
-                    }
-                }
-            }
+        
+        public interface LogListener {
+            void onLog(String message);
         }
     }
 

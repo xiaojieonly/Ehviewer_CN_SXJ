@@ -35,6 +35,7 @@ import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,6 +60,8 @@ import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.transition.TransitionInflater;
+import android.os.AsyncTask;
+import android.view.MenuItem;
 
 import com.hippo.android.resource.AttrResources;
 import com.hippo.beerbelly.BeerBelly;
@@ -91,9 +94,11 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadTorrentManager;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
+import com.hippo.ehviewer.ui.dialog.DownloadProgressDialog;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
@@ -112,6 +117,7 @@ import com.hippo.ehviewer.ui.scene.history.HistoryScene;
 import com.hippo.ehviewer.util.ClipboardUtil;
 import com.hippo.ehviewer.widget.ArchiverDownloadProgress;
 import com.hippo.ehviewer.widget.GalleryRatingBar;
+import com.hippo.ehviewer.cache.GalleryCacheManager;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
@@ -804,6 +810,42 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     private boolean request() {
+        long gid = getGid();
+        if (gid != -1) {
+            // 检查是否是下载项目，如果是则先尝试读取缓存
+            Context context = getEHContext();
+            if (context != null) {
+                DownloadManager downloadManager = EhApplication.getDownloadManager();
+                if (downloadManager.containDownloadInfo(gid)) {
+                    android.util.Log.d("GalleryDetailScene", "检测到下载项目，尝试读取缓存: GID " + gid);
+                    
+                    GalleryCacheManager cacheManager = GalleryCacheManager.getInstance(context);
+                    GalleryDetail cachedDetail = cacheManager.readGalleryCache(gid);
+                    
+                    if (cachedDetail != null) {
+                        android.util.Log.d("GalleryDetailScene", "成功读取缓存: " + cachedDetail.title);
+                        
+                        // 检查是否已被删除
+                        if (cacheManager.isGalleryMarkedAsDeleted(gid)) {
+                            android.util.Log.d("GalleryDetailScene", "画廊已被标记为删除: " + cachedDetail.title);
+                            // 显示删除警告
+                            showGalleryDeletedAlert(cachedDetail);
+                        }
+                        
+                        // 使用缓存数据
+                        onGetGalleryDetailSuccess(cachedDetail);
+                        
+                        // 仍然请求网络数据以检查更新
+                        String url = getGalleryDetailUrl();
+                        request(url, GetGalleryDetailListener.RESULT_UPDATE);
+                        return true;
+                    } else {
+                        android.util.Log.d("GalleryDetailScene", "缓存不存在，请求网络数据: GID " + gid);
+                    }
+                }
+            }
+        }
+        
         String url = getGalleryDetailUrl();
         return request(url, GetGalleryDetailListener.RESULT_DETAIL);
     }
@@ -1324,6 +1366,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         PopupMenu popup = new PopupMenu(context, mOtherActions, Gravity.TOP);
         mPopupMenu = popup;
         popup.getMenuInflater().inflate(R.menu.scene_gallery_detail, popup.getMenu());
+        
+        // 如果是已下载的画廊，显示修复选项
+        MenuItem repairItem = popup.getMenu().findItem(R.id.action_repair_gallery_info);
+        if (repairItem != null && mDownloadInfo != null) {
+            repairItem.setVisible(true);
+        }
+        
         popup.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.action_open_in_other_app:
@@ -1342,6 +1391,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 case R.id.action_version_history:
                     checkVersionHistory();
                     break;
+                case R.id.action_repair_gallery_info:
+                    repairGalleryInfo();
+                    break;
             }
             return true;
         });
@@ -1353,7 +1405,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             return null;
         }
         for (GalleryTagGroup tagGroup : tagGroups) {
-            if ("artist".equals(tagGroup.groupName) && tagGroup.size() > 0) {
+            if (tagGroup != null && "artist".equals(tagGroup.groupName) && tagGroup.size() > 0) {
                 return tagGroup.getTagAt(0);
             }
         }
@@ -1713,9 +1765,23 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         GalleryInfo galleryInfo = getGalleryInfo();
         if (galleryInfo != null) {
             if (EhApplication.getDownloadManager(mContext).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
-                // 显示准备下载的Toast提示
-                Toast.makeText(mContext, getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
-                CommonOperations.startDownload(activity, galleryInfo, false);
+                // 显示下载进度对话框
+                DownloadProgressDialog progressDialog = DownloadProgressDialog.show(mContext, 
+                    getString(R.string.preparing_download));
+                
+                // 在后台线程处理下载，避免阻塞UI
+                new Thread(() -> {
+                    try {
+                        CommonOperations.startDownload(activity, galleryInfo, false);
+                    } finally {
+                        // 确保对话框在主线程中被关闭
+                        SimpleHandler.getInstance().post(() -> {
+                            if (progressDialog != null && progressDialog.isShowing()) {
+                                progressDialog.dismiss();
+                            }
+                        });
+                    }
+                }).start();
             } else {
                 new AlertDialog.Builder(mContext)
                         .setTitle(R.string.download_remove_dialog_title)
@@ -1881,7 +1947,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mGalleryDetail = result;
         updateDownloadState();
         if (mDownloadState != DownloadInfo.STATE_INVALID) {
-            if (mDownloadInfo != null && !mDownloadInfo.thumb.equals(result.thumb) && mDownloadInfo.gid == result.gid) {
+            if (mDownloadInfo != null && !java.util.Objects.equals(mDownloadInfo.thumb, result.thumb) && mDownloadInfo.gid == result.gid) {
                 useNetWorkLoadThumb = true;
                 mDownloadInfo.updateInfo(result);
                 mDownloadInfo.state = mDownloadState;
@@ -1890,6 +1956,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
         adjustViewVisibility(STATE_NORMAL, true);
         bindViewSecond();
+        
+        // 检查是否需要显示删除警告
+        if ("deleted".equals(result.visible)) {
+            showGalleryDeletedAlert(result);
+        }
+        
         if (myUpdateDialog != null && myUpdateDialog.autoDownload) {
             myUpdateDialog.autoDownload = false;
             mDownloadState = DownloadInfo.STATE_INVALID;
@@ -1910,6 +1982,24 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     protected void onGetGalleryDetailUpdateFailure(Exception e) {
         Analytics.recordException(e);
         adjustViewVisibility(STATE_NORMAL, true);
+    }
+
+    /**
+     * 显示画廊已删除的警告
+     */
+    private void showGalleryDeletedAlert(@NonNull GalleryDetail galleryDetail) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        
+        SimpleHandler.getInstance().post(() -> {
+            new AlertDialog.Builder(context)
+                    .setTitle("画廊已删除")
+                    .setMessage("该画廊在E-Hentai上已被删除，但保留了本地缓存信息。")
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+        });
     }
 
     private void onRateGallerySuccess(RateGalleryParser.Result result) {
@@ -2517,5 +2607,42 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         public boolean isInstance(SceneFragment scene) {
             return scene instanceof GalleryDetailScene;
         }
+    }
+
+    private void repairGalleryInfo() {
+        if (mDownloadInfo == null) {
+            showTip(R.string.error_cant_find_gallery, LENGTH_SHORT);
+            return;
+        }
+
+        // 确认对话框
+        new AlertDialog.Builder(getEHContext())
+                .setTitle(R.string.repair_gallery_info)
+                .setMessage(R.string.repair_gallery_info_confirm)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    // 在后台线程执行修复
+                    new AsyncTask<Void, Void, Boolean>() {
+                        @Override
+                        protected Boolean doInBackground(Void... voids) {
+                            try {
+                                DownloadManager downloadManager = EhApplication.getDownloadManager(requireContext());
+                                return downloadManager.repairGalleryInfo(mDownloadInfo.gid);
+                            } catch (Exception e) {
+                                return false;
+                            }
+                        }
+
+                        @Override
+                        protected void onPostExecute(Boolean success) {
+                            if (success) {
+                                showTip(R.string.repair_gallery_info_success, LENGTH_SHORT);
+                            } else {
+                                showTip(R.string.repair_gallery_info_failed, LENGTH_SHORT);
+                            }
+                        }
+                    }.execute();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 }

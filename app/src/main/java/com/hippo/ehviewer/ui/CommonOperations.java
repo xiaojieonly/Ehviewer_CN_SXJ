@@ -46,6 +46,7 @@ import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.GalleryActivity;
+import com.hippo.ehviewer.ui.dialog.DownloadProgressDialog;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.lib.yorozuya.SimpleHandler;
@@ -168,13 +169,23 @@ public final class CommonOperations {
 
     // TODO Add context if activity and context are different style
     public static void startDownload(final MainActivity activity, final List<GalleryInfo> galleryInfos, boolean forceDefault) {
-        // 显示准备下载的Toast提示，避免用户感觉界面卡死
-        SimpleHandler.getInstance().post(() -> {
-            Toast.makeText(activity, activity.getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
-        });
+        // 如果是多个画廊，显示进度对话框
+        final boolean isMultiDownload = galleryInfos.size() > 1;
+        final DownloadProgressDialog progressDialog;
+        
+        if (isMultiDownload) {
+            progressDialog = DownloadProgressDialog.show(activity, 
+                activity.getString(R.string.download_multi_select_processing));
+        } else {
+            progressDialog = null;
+            // 显示准备下载的Toast提示，避免用户感觉界面卡死
+            SimpleHandler.getInstance().post(() -> {
+                Toast.makeText(activity, activity.getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
+            });
+        }
         
         // 在后台线程执行耗时操作，避免阻塞主线程
-        SimpleHandler.getInstance().post(() -> {
+        new Thread(() -> {
             try {
                 final DownloadManager dm = EhApplication.getDownloadManager(activity);
 
@@ -284,7 +295,7 @@ public final class CommonOperations {
                                     // Notify
                                     activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
                                 }, activity.getString(R.string.remember_download_label), false)
-                                .setTitle(R.string.download)
+                                .setTitle(R.string.download_dialog_title)
                                 .show();
                     });
                 }
@@ -293,8 +304,17 @@ public final class CommonOperations {
                 SimpleHandler.getInstance().post(() -> {
                     Toast.makeText(activity, "启动下载失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
+            } finally {
+                // 确保对话框在主线程中被关闭
+                if (isMultiDownload && progressDialog != null) {
+                    SimpleHandler.getInstance().post(() -> {
+                        if (progressDialog.isShowing()) {
+                            progressDialog.dismiss();
+                        }
+                    });
+                }
             }
-        });
+        }).start();
     }
 
     /**

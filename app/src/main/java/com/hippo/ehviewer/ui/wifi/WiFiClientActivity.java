@@ -42,6 +42,7 @@ import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
@@ -49,6 +50,7 @@ import com.hippo.ehviewer.client.wifi.ListenerThread;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.ui.EhActivity;
 import com.hippo.util.ExecutorManager;
 import com.hippo.util.PermissionRequester;
 
@@ -61,7 +63,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WiFiClientActivity extends AppCompatActivity {
+public class WiFiClientActivity extends EhActivity {
 
     private final int pCode = 88888;
 
@@ -122,6 +124,12 @@ public class WiFiClientActivity extends AppCompatActivity {
         connectSocket();
         listenerThread = new ListenerThread(PORT, handler);
         listenerThread.start();
+    }
+
+    @Override
+    protected int getThemeResId(int theme) {
+        // 使用父类的默认实现，支持自适应主题切换
+        return super.getThemeResId(theme);
     }
 
     @Override

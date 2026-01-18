@@ -20,8 +20,9 @@ import android.os.Bundle;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.StyleRes;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.database.DatabaseManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +32,16 @@ import java.util.Map;
  * 数据库查看Activity
  * 显示应用内所有数据库的版本、表、列和数据
  */
-public class DatabaseViewerActivity extends AppCompatActivity {
+public class DatabaseViewerActivity extends EhActivity {
     private ExpandableListView mExpandableListView;
     private DatabaseManager mDatabaseManager;
     private DatabaseExpandableAdapter mAdapter;
+
+    @Override
+    protected int getThemeResId(int theme) {
+        // 使用父类的默认实现，支持自适应主题切换
+        return super.getThemeResId(theme);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -48,12 +48,6 @@
         app:fragment="com.hippo.ehviewer.ui.fragment.AdvancedFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
-        android:icon="@drawable/v_adb_primary_x24"
-        android:title="@string/settings_transfer"
-        app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.TransferFragment" />
-
-    <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_info_primary_x24"
         android:title="@string/settings_about"
         app:allowDividerAbove="true"

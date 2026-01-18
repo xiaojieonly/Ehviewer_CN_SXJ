@@ -16,6 +16,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.download.DownloadLogger;
+import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -50,9 +52,18 @@ public class BackgroundTaskManager {
     // IO密集型任务线程池（用于网络或文件IO）
     private final ExecutorService mIoExecutor;
     
+    // 网络线程池（专门用于与Eh交互）
+    private final ExecutorService mNetworkExecutor;
+    
     private NotificationManager mNotificationManager;
     private boolean mForegroundServiceRunning = false;
     private final AtomicInteger mActiveTaskCount = new AtomicInteger(0);
+    
+    // 下载日志记录器
+    private final DownloadLogger mDownloadLogger;
+    
+    // 任务状态管理器
+    private final BackgroundTaskStatusManager mTaskStatusManager;
     
     public static synchronized void initialize(Context context) {
         if (sInstance == null) {
@@ -70,6 +81,12 @@ public class BackgroundTaskManager {
     private BackgroundTaskManager(Context context) {
         mContext = context;
         mMainHandler = new Handler(Looper.getMainLooper());
+        
+        // 初始化下载日志记录器
+        mDownloadLogger = DownloadLogger.getInstance();
+        
+        // 初始化任务状态管理器
+        mTaskStatusManager = BackgroundTaskStatusManager.getInstance();
         
         // CPU线程池：核心线程数 = CPU核心数，最大线程数 = CPU核心数 * 2
         int cpuCount = Runtime.getRuntime().availableProcessors();
@@ -91,11 +108,35 @@ public class BackgroundTaskManager {
         });
         
         // IO线程池：用于文件IO、网络请求等
-        mIoExecutor = Executors.newFixedThreadPool(4, r -> {
-            Thread thread = new Thread(r, "BackgroundTaskManager-IO");
-            thread.setPriority(Thread.MIN_PRIORITY);
-            return thread;
-        });
+        // 对于重建下载记录等IO密集型任务，使用更多线程
+        int ioCorePoolSize = Math.max(4, cpuCount);
+        int ioMaxPoolSize = cpuCount * 3;
+        mIoExecutor = new ThreadPoolExecutor(
+                ioCorePoolSize,
+                ioMaxPoolSize,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                r -> {
+                    Thread thread = new Thread(r, "BackgroundTaskManager-IO");
+                    thread.setPriority(Thread.NORM_PRIORITY - 1); // 稍微降低优先级
+                    return thread;
+                }
+        );
+        
+        // 网络线程池：专门用于与Eh交互
+        int networkCorePoolSize = Math.max(2, cpuCount / 2);
+        int networkMaxPoolSize = cpuCount;
+        mNetworkExecutor = new ThreadPoolExecutor(
+                networkCorePoolSize,
+                networkMaxPoolSize,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                r -> {
+                    Thread thread = new Thread(r, "BackgroundTaskManager-Network");
+                    thread.setPriority(Thread.NORM_PRIORITY);
+                    return thread;
+                }
+        );
         
         // 初始化通知通道
         initNotificationChannel();
@@ -159,6 +200,20 @@ public class BackgroundTaskManager {
      */
     public Future<?> submitIoTask(Runnable task) {
         return mIoExecutor.submit(task);
+    }
+    
+    /**
+     * 提交网络任务（专门用于与Eh交互）
+     */
+    public <T> Future<T> submitNetworkTask(Callable<T> task) {
+        return mNetworkExecutor.submit(task);
+    }
+    
+    /**
+     * 提交网络任务（无返回值）
+     */
+    public Future<?> submitNetworkTask(Runnable task) {
+        return mNetworkExecutor.submit(task);
     }
     
     /**
@@ -280,17 +335,28 @@ public class BackgroundTaskManager {
      * @return Future用于等待任务完成或取消任务
      */
     public Future<?> submitScanDownloadTask(@Nullable final DownloadedFileManager.ScanProgressListener progressListener) {
+        long startTime = System.currentTimeMillis();
+        mDownloadLogger.logBackgroundTaskStart("ScanDownload", "扫描下载文件");
+        
+        String taskName = mContext.getString(R.string.settings_download_scan_download_files);
+        String taskDescription = mContext.getString(R.string.settings_download_scan_download_files_summary);
+        
+        // 添加到任务状态管理器
+        String taskId = mTaskStatusManager.addTask(taskName, taskDescription, null);
+        
         return submitIoTask(() -> {
-            startForegroundTask(
-                    mContext.getString(R.string.settings_download_scan_download_files),
-                    mContext.getString(R.string.settings_download_scan_download_files_summary)
-            );
+            startForegroundTask(taskName, taskDescription);
             
             try {
                 DownloadedFileManager manager = DownloadedFileManager.getInstance();
                 manager.scanDownloadDirectories(new DownloadedFileManager.ScanProgressListener() {
                     @Override
                     public void onProgress(final int current, final int total) {
+                        mDownloadLogger.logBackgroundTaskProgress("ScanDownload", "扫描下载文件", current, total);
+                        
+                        // 更新任务进度
+                        mTaskStatusManager.updateTaskProgress(taskId, current, total);
+                        
                         runOnUiThread(() -> {
                             if (progressListener != null) {
                                 progressListener.onProgress(current, total);
@@ -300,6 +366,12 @@ public class BackgroundTaskManager {
 
                     @Override
                     public void onCompleted() {
+                        long totalTime = System.currentTimeMillis() - startTime;
+                        mDownloadLogger.logBackgroundTaskComplete("ScanDownload", "扫描下载文件", totalTime, true);
+                        
+                        // 标记任务完成
+                        mTaskStatusManager.markTaskCompleted(taskId);
+                        
                         runOnUiThread(() -> {
                             if (progressListener != null) {
                                 progressListener.onCompleted();
@@ -310,6 +382,13 @@ public class BackgroundTaskManager {
 
                     @Override
                     public void onError(final Exception e) {
+                        long totalTime = System.currentTimeMillis() - startTime;
+                        mDownloadLogger.logBackgroundTaskComplete("ScanDownload", "扫描下载文件", totalTime, false);
+                        mDownloadLogger.logDownloadError("ScanDownload", "扫描下载文件", e.getMessage(), e);
+                        
+                        // 标记任务出错
+                        mTaskStatusManager.markTaskError(taskId, e.getMessage());
+                        
                         runOnUiThread(() -> {
                             if (progressListener != null) {
                                 progressListener.onError(e);
@@ -320,6 +399,10 @@ public class BackgroundTaskManager {
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Error in scan download task", e);
+                
+                // 标记任务出错
+                mTaskStatusManager.markTaskError(taskId, e.getMessage());
+                
                 endForegroundTask("scan_download");
                 runOnUiThread(() -> {
                     if (progressListener != null) {
@@ -339,14 +422,39 @@ public class BackgroundTaskManager {
      * @return Future用于等待任务完成或取消任务
      */
     public Future<?> submitLongRunningTask(String taskName, String taskDescription, Runnable task) {
+        return submitLongRunningTask(taskName, taskDescription, task, null);
+    }
+
+    public Future<?> submitLongRunningTask(String taskName, String taskDescription, Runnable task, @Nullable String existingTaskId) {
+        // 添加到任务状态管理器（如果未提供现有任务ID）
+        final String taskId = existingTaskId != null ? existingTaskId : mTaskStatusManager.addTask(taskName, taskDescription, null);
+        
         return submitIoTask(() -> {
             startForegroundTask(taskName, taskDescription);
             try {
                 task.run();
+                // 标记任务完成
+                mTaskStatusManager.markTaskCompleted(taskId);
+            } catch (Exception e) {
+                // 标记任务出错
+                mTaskStatusManager.markTaskError(taskId, e.getMessage());
+                throw e;
             } finally {
                 endForegroundTask(taskName);
             }
         });
+    }
+    
+    /**
+     * 提交恢复下载项任务
+     * @return Future用于等待任务完成或取消任务
+     */
+    public Future<?> submitRestoreDownloadTask(Runnable task) {
+        return submitLongRunningTask(
+                mContext.getString(R.string.settings_download_restore_download_items),
+                mContext.getString(R.string.settings_download_restore_download_items_summary),
+                task
+        );
     }
     
     /**
@@ -363,12 +471,20 @@ public class BackgroundTaskManager {
     }
     
     /**
+     * 获取任务状态管理器
+     */
+    public BackgroundTaskStatusManager getTaskStatusManager() {
+        return mTaskStatusManager;
+    }
+    
+    /**
      * 关闭所有线程池
      */
     public void shutdown() {
         mCpuExecutor.shutdown();
         mDbExecutor.shutdown();
         mIoExecutor.shutdown();
+        mNetworkExecutor.shutdown();
         
         try {
             if (!mCpuExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
@@ -380,10 +496,14 @@ public class BackgroundTaskManager {
             if (!mIoExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
                 mIoExecutor.shutdownNow();
             }
+            if (!mNetworkExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
+                mNetworkExecutor.shutdownNow();
+            }
         } catch (InterruptedException e) {
             mCpuExecutor.shutdownNow();
             mDbExecutor.shutdownNow();
             mIoExecutor.shutdownNow();
+            mNetworkExecutor.shutdownNow();
             Thread.currentThread().interrupt();
         }
         

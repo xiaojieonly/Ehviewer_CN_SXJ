@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 网络信息显示 -->
+    <TextView
+        android:id="@+id/network_info_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="获取网络信息中..."
+        android:textSize="14sp"
+        android:textColor="?attr/colorOnBackground"
+        android:padding="12dp"
+        android:background="?attr/colorSurface"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 进度条 -->
+    <ProgressBar
+        android:id="@+id/diagnostic_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        android:layout_marginVertical="16dp" />
+
+    <!-- 诊断结果容器 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/diagnostic_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </ScrollView>
+
+</LinearLayout>

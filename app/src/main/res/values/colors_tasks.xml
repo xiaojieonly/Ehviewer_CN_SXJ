@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Task state colors -->
+    <color name="task_state_pending">#FF9800</color>
+    <color name="task_state_running">#4CAF50</color>
+    <color name="task_state_paused">#FF9800</color>
+    <color name="task_state_completed">#4CAF50</color>
+    <color name="task_state_failed">#F44336</color>
+    <color name="task_state_cancelled">#757575</color>
+</resources>

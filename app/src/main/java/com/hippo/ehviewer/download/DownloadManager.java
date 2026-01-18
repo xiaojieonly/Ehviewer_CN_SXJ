@@ -44,6 +44,13 @@ import com.hippo.ehviewer.dao.GalleryVersionMap;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
+import com.hippo.ehviewer.cache.GalleryCacheManager;
+import com.hippo.ehviewer.client.EhUrl;
+import com.hippo.ehviewer.client.EhEngine;
+import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.client.data.GalleryDetail;
+import com.hippo.ehviewer.client.data.GalleryTagGroup;
+import okhttp3.OkHttpClient;
 import com.hippo.lib.image.Image;
 //import com.hippo.lib.image.Image1;
 import com.hippo.unifile.UniFile;
@@ -108,9 +115,15 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     private SpiderQueen mCurrentSpider;
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(5);
+    
+    // 下载日志记录器
+    private final DownloadLogger mDownloadLogger = DownloadLogger.getInstance();
 
     public DownloadManager(Context context) {
         mContext = context;
+        
+        // 初始化下载日志记录器
+        DownloadLogger.initialize(context);
 
         // Get all labels
         List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
@@ -347,6 +360,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             info.finished = 0;
             info.downloaded = 0;
             info.legacy = -1;
+            info.time = System.currentTimeMillis(); // 设置下载开始时间
             
             Log.d(TAG, "[ENSURE] 初始化下载状态: " + galleryTitle);
             
@@ -378,6 +392,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         String galleryTitle = EhUtils.getSuitableTitle(galleryInfo);
         Log.d(TAG, "[START] 开始启动下载: " + galleryTitle + " (GID: " + galleryInfo.gid + ", 标签: " + label + ")");
         
+        // 记录下载开始日志
+        mDownloadLogger.logDownloadStart(String.valueOf(galleryInfo.gid), galleryTitle, galleryInfo.pages);
+        
         if (mCurrentTask != null && mCurrentTask.gid == galleryInfo.gid) {
             Log.d(TAG, "[START] 下载任务已是当前任务，跳过: " + galleryTitle);
             // It is current task
@@ -398,62 +415,20 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         if (info != null) { // Get it in download list
             Log.d(TAG, "[START] 在下载列表中找到任务: " + galleryTitle + " (当前状态: " + info.state + ")");
             
-            // 检查是否需要增量更新
-            if (Settings.getIncrementalDownloadUpdate()) {
-                Log.d(TAG, "[START] 增量下载更新功能已启用，检查是否存在同名画廊");
-                Long oldGid = findSameNameGallery(galleryInfo);
-                if (oldGid != null && oldGid != galleryInfo.gid) {
-                    Log.i(TAG, "[START] 发现同名画廊，准备进行增量更新: " + galleryTitle + 
-                              " (旧GID: " + oldGid + ", 新GID: " + galleryInfo.gid + ")");
-                    
-                    // 显示增量更新提示
-                    SimpleHandler.getInstance().post(() -> {
-                        Toast.makeText(mContext, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-                    });
-                    
-                    // 处理增量下载更新
-                    handleIncrementalUpdate(galleryInfo, oldGid);
-                    
-                    // 更新当前下载信息，保留进度
-                    DownloadInfo oldDownloadInfo = mAllInfoMap.get(oldGid);
-                    if (oldDownloadInfo != null) {
-                        // 保留旧画廊的进度信息
-                        info.finished = oldDownloadInfo.finished;
-                        info.downloaded = oldDownloadInfo.downloaded;
-                        info.total = oldDownloadInfo.total;
-                        info.legacy = oldDownloadInfo.legacy;
-                        
-                        // 在标题前添加增量更新标识
-                        String originalTitle = EhUtils.getSuitableTitle(info);
-                        info.title = "🔄 " + originalTitle;
-                        
-                        Log.d(TAG, "[START] 增量更新 - 保留的进度信息: 完成=" + info.finished + 
-                                  ", 下载=" + info.downloaded + ", 总计=" + info.total + ", 剩余=" + info.legacy);
-                        
-                        // 更新数据库
-                        EhDB.putDownloadInfo(info);
-                        Log.d(TAG, "[START] 更新增量更新信息到数据库: " + galleryTitle);
-                        
-                        // 通知界面更新
-                        List<DownloadInfo> list = getInfoListForLabel(info.label);
-                        if (list != null) {
-                            for (DownloadInfoListener l : mDownloadInfoListeners) {
-                                l.onUpdate(info, list, mWaitList);
-                            }
-                            Log.d(TAG, "[START] 已通知界面更新增量下载信息: " + galleryTitle);
-                        }
-                    }
-                } else {
-                    Log.d(TAG, "[START] 未发现需要更新的同名画廊: " + galleryTitle);
-                }
-            }
-            
-            if (info.state != DownloadInfo.STATE_WAIT) {
+            // 先设置为等待状态，再进行其他检测
+            if (info.state != DownloadInfo.STATE_WAIT && info.state != DownloadInfo.STATE_DOWNLOAD) {
                 // Set state DownloadInfo.STATE_WAIT
                 info.state = DownloadInfo.STATE_WAIT;
                 Log.d(TAG, "[START] 设置状态为等待: " + galleryTitle);
                 // Add to wait list
                 mWaitList.add(info);
+                
+                // Apply queue order if needed
+                int downloadQueueOrder = getDownloadQueueOrderSafely();
+                if (downloadQueueOrder != Settings.DOWNLOAD_QUEUE_ORDER_DEFAULT) {
+                    sortDownloadList(mWaitList, downloadQueueOrder);
+                }
+                
                 // Update in DB
                 EhDB.putDownloadInfo(info);
                 Log.d(TAG, "[START] 更新数据库状态: " + galleryTitle);
@@ -464,11 +439,20 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         l.onUpdate(info, list, mWaitList);
                     }
                 }
-                // Make sure download is running
-                ensureDownload();
-                Log.d(TAG, "[START] 确保下载正在运行: " + galleryTitle);
+                
+                // 创建final副本以供匿名内部类使用
+                final DownloadInfo finalInfo = info;
+                final GalleryInfo finalGalleryInfo = galleryInfo;
+                
+                // 在后台线程中进行增量更新检测
+                ExecutorManager.getBackgroundExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        performIncrementalUpdateCheck(finalInfo, finalGalleryInfo);
+                    }
+                });
             } else {
-                Log.d(TAG, "[START] 任务已在等待队列中: " + galleryTitle);
+                Log.d(TAG, "[START] 任务已在等待队列中或正在下载: " + galleryTitle);
             }
         } else {
             Log.d(TAG, "[START] 创建新的下载任务: " + galleryTitle);
@@ -546,6 +530,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
             // Add to wait list
             mWaitList.add(info);
+            
+            // Apply queue order if needed
+            int downloadQueueOrder = getDownloadQueueOrderSafely();
+            if (downloadQueueOrder != Settings.DOWNLOAD_QUEUE_ORDER_DEFAULT) {
+                sortDownloadList(mWaitList, downloadQueueOrder);
+            }
 
             // Save to
             EhDB.putDownloadInfo(info);
@@ -571,15 +561,29 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         boolean update = false;
         boolean downloadOrder = Settings.getDownloadOrder();
         
+        // 获取下载队列顺序设置
+        int downloadQueueOrder = getDownloadQueueOrderSafely();
+        
         // 检查是否启用增量下载更新
         boolean incrementalUpdateEnabled = Settings.getIncrementalDownloadUpdate();
         
+        // 获取范围内的下载信息并排序
+        List<DownloadInfo> rangeDownloadList = new ArrayList<>();
+        for (int i = 0, n = gidList.size(); i < n; i++) {
+            long gid = gidList.get(i);
+            DownloadInfo info = mAllInfoMap.get(gid);
+            if (info != null && (info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED)) {
+                rangeDownloadList.add(info);
+            }
+        }
+        
+        // 应用队列顺序排序
+        sortDownloadList(rangeDownloadList, downloadQueueOrder);
+        
         if (downloadOrder) {
-            for (int i = 0, n = gidList.size(); i < n; i++) {
-                long gid = gidList.get(i);
-                DownloadInfo info = mAllInfoMap.get(gid);
+            for (DownloadInfo info : rangeDownloadList) {
                 if (null == info) {
-                    Log.d(TAG, "[RANGE] Can't get download info with gid: " + gid);
+                    Log.d(TAG, "[RANGE] Can't get download info");
                     continue;
                 }
 
@@ -590,7 +594,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // 检查是否需要增量更新
                     if (incrementalUpdateEnabled) {
                         GalleryInfo galleryInfo = new GalleryInfo();
-                        galleryInfo.gid = gid;
+                        galleryInfo.gid = info.gid;
                         galleryInfo.title = info.title;
                         galleryInfo.thumb = info.thumb;
                         galleryInfo.uploader = info.uploader;
@@ -598,9 +602,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         galleryInfo.rating = info.rating;
                         
                         Long oldGid = findSameNameGallery(galleryInfo);
-                        if (oldGid != null && oldGid != gid) {
+                        if (oldGid != null && oldGid != info.gid) {
                             Log.i(TAG, "[RANGE] 批量下载发现增量更新: " + info.title + 
-                                      " (旧GID: " + oldGid + ", 新GID: " + gid + ")");
+                                      " (旧GID: " + oldGid + ", 新GID: " + info.gid + ")");
                             
                             // 处理增量下载更新
                             handleIncrementalUpdate(galleryInfo, oldGid);
@@ -633,11 +637,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 }
             }
         } else {
-            for (int i = gidList.size(), n = 0; i > n; i--) {
-                long gid = gidList.get(i - 1);
-                DownloadInfo info = mAllInfoMap.get(gid);
+            for (DownloadInfo info : rangeDownloadList) {
                 if (null == info) {
-                    Log.d(TAG, "[RANGE] Can't get download info with gid: " + gid);
+                    Log.d(TAG, "[RANGE] Can't get download info");
                     continue;
                 }
 
@@ -648,7 +650,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // 检查是否需要增量更新
                     if (incrementalUpdateEnabled) {
                         GalleryInfo galleryInfo = new GalleryInfo();
-                        galleryInfo.gid = gid;
+                        galleryInfo.gid = info.gid;
                         galleryInfo.title = info.title;
                         galleryInfo.thumb = info.thumb;
                         galleryInfo.uploader = info.uploader;
@@ -656,9 +658,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         galleryInfo.rating = info.rating;
                         
                         Long oldGid = findSameNameGallery(galleryInfo);
-                        if (oldGid != null && oldGid != gid) {
+                        if (oldGid != null && oldGid != info.gid) {
                             Log.i(TAG, "[RANGE] 批量下载发现增量更新: " + info.title + 
-                                      " (旧GID: " + oldGid + ", 新GID: " + gid + ")");
+                                      " (旧GID: " + oldGid + ", 新GID: " + info.gid + ")");
                             
                             // 处理增量下载更新
                             handleIncrementalUpdate(galleryInfo, oldGid);
@@ -720,7 +722,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 // Start all STATE_NONE and STATE_FAILED item
                 LinkedList<DownloadInfo> allInfoList = mAllInfoList;
                 LinkedList<DownloadInfo> waitList = mWaitList;
+                
+                // 获取下载队列顺序设置
+                int downloadQueueOrder = getDownloadQueueOrderSafely();
+                String queueOrderText = getQueueOrderText(downloadQueueOrder);
+                
+                // 获取正序倒序设置
                 boolean downloadOrder = Settings.getDownloadOrder();
+                String orderText = downloadOrder ? "正序" : "倒序";
                 
                 // 检查是否启用增量下载更新
                 boolean incrementalUpdateEnabled = Settings.getIncrementalDownloadUpdate();
@@ -734,52 +743,56 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 } else {
                     totalCount = 0;
                 }
+                
+                Log.i(TAG, "[START_ALL] 批量启动下载任务 - 总数: " + totalCount + 
+                          ", 队列顺序: " + queueOrderText + 
+                          ", 排序方式: " + orderText + 
+                          ", 增量更新: " + (incrementalUpdateEnabled ? "启用" : "禁用"));
 
+                // 根据队列顺序设置对下载列表进行排序
+                List<DownloadInfo> sortedDownloadList = new ArrayList<>();
+                for (DownloadInfo info : allInfoList) {
+                    if (info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED) {
+                        sortedDownloadList.add(info);
+                    }
+                }
+                
+                // 应用队列顺序排序
+                sortDownloadList(sortedDownloadList, downloadQueueOrder);
+                
+                // 记录排序结果
+                Log.d(TAG, "[START_ALL] 队列排序完成，排序前5项:");
+                for (int i = 0; i < Math.min(5, sortedDownloadList.size()); i++) {
+                    DownloadInfo info = sortedDownloadList.get(i);
+                    Log.d(TAG, "[START_ALL]   [" + (i+1) + "] " + EhUtils.getSuitableTitle(info) + 
+                              " (GID: " + info.gid + ", 页数: " + info.total + ", 状态: " + getStateString(info.state) + ")");
+                }
+
+                // 根据正序倒序设置决定遍历方向
                 if (downloadOrder) {
-                    for (DownloadInfo info : allInfoList) {
+                    Log.d(TAG, "[START_ALL] 使用正序处理下载列表");
+                    // 正序：从前往后处理
+                    for (int i = 0; i < sortedDownloadList.size(); i++) {
+                        DownloadInfo info = sortedDownloadList.get(i);
                         if (info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED) {
                             processedCount++;
                             final int current = processedCount;
                             final int total = totalCount;
                             
+                            String galleryTitle = EhUtils.getSuitableTitle(info);
+                            Log.d(TAG, "[START_ALL] [" + current + "/" + total + "] 正序处理: " + galleryTitle + 
+                                      " (GID: " + info.gid + ", 页数: " + info.total + ")");
+                            
+                            final String finalGalleryTitle = galleryTitle;
                             if (listener != null) {
                                 SimpleHandler.getInstance().post(() -> 
-                                    listener.onProgress(current, total, EhUtils.getSuitableTitle(info)));
+                                    listener.onProgress(current, total, finalGalleryTitle));
                             }
                             
                             // 检查是否需要增量更新
                             if (incrementalUpdateEnabled) {
-                                GalleryInfo galleryInfo = new GalleryInfo();
-                                galleryInfo.gid = info.gid;
-                                galleryInfo.title = info.title;
-                                galleryInfo.thumb = info.thumb;
-                                galleryInfo.uploader = info.uploader;
-                                galleryInfo.category = info.category;
-                                galleryInfo.rating = info.rating;
-                                
-                                Long oldGid = findSameNameGallery(galleryInfo);
-                                if (oldGid != null && oldGid != info.gid) {
-                                    Log.i(TAG, "[ALL] 全部下载发现增量更新: " + info.title + 
-                                              " (旧GID: " + oldGid + ", 新GID: " + info.gid + ")");
-                                    
-                                    // 处理增量下载更新
-                                    handleIncrementalUpdate(galleryInfo, oldGid);
-                                    
-                                    // 保留旧画廊的进度信息
-                                    DownloadInfo oldDownloadInfo = mAllInfoMap.get(oldGid);
-                                    if (oldDownloadInfo != null) {
-                                        info.finished = oldDownloadInfo.finished;
-                                        info.downloaded = oldDownloadInfo.downloaded;
-                                        info.total = oldDownloadInfo.total;
-                                        info.legacy = oldDownloadInfo.legacy;
-                                        
-                                        // 在标题前添加增量更新标识
-                                        String originalTitle = EhUtils.getSuitableTitle(info);
-                                        info.title = "🔄 " + originalTitle;
-                                        
-                                        Log.d(TAG, "[ALL] 全部增量更新 - 保留的进度信息: 完成=" + info.finished + 
-                                                  ", 下载=" + info.downloaded + ", 总计=" + info.total + ", 剩余=" + info.legacy);
-                                    }
+                                if (processIncrementalUpdate(info, "[ALL-正序]")) {
+                                    galleryTitle = EhUtils.getSuitableTitle(info); // 更新标题（可能已添加🔄标识）
                                 }
                             }
                             
@@ -788,57 +801,38 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             info.state = DownloadInfo.STATE_WAIT;
                             // Add to wait list
                             synchronized (waitList) {
-                                waitList.addFirst(info);
+                                waitList.addLast(info); // 正序时添加到末尾，保持顺序
                             }
                             // Update in DB
                             EhDB.putDownloadInfo(info);
+                            
+                            Log.d(TAG, "[START_ALL] [" + current + "/" + total + "] 已添加到等待队列: " + galleryTitle);
                         }
                     }
                 } else {
-                    for (DownloadInfo info : allInfoList) {
+                    Log.d(TAG, "[START_ALL] 使用倒序处理下载列表");
+                    // 倒序：从后往前处理
+                    for (int i = sortedDownloadList.size() - 1; i >= 0; i--) {
+                        DownloadInfo info = sortedDownloadList.get(i);
                         if (info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED) {
                             processedCount++;
                             final int current = processedCount;
                             final int total = totalCount;
                             
+                            String galleryTitle = EhUtils.getSuitableTitle(info);
+                            Log.d(TAG, "[START_ALL] [" + current + "/" + total + "] 倒序处理: " + galleryTitle + 
+                                      " (GID: " + info.gid + ", 页数: " + info.total + ")");
+                            
+                            final String finalGalleryTitle = galleryTitle;
                             if (listener != null) {
                                 SimpleHandler.getInstance().post(() -> 
-                                    listener.onProgress(current, total, EhUtils.getSuitableTitle(info)));
+                                    listener.onProgress(current, total, finalGalleryTitle));
                             }
                             
                             // 检查是否需要增量更新
                             if (incrementalUpdateEnabled) {
-                                GalleryInfo galleryInfo = new GalleryInfo();
-                                galleryInfo.gid = info.gid;
-                                galleryInfo.title = info.title;
-                                galleryInfo.thumb = info.thumb;
-                                galleryInfo.uploader = info.uploader;
-                                galleryInfo.category = info.category;
-                                galleryInfo.rating = info.rating;
-                                
-                                Long oldGid = findSameNameGallery(galleryInfo);
-                                if (oldGid != null && oldGid != info.gid) {
-                                    Log.i(TAG, "[ALL] 全部下载发现增量更新: " + info.title + 
-                                              " (旧GID: " + oldGid + ", 新GID: " + info.gid + ")");
-                                    
-                                    // 处理增量下载更新
-                                    handleIncrementalUpdate(galleryInfo, oldGid);
-                                    
-                                    // 保留旧画廊的进度信息
-                                    DownloadInfo oldDownloadInfo = mAllInfoMap.get(oldGid);
-                                    if (oldDownloadInfo != null) {
-                                        info.finished = oldDownloadInfo.finished;
-                                        info.downloaded = oldDownloadInfo.downloaded;
-                                        info.total = oldDownloadInfo.total;
-                                        info.legacy = oldDownloadInfo.legacy;
-                                        
-                                        // 在标题前添加增量更新标识
-                                        String originalTitle = EhUtils.getSuitableTitle(info);
-                                        info.title = "🔄 " + originalTitle;
-                                        
-                                        Log.d(TAG, "[ALL] 全部增量更新 - 保留的进度信息: 完成=" + info.finished + 
-                                                  ", 下载=" + info.downloaded + ", 总计=" + info.total + ", 剩余=" + info.legacy);
-                                    }
+                                if (processIncrementalUpdate(info, "[ALL-倒序]")) {
+                                    galleryTitle = EhUtils.getSuitableTitle(info); // 更新标题（可能已添加🔄标识）
                                 }
                             }
                             
@@ -847,15 +841,18 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             info.state = DownloadInfo.STATE_WAIT;
                             // Add to wait list
                             synchronized (waitList) {
-                                waitList.addFirst(info);
+                                waitList.addFirst(info); // 倒序时添加到开头，实现倒序效果
                             }
                             // Update in DB
                             EhDB.putDownloadInfo(info);
+                            
+                            Log.d(TAG, "[START_ALL] [" + current + "/" + total + "] 已添加到等待队列: " + galleryTitle);
                         }
                     }
                 }
 
                 final boolean finalUpdate = update;
+                final int finalProcessedCount = processedCount;
                 SimpleHandler.getInstance().post(() -> {
                     if (finalUpdate) {
                         // Notify Listener
@@ -866,12 +863,25 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         ensureDownload();
                     }
                     
+                    // 记录等待队列的最终状态
+                    Log.d(TAG, "[START_ALL] 批量启动完成，等待队列状态:");
+                    synchronized (mWaitList) {
+                        for (int i = 0; i < Math.min(5, mWaitList.size()); i++) {
+                            DownloadInfo info = mWaitList.get(i);
+                            Log.d(TAG, "[START_ALL]   等待[" + (i+1) + "] " + EhUtils.getSuitableTitle(info) + 
+                                      " (GID: " + info.gid + ", 页数: " + info.total + ")");
+                        }
+                        if (mWaitList.size() > 5) {
+                            Log.d(TAG, "[START_ALL]   ... 等待队列中共有 " + mWaitList.size() + " 个任务");
+                        }
+                    }
+                    
                     if (listener != null) {
-                        listener.onComplete(totalCount);
+                        listener.onComplete(finalProcessedCount);
                     }
                 });
                 
-                Log.i(TAG, "[START_ALL] 批量启动完成，共处理 " + totalCount + " 个任务");
+                Log.i(TAG, "[START_ALL] 批量启动完成，共处理 " + processedCount + " 个任务");
             } catch (Exception e) {
                 Log.e(TAG, "[START_ALL] 批量启动出错", e);
                 if (listener != null) {
@@ -882,16 +892,25 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     }
 
     public void addDownload(List<DownloadInfo> downloadInfoList) {
+        // 检查当前是否有正在下载的任务，如果有，新任务应该进入等待状态而不是被重置为NONE
+        boolean hasActiveDownloads = !mWaitList.isEmpty() || (mCurrentTask != null);
+        
         for (DownloadInfo info : downloadInfoList) {
             if (containDownloadInfo(info.gid)) {
                 // Contain
                 continue;
             }
 
-            // Ensure download state
+            // Ensure download state - 修复：如果有活跃下载，保持等待状态
             if (DownloadInfo.STATE_WAIT == info.state ||
                     DownloadInfo.STATE_DOWNLOAD == info.state) {
-                info.state = DownloadInfo.STATE_NONE;
+                if (hasActiveDownloads) {
+                    // 如果有活跃下载，保持等待状态
+                    info.state = DownloadInfo.STATE_WAIT;
+                } else {
+                    // 否则重置为NONE状态
+                    info.state = DownloadInfo.STATE_NONE;
+                }
             }
 
             // Add to label download list
@@ -920,12 +939,24 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         // Sort all download list
         Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
 
+        // 如果有等待状态的任务，添加到等待队列
+        if (hasActiveDownloads) {
+            for (DownloadInfo info : downloadInfoList) {
+                if (info.state == DownloadInfo.STATE_WAIT && !mWaitList.contains(info)) {
+                    mWaitList.add(info);
+                }
+            }
+        }
+
         // Notify
         new Handler(Looper.getMainLooper()).post(() -> {
             for (DownloadInfoListener l : mDownloadInfoListeners) {
                 l.onReload();
             }
         });
+        
+        // 确保下载继续
+        ensureDownload();
     }
 
     /**
@@ -1452,6 +1483,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             l.onAdd(info, list, list.size() - 1);
         }
         
+        // 如果添加的是等待状态的任务，确保下载管理器继续处理
+        if (info.state == DownloadInfo.STATE_WAIT) {
+            ensureDownload();
+        }
+        
         Log.i(TAG, "[DOWNLOAD] 下载任务添加完成: " + galleryTitle + " (标签: " + label + ", 状态: " + state + ")");
     }
 
@@ -1490,6 +1526,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     public void stopDownload(long gid) {
         DownloadInfo info = stopDownloadInternal(gid);
         if (info != null) {
+            // 记录下载停止日志
+            String galleryTitle = EhUtils.getSuitableTitle(info);
+            long totalTime = info.time > 0 ? System.currentTimeMillis() - info.time : 0;
+            mDownloadLogger.logDownloadComplete(String.valueOf(gid), galleryTitle, 
+                totalTime, info.finished, info.pages - info.finished);
+            
             // Update listener
             List<DownloadInfo> list = getInfoListForLabel(info.label);
             if (list != null) {
@@ -1937,6 +1979,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         if (mCurrentTask != null) {
             String galleryTitle = EhUtils.getSuitableTitle(mCurrentTask);
             Log.d(TAG, "[SPIDER] 页面下载成功: " + index + "/" + total + " (" + finished + " 完成) - " + galleryTitle);
+            
+            // 记录下载进度日志
+            int speed = mSpeedReminder != null ? mSpeedReminder.getSpeed() : 0;
+            mDownloadLogger.logDownloadProgress(String.valueOf(mCurrentTask.gid), galleryTitle, 
+                finished, total, speed);
         }
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
@@ -1948,6 +1995,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     @Override
     public void onPageFailure(int index, String error, int finished, int downloaded, int total) {
+        if (mCurrentTask != null) {
+            String galleryTitle = EhUtils.getSuitableTitle(mCurrentTask);
+            Log.d(TAG, "[SPIDER] 页面下载失败: " + index + "/" + total + " (" + finished + " 完成) - " + galleryTitle + " - 错误: " + error);
+            
+            // 记录下载错误日志
+            mDownloadLogger.logDownloadError(String.valueOf(mCurrentTask.gid), galleryTitle, 
+                "页面 " + index + " 下载失败: " + error, null);
+        }
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
             task = new NotifyTask();
@@ -1961,6 +2016,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         if (mCurrentTask != null) {
             String galleryTitle = EhUtils.getSuitableTitle(mCurrentTask);
             Log.i(TAG, "[SPIDER] 下载完成: " + finished + "/" + total + " (" + downloaded + " 已下载) - " + galleryTitle);
+            
+            // 记录下载完成日志
+            long totalTime = mCurrentTask.time > 0 ? System.currentTimeMillis() - mCurrentTask.time : 0;
+            mDownloadLogger.logDownloadComplete(String.valueOf(mCurrentTask.gid), galleryTitle, 
+                totalTime, finished, total - finished);
+            
+            // 保存画廊缓存
+            saveGalleryCache(mCurrentTask);
         }
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
@@ -2213,6 +2276,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         public void onFinish() {
             mContentLengthMap.clear();
             mReceivedSizeMap.clear();
+        }
+        
+        public int getSpeed() {
+            return oldSpeed > 0 ? (int) (oldSpeed / 1024) : 0; // 返回KB/s
         }
 
         @Override
@@ -2573,6 +2640,373 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         } catch (Exception e) {
             Log.e(TAG, "[REPAIR] 修复文件时发生错误: " + missingFile.getFilename(), e);
             return false;
+        }
+    }
+
+    /**
+     * 获取队列顺序文本描述
+     */
+    private String getQueueOrderText(int order) {
+        switch (order) {
+            case Settings.DOWNLOAD_QUEUE_ORDER_DEFAULT:
+                return "默认顺序";
+            case Settings.DOWNLOAD_QUEUE_ORDER_FEWEST_FIRST:
+                return "少图优先";
+            case Settings.DOWNLOAD_QUEUE_ORDER_MOST_FIRST:
+                return "多图优先";
+            default:
+                return "未知";
+        }
+    }
+
+    /**
+     * 处理增量更新，返回是否进行了增量更新
+     */
+    private boolean processIncrementalUpdate(DownloadInfo info, String logPrefix) {
+        GalleryInfo galleryInfo = new GalleryInfo();
+        galleryInfo.gid = info.gid;
+        galleryInfo.title = info.title;
+        galleryInfo.thumb = info.thumb;
+        galleryInfo.uploader = info.uploader;
+        galleryInfo.category = info.category;
+        galleryInfo.rating = info.rating;
+        
+        Long oldGid = findSameNameGallery(galleryInfo);
+        if (oldGid != null && oldGid != info.gid) {
+            Log.i(TAG, " " + logPrefix + " 发现增量更新: " + info.title + 
+                      " (旧GID: " + oldGid + ", 新GID: " + info.gid + ")");
+            
+            // 处理增量下载更新
+            handleIncrementalUpdate(galleryInfo, oldGid);
+            
+            // 保留旧画廊的进度信息
+            DownloadInfo oldDownloadInfo = mAllInfoMap.get(oldGid);
+            if (oldDownloadInfo != null) {
+                info.finished = oldDownloadInfo.finished;
+                info.downloaded = oldDownloadInfo.downloaded;
+                info.total = oldDownloadInfo.total;
+                info.legacy = oldDownloadInfo.legacy;
+                
+                // 在标题前添加增量更新标识
+                String originalTitle = EhUtils.getSuitableTitle(info);
+                info.title = "🔄 " + originalTitle;
+                
+                Log.d(TAG, " " + logPrefix + " 增量更新 - 保留的进度信息: 完成=" + info.finished + 
+                          ", 下载=" + info.downloaded + ", 总计=" + info.total + ", 剩余=" + info.legacy);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 安全获取下载队列顺序设置，处理ClassCastException异常
+     */
+    private int getDownloadQueueOrderSafely() {
+        try {
+            return Settings.getDownloadQueueOrder();
+        } catch (ClassCastException e) {
+            Log.e(TAG, "获取下载队列顺序设置时发生类型转换异常，使用默认值", e);
+            // 重置设置为默认值
+            Settings.setDownloadQueueOrder(Settings.DOWNLOAD_QUEUE_ORDER_DEFAULT);
+            return Settings.DOWNLOAD_QUEUE_ORDER_DEFAULT;
+        }
+    }
+
+    /**
+     * 保存画廊缓存信息
+     */
+    private void saveGalleryCache(@NonNull DownloadInfo downloadInfo) {
+        try {
+            // 获取画廊详细信息
+            GalleryDetail galleryDetail = getGalleryDetailFromSpiderQueen(downloadInfo);
+            if (galleryDetail != null) {
+                GalleryCacheManager cacheManager = GalleryCacheManager.getInstance(mContext);
+                boolean success = cacheManager.saveGalleryCache(galleryDetail);
+                if (success) {
+                    Log.d(TAG, "[CACHE] 画廊缓存保存成功: " + EhUtils.getSuitableTitle(downloadInfo));
+                } else {
+                    Log.w(TAG, "[CACHE] 画廊缓存保存失败: " + EhUtils.getSuitableTitle(downloadInfo));
+                }
+            } else {
+                Log.w(TAG, "[CACHE] 无法获取画廊详细信息: " + EhUtils.getSuitableTitle(downloadInfo));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "[CACHE] 保存画廊缓存时发生错误: " + EhUtils.getSuitableTitle(downloadInfo), e);
+        }
+    }
+
+    /**
+     * 从SpiderQueen获取画廊详细信息
+     */
+    @Nullable
+    private GalleryDetail getGalleryDetailFromSpiderQueen(@NonNull DownloadInfo downloadInfo) {
+        try {
+            // 创建一个基本的GalleryDetail对象
+            GalleryDetail galleryDetail = new GalleryDetail();
+            
+            // 复制基本信息
+            galleryDetail.gid = downloadInfo.gid;
+            galleryDetail.token = downloadInfo.token;
+            galleryDetail.title = downloadInfo.title;
+            galleryDetail.titleJpn = downloadInfo.titleJpn;
+            galleryDetail.thumb = downloadInfo.thumb;
+            galleryDetail.category = downloadInfo.category;
+            galleryDetail.posted = downloadInfo.posted;
+            galleryDetail.uploader = downloadInfo.uploader;
+            galleryDetail.rating = downloadInfo.rating;
+            galleryDetail.simpleLanguage = downloadInfo.simpleLanguage;
+            galleryDetail.pages = downloadInfo.pages;
+            
+            // 包含标签信息 - 将simpleTags转换为GalleryTagGroup格式
+            if (downloadInfo.simpleTags != null && downloadInfo.simpleTags.length > 0) {
+                // 创建一个默认的标签组来包含所有simpleTags
+                GalleryTagGroup tagGroup = new GalleryTagGroup();
+                tagGroup.groupName = "tags";
+                for (String tag : downloadInfo.simpleTags) {
+                    tagGroup.addTag(tag);
+                }
+                galleryDetail.tags = new GalleryTagGroup[]{tagGroup};
+            }
+            
+            // 尝试从SpiderQueen获取更多信息
+            if (mCurrentSpider != null) {
+                // SpiderInfo可能通过其他方式获取，这里暂时跳过
+                // 可以根据需要添加更多字段
+                galleryDetail.size = "Unknown";
+                galleryDetail.language = "Unknown";
+            }
+            
+            return galleryDetail;
+        } catch (Exception e) {
+            Log.e(TAG, "[CACHE] 从SpiderQueen获取画廊详细信息失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 修复已下载文件的画廊信息
+     * @param gid 画廊ID
+     * @return 是否修复成功
+     */
+    public boolean repairGalleryInfo(long gid) {
+        DownloadInfo downloadInfo = getDownloadInfo(gid);
+        if (downloadInfo == null) {
+            Log.w(TAG, "[REPAIR] 未找到下载信息: GID " + gid);
+            return false;
+        }
+        
+        String galleryTitle = EhUtils.getSuitableTitle(downloadInfo);
+        Log.i(TAG, "[REPAIR] 开始修复画廊信息: " + galleryTitle + " (GID: " + gid + ")");
+        
+        try {
+            // 获取最新的画廊详细信息
+            GalleryDetail galleryDetail = fetchGalleryDetailFromNetwork(downloadInfo);
+            if (galleryDetail == null) {
+                Log.w(TAG, "[REPAIR] 无法从网络获取画廊信息: " + galleryTitle);
+                return false;
+            }
+            
+            // 保存到缓存
+            GalleryCacheManager cacheManager = GalleryCacheManager.getInstance(mContext);
+            boolean cacheSuccess = cacheManager.saveGalleryCache(galleryDetail);
+            if (cacheSuccess) {
+                Log.d(TAG, "[REPAIR] 画廊缓存保存成功: " + galleryTitle);
+            } else {
+                Log.w(TAG, "[REPAIR] 画廊缓存保存失败: " + galleryTitle);
+            }
+            
+            // 更新下载信息
+            downloadInfo.updateInfo(galleryDetail);
+            EhDB.putDownloadInfo(downloadInfo);
+            Log.d(TAG, "[REPAIR] 下载信息更新成功: " + galleryTitle);
+            
+            // 通知监听器
+            for (DownloadInfoListener l : mDownloadInfoListeners) {
+                l.onUpdate(downloadInfo, getInfoListForLabel(downloadInfo.label), mWaitList);
+            }
+            
+            Log.i(TAG, "[REPAIR] 画廊信息修复完成: " + galleryTitle);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "[REPAIR] 修复画廊信息时发生错误: " + galleryTitle, e);
+            return false;
+        }
+    }
+
+    /**
+     * 从网络获取画廊详细信息
+     */
+    @Nullable
+    private GalleryDetail fetchGalleryDetailFromNetwork(@NonNull DownloadInfo downloadInfo) {
+        try {
+            String url = EhUrl.getGalleryDetailUrl(downloadInfo.gid, downloadInfo.token);
+            Log.d(TAG, "[REPAIR] 从网络获取画廊信息: " + url);
+            
+            // 使用EhEngine获取画廊详情
+            Context context = mContext;
+            OkHttpClient okHttpClient = EhApplication.getOkHttpClient(context);
+            GalleryDetail galleryDetail = EhEngine.getGalleryDetail(null, okHttpClient, url);
+            
+            if (galleryDetail == null) {
+                Log.w(TAG, "[REPAIR] 无法从网络获取画廊信息: " + downloadInfo.title);
+                return null;
+            }
+            
+            Log.d(TAG, "[REPAIR] 成功获取画廊信息: " + galleryDetail.title);
+            return galleryDetail;
+            
+        } catch (Throwable e) {
+            Log.e(TAG, "[REPAIR] 从网络获取画廊信息时发生错误: " + EhUtils.getSuitableTitle(downloadInfo), e);
+            
+            // 如果是画廊已删除的错误，仍然返回部分信息
+            if (e.getMessage() != null && 
+                (e.getMessage().contains("Gallery Not Found") || e.getMessage().contains("404"))) {
+                Log.d(TAG, "[REPAIR] 画廊已被删除，但保留基本信息: " + EhUtils.getSuitableTitle(downloadInfo));
+                
+                // 创建一个基本的GalleryDetail，标记为已删除
+                GalleryDetail deletedDetail = new GalleryDetail();
+                deletedDetail.gid = downloadInfo.gid;
+                deletedDetail.token = downloadInfo.token;
+                deletedDetail.title = downloadInfo.title;
+                deletedDetail.titleJpn = downloadInfo.titleJpn;
+                deletedDetail.thumb = downloadInfo.thumb;
+                deletedDetail.category = downloadInfo.category;
+                deletedDetail.posted = downloadInfo.posted;
+                deletedDetail.uploader = downloadInfo.uploader;
+                deletedDetail.rating = downloadInfo.rating;
+                deletedDetail.simpleLanguage = downloadInfo.simpleLanguage;
+                deletedDetail.pages = downloadInfo.pages;
+                deletedDetail.visible = "deleted"; // 标记为已删除
+                
+                return deletedDetail;
+            }
+            
+            return null;
+        }
+    }
+
+    /**
+     * 批量修复所有下载画廊的信息
+     */
+    public void repairAllGalleryInfo() {
+        Log.i(TAG, "[REPAIR] 开始批量修复所有画廊信息");
+        
+        int successCount = 0;
+        int failCount = 0;
+        
+        for (DownloadInfo downloadInfo : mAllInfoList) {
+            if (repairGalleryInfo(downloadInfo.gid)) {
+                successCount++;
+            } else {
+                failCount++;
+            }
+        }
+        
+        Log.i(TAG, "[REPAIR] 批量修复完成: 成功 " + successCount + " 个，失败 " + failCount + " 个");
+    }
+
+    /**
+     * 根据设置对下载列表进行排序
+     */
+    private void sortDownloadList(List<DownloadInfo> list, int order) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        
+        switch (order) {
+            case Settings.DOWNLOAD_QUEUE_ORDER_FEWEST_FIRST:
+                // 少图画廊优先（按总页数排序）
+                Collections.sort(list, (o1, o2) -> {
+                    int pages1 = Math.max(o1.total, 0);
+                    int pages2 = Math.max(o2.total, 0);
+                    return Integer.compare(pages1, pages2);
+                });
+                break;
+            case Settings.DOWNLOAD_QUEUE_ORDER_MOST_FIRST:
+                // 多图画廊优先（按总页数排序）
+                Collections.sort(list, (o1, o2) -> {
+                    int pages1 = Math.max(o1.total, 0);
+                    int pages2 = Math.max(o2.total, 0);
+                    return Integer.compare(pages2, pages1);
+                });
+                break;
+            case Settings.DOWNLOAD_QUEUE_ORDER_DEFAULT:
+            default:
+                // 默认按添加顺序，不需要排序
+                break;
+        }
+    }
+
+    /**
+     * 在后台线程中执行增量更新检测
+     * @param info 当前的下载信息
+     * @param galleryInfo 画廊信息
+     */
+    private void performIncrementalUpdateCheck(DownloadInfo info, GalleryInfo galleryInfo) {
+        String galleryTitle = EhUtils.getSuitableTitle(galleryInfo);
+        Log.d(TAG, "[INCREMENTAL_CHECK] 开始后台检测: " + galleryTitle);
+        
+        try {
+            // 检查是否需要增量更新
+            if (Settings.getIncrementalDownloadUpdate()) {
+                Log.d(TAG, "[INCREMENTAL_CHECK] 增量下载更新功能已启用，检查是否存在同名画廊");
+                Long oldGid = findSameNameGallery(galleryInfo);
+                if (oldGid != null && oldGid != galleryInfo.gid) {
+                    Log.i(TAG, "[INCREMENTAL_CHECK] 发现同名画廊，准备进行增量更新: " + galleryTitle + 
+                              " (旧GID: " + oldGid + ", 新GID: " + galleryInfo.gid + ")");
+                    
+                    // 显示增量更新提示
+                    SimpleHandler.getInstance().post(() -> {
+                        Toast.makeText(mContext, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
+                    });
+                    
+                    // 处理增量下载更新
+                    handleIncrementalUpdate(galleryInfo, oldGid);
+                    
+                    // 更新当前下载信息，保留进度
+                    DownloadInfo oldDownloadInfo = mAllInfoMap.get(oldGid);
+                    if (oldDownloadInfo != null) {
+                        // 保留旧画廊的进度信息
+                        info.finished = oldDownloadInfo.finished;
+                        info.downloaded = oldDownloadInfo.downloaded;
+                        info.total = oldDownloadInfo.total;
+                        info.legacy = oldDownloadInfo.legacy;
+                        
+                        // 在标题前添加增量更新标识
+                        String originalTitle = EhUtils.getSuitableTitle(info);
+                        info.title = "🔄 " + originalTitle;
+                        
+                        Log.d(TAG, "[INCREMENTAL_CHECK] 增量更新 - 保留的进度信息: 完成=" + info.finished + 
+                                  ", 下载=" + info.downloaded + ", 总计=" + info.total + ", 剩余=" + info.legacy);
+                        
+                        // 更新数据库
+                        EhDB.putDownloadInfo(info);
+                        Log.d(TAG, "[INCREMENTAL_CHECK] 更新增量更新信息到数据库: " + galleryTitle);
+                        
+                        // 通知界面更新
+                        SimpleHandler.getInstance().post(() -> {
+                            List<DownloadInfo> list = getInfoListForLabel(info.label);
+                            if (list != null) {
+                                for (DownloadInfoListener l : mDownloadInfoListeners) {
+                                    l.onUpdate(info, list, mWaitList);
+                                }
+                                Log.d(TAG, "[INCREMENTAL_CHECK] 已通知界面更新增量下载信息: " + galleryTitle);
+                            }
+                        });
+                    }
+                } else {
+                    Log.d(TAG, "[INCREMENTAL_CHECK] 未发现需要更新的同名画廊: " + galleryTitle);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "[INCREMENTAL_CHECK] 增量更新检测时发生错误: " + galleryTitle, e);
+        } finally {
+            // 确保下载开始
+            SimpleHandler.getInstance().post(() -> {
+                Log.d(TAG, "[INCREMENTAL_CHECK] 增量检测完成，确保下载开始: " + galleryTitle);
+                ensureDownload();
+            });
         }
     }
 
