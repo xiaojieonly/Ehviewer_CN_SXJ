@@ -61,7 +61,7 @@ android {
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
         }
         debug {
-            applicationIdSuffix ".debug"
+            applicationIdSuffix ".debug1"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
         }
     }

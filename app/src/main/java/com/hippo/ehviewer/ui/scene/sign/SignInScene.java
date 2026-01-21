@@ -57,7 +57,9 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     private static final int REQUEST_CODE_WEBVIEW = 0;
     private static final int REQUEST_CODE_COOKIE = 0;
-    private static final int REQUEST_CODE_PROFILE = 0;
+    public static final int REQUEST_CODE_PROFILE = 0x000F;
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String AVATAR = "avatar";
 
     /*---------------
      View life cycle
@@ -210,9 +212,19 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
             if (RESULT_OK == resultCode) {
                 getProfile();
             }
+        } else if (requestCode == REQUEST_CODE_PROFILE) {
+            getProfileSuccess(data);
         } else {
             super.onSceneResult(requestCode, resultCode, data);
         }
+    }
+
+    private void getProfileSuccess(Bundle data) {
+        String name = data.getString(DISPLAY_NAME,"");
+        String avatar = data.getString(AVATAR,"");
+        Settings.putDisplayName(name);
+        Settings.putAvatar(avatar);
+        onGetProfileEnd();
     }
 
     @Override

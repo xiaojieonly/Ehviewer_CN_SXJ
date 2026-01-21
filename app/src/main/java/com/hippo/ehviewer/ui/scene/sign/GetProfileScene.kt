@@ -1,13 +1,11 @@
 package com.hippo.ehviewer.ui.scene.sign
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
-import android.webkit.ValueCallback
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -17,20 +15,26 @@ import com.acsbendi.requestinspectorwebview.WebViewRequest
 import com.acsbendi.requestinspectorwebview.WebViewRequestType
 import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
+import com.hippo.ehviewer.client.exception.ParseException
+import com.hippo.ehviewer.client.parser.ProfileParser
 import com.hippo.ehviewer.ui.scene.SolidScene
+import com.hippo.ehviewer.ui.scene.sign.SignInScene.AVATAR
+import com.hippo.ehviewer.ui.scene.sign.SignInScene.DISPLAY_NAME
+import com.hippo.ehviewer.ui.scene.sign.SignInScene.REQUEST_CODE_PROFILE
 import com.hippo.lib.yorozuya.AssertUtils
+import com.hippo.util.AppHelper
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONException
-import org.json.JSONObject
 import java.io.IOException
 
-class GetProfileScene  : SolidScene(){
+class GetProfileScene : SolidScene() {
 
     private var mWebView: WebView? = null
     private var okHttpClient: OkHttpClient? = null
@@ -54,14 +58,18 @@ class GetProfileScene  : SolidScene(){
         mWebView = WebView(context!!)
         val webSettings = mWebView!!.settings
         webSettings.javaScriptEnabled = true
-        CookieManager.getInstance().setAcceptCookie(true)
+        val manager = CookieManager.getInstance()
+        manager.setAcceptCookie(true)
+//        val store = EhApplication.getEhCookieStore(context)
+//        val cookie = store.getCookieHeader(HttpUrl(EhUrl.URL_FORUMS))
+//        manager.setCookie(EhUrl.URL_FORUMS)
 
-//        if (Settings.getDF()&& AppHelper.checkVPN(context)){
-//            mWebView!!.webViewClient = ProfileWebViewClientSNI(mWebView!!)
-//        }else{
-//
-//        }
-        mWebView!!.webViewClient = ProfileWebViewClient()
+        if (Settings.getDF()&& AppHelper.checkVPN(context)){
+            mWebView!!.webViewClient = ProfileWebViewClientSNI(mWebView!!)
+        }else{
+            mWebView!!.webViewClient = ProfileWebViewClient()
+        }
+
 //        mWebView!!.evaluateJavascript(
 //            "(function(){ return document.documentElement.outerHTML; })();"
 //        ) { html ->
@@ -74,7 +82,7 @@ class GetProfileScene  : SolidScene(){
         return mWebView
     }
 
-    private inner class ProfileWebViewClientSNI: RequestInspectorWebViewClient {
+    private inner class ProfileWebViewClientSNI : RequestInspectorWebViewClient {
         constructor(webView: WebView, options: RequestInspectorOptions) : super(webView, options)
 
         constructor(webView: WebView) : super(webView)
@@ -88,6 +96,7 @@ class GetProfileScene  : SolidScene(){
                 request.headers,
                 request.url
             )
+
             val type = request.type
             when (type) {
                 WebViewRequestType.FETCH, WebViewRequestType.HTML, WebViewRequestType.XML_HTTP -> {}
@@ -110,10 +119,10 @@ class GetProfileScene  : SolidScene(){
         }
 
         override fun onPageFinished(view: WebView, url: String) {
-            val context = ehContext ?: return
-            val httpUrl = HttpUrl.parse(url) ?: return
+            ehContext ?: return
+            HttpUrl.parse(url) ?: return
             val manager = CookieManager.getInstance()
-            val cookieString = manager.getCookie(EhUrl.HOST_E)
+            manager.getCookie(EhUrl.HOST_E)
 
             var getId = false
             var getHash = false
@@ -157,7 +166,8 @@ class GetProfileScene  : SolidScene(){
             // Get the response code and message
             val statusCode = okHttpResponse.code()
             val reasonPhraseRaw = okHttpResponse.message()
-            val reasonPhrase = if (reasonPhraseRaw.isNullOrEmpty()) defaultReasonPhrase(statusCode) else reasonPhraseRaw
+            val reasonPhrase =
+                if (reasonPhraseRaw.isNullOrEmpty()) defaultReasonPhrase(statusCode) else reasonPhraseRaw
 
             // Get headers as a Map
             val responseHeaders: MutableMap<String, String?> = HashMap()
@@ -250,7 +260,7 @@ class GetProfileScene  : SolidScene(){
 
     }
 
-    private inner class ProfileWebViewClient: WebViewClient(){
+    private inner class ProfileWebViewClient : WebViewClient() {
 
         override fun onPageFinished(view: WebView, url: String) {
 //            val context: Context =  ehContext ?: return
@@ -274,31 +284,37 @@ class GetProfileScene  : SolidScene(){
                 setResult(RESULT_OK, null)
                 finish()
             }
-            readPageContent();
+            readPageContent()
         }
+
         private fun readPageContent() {
             mWebView?.evaluateJavascript(
                 "(function() {" +
-                        "var content = {" +
-                        "  title: document.title," +
-                        "  url: window.location.href," +
-                        "  html: document.documentElement.outerHTML," +
-                        "  text: document.body.innerText," +
-                        "  metaDescription: document.querySelector('meta[name=\"description\"]')?.content || ''," +
-                        "  links: Array.from(document.getElementsByTagName('a')).map(a => ({href: a.href, text: a.textContent}))" +
-                        "};" +
-                        "return JSON.stringify(content);" +
+//                        "var content = {" +
+//                        "  title: document.title," +
+//                        "  url: window.location.href," +
+//                        "  html: document.documentElement.outerHTML," +
+//                        "  text: document.body.innerText," +
+//                        "  metaDescription: document.querySelector('meta[name=\"description\"]')?.content || ''," +
+//                        "  links: Array.from(document.getElementsByTagName('a')).map(a => ({href: a.href, text: a.textContent}))" +
+//                        "};" +
+//                        "return JSON.stringify(content);" +
+                        "return document.documentElement.outerHTML;" +
                         "})();"
             ) { json ->
                 try {
-                    val content: JSONObject = JSONObject(json)
+                    val result = ProfileParser.parseNew(json)
+                    val bundle = Bundle()
+                    bundle.putString(DISPLAY_NAME, result.displayName)
+                    bundle.putString(AVATAR, result.avatar)
+                    setResult(REQUEST_CODE_PROFILE,bundle)
+                    finish()
+                    print(result)
                     println(json)
-                    val title: String? = content.getString("title")
-                    val pageText: String? = content.getString("text")
                     // 处理内容...
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                }
+                }catch (_: ParseException){}
             }
         }
 

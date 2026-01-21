@@ -67,6 +67,7 @@ public class EhUrl {
     public static final String URL_REGISTER = "https://forums.e-hentai.org/index.php?act=Reg&CODE=00";
     public static final String URL_FAVORITES_E = HOST_E + "favorites.php";
     public static final String URL_FAVORITES_EX = HOST_EX + "favorites.php";
+    public static final String DOMAIN_FORUMS = "forums.e-hentai.org";
     public static final String URL_FORUMS = "https://forums.e-hentai.org/";
 
     public static final String ORIGIN_EX = REFERER_EX;

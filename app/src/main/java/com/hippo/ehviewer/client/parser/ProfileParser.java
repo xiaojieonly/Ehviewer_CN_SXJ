@@ -18,9 +18,11 @@ package com.hippo.ehviewer.client.parser;
 
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.exception.ParseException;
 import com.hippo.util.ExceptionUtils;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,6 +37,37 @@ public class ProfileParser {
             Document d = Jsoup.parse(body);
             Element profilename = d.getElementById("profilename");
             result.displayName = profilename.child(0).text();
+            try {
+                result.avatar = profilename.nextElementSibling().nextElementSibling().child(0).attr("src");
+                if (TextUtils.isEmpty(result.avatar)) {
+                    result.avatar = null;
+                } else if (!result.avatar.startsWith("http")) {
+                    result.avatar = EhUrl.URL_FORUMS + result.avatar;
+                }
+            } catch (Throwable e) {
+                ExceptionUtils.throwIfFatal(e);
+                Log.i(TAG, "No avatar");
+            }
+            return result;
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            throw new ParseException("Parse forums error", body);
+        }
+    }
+
+    public static Result parseNew(String body) throws ParseException {
+        try {
+            String htmlString = body.replaceAll("\\\\u003C", "<")
+                    .replaceAll("\\\\n", "")
+                    .replaceAll("\\\\\"", "")
+                    .replaceAll("\\\\t", "");
+            Result result = new Result();
+            if (htmlString.contains("ERR_CONNECTION_REFUSED")){
+                return result;
+            }
+            Document document = Jsoup.parse(htmlString);
+            Element profilename = document.getElementById("userlinks");
+            result.displayName =  profilename.child(0).child(0).child(0).text();
             try {
                 result.avatar = profilename.nextElementSibling().nextElementSibling().child(0).attr("src");
                 if (TextUtils.isEmpty(result.avatar)) {
