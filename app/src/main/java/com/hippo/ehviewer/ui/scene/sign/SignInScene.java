@@ -45,6 +45,7 @@ import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.SolidScene;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
+import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
@@ -314,7 +315,13 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (null == context || null == activity) {
             return;
         }
-
+        if (Settings.getDF()&& AppHelper.checkVPN(context)){
+            Bundle data = new Bundle();
+            data.putString(DISPLAY_NAME, getString(R.string.default_display_name));
+            data.putString(AVATAR, "");
+            getProfileSuccess(data);
+            return;
+        }
         startScene(new Announcer(GetProfileScene.class).setRequestCode(this, REQUEST_CODE_PROFILE));
 
 //        hideSoftInput();

@@ -26,10 +26,13 @@ import com.hippo.ehviewer.ui.scene.sign.SignInScene.DISPLAY_NAME
 import com.hippo.ehviewer.ui.scene.sign.SignInScene.REQUEST_CODE_PROFILE
 import com.hippo.lib.yorozuya.AssertUtils
 import com.hippo.util.AppHelper
+import android.util.Log
 import okhttp3.FormBody
 import okhttp3.HttpUrl
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
 import org.json.JSONException
 import java.io.IOException
@@ -38,6 +41,10 @@ class GetProfileScene : SolidScene() {
 
     private var mWebView: WebView? = null
     private var okHttpClient: OkHttpClient? = null
+    
+    companion object {
+        private const val TAG = "GetProfileScene"
+    }
 
     override fun needShowLeftDrawer(): Boolean {
         return false
@@ -82,6 +89,37 @@ class GetProfileScene : SolidScene() {
         return mWebView
     }
 
+    private fun readPageContent() {
+        mWebView?.evaluateJavascript(
+            "(function() {" +
+//                        "var content = {" +
+//                        "  title: document.title," +
+//                        "  url: window.location.href," +
+//                        "  html: document.documentElement.outerHTML," +
+//                        "  text: document.body.innerText," +
+//                        "  metaDescription: document.querySelector('meta[name=\"description\"]')?.content || ''," +
+//                        "  links: Array.from(document.getElementsByTagName('a')).map(a => ({href: a.href, text: a.textContent}))" +
+//                        "};" +
+//                        "return JSON.stringify(content);" +
+                    "return document.documentElement.outerHTML;" +
+                    "})();"
+        ) { json ->
+            try {
+                val result = ProfileParser.parseNew(json)
+                val bundle = Bundle()
+                bundle.putString(DISPLAY_NAME, result.displayName)
+                bundle.putString(AVATAR, result.avatar)
+                setResult(REQUEST_CODE_PROFILE,bundle)
+                finish()
+                print(result)
+                println(json)
+                // 处理内容...
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }catch (_: ParseException){}
+        }
+    }
+
     private inner class ProfileWebViewClientSNI : RequestInspectorWebViewClient {
         constructor(webView: WebView, options: RequestInspectorOptions) : super(webView, options)
 
@@ -91,31 +129,91 @@ class GetProfileScene : SolidScene() {
             view: WebView,
             request: WebViewRequest,
         ): WebResourceResponse? {
+            // 方案五：URL Scheme 过滤 - 只处理 HTTP/HTTPS 请求
+            val url = request.url
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                return null // 让 WebView 处理 file://, data:// 等
+            }
+
             val okRequest: Request
             val builder = EhRequestBuilder(
                 request.headers,
                 request.url
             )
 
+            // 方案一和方案二：获取请求方法并处理所有请求类型
+            val method = getRequestMethod(request)
             val type = request.type
+
+            // 方案四：处理 Range 请求（断点续传）
+            val rangeHeader = request.headers["Range"]
+            if (rangeHeader != null) {
+                builder.addHeader("Range", rangeHeader)
+            }
+
+            // 处理不同类型的请求
             when (type) {
-                WebViewRequestType.FETCH, WebViewRequestType.HTML, WebViewRequestType.XML_HTTP -> {}
+                WebViewRequestType.FETCH, WebViewRequestType.HTML, 
+                WebViewRequestType.XML_HTTP -> {
+                    // GET 请求或带请求体的其他方法
+                    handleRequestWithBody(builder, request, method)
+                }
                 WebViewRequestType.FORM -> {
                     val formBody = buildForm(request)
                     builder.post(formBody)
                 }
+                // 方案三：扩展请求类型处理
+//                WebViewRequestType.RESOURCE,
+//                WebViewRequestType.IMAGE,
+//                WebViewRequestType.STYLESHEET,
+//                WebViewRequestType.SCRIPT,
+//                WebViewRequestType.FONT -> {
+//                    // 资源请求通常是 GET
+//                    handleRequestWithBody(builder, request, method)
+//                }
+                else -> {
+                    // 未知类型，使用默认处理
+                    handleRequestWithBody(builder, request, method)
+                }
             }
+            
             okRequest = builder.build()
+            
+            // 方案三和方案七：改进异常处理和重定向处理
             try {
                 val response = okHttpClient!!.newCall(okRequest).execute()
+                
+                // 处理重定向响应（3xx状态码）
+                val statusCode = response.code()
+                if (statusCode in 300..399) {
+                    val redirectUrl = response.header("Location")
+                    if (redirectUrl != null) {
+                        // 让 WebView 处理重定向
+                        response.close()
+                        return null
+                    }
+                }
+                
                 if (response.body() == null) {
+                    response.close()
                     throw IOException("请求结果为空")
                 }
+                
+                // 方案六：同步 Cookie
+                syncCookiesFromResponse(response, url)
+                
                 return convertOkHttpResponse(response)
             } catch (e: IOException) {
                 Analytics.recordException(e)
+                // 记录更详细的错误信息
+                Log.e(TAG, "OkHttp request failed for $url", e)
+                // 根据错误类型决定是否回退
+                return null // 让 WebView 使用默认网络栈
+            } catch (e: Exception) {
+                Analytics.recordException(e)
+                Log.e(TAG, "Unexpected error for $url", e)
+                return null
             }
-            return null
         }
 
         override fun onPageFinished(view: WebView, url: String) {
@@ -123,13 +221,159 @@ class GetProfileScene : SolidScene() {
             HttpUrl.parse(url) ?: return
             val manager = CookieManager.getInstance()
             manager.getCookie(EhUrl.HOST_E)
+            readPageContent()
+//            var getId = false
+//            var getHash = false
+//
+//            if (getId && getHash) {
+//                setResult(RESULT_OK, null)
+//                finish()
+//            }
+        }
 
-            var getId = false
-            var getHash = false
+        /**
+         * 获取请求方法
+         * 从 headers 中查找，或根据类型推断
+         */
+        private fun getRequestMethod(request: WebViewRequest): String {
+            // 尝试从 headers 中获取方法（某些库可能会添加）
+            val methodHeader = request.headers["X-HTTP-Method-Override"] 
+                ?: request.headers["X-Method-Override"]
+            
+            if (methodHeader != null) {
+                return methodHeader.uppercase()
+            }
+            
+            // 根据类型推断
+            return when (request.type) {
+                WebViewRequestType.FORM -> "POST"
+                else -> {
+                    // 检查是否有请求体来判断是否为 POST
+                    if (request.formParameters.isNotEmpty()) {
+                        "POST"
+                    } else {
+                        "GET"
+                    }
+                }
+            }
+        }
 
-            if (getId && getHash) {
-                setResult(RESULT_OK, null)
-                finish()
+        /**
+         * 方案二：支持多种请求体类型
+         * 
+         * 注意：由于 Android-Request-Inspector-WebView 库的限制，
+         * WebViewRequest 可能不直接提供请求体内容（特别是对于 FETCH/XML_HTTP 类型的请求）。
+         * 如果库提供了 getBody() 或类似方法，应该优先使用。
+         * 
+         * 当前实现：
+         * - 表单数据：从 formParameters 构建
+         * - 其他类型：根据 Content-Type 创建空的 RequestBody（实际内容需要库支持）
+         */
+        private fun buildRequestBody(request: WebViewRequest, method: String): RequestBody? {
+            return when {
+                // 表单数据
+                request.formParameters.isNotEmpty() -> {
+                    buildForm(request)
+                }
+                // 尝试从 headers 获取 Content-Type 来判断请求体类型
+                else -> {
+                    val contentType = request.headers["Content-Type"] ?: ""
+                    
+                    // 尝试通过反射获取请求体（如果库支持）
+                    val requestBody = tryGetRequestBodyViaReflection(request)
+                    if (requestBody != null) {
+                        return requestBody
+                    }
+                    
+                    // 如果没有获取到请求体，根据 Content-Type 创建占位符
+                    when {
+                        contentType.contains("application/json") -> {
+                            // JSON 数据
+                            // 注意：实际请求体内容需要通过库的 API 获取
+                            RequestBody.create(
+                                MediaType.parse("application/json; charset=utf-8"),
+                                "{}"
+                            )
+                        }
+                        contentType.contains("application/xml") || contentType.contains("text/xml") -> {
+                            // XML 数据
+                            RequestBody.create(
+                                MediaType.parse("application/xml; charset=utf-8"),
+                                ""
+                            )
+                        }
+                        contentType.contains("text/plain") -> {
+                            // 纯文本
+                            RequestBody.create(
+                                MediaType.parse("text/plain; charset=utf-8"),
+                                ""
+                            )
+                        }
+                        contentType.isNotEmpty() && method != "GET" -> {
+                            // 其他类型的请求体
+                            RequestBody.create(
+                                MediaType.parse(contentType),
+                                ByteArray(0)
+                            )
+                        }
+                        else -> null
+                    }
+                }
+            }
+        }
+
+        /**
+         * 尝试通过反射获取请求体
+         * Android-Request-Inspector-WebView 库可能提供 getBody() 或类似方法
+         */
+        private fun tryGetRequestBodyViaReflection(request: WebViewRequest): RequestBody? {
+            return try {
+                // 尝试调用 getBody() 方法
+                val getBodyMethod = request.javaClass.getMethod("getBody")
+                val bodyString = getBodyMethod.invoke(request) as? String
+                if (!bodyString.isNullOrEmpty()) {
+                    val contentType = request.headers["Content-Type"] ?: "application/octet-stream"
+                    RequestBody.create(MediaType.parse(contentType), bodyString)
+                } else {
+                    null
+                }
+            } catch (_: Exception) {
+                // 方法不存在或其他错误，返回 null
+                null
+            }
+        }
+
+        /**
+         * 处理带请求体的请求
+         */
+        private fun handleRequestWithBody(
+            builder: EhRequestBuilder,
+            request: WebViewRequest,
+            method: String
+        ) {
+            val requestBody = buildRequestBody(request, method)
+            when (method.uppercase()) {
+                "POST" -> {
+                    builder.post(requestBody ?: FormBody.Builder().build())
+                }
+                "PUT" -> {
+                    builder.put(requestBody ?: FormBody.Builder().build())
+                }
+                "PATCH" -> {
+                    builder.patch(requestBody ?: FormBody.Builder().build())
+                }
+                "DELETE" -> {
+                    builder.delete(requestBody)
+                }
+                "HEAD" -> {
+                    builder.head()
+                }
+                "OPTIONS" -> {
+                    // OPTIONS 通常不需要 body
+                }
+                else -> {
+                    // GET 等，不需要设置 body
+                }
             }
         }
 
@@ -142,6 +386,20 @@ class GetProfileScene : SolidScene() {
             }
 
             return builder.build()
+        }
+
+        /**
+         * 方案六：Cookie 同步增强
+         */
+        private fun syncCookiesFromResponse(response: Response, url: String) {
+            val cookies = response.headers("Set-Cookie")
+            if (cookies.isNotEmpty()) {
+                val cookieManager = CookieManager.getInstance()
+                for (cookie in cookies) {
+                    cookieManager.setCookie(url, cookie)
+                }
+                cookieManager.flush()
+            }
         }
 
         fun convertOkHttpResponse(okHttpResponse: Response): WebResourceResponse {
@@ -285,37 +543,6 @@ class GetProfileScene : SolidScene() {
                 finish()
             }
             readPageContent()
-        }
-
-        private fun readPageContent() {
-            mWebView?.evaluateJavascript(
-                "(function() {" +
-//                        "var content = {" +
-//                        "  title: document.title," +
-//                        "  url: window.location.href," +
-//                        "  html: document.documentElement.outerHTML," +
-//                        "  text: document.body.innerText," +
-//                        "  metaDescription: document.querySelector('meta[name=\"description\"]')?.content || ''," +
-//                        "  links: Array.from(document.getElementsByTagName('a')).map(a => ({href: a.href, text: a.textContent}))" +
-//                        "};" +
-//                        "return JSON.stringify(content);" +
-                        "return document.documentElement.outerHTML;" +
-                        "})();"
-            ) { json ->
-                try {
-                    val result = ProfileParser.parseNew(json)
-                    val bundle = Bundle()
-                    bundle.putString(DISPLAY_NAME, result.displayName)
-                    bundle.putString(AVATAR, result.avatar)
-                    setResult(REQUEST_CODE_PROFILE,bundle)
-                    finish()
-                    print(result)
-                    println(json)
-                    // 处理内容...
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                }catch (_: ParseException){}
-            }
         }
 
     }
