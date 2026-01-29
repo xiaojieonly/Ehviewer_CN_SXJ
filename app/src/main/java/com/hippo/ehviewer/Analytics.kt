@@ -36,14 +36,19 @@ object Analytics {
     @JvmStatic
     fun start(context: Context) {
         analytics = FirebaseAnalytics.getInstance(context)
-        analytics!!.setUserId(Settings.getUserID())
+        try {
+            analytics!!.setUserId(Settings.getUserID())
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Firebase error: $e")
+        }
+
 
         val locale = Locale.getDefault()
-        var language = locale.getLanguage()
+        var language = locale.language
         if (TextUtils.isEmpty(language)) {
             language = "none"
         }
-        val country = locale.getCountry()
+        val country = locale.country
         if (!TextUtils.isEmpty(country)) {
             language = language + "-" + country
         }
