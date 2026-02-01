@@ -43,6 +43,8 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.GalleryVersionMap;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.GalleryActivity;
@@ -217,10 +219,9 @@ public final class CommonOperations {
                 }
 
                 if (!toStart.isEmpty()) {
-                    Intent intent = new Intent(activity, DownloadService.class);
-                    intent.setAction(DownloadService.ACTION_START_RANGE);
-                    intent.putExtra(DownloadService.KEY_GID_LIST, toStart);
-                    activity.startService(intent);
+                    // 使用后台任务处理多选下载，避免界面卡顿
+                    StartRangeDownloadTask task = new StartRangeDownloadTask(activity, toStart);
+                    TaskExecutor.getInstance().execute(task);
                 }
 
                 if (toAdd.isEmpty()) {
@@ -244,14 +245,21 @@ public final class CommonOperations {
                 }
 
                 if (justStart) {
-                    // Got default label
+                    // Got default label - 使用后台任务处理新下载，避免界面卡顿
                     for (GalleryInfo gi : toAdd) {
-                        Intent intent = new Intent(activity, DownloadService.class);
-                        intent.setAction(DownloadService.ACTION_START);
-                        intent.putExtra(DownloadService.KEY_LABEL, label);
-                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                        activity.startService(intent);
+                        dm.addDownload(gi, label);
                     }
+                    
+                    // 对于新添加的项目，创建一个包含它们的GID列表并使用后台任务
+                    if (!toAdd.isEmpty()) {
+                        LongList newGidList = new LongList();
+                        for (GalleryInfo gi : toAdd) {
+                            newGidList.add(gi.gid);
+                        }
+                        StartRangeDownloadTask task = new StartRangeDownloadTask(activity, newGidList);
+                        TaskExecutor.getInstance().execute(task);
+                    }
+                    
                     // Notify
                     SimpleHandler.getInstance().post(() -> {
                         activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
@@ -277,13 +285,19 @@ public final class CommonOperations {
                                             label1 = null;
                                         }
                                     }
-                                    // Start download
+                                    // Start download - 使用后台任务处理新下载，避免界面卡顿
                                     for (GalleryInfo gi : toAdd) {
-                                        Intent intent = new Intent(activity, DownloadService.class);
-                                        intent.setAction(DownloadService.ACTION_START);
-                                        intent.putExtra(DownloadService.KEY_LABEL, label1);
-                                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                                        activity.startService(intent);
+                                        dm.addDownload(gi, label1);
+                                    }
+                                    
+                                    // 对于新添加的项目，创建一个包含它们的GID列表并使用后台任务
+                                    if (!toAdd.isEmpty()) {
+                                        LongList newGidList = new LongList();
+                                        for (GalleryInfo gi : toAdd) {
+                                            newGidList.add(gi.gid);
+                                        }
+                                        StartRangeDownloadTask task = new StartRangeDownloadTask(activity, newGidList);
+                                        TaskExecutor.getInstance().execute(task);
                                     }
                                     // Save settings
                                     if (builder.isChecked()) {

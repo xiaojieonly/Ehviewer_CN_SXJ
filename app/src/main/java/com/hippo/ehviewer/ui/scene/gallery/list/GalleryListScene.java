@@ -127,6 +127,7 @@ import com.hippo.lib.yorozuya.AnimationUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.SimpleAnimatorListener;
+import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.StringUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
 
@@ -245,9 +246,8 @@ public final class GalleryListScene extends BaseScene
     private final Animator.AnimatorListener mActionFabAnimatorListener = new SimpleAnimatorListener() {
         @Override
         public void onAnimationEnd(Animator animation) {
-            if (null != mFabLayout) {
-                ((View) mFabLayout.getPrimaryFab()).setVisibility(View.INVISIBLE);
-            }
+            // 在吸附模式下，不需要将按钮设置为不可见
+            // 按钮会保持在右侧可见状态
         }
     };
 
@@ -366,7 +366,12 @@ public final class GalleryListScene extends BaseScene
             @Override
             public void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
                 if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
+                    // 确保在主线程中更新UI
+                    SimpleHandler.getInstance().post(() -> {
+                        if (mAdapter != null) {
+                            mAdapter.notifyDataSetChanged();
+                        }
+                    });
                 }
             }
 
@@ -386,14 +391,24 @@ public final class GalleryListScene extends BaseScene
             @Override
             public void onReload() {
                 if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
+                    // 确保在主线程中更新UI
+                    SimpleHandler.getInstance().post(() -> {
+                        if (mAdapter != null) {
+                            mAdapter.notifyDataSetChanged();
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChange() {
                 if (mAdapter != null) {
-                    mAdapter.notifyDataSetChanged();
+                    // 确保在主线程中更新UI
+                    SimpleHandler.getInstance().post(() -> {
+                        if (mAdapter != null) {
+                            mAdapter.notifyDataSetChanged();
+                        }
+                    });
                 }
             }
 
@@ -681,6 +696,14 @@ public final class GalleryListScene extends BaseScene
 
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
+        
+        // 保存按钮的原始位置，用于吸附效果
+        View fab = mFabLayout.getPrimaryFab();
+        fab.post(() -> {
+            if (fab.getTag() == null) {
+                fab.setTag(new float[]{fab.getX(), fab.getY()});
+            }
+        });
         
         // 为主FAB添加长按事件，用于退出多选模式
         mFabLayout.getPrimaryFab().setOnLongClickListener(v -> {
@@ -1567,9 +1590,22 @@ public final class GalleryListScene extends BaseScene
             View fab = mFabLayout.getPrimaryFab();
             fab.setVisibility(View.VISIBLE);
             fab.setRotation(-45.0f);
+            
+            // 如果是从吸附状态恢复，先恢复位置
+            float[] originalPos = (float[]) fab.getTag();
+            if (originalPos != null) {
+                fab.setX(originalPos[0]);
+                fab.setScaleX(1.0f);
+                fab.setScaleY(1.0f);
+                fab.setAlpha(1.0f);
+            }
+            
             fab.animate().scaleX(1.0f).scaleY(1.0f).rotation(0.0f).setListener(null)
                     .setDuration(ANIMATE_TIME).setStartDelay(0L)
                     .setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR).start();
+                    
+            // 恢复原始的点击监听器
+            fab.setOnClickListener(this);
         }
     }
 
@@ -1577,9 +1613,65 @@ public final class GalleryListScene extends BaseScene
         if (null != mFabLayout && STATE_NORMAL == mState && mShowActionFab) {
             mShowActionFab = false;
             View fab = mFabLayout.getPrimaryFab();
-            fab.animate().scaleX(0.0f).scaleY(0.0f).setListener(mActionFabAnimatorListener)
-                    .setDuration(ANIMATE_TIME).setStartDelay(0L)
-                    .setInterpolator(AnimationUtils.SLOW_FAST_INTERPOLATOR).start();
+            
+            // 获取屏幕宽度
+            Display display = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
+            Point screenSize = new Point();
+            display.getSize(screenSize);
+            int screenWidth = screenSize.x;
+            
+            // 计算吸附位置：让按钮大部分移出屏幕，只留一小部分在右侧可见
+            int fabWidth = fab.getWidth();
+            int visibleWidth = (int) (fabWidth * 0.2f); // 只显示20%的宽度
+            int targetX = screenWidth - visibleWidth;
+            
+            // 保存原始位置
+            if (fab.getTag() == null) {
+                fab.setTag(new float[]{fab.getX(), fab.getY()});
+            }
+            
+            // 执行吸附动画
+            fab.animate()
+                .x(targetX)
+                .scaleX(0.8f) // 稍微缩小一点
+                .scaleY(0.8f)
+                .alpha(0.7f) // 稍微透明一点
+                .setDuration(ANIMATE_TIME)
+                .setStartDelay(0L)
+                .setInterpolator(AnimationUtils.SLOW_FAST_INTERPOLATOR)
+                .start();
+                
+            // 设置点击监听器，用于恢复完整显示
+            fab.setOnClickListener(v -> {
+                showActionFabFromCollapsed();
+            });
+        }
+    }
+    
+    /**
+     * 从吸附状态恢复完整显示
+     */
+    private void showActionFabFromCollapsed() {
+        if (null != mFabLayout) {
+            View fab = mFabLayout.getPrimaryFab();
+            
+            // 恢复原始位置
+            float[] originalPos = (float[]) fab.getTag();
+            if (originalPos != null) {
+                fab.animate()
+                    .x(originalPos[0])
+                    .scaleX(1.0f)
+                    .scaleY(1.0f)
+                    .alpha(1.0f)
+                    .setDuration(ANIMATE_TIME)
+                    .setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR)
+                    .start();
+            }
+            
+            mShowActionFab = true;
+            
+            // 恢复原始的点击监听器
+            fab.setOnClickListener(this);
         }
     }
 
@@ -1637,20 +1729,44 @@ public final class GalleryListScene extends BaseScene
             }
             View fab = mFabLayout.getPrimaryFab();
             fab.setVisibility(View.VISIBLE);
+            
+            // 恢复原始位置
+            float[] originalPos = (float[]) fab.getTag();
+            if (originalPos != null) {
+                fab.setX(originalPos[0]);
+            }
+            
             fab.setRotation(-45.0f);
+            fab.setScaleX(1.0f);
+            fab.setScaleY(1.0f);
+            fab.setAlpha(1.0f);
             fab.animate().scaleX(1.0f).scaleY(1.0f).rotation(0.0f).setListener(null)
                     .setDuration(ANIMATE_TIME).setStartDelay(delay)
                     .setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR).start();
+                    
+            // 恢复原始的点击监听器
+            fab.setOnClickListener(this);
 
         } else {
             mFabLayout.setExpanded(false, false);
             View fab = mFabLayout.getPrimaryFab();
             fab.setVisibility(View.VISIBLE);
+            
+            // 恢复原始位置
+            float[] originalPos = (float[]) fab.getTag();
+            if (originalPos != null) {
+                fab.setX(originalPos[0]);
+            }
+            
             fab.setScaleX(1.0f);
             fab.setScaleY(1.0f);
+            fab.setAlpha(1.0f);
             mSearchFab.setVisibility(View.INVISIBLE);
             mSearchFab.setScaleX(0.0f);
             mSearchFab.setScaleY(0.0f);
+            
+            // 恢复原始的点击监听器
+            fab.setOnClickListener(this);
         }
     }
 
@@ -2335,21 +2451,17 @@ public final class GalleryListScene extends BaseScene
                 .setTitle(R.string.download_selected)
                 .setMessage(getString(R.string.download_selected_confirm, mSelectedGalleryList.size()))
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    // 直接批量加入下载管理器
+                    // 使用 CommonOperations.startDownload 确保调用 StartRangeDownloadTask
                     showTip("正在添加 " + mSelectedGalleryList.size() + " 个下载任务...", LENGTH_SHORT);
-                    for (com.hippo.ehviewer.client.data.GalleryInfo gi : new ArrayList<>(mSelectedGalleryList)) {
-                        if (mDownloadManager != null) {
-                            mDownloadManager.addDownload(gi, null);
-                        }
-                    }
+                    
+                    // 转换为 GalleryInfo 列表
+                    List<com.hippo.ehviewer.client.data.GalleryInfo> galleryList = new ArrayList<>(mSelectedGalleryList);
+                    
+                    // 调用 CommonOperations.startDownload 确保使用后台任务
+                    CommonOperations.startDownload((MainActivity) getActivity(), galleryList, false);
 
                     // 立即退出多选模式，不阻塞UI
                     toggleMultiSelectMode();
-
-                    // 延迟显示成功提示
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                        showTip("已添加 " + mSelectedGalleryList.size() + " 个下载任务", LENGTH_SHORT);
-                    }, 500);
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();

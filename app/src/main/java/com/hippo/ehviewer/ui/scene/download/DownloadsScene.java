@@ -131,6 +131,7 @@ import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.ehviewer.ui.progress.ProgressDialogManager;
 import com.hippo.ehviewer.task.TaskExecutor;
 import com.hippo.ehviewer.task.impl.StartAllDownloadTask;
+import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -216,6 +217,9 @@ public class DownloadsScene extends ToolbarScene
     private MyPageChangeListener myPageChangeListener;
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
+    
+    // 添加页码切换标志位，避免与进度更新冲突
+    private volatile boolean isPageChanging = false;
 
     /*---------------
      View life cycle
@@ -584,6 +588,23 @@ public class DownloadsScene extends ToolbarScene
             @Override
             public void onPageChanged(int newIndexPage) {
                 indexPage = newIndexPage;
+                // 设置页码切换标志
+                isPageChanging = true;
+                
+                // 页码切换时，延迟更新列表以避免与进度更新冲突
+                if (mAdapter != null) {
+                    android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                    mainHandler.postDelayed(() -> {
+                        try {
+                            mAdapter.notifyDataSetChanged();
+                            // 重置页码切换标志
+                            isPageChanging = false;
+                        } catch (Exception e) {
+                            android.util.Log.e("DownloadsScene", "Error updating adapter after page change: " + e.getMessage());
+                            isPageChanging = false;
+                        }
+                    }, 150); // 延迟150ms执行，确保页码切换完成
+                }
             }
 
             @Override
@@ -1250,10 +1271,9 @@ public class DownloadsScene extends ToolbarScene
                     if (gidList.isEmpty()) {
                         break;
                     }
-                    Intent intent = new Intent(activity, DownloadService.class);
-                    intent.setAction(DownloadService.ACTION_START_RANGE);
-                    intent.putExtra(DownloadService.KEY_GID_LIST, gidList);
-                    activity.startService(intent);
+                    // 使用后台任务处理多选下载，避免界面卡顿
+                    StartRangeDownloadTask task = new StartRangeDownloadTask(activity, gidList);
+                    TaskExecutor.getInstance().execute(task);
                     // Cancel check mode
                     recyclerView.outOfCustomChoiceMode();
                     break;
@@ -1480,6 +1500,13 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, LinkedList<DownloadInfo> mWaitList) {
+        // 如果正在页码切换，延迟处理进度更新
+        if (isPageChanging) {
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            mainHandler.postDelayed(() -> onUpdate(info, list, mWaitList), 200);
+            return;
+        }
+        
         if (mList != list) {
             // 如果列表不匹配，尝试在当前列表中找到对应的项目
             boolean found = false;
@@ -1498,7 +1525,11 @@ public class DownloadsScene extends ToolbarScene
                     
                     // 使用payload通知更新，避免整个item重绘，提高性能
                     if (mAdapter != null) {
-                        mAdapter.notifyItemChanged(listIndexInPage(i), "progress");
+                        try {
+                            mAdapter.notifyItemChanged(listIndexInPage(i), "progress");
+                        } catch (Exception e) {
+                            android.util.Log.e("DownloadsScene", "Error notifying item change: " + e.getMessage());
+                        }
                     }
                     found = true;
                     break;
@@ -1518,7 +1549,11 @@ public class DownloadsScene extends ToolbarScene
         int index = mList.indexOf(info);
         if (index >= 0 && mAdapter != null) {
             // 使用payload通知更新，避免整个item重绘，提高性能
-            mAdapter.notifyItemChanged(listIndexInPage(index), "progress");
+            try {
+                mAdapter.notifyItemChanged(listIndexInPage(index), "progress");
+            } catch (Exception e) {
+                android.util.Log.e("DownloadsScene", "Error notifying item change: " + e.getMessage());
+            }
         }
     }
 

@@ -3,6 +3,7 @@ package com.hippo.ehviewer.task
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.hippo.ehviewer.BackgroundTaskManager
 
 /**
  * Java 兼容的任务执行器
@@ -23,5 +24,22 @@ object TaskExecutor {
                 // 错误会在任务内部处理
             }
         }
+    }
+    
+    /**
+     * 获取 TaskExecutor 实例（兼容旧代码）
+     */
+    @JvmStatic
+    fun getInstance(): TaskExecutor {
+        return this
+    }
+    
+    /**
+     * 执行后台任务（兼容旧代码）
+     * @param task 要执行的后台任务
+     */
+    @JvmStatic
+    fun execute(task: BackgroundTask) {
+        executeTask(task)
     }
 }

@@ -46,6 +46,9 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
+import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.ehviewer.gallery.A7ZipArchive;
 import com.hippo.ehviewer.gallery.Pipe;
 import com.hippo.ehviewer.spider.SpiderInfo;
@@ -780,10 +783,12 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             } else if (start == v) {
                 final DownloadInfo info = list.get(mCallback.positionInList(index));
-                Intent intent = new Intent(context, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
-                context.startService(intent);
+                
+                // 使用后台任务处理单个下载，避免界面卡顿
+                LongList gidList = new LongList();
+                gidList.add(info.gid);
+                StartRangeDownloadTask task = new StartRangeDownloadTask(context, gidList);
+                TaskExecutor.getInstance().execute(task);
             } else if (stop == v) {
                 DownloadManager downloadManager = mCallback.getDownloadManager();
                 if (null != downloadManager) {

@@ -40,50 +40,49 @@ class StartAllDownloadTask(context: Context) : BaseBackgroundTask(context) {
                 return Result.success(Unit)
             }
             
-            // 计算需要启动的任务数量
-            val tasksToStart = allInfoList.filter { info ->
-                info.state == DownloadInfo.STATE_NONE || info.state == DownloadInfo.STATE_FAILED
-            }
-            
-            val totalCount = tasksToStart.size
-            var processedCount = 0
-            
+            val totalCount = allInfoList.size
             updateProgress(5, context.getString(R.string.start_all_download_starting, totalCount))
             delay(500)
             
-            // 启动所有符合条件的下载任务
-            for (info in tasksToStart) {
-                try {
-                    val galleryTitle = info.title ?: "Gallery ${info.gid}"
-                    
-                    updateProgress(
-                        5 + (processedCount * 90 / totalCount),
-                        context.getString(R.string.start_all_download_progress, 
-                            processedCount + 1, totalCount, galleryTitle)
-                    )
-                    
-                    // 设置为等待状态
-                    info.state = DownloadInfo.STATE_WAIT
-                    // downloadManager.addToWaitList(info)
-                    
-                    processedCount++
-                    delay(100) // 给UI一些更新时间
-                    
-                } catch (e: Exception) {
-                    // 记录错误但继续处理其他任务
+            // 使用 DownloadManager 的 startAllDownload 方法，并提供监听器
+            var isCompleted = false
+            downloadManager.startAllDownload(object : DownloadManager.StartAllDownloadListener {
+                override fun onStart() {
+                    // 开始时的处理
                 }
+                
+                override fun onProgress(current: Int, total: Int, title: String) {
+                    // 更新进度 - 基于所有扫描到的项目
+                    updateProgress(
+                        5 + (current * 90 / total),
+                        context.getString(R.string.start_all_download_progress, 
+                            current, total, title)
+                    )
+                }
+                
+                override fun onComplete(totalStarted: Int) {
+                    updateProgress(95, context.getString(R.string.start_all_download_finalizing))
+                    // startAllDownload() 方法会自动调用 ensureDownload()，所以不需要手动调用
+                    updateProgress(100, context.getString(R.string.start_all_download_completed, totalStarted))
+                    
+                    // 使用Handler延迟执行，而不是delay
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        notifyCompleted()
+                        isCompleted = true
+                    }, 1000)
+                }
+                
+                override fun onError(error: String) {
+                    notifyError(Exception(error))
+                    isCompleted = true
+                }
+            })
+            
+            // 等待下载完成
+            while (!isCompleted) {
+                delay(100)
             }
             
-            updateProgress(95, context.getString(R.string.start_all_download_finalizing))
-            delay(500)
-            
-            // 确保下载开始
-            // downloadManager.ensureDownload()
-            
-            updateProgress(100, context.getString(R.string.start_all_download_completed, processedCount))
-            delay(1000)
-            
-            notifyCompleted()
             Result.success(Unit)
             
         } catch (e: Exception) {

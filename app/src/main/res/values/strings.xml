@@ -1450,6 +1450,18 @@ This feature intelligently cleans invalid download items with the following work
     <string name="start_all_download_completed">Started %d tasks</string>
     <string name="start_all_download_no_tasks">No tasks to start</string>
     
+    <!-- Start range download task -->
+    <string name="download_start_range">Start Range Download</string>
+    <string name="download_start_range_summary">Start %d selected downloads</string>
+    <string name="start_range_download_initializing">Initializing range downloads...</string>
+    <string name="start_range_download_starting">Starting %d selected tasks</string>
+    <string name="start_range_download_progress">Processing: %1$d/%2$d</string>
+    <string name="start_range_download_finalizing">Finalizing...</string>
+    <string name="start_range_download_completed">Started %d selected tasks</string>
+    <string name="start_range_download_no_tasks">No tasks to start</string>
+    <string name="start_range_download_no_valid_tasks">No valid tasks to start</string>
+    <string name="start_range_download_processing">Processing %d valid tasks</string>
+    
     <!-- Settings strings -->
     <string name="settings_download_cleaning_summary">Clean invalid download items</string>
     <string name="settings_download_rebuilding_summary">Rebuild download records</string>
