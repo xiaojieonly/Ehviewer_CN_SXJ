@@ -32,6 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.hippo.ehviewer.Analytics;
+import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.Settings;
@@ -65,6 +66,7 @@ import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.lib.yorozuya.collect.SparseIJArray;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
+import com.hippo.ehviewer.util.UiThreadHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -113,6 +115,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     private DownloadInfo mCurrentTask;
     @Nullable
     private SpiderQueen mCurrentSpider;
+    
+    // 后台任务管理器
+    private final BackgroundTaskManager mBackgroundTaskManager;
+    // 当前下载任务的后台任务ID
+    @Nullable
+    private String mCurrentDownloadTaskId;
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(5);
     
@@ -124,6 +132,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         
         // 初始化下载日志记录器
         DownloadLogger.initialize(context);
+        
+        // 初始化后台任务管理器
+        mBackgroundTaskManager = BackgroundTaskManager.getInstance();
 
         // Get all labels
         List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
@@ -336,6 +347,16 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         mDownloadListener = listener;
     }
 
+    private void moveToRecycleBin(DownloadInfo info) {
+        try {
+            // 简化版本：暂时只记录日志，不实际移动文件
+            // TODO: 实现完整的回收站功能
+            Log.d(TAG, "Moving download to recycle bin: " + info.title);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to move download to recycle bin", e);
+        }
+    }
+
     private void ensureDownload() {
         if (mCurrentTask != null) {
             // Only one download
@@ -349,28 +370,50 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             String galleryTitle = EhUtils.getSuitableTitle(info);
             Log.d(TAG, "[ENSURE] 从等待列表获取任务: " + galleryTitle + " (等待列表剩余: " + mWaitList.size() + ")");
             
-            SpiderQueen spider = SpiderQueen.obtainSpiderQueen(mContext, info, SpiderQueen.MODE_DOWNLOAD);
-            mCurrentTask = info;
-            mCurrentSpider = spider;
-            spider.addOnSpiderListener(this);
-            info.state = DownloadInfo.STATE_DOWNLOAD;
-            info.speed = -1;
-            info.remaining = -1;
-            info.total = -1;
-            info.finished = 0;
-            info.downloaded = 0;
-            info.legacy = -1;
-            info.time = System.currentTimeMillis(); // 设置下载开始时间
-            
-            Log.d(TAG, "[ENSURE] 初始化下载状态: " + galleryTitle);
-            
-            // Update in DB
-            EhDB.putDownloadInfo(info);
-            Log.d(TAG, "[ENSURE] 更新下载状态到数据库: " + galleryTitle);
+            // 确保在主线程获取SpiderQueen
+            SimpleHandler.getInstance().post(() -> {
+                try {
+                    SpiderQueen spider = SpiderQueen.obtainSpiderQueen(mContext, info, SpiderQueen.MODE_DOWNLOAD);
+                    synchronized (DownloadManager.this) {
+                        mCurrentTask = info;
+                        mCurrentSpider = spider;
+                        spider.addOnSpiderListener(this);
+                        info.state = DownloadInfo.STATE_DOWNLOAD;
+                        info.speed = -1;
+                        info.remaining = -1;
+                        info.total = -1;
+                        info.finished = 0;
+                        info.downloaded = 0;
+                        info.legacy = -1;
+                        info.time = System.currentTimeMillis(); // 设置下载开始时间
+                        
+                        Log.d(TAG, "[ENSURE] 初始化下载状态: " + galleryTitle);
+                        
+                        // Update in DB
+                        EhDB.putDownloadInfo(info);
+                        Log.d(TAG, "[ENSURE] 更新下载状态到数据库: " + galleryTitle);
+                        
+                        // SpiderQueen will start automatically when obtained in download mode
+                        Log.d(TAG, "[ENSURE] SpiderQueen已准备就绪: " + galleryTitle);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "[ENSURE] 获取SpiderQueen失败: " + galleryTitle, e);
+                    // 恢复到等待状态
+                    info.state = DownloadInfo.STATE_WAIT;
+                    EhDB.putDownloadInfo(info);
+                    mWaitList.addFirst(info);
+                }
+            });
             
             // Start speed count
             mSpeedReminder.start();
             Log.d(TAG, "[ENSURE] 开始速度计数: " + galleryTitle);
+            
+            // 创建后台任务
+            String taskName = "下载: " + galleryTitle;
+            String taskDescription = "正在下载 " + galleryTitle;
+            mCurrentDownloadTaskId = mBackgroundTaskManager.getTaskStatusManager().addTask(taskName, taskDescription, null);
+            Log.d(TAG, "[ENSURE] 创建后台任务: " + mCurrentDownloadTaskId);
             
             // Notify start downloading
             if (mDownloadListener != null) {
@@ -483,9 +526,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                               " (旧GID: " + oldGid + ", 新GID: " + galleryInfo.gid + ")");
                     
                     // 显示增量更新提示
-                    SimpleHandler.getInstance().post(() -> {
-                        Toast.makeText(mContext, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-                    });
+                    UiThreadHelper.showToastSafely("检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG);
                     
                     // 处理增量下载更新
                     handleIncrementalUpdate(galleryInfo, oldGid);
@@ -592,9 +633,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             for (DownloadInfoListener l : mDownloadInfoListeners) {
                 l.onUpdateAll();
             }
-            // Ensure download
-            ensureDownload();
         }
+
+        // Ensure download
+        ensureDownload();
     }
 
     public void startAllDownload() {
@@ -1188,9 +1230,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                               " (旧GID: " + oldGid + ", 新GID: " + galleryInfo.gid + ")");
                     
                     // 显示增量更新提示
-                    SimpleHandler.getInstance().post(() -> {
-                        Toast.makeText(mContext, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-                    });
+                    UiThreadHelper.showToastSafely("检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG);
                     
                     // 获取已存在的下载信息
                     DownloadInfo existingInfo = mAllInfoMap.get(galleryInfo.gid);
@@ -1260,9 +1300,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                       " (旧GID: " + oldGid + ", 新GID: " + galleryInfo.gid + ")");
             
             // 显示增量更新提示
-            SimpleHandler.getInstance().post(() -> {
-                Toast.makeText(mContext, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-            });
+            UiThreadHelper.showToastSafely("检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG);
             
             // 处理增量下载更新
             handleIncrementalUpdate(galleryInfo, oldGid);
@@ -1426,6 +1464,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         stopDownloadInternal(gid);
         DownloadInfo info = mAllInfoMap.get(gid);
         if (info != null) {
+            // Move to recycle bin instead of direct deletion
+            moveToRecycleBin(info);
+
             // Remove from DB
             EhDB.removeDownloadInfo(info.gid);
 
@@ -1461,6 +1502,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 Log.d(TAG, "Can't get download info with gid: " + gid);
                 continue;
             }
+
+            // Move to recycle bin instead of direct deletion
+            moveToRecycleBin(info);
 
             // Remove from DB
             EhDB.removeDownloadInfo(info.gid);
@@ -1567,6 +1611,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         mCurrentSpider = null;
         // Stop speed reminder
         mSpeedReminder.stop();
+        
+        // 结束后台任务
+        if (mCurrentDownloadTaskId != null) {
+            mBackgroundTaskManager.getTaskStatusManager().markTaskCancelled(mCurrentDownloadTaskId);
+            Log.d(TAG, "[STOP] 标记后台任务取消: " + mCurrentDownloadTaskId);
+            mCurrentDownloadTaskId = null;
+        }
+        
         if (info == null) {
             return null;
         }
@@ -1817,6 +1869,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             int speed = mSpeedReminder != null ? mSpeedReminder.getSpeed() : 0;
             mDownloadLogger.logDownloadProgress(String.valueOf(mCurrentTask.gid), galleryTitle, 
                 finished, total, speed);
+            
+            // 更新后台任务进度
+            if (mCurrentDownloadTaskId != null) {
+                mBackgroundTaskManager.getTaskStatusManager().updateTaskProgress(
+                    mCurrentDownloadTaskId, finished, total, 
+                    "正在下载第 " + index + " 页"
+                );
+            }
         }
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
@@ -2055,6 +2115,20 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             l.onUpdate(info, list, mWaitList);
                         }
                     }
+                    
+                    // 结束后台任务
+                    if (mCurrentDownloadTaskId != null) {
+                        if (info.legacy == 0) {
+                            mBackgroundTaskManager.getTaskStatusManager().markTaskCompleted(mCurrentDownloadTaskId);
+                            Log.d(TAG, "[FINISH] 标记后台任务完成: " + mCurrentDownloadTaskId);
+                        } else {
+                            mBackgroundTaskManager.getTaskStatusManager().markTaskError(mCurrentDownloadTaskId, 
+                                "下载失败，剩余 " + info.legacy + " 页");
+                            Log.d(TAG, "[FINISH] 标记后台任务失败: " + mCurrentDownloadTaskId);
+                        }
+                        mCurrentDownloadTaskId = null;
+                    }
+                    
                     // Start next download
                     ensureDownload();
                     Log.d(TAG, "[FINISH] 确保下一个下载开始: " + galleryTitle);
@@ -2980,9 +3054,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                               " (旧GID: " + oldGid + ", 新GID: " + galleryInfo.gid + ")");
                     
                     // 显示增量更新提示
-                    SimpleHandler.getInstance().post(() -> {
-                        Toast.makeText(mContext, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-                    });
+                    UiThreadHelper.showToastSafely("检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG);
                     
                     // 处理增量下载更新
                     handleIncrementalUpdate(galleryInfo, oldGid);

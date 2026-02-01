@@ -62,6 +62,14 @@ public class BackgroundTaskStatusManager {
             taskInfo.setCurrentProgress(current);
             taskInfo.setTotalProgress(total);
             taskInfo.setProgressDetail(detail);
+            
+            // 更新通知栏进度
+            BackgroundTaskManager.getInstance().updateTaskProgress(
+                taskInfo.getTaskName(), 
+                taskInfo.getTaskDescription(),
+                current, 
+                total
+            );
         }
     }
 
@@ -100,13 +108,32 @@ public class BackgroundTaskStatusManager {
     }
     
     /**
+     * 标记任务取消
+     */
+    public void markTaskCancelled(@NonNull String taskId) {
+        BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
+        if (taskInfo != null) {
+            taskInfo.setCancelled(true);
+            
+            // 添加到已完成任务列表
+            mCompletedTasks.put(taskId, taskInfo);
+            
+            // 限制已完成任务的数量
+            if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
+                // 移除最旧的任务
+                String oldestTaskId = mCompletedTasks.keySet().iterator().next();
+                mCompletedTasks.remove(oldestTaskId);
+            }
+        }
+    }
+    
+    /**
      * 标记任务出错
      */
     public void markTaskError(@NonNull String taskId, @Nullable String errorMessage) {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
         if (taskInfo != null) {
             taskInfo.setErrorMessage(errorMessage);
-            taskInfo.setCompleted(true);
             
             // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);

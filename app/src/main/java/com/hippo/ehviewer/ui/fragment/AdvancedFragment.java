@@ -40,6 +40,7 @@ import com.hippo.ehviewer.ui.wifi.WiFiServerActivity;
 import com.hippo.ehviewer.ui.task.BackgroundTaskActivity;
 import com.hippo.ehviewer.ui.transfer.TransferActivity;
 import com.hippo.ehviewer.ui.NetworkDiagnosticActivity;
+import com.hippo.ehviewer.ui.local.LocalGalleryActivity;
 import com.hippo.ehviewer.widget.ProgressHelper;
 import com.hippo.util.LogCat;
 import com.hippo.util.ReadableTime;
@@ -68,6 +69,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_TRANSFER_SERVICE = "transfer_service";
     private static final String KEY_NETWORK_DIAGNOSTIC = "network_diagnostic";
     private static final String KEY_USER_AGENT = "user_agent";
+    private static final String KEY_LOCAL_GALLERY = "local_gallery";
 
     private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
 
@@ -88,6 +90,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Preference transferService = findPreference(KEY_TRANSFER_SERVICE);
         Preference networkDiagnostic = findPreference(KEY_NETWORK_DIAGNOSTIC);
         Preference userAgent = findPreference(KEY_USER_AGENT);
+        Preference localGallery = findPreference(KEY_LOCAL_GALLERY);
 
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
@@ -98,6 +101,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         transferService.setOnPreferenceClickListener(this);
         networkDiagnostic.setOnPreferenceClickListener(this);
         userAgent.setOnPreferenceClickListener(this);
+        localGallery.setOnPreferenceClickListener(this);
 
         appLanguage.setOnPreferenceChangeListener(this);
     }
@@ -131,6 +135,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 return gotoNetworkDiagnosticActivity();
             case KEY_USER_AGENT:
                 return showUserAgentDialog();
+            case KEY_LOCAL_GALLERY:
+                return gotoLocalGalleryActivity();
             default:
                 return false;
         }
@@ -166,6 +172,13 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private boolean gotoNetworkDiagnosticActivity() {
         Activity activity = getActivity();
         Intent intent = new Intent(activity, NetworkDiagnosticActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoLocalGalleryActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, LocalGalleryActivity.class);
         activity.startActivity(intent);
         return true;
     }

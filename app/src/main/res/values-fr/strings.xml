@@ -929,11 +929,15 @@
     
     <!-- Download scene strings -->
     <string name="starting_download">Démarrage du téléchargement...</string>
+    <string name="preparing_download">Préparation du téléchargement, veuillez patienter...</string>
     <string name="please_wait">Veuillez patienter...</string>
     <string name="background_processing">Traitement en arrière-plan</string>
     <string name="background_processing_please_wait">Traitement en arrière-plan, veuillez consulter les résultats plus tard</string>
-    <string name="processing_progress">Traitement: %s (%d/%d)</string>
-    <string name="download_tasks_started">%d tâches de téléchargement démarrées</string>
+    <string name="download_progress_format">Traitement du téléchargement: %1$d/%2$d</string>
+    <string name="download_dialog_title">Téléchargement</string>
+    <string name="download_multi_select_processing">Traitement du téléchargement multi-sélection, veuillez patienter...</string>
+    <string name="processing_progress">Traitement: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">%1$d tâches de téléchargement démarrées</string>
     <string name="no_download_tasks_to_start">Aucune tâche de téléchargement à démarrer</string>
     <string name="start_failed">Échec du démarrage: %s</string>
     

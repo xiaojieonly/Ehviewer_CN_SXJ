@@ -33,6 +33,41 @@
     <string name="news">新闻</string>
     <string name="settings">设置</string>
 
+    <!-- Local Gallery Management -->
+    <string name="settings_advanced_local_gallery">本地画廊管理</string>
+    <string name="settings_advanced_local_gallery_summary">管理本地画廊和回收站</string>
+    <string name="local_gallery_title">本地画廊</string>
+    <string name="local_gallery_empty">未找到本地画廊</string>
+    <string name="local_gallery_scanning">正在扫描本地画廊...</string>
+    <string name="local_gallery_scan_complete">扫描完成，找到 %d 个画廊</string>
+    <string name="local_gallery_delete_confirm">删除此本地画廊？它将被移入回收站。</string>
+    <string name="local_gallery_delete_success">画廊已移入回收站</string>
+    <string name="local_gallery_delete_failed">删除画廊失败</string>
+    <string name="local_gallery_search_info">搜索画廊信息</string>
+    <string name="local_gallery_searching">正在搜索画廊信息...</string>
+    <string name="local_gallery_search_not_found">未找到画廊信息</string>
+    <string name="local_gallery_view_error">无法查看此画廊</string>
+    
+    <!-- Recycle Bin -->
+    <string name="recycle_bin_title">回收站</string>
+    <string name="recycle_bin_empty">回收站为空</string>
+    <string name="recycle_bin_restore">还原</string>
+    <string name="recycle_bin_delete_permanently">永久删除</string>
+    <string name="recycle_bin_restore_confirm">将此画廊还原到下载列表？</string>
+    <string name="recycle_bin_restore_success">画廊还原成功</string>
+    <string name="recycle_bin_restore_failed">还原画廊失败</string>
+    <string name="recycle_bin_delete_permanent_confirm">永久删除此画廊？此操作无法撤销！</string>
+    <string name="recycle_bin_delete_permanent_success">画廊已永久删除</string>
+    <string name="recycle_bin_delete_permanent_failed">永久删除画廊失败</string>
+    <string name="recycle_bin_empty_confirm">清空回收站？所有画廊将被永久删除！</string>
+    <string name="recycle_bin_empty_success">回收站已清空</string>
+    
+    <!-- Gallery Actions -->
+    <string name="view_gallery">查看画廊</string>
+    <string name="start_slideshow">开始幻灯片</string>
+    <string name="local_gallery_refresh">刷新</string>
+    <string name="local_gallery_delete">删除</string>
+
     <string name="username">用户名</string>
     <string name="password">密码</string>
     <string name="recaptcha">验证码（非必需）</string>
@@ -1220,11 +1255,15 @@
     
     <!-- Download scene strings -->
     <string name="starting_download">正在启动下载...</string>
+    <string name="preparing_download">正在准备下载，请稍候...</string>
     <string name="please_wait">请稍候...</string>
     <string name="background_processing">后台处理</string>
     <string name="background_processing_please_wait">正在后台处理，请稍后查看结果</string>
+    <string name="download_progress_format">正在处理下载: %1$d/%2$d</string>
+    <string name="download_dialog_title">下载</string>
+    <string name="download_multi_select_processing">正在处理多选下载，请稍候...</string>
     <string name="processing_progress">正在处理: %1$s (%2$d/%3$d)</string>
-    <string name="download_tasks_started">已启动 %d 个下载任务</string>
+    <string name="download_tasks_started">已启动 %1$d 个下载任务</string>
     <string name="no_download_tasks_to_start">没有需要启动的下载任务</string>
     <string name="start_failed">启动失败: %s</string>
     
@@ -1349,4 +1388,17 @@
     <!-- Task strings -->
     <string name="loading">加载中…</string>
     <string name="show">显示</string>
+    
+    <!-- Gallery Detail and Viewer -->
+    <string name="local_gallery_detail_title">画廊详情</string>
+    <string name="local_gallery_viewer_title">画廊查看器</string>
+    <string name="local_gallery_info_title">标题</string>
+    <string name="local_gallery_info_path">路径</string>
+    <string name="local_gallery_info_size">大小</string>
+    <string name="local_gallery_info_count">图片数量</string>
+    <string name="local_gallery_info_modified">修改时间</string>
+    <string name="local_gallery_no_images">此画廊中没有找到图片</string>
+    <string name="local_gallery_slideshow_interval">幻灯片间隔</string>
+    <string name="local_gallery_slideshow_start">开始幻灯片播放...</string>
+    <string name="local_gallery_slideshow_stop">幻灯片播放已停止</string>
 </resources>

@@ -309,6 +309,42 @@
             android:label="@string/settings_advanced_database_viewer"
             android:theme="@style/AppTheme.Toolbar" />
 
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_detail_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryViewerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_viewer_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+            <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_detail_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryViewerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_viewer_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
         <service
             android:name="com.hippo.ehviewer.download.DownloadService"
             android:label="@string/download_service_label"

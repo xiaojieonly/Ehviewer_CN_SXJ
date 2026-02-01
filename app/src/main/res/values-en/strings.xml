@@ -905,11 +905,15 @@
     
     <!-- Download scene strings -->
     <string name="starting_download">Starting download...</string>
+    <string name="preparing_download">Preparing download, please wait...</string>
     <string name="please_wait">Please wait...</string>
     <string name="background_processing">Background processing</string>
     <string name="background_processing_please_wait">Processing in background, please check results later</string>
-    <string name="processing_progress">Processing: %s (%d/%d)</string>
-    <string name="download_tasks_started">Started %d download tasks</string>
+    <string name="download_progress_format">Processing download: %1$d/%2$d</string>
+    <string name="download_dialog_title">Download</string>
+    <string name="download_multi_select_processing">Processing multi-select download, please wait...</string>
+    <string name="processing_progress">Processing: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">Started %1$d download tasks</string>
     <string name="no_download_tasks_to_start">No download tasks to start</string>
     <string name="start_failed">Start failed: %s</string>
     

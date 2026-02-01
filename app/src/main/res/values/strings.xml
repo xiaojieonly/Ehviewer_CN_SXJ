@@ -1466,5 +1466,56 @@ This feature intelligently cleans invalid download items with the following work
     <string name="settings_download_cleaning_summary">Clean invalid download items</string>
     <string name="settings_download_rebuilding_summary">Rebuild download records</string>
     <string name="download_start_all_summary">Start all pending downloads</string>
+    
+    <!-- Local Gallery Management -->
+    <string name="settings_advanced_local_gallery">Local Gallery Management</string>
+    <string name="settings_advanced_local_gallery_summary">Manage local galleries and recycle bin</string>
+    <string name="local_gallery_title">Local Gallery</string>
+    <string name="local_gallery_empty">No local galleries found</string>
+    <string name="local_gallery_scanning">Scanning local galleries...</string>
+    <string name="local_gallery_scan_complete">Scan complete, found %d galleries</string>
+    <string name="local_gallery_delete_confirm">Delete this local gallery? It will be moved to recycle bin.</string>
+    <string name="local_gallery_delete_success">Gallery moved to recycle bin</string>
+    <string name="local_gallery_delete_failed">Failed to delete gallery</string>
+    <string name="local_gallery_search_info">Search Gallery Info</string>
+    <string name="local_gallery_searching">Searching gallery information...</string>
+    <string name="local_gallery_search_not_found">Gallery information not found</string>
+    <string name="local_gallery_view_error">Cannot view this gallery</string>
+    <string name="local_gallery_page_indicator">%1$d / %2$d</string>
+    <string name="local_gallery_image">Gallery image</string>
+    <string name="local_gallery_slideshow_start">Start Slideshow</string>
+    <string name="local_gallery_slideshow_stop">Stop Slideshow</string>
+    <string name="local_gallery_slideshow_interval">Slideshow interval</string>
+    <string name="local_gallery_info_title">Gallery Information</string>
+    <string name="local_gallery_info_path">Path</string>
+    <string name="local_gallery_info_size">Size</string>
+    <string name="local_gallery_info_count">Image Count</string>
+    <string name="local_gallery_info_modified">Modified Time</string>
+    <string name="local_gallery_info">Gallery Info</string>
+    <string name="local_gallery_no_images">No images found in this gallery</string>
+    
+    <!-- Recycle Bin -->
+    <string name="recycle_bin_title">Recycle Bin</string>
+    <string name="recycle_bin_empty">Recycle bin is empty</string>
+    <string name="recycle_bin_restore">Restore</string>
+    <string name="recycle_bin_delete_permanently">Delete Permanently</string>
+    <string name="recycle_bin_restore_confirm">Restore this gallery to download list?</string>
+    <string name="recycle_bin_restore_success">Gallery restored successfully</string>
+    <string name="recycle_bin_restore_failed">Failed to restore gallery</string>
+    <string name="recycle_bin_delete_permanent_confirm">Permanently delete this gallery? This action cannot be undone!</string>
+    <string name="recycle_bin_delete_permanent_success">Gallery permanently deleted</string>
+    <string name="recycle_bin_delete_permanent_failed">Failed to delete gallery permanently</string>
+    <string name="recycle_bin_empty_confirm">Empty recycle bin? All galleries will be permanently deleted!</string>
+    <string name="recycle_bin_empty_success">Recycle bin emptied</string>
+    
+    <!-- Gallery Actions -->
+    <string name="view_gallery">View Gallery</string>
+    <string name="start_slideshow">Start Slideshow</string>
+    <string name="local_gallery_refresh">Refresh</string>
+    <string name="local_gallery_delete">Delete</string>
+    
+    <!-- Gallery Detail and Viewer -->
+    <string name="local_gallery_detail_title">Gallery Details</string>
+    <string name="local_gallery_viewer_title">Gallery Viewer</string>
 
 </resources>

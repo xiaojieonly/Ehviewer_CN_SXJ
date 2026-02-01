@@ -3,7 +3,9 @@ package com.hippo.ehviewer.task
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.hippo.ehviewer.BackgroundTaskManager
+import com.hippo.ehviewer.util.UiThreadHelper
 
 /**
  * Java 兼容的任务执行器
@@ -19,9 +21,16 @@ object TaskExecutor {
     fun executeTask(task: BackgroundTask) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                task.execute()
+                val result = task.execute()
+                // 确保成功回调在主线程执行
+                withContext(Dispatchers.Main) {
+                    // 任务成功完成后的UI更新可以在这里处理
+                }
             } catch (e: Exception) {
-                // 错误会在任务内部处理
+                // 确保错误回调在主线程执行
+                withContext(Dispatchers.Main) {
+                    // 错误处理和UI更新可以在这里处理
+                }
             }
         }
     }

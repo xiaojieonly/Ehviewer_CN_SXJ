@@ -251,6 +251,14 @@ public class BackgroundTaskManager {
      * 显示前台通知
      */
     private void showForegroundNotification(@Nullable String taskName, @Nullable String taskDescription) {
+        showForegroundNotification(taskName, taskDescription, -1, -1);
+    }
+    
+    /**
+     * 显示前台通知（带进度）
+     */
+    private void showForegroundNotification(@Nullable String taskName, @Nullable String taskDescription, 
+                                          int currentProgress, int totalProgress) {
         String title = taskName != null ? taskName : mContext.getString(R.string.background_task_running);
         String text = taskDescription != null ? taskDescription : mContext.getString(R.string.background_task_running_description);
         
@@ -260,15 +268,27 @@ public class BackgroundTaskManager {
                 mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         
-        Notification notification = new NotificationCompat.Builder(mContext, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setContentIntent(pendingIntent)
-                .build();
+                .setContentIntent(pendingIntent);
+        
+        // 添加进度显示
+        if (currentProgress >= 0 && totalProgress > 0) {
+            builder.setProgress(totalProgress, currentProgress, false);
+            // 更新文本显示进度
+            String progressText = mContext.getString(R.string.task_progress_format, 
+                    currentProgress, totalProgress, (currentProgress * 100) / totalProgress);
+            builder.setContentText(text + " - " + progressText);
+        } else {
+            builder.setProgress(0, 0, true); // 不确定进度
+        }
+        
+        Notification notification = builder.build();
         
         if (mNotificationManager != null) {
             mNotificationManager.notify(NOTIFICATION_ID, notification);
@@ -279,6 +299,14 @@ public class BackgroundTaskManager {
      * 更新前台通知
      */
     private void updateForegroundNotification(@Nullable String taskName, @Nullable String taskDescription) {
+        updateForegroundNotification(taskName, taskDescription, -1, -1);
+    }
+    
+    /**
+     * 更新前台通知（带进度）
+     */
+    private void updateForegroundNotification(@Nullable String taskName, @Nullable String taskDescription,
+                                            int currentProgress, int totalProgress) {
         int activeTasks = mActiveTaskCount.get();
         if (activeTasks <= 0) {
             hideForegroundNotification();
@@ -295,15 +323,27 @@ public class BackgroundTaskManager {
                 mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         
-        Notification notification = new NotificationCompat.Builder(mContext, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setContentIntent(pendingIntent)
-                .build();
+                .setContentIntent(pendingIntent);
+        
+        // 添加进度显示
+        if (currentProgress >= 0 && totalProgress > 0) {
+            builder.setProgress(totalProgress, currentProgress, false);
+            // 更新文本显示进度
+            String progressText = mContext.getString(R.string.task_progress_format, 
+                    currentProgress, totalProgress, (currentProgress * 100) / totalProgress);
+            builder.setContentText(text + " - " + progressText);
+        } else {
+            builder.setProgress(0, 0, true); // 不确定进度
+        }
+        
+        Notification notification = builder.build();
         
         if (mNotificationManager != null) {
             mNotificationManager.notify(NOTIFICATION_ID, notification);
@@ -320,6 +360,20 @@ public class BackgroundTaskManager {
     }
     
     /**
+     * 更新任务进度通知
+     * @param taskName 任务名称
+     * @param taskDescription 任务描述
+     * @param currentProgress 当前进度
+     * @param totalProgress 总进度
+     */
+    public void updateTaskProgress(@Nullable String taskName, @Nullable String taskDescription,
+                                  int currentProgress, int totalProgress) {
+        if (mActiveTaskCount.get() > 0) {
+            updateForegroundNotification(taskName, taskDescription, currentProgress, totalProgress);
+        }
+    }
+    
+    /**
      * 在UI线程执行任务
      */
     public void runOnUiThread(Runnable runnable) {
@@ -328,6 +382,13 @@ public class BackgroundTaskManager {
         } else {
             mMainHandler.post(runnable);
         }
+    }
+    
+    /**
+     * 获取任务状态管理器
+     */
+    public BackgroundTaskStatusManager getTaskStatusManager() {
+        return mTaskStatusManager;
     }
     
     /**
@@ -468,13 +529,6 @@ public class BackgroundTaskManager {
                 mContext.getString(R.string.settings_download_merge_duplicate_gallery_summary),
                 task
         );
-    }
-    
-    /**
-     * 获取任务状态管理器
-     */
-    public BackgroundTaskStatusManager getTaskStatusManager() {
-        return mTaskStatusManager;
     }
     
     /**

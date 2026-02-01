@@ -42,6 +42,42 @@
     <!--    <string name="network_remind">It has been detected that the vpn is enabled, please pay attention to network security</string>-->
     <string name="no_blicklist">これはブラックリストです</string>
     <string name="app_name">EhViewer</string>
+    
+    <!-- Local Gallery Management -->
+    <string name="settings_advanced_local_gallery">ローカルギャラリー管理</string>
+    <string name="settings_advanced_local_gallery_summary">ローカルギャラリーとゴミ箱を管理</string>
+    <string name="local_gallery_title">ローカルギャラリー</string>
+    <string name="local_gallery_empty">ローカルギャラリーが見つかりません</string>
+    <string name="local_gallery_scanning">ローカルギャラリーをスキャン中...</string>
+    <string name="local_gallery_scan_complete">スキャン完了、%d個のギャラリーが見つかりました</string>
+    <string name="local_gallery_delete_confirm">このローカルギャラリーを削除しますか？ゴミ箱に移動されます。</string>
+    <string name="local_gallery_delete_success">ギャラリーがゴミ箱に移動されました</string>
+    <string name="local_gallery_delete_failed">ギャラリーの削除に失敗しました</string>
+    <string name="local_gallery_search_info">ギャラリー情報を検索</string>
+    <string name="local_gallery_searching">ギャラリー情報を検索中...</string>
+    <string name="local_gallery_search_not_found">ギャラリー情報が見つかりません</string>
+    <string name="local_gallery_view_error">このギャラリーを表示できません</string>
+    
+    <!-- Recycle Bin -->
+    <string name="recycle_bin_title">ゴミ箱</string>
+    <string name="recycle_bin_empty">ゴミ箱は空です</string>
+    <string name="recycle_bin_restore">復元</string>
+    <string name="recycle_bin_delete_permanently">完全に削除</string>
+    <string name="recycle_bin_restore_confirm">このギャラリーをダウンロードリストに復元しますか？</string>
+    <string name="recycle_bin_restore_success">ギャラリーの復元に成功しました</string>
+    <string name="recycle_bin_restore_failed">ギャラリーの復元に失敗しました</string>
+    <string name="recycle_bin_delete_permanent_confirm">このギャラリーを完全に削除しますか？この操作は元に戻せません！</string>
+    <string name="recycle_bin_delete_permanent_success">ギャラリーが完全に削除されました</string>
+    <string name="recycle_bin_delete_permanent_failed">ギャラリーの完全削除に失敗しました</string>
+    <string name="recycle_bin_empty_confirm">ゴミ箱を空にしますか？すべてのギャラリーが完全に削除されます！</string>
+    <string name="recycle_bin_empty_success">ゴミ箱が空になりました</string>
+    
+    <!-- Gallery Actions -->
+    <string name="view_gallery">ギャラリーを表示</string>
+    <string name="start_slideshow">スライドショーを開始</string>
+    <string name="local_gallery_refresh">更新</string>
+    <string name="local_gallery_delete">削除</string>
+
     <!-- Theme -->
     <string name="theme_light">ライトテーマ</string>
     <string name="theme_dark">ダークテーマ</string>
@@ -974,10 +1010,14 @@
     
     <!-- Download scene strings -->
     <string name="starting_download">ダウンロードを開始中...</string>
+    <string name="preparing_download">ダウンロードを準備中、お待ちください...</string>
     <string name="background_processing">バックグラウンド処理</string>
     <string name="background_processing_please_wait">バックグラウンドで処理中です。後で結果をご確認ください</string>
-    <string name="processing_progress">処理中: %s (%d/%d)</string>
-    <string name="download_tasks_started">%d個のダウンロードタスクを開始しました</string>
+    <string name="download_progress_format">ダウンロードを処理中: %1$d/%2$d</string>
+    <string name="download_dialog_title">ダウンロード</string>
+    <string name="download_multi_select_processing">複数選択ダウンロードを処理中、お待ちください...</string>
+    <string name="processing_progress">処理中: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">%1$d個のダウンロードタスクを開始しました</string>
     <string name="no_download_tasks_to_start">開始するダウンロードタスクがありません</string>
     <string name="start_failed">開始失敗: %s</string>
     

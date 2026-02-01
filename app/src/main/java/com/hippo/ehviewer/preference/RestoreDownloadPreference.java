@@ -37,6 +37,7 @@ import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.task.BackgroundTask;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
+import com.hippo.ehviewer.util.UiThreadHelper;
 import com.hippo.lib.yorozuya.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
@@ -188,8 +189,8 @@ public class RestoreDownloadPreference extends Preference {
                             
                             // 在主线程显示Toast
                             taskManager.runOnUiThread(() -> {
-                                Toast.makeText(application, R.string.settings_download_restore_not_found, 
-                                    Toast.LENGTH_SHORT).show();
+                                UiThreadHelper.showToastSafely(application, R.string.settings_download_restore_not_found, 
+                                    Toast.LENGTH_SHORT);
                             });
                             return;
                         }
@@ -210,8 +211,8 @@ public class RestoreDownloadPreference extends Preference {
                             
                             // 在主线程显示Toast
                             taskManager.runOnUiThread(() -> {
-                                Toast.makeText(application, R.string.settings_download_restore_failed, 
-                                    Toast.LENGTH_SHORT).show();
+                                UiThreadHelper.showToastSafely(application, R.string.settings_download_restore_failed, 
+                                    Toast.LENGTH_SHORT);
                             });
                             return;
                         }
@@ -261,7 +262,7 @@ public class RestoreDownloadPreference extends Preference {
                                 message += "\n" + application.getString(R.string.settings_download_restore_check_logs);
                             }
                             
-                            Toast.makeText(application, message, Toast.LENGTH_LONG).show();
+                            UiThreadHelper.showToastSafely(message, Toast.LENGTH_LONG);
 
                             if (context instanceof Activity) {
                                 ((Activity) context).setResult(Activity.RESULT_OK);
@@ -274,8 +275,8 @@ public class RestoreDownloadPreference extends Preference {
                         
                         // 在主线程显示Toast
                         taskManager.runOnUiThread(() -> {
-                            Toast.makeText(application, R.string.settings_download_restore_failed, 
-                                Toast.LENGTH_SHORT).show();
+                            UiThreadHelper.showToastSafely(application, R.string.settings_download_restore_failed, 
+                                Toast.LENGTH_SHORT);
                         });
                     }
                 }

@@ -1041,4 +1041,17 @@
 • 확인 과정으로 인해 실행 시간이 다소 증가할 수 있음
 • 네트워크 오류 시 안전을 위해 기본적으로 다운로드 항목 보존</string>
 
+    <!-- Download scene strings -->
+    <string name="starting_download">다운로드 시작 중...</string>
+    <string name="preparing_download">다운로드 준비 중, 잠시 기다려 주세요...</string>
+    <string name="background_processing">백그라운드 처리</string>
+    <string name="background_processing_please_wait">백그라운드에서 처리 중입니다. 나중에 결과를 확인해 주세요</string>
+    <string name="download_progress_format">다운로드 처리 중: %1$d/%2$d</string>
+    <string name="download_dialog_title">다운로드</string>
+    <string name="download_multi_select_processing">다중 선택 다운로드 처리 중, 잠시 기다려 주세요...</string>
+    <string name="processing_progress">처리 중: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">%1$d개의 다운로드 작업 시작됨</string>
+    <string name="no_download_tasks_to_start">시작할 다운로드 작업 없음</string>
+    <string name="start_failed">시작 실패: %s</string>
+
 </resources>

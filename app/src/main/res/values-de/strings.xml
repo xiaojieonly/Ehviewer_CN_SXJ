@@ -948,11 +948,15 @@
     
     <!-- Download scene strings -->
     <string name="starting_download">Download wird gestartet...</string>
+    <string name="preparing_download">Download wird vorbereitet, bitte warten...</string>
     <string name="please_wait">Bitte warten...</string>
     <string name="background_processing">Hintergrundverarbeitung</string>
     <string name="background_processing_please_wait">Verarbeitung im Hintergrund, bitte Ergebnisse später überprüfen</string>
-    <string name="processing_progress">Verarbeitung: %s (%d/%d)</string>
-    <string name="download_tasks_started">%d Download-Aufgaben gestartet</string>
+    <string name="download_progress_format">Download-Verarbeitung: %1$d/%2$d</string>
+    <string name="download_dialog_title">Download</string>
+    <string name="download_multi_select_processing">Mehrfachauswahl-Download wird verarbeitet, bitte warten...</string>
+    <string name="processing_progress">Verarbeitung: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">%1$d Download-Aufgaben gestartet</string>
     <string name="no_download_tasks_to_start">Keine Download-Aufgaben zu starten</string>
     <string name="start_failed">Start fehlgeschlagen: %s</string>
     

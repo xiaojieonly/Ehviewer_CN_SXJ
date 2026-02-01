@@ -30,6 +30,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -117,6 +118,7 @@ import com.hippo.ripple.Ripple;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.util.AppHelper;
+import com.hippo.ehviewer.util.UiThreadHelper;
 import com.hippo.util.DrawableManager;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.ContentLayout;
@@ -425,6 +427,16 @@ public final class GalleryListScene extends BaseScene
 
             @Override
             public void onUpdateLabels() {
+                // 确保在主线程执行UI更新
+                if (Looper.myLooper() != Looper.getMainLooper()) {
+                    SimpleHandler.getInstance().post(this::onUpdateLabels);
+                    return;
+                }
+                
+                // 刷新列表显示
+                if (mAdapter != null) {
+                    mAdapter.notifyDataSetChanged();
+                }
             }
         };
         mDownloadManager.addDownloadInfoListener(mDownloadInfoListener);

@@ -979,4 +979,17 @@
     <string name="advanced_filter_discard_changes">Descartar cambios</string>
     <string name="advanced_filter_confirm_reset">¿Restablecer todos los filtros a los valores predeterminados?</string>
 
+    <!-- Download scene strings -->
+    <string name="starting_download">Iniciando descarga...</string>
+    <string name="preparing_download">Preparando descarga, por favor espere...</string>
+    <string name="background_processing">Procesamiento en segundo plano</string>
+    <string name="background_processing_please_wait">Procesando en segundo plano, por favor revise los resultados más tarde</string>
+    <string name="download_progress_format">Procesando descarga: %1$d/%2$d</string>
+    <string name="download_dialog_title">Descargar</string>
+    <string name="download_multi_select_processing">Procesando descarga de selección múltiple, por favor espere...</string>
+    <string name="processing_progress">Procesando: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">Iniciadas %1$d tareas de descarga</string>
+    <string name="no_download_tasks_to_start">No hay tareas de descarga para iniciar</string>
+    <string name="start_failed">Error al iniciar: %s</string>
+
 </resources>

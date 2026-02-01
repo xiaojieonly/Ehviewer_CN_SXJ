@@ -36,6 +36,7 @@ import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
@@ -129,6 +130,7 @@ import com.hippo.ehviewer.ui.scene.download.part.CheckboxAdapter;
 import com.hippo.util.ExecutorManager;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.ehviewer.ui.progress.ProgressDialogManager;
+import com.hippo.ehviewer.util.UiThreadHelper;
 import com.hippo.ehviewer.task.TaskExecutor;
 import com.hippo.ehviewer.task.impl.StartAllDownloadTask;
 import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
@@ -189,9 +191,13 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     public String mLabel;
     @Nullable
+    private String mCurrentLabel;
+    @Nullable
     private List<DownloadInfo> mList;
     @Nullable
     private List<DownloadInfo> mBackList;
+    @Nullable
+    private ArrayAdapter<DownloadLabel> mLabelAdapter;
 
     /*---------------
      List pagination
@@ -876,7 +882,7 @@ public class DownloadsScene extends ToolbarScene
                     return false;
                 }
                 if (searching) {
-                    Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
+                    UiThreadHelper.showToastSafely(context, R.string.download_searching, Toast.LENGTH_LONG);
                     return true;
                 }
                 new AlertDialog.Builder(context)
@@ -1148,7 +1154,7 @@ public class DownloadsScene extends ToolbarScene
                     // Test if we can access the URI
                     try (InputStream testStream = getEHContext().getContentResolver().openInputStream(archiveUri)) {
                         if (testStream == null) {
-                            Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
+                            UiThreadHelper.showToastSafely(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT);
                             return true;
                         }
                     }
@@ -1158,12 +1164,12 @@ public class DownloadsScene extends ToolbarScene
                         getEHContext().getContentResolver().takePersistableUriPermission(archiveUri,
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     } catch (Exception ex) {
-                        Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+                        UiThreadHelper.showToastSafely(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG);
                         Analytics.recordException(ex);
                         return true;
                     }
                 } catch (Exception e) {
-                    Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
+                    UiThreadHelper.showToastSafely(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT);
                     return true;
                 }
                 intent.setAction(Intent.ACTION_VIEW);
@@ -1561,7 +1567,18 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public void onUpdateAll() {
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            // 确保在主线程中更新UI
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                mAdapter.notifyDataSetChanged();
+            } else {
+                // 在后台线程中，使用Handler切换到主线程
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    if (mAdapter != null) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
         }
     }
 
@@ -1569,16 +1586,38 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public void onReload() {
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            // 确保在主线程中更新UI
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                mAdapter.notifyDataSetChanged();
+                updateView();
+            } else {
+                // 在后台线程中，使用Handler切换到主线程
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    if (mAdapter != null) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                    updateView();
+                });
+            }
         }
-        updateView();
     }
 
     @Override
     public void onChange() {
         mLabel = null;
-        updateForLabel();
-        updateView();
+        // 确保在主线程中更新UI
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            updateForLabel();
+            updateView();
+        } else {
+            // 在后台线程中，使用Handler切换到主线程
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            mainHandler.post(() -> {
+                updateForLabel();
+                updateView();
+            });
+        }
     }
 
     @Override
@@ -1588,8 +1627,18 @@ public class DownloadsScene extends ToolbarScene
         }
 
         mLabel = to;
-        updateForLabel();
-        updateView();
+        // 确保在主线程中更新UI
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            updateForLabel();
+            updateView();
+        } else {
+            // 在后台线程中，使用Handler切换到主线程
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            mainHandler.post(() -> {
+                updateForLabel();
+                updateView();
+            });
+        }
     }
 
     @Override
@@ -1598,14 +1647,65 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         if (mAdapter != null) {
-            mAdapter.notifyItemRemoved(listIndexInPage(position));
+            // 确保在主线程中更新UI
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                mAdapter.notifyItemRemoved(listIndexInPage(position));
+                updateView();
+            } else {
+                // 在后台线程中，使用Handler切换到主线程
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    if (mAdapter != null) {
+                        mAdapter.notifyItemRemoved(listIndexInPage(position));
+                    }
+                    updateView();
+                });
+            }
         }
-        updateView();
     }
 
     @Override
     public void onUpdateLabels() {
-        // TODO
+        // 确保在主线程执行UI更新
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            SimpleHandler.getInstance().post(this::onUpdateLabels);
+            return;
+        }
+        
+        // 更新标签相关的UI
+        updateLabelTabs();
+        
+        // 刷新当前显示的列表
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
+        }
+        
+        // 更新视图状态
+        updateView();
+    }
+    
+    /**
+     * 更新标签页显示
+     */
+    private void updateLabelTabs() {
+        if (mDownloadManager == null) {
+            return;
+        }
+        
+        // 获取所有标签
+        List<DownloadLabel> labels = mDownloadManager.getLabelList();
+        
+        // 更新标签适配器
+        if (mLabelAdapter != null) {
+            mLabelAdapter.notifyDataSetChanged();
+        }
+        
+        // 如果当前选中的标签被删除了，切换到默认标签
+        if (mCurrentLabel != null && !mDownloadManager.containLabel(mCurrentLabel)) {
+            mCurrentLabel = null;
+            mLabel = null;
+            onInit();
+        }
     }
 
     @Nullable
@@ -1873,7 +1973,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onDownloadSearchFailed(List<DownloadInfo> list) {
-        Toast.makeText(getEHContext(), R.string.download_searching_failed, Toast.LENGTH_LONG).show();
+        UiThreadHelper.showToastSafely(getEHContext(), R.string.download_searching_failed, Toast.LENGTH_LONG);
         mList = list;
         // 异常时也重置分页，避免页码停留在无效页
         indexPage = 1;
@@ -2013,7 +2113,7 @@ public class DownloadsScene extends ToolbarScene
         } catch (Exception e) {
             Context context = getEHContext();
             if (context != null) {
-                Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
+                UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT);
             }
         }
     }
@@ -2041,16 +2141,16 @@ public class DownloadsScene extends ToolbarScene
             Log.d(TAG, "Successfully obtained persistent URI permission for: " + uri);
         } catch (SecurityException e) {
             Log.e(TAG, "Failed to obtain persistent URI permission for: " + uri, e);
-            Toast.makeText(context, R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+            UiThreadHelper.showToastSafely(context, R.string.archive_permission_lost, Toast.LENGTH_LONG);
             return;
         } catch (Exception e) {
             Log.e(TAG, "Unexpected error when obtaining URI permission for: " + uri, e);
-            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
+            UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT);
             return;
         }
 
         // Show processing dialog
-        Toast.makeText(context, R.string.import_archive_processing, Toast.LENGTH_LONG).show();
+        UiThreadHelper.showToastSafely(context, R.string.import_archive_processing, Toast.LENGTH_LONG);
 
         // Process the archive file in background
         ExecutorManager.getBackgroundExecutor().execute(() -> processArchiveFile(uri));
@@ -2067,14 +2167,14 @@ public class DownloadsScene extends ToolbarScene
             try (InputStream inputStream = context.getContentResolver().openInputStream(uri)) {
                 if (inputStream == null) {
                     runOnUiThread(() ->
-                            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
+                            UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT)
                     );
                     return;
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Cannot access file even with persistent permission", e);
                 runOnUiThread(() ->
-                        Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
+                        UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT)
                 );
                 return;
             }

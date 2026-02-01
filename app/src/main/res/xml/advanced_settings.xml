@@ -161,4 +161,10 @@
         android:title="@string/settings_advanced_database_viewer"
         app:allowDividerAbove="true" />
 
+    <Preference
+        android:key="local_gallery"
+        android:summary="@string/settings_advanced_local_gallery_summary"
+        android:title="@string/settings_advanced_local_gallery"
+        app:allowDividerAbove="true" />
+
 </PreferenceScreen>

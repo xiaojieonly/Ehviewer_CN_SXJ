@@ -93,6 +93,7 @@ import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
+import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.Filter;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadTorrentManager;
@@ -130,6 +131,7 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
+import com.hippo.ehviewer.util.UiThreadHelper;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -335,6 +337,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     private Context mContext;
     private MainActivity activity;
+    
+    // Download manager and related variables
+    @Nullable
+    private DownloadManager mDownloadManager;
+    @Nullable
+    private ArrayAdapter<DownloadLabel> mLabelAdapter;
 
     private ExecutorService executorService;
     private EhTagDatabase ehTags;
@@ -510,6 +518,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
                               @Nullable Bundle savedInstanceState) {
         Context context = getEHContext();
+        // Initialize download manager
+        if (context != null) {
+            mDownloadManager = EhApplication.getDownloadManager(context);
+        }
+        
         // Get download state
         long gid = getGid();
         if (gid != -1) {
@@ -1941,6 +1954,41 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     @Override
     public void onUpdateLabels() {
+        // 确保在主线程执行UI更新
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            SimpleHandler.getInstance().post(this::onUpdateLabels);
+            return;
+        }
+        
+        // 更新下载标签选择器
+        updateDownloadLabelSelector();
+        
+        // 更新下载状态
+        updateDownloadState();
+    }
+    
+    /**
+     * 更新下载标签选择器
+     */
+    private void updateDownloadLabelSelector() {
+        if (mDownloadManager == null) {
+            return;
+        }
+        
+        // 获取所有标签
+        List<DownloadLabel> labels = mDownloadManager.getLabelList();
+        
+        // 更新标签下拉菜单
+        if (mLabelAdapter != null) {
+            mLabelAdapter.notifyDataSetChanged();
+        }
+        
+        // 如果当前选中的标签被删除了，重置为默认标签
+        if (mDownloadInfo != null && mDownloadInfo.label != null && 
+            !mDownloadManager.containLabel(mDownloadInfo.label)) {
+            mDownloadInfo.label = null;
+            EhDB.putDownloadInfo(mDownloadInfo);
+        }
     }
 
     protected void onGetGalleryDetailSuccess(GalleryDetail result) {

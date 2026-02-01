@@ -38,6 +38,41 @@
     <string name="settings">設定</string>
     <string name="stub" translatable="false">Stub</string>
 
+    <!-- Local Gallery Management -->
+    <string name="settings_advanced_local_gallery">本地板畫管理</string>
+    <string name="settings_advanced_local_gallery_summary">管理本地板畫和回收站</string>
+    <string name="local_gallery_title">本地板畫</string>
+    <string name="local_gallery_empty">未找到本地板畫</string>
+    <string name="local_gallery_scanning">正在掃描本地板畫...</string>
+    <string name="local_gallery_scan_complete">掃描完成，找到 %d 個畫廊</string>
+    <string name="local_gallery_delete_confirm">刪除此本地板畫？它將被移入回收站。</string>
+    <string name="local_gallery_delete_success">畫廊已移入回收站</string>
+    <string name="local_gallery_delete_failed">刪除畫廊失敗</string>
+    <string name="local_gallery_search_info">搜尋畫廊資訊</string>
+    <string name="local_gallery_searching">正在搜尋畫廊資訊...</string>
+    <string name="local_gallery_search_not_found">未找到畫廊資訊</string>
+    <string name="local_gallery_view_error">無法查看此畫廊</string>
+    
+    <!-- Recycle Bin -->
+    <string name="recycle_bin_title">回收站</string>
+    <string name="recycle_bin_empty">回收站為空</string>
+    <string name="recycle_bin_restore">還原</string>
+    <string name="recycle_bin_delete_permanently">永久刪除</string>
+    <string name="recycle_bin_restore_confirm">將此畫廊還原到下載列表？</string>
+    <string name="recycle_bin_restore_success">畫廊還原成功</string>
+    <string name="recycle_bin_restore_failed">還原畫廊失敗</string>
+    <string name="recycle_bin_delete_permanent_confirm">永久刪除此畫廊？此操作無法撤銷！</string>
+    <string name="recycle_bin_delete_permanent_success">畫廊已永久刪除</string>
+    <string name="recycle_bin_delete_permanent_failed">永久刪除畫廊失敗</string>
+    <string name="recycle_bin_empty_confirm">清空回收站？所有畫廊將被永久刪除！</string>
+    <string name="recycle_bin_empty_success">回收站已清空</string>
+    
+    <!-- Gallery Actions -->
+    <string name="view_gallery">查看畫廊</string>
+    <string name="start_slideshow">開始幻燈片</string>
+    <string name="local_gallery_refresh">重新整理</string>
+    <string name="local_gallery_delete">刪除</string>
+
     <string name="username">使用者名稱</string>
     <string name="password">密碼</string>
     <string name="recaptcha">驗證碼（非必需）</string>
@@ -1141,5 +1176,18 @@
     <string name="transfer_service_not_running">傳輸服務未運行</string>
     <string name="transfer_connected_clients">已連線用戶端</string>
     <string name="transfer_client_count_default">已連線用戶端：0</string>
+
+    <!-- Download scene strings -->
+    <string name="starting_download">正在啟動下載...</string>
+    <string name="preparing_download">正在準備下載，請稍候...</string>
+    <string name="background_processing">後台處理</string>
+    <string name="background_processing_please_wait">正在後台處理，請稍後查看結果</string>
+    <string name="download_progress_format">正在處理下載: %1$d/%2$d</string>
+    <string name="download_dialog_title">下載</string>
+    <string name="download_multi_select_processing">正在處理多選下載，請稍候...</string>
+    <string name="processing_progress">正在處理: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">已啟動 %1$d 個下載任務</string>
+    <string name="no_download_tasks_to_start">沒有需要啟動的下載任務</string>
+    <string name="start_failed">啟動失敗: %s</string>
 
 </resources>
