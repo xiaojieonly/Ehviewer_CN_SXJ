@@ -29,9 +29,9 @@ android {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 111
-        versionName "2.0.1.3.1"
+        versionName "2.0.1.4"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true

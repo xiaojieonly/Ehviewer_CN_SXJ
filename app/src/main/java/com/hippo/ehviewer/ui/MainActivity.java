@@ -16,6 +16,8 @@
 
 package com.hippo.ehviewer.ui;
 
+import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
@@ -29,7 +31,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -526,8 +530,16 @@ public final class MainActivity extends StageActivity
 
     private void onInit() {
         // Check permission
-        PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()){
+                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            }
+        }else {
+            PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
         EhCookieStore store = EhApplication.getEhCookieStore(getApplicationContext());
         List<Cookie> eCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_E));
         List<Cookie> exCookies = store.getCookies(HttpUrl.get(EhUrl.HOST_EX));

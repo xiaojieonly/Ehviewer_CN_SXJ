@@ -45,6 +45,7 @@ import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.SolidScene;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
+import com.hippo.util.AppHelper;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
@@ -57,7 +58,9 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     private static final int REQUEST_CODE_WEBVIEW = 0;
     private static final int REQUEST_CODE_COOKIE = 0;
-    private static final int REQUEST_CODE_PROFILE = 0;
+    public static final int REQUEST_CODE_PROFILE = 0x000F;
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String AVATAR = "avatar";
 
     /*---------------
      View life cycle
@@ -210,9 +213,19 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
             if (RESULT_OK == resultCode) {
                 getProfile();
             }
+        } else if (requestCode == REQUEST_CODE_PROFILE) {
+            getProfileSuccess(data);
         } else {
             super.onSceneResult(requestCode, resultCode, data);
         }
+    }
+
+    private void getProfileSuccess(Bundle data) {
+        String name = data.getString(DISPLAY_NAME,"");
+        String avatar = data.getString(AVATAR,"");
+        Settings.putDisplayName(name);
+        Settings.putAvatar(avatar);
+        onGetProfileEnd();
     }
 
     @Override
@@ -302,7 +315,13 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         if (null == context || null == activity) {
             return;
         }
-
+        if (Settings.getDF()&& AppHelper.checkVPN(context)){
+            Bundle data = new Bundle();
+            data.putString(DISPLAY_NAME, getString(R.string.default_display_name));
+            data.putString(AVATAR, "");
+            getProfileSuccess(data);
+            return;
+        }
         startScene(new Announcer(GetProfileScene.class).setRequestCode(this, REQUEST_CODE_PROFILE));
 
 //        hideSoftInput();
