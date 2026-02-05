@@ -22,6 +22,7 @@ import android.util.Log
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.scene.SceneFragment
+import com.hippo.util.AndroidUtil.getAndroidId
 import java.util.Locale
 
 /**
@@ -37,8 +38,10 @@ object Analytics {
     fun start(context: Context) {
         analytics = FirebaseAnalytics.getInstance(context)
         try {
-            analytics!!.setUserId(Settings.getUserID())
+//            analytics!!.setUserId(Settings.getUserID())
+            analytics!!.setUserId(getAndroidId())
         } catch (e: Exception) {
+//            analytics!!.setUserId()
             Log.e(LOG_TAG, "Firebase error: $e")
         }
 
