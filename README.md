@@ -147,3 +147,6 @@ Here is the libraries
 ## 状态
 
 [![Alt](https://repobeats.axiom.co/api/embed/e6becb5b041dae430dff7f85581aa1f91975d416.svg "Repobeats analytics image")](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/pulse)
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=xiaojieonly/Ehviewer_CN_SXJ&type=date&legend=top-left)](https://www.star-history.com/#xiaojieonly/Ehviewer_CN_SXJ&type=date&legend=top-left)
