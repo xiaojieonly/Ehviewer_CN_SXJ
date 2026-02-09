@@ -383,7 +383,7 @@ public class EhApplication extends RecordingApplication {
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
                     .writeTimeout(10, TimeUnit.SECONDS)
-//                    .callTimeout(10, TimeUnit.SECONDS)
+                    .callTimeout(30, TimeUnit.SECONDS)
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
