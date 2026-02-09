@@ -16,8 +16,8 @@ object AndroidUtil {
 
     // Fetch the Android ID while suppressing lint warning about hardware IDs
     @SuppressLint("HardwareIds")
-    fun getAndroidId(): String? {
-        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+    fun getAndroidId(context: Context): String? {
+        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 
     fun getVersion(context: Context): String? {

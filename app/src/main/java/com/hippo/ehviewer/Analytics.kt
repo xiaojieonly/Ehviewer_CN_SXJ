@@ -39,7 +39,7 @@ object Analytics {
         analytics = FirebaseAnalytics.getInstance(context)
         try {
 //            analytics!!.setUserId(Settings.getUserID())
-            analytics!!.setUserId(getAndroidId())
+            analytics!!.setUserId(getAndroidId(context))
         } catch (e: Exception) {
 //            analytics!!.setUserId()
             Log.e(LOG_TAG, "Firebase error: $e")
