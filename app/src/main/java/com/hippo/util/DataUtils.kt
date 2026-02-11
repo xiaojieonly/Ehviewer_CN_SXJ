@@ -1,21 +1,19 @@
-package com.hippo.util;
+package com.hippo.util
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
-import com.hippo.ehviewer.dao.DownloadInfo;
-
-public class DataUtils {
-    public static <T> T copy(Parcelable input){
-        Parcel parcel = null;
-        try{
-            parcel = Parcel.obtain();
-            parcel.writeParcelable(input,0);
-            parcel.setDataPosition(0);
-            return parcel.readParcelable(input.getClass().getClassLoader());
-        }finally {
-            parcel.recycle();
+object DataUtils {
+    @JvmStatic
+    fun <T> copy(input: Parcelable): T? {
+        var parcel: Parcel? = null
+        try {
+            parcel = Parcel.obtain()
+            parcel.writeParcelable(input, 0)
+            parcel.setDataPosition(0)
+            return parcel.readParcelable(input.javaClass.getClassLoader())
+        } finally {
+            parcel!!.recycle()
         }
     }
-
 }
