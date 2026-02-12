@@ -33,7 +33,7 @@ internal open class SystemUiHelperImplHC(
     val mDecorView: View
 
     init {
-        mDecorView = activity.getWindow().getDecorView()
+        mDecorView = activity.window.decorView
         mDecorView.setOnSystemUiVisibilityChangeListener(this)
     }
 
