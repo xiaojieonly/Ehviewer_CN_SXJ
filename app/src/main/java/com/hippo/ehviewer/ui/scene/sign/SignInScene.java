@@ -214,7 +214,13 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
                 getProfile();
             }
         } else if (requestCode == REQUEST_CODE_PROFILE) {
-            getProfileSuccess(data);
+            if (RESULT_OK == resultCode && data != null) {
+                getProfileSuccess(data);
+            } else {
+                // 用户取消或获取资料失败，结束登录流程并隐藏进度
+                mSigningIn = false;
+                hideProgress();
+            }
         } else {
             super.onSceneResult(requestCode, resultCode, data);
         }
