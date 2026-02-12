@@ -13,45 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
-
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.os.Build;
-import android.view.View;
+import android.annotation.TargetApi
+import android.app.Activity
+import android.os.Build
+import android.view.View
+import com.hippo.util.SystemUiHelper.OnVisibilityChangeListener
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-class SystemUiHelperImplICS extends SystemUiHelperImplHC {
-
-    SystemUiHelperImplICS(Activity activity, int level, int flags,
-            SystemUiHelper.OnVisibilityChangeListener onVisibilityChangeListener) {
-        super(activity, level, flags, onVisibilityChangeListener);
+internal open class SystemUiHelperImplICS(
+    activity: Activity, level: Int, flags: Int,
+    onVisibilityChangeListener: OnVisibilityChangeListener?
+) : SystemUiHelperImplHC(activity, level, flags, onVisibilityChangeListener) {
+    override fun createShowFlags(): Int {
+        return View.SYSTEM_UI_FLAG_VISIBLE
     }
 
-    @Override
-    protected int createShowFlags() {
-        return View.SYSTEM_UI_FLAG_VISIBLE;
-    }
-
-    @Override
-    protected int createTestFlags() {
+    override fun createTestFlags(): Int {
         if (mLevel >= SystemUiHelper.LEVEL_LEAN_BACK) {
             // Intentionally override test flags.
-            return View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+            return View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         }
 
-        return View.SYSTEM_UI_FLAG_LOW_PROFILE;
+        return View.SYSTEM_UI_FLAG_LOW_PROFILE
     }
 
-    @Override
-    protected int createHideFlags() {
-        int flag = View.SYSTEM_UI_FLAG_LOW_PROFILE;
+    override fun createHideFlags(): Int {
+        var flag = View.SYSTEM_UI_FLAG_LOW_PROFILE
 
         if (mLevel >= SystemUiHelper.LEVEL_LEAN_BACK) {
-            flag |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+            flag = flag or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         }
 
-        return flag;
+        return flag
     }
 }

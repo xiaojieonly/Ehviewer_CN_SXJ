@@ -13,81 +13,78 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
-
-import android.annotation.TargetApi;
-import android.app.ActionBar;
-import android.app.Activity;
-import android.os.Build;
-import android.view.View;
-import android.view.WindowManager;
+import android.annotation.TargetApi
+import android.app.Activity
+import android.os.Build
+import android.view.View
+import android.view.View.OnSystemUiVisibilityChangeListener
+import android.view.WindowManager
+import com.hippo.util.SystemUiHelper.OnVisibilityChangeListener
+import com.hippo.util.SystemUiHelper.SystemUiHelperImpl
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-class SystemUiHelperImplHC extends SystemUiHelper.SystemUiHelperImpl
-        implements View.OnSystemUiVisibilityChangeListener {
+internal open class SystemUiHelperImplHC(
+    activity: Activity, level: Int, flags: Int,
+    onVisibilityChangeListener: OnVisibilityChangeListener?
+) : SystemUiHelperImpl(activity, level, flags, onVisibilityChangeListener),
+    OnSystemUiVisibilityChangeListener {
+    val mDecorView: View
 
-    final View mDecorView;
-
-    SystemUiHelperImplHC(Activity activity, int level, int flags,
-            SystemUiHelper.OnVisibilityChangeListener onVisibilityChangeListener) {
-        super(activity, level, flags, onVisibilityChangeListener);
-
-        mDecorView = activity.getWindow().getDecorView();
-        mDecorView.setOnSystemUiVisibilityChangeListener(this);
+    init {
+        mDecorView = activity.getWindow().getDecorView()
+        mDecorView.setOnSystemUiVisibilityChangeListener(this)
     }
 
 
-    @Override
-    void show() {
-        mDecorView.setSystemUiVisibility(createShowFlags());
+    override fun show() {
+        mDecorView.setSystemUiVisibility(createShowFlags())
     }
 
-    @Override
-    void hide() {
-        mDecorView.setSystemUiVisibility(createHideFlags());
+    override fun hide() {
+        mDecorView.setSystemUiVisibility(createHideFlags())
     }
 
-    @Override
-    public final void onSystemUiVisibilityChange(int visibility) {
-        if ((visibility & createTestFlags()) != 0) {
-            onSystemUiHidden();
+    override fun onSystemUiVisibilityChange(visibility: Int) {
+        if ((visibility and createTestFlags()) != 0) {
+            onSystemUiHidden()
         } else {
-            onSystemUiShown();
+            onSystemUiShown()
         }
     }
 
-    protected void onSystemUiShown() {
-        ActionBar ab = mActivity.getActionBar();
+    protected open fun onSystemUiShown() {
+        val ab = mActivity.getActionBar()
         if (ab != null) {
-            ab.show();
+            ab.show()
         }
 
-        mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
-        setIsShowing(true);
+        setIsShowing(true)
     }
 
-    protected void onSystemUiHidden() {
-        ActionBar ab = mActivity.getActionBar();
+    protected open fun onSystemUiHidden() {
+        val ab = mActivity.getActionBar()
         if (ab != null) {
-            ab.hide();
+            ab.hide()
         }
 
-        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
-        setIsShowing(false);
+        setIsShowing(false)
     }
 
-    protected int createShowFlags() {
-       return View.STATUS_BAR_VISIBLE;
+    protected open fun createShowFlags(): Int {
+        return View.STATUS_BAR_VISIBLE
     }
 
-    protected int createHideFlags() {
-        return View.STATUS_BAR_HIDDEN;
+    protected open fun createHideFlags(): Int {
+        return View.STATUS_BAR_HIDDEN
     }
 
-    protected int createTestFlags() {
-        return View.STATUS_BAR_HIDDEN;
+    protected open fun createTestFlags(): Int {
+        return View.STATUS_BAR_HIDDEN
     }
 }
