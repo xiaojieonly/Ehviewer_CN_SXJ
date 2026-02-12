@@ -14,25 +14,48 @@
   ~ limitations under the License.
   -->
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    style="?attr/buttonBarStyle">
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground">
 
-    <Button
-        android:id="@+id/action"
+    <TextView
+        android:id="@+id/search_image_toggle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="?attr/colorPrimary"
+        android:minHeight="48dp"
+        android:gravity="center"
+        android:text="@string/image_search"
+        android:textColor="?attr/colorAccent"
+        android:textSize="14sp"
         android:textStyle="bold"
-        style="?attr/buttonBarPositiveButtonStyle"/>
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"/>
 
-    <Space
+    <View
+        android:layout_width="1dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center_vertical"
+        android:background="#E0E0E0" />
+
+    <TextView
+        android:id="@+id/tv_tag_search_entrance"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:minHeight="48dp"
+        android:gravity="center"
+        android:padding="12dp"
+        android:text="标签检索"
+        android:textColor="?attr/colorAccent"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"/>
 
 </LinearLayout>

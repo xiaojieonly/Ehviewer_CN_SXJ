@@ -9,6 +9,7 @@
   ~      http://www.apache.org/licenses/LICENSE-2.0
   ~
   ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
@@ -21,12 +22,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- 1. 顶部的分类色块表 -->
     <com.hippo.ehviewer.widget.CategoryTable
         android:id="@+id/search_category_table"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/search_item_interval"/>
 
+
+
+    <!-- 2. 中间的搜索模式单选框 -->
     <com.hippo.widget.RadioGridGroup
         android:id="@+id/normal_search_mode"
         android:layout_width="wrap_content"
@@ -62,6 +67,7 @@
 
     </com.hippo.widget.RadioGridGroup>
 
+    <!-- 3. 底部的帮助图标和高级选项开关 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

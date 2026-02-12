@@ -46,12 +46,7 @@ public class EhRequestBuilder extends ChromeRequestBuilder {
     public EhRequestBuilder(Map<String, String> headers,String url ) {
         super(url);
         for (Map.Entry<String, String> m : headers.entrySet()) {
-            String value = m.getValue();
-            if (value != null) {
-                // OkHttp 不允许 Header 中包含换行等控制字符，这里做一次清理，避免 0x0a 崩溃
-                value = value.replace("\r", "").replace("\n", "");
-                addHeader(m.getKey(), value);
-            }
+            addHeader(m.getKey(), m.getValue());
         }
     }
 
