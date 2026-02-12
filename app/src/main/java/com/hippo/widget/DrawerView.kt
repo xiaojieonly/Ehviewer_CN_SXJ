@@ -13,62 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.widget
 
-package com.hippo.widget;
+import android.R
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.FrameLayout
+import com.hippo.lib.yorozuya.LayoutUtils
+import kotlin.math.min
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
-import android.widget.FrameLayout;
+open class DrawerView : FrameLayout {
+    private var mMaxWidth = 0
 
-import com.hippo.lib.yorozuya.LayoutUtils;
-
-public class DrawerView extends FrameLayout {
-
-    private static final int DEFAULT_MAX_WIDTH = 280;
-
-    private static final int[] SIZE_ATTRS = new int[] {
-            android.R.attr.maxWidth
-    };
-
-    private int mMaxWidth;
-
-    public DrawerView(Context context) {
-        super(context);
-        init(context, null);
+    constructor(context: Context) : super(context) {
+        init(context, null)
     }
 
-    public DrawerView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        init(context, attrs)
     }
 
-    public DrawerView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        init(context, attrs)
     }
 
-    private void init(Context context, AttributeSet attrs) {
-        TypedArray a = context.obtainStyledAttributes(attrs, SIZE_ATTRS);
-        mMaxWidth = a.getDimensionPixelOffset(0, LayoutUtils.dp2pix(context, DEFAULT_MAX_WIDTH));
-        a.recycle();
+    private fun init(context: Context, attrs: AttributeSet?) {
+        val a = context.obtainStyledAttributes(attrs, SIZE_ATTRS)
+        mMaxWidth =
+            a.getDimensionPixelOffset(0, LayoutUtils.dp2pix(context, DEFAULT_MAX_WIDTH.toFloat()))
+        a.recycle()
     }
 
-    @Override
-    protected void onMeasure(int widthSpec, int heightSpec) {
-        switch (MeasureSpec.getMode(widthSpec)) {
-            case MeasureSpec.EXACTLY:
-                // Nothing to do
-                break;
-            case MeasureSpec.AT_MOST:
-                widthSpec = MeasureSpec.makeMeasureSpec(
-                        Math.min(MeasureSpec.getSize(widthSpec), mMaxWidth), MeasureSpec.EXACTLY);
-                break;
-            case MeasureSpec.UNSPECIFIED:
-                widthSpec = MeasureSpec.makeMeasureSpec(mMaxWidth, MeasureSpec.EXACTLY);
-                break;
+    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
+        var widthSpec = widthSpec
+        when (MeasureSpec.getMode(widthSpec)) {
+            MeasureSpec.EXACTLY -> {}
+            MeasureSpec.AT_MOST -> widthSpec = MeasureSpec.makeMeasureSpec(
+                min(MeasureSpec.getSize(widthSpec), mMaxWidth), MeasureSpec.EXACTLY
+            )
+
+            MeasureSpec.UNSPECIFIED -> widthSpec =
+                MeasureSpec.makeMeasureSpec(mMaxWidth, MeasureSpec.EXACTLY)
         }
         // Let super sort out the height
-        super.onMeasure(widthSpec, heightSpec);
+        super.onMeasure(widthSpec, heightSpec)
+    }
+
+    companion object {
+        private const val DEFAULT_MAX_WIDTH = 280
+
+        private val SIZE_ATTRS = intArrayOf(
+            R.attr.maxWidth
+        )
     }
 }
