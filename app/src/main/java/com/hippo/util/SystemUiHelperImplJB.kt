@@ -61,9 +61,7 @@ internal open class SystemUiHelperImplJB(
         if (mLevel == SystemUiHelper.LEVEL_LOW_PROFILE) {
             // Manually show the action bar when in low profile mode.
             val ab = mActivity.getActionBar()
-            if (ab != null) {
-                ab.show()
-            }
+            ab?.show()
         }
 
         setIsShowing(true)
@@ -73,9 +71,7 @@ internal open class SystemUiHelperImplJB(
         if (mLevel == SystemUiHelper.LEVEL_LOW_PROFILE) {
             // Manually hide the action bar when in low profile mode.
             val ab = mActivity.getActionBar()
-            if (ab != null) {
-                ab.hide()
-            }
+            ab?.hide()
         }
 
         setIsShowing(false)
