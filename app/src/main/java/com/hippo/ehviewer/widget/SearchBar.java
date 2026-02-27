@@ -187,7 +187,7 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
         String[] keywords = mSearchDatabase.getSuggestions(text, 128);
         for (String keyword : keywords) {
-            mSuggestionList.add(new TagSuggestion(null, keyword));
+            mSuggestionList.add(new HistorySuggestion(keyword));
         }
 
         EhTagDatabase ehTagDatabase = EhTagDatabase.getInstance(getContext());
@@ -764,6 +764,40 @@ public class SearchBar extends CardView implements View.OnClickListener,
         @Override
         public void onLongClick() {
             mSearchDatabase.deleteQuery(mKeyword);
+            updateSuggestions(false);
+        }
+    }
+
+    private class HistorySuggestion extends Suggestion {
+
+        private final String mQuery;
+
+        public HistorySuggestion(String query) {
+            mQuery = query;
+        }
+
+        @Override
+        public CharSequence getText(float textSize) {
+            return null;
+        }
+
+        @Override
+        public CharSequence getText(TextView textView) {
+            if (textView.getId() == R.id.hintView) {
+                return mQuery;
+            }
+            return null;
+        }
+
+        @Override
+        public void onClick() {
+            mEditText.setText(mQuery);
+            mEditText.setSelection(mEditText.getText().length());
+        }
+
+        @Override
+        public void onLongClick() {
+            mSearchDatabase.deleteQuery(mQuery);
             updateSuggestions(false);
         }
     }
