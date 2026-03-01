@@ -640,6 +640,8 @@
     <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>
+    <string name="settings_eh_show_gallery_loading_speed">Show loading speed</string>
+    <string name="settings_eh_show_gallery_loading_speed_summary">Show download speed and percent when loading gallery pages</string>
     <string name="settings_eh_show_tag_translations">Show tag translations</string>
     <string name="settings_eh_show_tag_translations_summary">Show tag translations instead of the original text (It takes time to download the data file)</string>
     <string name="settings_eh_tag_translations_source">Placeholder</string>
@@ -1238,6 +1240,28 @@
     <string name="background_tasks_channel_description">Background task notifications for scanning download files, merging duplicate galleries, etc.</string>
     <string name="background_task_running">Background task running</string>
     <string name="background_task_running_description">Notification will automatically disappear after task completion</string>
+    <plurals name="background_tasks_running">
+        <item quantity="one">%d task running</item>
+        <item quantity="other">%d tasks running</item>
+    </plurals>
+    <string name="settings_advanced_local_gallery_scan_on_start">Scan local galleries on startup</string>
+    <string name="settings_advanced_local_gallery_scan_on_start_summary">Run a background scan of local galleries and recycle bin when the app starts</string>
+    <string name="settings_advanced_local_gallery_cache_expire_days">Local gallery cache expiry</string>
+    <string name="local_gallery_cache_expire_1_day">1 day</string>
+    <string name="local_gallery_cache_expire_3_days">3 days</string>
+    <string name="local_gallery_cache_expire_7_days">7 days</string>
+    <string name="local_gallery_cache_expire_14_days">14 days</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled">Use cached scan results</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled_summary">Reuse cached local gallery scan results for automatic scans</string>
+
+    <string name="local_gallery_scan_task_name">Scan local galleries</string>
+    <string name="local_gallery_scan_task_summary">Scan local galleries in the download directory</string>
+    <string name="recycle_bin_scan_task_name">Scan recycle bin</string>
+    <string name="recycle_bin_scan_task_summary">Scan galleries in the recycle bin</string>
+    <string name="local_gallery_scan_progress">Local: %1$d/%2$d - %3$s</string>
+    <string name="local_gallery_scan_progress_simple">Local: %1$d/%2$d</string>
+    <string name="recycle_bin_scan_progress">Recycle bin: %1$d/%2$d - %3$s</string>
+    <string name="recycle_bin_scan_progress_simple">Recycle bin: %1$d/%2$d</string>
 
     <!-- Download scan strings -->
     <string name="scan_download_files_scanning">Scanning download directory...</string>
@@ -1313,6 +1337,9 @@
     <string name="active_tasks">Active Tasks</string>
     <string name="completed_tasks">Completed Tasks</string>
     <string name="no_background_tasks">No background tasks</string>
+    <string name="background_task_clear_completed">Clear completed tasks</string>
+    <string name="background_task_cleared_completed">Completed tasks cleared</string>
+    <string name="background_task_unique_running">A background task is already running</string>
     <string name="no_description">No description</string>
     <string name="task_progress_label">Progress</string>
     <string name="task_status_label">Status</string>
@@ -1332,10 +1359,6 @@
     <string name="settings_advanced_background_tasks">Background Tasks</string>
     <string name="settings_advanced_background_tasks_summary">View and manage running background tasks</string>
     <string name="settings_transfer_summary">Manage data transfer settings</string>
-    <plurals name="background_tasks_running">
-        <item quantity="one">%d task running</item>
-        <item quantity="other">%d tasks running</item>
-    </plurals>
     <string name="task_state_pending">Pending</string>
     <string name="task_state_running">Running</string>
     <string name="task_state_paused">Paused</string>
@@ -1478,6 +1501,7 @@ This feature intelligently cleans invalid download items with the following work
     <string name="local_gallery_delete_success">Gallery moved to recycle bin</string>
     <string name="local_gallery_delete_failed">Failed to delete gallery</string>
     <string name="local_gallery_search_info">Search Gallery Info</string>
+    <string name="local_gallery_open_online_detail">Open Online Detail</string>
     <string name="local_gallery_searching">Searching gallery information...</string>
     <string name="local_gallery_search_not_found">Gallery information not found</string>
     <string name="local_gallery_view_error">Cannot view this gallery</string>

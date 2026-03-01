@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.hippo.ehviewer.BackgroundTaskManager;
+import com.hippo.ehviewer.task.BackgroundTask;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,12 +42,42 @@ public class BackgroundTaskStatusManager {
     /**
      * 添加一个新的后台任务
      */
-    @NonNull
-    public String addTask(@NonNull String taskName, @Nullable String taskDescription, @NonNull Future<?> future) {
+    @Nullable
+    public String addTask(@NonNull String taskName, @Nullable String taskDescription, @Nullable Future<?> future) {
         String taskId = UUID.randomUUID().toString();
-        BackgroundTaskInfo taskInfo = new BackgroundTaskInfo(taskId, taskName, taskDescription, future);
+        return addTask(taskId, taskName, taskDescription, future, BackgroundTask.TaskType.OTHER, true);
+    }
+
+    @Nullable
+    public String addTask(@NonNull String taskName, @Nullable String taskDescription, @Nullable Future<?> future,
+                          @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask) {
+        String taskId = UUID.randomUUID().toString();
+        return addTask(taskId, taskName, taskDescription, future, taskType, uniqueTask);
+    }
+
+    @Nullable
+    public String addTask(@NonNull String taskId, @NonNull String taskName, @Nullable String taskDescription,
+                          @Nullable Future<?> future, @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask) {
+        if (uniqueTask && taskType != BackgroundTask.TaskType.DOWNLOAD) {
+            BackgroundTaskInfo activeUnique = getActiveUniqueNonDownloadTask();
+            if (activeUnique != null) {
+                return null;
+            }
+        }
+
+        BackgroundTaskInfo taskInfo = new BackgroundTaskInfo(taskId, taskName, taskDescription, future, taskType, uniqueTask);
         mActiveTasks.put(taskId, taskInfo);
         return taskId;
+    }
+
+    @Nullable
+    public BackgroundTaskInfo getActiveUniqueNonDownloadTask() {
+        for (BackgroundTaskInfo info : mActiveTasks.values()) {
+            if (info.isUniqueTask() && info.getTaskType() != BackgroundTask.TaskType.DOWNLOAD) {
+                return info;
+            }
+        }
+        return null;
     }
     
     /**

@@ -47,8 +47,14 @@ public class CleanRedundancyPreference2 extends Preference {
         String taskId = statusManager.addTask(
             context.getString(R.string.settings_download_clean_redundancy),
             context.getString(R.string.settings_download_clean_redundancy_summary),
-            null
+            null,
+            com.hippo.ehviewer.task.BackgroundTask.TaskType.CLEANUP,
+            true
         );
+        if (taskId == null) {
+            Toast.makeText(context, R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
+            return;
+        }
         
         // 提交任务
         taskManager.submitLongRunningTask(

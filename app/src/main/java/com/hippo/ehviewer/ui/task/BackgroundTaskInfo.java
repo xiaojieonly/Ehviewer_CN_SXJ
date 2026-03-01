@@ -3,6 +3,8 @@ package com.hippo.ehviewer.ui.task;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.task.BackgroundTask;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,6 +25,8 @@ public class BackgroundTaskInfo {
     private final String taskName;
     private final String taskDescription;
     private final Future<?> future;
+    private final BackgroundTask.TaskType taskType;
+    private final boolean uniqueTask;
     private final long startTime;
     private volatile int currentProgress;
     private volatile int totalProgress;
@@ -34,11 +38,14 @@ public class BackgroundTaskInfo {
     private final List<String> logMessages;
 
     public BackgroundTaskInfo(@NonNull String taskId, @NonNull String taskName, 
-                             @Nullable String taskDescription, @NonNull Future<?> future) {
+                             @Nullable String taskDescription, @Nullable Future<?> future,
+                             @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask) {
         this.taskId = taskId;
         this.taskName = taskName;
         this.taskDescription = taskDescription;
         this.future = future;
+        this.taskType = taskType;
+        this.uniqueTask = uniqueTask;
         this.startTime = System.currentTimeMillis();
         this.currentProgress = 0;
         this.totalProgress = -1; // -1 表示不确定进度
@@ -65,9 +72,18 @@ public class BackgroundTaskInfo {
         return taskDescription;
     }
 
-    @NonNull
+    @Nullable
     public Future<?> getFuture() {
         return future;
+    }
+
+    @NonNull
+    public BackgroundTask.TaskType getTaskType() {
+        return taskType;
+    }
+
+    public boolean isUniqueTask() {
+        return uniqueTask;
     }
 
     public long getStartTime() {

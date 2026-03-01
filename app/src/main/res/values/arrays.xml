@@ -185,6 +185,20 @@
         <item>7</item>
     </string-array>
 
+    <string-array name="local_gallery_cache_expire_entries">
+        <item>@string/local_gallery_cache_expire_1_day</item>
+        <item>@string/local_gallery_cache_expire_3_days</item>
+        <item>@string/local_gallery_cache_expire_7_days</item>
+        <item>@string/local_gallery_cache_expire_14_days</item>
+    </string-array>
+
+    <string-array name="local_gallery_cache_expire_entry_values" translatable="false">
+        <item>1</item>
+        <item>3</item>
+        <item>7</item>
+        <item>14</item>
+    </string-array>
+
     <string-array name="download_queue_order_entries" translatable="false">
         <item>@string/download_queue_order_default</item>
         <item>@string/download_queue_order_fewest_first</item>

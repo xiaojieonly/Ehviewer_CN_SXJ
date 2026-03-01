@@ -19,6 +19,7 @@ package com.hippo.ehviewer.ui.local;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,6 +39,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.LocalGalleryInfo;
+import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.client.EhClient;
+import com.hippo.ehviewer.client.EhRequest;
+import com.hippo.ehviewer.client.EhUrl;
+import com.hippo.ehviewer.client.data.ListUrlBuilder;
+import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.client.parser.GalleryListParser;
+import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.local.LocalGalleryManager;
 import com.hippo.ehviewer.ui.local.adapter.LocalGalleryCardAdapter;
 import com.hippo.yorozuya.ViewUtils;
@@ -46,11 +55,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
 
 public class LocalGalleryListFragment extends Fragment implements LocalGalleryCardAdapter.OnLocalGalleryClickListener, LocalGalleryManager.LocalGalleryListener {
     
-    private static final String KEY_GALLERIES = "galleries";
     private static final String KEY_IS_RECYCLE_BIN = "is_recycle_bin";
     
     private RecyclerView mRecyclerView;
@@ -65,10 +74,9 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
     
     private static final String TAG = "LocalGalleryList";
     
-    public static LocalGalleryListFragment newInstance(List<LocalGalleryInfo> galleries, boolean isRecycleBin) {
+    public static LocalGalleryListFragment newInstance(boolean isRecycleBin) {
         LocalGalleryListFragment fragment = new LocalGalleryListFragment();
         Bundle args = new Bundle();
-        args.putParcelableArrayList(KEY_GALLERIES, new ArrayList<>(galleries));
         args.putBoolean(KEY_IS_RECYCLE_BIN, isRecycleBin);
         fragment.setArguments(args);
         return fragment;
@@ -81,15 +89,24 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         
         Bundle args = getArguments();
         if (args != null) {
-            mGalleries = args.getParcelableArrayList(KEY_GALLERIES);
             mIsRecycleBin = args.getBoolean(KEY_IS_RECYCLE_BIN);
         } else {
-            mGalleries = new ArrayList<>();
             mIsRecycleBin = false;
+        }
+
+        if (mGalleries == null) {
+            mGalleries = new ArrayList<>();
         }
         
         mLocalGalleryManager = LocalGalleryManager.getInstance(requireContext());
         mLocalGalleryManager.addListener(this);
+        List<LocalGalleryInfo> initial = mIsRecycleBin
+                ? mLocalGalleryManager.getCachedRecycleBinGalleries()
+                : mLocalGalleryManager.getCachedLocalGalleries();
+        if (initial != null) {
+            mGalleries.clear();
+            mGalleries.addAll(initial);
+        }
     }
     
     @Override
@@ -125,7 +142,7 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         mFabRefresh.setOnClickListener(v -> {
             Log.d(TAG, "开始刷新本地画廊列表");
             Toast.makeText(requireContext(), R.string.local_gallery_scanning, Toast.LENGTH_SHORT).show();
-            mLocalGalleryManager.scanLocalGalleries();
+            mLocalGalleryManager.scanLocalGalleries(true);
         });
         
         updateEmptyView();
@@ -177,7 +194,7 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         if (itemId == R.id.action_refresh) {
             Log.d(TAG, "开始刷新本地画廊列表（菜单）");
             Toast.makeText(requireContext(), R.string.local_gallery_scanning, Toast.LENGTH_SHORT).show();
-            mLocalGalleryManager.scanLocalGalleries();
+            mLocalGalleryManager.scanLocalGalleries(true);
             return true;
         } else if (itemId == R.id.action_empty_recycle_bin) {
             showEmptyRecycleBinDialog();
@@ -221,10 +238,13 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
                     getString(R.string.recycle_bin_delete_permanently)
             };
         } else {
-            items = new String[]{
-                    getString(R.string.local_gallery_search_info),
-                    getString(R.string.local_gallery_delete_confirm)
-            };
+            List<String> itemList = new ArrayList<>();
+            itemList.add(getString(R.string.local_gallery_search_info));
+            if (!TextUtils.isEmpty(getFolderGidPrefix(gallery))) {
+                itemList.add(getString(R.string.local_gallery_open_online_detail));
+            }
+            itemList.add(getString(R.string.local_gallery_delete_confirm));
+            items = itemList.toArray(new String[0]);
         }
         
         new AlertDialog.Builder(requireContext())
@@ -239,16 +259,131 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
                             showPermanentDeleteDialog(gallery);
                         }
                     } else {
-                        if (which == 0) {
-                            // 搜索信息
-                            LocalGalleryDetailActivity.start(requireContext(), gallery);
-                        } else if (which == 1) {
+                        int actionIndex = 0;
+                        if (which == actionIndex) {
+                            openOnlineSearch(gallery);
+                            return;
+                        }
+                        actionIndex++;
+                        if (!TextUtils.isEmpty(getFolderGidPrefix(gallery))) {
+                            if (which == actionIndex) {
+                                openOnlineDetail(gallery);
+                                return;
+                            }
+                            actionIndex++;
+                        }
+                        if (which == actionIndex) {
                             // 删除到回收站
                             showDeleteDialog(gallery);
                         }
                     }
                 })
                 .show();
+    }
+
+    private void openOnlineSearch(LocalGalleryInfo gallery) {
+        if (gallery == null) {
+            return;
+        }
+        String keyword = gallery.getDisplayTitle();
+        if (TextUtils.isEmpty(keyword)) {
+            Toast.makeText(requireContext(), R.string.local_gallery_search_not_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ListUrlBuilder builder = new ListUrlBuilder();
+        builder.setMode(ListUrlBuilder.MODE_NORMAL);
+        builder.setKeyword(keyword);
+        UrlOpener.openUrl(requireContext(), builder.build(), true);
+    }
+
+    private void openOnlineDetail(LocalGalleryInfo gallery) {
+        String gidPrefix = getFolderGidPrefix(gallery);
+        if (TextUtils.isEmpty(gidPrefix)) {
+            return;
+        }
+        long gid;
+        try {
+            gid = Long.parseLong(gidPrefix);
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        String token = gallery != null ? gallery.token : null;
+        if (!TextUtils.isEmpty(token)) {
+            String url = EhUrl.getGalleryDetailUrl(gid, token);
+            UrlOpener.openUrl(requireContext(), url, true);
+            return;
+        }
+
+        String keyword = gallery != null ? gallery.getDisplayTitle() : null;
+        if (TextUtils.isEmpty(keyword)) {
+            Toast.makeText(requireContext(), R.string.local_gallery_search_not_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(requireContext(), R.string.local_gallery_searching, Toast.LENGTH_SHORT).show();
+        ListUrlBuilder builder = new ListUrlBuilder();
+        builder.setMode(ListUrlBuilder.MODE_NORMAL);
+        builder.setKeyword(keyword);
+        String url = builder.build();
+
+        EhRequest request = new EhRequest();
+        request.setMethod(EhClient.METHOD_GET_GALLERY_LIST);
+        request.setArgs(url, builder.getMode());
+        request.setCallback(new EhClient.Callback<GalleryListParser.Result>() {
+            @Override
+            public void onSuccess(GalleryListParser.Result result) {
+                GalleryInfo match = findGalleryByGid(result, gid);
+                if (match != null && !TextUtils.isEmpty(match.token)) {
+                    String detailUrl = EhUrl.getGalleryDetailUrl(match.gid, match.token);
+                    UrlOpener.openUrl(requireContext(), detailUrl, true);
+                } else {
+                    Toast.makeText(requireContext(), R.string.local_gallery_search_not_found, Toast.LENGTH_SHORT).show();
+                    UrlOpener.openUrl(requireContext(), url, true);
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(requireContext(), R.string.local_gallery_search_not_found, Toast.LENGTH_SHORT).show();
+                UrlOpener.openUrl(requireContext(), url, true);
+            }
+
+            @Override
+            public void onCancel() {
+            }
+        });
+        EhApplication.getEhClient(requireContext()).execute(request);
+    }
+
+    private GalleryInfo findGalleryByGid(GalleryListParser.Result result, long gid) {
+        if (result == null || result.galleryInfoList == null) {
+            return null;
+        }
+        for (GalleryInfo info : result.galleryInfoList) {
+            if (info != null && info.gid == gid) {
+                return info;
+            }
+        }
+        return null;
+    }
+
+    private String getFolderGidPrefix(LocalGalleryInfo gallery) {
+        if (gallery == null || TextUtils.isEmpty(gallery.path)) {
+            return null;
+        }
+        String name = new File(gallery.path).getName();
+        if (TextUtils.isEmpty(name)) {
+            return null;
+        }
+        int index = 0;
+        while (index < name.length() && Character.isDigit(name.charAt(index))) {
+            index++;
+        }
+        if (index == 0) {
+            return null;
+        }
+        return name.substring(0, index);
     }
     
     private void showDeleteDialog(LocalGalleryInfo gallery) {

@@ -96,6 +96,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.Call;
+import okhttp3.Dispatcher;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -127,6 +128,8 @@ public final class SpiderQueen implements Runnable {
     private final OkHttpClient mHttpClient;
     @NonNull
     private final OkHttpClient mHttpImageClient;
+    @NonNull
+    private final OkHttpClient mDownloadHttpClient;
     @NonNull
     private final SimpleDiskCache mSpiderInfoCache;
     @NonNull
@@ -184,6 +187,14 @@ public final class SpiderQueen implements Runnable {
 
         mWorkerMaxCount = MathUtils.clamp(Settings.getMultiThreadDownload(), 1, 10);
         mPreloadNumber = MathUtils.clamp(Settings.getPreloadImage(), 0, 100);
+
+        Dispatcher downloadDispatcher = new Dispatcher();
+        int maxPerHost = Math.max(5, mWorkerMaxCount);
+        downloadDispatcher.setMaxRequestsPerHost(maxPerHost);
+        downloadDispatcher.setMaxRequests(Math.max(64, maxPerHost * 2));
+        mDownloadHttpClient = mHttpClient.newBuilder()
+            .dispatcher(downloadDispatcher)
+            .build();
 
         for (int i = 0; i < DECODE_THREAD_NUM; i++) {
             mDecodeIndexArray[i] = GalleryPageView.INVALID_INDEX;
@@ -1590,7 +1601,7 @@ public final class SpiderQueen implements Runnable {
 
                         // 扩大连接/读/写超时，避免 10s 连接超时导致频繁失败
                         int timeoutSec = downloadTimeout <= 0 ? 30 : downloadTimeout;
-                        Call call = mHttpClient.newBuilder()
+                        Call call = mDownloadHttpClient.newBuilder()
                             .connectTimeout(timeoutSec, TimeUnit.SECONDS)
                             .readTimeout(timeoutSec, TimeUnit.SECONDS)
                             .writeTimeout(timeoutSec, TimeUnit.SECONDS)
@@ -1658,7 +1669,7 @@ public final class SpiderQueen implements Runnable {
                         osPipe.obtain();
                         OutputStream os = osPipe.open();
 
-                        final byte[] data = new byte[1024 * 4];
+                        final byte[] data = new byte[1024 * 32];
                         long receivedSize = 0;
 
                         while (!Thread.currentThread().isInterrupted()) {

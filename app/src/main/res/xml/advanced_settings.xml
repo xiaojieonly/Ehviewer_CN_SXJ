@@ -18,6 +18,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="local_gallery_scan_on_start"
+        android:summary="@string/settings_advanced_local_gallery_scan_on_start_summary"
+        android:title="@string/settings_advanced_local_gallery_scan_on_start" />
+
+    <com.hippo.preference.ListPreference
+        android:defaultValue="3"
+        android:key="local_gallery_cache_expire_days"
+        android:summary="%s"
+        android:title="@string/settings_advanced_local_gallery_cache_expire_days"
+        app:entries="@array/local_gallery_cache_expire_entries"
+        app:entryValues="@array/local_gallery_cache_expire_entry_values" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="local_gallery_scan_cache_enabled"
+        android:summary="@string/settings_advanced_local_gallery_scan_cache_enabled_summary"
+        android:title="@string/settings_advanced_local_gallery_scan_cache_enabled" />
+
+    <com.hippo.preference.SwitchPreference
         android:defaultValue="@bool/beta"
         android:key="save_parse_error_body"
         android:summary="@string/settings_advanced_save_parse_error_body_summary"

@@ -3,7 +3,9 @@ package com.hippo.ehviewer.ui.task;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -84,11 +86,24 @@ public class BackgroundTaskActivity extends EhActivity {
             mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_background_task, menu);
+        return true;
+    }
     
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
+            return true;
+        } else if (item.getItemId() == R.id.action_clear_completed) {
+            if (mTaskManager != null && mAdapter != null) {
+                mTaskManager.clearCompletedTasks();
+                mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
+                Toast.makeText(this, R.string.background_task_cleared_completed, Toast.LENGTH_SHORT).show();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);

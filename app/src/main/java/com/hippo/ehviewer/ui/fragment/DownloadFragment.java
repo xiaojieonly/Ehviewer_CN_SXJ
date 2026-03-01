@@ -322,7 +322,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                             taskManager.getTaskStatusManager();
                         
                         // 添加任务到状态管理器
-                        String taskId = statusManager.addTask(taskName, taskDesc, null);
+                        String taskId = statusManager.addTask(taskName, taskDesc, null,
+                                com.hippo.ehviewer.task.BackgroundTask.TaskType.CLEANUP, true);
+                        if (taskId == null) {
+                            Toast.makeText(requireActivity(), R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         
                         // 执行任务
                         taskManager.submitIoTask(new Runnable() {
@@ -379,7 +384,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                             taskManager.getTaskStatusManager();
 
                         // 先注册任务，确保进度条不再显示不确定状态
-                        String taskId = statusManager.addTask(taskName, taskDesc, null);
+                        String taskId = statusManager.addTask(taskName, taskDesc, null,
+                                com.hippo.ehviewer.task.BackgroundTask.TaskType.SCAN, true);
+                        if (taskId == null) {
+                            Toast.makeText(requireActivity(), R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
                         // 准备日志文件（存放在 logcat 目录）
                         java.io.File logFile = createRepairLogFile();
@@ -448,7 +458,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                             taskManager.getTaskStatusManager();
 
                         // 先注册任务，确保进度条不再显示不确定状态
-                        String taskId = statusManager.addTask(taskName, taskDesc, null);
+                        String taskId = statusManager.addTask(taskName, taskDesc, null,
+                                com.hippo.ehviewer.task.BackgroundTask.TaskType.SCAN, true);
+                        if (taskId == null) {
+                            Toast.makeText(requireActivity(), R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
                         // 准备日志文件（存放在 logcat 目录）
                         java.io.File logFile = createRepairLogFile();

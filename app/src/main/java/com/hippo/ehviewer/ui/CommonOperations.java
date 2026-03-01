@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -43,8 +44,6 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.GalleryVersionMap;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
-import com.hippo.ehviewer.task.TaskExecutor;
-import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.GalleryActivity;
@@ -52,6 +51,7 @@ import com.hippo.ehviewer.ui.dialog.DownloadProgressDialog;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.lib.yorozuya.SimpleHandler;
+import com.hippo.util.ExecutorManager;
 import com.hippo.unifile.UniFile;
 import com.hippo.lib.yorozuya.FileUtils;
 import com.hippo.lib.yorozuya.IOUtils;
@@ -72,6 +72,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class CommonOperations {
 
@@ -182,51 +183,47 @@ public final class CommonOperations {
             progressDialog = null;
             // 显示准备下载的Toast提示，避免用户感觉界面卡死
             SimpleHandler.getInstance().post(() -> {
-                Toast.makeText(activity, activity.getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
+                if (isActivityAlive(activity)) {
+                    Toast.makeText(activity, activity.getString(R.string.preparing_download), Toast.LENGTH_SHORT).show();
+                }
             });
         }
         
         // 在后台线程执行耗时操作，避免阻塞主线程
-        new Thread(() -> {
+        ExecutorManager.getBackgroundExecutor().execute(() -> {
+            AtomicBoolean deferDismiss = new AtomicBoolean(false);
             try {
                 final DownloadManager dm = EhApplication.getDownloadManager(activity);
 
                 LongList toStart = new LongList();
                 List<GalleryInfo> toAdd = new ArrayList<>();
-                for (GalleryInfo gi : galleryInfos) {
+                for (int i = 0; i < galleryInfos.size(); i++) {
+                    GalleryInfo gi = galleryInfos.get(i);
                     if (dm.containDownloadInfo(gi.gid)) {
                         toStart.add(gi.gid);
                     } else {
-                        // 检查是否为增量更新
-                        if (Settings.getIncrementalDownloadUpdate()) {
-                            Long oldGid = findSameNameGallery(gi);
-                            if (oldGid != null && oldGid != gi.gid) {
-                                // 找到同名画廊，进行增量更新处理
-                                Log.i("CommonOperations", "检测到增量更新: " + EhUtils.getSuitableTitle(gi) + 
-                                      " (旧GID: " + oldGid + ", 新GID: " + gi.gid + ")");
-                                
-                                // 显示增量更新提示
-                                SimpleHandler.getInstance().post(() -> {
-                                    Toast.makeText(activity, "检测到画廊更新，将保留已下载的进度", Toast.LENGTH_LONG).show();
-                                });
-                                
-                                // 处理增量下载更新
-                                handleIncrementalUpdate(activity, gi, oldGid);
-                            }
-                        }
                         toAdd.add(gi);
+                    }
+
+                    final int progressCurrent = i + 1;
+                    if (isMultiDownload && progressDialog != null) {
+                        SimpleHandler.getInstance().post(() -> {
+                            if (isActivityAlive(activity) && progressDialog.isShowing()) {
+                                progressDialog.updateProgress(progressCurrent, galleryInfos.size());
+                            }
+                        });
                     }
                 }
 
                 if (!toStart.isEmpty()) {
-                    // 使用后台任务处理多选下载，避免界面卡顿
-                    StartRangeDownloadTask task = new StartRangeDownloadTask(activity, toStart);
-                    TaskExecutor.getInstance().execute(task);
+                    dm.startRangeDownload(toStart);
                 }
 
                 if (toAdd.isEmpty()) {
                     SimpleHandler.getInstance().post(() -> {
-                        activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                        if (isActivityAlive(activity)) {
+                            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                        }
                     });
                     return;
                 }
@@ -245,28 +242,15 @@ public final class CommonOperations {
                 }
 
                 if (justStart) {
-                    // Got default label - 使用后台任务处理新下载，避免界面卡顿
-                    for (GalleryInfo gi : toAdd) {
-                        dm.addDownload(gi, label);
-                    }
-                    
-                    // 对于新添加的项目，创建一个包含它们的GID列表并使用后台任务
-                    if (!toAdd.isEmpty()) {
-                        LongList newGidList = new LongList();
-                        for (GalleryInfo gi : toAdd) {
-                            newGidList.add(gi.gid);
-                        }
-                        StartRangeDownloadTask task = new StartRangeDownloadTask(activity, newGidList);
-                        TaskExecutor.getInstance().execute(task);
-                    }
-                    
-                    // Notify
-                    SimpleHandler.getInstance().post(() -> {
-                        activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
-                    });
+                    addDownloadsToWait(activity, dm, toAdd, label, progressDialog, isMultiDownload);
                 } else {
                     // Let use chose label - 需要在主线程显示对话框
+                    deferDismiss.set(true);
                     SimpleHandler.getInstance().post(() -> {
+                        if (!isActivityAlive(activity)) {
+                            deferDismiss.set(false);
+                            return;
+                        }
                         List<DownloadLabel> list = dm.getLabelList();
                         final String[] items = new String[list.size() + 1];
                         items[0] = activity.getString(R.string.default_download_label_name);
@@ -285,29 +269,22 @@ public final class CommonOperations {
                                             label1 = null;
                                         }
                                     }
-                                    // Start download - 使用后台任务处理新下载，避免界面卡顿
-                                    for (GalleryInfo gi : toAdd) {
-                                        dm.addDownload(gi, label1);
-                                    }
-                                    
-                                    // 对于新添加的项目，创建一个包含它们的GID列表并使用后台任务
-                                    if (!toAdd.isEmpty()) {
-                                        LongList newGidList = new LongList();
-                                        for (GalleryInfo gi : toAdd) {
-                                            newGidList.add(gi.gid);
-                                        }
-                                        StartRangeDownloadTask task = new StartRangeDownloadTask(activity, newGidList);
-                                        TaskExecutor.getInstance().execute(task);
-                                    }
+                                    String finalLabel = label1;
+                                    ExecutorManager.getBackgroundExecutor().execute(() -> {
+                                        addDownloadsToWait(activity, dm, toAdd, finalLabel, progressDialog, isMultiDownload);
+                                    });
+
                                     // Save settings
                                     if (builder.isChecked()) {
                                         Settings.putHasDefaultDownloadLabel(true);
-                                        Settings.putDefaultDownloadLabel(label1);
+                                        Settings.putDefaultDownloadLabel(finalLabel);
                                     } else {
                                         Settings.putHasDefaultDownloadLabel(false);
                                     }
                                     // Notify
-                                    activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                                    if (isActivityAlive(activity)) {
+                                        activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+                                    }
                                 }, activity.getString(R.string.remember_download_label), false)
                                 .setTitle(R.string.download_dialog_title)
                                 .show();
@@ -316,19 +293,63 @@ public final class CommonOperations {
             } catch (Exception e) {
                 Log.e("CommonOperations", "Error starting download", e);
                 SimpleHandler.getInstance().post(() -> {
-                    Toast.makeText(activity, "启动下载失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    if (isActivityAlive(activity)) {
+                        Toast.makeText(activity, "启动下载失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 });
             } finally {
                 // 确保对话框在主线程中被关闭
-                if (isMultiDownload && progressDialog != null) {
+                if (isMultiDownload && progressDialog != null && !deferDismiss.get()) {
                     SimpleHandler.getInstance().post(() -> {
-                        if (progressDialog.isShowing()) {
+                        if (isActivityAlive(activity) && progressDialog.isShowing()) {
                             progressDialog.dismiss();
                         }
                     });
                 }
             }
-        }).start();
+        });
+    }
+
+    private static void addDownloadsToWait(MainActivity activity, DownloadManager dm,
+                                           List<GalleryInfo> toAdd, @Nullable String label,
+                                           @Nullable DownloadProgressDialog progressDialog,
+                                           boolean isMultiDownload) {
+        int total = toAdd.size();
+        for (int i = 0; i < toAdd.size(); i++) {
+            GalleryInfo gi = toAdd.get(i);
+            dm.addDownload(gi, label, DownloadInfo.STATE_WAIT);
+
+            if (isMultiDownload && progressDialog != null) {
+                int current = i + 1;
+                SimpleHandler.getInstance().post(() -> {
+                    if (isActivityAlive(activity) && progressDialog.isShowing()) {
+                        progressDialog.updateProgress(current, total);
+                    }
+                });
+            }
+        }
+
+        if (isMultiDownload && progressDialog != null) {
+            SimpleHandler.getInstance().post(() -> {
+                if (isActivityAlive(activity) && progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+            });
+        }
+
+        SimpleHandler.getInstance().post(() -> {
+            if (isActivityAlive(activity)) {
+                activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
+            }
+        });
+    }
+
+    private static boolean isActivityAlive(@Nullable Activity activity) {
+        if (activity == null || activity.isFinishing()) {
+            return false;
+        }
+
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1 || !activity.isDestroyed();
     }
 
     /**

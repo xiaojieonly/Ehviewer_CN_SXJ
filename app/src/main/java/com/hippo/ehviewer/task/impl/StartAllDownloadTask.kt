@@ -40,7 +40,13 @@ class StartAllDownloadTask(context: Context) : BaseBackgroundTask(context) {
                 return Result.success(Unit)
             }
             
-            val totalCount = allInfoList.size
+            val totalCount = allInfoList.count { it.state != DownloadInfo.STATE_FINISH }
+            if (totalCount == 0) {
+                updateProgress(100, context.getString(R.string.start_all_download_no_tasks))
+                delay(1000)
+                notifyCompleted()
+                return Result.success(Unit)
+            }
             updateProgress(5, context.getString(R.string.start_all_download_starting, totalCount))
             delay(500)
             

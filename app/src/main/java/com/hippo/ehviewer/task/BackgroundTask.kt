@@ -35,6 +35,11 @@ interface BackgroundTask {
     suspend fun execute(): Result<Unit>
 
     /**
+     * 是否为唯一任务（同一时间只允许一个未完成任务）
+     */
+    fun isUniqueTask(): Boolean = getTaskType() != TaskType.DOWNLOAD
+
+    /**
      * 任务是否支持暂停
      */
     fun isPausable(): Boolean = false

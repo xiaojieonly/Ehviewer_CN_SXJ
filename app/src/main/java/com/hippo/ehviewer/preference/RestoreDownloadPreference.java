@@ -120,7 +120,19 @@ public class RestoreDownloadPreference extends Preference {
             String taskDesc = application.getString(R.string.settings_download_restore_download_items_summary);
             
             // 添加到任务状态管理器
-            String taskId = taskManager.getTaskStatusManager().addTask(taskName, taskDesc, null);
+                String taskId = taskManager.getTaskStatusManager().addTask(
+                    taskName,
+                    taskDesc,
+                    null,
+                    BackgroundTask.TaskType.SCAN,
+                    true
+                );
+                    if (taskId == null) {
+                    UiThreadHelper.runOnUiThread(() ->
+                        Toast.makeText(context, R.string.background_task_unique_running, Toast.LENGTH_SHORT).show());
+                return taskManager.submitLongRunningTask(taskName, taskDesc, () -> {}, null,
+                    BackgroundTask.TaskType.SCAN, true);
+                }
             
             return taskManager.submitRestoreDownloadTask(new Runnable() {
                 @Override

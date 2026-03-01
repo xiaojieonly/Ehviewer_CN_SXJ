@@ -580,6 +580,8 @@
     <string name="settings_eh_show_eh_limits">顯示 EH 配額</string>
     <string name="settings_eh_show_jpn_title_summary">需同時在 EHentai 網站設定中啟用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">顯示畫廊頁數</string>
+        <string name="settings_eh_show_gallery_loading_speed">顯示載入速度</string>
+        <string name="settings_eh_show_gallery_loading_speed_summary">載入畫廊頁面時顯示下載速度與進度百分比</string>
     <string name="settings_eh_show_gallery_pages_summary">在畫廊列表中顯示頁數</string>
     <string name="settings_eh_show_tag_translations">顯示標籤翻譯</string>
     <string name="settings_eh_show_tag_translations_summary">以翻譯後的標籤代替原文標籤（需花費時間下載數據檔案）</string>
@@ -981,6 +983,13 @@
     <string name="active_tasks">活躍任務</string>
     <string name="completed_tasks">已完成任務</string>
     <string name="no_background_tasks">無後台任務</string>
+    <string name="background_task_clear_completed">清除已完成任務</string>
+    <string name="background_task_cleared_completed">已完成任務已清除</string>
+    <string name="background_task_unique_running">已有後台任務正在運行</string>
+    <plurals name="background_tasks_running">
+        <item quantity="one">%d 個任務正在運行</item>
+        <item quantity="other">%d 個任務正在運行</item>
+    </plurals>
     <string name="no_description">無描述</string>
     <string name="task_progress_label">進度</string>
     <string name="task_status_label">狀態</string>
@@ -1000,6 +1009,26 @@
     <string name="task_log_file_missing">未找到日誌文件</string>
     <string name="settings_advanced_background_tasks">後台任務</string>
     <string name="settings_advanced_background_tasks_summary">查看和管理正在運行的後台任務</string>
+    <string name="settings_advanced_local_gallery_scan_on_start">啟動時掃描本地畫廊</string>
+    <string name="settings_advanced_local_gallery_scan_on_start_summary">應用啟動時在後台掃描本地畫廊與回收站</string>
+    <string name="settings_advanced_local_gallery_cache_expire_days">本地畫廊快取過期天數</string>
+    <string name="local_gallery_cache_expire_1_day">1天</string>
+    <string name="local_gallery_cache_expire_3_days">3天</string>
+    <string name="local_gallery_cache_expire_7_days">7天</string>
+    <string name="local_gallery_cache_expire_14_days">14天</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled">使用掃描快取</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled_summary">自動掃描時優先使用本地畫廊掃描快取</string>
+
+    <string name="local_gallery_scan_task_name">掃描本地畫廊</string>
+    <string name="local_gallery_scan_task_summary">掃描下載目錄中的本地畫廊</string>
+    <string name="recycle_bin_scan_task_name">掃描回收站</string>
+    <string name="recycle_bin_scan_task_summary">掃描回收站中的畫廊</string>
+    <string name="local_gallery_scan_progress">本地: %1$d/%2$d - %3$s</string>
+    <string name="local_gallery_scan_progress_simple">本地: %1$d/%2$d</string>
+    <string name="local_gallery_search_info">搜尋畫廊資訊</string>
+    <string name="local_gallery_open_online_detail">開啟線上畫廊詳情</string>
+    <string name="recycle_bin_scan_progress">回收站: %1$d/%2$d - %3$s</string>
+    <string name="recycle_bin_scan_progress_simple">回收站: %1$d/%2$d</string>
     <string name="settings_transfer_summary">管理數據傳輸設置</string>
     <string name="settings_download_rebuild_download_records">重建下載記錄</string>
     <string name="settings_download_rebuild_download_records_summary">掃描下載路徑並從.ehviewer文件重建下載記錄</string>

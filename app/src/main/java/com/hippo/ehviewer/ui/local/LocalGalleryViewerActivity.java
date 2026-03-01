@@ -71,6 +71,7 @@ import com.hippo.ehviewer.gallery.DirGalleryProvider;
 import com.hippo.ehviewer.gallery.EhGalleryProvider;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.ehviewer.ui.EhActivity;
+import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.widget.GalleryGuideView;
 import com.hippo.ehviewer.widget.GalleryHeader;
 import com.hippo.ehviewer.widget.ReversibleSeekBar;
@@ -143,8 +144,9 @@ public class LocalGalleryViewerActivity extends EhActivity implements SeekBar.On
     private boolean canFinish = true;
     
     public static void start(Context context, LocalGalleryInfo galleryInfo) {
-        Intent intent = new Intent(context, LocalGalleryViewerActivity.class);
-        intent.putExtra(KEY_GALLERY_INFO, galleryInfo);
+        Intent intent = new Intent(context, GalleryActivity.class);
+        intent.setAction(GalleryActivity.ACTION_DIR);
+        intent.putExtra(GalleryActivity.KEY_FILENAME, galleryInfo.path);
         context.startActivity(intent);
     }
     

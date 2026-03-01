@@ -17,6 +17,9 @@ import androidx.core.app.NotificationCompat;
 
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.download.DownloadLogger;
+import com.hippo.ehviewer.task.BackgroundTask;
+import com.hippo.ehviewer.task.BackgroundTaskRunner;
+import com.hippo.ehviewer.ui.task.BackgroundTaskInfo;
 import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 
 import java.util.concurrent.Callable;
@@ -27,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
 /**
  * 后台任务管理器
@@ -58,6 +62,7 @@ public class BackgroundTaskManager {
     private NotificationManager mNotificationManager;
     private boolean mForegroundServiceRunning = false;
     private final AtomicInteger mActiveTaskCount = new AtomicInteger(0);
+    private final AtomicInteger mNotificationTaskIndex = new AtomicInteger(0);
     
     // 下载日志记录器
     private final DownloadLogger mDownloadLogger;
@@ -159,6 +164,24 @@ public class BackgroundTaskManager {
             mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         }
     }
+
+    @Nullable
+    private BackgroundTaskInfo getNextActiveTaskInfo() {
+        List<BackgroundTaskInfo> activeTasks = mTaskStatusManager.getActiveTasks();
+        if (activeTasks.isEmpty()) {
+            return null;
+        }
+        int index = Math.abs(mNotificationTaskIndex.getAndIncrement());
+        return activeTasks.get(index % activeTasks.size());
+    }
+
+    @NonNull
+    private String getRunningTasksTitle(int count) {
+        if (count <= 0) {
+            return mContext.getString(R.string.background_task_running);
+        }
+        return mContext.getResources().getQuantityString(R.plurals.background_tasks_running, count, count);
+    }
     
     /**
      * 提交CPU密集型任务（如图像处理、计算等）
@@ -201,6 +224,14 @@ public class BackgroundTaskManager {
     public Future<?> submitIoTask(Runnable task) {
         return mIoExecutor.submit(task);
     }
+
+    /**
+     * 提交已有的FutureTask到IO线程池
+     */
+    public Future<?> submitIoFutureTask(java.util.concurrent.FutureTask<?> task) {
+        mIoExecutor.execute(task);
+        return task;
+    }
     
     /**
      * 提交网络任务（专门用于与Eh交互）
@@ -214,6 +245,86 @@ public class BackgroundTaskManager {
      */
     public Future<?> submitNetworkTask(Runnable task) {
         return mNetworkExecutor.submit(task);
+    }
+
+    /**
+     * 后台任务提交结果
+     */
+    public static class TaskHandle {
+        public final String taskId;
+        public final Future<?> future;
+
+        public TaskHandle(@NonNull String taskId, @NonNull Future<?> future) {
+            this.taskId = taskId;
+            this.future = future;
+        }
+    }
+
+    /**
+     * 提交BackgroundTask并接入任务管理与通知
+     */
+    @NonNull
+    public TaskHandle submitBackgroundTask(@NonNull BackgroundTask task) {
+        final String taskId = task.getTaskId();
+        final String taskName = task.getTaskName();
+        final String taskDescription = task.getTaskDescription();
+
+        if (task.isUniqueTask() && task.getTaskType() != BackgroundTask.TaskType.DOWNLOAD) {
+            BackgroundTaskInfo activeUnique = mTaskStatusManager.getActiveUniqueNonDownloadTask();
+            if (activeUnique != null) {
+                Log.d(TAG, "Skip unique task, active task running: " + activeUnique.getTaskId());
+                return new TaskHandle(activeUnique.getTaskId(), createNoOpFuture());
+            }
+        }
+
+        task.setProgressListener(new BackgroundTask.ProgressListener() {
+            @Override
+            public void onProgressChanged(int progress, @Nullable String detail) {
+                int total = progress >= 0 ? 100 : -1;
+                int current = progress >= 0 ? progress : -1;
+                mTaskStatusManager.updateTaskProgress(taskId, current, total, detail);
+            }
+
+            @Override
+            public void onCompleted() {
+                mTaskStatusManager.updateTaskProgress(taskId, 100, 100, taskDescription);
+            }
+
+            @Override
+            public void onError(@NonNull Throwable error) {
+                mTaskStatusManager.markTaskError(taskId, error.getMessage());
+            }
+        });
+
+        java.util.concurrent.FutureTask<?> futureTask = new java.util.concurrent.FutureTask<>(() -> {
+            startForegroundTask(taskName, taskDescription);
+            try {
+                Throwable error = BackgroundTaskRunner.runBlockingExecute(task);
+                if (error == null) {
+                    mTaskStatusManager.markTaskCompleted(taskId);
+                } else {
+                    mTaskStatusManager.markTaskError(taskId, error.getMessage());
+                }
+            } finally {
+                endForegroundTask(taskName);
+            }
+            return null;
+        });
+
+        String registeredTaskId = mTaskStatusManager.addTask(taskId, taskName, taskDescription, futureTask,
+                task.getTaskType(), task.isUniqueTask());
+        if (registeredTaskId == null) {
+            return new TaskHandle(taskId, createNoOpFuture());
+        }
+        submitIoFutureTask(futureTask);
+
+        return new TaskHandle(taskId, futureTask);
+    }
+
+    private Future<?> createNoOpFuture() {
+        java.util.concurrent.FutureTask<?> futureTask = new java.util.concurrent.FutureTask<>(() -> null);
+        futureTask.run();
+        return futureTask;
     }
     
     /**
@@ -259,8 +370,17 @@ public class BackgroundTaskManager {
      */
     private void showForegroundNotification(@Nullable String taskName, @Nullable String taskDescription, 
                                           int currentProgress, int totalProgress) {
-        String title = taskName != null ? taskName : mContext.getString(R.string.background_task_running);
-        String text = taskDescription != null ? taskDescription : mContext.getString(R.string.background_task_running_description);
+        int activeTasks = Math.max(mTaskStatusManager.getActiveTaskCount(), mActiveTaskCount.get());
+        BackgroundTaskInfo activeInfo = getNextActiveTaskInfo();
+
+        String title = getRunningTasksTitle(activeTasks);
+        String line = activeInfo != null ? activeInfo.getTaskName()
+            : (taskName != null ? taskName : mContext.getString(R.string.background_task_running));
+        String detail = activeInfo != null ? activeInfo.getProgressDetail() : taskDescription;
+        int displayCurrent = activeInfo != null ? activeInfo.getCurrentProgress() : currentProgress;
+        int displayTotal = activeInfo != null ? activeInfo.getTotalProgress() : totalProgress;
+
+        String text = detail != null ? line + " - " + detail : line;
         
         Intent intent = new Intent(mContext, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -278,11 +398,11 @@ public class BackgroundTaskManager {
                 .setContentIntent(pendingIntent);
         
         // 添加进度显示
-        if (currentProgress >= 0 && totalProgress > 0) {
-            builder.setProgress(totalProgress, currentProgress, false);
+        if (displayCurrent >= 0 && displayTotal > 0) {
+            builder.setProgress(displayTotal, displayCurrent, false);
             // 更新文本显示进度
             String progressText = mContext.getString(R.string.task_progress_format, 
-                    currentProgress, totalProgress, (currentProgress * 100) / totalProgress);
+                    displayCurrent, displayTotal, (displayCurrent * 100) / displayTotal);
             builder.setContentText(text + " - " + progressText);
         } else {
             builder.setProgress(0, 0, true); // 不确定进度
@@ -312,10 +432,18 @@ public class BackgroundTaskManager {
             hideForegroundNotification();
             return;
         }
-        
-        String title = taskName != null ? taskName : mContext.getString(R.string.background_task_running);
-        String text = taskDescription != null ? taskDescription : 
-                mContext.getString(R.string.background_task_running_description) + " (" + activeTasks + ")";
+
+        int runningCount = Math.max(mTaskStatusManager.getActiveTaskCount(), activeTasks);
+        BackgroundTaskInfo activeInfo = getNextActiveTaskInfo();
+
+        String title = getRunningTasksTitle(runningCount);
+        String line = activeInfo != null ? activeInfo.getTaskName()
+            : (taskName != null ? taskName : mContext.getString(R.string.background_task_running));
+        String detail = activeInfo != null ? activeInfo.getProgressDetail() : taskDescription;
+        int displayCurrent = activeInfo != null ? activeInfo.getCurrentProgress() : currentProgress;
+        int displayTotal = activeInfo != null ? activeInfo.getTotalProgress() : totalProgress;
+
+        String text = detail != null ? line + " - " + detail : line;
         
         Intent intent = new Intent(mContext, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -333,11 +461,11 @@ public class BackgroundTaskManager {
                 .setContentIntent(pendingIntent);
         
         // 添加进度显示
-        if (currentProgress >= 0 && totalProgress > 0) {
-            builder.setProgress(totalProgress, currentProgress, false);
+        if (displayCurrent >= 0 && displayTotal > 0) {
+            builder.setProgress(displayTotal, displayCurrent, false);
             // 更新文本显示进度
             String progressText = mContext.getString(R.string.task_progress_format, 
-                    currentProgress, totalProgress, (currentProgress * 100) / totalProgress);
+                    displayCurrent, displayTotal, (displayCurrent * 100) / displayTotal);
             builder.setContentText(text + " - " + progressText);
         } else {
             builder.setProgress(0, 0, true); // 不确定进度
@@ -403,7 +531,12 @@ public class BackgroundTaskManager {
         String taskDescription = mContext.getString(R.string.settings_download_scan_download_files_summary);
         
         // 添加到任务状态管理器
-        String taskId = mTaskStatusManager.addTask(taskName, taskDescription, null);
+        String taskId = mTaskStatusManager.addTask(taskName, taskDescription, null,
+            BackgroundTask.TaskType.SCAN, true);
+        if (taskId == null) {
+            Log.d(TAG, "Skip scan download task, unique task running");
+            return createNoOpFuture();
+        }
         
         return submitIoTask(() -> {
             startForegroundTask(taskName, taskDescription);
@@ -483,12 +616,23 @@ public class BackgroundTaskManager {
      * @return Future用于等待任务完成或取消任务
      */
     public Future<?> submitLongRunningTask(String taskName, String taskDescription, Runnable task) {
-        return submitLongRunningTask(taskName, taskDescription, task, null);
+        return submitLongRunningTask(taskName, taskDescription, task, null, BackgroundTask.TaskType.OTHER, true);
     }
 
     public Future<?> submitLongRunningTask(String taskName, String taskDescription, Runnable task, @Nullable String existingTaskId) {
+        return submitLongRunningTask(taskName, taskDescription, task, existingTaskId, BackgroundTask.TaskType.OTHER, true);
+    }
+
+    public Future<?> submitLongRunningTask(String taskName, String taskDescription, Runnable task,
+                                           @Nullable String existingTaskId, @NonNull BackgroundTask.TaskType taskType,
+                                           boolean uniqueTask) {
         // 添加到任务状态管理器（如果未提供现有任务ID）
-        final String taskId = existingTaskId != null ? existingTaskId : mTaskStatusManager.addTask(taskName, taskDescription, null);
+        final String taskId = existingTaskId != null ? existingTaskId :
+                mTaskStatusManager.addTask(taskName, taskDescription, null, taskType, uniqueTask);
+        if (taskId == null) {
+            Log.d(TAG, "Skip task, unique task running: " + taskName);
+            return createNoOpFuture();
+        }
         
         return submitIoTask(() -> {
             startForegroundTask(taskName, taskDescription);
@@ -514,7 +658,10 @@ public class BackgroundTaskManager {
         return submitLongRunningTask(
                 mContext.getString(R.string.settings_download_restore_download_items),
                 mContext.getString(R.string.settings_download_restore_download_items_summary),
-                task
+                task,
+                null,
+                BackgroundTask.TaskType.SCAN,
+                true
         );
     }
     
@@ -527,7 +674,10 @@ public class BackgroundTaskManager {
         return submitLongRunningTask(
                 mContext.getString(R.string.settings_download_merge_duplicate_gallery),
                 mContext.getString(R.string.settings_download_merge_duplicate_gallery_summary),
-                task
+                task,
+                null,
+                BackgroundTask.TaskType.MERGE,
+                true
         );
     }
     

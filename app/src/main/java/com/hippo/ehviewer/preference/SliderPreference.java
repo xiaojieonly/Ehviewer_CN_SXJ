@@ -17,6 +17,7 @@
 package com.hippo.ehviewer.preference;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.View;
@@ -119,6 +120,31 @@ public class SliderPreference extends androidx.preference.Preference {
             text += " " + mUnit;
         }
         valueView.setText(text);
+    }
+
+    @Override
+    protected boolean persistInt(int value) {
+        if (!shouldPersist()) {
+            return false;
+        }
+
+        try {
+            if (value == getPersistedInt(mMinValue)) {
+                return true;
+            }
+        } catch (ClassCastException e) {
+            SharedPreferences prefs = getSharedPreferences();
+            if (prefs != null) {
+                prefs.edit().remove(getKey()).apply();
+            }
+        }
+
+        SharedPreferences prefs = getSharedPreferences();
+        if (prefs == null) {
+            return false;
+        }
+        prefs.edit().putInt(getKey(), value).apply();
+        return true;
     }
 
     @Override

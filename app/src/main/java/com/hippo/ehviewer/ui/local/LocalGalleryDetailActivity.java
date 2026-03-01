@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -35,7 +36,9 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.tabs.TabLayout;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.data.LocalGalleryInfo;
+import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.local.LocalGalleryManager;
+import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.ui.EhActivity;
 import com.hippo.ehviewer.ui.local.fragment.LocalGalleryDetailFragment;
 import com.hippo.ehviewer.ui.local.fragment.LocalGalleryPreviewsFragment;
@@ -216,16 +219,19 @@ public class LocalGalleryDetailActivity extends EhActivity implements LocalGalle
     }
     
     private void searchGalleryInfo() {
-        Toast.makeText(this, R.string.local_gallery_searching, Toast.LENGTH_SHORT).show();
-        
-        // 这里可以实现搜索画廊信息的功能
-        // 例如根据文件夹名称搜索对应的在线画廊信息
-        // 由于这是简化版本，暂时显示提示信息
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.local_gallery_search_info)
-                .setMessage(R.string.local_gallery_search_not_found)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
+        if (mGalleryInfo == null) {
+            return;
+        }
+        String keyword = mGalleryInfo.getDisplayTitle();
+        if (TextUtils.isEmpty(keyword)) {
+            Toast.makeText(this, R.string.local_gallery_search_not_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ListUrlBuilder builder = new ListUrlBuilder();
+        builder.setMode(ListUrlBuilder.MODE_NORMAL);
+        builder.setKeyword(keyword);
+        String url = builder.build();
+        UrlOpener.openUrl(this, url, true);
     }
     
     private void deleteGallery() {

@@ -37,6 +37,7 @@ public class GalleryPageView extends GLFrameLayout {
     private final ImageView mImage;
     private final GLLinearLayout mInfo;
     private final GLImageMovableTextView mPage;
+    private final GLImageMovableTextView mProgressText;
     private final GLTextureView mError;
     private final GLProgressView mProgress;
 
@@ -44,7 +45,8 @@ public class GalleryPageView extends GLFrameLayout {
 
     private int mIndex = INVALID_INDEX;
 
-    public GalleryPageView(ImageMovableTextTexture pageTextTexture,
+        public GalleryPageView(ImageMovableTextTexture pageTextTexture,
+            ImageMovableTextTexture progressTextTexture,
             int progressColor, int progressBgColor, int progressSize,
             int minHeight, int infoInterval) {
         // Add image
@@ -69,6 +71,14 @@ public class GalleryPageView extends GLFrameLayout {
                 LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mPage, lp);
+
+        mProgressText = new GLImageMovableTextView();
+        mProgressText.setTextTexture(progressTextTexture);
+        mProgressText.setVisibility(GONE);
+        lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+            LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        mInfo.addComponent(mProgressText, lp);
 
         // Add error
         mError = new GLTextureView();
@@ -149,13 +159,25 @@ public class GalleryPageView extends GLFrameLayout {
     public void setProgress(float progress) {
         if (progress == PROGRESS_GONE) {
             mProgress.setVisibility(GONE);
+            mProgressText.setVisibility(GONE);
         } else if (progress == PROGRESS_INDETERMINATE) {
             mProgress.setVisibility(VISIBLE);
             mProgress.setIndeterminate(true);
+            mProgressText.setVisibility(GONE);
         } else {
             mProgress.setVisibility(VISIBLE);
             mProgress.setIndeterminate(false);
             mProgress.setProgress(progress);
+        }
+    }
+
+    public void setProgressText(String text) {
+        if (text == null || text.isEmpty()) {
+            mProgressText.setVisibility(GONE);
+            mProgressText.setText("");
+        } else {
+            mProgressText.setVisibility(VISIBLE);
+            mProgressText.setText(text);
         }
     }
 

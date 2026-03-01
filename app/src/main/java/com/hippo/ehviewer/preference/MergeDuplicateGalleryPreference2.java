@@ -41,8 +41,14 @@ public class MergeDuplicateGalleryPreference2 extends Preference {
         String taskId = statusManager.addTask(
             context.getString(R.string.settings_download_merge_duplicate_gallery),
             context.getString(R.string.settings_download_merge_duplicate_gallery_summary),
-            null
+            null,
+            com.hippo.ehviewer.task.BackgroundTask.TaskType.MERGE,
+            true
         );
+        if (taskId == null) {
+            android.widget.Toast.makeText(context, R.string.background_task_unique_running, android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
         
         // 提交任务
         taskManager.submitMergeDuplicateGalleryTask(() -> {

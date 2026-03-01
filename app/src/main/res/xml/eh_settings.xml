@@ -168,6 +168,12 @@
         android:title="@string/settings_eh_show_gallery_pages" />
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="gallery_show_loading_speed"
+        android:summary="@string/settings_eh_show_gallery_loading_speed_summary"
+        android:title="@string/settings_eh_show_gallery_loading_speed" />
+
+    <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
         android:key="show_tag_translations"
         android:summary="@string/settings_eh_show_tag_translations_summary"

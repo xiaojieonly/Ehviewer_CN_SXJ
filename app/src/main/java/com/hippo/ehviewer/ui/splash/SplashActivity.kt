@@ -9,6 +9,7 @@ import com.hippo.ehviewer.client.EhClient
 import com.hippo.ehviewer.client.EhRequest
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.data.EhNewsDetail
+import com.hippo.ehviewer.local.LocalGalleryManager
 import com.hippo.ehviewer.ui.EhActivity
 import com.hippo.ehviewer.ui.MainActivity
 //import com.hippo.ehviewer.ui.dialog.EhDistributeListener
@@ -35,6 +36,9 @@ class SplashActivity : EhActivity() {
 //        Distribute.setEnabled(!Settings.getCloseAutoUpdate())
         super.onCreate(savedInstanceState)
         setContentView(R.layout.splash_layout)
+        if (Settings.getLocalGalleryScanOnStart()) {
+            LocalGalleryManager.getInstance(this).scanLocalGalleries(false)
+        }
         Thread(Runnable {
             //耗时任务，比如加载网络数据
             runOnUiThread(Runnable {

@@ -17,8 +17,10 @@
 package com.hippo.ehviewer.ui.local;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -60,6 +62,9 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
     
     private List<LocalGalleryInfo> mLocalGalleries;
     private List<LocalGalleryInfo> mRecycleBinGalleries;
+
+    private ProgressDialog mScanProgressDialog;
+    private boolean mIsScanDialogShown = false;
     
     public static void start(Context context) {
         Intent intent = new Intent(context, LocalGalleryActivity.class);
@@ -86,8 +91,7 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
         
         initViews();
         
-        // 开始扫描
-        mLocalGalleryManager.scanLocalGalleries();
+        // Do not auto-scan on entry; user can refresh manually.
     }
     
     @Override
@@ -95,6 +99,10 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
         super.onDestroy();
         if (mLocalGalleryManager != null) {
             mLocalGalleryManager.removeListener(this);
+        }
+        if (mScanProgressDialog != null) {
+            mScanProgressDialog.dismiss();
+            mScanProgressDialog = null;
         }
     }
     
@@ -120,7 +128,7 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
             finish();
             return true;
         } else if (itemId == R.id.action_refresh) {
-            mLocalGalleryManager.scanLocalGalleries();
+            mLocalGalleryManager.scanLocalGalleries(true);
             return true;
         } else if (itemId == R.id.action_empty_recycle_bin) {
             showEmptyRecycleBinDialog();
@@ -141,16 +149,43 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
     
     @Override
     public void onScanStart() {
-        // 显示扫描进度
+        if (isFinishing()) {
+            return;
+        }
+        if (mScanProgressDialog == null) {
+            mScanProgressDialog = new ProgressDialog(this);
+            mScanProgressDialog.setTitle(R.string.local_gallery_title);
+            mScanProgressDialog.setMessage(getString(R.string.local_gallery_scanning));
+            mScanProgressDialog.setIndeterminate(true);
+            mScanProgressDialog.setCancelable(false);
+            mScanProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "后台运行", (dialog, which) -> {
+                mIsScanDialogShown = false;
+                dialog.dismiss();
+            });
+        } else {
+            mScanProgressDialog.setMessage(getString(R.string.local_gallery_scanning));
+        }
+        mIsScanDialogShown = true;
+        mScanProgressDialog.show();
     }
     
     @Override
     public void onScanProgress(String current) {
-        // 更新扫描进度
+        if (mScanProgressDialog != null && mIsScanDialogShown) {
+            if (current != null && !current.isEmpty()) {
+                mScanProgressDialog.setMessage(getString(R.string.local_gallery_scanning) + "\n" + current);
+            } else {
+                mScanProgressDialog.setMessage(getString(R.string.local_gallery_scanning));
+            }
+        }
     }
     
     @Override
     public void onScanComplete(List<LocalGalleryInfo> localGalleries, List<LocalGalleryInfo> recycleBinGalleries) {
+        if (mScanProgressDialog != null && mIsScanDialogShown) {
+            mScanProgressDialog.dismiss();
+            mIsScanDialogShown = false;
+        }
         mLocalGalleries.clear();
         mLocalGalleries.addAll(localGalleries);
         
@@ -184,7 +219,7 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_VIEW && resultCode == RESULT_OK) {
             // 刷新数据
-            mLocalGalleryManager.scanLocalGalleries();
+            mLocalGalleryManager.scanLocalGalleries(true);
         }
     }
     
@@ -207,12 +242,12 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
             switch (position) {
                 case TAB_LOCAL:
                     if (mLocalFragment == null) {
-                        mLocalFragment = LocalGalleryListFragment.newInstance(mLocalGalleries, false);
+                        mLocalFragment = LocalGalleryListFragment.newInstance(false);
                     }
                     return mLocalFragment;
                 case TAB_RECYCLE_BIN:
                     if (mRecycleBinFragment == null) {
-                        mRecycleBinFragment = LocalGalleryListFragment.newInstance(mRecycleBinGalleries, true);
+                        mRecycleBinFragment = LocalGalleryListFragment.newInstance(true);
                     }
                     return mRecycleBinFragment;
                 default:

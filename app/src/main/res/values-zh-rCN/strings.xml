@@ -44,6 +44,7 @@
     <string name="local_gallery_delete_success">画廊已移入回收站</string>
     <string name="local_gallery_delete_failed">删除画廊失败</string>
     <string name="local_gallery_search_info">搜索画廊信息</string>
+    <string name="local_gallery_open_online_detail">打开在线画廊详情</string>
     <string name="local_gallery_searching">正在搜索画廊信息...</string>
     <string name="local_gallery_search_not_found">未找到画廊信息</string>
     <string name="local_gallery_view_error">无法查看此画廊</string>
@@ -599,6 +600,8 @@
     <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">显示画廊页数</string>
     <string name="settings_eh_show_gallery_pages_summary">在画廊列表中显示页数</string>
+        <string name="settings_eh_show_gallery_loading_speed">显示加载速度</string>
+        <string name="settings_eh_show_gallery_loading_speed_summary">加载画廊页面时显示下载速度与进度百分比</string>
     <string name="settings_eh_show_tag_translations">显示标签翻译</string>
     <string name="settings_eh_show_tag_translations_summary">显示翻译后的标签而非原始文字（需花费时间来下载数据文件）</string>
     <string name="settings_eh_tag_translations_source">补充翻译（由 EhTagTranslator 提供）</string>
@@ -1155,6 +1158,9 @@
     <string name="active_tasks">活跃任务</string>
     <string name="completed_tasks">已完成任务</string>
     <string name="no_background_tasks">无后台任务</string>
+    <string name="background_task_clear_completed">清除已完成任务</string>
+    <string name="background_task_cleared_completed">已完成任务已清除</string>
+    <string name="background_task_unique_running">已有后台任务运行中</string>
     <string name="no_description">无描述</string>
     <string name="task_progress_label">进度</string>
     <string name="task_status_label">状态</string>
@@ -1289,6 +1295,24 @@
         <item quantity="one">%d 个任务正在运行</item>
         <item quantity="other">%d 个任务正在运行</item>
     </plurals>
+    <string name="settings_advanced_local_gallery_scan_on_start">启动时扫描本地画廊</string>
+    <string name="settings_advanced_local_gallery_scan_on_start_summary">应用启动时在后台扫描本地画廊与回收站</string>
+    <string name="settings_advanced_local_gallery_cache_expire_days">本地画廊缓存过期天数</string>
+    <string name="local_gallery_cache_expire_1_day">1天</string>
+    <string name="local_gallery_cache_expire_3_days">3天</string>
+    <string name="local_gallery_cache_expire_7_days">7天</string>
+    <string name="local_gallery_cache_expire_14_days">14天</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled">使用扫描缓存</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled_summary">自动扫描时优先使用本地画廊扫描缓存</string>
+
+    <string name="local_gallery_scan_task_name">扫描本地画廊</string>
+    <string name="local_gallery_scan_task_summary">扫描下载目录中的本地画廊</string>
+    <string name="recycle_bin_scan_task_name">扫描回收站</string>
+    <string name="recycle_bin_scan_task_summary">扫描回收站中的画廊</string>
+    <string name="local_gallery_scan_progress">本地: %1$d/%2$d - %3$s</string>
+    <string name="local_gallery_scan_progress_simple">本地: %1$d/%2$d</string>
+    <string name="recycle_bin_scan_progress">回收站: %1$d/%2$d - %3$s</string>
+    <string name="recycle_bin_scan_progress_simple">回收站: %1$d/%2$d</string>
     <string name="task_state_pending">等待中</string>
     <string name="task_state_running">运行中</string>
     <string name="task_state_paused">已暂停</string>

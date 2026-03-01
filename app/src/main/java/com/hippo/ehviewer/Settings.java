@@ -90,6 +90,7 @@ public class Settings {
         migrateIntToString(KEY_THUMB_SIZE, String.valueOf(DEFAULT_THUMB_SIZE));
         migrateIntToString(KEY_PRELOAD_IMAGE, String.valueOf(DEFAULT_PRELOAD_IMAGE));
         migrateIntToString(KEY_MULTI_THREAD_DOWNLOAD, String.valueOf(DEFAULT_MULTI_THREAD_DOWNLOAD));
+        migrateIntToString(KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS, String.valueOf(DEFAULT_LOCAL_GALLERY_CACHE_EXPIRE_DAYS));
     }
 
     private static void migrateIntToString(String key, String defaultValue) {
@@ -224,18 +225,30 @@ public class Settings {
     }
 
     public static int getIntFromStr(String key, int defValue) {
+        Object rawValue = sSettingsPre.getAll().get(key);
+        if (rawValue instanceof String) {
+            return NumberUtils.parseIntSafely((String) rawValue, defValue);
+        }
+        if (rawValue instanceof Number) {
+            int intValue = ((Number) rawValue).intValue();
+            // 将整数值转换为字符串格式存储，保持一致性
+            putIntToStr(key, intValue);
+            return intValue;
+        }
+        if (rawValue == null) {
+            return defValue;
+        }
+
+        // 回退到旧逻辑，保证兼容异常类型
         try {
             return NumberUtils.parseIntSafely(sSettingsPre.getString(key, Integer.toString(defValue)), defValue);
         } catch (ClassCastException e) {
             Log.d(TAG, "Get ClassCastException when get " + key + " value", e);
-            // 尝试直接获取整数值
             try {
                 int intValue = sSettingsPre.getInt(key, defValue);
-                // 将整数值转换为字符串格式存储，保持一致性
                 putIntToStr(key, intValue);
                 return intValue;
             } catch (ClassCastException e2) {
-                // 如果还是失败，清空存储值并返回默认值
                 Log.d(TAG, "Failed to get " + key + " as int, clearing and using default", e2);
                 try {
                     sSettingsPre.edit().remove(key).apply();
@@ -686,6 +699,17 @@ public class Settings {
         putBoolean(KEY_SHOW_PROGRESS, value);
     }
 
+    private static final String KEY_SHOW_GALLERY_LOADING_SPEED = "gallery_show_loading_speed";
+    private static final boolean DEFAULT_SHOW_GALLERY_LOADING_SPEED = false;
+
+    public static boolean getShowGalleryLoadingSpeed() {
+        return getBoolean(KEY_SHOW_GALLERY_LOADING_SPEED, DEFAULT_SHOW_GALLERY_LOADING_SPEED);
+    }
+
+    public static void putShowGalleryLoadingSpeed(boolean value) {
+        putBoolean(KEY_SHOW_GALLERY_LOADING_SPEED, value);
+    }
+
     private static final String KEY_SHOW_BATTERY = "gallery_show_battery";
     private static final boolean DEFAULT_SHOW_BATTERY = true;
 
@@ -822,8 +846,45 @@ public class Settings {
     public static final String KEY_MEDIA_SCAN = "media_scan";
     private static final boolean DEFAULT_MEDIA_SCAN = false;
 
+    public static final String KEY_LOCAL_GALLERY_SCAN_ON_START = "local_gallery_scan_on_start";
+    private static final boolean DEFAULT_LOCAL_GALLERY_SCAN_ON_START = false;
+
+    public static final String KEY_LOCAL_GALLERY_SCAN_CACHE_ENABLED = "local_gallery_scan_cache_enabled";
+    private static final boolean DEFAULT_LOCAL_GALLERY_SCAN_CACHE_ENABLED = true;
+
+    public static final String KEY_LOCAL_GALLERY_LAST_SCAN_TIME = "local_gallery_last_scan_time";
+    public static final String KEY_LOCAL_GALLERY_LAST_SCAN_TYPE = "local_gallery_last_scan_type";
+    public static final String KEY_LOCAL_GALLERY_LAST_SCAN_RESULT = "local_gallery_last_scan_result";
+
+    public static final String KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS = "local_gallery_cache_expire_days";
+    private static final int DEFAULT_LOCAL_GALLERY_CACHE_EXPIRE_DAYS = 3;
+
     public static boolean getMediaScan() {
         return getBoolean(KEY_MEDIA_SCAN, DEFAULT_MEDIA_SCAN);
+    }
+
+    public static boolean getLocalGalleryScanOnStart() {
+        return getBoolean(KEY_LOCAL_GALLERY_SCAN_ON_START, DEFAULT_LOCAL_GALLERY_SCAN_ON_START);
+    }
+
+    public static void putLocalGalleryScanOnStart(boolean value) {
+        putBoolean(KEY_LOCAL_GALLERY_SCAN_ON_START, value);
+    }
+
+    public static boolean getLocalGalleryScanCacheEnabled() {
+        return getBoolean(KEY_LOCAL_GALLERY_SCAN_CACHE_ENABLED, DEFAULT_LOCAL_GALLERY_SCAN_CACHE_ENABLED);
+    }
+
+    public static void putLocalGalleryScanCacheEnabled(boolean value) {
+        putBoolean(KEY_LOCAL_GALLERY_SCAN_CACHE_ENABLED, value);
+    }
+
+    public static int getLocalGalleryCacheExpireDays() {
+        return getIntFromStr(KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS, DEFAULT_LOCAL_GALLERY_CACHE_EXPIRE_DAYS);
+    }
+
+    public static void putLocalGalleryCacheExpireDays(int value) {
+        putIntToStr(KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS, value);
     }
 
     public static final String KEY_ENABLE_MIN_DOWNLOAD_SPEED = "enable_min_download_speed";

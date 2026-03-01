@@ -1616,8 +1616,8 @@ public final class GalleryListScene extends BaseScene
                     .setDuration(ANIMATE_TIME).setStartDelay(0L)
                     .setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR).start();
                     
-            // 恢复原始的点击监听器
-            fab.setOnClickListener(this);
+            // 恢复由 FabLayout 处理点击事件
+            fab.setOnClickListener(mFabLayout);
         }
     }
 
@@ -1654,9 +1654,7 @@ public final class GalleryListScene extends BaseScene
                 .start();
                 
             // 设置点击监听器，用于恢复完整显示
-            fab.setOnClickListener(v -> {
-                showActionFabFromCollapsed();
-            });
+            fab.setOnClickListener(v -> showActionFabFromCollapsed());
         }
     }
     
@@ -1682,8 +1680,8 @@ public final class GalleryListScene extends BaseScene
             
             mShowActionFab = true;
             
-            // 恢复原始的点击监听器
-            fab.setOnClickListener(this);
+            // 恢复由 FabLayout 处理点击事件
+            fab.setOnClickListener(mFabLayout);
         }
     }
 

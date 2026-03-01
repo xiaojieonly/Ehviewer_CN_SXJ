@@ -20,33 +20,49 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
+import androidx.annotation.Nullable;
 
-import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.LocalGalleryInfo;
 import com.hippo.unifile.UniFile;
-import com.hippo.yorozuya.FileUtils;
-import com.hippo.yorozuya.IOUtils;
-import com.hippo.yorozuya.StringUtils;
 
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.hippo.ehviewer.service.LocalGalleryScanService;
+import com.hippo.ehviewer.service.RecycleBinScanService;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LocalGalleryManager {
     
     private static final String TAG = "LocalGalleryManager";
     private static final String RECYCLE_BIN_DIR_NAME = ".recycle_bin";
+    private static final String KEY_LOCAL_GALLERY_CACHE_JSON = "local_gallery_cache_json";
+    private static final String KEY_RECYCLE_BIN_CACHE_JSON = "recycle_bin_cache_json";
+    private static final String KEY_LOCAL_GALLERY_CACHE_TIME = "local_gallery_cache_time";
+    private static final String KEY_RECYCLE_BIN_CACHE_TIME = "recycle_bin_cache_time";
     private static LocalGalleryManager sInstance;
     
     private final Context mContext;
     private final Handler mMainHandler;
     private final List<LocalGalleryListener> mListeners;
+    private final List<LocalGalleryInfo> mCachedLocalGalleries;
+    private final List<LocalGalleryInfo> mCachedRecycleBinGalleries;
+    private boolean mCacheLoaded;
+    private String mLastScanTrigger = "auto";
     
     public interface LocalGalleryListener {
         void onScanStart();
@@ -55,11 +71,17 @@ public class LocalGalleryManager {
         void onGalleryDeleted(LocalGalleryInfo gallery, boolean success);
         void onGalleryRestored(LocalGalleryInfo gallery, boolean success);
     }
+
+    public interface ScanProgressCallback {
+        boolean onProgress(int current, int total, String detail);
+    }
     
     private LocalGalleryManager(Context context) {
         mContext = context.getApplicationContext();
         mMainHandler = new Handler(Looper.getMainLooper());
         mListeners = new ArrayList<>();
+        mCachedLocalGalleries = new ArrayList<>();
+        mCachedRecycleBinGalleries = new ArrayList<>();
     }
     
     public static LocalGalleryManager getInstance(Context context) {
@@ -80,8 +102,23 @@ public class LocalGalleryManager {
     }
     
     public void scanLocalGalleries() {
+        scanLocalGalleries(false);
+    }
+
+    public void scanLocalGalleries(boolean forceRefresh) {
+        mLastScanTrigger = forceRefresh ? "manual" : "auto";
+        if (!forceRefresh && Settings.getLocalGalleryScanCacheEnabled()) {
+            CacheSnapshot cacheSnapshot = loadCacheIfValid();
+            if (cacheSnapshot != null) {
+                applyCacheSnapshot(cacheSnapshot);
+                return;
+            }
+        }
+
         Log.d(TAG, "开始扫描本地画廊");
-        new ScanTask().execute();
+        notifyScanStart();
+        LocalGalleryScanService.start(mContext);
+        RecycleBinScanService.start(mContext);
     }
     
     public void deleteGallery(LocalGalleryInfo gallery) {
@@ -146,6 +183,10 @@ public class LocalGalleryManager {
             }
         });
     }
+
+    public void reportScanProgress(String detail) {
+        notifyScanProgress(detail);
+    }
     
     private void notifyScanComplete(List<LocalGalleryInfo> localGalleries, List<LocalGalleryInfo> recycleBinGalleries) {
         mMainHandler.post(() -> {
@@ -153,6 +194,231 @@ public class LocalGalleryManager {
                 listener.onScanComplete(localGalleries, recycleBinGalleries);
             }
         });
+    }
+
+    public void reportLocalScanComplete(List<LocalGalleryInfo> localGalleries) {
+        synchronized (mCachedLocalGalleries) {
+            mCachedLocalGalleries.clear();
+            mCachedLocalGalleries.addAll(localGalleries);
+        }
+        persistLocalGalleryCache();
+        mCacheLoaded = true;
+        updateLastScanRecord("local");
+        List<LocalGalleryInfo> recycleSnapshot = new ArrayList<>();
+        synchronized (mCachedRecycleBinGalleries) {
+            recycleSnapshot.addAll(mCachedRecycleBinGalleries);
+        }
+        notifyScanComplete(new ArrayList<>(localGalleries), recycleSnapshot);
+    }
+
+    public void reportRecycleBinScanComplete(List<LocalGalleryInfo> recycleBinGalleries) {
+        synchronized (mCachedRecycleBinGalleries) {
+            mCachedRecycleBinGalleries.clear();
+            mCachedRecycleBinGalleries.addAll(recycleBinGalleries);
+        }
+        persistRecycleBinCache();
+        mCacheLoaded = true;
+        updateLastScanRecord("recycle_bin");
+        List<LocalGalleryInfo> localSnapshot = new ArrayList<>();
+        synchronized (mCachedLocalGalleries) {
+            localSnapshot.addAll(mCachedLocalGalleries);
+        }
+        notifyScanComplete(localSnapshot, new ArrayList<>(recycleBinGalleries));
+    }
+
+    private void updateLastScanRecord(String scanType) {
+        JSONObject record = new JSONObject();
+        record.put("trigger", mLastScanTrigger);
+        record.put("type", scanType);
+        record.put("localCount", mCachedLocalGalleries.size());
+        record.put("recycleCount", mCachedRecycleBinGalleries.size());
+        Settings.putLong(Settings.KEY_LOCAL_GALLERY_LAST_SCAN_TIME, System.currentTimeMillis());
+        Settings.putString(Settings.KEY_LOCAL_GALLERY_LAST_SCAN_TYPE, scanType);
+        Settings.putString(Settings.KEY_LOCAL_GALLERY_LAST_SCAN_RESULT, record.toJSONString());
+    }
+
+    public List<LocalGalleryInfo> getCachedLocalGalleries() {
+        List<LocalGalleryInfo> snapshot = new ArrayList<>();
+        synchronized (mCachedLocalGalleries) {
+            snapshot.addAll(mCachedLocalGalleries);
+        }
+        return snapshot;
+    }
+
+    public List<LocalGalleryInfo> getCachedRecycleBinGalleries() {
+        List<LocalGalleryInfo> snapshot = new ArrayList<>();
+        synchronized (mCachedRecycleBinGalleries) {
+            snapshot.addAll(mCachedRecycleBinGalleries);
+        }
+        return snapshot;
+    }
+
+    public List<LocalGalleryInfo> scanLocalGalleriesSync(@Nullable ScanProgressCallback callback) {
+        List<LocalGalleryInfo> localGalleries = new ArrayList<>();
+        File downloadDir = getDownloadDir();
+        if (downloadDir == null || !downloadDir.exists()) {
+            Log.w(TAG, "下载目录不存在: " + downloadDir);
+            return localGalleries;
+        }
+
+        File[] files = downloadDir.listFiles();
+        if (files == null) {
+            Log.w(TAG, "无法列出下载目录的文件");
+            return localGalleries;
+        }
+
+        List<File> galleryDirs = new ArrayList<>();
+        for (File file : files) {
+            if (file.isDirectory() && !file.getName().equals(RECYCLE_BIN_DIR_NAME)) {
+                galleryDirs.add(file);
+            }
+        }
+
+        int total = galleryDirs.size();
+        if (total == 0) {
+            return localGalleries;
+        }
+
+        AtomicInteger current = new AtomicInteger(0);
+        AtomicBoolean canceled = new AtomicBoolean(false);
+        int batchSize = Math.max(1, (int) Math.ceil(total * 0.1f));
+        int batchCount = (total + batchSize - 1) / batchSize;
+        int threadCount = Math.min(batchCount, Math.max(1, Runtime.getRuntime().availableProcessors()));
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        List<Future<List<LocalGalleryInfo>>> futures = new ArrayList<>();
+
+        for (int start = 0; start < total; start += batchSize) {
+            int from = start;
+            int to = Math.min(total, start + batchSize);
+            futures.add(executor.submit(() -> scanLocalBatch(galleryDirs, from, to, current, total, canceled, callback)));
+        }
+
+        for (Future<List<LocalGalleryInfo>> future : futures) {
+            if (canceled.get()) {
+                break;
+            }
+            try {
+                localGalleries.addAll(future.get());
+            } catch (InterruptedException | ExecutionException e) {
+                Log.w(TAG, "Scan local gallery batch failed", e);
+            }
+        }
+
+        if (canceled.get()) {
+            executor.shutdownNow();
+        } else {
+            executor.shutdown();
+        }
+
+        return localGalleries;
+    }
+
+    public List<LocalGalleryInfo> scanRecycleBinSync(@Nullable ScanProgressCallback callback) {
+        List<LocalGalleryInfo> recycleBinGalleries = new ArrayList<>();
+        File recycleBinDir = getRecycleBinDir();
+        if (recycleBinDir == null || !recycleBinDir.exists()) {
+            Log.d(TAG, "回收站目录不存在: " + recycleBinDir);
+            return recycleBinGalleries;
+        }
+
+        File[] files = recycleBinDir.listFiles();
+        if (files == null) {
+            Log.w(TAG, "无法列出回收站目录的文件");
+            return recycleBinGalleries;
+        }
+
+        List<File> galleryDirs = new ArrayList<>();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                galleryDirs.add(file);
+            }
+        }
+
+        int total = galleryDirs.size();
+        if (total == 0) {
+            return recycleBinGalleries;
+        }
+
+        AtomicInteger current = new AtomicInteger(0);
+        AtomicBoolean canceled = new AtomicBoolean(false);
+        int batchSize = Math.max(1, (int) Math.ceil(total * 0.1f));
+        int batchCount = (total + batchSize - 1) / batchSize;
+        int threadCount = Math.min(batchCount, Math.max(1, Runtime.getRuntime().availableProcessors()));
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        List<Future<List<LocalGalleryInfo>>> futures = new ArrayList<>();
+
+        for (int start = 0; start < total; start += batchSize) {
+            int from = start;
+            int to = Math.min(total, start + batchSize);
+            futures.add(executor.submit(() -> scanRecycleBatch(galleryDirs, from, to, current, total, canceled, callback)));
+        }
+
+        for (Future<List<LocalGalleryInfo>> future : futures) {
+            if (canceled.get()) {
+                break;
+            }
+            try {
+                recycleBinGalleries.addAll(future.get());
+            } catch (InterruptedException | ExecutionException e) {
+                Log.w(TAG, "Scan recycle bin batch failed", e);
+            }
+        }
+
+        if (canceled.get()) {
+            executor.shutdownNow();
+        } else {
+            executor.shutdown();
+        }
+
+        return recycleBinGalleries;
+    }
+
+    private List<LocalGalleryInfo> scanLocalBatch(List<File> galleryDirs, int from, int to,
+            AtomicInteger current, int total, AtomicBoolean canceled, @Nullable ScanProgressCallback callback) {
+        List<LocalGalleryInfo> batch = new ArrayList<>();
+        for (int index = from; index < to; index++) {
+            if (canceled.get()) {
+                break;
+            }
+            File file = galleryDirs.get(index);
+            int progress = current.incrementAndGet();
+            if (callback != null && !callback.onProgress(progress, total, file.getName())) {
+                canceled.set(true);
+                break;
+            }
+
+            if (!isInDownloadList(file.getAbsolutePath())) {
+                LocalGalleryInfo info = new LocalGalleryInfo(file.getAbsolutePath());
+                if (info.isValid()) {
+                    info.type = LocalGalleryInfo.TYPE_LOCAL;
+                    batch.add(info);
+                }
+            }
+        }
+        return batch;
+    }
+
+    private List<LocalGalleryInfo> scanRecycleBatch(List<File> galleryDirs, int from, int to,
+            AtomicInteger current, int total, AtomicBoolean canceled, @Nullable ScanProgressCallback callback) {
+        List<LocalGalleryInfo> batch = new ArrayList<>();
+        for (int index = from; index < to; index++) {
+            if (canceled.get()) {
+                break;
+            }
+            File file = galleryDirs.get(index);
+            int progress = current.incrementAndGet();
+            if (callback != null && !callback.onProgress(progress, total, file.getName())) {
+                canceled.set(true);
+                break;
+            }
+
+            LocalGalleryInfo info = new LocalGalleryInfo(file.getAbsolutePath());
+            if (info.isValid()) {
+                info.type = LocalGalleryInfo.TYPE_RECYCLE_BIN;
+                batch.add(info);
+            }
+        }
+        return batch;
     }
     
     private void notifyGalleryDeleted(LocalGalleryInfo gallery, boolean success) {
@@ -265,6 +531,7 @@ public class LocalGalleryManager {
     
     private class DeleteTask extends AsyncTask<Void, Void, Boolean> {
         private final LocalGalleryInfo mGallery;
+        private File mTargetDir;
         
         DeleteTask(LocalGalleryInfo gallery) {
             mGallery = gallery;
@@ -292,7 +559,11 @@ public class LocalGalleryManager {
                 }
                 
                 // 移动文件夹到回收站
-                return sourceDir.renameTo(targetDir);
+                boolean result = sourceDir.renameTo(targetDir);
+                if (result) {
+                    mTargetDir = targetDir;
+                }
+                return result;
                 
             } catch (Exception e) {
                 return false;
@@ -301,12 +572,16 @@ public class LocalGalleryManager {
         
         @Override
         protected void onPostExecute(Boolean success) {
+            if (success) {
+                updateCacheAfterDelete(mGallery, mTargetDir);
+            }
             notifyGalleryDeleted(mGallery, success);
         }
     }
     
     private class RestoreTask extends AsyncTask<Void, Void, Boolean> {
         private final LocalGalleryInfo mGallery;
+        private File mTargetDir;
         
         RestoreTask(LocalGalleryInfo gallery) {
             mGallery = gallery;
@@ -334,7 +609,11 @@ public class LocalGalleryManager {
                 }
                 
                 // 移动文件夹回下载目录
-        return sourceDir.renameTo(targetDir);
+                boolean result = sourceDir.renameTo(targetDir);
+                if (result) {
+                    mTargetDir = targetDir;
+                }
+                return result;
             } catch (Exception e) {
                 return false;
             }
@@ -342,6 +621,9 @@ public class LocalGalleryManager {
         
         @Override
         protected void onPostExecute(Boolean success) {
+            if (success) {
+                updateCacheAfterRestore(mGallery, mTargetDir);
+            }
             notifyGalleryRestored(mGallery, success);
         }
     }
@@ -365,6 +647,13 @@ public class LocalGalleryManager {
                 
             } catch (Exception e) {
                 return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                updateCacheAfterPermanentDelete(mGallery);
             }
         }
         
@@ -413,6 +702,13 @@ public class LocalGalleryManager {
             }
             return directory.delete();
         }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                updateCacheAfterEmptyRecycleBin();
+            }
+        }
     }
     
     private static class ScanResult {
@@ -422,6 +718,221 @@ public class LocalGalleryManager {
         ScanResult(List<LocalGalleryInfo> localGalleries, List<LocalGalleryInfo> recycleBinGalleries) {
             this.localGalleries = localGalleries;
             this.recycleBinGalleries = recycleBinGalleries;
+        }
+    }
+
+    private static class CacheSnapshot {
+        final List<LocalGalleryInfo> localGalleries;
+        final List<LocalGalleryInfo> recycleBinGalleries;
+
+        CacheSnapshot(List<LocalGalleryInfo> localGalleries, List<LocalGalleryInfo> recycleBinGalleries) {
+            this.localGalleries = localGalleries;
+            this.recycleBinGalleries = recycleBinGalleries;
+        }
+    }
+
+    private CacheSnapshot loadCacheIfValid() {
+        int expiryDays = Settings.getLocalGalleryCacheExpireDays();
+        if (expiryDays <= 0) {
+            return null;
+        }
+
+        long now = System.currentTimeMillis();
+        long localTimestamp = Settings.getLong(KEY_LOCAL_GALLERY_CACHE_TIME, 0L);
+        long recycleTimestamp = Settings.getLong(KEY_RECYCLE_BIN_CACHE_TIME, 0L);
+        long maxAgeMillis = TimeUnit.DAYS.toMillis(expiryDays);
+
+        if (localTimestamp <= 0 || recycleTimestamp <= 0) {
+            return null;
+        }
+        if (now - localTimestamp > maxAgeMillis || now - recycleTimestamp > maxAgeMillis) {
+            return null;
+        }
+
+        String localJson = Settings.getString(KEY_LOCAL_GALLERY_CACHE_JSON, null);
+        String recycleJson = Settings.getString(KEY_RECYCLE_BIN_CACHE_JSON, null);
+        if (TextUtils.isEmpty(localJson) || TextUtils.isEmpty(recycleJson)) {
+            return null;
+        }
+
+        try {
+            List<LocalGalleryInfo> localList = decodeGalleryList(localJson);
+            List<LocalGalleryInfo> recycleList = decodeGalleryList(recycleJson);
+            return new CacheSnapshot(localList, recycleList);
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to parse local gallery cache", e);
+            return null;
+        }
+    }
+
+    private void applyCacheSnapshot(CacheSnapshot snapshot) {
+        synchronized (mCachedLocalGalleries) {
+            mCachedLocalGalleries.clear();
+            mCachedLocalGalleries.addAll(snapshot.localGalleries);
+        }
+        synchronized (mCachedRecycleBinGalleries) {
+            mCachedRecycleBinGalleries.clear();
+            mCachedRecycleBinGalleries.addAll(snapshot.recycleBinGalleries);
+        }
+        mCacheLoaded = true;
+        notifyScanComplete(new ArrayList<>(snapshot.localGalleries), new ArrayList<>(snapshot.recycleBinGalleries));
+    }
+
+    private void persistLocalGalleryCache() {
+        List<LocalGalleryInfo> snapshot = new ArrayList<>();
+        synchronized (mCachedLocalGalleries) {
+            snapshot.addAll(mCachedLocalGalleries);
+        }
+        String json = encodeGalleryList(snapshot);
+        Settings.putString(KEY_LOCAL_GALLERY_CACHE_JSON, json);
+        Settings.putLong(KEY_LOCAL_GALLERY_CACHE_TIME, System.currentTimeMillis());
+    }
+
+    private void persistRecycleBinCache() {
+        List<LocalGalleryInfo> snapshot = new ArrayList<>();
+        synchronized (mCachedRecycleBinGalleries) {
+            snapshot.addAll(mCachedRecycleBinGalleries);
+        }
+        String json = encodeGalleryList(snapshot);
+        Settings.putString(KEY_RECYCLE_BIN_CACHE_JSON, json);
+        Settings.putLong(KEY_RECYCLE_BIN_CACHE_TIME, System.currentTimeMillis());
+    }
+
+    private String encodeGalleryList(List<LocalGalleryInfo> galleries) {
+        JSONArray array = new JSONArray();
+        if (galleries != null) {
+            for (LocalGalleryInfo info : galleries) {
+                array.add(encodeGalleryInfo(info));
+            }
+        }
+        return array.toJSONString();
+    }
+
+    private List<LocalGalleryInfo> decodeGalleryList(String json) {
+        List<LocalGalleryInfo> galleries = new ArrayList<>();
+        if (TextUtils.isEmpty(json)) {
+            return galleries;
+        }
+        JSONArray array = JSON.parseArray(json);
+        if (array == null) {
+            return galleries;
+        }
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject obj = array.getJSONObject(i);
+            if (obj != null) {
+                galleries.add(decodeGalleryInfo(obj));
+            }
+        }
+        return galleries;
+    }
+
+    private JSONObject encodeGalleryInfo(LocalGalleryInfo info) {
+        JSONObject obj = new JSONObject();
+        if (info == null) {
+            return obj;
+        }
+        obj.put("id", info.id);
+        obj.put("title", info.title);
+        obj.put("titleJpn", info.titleJpn);
+        obj.put("category", info.category);
+        obj.put("thumb", info.thumb);
+        obj.put("path", info.path);
+        obj.put("type", info.type);
+        obj.put("timestamp", info.timestamp);
+        obj.put("pageCount", info.pageCount);
+        obj.put("size", info.size);
+        obj.put("gid", info.gid);
+        obj.put("token", info.token);
+        return obj;
+    }
+
+    private LocalGalleryInfo decodeGalleryInfo(JSONObject obj) {
+        LocalGalleryInfo info = new LocalGalleryInfo();
+        info.id = obj.getLongValue("id");
+        info.title = obj.getString("title");
+        info.titleJpn = obj.getString("titleJpn");
+        info.category = obj.getString("category");
+        info.thumb = obj.getString("thumb");
+        info.path = obj.getString("path");
+        info.type = obj.getIntValue("type");
+        info.timestamp = obj.getLongValue("timestamp");
+        info.pageCount = obj.getIntValue("pageCount");
+        info.size = obj.getLongValue("size");
+        info.gid = obj.getString("gid");
+        info.token = obj.getString("token");
+        return info;
+    }
+
+    private void updateCacheAfterDelete(LocalGalleryInfo gallery, File targetDir) {
+        if (gallery == null || targetDir == null) {
+            return;
+        }
+        LocalGalleryInfo updated = new LocalGalleryInfo(targetDir.getAbsolutePath());
+        updated.type = LocalGalleryInfo.TYPE_RECYCLE_BIN;
+
+        synchronized (mCachedLocalGalleries) {
+            removeByPath(mCachedLocalGalleries, gallery.path);
+        }
+        synchronized (mCachedRecycleBinGalleries) {
+            mCachedRecycleBinGalleries.add(updated);
+        }
+        if (mCacheLoaded) {
+            persistLocalGalleryCache();
+            persistRecycleBinCache();
+        }
+    }
+
+    private void updateCacheAfterRestore(LocalGalleryInfo gallery, File targetDir) {
+        if (gallery == null || targetDir == null) {
+            return;
+        }
+        LocalGalleryInfo updated = new LocalGalleryInfo(targetDir.getAbsolutePath());
+        updated.type = LocalGalleryInfo.TYPE_LOCAL;
+
+        synchronized (mCachedRecycleBinGalleries) {
+            removeByPath(mCachedRecycleBinGalleries, gallery.path);
+        }
+        synchronized (mCachedLocalGalleries) {
+            mCachedLocalGalleries.add(updated);
+        }
+        if (mCacheLoaded) {
+            persistLocalGalleryCache();
+            persistRecycleBinCache();
+        }
+    }
+
+    private void updateCacheAfterPermanentDelete(LocalGalleryInfo gallery) {
+        if (gallery == null) {
+            return;
+        }
+        synchronized (mCachedRecycleBinGalleries) {
+            removeByPath(mCachedRecycleBinGalleries, gallery.path);
+        }
+        if (mCacheLoaded) {
+            persistRecycleBinCache();
+        }
+    }
+
+    private void updateCacheAfterEmptyRecycleBin() {
+        synchronized (mCachedRecycleBinGalleries) {
+            mCachedRecycleBinGalleries.clear();
+        }
+        if (mCacheLoaded) {
+            persistRecycleBinCache();
+        }
+    }
+
+    private void removeByPath(List<LocalGalleryInfo> list, String path) {
+        if (list == null || TextUtils.isEmpty(path)) {
+            return;
+        }
+        Iterator<LocalGalleryInfo> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            LocalGalleryInfo info = iterator.next();
+            if (TextUtils.equals(path, info.path)) {
+                iterator.remove();
+                return;
+            }
         }
     }
 }
