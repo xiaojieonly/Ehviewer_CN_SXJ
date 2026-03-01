@@ -375,12 +375,12 @@ public class DownloadsScene extends ToolbarScene
     @SuppressLint("StringFormatMatches")
     private void updateTitle() {
         try {
-            setTitle(getString(R.string.scene_download_title,
-                    Integer.toString(mList == null ? 0 : mList.size()),
-                    mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
+            setTitle(getString(R.string.scene_download_title_new,
+                    mLabel != null ? mLabel : getString(R.string.default_download_label_name),
+                    Integer.toString(mList == null ? 0 : mList.size())));
         } catch (Exception e) {
             Analytics.recordException(e);
-            setTitle(getString(R.string.scene_download_title,
+            setTitle(getString(R.string.scene_download_title_new,
                     mLabel != null ? mLabel : getString(R.string.default_download_label_name)));
         }
     }
