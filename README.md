@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1VD8NwRZTUVkO5hsTCPd95A) 提取码：hfms
-- [夸克网盘](https://pan.quark.cn/s/685e409e6164) 提取码：yiie
-- [蓝奏云](https://wwbfg.lanzouu.com/iM6GO3hj88cd)，电脑端可正常下载 提取码：cjgb
+- [百度云](https://pan.baidu.com/s/1_rbxH65GXWjx_pxYIf0Pug) 提取码：wzv4
+- [夸克网盘](https://pan.quark.cn/s/95915acfe88b) 提取码：HmUu
+- [蓝奏云](https://wwbfg.lanzouu.com/iYopw3jiyizi)，电脑端可正常下载 提取码：fhbq
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:fd7fb29419c9b6f7a22bbbd899500fb828e2e5ce&xt=urn:btmh:1220aa0bf5802d34adeb7e60b17f0466f951a4d96dd4ab5b06158af2690bee2cb073&dn=EhViewer-2.0.1.4.apk&xl=27623297
+- Torrent链接:magnet:?xt=urn:btih:4869fe5d6cebba6e1f2b672e3523cca83838b466&xt=urn:btmh:1220df01410d828d8544b9efe8e15fe3e7323eab74d2ae962947f324dd36e0a99b74&dn=EhViewer-2.0.1.5.apk&xl=27934862
 
 点击前往赏饭：
 
@@ -29,6 +29,18 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2026/03/01 提前祝大家元宵节快乐
+### 新版发布2.0.1.5
+
+- 调整 Analytics上报字段
+- 将部分代码从java迁移到kotlin
+- 修复 `BitmapUtils` 中的潜在整数溢出问题
+- 优化VPN检测逻辑，增加权限检查和异常处理
+- 优化登录流程异常处理和进度显示
+- 清理请求头中的换行符避免崩溃
+- 调整下载列表页面的标题格式
+- zyl-hub：修复了在搜索框不为空时的搜索历史补全
+
 ## 2026/02/01 给大家提前拜个早年，祝大家新春快乐~
 ### 新版发布2.0.1.4
 
@@ -38,6 +50,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
   网页登录只能使用VPN进行
 - 在裸连使用cookie登录时，现在会跳过获取用户详情步骤
 - 更新安卓targetSdkVersion到30，所有用户需要授予管理文件权限，否则将无法读取旧画廊
+- [百度云](https://pan.baidu.com/s/1VD8NwRZTUVkO5hsTCPd95A) 提取码：hfms
+- [夸克网盘](https://pan.quark.cn/s/685e409e6164) 提取码：yiie
+- [蓝奏云](https://wwbfg.lanzouu.com/iM6GO3hj88cd)，电脑端可正常下载 提取码：cjgb
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接: magnet:?xt=urn:btih:fd7fb29419c9b6f7a22bbbd899500fb828e2e5ce&xt=urn:btmh:1220aa0bf5802d34adeb7e60b17f0466f951a4d96dd4ab5b06158af2690bee2cb073&dn=EhViewer-2.0.1.4.apk&xl=27623297
+
 
 ## 2026/01/05 紧急修复
 ### 新版发布2.0.1.3
