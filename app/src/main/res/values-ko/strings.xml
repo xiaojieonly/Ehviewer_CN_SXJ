@@ -140,6 +140,7 @@
     <string name="content_layout_restore_tip">다시 시도하려면 누르기</string>
     <string name="write_rationale">앱이 갤러리를 다운로드하려면 WRITE_EXTERNAL_STORAGE 권한이 필요합니다. 권한을 허용하시겠습니까?</string>
     <string name="you_rejected_me">안돼요</string>
+    <string name="show_details">세부 정보 표시</string>
     <string name="analytics_explain">앱 개발자에게 기기 및 사용 정보를 보내시겠습니까? 앱 개발에 굉장한 도움이 됩니다. &lt;br&gt;&lt;br&gt;데이터 분석 서비스는 Google Analytics for Firebase를 사용하며, 개인 정보 보호 정책은 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 에서 확인하실 수 있습니다.&lt;br&gt;&lt;br&gt;데이터 분석을 허용하면 사용자의 기기 및 앱 사용 정보가 수집됩니다. 전화번호나 이메일 주소, IMEI와 같은 개인 정보는 수집하지 않습니다.&lt;br&gt;&lt;br&gt;데이터 분석을 허용하기 전까지는 정보를 수집하지 않습니다.&lt;br&gt;&lt;br&gt;수집한 정보는 Google Analytics for Firebase에 의해 분석됩니다. 분석된 정보는 이 애플리케이션의 개발자만 볼 수 있습니다.</string>
     <string name="get_it">알겠습니다</string>
     <string name="accept">동의</string>
@@ -409,6 +410,7 @@
     <string name="sort_by_file_size_asc">파일 크기 오름차순</string>
     <string name="sort_by_file_size_desc">파일 크기 내림차순</string>
     <string name="sort_download_list">목록 정렬</string>
+    <string name="advanced_filter">고급 필터</string>
     <string name="download_start_all">모두 시작</string>
     <string name="download_stop_all">모두 중지</string>
     <string name="download_reset_reading_progress">독서 진행도 초기화</string>
@@ -620,6 +622,19 @@
     <string name="settings_download_restore_not_found">복구할 다운로드 항목을 찾을 수 없습니다.</string>
     <string name="settings_download_restore_failed">복구하지 못했습니다.</string>
     <string name="settings_download_restore_successfully">%d개 항목을 복구했습니다.</string>
+    <string name="settings_download_restore_successfully_with_details">복구 완료: %1$d개 성공, %2$d개 실패</string>
+    <string name="settings_download_restore_failed_all">복구 실패: 모든 항목을 복구할 수 없습니다</string>
+    <string name="settings_download_restore_check_logs">자세한 정보는 로그를 확인하세요</string>
+    <string name="settings_download_restore_started">복구 작업이 시작되었습니다</string>
+    <string name="settings_download_restore_already_running">복구 작업이 이미 실행 중입니다</string>
+    <string name="settings_download_import_items">다운로드 항목 가져오기</string>
+    <string name="settings_download_import_no_items">가져올 항목이 없습니다</string>
+    <string name="settings_download_import_failed">다운로드 항목 가져오기 실패</string>
+    <string name="settings_download_import_succeed">%d개 다운로드 항목을 성공적으로 가져왔습니다</string>
+    <string name="settings_download_import_read_failed">가져오기 파일 읽기 실패</string>
+    <string name="settings_download_import_succeed_with_details">가져오기 완료: %1$d개 성공, %2$d개 실패</string>
+    <string name="settings_download_import_failed_all">가져오기 실패: 모든 항목을 가져올 수 없습니다</string>
+    <string name="settings_download_import_check_logs">자세한 정보는 로그를 확인하세요</string>
     <string name="settings_download_clean_redundancy">잉여 파일 삭제</string>
     <string name="settings_download_clean_redundancy_summary">다운로드 위치에 존재하지만 다운로드 목록에는 없는 갤러리 이미지 제거</string>
     <string name="settings_download_clean_redundancy_no_redundancy">잉여 파일이 없습니다.</string>
@@ -662,6 +677,8 @@
     <string name="settings_advanced_wifi_sander_summary">Wi-Fi 핫스팟을 통한 데이터 마이그레이션</string>
     <string name="settings_advanced_wifi_client">WiFi 마이그레이션 데이터 수신</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi 핫스팟에서 마이그레이션 데이터 수신</string>
+    <string name="settings_advanced_database_viewer">데이터베이스 뷰어</string>
+    <string name="settings_advanced_database_viewer_summary">데이터베이스 버전, 테이블 및 데이터 내용보기</string>
 
     <string name="settings_about">앱 정보</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -920,6 +937,12 @@
     <string name="spen_next_page">다음 페이지</string>
     <string name="category_all">전체</string>
     <string name="import_local_archive">로컬 아카이브 가져오기</string>
+    <string name="repair_gallery_info">갤러리 정보 복구</string>
+    <string name="repair_gallery_info_success">갤러리 정보 복구 성공</string>
+    <string name="repair_gallery_info_failed">갤러리 정보 복구 실패</string>
+    <string name="repair_gallery_info_confirm">선택한 갤러리 정보를 복구하시겠습니까?</string>
+    <string name="gallery_deleted_alert">갤러리 삭제됨</string>
+    <string name="gallery_deleted_message">이 갤러리는 E-Hentai에서 삭제되었지만 로컬 캐시 정보는 보존됩니다.</string>
     <string name="import_archive_title">아카이브 파일 선택</string>
     <string name="import_archive_failed">아카이브 가져오기 실패</string>
     <string name="archive_permission_lost">아카이브 접근 권한이 손실되었습니다. 아카이브 파일을 다시 가져오세요.</string>
@@ -932,5 +955,103 @@
     <string name="imported_archive_info_message">로컬 저장소에서 가져온 항목입니다</string>
     <string name="imported_archive_category">로컬 가져오기</string>
 
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">정렬 및 필터</string>
+    <string name="dialog_category_filter_label">카테고리 필터(다중 선택)</string>
+    <string name="dialog_status_filter_label">상태 필터</string>
+    <string name="dialog_sort_method_label">정렬 방식</string>
+    <string name="dialog_search_download_title">다운로드 검색</string>
+    <string name="dialog_search_options_label">검색 옵션</string>
+    <string name="reset">재설정</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">카테고리, 상태, 정렬 순서로 다운로드 필터링</string>
+    <string name="category_filter_description">다운로드를 필터링할 카테고리를 하나 이상 선택</string>
+    <string name="status_filter_description">표시할 다운로드 상태 선택(예: 완료, 다운로드 중)</string>
+    <string name="sort_method_description">필터링된 다운로드의 정렬 방식 선택</string>
+    <string name="no_filters_applied">필터 적용되지 않음</string>
+    <string name="filters_applied">%d개 필터 적용됨</string>
+    <string name="filter_by_all_categories">모든 카테고리</string>
+    <string name="filter_by_selected_categories">%d개 카테고리 선택됨</string>
+    <string name="filter_by_all_statuses">모든 상태</string>
+    <string name="filter_by_selected_statuses">%d개 상태 선택됨</string>
+    <string name="sort_by_default_order">기본 순서</string>
+    <string name="sort_by_custom_order">사용자 정의 순서: %s</string>
+    <string name="advanced_filter_tip">팁: 여러 필터를 결합하여 정확한 결과를 얻을 수 있습니다</string>
+    <string name="advanced_filter_empty_result">현재 필터 조건에 맞는 다운로드가 없습니다</string>
+    <string name="advanced_filter_clear_all">모든 필터 지우기</string>
+    <string name="advanced_filter_apply_changes">필터 변경사항 적용</string>
+    <string name="advanced_filter_discard_changes">변경사항 취소</string>
+    <string name="advanced_filter_confirm_reset">모든 필터를 기본값으로 재설정하시겠습니까?</string>
+
+    <!-- Download scan strings -->
+    <string name="scan_download_files_scanning">다운로드 디렉토리 스캔 중...</string>
+    <string name="scan_download_files_scanning_progress">다운로드 디렉토리 스캔 중... (%d/%d)</string>
+    <string name="scan_download_files_completed">스캔 완료!</string>
+    <string name="scan_download_files_failed">스캔 실패</string>
+    <string name="scan_download_files_failed_title">스캔 실패</string>
+    
+    <!-- Clean invalid download strings -->
+    <string name="clean_invalid_download_empty_directory">빈 디렉토리: %s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">.ehviewer 파일 없음: %s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">잘못된 .ehviewer 파일: %s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">파일 수 불일치: %s, 예상: %d, 실제: %d</string>
+    <string name="clean_invalid_download_error_processing_directory">디렉토리 처리 중 오류: %s - %s</string>
+    <string name="clean_invalid_download_initializing">정리 초기화 중...</string>
+    <string name="clean_invalid_download_scanning">다운로드 디렉토리 스캔 중...</string>
+    <string name="clean_invalid_download_processing">무효 다운로드 정리 중...</string>
+    <string name="clean_invalid_download_progress">처리 중: %1$d/%2$d 디렉토리, 정리됨 %3$d, 오류 %4$d</string>
+    <string name="clean_invalid_download_finalizing">완료 중...</string>
+    <string name="clean_invalid_download_completed">정리 완료, 총 %d개의 무효 다운로드 정리됨</string>
+    <string name="clean_invalid_download_completed_with_skipped">정리 완료, 총 %1$d개의 무효 다운로드 정리됨, 삭제된 갤러리 %2$d개 건너뜀</string>
+    <string name="clean_invalid_download_no_files">정리할 파일을 찾지 못함</string>
+    <string name="clean_invalid_download_invalid_dir">잘못된 다운로드 디렉토리</string>
+    <string name="clean_invalid_download_gallery_deleted">삭제된 갤러리 감지, 정리 건너뜀</string>
+    <string name="clean_invalid_download_checking_gallery">갤러리 상태 확인 중: %s</string>
+    <string name="clean_invalid_download_gallery_still_exists">갤러리가 여전히 존재함, 불완전한 다운로드 정리 준비</string>
+    <string name="clean_invalid_download_error_checking">갤러리 상태 확인 중 오류: %s</string>
+    <string name="clean_invalid_download_detail_title">무효 다운로드 정리 세부 정보</string>
+    <string name="clean_invalid_download_detail_message"><b>기능 설명:</b>
+
+이 기능은 무효 다운로드 항목을 지능적으로 정리합니다. 작업 흐름은 다음과 같습니다:
+
+1. <b>스캔 단계</b>
+   • 다운로드 디렉토리의 모든 폴더를 순회
+   • .ehviewer 파일이 포함된 다운로드 항목 식별
+
+2. <b>검증 단계</b>
+   • 다운로드 무결성 확인 (파일 수, 파일 유효성 등)
+   • <b>핵심 기능: 삭제 전 네트워크 요청을 보내 갤러리 상태 확인</b>
+   • 갤러리 GID와 Token을 사용하여 갤러리 존재 여부 쿼리
+
+3. <b>정리 단계</b>
+   • 삭제된 갤러리 건너뛰기 (로컬 파일 보존)
+   • 갤러리가 여전히 존재하는 불완전한 다운로드만 삭제
+   • 통계 및 정리 결과 보고
+
+<b>왜 갤러리 상태를 확인해야 하나요?</b>
+
+• 삭제된 갤러리의 파일을 실수로 삭제하는 것 방지
+• 다운로드는 불완전하지만 갤러리가 더 이상 존재하지 않는 파일 보존
+• 사용자가 복구 불가능한 콘텐츠를 잃어버리는 것 방지
+
+<b>주의사항:</b>
+
+• 갤러리 상태 확인을 위해 네트워크 연결 필요
+• 확인 과정으로 인해 실행 시간이 다소 증가할 수 있음
+• 네트워크 오류 시 안전을 위해 기본적으로 다운로드 항목 보존</string>
+
+    <!-- Download scene strings -->
+    <string name="starting_download">다운로드 시작 중...</string>
+    <string name="preparing_download">다운로드 준비 중, 잠시 기다려 주세요...</string>
+    <string name="background_processing">백그라운드 처리</string>
+    <string name="background_processing_please_wait">백그라운드에서 처리 중입니다. 나중에 결과를 확인해 주세요</string>
+    <string name="download_progress_format">다운로드 처리 중: %1$d/%2$d</string>
+    <string name="download_dialog_title">다운로드</string>
+    <string name="download_multi_select_processing">다중 선택 다운로드 처리 중, 잠시 기다려 주세요...</string>
+    <string name="processing_progress">처리 중: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">%1$d개의 다운로드 작업 시작됨</string>
+    <string name="no_download_tasks_to_start">시작할 다운로드 작업 없음</string>
+    <string name="start_failed">시작 실패: %s</string>
 
 </resources>

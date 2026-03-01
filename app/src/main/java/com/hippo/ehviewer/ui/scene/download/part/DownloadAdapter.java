@@ -46,6 +46,9 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
+import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.ehviewer.gallery.A7ZipArchive;
 import com.hippo.ehviewer.gallery.Pipe;
 import com.hippo.ehviewer.spider.SpiderInfo;
@@ -61,6 +64,7 @@ import com.hippo.scene.Announcer;
 import com.hippo.unifile.UniFile;
 import com.hippo.unifile.UniRandomAccessFile;
 import com.hippo.util.NaturalComparator;
+import com.hippo.util.ExecutorManager;
 import com.hippo.ehviewer.Analytics;
 import com.hippo.widget.LoadImageView;
 
@@ -178,6 +182,9 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
                 title = "📦 " + title;
             }
+            // Check if this is an incremental update (title starts with 🔄)
+            boolean isIncrementalUpdate = title.startsWith("🔄");
+            
             // Handle thumbnail loading for imported archives
             if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
                 // For imported archives, extract first image as thumbnail
@@ -187,8 +194,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                         new ThumbDataContainer(info), true, false);
             }
-
-
 
             holder.title.setText(title);
             holder.uploader.setText(info.uploader);
@@ -218,20 +223,52 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 newCategoryText = mScene.getString(R.string.imported_archive_category);
                 categoryColor = 0xFF4CAF50; // Green color for imported archives
             } else {
+                // 显示原有分类，不区分增量更新
                 newCategoryText = EhUtils.getCategory(info.category);
                 categoryColor = EhUtils.getCategoryColor(info.category);
             }
 
             if (!newCategoryText.equals(category.getText())) {
                 category.setText(newCategoryText);
-                category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
+                category.setBackgroundColor(categoryColor);
             }
+            
+            // Log incremental update info
+            if (isIncrementalUpdate) {
+                Log.d(TAG, "[ADAPTER] 增量更新画廊: " + title + 
+                          " (完成: " + info.finished + ", 下载: " + info.downloaded + ", 总计: " + info.total + ")");
+            }
+            
             bindForState(holder, info);
 
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         } catch (Exception e) {
             Analytics.recordException(e);
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DownloadHolder holder, int position, @NonNull List<Object> payloads) {
+        // 如果payload不为空且包含"progress"，只更新进度部分
+        if (!payloads.isEmpty() && "progress".equals(payloads.get(0))) {
+            List<DownloadInfo> list = mCallback.getList();
+            if (list == null) {
+                return;
+            }
+
+            try {
+                int pos = mCallback.positionInList(position);
+                DownloadInfo info = list.get(pos);
+                
+                // 只更新进度相关的部分，避免重新加载整个item
+                bindForState(holder, info);
+            } catch (Exception e) {
+                Analytics.recordException(e);
+            }
+        } else {
+            // 如果payload为空，执行完整的bind
+            super.onBindViewHolder(holder, position, payloads);
         }
     }
 
@@ -264,12 +301,17 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             return;
         }
 
+        // Check if this is an incremental update
+        boolean isIncrementalUpdate = info.title != null && info.title.startsWith("🔄");
+        
         switch (info.state) {
             case DownloadInfo.STATE_NONE:
-                bindState(holder, info, resources.getString(R.string.download_state_none));
+                String stateText = resources.getString(R.string.download_state_none);
+                bindState(holder, info, stateText);
                 break;
             case DownloadInfo.STATE_WAIT:
-                bindState(holder, info, resources.getString(R.string.download_state_wait));
+                stateText = resources.getString(R.string.download_state_wait);
+                bindState(holder, info, stateText);
                 break;
             case DownloadInfo.STATE_DOWNLOAD:
                 bindProgress(holder, info);
@@ -284,7 +326,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 bindState(holder, info, text);
                 break;
             case DownloadInfo.STATE_FINISH:
-                bindState(holder, info, resources.getString(R.string.download_state_finish));
+                stateText = resources.getString(R.string.download_state_finish);
+                bindState(holder, info, stateText);
                 break;
         }
     }
@@ -327,14 +370,27 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             holder.stop.setVisibility(View.GONE);
         }
 
+        // Check if this is an incremental update
+        boolean isIncrementalUpdate = info.title != null && info.title.startsWith("🔄");
+        
         if (info.total <= 0 || info.finished < 0) {
             holder.percent.setText(null);
             holder.progressBar.setIndeterminate(true);
         } else {
-            holder.percent.setText(info.finished + "/" + info.total);
+            String progressText = info.finished + "/" + info.total;
+            // For incremental update, show additional info
+            if (isIncrementalUpdate && info.downloaded > 0) {
+                progressText += " (已下载: " + info.downloaded + ")";
+            }
+            holder.percent.setText(progressText);
             holder.progressBar.setIndeterminate(false);
             holder.progressBar.setMax(info.total);
             holder.progressBar.setProgress(info.finished);
+            
+            // Log incremental update progress
+            if (isIncrementalUpdate) {
+                Log.d(TAG, "[ADAPTER] 增量更新进度: " + info.title + " - " + progressText);
+            }
         }
         long speed = info.speed;
         if (speed < 0) {
@@ -460,7 +516,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         thumb.setImageResource(R.drawable.v_archive_hh_primary_x48);
 
         // Load thumbnail in background thread
-        new Thread(() -> {
+        ExecutorManager.getComputationExecutor().execute(() -> {
             try {
                 Bitmap thumbnail = extractFirstImageFromArchive(archiveUri);
                 mScene.runOnUiThread(() -> {
@@ -481,7 +537,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 Log.e(TAG, "Failed to load archive thumbnail for " + uriString, e);
                 // Keep the default icon that was already set - no need to change anything
             }
-        }).start();
+        });
     }
 
     private Bitmap extractFirstImageFromArchive(Uri archiveUri) {
@@ -727,10 +783,12 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             } else if (start == v) {
                 final DownloadInfo info = list.get(mCallback.positionInList(index));
-                Intent intent = new Intent(context, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
-                context.startService(intent);
+                
+                // 使用后台任务处理单个下载，避免界面卡顿
+                LongList gidList = new LongList();
+                gidList.add(info.gid);
+                StartRangeDownloadTask task = new StartRangeDownloadTask(context, gidList);
+                TaskExecutor.getInstance().execute(task);
             } else if (stop == v) {
                 DownloadManager downloadManager = mCallback.getDownloadManager();
                 if (null != downloadManager) {

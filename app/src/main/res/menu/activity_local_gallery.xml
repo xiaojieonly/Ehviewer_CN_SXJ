@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/v_refresh_dark_x24"
+        android:title="@string/local_gallery_refresh"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_empty_recycle_bin"
+        android:icon="@drawable/v_delete_dark_x24"
+        android:title="@string/recycle_bin_empty_confirm"
+        app:showAsAction="ifRoom" />
+
+</menu>

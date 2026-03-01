@@ -18,10 +18,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="local_gallery_scan_on_start"
+        android:summary="@string/settings_advanced_local_gallery_scan_on_start_summary"
+        android:title="@string/settings_advanced_local_gallery_scan_on_start" />
+
+    <com.hippo.preference.ListPreference
+        android:defaultValue="3"
+        android:key="local_gallery_cache_expire_days"
+        android:summary="%s"
+        android:title="@string/settings_advanced_local_gallery_cache_expire_days"
+        app:entries="@array/local_gallery_cache_expire_entries"
+        app:entryValues="@array/local_gallery_cache_expire_entry_values" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="local_gallery_scan_cache_enabled"
+        android:summary="@string/settings_advanced_local_gallery_scan_cache_enabled_summary"
+        android:title="@string/settings_advanced_local_gallery_scan_cache_enabled" />
+
+    <com.hippo.preference.SwitchPreference
         android:defaultValue="@bool/beta"
         android:key="save_parse_error_body"
         android:summary="@string/settings_advanced_save_parse_error_body_summary"
         android:title="@string/settings_advanced_save_parse_error_body" />
+
+    <Preference
+        android:key="user_agent"
+        android:title="@string/settings_advanced_user_agent"
+        android:summary="@string/settings_advanced_user_agent_summary"
+        app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
@@ -129,6 +155,36 @@
         android:key="wifi_client"
         android:summary="@string/settings_advanced_wifi_client_summary"
         android:title="@string/settings_advanced_wifi_client"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="background_tasks"
+        android:summary="@string/settings_advanced_background_tasks_summary"
+        android:title="@string/settings_advanced_background_tasks"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="transfer_service"
+        android:summary="@string/settings_transfer_summary"
+        android:title="@string/settings_transfer"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="network_diagnostic"
+        android:summary="@string/settings_advanced_network_diagnostic_summary"
+        android:title="@string/settings_advanced_network_diagnostic"
+        app:allowDividerAbove="true" />
+
+    <com.hippo.ehviewer.preference.DatabaseViewerPreference
+        android:key="database_viewer"
+        android:summary="@string/settings_advanced_database_viewer_summary"
+        android:title="@string/settings_advanced_database_viewer"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="local_gallery"
+        android:summary="@string/settings_advanced_local_gallery_summary"
+        android:title="@string/settings_advanced_local_gallery"
         app:allowDividerAbove="true" />
 
 </PreferenceScreen>

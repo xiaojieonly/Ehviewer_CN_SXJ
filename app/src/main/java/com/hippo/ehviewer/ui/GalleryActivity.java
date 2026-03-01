@@ -104,6 +104,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -226,15 +227,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     protected int getThemeResId(int theme) {
-        switch (theme) {
-            case Settings.THEME_LIGHT:
-            default:
-                return R.style.AppTheme_Gallery;
-            case Settings.THEME_DARK:
-                return R.style.AppTheme_Gallery_Dark;
-            case Settings.THEME_BLACK:
-                return R.style.AppTheme_Gallery_Black;
-        }
+        // 使用父类的默认实现，支持自适应主题切换
+        return super.getThemeResId(theme);
     }
 
     private void buildProvider() {
@@ -360,6 +354,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         setContentView(R.layout.activity_gallery);
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
+        if (Settings.getShowGalleryLoadingSpeed()) {
+            mGalleryAdapter.setProgressTextProvider(new SimpleAdapter.ProgressTextProvider() {
+                @Override
+                public String getProgressText(int index, float percent) {
+                    return buildLoadingProgressText(index, percent);
+                }
+            });
+        } else {
+            mGalleryAdapter.setProgressTextProvider(null);
+        }
         Resources resources = getResources();
         mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(Settings.getReadingDirection()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
         mGLRootView.setContentPane(mGalleryView);
@@ -682,6 +686,37 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         } else {
             mProgress.setText((mCurrentIndex + 1) + "/" + mSize);
         }
+    }
+
+    private String buildLoadingProgressText(int index, float percent) {
+        int percentValue = Math.min(100, Math.max(0, Math.round(percent * 100f)));
+        String speedText = null;
+        if (mGalleryProvider instanceof EhGalleryProvider) {
+            long speed = ((EhGalleryProvider) mGalleryProvider).getPageSpeedBytesPerSecond(index);
+            if (speed > 0L) {
+                speedText = formatSpeed(speed);
+            }
+        }
+        if (speedText == null) {
+            return percentValue + "%";
+        }
+        return percentValue + "% " + speedText;
+    }
+
+    private String formatSpeed(long bytesPerSecond) {
+        final long kb = 1024L;
+        final long mb = kb * 1024L;
+        final long gb = mb * 1024L;
+        if (bytesPerSecond >= gb) {
+            return String.format(Locale.US, "%.1fGB/s", bytesPerSecond / (float) gb);
+        }
+        if (bytesPerSecond >= mb) {
+            return String.format(Locale.US, "%.1fMB/s", bytesPerSecond / (float) mb);
+        }
+        if (bytesPerSecond >= kb) {
+            return String.format(Locale.US, "%.1fKB/s", bytesPerSecond / (float) kb);
+        }
+        return bytesPerSecond + "B/s";
     }
 
     @SuppressLint("SetTextI18n")

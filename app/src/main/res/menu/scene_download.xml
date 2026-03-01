@@ -161,8 +161,15 @@
                 </menu>
             </item>
 
+            <item
+                android:id="@+id/advanced_filter"
+                android:title="@string/advanced_filter"
+                android:icon="@drawable/ic_baseline_filter_none_24"
+                app:showAsAction="ifRoom"/>
+
         </menu>
     </item>
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_start_all"

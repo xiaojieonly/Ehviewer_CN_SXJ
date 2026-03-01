@@ -26,7 +26,7 @@ import com.hippo.ehviewer.R;
 public class ReadFragment extends BasePreferenceFragmentCompat {
 
     /**
-     * 设置->阅读界面
+     * Settings->Reading interface
      * xml/read_settings.xml
      * @param savedInstanceState
      */

@@ -386,6 +386,7 @@
     <string name="sort_by_file_size_asc">ตามขนาดไฟล์ จากน้อยไปมาก</string>
     <string name="sort_by_file_size_desc">ตามขนาดไฟล์ จากมากไปน้อย</string>
     <string name="sort_download_list">เรียงลำดับรายการ</string>
+    <string name="advanced_filter">ตัวกรองขั้นสูง</string>
     <string name="stat_509_alert_title">คำเตือน 509</string>
     <string name="stat_509_alert_text">การลิมิตของรูปภาพต่อวันถึงลิมิตแล้ว กรุณาหยุดโหลดและพักผ่อนบ้างนะ</string>
     <string name="stat_download_done_title">ดาวน์โหลดเสร็จสิ้น</string>
@@ -649,6 +650,8 @@
     <string name="settings_advanced_wifi_sander_summary">การย้ายข้อมูลผ่าน Wi-Fi Hotspot</string>
     <string name="settings_advanced_wifi_client">การรับข้อมูลการย้ายผ่าน WiFi</string>
     <string name="settings_advanced_wifi_client_summary">รับข้อมูลการย้ายจาก Wi-Fi Hotspot</string>
+    <string name="settings_advanced_database_viewer">เครื่องมือดูฐานข้อมูล</string>
+    <string name="settings_advanced_database_viewer_summary">ดูเวอร์ชันฐานข้อมูล ตารางและเนื้อหาข้อมูล</string>
 
     <string name="settings_about">เกี่ยวกับ</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -858,6 +861,12 @@
     <string name="subscription_success">%s สำเร็จ</string>
     <string name="settings_eh_show_gallery_rating">แสดงคะแนนแกลเลอรี่</string>
     <string name="import_local_archive">นำเข้าไฟล์บีบอัดท้องถิ่น</string>
+    <string name="repair_gallery_info">ซ่อมแซมข้อมูลแกลเลอรี่</string>
+    <string name="repair_gallery_info_success">ซ่อมแซมข้อมูลแกลเลอรี่สำเร็จ</string>
+    <string name="repair_gallery_info_failed">ซ่อมแซมข้อมูลแกลเลอรี่ล้มเหลว</string>
+    <string name="repair_gallery_info_confirm">คุณแน่ใจหรือไม่ว่าต้องการซ่อมแซมข้อมูลแกลเลอรี่ที่เลือก?</string>
+    <string name="gallery_deleted_alert">แกลเลอรี่ถูกลบ</string>
+    <string name="gallery_deleted_message">แกลเลอรี่นี้ถูกลบบน E-Hentai แต่ข้อมูลแคชในเครื่องยังคงอยู่</string>
     <string name="import_archive_title">เลือกไฟล์บีบอัด</string>
     <string name="import_archive_failed">การนำเข้าไฟล์บีบอัดล้มเหลว</string>
     <string name="archive_permission_lost">สิทธิ์ในการเข้าถึงไฟล์บีบอัดสูญหายแล้ว กรุณานำเข้าไฟล์บีบอัดอีกครั้ง</string>
@@ -938,6 +947,48 @@
 
     <string name="pagination_count">จำนวน</string>
     <string name="pagination_page_and_item">r/p</string>
+
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">จัดเรียงและกรอง</string>
+    <string name="dialog_category_filter_label">ตัวกรองหมวดหมู่ (เลือกได้หลายรายการ)</string>
+    <string name="dialog_status_filter_label">ตัวกรองสถานะ</string>
+    <string name="dialog_sort_method_label">วิธีการจัดเรียง</string>
+    <string name="dialog_search_download_title">ค้นหาการดาวน์โหลด</string>
+    <string name="dialog_search_options_label">ตัวเลือกการค้นหา</string>
+    <string name="reset">รีเซ็ต</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">กรองการดาวน์โหลดตามหมวดหมู่ สถานะ และลำดับการจัดเรียง</string>
+    <string name="category_filter_description">เลือกหนึ่งหมวดหมู่หรือมากกว่าเพื่อกรองการดาวน์โหลด</string>
+    <string name="status_filter_description">เลือกสถานะการดาวน์โหลดที่จะแสดง (เช่น: เสร็จสิ้น กำลังดาวน์โหลด)</string>
+    <string name="sort_method_description">เลือกวิธีการจัดเรียงการดาวน์โหลดที่กรองแล้ว</string>
+    <string name="no_filters_applied">ไม่มีตัวกรองที่ใช้งาน</string>
+    <string name="filters_applied">ตัวกรองที่ใช้งาน: %d</string>
+    <string name="filter_by_all_categories">หมวดหมู่ทั้งหมด</string>
+    <string name="filter_by_selected_categories">หมวดหมู่ที่เลือก: %d</string>
+    <string name="filter_by_all_statuses">สถานะทั้งหมด</string>
+    <string name="filter_by_selected_statuses">สถานะที่เลือก: %d</string>
+    <string name="sort_by_default_order">ลำดับเริ่มต้น</string>
+    <string name="sort_by_custom_order">ลำดับที่กำหนดเอง: %s</string>
+    <string name="advanced_filter_tip">เคล็ดลับ: คุณสามารถรวมตัวกรองหลายๆ ตัวเพื่อผลลัพธ์ที่แม่นยำ</string>
+    <string name="advanced_filter_empty_result">ไม่มีการดาวน์โหลดที่ตรงกับเงื่อนไขตัวกรองปัจจุบัน</string>
+    <string name="advanced_filter_clear_all">ล้างตัวกรองทั้งหมด</string>
+    <string name="advanced_filter_apply_changes">ใช้การเปลี่ยนแปลงตัวกรอง</string>
+    <string name="advanced_filter_discard_changes">ยกเลิกการเปลี่ยนแปลง</string>
+    <string name="advanced_filter_confirm_reset">รีเซ็ตตัวกรองทั้งหมดเป็นค่าเริ่มต้น?</string>
+
+    <!-- Download scene strings -->
+    <string name="starting_download">กำลังเริ่มดาวน์โหลด...</string>
+    <string name="preparing_download">กำลังเตรียมดาวน์โหลด โปรดรอสักครู่...</string>
+    <string name="background_processing">การประมวลผลในพื้นหลัง</string>
+    <string name="background_processing_please_wait">กำลังประมวลผลในพื้นหลัง โปรดตรวจสอบผลลัพธ์ภายหลัง</string>
+    <string name="download_progress_format">กำลังประมวลผลการดาวน์โหลด: %1$d/%2$d</string>
+    <string name="download_dialog_title">ดาวน์โหลด</string>
+    <string name="download_multi_select_processing">กำลังประมวลผลการดาวน์โหลดแบบเลือกหลายรายการ โปรดรอสักครู่...</string>
+    <string name="processing_progress">กำลังประมวลผล: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">เริ่มงานดาวน์โหลด %1$d รายการแล้ว</string>
+    <string name="no_download_tasks_to_start">ไม่มีงานดาวน์โหลดที่จะเริ่ม</string>
+    <string name="start_failed">เริ่มล้มเหลว: %s</string>
 
     <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">หน้าก่อนหน้า</string>

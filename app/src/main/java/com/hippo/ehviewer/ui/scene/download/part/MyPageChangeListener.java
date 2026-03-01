@@ -32,6 +32,10 @@ public class MyPageChangeListener implements PaginationIndicator.OnChangedListen
     private RecyclerView.Adapter<?> mAdapter;
     private RecyclerView mRecyclerView;
     private PageChangeCallback mPageChangeCallback;
+    
+    // 添加防抖机制
+    private long lastClickTime = 0;
+    private static final long CLICK_DEBOUNCE_DELAY = 300; // 300ms防抖延迟
 
     public MyPageChangeListener() {
     }
@@ -53,17 +57,29 @@ public class MyPageChangeListener implements PaginationIndicator.OnChangedListen
 
     @Override
     public void onPageSelectedChanged(int currentPagePos, int lastPagePos, int totalPageCount, int total) {
-        if (indexPage == currentPagePos) {
+        // 防抖检查
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastClickTime < CLICK_DEBOUNCE_DELAY) {
+            return;
+        }
+        lastClickTime = currentTime;
+        
+        // 如果是初始化阶段且当前页就是目标页，重置标志
+        if (needInitPage && indexPage == currentPagePos) {
             needInitPage = false;
-        }
-        if (needInitPage) {
-            // 注意：这里需要外部传入 PaginationIndicator 实例
-            // 或者通过回调方法处理
             return;
         }
+        
+        // 如果需要初始化且当前页不是目标页，跳过本次处理
+        if (needInitPage) {
+            return;
+        }
+        
+        // 如果页码没有变化，不需要处理
         if (indexPage == currentPagePos) {
             return;
         }
+        
         indexPage = currentPagePos;
         
         // 通过回调更新主类的状态
@@ -76,9 +92,18 @@ public class MyPageChangeListener implements PaginationIndicator.OnChangedListen
 
     @Override
     public void onPerPageCountChanged(int perPageCount) {
+        // 防抖检查
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastClickTime < CLICK_DEBOUNCE_DELAY) {
+            return;
+        }
+        lastClickTime = currentTime;
+        
+        // 如果页面大小没有变化，不需要处理
         if (pageSize == perPageCount) {
             return;
         }
+        
         pageSize = perPageCount;
         
         // 通过回调更新主类的状态
@@ -91,16 +116,35 @@ public class MyPageChangeListener implements PaginationIndicator.OnChangedListen
 
     @SuppressLint("NotifyDataSetChanged")
     public void notifyAdapter() {
-        if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
-        }
-        if (mRecyclerView != null) {
-            if (doNotScroll) {
-                doNotScroll = false;
-                return;
+        // 确保在主线程中执行
+        android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        mainHandler.post(() -> {
+            if (mAdapter != null) {
+                try {
+                    mAdapter.notifyDataSetChanged();
+                } catch (Exception e) {
+                    android.util.Log.e("MyPageChangeListener", "Error notifying adapter: " + e.getMessage());
+                }
             }
-            mRecyclerView.scrollToPosition(0);
-        }
+            if (mRecyclerView != null) {
+                try {
+                    if (doNotScroll) {
+                        doNotScroll = false;
+                        return;
+                    }
+                    // 使用smoothScrollToPosition提供更好的用户体验
+                    mRecyclerView.post(() -> {
+                        try {
+                            mRecyclerView.scrollToPosition(0);
+                        } catch (Exception e) {
+                            android.util.Log.e("MyPageChangeListener", "Error scrolling: " + e.getMessage());
+                        }
+                    });
+                } catch (Exception e) {
+                    android.util.Log.e("MyPageChangeListener", "Error in scroll logic: " + e.getMessage());
+                }
+            }
+        });
     }
 
     // Getter and Setter methods

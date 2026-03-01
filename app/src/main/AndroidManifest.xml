@@ -221,7 +221,25 @@
             android:label="@string/my_tags"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
-            android:name=".ui.HostsActivity"
+            android:name="com.hippo.ehviewer.ui.task.BackgroundTaskActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/background_task_management"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.NetworkDiagnosticActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_advanced_network_diagnostic"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.task.BackgroundTaskDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/background_task_detail"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.HostsActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/hosts"
             android:theme="@style/AppTheme.Toolbar" />
@@ -241,6 +259,50 @@
             android:configChanges="screenSize|uiMode"
             android:label="@string/wifi_client"
             android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.transfer.TransferActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_transfer"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <service
+            android:name="com.hippo.ehviewer.transfer.TransferService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.DatabaseViewerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_advanced_database_viewer"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_detail_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryViewerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_viewer_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <service
+            android:name="com.hippo.ehviewer.service.LocalGalleryScanService"
+            android:exported="false" />
+
+        <service
+            android:name="com.hippo.ehviewer.service.RecycleBinScanService"
+            android:exported="false" />
 
         <service
             android:name=".download.DownloadService"

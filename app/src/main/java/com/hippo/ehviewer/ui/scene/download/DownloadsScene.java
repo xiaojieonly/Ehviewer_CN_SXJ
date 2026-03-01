@@ -23,6 +23,7 @@ import static com.hippo.util.FileUtils.getFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,9 +36,11 @@ import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
+import android.text.Editable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -46,6 +49,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -58,6 +62,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -94,6 +99,7 @@ import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.DownloadListInfosExecutor;
 import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
+// removed unused background task imports
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
@@ -102,6 +108,8 @@ import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
 import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
 import com.hippo.ehviewer.widget.MyEasyRecyclerView;
 import com.hippo.ehviewer.widget.SearchBar;
+import com.hippo.ehviewer.ui.scene.download.part.DownloadCategoryTable;
+import com.hippo.ehviewer.widget.AdvanceSearchTable;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ObjectUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
@@ -116,6 +124,28 @@ import com.hippo.widget.ProgressView;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.sxj.paginationlib.PaginationIndicator;
+import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
+import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
+import com.hippo.ehviewer.ui.scene.download.part.CheckboxAdapter;
+import com.hippo.util.ExecutorManager;
+import com.hippo.lib.yorozuya.SimpleHandler;
+import com.hippo.ehviewer.ui.progress.ProgressDialogManager;
+import com.hippo.ehviewer.util.UiThreadHelper;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.StartAllDownloadTask;
+import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+// 拖拽排序相关导入
+import com.h6ah4i.android.widget.advrecyclerview.animator.DraggableItemAnimator;
+import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
+import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
+import android.graphics.drawable.NinePatchDrawable;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -132,8 +162,8 @@ import java.util.Objects;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
-        MyEasyRecyclerView.OnItemClickListener,
-        MyEasyRecyclerView.OnItemLongClickListener,
+        EasyRecyclerView.OnItemClickListener,
+        EasyRecyclerView.OnItemLongClickListener,
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener, DownloadAdapter.DownloadAdapterCallback {
 
     private static final String TAG = DownloadsScene.class.getSimpleName();
@@ -161,9 +191,13 @@ public class DownloadsScene extends ToolbarScene
     @Nullable
     public String mLabel;
     @Nullable
+    private String mCurrentLabel;
+    @Nullable
     private List<DownloadInfo> mList;
     @Nullable
     private List<DownloadInfo> mBackList;
+    @Nullable
+    private ArrayAdapter<DownloadLabel> mLabelAdapter;
 
     /*---------------
      List pagination
@@ -172,6 +206,16 @@ public class DownloadsScene extends ToolbarScene
     private int pageSize = 1;
     private boolean canPagination = true;
     private final int paginationSize = 500;
+
+    // 排序和过滤相关变量
+    private AlertDialog mSortFilterDialog;
+    private CheckboxAdapter mCategoryAdapter;
+    private CheckboxAdapter mStatusAdapter;
+    private Spinner mCategorySpinner;
+    private CheckboxAdapter mSortAdapter;
+    private Set<Integer> mSelectedCategories = new HashSet<>();
+    private Set<Integer> mSelectedStatuses = new HashSet<>();
+    private Set<Integer> mSelectedSorts = new HashSet<>();
     //    private final int paginationSize = 5;
     private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
 //    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
@@ -179,6 +223,9 @@ public class DownloadsScene extends ToolbarScene
     private MyPageChangeListener myPageChangeListener;
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
+    
+    // 添加页码切换标志位，避免与进度更新冲突
+    private volatile boolean isPageChanging = false;
 
     /*---------------
      View life cycle
@@ -214,6 +261,7 @@ public class DownloadsScene extends ToolbarScene
     @ViewLifeCircle
     private SearchBarMover mSearchBarMover;
     private boolean mSearchMode = false;
+    private boolean isFilteringOrSearching = false;  // 标记是否处于筛选或搜索状态
     public String searchKey = null;
 
     private int mInitPosition = -1;
@@ -224,8 +272,6 @@ public class DownloadsScene extends ToolbarScene
     private boolean needInitPage = false;
     private boolean needInitPageSize = false;
 
-    @Nullable
-    private Spinner mCategorySpinner;
     private int mSelectedCategory = EhUtils.ALL_CATEGORY;
 
     @NonNull
@@ -342,27 +388,45 @@ public class DownloadsScene extends ToolbarScene
             mAdapter.notifyDataSetChanged();
         }
         mBackList = mList;
+        isFilteringOrSearching = false;  // 切换标签时退出筛选状态
 //        filterByCategory();
         updateTitle();
-        updatePaginationIndicator();
+        updatePaginationIndicator(true); // 标签变化时强制重新初始化
         Settings.putRecentDownloadLabel(mLabel);
         queryUnreadSpiderInfo();
     }
 
     private void updatePaginationIndicator() {
+        updatePaginationIndicator(false);
+    }
+    
+    private void updatePaginationIndicator(boolean forceReinit) {
         if (mPaginationIndicator == null || mList == null) {
             return;
         }
-        if (mList.size() < paginationSize || !canPagination) {
+        
+        // 如果处于筛选或搜索模式，使用当前结果列表大小；否则检查是否需要分页
+        int currentListSize = mList.size();
+        
+        // 判断是否需要显示分页：列表大小要超过阈值且支持分页
+        if (currentListSize < paginationSize || !canPagination) {
             mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
-        mPaginationIndicator.setVisibility(View.VISIBLE);
-        needInitPageSize = true;
-        mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
-//        mPaginationIndicator.setTotalCount();
-        mPaginationIndicator.setListener(myPageChangeListener);
-
+        
+        // 只在必要时才重新初始化
+        if (forceReinit || needInitPageSize) {
+            mPaginationIndicator.setVisibility(View.VISIBLE);
+            needInitPageSize = false;
+            // 使用当前结果列表的大小初始化分页，而非原始列表
+            mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, currentListSize, indexPage);
+            
+            // 只在第一次或强制重新初始化时设置监听器
+            if (myPageChangeListener != null) {
+                mPaginationIndicator.setListener(myPageChangeListener);
+            }
+        }
+        
         // 同步分页监听器的状态
         if (myPageChangeListener != null) {
             myPageChangeListener.setIndexPage(indexPage);
@@ -530,6 +594,23 @@ public class DownloadsScene extends ToolbarScene
             @Override
             public void onPageChanged(int newIndexPage) {
                 indexPage = newIndexPage;
+                // 设置页码切换标志
+                isPageChanging = true;
+                
+                // 页码切换时，延迟更新列表以避免与进度更新冲突
+                if (mAdapter != null) {
+                    android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                    mainHandler.postDelayed(() -> {
+                        try {
+                            mAdapter.notifyDataSetChanged();
+                            // 重置页码切换标志
+                            isPageChanging = false;
+                        } catch (Exception e) {
+                            android.util.Log.e("DownloadsScene", "Error updating adapter after page change: " + e.getMessage());
+                            isPageChanging = false;
+                        }
+                    }, 150); // 延迟150ms执行，确保页码切换完成
+                }
             }
 
             @Override
@@ -603,6 +684,10 @@ public class DownloadsScene extends ToolbarScene
         mFabLayout.setOnExpandListener(this);
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
+        
+        // 为FloatingActionButton添加标签
+        setupFabLabels();
+        
         FloatingActionButton fab = mFabLayout.getSecondaryFabAt(6);
         if (DRAG_ENABLE) {
             fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.v_mobile_hand_left_x24, context.getTheme()));
@@ -614,7 +699,7 @@ public class DownloadsScene extends ToolbarScene
         updateView();
 
         guide();
-        updatePaginationIndicator();
+        updatePaginationIndicator(true); // 首次初始化时强制重新初始化
         return view;
     }
 
@@ -701,6 +786,24 @@ public class DownloadsScene extends ToolbarScene
                 }).build();
     }
 
+    private void showStartAllProgressDialog() {
+        Activity activity = getActivity2();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        
+        // 创建新的下载任务
+        StartAllDownloadTask task = new StartAllDownloadTask(activity);
+        
+        // 使用统一的进度对话框管理器
+        boolean isNewDialog = ProgressDialogManager.showOrUpdateDialog(activity, task);
+        
+        if (isNewDialog) {
+            // 如果是新对话框，启动任务
+            TaskExecutor.executeTask(task);
+        }
+    }
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -732,6 +835,9 @@ public class DownloadsScene extends ToolbarScene
         mLayoutManager = null;
         mDragDropManager = null;
         EventBus.getDefault().unregister(this);
+        
+        // 清理进度对话框
+        ProgressDialogManager.dismissAll();
     }
 
     @Override
@@ -756,9 +862,12 @@ public class DownloadsScene extends ToolbarScene
         int id = item.getItemId();
         switch (id) {
             case R.id.action_start_all: {
-                Intent intent = new Intent(activity, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START_ALL);
-                activity.startService(intent);
+                if (mDownloadManager == null) {
+                    return false;
+                }
+                
+                // 显示进度条对话框
+                showStartAllProgressDialog();
                 return true;
             }
             case R.id.action_stop_all: {
@@ -773,7 +882,7 @@ public class DownloadsScene extends ToolbarScene
                     return false;
                 }
                 if (searching) {
-                    Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
+                    UiThreadHelper.showToastSafely(context, R.string.download_searching, Toast.LENGTH_LONG);
                     return true;
                 }
                 new AlertDialog.Builder(context)
@@ -824,7 +933,15 @@ public class DownloadsScene extends ToolbarScene
             case R.id.western:
             case R.id.unknown:
                 gotoFilterAndSort(id);
+            case R.id.sort_download_list: {
+                // 不再显示排序窗口，直接使用菜单中的排序选项
                 return true;
+            }
+            case R.id.advanced_filter: {
+                Log.d("DownloadsScene", "onOptionsItemSelected: 高级过滤按钮被点击");
+                showSortFilterDialog();
+                return true;
+            }
             case R.id.import_local_archive:
                 importLocalArchive();
                 return true;
@@ -850,46 +967,103 @@ public class DownloadsScene extends ToolbarScene
             mSearchDialog.show();
             return;
         }
-        LayoutInflater layoutInflater = LayoutInflater.from(context);
-
-        Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_download);
-
-        LinearLayout linearLayout = (LinearLayout) layoutInflater.inflate(R.layout.download_search_dialog, null);
-        mSearchBar = linearLayout.findViewById(R.id.download_search_bar);
-        mSearchBar.setHelper(this);
-        mSearchBar.setIsComeFromDownload(true);
-        mSearchBar.setEditTextHint(R.string.download_search_hint);
-        mSearchBar.setLeftDrawable(drawable);
-        mSearchBar.setText(searchKey);
+        
+        // 创建增强的搜索对话框
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.download_search_dialog_v2, null);
+        
+        // 获取各个组件
+        SearchBar searchBar = dialogView.findViewById(R.id.download_search_bar);
+        mSearchBar = searchBar; // 供回调使用，避免空指针
+        AdvanceSearchTable advanceSearchTable = dialogView.findViewById(R.id.advance_search_table);
+        DownloadCategoryTable categoryTable = dialogView.findViewById(R.id.category_table);
+        
+        // 设置SearchBar
+        searchBar.setHelper(this);
+        searchBar.setIsComeFromDownload(true);
+        searchBar.setEditTextHint(R.string.download_search_hint);
+        searchBar.setText(searchKey);
         if (searchKey != null && !searchKey.isEmpty()) {
-            mSearchBar.setTitle(searchKey);
-            mSearchBar.cursorToEnd();
+            searchBar.setTitle(searchKey);
+            searchBar.cursorToEnd();
         } else {
-            mSearchBar.setTitle(R.string.download_search_hint);
+            searchBar.setTitle(R.string.download_search_hint);
         }
-
-        mSearchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
-        mSearchBarMover = new SearchBarMover(this, mSearchBar);
+        searchBar.setRightDrawable(DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24));
+        
+        // 设置SearchBar为搜索状态，但不立即显示建议列表
+        searchBar.setState(SearchBar.STATE_SEARCH, false);
+        
+        // 确保EditText可以获取焦点和点击
+        searchBar.mEditText.setFocusable(true);
+        searchBar.mEditText.setFocusableInTouchMode(true);
+        searchBar.mEditText.setClickable(true);
+        
+        // 设置默认搜索选项
+        advanceSearchTable.setAdvanceSearch(AdvanceSearchTable.SNAME | AdvanceSearchTable.STAGS);
+        
+        // 设置默认分类为全选 - 确保所有按钮都是亮起的
+        Set<Integer> defaultCategories = new HashSet<>();
+        defaultCategories.add(EhUtils.ALL_CATEGORY);
+        categoryTable.setSelectedCategories(defaultCategories);
+        
         mSearchDialog = new AlertDialog.Builder(context)
-                .setMessage(R.string.download_search_gallery)
-                .setView(linearLayout)
+                .setView(dialogView)
                 .setCancelable(true)
                 .setOnDismissListener(this::onSearchDialogDismiss)
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                    // 取消搜索，不执行任何搜索操作
                     searchKey = null;
-                    mSearchBar.setText(null);
-                    mSearchBar.setTitle(null);
-                    mSearchBar.applySearch(true);
+                    // 隐藏建议列表
+                    searchBar.hideSuggestionsList();
                     dialog.dismiss();
                 })
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    mSearchBar.applySearch(true);
+                    // 获取搜索关键词
+                    Editable editable = searchBar.mEditText.getText();
+                    searchKey = editable != null ? editable.toString() : null;
+                    
+                    // 获取高级搜索选项
+                    int searchOption = advanceSearchTable.getAdvanceSearch();
+                    
+                    // 获取选中的分类
+                    Set<Integer> selectedCategories = categoryTable.getSelectedCategories();
+                    
+                    // 隐藏建议列表
+                    searchBar.hideSuggestionsList();
+                    
+                    // 执行搜索
+                    performAdvancedSearch(searchKey, searchOption, selectedCategories);
                     dialog.dismiss();
-                }).show();
+                })
+                .setOnDismissListener(dialog -> {
+                    // 对话框关闭时隐藏建议列表
+                    if (searchBar != null) {
+                        searchBar.hideSuggestionsList();
+                    }
+                    onSearchDialogDismiss(dialog);
+                })
+                .show();
+    }
+    
+    // 新增方法：执行高级搜索
+    private void performAdvancedSearch(String keyword, int searchOption, Set<Integer> categories) {
+        Log.d("DownloadsScene", "performAdvancedSearch: keyword=" + keyword + ", searchOption=" + searchOption + ", categories=" + categories);
+        
+        isFilteringOrSearching = true;  // 标记进入搜索状态
+        mProgressView.setVisibility(View.VISIBLE);
+        if (mRecyclerView != null) {
+            mRecyclerView.setVisibility(View.GONE);
+        }
+        
+        // 创建执行器并执行搜索
+        DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mBackList, mDownloadManager);
+        executor.setDownloadSearchingListener(this);
+        executor.executeAdvancedSearch(keyword, searchOption, categories);
     }
 
     private void onSearchDialogDismiss(DialogInterface dialog) {
         mSearchMode = false;
+        mSearchBar = null; // 释放引用，避免后续回调访问空对象
     }
 
     private void enterSearchMode(boolean animation) {
@@ -980,7 +1154,7 @@ public class DownloadsScene extends ToolbarScene
                     // Test if we can access the URI
                     try (InputStream testStream = getEHContext().getContentResolver().openInputStream(archiveUri)) {
                         if (testStream == null) {
-                            Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
+                            UiThreadHelper.showToastSafely(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT);
                             return true;
                         }
                     }
@@ -990,12 +1164,12 @@ public class DownloadsScene extends ToolbarScene
                         getEHContext().getContentResolver().takePersistableUriPermission(archiveUri,
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     } catch (Exception ex) {
-                        Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+                        UiThreadHelper.showToastSafely(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG);
                         Analytics.recordException(ex);
                         return true;
                     }
                 } catch (Exception e) {
-                    Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
+                    UiThreadHelper.showToastSafely(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT);
                     return true;
                 }
                 intent.setAction(Intent.ACTION_VIEW);
@@ -1103,10 +1277,9 @@ public class DownloadsScene extends ToolbarScene
                     if (gidList.isEmpty()) {
                         break;
                     }
-                    Intent intent = new Intent(activity, DownloadService.class);
-                    intent.setAction(DownloadService.ACTION_START_RANGE);
-                    intent.putExtra(DownloadService.KEY_GID_LIST, gidList);
-                    activity.startService(intent);
+                    // 使用后台任务处理多选下载，避免界面卡顿
+                    StartRangeDownloadTask task = new StartRangeDownloadTask(activity, gidList);
+                    TaskExecutor.getInstance().execute(task);
                     // Cancel check mode
                     recyclerView.outOfCustomChoiceMode();
                     break;
@@ -1167,6 +1340,9 @@ public class DownloadsScene extends ToolbarScene
                 case 6:
                     setDragEnable(fab);
                     break;
+                case 7:
+                    refreshCurrentPage();
+                    break;
             }
         }
     }
@@ -1182,6 +1358,41 @@ public class DownloadsScene extends ToolbarScene
             fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.v_mobile_hand_left_off_x24, context.getTheme()));
         }
 //        mDragDropManager.cancelDrag(dragEnable);
+    }
+
+    private void setupFabLabels() {
+        Context context = getEHContext();
+        if (null == context || null == mFabLayout) {
+            return;
+        }
+        
+        // 为每个SecondaryFab添加标签
+        String[] labels = {
+            getString(R.string.select_all),
+            getString(R.string.start_all_download),
+            getString(R.string.pause_all_download),
+            getString(R.string.delete_download),
+            getString(R.string.move_download),
+            getString(R.string.random_download),
+            getString(R.string.drag_mode),
+            getString(R.string.refresh_current_page)
+        };
+        
+        for (int i = 0; i < mFabLayout.getSecondaryFabCount() && i < labels.length; i++) {
+            FloatingActionButton fab = mFabLayout.getSecondaryFabAt(i);
+            if (fab != null) {
+                // 设置内容描述作为标签
+                fab.setContentDescription(labels[i]);
+            }
+        }
+    }
+
+    private void refreshCurrentPage() {
+        if (mDownloadManager != null) {
+            // 重新加载当前页面的数据
+            updateView();
+            showTip(R.string.refreshed, LENGTH_SHORT);
+        }
     }
 
     private void viewRandom() {
@@ -1207,8 +1418,42 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
         if (mList != list) {
+            // 如果列表不匹配，尝试在当前列表中查找是否已存在该项目
+            boolean found = false;
+            for (int i = 0; i < mList.size(); i++) {
+                DownloadInfo item = mList.get(i);
+                if (item.gid == info.gid) {
+                    // 项目已存在，更新信息
+                    item.title = info.title;
+                    item.finished = info.finished;
+                    item.downloaded = info.downloaded;
+                    item.total = info.total;
+                    item.legacy = info.legacy;
+                    item.state = info.state;
+                    item.speed = info.speed;
+                    item.remaining = info.remaining;
+                    
+                    // 通知更新
+                    if (mAdapter != null) {
+                        mAdapter.notifyItemChanged(listIndexInPage(i));
+                    }
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                // 项目不存在，添加到当前列表
+                Log.d(TAG, "onAdd: 项目不存在，添加到当前列表，GID: " + info.gid);
+                // 这里需要谨慎处理，因为直接添加可能会破坏列表结构
+                // 最好的方式是触发列表刷新
+                updateForLabel();
+                updateView();
+            }
             return;
         }
+        
+        // 原有逻辑
         if (mAdapter != null) {
             mAdapter.notifyItemInserted(position);
         }
@@ -1223,28 +1468,98 @@ public class DownloadsScene extends ToolbarScene
         if (mList == null) {
             return;
         }
-        updateForLabel();
-        updateView();
-
-        int index = mList.indexOf(newInfo);
-        if (index >= 0 && mAdapter != null) {
-//            mSpiderInfoMap.put(info.gid,getSpiderInfo(info));
-            mAdapter.notifyItemChanged(listIndexInPage(index));
+        
+        // 尝试在当前列表中找到对应的项目
+        boolean found = false;
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo item = mList.get(i);
+            if (item.gid == oldInfo.gid) {
+                // 更新项目信息
+                item.title = newInfo.title;
+                item.finished = newInfo.finished;
+                item.downloaded = newInfo.downloaded;
+                item.total = newInfo.total;
+                item.legacy = newInfo.legacy;
+                item.state = newInfo.state;
+                item.speed = newInfo.speed;
+                item.remaining = newInfo.remaining;
+                
+                // 通知更新
+                if (mAdapter != null) {
+                    mAdapter.notifyItemChanged(listIndexInPage(i));
+                }
+                found = true;
+                break;
+            }
         }
-        List<DownloadInfo> infos = new ArrayList<>();
-        infos.add(newInfo);
-        DownloadSpiderInfoExecutor executor = new DownloadSpiderInfoExecutor(infos, this::spiderInfoResultCallBack);
-        executor.execute();
+        
+        if (!found) {
+            Log.d(TAG, "onReplace: 在当前列表中未找到对应的项目，GID: " + oldInfo.gid);
+            // 如果找不到，回退到原来的逻辑
+            updateForLabel();
+            updateView();
+        } else {
+            // 如果找到了，更新视图
+            updateView();
+        }
     }
 
     @Override
     public void onUpdate(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, LinkedList<DownloadInfo> mWaitList) {
-        if (mList != list && !mList.contains(info)) {
+        // 如果正在页码切换，延迟处理进度更新
+        if (isPageChanging) {
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            mainHandler.postDelayed(() -> onUpdate(info, list, mWaitList), 200);
+            return;
+        }
+        
+        if (mList != list) {
+            // 如果列表不匹配，尝试在当前列表中找到对应的项目
+            boolean found = false;
+            for (int i = 0; i < mList.size(); i++) {
+                DownloadInfo item = mList.get(i);
+                if (item.gid == info.gid) {
+                    // 更新项目信息
+                    item.title = info.title;
+                    item.finished = info.finished;
+                    item.downloaded = info.downloaded;
+                    item.total = info.total;
+                    item.legacy = info.legacy;
+                    item.state = info.state;
+                    item.speed = info.speed;
+                    item.remaining = info.remaining;
+                    
+                    // 使用payload通知更新，避免整个item重绘，提高性能
+                    if (mAdapter != null) {
+                        try {
+                            mAdapter.notifyItemChanged(listIndexInPage(i), "progress");
+                        } catch (Exception e) {
+                            android.util.Log.e("DownloadsScene", "Error notifying item change: " + e.getMessage());
+                        }
+                    }
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                Log.d(TAG, "onUpdate: 在当前列表中未找到对应的项目，GID: " + info.gid);
+            }
+            return;
+        }
+        
+        // 原有逻辑
+        if (!mList.contains(info)) {
             return;
         }
         int index = mList.indexOf(info);
         if (index >= 0 && mAdapter != null) {
-            mAdapter.notifyItemChanged(listIndexInPage(index));
+            // 使用payload通知更新，避免整个item重绘，提高性能
+            try {
+                mAdapter.notifyItemChanged(listIndexInPage(index), "progress");
+            } catch (Exception e) {
+                android.util.Log.e("DownloadsScene", "Error notifying item change: " + e.getMessage());
+            }
         }
     }
 
@@ -1252,7 +1567,18 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public void onUpdateAll() {
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            // 确保在主线程中更新UI
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                mAdapter.notifyDataSetChanged();
+            } else {
+                // 在后台线程中，使用Handler切换到主线程
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    if (mAdapter != null) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
         }
     }
 
@@ -1260,16 +1586,38 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public void onReload() {
         if (mAdapter != null) {
-            mAdapter.notifyDataSetChanged();
+            // 确保在主线程中更新UI
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                mAdapter.notifyDataSetChanged();
+                updateView();
+            } else {
+                // 在后台线程中，使用Handler切换到主线程
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    if (mAdapter != null) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                    updateView();
+                });
+            }
         }
-        updateView();
     }
 
     @Override
     public void onChange() {
         mLabel = null;
-        updateForLabel();
-        updateView();
+        // 确保在主线程中更新UI
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            updateForLabel();
+            updateView();
+        } else {
+            // 在后台线程中，使用Handler切换到主线程
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            mainHandler.post(() -> {
+                updateForLabel();
+                updateView();
+            });
+        }
     }
 
     @Override
@@ -1279,8 +1627,18 @@ public class DownloadsScene extends ToolbarScene
         }
 
         mLabel = to;
-        updateForLabel();
-        updateView();
+        // 确保在主线程中更新UI
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            updateForLabel();
+            updateView();
+        } else {
+            // 在后台线程中，使用Handler切换到主线程
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            mainHandler.post(() -> {
+                updateForLabel();
+                updateView();
+            });
+        }
     }
 
     @Override
@@ -1289,14 +1647,65 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         if (mAdapter != null) {
-            mAdapter.notifyItemRemoved(listIndexInPage(position));
+            // 确保在主线程中更新UI
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                mAdapter.notifyItemRemoved(listIndexInPage(position));
+                updateView();
+            } else {
+                // 在后台线程中，使用Handler切换到主线程
+                android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    if (mAdapter != null) {
+                        mAdapter.notifyItemRemoved(listIndexInPage(position));
+                    }
+                    updateView();
+                });
+            }
         }
-        updateView();
     }
 
     @Override
     public void onUpdateLabels() {
-        // TODO
+        // 确保在主线程执行UI更新
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            SimpleHandler.getInstance().post(this::onUpdateLabels);
+            return;
+        }
+        
+        // 更新标签相关的UI
+        updateLabelTabs();
+        
+        // 刷新当前显示的列表
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
+        }
+        
+        // 更新视图状态
+        updateView();
+    }
+    
+    /**
+     * 更新标签页显示
+     */
+    private void updateLabelTabs() {
+        if (mDownloadManager == null) {
+            return;
+        }
+        
+        // 获取所有标签
+        List<DownloadLabel> labels = mDownloadManager.getLabelList();
+        
+        // 更新标签适配器
+        if (mLabelAdapter != null) {
+            mLabelAdapter.notifyDataSetChanged();
+        }
+        
+        // 如果当前选中的标签被删除了，切换到默认标签
+        if (mCurrentLabel != null && !mDownloadManager.containLabel(mCurrentLabel)) {
+            mCurrentLabel = null;
+            mLabel = null;
+            onInit();
+        }
     }
 
     @Nullable
@@ -1390,7 +1799,9 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onClickRightIcon() {
-        mSearchBar.applySearch(true);
+        if (mSearchBar != null) {
+            mSearchBar.applySearch(true);
+        }
     }
 
     @Override
@@ -1401,9 +1812,16 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onApplySearch(String query) {
+        // 检查mSearchBar是否为空，避免空指针异常
+        if (mSearchBar == null) {
+            Log.d("DownloadsScene", "onApplySearch: mSearchBar为null，可能对话框已关闭");
+            return;
+        }
+        
         searchKey = query;
         mSearchBar.hideKeyBoard();
         searching = true;
+        isFilteringOrSearching = true;  // 标记进入搜索状态
         startSearching();
     }
 
@@ -1413,13 +1831,16 @@ public class DownloadsScene extends ToolbarScene
             mRecyclerView.setVisibility(View.GONE);
         }
 
-        if (mSearchMode) {
+        if (mSearchMode && mSearchBar != null) {
             mSearchMode = false;
+            isFilteringOrSearching = false;  // 退出搜索模式时清除标记
             mSearchBar.setTitle(searchKey);
             mSearchBar.setState(SearchBar.STATE_NORMAL);
         }
 
-        mSearchDialog.dismiss();
+        if (mSearchDialog != null) {
+            mSearchDialog.dismiss();
+        }
 
         updateForLabel();
 
@@ -1436,7 +1857,8 @@ public class DownloadsScene extends ToolbarScene
             mRecyclerView.setVisibility(View.GONE);
         }
 
-        DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mBackList, mDownloadManager);
+        // 使用当前列表而不是原始列表进行过滤和排序
+        DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mList, mDownloadManager);
 
         executor.setDownloadSearchingListener(this);
 
@@ -1455,6 +1877,11 @@ public class DownloadsScene extends ToolbarScene
         if (mRecyclerView != null) {
             mRecyclerView.setAdapter(mAdapter);
         }
+        // 同步分页监听器持有的适配器与 RecyclerView，避免换适配器后页码点击无效
+        if (myPageChangeListener != null) {
+            myPageChangeListener.setAdapter(mOriginalAdapter);
+            myPageChangeListener.setRecyclerView(mRecyclerView);
+        }
     }
 
     @Override
@@ -1462,7 +1889,10 @@ public class DownloadsScene extends ToolbarScene
         if (mSearchMode) {
             mSearchMode = false;
         }
-        mSearchBar.setState(SearchBar.STATE_NORMAL, true);
+        // 防止空指针异常
+        if (mSearchBar != null) {
+            mSearchBar.setState(SearchBar.STATE_NORMAL, true);
+        }
     }
 
     @Override
@@ -1490,16 +1920,34 @@ public class DownloadsScene extends ToolbarScene
     public void onDownloadSearchSuccess(List<DownloadInfo> list) {
         // 检查 Fragment 是否已附加，如果未附加则忽略回调
         if (!isAdded()) {
+            Log.w("DownloadsScene", "onDownloadSearchSuccess: Fragment未附加，忽略回调");
             return;
         }
+        
+        Log.d("DownloadsScene", "onDownloadSearchSuccess: 收到回调，列表大小=" + list.size());
         mList = list;
+        // 过滤或排序后重置分页到第一页，重新初始化分页指示器
+        indexPage = 1;
+        needInitPage = true;
+        doNotScroll = false;
         updateAdapter();
+        updatePaginationIndicator(true);
+        updateTitle();
         mProgressView.setVisibility(View.GONE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.VISIBLE);
         }
         searching = false;
         queryUnreadSpiderInfo();
+        
+        // 打印前几个项目的排序信息用于调试
+        if (list != null && list.size() > 0) {
+            Log.d("DownloadsScene", "onDownloadSearchSuccess: 排序后的前5个项目:");
+            for (int i = 0; i < Math.min(5, list.size()); i++) {
+                DownloadInfo info = list.get(i);
+                Log.d("DownloadsScene", "  [" + i + "] ID=" + info.gid + ", 标题=" + info.title + ", 时间=" + info.time);
+            }
+        }
     }
 
     @Override
@@ -1509,7 +1957,13 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         mList = list;
+        // 处理列表成功后同样重置分页并刷新指示器
+        indexPage = 1;
+        needInitPage = true;
+        doNotScroll = false;
         updateAdapter();
+        updatePaginationIndicator(true);
+        updateTitle();
         mProgressView.setVisibility(View.GONE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.VISIBLE);
@@ -1519,9 +1973,15 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onDownloadSearchFailed(List<DownloadInfo> list) {
-        Toast.makeText(getEHContext(), R.string.download_searching_failed, Toast.LENGTH_LONG).show();
+        UiThreadHelper.showToastSafely(getEHContext(), R.string.download_searching_failed, Toast.LENGTH_LONG);
         mList = list;
+        // 异常时也重置分页，避免页码停留在无效页
+        indexPage = 1;
+        needInitPage = true;
+        doNotScroll = false;
         updateAdapter();
+        updatePaginationIndicator(true);
+        updateTitle();
         mProgressView.setVisibility(View.GONE);
         if (mRecyclerView != null) {
             mRecyclerView.setVisibility(View.VISIBLE);
@@ -1653,7 +2113,7 @@ public class DownloadsScene extends ToolbarScene
         } catch (Exception e) {
             Context context = getEHContext();
             if (context != null) {
-                Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
+                UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT);
             }
         }
     }
@@ -1681,19 +2141,19 @@ public class DownloadsScene extends ToolbarScene
             Log.d(TAG, "Successfully obtained persistent URI permission for: " + uri);
         } catch (SecurityException e) {
             Log.e(TAG, "Failed to obtain persistent URI permission for: " + uri, e);
-            Toast.makeText(context, R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+            UiThreadHelper.showToastSafely(context, R.string.archive_permission_lost, Toast.LENGTH_LONG);
             return;
         } catch (Exception e) {
             Log.e(TAG, "Unexpected error when obtaining URI permission for: " + uri, e);
-            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show();
+            UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT);
             return;
         }
 
         // Show processing dialog
-        Toast.makeText(context, R.string.import_archive_processing, Toast.LENGTH_LONG).show();
+        UiThreadHelper.showToastSafely(context, R.string.import_archive_processing, Toast.LENGTH_LONG);
 
         // Process the archive file in background
-        new Thread(() -> processArchiveFile(uri)).start();
+        ExecutorManager.getBackgroundExecutor().execute(() -> processArchiveFile(uri));
     }
 
     private void processArchiveFile(Uri uri) {
@@ -1707,14 +2167,14 @@ public class DownloadsScene extends ToolbarScene
             try (InputStream inputStream = context.getContentResolver().openInputStream(uri)) {
                 if (inputStream == null) {
                     runOnUiThread(() ->
-                            Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
+                            UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT)
                     );
                     return;
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Cannot access file even with persistent permission", e);
                 runOnUiThread(() ->
-                        Toast.makeText(context, R.string.import_archive_failed, Toast.LENGTH_SHORT).show()
+                        UiThreadHelper.showToastSafely(context, R.string.import_archive_failed, Toast.LENGTH_SHORT)
                 );
                 return;
             }
@@ -1946,7 +2406,7 @@ public class DownloadsScene extends ToolbarScene
 //        }
 //    }
 
-    private class DownloadChoiceListener implements MyEasyRecyclerView.CustomChoiceListener {
+    private class DownloadChoiceListener implements EasyRecyclerView.CustomChoiceListener {
 
         @Override
         public void onIntoCustomChoice(EasyRecyclerView view) {
@@ -2003,12 +2463,260 @@ public class DownloadsScene extends ToolbarScene
                 }
             }
         }
+        // 如果没有应用状态过滤或排序，直接更新界面
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
         updateTitle();
-        updatePaginationIndicator();
+        updatePaginationIndicator(true); // 筛选时强制重新初始化
         updateView();
         queryUnreadSpiderInfo();
+    }
+
+    private void showSortFilterDialog() {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+
+        // 如果弹窗已经存在，直接显示
+        if (mSortFilterDialog != null && mSortFilterDialog.isShowing()) {
+            return;
+        }
+
+        // 创建弹窗视图 - 使用新的布局
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_sort_filter_v2, null);
+        
+        // 获取CategoryTable
+        DownloadCategoryTable categoryTable = dialogView.findViewById(R.id.category_table);
+        
+        // 初始化RecyclerView
+        RecyclerView statusRecyclerView = dialogView.findViewById(R.id.status_recycler_view);
+        RecyclerView sortRecyclerView = dialogView.findViewById(R.id.sort_recycler_view);
+        
+        // 设置布局管理器
+        statusRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        sortRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+
+        // 准备状态数据（去除全部选项）
+        List<String> statusItems = new ArrayList<>();
+        List<Integer> statusIds = new ArrayList<>();
+        statusItems.add(getString(R.string.download_state_downloaded));
+        statusIds.add(R.id.download_done);
+        statusItems.add(getString(R.string.download_state_none));
+        statusIds.add(R.id.not_started);
+        statusItems.add(getString(R.string.download_state_wait));
+        statusIds.add(R.id.waiting);
+        statusItems.add(getString(R.string.download_state_downloading));
+        statusIds.add(R.id.downloading);
+        statusItems.add(getString(R.string.download_state_failed));
+        statusIds.add(R.id.failed);
+
+        // 准备排序数据
+        List<String> sortItems = new ArrayList<>();
+        List<Integer> sortIds = new ArrayList<>();
+        sortItems.add(getString(R.string.default_sort));
+        sortIds.add(R.id.sort_by_default);
+        sortItems.add(getString(R.string.sort_by_gallery_id_asc));
+        sortIds.add(R.id.sort_by_gallery_id_asc);
+        sortItems.add(getString(R.string.sort_by_gallery_id_desc));
+        sortIds.add(R.id.sort_by_gallery_id_desc);
+        sortItems.add(getString(R.string.sort_by_create_time_asc));
+        sortIds.add(R.id.sort_by_create_time_asc);
+        sortItems.add(getString(R.string.sort_by_create_time_desc));
+        sortIds.add(R.id.sort_by_create_time_desc);
+        sortItems.add(getString(R.string.sort_by_rating_asc));
+        sortIds.add(R.id.sort_by_rating_asc);
+        sortItems.add(getString(R.string.sort_by_rating_desc));
+        sortIds.add(R.id.sort_by_rating_desc);
+        sortItems.add(getString(R.string.sort_by_name_asc));
+        sortIds.add(R.id.sort_by_name_asc);
+        sortItems.add(getString(R.string.sort_by_name_desc));
+        sortIds.add(R.id.sort_by_name_desc);
+        sortItems.add(getString(R.string.sort_by_file_size_asc));
+        sortIds.add(R.id.sort_by_file_size_asc);
+        sortItems.add(getString(R.string.sort_by_file_size_desc));
+        sortIds.add(R.id.sort_by_file_size_desc);
+
+        // 初始化适配器
+        mStatusAdapter = new CheckboxAdapter(statusItems, statusIds);
+        mSortAdapter = new CheckboxAdapter(sortItems, sortIds);
+        
+        // 设置互斥选择 - 状态改为多选，排序保持互斥
+        mStatusAdapter.setMutuallyExclusive(false);
+        mSortAdapter.setMutuallyExclusive(true);
+
+        // 设置选择变更监听器
+        mStatusAdapter.setOnSelectionChangedListener(selectedItems -> {
+            Log.d("DownloadsScene", "状态选择已变更: " + selectedItems);
+            mSelectedStatuses.clear();
+            mSelectedStatuses.addAll(selectedItems);
+        });
+        
+        mSortAdapter.setOnSelectionChangedListener(selectedItems -> {
+            Log.d("DownloadsScene", "排序选择已变更: " + selectedItems);
+            mSelectedSorts.clear();
+            mSelectedSorts.addAll(selectedItems);
+        });
+
+        // 设置适配器
+        statusRecyclerView.setAdapter(mStatusAdapter);
+        sortRecyclerView.setAdapter(mSortAdapter);
+
+        // 设置CategoryTable的选中状态
+        if (mSelectedCategories != null && !mSelectedCategories.isEmpty()) {
+            // 使用新的DownloadCategoryTable，直接设置选中的分类
+            categoryTable.setSelectedCategories(mSelectedCategories);
+        } else {
+            // 默认全选 - 确保所有按钮都是亮起的
+            mSelectedCategories = new HashSet<>();
+            mSelectedCategories.add(EhUtils.ALL_CATEGORY);
+            categoryTable.setSelectedCategories(mSelectedCategories);
+        }
+
+        // 设置默认选中项
+        if (mSelectedStatuses.isEmpty()) {
+            // 默认全选所有状态
+            mSelectedStatuses.add(R.id.download_done);
+            mSelectedStatuses.add(R.id.not_started);
+            mSelectedStatuses.add(R.id.waiting);
+            mSelectedStatuses.add(R.id.downloading);
+            mSelectedStatuses.add(R.id.failed);
+        }
+        if (mSelectedSorts.isEmpty()) {
+            mSelectedSorts.add(R.id.sort_by_default);
+        }
+
+        // 使用post方法延迟设置选中项，避免在RecyclerView计算布局时调用
+        dialogView.post(() -> {
+            mStatusAdapter.setSelectedItems(mSelectedStatuses);
+            mSortAdapter.setSelectedItems(mSelectedSorts);
+        });
+
+        // 创建弹窗
+        mSortFilterDialog = new AlertDialog.Builder(context)
+                .setTitle(R.string.advanced_filter)
+                .setView(dialogView)
+                .create();
+
+        // 设置按钮点击事件
+        Button resetButton = dialogView.findViewById(R.id.reset_button);
+        Button applyButton = dialogView.findViewById(R.id.apply_button);
+        Button selectAllStatusButton = dialogView.findViewById(R.id.select_all_status_button);
+        Button selectNoneStatusButton = dialogView.findViewById(R.id.select_none_status_button);
+        
+        // 全选按钮点击事件
+        selectAllStatusButton.setOnClickListener(v -> {
+            mSelectedStatuses.clear();
+            mSelectedStatuses.add(R.id.download_done);
+            mSelectedStatuses.add(R.id.not_started);
+            mSelectedStatuses.add(R.id.waiting);
+            mSelectedStatuses.add(R.id.downloading);
+            mSelectedStatuses.add(R.id.failed);
+            mStatusAdapter.setSelectedItems(mSelectedStatuses);
+        });
+        
+        // 全不选按钮点击事件
+        selectNoneStatusButton.setOnClickListener(v -> {
+            mSelectedStatuses.clear();
+            mStatusAdapter.setSelectedItems(mSelectedStatuses);
+        });
+
+        resetButton.setOnClickListener(v -> {
+            // 重置所有选择
+            mSelectedCategories.clear();
+            mSelectedStatuses.clear();
+            mSelectedSorts.clear();
+            
+            mSelectedCategories.add(EhUtils.ALL_CATEGORY);
+            // 重置为全选所有状态
+            mSelectedStatuses.add(R.id.download_done);
+            mSelectedStatuses.add(R.id.not_started);
+            mSelectedStatuses.add(R.id.waiting);
+            mSelectedStatuses.add(R.id.downloading);
+            mSelectedStatuses.add(R.id.failed);
+            mSelectedSorts.add(R.id.sort_by_default);
+            
+            // 重置CategoryTable - 确保所有按钮都是亮起的
+            categoryTable.setSelectedCategories(mSelectedCategories);
+            
+            // 使用post方法延迟设置选中项，避免在RecyclerView计算布局时调用
+            dialogView.post(() -> {
+                mStatusAdapter.setSelectedItems(mSelectedStatuses);
+                mSortAdapter.setSelectedItems(mSelectedSorts);
+            });
+        });
+
+        applyButton.setOnClickListener(v -> {
+            // 获取CategoryTable的选中状态
+            mSelectedCategories = categoryTable.getSelectedCategories();
+            Log.d("DownloadsScene", "applySortAndFilter: 获取到的分类=" + mSelectedCategories);
+            
+            // 应用选择
+            Log.d("DownloadsScene", "applyButton clicked: 应用过滤和排序");
+            applySortAndFilter();
+            mSortFilterDialog.dismiss();
+        });
+
+        mSortFilterDialog.show();
+    }
+
+    private void applySortAndFilter() {
+        // 添加日志
+        Log.d("DownloadsScene", "applySortAndFilter: 开始应用过滤和排序");
+        
+        // 应用分类过滤
+        Set<Integer> selectedCategories = new HashSet<>();
+        Integer selectedStatus = R.id.all;
+        Integer selectedSort = R.id.sort_by_default;
+        
+        if (mSelectedCategories != null && !mSelectedCategories.isEmpty()) {
+            selectedCategories.addAll(mSelectedCategories);
+            Log.d("DownloadsScene", "applySortAndFilter: 选中的分类ID = " + selectedCategories);
+        } else {
+            // 如果没有选择分类，默认为全部
+            selectedCategories.add(EhUtils.ALL_CATEGORY);
+        }
+        
+        // 状态现在是多选的，不需要取第一个，直接传递集合
+        Log.d("DownloadsScene", "applySortAndFilter: 选中的状态ID集合 = " + mSelectedStatuses);
+        
+        if (!mSelectedSorts.isEmpty()) {
+            // 取第一个选中的排序（现在是互斥的，只会有一个）
+            selectedSort = mSelectedSorts.iterator().next();
+            Log.d("DownloadsScene", "applySortAndFilter: 选中的排序ID = " + selectedSort);
+        }
+        
+        // 检查是否只选择了ALL_CATEGORY（即全选状态）
+        boolean isAllCategories = selectedCategories.size() == 1 && selectedCategories.contains(EhUtils.ALL_CATEGORY);
+        
+        // 如果需要应用任何过滤或排序
+        boolean hasStatusFilter = !mSelectedStatuses.isEmpty() && mSelectedStatuses.size() < 5; // 5是所有状态的数量
+        if (!isAllCategories || hasStatusFilter || selectedSort != R.id.sort_by_default) {
+            Log.d("DownloadsScene", "applySortAndFilter: 需要应用过滤或排序");
+            isFilteringOrSearching = true;  // 标记进入筛选状态
+            mProgressView.setVisibility(View.VISIBLE);
+            if (mRecyclerView != null) {
+                mRecyclerView.setVisibility(View.GONE);
+            }
+            
+            // 创建执行器并应用过滤和排序
+            DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mBackList, mDownloadManager);
+            executor.setDownloadSearchingListener(this);
+            
+            // 同时应用分类过滤、状态过滤和排序
+            Log.d("DownloadsScene", "applySortAndFilter: 调用executeFilterAndSort, categories=" + selectedCategories + ", statuses=" + mSelectedStatuses + ", sort=" + selectedSort);
+            executor.executeFilterAndSort(selectedCategories, mSelectedStatuses, selectedSort);
+        } else {
+            Log.d("DownloadsScene", "applySortAndFilter: 不需要任何过滤或排序，使用原始列表");
+            isFilteringOrSearching = false;  // 标记退出筛选状态
+            // 不需要任何过滤或排序，直接使用原始列表
+            mList = new ArrayList<>(mBackList);
+            updateAdapter();
+            updateTitle();
+            updatePaginationIndicator(true);
+            updateView();
+            queryUnreadSpiderInfo();
+        }
     }
 }

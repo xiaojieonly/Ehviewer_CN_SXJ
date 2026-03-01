@@ -580,6 +580,8 @@
     <string name="settings_eh_show_eh_limits">顯示 EH 配額</string>
     <string name="settings_eh_show_jpn_title_summary">需同時在 EHentai 網站設定中啟用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">顯示畫廊頁數</string>
+        <string name="settings_eh_show_gallery_loading_speed">顯示載入速度</string>
+        <string name="settings_eh_show_gallery_loading_speed_summary">載入畫廊頁面時顯示下載速度與進度百分比</string>
     <string name="settings_eh_show_gallery_pages_summary">在畫廊列表中顯示頁數</string>
     <string name="settings_eh_show_tag_translations">顯示標籤翻譯</string>
     <string name="settings_eh_show_tag_translations_summary">以翻譯後的標籤代替原文標籤（需花費時間下載數據檔案）</string>
@@ -695,6 +697,11 @@
     <string name="settings_advanced_wifi_sander_summary">通過 Wi-Fi 熱點進行數據遷移</string>
     <string name="settings_advanced_wifi_client">WiFi 遷移數據接收</string>
     <string name="settings_advanced_wifi_client_summary">從 Wi-Fi 熱點接收遷移數據</string>
+    <string name="settings_advanced_database_viewer">數據庫查看器</string>
+    <string name="settings_advanced_database_viewer_summary">查看數據庫版本、表和數據內容</string>
+
+    <!-- Transfer Settings -->
+    <string name="settings_transfer">數據傳輸</string>
 
     <string name="settings_about">關於</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
@@ -969,6 +976,63 @@
     <string name="settings_eh_list_show_read_progress">顯示閱讀進度</string>
     <string name="settings_eh_list_show_read_progress_summary">在詳細列表模式下顯示每個畫廊的閱讀進度</string>
     <string name="cookie_login_import_in_clipboard">從剪貼簿匯入</string>
+    
+    <!-- Background task management -->
+    <string name="background_task_management">後台任務</string>
+    <string name="background_task_detail">任務詳情</string>
+    <string name="active_tasks">活躍任務</string>
+    <string name="completed_tasks">已完成任務</string>
+    <string name="no_background_tasks">無後台任務</string>
+    <string name="background_task_clear_completed">清除已完成任務</string>
+    <string name="background_task_cleared_completed">已完成任務已清除</string>
+    <string name="background_task_unique_running">已有後台任務正在運行</string>
+    <plurals name="background_tasks_running">
+        <item quantity="one">%d 個任務正在運行</item>
+        <item quantity="other">%d 個任務正在運行</item>
+    </plurals>
+    <string name="no_description">無描述</string>
+    <string name="task_progress_label">進度</string>
+    <string name="task_status_label">狀態</string>
+    <string name="task_time_label">運行時間</string>
+    <string name="task_progress_format">%1$d/%2$d (%3$d%%)</string>
+    <string name="task_progress_indeterminate">不確定</string>
+    <string name="task_running_time">運行時間：%s</string>
+    <string name="task_status_running">運行中</string>
+    <string name="task_status_completed">已完成</string>
+    <string name="task_status_failed">失敗</string>
+    <string name="task_status_cancelled">已取消</string>
+    <string name="task_error_format">錯誤：%s</string>
+    <string name="task_progress_detail_label">進度詳情</string>
+    <string name="task_log_label">任務日誌</string>
+    <string name="task_log_empty">暫無日誌</string>
+    <string name="task_log_save_to">日誌已保存到 %s</string>
+    <string name="task_log_file_missing">未找到日誌文件</string>
+    <string name="settings_advanced_background_tasks">後台任務</string>
+    <string name="settings_advanced_background_tasks_summary">查看和管理正在運行的後台任務</string>
+    <string name="settings_advanced_local_gallery_scan_on_start">啟動時掃描本地畫廊</string>
+    <string name="settings_advanced_local_gallery_scan_on_start_summary">應用啟動時在後台掃描本地畫廊與回收站</string>
+    <string name="settings_advanced_local_gallery_cache_expire_days">本地畫廊快取過期天數</string>
+    <string name="local_gallery_cache_expire_1_day">1天</string>
+    <string name="local_gallery_cache_expire_3_days">3天</string>
+    <string name="local_gallery_cache_expire_7_days">7天</string>
+    <string name="local_gallery_cache_expire_14_days">14天</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled">使用掃描快取</string>
+    <string name="settings_advanced_local_gallery_scan_cache_enabled_summary">自動掃描時優先使用本地畫廊掃描快取</string>
+
+    <string name="local_gallery_scan_task_name">掃描本地畫廊</string>
+    <string name="local_gallery_scan_task_summary">掃描下載目錄中的本地畫廊</string>
+    <string name="recycle_bin_scan_task_name">掃描回收站</string>
+    <string name="recycle_bin_scan_task_summary">掃描回收站中的畫廊</string>
+    <string name="local_gallery_scan_progress">本地: %1$d/%2$d - %3$s</string>
+    <string name="local_gallery_scan_progress_simple">本地: %1$d/%2$d</string>
+    <string name="local_gallery_search_info">搜尋畫廊資訊</string>
+    <string name="local_gallery_open_online_detail">開啟線上畫廊詳情</string>
+    <string name="recycle_bin_scan_progress">回收站: %1$d/%2$d - %3$s</string>
+    <string name="recycle_bin_scan_progress_simple">回收站: %1$d/%2$d</string>
+    <string name="settings_transfer_summary">管理數據傳輸設置</string>
+    <string name="settings_download_rebuild_download_records">重建下載記錄</string>
+    <string name="settings_download_rebuild_download_records_summary">掃描下載路徑並從.ehviewer文件重建下載記錄</string>
+    <string name="settings_download_rebuild_complete">重建完成，已添加 %d 條下載記錄</string>
     <string name="no_cookie_in_clipboard">剪貼簿中找不到有效數據</string>
     <string name="gallery_update_dialog_title">更新方式</string>
     <string name="gallery_update_dialog_message">覆蓋舊畫廊：只保留下載的版本，舊版本將被刪除。\n下載為新畫廊：下載的畫廊將作為新畫廊存在，新畫廊和舊畫廊都將被保存。</string>
@@ -1008,6 +1072,12 @@
     <string name="spen_next_page">下一頁</string>
     <string name="category_all">全部</string>
     <string name="import_local_archive">匯入本機歸檔</string>
+    <string name="repair_gallery_info">修復畫廊資訊</string>
+    <string name="repair_gallery_info_success">畫廊資訊修復成功</string>
+    <string name="repair_gallery_info_failed">畫廊資訊修復失敗</string>
+    <string name="repair_gallery_info_confirm">確定要修復選取的畫廊資訊嗎？</string>
+    <string name="gallery_deleted_alert">畫廊已刪除</string>
+    <string name="gallery_deleted_message">該畫廊在E-Hentai上已被刪除，但保留了本地快取資訊。</string>
     <string name="import_archive_title">選擇歸檔檔案</string>
     <string name="import_archive_failed">匯入歸檔失敗</string>
     <string name="archive_permission_lost">已失去存取歸檔的權限。請重新匯入歸檔檔案。</string>
@@ -1019,5 +1089,34 @@
     <string name="imported_archive_info_title">本機匯入資訊</string>
     <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
     <string name="imported_archive_category">本機匯入</string>
+
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">排序和過濾</string>
+    <string name="dialog_category_filter_label">分類過濾（可多選）</string>
+    <string name="dialog_status_filter_label">狀態過濾</string>
+    <string name="dialog_sort_method_label">排序方式</string>
+    <string name="dialog_search_download_title">搜尋下載畫廊</string>
+    <string name="dialog_search_options_label">搜尋選項</string>
+    <string name="reset">重置</string>
+
+    <!-- Transfer service -->
+    <string name="transfer_service">傳輸服務</string>
+    <string name="transfer_service_description">WIFI 資料傳輸服務</string>
+    <string name="transfer_service_summary">透過 WIFI 傳輸書籤、下載等資料</string>
+    <string name="transfer_start_service">啟動傳輸服務</string>
+    <string name="transfer_start_service_summary">啟動 WIFI 資料傳輸服務</string>
+    <string name="transfer_stop_service">停止服務</string>
+    <string name="transfer_open_manager">開啟傳輸管理器</string>
+    <string name="transfer_open_manager_summary">管理傳輸任務與已連線用戶端</string>
+    <string name="transfer_advanced">進階選項</string>
+    <string name="transfer_auto_start">自動啟動服務</string>
+    <string name="transfer_auto_start_summary">應用啟動時自動啟動傳輸服務</string>
+    <string name="transfer_enable_encryption">啟用加密</string>
+    <string name="transfer_enable_encryption_summary">為傳輸啟用 TLS 加密</string>
+    <string name="transfer_enable_compression">啟用壓縮</string>
+    <string name="transfer_enable_compression_summary">傳輸時壓縮資料以提升速度</string>
+    <string name="transfer_service_not_running">傳輸服務未運行</string>
+    <string name="transfer_connected_clients">已連線用戶端</string>
+    <string name="transfer_client_count_default">已連線用戶端：0</string>
 
 </resources>

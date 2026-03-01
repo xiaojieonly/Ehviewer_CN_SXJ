@@ -37,11 +37,18 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.wifi.WiFiClientActivity;
 import com.hippo.ehviewer.ui.wifi.WiFiServerActivity;
+import com.hippo.ehviewer.ui.task.BackgroundTaskActivity;
+import com.hippo.ehviewer.ui.transfer.TransferActivity;
+import com.hippo.ehviewer.ui.NetworkDiagnosticActivity;
+import com.hippo.ehviewer.ui.local.LocalGalleryActivity;
 import com.hippo.ehviewer.widget.ProgressHelper;
 import com.hippo.util.LogCat;
 import com.hippo.util.ReadableTime;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class AdvancedFragment extends BasePreferenceFragmentCompat
@@ -58,6 +65,11 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_IMPORT_DATA = "import_data";
     private static final String KEY_WIFI_SERVER = "wifi_server";
     private static final String KEY_WIFI_CLIENT = "wifi_client";
+    private static final String KEY_BACKGROUND_TASKS = "background_tasks";
+    private static final String KEY_TRANSFER_SERVICE = "transfer_service";
+    private static final String KEY_NETWORK_DIAGNOSTIC = "network_diagnostic";
+    private static final String KEY_USER_AGENT = "user_agent";
+    private static final String KEY_LOCAL_GALLERY = "local_gallery";
 
     private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
 
@@ -74,12 +86,22 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Preference importData = findPreference(KEY_IMPORT_DATA);
         Preference socketData = findPreference(KEY_WIFI_SERVER);
         Preference clientData = findPreference(KEY_WIFI_CLIENT);
+        Preference backgroundTasks = findPreference(KEY_BACKGROUND_TASKS);
+        Preference transferService = findPreference(KEY_TRANSFER_SERVICE);
+        Preference networkDiagnostic = findPreference(KEY_NETWORK_DIAGNOSTIC);
+        Preference userAgent = findPreference(KEY_USER_AGENT);
+        Preference localGallery = findPreference(KEY_LOCAL_GALLERY);
 
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
         importData.setOnPreferenceClickListener(this);
         socketData.setOnPreferenceClickListener(this);
         clientData.setOnPreferenceClickListener(this);
+        backgroundTasks.setOnPreferenceClickListener(this);
+        transferService.setOnPreferenceClickListener(this);
+        networkDiagnostic.setOnPreferenceClickListener(this);
+        userAgent.setOnPreferenceClickListener(this);
+        localGallery.setOnPreferenceClickListener(this);
 
         appLanguage.setOnPreferenceChangeListener(this);
     }
@@ -105,6 +127,16 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 return gotoWiFiServerActivity();
             case KEY_WIFI_CLIENT:
                 return gotoWiFiClientActivity();
+            case KEY_BACKGROUND_TASKS:
+                return gotoBackgroundTaskActivity();
+            case KEY_TRANSFER_SERVICE:
+                return gotoTransferActivity();
+            case KEY_NETWORK_DIAGNOSTIC:
+                return gotoNetworkDiagnosticActivity();
+            case KEY_USER_AGENT:
+                return showUserAgentDialog();
+            case KEY_LOCAL_GALLERY:
+                return gotoLocalGalleryActivity();
             default:
                 return false;
         }
@@ -122,6 +154,73 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Intent intent = new Intent(activity, WiFiServerActivity.class);
         activity.startActivity(intent);
         return false;
+    }
+
+    private boolean gotoBackgroundTaskActivity() {
+        Activity activity = getActivity();
+        BackgroundTaskActivity.start(activity);
+        return true;
+    }
+
+    private boolean gotoTransferActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, TransferActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoNetworkDiagnosticActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, NetworkDiagnosticActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoLocalGalleryActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, LocalGalleryActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean showUserAgentDialog() {
+        Context context = getContext();
+        if (context == null) return false;
+        
+        // 创建输入框
+        android.widget.EditText editText = new android.widget.EditText(context);
+        editText.setText(com.hippo.ehviewer.Settings.getUserAgent());
+        editText.setSingleLine(false);
+        editText.setHorizontallyScrolling(false);
+        editText.setMinLines(3);
+        editText.setMaxLines(6);
+        editText.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
+        editText.setScroller(new android.widget.Scroller(context));
+        editText.setVerticalScrollBarEnabled(true);
+        
+        // 创建对话框
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.settings_advanced_user_agent)
+                .setView(editText)
+                .setPositiveButton(R.string.settings_advanced_user_agent_restore_default, (dialog, which) -> {
+                    // 恢复默认值
+                    com.hippo.ehviewer.Settings.putUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+                    Toast.makeText(context, R.string.settings_advanced_user_agent_restored, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .setNeutralButton(R.string.settings_advanced_user_agent_save, (dialog, which) -> {
+                    // 保存用户输入的值
+                    String userAgent = editText.getText().toString().trim();
+                    if (!userAgent.isEmpty()) {
+                        com.hippo.ehviewer.Settings.putUserAgent(userAgent);
+                        Toast.makeText(context, R.string.settings_advanced_user_agent_saved, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(context, R.string.settings_advanced_user_agent_empty, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+        
+        return true;
     }
 
     private boolean clearMemoryCache() {

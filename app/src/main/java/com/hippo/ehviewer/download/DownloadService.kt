@@ -42,7 +42,6 @@ import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.ui.MainActivity
-import com.hippo.ehviewer.ui.scene.download.DownloadsScene
 import com.hippo.ehviewer.util.MiuiOptimizationHelper
 import com.hippo.scene.StageActivity
 import com.hippo.util.ReadableTime
@@ -111,6 +110,12 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         
         mDownloadManager = EhApplication.getDownloadManager(applicationContext)
         mDownloadManager!!.setDownloadListener(this)
+
+        // 如果启动时已经有任务，立即提升为前台以防被系统回收
+        if (mDownloadManager != null && mDownloadManager!!.hasActiveDownload()) {
+            ensureDownloadingBuilder()
+            mDownloadingDelay!!.startForeground()
+        }
     }
 
     override fun onDestroy() {
@@ -148,6 +153,12 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
                 handleIntent(intent)
             }
         } catch (_: NullPointerException) {
+        }
+
+        // 前台保活兜底：如果仍有任务且尚未在前台，确保前台通知存在
+        if (mDownloadManager != null && mDownloadManager!!.hasActiveDownload()) {
+            ensureDownloadingBuilder()
+            mDownloadingDelay!!.startForeground()
         }
         return START_STICKY
     }
@@ -263,10 +274,10 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         val piClear = PendingIntent.getService(this, 0, clearIntent, 0)
 
         val bundle = Bundle()
-        bundle.putString(DownloadsScene.KEY_ACTION, DownloadsScene.ACTION_CLEAR_DOWNLOAD_SERVICE)
+        bundle.putString("action", "clear_download_service")
         val activityIntent = Intent(this, MainActivity::class.java)
         activityIntent.setAction(StageActivity.ACTION_START_SCENE)
-        activityIntent.putExtra(StageActivity.KEY_SCENE_NAME, DownloadsScene::class.java.name)
+        activityIntent.putExtra(StageActivity.KEY_SCENE_NAME, "com.hippo.ehviewer.ui.scene.download.DownloadsScene")
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
@@ -326,10 +337,10 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         ensureDownloadingBuilder()
 
         val bundle = Bundle()
-        bundle.putLong(DownloadsScene.KEY_GID, info.gid)
+        bundle.putLong("gid", info.gid)
         val activityIntent = Intent(this, MainActivity::class.java)
         activityIntent.setAction(StageActivity.ACTION_START_SCENE)
-        activityIntent.putExtra(StageActivity.KEY_SCENE_NAME, DownloadsScene::class.java.name)
+        activityIntent.putExtra(StageActivity.KEY_SCENE_NAME, "com.hippo.ehviewer.ui.scene.download.DownloadsScene")
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,

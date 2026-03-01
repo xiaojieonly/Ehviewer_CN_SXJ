@@ -42,6 +42,42 @@
     <!--    <string name="network_remind">It has been detected that the vpn is enabled, please pay attention to network security</string>-->
     <string name="no_blicklist">これはブラックリストです</string>
     <string name="app_name">EhViewer</string>
+    
+    <!-- Local Gallery Management -->
+    <string name="settings_advanced_local_gallery">ローカルギャラリー管理</string>
+    <string name="settings_advanced_local_gallery_summary">ローカルギャラリーとゴミ箱を管理</string>
+    <string name="local_gallery_title">ローカルギャラリー</string>
+    <string name="local_gallery_empty">ローカルギャラリーが見つかりません</string>
+    <string name="local_gallery_scanning">ローカルギャラリーをスキャン中...</string>
+    <string name="local_gallery_scan_complete">スキャン完了、%d個のギャラリーが見つかりました</string>
+    <string name="local_gallery_delete_confirm">このローカルギャラリーを削除しますか？ゴミ箱に移動されます。</string>
+    <string name="local_gallery_delete_success">ギャラリーがゴミ箱に移動されました</string>
+    <string name="local_gallery_delete_failed">ギャラリーの削除に失敗しました</string>
+    <string name="local_gallery_search_info">ギャラリー情報を検索</string>
+    <string name="local_gallery_searching">ギャラリー情報を検索中...</string>
+    <string name="local_gallery_search_not_found">ギャラリー情報が見つかりません</string>
+    <string name="local_gallery_view_error">このギャラリーを表示できません</string>
+    
+    <!-- Recycle Bin -->
+    <string name="recycle_bin_title">ゴミ箱</string>
+    <string name="recycle_bin_empty">ゴミ箱は空です</string>
+    <string name="recycle_bin_restore">復元</string>
+    <string name="recycle_bin_delete_permanently">完全に削除</string>
+    <string name="recycle_bin_restore_confirm">このギャラリーをダウンロードリストに復元しますか？</string>
+    <string name="recycle_bin_restore_success">ギャラリーの復元に成功しました</string>
+    <string name="recycle_bin_restore_failed">ギャラリーの復元に失敗しました</string>
+    <string name="recycle_bin_delete_permanent_confirm">このギャラリーを完全に削除しますか？この操作は元に戻せません！</string>
+    <string name="recycle_bin_delete_permanent_success">ギャラリーが完全に削除されました</string>
+    <string name="recycle_bin_delete_permanent_failed">ギャラリーの完全削除に失敗しました</string>
+    <string name="recycle_bin_empty_confirm">ゴミ箱を空にしますか？すべてのギャラリーが完全に削除されます！</string>
+    <string name="recycle_bin_empty_success">ゴミ箱が空になりました</string>
+    
+    <!-- Gallery Actions -->
+    <string name="view_gallery">ギャラリーを表示</string>
+    <string name="start_slideshow">スライドショーを開始</string>
+    <string name="local_gallery_refresh">更新</string>
+    <string name="local_gallery_delete">削除</string>
+
     <!-- Theme -->
     <string name="theme_light">ライトテーマ</string>
     <string name="theme_dark">ダークテーマ</string>
@@ -373,6 +409,7 @@
     <string name="sort_by_file_size_asc">ファイルサイズの昇順</string>
     <string name="sort_by_file_size_desc">ファイルサイズの降順</string>
     <string name="sort_download_list">リストを並べ替え</string>
+    <string name="advanced_filter">高度なフィルター</string>
     <string name="download_start_all">すべて開始</string>
     <string name="download_stop_all">すべて停止</string>
     <string name="download_reset_reading_progress">閲覧進捗をリセット</string>
@@ -613,6 +650,8 @@
     <string name="settings_advanced_wifi_sander_summary">Wi-Fi ホットスポット経由で移行をするデータを送信します</string>
     <string name="settings_advanced_wifi_client">Wi-Fi で移行をするデータを受信</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi ホットスポット経由で移行をするデータを受信します</string>
+    <string name="settings_advanced_database_viewer">データベースビューア</string>
+    <string name="settings_advanced_database_viewer_summary">データベースバージョン、テーブル、データの内容を表示します</string>
     <string name="settings_about">このアプリについて</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer は E-Hentai.org と一切の関係がございません。</string>
@@ -881,6 +920,12 @@
     <string name="spen_next_page">次のページ</string>
     <string name="category_all">すべて</string>
     <string name="import_local_archive">ローカルアーカイブをインポート</string>
+    <string name="repair_gallery_info">ギャラリー情報を修復</string>
+    <string name="repair_gallery_info_success">ギャラリー情報の修復に成功しました</string>
+    <string name="repair_gallery_info_failed">ギャラリー情報の修復に失敗しました</string>
+    <string name="repair_gallery_info_confirm">選択したギャラリー情報を修復してもよろしいですか？</string>
+    <string name="gallery_deleted_alert">ギャラリーが削除されました</string>
+    <string name="gallery_deleted_message">このギャラリーはE-Hentaiで削除されていますが、ローカルキャッシュ情報は保持されています。</string>
     <string name="import_archive_title">アーカイブファイルを選択</string>
     <string name="import_archive_failed">アーカイブのインポートに失敗しました</string>
     <string name="archive_permission_lost">アーカイブへのアクセス権限が失われました。アーカイブファイルを再インポートしてください。</string>
@@ -892,4 +937,100 @@
     <string name="imported_archive_info_title">ローカルインポート情報</string>
     <string name="imported_archive_info_message">これはローカルストレージからインポートされたアイテムです</string>
     <string name="imported_archive_category">ローカルインポート</string>
+
+    <!-- Download filter/search dialogs -->
+    <string name="dialog_sort_filter_title">並び替えとフィルター</string>
+    <string name="dialog_category_filter_label">カテゴリフィルター（複数選択）</string>
+    <string name="dialog_status_filter_label">ステータスフィルター</string>
+    <string name="dialog_sort_method_label">並び替え方法</string>
+    <string name="dialog_search_download_title">ダウンロードを検索</string>
+    <string name="dialog_search_options_label">検索オプション</string>
+    <string name="reset">リセット</string>
+    
+    <!-- Advanced filter descriptions -->
+    <string name="advanced_filter_description">カテゴリ、ステータス、並び替え順でダウンロードをフィルター</string>
+    <string name="category_filter_description">ダウンロードをフィルターするカテゴリを1つ以上選択</string>
+    <string name="status_filter_description">表示するダウンロードステータスを選択（例：完了、ダウンロード中）</string>
+    <string name="sort_method_description">フィルター後のダウンロードの並び替え方法を選択</string>
+    <string name="no_filters_applied">フィルター未適用</string>
+    <string name="filters_applied">%d個のフィルター適用中</string>
+    <string name="filter_by_all_categories">すべてのカテゴリ</string>
+    <string name="filter_by_selected_categories">%d個のカテゴリ選択中</string>
+    <string name="filter_by_all_statuses">すべてのステータス</string>
+    <string name="filter_by_selected_statuses">%d個のステータス選択中</string>
+    <string name="sort_by_default_order">デフォルト順</string>
+    <string name="sort_by_custom_order">カスタム順：%s</string>
+    <string name="advanced_filter_tip">ヒント：複数のフィルターを組み合わせることで、精度の高い結果が得られます</string>
+    <string name="advanced_filter_empty_result">現在のフィルター条件に一致するダウンロードがありません</string>
+    <string name="advanced_filter_clear_all">すべてのフィルターをクリア</string>
+    <string name="advanced_filter_apply_changes">フィルター変更を適用</string>
+    <string name="advanced_filter_discard_changes">変更を破棄</string>
+    <string name="advanced_filter_confirm_reset">すべてのフィルターをデフォルト値にリセットしますか？</string>
+
+    <!-- Download scan strings -->
+    <string name="scan_download_files_scanning">ダウンロードディレクトリをスキャン中...</string>
+    <string name="scan_download_files_scanning_progress">ダウンロードディレクトリをスキャン中... (%d/%d)</string>
+    <string name="scan_download_files_completed">スキャン完了！</string>
+    <string name="scan_download_files_failed">スキャン失敗</string>
+    <string name="scan_download_files_failed_title">スキャン失敗</string>
+    
+    <!-- Clean invalid download strings -->
+    <string name="clean_invalid_download_empty_directory">空のディレクトリ: %s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">.ehviewer ファイルがありません: %s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">無効な .ehviewer ファイル: %s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">ファイル数が一致しません: %s, 予想: %d, 実際: %d</string>
+    <string name="clean_invalid_download_error_processing_directory">ディレクトリ処理中にエラーが発生しました: %s - %s</string>
+    
+    <!-- Theme strings -->
+    <string name="unavailable">利用不可</string>
+    
+    <!-- Merge duplicate gallery strings -->
+    <string name="merge_scanning_galleries">ダウンロードされたギャラリーをスキャン中...</string>
+    <string name="merge_start_scan">ダウンロードされたギャラリーのスキャンを開始...</string>
+    <string name="merge_scan_failed">ダウンロードされたギャラリーのスキャンに失敗</string>
+    <string name="merge_scan_complete">スキャン完了、%dグループの重複ギャラリーが見つかりました</string>
+    <string name="merge_start_analyze">ギャラリーバージョン関係の分析を開始...</string>
+    <string name="merge_analyzing_versions">ギャラリーバージョン関係を分析中...</string>
+    <string name="merge_analyze_failed">ギャラリーバージョン関係の分析に失敗</string>
+    <string name="merge_analyze_complete">分析完了</string>
+    <string name="merge_no_duplicates_found">マージが必要な重複ギャラリーは見つかりませんでした</string>
+    <string name="merge_start_backup">データベースのバックアップを開始...</string>
+    <string name="merge_backing_database">データベースをバックアップ中...</string>
+    <string name="merge_backup_failed">データベースのバックアップに失敗</string>
+    <string name="merge_backup_success">データベースのバックアップが成功</string>
+    <string name="merge_start_merge">ギャラリーのマージを開始...</string>
+    <string name="merge_merging_galleries">ギャラリーをマージ中...</string>
+    <string name="merge_merge_failed">ギャラリーのマージに失敗</string>
+    <string name="merge_merge_success">ギャラリーのマージが成功</string>
+    <string name="merge_exception_occurred">マージ中に例外が発生: %s</string>
+    <string name="merge_exception_stack">例外スタック: %s</string>
+    <string name="merge_success_summary">%dグループの重複ギャラリーを正常にマージし、%dグループをスキップしました</string>
+    <string name="merge_failure_summary">マージ失敗、%dグループをマージし、%dグループをスキップし、エラーレポートを生成しました</string>
+    <string name="merge_duplicate_gallery_title">重複ギャラリーのマージ</string>
+    
+    <!-- Download scene strings -->
+    <string name="starting_download">ダウンロードを開始中...</string>
+    <string name="preparing_download">ダウンロードを準備中、お待ちください...</string>
+    <string name="background_processing">バックグラウンド処理</string>
+    <string name="background_processing_please_wait">バックグラウンドで処理中です。後で結果をご確認ください</string>
+    <string name="download_progress_format">ダウンロードを処理中: %1$d/%2$d</string>
+    <string name="download_dialog_title">ダウンロード</string>
+    <string name="download_multi_select_processing">複数選択ダウンロードを処理中、お待ちください...</string>
+    <string name="processing_progress">処理中: %1$s (%2$d/%3$d)</string>
+    <string name="download_tasks_started">%1$d個のダウンロードタスクを開始しました</string>
+    <string name="no_download_tasks_to_start">開始するダウンロードタスクがありません</string>
+    <string name="start_failed">開始失敗: %s</string>
+    
+    <!-- Database viewer strings -->
+    <string name="table_info">テーブル: %s (%d行)</string>
+    <string name="column_info">列情報:</string>
+    <string name="data_sample_preview">データサンプル (最初の10行):</string>
+    
+    <!-- WiFi client strings -->
+    <string name="wifi_connected_info">接続中: %s\nIP:%s\nルーター:%s</string>
+    <string name="wifi_connection_failed">通信接続に失敗</string>
+    <string name="wifi_try_reconnect">再接続を試行中</string>
+    <string name="wifi_please_enter_ip">IPアドレスを入力してください</string>
+    <string name="wifi_invalid_ip_format">無効なIPアドレス形式</string>
+    <string name="wifi_connecting_to_custom_ip">指定IPに接続を試行中: %s\nローカルIP:%s</string>
 </resources>

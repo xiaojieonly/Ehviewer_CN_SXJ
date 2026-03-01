@@ -16,4 +16,7 @@ gradle/wrapper/gradle-wrapper.properties
 /.kotlin/
 /download/00000006.gif
 open_source_licenses.html
+.vscode/settings.json
+项目结构分析.md
+/伪代码
 /.vscode/settings.json

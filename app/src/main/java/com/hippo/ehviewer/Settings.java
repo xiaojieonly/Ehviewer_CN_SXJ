@@ -85,6 +85,34 @@ public class Settings {
             }
         }
 
+        // Migrate Integer values to String for ListPreference
+        migrateIntToString(KEY_DETAIL_SIZE, String.valueOf(DEFAULT_DETAIL_SIZE));
+        migrateIntToString(KEY_THUMB_SIZE, String.valueOf(DEFAULT_THUMB_SIZE));
+        migrateIntToString(KEY_PRELOAD_IMAGE, String.valueOf(DEFAULT_PRELOAD_IMAGE));
+        migrateIntToString(KEY_MULTI_THREAD_DOWNLOAD, String.valueOf(DEFAULT_MULTI_THREAD_DOWNLOAD));
+        migrateIntToString(KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS, String.valueOf(DEFAULT_LOCAL_GALLERY_CACHE_EXPIRE_DAYS));
+    }
+
+    private static void migrateIntToString(String key, String defaultValue) {
+        try {
+            // Check if the value is stored as Integer
+            int intValue = sSettingsPre.getInt(key, -1);
+            if (intValue != -1) {
+                // Migrate to String
+                sSettingsPre.edit()
+                    .remove(key)
+                    .putString(key, String.valueOf(intValue))
+                    .apply();
+            }
+        } catch (ClassCastException e) {
+            // Already stored as String, which is what we want
+            // Check if the value exists, if not set default
+            if (!sSettingsPre.contains(key)) {
+                sSettingsPre.edit()
+                    .putString(key, defaultValue)
+                    .apply();
+            }
+        }
     }
 
     private static EhConfig loadEhConfig() {
@@ -143,6 +171,12 @@ public class Settings {
             return sSettingsPre.getInt(key, defValue);
         } catch (ClassCastException e) {
             Log.d(TAG, "Get ClassCastException when get " + key + " value", e);
+            //再按string取一次值，如果为空或者不为数字对象返回默认值
+            try {
+                return NumberUtils.parseIntSafely(sSettingsPre.getString(key, Integer.toString(defValue)), defValue);
+            }catch (Exception e2){
+                Log.d(TAG, "Get Exception when get " + key + " value", e2);
+            }
             return defValue;
         }
     }
@@ -191,11 +225,38 @@ public class Settings {
     }
 
     public static int getIntFromStr(String key, int defValue) {
+        Object rawValue = sSettingsPre.getAll().get(key);
+        if (rawValue instanceof String) {
+            return NumberUtils.parseIntSafely((String) rawValue, defValue);
+        }
+        if (rawValue instanceof Number) {
+            int intValue = ((Number) rawValue).intValue();
+            // 将整数值转换为字符串格式存储，保持一致性
+            putIntToStr(key, intValue);
+            return intValue;
+        }
+        if (rawValue == null) {
+            return defValue;
+        }
+
+        // 回退到旧逻辑，保证兼容异常类型
         try {
             return NumberUtils.parseIntSafely(sSettingsPre.getString(key, Integer.toString(defValue)), defValue);
         } catch (ClassCastException e) {
             Log.d(TAG, "Get ClassCastException when get " + key + " value", e);
-            return defValue;
+            try {
+                int intValue = sSettingsPre.getInt(key, defValue);
+                putIntToStr(key, intValue);
+                return intValue;
+            } catch (ClassCastException e2) {
+                Log.d(TAG, "Failed to get " + key + " as int, clearing and using default", e2);
+                try {
+                    sSettingsPre.edit().remove(key).apply();
+                } catch (Exception ex) {
+                    // 忽略清除失败
+                }
+                return defValue;
+            }
         }
     }
 
@@ -415,11 +476,55 @@ public class Settings {
         }
     }
 
+    public static final String KEY_COMMENT_RATING_THRESHOLD = "comment_rating_threshold";
+    private static final int DEFAULT_COMMENT_RATING_THRESHOLD = 0;
+
+    public static int getCommentRatingThreshold() {
+        return getInt(KEY_COMMENT_RATING_THRESHOLD, DEFAULT_COMMENT_RATING_THRESHOLD);
+    }
+
+    public static void putCommentRatingThreshold(int value) {
+        putInt(KEY_COMMENT_RATING_THRESHOLD, value);
+    }
+
+    public static final String KEY_ENABLE_COMMENT_RATING_FILTER = "enable_comment_rating_filter";
+    private static final boolean DEFAULT_ENABLE_COMMENT_RATING_FILTER = false;
+
+    public static boolean getEnableCommentRatingFilter() {
+        return getBoolean(KEY_ENABLE_COMMENT_RATING_FILTER, DEFAULT_ENABLE_COMMENT_RATING_FILTER);
+    }
+
+    public static void putEnableCommentRatingFilter(boolean value) {
+        putBoolean(KEY_ENABLE_COMMENT_RATING_FILTER, value);
+    }
+
     public static final String KEY_THUMB_RESOLUTION = "thumb_resolution";
     private static final int DEFAULT_THUMB_RESOLUTION = 0;
 
     public static int getThumbResolution() {
         return getIntFromStr(KEY_THUMB_RESOLUTION, DEFAULT_THUMB_RESOLUTION);
+    }
+
+    public static final String KEY_MANUAL_THUMB_RESOLUTION = "manual_thumb_resolution";
+    private static final boolean DEFAULT_MANUAL_THUMB_RESOLUTION = false;
+
+    public static boolean getManualThumbResolution() {
+        return getBoolean(KEY_MANUAL_THUMB_RESOLUTION, DEFAULT_MANUAL_THUMB_RESOLUTION);
+    }
+
+    public static void putManualThumbResolution(boolean value) {
+        putBoolean(KEY_MANUAL_THUMB_RESOLUTION, value);
+    }
+
+    public static final String KEY_CUSTOM_THUMB_RESOLUTION = "custom_thumb_resolution";
+    private static final int DEFAULT_CUSTOM_THUMB_RESOLUTION = 250;
+
+    public static int getCustomThumbResolution() {
+        return getInt(KEY_CUSTOM_THUMB_RESOLUTION, DEFAULT_CUSTOM_THUMB_RESOLUTION);
+    }
+
+    public static void putCustomThumbResolution(int value) {
+        putInt(KEY_CUSTOM_THUMB_RESOLUTION, value);
     }
 
     private static final String KEY_FIX_THUMB_URL = "fix_thumb_url";
@@ -594,6 +699,17 @@ public class Settings {
         putBoolean(KEY_SHOW_PROGRESS, value);
     }
 
+    private static final String KEY_SHOW_GALLERY_LOADING_SPEED = "gallery_show_loading_speed";
+    private static final boolean DEFAULT_SHOW_GALLERY_LOADING_SPEED = false;
+
+    public static boolean getShowGalleryLoadingSpeed() {
+        return getBoolean(KEY_SHOW_GALLERY_LOADING_SPEED, DEFAULT_SHOW_GALLERY_LOADING_SPEED);
+    }
+
+    public static void putShowGalleryLoadingSpeed(boolean value) {
+        putBoolean(KEY_SHOW_GALLERY_LOADING_SPEED, value);
+    }
+
     private static final String KEY_SHOW_BATTERY = "gallery_show_battery";
     private static final boolean DEFAULT_SHOW_BATTERY = true;
 
@@ -730,8 +846,67 @@ public class Settings {
     public static final String KEY_MEDIA_SCAN = "media_scan";
     private static final boolean DEFAULT_MEDIA_SCAN = false;
 
+    public static final String KEY_LOCAL_GALLERY_SCAN_ON_START = "local_gallery_scan_on_start";
+    private static final boolean DEFAULT_LOCAL_GALLERY_SCAN_ON_START = false;
+
+    public static final String KEY_LOCAL_GALLERY_SCAN_CACHE_ENABLED = "local_gallery_scan_cache_enabled";
+    private static final boolean DEFAULT_LOCAL_GALLERY_SCAN_CACHE_ENABLED = true;
+
+    public static final String KEY_LOCAL_GALLERY_LAST_SCAN_TIME = "local_gallery_last_scan_time";
+    public static final String KEY_LOCAL_GALLERY_LAST_SCAN_TYPE = "local_gallery_last_scan_type";
+    public static final String KEY_LOCAL_GALLERY_LAST_SCAN_RESULT = "local_gallery_last_scan_result";
+
+    public static final String KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS = "local_gallery_cache_expire_days";
+    private static final int DEFAULT_LOCAL_GALLERY_CACHE_EXPIRE_DAYS = 3;
+
     public static boolean getMediaScan() {
         return getBoolean(KEY_MEDIA_SCAN, DEFAULT_MEDIA_SCAN);
+    }
+
+    public static boolean getLocalGalleryScanOnStart() {
+        return getBoolean(KEY_LOCAL_GALLERY_SCAN_ON_START, DEFAULT_LOCAL_GALLERY_SCAN_ON_START);
+    }
+
+    public static void putLocalGalleryScanOnStart(boolean value) {
+        putBoolean(KEY_LOCAL_GALLERY_SCAN_ON_START, value);
+    }
+
+    public static boolean getLocalGalleryScanCacheEnabled() {
+        return getBoolean(KEY_LOCAL_GALLERY_SCAN_CACHE_ENABLED, DEFAULT_LOCAL_GALLERY_SCAN_CACHE_ENABLED);
+    }
+
+    public static void putLocalGalleryScanCacheEnabled(boolean value) {
+        putBoolean(KEY_LOCAL_GALLERY_SCAN_CACHE_ENABLED, value);
+    }
+
+    public static int getLocalGalleryCacheExpireDays() {
+        return getIntFromStr(KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS, DEFAULT_LOCAL_GALLERY_CACHE_EXPIRE_DAYS);
+    }
+
+    public static void putLocalGalleryCacheExpireDays(int value) {
+        putIntToStr(KEY_LOCAL_GALLERY_CACHE_EXPIRE_DAYS, value);
+    }
+
+    public static final String KEY_ENABLE_MIN_DOWNLOAD_SPEED = "enable_min_download_speed";
+    private static final boolean DEFAULT_ENABLE_MIN_DOWNLOAD_SPEED = false;
+
+    public static boolean getEnableMinDownloadSpeed() {
+        return getBoolean(KEY_ENABLE_MIN_DOWNLOAD_SPEED, DEFAULT_ENABLE_MIN_DOWNLOAD_SPEED);
+    }
+
+    public static void putEnableMinDownloadSpeed(boolean value) {
+        putBoolean(KEY_ENABLE_MIN_DOWNLOAD_SPEED, value);
+    }
+
+    public static final String KEY_MIN_DOWNLOAD_SPEED = "min_download_speed";
+    private static final int DEFAULT_MIN_DOWNLOAD_SPEED = 64; // 64 KB/s
+
+    public static int getMinDownloadSpeed() {
+        return getInt(KEY_MIN_DOWNLOAD_SPEED, DEFAULT_MIN_DOWNLOAD_SPEED);
+    }
+
+    public static void putMinDownloadSpeed(int value) {
+        putInt(KEY_MIN_DOWNLOAD_SPEED, value);
     }
 
     private static final String KEY_RECENT_DOWNLOAD_LABEL = "recent_download_label";
@@ -765,6 +940,17 @@ public class Settings {
 
     public static void putDefaultDownloadLabel(String value) {
         putString(KEY_DEFAULT_DOWNLOAD_LABEL, value);
+    }
+
+    private static final String KEY_INCREMENTAL_DOWNLOAD_UPDATE = "incremental_download_update";
+    private static final boolean DEFAULT_INCREMENTAL_DOWNLOAD_UPDATE = false;
+
+    public static boolean getIncrementalDownloadUpdate() {
+        return getBoolean(KEY_INCREMENTAL_DOWNLOAD_UPDATE, DEFAULT_INCREMENTAL_DOWNLOAD_UPDATE);
+    }
+
+    public static void putIncrementalDownloadUpdate(boolean value) {
+        putBoolean(KEY_INCREMENTAL_DOWNLOAD_UPDATE, value);
     }
 
     private static final String KEY_MULTI_THREAD_DOWNLOAD = "download_thread";
@@ -1404,6 +1590,19 @@ public class Settings {
         putBoolean(KEY_DOWNLOAD_ORDER_ASC, value);
     }
 
+    public static final String KEY_DOWNLOAD_QUEUE_ORDER = "download_queue_order";
+    public static final int DOWNLOAD_QUEUE_ORDER_DEFAULT = 0; // 按添加顺序
+    public static final int DOWNLOAD_QUEUE_ORDER_FEWEST_FIRST = 1; // 少图画廊优先
+    public static final int DOWNLOAD_QUEUE_ORDER_MOST_FIRST = 2; // 多图画廊优先
+
+    public static int getDownloadQueueOrder() {
+        return getInt(KEY_DOWNLOAD_QUEUE_ORDER, DOWNLOAD_QUEUE_ORDER_DEFAULT);
+    }
+
+    public static void setDownloadQueueOrder(int value) {
+        putInt(KEY_DOWNLOAD_QUEUE_ORDER, value);
+    }
+
     public static final String KEY_DOWNLOAD_LIST_PAGINATION = "download_list_pagination";
 
     private static boolean IS_DOWNLOAD_LIST_PAGINATION = true;
@@ -1426,6 +1625,17 @@ public class Settings {
 
     public static void setShowReadProgress(boolean value) {
         putBoolean(KEY_SHOW_READ_PROGRESS, value);
+    }
+
+    public static final String KEY_USER_AGENT = "user_agent";
+    private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+
+    public static String getUserAgent() {
+        return getString(KEY_USER_AGENT, DEFAULT_USER_AGENT);
+    }
+
+    public static void putUserAgent(String value) {
+        putString(KEY_USER_AGENT, value);
     }
 
     public static final String KEY_DRAG_DOWNLOAD_GALLERY = "drag_download_gallery";
@@ -1458,7 +1668,7 @@ public class Settings {
 
     public static final String KEY_DOWNLOAD_TIMEOUT = "download_timeout";
 
-    public static int DEFAULT_DOWNLOAD_TIMEOUT = 0;
+    public static int DEFAULT_DOWNLOAD_TIMEOUT = 60;
 
     public static int getDownloadTimeout() {
         int size = getIntFromStr(KEY_DOWNLOAD_TIMEOUT, DEFAULT_DOWNLOAD_TIMEOUT);
@@ -1467,6 +1677,17 @@ public class Settings {
 
     public static void setDownloadTimeout(int value) {
         putIntToStr(KEY_DOWNLOAD_TIMEOUT, value);
+    }
+
+    public static final String KEY_ENABLE_DOWNLOAD_TIMEOUT = "enable_download_timeout";
+    private static final boolean DEFAULT_ENABLE_DOWNLOAD_TIMEOUT = false;
+
+    public static boolean getEnableDownloadTimeout() {
+        return getBoolean(KEY_ENABLE_DOWNLOAD_TIMEOUT, DEFAULT_ENABLE_DOWNLOAD_TIMEOUT);
+    }
+
+    public static void putEnableDownloadTimeout(boolean value) {
+        putBoolean(KEY_ENABLE_DOWNLOAD_TIMEOUT, value);
     }
 
     public static final String KEY_LAST_UPDATE_TIME = "last_update_time";
@@ -1484,5 +1705,16 @@ public class Settings {
 
     public static void putUpdateTime(long updateTime) {
         putLong(KEY_LAST_UPDATE_TIME,updateTime);
+    }
+
+    public static final String KEY_DOWNLOAD_LOGGING_ENABLED = "download_logging_enabled";
+    private static final boolean DEFAULT_DOWNLOAD_LOGGING_ENABLED = false;
+
+    public static boolean getDownloadLoggingEnabled() {
+        return getBoolean(KEY_DOWNLOAD_LOGGING_ENABLED, DEFAULT_DOWNLOAD_LOGGING_ENABLED);
+    }
+
+    public static void putDownloadLoggingEnabled(boolean value) {
+        putBoolean(KEY_DOWNLOAD_LOGGING_ENABLED, value);
     }
 }

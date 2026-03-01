@@ -30,6 +30,7 @@ import android.os.Message;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -41,6 +42,7 @@ import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 import com.hippo.ehviewer.client.wifi.ConnectThread;
@@ -48,6 +50,8 @@ import com.hippo.ehviewer.client.wifi.ListenerThread;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.ui.EhActivity;
+import com.hippo.util.ExecutorManager;
 import com.hippo.util.PermissionRequester;
 
 import org.greenrobot.eventbus.EventBus;
@@ -59,12 +63,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WiFiClientActivity extends AppCompatActivity {
+public class WiFiClientActivity extends EhActivity {
 
     private final int pCode = 88888;
 
     private TextView textState;
     private TextView receiveMessage;
+    private EditText ipAddressInput;
     /**
      * 连接线程
      */
@@ -94,7 +99,8 @@ public class WiFiClientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_client);
 //        findViewById(R.id.send).setOnClickListener(this::send);
-        findViewById(R.id.connect_server).setOnClickListener(this::connect);
+        findViewById(R.id.connect_server).setOnClickListener(this::connectAuto);
+        findViewById(R.id.connect_custom_ip).setOnClickListener(this::connectCustomIP);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         boolean result = PermissionRequester.request(this, Manifest.permission.CHANGE_WIFI_STATE,
@@ -105,10 +111,9 @@ public class WiFiClientActivity extends AppCompatActivity {
         textState = findViewById(R.id.status_info);
         receiveMessage = findViewById(R.id.receive_message);
         statusInit = findViewById(R.id.status_init);
+        ipAddressInput = findViewById(R.id.ip_address_input);
 
-        String initText = "已连接到：" + wifiManager.getConnectionInfo().getSSID() +
-                "\nIP:" + getIp()
-                + "\n路由：" + getWifiRouteIPAddress(this);
+        String initText = getString(R.string.wifi_connected_info, wifiManager.getConnectionInfo().getSSID(), getIp(), getWifiRouteIPAddress(this));
         statusInit.setText(initText);
 
         if (handler == null) {
@@ -122,6 +127,12 @@ public class WiFiClientActivity extends AppCompatActivity {
     }
 
     @Override
+    protected int getThemeResId(int theme) {
+        // 使用父类的默认实现，支持自适应主题切换
+        return super.getThemeResId(theme);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == pCode){
@@ -131,32 +142,72 @@ public class WiFiClientActivity extends AppCompatActivity {
     }
 
     private void connectSocket() {
-        new Thread(() -> {
+        connectSocketWithIP(getWifiRouteIPAddress(WiFiClientActivity.this));
+    }
+
+    private void connectSocketWithIP(String targetIP) {
+        ExecutorManager.getNetworkExecutor().execute(() -> {
             try {
-                Socket socket = new Socket(getWifiRouteIPAddress(WiFiClientActivity.this), PORT);
+                Socket socket = new Socket(targetIP, PORT);
                 connectThread = new ConnectThread(getApplicationContext(), socket, handler, IS_CLIENT);
                 connectThread.start();
             } catch (IOException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> textState.setText("通信连接失败"));
+                runOnUiThread(() -> textState.setText(getString(R.string.wifi_connection_failed)));
                 try {
                     Thread.sleep(2000);
-                    runOnUiThread(() -> textState.setText("尝试重新链接"));
-                    connectSocket();
+                    runOnUiThread(() -> textState.setText(getString(R.string.wifi_try_reconnect)));
+                    connectSocketWithIP(targetIP);
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
             }
-
-        }).start();
+        });
     }
 
-    private void connect(View view) {
-        String text = "已连接到：" + wifiManager.getConnectionInfo().getSSID() +
-                "\nIP:" + getIp()
-                + "\n路由：" + getWifiRouteIPAddress(this);
+    private void connectAuto(View view) {
+        String text = getString(R.string.wifi_connected_info, wifiManager.getConnectionInfo().getSSID(), getIp(), getWifiRouteIPAddress(this));
         statusInit.setText(text);
-//        connectSocket();
+        connectSocket();
+    }
+
+    private void connectCustomIP(View view) {
+        String customIP = ipAddressInput.getText().toString().trim();
+        if (customIP.isEmpty()) {
+            textState.setText(getString(R.string.wifi_please_enter_ip));
+            return;
+        }
+        
+        // 简单的IP地址格式验证
+        if (!isValidIP(customIP)) {
+            textState.setText(getString(R.string.wifi_invalid_ip_format));
+            return;
+        }
+        
+        String text = getString(R.string.wifi_connecting_to_custom_ip, customIP, getIp());
+        statusInit.setText(text);
+        connectSocketWithIP(customIP);
+    }
+
+    private boolean isValidIP(String ip) {
+        if (ip == null || ip.isEmpty()) {
+            return false;
+        }
+        String[] parts = ip.split("\\.");
+        if (parts.length != 4) {
+            return false;
+        }
+        try {
+            for (String part : parts) {
+                int num = Integer.parseInt(part);
+                if (num < 0 || num > 255) {
+                    return false;
+                }
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -268,13 +319,13 @@ public class WiFiClientActivity extends AppCompatActivity {
 
     private void dealWithFavoriteInfo(WiFiDataHand response) {
         JSONArray jsonArray = response.getData().getJSONArray(FAVORITE_INFO_DATA_KEY);
-        new Thread(()->{
+        ExecutorManager.getIoExecutor().execute(() -> {
             for (int i = 0; i < jsonArray.size(); i++) {
                 EhDB.putLocalFavorite(GalleryInfo.galleryInfoFromJson(jsonArray.getJSONObject(i)));
             }
             connectThread.dataProcessed(response);
             updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
-        }).start();
+        });
     }
 
     private void dealWithDownloadInfo(WiFiDataHand response) {
@@ -297,14 +348,14 @@ public class WiFiClientActivity extends AppCompatActivity {
     private void dealWithDownloadLabel(WiFiDataHand response) {
         JSONArray jsonArray = response.getData().getJSONArray(DOWNLOAD_LABEL_KEY);
         DownloadManager manager = EhApplication.getDownloadManager();
-        new Thread(()->{
+        ExecutorManager.getBackgroundExecutor().execute(() -> {
             for (int i = 0; i < jsonArray.size(); i++) {
                 manager.addLabelInSyncThread(jsonArray.getString(i));
             }
             connectThread.dataProcessed(response);
             updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
             EventBus.getDefault().post(downloadInfoNeedRefresh());
-       }).start();
+       });
     }
 
     private void dealWithQuickSearch(WiFiDataHand response) {
@@ -316,12 +367,12 @@ public class WiFiClientActivity extends AppCompatActivity {
             JSONObject object = jsonArray.getJSONObject(i);
             quickSearchList.add(QuickSearch.quickSearchFromJson(object));
         }
-        new Thread(()->{
+        ExecutorManager.getIoExecutor().execute(() -> {
             EhDB.takeOverQuickSearchList(quickSearchList);
             connectThread.dataProcessed(response);
             updateReceiveMessage(getString(R.string.wifi_server_receive_message, response.toString()));
             EventBus.getDefault().post(bookmarkDrawNeedRefresh());
-        }).start();
+        });
     }
 
     public void updateReceiveMessage(String message){

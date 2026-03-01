@@ -1,0 +1,259 @@
+package com.hippo.ehviewer.ui.task;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.hippo.ehviewer.R;
+import com.hippo.util.ReadableTime;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 后台任务列表适配器
+ */
+public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    
+    private static final int TYPE_ACTIVE_HEADER = 0;
+    private static final int TYPE_ACTIVE_TASK = 1;
+    private static final int TYPE_COMPLETED_HEADER = 2;
+    private static final int TYPE_COMPLETED_TASK = 3;
+    private static final int TYPE_EMPTY = 4;
+    
+    private final Context mContext;
+    private final LayoutInflater mInflater;
+    private List<BackgroundTaskInfo> mActiveTasks = new ArrayList<>();
+    private List<BackgroundTaskInfo> mCompletedTasks = new ArrayList<>();
+    private OnItemClickListener mOnItemClickListener;
+    
+    public interface OnItemClickListener {
+        void onItemClick(BackgroundTaskInfo taskInfo);
+    }
+    
+    public BackgroundTaskAdapter(@NonNull Context context) {
+        mContext = context;
+        mInflater = LayoutInflater.from(context);
+    }
+    
+    public void setOnItemClickListener(@Nullable OnItemClickListener listener) {
+        mOnItemClickListener = listener;
+    }
+    
+    public void updateData(@NonNull List<BackgroundTaskInfo> activeTasks, 
+                          @NonNull List<BackgroundTaskInfo> completedTasks) {
+        mActiveTasks = new ArrayList<>(activeTasks);
+        mCompletedTasks = new ArrayList<>(completedTasks);
+        notifyDataSetChanged();
+    }
+    
+    @Override
+    public int getItemViewType(int position) {
+        int activeCount = mActiveTasks.size();
+        int completedCount = mCompletedTasks.size();
+        
+        if (activeCount == 0 && completedCount == 0) {
+            return TYPE_EMPTY;
+        }
+        
+        if (activeCount > 0) {
+            if (position == 0) {
+                return TYPE_ACTIVE_HEADER;
+            } else if (position <= activeCount) {
+                return TYPE_ACTIVE_TASK;
+            } else if (position == activeCount + 1) {
+                return completedCount > 0 ? TYPE_COMPLETED_HEADER : TYPE_EMPTY;
+            } else {
+                return TYPE_COMPLETED_TASK;
+            }
+        } else {
+            if (position == 0) {
+                return TYPE_COMPLETED_HEADER;
+            } else {
+                return TYPE_COMPLETED_TASK;
+            }
+        }
+    }
+    
+    @Override
+    public int getItemCount() {
+        int activeCount = mActiveTasks.size();
+        int completedCount = mCompletedTasks.size();
+        
+        if (activeCount == 0 && completedCount == 0) {
+            return 1; // 空状态
+        }
+        
+        int count = 0;
+        if (activeCount > 0) {
+            count += 1; // 活跃任务标题
+            count += activeCount; // 活跃任务项
+        }
+        if (completedCount > 0) {
+            count += 1; // 已完成任务标题
+            count += completedCount; // 已完成任务项
+        }
+        
+        return count;
+    }
+    
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        switch (viewType) {
+            case TYPE_ACTIVE_HEADER:
+                return new HeaderViewHolder(mInflater.inflate(R.layout.item_task_header, parent, false), 
+                    R.string.active_tasks);
+            case TYPE_ACTIVE_TASK:
+                return new TaskViewHolder(mInflater.inflate(R.layout.item_background_task, parent, false));
+            case TYPE_COMPLETED_HEADER:
+                return new HeaderViewHolder(mInflater.inflate(R.layout.item_task_header, parent, false), 
+                    R.string.completed_tasks);
+            case TYPE_COMPLETED_TASK:
+                return new TaskViewHolder(mInflater.inflate(R.layout.item_background_task, parent, false));
+            case TYPE_EMPTY:
+                return new EmptyViewHolder(mInflater.inflate(R.layout.item_empty_task, parent, false));
+            default:
+                throw new IllegalArgumentException("Unknown view type: " + viewType);
+        }
+    }
+    
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        int viewType = getItemViewType(position);
+        
+        if (viewType == TYPE_ACTIVE_TASK || viewType == TYPE_COMPLETED_TASK) {
+            TaskViewHolder taskHolder = (TaskViewHolder) holder;
+            BackgroundTaskInfo taskInfo = getTaskInfoAtPosition(position);
+            if (taskInfo != null) {
+                taskHolder.bind(taskInfo);
+            }
+        }
+    }
+    
+    @Nullable
+    private BackgroundTaskInfo getTaskInfoAtPosition(int position) {
+        int activeCount = mActiveTasks.size();
+        
+        if (activeCount > 0) {
+            if (position > 0 && position <= activeCount) {
+                return mActiveTasks.get(position - 1);
+            } else if (position > activeCount + 1) {
+                int completedIndex = position - activeCount - 2;
+                if (completedIndex < mCompletedTasks.size()) {
+                    return mCompletedTasks.get(completedIndex);
+                }
+            }
+        } else {
+            if (position > 0) {
+                int completedIndex = position - 1;
+                if (completedIndex < mCompletedTasks.size()) {
+                    return mCompletedTasks.get(completedIndex);
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    private class TaskViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private final TextView mNameText;
+        private final TextView mDescriptionText;
+        private final TextView mProgressText;
+        private final TextView mTimeText;
+        private final TextView mStatusText;
+        private final ProgressBar mProgressBar;
+        
+        private BackgroundTaskInfo mTaskInfo;
+        
+        public TaskViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mNameText = itemView.findViewById(R.id.task_name);
+            mDescriptionText = itemView.findViewById(R.id.task_description);
+            mProgressText = itemView.findViewById(R.id.task_progress);
+            mTimeText = itemView.findViewById(R.id.task_time);
+            mStatusText = itemView.findViewById(R.id.task_status);
+            mProgressBar = itemView.findViewById(R.id.progress_bar);
+            
+            itemView.setOnClickListener(this);
+        }
+        
+        public void bind(@NonNull BackgroundTaskInfo taskInfo) {
+            mTaskInfo = taskInfo;
+            
+            // 任务名称
+            mNameText.setText(taskInfo.getTaskName());
+            
+            // 任务描述
+            String description = taskInfo.getTaskDescription();
+            mDescriptionText.setText(description != null ? description : mContext.getString(R.string.no_description));
+            
+            // 进度
+            int percentage = taskInfo.getProgressPercentage();
+            if (percentage >= 0) {
+                String detail = taskInfo.getProgressDetail();
+                String progressText = mContext.getString(R.string.task_progress_format, 
+                    taskInfo.getCurrentProgress(), taskInfo.getTotalProgress(), percentage);
+                if (detail != null && !detail.isEmpty()) {
+                    progressText = progressText + " - " + detail;
+                }
+                mProgressText.setText(progressText);
+                mProgressBar.setMax(100);
+                mProgressBar.setProgress(percentage);
+                mProgressBar.setIndeterminate(false);
+            } else {
+                mProgressText.setText(R.string.task_progress_indeterminate);
+                mProgressBar.setIndeterminate(true);
+            }
+            
+            // 运行时间
+            long runningTime = taskInfo.getRunningTime();
+            mTimeText.setText(mContext.getString(R.string.task_running_time, ReadableTime.getShortTimeInterval(runningTime)));
+            
+            // 状态
+            String status;
+            if (taskInfo.isCancelled()) {
+                status = mContext.getString(R.string.task_status_cancelled);
+            } else if (taskInfo.isCompleted()) {
+                if (taskInfo.getErrorMessage() != null) {
+                    status = mContext.getString(R.string.task_status_failed);
+                } else {
+                    status = mContext.getString(R.string.task_status_completed);
+                }
+            } else {
+                status = mContext.getString(R.string.task_status_running);
+            }
+            mStatusText.setText(status);
+        }
+        
+        @Override
+        public void onClick(View v) {
+            if (mOnItemClickListener != null && mTaskInfo != null) {
+                mOnItemClickListener.onItemClick(mTaskInfo);
+            }
+        }
+    }
+    
+    private static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        private final TextView mTitleText;
+        
+        public HeaderViewHolder(@NonNull View itemView, int titleResId) {
+            super(itemView);
+            mTitleText = itemView.findViewById(R.id.header_title);
+            mTitleText.setText(itemView.getContext().getString(titleResId));
+        }
+    }
+    
+    private static class EmptyViewHolder extends RecyclerView.ViewHolder {
+        public EmptyViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+    }
+}

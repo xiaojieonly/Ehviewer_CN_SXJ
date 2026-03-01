@@ -26,6 +26,11 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
     private final GalleryProvider mProvider;
     private final ImageTexture.Uploader mUploader;
     private boolean mShowIndex = true;
+    private ProgressTextProvider mProgressTextProvider;
+
+    public interface ProgressTextProvider {
+        String getProgressText(int index, float percent);
+    }
 
     public SimpleAdapter(@NonNull GLRootView glRootView, @NonNull GalleryProvider provider) {
         mProvider = provider;
@@ -40,6 +45,10 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         mShowIndex = show;
     }
 
+    public void setProgressTextProvider(ProgressTextProvider provider) {
+        mProgressTextProvider = provider;
+    }
+
     @Override
     public void onBind(GalleryPageView view, int index) {
         mProvider.request(index);
@@ -51,6 +60,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             view.hidePage();
         }
         view.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
+        view.setProgressText(null);
         view.setError(null, null);
     }
 
@@ -88,6 +98,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 page.hidePage();
             }
             page.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
+            page.setProgressText(null);
             page.setError(null, null);
         }
     }
@@ -104,6 +115,11 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 page.hidePage();
             }
             page.setProgress(percent);
+            if (mProgressTextProvider != null) {
+                page.setProgressText(mProgressTextProvider.getProgressText(index, percent));
+            } else {
+                page.setProgressText(null);
+            }
             page.setError(null, null);
         }
     }
@@ -123,6 +139,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                     page.hidePage();
                 }
                 page.setProgress(GalleryPageView.PROGRESS_GONE);
+                page.setProgressText(null);
                 page.setError(null, null);
             } else {
                 // The image is recycled, request again.
@@ -144,6 +161,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 page.hidePage();
             }
             page.setProgress(GalleryPageView.PROGRESS_GONE);
+            page.setProgressText(null);
             page.setError(error, mGalleryView);
         }
     }

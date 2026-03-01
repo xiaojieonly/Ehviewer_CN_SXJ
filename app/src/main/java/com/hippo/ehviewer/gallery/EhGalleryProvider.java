@@ -17,6 +17,8 @@
 package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
+import android.os.SystemClock;
+import android.util.SparseLongArray;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -34,6 +36,9 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     private final GalleryInfo mGalleryInfo;
     @Nullable
     private SpiderQueen mSpiderQueen;
+    private final SparseLongArray mLastDownloadTime = new SparseLongArray();
+    private final SparseLongArray mLastDownloadBytes = new SparseLongArray();
+    private final SparseLongArray mDownloadSpeed = new SparseLongArray();
 
     public EhGalleryProvider(Context context, GalleryInfo galleryInfo) {
         mContext = context;
@@ -166,9 +171,24 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
 
     @Override
     public void onPageDownload(int index, long contentLength, long receivedSize, int bytesRead) {
+        long now = SystemClock.elapsedRealtime();
+        long lastTime = mLastDownloadTime.get(index, 0L);
+        long lastBytes = mLastDownloadBytes.get(index, 0L);
+        if (lastTime > 0L && now > lastTime) {
+            long deltaBytes = receivedSize - lastBytes;
+            long deltaTime = now - lastTime;
+            long speed = deltaTime > 0L ? Math.max(0L, deltaBytes * 1000L / deltaTime) : 0L;
+            mDownloadSpeed.put(index, speed);
+        }
+        mLastDownloadTime.put(index, now);
+        mLastDownloadBytes.put(index, receivedSize);
         if (contentLength > 0) {
             notifyPagePercent(index, (float) receivedSize / contentLength);
         }
+    }
+
+    public long getPageSpeedBytesPerSecond(int index) {
+        return mDownloadSpeed.get(index, 0L);
     }
 
     @Override
