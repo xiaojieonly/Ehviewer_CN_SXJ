@@ -1749,6 +1749,11 @@ public final class GalleryListScene extends BaseScene
             return;
         }
 
+        // 过滤搜索文本中的换行符，避免影响搜索语法
+        if (query != null) {
+            query = query.replace("\r", " ").replace("\n", " ");
+        }
+
         if (mState == STATE_SEARCH || mState == STATE_SEARCH_SHOW_LIST) {
             try {
                 mSearchLayout.formatListUrlBuilder(mUrlBuilder, query);
