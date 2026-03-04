@@ -113,6 +113,10 @@
     <string name="error_empty_html">空のページ</string>
     <string name="error_cant_get_image">画像を取得できませんでした</string>
     <string name="error_igneous_wrong">igneousが間違っています\n権限を確認して再ログインしてください</string>
+    <string name="gallery_gl_fallback_title">OpenGLレンダラーを利用できません</string>
+    <string name="gallery_gl_fallback_message">このデバイスでは現在EGLを初期化できません。戻ってしばらくしてから再試行してください。</string>
+    <string name="gallery_gl_fallback_action_close">戻る</string>
+    <string name="gallery_gl_fallback_toast">GLレンダリングに失敗したため、安全な代替ページに切り替えました</string>
     <string name="kokomade_tip">設定 -&gt; Eh -&gt; ギャラリーサイト -&gt; E-Hentai</string>
     <string name="app_waring">このアプリの内容はインターネットから取得したものです。その内容の一部は使用者のお体や心理に傷つける恐れがあります。それでも続行しますか？</string>
     <string name="error_username_cannot_empty">ユーザー名を入力してください。</string>

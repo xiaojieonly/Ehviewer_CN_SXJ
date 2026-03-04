@@ -17,9 +17,11 @@
 package com.hippo.ehviewer.ui;
 
 import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
+import static android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -531,12 +533,10 @@ public final class MainActivity extends StageActivity
     private void onInit() {
         // Check permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()){
-                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
+            if (!Environment.isExternalStorageManager()) {
+                requestAllFilesAccessPermissionSafely();
             }
-        }else {
+        } else {
             PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
@@ -570,6 +570,30 @@ public final class MainActivity extends StageActivity
 //            Settings.setLoginState(false);
 //        }
         Settings.setLoginState(ipbMemberId != null || ipbPassHash != null || igneous != null);
+    }
+
+    /**
+     * Some ROMs reject the app-specific all-files-access page with SecurityException.
+     * Try app-specific page first, then fallback to global management page.
+     */
+    private void requestAllFilesAccessPermissionSafely() {
+        Intent appSpecificIntent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+        appSpecificIntent.setData(Uri.parse("package:" + getPackageName()));
+        if (startActivityQuietly(appSpecificIntent)) {
+            return;
+        }
+
+        Intent globalIntent = new Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+        startActivityQuietly(globalIntent);
+    }
+
+    private boolean startActivityQuietly(@NonNull Intent intent) {
+        try {
+            startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            return false;
+        }
     }
 
     private void onRestore(Bundle savedInstanceState) {

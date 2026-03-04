@@ -618,6 +618,8 @@ public class GLRootView extends GLSurfaceView
     private class ConfigChooser implements EGLConfigChooser {
 
         private final int[] mValue = new int[1];
+        private static final int EGL_OPENGL_ES2_BIT = 0x0004;
+        private static final int EGL_NOT_INITIALIZED = 0x3001;
 
         @Override
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
@@ -628,6 +630,63 @@ public class GLRootView extends GLSurfaceView
                         Integer.toHexString(error));
             }
 
+            // Some vendor EGL drivers sporadically report EGL_NOT_INITIALIZED here.
+            // Retry once after explicit eglInitialize to avoid startup crash.
+            for (int attempt = 0; attempt < 2; attempt++) {
+                if (!ensureDisplayInitialized(egl, display)) {
+                    int error = egl.eglGetError();
+                    throw new IllegalArgumentException("EGL display not initialized, error: 0x" +
+                            Integer.toHexString(error));
+                }
+
+                try {
+                    EGLConfig config = chooseConfigInternal(egl, display);
+                    int renderableType = findConfigAttrib(egl, display, config, EGL10.EGL_RENDERABLE_TYPE);
+                    if ((renderableType & EGL_OPENGL_ES2_BIT) == EGL_OPENGL_ES2_BIT) {
+                        mEGLContextClientVersion = 2;
+                    } else {
+                        mEGLContextClientVersion = 1;
+                    }
+                    return config;
+                } catch (IllegalArgumentException e) {
+                    int error = egl.eglGetError();
+                    if (attempt == 0 && error == EGL_NOT_INITIALIZED) {
+                        Log.w(TAG, "eglChooseConfig hit EGL_NOT_INITIALIZED, retrying eglInitialize once");
+                        if (tryInitializeDisplay(egl, display)) {
+                            continue;
+                        }
+                    }
+                    throw e;
+                }
+            }
+
+            throw new IllegalArgumentException("eglChooseConfig failed after reinitialize retry");
+        }
+
+        private boolean ensureDisplayInitialized(EGL10 egl, EGLDisplay display) {
+            int[] numConfig = new int[1];
+            if (egl.eglGetConfigs(display, null, 0, numConfig)) {
+                return true;
+            }
+            int error = egl.eglGetError();
+            if (error != EGL_NOT_INITIALIZED) {
+                return false;
+            }
+            return tryInitializeDisplay(egl, display) &&
+                    egl.eglGetConfigs(display, null, 0, numConfig);
+        }
+
+        private boolean tryInitializeDisplay(EGL10 egl, EGLDisplay display) {
+            int[] version = new int[2];
+            boolean initialized = egl.eglInitialize(display, version);
+            if (!initialized) {
+                int error = egl.eglGetError();
+                Log.w(TAG, "eglInitialize retry failed, error: 0x" + Integer.toHexString(error));
+            }
+            return initialized;
+        }
+
+        private EGLConfig chooseConfigInternal(EGL10 egl, EGLDisplay display) {
             int[] num_config = new int[1];
             int[] configSpec;
             int error;
@@ -654,7 +713,7 @@ public class GLRootView extends GLSurfaceView
                         EGL10.EGL_GREEN_SIZE, 8,
                         EGL10.EGL_BLUE_SIZE, 8,
                         EGL10.EGL_ALPHA_SIZE, 8,
-                        EGL10.EGL_RENDERABLE_TYPE, 0x0004, // EGL_OPENGL_ES2_BIT
+                        EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
                         EGL10.EGL_NONE
                 };
                 
@@ -707,14 +766,6 @@ public class GLRootView extends GLSurfaceView
             if (config == null) {
                 throw new IllegalArgumentException("No config chosen");
             }
-
-            int renderableType = findConfigAttrib(egl, display, config, EGL10.EGL_RENDERABLE_TYPE);
-            if ((renderableType & 0x0004) == 0x0004 /* EGL_OPENGL_ES2_BIT */) {
-                mEGLContextClientVersion = 2;
-            } else {
-                mEGLContextClientVersion = 1;
-            }
-
             return config;
         }
 

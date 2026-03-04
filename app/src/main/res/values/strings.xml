@@ -184,6 +184,10 @@
     <string name="error_empty_html">Empty page</string>
     <string name="error_cant_get_image">Can\'t get image</string>
     <string name="error_igneous_wrong">Wrong igneous\nmake sure you have permission and re-login</string>
+    <string name="gallery_gl_fallback_title">OpenGL renderer unavailable</string>
+    <string name="gallery_gl_fallback_message">This device cannot initialize EGL right now. Please return and try again later.</string>
+    <string name="gallery_gl_fallback_action_close">Back</string>
+    <string name="gallery_gl_fallback_toast">GL rendering failed, switched to safe fallback page</string>
 
     <string name="kokomade_tip">Settings->Eh->Gallery Site->e-hentai</string>
 
