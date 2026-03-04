@@ -206,7 +206,7 @@ public class AppConfig {
             sDeletingOldParseErrorFiles = true;
         }
         
-        IoThreadPoolExecutor.getInstance().execute(() -> {
+        IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
             try {
                 File[] files = dir.listFiles();
                 if (files == null) {

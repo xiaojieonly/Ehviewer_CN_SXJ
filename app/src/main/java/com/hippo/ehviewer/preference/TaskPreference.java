@@ -65,7 +65,7 @@ public abstract class TaskPreference extends DialogPreference {
             mTask = onCreateTask();
             mTask.setPreference(this);
             mTaskId = ((EhApplication) getContext().getApplicationContext()).putGlobalStuff(mTask);
-            mTask.executeOnExecutor(IoThreadPoolExecutor.getInstance());
+            mTask.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
         }
     }
 

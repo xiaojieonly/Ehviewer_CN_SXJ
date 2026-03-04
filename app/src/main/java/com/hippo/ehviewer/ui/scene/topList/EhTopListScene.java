@@ -1,5 +1,7 @@
 package com.hippo.ehviewer.ui.scene.topList;
 
+import static com.hippo.ehviewer.util.ClipboardUtil.createAnnouncerFromClipboardUrl;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -30,7 +32,10 @@ import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
+import com.hippo.ehviewer.ui.scene.ProgressScene;
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
+import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.view.ViewTransition;
 
@@ -89,12 +94,11 @@ public class EhTopListScene extends BaseScene {
     EhRequest mRequest;
 
     @Nullable
-    private ListUrlBuilder mUrlBuilder = new ListUrlBuilder();
+    private final ListUrlBuilder mUrlBuilder = new ListUrlBuilder();
 
     private boolean mHasFirstRefresh = false;
 
     private static final boolean TRANSITION_ANIMATION_DISABLED = true;
-
 
 
     @Override
@@ -340,6 +344,22 @@ public class EhTopListScene extends BaseScene {
                 urlBuilder.setMode(ListUrlBuilder.MODE_NORMAL);
             } else {
                 urlBuilder.setMode(ListUrlBuilder.MODE_UPLOADER);
+            }
+            if (topListItem.gid != null && !topListItem.gid.isEmpty()
+                    && topListItem.token != null && !topListItem.token.isEmpty()) {
+                Bundle args = new Bundle();
+                args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN);
+                args.putLong(ProgressScene.KEY_GID, Long.parseLong(topListItem.gid));
+                args.putString(ProgressScene.KEY_PTOKEN, topListItem.tag);
+                Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
+                startScene(announcer);
+                return;
+            } else if (topListItem.href!=null) {
+                Announcer announcer = createAnnouncerFromClipboardUrl(topListItem.href);
+                if (announcer!=null){
+                    startScene(announcer);
+                    return;
+                }
             }
             urlBuilder.setKeyword(topListItem.value);
             GalleryListScene.startScene(sceneFragment, urlBuilder);

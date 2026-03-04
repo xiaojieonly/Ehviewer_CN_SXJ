@@ -227,7 +227,7 @@ public class EhApplication extends RecordingApplication {
 
                 return null;
             }
-        }.executeOnExecutor(IoThreadPoolExecutor.getInstance());
+        }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
 
         // Check app update
         update();

@@ -75,7 +75,7 @@ public class EhClient {
     private final OkHttpClient mImageOkHttpClient;
 
     public EhClient(Context context) {
-        mRequestThreadPool = IoThreadPoolExecutor.getInstance();
+        mRequestThreadPool = IoThreadPoolExecutor.Companion.getInstance();
         mOkHttpClient = EhApplication.getOkHttpClient(context);
         mImageOkHttpClient = EhApplication.getImageOkHttpClient(context);
     }
