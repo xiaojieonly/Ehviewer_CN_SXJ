@@ -1,384 +1,269 @@
-package com.hippo.ehviewer.ui.scene.topList;
+package com.hippo.ehviewer.ui.scene.topList
 
-import static com.hippo.ehviewer.util.ClipboardUtil.createAnnouncerFromClipboardUrl;
+import android.content.Context
+import android.graphics.Color
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.FrameLayout
+import android.widget.Spinner
+import androidx.annotation.IntDef
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.R
+import com.hippo.ehviewer.client.EhClient
+import com.hippo.ehviewer.client.EhRequest
+import com.hippo.ehviewer.client.EhUrl
+import com.hippo.ehviewer.client.data.EhTopListDetail
+import com.hippo.ehviewer.client.data.ListUrlBuilder
+import com.hippo.ehviewer.client.data.topList.TopListInfo
+import com.hippo.ehviewer.client.data.topList.TopListItem
+import com.hippo.ehviewer.client.exception.EhException
+import com.hippo.ehviewer.ui.scene.BaseScene
+import com.hippo.ehviewer.ui.scene.EhCallback
+import com.hippo.ehviewer.ui.scene.ProgressScene
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene
+import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene
+import com.hippo.ehviewer.util.ClipboardUtil.createAnnouncerFromClipboardUrl
+import com.hippo.scene.Announcer
+import com.hippo.scene.SceneFragment
+import com.hippo.view.ViewTransition
+import java.util.Random
 
-import android.content.Context;
-import android.graphics.Color;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.FrameLayout;
-import android.widget.Spinner;
+private const val STATE_INIT = -1
+private const val STATE_NORMAL = 0
+private const val STATE_REFRESH = 1
+private const val STATE_REFRESH_HEADER = 2
+private const val STATE_FAILED = 3
+private const val BACK_PRESSED_INTERVAL = 2000
+private const val TRANSITION_ANIMATION_DISABLED = true
 
-import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
+private var mPosition = 0
 
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.client.EhClient;
-import com.hippo.ehviewer.client.EhRequest;
-import com.hippo.ehviewer.client.EhUrl;
-import com.hippo.ehviewer.client.data.EhTopListDetail;
-import com.hippo.ehviewer.client.data.ListUrlBuilder;
-import com.hippo.ehviewer.client.data.topList.TopListInfo;
-import com.hippo.ehviewer.client.data.topList.TopListItem;
-import com.hippo.ehviewer.client.exception.EhException;
-import com.hippo.ehviewer.ui.MainActivity;
-import com.hippo.ehviewer.ui.scene.BaseScene;
-import com.hippo.ehviewer.ui.scene.EhCallback;
-import com.hippo.ehviewer.ui.scene.ProgressScene;
-import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
-import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
-import com.hippo.scene.Announcer;
-import com.hippo.scene.SceneFragment;
-import com.hippo.view.ViewTransition;
+class EhTopListScene : BaseScene() {
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.HashMap;
-import java.util.Random;
+    @IntDef(STATE_INIT, STATE_NORMAL, STATE_REFRESH, STATE_REFRESH_HEADER, STATE_FAILED)
+    @Retention(AnnotationRetention.SOURCE)
+    private annotation class State
 
-public class EhTopListScene extends BaseScene {
-
-    @IntDef({STATE_INIT, STATE_NORMAL, STATE_REFRESH, STATE_REFRESH_HEADER, STATE_FAILED})
-    @Retention(RetentionPolicy.SOURCE)
-    private @interface State {
-    }
-
-    private static final int STATE_INIT = -1;
-    private static final int STATE_NORMAL = 0;
-    private static final int STATE_REFRESH = 1;
-    private static final int STATE_REFRESH_HEADER = 2;
-    private static final int STATE_FAILED = 3;
-
-    private static int mPosition = 0;
-
-    private long mPressBackTime = 0;
-    private static final int BACK_PRESSED_INTERVAL = 2000;
+    private var pressBackTime = 0L
 
     @State
-    private int mState = STATE_INIT;
+    private var state = STATE_INIT
 
-    public final static String KEY_ACTION = "action";
-    //    public final static String ACTION_HOMEPAGE = "action_homepage";
-//    public final static String ACTION_SUBSCRIPTION = "action_subscription";
-//    public final static String ACTION_WHATS_HOT = "action_whats_hot";
-    public final static String ACTION_TOP_LIST = "action_top_list";
-//    public final static String ACTION_LIST_URL_BUILDER = "action_list_url_builder";
+    private var ehTopListDetail: EhTopListDetail? = null
+    private var viewTransition: ViewTransition? = null
+    private var recyclerView: RecyclerView? = null
+    private var client: EhClient? = null
+    private var request: EhRequest? = null
+    private var hasFirstRefresh = false
 
-//    public static final String ACTION_TOP_LIST_INFO = "action_gallery_info";
-//    public static final String ACTION_GID_TOKEN = "action_gid_token";
-
-
-    private EhTopListDetail ehTopListDetail;
-
-    @Nullable
-    private ViewTransition mViewTransition;
-    @Nullable
-    private RecyclerView mRecyclerView;
-    @NonNull
-    private ViewPager drawPager;
-
-//    private ShowcaseView mShowcaseView;
-
-
-    @Nullable
-    private EhClient mClient;
-
-    EhRequest mRequest;
-
-    @Nullable
-    private final ListUrlBuilder mUrlBuilder = new ListUrlBuilder();
-
-    private boolean mHasFirstRefresh = false;
-
-    private static final boolean TRANSITION_ANIMATION_DISABLED = true;
-
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        Context context = getEHContext();
-
-        mClient = EhApplication.getEhClient(context);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val ehContext = ehContext ?: return
+        client = EhApplication.getEhClient(ehContext)
     }
 
-    @Nullable
-    @Override
-    public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.scene_gallery_top_list, container, false);
+    override fun onCreateView2(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        val view = inflater.inflate(R.layout.scene_gallery_top_list, container, false)
 
-        Spinner spinner = view.findViewById(R.id.top_list_spinner);
-        spinner.setSelection(0);
-        spinner.setOnItemSelectedListener(new TopListKindSelectedListener());
-        FrameLayout mFrameLayout = view.findViewById(R.id.page_detail_view);
-        View transitionView = view.findViewById(R.id.data_loading_view);
-        mViewTransition = new ViewTransition(transitionView, mFrameLayout);
+        val spinner = view.findViewById<Spinner>(R.id.top_list_spinner)
+        spinner.setSelection(0)
+        spinner.onItemSelectedListener = TopListKindSelectedListener()
 
-        mRecyclerView = view.findViewById(R.id.top_list_recycler_view);
+        val frameLayout = view.findViewById<FrameLayout>(R.id.page_detail_view)
+        val transitionView = view.findViewById<View>(R.id.data_loading_view)
+        viewTransition = ViewTransition(transitionView, frameLayout)
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getEHContext());
-        mRecyclerView.setLayoutManager(linearLayoutManager);
-        if (!mHasFirstRefresh) {
-            mHasFirstRefresh = true;
+        recyclerView = view.findViewById(R.id.top_list_recycler_view)
+        recyclerView?.layoutManager = LinearLayoutManager(ehContext)
+
+        if (!hasFirstRefresh) {
+            hasFirstRefresh = true
             try {
-                loadData();
-            } catch (EhException e) {
-                e.printStackTrace();
+                loadData()
+            } catch (e: EhException) {
+                e.printStackTrace()
             }
         } else {
-            bindViewSecond(mPosition);
-            adjustViewVisibility(STATE_NORMAL, true);
+            bindViewSecond(mPosition)
+            adjustViewVisibility(STATE_NORMAL, true)
         }
 
-        return view;
+        return view
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        mViewTransition = null;
+    override fun onDestroyView() {
+        super.onDestroyView()
+        viewTransition = null
     }
 
-    @Override
-    public void onBackPressed() {
-
-        boolean handle = checkDoubleClickExit();
-
-
+    override fun onBackPressed() {
+        val handle = checkDoubleClickExit()
         if (!handle) {
-            if (mState == STATE_INIT) {
-                mRequest.cancel();
+            if (state == STATE_INIT) {
+                request?.cancel()
             }
-            finish();
+            finish()
         }
     }
 
-    private boolean checkDoubleClickExit() {
-        if (getStackIndex() != 0) {
-            return false;
+    private fun checkDoubleClickExit(): Boolean {
+        if (stackIndex != 0) {
+            return false
         }
 
-        long time = System.currentTimeMillis();
-        if (time - mPressBackTime > BACK_PRESSED_INTERVAL) {
-            // It is the last scene
-            mPressBackTime = time;
-            showTip(R.string.press_twice_exit, LENGTH_SHORT);
-            return true;
+        val time = System.currentTimeMillis()
+        return if (time - pressBackTime > BACK_PRESSED_INTERVAL) {
+            pressBackTime = time
+            showTip(R.string.press_twice_exit, LENGTH_SHORT)
+            true
         } else {
-            return false;
+            false
         }
     }
 
-
-    /**
-     * 数据请求入口
-     */
-    private void loadData() throws EhException {
-        boolean requested = request();
+    @Throws(EhException::class)
+    private fun loadData() {
+        val requested = request()
         if (!requested) {
-            throw new EhException("请求数据失败请更换IP地址或检查网络设置是否正确~");
+            throw EhException("请求数据失败请更换IP地址或检查网络设置是否正确~")
         }
     }
 
+    private fun request(): Boolean {
+        val context = ehContext ?: return false
+        val activity = activity2 ?: return false
+        val ehClient = client ?: return false
+        val url = EhUrl.getTopListUrl()
 
-    /**
-     * 请求数据
-     *
-     * @return
-     */
-    private boolean request() {
+        val callback = GetTopListDetailListener(context, activity.stageId, tag)
 
-        Context context = getEHContext();
+        request = EhRequest()
+            .setMethod(EhClient.METHOD_GET_TOP_LIST)
+            .setArgs(url)
+            .setCallback(callback)
 
-        MainActivity activity = getActivity2();
-
-        String url = EhUrl.getTopListUrl();
-//        String url = EhUrl.getMyTag();
-
-        if (null == context || null == activity) {
-            return false;
-        }
-
-        EhClient.Callback callback = new GetTopListDetailListener(context, activity.getStageId(), getTag());
-
-        mRequest = new EhRequest()
-                .setMethod(EhClient.METHOD_GET_TOP_LIST)
-//                .setMethod(EhClient.METHOD_ADD_WATCHED)
-                .setArgs(url).setCallback(callback);
-
-        mClient.execute(mRequest);
-
-
-        return true;
+        ehClient.execute(request)
+        return true
     }
 
-    /**
-     * 通过返回监听赋值数据
-     *
-     * @param ehTopListDetail
-     */
-    private void onGetEhTopListDetailSuccess(EhTopListDetail ehTopListDetail, int index) {
-        this.ehTopListDetail = ehTopListDetail;
-        bindViewSecond(index);
-        adjustViewVisibility(STATE_NORMAL, true);
+    private fun onGetEhTopListDetailSuccess(detail: EhTopListDetail, index: Int) {
+        ehTopListDetail = detail
+        bindViewSecond(index)
+        adjustViewVisibility(STATE_NORMAL, true)
     }
 
-    /**
-     * 绑定接口返回数据
-     */
-    private void bindViewSecond(int index) {
-        if (null == ehTopListDetail) {
-            return;
-        }
-        EhTopListAdapterView mAdapter = new EhTopListAdapterView(getEHContext(), mRecyclerView, ehTopListDetail.get(index), this, index);
-        mRecyclerView.setAdapter(mAdapter);
-
+    private fun bindViewSecond(index: Int) {
+        val detail = ehTopListDetail ?: return
+        val rv = recyclerView ?: return
+        val context = ehContext ?: return
+        val adapter = EhTopListAdapterView(context, rv, detail[index], this, index)
+        rv.adapter = adapter
     }
 
-    /**
-     * 调整页面组件可见性
-     *
-     * @param state
-     */
-    private void adjustViewVisibility(int state, boolean animation) {
-//        if (state == mState) {
-//            return;
-//        }
-        if (null == mViewTransition) {
-            return;
-        }
+    private fun adjustViewVisibility(@State newState: Int, animation: Boolean) {
+        val transition = viewTransition ?: return
+        state = newState
+        val shouldAnimate = !TRANSITION_ANIMATION_DISABLED && animation
 
-
-        mState = state;
-
-        animation = !TRANSITION_ANIMATION_DISABLED && animation;
-
-        switch (state) {
-            case STATE_INIT:
-            case STATE_REFRESH:
-                mViewTransition.showView(0, animation);
-                break;
-            default:
-            case STATE_NORMAL:
-            case STATE_REFRESH_HEADER:
-            case STATE_FAILED:
-                mViewTransition.showView(1, animation);
-                break;
-        }
-
-
-    }
-
-    /**
-     * 请求返回监听
-     */
-    private class GetTopListDetailListener extends EhCallback<EhTopListScene, EhTopListDetail> {
-
-        public GetTopListDetailListener(Context context, int stageId, String sceneTag) {
-            super(context, stageId, sceneTag);
-        }
-
-        @Override
-        public boolean isInstance(SceneFragment scene) {
-            return scene instanceof EhTopListScene;
-        }
-
-        @Override
-        public void onSuccess(EhTopListDetail result) {
-            onGetEhTopListDetailSuccess(result, 0);
-        }
-
-        @Override
-        public void onFailure(Exception e) {
-
-        }
-
-        @Override
-        public void onCancel() {
-
+        when (newState) {
+            STATE_INIT, STATE_REFRESH -> transition.showView(0, shouldAnimate)
+            else -> transition.showView(1, shouldAnimate)
         }
     }
 
-    private class EhTopListAdapterView extends EhTopListAdapter {
-        private final SceneFragment sceneFragment;
-        private final HashMap<Integer, Integer> hashMap = new HashMap();
+    private inner class GetTopListDetailListener(
+        context: Context,
+        stageId: Int,
+        sceneTag: String?,
+    ) : EhCallback<EhTopListScene, EhTopListDetail>(context, stageId, sceneTag) {
+        override fun isInstance(scene: SceneFragment): Boolean = scene is EhTopListScene
 
-        public EhTopListAdapterView(@NonNull Context context, @NonNull RecyclerView recyclerView, TopListInfo topListInfo, SceneFragment scene, int searchType) {
-            super(context, topListInfo, searchType);
-            sceneFragment = scene;
+        override fun onSuccess(result: EhTopListDetail) {
+            onGetEhTopListDetailSuccess(result, 0)
         }
 
-        @Override
-        void clickTitle(String urlFollow) {
-            ListUrlBuilder urlBuilder = new ListUrlBuilder();
-            urlBuilder.setMode(ListUrlBuilder.MODE_TOP_LIST);
-            urlBuilder.setFollow(urlFollow);
-            GalleryListScene.startScene(sceneFragment, urlBuilder);
+        override fun onFailure(e: Exception) {
         }
 
-        @Override
-        int getRandomColor(int position) {
-            Random random = new Random();
+        override fun onCancel() {
+        }
+    }
 
-            if (hashMap.containsKey(position)) {
-                return hashMap.get(position);
-            } else {
-                int color = Color.argb(160, random.nextInt(256), random.nextInt(256), random.nextInt(256));
-                hashMap.put(position, color);
-                return color;
-            }
+    private inner class EhTopListAdapterView(
+        context: Context,
+        recyclerView: RecyclerView,
+        topListInfo: TopListInfo,
+        private val sceneFragment: SceneFragment,
+        searchType: Int,
+    ) : EhTopListAdapter(context, topListInfo, searchType) {
+
+        private val hashMap = HashMap<Int, Int>()
+
+        override fun clickTitle(urlFollow: String) {
+            val urlBuilder = ListUrlBuilder()
+            urlBuilder.mode = ListUrlBuilder.MODE_TOP_LIST
+            urlBuilder.setFollow(urlFollow)
+            GalleryListScene.startScene(sceneFragment, urlBuilder)
         }
 
-        @Override
-        public void onItemClick(TopListItem topListItem, int searchType) {
-            ListUrlBuilder urlBuilder = new ListUrlBuilder();
+        override fun getRandomColor(position: Int): Int {
+            hashMap[position]?.let { return it }
+            val random = Random()
+            val color = Color.argb(160, random.nextInt(256), random.nextInt(256), random.nextInt(256))
+            hashMap[position] = color
+            return color
+        }
+
+        override fun onItemClick(topListItem: TopListItem, searchType: Int) {
+            val urlBuilder = ListUrlBuilder()
             if (searchType == 0) {
-                urlBuilder.setMode(ListUrlBuilder.MODE_NORMAL);
+                urlBuilder.mode = ListUrlBuilder.MODE_NORMAL
             } else {
-                urlBuilder.setMode(ListUrlBuilder.MODE_UPLOADER);
+                urlBuilder.mode = ListUrlBuilder.MODE_UPLOADER
             }
-            if (topListItem.gid != null && !topListItem.gid.isEmpty()
-                    && topListItem.token != null && !topListItem.token.isEmpty()) {
-                Bundle args = new Bundle();
-                args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN);
-                args.putLong(ProgressScene.KEY_GID, Long.parseLong(topListItem.gid));
-                args.putString(ProgressScene.KEY_PTOKEN, topListItem.tag);
-                Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
-                startScene(announcer);
-                return;
-            } else if (topListItem.href!=null) {
-                Announcer announcer = createAnnouncerFromClipboardUrl(topListItem.href);
-                if (announcer!=null){
-                    startScene(announcer);
-                    return;
+
+            if (!topListItem.gid.isNullOrEmpty() && !topListItem.token.isNullOrEmpty()) {
+                val args = Bundle()
+                args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN)
+                args.putLong(ProgressScene.KEY_GID, topListItem.gid.toLong())
+                args.putString(ProgressScene.KEY_PTOKEN, topListItem.tag)
+                val announcer = Announcer(GalleryDetailScene::class.java).setArgs(args)
+                startScene(announcer)
+                return
+            } else if (topListItem.href != null) {
+                val announcer = createAnnouncerFromClipboardUrl(topListItem.href)
+                if (announcer != null) {
+                    startScene(announcer)
+                    return
                 }
             }
-            urlBuilder.setKeyword(topListItem.value);
-            GalleryListScene.startScene(sceneFragment, urlBuilder);
+
+            urlBuilder.keyword = topListItem.value
+            GalleryListScene.startScene(sceneFragment, urlBuilder)
         }
     }
 
-    /**
-     * 下拉框监听
-     */
-    private class TopListKindSelectedListener implements AdapterView.OnItemSelectedListener {
-        @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            mPosition = position;
-            bindViewSecond(mPosition);
+    private inner class TopListKindSelectedListener : AdapterView.OnItemSelectedListener {
+        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            mPosition = position
+            bindViewSecond(mPosition)
         }
 
-        @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-
+        override fun onNothingSelected(parent: AdapterView<*>?) {
         }
+    }
+
+    companion object {
+        const val KEY_ACTION = "action"
+        const val ACTION_TOP_LIST = "action_top_list"
     }
 }
