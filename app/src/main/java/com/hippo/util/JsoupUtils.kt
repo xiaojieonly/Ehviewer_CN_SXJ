@@ -13,53 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 
-import androidx.annotation.Nullable;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-public final class JsoupUtils {
-
-    @Nullable
-    public static Element getElementByClass(Document doc, String className) {
-        Elements elements = doc.getElementsByClass(className);
-        if (elements != null && elements.size() > 0) {
-            return elements.get(0);
+object JsoupUtils {
+    @JvmStatic
+    fun getElementByClass(doc: Document, className: String): Element? {
+        val elements = doc.getElementsByClass(className)
+        if (elements != null && elements.isNotEmpty()) {
+            return elements[0]
         } else {
-            return null;
+            return null
         }
     }
 
-    @Nullable
-    public static Element getElementByClass(Element element, String className) {
-        Elements elements = element.getElementsByClass(className);
-        if (elements != null && elements.size() > 0) {
-            return elements.get(0);
+    @JvmStatic
+    fun getElementByClass(element: Element, className: String): Element? {
+        val elements = element.getElementsByClass(className)
+        return if (elements != null && elements.isNotEmpty()) {
+            elements[0]
         } else {
-            return null;
+            null
         }
     }
 
-    @Nullable
-    public static Elements getElementsByClass(Element element, String className) {
-        Elements elements = element.getElementsByClass(className);
-        if (elements != null && elements.size() > 0) {
-            return elements;
+    @JvmStatic
+    fun getElementsByClass(element: Element, className: String): Elements? {
+        val elements = element.getElementsByClass(className)
+        return if (elements != null && elements.isNotEmpty()) {
+            elements
         } else {
-            return null;
+            null
         }
     }
 
-    @Nullable
-    public static Element getElementByTag(Element element, String tagName) {
-        Elements elements = element.getElementsByTag(tagName);
-        if (elements != null && elements.size() > 0) {
-            return elements.get(0);
+    @JvmStatic
+    fun getElementByTag(element: Element, tagName: String): Element? {
+        val elements = element.getElementsByTag(tagName)
+        return if (elements != null && elements.isNotEmpty()) {
+            elements[0]
         } else {
-            return null;
+            null
         }
     }
 }

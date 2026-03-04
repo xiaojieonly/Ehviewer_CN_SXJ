@@ -13,35 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
+import android.content.Context
+import android.graphics.drawable.Drawable
+import androidx.annotation.DrawableRes
+import androidx.core.content.res.ResourcesCompat
 
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
-
-public final class DrawableManager {
-
-//    public static Drawable getVectorDrawable(@NonNull Context context, @DrawableRes int resId) {
-//        return getVectorDrawable(context.getResources(), resId, context.getTheme());
-//    }
-//
-//    public static Drawable getVectorDrawable(@NonNull Resources res,
-//            @DrawableRes int resId, @Nullable Resources.Theme theme) {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            return res.getDrawable(resId, theme);
-//        } else {
-//            return VectorDrawableCompat.create(res, resId, theme);
-//        }
-//    }
-    public static Drawable getVectorDrawable(@NonNull Context context, @DrawableRes int resId) {
-        return ResourcesCompat.getDrawable(context.getResources(), resId, context.getTheme());
+object DrawableManager {
+    //    public static Drawable getVectorDrawable(@NonNull Context context, @DrawableRes int resId) {
+    //        return getVectorDrawable(context.getResources(), resId, context.getTheme());
+    //    }
+    //
+    //    public static Drawable getVectorDrawable(@NonNull Resources res,
+    //            @DrawableRes int resId, @Nullable Resources.Theme theme) {
+    //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    //            return res.getDrawable(resId, theme);
+    //        } else {
+    //            return VectorDrawableCompat.create(res, resId, theme);
+    //        }
+    //    }
+    @JvmStatic
+    fun getVectorDrawable(context: Context, @DrawableRes resId: Int): Drawable? {
+        return ResourcesCompat.getDrawable(context.getResources(), resId, context.getTheme())
     }
-
 }

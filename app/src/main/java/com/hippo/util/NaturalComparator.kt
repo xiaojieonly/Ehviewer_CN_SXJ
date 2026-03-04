@@ -13,140 +13,150 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.hippo.util;
-
-import java.util.Comparator;
+package com.hippo.util
 
 /**
  * Implements natural sort order.
  */
-public class NaturalComparator implements Comparator<String> {
-
-  @Override
-  public int compare(String o1, String o2) {
-    if (o1 == null && o2 == null) {
-      return 0;
-    }
-    if (o1 == null) {
-      return -1;
-    }
-    if (o2 == null) {
-      return 1;
-    }
-
-    int index1 = 0;
-    int index2 = 0;
-    while (true) {
-      String data1 = nextSlice(o1, index1);
-      String data2 = nextSlice(o2, index2);
-
-      if (data1 == null && data2 == null) {
-        return 0;
-      }
-      if (data1 == null) {
-        return -1;
-      }
-      if (data2 == null) {
-        return 1;
-      }
-
-      index1 += data1.length();
-      index2 += data2.length();
-
-      int result;
-      if (isDigit(data1) && isDigit(data2)) {
-        result = compareNumberString(data1, data2);
-      } else {
-        result = data1.compareToIgnoreCase(data2);
-      }
-
-      if (result != 0) {
-        return result;
-      }
-    }
-  }
-
-  private static boolean isDigit(String str) {
-    // Just check the first char
-    char ch = str.charAt(0);
-    return ch >= '0' && ch <= '9';
-  }
-
-  private static String nextSlice(String str, int index) {
-    int length = str.length();
-    if (index == length) {
-      return null;
-    }
-
-    char ch = str.charAt(index);
-    if (ch == '.' || ch == ' ') {
-      return str.substring(index, index + 1);
-    } else if (ch >= '0' && ch <= '9') {
-      return str.substring(index, nextNumberBound(str, index + 1));
-    } else {
-      return str.substring(index, nextOtherBound(str, index + 1));
-    }
-  }
-
-  private static int nextNumberBound(String str, int index) {
-    for (int length = str.length(); index < length; index++) {
-      char ch = str.charAt(index);
-      if (ch < '0' || ch > '9') {
-        break;
-      }
-    }
-    return index;
-  }
-
-  private static int nextOtherBound(String str, int index) {
-    for (int length = str.length(); index < length; index++) {
-      char ch = str.charAt(index);
-      if (ch == '.' || ch == ' ' || (ch >= '0' && ch <= '9')) {
-        break;
-      }
-    }
-    return index;
-  }
-
-  private static String removeLeadingZero(String s) {
-    if (s.length() < 1) {
-      return s;
-    }
-
-    // At least keep the last number
-    for (int i = 0, n = s.length() - 1; i < n; i++) {
-      if (s.charAt(i) != '0') {
-        return s.substring(i);
-      }
-    }
-
-    return s.substring(s.length() - 1);
-  }
-
-  private static int compareNumberString(String s1, String s2) {
-    String p1 = removeLeadingZero(s1);
-    String p2 = removeLeadingZero(s2);
-
-    int l1 = p1.length();
-    int l2 = p2.length();
-
-    if (l1 > l2) {
-      return 1;
-    } else if (l1 < l2) {
-      return -1;
-    } else {
-      for (int i = 0; i < l1; i++) {
-        char c1 = p1.charAt(i);
-        char c2 = p2.charAt(i);
-        if (c1 > c2) {
-          return 1;
-        } else if (c1 < c2) {
-          return -1;
+class NaturalComparator : Comparator<String?> {
+    override fun compare(o1: String?, o2: String?): Int {
+        if (o1 == null && o2 == null) {
+            return 0
         }
-      }
+        if (o1 == null) {
+            return -1
+        }
+        if (o2 == null) {
+            return 1
+        }
+
+        var index1 = 0
+        var index2 = 0
+        while (true) {
+            val data1: String? = nextSlice(o1, index1)
+            val data2: String? = nextSlice(o2, index2)
+
+            if (data1 == null && data2 == null) {
+                return 0
+            }
+            if (data1 == null) {
+                return -1
+            }
+            if (data2 == null) {
+                return 1
+            }
+
+            index1 += data1.length
+            index2 += data2.length
+
+            val result: Int
+            if (isDigit(data1) && isDigit(data2)) {
+                result = compareNumberString(data1, data2)
+            } else {
+                result = data1.compareTo(data2, ignoreCase = true)
+            }
+
+            if (result != 0) {
+                return result
+            }
+        }
     }
 
-    return -Integer.compare(s1.length(), s2.length());
-  }
+    companion object {
+        private fun isDigit(str: String): Boolean {
+            // Just check the first char
+            val ch = str[0]
+            return ch in '0'..'9'
+        }
+
+        private fun nextSlice(str: String, index: Int): String? {
+            val length = str.length
+            if (index == length) {
+                return null
+            }
+
+            val ch = str[index]
+            return when (ch) {
+                '.', ' ' -> {
+                    str.substring(index, index + 1)
+                }
+                in '0'..'9' -> {
+                    str.substring(index, nextNumberBound(str, index + 1))
+                }
+                else -> {
+                    str.substring(index, nextOtherBound(str, index + 1))
+                }
+            }
+        }
+
+        private fun nextNumberBound(str: String, index: Int): Int {
+            var index = index
+            val length = str.length
+            while (index < length) {
+                val ch = str[index]
+                if (ch !in '0'..'9') {
+                    break
+                }
+                index++
+            }
+            return index
+        }
+
+        private fun nextOtherBound(str: String, index: Int): Int {
+            var index = index
+            val length = str.length
+            while (index < length) {
+                val ch = str[index]
+                if (ch == '.' || ch == ' ' || (ch in '0'..'9')) {
+                    break
+                }
+                index++
+            }
+            return index
+        }
+
+        private fun removeLeadingZero(s: String): String {
+            if (s.isEmpty()) {
+                return s
+            }
+
+            // At least keep the last number
+            var i = 0
+            val n = s.length - 1
+            while (i < n) {
+                if (s[i] != '0') {
+                    return s.substring(i)
+                }
+                i++
+            }
+
+            return s.substring(s.length - 1)
+        }
+
+        private fun compareNumberString(s1: String, s2: String): Int {
+            val p1: String = removeLeadingZero(s1)
+            val p2: String = removeLeadingZero(s2)
+
+            val l1 = p1.length
+            val l2 = p2.length
+
+            if (l1 > l2) {
+                return 1
+            } else if (l1 < l2) {
+                return -1
+            } else {
+                for (i in 0..<l1) {
+                    val c1 = p1[i]
+                    val c2 = p2[i]
+                    if (c1 > c2) {
+                        return 1
+                    } else if (c1 < c2) {
+                        return -1
+                    }
+                }
+            }
+
+            return -s1.length.compareTo(s2.length)
+        }
+    }
 }

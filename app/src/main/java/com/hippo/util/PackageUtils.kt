@@ -13,67 +13,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Log
+import com.hippo.util.ExceptionUtils.throwIfFatal
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+import java.util.Locale
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.util.Log;
+object PackageUtils {
+    private val TAG: String = PackageUtils::class.java.getSimpleName()
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-public final class PackageUtils {
-
-    private static final String TAG = PackageUtils.class.getSimpleName();
-
-    public static String getSignature(Context context, String packageName) {
+    @JvmStatic
+    fun getSignature(context: Context, packageName: String): String? {
         try {
-            @SuppressLint("PackageManagerGetSignatures")
-            PackageInfo pi = context.getPackageManager().getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
-            Signature[] ss = pi.signatures;
-            if (ss != null && ss.length >= 1) {
-                return computeSHA1(ss[0].toByteArray());
+            @SuppressLint("PackageManagerGetSignatures") val pi = context.packageManager
+                .getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+            val ss = pi.signatures
+            if (ss != null && ss.size >= 1) {
+                return computeSHA1(ss[0]!!.toByteArray())
             } else {
-                Log.e(TAG, "Can't find signature in package " + packageName);
+                Log.e(TAG, "Can't find signature in package $packageName")
             }
-        } catch (Throwable e) {
-            ExceptionUtils.throwIfFatal(e);
-            Log.e(TAG, "Can't find package " + packageName, e);
+        } catch (e: Throwable) {
+            throwIfFatal(e)
+            Log.e(TAG, "Can't find package $packageName", e)
         }
-        return null;
+        return null
     }
 
     /**
      * @return looks like A1:43:6B:34... or null
      */
-    public static String computeSHA1(final byte[] certRaw) {
-        StringBuilder sb = new StringBuilder(59);
-        MessageDigest md;
+    fun computeSHA1(certRaw: ByteArray): String? {
+        val sb = StringBuilder(59)
+        val md: MessageDigest?
         try {
-            md = MessageDigest.getInstance("SHA1");
-            byte[] sha1 = md.digest(certRaw);
-            int length = sha1.length;
-            for (int i = 0; i  < length; i++) {
+            md = MessageDigest.getInstance("SHA1")
+            val sha1 = md.digest(certRaw)
+            val length = sha1.size
+            for (i in 0..<length) {
                 if (i != 0) {
-                    sb.append(':');
+                    sb.append(':')
                 }
-                byte b = sha1[i];
-                String appendStr = Integer.toString(b & 0xff, 16);
-                if (appendStr.length() == 1) {
-                    sb.append(0);
+                val b = sha1[i]
+                val appendStr = (b.toInt() and 0xff).toString(16)
+                if (appendStr.length == 1) {
+                    sb.append(0)
                 }
-                sb.append(appendStr);
+                sb.append(appendStr)
             }
 
-            return sb.toString().toUpperCase();
-        }
-        catch (NoSuchAlgorithmException ex) {
-            Log.e(TAG, "Can't final Algorithm SHA1", ex);
-            return null;
+            return sb.toString().uppercase(Locale.getDefault())
+        } catch (ex: NoSuchAlgorithmException) {
+            Log.e(TAG, "Can't final Algorithm SHA1", ex)
+            return null
         }
     }
 }
