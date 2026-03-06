@@ -72,8 +72,6 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUrlOpener;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
-import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
-import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.ehviewer.ui.main.UserImageChange;
 import com.hippo.ehviewer.ui.scene.AnalyticsScene;
 import com.hippo.ehviewer.ui.scene.BaseScene;
@@ -165,7 +163,7 @@ public final class MainActivity extends StageActivity
 
     Handler handlerB = new Handler(Looper.getMainLooper()) {
         @Override
-        public void handleMessage(Message msg) {
+        public void handleMessage(@NonNull Message msg) {
             int mNextFrame = gifHandler.updateFrame(backgroundBit);
             handlerB.sendEmptyMessageDelayed(1, mNextFrame);
             mHeaderBackground.setImageBitmap(backgroundBit);
@@ -605,7 +603,7 @@ public final class MainActivity extends StageActivity
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+    public void onSaveInstanceState(Bundle outState, @NonNull PersistableBundle outPersistentState) {
 //        super.onSaveInstanceState(outState, outPersistentState);
         outState.putInt(KEY_NAV_CHECKED_ITEM, mNavCheckedItem);
     }
