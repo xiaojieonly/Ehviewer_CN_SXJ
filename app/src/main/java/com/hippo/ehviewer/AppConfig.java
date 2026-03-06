@@ -208,18 +208,20 @@ public class AppConfig {
         
         IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
             try {
-                File[] files = dir.listFiles();
-                if (files == null) {
+                String[] names = dir.list();
+                if (names == null) {
                     return;
                 }
-                
                 long threeDaysAgo = System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000;
-                
-                for (File file : files) {
+                for (String name : names) {
+                    File file = new File(dir, name);
                     if (file.isFile() && file.lastModified() < threeDaysAgo) {
                         file.delete();
                     }
                 }
+            } catch (OutOfMemoryError e) {
+                // 内存不足时静默放弃，并尝试删除整个目录，避免崩溃
+                dir.delete();
             } finally {
                 synchronized (sDeleteOldParseErrorFilesLock) {
                     sDeletingOldParseErrorFiles = false;
