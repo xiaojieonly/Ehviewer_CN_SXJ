@@ -27,6 +27,7 @@ import java.io.OutputStream;
 public final class IOUtils {
     private static final int EOF = -1;
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
+    private static final int MAX_LINE_LENGTH = 131072; // 128KB
 
     private IOUtils() {
     }
@@ -71,10 +72,28 @@ public final class IOUtils {
      * Returns the ASCII characters up to but not including the next "\r\n", or
      * "\n".
      *
+     * @param in the InputStream to read from
+     * @return the line content without line terminator
      * @throws EOFException if the stream is exhausted before the next
      *                              newline character.
+     * @throws IOException if the line exceeds maxLength (prevents OOM on corrupted files)
      */
     public static String readAsciiLine(final InputStream in) throws IOException {
+        return readAsciiLine(in, MAX_LINE_LENGTH);
+    }
+
+    /**
+     * Returns the ASCII characters up to but not including the next "\r\n", or
+     * "\n", with a maximum line length to prevent OOM on corrupted/malformed files.
+     *
+     * @param in       the InputStream to read from
+     * @param maxLength maximum allowed line length in characters
+     * @return the line content without line terminator
+     * @throws EOFException if the stream is exhausted before the next
+     *                              newline character.
+     * @throws IOException if the line exceeds maxLength
+     */
+    public static String readAsciiLine(final InputStream in, final int maxLength) throws IOException {
         final StringBuilder result = new StringBuilder(80);
         while (true) {
             final int c = in.read();
@@ -83,7 +102,9 @@ public final class IOUtils {
             } else if (c == '\n') {
                 break;
             }
-
+            if (result.length() >= maxLength) {
+                throw new IOException("Line too long");
+            }
             result.append((char) c);
         }
         final int length = result.length();
