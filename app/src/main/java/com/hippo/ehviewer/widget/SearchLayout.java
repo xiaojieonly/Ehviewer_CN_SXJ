@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -94,7 +94,9 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     private ImageSearchLayout mImageView;
 
     private View mActionView;
-    private TextView mAction;
+    // --- [修正] 使用新的 TextView 变量，删除旧的 mAction ---
+    private TextView mTagSearchEntrance;
+    private TextView mImageSearchToggle;
 
     private LinearLayoutManager mLayoutManager;
     private SearchAdapter mAdapter;
@@ -150,10 +152,30 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
         mImageView = (ImageSearchLayout) mInflater.inflate(R.layout.search_image, null);
         mImageView.setHelper(this);
 
-        // Create action view
+        // Create action view (New Structure)
         mActionView = mInflater.inflate(R.layout.search_action, null);
-        mAction = (TextView) mActionView.findViewById(R.id.action);
-        mAction.setOnClickListener(this);
+
+        // 1. 绑定“图片搜索”切换
+        mImageSearchToggle = mActionView.findViewById(R.id.search_image_toggle);
+        mImageSearchToggle.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 点击左边 -> 切换模式（文字会变）
+                toggleSearchMode();
+            }
+        });
+
+        // 2. 绑定“标签检索”跳转
+        mTagSearchEntrance = mActionView.findViewById(R.id.tv_tag_search_entrance);
+        mTagSearchEntrance.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 点击右边 -> 跳转页面（文字不变）
+                if (mHelper != null) {
+                    mHelper.onOpenTagSelector();
+                }
+            }
+        });
     }
 
     public void setHelper(Helper helper) {
@@ -316,7 +338,11 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                 resId = R.string.keyword_search;
                 break;
         }
-        mAction.setText(resId);
+
+        // --- [修正] 确保将文字设置给 mImageSearchToggle ---
+        if (mImageSearchToggle != null) {
+            mImageSearchToggle.setText(resId);
+        }
 
         if (mHelper != null) {
             mHelper.onChangeSearchMode();
@@ -329,9 +355,8 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
             new AlertDialog.Builder(getContext())
                     .setMessage(R.string.search_tip)
                     .show();
-        } else if (mAction == v) {
-            toggleSearchMode();
         }
+        // 移除了 mAction 和 mAdvancedTagSearchBtn 的判断，因为现在使用匿名监听器
     }
 
     private class SimpleHolder extends ViewHolder {
@@ -379,7 +404,12 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
                         resId = R.string.keyword_search;
                         break;
                 }
-                mAction.setText(resId);
+
+                // --- [核心修正] 防止空指针异常 ---
+                if (mImageSearchToggle != null) {
+                    mImageSearchToggle.setText(resId);
+                }
+
                 view = mActionView;
             } else {
                 view = mInflater.inflate(R.layout.search_category, parent, false);
@@ -416,5 +446,6 @@ public class SearchLayout extends EasyRecyclerView implements CompoundButton.OnC
     public interface Helper {
         void onChangeSearchMode();
         void onSelectImage();
+        void onOpenTagSelector();
     }
 }

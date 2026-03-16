@@ -1,54 +1,34 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-  ~ Copyright 2016 Hippo Seven
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
--->
-<!--    android:requestLegacyExternalStorage="true"-->
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <!-- Android 10 (API 29) 及以上版本，可能需要添加 -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Android 10 (API 29) 及以上版本，可能需要添加 -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <!--  用于获取wifi状态、实现WiFi迁移的必要权限  -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <!--  使用系统自带下载器  -->
-    <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" />
-    <!--  自动安装apk  -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- 用于获取wifi状态 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- 使用系统自带下载器 -->
+    <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" /> <!-- 自动安装apk -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
-        android:required="true" />
-
-    <!--  鼠标适配  -->
+        android:required="true" /> <!-- 鼠标适配 -->
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
+
     <application
-        android:name="com.hippo.ehviewer.EhApplication"
+        android:name=".EhApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_scheme"
         android:hardwareAccelerated="true"
@@ -60,8 +40,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         tools:ignore="UnusedAttribute">
-        <!--        tools:targetApi="n">-->
-
+        <activity
+            android:name=".ui.TagSelectorActivity"
+            android:label="标签选择"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            xmlns:tools="http://schemas.android.com/tools"
+            tools:replace="android:theme" />
+        <!-- tools:targetApi="n"> -->
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
@@ -71,7 +56,7 @@
             android:value="2.1" />
 
         <activity
-            android:name="com.hippo.ehviewer.ui.splash.SplashActivity"
+            android:name=".ui.splash.SplashActivity"
             android:alwaysRetainTaskState="true"
             android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
             android:exported="true"
@@ -81,24 +66,23 @@
             android:windowSoftInputMode="stateHidden|adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <!-- LAUNCHER -->
-                <!--                <category android:name="android.intent.category.HOME" />-->
+                <!-- <category android:name="android.intent.category.HOME" /> -->
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name="com.hippo.ehviewer.ui.MainActivity"
+            android:name=".ui.MainActivity"
             android:configChanges="screenSize|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.Main"
             android:windowSoftInputMode="stateHidden">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <!--                <category android:name="android.intent.category.LAUNCHER"/>-->
+                <!-- <category android:name="android.intent.category.LAUNCHER"/> -->
             </intent-filter>
 
             <meta-data
@@ -118,27 +102,27 @@
                 <data android:host="g.e-hentai.org" />
                 <data android:host="lofi.e-hentai.org" />
             </intent-filter>
-
             <intent-filter android:label="@string/keyword_search">
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
             </intent-filter>
-
             <intent-filter android:label="@string/image_search">
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name="com.hippo.ehviewer.ui.GalleryActivity"
+            android:name=".ui.GalleryActivity"
             android:configChanges="screenSize|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.Gallery">
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -156,7 +140,6 @@
                 <data android:mimeType="application/x-rar-compressed" />
                 <data android:mimeType="application/x-zip-compressed" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -170,7 +153,6 @@
                 <data android:pathPattern=".*\\.rar" />
                 <data android:pathPattern=".*\\.zip" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -185,110 +167,94 @@
                 <data android:pathPattern=".*\\.rar" />
                 <data android:pathPattern=".*\\.zip" />
             </intent-filter>
-
             <intent-filter>
-                <action android:name="com.samsung.android.support.REMOTE_ACTION"/>
+                <action android:name="com.samsung.android.support.REMOTE_ACTION" />
             </intent-filter>
 
             <meta-data
                 android:name="com.samsung.android.support.REMOTE_ACTION"
-                android:resource="@xml/s_pen_actions"/>
+                android:resource="@xml/s_pen_actions" />
         </activity>
-
         <activity
-            android:name="com.hippo.ehviewer.ui.SettingsActivity"
+            android:name=".ui.SettingsActivity"
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Settings" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.ExcludedLanguagesActivity"
+            android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/excluded_languages"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.DirPickerActivity"
+            android:name=".ui.DirPickerActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/dir_picker"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.LicenseActivity"
+            android:name=".ui.LicenseActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/license"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.FilterActivity"
+            android:name=".ui.FilterActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/filter"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.BlackListActivity"
+            android:name=".ui.BlackListActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/blacklist"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.SetSecurityActivity"
+            android:name=".ui.SetSecurityActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/set_pattern_protection"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.UConfigActivity"
+            android:name=".ui.UConfigActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/u_config"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.MyTagsActivity"
+            android:name=".ui.MyTagsActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/my_tags"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.HostsActivity"
+            android:name=".ui.HostsActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/hosts"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.shortcuts.ShortcutsActivity"
+            android:name=".shortcuts.ShortcutsActivity"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.wifi.WiFiServerActivity"
+            android:name=".ui.wifi.WiFiServerActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/wifi_server"
             android:theme="@style/AppTheme.Toolbar" />
-
         <activity
-            android:name="com.hippo.ehviewer.ui.wifi.WiFiClientActivity"
+            android:name=".ui.wifi.WiFiClientActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/wifi_client"
             android:theme="@style/AppTheme.Toolbar" />
 
         <service
-            android:name="com.hippo.ehviewer.download.DownloadService"
-            android:label="@string/download_service_label"
-            android:foregroundServiceType="dataSync" />
+            android:name=".download.DownloadService"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/download_service_label" />
 
         <provider
             android:name="com.hippo.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
-
             <meta-data
                 android:name="com.hippo.content.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
-
         </provider>
-
     </application>
+
 </manifest>
