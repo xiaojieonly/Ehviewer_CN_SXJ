@@ -108,6 +108,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
+
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
 
     public static final String ACTION_DIR = "dir";
@@ -357,6 +361,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             startPage = mCurrentIndex;
         }
 
+        if (!isEglAvailable()) {
+            mGalleryProvider.stop();
+            showGlFallbackView();
+            return;
+        }
+
         setContentView(R.layout.activity_gallery);
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
@@ -444,6 +454,37 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             FrameLayout mainLayout = (FrameLayout) ViewUtils.$$(this, R.id.main);
             mainLayout.addView(new GalleryGuideView(this));
         }
+    }
+
+    private boolean isEglAvailable() {
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+        if (display == null || display == EGL10.EGL_NO_DISPLAY) {
+            return false;
+        }
+
+        int[] version = new int[2];
+        if (!egl.eglInitialize(display, version)) {
+            return false;
+        }
+
+        try {
+            int[] numConfig = new int[1];
+            return egl.eglChooseConfig(display, new int[]{EGL10.EGL_NONE}, null, 0, numConfig)
+                    && numConfig[0] > 0;
+        } catch (Throwable e) {
+            return false;
+        } finally {
+            egl.eglTerminate(display);
+        }
+    }
+
+    private void showGlFallbackView() {
+        setContentView(R.layout.activity_gallery_fallback);
+        View close = ViewUtils.$$(this, R.id.gl_fallback_close);
+        close.setOnClickListener(v -> finish());
+        Log.w("GalleryActivity", "EGL init failed, switch to non-GL fallback page");
+        Toast.makeText(this, R.string.gallery_gl_fallback_toast, Toast.LENGTH_LONG).show();
     }
 
     @Override

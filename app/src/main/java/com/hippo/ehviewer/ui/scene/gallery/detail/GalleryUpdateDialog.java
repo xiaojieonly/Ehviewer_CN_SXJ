@@ -1,5 +1,7 @@
 package com.hippo.ehviewer.ui.scene.gallery.detail;
 
+import static com.hippo.ehviewer.util.ClipboardUtil.createAnnouncerFromClipboardUrl;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -46,7 +48,7 @@ public class GalleryUpdateDialog {
 //            args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, gi);
 //            Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
             dialog.dismiss();
-            Announcer announcer = MainActivity.createAnnouncerFromClipboardUrl(galleryDetail.newVersions[index].versionUrl);
+            Announcer announcer = createAnnouncerFromClipboardUrl(galleryDetail.newVersions[index].versionUrl);
             detailScene.startScene(announcer);
         });
         dialog = builder.create();

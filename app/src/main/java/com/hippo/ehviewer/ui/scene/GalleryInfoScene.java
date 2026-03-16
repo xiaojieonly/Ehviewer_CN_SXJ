@@ -155,8 +155,7 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
         outState.putStringArrayList(KEY_VALUES, mValues);
     }
 
-    @SuppressWarnings("deprecation")
-    @Nullable
+    @NonNull
     @Override
     public View onCreateView3(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

@@ -811,7 +811,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 }
                 return null;
             }
-        }.executeOnExecutor(IoThreadPoolExecutor.getInstance());
+        }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
     }
 
     // Update in DB

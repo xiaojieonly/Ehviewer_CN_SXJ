@@ -373,16 +373,22 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         int fromPosInList = mCallback.positionInList(fromPosition);
         int toPosInList = mCallback.positionInList(toPosition);
         
-        if (fromPosInList >= 0 && fromPosInList < list.size() && 
-            toPosInList >= 0 && toPosInList < list.size()) {
-            // 获取下载项信息
-            EhDB.moveDownloadInfo(list,fromPosInList, toPosInList);
+        if (fromPosInList >= 0 && fromPosInList < list.size() &&
+                toPosInList >= 0 && toPosInList < list.size()) {
+            // 先更新数据库中的顺序（通过 time 字段）
+            EhDB.moveDownloadInfo(list, fromPosInList, toPosInList);
 
-            // 移动下载项
-            final DownloadInfo item = list.remove(fromPosInList);
-            list.add(toPosInList, item);
-            
-            // 通知适配器数据已更改
+            // 再尝试更新当前列表的内存顺序
+            // 某些场景下（如搜索结果列表）mList 可能是 Arrays.asList(...)
+            // 这类列表不支持结构修改，直接 remove/add 会抛出 UnsupportedOperationException
+            try {
+                final DownloadInfo item = list.remove(fromPosInList);
+                list.add(toPosInList, item);
+            } catch (UnsupportedOperationException e) {
+                Log.w(TAG, "onMoveItem: list is unmodifiable, only DB order updated", e);
+            }
+
+            // 通知适配器刷新界面
             notifyDataSetChanged();
         }
     }

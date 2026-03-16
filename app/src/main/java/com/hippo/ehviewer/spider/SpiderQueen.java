@@ -730,7 +730,7 @@ public final class SpiderQueen implements Runnable {
                     writeSpiderInfoToLocal(spiderInfo);
                     return null;
                 }
-            }.executeOnExecutor(IoThreadPoolExecutor.getInstance());
+            }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
         }
     }
 

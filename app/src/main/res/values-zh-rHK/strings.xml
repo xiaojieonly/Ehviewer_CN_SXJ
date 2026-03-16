@@ -157,6 +157,10 @@
     <string name="error_empty_html">空白頁面內容</string>
     <string name="error_cant_get_image">無法獲取圖片</string>
     <string name="error_igneous_wrong">錯誤的igneous\n檢查帳號權限後重新登入</string>
+    <string name="gallery_gl_fallback_title">OpenGL 渲染器無法使用</string>
+    <string name="gallery_gl_fallback_message">目前裝置暫時無法初始化 EGL，請返回後稍後再試。</string>
+    <string name="gallery_gl_fallback_action_close">返回</string>
+    <string name="gallery_gl_fallback_toast">GL 渲染失敗，已切換到安全占位頁</string>
 
     <string name="kokomade_tip">設定->Eh->畫廊站點->e-hentai</string>
 

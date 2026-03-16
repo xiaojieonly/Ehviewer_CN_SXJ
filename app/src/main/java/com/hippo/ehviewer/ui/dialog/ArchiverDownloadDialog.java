@@ -196,7 +196,7 @@ public class ArchiverDownloadDialog implements
             if (dialog != null && !dialog.isShowing()) {
                 return;
             }
-            if (downloadUrl==null){
+            if (downloadUrl == null || downloadUrl.trim().isEmpty()) {
                 Toast.makeText(context,R.string.download_state_failed,Toast.LENGTH_LONG).show();
                 return;
             }
@@ -205,9 +205,26 @@ public class ArchiverDownloadDialog implements
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
 //            String fileName = galleryDetail.title.replaceAll("/","");
-            String fileName = createFileName(galleryDetail.title);
+            String fileName = createFileName(galleryDetail.title, galleryDetail.gid);
+            if (fileName.isEmpty()) {
+                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
             Uri downloadUri = Uri.parse(downloadUrl);
-            DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+            String scheme = downloadUri.getScheme();
+            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+                Log.w("ArchiverDownloadDialog", "Invalid download URL scheme: " + downloadUrl);
+                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
+            DownloadManager.Request request;
+            try {
+                request = new DownloadManager.Request(downloadUri);
+            } catch (IllegalArgumentException e) {
+                Log.e("ArchiverDownloadDialog", "Invalid download URL: " + downloadUrl, e);
+                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
             request.setAllowedOverRoaming(true);
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
@@ -218,6 +235,10 @@ public class ArchiverDownloadDialog implements
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            if (downloadManager == null) {
+                Toast.makeText(context, R.string.download_state_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
 
 //            downloadManager.query(new DownloadManager.Query().setFilterByStatus(DownloadManager.STATUS_PAUSED));
 
@@ -320,7 +341,7 @@ public class ArchiverDownloadDialog implements
             }
             long downloadId = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID));
 //            String fileName = galleryDetail.title.replaceAll("/","");
-            String fileName = createFileName(galleryDetail.title);
+            String fileName = createFileName(galleryDetail.title, galleryDetail.gid);
             String tempFilePath = tempDir.getPath() + "/" + fileName;
             
             // Handle content:// URI by copying to temp file first
@@ -417,11 +438,7 @@ public class ArchiverDownloadDialog implements
                     
                     // Copy from File to UniFile
                     UniFile sourceFile = UniFile.fromFile(picture);
-                    if (sourceFile == null) {
-                        Log.e(TAG, "Failed to create UniFile from: " + picture.getPath());
-                        continue;
-                    }
-                    
+
                     if (!FileUtils.copyFile(sourceFile, destFile, false)) {
                         Log.e(TAG, "Failed to copy file: " + picture.getName() + " to " + newName);
                         // Try to delete the created file if copy failed
@@ -455,31 +472,18 @@ public class ArchiverDownloadDialog implements
         }
     }
 
-/**
- * 去除输入字符串中的'\'、'/'、'|'字符
- * 创建文件名的静态私有方法
- * 限制文件名长度以避免"File name too long"错误
- * @param name 原始名称参数
- * @return 返回处理后的文件名字符串
- */
-    static private String createFileName(String name){
-        if (name == null) {
-            throw new IllegalArgumentException("Input name cannot be null");
-        }
-        if (name.isEmpty()) {
-            return "";
-        }
-        String result = name.replaceAll("/","");
-        result = result.replaceAll("\\|","");
-        // 限制文件名长度，避免"File name too long"错误
-        // 考虑到 ARCHIVER_PATH (18字符) + ".zip" (4字符) + 路径分隔符
-        // 限制文件名在 200 个字符以内，为路径预留空间
+    /**
+     * 统一净化归档文件名，避免 DownloadManager 因非法路径抛错。
+     */
+    private static String createFileName(String name, long gid) {
+        String result = name == null ? "" : com.hippo.lib.yorozuya.FileUtils.sanitizeFilename(name);
         final int MAX_FILENAME_LENGTH = 150;
         if (result.length() > MAX_FILENAME_LENGTH) {
             result = result.substring(0, MAX_FILENAME_LENGTH);
         }
+        if (result.isEmpty()) {
+            result = gid > 0 ? "archiver_" + gid : "archiver";
+        }
         return result;
-        // 使用正则表达式替换非法字符
-//        return name.replaceAll("[\\\\/|]", "");
     }
 }

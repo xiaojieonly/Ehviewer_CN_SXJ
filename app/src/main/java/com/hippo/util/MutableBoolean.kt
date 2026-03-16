@@ -13,14 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
-
-public class MutableBoolean {
-
-  public boolean value;
-
-  public MutableBoolean(boolean value) {
-    this.value = value;
-  }
-}
+class MutableBoolean(@JvmField var value: Boolean)
