@@ -23,21 +23,26 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.text.TextUtils
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.hippo.ehviewer.R
 import java.lang.RuntimeException
+import androidx.core.net.toUri
 
 class AppHelper {
     private fun isWifiProxy(context: Context?): Boolean {
         var proxyPort: Int
 
-        var proxyAddress = System.getProperty("http.proxyHost")
+        val proxyAddress = System.getProperty("http.proxyHost")
         val portStr = System.getProperty("http.proxyPort")
-        proxyPort = (if (portStr != null) portStr else "-1").toInt()
+        proxyPort = (portStr ?: "-1").toInt()
 
         return (!TextUtils.isEmpty(proxyAddress)) && (proxyPort != -1)
     }
@@ -49,7 +54,7 @@ class AppHelper {
             subject: String?, text: String?
         ) {
             val i = Intent(Intent.ACTION_SENDTO)
-            i.setData(Uri.parse("mailto:$address"))
+            i.setData("mailto:$address".toUri())
             if (subject != null) {
                 i.putExtra(Intent.EXTRA_SUBJECT, subject)
             }
@@ -130,21 +135,52 @@ class AppHelper {
 
         @JvmStatic
         fun checkVPN(context: Context): Boolean {
-            val connectivityManager =
-                context.getSystemService<ConnectivityManager>(ConnectivityManager::class.java)
+            // 如果应用没有声明或授予 ACCESS_NETWORK_STATE，就直接跳过 VPN 检测，避免崩溃
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_NETWORK_STATE
+            ) == PackageManager.PERMISSION_GRANTED
 
-            val network = connectivityManager.activeNetwork
-            //don't know why always returns null:
-            val networkInfo = connectivityManager.getNetworkInfo(network)
-            val result =
-                networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_VPN
-            if (result) {
-                try {
-                    Toast.makeText(context, R.string.network_remind, Toast.LENGTH_LONG).show()
-                } catch (_: RuntimeException) {
-                }
+            if (!hasPermission) {
+                // 无权限时，不做任何网络状态检测，认为“可以正常访问”
+                return true
             }
-            return !result
+
+            return try {
+                val connectivityManager =
+                    context.getSystemService(ConnectivityManager::class.java)
+                        ?: // 拿不到系统服务时直接认为“允许访问”，避免崩溃
+                        return true
+
+                val isVpn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // 新 API：通过 NetworkCapabilities 判断是否走 VPN
+                    val network = connectivityManager.activeNetwork
+                    val capabilities = if (network != null) {
+                        connectivityManager.getNetworkCapabilities(network)
+                    } else {
+                        null
+                    }
+                    capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+                } else {
+                    // 旧 API：使用 TYPE_VPN 的 NetworkInfo（已废弃，但仅在旧系统上走到这里）
+                    @Suppress("DEPRECATION")
+                    val networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN)
+                    @Suppress("DEPRECATION")
+                    networkInfo?.isConnected == true
+                }
+
+                if (isVpn) {
+                    try {
+                        Toast.makeText(context, R.string.network_remind, Toast.LENGTH_LONG).show()
+                    } catch (_: RuntimeException) {
+                    }
+                }
+
+                !isVpn
+            } catch (_: SecurityException) {
+                // 某些机型/ROM 即使有权限声明也可能抛 SecurityException，这里统一兜底为“允许访问”
+                true
+            }
         }
 
         @JvmStatic

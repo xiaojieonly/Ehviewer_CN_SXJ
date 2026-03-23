@@ -452,7 +452,4 @@ public class EhTagDatabase {
 
         return searchList;
     }
-    public List<Tag> getTagList() {
-        return tagList;
-    }
 }

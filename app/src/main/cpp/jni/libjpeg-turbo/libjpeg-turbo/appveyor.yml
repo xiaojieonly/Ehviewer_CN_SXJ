@@ -1,0 +1,57 @@
+install:
+  - cmd: >-
+      mkdir c:\installers
+
+      mkdir c:\temp
+
+      curl -fSL -o c:\installers\nasm-2.10.01-win32.zip http://www.nasm.us/pub/nasm/releasebuilds/2.10.01/win32/nasm-2.10.01-win32.zip
+
+      7z x c:\installers\nasm-2.10.01-win32.zip -oc:\ > c:\installers\nasm.install.log
+
+      set INCLUDE=c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include;c:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\include
+
+      set LIB=c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib\amd64;c:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\lib\x64
+
+      set PATH=c:\nasm-2.10.01;c:\Program Files (x86)\NSIS;c:\msys64\mingw32\bin;c:\msys64\usr\bin;c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\amd64;c:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE;c:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\bin\x64;c:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\bin;%PATH%
+
+      set MSYSTEM=MINGW32
+
+      bash -c "pacman --noconfirm -S zip"
+
+      mklink /d "%ProgramData%\Oracle\Java32" "c:\Program Files (x86)\Java\jdk1.6.0"
+
+      git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b %APPVEYOR_REPO_BRANCH% c:/buildscripts
+
+build_script:
+  - cmd: >-
+      for /f %%i in ('"cygpath %CD%"') do set MINGWPATH=%%i
+
+      bash c:/buildscripts/buildljt -d %MINGWPATH% -b /c/ljt.nightly -v
+
+      move c:\ljt.nightly\files\*.tar.gz .
+
+      move c:\ljt.nightly\files\*.exe .
+
+      move c:\ljt.nightly\files\*.zip .
+
+      move c:\ljt.nightly\log-windows.txt .
+
+artifacts:
+  - path: '*.tar.gz'
+    name: Source tarball
+
+  - path: '*-gcc*.exe'
+    name: SDK for MinGW
+
+  - path: '*-vc*.exe'
+    name: SDK for Visual C++
+
+  - path: '*.zip'
+    name: Windows JNI JARs
+
+  - path: 'log-windows.txt'
+    name: Build log
+
+test: off
+
+deploy: off

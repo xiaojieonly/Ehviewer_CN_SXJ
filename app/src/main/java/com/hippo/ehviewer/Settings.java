@@ -997,11 +997,11 @@ public class Settings {
         boolean writeFile = false;
         String userID = getString(KEY_USER_ID, null);
         File file = AppConfig.getFileInExternalAppDir(FILENAME_USER_ID);
-        if (null == userID || !isValidUserID(userID)) {
+        if (!isValidUserID(userID)) {
             writeXml = true;
             // Get use ID from out sd card file
             userID = FileUtils.read(file);
-            if (null == userID || !isValidUserID(userID)) {
+            if (!isValidUserID(userID)) {
                 writeFile = true;
                 userID = generateUserID();
             }

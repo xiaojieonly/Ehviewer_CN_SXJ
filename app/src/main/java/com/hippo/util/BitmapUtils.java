@@ -40,7 +40,7 @@ public final class BitmapUtils {
 
         final ActivityManager activityManager = (ActivityManager) sContext.
                 getSystemService(Context.ACTIVITY_SERVICE);
-        final long total = activityManager.getMemoryClass() * 1024 * 1024;
+        final long total = activityManager.getMemoryClass() * 1024 * 1024L;
 
         return total - used;
     }
@@ -85,7 +85,7 @@ public final class BitmapUtils {
                     }
                     return null;
                 }
-                if (width * height * 3 > m) {
+                if (width * height * 3L > m) {
                     scaleM = (int) Math.ceil(Math.sqrt(width * height * 3 / (float) m));
                 }
             }
