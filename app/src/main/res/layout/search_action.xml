@@ -50,7 +50,7 @@
         android:minHeight="48dp"
         android:gravity="center"
         android:padding="12dp"
-        android:text="标签检索"
+        android:text="@string/tag_search_entrance"
         android:textColor="?attr/colorAccent"
         android:textSize="14sp"
         android:textStyle="bold"

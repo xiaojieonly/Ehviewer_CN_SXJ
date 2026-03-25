@@ -202,6 +202,7 @@
     <string name="search_normal">Normal Search</string>
     <string name="search_advance">Advance Options</string>
     <string name="search_image">Image Search</string>
+    <string name="tag_search_entrance">Tag Selector</string>
     <string name="search_normal_search">Normal search</string>
     <string name="search_subscription_search">Subscription search</string>
     <string name="search_specify_uploader">Specify uploader</string>

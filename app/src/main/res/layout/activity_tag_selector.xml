@@ -6,14 +6,7 @@
     android:orientation="vertical"
     android:background="?android:attr/windowBackground">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#009688"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        app:titleTextColor="@android:color/white" />
+
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
