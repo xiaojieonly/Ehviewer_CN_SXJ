@@ -69,12 +69,12 @@ class WebViewSignInScene : SolidScene() {
         mWebView = WebView(context)
         val webSettings = mWebView!!.settings
         webSettings.javaScriptEnabled = true
-        if (Settings.getDF()&& AppHelper.Companion.checkVPN(context)){
-            mWebView!!.webViewClient = LoginWebViewClientSNI(mWebView!!)
-        }else{
-            mWebView!!.webViewClient = LoginWebViewClient()
-        }
-
+//        if (Settings.getDF()&& AppHelper.Companion.checkVPN(context)){
+//            mWebView!!.webViewClient = LoginWebViewClientSNI(mWebView!!)
+//        }else{
+//            mWebView!!.webViewClient = LoginWebViewClient()
+//        }
+        mWebView!!.webViewClient = LoginWebViewClient()
         //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
 //        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
         mWebView!!.loadUrl(EhUrl.URL_SIGN_IN)
