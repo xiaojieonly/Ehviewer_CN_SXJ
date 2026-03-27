@@ -48,6 +48,8 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -97,6 +99,7 @@ import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.TagSelectorActivity;
 import com.hippo.ehviewer.ui.dialog.SelectItemWithIconAdapter;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
@@ -180,6 +183,7 @@ public final class GalleryListScene extends BaseScene
     /*---------------
      Whole life cycle
      ---------------*/
+
     @Nullable
     private EhClient mClient;
     @Nullable
@@ -459,6 +463,7 @@ public final class GalleryListScene extends BaseScene
         EventBus.getDefault().unregister(this);
     }
 
+
     private void setSearchBarHint(Context context, SearchBar searchBar) {
         Resources resources = context.getResources();
         Drawable searchImage = DrawableManager.getVectorDrawable(context, R.drawable.v_magnify_x24);
@@ -475,6 +480,7 @@ public final class GalleryListScene extends BaseScene
     }
 
     private void setSearchBarSuggestionProvider(SearchBar searchBar) {
+
         searchBar.setSuggestionProvider(text -> {
             GalleryDetailUrlParser.Result result1 = GalleryDetailUrlParser.parse(text, false);
             if (result1 != null) {
@@ -486,7 +492,35 @@ public final class GalleryListScene extends BaseScene
             }
             return null;
         });
+
+
+
     }
+    /**
+     * [New Feature] Tag Selector Result Handler
+     * Registers an asynchronous callback to process results returned from the TagSelectorActivity.
+     * 注册异步回调，用于处理标签选择器返回的数据并触发搜索。
+     */
+    private final ActivityResultLauncher<Intent> mTagSelectorLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                // Validate result status and data integrity
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    // Extract the constructed tag query string from intent payload
+                    // 从 Intent 载荷中提取拼接好的标签字符串
+                    String selectedTags = result.getData().getStringExtra("selected_tags");
+
+                    if (mSearchBar != null && !TextUtils.isEmpty(selectedTags)) {
+                        // 1. Update SearchBar UI state
+                        mSearchBar.setText(selectedTags);
+                        // 2. Trigger search execution immediately
+                        // 直接调用核心搜索逻辑
+                        onApplySearch(selectedTags);
+                    }
+                }
+            }
+    );
+
 
     @Nullable
     private static String getSuitableTitleForUrlBuilder(
@@ -1345,6 +1379,7 @@ public final class GalleryListScene extends BaseScene
         if (STATE_NORMAL == mState) {
             view.toggle();
         }
+
     }
 
     private void showGoToDialog() {
@@ -1727,11 +1762,10 @@ public final class GalleryListScene extends BaseScene
         if (null == mSearchBar) {
             return;
         }
-
         if (mSearchBar.getState() == SearchBar.STATE_NORMAL) {
             setState(STATE_SEARCH);
         } else {
-            // Clear
+            // 右侧图标恢复为原本的：清空搜索框内容
             mSearchBar.setText("");
         }
     }
@@ -1847,10 +1881,18 @@ public final class GalleryListScene extends BaseScene
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-//        ActivityResultContracts.StartActivityForResult(Intent.createChooser(intent,
-//                getString(R.string.select_image)), REQUEST_CODE_SELECT_IMAGE);
         startActivityForResult(Intent.createChooser(intent,
                 getString(R.string.select_image)), REQUEST_CODE_SELECT_IMAGE);
+    }
+    @Override
+    public void onOpenTagSelector() {
+        Context context = getContext();
+        if (context != null) {
+            Intent intent = new Intent(context, TagSelectorActivity.class);
+            // Launch the visual tag selector interface via the registered launcher
+            // 通过注册的启动器打开可视化标签选择界面
+            mTagSelectorLauncher.launch(intent);
+        }
     }
 
     // SearchBarMover.Helper
@@ -1889,14 +1931,21 @@ public final class GalleryListScene extends BaseScene
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (REQUEST_CODE_SELECT_IMAGE == requestCode) {
-            if (Activity.RESULT_OK == resultCode && null != mSearchLayout && null != data) {
-                mSearchLayout.setImageUri(data.getData());
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Handle legacy request codes or fallback scenarios
+        // 处理传统的 Activity 返回结果
+        if (requestCode == 1001 && resultCode == Activity.RESULT_OK && data != null) {
+            String tags = data.getStringExtra("selected_tags");
+            if (!TextUtils.isEmpty(tags) && mSearchBar != null) {
+                // Sync UI and trigger application logic
+                // 同步 UI 状态并应用搜索
+                mSearchBar.setText(tags);
+                onApplySearch(tags);
             }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
 
     private void onGetGalleryListSuccess(GalleryListParser.Result result, int taskId) {
         if (mHelper != null && mSearchBarMover != null &&

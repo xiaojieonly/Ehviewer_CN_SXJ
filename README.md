@@ -19,6 +19,7 @@ An E-Hentai Application for Android.
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - Torrent链接:magnet:?xt=urn:btih:4869fe5d6cebba6e1f2b672e3523cca83838b466&xt=urn:btmh:1220df01410d828d8544b9efe8e15fe3e7323eab74d2ae962947f324dd36e0a99b74&dn=EhViewer-2.0.1.5.apk&xl=27934862
 
+
 点击前往赏饭：
 
 - [要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)
@@ -58,14 +59,9 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 
 ## 2026/01/05 紧急修复
-### 新版发布2.0.1.3
+### 新版发布2.0.1.2
 
 - 暂时回滚图片解码方式，等后续优化好了再上
-- [百度云](https://pan.baidu.com/s/1cPrJQY1vIj-wGCaeHGCuvg) 提取码：q48u
-- [夸克网盘](https://pan.quark.cn/s/e979bc34a387) 提取码：EKWz
-- [蓝奏云](https://wwbfg.lanzouu.com/iS7Ec3fdxo0j)，电脑端可正常下载 提取码：74wp
-- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接: magnet:?xt=urn:btih:2e1ff3f33a2b805248f8924a59c9af10a253aeba&xt=urn:btmh:1220b85731bf95b0beddae106ae6c369c9e01177e133a26b70ecc8a8a4314e237410&dn=EhViewer-2.0.1.3.apk&xl=27623258
 
 ## 2026/01/04 紧急修复
 ### 新版发布2.0.1.1
@@ -165,6 +161,3 @@ Here is the libraries
 ## 状态
 
 [![Alt](https://repobeats.axiom.co/api/embed/e6becb5b041dae430dff7f85581aa1f91975d416.svg "Repobeats analytics image")](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/pulse)
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=xiaojieonly/Ehviewer_CN_SXJ&type=date&legend=top-left)](https://www.star-history.com/#xiaojieonly/Ehviewer_CN_SXJ&type=date&legend=top-left)

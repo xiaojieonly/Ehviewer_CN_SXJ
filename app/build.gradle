@@ -29,7 +29,7 @@ android {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 30
+        targetSdkVersion 29
         versionCode 111
         versionName "2.0.1.5"
         vectorDrawables.useSupportLibrary = true
@@ -61,7 +61,7 @@ android {
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
         }
         debug {
-            applicationIdSuffix ".debug"
+            applicationIdSuffix ".debug1"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
         }
     }
@@ -81,8 +81,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-        // 允许对 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
-        coreLibraryDesugaringEnabled true
     }
 
     buildFeatures {
@@ -169,9 +167,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation 'org.jsoup:jsoup:1.18.1'
 
-    // Java 8+ 核心库 desugaring，用于在旧 Android 上支持 ThreadLocal.withInitial 等 API
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
-
     // Glide 图片加载库
 //    implementation 'com.github.bumptech.glide:glide:5.0.5'
 //    kapt 'com.github.bumptech.glide:compiler:5.0.5'
@@ -180,6 +175,9 @@ dependencies {
     implementation 'org.greenrobot:eventbus:3.3.1'
     //loading组件
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    // 引入 Google 的弹性流式布局库
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
 
 
     testImplementation 'junit:junit:4.13.2'

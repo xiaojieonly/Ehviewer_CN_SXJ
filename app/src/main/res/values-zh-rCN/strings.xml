@@ -172,6 +172,7 @@
     <string name="search_normal">普通搜索</string>
     <string name="search_advance">高级选项</string>
     <string name="search_image">图片搜索</string>
+    <string name="tag_search_entrance">标签检索</string>
     <string name="search_normal_search">一般搜索</string>
     <string name="search_subscription_search">订阅搜索</string>
     <string name="search_specify_uploader">指定上传者</string>
