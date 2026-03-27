@@ -18,12 +18,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
 
 import java.lang.ref.WeakReference;
@@ -43,7 +43,20 @@ import java.util.Set;
  * 2. Checks system locale to prevent Chinese tags on English devices. (根据系统语言强制切英文，防止乱码或违和感)
  * 3. Uses lazy loading for large tag lists. (数据量太大，采用了懒加载)
  */
-public class TagSelectorActivity extends AppCompatActivity {
+public class TagSelectorActivity extends EhActivity {
+
+    @Override
+    protected int getThemeResId(int theme) {
+        switch (theme) {
+            case Settings.THEME_LIGHT:
+            default:
+                return R.style.AppTheme_NoActionBar;
+            case Settings.THEME_DARK:
+                return R.style.AppTheme_Dark_NoActionBar;
+            case Settings.THEME_BLACK:
+                return R.style.AppTheme_Black_NoActionBar;
+        }
+    }
 
     private RecyclerView recyclerView;
     private TagAdapter adapter;
@@ -106,9 +119,8 @@ public class TagSelectorActivity extends AppCompatActivity {
 
         // Strict check: Only "zh" gets Chinese tags.
         // 严格检查：只有系统语言是中文(zh)才显示中文标签，其他一律英文
-        Locale locale = Locale.getDefault();
-        String lang = locale.getLanguage();
-        isChineseSystem = "zh".equals(lang);
+        String lang = Settings.getAppLanguage();
+        isChineseSystem = lang.contains("zh");
     }
 
     private void initView() {
@@ -267,7 +279,8 @@ public class TagSelectorActivity extends AppCompatActivity {
             if (resultPairs != null) {
                 for (Pair<String, String> pair : resultPairs) {
                     String val1 = pair.first; String val2 = pair.second;
-                    String searchKey = null; String displayName = null;
+                    String searchKey;
+                    String displayName;
 
                     // Normalize data (key vs translation position varies)
                     // 数据库返回的 key/value 位置可能不固定，这里做下标准化

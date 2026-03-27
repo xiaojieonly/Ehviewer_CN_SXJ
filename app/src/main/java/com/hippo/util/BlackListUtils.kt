@@ -2,7 +2,7 @@ package com.hippo.util
 
 import com.hippo.ehviewer.client.data.GalleryComment
 import com.hippo.ehviewer.dao.BlackList
-import com.hippo.util.TimeUtils.timeNow
+import com.hippo.util.TimeUtils.getTimeNow
 
 object BlackListUtils {
     @JvmStatic
@@ -12,7 +12,7 @@ object BlackListUtils {
         blackList.badgayname = comment.user
         blackList.angrywith = comment.comment
         blackList.mode = 1
-        blackList.add_time = timeNow
+        blackList.add_time = getTimeNow()
 
         return blackList
     }
