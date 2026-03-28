@@ -116,6 +116,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     @Nullable
     private SpiderQueen mCurrentSpider;
     
+    // UI 线程 Handler，用于从后台线程回调到主线程
+    private final Handler mMainHandler;
+
     // 后台任务管理器
     private final BackgroundTaskManager mBackgroundTaskManager;
     // 当前下载任务的后台任务ID
@@ -138,6 +141,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         
         // 初始化后台任务管理器
         mBackgroundTaskManager = BackgroundTaskManager.getInstance();
+
+        // 初始化主线程 Handler
+        mMainHandler = new Handler(Looper.getMainLooper());
 
         // Get all labels
         List<DownloadLabel> labels = EhDB.getAllDownloadLabelList();
@@ -236,6 +242,34 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             return mDefaultInfoList;
         } else {
             return mMap.get(label);
+        }
+    }
+
+    private void notifyRemove(final DownloadInfo info, final List<DownloadInfo> list, final int index) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            for (DownloadInfoListener l : mDownloadInfoListeners) {
+                l.onRemove(info, list, index);
+            }
+        } else {
+            mMainHandler.post(() -> {
+                for (DownloadInfoListener l : mDownloadInfoListeners) {
+                    l.onRemove(info, list, index);
+                }
+            });
+        }
+    }
+
+    private void notifyReload() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            for (DownloadInfoListener l : mDownloadInfoListeners) {
+                l.onReload();
+            }
+        } else {
+            mMainHandler.post(() -> {
+                for (DownloadInfoListener l : mDownloadInfoListeners) {
+                    l.onReload();
+                }
+            });
         }
     }
 
@@ -1546,9 +1580,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 if (index >= 0) {
                     list.remove(info);
                     // Update listener
-                    for (DownloadInfoListener l : mDownloadInfoListeners) {
-                        l.onRemove(info, list, index);
-                    }
+                    notifyRemove(info, list, index);
                 }
             }
 
@@ -1586,9 +1618,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
 
         // Update listener
-        for (DownloadInfoListener l : mDownloadInfoListeners) {
-            l.onReload();
-        }
+        notifyReload();
 
         // Ensure download
         requestEnsureDownload();

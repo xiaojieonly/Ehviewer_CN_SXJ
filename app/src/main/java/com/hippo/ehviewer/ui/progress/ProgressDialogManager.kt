@@ -1,12 +1,16 @@
 package com.hippo.ehviewer.ui.progress
 
-import android.app.AlertDialog
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Handler
 import android.os.Looper
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.view.setPadding
 import androidx.annotation.MainThread
 import androidx.annotation.StringRes
 import com.hippo.ehviewer.R
@@ -30,7 +34,9 @@ object ProgressDialogManager {
      */
     private data class TaskDialog(
         val taskId: String,
-        val dialog: ProgressDialog,
+        val dialog: AlertDialog,
+        val progressBar: ProgressBar,
+        val messageView: TextView,
         var isShown: Boolean = true,
         var context: Context?
     )
@@ -64,30 +70,44 @@ object ProgressDialogManager {
     @MainThread
     private fun createNewDialog(context: Context, task: BackgroundTask) {
         val taskId = task.getTaskId()
-        val progressDialog = ProgressDialog(context).apply {
-            setTitle(task.getTaskName())
-            setMessage(task.getTaskDescription() ?: "Loading...")
-            setIndeterminate(task.getProgress() == -1)
-            setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-            setCancelable(false)
-            setMax(100)
-            setProgress(if (task.getProgress() == -1) 0 else task.getProgress())
-            
-            // 添加后台运行按钮
-            setButton(DialogInterface.BUTTON_NEGATIVE, context.getString(R.string.background_processing)) { dialog, which ->
-                dismissDialog(taskId, false) // 不移除监听器，继续后台运行
-            }
+
+        val progressBar = ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
+            isIndeterminate = task.getProgress() == -1
+            max = 100
+            progress = if (task.getProgress() == -1) 0 else task.getProgress()
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
-        
-        val taskDialog = TaskDialog(taskId, progressDialog, true, context)
+
+        val messageView = TextView(context).apply {
+            text = task.getTaskDescription() ?: ""
+            setPadding((context.resources.displayMetrics.density * 12).toInt())
+        }
+
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((context.resources.displayMetrics.density * 16).toInt())
+            addView(progressBar)
+            addView(messageView)
+        }
+
+        val alertDialog = AlertDialog.Builder(context)
+            .setTitle(task.getTaskName())
+            .setView(container)
+            .setCancelable(false)
+            .setNegativeButton(R.string.background_processing) { dialog, _ ->
+                dialog.dismiss()
+                dismissDialog(taskId, false)
+            }
+            .create()
+
+        val taskDialog = TaskDialog(taskId, alertDialog, progressBar, messageView, true, context)
         activeDialogs[taskId] = taskDialog
-        
-        // 设置进度监听器
+
         val listener = createProgressListener(taskId, task)
         taskListeners[taskId] = listener
         task.setProgressListener(listener)
-        
-        progressDialog.show()
+
+        alertDialog.show()
     }
     
     /**
@@ -95,23 +115,21 @@ object ProgressDialogManager {
      */
     @MainThread
     private fun updateExistingDialog(taskDialog: TaskDialog, task: BackgroundTask) {
-        val dialog = taskDialog.dialog
         val progress = task.getProgress()
         val detail = task.getProgressDetail()
-        
-        dialog.apply {
+
+        taskDialog.progressBar.apply {
             if (progress != -1) {
-                setIndeterminate(false)
-                setMax(100)
-                setProgress(progress)
+                isIndeterminate = false
+                max = 100
+                this.progress = progress
             }
-            
-            val message = if (!detail.isNullOrEmpty()) {
-                "${task.getTaskDescription()}\n$detail"
-            } else {
-                task.getTaskDescription() ?: ""
-            }
-            setMessage(message)
+        }
+
+        taskDialog.messageView.text = if (!detail.isNullOrEmpty()) {
+            "${task.getTaskDescription()}\n$detail"
+        } else {
+            task.getTaskDescription() ?: ""
         }
     }
     
@@ -125,19 +143,16 @@ object ProgressDialogManager {
                 mainHandler.post {
                     activeDialogs[taskId]?.let { taskDialog ->
                         if (taskDialog.isShown) {
-                            taskDialog.dialog.apply {
-                                if (progress != -1) {
-                                    setIndeterminate(false)
-                                    setMax(100)
-                                    setProgress(progress)
-                                }
-                                
-                                val message = if (!detail.isNullOrEmpty()) {
-                                    "${task.getTaskDescription()}\n$detail"
-                                } else {
-                                    task.getTaskDescription() ?: ""
-                                }
-                                setMessage(message)
+                            if (progress != -1) {
+                                taskDialog.progressBar.isIndeterminate = false
+                                taskDialog.progressBar.max = 100
+                                taskDialog.progressBar.progress = progress
+                            }
+
+                            taskDialog.messageView.text = if (!detail.isNullOrEmpty()) {
+                                "${task.getTaskDescription()}\n$detail"
+                            } else {
+                                task.getTaskDescription() ?: ""
                             }
                         }
                     }

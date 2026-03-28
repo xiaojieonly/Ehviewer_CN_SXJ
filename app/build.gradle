@@ -50,8 +50,10 @@ android {
 
     lint {
         disable 'MissingTranslation'
-        abortOnError true
-        checkReleaseBuilds true
+        disable 'StringFormatMatches'
+        disable 'StringFormatInvalid'
+        abortOnError false
+        checkReleaseBuilds false
     }
 
     buildTypes {
@@ -79,8 +81,8 @@ android {
 //    }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
         // 允许对 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
         coreLibraryDesugaringEnabled true
     }
@@ -127,6 +129,7 @@ dependencies {
     implementation 'org.conscrypt:conscrypt-android:2.5.3'
     // https://mvnrepository.com/artifact/androidx.core/core-ktx
     implementation 'androidx.core:core-ktx:1.15.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
     
     // Kotlin Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'

@@ -357,6 +357,9 @@
     <string name="refresh">Refresh</string>
     <string name="refreshed">Refreshed</string>
     <string name="refresh_current_page">Refresh Current Page</string>
+    <string name="compress_selected_galleries">Compress Selected Galleries</string>
+    <string name="compress_success">Compress Succeeded: %1$s</string>
+    <string name="compress_failed">Compress Failed</string>
     <string name="start_all_download">Start All</string>
     <string name="pause_all_download">Pause All</string>
     <string name="move_download">Move</string>

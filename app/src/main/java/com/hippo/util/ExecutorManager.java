@@ -42,7 +42,7 @@ public class ExecutorManager {
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
     
     // IO密集型线程池（文件读写、数据库操作等）- 复用现有的IoThreadPoolExecutor
-    private static final ExecutorService IO_EXECUTOR = IoThreadPoolExecutor.getInstance();
+    private static final ExecutorService IO_EXECUTOR = IoThreadPoolExecutor.Companion.getInstance();
     
     // 网络请求线程池（网络连接、Socket等）
     private static final ExecutorService NETWORK_EXECUTOR = new ThreadPoolExecutor(
