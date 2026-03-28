@@ -7,15 +7,16 @@ import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 public class MergeDuplicateGalleryRunner {
     
     public static void executeMergeTask(Context context, String taskId, BackgroundTaskStatusManager statusManager) {
-        MergeDuplicateGalleryTask task = new MergeDuplicateGalleryTask(null);
+        MergeDuplicateGalleryTask task = new MergeDuplicateGalleryTask(context);
         task.setTaskId(taskId);
         task.setStatusManager(statusManager);
         
-        // 使用反射调用protected方法
         try {
-            java.lang.reflect.Method method = MergeDuplicateGalleryTask.class.getDeclaredMethod("doInBackground", Void[].class);
-            method.setAccessible(true);
-            method.invoke(task, (Object) null);
+            // 直接调用非UI线程安全方法
+            boolean success = task.runDirectly();
+            if (!success) {
+                statusManager.markTaskError(taskId, "合并重复画廊失败");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             statusManager.markTaskError(taskId, e.getMessage());

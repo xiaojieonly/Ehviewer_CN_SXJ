@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import androidx.annotation.DimenRes;
@@ -33,6 +34,7 @@ import androidx.annotation.Nullable;
 import com.alibaba.fastjson.JSONObject;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUtils;
+import java.io.File;
 import com.hippo.ehviewer.client.data.FavListUrlBuilder;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.ui.CommonOperations;
@@ -809,6 +811,82 @@ public class Settings {
     public static final String KEY_DOWNLOAD_SAVE_PATH = "image_path";
     public static final String KEY_DOWNLOAD_SAVE_QUERY = "image_query";
     public static final String KEY_DOWNLOAD_SAVE_FRAGMENT = "image_fragment";
+
+    public static final String KEY_EXPORT_SAVE_SCHEME = "export_scheme";
+    public static final String KEY_EXPORT_SAVE_AUTHORITY = "export_authority";
+    public static final String KEY_EXPORT_SAVE_PATH = "export_path";
+    public static final String KEY_EXPORT_SAVE_QUERY = "export_query";
+    public static final String KEY_EXPORT_SAVE_FRAGMENT = "export_fragment";
+
+    @Nullable
+    public static UniFile getExportLocation() {
+        UniFile dir = null;
+        try {
+            Uri.Builder builder = new Uri.Builder();
+            builder.scheme(getString(KEY_EXPORT_SAVE_SCHEME, null));
+            builder.encodedAuthority(getString(KEY_EXPORT_SAVE_AUTHORITY, null));
+            builder.encodedPath(getString(KEY_EXPORT_SAVE_PATH, null));
+            builder.encodedQuery(getString(KEY_EXPORT_SAVE_QUERY, null));
+            builder.encodedFragment(getString(KEY_EXPORT_SAVE_FRAGMENT, null));
+            dir = UniFile.fromUri(sContext, builder.build());
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            // Ignore
+        }
+        if (dir != null) {
+            return dir;
+        }
+
+        UniFile downloadLocation = getDownloadLocation();
+        if (downloadLocation != null) {
+            Uri uri = downloadLocation.getUri();
+            if (uri != null) {
+                String path = uri.getPath();
+                if (path != null) {
+                    String newPath;
+                    if (path.endsWith("/")) {
+                        path = path.substring(0, path.length() - 1);
+                    }
+                    int index = path.toLowerCase().lastIndexOf("/download");
+                    if (index >= 0) {
+                        newPath = path.substring(0, index) + "/Output";
+                    } else {
+                        newPath = path + "/Output";
+                    }
+                    File dirFile = new File(newPath);
+                    if (dirFile.exists() || dirFile.mkdirs()) {
+                        return UniFile.fromFile(dirFile);
+                    }
+                }
+            }
+        }
+
+        File defaultDownloadDir = AppConfig.getDefaultDownloadDir();
+        if (defaultDownloadDir != null) {
+            File parent = defaultDownloadDir.getParentFile();
+            if (parent != null) {
+                File outputDir = new File(parent, "Output");
+                if (outputDir.exists() || outputDir.mkdirs()) {
+                    return UniFile.fromFile(outputDir);
+                }
+            }
+        }
+
+        File fallbackDir = new File(Environment.getExternalStorageDirectory(), "EhViewer/Output");
+        if (!fallbackDir.exists()) {
+            fallbackDir.mkdirs();
+        }
+        return UniFile.fromFile(fallbackDir);
+    }
+
+    public static void putExportLocation(@NonNull UniFile location) {
+        Uri uri = location.getUri();
+        putString(KEY_EXPORT_SAVE_SCHEME, uri.getScheme());
+        putString(KEY_EXPORT_SAVE_AUTHORITY, uri.getEncodedAuthority());
+        putString(KEY_EXPORT_SAVE_PATH, uri.getEncodedPath());
+        putString(KEY_EXPORT_SAVE_QUERY, uri.getEncodedQuery());
+        putString(KEY_EXPORT_SAVE_FRAGMENT, uri.getEncodedFragment());
+    }
 
     @Nullable
     public static UniFile getDownloadLocation() {

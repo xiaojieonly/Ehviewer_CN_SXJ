@@ -61,6 +61,12 @@
         android:title="@string/settings_advanced_dump_logcat"
         app:allowDividerAbove="true" />
 
+    <Preference
+        android:key="export_path"
+        android:title="@string/settings_advanced_export_path"
+        android:summary="@string/settings_advanced_export_path_summary"
+        app:allowDividerAbove="true" />
+
     <com.hippo.ehviewer.preference.ClearDownloadPathCachePreference
         android:key="clear_download_path_cache"
         android:summary="@string/settings_advanced_clear_download_path_cache_summary"

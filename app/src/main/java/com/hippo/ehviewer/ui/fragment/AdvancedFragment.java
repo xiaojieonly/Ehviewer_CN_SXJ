@@ -35,6 +35,9 @@ import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.ui.DirPickerActivity;
+import com.hippo.unifile.UniFile;
 import com.hippo.ehviewer.ui.wifi.WiFiClientActivity;
 import com.hippo.ehviewer.ui.wifi.WiFiServerActivity;
 import com.hippo.ehviewer.ui.task.BackgroundTaskActivity;
@@ -61,6 +64,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
 
     private static final String KEY_DUMP_LOGCAT = "dump_logcat";
     private static final String KEY_CLEAR_MEMORY_CACHE = "clear_memory_cache";
+    private static final String KEY_EXPORT_PATH = "export_path";
     private static final String KEY_APP_LANGUAGE = "app_language";
     private static final String KEY_IMPORT_DATA = "import_data";
     private static final String KEY_WIFI_SERVER = "wifi_server";
@@ -70,6 +74,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_NETWORK_DIAGNOSTIC = "network_diagnostic";
     private static final String KEY_USER_AGENT = "user_agent";
     private static final String KEY_LOCAL_GALLERY = "local_gallery";
+
+    public static final int REQUEST_CODE_PICK_EXPORT_DIR = 10;
 
     private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
 
@@ -82,6 +88,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
 
         Preference dumpLogcat = findPreference(KEY_DUMP_LOGCAT);
         Preference clearMemoryCache = findPreference(KEY_CLEAR_MEMORY_CACHE);
+        Preference exportPath = findPreference(KEY_EXPORT_PATH);
         Preference appLanguage = findPreference(KEY_APP_LANGUAGE);
         Preference importData = findPreference(KEY_IMPORT_DATA);
         Preference socketData = findPreference(KEY_WIFI_SERVER);
@@ -94,6 +101,13 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
 
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
+        if (exportPath != null) {
+            exportPath.setOnPreferenceClickListener(this);
+            UniFile exportDir = Settings.getExportLocation();
+            if (exportDir != null && exportDir.getUri() != null) {
+                exportPath.setSummary(exportDir.getUri().toString());
+            }
+        }
         importData.setOnPreferenceClickListener(this);
         socketData.setOnPreferenceClickListener(this);
         clientData.setOnPreferenceClickListener(this);
@@ -135,6 +149,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 return gotoNetworkDiagnosticActivity();
             case KEY_USER_AGENT:
                 return showUserAgentDialog();
+            case KEY_EXPORT_PATH:
+                return openExportDirPicker();
             case KEY_LOCAL_GALLERY:
                 return gotoLocalGalleryActivity();
             default:
@@ -181,6 +197,40 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Intent intent = new Intent(activity, LocalGalleryActivity.class);
         activity.startActivity(intent);
         return true;
+    }
+
+    private boolean openExportDirPicker() {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return false;
+        }
+
+        UniFile uniFile = Settings.getExportLocation();
+        Intent intent = new Intent(activity, DirPickerActivity.class);
+        if (uniFile != null && uniFile.getUri() != null) {
+            intent.putExtra(DirPickerActivity.KEY_FILE_URI, uniFile.getUri());
+        }
+        startActivityForResult(intent, REQUEST_CODE_PICK_EXPORT_DIR);
+        return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_PICK_EXPORT_DIR && resultCode == Activity.RESULT_OK && data != null) {
+            UniFile uniFile = UniFile.fromUri(getContext(), data.getData());
+            if (uniFile != null) {
+                Settings.putExportLocation(uniFile);
+                Preference exportPath = findPreference(KEY_EXPORT_PATH);
+                if (exportPath != null && uniFile.getUri() != null) {
+                    exportPath.setSummary(uniFile.getUri().toString());
+                }
+                String path = uniFile.getUri() != null ? uniFile.getUri().toString() : null;
+                if (path != null) {
+                    Toast.makeText(getContext(), getString(R.string.settings_advanced_export_path_set, path), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     private boolean showUserAgentDialog() {

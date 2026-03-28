@@ -1265,7 +1265,7 @@ public class DownloadsScene extends ToolbarScene
             LongList gidList = null;
             List<DownloadInfo> downloadInfoList = null;
             boolean collectGid = position == 1 || position == 2 || position == 3; // Start, Stop, Delete
-            boolean collectDownloadInfo = position == 3 || position == 4; // Delete or Move
+            boolean collectDownloadInfo = position == 3 || position == 4 || position == 7; // Delete or Move or Zip
             if (collectGid) {
                 gidList = new LongList();
             }
@@ -1344,20 +1344,20 @@ public class DownloadsScene extends ToolbarScene
                             .show();
                     break;
                 }
-                case 5:
+                case 5: // Random Play
                     if (mList == null || mList.isEmpty()) {
                         return;
                     }
                     onClickPrimaryFab(mFabLayout, null);
                     viewRandom();
                     break;
-                case 6:
+                case 6: // Drap
                     setDragEnable(fab);
                     break;
-                case 7:
+                case 7: // Zip
                     compressSelectedGalleries(downloadInfoList);
                     break;
-                case 8:
+                case 8: //Refresh
                     refreshCurrentPage();
                     break;
             }
@@ -1413,6 +1413,19 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 
+    private void refreshDownloadListAfterDelete() {
+        // 依据当前筛选/搜索状态刷新列表
+        if (searchKey != null && !searchKey.isEmpty()) {
+            startSearching();
+        } else if (isFilteringOrSearching) {
+            applySortAndFilter();
+        } else {
+            updateForLabel();
+        }
+
+        updateView();
+    }
+
     private void viewRandom() {
         List<DownloadInfo> list = mList;
         if (list == null) {
@@ -1435,7 +1448,7 @@ public class DownloadsScene extends ToolbarScene
 
     private void compressSelectedGalleries(List<DownloadInfo> selectedList) {
         if (selectedList == null || selectedList.isEmpty()) {
-            showTip(R.string.no_download_info, LENGTH_SHORT);
+            showTip(R.string.empty_select_download_info, LENGTH_SHORT);
             return;
         }
 
@@ -1444,14 +1457,23 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
 
-        File outputDir = new File(Environment.getExternalStorageDirectory(), "EhView/Output");
-        if (!outputDir.exists() && !outputDir.mkdirs()) {
-            Toast.makeText(context, R.string.compress_failed, Toast.LENGTH_LONG).show();
-            return;
+        UniFile outputDir = Settings.getExportLocation();
+        if (outputDir == null || !outputDir.exists()) {
+            if (outputDir == null) {
+                outputDir = Settings.getExportLocation();
+            }
+            if (outputDir == null || !outputDir.ensureDir()) {
+                Toast.makeText(context, R.string.compress_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
         }
 
         String zipName = "ehviewer_" + System.currentTimeMillis() + ".zip";
-        File zipFile = new File(outputDir, zipName);
+        UniFile zipFile = outputDir.createFile(zipName);
+        if (zipFile == null) {
+            Toast.makeText(context, R.string.compress_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
 
         LinearLayout dialogLayout = new LinearLayout(context);
         dialogLayout.setOrientation(LinearLayout.VERTICAL);
@@ -1480,18 +1502,46 @@ public class DownloadsScene extends ToolbarScene
         new AsyncTask<Void, Integer, Exception>() {
             @Override
             protected Exception doInBackground(Void... voids) {
-                try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
+                boolean hasError = false;
+                StringBuilder errorMessage = new StringBuilder();
+                Set<String> addedEntries = new HashSet<>();
+
+                try (ZipOutputStream zos = new ZipOutputStream(zipFile.openOutputStream())) {
                     int index = 0;
                     for (DownloadInfo info : selectedList) {
                         UniFile galleryDir = getGalleryDownloadDir(info);
                         if (galleryDir != null && galleryDir.exists()) {
                             String folderName = sanitizeFileName(info.title != null ? info.title : String.valueOf(info.gid));
-                            addUniFileToZip(galleryDir, folderName, zos);
+                            try {
+                                addUniFileToZip(galleryDir, folderName, zos, addedEntries);
+                            } catch (IOException e) {
+                                hasError = true;
+                                String message = "Failed to compress " + folderName + ": " + e.getMessage();
+                                Log.e(TAG, message, e);
+                                if (errorMessage.length() > 0) {
+                                    errorMessage.append("; ");
+                                }
+                                errorMessage.append(message);
+                            }
+                        } else {
+                            String message = "Gallery dir missing: " + (info.title != null ? info.title : String.valueOf(info.gid));
+                            Log.w(TAG, message);
+                            hasError = true;
+                            if (errorMessage.length() > 0) {
+                                errorMessage.append("; ");
+                            }
+                            errorMessage.append(message);
                         }
                         publishProgress(++index);
                     }
                 } catch (IOException e) {
+                    String zipPath = (zipFile != null && zipFile.getUri() != null) ? zipFile.getUri().toString() : "";
+                    Log.e(TAG, "Failed to create zip file: " + zipPath, e);
                     return e;
+                }
+
+                if (hasError) {
+                    return new IOException(errorMessage.toString());
                 }
                 return null;
             }
@@ -1509,24 +1559,36 @@ public class DownloadsScene extends ToolbarScene
                 if (error != null) {
                     Toast.makeText(context, getString(R.string.compress_failed) + ": " + error.getMessage(), Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(context, getString(R.string.compress_success, zipFile.getAbsolutePath()), Toast.LENGTH_LONG).show();
+                    String zipPath = zipFile.getUri() != null ? zipFile.getUri().toString() : "";
+                    Toast.makeText(context, getString(R.string.compress_success, zipPath), Toast.LENGTH_LONG).show();
                 }
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
-    private void addUniFileToZip(UniFile uniFile, String basePath, ZipOutputStream zos) throws IOException {
+    private void addUniFileToZip(UniFile uniFile, String basePath, ZipOutputStream zos, Set<String> addedEntries) throws IOException {
         if (uniFile.isDirectory()) {
             if (!basePath.endsWith("/")) {
                 basePath += "/";
             }
-            zos.putNextEntry(new ZipEntry(basePath));
-            zos.closeEntry();
+            if (addedEntries.contains(basePath)) {
+                Log.i(TAG, "Skip duplicate directory entry: " + basePath);
+            } else {
+                zos.putNextEntry(new ZipEntry(basePath));
+                zos.closeEntry();
+                addedEntries.add(basePath);
+            }
+
             UniFile[] children = uniFile.listFiles();
             if (children != null) {
                 for (UniFile child : children) {
                     String childPath = basePath + sanitizeFileName(child.getName());
-                    addUniFileToZip(child, childPath, zos);
+                    try {
+                        addUniFileToZip(child, childPath, zos, addedEntries);
+                    } catch (IOException e) {
+                        // Log and continue with remaining files
+                        Log.e(TAG, "Failed to add child " + childPath + " to zip", e);
+                    }
                 }
             }
         } else if (uniFile.isFile()) {
@@ -1534,18 +1596,29 @@ public class DownloadsScene extends ToolbarScene
             if (entryName == null || entryName.isEmpty()) {
                 entryName = sanitizeFileName(uniFile.getName());
             }
+            if (addedEntries.contains(entryName)) {
+                Log.i(TAG, "Skip duplicate file entry: " + entryName);
+                return;
+            }
+
             zos.putNextEntry(new ZipEntry(entryName));
             InputStream is = uniFile.openInputStream();
             if (is != null) {
-                BufferedInputStream bis = new BufferedInputStream(is);
-                byte[] buffer = new byte[8192];
-                int count;
-                while ((count = bis.read(buffer)) != -1) {
-                    zos.write(buffer, 0, count);
+                try (BufferedInputStream bis = new BufferedInputStream(is)) {
+                    byte[] buffer = new byte[8192];
+                    int count;
+                    while ((count = bis.read(buffer)) != -1) {
+                        zos.write(buffer, 0, count);
+                    }
+                } catch (IOException e) {
+                    String fileName = uniFile.getName() != null ? uniFile.getName() : "unknown";
+                    Log.e(TAG, "Error reading file " + fileName, e);
+                    zos.closeEntry();
+                    throw e;
                 }
-                bis.close();
             }
             zos.closeEntry();
+            addedEntries.add(entryName);
         }
     }
 
@@ -1725,19 +1798,11 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public void onReload() {
         if (mAdapter != null) {
-            // 确保在主线程中更新UI
             if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
-                mAdapter.notifyDataSetChanged();
-                updateView();
+                refreshDownloadListAfterDelete();
             } else {
-                // 在后台线程中，使用Handler切换到主线程
                 android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-                mainHandler.post(() -> {
-                    if (mAdapter != null) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                    updateView();
-                });
+                mainHandler.post(() -> refreshDownloadListAfterDelete());
             }
         }
     }
@@ -2512,7 +2577,7 @@ public class DownloadsScene extends ToolbarScene
             progressBar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
             TextView progressText = new TextView(context);
-            progressText.setText(getString(R.string.download_remove_dialog_message_2, 0));
+            progressText.setText(getString(R.string.download_remove_progress, 0, mDownloadInfoList.size()));
             progressText.setPadding(0, padding / 2, 0, 0);
 
             dialogLayout.addView(progressBar);
@@ -2528,12 +2593,17 @@ public class DownloadsScene extends ToolbarScene
             new AsyncTask<Void, Integer, Void>() {
                 @Override
                 protected Void doInBackground(Void... voids) {
-                    if (null != mDownloadManager) {
-                        for (int i = 0; i < mGidList.size(); i++) {
+                    if (mDownloadManager != null) {
+                        int total = mGidList.size();
+                        Log.d(TAG, "DeleteRangeDialogHelper start deleting " + total + " items");
+                        // 先一次性批量删除，避免频繁 onRemove 导致 UI 卡顿
+                        mDownloadManager.deleteRangeDownload(mGidList);
+                        for (int i = 0; i < total; i++) {
                             long gid = mGidList.get(i);
-                            mDownloadManager.deleteDownload(gid);
                             publishProgress(i + 1);
+                            Log.d(TAG, "DeleteRangeDialogHelper progress " + (i + 1) + "/" + total + " gid=" + gid);
                         }
+                        Log.d(TAG, "DeleteRangeDialogHelper delete finished");
                     }
 
                     if (checked) {
@@ -2553,7 +2623,7 @@ public class DownloadsScene extends ToolbarScene
                 protected void onProgressUpdate(Integer... values) {
                     int progress = values.length > 0 ? values[0] : 0;
                     progressBar.setProgress(progress);
-                    progressText.setText(getString(R.string.download_remove_dialog_message_2, progress));
+                    progressText.setText(getString(R.string.download_remove_progress, progress, mDownloadInfoList.size()));
                 }
 
                 @Override
@@ -2561,7 +2631,7 @@ public class DownloadsScene extends ToolbarScene
                     if (progressDialog.isShowing()) {
                         progressDialog.dismiss();
                     }
-                    updateView();
+                    refreshDownloadListAfterDelete();
                 }
             }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }

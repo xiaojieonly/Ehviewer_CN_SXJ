@@ -98,7 +98,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
     public static final int RESPONSE_NO = 2;
     public static final int RESPONSE_NO_TO_ALL = 3;
     
-    private final WeakReference<DownloadFragment> mFragment;
+    private WeakReference<DownloadFragment> mFragment;
     private ProgressDialog mProgressDialog;
     private Context mContext;
     private boolean isDialogShown = true;
@@ -130,6 +130,15 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
     public MergeDuplicateGalleryTask(DownloadFragment fragment) {
         mFragment = new WeakReference<>(fragment);
         mContext = fragment.requireContext();
+    }
+
+    public MergeDuplicateGalleryTask(Context context) {
+        mFragment = null;
+        mContext = context;
+    }
+
+    public boolean runDirectly() {
+        return doInBackground();
     }
 
     private void initNotificationChannel() {
@@ -194,23 +203,27 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
         // 初始化通知栏
         initNotificationChannel();
         
-        DownloadFragment fragment = mFragment.get();
-        if (fragment == null || fragment.isDetached()) {
+        DownloadFragment fragment = mFragment == null ? null : mFragment.get();
+        if (fragment != null && fragment.isDetached()) {
             cancel(false);
             return;
         }
 
-        mProgressDialog = new ProgressDialog(mContext);
-        mProgressDialog.setTitle(R.string.settings_download_merge_duplicate_gallery);
-        mProgressDialog.setMessage(getString(R.string.merge_scanning_galleries));
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "后台运行", (dialog, which) -> {
-            isDialogShown = false;
-            dialog.dismiss();
-        });
-        mProgressDialog.show();
+        if (fragment != null) {
+            mProgressDialog = new ProgressDialog(mContext);
+            mProgressDialog.setTitle(R.string.settings_download_merge_duplicate_gallery);
+            mProgressDialog.setMessage(getString(R.string.merge_scanning_galleries));
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "后台运行", (dialog, which) -> {
+                isDialogShown = false;
+                dialog.dismiss();
+            });
+            mProgressDialog.show();
+        } else {
+            mProgressDialog = null;
+        }
         
         // 显示通知栏
         updateNotification(getString(R.string.settings_download_merge_duplicate_gallery), 
@@ -225,7 +238,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
         
         try {
             // 步骤1: 扫描下载目录
-            publishProgress(STEP_SCAN, getString(R.string.merge_scanning_galleries));
+            notifyProgress(STEP_SCAN, getString(R.string.merge_scanning_galleries));
             if (!scanDownloadedGalleries()) {
                 return false;
             }
@@ -235,7 +248,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             }
             
             // 步骤2: 分析重复画廊
-            publishProgress(STEP_ANALYZE, getString(R.string.merge_analyzing_galleries));
+            notifyProgress(STEP_ANALYZE, getString(R.string.merge_analyzing_galleries));
             if (!analyzeDuplicateGalleries()) {
                 return false;
             }
@@ -245,7 +258,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             }
             
             // 步骤3: 备份数据库
-            publishProgress(STEP_BACKUP, getString(R.string.merge_backing_up_database));
+            notifyProgress(STEP_BACKUP, getString(R.string.merge_backing_up_database));
             if (!backupDatabase()) {
                 return false;
             }
@@ -255,7 +268,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             }
             
             // 步骤4: 合并重复画廊
-            publishProgress(STEP_MERGE, getString(R.string.merge_merging_galleries));
+            notifyProgress(STEP_MERGE, getString(R.string.merge_merging_galleries));
             if (!mergeDuplicateGalleries()) {
                 return false;
             }
@@ -394,18 +407,27 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
         }
     }
 
-    private void publishProgress(int step, String message) {
-        publishProgress(step, message);
+    private void notifyProgress(int step, String message) {
+        if (mFragment == null) {
+            return;
+        }
+        super.publishProgress(step, message);
     }
 
-    private void publishProgress(int step, String message, GalleryGroup group) {
-        publishProgress(step, message, group);
+    private void notifyProgress(int step, String message, GalleryGroup group) {
+        if (mFragment == null) {
+            return;
+        }
+        super.publishProgress(step, message);
     }
 
-    private void publishProgress(int step, String message, GalleryGroup group, int current, int total) {
+    private void notifyProgress(int step, String message, GalleryGroup group, int current, int total) {
         mCurrentGallery = current;
         mTotalGalleries = total;
-        publishProgress(step, message, group);
+        if (mFragment == null) {
+            return;
+        }
+        super.publishProgress(step, message);
     }
 
     /**
@@ -462,7 +484,10 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
     }
 
     private String getString(int resId) {
-        return mContext.getString(resId);
+        if (mContext != null) {
+            return mContext.getString(resId);
+        }
+        return "";
     }
 
     // 简化的扫描方法，只返回true表示成功

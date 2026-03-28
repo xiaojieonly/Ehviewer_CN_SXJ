@@ -1,32 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ Copyright 2016 Hippo Seven
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-
 <resources>
-
     <string name="app_name">EhViewer</string>
-
     <string name="site_e" translatable="false">e-hentai</string>
     <string name="site_ex" translatable="false">exhentai</string>
-
-    <!-- Theme -->
     <string name="theme_light">亮色主題</string>
     <string name="theme_dark">暗色主題</string>
     <string name="theme_black">黑色主題</string>
-
     <string name="homepage">首頁</string>
     <string name="subscription">訂閱</string>
     <string name="whats_hot">熱門</string>
@@ -37,14 +16,12 @@
     <string name="news">新聞</string>
     <string name="settings">設定</string>
     <string name="stub" translatable="false">Stub</string>
-
-    <!-- Local Gallery Management -->
     <string name="settings_advanced_local_gallery">本地板畫管理</string>
     <string name="settings_advanced_local_gallery_summary">管理本地板畫和回收站</string>
     <string name="local_gallery_title">本地板畫</string>
     <string name="local_gallery_empty">未找到本地板畫</string>
     <string name="local_gallery_scanning">正在掃描本地板畫...</string>
-    <string name="local_gallery_scan_complete">掃描完成，找到 %d 個畫廊</string>
+    <string name="local_gallery_scan_complete">掃描完成，找到 %1$d 個畫廊</string>
     <string name="local_gallery_delete_confirm">刪除此本地板畫？它將被移入回收站。</string>
     <string name="local_gallery_delete_success">畫廊已移入回收站</string>
     <string name="local_gallery_delete_failed">刪除畫廊失敗</string>
@@ -53,8 +30,6 @@
     <string name="local_gallery_searching">正在搜尋畫廊資訊...</string>
     <string name="local_gallery_search_not_found">未找到畫廊資訊</string>
     <string name="local_gallery_view_error">無法查看此畫廊</string>
-    
-    <!-- Recycle Bin -->
     <string name="recycle_bin_title">回收站</string>
     <string name="recycle_bin_empty">回收站為空</string>
     <string name="recycle_bin_restore">還原</string>
@@ -67,21 +42,16 @@
     <string name="recycle_bin_delete_permanent_failed">永久刪除畫廊失敗</string>
     <string name="recycle_bin_empty_confirm">清空回收站？所有畫廊將被永久刪除！</string>
     <string name="recycle_bin_empty_success">回收站已清空</string>
-    
-    <!-- Gallery Actions -->
     <string name="view_gallery">查看畫廊</string>
     <string name="start_slideshow">開始幻燈片</string>
     <string name="local_gallery_refresh">重新整理</string>
     <string name="local_gallery_delete">刪除</string>
-
     <string name="username">使用者名稱</string>
     <string name="password">密碼</string>
     <string name="recaptcha">驗證碼（非必需）</string>
-
     <string name="recaptcha_none">點我</string>
     <string name="recaptcha_loading">載入中…</string>
     <string name="recaptcha_failure">失敗</string>
-
     <string name="sign_in">登入</string>
     <string name="register">註冊</string>
     <string name="sign_in_via_webview">透過網頁登入</string>
@@ -90,9 +60,7 @@
     <string name="display_name">暱稱</string>
     <string name="display_name_is_empty">暱稱是空的</string>
     <string name="sign_in_first">請先登入</string>
-
     <string name="default_display_name">Little Hippo</string>
-
     <string name="cookie_explain">Cookie 是儲存在瀏覽器裡的一小塊資料。如果您不清楚 Cookie 是什麼或者如何取得 Cookie，最好去查一下。\n\n請輸入特定的 Cookie 來登入。</string>
     <string name="text_is_empty">文字是空的</string>
     <string name="waring">警告</string>
@@ -100,16 +68,12 @@
     <string name="i_will_check_it">好的</string>
     <string name="i_dont_think_so">我覺得沒打錯</string>
     <string name="found_cookies">找到 Cookie了!</string>
-
     <string name="invalid_download_location">看來下載路徑似乎沒辦法使用。請至設定重新設定下載路徑。</string>
-
     <string name="cellular_network_warning">正在使用行動數據</string>
-
     <string name="clipboard_gallery_url_snack_message">剪下板裡有圖庫連結</string>
     <string name="clipboard_gallery_url_snack_action">檢視</string>
-
     <string name="image_save_success">成功儲存圖片</string>
-    <string name="error_bad_status_code">錯誤狀態碼：%d</string>
+    <string name="error_bad_status_code">錯誤狀態碼：%1$d</string>
     <string name="error_timeout">逾時</string>
     <string name="error_unknown_host">未知的主機</string>
     <string name="error_redirection">重新導向迴圈</string>
@@ -142,9 +106,7 @@
     <string name="gallery_gl_fallback_message">目前裝置暫時無法初始化 EGL，請返回後稍後再試。</string>
     <string name="gallery_gl_fallback_action_close">返回</string>
     <string name="gallery_gl_fallback_toast">GL 渲染失敗，已切換到安全占位頁</string>
-
-    <string name="kokomade_tip">設定->Eh->圖庫站台->e-hentai</string>
-
+    <string name="kokomade_tip">設定-&gt;Eh-&gt;圖庫站台-&gt;e-hentai</string>
     <string name="app_waring">本應用程式中內容來自網際網路，部分內容可能對您的生理及心理造成難以恢復的傷害。本應用程式的作者不會對由其所造成的任何影響負責。\n\n未成年人應在監護人指導下使用本應用程式。</string>
     <string name="error_username_cannot_empty">使用者名稱欄位不能為空</string>
     <string name="error_password_cannot_empty">密碼欄位不能為空</string>
@@ -161,15 +123,10 @@
     <string name="get_it">知道了</string>
     <string name="accept">接受</string>
     <string name="reject">拒絕</string>
-
-    <string name="help_route">設定->關於->說明</string>
-
-    <!-- Select scene -->
+    <string name="help_route">設定-&gt;關於-&gt;說明</string>
     <string name="select_scene">你想選擇哪個圖庫站台？</string>
     <string name="select_scene_explain">e-hentai：對任何人開放\nexhentai：僅對登入使用者開放</string>
     <string name="no_select">請選擇一個站台</string>
-
-    <!-- Update -->
     <string name="new_version">新版本</string>
     <string name="update">更新</string>
     <string name="update_fail">检查更新失败</string>
@@ -179,15 +136,12 @@
     <string name="no_updates_available">已是最新版本</string>
     <string name="update_to">更新至</string>
     <string name="update_ignore">忽略</string>
-
-    <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">在 ExHentai 中搜尋</string>
     <string name="gallery_list_search_bar_hint_e_hentai">在 E-Hentai 搜尋</string>
     <string name="gallery_list_search_bar_open_gallery">開啟圖庫</string>
     <string name="gallery_list_empty_hit">什麼都沒找到</string>
-    <string name="gallery_list_empty_hit_subscription">請至 設定->EH->我的標籤 訂閱標籤</string>
+    <string name="gallery_list_empty_hit_subscription">請至 設定-&gt;EH-&gt;我的標籤 訂閱標籤</string>
     <string name="gallery_list_no_preview_tag">暫無預覽標籤</string>
-
     <string name="gallery_list_action_url_missed">未發現下一頁</string>
     <string name="gallery_list_no_more_data">當前的列表無更多資料</string>
     <string name="gallery_list_date_jump_1d">昨天</string>
@@ -202,14 +156,11 @@
     <string name="gallery_list_select_jump_node">使用節點選擇器</string>
     <string name="gallery_list_jump_now">跳到現在</string>
     <string name="gallery_list_time_jump_dialog_title">跳到選擇器</string>
-    <string name="gallery_list_time_jump_dialog_found_message">發現 %s 個結果</string>
+    <string name="gallery_list_time_jump_dialog_found_message">發現 %1$s 個結果</string>
     <string name="gallery_tag_copy">已複製標籤</string>
-
     <string name="search">搜尋</string>
-
     <string name="keyword_search">關鍵字搜尋</string>
     <string name="image_search">圖片搜尋</string>
-
     <string name="search_normal">一般搜尋</string>
     <string name="search_advance">進階選項</string>
     <string name="search_image">圖片搜尋</string>
@@ -218,9 +169,7 @@
     <string name="search_specify_uploader">指定上傳者</string>
     <string name="search_specify_tag">指定標籤</string>
     <string name="search_enable_advance">啟用進階選項</string>
-
     <string name="search_tip">一般搜尋：就是搜尋。\n\n訂閱搜素：在訂閱中搜索。\n\n指定上傳者：列出該上傳者上傳的圖庫。其他選項會被忽略。\n\n指定標籤：列出含有該標籤的圖庫。其他選項會被忽略。</string>
-
     <string name="search_sname">搜尋圖庫</string>
     <string name="search_stags">搜尋圖庫的標籤</string>
     <string name="search_sdesc">搜尋圖庫的描述</string>
@@ -232,61 +181,51 @@
     <string name="search_sr">最低評分：</string>
     <string name="search_sp">頁數：</string>
     <string name="search_sp_to">到</string>
-    <!-- A placeholder for other languages -->
     <string name="search_sp_suffix"/>
     <string name="search_sf">禁用排除項：</string>
     <string name="search_sfl">語言</string>
     <string name="search_sfu">上傳者</string>
     <string name="search_sft">標籤</string>
-
     <string name="select_image">選擇圖片</string>
     <string name="search_uss">使用相似性搜尋</string>
     <string name="search_osc">只搜尋封面</string>
     <string name="search_se">顯示被刪除的圖庫</string>
     <string name="select_image_first">請先選擇圖片</string>
-
     <string name="add_to_favourites">收藏</string>
     <string name="remove_from_favourites">移除收藏</string>
-
     <string name="stop_downloading">停止下載</string>
     <string name="delete_downloads">刪除下載</string>
-
     <string name="quick_search">快速搜尋</string>
     <string name="quick_search_tip">點擊“+”以新增快速搜尋</string>
     <string name="add_quick_search_dialog_title">新增快速搜尋</string>
     <string name="name_is_empty">名稱是空的</string>
     <string name="delete">刪除</string>
     <string name="delete_quick_search_title">刪除快速搜尋</string>
-    <string name="delete_quick_search_message">刪除“%s”嗎？</string>
+    <string name="delete_quick_search_message">刪除“%1$s”嗎？</string>
     <string name="no_quick_search">快速搜尋會顯示在這裡</string>
     <string name="add_quick_search_tip">圖庫列表的狀態將被儲存為快速搜尋。如果你想儲存搜尋面板的狀態，請先進行搜尋。</string>
     <string name="readme">讀我檔</string>
     <string name="image_search_not_quick_search">無法將圖片搜尋加入快速搜尋</string>
-    <string name="duplicate_quick_search">已存在相同的快速搜尋，名稱為“%s”。</string>
+    <string name="duplicate_quick_search">已存在相同的快速搜尋，名稱為“%1$s”。</string>
     <string name="duplicate_name">已經有重複的名稱了</string>
-
     <string name="subscription_tip">點擊 “+” 添加訂閱</string>
-
     <string name="go_to_hint">第 %1$d 頁，共 %2$d 頁</string>
-
-    <!-- search_min_rating -->
     <string name="star_2">2 星</string>
     <string name="star_3">3 星</string>
     <string name="star_4">4 星</string>
     <string name="star_5">5 星</string>
-
-    <!-- Gallery detail -->
     <string name="error_cannot_find_gallery">找不到圖庫</string>
     <string name="download">下載</string>
     <string name="read">閱讀</string>
     <string name="more_information">更多資訊</string>
     <plurals name="page_count">
         <item quantity="other">%d 頁</item>
+        <item quantity="one">%d page</item>
     </plurals>
-    <string name="favored_times">\u2665 %d</string>
-    <string name="rating_text">%1$s (%2$.2f, %3$d)</string>
+    <string name="favored_times">\u2665 %1$d</string>
+    <string name="rating_text">%1$s (%2$f, %3$d)</string>
     <string name="favorites">收藏</string>
-    <string name="torrent_count">種子 (%d)</string>
+    <string name="torrent_count">種子 (%1$d)</string>
     <string name="share">分享</string>
     <string name="rate">評分</string>
     <string name="similar_gallery">類似的圖庫</string>
@@ -312,12 +251,10 @@
     <string name="remove_from_favorite_success">從收藏中移除</string>
     <string name="add_to_favorite_failure">無法新增至收藏</string>
     <string name="remove_from_favorite_failure">無法從收藏中移除</string>
-    <string name="filter_the_uploader">把上傳者 \"%s\" 加入遮蔽列表？</string>
-    <string name="filter_the_tag">把標籤 \"%s\" 加入遮蔽列表？</string>
+    <string name="filter_the_uploader">把上傳者 \&quot;%1$s\&quot; 加入遮蔽列表？</string>
+    <string name="filter_the_tag">把標籤 \&quot;%1$s\&quot; 加入遮蔽列表？</string>
     <string name="filter_added">已經新增遮蔽項</string>
     <string name="copy_tag">複製</string>
-
-    <!-- Rating -->
     <string name="rating10">太神啦!</string>
     <string name="rating9">根本把持不住</string>
     <string name="rating8">很棒</string>
@@ -330,8 +267,6 @@
     <string name="rating1">快要窒息了</string>
     <string name="rating0">下去 !</string>
     <string name="rating_none" translatable="false">(´_ゝ`)</string>
-
-    <!-- Gallery Info -->
     <string name="gallery_info">圖庫資訊</string>
     <string name="copied_to_clipboard">已複製到剪貼簿</string>
     <string name="header_key">索引鍵</string>
@@ -356,8 +291,6 @@
     <string name="key_rating">分數</string>
     <string name="key_torrents">種子數</string>
     <string name="key_torrent_url">種子連結</string>
-
-    <!-- Gallery Comments -->
     <string name="gallery_comments">圖庫留言</string>
     <string name="no_one_comments_gallery">目前沒有留言</string>
     <string name="comment_successfully">留言成功</string>
@@ -377,34 +310,30 @@
     <string name="vote_failed">推噓失敗</string>
     <string name="check_vote_status">檢視推噓狀態</string>
     <string name="click_more_comments">點選載入更多留言</string>
-    <string name="last_edited">上次修改時間：%s</string>
-
-    <!-- Gallery Previews -->
+    <string name="last_edited">上次修改時間：%1$s</string>
     <string name="gallery_previews">圖庫預覽</string>
     <string name="go_to">跳到</string>
     <string name="tag_filter">篩選標籤</string>
-
-    <!-- Download -->
-    <string name="scene_download_title">共%s個圖庫 - %s</string>
+    <string name="scene_download_title">共%1$s個圖庫 - %2$s</string>
     <string name="no_download_info">下載的物件將會顯示在此</string>
     <string name="download_state_none">閒置中</string>
     <string name="download_state_wait">等待中</string>
     <string name="download_state_downloading">下載中</string>
     <string name="download_state_downloaded">已下載</string>
     <string name="download_state_failed">下載失敗</string>
-    <string name="download_state_failed_2">還有 %d 尚未完成</string>
+    <string name="download_state_failed_2">還有 %1$d 尚未完成</string>
     <string name="download_state_finish">大功告成</string>
     <string name="stat_509_alert_title">509 警告</string>
     <string name="stat_509_alert_text">圖片流量已用盡。請停止下載，休息一下。</string>
     <string name="stat_download_done_title">下載結束</string>
-    <string name="stat_download_done_text_succeeded">有 %d 項已成功下載</string>
-    <string name="stat_download_done_text_failed">有 %d 項下載失敗</string>
+    <string name="stat_download_done_text_succeeded">有 %1$d 項已成功下載</string>
+    <string name="stat_download_done_text_failed">有 %1$d 項下載失敗</string>
     <string name="stat_download_done_text_mix">%1$d 項成功下載，%2$d 項下載失敗</string>
-    <string name="stat_download_done_line_succeeded"> %s 下載成功</string>
-    <string name="stat_download_done_line_failed"> %s 下載失敗</string>
+    <string name="stat_download_done_line_succeeded">%1$s 下載成功</string>
+    <string name="stat_download_done_line_failed">%1$s 下載失敗</string>
     <string name="download_remove_dialog_title">移除下載佇列</string>
-    <string name="download_remove_dialog_message">將 %s 從下載佇列中移除嗎?</string>
-    <string name="download_remove_dialog_message_2">從下載佇列中移除 %d 項任務嗎？</string>
+    <string name="download_remove_dialog_message">將 %1$s 從下載佇列中移除嗎?</string>
+    <string name="download_remove_dialog_message_2">從下載佇列中移除 %1$d 項任務嗎？</string>
     <string name="download_remove_dialog_check_text">刪除圖檔</string>
     <string name="stat_download_action_stop_all">全部停止</string>
     <string name="drawer_download_label_title">標籤</string>
@@ -416,7 +345,7 @@
     <string name="download_reset_reading_progress">重置閱讀進度</string>
     <string name="reset_reading_progress_message">重置所有已下載圖庫的閱讀進度？</string>
     <string name="download_service_label">EhViewer 下載服務</string>
-    <string name="download_speed_text">%s</string>
+    <string name="download_speed_text">%1$s</string>
     <string name="download_speed_text_2">%1$s，剩餘 %2$s</string>
     <string name="remember_download_label">記住下載標籤</string>
     <string name="default_download_label">預設下載標籤</string>
@@ -442,8 +371,6 @@
     <string name="download_filter_by_status">照狀態篩選</string>
     <string name="download_status_all">全部</string>
     <string name="download_status_not_started">未開始</string>
-
-    <!-- Download label -->
     <string name="no_download_label">下載標籤將會顯示在這裡</string>
     <string name="add">新增</string>
     <string name="new_label_title">新標籤</string>
@@ -452,42 +379,30 @@
     <string name="label_text_exist">標籤已存在</string>
     <string name="rename_label_title">重新命名標籤</string>
     <string name="delete_label_title">刪除標籤</string>
-    <string name="delete_label_message">將 “%s”刪除？</string>
-
-    <!-- History -->
+    <string name="delete_label_message">將 “%1$s”刪除？</string>
     <string name="no_history">歷史紀錄將會顯示在這裡</string>
     <string name="clear_all">全部清除</string>
     <string name="clear_all_history">清除所有歷史紀錄？</string>
-
-    <!-- Filter -->
     <string name="filter">遮蔽圖庫</string>
     <string name="no_filter">這裡是遮蔽列表</string>
     <string name="filter_title">標題</string>
     <string name="filter_uploader">上傳者</string>
     <string name="filter_tag">標籤</string>
     <string name="filter_tag_namespace">標籤組</string>
-    <string name="delete_filter">刪除遮蔽項“%s”？</string>
+    <string name="delete_filter">刪除遮蔽項“%1$s”？</string>
     <string name="tip">提示</string>
     <string name="add_filter">新增遮蔽項</string>
     <string name="show_definition">檢視定義</string>
     <string name="filter_text">遮蔽項文字</string>
     <string name="filter_tip">該遮蔽系統會在 EHentai 網站遮蔽系統的基礎上繼續遮蔽圖庫。\n\n標題遮蔽項：排除標題含有該關鍵字的圖庫。\n\n上傳者遮蔽項：排除該上傳者上傳的圖庫。\n\n標籤遮蔽項：排除包含該標籤的圖庫，這會使獲取圖庫列表花費更多時間。\n\n標籤組遮蔽項：排除包含該標籤組的圖庫，這會使獲取圖庫列表花費更多時間。</string>
-
-    <!-- Set Security -->
     <string name="set_pattern_protection">設定圖形解鎖</string>
     <string name="set_pattern_protection_tip">繪製圖案來設定繪圖解鎖\n留白以取消圖案保護</string>
     <string name="set">設定</string>
     <string name="enable_fingerprint">啟用指紋解鎖</string>
-
-    <!-- UConfig Activity -->
     <string name="u_config">EHentai 設定</string>
     <string name="apply">套用</string>
     <string name="apply_tip">點選右上角的勾勾以儲存設定</string>
-
-    <!-- My Tags Activity -->
     <string name="my_tags">我的標籤</string>
-
-    <!-- Hosts Activity -->
     <string name="hosts">自訂hosts.txt</string>
     <string name="hosts_tip">hosts.txt</string>
     <string name="hosts_host">Host</string>
@@ -499,14 +414,10 @@
     <string name="edit_host_delete">刪除</string>
     <string name="invalid_host">無效的 host</string>
     <string name="invalid_ip">無效的 IP</string>
-
-    <!-- DirPickerActivity -->
     <string name="preset">預設</string>
     <string name="default_directory">預設目錄</string>
-    <string name="application_file_directory">應用檔案目錄 %d （應用解除安裝後會被刪除）</string>
-
-    <!-- Gallery Activity -->
-    <string name="page_menu_title">第 %d 頁</string>
+    <string name="application_file_directory">應用檔案目錄 %1$d （應用解除安裝後會被刪除）</string>
+    <string name="page_menu_title">第 %1$d 頁</string>
     <string name="page_menu_refresh">@string/refresh</string>
     <string name="page_menu_share">@string/share</string>
     <string name="page_menu_save">儲存</string>
@@ -514,9 +425,7 @@
     <string name="page_menu_add_bookmark">新增書籤</string>
     <string name="gallery_menu_title">選單</string>
     <string name="share_image">分享圖片</string>
-    <string name="image_saved">已將圖片儲存至 %s</string>
-
-    <!-- Settings -->
+    <string name="image_saved">已將圖片儲存至 %1$s</string>
     <string name="settings_eh">EH</string>
     <string name="settings_eh_sign_out">登出</string>
     <string name="settings_eh_sign_out_summary">登出後重新啟動程式以再次登入</string>
@@ -525,9 +434,7 @@
     <string name="settings_eh_sign_out_tip">已登出，重新啟動程式以再次登入</string>
     <string name="settings_eh_identity_cookies">身份識別 Cookie</string>
     <string name="settings_eh_identity_cookies_summary">可用於登入</string>
-<!--    <string name="settings_eh_lock_cookies_igneous">鎖定 Cookie igneous 欄位</string>-->
-<!--    <string name="settings_eh_lock_cookies_igneous_summary">除非在特殊情況下，不建議啟用。</string>-->
-    <string name="settings_eh_identity_cookies_signed">身份 Cookie 可用於登入該帳號。&lt;br&gt;&lt;b&gt;請注意資料安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
+    <string name="settings_eh_identity_cookies_signed">身份 Cookie 可用於登入該帳號。&lt;br&gt;&lt;b&gt;請注意資料安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%1$s</string>
     <string name="settings_eh_identity_cookies_tourist">未登入</string>
     <string name="settings_eh_identity_cookies_copy">複製</string>
     <string name="settings_u_config">EHentai 設定</string>
@@ -553,7 +460,7 @@
     <string name="settings_eh_thumb_size_middle">中</string>
     <string name="settings_eh_thumb_size_small">小</string>
     <string name="settings_eh_thumb_resolution">縮圖解析度</string>
-    <string name="settings_eh_thumb_resolution_summary">%s，指定解析度可能會使縮圖取得失敗</string>
+    <string name="settings_eh_thumb_resolution_summary">%1$s，指定解析度可能會使縮圖取得失敗</string>
     <string name="settings_eh_thumb_resolution_auto">自動</string>
     <string name="settings_eh_fix_thumb_url">修正縮圖連結</string>
     <string name="settings_eh_default_categories">顯示在首頁的分類</string>
@@ -579,7 +486,6 @@
     <string name="settings_eh_filter">遮蔽圖庫</string>
     <string name="settings_eh_filter_summary">根據標題、上傳者、標籤遮蔽圖庫</string>
     <string name="settings_eh_cellular_network_warning">行動數據警告</string>
-
     <string name="settings_read">閱讀</string>
     <string name="settings_read_screen_rotation">螢幕方向</string>
     <string name="settings_read_screen_rotation_default">系統預設</string>
@@ -613,7 +519,6 @@
     <string name="settings_read_auto_transfer_time">自動切換時間（秒）</string>
     <string name="settings_read_custom_screen_lightness">自訂螢幕亮度</string>
     <string name="settings_read_screen_lightness">螢幕亮度</string>
-
     <string name="settings_download">下載</string>
     <string name="settings_download_download_location">下載路徑</string>
     <string name="settings_download_invalid_download_location">無效的下載路徑</string>
@@ -623,11 +528,11 @@
     <string name="settings_download_document">檔案</string>
     <string name="settings_download_continue">繼續</string>
     <string name="settings_download_multi_thread_download">同時多重下載</string>
-    <string name="settings_download_multi_thread_download_summary">最多同時下載 %s 張圖片</string>
+    <string name="settings_download_multi_thread_download_summary">最多同時下載 %1$s 張圖片</string>
     <string name="settings_download_preload_image">預載圖片</string>
-    <string name="settings_download_preload_image_summary">向後預載 %s 張圖片</string>
+    <string name="settings_download_preload_image_summary">向後預載 %1$s 張圖片</string>
     <string name="settings_download_image_resolution">圖片解析度</string>
-    <string name="settings_download_image_resolution_summary">%s，大於 1280x 的解析度可能不會生效</string>
+    <string name="settings_download_image_resolution_summary">%1$s，大於 1280x 的解析度可能不會生效</string>
     <string name="settings_download_image_resolution_auto">自動</string>
     <string name="settings_download_download_origin_image">下載原圖</string>
     <string name="settings_download_download_origin_image_summary">這很危險！勾選這個選項會導致圖片流量配額與GP快速耗用</string>
@@ -652,7 +557,7 @@
     <string name="settings_download_restoring">回復中</string>
     <string name="settings_download_restore_not_found">未尋獲可回復的已下載檔案</string>
     <string name="settings_download_restore_failed">回復失敗</string>
-    <string name="settings_download_restore_successfully">成功回復 %d 項</string>
+    <string name="settings_download_restore_successfully">成功回復 %1$d 項</string>
     <string name="settings_download_restore_successfully_with_details">回復完成：%1$d 個成功，%2$d 個失敗</string>
     <string name="settings_download_restore_failed_all">回復失敗：所有項目都無法回復</string>
     <string name="settings_download_restore_check_logs">請查看日誌了解詳細信息</string>
@@ -661,7 +566,7 @@
     <string name="settings_download_import_items">匯入下載項目</string>
     <string name="settings_download_import_no_items">沒有項目可匯入</string>
     <string name="settings_download_import_failed">匯入下載項目失敗</string>
-    <string name="settings_download_import_succeed">成功匯入 %d 個下載項目</string>
+    <string name="settings_download_import_succeed">成功匯入 %1$d 個下載項目</string>
     <string name="settings_download_import_read_failed">讀取匯入檔案失敗</string>
     <string name="settings_download_import_succeed_with_details">匯入完成：%1$d 個成功，%2$d 個失敗</string>
     <string name="settings_download_import_failed_all">匯入失敗：所有項目都無法匯入</string>
@@ -669,8 +574,7 @@
     <string name="settings_download_clean_redundancy">清除冗餘的檔案</string>
     <string name="settings_download_clean_redundancy_summary">清除已下載但不在下載列表中的圖檔</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未發現冗餘檔案</string>
-    <string name="settings_download_clean_redundancy_done">完成冗餘檔案清理，共清理了 %d 個檔案</string>
-
+    <string name="settings_download_clean_redundancy_done">完成冗餘檔案清理，共清理了 %1$d 個檔案</string>
     <string name="settings_advanced">進階</string>
     <string name="settings_advanced_save_parse_error_body">解析失敗時儲存網頁的內容</string>
     <string name="settings_advanced_save_parse_error_body_summary">網頁內容可能含有敏感的隱私資料</string>
@@ -679,7 +583,7 @@
     <string name="settings_advanced_dump_logcat">傾印log</string>
     <string name="settings_advanced_dump_logcat_summary">儲存log紀錄至外接儲存裝置中</string>
     <string name="settings_advanced_dump_logcat_failed">無法傾印log紀錄</string>
-    <string name="settings_advanced_dump_logcat_to">已儲存log紀錄至 %s</string>
+    <string name="settings_advanced_dump_logcat_to">已儲存log紀錄至 %1$s</string>
     <string name="settings_advanced_clear_download_path_cache">清除下載路徑的快取</string>
     <string name="settings_advanced_clear_download_path_cache_summary">圖庫下載路徑可能錯了，所以需要重新下載。清除圖庫下載路徑的快取可能可以解決這個問題。</string>
     <string name="settings_advanced_clear_download_path_cache_message">清除圖庫下載路徑的快取？</string>
@@ -699,7 +603,7 @@
     <string name="settings_privacy_pattern_protection_set">已設定繪圖解鎖</string>
     <string name="settings_advanced_export_data">匯出檔案</string>
     <string name="settings_advanced_export_data_summary">儲存資料至外接儲存設備，例如下載列表，快速搜尋列表</string>
-    <string name="settings_advanced_export_data_to">已匯出資料至 %s</string>
+    <string name="settings_advanced_export_data_to">已匯出資料至 %1$s</string>
     <string name="settings_advanced_export_data_failed">無法匯出資料</string>
     <string name="settings_advanced_import_data">匯入檔案</string>
     <string name="settings_advanced_import_data_summary">從之前儲存的檔案匯入</string>
@@ -710,10 +614,7 @@
     <string name="settings_advanced_wifi_client_summary">接收來自Wi-Fi熱點的遷移資料</string>
     <string name="settings_advanced_database_viewer">資料庫查看器</string>
     <string name="settings_advanced_database_viewer_summary">查看資料庫版本、表和資料內容</string>
-
-    <!-- Transfer Settings -->
     <string name="settings_transfer">資料傳輸</string>
-
     <string name="settings_about">關於</string>
     <string name="settings_about_declaration" translatable="false">EhViewer</string>
     <string name="settings_about_declaration_summary">EhViewer 與 E-Hentai.org 無任何聯繫</string>
@@ -745,8 +646,6 @@
     <string name="settings_close_automatic_updates">關閉自動更新</string>
     <string name="settings_about_beta_update_channel">安裝測試更新版</string>
     <string name="settings_about_beta_update_channel_summary">測試更新版可能會使裝置出現不可預期的錯誤</string>
-
-    <!-- ExcludedLanguagesScene -->
     <string name="excluded_languages">排除語言</string>
     <string name="select_all">全選</string>
     <string name="deselect_all">全取消</string>
@@ -772,9 +671,7 @@
     <string name="language_vietnamese">越南語</string>
     <string name="language_na">N/A</string>
     <string name="language_other">其他</string>
-
     <string name="please_wait">請稍候</string>
-
     <string name="proxy_enable">啟用</string>
     <string name="proxy_enabled">已啟用</string>
     <string name="proxy_disabled">未啟用</string>
@@ -784,28 +681,20 @@
     <string name="proxy_port">通訊埠</string>
     <string name="proxy_domain_not_supported">不支援的域名</string>
     <string name="proxy_invalid_port">無效的通訊埠</string>
-
     <string name="cant_get_data_dir">無法取得檔案資料夾</string>
     <string name="cant_find_any_data">找不到任何資料</string>
     <string name="cant_read_the_file">無法讀取檔案</string>
-
     <string name="app_language_system">系統語言（預設）</string>
-
-    <!-- License -->
     <string name="license">授權</string>
-
-    <!-- Dir Picker-->
     <string name="dir_picker">選擇資料夾</string>
     <string name="directory_not_writable">該資料夾無法寫入</string>
-
-    <!-- Favorites -->
     <string name="cloud_favorites">雲端收藏</string>
     <string name="local_favorites">本機收藏</string>
-    <string name="favorites_search_bar_hint">搜尋 %s</string>
-    <string name="favorites_title">%s</string>
+    <string name="favorites_search_bar_hint">搜尋 %1$s</string>
+    <string name="favorites_title">%1$s</string>
     <string name="favorites_title_2">%1$s - %2$s</string>
     <string name="delete_favorites_dialog_title">移除收藏</string>
-    <string name="delete_favorites_dialog_message">將 %d 項收藏移除？</string>
+    <string name="delete_favorites_dialog_message">將 %1$d 項收藏移除？</string>
     <string name="move_favorites_dialog_title">移動收藏</string>
     <string name="default_favorites_collection">預設收藏夾</string>
     <string name="let_me_select">讓我每次都選擇</string>
@@ -813,11 +702,7 @@
     <string name="collections">收藏夾</string>
     <string name="count">數量</string>
     <string name="need_sign_in">需要登入</string>
-
-    <!-- Progress Scene -->
     <string name="error_something_wrong_happened">被玩壞了</string>
-
-    <!-- Guide -->
     <string name="guide_quick_search_title">快速搜尋</string>
     <string name="guide_quick_search_text">從右側滑動以開啟快速搜尋面板</string>
     <string name="guide_collections_title">收藏夾</string>
@@ -831,33 +716,37 @@
     <string name="guide_gallery_menu">選單</string>
     <string name="guide_gallery_progress">進度條</string>
     <string name="guide_gallery_long_click">長按以開啟頁面選單</string>
-
-    <!-- Readable Time -->
     <string name="from_the_future">來自未來</string>
     <string name="just_now">剛剛</string>
     <plurals name="some_minutes_ago">
         <item quantity="other">%d 分鐘前</item>
+        <item quantity="one">A minute ago</item>
     </plurals>
     <plurals name="some_hours_ago">
         <item quantity="other">%d 小時前</item>
+        <item quantity="one">An hour ago</item>
     </plurals>
     <string name="yesterday">昨天</string>
-    <string name="some_days_ago">%d 天前</string>
-
+    <string name="some_days_ago">%1$d 天前</string>
     <plurals name="second">
         <item quantity="other">秒</item>
+        <item quantity="one">sec</item>
     </plurals>
     <plurals name="minute">
         <item quantity="other">分鐘</item>
+        <item quantity="one">min</item>
     </plurals>
     <plurals name="hour">
         <item quantity="other">小時</item>
+        <item quantity="one">hour</item>
     </plurals>
     <plurals name="day">
         <item quantity="other">天</item>
+        <item quantity="one">day</item>
     </plurals>
     <plurals name="year">
         <item quantity="other">年</item>
+        <item quantity="one">year</item>
     </plurals>
     <string name="dialog_archive_title">透過 H@H 下載</string>
     <string name="no_archives">沒有壓縮檔</string>
@@ -871,30 +760,25 @@
     <string name="download_service">下載服務</string>
     <string name="favorite_name">收藏圖庫</string>
     <string name="no_blicklist">這裡是黑名單</string>
-
-    <!--  排行榜  -->
     <string name="gallery_toplists">圖庫 排行榜</string>
     <string name="uploader_toplists">上傳 排行榜</string>
     <string name="tagging_toplists">標籤 排行榜</string>
     <string name="hentai_home_toplists">Hentai@Home 排行榜</string>
     <string name="ehtracker_toplists">EH訂閱 排行榜</string>
     <string name="cleanup_toplists">整理 排行榜</string>
-    <string name="rating_reviewing_toplists">等級&#038;審核 排行榜</string>
+    <string name="rating_reviewing_toplists">等級&amp;審核 排行榜</string>
     <string name="top_list">排行榜</string>
-
     <string name="all_time_top_list">有史以來</string>
     <string name="past_year_top_list">過去一年</string>
     <string name="past_month_top_list">過去一個月</string>
     <string name="yesterday_top_list">昨天</string>
-
-    <!--  black list  -->
     <string name="blacklist_id">使用者ID</string>
     <string name="blacklist">黑名單</string>
     <string name="join_in_blacklist">加入黑名單</string>
     <string name="add_blacklist">添加封鎖用戶</string>
     <string name="blacklist_tip">該封鎖系統會在 EHentai 網站評論系統的基礎上繼續封鎖評論。\n\n評論者封鎖項：排除該評論者上傳的評論。這會使載入圖庫列表花費更多時間。</string>
     <string name="blacklist_text">封鎖用戶</string>
-    <string name="delete_blacklist">取消封鎖用戶“%s”？</string>
+    <string name="delete_blacklist">取消封鎖用戶“%1$s”？</string>
     <string name="blacklist_reason_text">封鎖原因</string>
     <string name="settings_eh_blacklist">評論黑名單</string>
     <string name="settings_eh_blacklist_summary">根據帳號名稱封鎖他人評論</string>
@@ -905,24 +789,20 @@
     <string name="settings_advanced_url_replace_title">url偽裝,需關閉SNI</string>
     <string name="settings_advanced_url_replace_summary">url偽裝(需重啟，開啟後帳號功能失效)</string>
     <string name="share_favorites_dialog_title">分享收藏</string>
-    <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
-    <string name="add_favorites_dialog_message">添加收藏 %s ？</string>
+    <string name="share_favorites_dialog_message">分享收藏 %1$s ？</string>
+    <string name="add_favorites_dialog_message">添加收藏 %1$s ？</string>
     <string name="settings_advanced_built_ex_hosts_title">內建exhentai hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">應用提供的主機到IP的映射\n可被自訂 hosts.txt 覆蓋</string>
     <string name="network_remind">檢測到開啟了vpn，請注意您的網路安全</string>
-
-    <!-- 下载通知   -->
-    <string name="download_torrent_name">種子: %s</string>
-    <string name="download_torrent_state">狀態: </string>
-    <string name="download_torrent_path">path: %s</string>
+    <string name="download_torrent_name">種子: %1$s</string>
+    <string name="download_torrent_state">狀態:</string>
+    <string name="download_torrent_path">path: %1$s</string>
     <string name="download_search">在下載列表中搜尋</string>
     <string name="sure">OK</string>
     <string name="try_again">再試一次</string>
     <string name="open_directory">開啟目錄</string>
     <string name="downloading">正在下載…… 請稍後再試</string>
-    <string name="torrent_exist">檔案已存在: %s</string>
-
-    <!--  訂閱服務  -->
+    <string name="torrent_exist">檔案已存在: %1$s</string>
     <string name="subscription_watched">訂閱</string>
     <string name="subscription_hidden">排除</string>
     <string name="delete_subscription_title">刪除標籤</string>
@@ -930,12 +810,9 @@
     <string name="add_tag_dialog_title">添加標籤</string>
     <string name="tag_title">標籤欄</string>
     <string name="empty_subscription">訂閱內容為空</string>
-    <string name="subscription_success">%s成功</string>
-
+    <string name="subscription_success">%1$s成功</string>
     <string name="yes">是</string>
     <string name="cancel">取消</string>
-
-    <!--  側滑欄頭像和背景修改  -->
     <string name="change_background_title">你確定要改變背景嗎？</string>
     <string name="change_background_message">背景修改僅限於此軟體，不與 E-hentai 或其它類似軟體同步。</string>
     <string name="change_avatar_title">你確定要改變你的頭像嗎？</string>
@@ -944,8 +821,6 @@
     <string name="choose_from_the_album">從相簿選擇</string>
     <string name="request_camera_permission">為了拍照，EhViewer 將請求裝置相機的權限。您願意授權嗎？</string>
     <string name="request_storage_permission">為了獲取相片，EhViewer 將請求裝置的圖片相簿之權限。您願意授權嗎？</string>
-
-    <!--  wifi server -->
     <string name="wifi_server_name">WiFi伺服器</string>
     <string name="wifi_server">WiFi伺服器</string>
     <string name="wifi_client">WiFi用戶端</string>
@@ -953,8 +828,8 @@
     <string name="wifi_send_favorite">遷移收藏</string>
     <string name="wifi_send_download">遷移下載資料</string>
     <string name="wifi_send_done">遷移資料完成</string>
-    <string name="wifi_send_start">開始遷移%s</string>
-    <string name="wifi_send_stop">停止遷移%s</string>
+    <string name="wifi_send_start">開始遷移%1$s</string>
+    <string name="wifi_send_stop">停止遷移%1$s</string>
     <string name="wifi_sending">資料遷移中請稍候或退出重試</string>
     <string name="wifi_send_text">發送資料</string>
     <string name="wifi_server_illustrate">請確保要接收資料的手機以連接本機熱點，並再遷移完成前切勿斷開連結或返回上層頁面！</string>
@@ -963,27 +838,23 @@
     <string name="wifi_server_connection_succeeded">裝置已連接成功。收到資料後，請重新開啟應用程式以使資料生效。</string>
     <string name="wifi_server_disconnect">裝置斷開連結</string>
     <string name="wifi_server_connection_fail">創建通信失敗</string>
-    <string name="wifi_server_send_success">發送消息成功: %s</string>
-    <string name="wifi_server_send_fail">發送消息失敗: %s</string>
-    <string name="wifi_server_receive_message">收到消息: %s</string>
+    <string name="wifi_server_send_success">發送消息成功: %1$s</string>
+    <string name="wifi_server_send_fail">發送消息失敗: %1$s</string>
+    <string name="wifi_server_receive_message">收到消息: %1$s</string>
     <string name="wifi_server_receive_message_unknown">未知資料類型</string>
-    <string name="wifi_server_opened">熱點已開啟 SSID: %1s \n%2s</string>
+    <string name="wifi_server_opened">熱點已開啟 SSID: %1$s \n%2$s</string>
     <string name="wifi_server_closed">熱點已關閉</string>
-    <string name="wifi_server_password">密碼: %s</string>
+    <string name="wifi_server_password">密碼: %1$s</string>
     <string name="wifi_server_no_permission">權限不足，請授予權限</string>
-    <!--  wifi server  -->
-
-    <!--  limits  -->
     <string name="refresh_limits">重新整理使用限額</string>
-    <string name="from_gallery_visits">%s 來自圖庫瀏覽</string>
-    <string name="from_torrent_completions">%s 來自種子完成</string>
-    <string name="from_archive_download">%s 來自內容下載</string>
-    <string name="from_hentai_home">%s 來自 Hentai@Home</string>
-    <string name="current_moderation_power">當前願力 %s</string>
-    <string name="reset_cost">花費 %s 重置</string>
+    <string name="from_gallery_visits">%1$s 來自圖庫瀏覽</string>
+    <string name="from_torrent_completions">%1$s 來自種子完成</string>
+    <string name="from_archive_download">%1$s 來自內容下載</string>
+    <string name="from_hentai_home">%1$s 來自 Hentai@Home</string>
+    <string name="current_moderation_power">當前願力 %1$s</string>
+    <string name="reset_cost">花費 %1$s 重置</string>
     <string name="ip_base_limits">IP 基礎限制</string>
     <string name="limit_unneed_reset">目前無需重置配額，請重新整理後再試試~</string>
-
     <string name="pagination_count">計數</string>
     <string name="pagination_page_and_item">r/p</string>
     <string name="settings_eh_list_show_read_progress">顯示閱讀進度</string>
@@ -999,10 +870,10 @@
     <string name="history_info_unlimited">無限制</string>
     <string name="archiver">歸檔器</string>
     <string name="archiver_dialog_current_funds">當前資金：</string>
-    <string name="archiver_dialog_cost">下載成本：  %s</string>
+    <string name="archiver_dialog_cost">下載成本：  %1$s</string>
     <string name="archiver_dialog_download_original">下載原始歸檔</string>
     <string name="archiver_dialog_download_resample">下載重採樣歸檔</string>
-    <string name="archiver_dialog_size">預估大小：  %s</string>
+    <string name="archiver_dialog_size">預估大小：  %1$s</string>
     <string name="dialog_archiver_title">歸檔下載器</string>
     <string name="download_receiver_label">EhViewer 下載接收器</string>
     <string name="decompressed_successfully">解壓縮成功！</string>
@@ -1010,16 +881,14 @@
     <string name="download_label_archiver">歸檔器</string>
     <string name="cookie_in_clipboard_incorrect">Cookie 格式不正確</string>
     <string name="settings_download_timeout">下載逾時</string>
-    
-    <!-- Background task management -->
-    <string name="background_task_management">後台任務</string>
+    <string name="background_task_management">背景任務</string>
     <string name="background_task_detail">任務詳情</string>
-    <string name="active_tasks">活躍任務</string>
+    <string name="active_tasks">活動任務</string>
     <string name="completed_tasks">已完成任務</string>
     <string name="no_background_tasks">無後台任務</string>
     <string name="background_task_clear_completed">清除已完成任務</string>
-    <string name="background_task_cleared_completed">已完成任務已清除</string>
-    <string name="background_task_unique_running">已有後台任務正在運行</string>
+    <string name="background_task_cleared_completed">已清除已完成任務</string>
+    <string name="background_task_unique_running">已有背景任務正在執行</string>
     <plurals name="background_tasks_running">
         <item quantity="one">%d 個任務正在運行</item>
         <item quantity="other">%d 個任務正在運行</item>
@@ -1030,16 +899,16 @@
     <string name="task_time_label">運行時間</string>
     <string name="task_progress_format">%1$d/%2$d (%3$d%%)</string>
     <string name="task_progress_indeterminate">不確定</string>
-    <string name="task_running_time">運行時間：%s</string>
+    <string name="task_running_time">運行時間：%1$s</string>
     <string name="task_status_running">運行中</string>
     <string name="task_status_completed">已完成</string>
     <string name="task_status_failed">失敗</string>
     <string name="task_status_cancelled">已取消</string>
-    <string name="task_error_format">錯誤：%s</string>
+    <string name="task_error_format">錯誤：%1$s</string>
     <string name="task_progress_detail_label">進度詳情</string>
     <string name="task_log_label">任務日誌</string>
     <string name="task_log_empty">暫無日誌</string>
-    <string name="task_log_save_to">日誌已保存到 %s</string>
+    <string name="task_log_save_to">日誌已保存到 %1$s</string>
     <string name="task_log_file_missing">未找到日誌文件</string>
     <string name="settings_advanced_background_tasks">後台任務</string>
     <string name="settings_advanced_background_tasks_summary">查看和管理正在運行的後台任務</string>
@@ -1052,7 +921,6 @@
     <string name="local_gallery_cache_expire_14_days">14天</string>
     <string name="settings_advanced_local_gallery_scan_cache_enabled">使用掃描快取</string>
     <string name="settings_advanced_local_gallery_scan_cache_enabled_summary">自動掃描時優先使用本地畫廊掃描快取</string>
-
     <string name="local_gallery_scan_task_name">掃描本地畫廊</string>
     <string name="local_gallery_scan_task_summary">掃描下載目錄中的本地畫廊</string>
     <string name="recycle_bin_scan_task_name">掃描回收站</string>
@@ -1064,14 +932,14 @@
     <string name="settings_transfer_summary">管理數據傳輸設置</string>
     <string name="settings_download_rebuild_download_records">重建下載記錄</string>
     <string name="settings_download_rebuild_download_records_summary">掃描下載路徑並從.ehviewer文件重建下載記錄</string>
-    <string name="settings_download_rebuild_complete">重建完成，已添加 %d 條下載記錄</string>
+    <string name="settings_download_rebuild_complete">重建完成，已添加 %1$d 條下載記錄</string>
     <string name="download_timeout_unlimited">無限制</string>
-    <string name="settings_download_timeout_summary">%s（秒），允許下載一張圖片的最大時間。</string>
+    <string name="settings_download_timeout_summary">%1$s（秒），允許下載一張圖片的最大時間。</string>
     <string name="have_new_version">點擊查看新圖庫版本</string>
     <string name="appwidget_text">範例</string>
     <string name="add_widget">新增小工具</string>
     <string name="app_widget_description">這是應用程式小工具的描述</string>
-    <string name="archiver_downloading">歸檔下載中 %s</string>
+    <string name="archiver_downloading">歸檔下載中 %1$s</string>
     <string name="order">順序</string>
     <string name="sort_by_pub_time">發布時間</string>
     <string name="sort_by_fav_time">收藏時間</string>
@@ -1094,8 +962,6 @@
     <string name="imported_archive_info_title">本機匯入資訊</string>
     <string name="imported_archive_info_message">這是從本機儲存空間匯入的項目</string>
     <string name="imported_archive_category">本機匯入</string>
-
-    <!-- Download filter/search dialogs -->
     <string name="dialog_sort_filter_title">排序和過濾</string>
     <string name="dialog_category_filter_label">分類過濾（可多選）</string>
     <string name="dialog_status_filter_label">狀態過濾</string>
@@ -1103,93 +969,62 @@
     <string name="dialog_search_download_title">搜尋下載畫廊</string>
     <string name="dialog_search_options_label">搜尋選項</string>
     <string name="reset">重置</string>
-    
-    <!-- Advanced filter descriptions -->
     <string name="advanced_filter_description">按分類、狀態和排序順序過濾下載內容</string>
     <string name="category_filter_description">選擇一個或多個分類來過濾下載內容</string>
     <string name="status_filter_description">選擇要顯示的下載狀態（如：已完成、下載中）</string>
     <string name="sort_method_description">選擇如何排序過濾後的下載內容</string>
     <string name="no_filters_applied">未應用過濾器</string>
-    <string name="filters_applied">已應用 %d 個過濾器</string>
+    <string name="filters_applied">已應用 %1$d 個過濾器</string>
     <string name="filter_by_all_categories">所有分類</string>
-    <string name="filter_by_selected_categories">已選擇 %d 個分類</string>
+    <string name="filter_by_selected_categories">已選擇 %1$d 個分類</string>
     <string name="filter_by_all_statuses">所有狀態</string>
-    <string name="filter_by_selected_statuses">已選擇 %d 個狀態</string>
+    <string name="filter_by_selected_statuses">已選擇 %1$d 個狀態</string>
     <string name="sort_by_default_order">預設順序</string>
-    <string name="sort_by_custom_order">自訂順序：%s</string>
+    <string name="sort_by_custom_order">自訂順序：%1$s</string>
     <string name="advanced_filter_tip">提示：您可以組合多個過濾器以獲得精確結果</string>
     <string name="advanced_filter_empty_result">沒有下載內容符合當前的過濾條件</string>
     <string name="advanced_filter_clear_all">清除所有過濾器</string>
     <string name="advanced_filter_apply_changes">應用過濾器更改</string>
     <string name="advanced_filter_discard_changes">放棄更改</string>
     <string name="advanced_filter_confirm_reset">確定要將所有過濾器重置為預設值嗎？</string>
-
-    <!-- S-Pen Actions(Samsung only) -->
     <string name="spen_previous_page">上一頁</string>
     <string name="spen_next_page">下一頁</string>
     <string name="category_all">全部</string>
-
     <string name="dummy_button">虛擬按鈕</string>
     <string name="dummy_content">虛擬\n內容</string>
-
-    <!-- Download scan strings -->
     <string name="scan_download_files_scanning">正在掃描下載目錄...</string>
-    <string name="scan_download_files_scanning_progress">正在掃描下載目錄... (%d/%d)</string>
+    <string name="scan_download_files_scanning_progress">正在掃描下載目錄... (%1$d/%2$d)</string>
     <string name="scan_download_files_completed">掃描完成！</string>
     <string name="scan_download_files_failed">掃描失敗</string>
     <string name="scan_download_files_failed_title">掃描失敗</string>
-    
-    <!-- Clean invalid download strings -->
-    <string name="clean_invalid_download_empty_directory">空目錄: %s</string>
-    <string name="clean_invalid_download_missing_ehviewer_file">缺少 .ehviewer 檔案: %s</string>
-    <string name="clean_invalid_download_invalid_ehviewer_file">無效的 .ehviewer 檔案: %s</string>
-    <string name="clean_invalid_download_inconsistent_file_count">檔案數量不一致: %s, 預期: %d, 實際: %d</string>
-    <string name="clean_invalid_download_error_processing_directory">處理目錄時出錯: %s - %s</string>
+    <string name="clean_invalid_download_empty_directory">空目錄: %1$s</string>
+    <string name="clean_invalid_download_missing_ehviewer_file">缺少 .ehviewer 檔案: %1$s</string>
+    <string name="clean_invalid_download_invalid_ehviewer_file">無效的 .ehviewer 檔案: %1$s</string>
+    <string name="clean_invalid_download_inconsistent_file_count">檔案數量不一致: %1$s, 預期: %2$d, 實際: %3$d</string>
+    <string name="clean_invalid_download_error_processing_directory">處理目錄時出錯: %1$s - %2$s</string>
     <string name="clean_invalid_download_initializing">正在初始化清理...</string>
     <string name="clean_invalid_download_scanning">正在掃描下載目錄...</string>
     <string name="clean_invalid_download_processing">正在清理無效下載...</string>
     <string name="clean_invalid_download_progress">正在處理: %1$d/%2$d 個目錄，已清理 %3$d 個，錯誤 %4$d 個</string>
     <string name="clean_invalid_download_finalizing">正在完成清理...</string>
-    <string name="clean_invalid_download_completed">清理完成，共清理 %d 個無效下載</string>
+    <string name="clean_invalid_download_completed">清理完成，共清理 %1$d 個無效下載</string>
     <string name="clean_invalid_download_completed_with_skipped">清理完成，共清理 %1$d 個無效下載，跳過已刪除畫廊 %2$d 個</string>
     <string name="clean_invalid_download_no_files">沒有找到需要清理的檔案</string>
     <string name="clean_invalid_download_invalid_dir">下載目錄無效</string>
     <string name="clean_invalid_download_gallery_deleted">檢測到已刪除畫廊，跳過清理</string>
-    <string name="clean_invalid_download_checking_gallery">正在檢查畫廊狀態: %s</string>
+    <string name="clean_invalid_download_checking_gallery">正在檢查畫廊狀態: %1$s</string>
     <string name="clean_invalid_download_gallery_still_exists">畫廊仍存在，準備清理不完整下載</string>
-    <string name="clean_invalid_download_error_checking">檢查畫廊狀態時出錯: %s</string>
+    <string name="clean_invalid_download_error_checking">檢查畫廊狀態時出錯: %1$s</string>
     <string name="clean_invalid_download_detail_title">清空無效下載項詳情</string>
-    <string name="clean_invalid_download_detail_message"><b>功能說明：</b>
-
-此功能會智能清理無效的下載項，具體流程如下：
-
-1. <b>掃描階段</b>
-   • 遍歷下載目錄中的所有資料夾
-   • 識別包含 .ehviewer 檔案的下載項
-
-2. <b>驗證階段</b>
-   • 檢查下載完整性（檔案數量、檔案有效性等）
-   • <b>關鍵特性：在刪除前發送網絡請求驗證畫廊狀態</b>
-   • 使用畫廊 GID 和 Token 查詢畫廊是否仍存在
-
-3. <b>清理階段</b>
-   • 跳過已被刪除的畫廊（保留本地檔案）
-   • 僅刪除不完整且畫廊仍存在的下載項
-   • 統計並報告清理結果
-
-<b>為什麼要檢查畫廊狀態？</b>
-
-• 避免誤刪已被刪除的畫廊檔案
-• 保留那些雖然下載不完整但畫廊已不存在的檔案
-• 防止用戶丟失可能無法再次獲取的內容
-
-<b>注意事項：</b>
-
-• 需要網絡連接才能進行畫廊狀態檢查
-• 檢查過程可能會增加一些執行時間
-• 網絡錯誤時默認保留下載項，確保安全</string>
-
-    <!-- Transfer service -->
+    <string name="clean_invalid_download_detail_message">
+        <b>功能說明：</b>
+        <b>掃描階段</b>
+        <b>驗證階段</b>
+        <b>關鍵特性：在刪除前發送網絡請求驗證畫廊狀態</b>
+        <b>清理階段</b>
+        <b>為什麼要檢查畫廊狀態？</b>
+        <b>注意事項：</b>
+    </string>
     <string name="transfer_service">傳輸服務</string>
     <string name="transfer_service_description">WIFI 資料傳輸服務</string>
     <string name="transfer_service_summary">透過 WIFI 傳輸書籤、下載等資料</string>
@@ -1208,8 +1043,6 @@
     <string name="transfer_service_not_running">傳輸服務未運行</string>
     <string name="transfer_connected_clients">已連線用戶端</string>
     <string name="transfer_client_count_default">已連線用戶端：0</string>
-
-    <!-- Download scene strings -->
     <string name="starting_download">正在啟動下載...</string>
     <string name="preparing_download">正在準備下載，請稍候...</string>
     <string name="background_processing">後台處理</string>
@@ -1220,6 +1053,292 @@
     <string name="processing_progress">正在處理: %1$s (%2$d/%3$d)</string>
     <string name="download_tasks_started">已啟動 %1$d 個下載任務</string>
     <string name="no_download_tasks_to_start">沒有需要啟動的下載任務</string>
-    <string name="start_failed">啟動失敗: %s</string>
-
+    <string name="start_failed">啟動失敗: %1$s</string>
+    <string name="settings_download_clean_invalid_download_confirm">Confirm to clear invalid download items?</string>
+    <string name="settings_download_cleaning">Cleaning download items</string>
+    <string name="settings_download_clean_invalid_done">Completed cleaning %1$d download items</string>
+    <string name="settings_download_clean_invalid_no_invalid">No invalid download items to clear</string>
+    <string name="settings_download_restore_download_items_get_gallery_info">Restore download items in gallery</string>
+    <string name="settings_download_export_no_items">No items to export</string>
+    <string name="settings_download_export_failed">Failed to export download items</string>
+    <string name="settings_download_export_succeed">Successfully exported download items to %1$s</string>
+    <string name="settings_eh_system_theme">System theme</string>
+    <string name="doujinshi">DOUJINSHI</string>
+    <string name="manga">MANGA</string>
+    <string name="artist_cg">ARTIST CG</string>
+    <string name="game_cg">GAME CG</string>
+    <string name="western">WESTERN</string>
+    <string name="non_h">NON-H</string>
+    <string name="image_set">IMAGE SET</string>
+    <string name="cosplay">COSPLAY</string>
+    <string name="asian_porn">ASIAN PORN</string>
+    <string name="misc">MISC</string>
+    <string name="unknown">UNKNOWN</string>
+    <string name="error_status_code_400">Bad Request</string>
+    <string name="error_status_code_401">Unauthorized</string>
+    <string name="error_status_code_402">Payment Required</string>
+    <string name="error_status_code_403">Forbidden</string>
+    <string name="error_status_code_404">Not Found</string>
+    <string name="error_status_code_405">Method Not Allowed</string>
+    <string name="error_status_code_406">Not Acceptable</string>
+    <string name="error_status_code_407">Proxy Authentication Required</string>
+    <string name="error_status_code_408">Request Timeout</string>
+    <string name="error_status_code_409">Conflict</string>
+    <string name="error_status_code_410">Gone</string>
+    <string name="error_status_code_411">Length Required</string>
+    <string name="error_status_code_412">Precondition Failed</string>
+    <string name="error_status_code_413">Request Entity Too Large</string>
+    <string name="error_status_code_414">Request-URI Too Long</string>
+    <string name="error_status_code_415">Unsupported Media Type</string>
+    <string name="error_status_code_416">Requested Range Not Satisfiable</string>
+    <string name="error_status_code_417">Expectation Failed</string>
+    <string name="error_status_code_500">Internal Server Error</string>
+    <string name="error_status_code_501">Not Implemented</string>
+    <string name="error_status_code_502">Bad Gateway</string>
+    <string name="error_status_code_503">Service Unavailable</string>
+    <string name="error_status_code_504">Gateway Timeout</string>
+    <string name="error_status_code_505">HTTP Version Not Supported</string>
+    <string name="refreshed">Refreshed</string>
+    <string name="refresh_current_page">Refresh Current Page</string>
+    <string name="compress_selected_galleries">Compress Selected Galleries</string>
+    <string name="compress_success">Compress Succeeded: %1$s</string>
+    <string name="compress_failed">Compress Failed</string>
+    <string name="start_all_download">Start All</string>
+    <string name="pause_all_download">Pause All</string>
+    <string name="move_download">Move</string>
+    <string name="random_download">Random</string>
+    <string name="drag_mode">Drag Mode</string>
+    <string name="version_history">Version History</string>
+    <string name="checking_version_history">Checking version history...</string>
+    <string name="no_version_history_found">No version history found</string>
+    <string name="version_history_found">Found %1$d version(s) of this gallery</string>
+    <string name="gallery_update_available">Gallery update available!</string>
+    <string name="view_update_versions">View Update Versions</string>
+    <string name="scene_download_title_new">%1$s(%2$s)</string>
+    <string name="empty_select_download_info">No download items selected</string>
+    <string name="download_remove_progress">Deleting %1$d/%2$d</string>
+    <string name="download_filter_by_kind">Filter by kind</string>
+    <string name="settings_eh_manual_thumb_resolution">Manual thumb resolution</string>
+    <string name="settings_eh_manual_thumb_resolution_summary">Enable manual thumbnail resolution setting</string>
+    <string name="settings_eh_custom_thumb_resolution">Custom thumb resolution</string>
+    <string name="settings_eh_enable_comment_rating_filter">Enable comment rating filter</string>
+    <string name="settings_eh_enable_comment_rating_filter_summary">Filter comments based on rating threshold</string>
+    <string name="settings_eh_comment_rating_threshold">Comment rating threshold</string>
+    <string name="settings_read_picture_decoding_method">Picture decoding method</string>
+    <string name="settings_read_picture_decoding_method_origin">System Decoding</string>
+    <string name="settings_read_picture_decoding_method_native">Open source C++ decoding library</string>
+    <string name="settings_download_reset_media_scan">Reset media scan</string>
+    <string name="settings_download_reset_media_scan_summary">Refresh system media scan to update gallery apps</string>
+    <string name="settings_download_enable_min_download_speed">Enable minimum download speed limit</string>
+    <string name="settings_download_enable_min_download_speed_summary">Stop all downloads if speed is below threshold for 3 minutes</string>
+    <string name="settings_download_min_download_speed">Minimum download speed</string>
+    <string name="settings_download_logging_enabled">Enable download logging</string>
+    <string name="settings_download_logging_enabled_summary">Record detailed information about download process and save to log files</string>
+    <string name="settings_download_view_logs">View download logs</string>
+    <string name="settings_download_view_logs_summary">View and manage download log files</string>
+    <string name="settings_download_clean_logs">Clean old logs</string>
+    <string name="settings_download_clean_logs_summary">Delete log files older than 7 days</string>
+    <string name="settings_download_enable_download_timeout">Enable download timeout</string>
+    <string name="settings_download_enable_download_timeout_summary">Enable timeout limit for download requests</string>
+    <string name="settings_download_download_queue_order">Download queue order</string>
+    <string name="settings_download_download_queue_order_summary">Set the queue order strategy for download tasks</string>
+    <string name="download_queue_order_default">Default (by add order)</string>
+    <string name="download_queue_order_fewest_first">Fewest images first</string>
+    <string name="download_queue_order_most_first">Most images first</string>
+    <string name="merge_duplicate_gallery_title">Merge Duplicate Galleries</string>
+    <string name="settings_download_scan_download_files">Scan download files</string>
+    <string name="settings_download_scan_download_files_summary">Scan all download directories and rebuild file info table to optimize downloads and avoid duplicates</string>
+    <string name="settings_download_restore_download_items_detail">Recovers download items with valid .ehviewer files by fetching complete gallery info from API</string>
+    <string name="settings_download_clean_invalid_download_summary">Remove download items which are invalid</string>
+    <string name="settings_download_clean_invalid_download">Clean invaild download</string>
+    <string name="settings_download_rebuild_download_records_detail">Handles all folders, creates fallback local records for those without .ehviewer files</string>
+    <string name="settings_download_rebuilding">Rebuilding download records</string>
+    <string name="settings_download_rebuild_success">Rebuild completed, added %1$d records</string>
+    <string name="settings_download_rebuild_failed">Rebuild failed</string>
+    <string name="settings_download_rebuild_no_records">No valid download records found</string>
+    <string name="settings_download_rebuild_confirm">Are you sure you want to rebuild download records from download path? This will scan all folders and add valid galleries to the download list. Folders without .ehviewer files will be created as local gallery records.</string>
+    <string name="settings_download_rebuild_download_records_started">Rebuild task started, check task manager for progress</string>
+    <string name="settings_download_clean_redundancy_started">Clean redundancy task started, check task manager for progress</string>
+    <string name="settings_advanced_user_agent">User Agent</string>
+    <string name="settings_advanced_user_agent_summary">Custom user agent for network requests</string>
+    <string name="settings_advanced_user_agent_restore_default">Restore Default</string>
+    <string name="settings_advanced_user_agent_save">Save</string>
+    <string name="settings_advanced_user_agent_saved">User Agent saved</string>
+    <string name="settings_advanced_user_agent_restored">User Agent restored to default</string>
+    <string name="settings_advanced_user_agent_empty">User Agent cannot be empty</string>
+    <string name="settings_advanced_export_path">Export path</string>
+    <string name="settings_advanced_export_path_summary">Choose where compressed galleries are saved (default: download path with /Output)</string>
+    <string name="settings_advanced_export_path_set">Export path updated to %1$s</string>
+    <string name="transfer_client_operations">Client Operations</string>
+    <string name="transfer_send_bookmarks">Send Bookmarks</string>
+    <string name="transfer_send_downloads">Send Downloads</string>
+    <string name="transfer_send_favorites">Send Favorites</string>
+    <string name="transfer_send_export">Send Export Data</string>
+    <string name="transfer_client_push_requested">Requested client push: %1$s (task %2$s)</string>
+    <string name="app_language_de">Deutsch</string>
+    <string name="app_language_en">English</string>
+    <string name="app_language_es">Español</string>
+    <string name="app_language_fr">Français</string>
+    <string name="app_language_ja">Japanese</string>
+    <string name="app_language_ko">한국어</string>
+    <string name="app_language_th">ไทย</string>
+    <string name="app_language_zh_cn">Chinese (Simplified)</string>
+    <string name="app_language_zh_hk">Chinese (Hong Kong)</string>
+    <string name="app_language_zh_tw">Chinese (Taiwan)</string>
+    <string name="wifi_connect_auto">Auto connect</string>
+    <string name="wifi_connect_custom_ip">Connect to specified IP</string>
+    <string name="wifi_ip_address_label">IP address:</string>
+    <string name="wifi_ip_address_hint">192.168.1.100</string>
+    <string name="wifi_server_ip_addresses">Local IP addresses: %1$s</string>
+    <string name="wifi_please_select_data_type">Please select at least one data type</string>
+    <string name="wifi_server_reconnecting">Connection lost, trying to reconnect...</string>
+    <string name="wifi_server_reconnect_failed">Failed to reconnect: %1$s</string>
+    <string name="wifi_server_hotspot_not_enabled">WiFi hotspot is not enabled, please enable WiFi hotspot first</string>
+    <string name="wifi_server_hotspot_enabled">WiFi hotspot is enabled, waiting for device connection...</string>
+    <string name="wifi_server_please_enable_hotspot">Please enable WiFi hotspot first</string>
+    <string name="settings_download_repair_all_downloaded_gallery">Repair all downloaded gallery info</string>
+    <string name="settings_download_repair_all_downloaded_gallery_summary">Scan and repair all downloaded gallery info</string>
+    <string name="repair_all_downloaded_gallery_confirm">Are you sure you want to repair all downloaded gallery info? This operation may take a long time.</string>
+    <string name="repair_all_downloaded_gallery_success">All downloaded gallery info repaired successfully</string>
+    <string name="repair_all_downloaded_gallery_failed">Error occurred during repair process</string>
+    <string name="repair_all_downloaded_gallery_processing">Repairing all downloaded gallery info...</string>
+    <string name="settings_download_repair_unknown_category_gallery">Repair unknown category downloads</string>
+    <string name="settings_download_repair_unknown_category_gallery_summary">Scan and repair all downloaded galleries with unknown category</string>
+    <string name="repair_unknown_category_gallery_confirm">Are you sure you want to repair unknown category downloads? This operation may take a long time.</string>
+    <string name="repair_unknown_category_gallery_success">Unknown category downloads repaired successfully</string>
+    <string name="repair_unknown_category_gallery_failed">Error occurred during repair process</string>
+    <string name="repair_unknown_category_gallery_processing">Repairing unknown category downloads...</string>
+    <string name="error_cant_find_gallery">Can\'t find gallery</string>
+    <string name="multi_select_mode_enabled">Multi-select mode enabled</string>
+    <string name="multi_select_mode_disabled">Multi-select mode disabled</string>
+    <string name="download_selected">Download selected galleries</string>
+    <string name="download_selected_confirm">Are you sure you want to download %1$d selected galleries?</string>
+    <string name="download_selected_result">Successfully downloaded %1$d/%2$d galleries</string>
+    <string name="no_gallery_selected">Please select galleries to download first</string>
+    <string name="incremental_update_category">Incremental Update</string>
+    <string name="download_state_download">Download State</string>
+    <string name="sort_by_default">Default Order</string>
+    <string name="delete_download">Delete Download</string>
+    <string name="background_tasks_channel_name">背景任務</string>
+    <string name="background_tasks_channel_description">用於掃描下載文件、合併重複畫廊等的背景任務通知</string>
+    <string name="background_task_running">背景任務正在運行</string>
+    <string name="background_task_running_description">任務完成後通知會自動消失</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="merge_scanning_galleries">Scanning downloaded galleries...</string>
+    <string name="merge_start_scan">Start scanning downloaded galleries...</string>
+    <string name="merge_scan_failed">Failed to scan downloaded galleries</string>
+    <string name="merge_scan_complete">Scan completed, found %1$d duplicate gallery groups</string>
+    <string name="merge_start_analyze">Start analyzing gallery version relationships...</string>
+    <string name="merge_analyzing_versions">Analyzing gallery version relationships...</string>
+    <string name="merge_analyzing_galleries">Analyzing galleries for duplicates...</string>
+    <string name="merge_analyze_failed">Failed to analyze gallery version relationships</string>
+    <string name="merge_analyze_complete">Analysis completed</string>
+    <string name="merge_no_duplicates_found">No duplicate galleries found that need merging</string>
+    <string name="merge_backing_up_database">Backing up database...</string>
+    <string name="merge_merging_galleries">Merging duplicate galleries...</string>
+    <string name="merge_success_summary">Merge completed: %1$d merged, %2$d skipped</string>
+    <string name="merge_failure_summary">Merge failed: %1$d merged, %2$d skipped</string>
+    <string name="merge_start_backup">Start backing up database...</string>
+    <string name="merge_backing_database">Backing up database...</string>
+    <string name="merge_backup_failed">Failed to back up database</string>
+    <string name="merge_backup_success">Database backup successful</string>
+    <string name="merge_start_merge">Start merging galleries...</string>
+    <string name="merge_merge_failed">Failed to merge galleries</string>
+    <string name="merge_merge_success">Gallery merge successful</string>
+    <string name="merge_exception_occurred">Exception occurred during merge: %1$s</string>
+    <string name="merge_exception_stack">Exception stack: %1$s</string>
+    <string name="table_info">Table: %1$s (total %2$d rows)</string>
+    <string name="column_info">Column information:</string>
+    <string name="data_sample_preview">Data sample (first 10 rows):</string>
+    <string name="wifi_connected_info">Connected to: %1$s\nIP:%2$s\nRoute: %3$s</string>
+    <string name="wifi_connection_failed">Communication connection failed</string>
+    <string name="wifi_try_reconnect">Try to reconnect</string>
+    <string name="wifi_please_enter_ip">Please enter IP address</string>
+    <string name="wifi_invalid_ip_format">IP address format is incorrect</string>
+    <string name="wifi_connecting_to_custom_ip">Trying to connect to specified IP: %1$s\nLocal IP:%2$s</string>
+    <string name="task_state_pending">Pending</string>
+    <string name="task_state_running">Running</string>
+    <string name="task_state_paused">Paused</string>
+    <string name="task_state_completed">Completed</string>
+    <string name="task_state_failed">Failed</string>
+    <string name="task_state_cancelled">Cancelled</string>
+    <string name="task_progress_unknown">Unknown Progress</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="stop">Stop</string>
+    <string name="stop_all">Stop All</string>
+    <string name="task_detail">Task Details</string>
+    <string name="task_id">Task ID</string>
+    <string name="task_name">Task Name</string>
+    <string name="task_description">Description</string>
+    <string name="task_state">State</string>
+    <string name="task_progress">Progress</string>
+    <string name="task_created_time">Created</string>
+    <string name="task_start_time">Started</string>
+    <string name="task_end_time">Ended</string>
+    <string name="task_error">Error</string>
+    <string name="task_no_error">No error</string>
+    <string name="settings_advanced_network_diagnostic">Network Diagnostic</string>
+    <string name="settings_advanced_network_diagnostic_summary">Test site connectivity and network status</string>
+    <string name="network_diagnostic_title">Network Connectivity Diagnostic</string>
+    <string name="network_status_connected">Connected</string>
+    <string name="network_status_disconnected">Disconnected</string>
+    <string name="network_info_format">Network Status: %1$s\nNetwork Type: %2$s\nLocal IP: %3$s</string>
+    <string name="network_type_wifi">WiFi</string>
+    <string name="network_type_mobile">Mobile</string>
+    <string name="network_type_unknown">Unknown</string>
+    <string name="diagnostic_error">Diagnostic Error: %1$s</string>
+    <string name="dns_resolution_failed">DNS Resolution Failed</string>
+    <string name="site_accessible">✓ Accessible (%1$dms)</string>
+    <string name="site_inaccessible">✗ Inaccessible</string>
+    <string name="site_inaccessible_with_error">✗ Inaccessible (%1$s)</string>
+    <string name="ip_address_format">IP: %1$s</string>
+    <string name="refresh_diagnostic">Refresh Diagnostic</string>
+    <string name="task_completed">Task completed</string>
+    <string name="show">Show</string>
+    <string name="rebuild_download_records_initializing">Initializing rebuild...</string>
+    <string name="rebuild_download_records_invalid_dir">Invalid download directory</string>
+    <string name="rebuild_download_records_scanning">Scanning files...</string>
+    <string name="rebuild_download_records_empty_dir">Empty download directory</string>
+    <string name="rebuild_download_records_no_metadata">No metadata files found</string>
+    <string name="rebuild_download_records_processing">Processing: %1$d/%2$d (Added: %3$d)</string>
+    <string name="rebuild_download_records_progress">Processing: %1$d/%2$d (Added: %3$d)</string>
+    <string name="rebuild_download_records_finalizing">Finalizing...</string>
+    <string name="rebuild_download_records_completed">Rebuild completed</string>
+    <string name="scan_download_files_initializing">Initializing scan...</string>
+    <string name="scan_download_files_counting">Counting files...</string>
+    <string name="scan_download_files_progress">Scanning: %1$d/%2$d files</string>
+    <string name="start_all_download_initializing">Initializing downloads...</string>
+    <string name="start_all_download_starting">Starting %1$d tasks</string>
+    <string name="start_all_download_progress">Starting: %1$d/%2$d - %3$s</string>
+    <string name="start_all_download_finalizing">Finalizing...</string>
+    <string name="start_all_download_completed">Started %1$d tasks</string>
+    <string name="start_all_download_no_tasks">No tasks to start</string>
+    <string name="download_start_range">Start Range Download</string>
+    <string name="download_start_range_summary">Start %1$d selected downloads</string>
+    <string name="start_range_download_initializing">Initializing range downloads...</string>
+    <string name="start_range_download_starting">Starting %1$d selected tasks</string>
+    <string name="start_range_download_progress">Processing: %1$d/%2$d</string>
+    <string name="start_range_download_finalizing">Finalizing...</string>
+    <string name="start_range_download_completed">Started %1$d selected tasks</string>
+    <string name="start_range_download_no_tasks">No tasks to start</string>
+    <string name="start_range_download_no_valid_tasks">No valid tasks to start</string>
+    <string name="start_range_download_processing">Processing %1$d valid tasks</string>
+    <string name="settings_download_cleaning_summary">Clean invalid download items</string>
+    <string name="settings_download_rebuilding_summary">Rebuild download records</string>
+    <string name="download_start_all_summary">Start all pending downloads</string>
+    <string name="local_gallery_page_indicator">%1$d / %2$d</string>
+    <string name="local_gallery_image">Gallery image</string>
+    <string name="local_gallery_slideshow_start">Start Slideshow</string>
+    <string name="local_gallery_slideshow_stop">Stop Slideshow</string>
+    <string name="local_gallery_slideshow_interval">Slideshow interval</string>
+    <string name="local_gallery_info_title">Gallery Information</string>
+    <string name="local_gallery_info_path">Path</string>
+    <string name="local_gallery_info_size">Size</string>
+    <string name="local_gallery_info_count">Image Count</string>
+    <string name="local_gallery_info_modified">Modified Time</string>
+    <string name="local_gallery_info">Gallery Info</string>
+    <string name="local_gallery_no_images">No images found in this gallery</string>
+    <string name="local_gallery_detail_title">Gallery Details</string>
+    <string name="local_gallery_viewer_title">Gallery Viewer</string>
 </resources>
