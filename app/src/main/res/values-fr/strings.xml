@@ -115,6 +115,10 @@
     <string name="error_empty_html">Page vide</string>
     <string name="error_cant_get_image">Impossible d\'obtenir l\'image</string>
     <string name="error_igneous_wrong">Ignous incorrect\nassurez-vous d\'avoir les permissions et reconnectez-vous</string>
+    <string name="gallery_gl_fallback_title">Le moteur OpenGL est indisponible</string>
+    <string name="gallery_gl_fallback_message">Cet appareil ne peut pas initialiser EGL pour le moment. Revenez en arrière et réessayez plus tard.</string>
+    <string name="gallery_gl_fallback_action_close">Retour</string>
+    <string name="gallery_gl_fallback_toast">Échec du rendu GL, basculement vers une page de secours sécurisée</string>
 
     <string name="app_waring">Le contenu de l\'application provient de l\'Internet, dont quelque chose peut vous causer le dommage physique ou mentale. Vous l\'avez bien compris et voulez continuer quand même.</string>
     <string name="error_username_cannot_empty">Le nom d\'utilisateur ne doit pas être une chaîne vide</string>

@@ -1782,7 +1782,7 @@ public class DownloadsScene extends ToolbarScene
                 }
                 return null;
             }
-        }.executeOnExecutor(IoThreadPoolExecutor.getInstance(), files);
+        }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance(), files);
     }
 
     @Override

@@ -355,7 +355,7 @@ public class EhTagDatabase {
             instance = null;
         }
 
-        IoThreadPoolExecutor.getInstance().execute(() -> {
+        IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
             if (!lock.tryLock()) {
                 return;
             }

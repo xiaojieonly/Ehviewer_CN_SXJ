@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hippo.util
 
-package com.hippo.util;
+import com.hippo.lib.yorozuya.FileUtils
+import com.hippo.lib.yorozuya.IOUtils
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
-import com.hippo.lib.yorozuya.FileUtils;
-import com.hippo.lib.yorozuya.IOUtils;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-public final class LogCat {
-
-    private LogCat() {
-    }
-
-    public static boolean save(File file) {
+object LogCat {
+    @JvmStatic
+    fun save(file: File?): Boolean {
         if (!FileUtils.ensureFile(file)) {
-            return false;
+            return false
         }
 
         try {
-            Process p = Runtime.getRuntime().exec("logcat -d");
-            IOUtils.copy(p.getInputStream(), new FileOutputStream(file));
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+            val p = Runtime.getRuntime().exec("logcat -d")
+            IOUtils.copy(p.inputStream, FileOutputStream(file))
+            return true
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return false
         }
     }
 }

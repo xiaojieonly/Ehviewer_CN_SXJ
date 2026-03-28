@@ -193,6 +193,10 @@
     <string name="error_empty_html">Empty page</string>
     <string name="error_cant_get_image">Can\'t get image</string>
     <string name="error_igneous_wrong">Wrong igneous\nmake sure you have permission and re-login</string>
+    <string name="gallery_gl_fallback_title">OpenGL renderer unavailable</string>
+    <string name="gallery_gl_fallback_message">This device cannot initialize EGL right now. Please return and try again later.</string>
+    <string name="gallery_gl_fallback_action_close">Back</string>
+    <string name="gallery_gl_fallback_toast">GL rendering failed, switched to safe fallback page</string>
 
     <string name="kokomade_tip">Settings->Eh->Gallery Site->e-hentai</string>
 
@@ -591,6 +595,8 @@
     <string name="settings_eh_sign_out_tip">You have signed out. Restart the application to sign in again</string>
     <string name="settings_eh_identity_cookies">Identity cookies</string>
     <string name="settings_eh_identity_cookies_summary">Cookies can be used to sign in</string>
+    <!--    <string name="settings_eh_lock_cookies_igneous">Lock the Cookie igneous field</string>-->
+    <!--    <string name="settings_eh_lock_cookies_igneous_summary">It is not recommended to enable it except in special circumstances.</string>-->
     <!--    <string name="settings_eh_lock_cookies_igneous">Lock the Cookie igneous field</string>-->
     <!--    <string name="settings_eh_lock_cookies_igneous_summary">It is not recommended to enable it except in special circumstances.</string>-->
     <string name="settings_eh_identity_cookies_signed">Identity cookies can be used to sign in to this account.&lt;br&gt;&lt;b&gt;KEEP IT SAFE&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>

@@ -79,8 +79,10 @@ android {
 //    }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+        // 允许对 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {

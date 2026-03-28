@@ -19,6 +19,7 @@ An E-Hentai Application for Android.
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
 - Torrent链接:magnet:?xt=urn:btih:4869fe5d6cebba6e1f2b672e3523cca83838b466&xt=urn:btmh:1220df01410d828d8544b9efe8e15fe3e7323eab74d2ae962947f324dd36e0a99b74&dn=EhViewer-2.0.1.5.apk&xl=27934862
 
+
 点击前往赏饭：
 
 - [要饭嘛不寒掺](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/blob/BiLi_PC_Gamer/feedauthor/support.md)

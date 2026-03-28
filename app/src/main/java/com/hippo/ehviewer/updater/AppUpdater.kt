@@ -106,7 +106,7 @@ class AppUpdater(private val name: String, source: BufferedSource) {
                 instance = null
             }
 
-            IoThreadPoolExecutor.getInstance().execute {
+            IoThreadPoolExecutor.instance.execute {
                 if (!lock.tryLock()) {
                     return@execute
                 }

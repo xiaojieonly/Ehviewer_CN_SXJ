@@ -3,14 +3,22 @@ package com.hippo.ehviewer.util;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
+
+import androidx.annotation.Nullable;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser;
+import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.ehviewer.dao.LocalFavoriteInfo;
+import com.hippo.ehviewer.ui.scene.ProgressScene;
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.scene.Announcer;
 import com.hippo.util.ExceptionUtils;
 
 
@@ -152,5 +160,29 @@ public class ClipboardUtil {
             }
         }
         return "";
+    }
+
+    @Nullable
+    public static Announcer createAnnouncerFromClipboardUrl(String url) {
+        GalleryDetailUrlParser.Result result1 = GalleryDetailUrlParser.parse(url, false);
+        if (result1 != null) {
+            Bundle args = new Bundle();
+            args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_GID_TOKEN);
+            args.putLong(GalleryDetailScene.KEY_GID, result1.gid);
+            args.putString(GalleryDetailScene.KEY_TOKEN, result1.token);
+            return new Announcer(GalleryDetailScene.class).setArgs(args);
+        }
+
+        GalleryPageUrlParser.Result result2 = GalleryPageUrlParser.parse(url, false);
+        if (result2 != null) {
+            Bundle args = new Bundle();
+            args.putString(ProgressScene.KEY_ACTION, ProgressScene.ACTION_GALLERY_TOKEN);
+            args.putLong(ProgressScene.KEY_GID, result2.gid);
+            args.putString(ProgressScene.KEY_PTOKEN, result2.pToken);
+            args.putInt(ProgressScene.KEY_PAGE, result2.page);
+            return new Announcer(ProgressScene.class).setArgs(args);
+        }
+
+        return null;
     }
 }

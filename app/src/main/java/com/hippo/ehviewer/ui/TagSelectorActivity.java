@@ -18,7 +18,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import com.hippo.ehviewer.ui.EhActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,7 +43,7 @@ import java.util.Set;
  * 2. Checks system locale to prevent Chinese tags on English devices. (根据系统语言强制切英文，防止乱码或违和感)
  * 3. Uses lazy loading for large tag lists. (数据量太大，采用了懒加载)
  */
-public class TagSelectorActivity extends AppCompatActivity {
+public class TagSelectorActivity extends EhActivity {
 
     private RecyclerView recyclerView;
     private TagAdapter adapter;
@@ -66,6 +66,20 @@ public class TagSelectorActivity extends AppCompatActivity {
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
     };
+
+    @Override
+    protected int getThemeResId(int theme) {
+        switch (theme) {
+            case com.hippo.ehviewer.Settings.THEME_DARK:
+                return R.style.AppTheme_Dark;
+            case com.hippo.ehviewer.Settings.THEME_BLACK:
+                return R.style.AppTheme_Black;
+            case com.hippo.ehviewer.Settings.THEME_LIGHT:
+            default:
+                return R.style.AppTheme;
+        }
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,8 +115,8 @@ public class TagSelectorActivity extends AppCompatActivity {
     }
 
     private void checkSystemEnvironment() {
-        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        isDarkMode = (nightModeFlags == Configuration.UI_MODE_NIGHT_YES);
+        int theme = com.hippo.ehviewer.Settings.getTheme();
+        isDarkMode = (theme == com.hippo.ehviewer.Settings.THEME_DARK || theme == com.hippo.ehviewer.Settings.THEME_BLACK);
 
         // Strict check: Only "zh" gets Chinese tags.
         // 严格检查：只有系统语言是中文(zh)才显示中文标签，其他一律英文
@@ -118,7 +132,6 @@ public class TagSelectorActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Tag Selector");
         }
-        toolbar.setNavigationOnClickListener(v -> finish());
 
         tvSelectedCount = findViewById(R.id.tv_selected_count);
         recyclerView = findViewById(R.id.rv_tag_list);
@@ -140,6 +153,15 @@ public class TagSelectorActivity extends AppCompatActivity {
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // 关掉页面
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void updateInfo() {

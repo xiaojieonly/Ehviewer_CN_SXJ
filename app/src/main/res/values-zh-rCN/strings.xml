@@ -156,6 +156,10 @@
     <string name="error_empty_html">页面内容为空</string>
     <string name="error_cant_get_image">无法获取图片</string>
     <string name="error_igneous_wrong">错误的igneous\n检查账号里站权限后重新登录</string>
+    <string name="gallery_gl_fallback_title">OpenGL 渲染器不可用</string>
+    <string name="gallery_gl_fallback_message">当前设备暂时无法初始化 EGL。请返回后稍后重试。</string>
+    <string name="gallery_gl_fallback_action_close">返回</string>
+    <string name="gallery_gl_fallback_toast">GL 渲染失败，已切换到安全占位页</string>
 
     <string name="kokomade_tip">设置->Eh->画廊站点->e-hentai</string>
 
@@ -226,6 +230,7 @@
     <string name="search_normal">普通搜索</string>
     <string name="search_advance">高级选项</string>
     <string name="search_image">图片搜索</string>
+    <string name="tag_search_entrance">标签检索</string>
     <string name="search_normal_search">一般搜索</string>
     <string name="search_subscription_search">订阅搜索</string>
     <string name="search_specify_uploader">指定上传者</string>
