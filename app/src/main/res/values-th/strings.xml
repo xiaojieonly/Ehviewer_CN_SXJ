@@ -363,6 +363,11 @@
     <string name="gallery_previews">ตัวอย่างแกลเลอรี่</string>
     <string name="go_to">ไปที่</string>
     <string name="tag_filter">กรองแท็ก</string>
+    <string name="tag_selector_search_hint">ค้นหาแท็ก…</string>
+    <string name="tag_selector_selected_count">เลือกแล้ว: %d</string>
+    <string name="tag_selector_selected_section_title">แท็กที่เลือก</string>
+    <string name="tag_selector_empty_selected">ยังไม่ได้เลือกแท็ก</string>
+    <string name="tag_selector_other_group">อื่นๆ</string>
 
     <!-- Download -->
     <string name="scene_download_title">%s แกลเลอรี่- %s</string>

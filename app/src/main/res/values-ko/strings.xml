@@ -369,6 +369,11 @@
     <string name="gallery_previews">갤러리 미리 보기</string>
     <string name="go_to">이동</string>
     <string name="tag_filter">태그 필터링</string>
+    <string name="tag_selector_search_hint">태그 검색…</string>
+    <string name="tag_selector_selected_count">선택됨: %d</string>
+    <string name="tag_selector_selected_section_title">선택한 태그</string>
+    <string name="tag_selector_empty_selected">선택한 태그 없음</string>
+    <string name="tag_selector_other_group">기타</string>
 
     <!-- Download -->
     <string name="scene_download_title">%s 갤러리 - %s</string>

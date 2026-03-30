@@ -305,6 +305,11 @@
     <string name="gallery_previews">Vorschauen der Galerie</string>
     <string name="go_to">Gehe zu</string>
     <string name="tag_filter">Etikett filtern</string>
+    <string name="tag_selector_search_hint">Tags durchsuchen…</string>
+    <string name="tag_selector_selected_count">Ausgewählt: %d</string>
+    <string name="tag_selector_selected_section_title">Ausgewählte Tags</string>
+    <string name="tag_selector_empty_selected">Keine Tags ausgewählt</string>
+    <string name="tag_selector_other_group">Sonstige</string>
     <string name="scene_download_title">%s Galleries - %s</string>
     <string name="no_download_info">Downloads werden hier angezeigt</string>
     <string name="download_state_none">Pausiert</string>

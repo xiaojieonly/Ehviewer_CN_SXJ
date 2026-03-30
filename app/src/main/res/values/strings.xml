@@ -429,6 +429,11 @@
     <string name="gallery_previews">Gallery Previews</string>
     <string name="go_to">Go to</string>
     <string name="tag_filter">Filter tag</string>
+    <string name="tag_selector_search_hint">Search tags…</string>
+    <string name="tag_selector_selected_count">Selected: %d</string>
+    <string name="tag_selector_selected_section_title">Selected tags</string>
+    <string name="tag_selector_empty_selected">No tags selected</string>
+    <string name="tag_selector_other_group">Other</string>
 
     <!-- Download -->
     <string name="scene_download_title">%s Galleries - %s</string>
