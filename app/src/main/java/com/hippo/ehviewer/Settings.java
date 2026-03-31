@@ -818,6 +818,25 @@ public class Settings {
     public static final String KEY_EXPORT_SAVE_QUERY = "export_query";
     public static final String KEY_EXPORT_SAVE_FRAGMENT = "export_fragment";
 
+    public static final String KEY_COMPRESS_SPLIT_SIZE_MB = "compress_split_size_mb";
+    public static final int DEFAULT_COMPRESS_SPLIT_SIZE_MB = 1024; // 1GB
+
+    public static int getCompressSplitSizeMB() {
+        return getIntFromStr(KEY_COMPRESS_SPLIT_SIZE_MB, DEFAULT_COMPRESS_SPLIT_SIZE_MB);
+    }
+
+    public static void putCompressSplitSizeMB(int value) {
+        putIntToStr(KEY_COMPRESS_SPLIT_SIZE_MB, value);
+    }
+
+    public static long getCompressSplitSizeBytes() {
+        int mb = getCompressSplitSizeMB();
+        if (mb <= 0) {
+            return 0L;
+        }
+        return mb * 1024L * 1024L;
+    }
+
     @Nullable
     public static UniFile getExportLocation() {
         UniFile dir = null;

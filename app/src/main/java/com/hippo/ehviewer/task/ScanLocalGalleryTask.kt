@@ -39,36 +39,51 @@ class ScanLocalGalleryTask(
             coroutineContext[Job]?.ensureActive()
 
             val manager = LocalGalleryManager.getInstance(context)
-            val results = manager.scanLocalGalleriesSync { current, total, detail ->
-                currentProgress = current
-                totalProgress = total
+            val latch = java.util.concurrent.CountDownLatch(1)
+            val localResults = java.util.concurrent.atomic.AtomicReference<List<com.hippo.ehviewer.client.data.LocalGalleryInfo>>() 
 
-                val percent = if (total > 0) current * 100 / total else -1
-                val progressDetail = if (detail.isNotEmpty()) {
-                    context.getString(R.string.local_gallery_scan_progress, current, total, detail)
-                } else {
-                    context.getString(R.string.local_gallery_scan_progress_simple, current, total)
+            val listener = object : LocalGalleryManager.LocalGalleryListener {
+                override fun onScanStart() {
+                    // no-op
                 }
 
-                progressListener?.onProgressChanged(percent, progressDetail)
-                manager.reportScanProgress(progressDetail)
-
-                while (isPaused && !isCancelled) {
-                    Thread.sleep(100)
+                override fun onScanProgress(current: String) {
+                    if (isCancelled) return
+                    val progressDetail = context.getString(R.string.local_gallery_scan_progress_simple, 0, 0)
+                    progressListener?.onProgressChanged(-1, progressDetail)
                 }
 
-                if (isCancelled) {
-                    return@scanLocalGalleriesSync false
+                override fun onScanComplete(localGalleries: List<com.hippo.ehviewer.client.data.LocalGalleryInfo>, recycleBinGalleries: List<com.hippo.ehviewer.client.data.LocalGalleryInfo>) {
+                    localResults.set(localGalleries)
+                    latch.countDown()
                 }
 
-                true
+                override fun onGalleryDeleted(gallery: com.hippo.ehviewer.client.data.LocalGalleryInfo, success: Boolean) {
+                    // no-op
+                }
+
+                override fun onGalleryRestored(gallery: com.hippo.ehviewer.client.data.LocalGalleryInfo, success: Boolean) {
+                    // no-op
+                }
             }
 
+            manager.addListener(listener)
+            try {
+                manager.scanLocalGalleries(true)
+                while (!latch.await(100, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+                    if (isCancelled) {
+                        throw CancellationException("Task cancelled")
+                    }
+                }
+            } finally {
+                manager.removeListener(listener)
+            }
+
+            val results = localResults.get() ?: manager.getCachedLocalGalleries()
             if (isCancelled) {
                 throw CancellationException("Task cancelled")
             }
 
-            manager.reportLocalScanComplete(results)
             Result.success(Unit)
         } catch (e: CancellationException) {
             Result.failure(e)

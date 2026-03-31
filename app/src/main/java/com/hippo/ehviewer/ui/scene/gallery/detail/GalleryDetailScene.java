@@ -111,6 +111,7 @@ import com.hippo.ehviewer.ui.scene.GalleryInfoScene;
 import com.hippo.ehviewer.ui.scene.GalleryPreviewsScene;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
+import com.hippo.ehviewer.download.DownloadInfoListener;
 import com.hippo.ehviewer.ui.scene.gallery.list.FavoritesScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListSceneDialog;
@@ -163,7 +164,7 @@ import java.util.concurrent.ExecutorService;
 import okhttp3.OkHttpClient;
 
 public class GalleryDetailScene extends BaseScene implements View.OnClickListener,
-        com.hippo.ehviewer.download.DownloadManager.DownloadInfoListener,
+        DownloadInfoListener,
         View.OnLongClickListener {
 
     @IntDef({STATE_INIT, STATE_NORMAL, STATE_REFRESH, STATE_REFRESH_HEADER, STATE_FAILED})

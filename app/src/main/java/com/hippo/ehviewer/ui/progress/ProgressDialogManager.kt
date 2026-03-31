@@ -52,16 +52,20 @@ object ProgressDialogManager {
     fun showOrUpdateDialog(context: Context, task: BackgroundTask): Boolean {
         val taskId = task.getTaskId()
         val existingDialog = activeDialogs[taskId]
-        
-        return if (existingDialog != null && existingDialog.isShown) {
-            // 更新现有对话框
+
+        if (existingDialog != null) {
+            // 如果已有同一任务的对话框（可能用户之前点击了“后台处理”），则复用原有对话框并重新显示
+            if (!existingDialog.isShown) {
+                existingDialog.isShown = true
+                existingDialog.dialog.show()
+            }
             updateExistingDialog(existingDialog, task)
-            false
-        } else {
-            // 创建新对话框
-            createNewDialog(context, task)
-            true
+            return false
         }
+
+        // 创建新对话框
+        createNewDialog(context, task)
+        return true
     }
     
     /**

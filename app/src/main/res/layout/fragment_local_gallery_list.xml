@@ -42,4 +42,41 @@
         android:src="@drawable/ic_refresh"
         app:tint="?android:textColorPrimary" />
 
+    <LinearLayout
+        android:id="@+id/recycle_bin_fab_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_empty_recycle_bin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/recycle_bin_action_empty"
+            android:src="@drawable/v_delete_x24"
+            app:tint="?android:textColorPrimary" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_refresh_recycle_bin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/recycle_bin_action_refresh"
+            android:src="@drawable/v_refresh_dark_x24"
+            app:tint="?android:textColorPrimary" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_rescan_recycle_bin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/recycle_bin_action_rescan"
+            android:src="@drawable/v_file_find_primary_x48"
+            app:tint="?android:textColorPrimary" />
+
+    </LinearLayout>
+
 </FrameLayout>

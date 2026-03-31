@@ -331,6 +331,22 @@
         <item>640</item>
     </string-array>
 
+    <string-array name="compress_split_size_entries" translatable="false">
+        <item>@string/settings_advanced_compress_split_size_disabled</item>
+        <item>@string/settings_advanced_compress_split_size_512m</item>
+        <item>@string/settings_advanced_compress_split_size_1g</item>
+        <item>@string/settings_advanced_compress_split_size_2g</item>
+        <item>@string/settings_advanced_compress_split_size_4g</item>
+    </string-array>
+
+    <string-array name="compress_split_size_entry_values" translatable="false">
+        <item>0</item>
+        <item>512</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+    </string-array>
+
     <string-array name="gallery_list_menu_entries">
         <item>@string/download</item>
         <item>@string/add_to_favourites</item>

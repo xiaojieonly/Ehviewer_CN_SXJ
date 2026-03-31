@@ -44,6 +44,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +81,7 @@ public class GalleryCacheManager {
     private static final String KEY_PARENT = "parent";
     private static final String KEY_VISIBLE = "visible";
     private static final String KEY_TAGS = "tags";
+    private static final String KEY_TG_LIST = "tgList";
     private static final String KEY_IS_DELETED = "isDeleted";
     private static final String KEY_CACHE_TIME = "cacheTime";
     
@@ -274,6 +276,11 @@ public class GalleryCacheManager {
             if (galleryDetail.tags != null && galleryDetail.tags.length > 0) {
                 jsonObject.put(KEY_TAGS, convertTagsToJson(galleryDetail.tags));
             }
+
+            // gtl 标签缓存（来自列表高速预览标签）
+            if (galleryDetail.tgList != null && !galleryDetail.tgList.isEmpty()) {
+                jsonObject.put(KEY_TG_LIST, galleryDetail.tgList);
+            }
             
             // 检查是否已被删除
             if (isGalleryMarkedAsDeleted(galleryDetail.gid)) {
@@ -327,7 +334,35 @@ public class GalleryCacheManager {
             if (jsonObject.containsKey(KEY_TAGS)) {
                 galleryDetail.tags = parseJsonToTags(jsonObject.getJSONArray(KEY_TAGS));
             }
-            
+
+            // 解析gtl标签
+            if (jsonObject.containsKey(KEY_TG_LIST)) {
+                try {
+                    java.util.List<String> list = jsonObject.getJSONArray(KEY_TG_LIST).toJavaList(String.class);
+                    if (list != null) {
+                        galleryDetail.tgList = new ArrayList<>(list);
+                    }
+                } catch (Exception ignore) {
+                    Log.w(TAG, "解析gtl标签时失败：" + galleryDetail.gid);
+                }
+            }
+
+            // gtl 缺失时尝试从标签组中自动恢复（重建时可用）
+            if ((galleryDetail.tgList == null || galleryDetail.tgList.isEmpty())
+                    && galleryDetail.tags != null && galleryDetail.tags.length > 0) {
+                galleryDetail.tgList = new ArrayList<>();
+                for (GalleryTagGroup group : galleryDetail.tags) {
+                    if (group != null && group.groupName != null) {
+                        for (int i = 0; i < group.size(); i++) {
+                            String tag = group.getTagAt(i);
+                            if (tag != null) {
+                                galleryDetail.tgList.add(group.groupName + ":" + tag);
+                            }
+                        }
+                    }
+                }
+            }
+
             return galleryDetail;
         } catch (Exception e) {
             Log.e(TAG, "解析JSON到GalleryDetail失败", e);

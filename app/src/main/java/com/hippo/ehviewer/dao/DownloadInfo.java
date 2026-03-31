@@ -45,6 +45,11 @@ public class DownloadInfo extends GalleryInfo {
 	public int total;
 	public long fileSize = -1; // 文件夹总大小（字节），-1表示未计算
 
+	// incremental download info
+	public boolean incremental;
+	public int copyCount;
+	public int networkCount;
+
 
 	@Generated
 	public DownloadInfo() {
@@ -185,6 +190,30 @@ public class DownloadInfo extends GalleryInfo {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public boolean isIncremental() {
+		return incremental;
+	}
+
+	public void setIncremental(boolean incremental) {
+		this.incremental = incremental;
+	}
+
+	public int getCopyCount() {
+		return copyCount;
+	}
+
+	public void setCopyCount(int copyCount) {
+		this.copyCount = copyCount;
+	}
+
+	public int getNetworkCount() {
+		return networkCount;
+	}
+
+	public void setNetworkCount(int networkCount) {
+		this.networkCount = networkCount;
 	}
 
 	public String getArchiveUri() {

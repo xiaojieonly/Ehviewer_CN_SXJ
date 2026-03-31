@@ -26,6 +26,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -66,6 +68,10 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
     private LocalGalleryCardAdapter mAdapter;
     private LocalGalleryManager mLocalGalleryManager;
     private FloatingActionButton mFabRefresh;
+    private FloatingActionButton mFabEmptyRecycleBin;
+    private FloatingActionButton mFabRefreshRecycleBin;
+    private FloatingActionButton mFabRescanRecycleBin;
+    private View mRecycleBinFabGroup;
     private View mEmptyView;
     private TextView mEmptyText;
     
@@ -124,6 +130,10 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         
         mRecyclerView = view.findViewById(R.id.recycler_view);
         mFabRefresh = view.findViewById(R.id.fab_refresh);
+        mFabEmptyRecycleBin = view.findViewById(R.id.fab_empty_recycle_bin);
+        mFabRefreshRecycleBin = view.findViewById(R.id.fab_refresh_recycle_bin);
+        mFabRescanRecycleBin = view.findViewById(R.id.fab_rescan_recycle_bin);
+        mRecycleBinFabGroup = view.findViewById(R.id.recycle_bin_fab_group);
         mEmptyView = view.findViewById(R.id.empty_view);
         mEmptyText = view.findViewById(R.id.empty_text);
         
@@ -140,11 +150,42 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         
         // 设置悬浮按钮点击事件
         mFabRefresh.setOnClickListener(v -> {
-            Log.d(TAG, "开始刷新本地画廊列表");
-            Toast.makeText(requireContext(), R.string.local_gallery_scanning, Toast.LENGTH_SHORT).show();
-            mLocalGalleryManager.scanLocalGalleries(true);
+            if (!mIsRecycleBin) {
+                Log.d(TAG, "开始刷新本地画廊列表");
+                Toast.makeText(requireContext(), R.string.local_gallery_scanning, Toast.LENGTH_SHORT).show();
+                mLocalGalleryManager.scanLocalGalleries(true);
+            }
         });
-        
+
+        mFabEmptyRecycleBin.setOnClickListener(v -> {
+            if (mIsRecycleBin) {
+                mLocalGalleryManager.emptyRecycleBin();
+                Toast.makeText(requireContext(), R.string.recycle_bin_empty_success, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mFabRefreshRecycleBin.setOnClickListener(v -> {
+            if (mIsRecycleBin) {
+                mLocalGalleryManager.scanLocalGalleries(true);
+                Toast.makeText(requireContext(), R.string.recycle_bin_action_refresh, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mFabRescanRecycleBin.setOnClickListener(v -> {
+            if (mIsRecycleBin) {
+                mLocalGalleryManager.scanLocalGalleries(true);
+                Toast.makeText(requireContext(), R.string.recycle_bin_action_rescan, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        if (mIsRecycleBin) {
+            mFabRefresh.setVisibility(View.GONE);
+            mRecycleBinFabGroup.setVisibility(View.VISIBLE);
+        } else {
+            mFabRefresh.setVisibility(View.VISIBLE);
+            mRecycleBinFabGroup.setVisibility(View.GONE);
+        }
+
         updateEmptyView();
     }
     
@@ -413,10 +454,51 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
                 .setTitle(R.string.recycle_bin_delete_permanent_confirm)
                 .setMessage(getString(R.string.recycle_bin_delete_permanent_confirm, gallery.getDisplayTitle()))
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    mLocalGalleryManager.permanentlyDeleteGallery(gallery);
+                    performPermanentDeleteWithProgress(gallery);
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private void performPermanentDeleteWithProgress(LocalGalleryInfo gallery) {
+        Context context = requireContext();
+        if (context == null) {
+            return;
+        }
+
+        ProgressBar progressBar = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setIndeterminate(false);
+        progressBar.setMax(100);
+
+        TextView progressText = new TextView(context);
+        progressText.setText(getString(R.string.recycle_bin_delete_progress, 0, 0));
+
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (context.getResources().getDisplayMetrics().density * 12);
+        layout.setPadding(padding, padding, padding, padding);
+        layout.addView(progressBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        layout.addView(progressText, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        AlertDialog progressDialog = new AlertDialog.Builder(context)
+                .setTitle(R.string.recycle_bin_delete_permanent)
+                .setView(layout)
+                .setCancelable(false)
+                .setNegativeButton(R.string.background_processing, (d, w) -> d.dismiss())
+                .create();
+        progressDialog.show();
+
+        mLocalGalleryManager.permanentlyDeleteGallery(gallery, (current, total, detail) -> {
+            if (total > 0) {
+                int percent = current * 100 / total;
+                progressBar.setProgress(percent);
+                progressText.setText(getString(R.string.recycle_bin_delete_progress, current, total));
+            }
+            if (current >= total) {
+                progressDialog.dismiss();
+                Toast.makeText(context, R.string.recycle_bin_delete_permanent_success, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
     
     @Override

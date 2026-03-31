@@ -23,7 +23,12 @@ import android.os.Looper;
 import androidx.annotation.Nullable;
 
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.cache.GalleryCacheManager;
 import com.hippo.ehviewer.client.data.LocalGalleryInfo;
+import com.hippo.ehviewer.dao.DownloadInfo;
+import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.EhApplication;
+import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.unifile.UniFile;
 
 import android.text.TextUtils;
@@ -35,6 +40,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -70,6 +76,10 @@ public class LocalGalleryManager {
         void onScanComplete(List<LocalGalleryInfo> localGalleries, List<LocalGalleryInfo> recycleBinGalleries);
         void onGalleryDeleted(LocalGalleryInfo gallery, boolean success);
         void onGalleryRestored(LocalGalleryInfo gallery, boolean success);
+    }
+
+    public interface DeleteProgressCallback {
+        void onProgress(int current, int total, String detail);
     }
 
     public interface ScanProgressCallback {
@@ -124,15 +134,19 @@ public class LocalGalleryManager {
     public void deleteGallery(LocalGalleryInfo gallery) {
         new DeleteTask(gallery).execute();
     }
-    
+
     public void restoreGallery(LocalGalleryInfo gallery) {
         new RestoreTask(gallery).execute();
     }
-    
+
     public void permanentlyDeleteGallery(LocalGalleryInfo gallery) {
-        new PermanentDeleteTask(gallery).execute();
+        permanentlyDeleteGallery(gallery, null);
     }
-    
+
+    public void permanentlyDeleteGallery(LocalGalleryInfo gallery, DeleteProgressCallback callback) {
+        new PermanentDeleteTask(gallery, callback).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
     public void emptyRecycleBin() {
         new EmptyRecycleBinTask().execute();
     }
@@ -162,12 +176,134 @@ public class LocalGalleryManager {
         if (TextUtils.isEmpty(path)) {
             return false;
         }
-        
-        // 简化版本：暂时返回false，即所有本地画廊都显示
-        // TODO: 实现完整的下载列表检查功能
-        return false;
+
+        Long gid = parseGidFromPath(path);
+        if (gid == null) {
+            return false;
+        }
+
+        DownloadManager downloadManager = EhApplication.getDownloadManager(mContext);
+        DownloadInfo downloadInfo = downloadManager.getDownloadInfo(gid);
+        if (downloadInfo == null) {
+            return false;
+        }
+
+        return downloadInfo.state == DownloadInfo.STATE_WAIT || downloadInfo.state == DownloadInfo.STATE_DOWNLOAD;
     }
-    
+
+    private Long parseGidFromPath(String path) {
+        if (TextUtils.isEmpty(path)) {
+            return null;
+        }
+        String folderName = new File(path).getName();
+        if (TextUtils.isEmpty(folderName)) {
+            return null;
+        }
+
+        int idx = 0;
+        while (idx < folderName.length() && Character.isDigit(folderName.charAt(idx))) {
+            idx++;
+        }
+        if (idx == 0) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(folderName.substring(0, idx));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private LocalGalleryInfo createLocalGalleryInfo(File directory) {
+        if (directory == null || !directory.isDirectory()) {
+            return null;
+        }
+
+        LocalGalleryInfo info = new LocalGalleryInfo(directory.getAbsolutePath());
+
+        // 从 .ehviewer.extra.json 读取缓存信息
+        File extraFile = new File(directory, GalleryCacheManager.GALLERY_CACHE_FILENAME);
+        if (extraFile.exists() && extraFile.isFile()) {
+            try (FileInputStream fis = new FileInputStream(extraFile)) {
+                String content = IOUtils.readString(fis, "UTF-8");
+                if (!TextUtils.isEmpty(content)) {
+                    JSONObject jsonObject = JSON.parseObject(content);
+                    if (jsonObject != null) {
+                        long gid = jsonObject.getLongValue("gid");
+                        if (gid > 0) {
+                            info.gid = String.valueOf(gid);
+                        }
+                        String token = jsonObject.getString("token");
+                        if (!TextUtils.isEmpty(token)) {
+                            info.token = token;
+                        }
+                        String title = jsonObject.getString("title");
+                        if (!TextUtils.isEmpty(title)) {
+                            info.title = title;
+                        }
+                        String titleJpn = jsonObject.getString("titleJpn");
+                        if (!TextUtils.isEmpty(titleJpn)) {
+                            info.titleJpn = titleJpn;
+                        }
+                        String thumb = jsonObject.getString("thumb");
+                        if (!TextUtils.isEmpty(thumb)) {
+                            info.thumb = new File(directory, thumb).getAbsolutePath();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "无法读取 .ehviewer.extra.json", e);
+            }
+        }
+
+        // 兼容旧版本 .ehviewer 文件
+        File ehviewerFile = new File(directory, DownloadManager.DOWNLOAD_INFO_FILENAME);
+        if (ehviewerFile.exists() && ehviewerFile.isFile()) {
+            try (FileInputStream fis = new FileInputStream(ehviewerFile)) {
+                String content = IOUtils.readString(fis, "UTF-8");
+                if (!TextUtils.isEmpty(content)) {
+                    String[] lines = content.split("\\n");
+                    if (lines.length > 0) {
+                        try {
+                            long parsedGid = Long.parseLong(lines[0].trim());
+                            info.gid = String.valueOf(parsedGid);
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                    if (lines.length > 1) {
+                        String token = lines[1].trim();
+                        if (!TextUtils.isEmpty(token)) {
+                            info.token = token;
+                        }
+                    }
+                    if (lines.length > 2) {
+                        String title = lines[2].trim();
+                        if (!TextUtils.isEmpty(title)) {
+                            info.title = title;
+                        }
+                    }
+                    if (lines.length > 3) {
+                        String titleJpn = lines[3].trim();
+                        if (!TextUtils.isEmpty(titleJpn)) {
+                            info.titleJpn = titleJpn;
+                        }
+                    }
+                    if (lines.length > 7) {
+                        try {
+                            info.pageCount = Integer.parseInt(lines[7].trim());
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "无法读取 .ehviewer 文件", e);
+            }
+        }
+
+        return info;
+    }
+
     private void notifyScanStart() {
         mMainHandler.post(() -> {
             for (LocalGalleryListener listener : mListeners) {
@@ -387,12 +523,15 @@ public class LocalGalleryManager {
                 break;
             }
 
-            if (!isInDownloadList(file.getAbsolutePath())) {
-                LocalGalleryInfo info = new LocalGalleryInfo(file.getAbsolutePath());
-                if (info.isValid()) {
-                    info.type = LocalGalleryInfo.TYPE_LOCAL;
-                    batch.add(info);
-                }
+            if (isInDownloadList(file.getAbsolutePath())) {
+                Log.d(TAG, "正在下载中，跳过本地画廊: " + file.getAbsolutePath());
+                continue;
+            }
+
+            LocalGalleryInfo info = createLocalGalleryInfo(file);
+            if (info != null && info.isValid()) {
+                info.type = LocalGalleryInfo.TYPE_LOCAL;
+                batch.add(info);
             }
         }
         return batch;
@@ -466,15 +605,18 @@ public class LocalGalleryManager {
                     if (file.isDirectory() && !file.getName().equals(RECYCLE_BIN_DIR_NAME)) {
                         publishProgress(file.getName());
                         
-                        if (!isInDownloadList(file.getAbsolutePath())) {
-                            LocalGalleryInfo info = new LocalGalleryInfo(file.getAbsolutePath());
-                            if (info.isValid()) {
-                                info.type = LocalGalleryInfo.TYPE_LOCAL;
-                                localGalleries.add(info);
-                                Log.d(TAG, "添加本地画廊: " + file.getName() + ", 图片数量: " + info.pageCount);
-                            } else {
-                                Log.w(TAG, "无效的画廊目录: " + file.getAbsolutePath());
-                            }
+                        if (isInDownloadList(file.getAbsolutePath())) {
+                            Log.d(TAG, "正在下载中，跳过本地画廊: " + file.getAbsolutePath());
+                            continue;
+                        }
+
+                        LocalGalleryInfo info = createLocalGalleryInfo(file);
+                        if (info != null && info.isValid()) {
+                            info.type = LocalGalleryInfo.TYPE_LOCAL;
+                            localGalleries.add(info);
+                            Log.d(TAG, "添加本地画廊: " + file.getName() + ", 图片数量: " + info.pageCount);
+                        } else {
+                            Log.w(TAG, "无效的画廊目录: " + file.getAbsolutePath());
                         }
                     }
                 }
@@ -628,13 +770,16 @@ public class LocalGalleryManager {
         }
     }
     
-    private class PermanentDeleteTask extends AsyncTask<Void, Void, Boolean> {
+    private class PermanentDeleteTask extends AsyncTask<Void, Integer, Boolean> {
         private final LocalGalleryInfo mGallery;
-        
-        PermanentDeleteTask(LocalGalleryInfo gallery) {
+        private final DeleteProgressCallback mCallback;
+        private int mTotalFiles;
+
+        PermanentDeleteTask(LocalGalleryInfo gallery, DeleteProgressCallback callback) {
             mGallery = gallery;
+            mCallback = callback;
         }
-        
+
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
@@ -642,11 +787,26 @@ public class LocalGalleryManager {
                 if (!dir.exists()) {
                     return false;
                 }
-                
-                return deleteDirectory(dir);
-                
+
+                mTotalFiles = countFiles(dir);
+                if (mTotalFiles <= 0) {
+                    return dir.delete();
+                }
+
+                AtomicInteger deletedCount = new AtomicInteger(0);
+                boolean result = deleteDirectory(dir, deletedCount);
+                publishProgress(deletedCount.get());
+                return result;
             } catch (Exception e) {
                 return false;
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            if (mCallback != null && values != null && values.length > 0) {
+                int current = values[0];
+                mCallback.onProgress(current, mTotalFiles, "");
             }
         }
 
@@ -655,20 +815,51 @@ public class LocalGalleryManager {
             if (success) {
                 updateCacheAfterPermanentDelete(mGallery);
             }
+            if (mCallback != null) {
+                mCallback.onProgress(mTotalFiles, mTotalFiles, success ? "done" : "failed");
+            }
         }
-        
-        private boolean deleteDirectory(File directory) {
+
+        private int countFiles(File directory) {
+            if (directory == null || !directory.exists()) {
+                return 0;
+            }
+            int count = 1; // count this file/dir
             File[] files = directory.listFiles();
             if (files != null) {
                 for (File file : files) {
                     if (file.isDirectory()) {
-                        deleteDirectory(file);
+                        count += countFiles(file);
                     } else {
-                        file.delete();
+                        count += 1;
                     }
                 }
             }
-            return directory.delete();
+            return count;
+        }
+
+        private boolean deleteDirectory(File directory, AtomicInteger deletedCount) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        if (!deleteDirectory(file, deletedCount)) {
+                            return false;
+                        }
+                    } else {
+                        if (file.delete()) {
+                            deletedCount.incrementAndGet();
+                            publishProgress(deletedCount.get());
+                        }
+                    }
+                }
+            }
+            if (directory.delete()) {
+                deletedCount.incrementAndGet();
+                publishProgress(deletedCount.get());
+                return true;
+            }
+            return false;
         }
     }
     
@@ -920,6 +1111,11 @@ public class LocalGalleryManager {
         if (mCacheLoaded) {
             persistRecycleBinCache();
         }
+
+        // Notify listeners to refresh UI immediately after emptying recycle bin
+        List<LocalGalleryInfo> localSnapshot = getCachedLocalGalleries();
+        List<LocalGalleryInfo> recycleSnapshot = getCachedRecycleBinGalleries();
+        notifyScanComplete(localSnapshot, recycleSnapshot);
     }
 
     private void removeByPath(List<LocalGalleryInfo> list, String path) {

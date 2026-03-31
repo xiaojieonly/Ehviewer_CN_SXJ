@@ -19,6 +19,11 @@ public class DownloadInfo extends GalleryInfo {
 	public long time;
 	public String label;
 
+	// 增量下载字段
+	public boolean incremental;
+	public int copyCount;
+	public int networkCount;
+
 	public static final Creator<DownloadInfo> CREATOR = new Creator<DownloadInfo>() {
 		@Override
 		public DownloadInfo createFromParcel(Parcel source) {

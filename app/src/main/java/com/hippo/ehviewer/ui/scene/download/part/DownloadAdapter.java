@@ -182,8 +182,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
                 title = "📦 " + title;
             }
-            // Check if this is an incremental update (title starts with 🔄)
-            boolean isIncrementalUpdate = title.startsWith("🔄");
+            // Incremental update flag (通过字段控制)
+            boolean isIncrementalUpdate = info.incremental;
             
             // Handle thumbnail loading for imported archives
             if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
@@ -302,7 +302,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         }
 
         // Check if this is an incremental update
-        boolean isIncrementalUpdate = info.title != null && info.title.startsWith("🔄");
+        boolean isIncrementalUpdate = info.incremental;
         
         switch (info.state) {
             case DownloadInfo.STATE_NONE:
@@ -371,25 +371,27 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         }
 
         // Check if this is an incremental update
-        boolean isIncrementalUpdate = info.title != null && info.title.startsWith("🔄");
+        boolean isIncrementalUpdate = info.incremental;
         
         if (info.total <= 0 || info.finished < 0) {
             holder.percent.setText(null);
             holder.progressBar.setIndeterminate(true);
         } else {
-            String progressText = info.finished + "/" + info.total;
-            // For incremental update, show additional info
-            if (isIncrementalUpdate && info.downloaded > 0) {
-                progressText += " (已下载: " + info.downloaded + ")";
+            String progressText;
+            if (isIncrementalUpdate) {
+                progressText = info.finished + "/" + info.total + " (复制：" + info.copyCount + "，下载：" + info.networkCount + ")";
+            } else {
+                progressText = info.finished + "/" + info.total + " (已下载：" + info.downloaded + ")";
             }
+
             holder.percent.setText(progressText);
             holder.progressBar.setIndeterminate(false);
             holder.progressBar.setMax(info.total);
             holder.progressBar.setProgress(info.finished);
-            
-            // Log incremental update progress
+
             if (isIncrementalUpdate) {
-                Log.d(TAG, "[ADAPTER] 增量更新进度: " + info.title + " - " + progressText);
+                String galleryTitle = EhUtils.getSuitableTitle(info);
+                Log.d(TAG, "[ADAPTER] 增量更新进度: " + galleryTitle + " - " + progressText);
             }
         }
         long speed = info.speed;

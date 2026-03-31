@@ -59,27 +59,13 @@ public class RebuildDownloadRecordsPreference extends Preference {
     protected void onClick() {
         Context context = getContext();
         
-        // 使用新的任务管理系统
         com.hippo.ehviewer.task.RebuildDownloadRecordsTask task = 
             new com.hippo.ehviewer.task.RebuildDownloadRecordsTask(context);
-        
-        // 提交任务到后台执行
-        EhApplication.getExecutorService(context).submit(() -> {
-            runTaskAsync(task);
-        });
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
         
         android.widget.Toast.makeText(context, 
             R.string.settings_download_rebuild_download_records_started, 
             android.widget.Toast.LENGTH_SHORT).show();
-    }
-    
-    private void runTaskAsync(com.hippo.ehviewer.task.RebuildDownloadRecordsTask task) {
-        // 在线程中执行任务
-        try {
-            task.executeSync();
-        } catch (Exception e) {
-            Log.e("RebuildDownloadRecordsPreference", "Task execution failed", e);
-        }
     }
 
     private static class RebuildTask implements Runnable {

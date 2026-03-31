@@ -24,12 +24,14 @@ import static com.hippo.util.FileUtils.getFileName;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.text.TextUtils;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import androidx.appcompat.app.AlertDialog;
 import android.content.DialogInterface;
+import java.util.List;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -88,6 +90,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.h6ah4i.android.widget.advrecyclerview.animator.DraggableItemAnimator;
 import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
 import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
+import com.hippo.ehviewer.local.LocalGalleryManager;
+import com.hippo.ehviewer.client.data.LocalGalleryInfo;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.app.CheckBoxDialogBuilder;
 import com.hippo.drawable.AddDeleteDrawable;
@@ -145,7 +149,12 @@ import com.hippo.util.ExecutorManager;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.ehviewer.ui.progress.ProgressDialogManager;
 import com.hippo.ehviewer.util.UiThreadHelper;
+import com.hippo.ehviewer.download.DownloadInfoListener;
+import com.hippo.ehviewer.task.BackgroundTask;
 import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.CompressSelectedGalleriesTask;
+import com.hippo.ehviewer.task.impl.DeleteFilesTask;
+import com.hippo.ehviewer.task.impl.DeleteRangeDownloadTask;
 import com.hippo.ehviewer.task.impl.StartAllDownloadTask;
 import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
 
@@ -175,7 +184,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class DownloadsScene extends ToolbarScene
-        implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
+        implements DownloadInfoListener, DownloadSearchCallback,
         EasyRecyclerView.OnItemClickListener,
         EasyRecyclerView.OnItemLongClickListener,
         FabLayout.OnClickFabListener, FabLayout.OnExpandListener, FastScroller.OnDragHandlerListener, SearchBar.Helper, SearchBarMover.Helper, SearchBar.OnStateChangeListener, DownloadAdapter.DownloadAdapterCallback {
@@ -814,7 +823,7 @@ public class DownloadsScene extends ToolbarScene
         
         if (isNewDialog) {
             // 如果是新对话框，启动任务
-            TaskExecutor.executeTask(task);
+            com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
         }
     }
 
@@ -1457,24 +1466,6 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
 
-        UniFile outputDir = Settings.getExportLocation();
-        if (outputDir == null || !outputDir.exists()) {
-            if (outputDir == null) {
-                outputDir = Settings.getExportLocation();
-            }
-            if (outputDir == null || !outputDir.ensureDir()) {
-                Toast.makeText(context, R.string.compress_failed, Toast.LENGTH_LONG).show();
-                return;
-            }
-        }
-
-        String zipName = "ehviewer_" + System.currentTimeMillis() + ".zip";
-        UniFile zipFile = outputDir.createFile(zipName);
-        if (zipFile == null) {
-            Toast.makeText(context, R.string.compress_failed, Toast.LENGTH_LONG).show();
-            return;
-        }
-
         LinearLayout dialogLayout = new LinearLayout(context);
         dialogLayout.setOrientation(LinearLayout.VERTICAL);
         int padding = (int) (context.getResources().getDisplayMetrics().density * 16);
@@ -1499,71 +1490,35 @@ public class DownloadsScene extends ToolbarScene
                 .create();
         progressDialog.show();
 
-        new AsyncTask<Void, Integer, Exception>() {
+        CompressSelectedGalleriesTask task = new CompressSelectedGalleriesTask(context, selectedList);
+        task.setProgressListener(new BackgroundTask.ProgressListener() {
             @Override
-            protected Exception doInBackground(Void... voids) {
-                boolean hasError = false;
-                StringBuilder errorMessage = new StringBuilder();
-                Set<String> addedEntries = new HashSet<>();
-
-                try (ZipOutputStream zos = new ZipOutputStream(zipFile.openOutputStream())) {
-                    int index = 0;
-                    for (DownloadInfo info : selectedList) {
-                        UniFile galleryDir = getGalleryDownloadDir(info);
-                        if (galleryDir != null && galleryDir.exists()) {
-                            String folderName = sanitizeFileName(info.title != null ? info.title : String.valueOf(info.gid));
-                            try {
-                                addUniFileToZip(galleryDir, folderName, zos, addedEntries);
-                            } catch (IOException e) {
-                                hasError = true;
-                                String message = "Failed to compress " + folderName + ": " + e.getMessage();
-                                Log.e(TAG, message, e);
-                                if (errorMessage.length() > 0) {
-                                    errorMessage.append("; ");
-                                }
-                                errorMessage.append(message);
-                            }
-                        } else {
-                            String message = "Gallery dir missing: " + (info.title != null ? info.title : String.valueOf(info.gid));
-                            Log.w(TAG, message);
-                            hasError = true;
-                            if (errorMessage.length() > 0) {
-                                errorMessage.append("; ");
-                            }
-                            errorMessage.append(message);
-                        }
-                        publishProgress(++index);
-                    }
-                } catch (IOException e) {
-                    String zipPath = (zipFile != null && zipFile.getUri() != null) ? zipFile.getUri().toString() : "";
-                    Log.e(TAG, "Failed to create zip file: " + zipPath, e);
-                    return e;
-                }
-
-                if (hasError) {
-                    return new IOException(errorMessage.toString());
-                }
-                return null;
-            }
-
-            @Override
-            protected void onProgressUpdate(Integer... values) {
-                int progress = values.length > 0 ? values[0] : 0;
+            public void onProgressChanged(int progress, String detail) {
                 progressBar.setProgress(progress);
                 progressText.setText(getString(R.string.compress_selected_galleries) + " " + progress + "/" + selectedList.size());
             }
 
             @Override
-            protected void onPostExecute(Exception error) {
-                progressDialog.dismiss();
-                if (error != null) {
-                    Toast.makeText(context, getString(R.string.compress_failed) + ": " + error.getMessage(), Toast.LENGTH_LONG).show();
-                } else {
-                    String zipPath = zipFile.getUri() != null ? zipFile.getUri().toString() : "";
-                    Toast.makeText(context, getString(R.string.compress_success, zipPath), Toast.LENGTH_LONG).show();
+            public void onCompleted() {
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
                 }
+                List<String> outFiles = task.getOutputFileNames();
+                String result = outFiles.isEmpty() ? "" : TextUtils.join(", ", outFiles);
+                String message = result.isEmpty() ? getString(R.string.compress_success_no_output) : getString(R.string.compress_success_multi, result);
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
             }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+            @Override
+            public void onError(Throwable error) {
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+                Toast.makeText(context, getString(R.string.compress_failed) + ": " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
     }
 
     private void addUniFileToZip(UniFile uniFile, String basePath, ZipOutputStream zos, Set<String> addedEntries) throws IOException {
@@ -1976,23 +1931,26 @@ public class DownloadsScene extends ToolbarScene
 
 
     private static void deleteFileAsync(UniFile... files) {
-        new AsyncTask<UniFile, Void, Void>() {
-            @Override
-            protected Void doInBackground(UniFile... params) {
-                for (UniFile file : params) {
-                    if (file != null) {
-                        file.delete();
-                    }
-                }
-                return null;
-            }
-        }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance(), files);
+        Context context = EhApplication.getInstance();
+        DeleteFilesTask task = new DeleteFilesTask(context, files);
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
     }
 
     @Override
     public void onClickTitle() {
         if (!mSearchMode) {
             enterSearchMode(true);
+            return;
+        }
+
+        if (mSearchBar != null) {
+            int state = mSearchBar.getState();
+            if (state != SearchBar.STATE_SEARCH_LIST) {
+                mSearchBar.setState(SearchBar.STATE_SEARCH_LIST, true);
+            } else {
+                // 如果已经是搜索列表状态，则重复点击隐藏/显示
+                mSearchBar.toggleSuggestionsList();
+            }
         }
     }
 
@@ -2494,22 +2452,57 @@ public class DownloadsScene extends ToolbarScene
                 return;
             }
 
-            // Delete
-            if (null != mDownloadManager) {
+            boolean checked = mBuilder.isChecked();
+            Settings.putRemoveImageFiles(checked);
+
+            // Remove from download list and move to recycle bin
+            if (mDownloadManager != null) {
                 mDownloadManager.deleteDownload(mGalleryInfo.gid);
             }
 
-            // Delete image files
-            boolean checked = mBuilder.isChecked();
-            Settings.putRemoveImageFiles(checked);
-            if (checked) {
-                // Remove download path
-                EhDB.removeDownloadDirname(mGalleryInfo.gid);
-                // Delete file
-                UniFile file = getGalleryDownloadDir(mGalleryInfo);
-                deleteFileAsync(file);
-            }
+            // When user selects delete, downloads are already moved to recycle bin by DownloadManager
+            // 'remove image files' setting means the user wants to quickly inline clear later.
         }
+    }
+
+    private void showPermanentDeleteProgressDialog(LocalGalleryInfo galleryInfo, String displayTitle) {
+        Context context = getEHContext();
+        if (context == null || galleryInfo == null) {
+            return;
+        }
+
+        ProgressBar progressBar = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setMax(100);
+        progressBar.setIndeterminate(false);
+
+        TextView progressText = new TextView(context);
+        progressText.setText(getString(R.string.recycle_bin_delete_progress, 0, 0));
+
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (context.getResources().getDisplayMetrics().density * 12);
+        layout.setPadding(padding, padding, padding, padding);
+        layout.addView(progressBar, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        layout.addView(progressText, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        AlertDialog progressDialog = new AlertDialog.Builder(context)
+                .setTitle(R.string.recycle_bin_delete_permanent)
+                .setMessage(getString(R.string.recycle_bin_delete_permanent_confirm, displayTitle))
+                .setView(layout)
+                .setCancelable(false)
+                .setNegativeButton(R.string.background_processing, (d, w) -> d.dismiss())
+                .create();
+        progressDialog.show();
+
+        LocalGalleryManager.getInstance(context).permanentlyDeleteGallery(galleryInfo, (current, total, detail) -> {
+            int percent = total > 0 ? current * 100 / total : 0;
+            progressBar.setProgress(percent);
+            progressText.setText(getString(R.string.recycle_bin_delete_progress, current, total));
+            if (current >= total) {
+                progressDialog.dismiss();
+                Toast.makeText(context, R.string.recycle_bin_delete_permanent_success, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private class DeleteRangeDialogHelper implements DialogInterface.OnClickListener {
@@ -2542,18 +2535,11 @@ public class DownloadsScene extends ToolbarScene
 
             // 少量删除直接原逻辑（避免开新线程开销）
             if (mDownloadInfoList.size() <= 5) {
-                if (null != mDownloadManager) {
+                if (mDownloadManager != null) {
                     mDownloadManager.deleteRangeDownload(mGidList);
                 }
                 if (checked) {
-                    UniFile[] files = new UniFile[mDownloadInfoList.size()];
-                    int i = 0;
-                    for (DownloadInfo info : mDownloadInfoList) {
-                        EhDB.removeDownloadDirname(info.gid);
-                        files[i] = getGalleryDownloadDir(info);
-                        i++;
-                    }
-                    deleteFileAsync(files);
+                    // item moved to recycle bin already; we keep permanent delete to user action in recycle bin UI
                 }
                 return;
             }
@@ -2590,50 +2576,38 @@ public class DownloadsScene extends ToolbarScene
                     .create();
             progressDialog.show();
 
-            new AsyncTask<Void, Integer, Void>() {
+            DeleteRangeDownloadTask task = new DeleteRangeDownloadTask(context, mDownloadManager, mGidList, new Runnable() {
                 @Override
-                protected Void doInBackground(Void... voids) {
-                    if (mDownloadManager != null) {
-                        int total = mGidList.size();
-                        Log.d(TAG, "DeleteRangeDialogHelper start deleting " + total + " items");
-                        // 先一次性批量删除，避免频繁 onRemove 导致 UI 卡顿
-                        mDownloadManager.deleteRangeDownload(mGidList);
-                        for (int i = 0; i < total; i++) {
-                            long gid = mGidList.get(i);
-                            publishProgress(i + 1);
-                            Log.d(TAG, "DeleteRangeDialogHelper progress " + (i + 1) + "/" + total + " gid=" + gid);
-                        }
-                        Log.d(TAG, "DeleteRangeDialogHelper delete finished");
-                    }
-
-                    if (checked) {
-                        UniFile[] files = new UniFile[mDownloadInfoList.size()];
-                        int i = 0;
-                        for (DownloadInfo info : mDownloadInfoList) {
-                            EhDB.removeDownloadDirname(info.gid);
-                            files[i] = getGalleryDownloadDir(info);
-                            i++;
-                        }
-                        deleteFileAsync(files);
-                    }
-                    return null;
-                }
-
-                @Override
-                protected void onProgressUpdate(Integer... values) {
-                    int progress = values.length > 0 ? values[0] : 0;
-                    progressBar.setProgress(progress);
-                    progressText.setText(getString(R.string.download_remove_progress, progress, mDownloadInfoList.size()));
-                }
-
-                @Override
-                protected void onPostExecute(Void aVoid) {
+                public void run() {
                     if (progressDialog.isShowing()) {
                         progressDialog.dismiss();
                     }
                     refreshDownloadListAfterDelete();
                 }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            });
+
+            task.setProgressListener(new BackgroundTask.ProgressListener() {
+                @Override
+                public void onProgressChanged(int progress, String detail) {
+                    progressBar.setProgress(progress);
+                    progressText.setText(getString(R.string.download_remove_progress, progress, mDownloadInfoList.size()));
+                }
+
+                @Override
+                public void onCompleted() {
+                    // onCompletedCallback already handles dismiss + refresh
+                }
+
+                @Override
+                public void onError(Throwable error) {
+                    if (progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    refreshDownloadListAfterDelete();
+                }
+            });
+
+            com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
         }
     }
 

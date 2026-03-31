@@ -352,7 +352,7 @@ public class BackgroundTaskManager {
         
         if (activeCount <= 0) {
             mActiveTaskCount.set(0);
-            hideForegroundNotification();
+            showIdleNotification();
         } else {
             updateForegroundNotification(null, null);
         }
@@ -429,7 +429,7 @@ public class BackgroundTaskManager {
                                             int currentProgress, int totalProgress) {
         int activeTasks = mActiveTaskCount.get();
         if (activeTasks <= 0) {
-            hideForegroundNotification();
+            showIdleNotification();
             return;
         }
 
@@ -479,7 +479,27 @@ public class BackgroundTaskManager {
     }
     
     /**
-     * 隐藏前台通知
+     * 显示空闲状态通知（没有正在执行的任务）
+     */
+    private void showIdleNotification() {
+        if (mNotificationManager != null) {
+            String title = mContext.getString(R.string.background_task_running);
+            String content = mContext.getString(R.string.no_background_tasks);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .setOngoing(false)
+                    .setOnlyAlertOnce(true);
+
+            Notification notification = builder.build();
+            mNotificationManager.notify(NOTIFICATION_ID, notification);
+        }
+    }
+
+    /**
+     * 隐藏前台通知（如果需要完全取消当前通知）
      */
     private void hideForegroundNotification() {
         if (mNotificationManager != null) {

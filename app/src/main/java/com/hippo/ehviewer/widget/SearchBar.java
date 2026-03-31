@@ -152,13 +152,13 @@ public class SearchBar extends CardView implements View.OnClickListener,
             if (mSuggestionsListManuallyControlled) {
                 return;
             }
-            
+
             if (hasFocus && mState == STATE_SEARCH) {
                 // 获得焦点且当前是搜索状态，显示建议列表
                 showImeAndSuggestionsList(true);
             } else if (!hasFocus && mState == STATE_SEARCH_LIST) {
-                // 失去焦点且当前是搜索列表状态，隐藏建议列表
-                hideSuggestionsList();
+                // 失去焦点且当前是搜索列表状态，切换到 SEARCH 状态（隐藏列表，但保留搜索模式）
+                setState(STATE_SEARCH, false);
             }
         });
 

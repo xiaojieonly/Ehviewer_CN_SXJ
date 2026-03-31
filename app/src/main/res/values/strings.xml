@@ -1345,4 +1345,23 @@
     <string name="local_gallery_delete">Delete</string>
     <string name="local_gallery_detail_title">Gallery Details</string>
     <string name="local_gallery_viewer_title">Gallery Viewer</string>
+
+    <string name="compress_success_multi">Compress Succeeded: %1$s</string>
+    <string name="compress_success_no_output">Compress Completed</string>
+    <string name="loading">加载中…</string>
+    <string name="recycle_bin_action_empty">Empty recycle bin</string>
+    <string name="recycle_bin_action_refresh">Refresh recycle bin</string>
+    <string name="recycle_bin_action_rescan">Rescan recycle bin folders</string>
+    <string name="recycle_bin_delete_permanent">Permanent delete</string>
+    <string name="recycle_bin_delete_progress">Deleting files: %1$d/%2$d</string>
+    <string name="settings_advanced_compress_split_size">Compress split size</string>
+    <string name="settings_advanced_compress_split_size_1g">1 GB</string>
+    <string name="settings_advanced_compress_split_size_2g">2 GB</string>
+    <string name="settings_advanced_compress_split_size_4g">4 GB</string>
+    <string name="settings_advanced_compress_split_size_512m">512 MB</string>
+    <string name="settings_advanced_compress_split_size_disabled">Disabled</string>
+    <string name="settings_advanced_compress_split_size_summary">Split the compressed archive into parts when reached the specified size (MB)</string>
+    <string name="settings_advanced_recycle_bin">Recycle Bin</string>
+    <string name="settings_advanced_recycle_bin_summary">Direct access to recycle bin and purge operations</string>
+    <string name="tag_search_entrance">Tag Selector</string>
 </resources>

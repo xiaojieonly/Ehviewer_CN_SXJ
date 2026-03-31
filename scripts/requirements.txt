@@ -1,0 +1,14 @@
+# 翻译脚本依赖
+
+# 在线翻译脚本依赖
+requests>=2.25.0
+
+# 本地AI翻译脚本依赖
+transformers>=4.20.0
+torch>=1.10.0
+
+# 可选：用于性能优化
+# concurrent-futures (Python标准库，无需安装)
+
+# 可选：用于调试
+# tqdm (进度条)

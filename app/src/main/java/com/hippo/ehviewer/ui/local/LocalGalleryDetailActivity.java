@@ -23,6 +23,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.text.TextUtils;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -241,7 +245,7 @@ public class LocalGalleryDetailActivity extends EhActivity implements LocalGalle
                     .setTitle(R.string.recycle_bin_delete_permanent_confirm)
                     .setMessage(getString(R.string.recycle_bin_delete_permanent_confirm, mGalleryInfo.getDisplayTitle()))
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                        mLocalGalleryManager.permanentlyDeleteGallery(mGalleryInfo);
+                        performPermanentDeleteWithProgress(mGalleryInfo);
                     })
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
@@ -260,6 +264,43 @@ public class LocalGalleryDetailActivity extends EhActivity implements LocalGalle
     
     private void viewGallery() {
         LocalGalleryViewerActivity.start(this, mGalleryInfo);
+    }
+
+    private void performPermanentDeleteWithProgress(LocalGalleryInfo gallery) {
+        ProgressBar progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setMax(100);
+        progressBar.setIndeterminate(false);
+
+        TextView progressText = new TextView(this);
+        progressText.setText(getString(R.string.recycle_bin_delete_progress, 0, 0));
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (getResources().getDisplayMetrics().density * 12);
+        layout.setPadding(padding, padding, padding, padding);
+        layout.addView(progressBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        layout.addView(progressText, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.recycle_bin_delete_permanent)
+                .setView(layout)
+                .setCancelable(false)
+                .setNegativeButton(R.string.background_processing, (d, w) -> d.dismiss())
+                .create();
+        progressDialog.show();
+
+        mLocalGalleryManager.permanentlyDeleteGallery(gallery, (current, total, detail) -> {
+            if (total > 0) {
+                int percent = current * 100 / total;
+                progressBar.setProgress(percent);
+                progressText.setText(getString(R.string.recycle_bin_delete_progress, current, total));
+            }
+            if (current >= total) {
+                progressDialog.dismiss();
+                Toast.makeText(this, R.string.recycle_bin_delete_permanent_success, Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        });
     }
     
     @Override

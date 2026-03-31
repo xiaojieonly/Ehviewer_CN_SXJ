@@ -67,6 +67,15 @@
         android:summary="@string/settings_advanced_export_path_summary"
         app:allowDividerAbove="true" />
 
+    <com.hippo.preference.ListPreference
+        android:defaultValue="1024"
+        android:key="compress_split_size_mb"
+        android:title="@string/settings_advanced_compress_split_size"
+        android:summary="@string/settings_advanced_compress_split_size_summary"
+        app:allowDividerAbove="true"
+        app:entries="@array/compress_split_size_entries"
+        app:entryValues="@array/compress_split_size_entry_values" />
+
     <com.hippo.ehviewer.preference.ClearDownloadPathCachePreference
         android:key="clear_download_path_cache"
         android:summary="@string/settings_advanced_clear_download_path_cache_summary"
@@ -191,6 +200,12 @@
         android:key="local_gallery"
         android:summary="@string/settings_advanced_local_gallery_summary"
         android:title="@string/settings_advanced_local_gallery"
+        app:allowDividerAbove="true" />
+
+    <Preference
+        android:key="recycle_bin"
+        android:summary="@string/settings_advanced_recycle_bin_summary"
+        android:title="@string/settings_advanced_recycle_bin"
         app:allowDividerAbove="true" />
 
 </PreferenceScreen>

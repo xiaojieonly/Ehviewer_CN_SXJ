@@ -74,6 +74,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_NETWORK_DIAGNOSTIC = "network_diagnostic";
     private static final String KEY_USER_AGENT = "user_agent";
     private static final String KEY_LOCAL_GALLERY = "local_gallery";
+    private static final String KEY_RECYCLE_BIN = "recycle_bin";
 
     public static final int REQUEST_CODE_PICK_EXPORT_DIR = 10;
 
@@ -98,6 +99,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Preference networkDiagnostic = findPreference(KEY_NETWORK_DIAGNOSTIC);
         Preference userAgent = findPreference(KEY_USER_AGENT);
         Preference localGallery = findPreference(KEY_LOCAL_GALLERY);
+        Preference recycleBin = findPreference(KEY_RECYCLE_BIN);
 
         dumpLogcat.setOnPreferenceClickListener(this);
         clearMemoryCache.setOnPreferenceClickListener(this);
@@ -116,6 +118,9 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         networkDiagnostic.setOnPreferenceClickListener(this);
         userAgent.setOnPreferenceClickListener(this);
         localGallery.setOnPreferenceClickListener(this);
+        if (recycleBin != null) {
+            recycleBin.setOnPreferenceClickListener(this);
+        }
 
         appLanguage.setOnPreferenceChangeListener(this);
     }
@@ -153,6 +158,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 return openExportDirPicker();
             case KEY_LOCAL_GALLERY:
                 return gotoLocalGalleryActivity();
+            case KEY_RECYCLE_BIN:
+                return gotoRecycleBinActivity();
             default:
                 return false;
         }
@@ -196,6 +203,12 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Activity activity = getActivity();
         Intent intent = new Intent(activity, LocalGalleryActivity.class);
         activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoRecycleBinActivity() {
+        Activity activity = getActivity();
+        LocalGalleryActivity.startRecycleBin(activity);
         return true;
     }
 

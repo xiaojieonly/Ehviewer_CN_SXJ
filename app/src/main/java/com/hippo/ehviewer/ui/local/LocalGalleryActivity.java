@@ -53,12 +53,14 @@ import java.util.List;
 public class LocalGalleryActivity extends EhActivity implements LocalGalleryManager.LocalGalleryListener {
     
     private static final String KEY_GALLERY_INFO = "gallery_info";
+    private static final String EXTRA_SHOW_RECYCLE_BIN_ONLY = "show_recycle_bin_only";
     private static final int REQUEST_CODE_VIEW = 0;
     
     private ViewPager mViewPager;
     private TabLayout mTabLayout;
     private LocalGalleryPagerAdapter mAdapter;
     private LocalGalleryManager mLocalGalleryManager;
+    private boolean mShowRecycleBinOnly = false;
     
     private List<LocalGalleryInfo> mLocalGalleries;
     private List<LocalGalleryInfo> mRecycleBinGalleries;
@@ -68,6 +70,12 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
     
     public static void start(Context context) {
         Intent intent = new Intent(context, LocalGalleryActivity.class);
+        context.startActivity(intent);
+    }
+
+    public static void startRecycleBin(Context context) {
+        Intent intent = new Intent(context, LocalGalleryActivity.class);
+        intent.putExtra(EXTRA_SHOW_RECYCLE_BIN_ONLY, true);
         context.startActivity(intent);
     }
     
@@ -85,7 +93,12 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
         
         mLocalGalleryManager = LocalGalleryManager.getInstance(this);
         mLocalGalleryManager.addListener(this);
-        
+
+        mShowRecycleBinOnly = getIntent() != null && getIntent().getBooleanExtra(EXTRA_SHOW_RECYCLE_BIN_ONLY, false);
+        if (mShowRecycleBinOnly) {
+            setTitle(R.string.recycle_bin_title);
+        }
+
         mLocalGalleries = new ArrayList<>();
         mRecycleBinGalleries = new ArrayList<>();
         
@@ -109,10 +122,17 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
     private void initViews() {
         mViewPager = findViewById(R.id.viewpager);
         mTabLayout = findViewById(R.id.tab_layout);
-        
+
+        // 去除顶部 tab，改用单页模式
+        if (mTabLayout != null) {
+            mTabLayout.setVisibility(View.GONE);
+        }
+
         mAdapter = new LocalGalleryPagerAdapter(getSupportFragmentManager());
         mViewPager.setAdapter(mAdapter);
-        mTabLayout.setupWithViewPager(mViewPager);
+
+        // 本地画廊只保留本地（或回收站单页）
+        mViewPager.setCurrentItem(0);
     }
     
     @Override
@@ -186,12 +206,14 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
             mScanProgressDialog.dismiss();
             mIsScanDialogShown = false;
         }
-        mLocalGalleries.clear();
-        mLocalGalleries.addAll(localGalleries);
-        
-        mRecycleBinGalleries.clear();
-        mRecycleBinGalleries.addAll(recycleBinGalleries);
-        
+        if (mShowRecycleBinOnly) {
+            mRecycleBinGalleries.clear();
+            mRecycleBinGalleries.addAll(recycleBinGalleries);
+        } else {
+            mLocalGalleries.clear();
+            mLocalGalleries.addAll(localGalleries);
+        }
+
         // 直接更新 Fragment 数据，而不是重新创建
         if (mAdapter != null) {
             mAdapter.updateFragments();
@@ -239,6 +261,12 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
         @NonNull
         @Override
         public Fragment getItem(int position) {
+            if (mShowRecycleBinOnly) {
+                if (mRecycleBinFragment == null) {
+                    mRecycleBinFragment = LocalGalleryListFragment.newInstance(true);
+                }
+                return mRecycleBinFragment;
+            }
             switch (position) {
                 case TAB_LOCAL:
                     if (mLocalFragment == null) {
@@ -263,36 +291,35 @@ public class LocalGalleryActivity extends EhActivity implements LocalGalleryMana
         
         public void updateFragments() {
             Log.d("LocalGalleryActivity", "updateFragments called - local: " + mLocalGalleries.size() + ", recycle: " + mRecycleBinGalleries.size());
-            if (mLocalFragment != null) {
-                mLocalFragment.updateGalleries(mLocalGalleries);
-                Log.d("LocalGalleryActivity", "Updated local fragment");
+            if (mShowRecycleBinOnly) {
+                if (mRecycleBinFragment != null) {
+                    mRecycleBinFragment.updateGalleries(mRecycleBinGalleries);
+                    Log.d("LocalGalleryActivity", "Updated recycle fragment");
+                } else {
+                    Log.w("LocalGalleryActivity", "Recycle fragment is null");
+                }
             } else {
-                Log.w("LocalGalleryActivity", "Local fragment is null");
-            }
-            if (mRecycleBinFragment != null) {
-                mRecycleBinFragment.updateGalleries(mRecycleBinGalleries);
-                Log.d("LocalGalleryActivity", "Updated recycle fragment");
-            } else {
-                Log.w("LocalGalleryActivity", "Recycle fragment is null");
+                if (mLocalFragment != null) {
+                    mLocalFragment.updateGalleries(mLocalGalleries);
+                    Log.d("LocalGalleryActivity", "Updated local fragment");
+                } else {
+                    Log.w("LocalGalleryActivity", "Local fragment is null");
+                }
             }
         }
         
         @Override
         public int getCount() {
-            return TAB_COUNT;
+            return 1;
         }
-        
+
         @Nullable
         @Override
         public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case TAB_LOCAL:
-                    return getString(R.string.local_gallery_title);
-                case TAB_RECYCLE_BIN:
-                    return getString(R.string.recycle_bin_title);
-                default:
-                    return null;
+            if (mShowRecycleBinOnly) {
+                return getString(R.string.recycle_bin_title);
             }
+            return getString(R.string.local_gallery_title);
         }
     }
 }

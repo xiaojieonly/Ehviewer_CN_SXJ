@@ -46,19 +46,12 @@ public class CleanRedundancyPreference3 extends Preference {
     @Override
     protected void onClick() {
         Context context = getContext();
-        
-        // 使用新的任务管理系统
-        com.hippo.ehviewer.task.CleanRedundancyTask task = 
-            new com.hippo.ehviewer.task.CleanRedundancyTask(context);
-        
-        // 提交任务到后台执行
-        EhApplication.getExecutorService(context).submit(() -> {
-            runTaskAsync(task);
-        });
-        
-        android.widget.Toast.makeText(context, 
-            R.string.settings_download_clean_redundancy_started, 
-            android.widget.Toast.LENGTH_SHORT).show();
+        com.hippo.ehviewer.task.CleanRedundancyTask task =
+                new com.hippo.ehviewer.task.CleanRedundancyTask(context);
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        android.widget.Toast.makeText(context,
+                R.string.settings_download_clean_redundancy_started,
+                android.widget.Toast.LENGTH_SHORT).show();
     }
     
     private void runTaskAsync(com.hippo.ehviewer.task.CleanRedundancyTask task) {
