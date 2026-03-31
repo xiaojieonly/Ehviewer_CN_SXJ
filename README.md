@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1_rbxH65GXWjx_pxYIf0Pug) 提取码：wzv4
-- [夸克网盘](https://pan.quark.cn/s/95915acfe88b) 提取码：HmUu
-- [蓝奏云](https://wwbfg.lanzouu.com/iYopw3jiyizi)，电脑端可正常下载 提取码：fhbq
+- [百度云](https://pan.baidu.com/s/1koygBtTteJtDHZTQYL8wXQ) 提取码：iqev
+- [夸克网盘](https://pan.quark.cn/s/b41421a61e70) 提取码：MrnK
+- [蓝奏云](https://wwbfg.lanzouu.com/iNSBF3m1jveb)，电脑端可正常下载 提取码：i4f8
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:4869fe5d6cebba6e1f2b672e3523cca83838b466&xt=urn:btmh:1220df01410d828d8544b9efe8e15fe3e7323eab74d2ae962947f324dd36e0a99b74&dn=EhViewer-2.0.1.5.apk&xl=27934862
+- Torrent链接:magnet:?xt=urn:btih:8488a933608f5b3901de8a2bedc669e20ff94839&xt=urn:btmh:1220dbe6fffcb6aff255e089e3bb0cefeb33940c27d82e37163252abe4813c987e33&dn=EhViewer-2.0.1.6.apk&xl=27702785
 
 
 点击前往赏饭：
@@ -30,6 +30,22 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 
+## 2026/04/01 祝大家愚人节伤心
+### 新版发布2.0.1.6
+
+- 搜索时过滤文本中的换行符
+- 修复下载列表排序奔溃的问题
+- 优化 EGL 初始化逻辑并增加 OpenGL 渲染故障时的回退机制
+- 排行榜中，画廊排行从原先的跳转画廊搜索，改为直接跳转对应画廊
+- 优化归档下载逻辑与文件名生成
+- 优化解析错误日志清理逻辑并增加异常处理
+- 优化搜索文本过滤，直接移除换行符而非替换为空格
+- 修正登录WebView客户端设置及资料获取逻辑
+- 升级SDK版本并启用coreLibraryDesugaring
+- miki sayaga：新增一个多标签搜索组合页面（未完成）
+- 修复部分多标签搜索组合页面bug
+- 将部分代码从java迁移到kotlin
+
 ## 2026/03/01 提前祝大家元宵节快乐
 ### 新版发布2.0.1.5
 
@@ -41,6 +57,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 清理请求头中的换行符避免崩溃
 - 调整下载列表页面的标题格式
 - zyl-hub：修复了在搜索框不为空时的搜索历史补全
+- [百度云](https://pan.baidu.com/s/1_rbxH65GXWjx_pxYIf0Pug) 提取码：wzv4
+- [夸克网盘](https://pan.quark.cn/s/95915acfe88b) 提取码：HmUu
+- [蓝奏云](https://wwbfg.lanzouu.com/iYopw3jiyizi)，电脑端可正常下载 提取码：fhbq
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:4869fe5d6cebba6e1f2b672e3523cca83838b466&xt=urn:btmh:1220df01410d828d8544b9efe8e15fe3e7323eab74d2ae962947f324dd36e0a99b74&dn=EhViewer-2.0.1.5.apk&xl=27934862
+
 
 ## 2026/02/01 给大家提前拜个早年，祝大家新春快乐~
 ### 新版发布2.0.1.4
