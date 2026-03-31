@@ -22,24 +22,24 @@
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp">
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:padding="4dp">-->
 
-            <EditText
-                android:id="@+id/et_tag_filter"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@null"
-                android:hint="@string/tag_selector_search_hint"
-                android:padding="16dp"
-                android:singleLine="true"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="16sp" />
+<!--            <EditText-->
+<!--                android:id="@+id/et_tag_filter"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:background="@null"-->
+<!--                android:hint="@string/tag_selector_search_hint"-->
+<!--                android:padding="16dp"-->
+<!--                android:singleLine="true"-->
+<!--                android:textColor="?android:attr/textColorPrimary"-->
+<!--                android:textSize="16sp" />-->
 
 <!--            <TextView-->
 <!--                android:id="@+id/tv_selected_count"-->
@@ -48,7 +48,7 @@
 <!--                android:padding="12dp"-->
 <!--                android:text="已选: 0"-->
 <!--                android:textStyle="bold" />-->
-        </LinearLayout>
+<!--        </LinearLayout>-->
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
