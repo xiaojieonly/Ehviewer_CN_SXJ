@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <TextView
+        android:id="@+id/tv_group_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/flex_selected_tags"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:alignItems="flex_start"
+        app:flexDirection="row"
+        app:flexWrap="wrap"
+        app:justifyContent="flex_start" />
+</LinearLayout>

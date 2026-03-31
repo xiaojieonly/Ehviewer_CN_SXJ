@@ -352,6 +352,11 @@
     <string name="gallery_previews">Vista previa de la galería</string>
     <string name="go_to">Ir a</string>
     <string name="tag_filter">Filtrar etiqueta</string>
+    <string name="tag_selector_search_hint">Buscar etiquetas…</string>
+    <string name="tag_selector_selected_count">Seleccionadas: %d</string>
+    <string name="tag_selector_selected_section_title">Etiquetas seleccionadas</string>
+    <string name="tag_selector_empty_selected">Ninguna etiqueta seleccionada</string>
+    <string name="tag_selector_other_group">Otras</string>
 
     <!-- Download -->
     <string name="scene_download_title">%s Galerías - %s</string>

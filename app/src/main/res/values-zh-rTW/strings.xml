@@ -346,6 +346,11 @@
     <string name="gallery_previews">圖庫預覽</string>
     <string name="go_to">跳到</string>
     <string name="tag_filter">篩選標籤</string>
+    <string name="tag_selector_search_hint">搜尋標籤…</string>
+    <string name="tag_selector_selected_count">已選: %d</string>
+    <string name="tag_selector_selected_section_title">已選標籤</string>
+    <string name="tag_selector_empty_selected">尚無已選標籤</string>
+    <string name="tag_selector_other_group">其他</string>
 
     <!-- Download -->
     <string name="scene_download_title">共%s個圖庫 - %s</string>

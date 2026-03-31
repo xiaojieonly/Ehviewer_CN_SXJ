@@ -340,6 +340,11 @@
     <string name="gallery_previews">画廊预览</string>
     <string name="go_to">跳页</string>
     <string name="tag_filter">标签过滤</string>
+    <string name="tag_selector_search_hint">搜索标签…</string>
+    <string name="tag_selector_selected_count">已选: %d</string>
+    <string name="tag_selector_selected_section_title">已选标签</string>
+    <string name="tag_selector_empty_selected">暂无已选标签</string>
+    <string name="tag_selector_other_group">其他</string>
 
     <!-- Download -->
     <string name="scene_download_title">共%s个画廊 - %s</string>

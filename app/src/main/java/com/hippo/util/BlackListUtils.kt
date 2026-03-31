@@ -11,7 +11,7 @@ object BlackListUtils {
         blackList.badgayname = comment.user
         blackList.angrywith = comment.comment
         blackList.mode = 1
-        blackList.add_time = System.currentTimeMillis().toString()
+        blackList.add_time = getTimeNow()
 
         return blackList
     }

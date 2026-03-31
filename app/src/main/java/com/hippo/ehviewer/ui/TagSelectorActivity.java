@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -18,21 +19,26 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import com.hippo.ehviewer.ui.EhActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.flexbox.FlexboxLayout;
+
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Tag selection screen with grouping support.
@@ -45,11 +51,36 @@ import java.util.Set;
  */
 public class TagSelectorActivity extends EhActivity {
 
+    @Override
+    protected int getThemeResId(int theme) {
+        switch (theme) {
+            case Settings.THEME_LIGHT:
+            default:
+                return R.style.AppTheme_NoActionBar;
+            case Settings.THEME_DARK:
+                return R.style.AppTheme_Dark_NoActionBar;
+            case Settings.THEME_BLACK:
+                return R.style.AppTheme_Black_NoActionBar;
+        }
+    }
+
     private RecyclerView recyclerView;
     private TagAdapter adapter;
-    private TextView tvSelectedCount;
+//    private TextView tvSelectedCount;
+    private TextView tvSelectedSectionTitle;
+    private TextView tvSelectedEmpty;
+    private RecyclerView rvSelectedByGroup;
+    private CardView cardSelectedTags;
+    private SelectedTagsAdapter selectedTagsAdapter;
 
-    private final Set<String> selectedTags = new HashSet<>();
+    private int selectedChipBgColor;
+    private int selectedChipTextColor;
+    private int selectedGroupHeaderColor;
+    private int selectedSectionTitleColor;
+    private int selectedEmptyTextColor;
+
+    private final LinkedHashMap<String, String> selectedTags = new LinkedHashMap<>();
+    private final List<SelectedTagGroup> selectedGroupsForDisplay = new ArrayList<>();
     private List<TagGroup> allGroups = new ArrayList<>();
     // Mixed list for Adapter (Headers + Items + Footers)
     // 混合列表，Adapter 会根据类型区分渲染
@@ -66,19 +97,6 @@ public class TagSelectorActivity extends EhActivity {
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
     };
-    @Override
-    protected int getThemeResId(int theme) {
-        switch (theme) {
-            case com.hippo.ehviewer.Settings.THEME_LIGHT:
-            default:
-                return R.style.AppTheme;
-            case com.hippo.ehviewer.Settings.THEME_DARK:
-                return R.style.AppTheme_Dark;
-            case com.hippo.ehviewer.Settings.THEME_BLACK:
-                return R.style.AppTheme_Black;
-        }
-    }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,27 +132,65 @@ public class TagSelectorActivity extends EhActivity {
     }
 
     private void checkSystemEnvironment() {
-        int theme = com.hippo.ehviewer.Settings.getTheme();
-        isDarkMode = (theme == com.hippo.ehviewer.Settings.THEME_DARK || theme == com.hippo.ehviewer.Settings.THEME_BLACK);
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        isDarkMode = (nightModeFlags == Configuration.UI_MODE_NIGHT_YES);
 
         // Strict check: Only "zh" gets Chinese tags.
         // 严格检查：只有系统语言是中文(zh)才显示中文标签，其他一律英文
-        Locale locale = Locale.getDefault();
-        String lang = locale.getLanguage();
-        isChineseSystem = "zh".equals(lang);
+        String lang = Settings.getAppLanguage();
+        isChineseSystem = lang.contains("zh");
     }
 
     private void initView() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Tag Selector");
         }
+        toolbar.setNavigationOnClickListener(v -> finish());
 
-        tvSelectedCount = findViewById(R.id.tv_selected_count);
+//        tvSelectedCount = findViewById(R.id.tv_selected_count);
         recyclerView = findViewById(R.id.rv_tag_list);
+        tvSelectedSectionTitle = findViewById(R.id.tv_selected_section_title);
+        tvSelectedEmpty = findViewById(R.id.tv_selected_empty);
+        rvSelectedByGroup = findViewById(R.id.rv_selected_by_group);
+        cardSelectedTags = findViewById(R.id.card_selected_tags);
+
+        tvSelectedSectionTitle.setText(R.string.tag_selector_selected_section_title);
+        tvSelectedEmpty.setText(R.string.tag_selector_empty_selected);
+
+        if (isDarkMode) {
+            selectedChipBgColor = Color.parseColor("#AD1457");
+            selectedChipTextColor = Color.WHITE;
+            selectedGroupHeaderColor = Color.parseColor("#F48FB1");
+            selectedSectionTitleColor = Color.parseColor("#E0E0E0");
+            selectedEmptyTextColor = Color.GRAY;
+        } else {
+            selectedChipBgColor = Color.parseColor("#F48FB1");
+            selectedChipTextColor = Color.WHITE;
+            selectedGroupHeaderColor = Color.parseColor("#424242");
+            selectedSectionTitleColor = Color.parseColor("#212121");
+            selectedEmptyTextColor = Color.parseColor("#757575");
+        }
+        tvSelectedSectionTitle.setTextColor(selectedSectionTitleColor);
+        tvSelectedEmpty.setTextColor(selectedEmptyTextColor);
+
+        rvSelectedByGroup.setLayoutManager(new LinearLayoutManager(this));
+        selectedTagsAdapter = new SelectedTagsAdapter();
+        rvSelectedByGroup.setAdapter(selectedTagsAdapter);
+
+        // Fix background color issues in some Dark Mode themes
+        // 修复部分深色主题下背景太白的问题
+        if (isDarkMode) {
+            recyclerView.setBackgroundColor(Color.parseColor("#121212"));
+//            tvSelectedCount.setTextColor(Color.LTGRAY);
+            cardSelectedTags.setCardBackgroundColor(Color.parseColor("#1E1E1E"));
+        }
 
         findViewById(R.id.btn_confirm_search).setOnClickListener(v -> {
             StringBuilder sb = new StringBuilder();
-            for (String tag : selectedTags) {
+            for (String tag : selectedTags.keySet()) {
                 sb.append(tag).append(" ");
             }
             Intent resultIntent = new Intent();
@@ -143,17 +199,72 @@ public class TagSelectorActivity extends EhActivity {
             finish();
         });
     }
-    @Override
-    public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish(); // 关掉页面
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     private void updateInfo() {
-        tvSelectedCount.setText("Selected: " + selectedTags.size());
+//        tvSelectedCount.setText(getString(R.string.tag_selector_selected_count, selectedTags.size()));
+        refreshSelectedPanel();
+    }
+
+    private void refreshSelectedPanel() {
+        rebuildSelectedGroups();
+        if (selectedTagsAdapter != null) {
+            selectedTagsAdapter.notifyDataSetChanged();
+        }
+        boolean empty = selectedTags.isEmpty();
+        tvSelectedEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        rvSelectedByGroup.setVisibility(empty ? View.GONE : View.VISIBLE);
+    }
+
+    private void rebuildSelectedGroups() {
+        selectedGroupsForDisplay.clear();
+        if (selectedTags.isEmpty()) {
+            return;
+        }
+        Map<String, List<Pair<String, String>>> byNs = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : selectedTags.entrySet()) {
+            String ns = extractNamespace(e.getKey());
+            List<Pair<String, String>> list = byNs.get(ns);
+            if (list == null) {
+                list = new ArrayList<>();
+                byNs.put(ns, list);
+            }
+            list.add(Pair.create(e.getKey(), e.getValue()));
+        }
+        List<String> ordered = new ArrayList<>();
+        for (TagGroup g : allGroups) {
+            if (byNs.containsKey(g.namespace)) {
+                ordered.add(g.namespace);
+            }
+        }
+        for (String ns : byNs.keySet()) {
+            if (!ordered.contains(ns)) {
+                ordered.add(ns);
+            }
+        }
+        for (String ns : ordered) {
+            String title = resolveNamespaceTitle(ns);
+            selectedGroupsForDisplay.add(new SelectedTagGroup(title, byNs.get(ns)));
+        }
+    }
+
+    private static String extractNamespace(String key) {
+        if (key == null) {
+            return "";
+        }
+        int idx = key.indexOf(':');
+        return idx > 0 ? key.substring(0, idx) : "";
+    }
+
+    private String resolveNamespaceTitle(String ns) {
+        if (TextUtils.isEmpty(ns)) {
+            return getString(R.string.tag_selector_other_group);
+        }
+        for (TagGroup g : allGroups) {
+            if (g.namespace.equals(ns)) {
+                return g.title;
+            }
+        }
+        return ns.substring(0, 1).toUpperCase(Locale.US) + ns.substring(1);
     }
 
     private void initGroupsStructure() {
@@ -277,7 +388,8 @@ public class TagSelectorActivity extends EhActivity {
             if (resultPairs != null) {
                 for (Pair<String, String> pair : resultPairs) {
                     String val1 = pair.first; String val2 = pair.second;
-                    String searchKey = null; String displayName = null;
+                    String searchKey;
+                    String displayName;
 
                     // Normalize data (key vs translation position varies)
                     // 数据库返回的 key/value 位置可能不固定，这里做下标准化
@@ -373,6 +485,14 @@ public class TagSelectorActivity extends EhActivity {
     }
     static class TagItem { String key; String show; boolean isPinned; TagItem(String k, String s, boolean p) { key = k; show = s; isPinned = p;} }
     static class FooterItem { TagGroup group; FooterItem(TagGroup g) { group = g; } }
+    static class SelectedTagGroup {
+        final String title;
+        final List<Pair<String, String>> entries;
+        SelectedTagGroup(String title, List<Pair<String, String>> entries) {
+            this.title = title;
+            this.entries = entries;
+        }
+    }
 
     // ================== RecyclerView Adapter ==================
     class TagAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -490,7 +610,7 @@ public class TagSelectorActivity extends EhActivity {
                 final TagViewHolder vh = (TagViewHolder) holder;
                 vh.tv.setText(item.show);
 
-                final boolean isSelected = selectedTags.contains(item.key);
+                final boolean isSelected = selectedTags.containsKey(item.key);
 
                 // Mutate background to avoid sharing state between recycled views
                 // 必须 mutate，否则复用 View 时会导致颜色错乱
@@ -508,11 +628,11 @@ public class TagSelectorActivity extends EhActivity {
                 } catch (Exception e) { e.printStackTrace(); }
 
                 vh.itemView.setOnClickListener(v -> {
-                    if (selectedTags.contains(item.key)) {
+                    if (selectedTags.containsKey(item.key)) {
                         selectedTags.remove(item.key);
                         animateTagSelection(vh.itemView, vh.tv, false);
                     } else {
-                        selectedTags.add(item.key);
+                        selectedTags.put(item.key, item.show);
                         animateTagSelection(vh.itemView, vh.tv, true);
                     }
                     updateInfo();
@@ -562,5 +682,67 @@ public class TagSelectorActivity extends EhActivity {
         @Override public int getItemCount() { return displayList.size(); }
         class TagViewHolder extends RecyclerView.ViewHolder { TextView tv; TagViewHolder(View v) { super(v); tv = v.findViewById(R.id.tv_tag_name); } }
         class FooterViewHolder extends RecyclerView.ViewHolder { TextView tvExpand, tvCollapse; FooterViewHolder(View v, TextView e, TextView c) { super(v); tvExpand=e; tvCollapse=c; } }
+    }
+
+    private class SelectedTagsAdapter extends RecyclerView.Adapter<SelectedTagsAdapter.VH> {
+
+        @NonNull
+        @Override
+        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_selected_tag_group, parent, false);
+            return new VH(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull VH holder, int position) {
+            SelectedTagGroup group = selectedGroupsForDisplay.get(position);
+            holder.tvTitle.setText(group.title);
+            holder.tvTitle.setTextColor(selectedGroupHeaderColor);
+            holder.flex.removeAllViews();
+            float d = getResources().getDisplayMetrics().density;
+            int padH = (int) (10 * d + 0.5f);
+            int chipPadV = (int) (8 * d + 0.5f);
+            int margin = (int) (4 * d + 0.5f);
+            for (Pair<String, String> entry : group.entries) {
+                TextView chip = new TextView(TagSelectorActivity.this);
+                chip.setText(entry.second + " \u00D7");
+                chip.setTextSize(13);
+                chip.setTextColor(selectedChipTextColor);
+                GradientDrawable gd = new GradientDrawable();
+                gd.setCornerRadius(20 * d);
+                gd.setColor(selectedChipBgColor);
+                chip.setBackground(gd);
+                chip.setPadding(padH, chipPadV, padH, chipPadV);
+                final String key = entry.first;
+                chip.setOnClickListener(v -> {
+                    selectedTags.remove(key);
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
+                    updateInfo();
+                });
+                FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.setMargins(margin, margin, margin, margin);
+                holder.flex.addView(chip, lp);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return selectedGroupsForDisplay.size();
+        }
+
+        class VH extends RecyclerView.ViewHolder {
+            final TextView tvTitle;
+            final FlexboxLayout flex;
+
+            VH(View v) {
+                super(v);
+                tvTitle = v.findViewById(R.id.tv_group_title);
+                flex = v.findViewById(R.id.flex_selected_tags);
+            }
+        }
     }
 }
