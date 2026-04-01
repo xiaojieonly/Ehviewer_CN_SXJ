@@ -254,7 +254,7 @@
     <plurals name="page_count">
         <item quantity="other">%d 页</item>
         <item quantity="one">%d page</item>
-    </plurals>
+        </plurals>
     <string name="favored_times">\u2665 %1$d</string>
     <string name="rating_text">%1$s (%2$f, %3$d)</string>
     <string name="favorites">收藏夹</string>
@@ -483,7 +483,7 @@
     <string name="settings_eh_sign_out">退出登录</string>
     <string name="settings_eh_sign_out_summary">重新启动应用程序以登录。</string>
     <string name="settings_eh_sign_out_warning">您确定要退出登录吗？</string>
-    <string name="settings_eh_sign_out_yes">@android:string/确定</string>
+    <string name="settings_eh_sign_out_yes">@android:string/ok</string>
     <string name="settings_eh_sign_out_tip">您已退出登录。请重启应用程序以重新登录。</string>
     <string name="settings_eh_identity_cookies">身份识别Cookie</string>
     <string name="settings_eh_identity_cookies_summary">Cookies可用于登录验证。</string>
@@ -654,10 +654,10 @@
     <string name="settings_download_clean_redundancy_done">冗余清理完成，总计清理%1$d个项目。</string>
     <string name="settings_download_clean_invalid_download_summary">移除无效的下载项目<b>实现原理：</b>
         <b>在删除前发送网络请求确认画廊是否已被删除</b>
-    </string>
+        </string>
     <string name="settings_download_clean_invalid_download">清理无效下载</string>
     <string name="settings_download_clean_invalid_download_confirm">确认清除无效下载项？<b>注意：</b>
-    </string>
+        </string>
     <string name="settings_download_rebuild_download_records">重建下载记录</string>
     <string name="settings_download_rebuild_download_records_summary">扫描下载路径中的所有文件夹，从.ehviewer文件重建或为无元数据的文件夹创建本地记录。</string>
     <string name="settings_download_rebuild_download_records_detail">处理所有文件夹，为没有.ehviewer文件的文件夹创建备用本地记录。</string>
@@ -856,33 +856,33 @@
     <plurals name="some_minutes_ago">
         <item quantity="other">%d 分钟前</item>
         <item quantity="one">A minute ago</item>
-    </plurals>
+        </plurals>
     <plurals name="some_hours_ago">
         <item quantity="other">%d 小时前</item>
         <item quantity="one">An hour ago</item>
-    </plurals>
+        </plurals>
     <string name="yesterday">昨天</string>
     <string name="some_days_ago">%1$d 天前</string>
     <plurals name="second">
         <item quantity="other">秒</item>
         <item quantity="one">sec</item>
-    </plurals>
+        </plurals>
     <plurals name="minute">
         <item quantity="other">分钟</item>
         <item quantity="one">min</item>
-    </plurals>
+        </plurals>
     <plurals name="hour">
         <item quantity="other">小时</item>
         <item quantity="one">hour</item>
-    </plurals>
+        </plurals>
     <plurals name="day">
         <item quantity="other">天数</item>
         <item quantity="one">day</item>
-    </plurals>
+        </plurals>
     <plurals name="year">
         <item quantity="other">年</item>
         <item quantity="one">year</item>
-    </plurals>
+        </plurals>
     <string name="dialog_archive_title">H@H 下载器</string>
     <string name="no_archives">无存档</string>
     <string name="download_archive_started">存档下载已开始</string>
@@ -1162,7 +1162,7 @@
     <plurals name="background_tasks_running">
         <item quantity="one">%d 个任务正在运行</item>
         <item quantity="other">%d 个任务正在运行</item>
-    </plurals>
+        </plurals>
     <string name="settings_advanced_local_gallery_scan_on_start">启动时扫描本地图库</string>
     <string name="settings_advanced_local_gallery_scan_on_start_summary">应用启动时，对本地图库和回收站进行后台扫描。</string>
     <string name="settings_advanced_local_gallery_cache_expire_days">本地画廊缓存过期</string>
@@ -1239,7 +1239,7 @@
         <b>清理阶段</b>
         <b>为什么要检查画廊状态？</b>
         <b>注意事项：</b>
-    </string>
+        </string>
     <string name="start_all_download_initializing">正在初始化下载...</string>
     <string name="start_all_download_starting">开始 %1$d 个任务</string>
     <string name="start_all_download_progress">开始：%1$d/%2$d - %3$s</string>
@@ -1375,4 +1375,4 @@
     <string name="local_gallery_page_indicator">%1$d / %2$d</string>
     <string name="local_gallery_image">画廊图片</string>
     <string name="local_gallery_info">画廊信息</string>
-</resources>
+    </resources>

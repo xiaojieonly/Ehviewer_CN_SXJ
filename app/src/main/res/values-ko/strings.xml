@@ -210,7 +210,7 @@ exhentai: 로그인한 사용자만 이용 가능</string>
     <string name="stop_downloading">다운로드를 중지하세요</string>
     <string name="delete_downloads">다운로드 삭제</string>
     <string name="quick_search">빠른 검색</string>
-    <string name="quick_search_tip">"빠른 검색을 추가하려면 '+'를 탭하세요."</string>
+    <string name="quick_search_tip">"빠른 검색을 추가하려면 \'+\'를 탭하세요."</string>
     <string name="add_quick_search_dialog_title">빠른 검색 추가</string>
     <string name="name_is_empty">이름이 비어 있습니다</string>
     <string name="delete">삭제</string>
@@ -763,7 +763,7 @@ exhentai: 로그인한 사용자만 이용 가능</string>
     <string name="download_h_h_failure_no_hath">아카이브 다운로드를 위한 H@H 클라이언트 필요합니다</string>
     <string name="settings_privacy">개인정보 보호</string>
     <string name="settings_privacy_secure">스크린샷 방지</string>
-    <string name="settings_privacy_secure_summary">앱의 내용이 스크린샷으로 찍히거나 '최근 앱' 목록에 표시되지 않도록 방지합니다.</string>
+    <string name="settings_privacy_secure_summary">앱의 내용이 스크린샷으로 찍히거나 \'최근 앱\' 목록에 표시되지 않도록 방지합니다.</string>
     <string name="download_service">다운로드 서비스</string>
     <string name="favorite_name">좋아하는</string>
     <string name="gallery_toplists">갤러리 인기 목록</string>

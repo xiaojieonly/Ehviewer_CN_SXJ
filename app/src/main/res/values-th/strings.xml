@@ -237,7 +237,7 @@ exhentai: เปิดให้เฉพาะผู้ที่ลงชื่�
     <plurals name="page_count">
         <item quantity="other">%d หน้า</item>
         <item quantity="one">%d page</item>
-    </plurals>
+        </plurals>
     <string name="favored_times">\u2665 %1$d</string>
     <string name="rating_text">%1$s (%2$f, %3$d)</string>
     <string name="favorites">รายการโปรด</string>
@@ -437,8 +437,8 @@ exhentai: เปิดให้เฉพาะผู้ที่ลงชื่�
     <string name="invalid_host">โฮสต์ไม่ถูกต้อง</string>
     <string name="invalid_ip">IP ไม่ถูกต้อง</string>
     <string name="page_menu_title">หน้า %1$d</string>
-    <string name="page_menu_refresh">@string/รีเฟรช</string>
-    <string name="page_menu_share">@string/แชร์</string>
+    <string name="page_menu_refresh">@string/refresh</string>
+    <string name="page_menu_share">@string/share</string>
     <string name="page_menu_save">บันทึก</string>
     <string name="page_menu_save_to">บันทึกไปยัง …</string>
     <string name="page_menu_add_bookmark">เพิ่มบุ๊กมาร์ก</string>
@@ -711,33 +711,33 @@ exhentai: เปิดให้เฉพาะผู้ที่ลงชื่�
     <plurals name="some_minutes_ago">
         <item quantity="other">%d นาทีที่แล้ว</item>
         <item quantity="one">A minute ago</item>
-    </plurals>
+        </plurals>
     <plurals name="some_hours_ago">
         <item quantity="other">%d ชั่วโมงที่แล้ว</item>
         <item quantity="one">An hour ago</item>
-    </plurals>
+        </plurals>
     <string name="yesterday">เมื่อวาน</string>
     <string name="some_days_ago">%1$d วันที่แล้ว</string>
     <plurals name="second">
         <item quantity="other">วินาที</item>
         <item quantity="one">sec</item>
-    </plurals>
+        </plurals>
     <plurals name="minute">
         <item quantity="other">นาที</item>
         <item quantity="one">min</item>
-    </plurals>
+        </plurals>
     <plurals name="hour">
         <item quantity="other">ชั่วโมง</item>
         <item quantity="one">hour</item>
-    </plurals>
+        </plurals>
     <plurals name="day">
         <item quantity="other">วัน</item>
         <item quantity="one">day</item>
-    </plurals>
+        </plurals>
     <plurals name="year">
         <item quantity="other">ปี</item>
         <item quantity="one">year</item>
-    </plurals>
+        </plurals>
     <string name="dialog_archive_title">H@H Downloader</string>
     <string name="no_archives">ไม่มีเอกสารสำคัญ</string>
     <string name="download_archive_started">การดาวน์โหลดไฟล์เก็บถาวรเริ่มต้นแล้ว</string>
@@ -1369,5 +1369,5 @@ exhentai: เปิดให้เฉพาะผู้ที่ลงชื่�
     <plurals name="background_tasks_running">
         <item quantity="one">%d task running</item>
         <item quantity="other">%d tasks running</item>
-    </plurals>
-</resources>
+        </plurals>
+    </resources>
