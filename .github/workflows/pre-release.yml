@@ -21,8 +21,16 @@ jobs:
       - name: Grant execute for gradlew
         run: chmod +x ./gradlew
 
+      - name: Verify gradle wrapper files
+        run: |
+          pwd
+          ls -al gradle/wrapper
+          find . -name gradle-wrapper.jar -print
+          file gradle/wrapper/gradle-wrapper.jar || true
+
       - name: Build release APK
         run: |
+          ./gradlew --version
           ./gradlew clean app:assembleRelease
 
       - name: Create pre-release version from commit time

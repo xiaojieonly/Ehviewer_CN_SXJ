@@ -21,9 +21,17 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+      - name: Verify gradle wrapper files
+        run: |
+          pwd
+          ls -al gradle/wrapper
+          find . -name gradle-wrapper.jar -print
+          file gradle/wrapper/gradle-wrapper.jar || true
+
       - name: Build
         run: |
           chmod +x ./gradlew
+          ./gradlew --version
           ./gradlew app:assembleDebug
           
       - name: Upload Artifact
