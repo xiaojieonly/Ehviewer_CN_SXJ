@@ -1,0 +1,60 @@
+name: Auto Build + Pre-release
+
+on:
+  push:
+    branches: [ BiLi_PC_Gamer ]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Grant execute for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build release APK
+        run: |
+          ./gradlew clean app:assembleRelease
+
+      - name: Create pre-release version from commit time
+        id: release_info
+        run: |
+          commit_time=$(git show -s --format=%cI HEAD)
+          major=$(date -d "$commit_time" +%Y%m%d)
+          minor=$(date -d "$commit_time" +%H%M%S)
+          version="${major}.${minor}"
+          tag="pre-release-${version}"
+          echo "commit_time=$commit_time" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - name: Create or update GitHub pre-release
+        id: release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: "auto pre-release ${{ steps.release_info.outputs.version }}"
+          body: "Auto build from commit `${{ github.sha }}`, generated at `${{ steps.release_info.outputs.commit_time }}`."
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          asset_path: app/build/outputs/apk/release/app-release.apk
+          asset_name: app-release-${{ steps.release_info.outputs.version }}.apk
+          asset_content_type: application/vnd.android.package-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
