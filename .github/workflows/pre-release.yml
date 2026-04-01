@@ -21,16 +21,21 @@ jobs:
       - name: Grant execute for gradlew
         run: chmod +x ./gradlew
 
-      - name: Setup Gradle CLI
-        uses: gradle/gradle-build-action@v2
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 9.0.2
+          gradle-version: current
 
       - name: Build release APK
         run: |
-          if [ -f ./gradlew ]; then chmod +x ./gradlew; ./gradlew --version; fi
-          gradle --version
-          gradle clean app:assembleRelease
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew --version
+            ./gradlew clean app:assembleRelease
+          else
+            gradle --version
+            gradle clean app:assembleRelease
+          fi
 
       - name: Create pre-release version from commit time
         id: release_info
