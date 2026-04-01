@@ -66,7 +66,7 @@ public class TagSelectorActivity extends EhActivity {
 
     private RecyclerView recyclerView;
     private TagAdapter adapter;
-//    private TextView tvSelectedCount;
+    private TextView tvSelectedCount;
     private TextView tvSelectedSectionTitle;
     private TextView tvSelectedEmpty;
     private RecyclerView rvSelectedByGroup;
@@ -97,19 +97,6 @@ public class TagSelectorActivity extends EhActivity {
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
     };
-
-    @Override
-    protected int getThemeResId(int theme) {
-        switch (theme) {
-            case com.hippo.ehviewer.Settings.THEME_DARK:
-                return R.style.AppTheme_Dark;
-            case com.hippo.ehviewer.Settings.THEME_BLACK:
-                return R.style.AppTheme_Black;
-            case com.hippo.ehviewer.Settings.THEME_LIGHT:
-            default:
-                return R.style.AppTheme;
-        }
-    }
 
 
     @Override
