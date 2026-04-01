@@ -322,9 +322,11 @@ Url</string>
     <string name="last_edited">Última edición: %1$s</string>
     <string name="gallery_previews">Vista Previa de la Galería</string>
     <string name="go_to">Ir a</string>
-    <string name="tag_filter">Etiqueta de filtro</string>
-    <string name="scene_download_title">%1$s Galerías - %2$s</string>
-    <string name="no_download_info">Los elementos descargados se mostrarán aquí.</string>
+    <string name="tag_filter">Filtrar etiqueta</string>
+
+    <!-- Download -->
+    <string name="scene_download_title">%s Galerías - %s</string>
+    <string name="no_download_info">Las galerías descargadas se mostrarán acá</string>
     <string name="download_state_wait">Esperando</string>
     <string name="download_state_downloading">Descargando</string>
     <string name="download_state_downloaded">Descargado</string>
