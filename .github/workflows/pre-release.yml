@@ -31,10 +31,10 @@ jobs:
           if [ -f ./gradlew ]; then
             chmod +x ./gradlew
             ./gradlew --version
-            ./gradlew clean app:assembleRelease
+            ./gradlew clean app:assembleAppReleaseRelease
           else
             gradle --version
-            gradle clean app:assembleRelease
+            gradle clean app:assembleAppReleaseRelease
           fi
 
       - name: Create pre-release version from commit time
@@ -61,12 +61,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Show built APK files
+        run: |
+          echo "APK output tree:"
+          ls -R app/build/outputs/apk || true
+          echo "Matched APK files:"
+          find app/build/outputs/apk -type f -name "*.apk" -print
+
       - name: Upload release artifact
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.release_info.outputs.tag }}
-          asset_path: app/build/outputs/apk/release/app-release.apk
-          asset_name: app-release-${{ steps.release_info.outputs.version }}.apk
-          asset_content_type: application/vnd.android.package-archive
+          files: |
+            app/build/outputs/apk/**/*.apk
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
