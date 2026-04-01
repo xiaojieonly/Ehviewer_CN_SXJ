@@ -24,7 +24,7 @@ jobs:
       - name: Setup Gradle CLI
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 9.0
+          gradle-version: 9.0.2
 
       - name: Build release APK
         run: |
