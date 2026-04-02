@@ -40,6 +40,7 @@ import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.NumberUtils;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,6 +52,9 @@ public class SpiderInfo {
 
     private static final String VERSION_STR = "VERSION";
     private static final int VERSION = 2;
+
+    /** Upper bound for pages from local file; prevents OOM from corrupted spider_info. */
+    private static final int MAX_SPIDER_INFO_PAGES = 100_000;
 
     static final String TOKEN_FAILED = "failed";
 
@@ -109,7 +113,6 @@ public class SpiderInfo {
     }
 
     @Nullable
-    @SuppressWarnings("InfiniteLoopStatement")
     public static SpiderInfo read(@Nullable InputStream is) {
         if (null == is) {
             return null;
@@ -150,13 +153,17 @@ public class SpiderInfo {
             // Pages
             spiderInfo.pages = Integer.parseInt(IOUtils.readAsciiLine(is));
             // Check pages
-            if (spiderInfo.pages <= 0) {
+            if (spiderInfo.pages <= 0 || spiderInfo.pages > MAX_SPIDER_INFO_PAGES) {
                 return null;
             }
-            // PToken
+            // PToken (at most one line per page in valid files; cap lines to avoid OOM on corrupt files)
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
-            while (true) { // EOFException will raise
-                line = IOUtils.readAsciiLine(is);
+            for (int linesRead = 0; linesRead < spiderInfo.pages; linesRead++) {
+                try {
+                    line = IOUtils.readAsciiLine(is);
+                } catch (EOFException e) {
+                    break;
+                }
                 int pos = line.indexOf(" ");
                 if (pos > 0) {
                     int index = Integer.parseInt(line.substring(0, pos));
