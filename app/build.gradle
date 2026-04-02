@@ -29,9 +29,9 @@ android {
         applicationId "com.xjs.ehviewer"
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 111
-        versionName "2.0.1.5"
+        versionName "2.0.1.6"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
@@ -61,7 +61,7 @@ android {
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
         }
         debug {
-            applicationIdSuffix ".debug1"
+            applicationIdSuffix ".debug"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
         }
     }

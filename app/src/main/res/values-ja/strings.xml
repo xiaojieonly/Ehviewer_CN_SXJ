@@ -334,6 +334,11 @@
     <string name="gallery_previews">ギャラリーのプレビュー</string>
     <string name="go_to">ページに移動</string>
     <string name="tag_filter">タグをフィルター</string>
+    <string name="tag_selector_search_hint">タグを検索…</string>
+    <string name="tag_selector_selected_count">選択中: %d</string>
+    <string name="tag_selector_selected_section_title">選択中のタグ</string>
+    <string name="tag_selector_empty_selected">タグが選択されていません</string>
+    <string name="tag_selector_other_group">その他</string>
     <!-- Download -->
     <string name="scene_download_title">%sギャラリー - %s</string>
     <string name="no_download_info">ダウンロードタスクはここに表示されます</string>
