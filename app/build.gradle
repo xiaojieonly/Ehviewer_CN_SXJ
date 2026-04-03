@@ -116,7 +116,7 @@ dependencies {
     implementation "androidx.activity:activity:1.2.4"
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.biometric:biometric:1.2.0-alpha01'
-    implementation "androidx.browser:browser:1.10.0"
+    implementation "androidx.browser:browser:1.4.0"
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation "androidx.fragment:fragment:1.8.6"
     implementation "androidx.preference:preference-ktx:1.2.1"
