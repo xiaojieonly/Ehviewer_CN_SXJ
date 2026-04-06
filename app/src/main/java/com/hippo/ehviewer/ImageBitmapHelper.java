@@ -47,6 +47,9 @@ public class ImageBitmapHelper implements ValueHelper<Image> {
         } catch (OutOfMemoryError e) {
             Analytics.recordException(e);
             return null;
+        } catch (RuntimeException e) {
+            Analytics.recordException(e);
+            return null;
         } catch (IOException e) {
             return null;
         } finally {

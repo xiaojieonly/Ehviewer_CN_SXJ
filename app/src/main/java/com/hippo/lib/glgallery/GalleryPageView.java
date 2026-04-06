@@ -38,12 +38,14 @@ public class GalleryPageView extends GLFrameLayout {
     private final GLLinearLayout mInfo;
     private final GLImageMovableTextView mPage;
     private final GLImageMovableTextView mProgressText;
+    private final GLImageMovableTextView mSpeedText; // 新增：速度显示
     private final GLTextureView mError;
     private final GLProgressView mProgress;
 
     private final int mMinHeight;
 
     private int mIndex = INVALID_INDEX;
+    private boolean mShowDetailedProgress = false; // 是否显示详细进度（三行信息）
 
         public GalleryPageView(ImageMovableTextTexture pageTextTexture,
             ImageMovableTextTexture progressTextTexture,
@@ -64,7 +66,7 @@ public class GalleryPageView extends GLFrameLayout {
         glp.gravity = Gravity.CENTER;
         addComponent(mInfo, glp);
 
-        // Add page
+        // Add page (Line 1: 第X页)
         mPage = new GLImageMovableTextView();
         mPage.setTextTexture(pageTextTexture);
         GLLinearLayout.LayoutParams lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
@@ -72,6 +74,7 @@ public class GalleryPageView extends GLFrameLayout {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mPage, lp);
 
+        // Add progress text (Line 2: 当前进度百分比)
         mProgressText = new GLImageMovableTextView();
         mProgressText.setTextTexture(progressTextTexture);
         mProgressText.setVisibility(GONE);
@@ -80,6 +83,15 @@ public class GalleryPageView extends GLFrameLayout {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mProgressText, lp);
 
+        // Add speed text (Line 3: 当前速率)
+        mSpeedText = new GLImageMovableTextView();
+        mSpeedText.setTextTexture(progressTextTexture);
+        mSpeedText.setVisibility(GONE);
+        lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+            LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        mInfo.addComponent(mSpeedText, lp);
+
         // Add error
         mError = new GLTextureView();
         lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
@@ -87,7 +99,7 @@ public class GalleryPageView extends GLFrameLayout {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mError, lp);
 
-        // Add progress
+        // Add progress circle
         mProgress = new GLProgressView();
         mProgress.setBgColor(progressBgColor);
         mProgress.setColor(progressColor);
@@ -178,6 +190,55 @@ public class GalleryPageView extends GLFrameLayout {
         } else {
             mProgressText.setVisibility(VISIBLE);
             mProgressText.setText(text);
+        }
+    }
+
+    /**
+     * Set speed text (Line 3 in detailed progress mode)
+     */
+    public void setSpeedText(String text) {
+        if (text == null || text.isEmpty()) {
+            mSpeedText.setVisibility(GONE);
+            mSpeedText.setText("");
+        } else {
+            mSpeedText.setVisibility(VISIBLE);
+            mSpeedText.setText(text);
+        }
+    }
+
+    /**
+     * Enable or disable detailed progress mode
+     * When enabled, shows three lines: page number, progress percentage, speed
+     */
+    public void setShowDetailedProgress(boolean show) {
+        mShowDetailedProgress = show;
+    }
+
+    /**
+     * Set detailed loading info (page index, progress, speed)
+     * @param pageIndex The current page index (1-based for display)
+     * @param progressText Progress text like "50%"
+     * @param speedText Speed text like "1.5MB/s"
+     */
+    public void setDetailedProgress(int pageIndex, String progressText, String speedText) {
+        // Show page number
+        mPage.setVisibility(VISIBLE);
+        mPage.setText("第" + pageIndex + "页");
+        
+        // Show progress
+        if (progressText != null && !progressText.isEmpty()) {
+            mProgressText.setVisibility(VISIBLE);
+            mProgressText.setText(progressText);
+        } else {
+            mProgressText.setVisibility(GONE);
+        }
+        
+        // Show speed
+        if (speedText != null && !speedText.isEmpty()) {
+            mSpeedText.setVisibility(VISIBLE);
+            mSpeedText.setText(speedText);
+        } else {
+            mSpeedText.setVisibility(GONE);
         }
     }
 

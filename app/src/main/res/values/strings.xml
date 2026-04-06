@@ -232,7 +232,7 @@
     <string name="search_sr">Minimum Rating:</string>
     <string name="search_sp">Pages:</string>
     <string name="search_sp_to">to</string>
-    <string name="search_sp_suffix"/>
+    <string name="search_sp_suffix" />
     <string name="search_sf">Disable default filters for:</string>
     <string name="search_sfl">Language</string>
     <string name="search_sfu">Uploader</string>
@@ -707,6 +707,10 @@
     <string name="settings_advanced_export_path">Export path</string>
     <string name="settings_advanced_export_path_summary">Choose where compressed galleries are saved (default: download path with /Output)</string>
     <string name="settings_advanced_export_path_set">Export path updated to %1$s</string>
+    <string name="settings_advanced_export_database">Export database</string>
+    <string name="settings_advanced_export_database_summary">Copy current application database to external storage for debugging</string>
+    <string name="settings_advanced_export_database_to">Database exported to %1$s</string>
+    <string name="settings_advanced_export_database_failed">Failed to export database</string>
     <string name="settings_advanced_clear_memory_cache">Clear memory cache</string>
     <string name="settings_advanced_clear_memory_cache_summary">Clear thumb, gallery info memory cache</string>
     <string name="settings_advanced_read_cache_size">Read cache size</string>
@@ -725,9 +729,13 @@
     <string name="settings_advanced_export_data_summary">Save data like download list, quick search list, to external storage</string>
     <string name="settings_advanced_export_data_to">Exported data to %1$s</string>
     <string name="settings_advanced_export_data_failed">Failed to export data</string>
+    <string name="settings_advanced_export_data_started">Exporting data in background…</string>
     <string name="settings_advanced_import_data">Import data</string>
     <string name="settings_advanced_import_data_summary">Load data which were previously saved</string>
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>
+    <string name="settings_advanced_import_data_started">Importing data in background…</string>
+    <string name="settings_advanced_export_database_started">Exporting database in background…</string>
+    <string name="settings_advanced_dump_logcat_started">Dumping logcat in background…</string>
     <string name="settings_advanced_wifi_sender">WiFi data migration</string>
     <string name="settings_advanced_wifi_sander_summary">Data Migration via Wi-Fi Hotspot</string>
     <string name="settings_advanced_wifi_client">WiFi migration data reception</string>
@@ -1134,6 +1142,7 @@
     <string name="scan_download_files_completed">Scan completed!</string>
     <string name="scan_download_files_failed">Scan failed</string>
     <string name="scan_download_files_failed_title">Scan failed</string>
+    <string name="scan_download_files_cancelled">Scan cancelled</string>
     <string name="clean_invalid_download_empty_directory">Empty directory: %1$s</string>
     <string name="clean_invalid_download_missing_ehviewer_file">Missing .ehviewer file: %1$s</string>
     <string name="clean_invalid_download_invalid_ehviewer_file">Invalid .ehviewer file: %1$s</string>
@@ -1369,4 +1378,5 @@
     <string name="settings_advanced_recycle_bin">Recycle Bin</string>
     <string name="settings_advanced_recycle_bin_summary">Direct access to recycle bin and purge operations</string>
     <string name="tag_search_entrance">Tag Selector</string>
+    <string name="settings_download_export_download_items">Export Download Items</string>
 </resources>

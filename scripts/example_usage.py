@@ -27,8 +27,8 @@ def example_google_translation():
     translated = translator.translate_text(text, 'en', 'zh')
     print(f"翻译 '{text}' -> '{translated}'")
     
-    # 创建字符串翻译器
-    base_file = "app/src/main/res/values/strings.xml"
+    # 创建字符串翻译器，优先使用英语源文件
+    base_file = "app/src/main/res/values-en/strings.xml"
     if os.path.exists(base_file):
         strings_translator = OnlineStringsTranslator(base_file, translator)
         strings_translator.parse_base_file()
@@ -60,8 +60,8 @@ def example_deepseek_translation():
         translated = translator.translate_text(text, '英语', '简体中文')
         print(f"翻译 '{text}' -> '{translated}'")
         
-        # 创建字符串翻译器
-        base_file = "app/src/main/res/values/strings.xml"
+        # 创建字符串翻译器，优先使用英语源文件
+        base_file = "app/src/main/res/values-en/strings.xml"
         if os.path.exists(base_file):
             strings_translator = DeepseekStringsTranslator(base_file, translator)
             strings_translator.parse_base_file()
@@ -79,19 +79,19 @@ def example_command_line_usage():
     print("=" * 60)
     
     print("1. 使用Google翻译（免费）：")
-    print("   python scripts/translate_strings_online.py --base app/src/main/res/values/strings.xml --api-type google")
+    print("   python scripts/translate_strings_online.py --base app/src/main/res/values-en/strings.xml --api-type google")
     print()
     
     print("2. 使用Deepseek翻译（需要API密钥）：")
-    print("   python scripts/translate_strings_deepseek.py --base app/src/main/res/values/strings.xml --api-key YOUR_API_KEY")
+    print("   python scripts/translate_strings_deepseek.py --base app/src/main/res/values-en/strings.xml --api-key YOUR_API_KEY")
     print()
     
     print("3. 使用本地AI翻译（需要安装transformers和torch）：")
-    print("   python scripts/translate_strings_local_ai.py --base app/src/main/res/values/strings.xml --model Qwen/Qwen2.5-7B-Instruct")
+    print("   python scripts/translate_strings_local_ai.py --base app/src/main/res/values-en/strings.xml --model Qwen/Qwen2.5-7B-Instruct")
     print()
     
     print("4. 模拟运行（不实际修改文件）：")
-    print("   python scripts/translate_strings_online.py --base app/src/main/res/values/strings.xml --api-type google --dry-run")
+    print("   python scripts/translate_strings_online.py --base app/src/main/res/values-en/strings.xml --api-type google --dry-run")
     print()
 
 

@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.DownloadedFileManager
+import com.hippo.ehviewer.DownloadedFileManagerScanListener
 import com.hippo.ehviewer.task.BackgroundTask
 import com.hippo.ehviewer.task.TaskState
 import com.hippo.ehviewer.task.BackgroundTask.TaskType
@@ -41,7 +42,7 @@ class ScanDownloadFilesTask(context: Context) : BaseBackgroundTask(context) {
             delay(500) // 给用户一些反馈时间
             
             // 创建进度监听器
-            val scanListener = object : DownloadedFileManager.ScanProgressListener {
+            val scanListener = object : DownloadedFileManagerScanListener {
                 override fun onProgress(current: Int, total: Int) {
                     processedFiles = current
                     totalFiles = total

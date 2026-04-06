@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -63,6 +64,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     public static final String LOADING_PROGRESS = "loading_progress";
 
     private static final String KEY_DUMP_LOGCAT = "dump_logcat";
+    private static final String KEY_EXPORT_DATABASE = "export_database";
     private static final String KEY_CLEAR_MEMORY_CACHE = "clear_memory_cache";
     private static final String KEY_EXPORT_PATH = "export_path";
     private static final String KEY_APP_LANGUAGE = "app_language";
@@ -77,6 +79,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     private static final String KEY_RECYCLE_BIN = "recycle_bin";
 
     public static final int REQUEST_CODE_PICK_EXPORT_DIR = 10;
+    private static final String TAG = "AdvancedFragment";
 
     private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
 
@@ -88,6 +91,7 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         addPreferencesFromResource(R.xml.advanced_settings);
 
         Preference dumpLogcat = findPreference(KEY_DUMP_LOGCAT);
+        Preference exportDatabase = findPreference(KEY_EXPORT_DATABASE);
         Preference clearMemoryCache = findPreference(KEY_CLEAR_MEMORY_CACHE);
         Preference exportPath = findPreference(KEY_EXPORT_PATH);
         Preference appLanguage = findPreference(KEY_APP_LANGUAGE);
@@ -102,6 +106,9 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Preference recycleBin = findPreference(KEY_RECYCLE_BIN);
 
         dumpLogcat.setOnPreferenceClickListener(this);
+        if (exportDatabase != null) {
+            exportDatabase.setOnPreferenceClickListener(this);
+        }
         clearMemoryCache.setOnPreferenceClickListener(this);
         if (exportPath != null) {
             exportPath.setOnPreferenceClickListener(this);
@@ -136,6 +143,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         switch (key) {
             case KEY_DUMP_LOGCAT:
                 return dumpLogcat();
+            case KEY_EXPORT_DATABASE:
+                return exportDatabase();
             case KEY_CLEAR_MEMORY_CACHE:
                 return clearMemoryCache();
             case KEY_IMPORT_DATA:
@@ -293,19 +302,18 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     }
 
     private boolean dumpLogcat() {
-        boolean ok;
-        File file = null;
-        File dir = AppConfig.getExternalLogcatDir();
-        if (dir != null) {
-            file = new File(dir, "logcat-" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt");
-            ok = LogCat.save(file);
-        } else {
-            ok = false;
-        }
-        Resources resources = getResources();
-        Toast.makeText(getActivity(),
-                ok ? resources.getString(R.string.settings_advanced_dump_logcat_to, file.getPath()) :
-                        resources.getString(R.string.settings_advanced_dump_logcat_failed), Toast.LENGTH_SHORT).show();
+        com.hippo.ehviewer.task.DumpLogcatTask task =
+                new com.hippo.ehviewer.task.DumpLogcatTask(requireContext());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireContext(), R.string.settings_advanced_dump_logcat_started, Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    private boolean exportDatabase() {
+        com.hippo.ehviewer.task.ExportDatabaseTask task =
+                new com.hippo.ehviewer.task.ExportDatabaseTask(requireContext());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireContext(), R.string.settings_advanced_export_database_started, Toast.LENGTH_SHORT).show();
         return true;
     }
 
@@ -323,28 +331,13 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Arrays.sort(files);
         new AlertDialog.Builder(context).setItems(files, (dialog, which) -> {
             dialog.dismiss();
-            showProgress(context, dir, files, which);
+            File file = new File(dir, files[which]);
+            com.hippo.ehviewer.task.impl.ImportDataTask task =
+                    new com.hippo.ehviewer.task.impl.ImportDataTask(context, file);
+            com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+            Toast.makeText(context, R.string.settings_advanced_import_data_started, Toast.LENGTH_SHORT).show();
         }).show();
         return false;
-    }
-
-    private void showProgress(final Context context, File dir, String[] files, int which) {
-
-        File file = new File(dir, files[which]);
-        ProgressHelper.showDialog(context, context.getString(R.string.loading_db_file));
-        new Thread(
-                () -> {
-                    String error = EhDB.importDB(context, file, dbSyncHandle);
-                    Message message = new Message();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("error", error);
-                    bundle.putInt(LOADING_STATUS, DB_LOAD_FINISH);
-                    message.setData(bundle);
-                    dbSyncHandle.sendMessage(message);
-                }
-        ).start();
-
-
     }
 
     @Override

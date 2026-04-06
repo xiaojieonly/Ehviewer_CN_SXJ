@@ -64,6 +64,41 @@
             app:warningColor="@color/red_500"
             tools:ignore="RtlHardcoded" />
 
+        <LinearLayout
+            android:id="@+id/title_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/gallery_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="middle"
+                android:maxWidth="200dp"
+                android:maxLines="1"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/file_type_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/badge_background"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
     </com.hippo.ehviewer.widget.GalleryHeader>
 
     <LinearLayout
@@ -123,6 +158,13 @@
 
         </com.hippo.ehviewer.widget.SeekBarPanel>
     </LinearLayout>
+
+    <com.hippo.ehviewer.widget.BottomIndicatorView
+        android:id="@+id/bottom_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:visibility="gone" />
 
     <com.hippo.widget.ColorView
         android:id="@+id/mask"

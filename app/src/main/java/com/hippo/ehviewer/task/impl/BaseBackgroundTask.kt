@@ -39,7 +39,15 @@ abstract class BaseBackgroundTask(
         _progressDetail = detail
         _progressListener?.onProgressChanged(progress, detail)
     }
-    
+
+    protected fun appendTaskLog(message: String) {
+        backgroundTaskManager.getTaskStatusManager().appendTaskLog(getTaskId(), message)
+    }
+
+    protected fun appendTaskLog(format: String, vararg args: Any?) {
+        appendTaskLog(String.format(format, *args))
+    }
+
     /**
      * 更新任务状态
      */

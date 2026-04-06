@@ -80,6 +80,21 @@ interface BackgroundTask {
     fun getProgressDetail(): String? = null
 
     /**
+     * 获取任务的持久化类名，用于恢复任务
+     */
+    fun getTaskClassName(): String = javaClass.name
+
+    /**
+     * 获取任务的可持久化状态字符串，用于在应用重启后恢复任务
+     */
+    fun getTaskPersistData(): String? = null
+
+    /**
+     * 当前任务是否支持持久化恢复
+     */
+    fun isPersistable(): Boolean = false
+
+    /**
      * 设置进度监听器
      */
     fun setProgressListener(listener: ProgressListener?) {}
@@ -103,6 +118,9 @@ interface BackgroundTask {
         MERGE,             // 合并任务
         UPDATE,            // 更新任务
         TRANSFER,          // 传输任务
+        IMPORT,            // 导入任务
+        EXPORT,            // 导出任务
+        BACKUP,            // 备份任务
         OTHER              // 其他任务
     }
 }

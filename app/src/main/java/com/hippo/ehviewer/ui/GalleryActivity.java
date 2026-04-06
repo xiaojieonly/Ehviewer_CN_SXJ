@@ -77,6 +77,7 @@ import com.hippo.ehviewer.gallery.EhGalleryProvider;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.ehviewer.widget.GalleryGuideView;
 import com.hippo.ehviewer.widget.GalleryHeader;
+import com.hippo.ehviewer.widget.BottomIndicatorView;
 import com.hippo.ehviewer.widget.ReversibleSeekBar;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.lib.glgallery.GalleryView;
@@ -160,6 +161,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Nullable
     private View mBattery;
     @Nullable
+    private TextView mGalleryTitle;
+    @Nullable
+    private TextView mFileTypeBadge;
+    @Nullable
+    private BottomIndicatorView mBottomIndicator;
+    @Nullable
     private View mSeekBarPanel;
     @Nullable
     private ImageView mAutoTransferPanel;
@@ -215,6 +222,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mAutoTransferAnimator = null;
             if (mAutoTransferPanel != null) {
                 mAutoTransferPanel.setVisibility(View.INVISIBLE);
+            }
+            // Show bottom indicator when slider is hidden
+            if (mBottomIndicator != null) {
+                mBottomIndicator.setVisibility(View.VISIBLE);
             }
         }
     };
@@ -365,14 +376,14 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
         if (Settings.getShowGalleryLoadingSpeed()) {
-            mGalleryAdapter.setProgressTextProvider(new SimpleAdapter.ProgressTextProvider() {
+            mGalleryAdapter.setDetailedProgressProvider(new SimpleAdapter.DetailedProgressProvider() {
                 @Override
-                public String getProgressText(int index, float percent) {
-                    return buildLoadingProgressText(index, percent);
+                public String[] getDetailedProgress(int index, float percent) {
+                    return buildDetailedProgressText(index, percent);
                 }
             });
         } else {
-            mGalleryAdapter.setProgressTextProvider(null);
+            mGalleryAdapter.setDetailedProgressProvider(null);
         }
         Resources resources = getResources();
         mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(Settings.getReadingDirection()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
@@ -398,6 +409,20 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mClock.setVisibility(Settings.getShowClock() ? View.VISIBLE : View.GONE);
         mProgress.setVisibility(Settings.getShowProgress() ? View.VISIBLE : View.GONE);
         mBattery.setVisibility(Settings.getShowBattery() ? View.VISIBLE : View.GONE);
+        
+        // Initialize title and badge views
+        mGalleryTitle = (TextView) ViewUtils.$$(this, R.id.gallery_title);
+        mFileTypeBadge = (TextView) ViewUtils.$$(this, R.id.file_type_badge);
+        updateGalleryTitle();
+        
+        // Initialize bottom indicator
+        mBottomIndicator = (BottomIndicatorView) ViewUtils.$$(this, R.id.bottom_indicator);
+        if (mBottomIndicator != null) {
+            mBottomIndicator.setOnClickListener(v -> {
+                showSlider(mSeekBarPanel, mSeekBarPanelAnimator);
+                showSlider(mAutoTransferPanel, mAutoTransferAnimator);
+            });
+        }
 
         mSeekBarPanel = ViewUtils.$$(this, R.id.seek_bar_panel);
         mAutoTransferPanel = (ImageView) ViewUtils.$$(this, R.id.auto_transfer);
@@ -744,6 +769,25 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         return percentValue + "% " + speedText;
     }
 
+    /**
+     * Build detailed progress text array for loading display
+     * @return String array: [0]=page text, [1]=progress text, [2]=speed text
+     */
+    private String[] buildDetailedProgressText(int index, float percent) {
+        int percentValue = Math.min(100, Math.max(0, Math.round(percent * 100f)));
+        String progressText = percentValue + "%";
+        
+        String speedText = "";
+        if (mGalleryProvider instanceof EhGalleryProvider) {
+            long speed = ((EhGalleryProvider) mGalleryProvider).getPageSpeedBytesPerSecond(index);
+            if (speed > 0L) {
+                speedText = formatSpeed(speed);
+            }
+        }
+        
+        return new String[] { "第" + (index + 1) + "页", progressText, speedText };
+    }
+
     private String formatSpeed(long bytesPerSecond) {
         final long kb = 1024L;
         final long mb = kb * 1024L;
@@ -781,6 +825,61 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         end.setText(Integer.toString(mSize));
         mSeekBar.setMax(mSize - 1);
         mSeekBar.setProgress(mCurrentIndex);
+        
+        // Update title and badge when page changes
+        updateGalleryTitle();
+    }
+
+    /**
+     * Update gallery title and file type badge
+     */
+    private void updateGalleryTitle() {
+        if (mGalleryTitle == null) {
+            return;
+        }
+        
+        // Set title from gallery info or filename
+        String title = null;
+        if (mGalleryInfo != null) {
+            title = mGalleryInfo.title;
+        } else if (mFilename != null) {
+            title = new java.io.File(mFilename).getName();
+        }
+        
+        if (!TextUtils.isEmpty(title)) {
+            mGalleryTitle.setText(title);
+            mGalleryTitle.setVisibility(View.VISIBLE);
+        } else {
+            mGalleryTitle.setVisibility(View.GONE);
+        }
+        
+        // Update file type badge based on current page
+        updateFileTypeBadge();
+    }
+
+    /**
+     * Update file type badge based on current page image type
+     */
+    private void updateFileTypeBadge() {
+        if (mFileTypeBadge == null || mGalleryProvider == null) {
+            return;
+        }
+        
+        // Get file extension from provider
+        String extension = mGalleryProvider.getImageExtension(mCurrentIndex);
+        if (!TextUtils.isEmpty(extension)) {
+            // Remove the dot and uppercase
+            String badgeText = extension.substring(1).toUpperCase();
+            mFileTypeBadge.setText(badgeText);
+            mFileTypeBadge.setVisibility(View.VISIBLE);
+            
+            // Add animated indicator for GIF/WebP animations
+            if (mGalleryProvider.isAnimated(mCurrentIndex)) {
+                mFileTypeBadge.setText(badgeText + " 动图");
+            }
+        } else {
+            mFileTypeBadge.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -908,7 +1007,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         sliderPanel.setVisibility(View.VISIBLE);
-
+        
+        // Hide bottom indicator when slider is shown
+        if (mBottomIndicator != null) {
+            mBottomIndicator.setVisibility(View.GONE);
+        }
 
         animator.setDuration(SLIDER_ANIMATION_DURING);
         animator.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);

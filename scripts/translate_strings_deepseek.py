@@ -196,10 +196,10 @@ class StringsTranslator:
         """处理所有语言文件"""
         res_dir = self.base_file.parent.parent
         
-        # 获取所有语言目录
+        # 获取所有目标语言目录（不包含英文源文件目录）
         language_dirs = []
         for item in res_dir.iterdir():
-            if item.is_dir() and item.name.startswith('values-') and item.name != 'values':
+            if item.is_dir() and item.name.startswith('values-') and item.name != 'values-en':
                 # 排除配置特定的覆盖文件
                 config_patterns = ['values-land', 'values-large', 'values-night', 'values-sw', 'values-v']
                 is_config_override = any(item.name.startswith(pattern) for pattern in config_patterns)
@@ -215,11 +215,11 @@ class StringsTranslator:
 
 
 def find_base_strings_file():
-    """自动查找基础strings.xml文件"""
-    # 尝试在当前目录和父目录中查找
+    """自动查找基础strings.xml文件，优先使用英文源文件"""
+    # 尝试在当前目录和父目录中查找英文源文件
     search_paths = [
-        Path.cwd() / 'app' / 'src' / 'main' / 'res' / 'values' / 'strings.xml',
-        Path.cwd().parent / 'app' / 'src' / 'main' / 'res' / 'values' / 'strings.xml',
+        Path.cwd() / 'app' / 'src' / 'main' / 'res' / 'values-en' / 'strings.xml',
+        Path.cwd().parent / 'app' / 'src' / 'main' / 'res' / 'values-en' / 'strings.xml',
         Path.cwd() / 'app' / 'src' / 'main' / 'res' / 'values' / 'strings.xml',
     ]
     

@@ -16,7 +16,7 @@
     <string name="loading">載入中…</string>
     <string name="settings_advanced_compress_split_size_512m">512 MB</string>
     <string name="recycle_bin_action_rescan">重新掃描回收桶資料夾</string>
-    <string name="settings_advanced_compress_split_size_disabled">殘障</string>
+    <string name="settings_advanced_compress_split_size_disabled">已停用</string>
     <string name="settings_advanced_compress_split_size_1g">1 GB</string>
     <string name="app_name">EhViewer</string>
     <string name="site_e" translatable="false">e-hentai</string>

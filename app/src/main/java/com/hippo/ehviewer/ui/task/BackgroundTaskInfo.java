@@ -27,6 +27,8 @@ public class BackgroundTaskInfo {
     private final Future<?> future;
     private final BackgroundTask.TaskType taskType;
     private final boolean uniqueTask;
+    private final String taskClassName;
+    private final String taskPersistData;
     private final long startTime;
     private volatile int currentProgress;
     private volatile int totalProgress;
@@ -37,16 +39,20 @@ public class BackgroundTaskInfo {
     private volatile File logFile;
     private final List<String> logMessages;
 
-    public BackgroundTaskInfo(@NonNull String taskId, @NonNull String taskName, 
+    public BackgroundTaskInfo(@NonNull String taskId, @NonNull String taskName,
                              @Nullable String taskDescription, @Nullable Future<?> future,
-                             @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask) {
+                             @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask,
+                             @NonNull String taskClassName, @Nullable String taskPersistData,
+                             long startTime) {
         this.taskId = taskId;
         this.taskName = taskName;
         this.taskDescription = taskDescription;
         this.future = future;
         this.taskType = taskType;
         this.uniqueTask = uniqueTask;
-        this.startTime = System.currentTimeMillis();
+        this.taskClassName = taskClassName;
+        this.taskPersistData = taskPersistData;
+        this.startTime = startTime;
         this.currentProgress = 0;
         this.totalProgress = -1; // -1 表示不确定进度
         this.progressDetail = null;
@@ -80,6 +86,16 @@ public class BackgroundTaskInfo {
     @NonNull
     public BackgroundTask.TaskType getTaskType() {
         return taskType;
+    }
+
+    @NonNull
+    public String getTaskClassName() {
+        return taskClassName;
+    }
+
+    @Nullable
+    public String getTaskPersistData() {
+        return taskPersistData;
     }
 
     public boolean isUniqueTask() {
@@ -179,6 +195,10 @@ public class BackgroundTaskInfo {
                 // 忽略写入异常，仍然保留内存日志
             }
         }
+    }
+
+    public void addLogMessage(@NonNull String message) {
+        logMessages.add(message);
     }
 
     @NonNull

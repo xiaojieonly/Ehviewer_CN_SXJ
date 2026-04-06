@@ -52,7 +52,7 @@ public class SpiderInfo {
     private static final String VERSION_STR = "VERSION";
     private static final int VERSION = 2;
 
-    static final String TOKEN_FAILED = "failed";
+    public static final String TOKEN_FAILED = "failed";
 
     public int startPage = 0;
     public long gid = -1;

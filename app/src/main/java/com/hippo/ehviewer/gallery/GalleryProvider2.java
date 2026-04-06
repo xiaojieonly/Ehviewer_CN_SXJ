@@ -43,6 +43,26 @@ public abstract class GalleryProvider2 extends GalleryProvider {
      */
     @NonNull
     public abstract String getImageFilename(int index);
+    
+    /**
+     * Get the image extension (with dot, e.g. ".jpg", ".gif")
+     * @param index the page index
+     * @return the extension or empty string if unknown
+     */
+    @NonNull
+    public String getImageExtension(int index) {
+        return "";
+    }
+    
+    /**
+     * Check if the image at index is animated (GIF or animated WebP)
+     * @param index the page index
+     * @return true if animated
+     */
+    public boolean isAnimated(int index) {
+        String ext = getImageExtension(index).toLowerCase();
+        return ".gif".equals(ext);
+    }
 
     public abstract boolean save(int index, @NonNull UniFile file);
 

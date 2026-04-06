@@ -37,6 +37,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.DownloadedFileManager;
+import com.hippo.ehviewer.DownloadedFileManagerScanListener;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 
@@ -150,7 +151,7 @@ public class ScanDownloadFilesTask extends AsyncTask<Void, Integer, Boolean> {
             Log.i(TAG, "BackgroundTaskManager instance obtained");
             
             // 创建进度监听器
-            DownloadedFileManager.ScanProgressListener listener = new DownloadedFileManager.ScanProgressListener() {
+            DownloadedFileManagerScanListener listener = new DownloadedFileManagerScanListener() {
                 @Override
                 public void onProgress(int current, int total) {
                     Log.d(TAG, "Scan progress: " + current + "/" + total);

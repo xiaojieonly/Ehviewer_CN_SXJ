@@ -1193,7 +1193,7 @@ public class EhEngine {
             return GalleryPageParser.parse(body);
         } catch (OutOfMemoryError oom) {
             Log.e(TAG, "OOM when reading gallery page", oom);
-            ExceptionUtils.throwIfFatal(oom);
+            // 不要将 OOM 重新抛出到线程顶层，尽量让调用链处理为正常失败
             throwException(call, code, headers, body, oom);
             throw new IOException("Out of memory when processing gallery page", oom);
         } catch (Throwable e) {
@@ -1256,7 +1256,6 @@ public class EhEngine {
             return GalleryPageApiParser.parse(body);
         } catch (OutOfMemoryError oom) {
             Log.e(TAG, "OOM when reading gallery page api", oom);
-            ExceptionUtils.throwIfFatal(oom);
             throwException(call, code, headers, body, oom);
             throw new IOException("Out of memory when processing gallery page API", oom);
         } catch (Throwable e) {
@@ -1304,7 +1303,6 @@ public class EhEngine {
             return MyTagLitParser.parse(body);
         } catch (OutOfMemoryError oom) {
             Log.e(TAG, "OOM when reading watched list", oom);
-            ExceptionUtils.throwIfFatal(oom);
             throwException(call, code, headers, body, oom);
             throw new IOException("Out of memory when processing watched list", oom);
         } catch (Throwable e) {

@@ -53,7 +53,7 @@ class StringsXMLProcessor:
         ]
         
         for item in res_dir.iterdir():
-            if item.is_dir() and item.name.startswith('values-') and item.name != 'values':
+            if item.is_dir() and item.name.startswith('values-') and item.name != 'values-en':
                 # 检查是否是配置特定的覆盖文件
                 is_config_override = any(item.name.startswith(pattern) for pattern in config_patterns)
                 if not is_config_override:
@@ -76,7 +76,7 @@ class StringsXMLProcessor:
         ]
         
         for item in res_dir.iterdir():
-            if item.is_dir() and item.name.startswith('values-') and item.name != 'values':
+            if item.is_dir() and item.name.startswith('values-') and item.name != 'values-en':
                 # 检查是否是配置特定的覆盖文件
                 is_config_override = any(item.name.startswith(pattern) for pattern in config_patterns)
                 if is_config_override:

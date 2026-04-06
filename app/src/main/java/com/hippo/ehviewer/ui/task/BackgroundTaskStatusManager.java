@@ -3,15 +3,28 @@ package com.hippo.ehviewer.ui.task;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.content.Context;
+
 import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.task.BackgroundTask;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -20,21 +33,46 @@ import java.util.concurrent.Future;
  */
 public class BackgroundTaskStatusManager {
     private static final String TAG = "BackgroundTaskStatusManager";
+    private static final String STATUS_FILE_NAME = "background_tasks.json";
+    private static final String LOG_DIR_NAME = "background_task_logs";
+
     private static BackgroundTaskStatusManager sInstance;
-    
+
     // 存储所有活跃的任务
     private final Map<String, BackgroundTaskInfo> mActiveTasks = new ConcurrentHashMap<>();
     // 存储已完成的任务（保留最近的一些）
     private final Map<String, BackgroundTaskInfo> mCompletedTasks = new ConcurrentHashMap<>();
     // 最大保留的已完成任务数量
     private static final int MAX_COMPLETED_TASKS = 50;
-    
-    private BackgroundTaskStatusManager() {
+
+    private final File mStatusFile;
+    private final File mLogDir;
+    private final ExecutorService mDiskExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "BackgroundTaskStatusManager-Disk");
+        thread.setPriority(Thread.MIN_PRIORITY);
+        return thread;
+    });
+    private final Object mPersistLock = new Object();
+
+    private BackgroundTaskStatusManager(Context context) {
+        File filesDir = context.getFilesDir();
+        mStatusFile = new File(filesDir, STATUS_FILE_NAME);
+        mLogDir = new File(filesDir, LOG_DIR_NAME);
+        if (!mLogDir.exists()) {
+            mLogDir.mkdirs();
+        }
+        restorePersistedTasks();
     }
     
+    public static synchronized void initialize(Context context) {
+        if (sInstance == null) {
+            sInstance = new BackgroundTaskStatusManager(context.getApplicationContext());
+        }
+    }
+
     public static synchronized BackgroundTaskStatusManager getInstance() {
         if (sInstance == null) {
-            sInstance = new BackgroundTaskStatusManager();
+            throw new IllegalStateException("BackgroundTaskStatusManager not initialized");
         }
         return sInstance;
     }
@@ -58,6 +96,14 @@ public class BackgroundTaskStatusManager {
     @Nullable
     public String addTask(@NonNull String taskId, @NonNull String taskName, @Nullable String taskDescription,
                           @Nullable Future<?> future, @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask) {
+        return addTask(taskId, taskName, taskDescription, future, taskType, uniqueTask,
+                BackgroundTask.class.getName(), null);
+    }
+
+    @Nullable
+    public String addTask(@NonNull String taskId, @NonNull String taskName, @Nullable String taskDescription,
+                          @Nullable Future<?> future, @NonNull BackgroundTask.TaskType taskType, boolean uniqueTask,
+                          @NonNull String taskClassName, @Nullable String taskPersistData) {
         if (uniqueTask && taskType != BackgroundTask.TaskType.DOWNLOAD) {
             BackgroundTaskInfo activeUnique = getActiveUniqueNonDownloadTask();
             if (activeUnique != null) {
@@ -65,8 +111,14 @@ public class BackgroundTaskStatusManager {
             }
         }
 
-        BackgroundTaskInfo taskInfo = new BackgroundTaskInfo(taskId, taskName, taskDescription, future, taskType, uniqueTask);
+        BackgroundTaskInfo taskInfo = new BackgroundTaskInfo(taskId, taskName, taskDescription, future, taskType,
+                uniqueTask, taskClassName, taskPersistData, System.currentTimeMillis());
+        File logFile = createTaskLogFile(taskId);
+        if (logFile != null) {
+            taskInfo.setLogFile(logFile);
+        }
         mActiveTasks.put(taskId, taskInfo);
+        savePersistedTasksAsync();
         return taskId;
     }
 
@@ -101,6 +153,7 @@ public class BackgroundTaskStatusManager {
                 current, 
                 total
             );
+            savePersistedTasksAsync();
         }
     }
 
@@ -115,6 +168,7 @@ public class BackgroundTaskStatusManager {
         BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
         if (taskInfo != null) {
             taskInfo.appendLog(message);
+            savePersistedTasksAsync();
         }
     }
     
@@ -125,16 +179,17 @@ public class BackgroundTaskStatusManager {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
         if (taskInfo != null) {
             taskInfo.setCompleted(true);
-            
+
             // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);
-            
+
             // 限制已完成任务的数量
             if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
                 // 移除最旧的任务
                 String oldestTaskId = mCompletedTasks.keySet().iterator().next();
                 mCompletedTasks.remove(oldestTaskId);
             }
+            savePersistedTasksAsync();
         }
     }
     
@@ -145,16 +200,17 @@ public class BackgroundTaskStatusManager {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
         if (taskInfo != null) {
             taskInfo.setCancelled(true);
-            
+
             // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);
-            
+
             // 限制已完成任务的数量
             if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
                 // 移除最旧的任务
                 String oldestTaskId = mCompletedTasks.keySet().iterator().next();
                 mCompletedTasks.remove(oldestTaskId);
             }
+            savePersistedTasksAsync();
         }
     }
     
@@ -165,16 +221,17 @@ public class BackgroundTaskStatusManager {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
         if (taskInfo != null) {
             taskInfo.setErrorMessage(errorMessage);
-            
+
             // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);
-            
+
             // 限制已完成任务的数量
             if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
                 // 移除最旧的任务
                 String oldestTaskId = mCompletedTasks.keySet().iterator().next();
                 mCompletedTasks.remove(oldestTaskId);
             }
+            savePersistedTasksAsync();
         }
     }
     
@@ -235,6 +292,7 @@ public class BackgroundTaskStatusManager {
      */
     public void clearCompletedTasks() {
         mCompletedTasks.clear();
+        savePersistedTasksAsync();
     }
     
     /**
@@ -249,5 +307,146 @@ public class BackgroundTaskStatusManager {
      */
     public int getTotalTaskCount() {
         return mActiveTasks.size() + mCompletedTasks.size();
+    }
+
+    public void removeTask(@NonNull String taskId) {
+        mActiveTasks.remove(taskId);
+        mCompletedTasks.remove(taskId);
+        savePersistedTasksAsync();
+    }
+
+    private File createTaskLogFile(@NonNull String taskId) {
+        File file = new File(mLogDir, taskId + ".log");
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            return file;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void savePersistedTasksAsync() {
+        mDiskExecutor.submit(this::savePersistedTasks);
+    }
+
+    private void savePersistedTasks() {
+        synchronized (mPersistLock) {
+            try (FileWriter writer = new FileWriter(mStatusFile, false)) {
+                JSONObject root = new JSONObject();
+                root.put("activeTasks", buildTaskArray(mActiveTasks.values()));
+                root.put("completedTasks", buildTaskArray(mCompletedTasks.values()));
+                writer.write(root.toString());
+            } catch (Exception ignored) {
+                // Ignore persistence errors
+            }
+        }
+    }
+
+    private JSONArray buildTaskArray(@NonNull Iterable<BackgroundTaskInfo> taskInfos) throws JSONException {
+        JSONArray array = new JSONArray();
+        for (BackgroundTaskInfo info : taskInfos) {
+            JSONObject object = new JSONObject();
+            object.put("taskId", info.getTaskId());
+            object.put("taskName", info.getTaskName());
+            object.put("taskDescription", info.getTaskDescription());
+            object.put("taskType", info.getTaskType().name());
+            object.put("uniqueTask", info.isUniqueTask());
+            object.put("currentProgress", info.getCurrentProgress());
+            object.put("totalProgress", info.getTotalProgress());
+            object.put("progressDetail", info.getProgressDetail());
+            object.put("startTime", info.getStartTime());
+            object.put("isCompleted", info.isCompleted());
+            object.put("isCancelled", info.isCancelled());
+            object.put("errorMessage", info.getErrorMessage());
+            object.put("taskClassName", info.getTaskClassName());
+            object.put("taskPersistData", info.getTaskPersistData());
+            File logFile = info.getLogFile();
+            if (logFile != null) {
+                object.put("logFileName", logFile.getName());
+            }
+            array.put(object);
+        }
+        return array;
+    }
+
+    private void restorePersistedTasks() {
+        if (!mStatusFile.exists()) {
+            return;
+        }
+
+        synchronized (mPersistLock) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(mStatusFile))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+                JSONObject root = new JSONObject(sb.toString());
+                parseTaskArray(root.optJSONArray("activeTasks"), mActiveTasks);
+                parseTaskArray(root.optJSONArray("completedTasks"), mCompletedTasks);
+            } catch (Exception ignored) {
+                // Ignore load errors, start fresh
+            }
+        }
+    }
+
+    private void parseTaskArray(@Nullable JSONArray array, @NonNull Map<String, BackgroundTaskInfo> target) {
+        if (array == null) {
+            return;
+        }
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject object = array.optJSONObject(i);
+            if (object == null) {
+                continue;
+            }
+            String taskId = object.optString("taskId", null);
+            String taskName = object.optString("taskName", null);
+            if (taskId == null || taskName == null) {
+                continue;
+            }
+            String taskDescription = object.optString("taskDescription", null);
+            BackgroundTask.TaskType taskType;
+            try {
+                taskType = BackgroundTask.TaskType.valueOf(object.optString("taskType", BackgroundTask.TaskType.OTHER.name()));
+            } catch (IllegalArgumentException e) {
+                taskType = BackgroundTask.TaskType.OTHER;
+            }
+            boolean uniqueTask = object.optBoolean("uniqueTask", false);
+            String taskClassName = object.optString("taskClassName", taskName);
+            String taskPersistData = object.optString("taskPersistData", null);
+            BackgroundTaskInfo taskInfo = new BackgroundTaskInfo(taskId, taskName, taskDescription,
+                    null, taskType, uniqueTask, taskClassName, taskPersistData,
+                    object.optLong("startTime", System.currentTimeMillis()));
+            taskInfo.setCurrentProgress(object.optInt("currentProgress", taskInfo.getCurrentProgress()));
+            taskInfo.setTotalProgress(object.optInt("totalProgress", taskInfo.getTotalProgress()));
+            taskInfo.setProgressDetail(object.optString("progressDetail", taskInfo.getProgressDetail()));
+            taskInfo.setCompleted(object.optBoolean("isCompleted", false));
+            taskInfo.setCancelled(object.optBoolean("isCancelled", false));
+            taskInfo.setErrorMessage(object.optString("errorMessage", null));
+            String logFileName = object.optString("logFileName", null);
+            if (logFileName != null) {
+                File logFile = new File(mLogDir, logFileName);
+                taskInfo.setLogFile(logFile);
+                loadTaskLogMessages(taskInfo);
+            }
+            target.put(taskId, taskInfo);
+        }
+    }
+
+    private void loadTaskLogMessages(@NonNull BackgroundTaskInfo taskInfo) {
+        File logFile = taskInfo.getLogFile();
+        if (logFile == null || !logFile.exists()) {
+            return;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(logFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                taskInfo.addLogMessage(line);
+            }
+        } catch (IOException ignored) {
+            // Ignore load errors
+        }
     }
 }

@@ -27,9 +27,20 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
     private final ImageTexture.Uploader mUploader;
     private boolean mShowIndex = true;
     private ProgressTextProvider mProgressTextProvider;
+    private DetailedProgressProvider mDetailedProgressProvider;
 
     public interface ProgressTextProvider {
         String getProgressText(int index, float percent);
+    }
+
+    /**
+     * Provider for detailed progress info (page, progress, speed)
+     */
+    public interface DetailedProgressProvider {
+        /**
+         * @return String array with 3 elements: [0]=page text, [1]=progress text, [2]=speed text
+         */
+        String[] getDetailedProgress(int index, float percent);
     }
 
     public SimpleAdapter(@NonNull GLRootView glRootView, @NonNull GalleryProvider provider) {
@@ -49,6 +60,10 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         mProgressTextProvider = provider;
     }
 
+    public void setDetailedProgressProvider(DetailedProgressProvider provider) {
+        mDetailedProgressProvider = provider;
+    }
+
     @Override
     public void onBind(GalleryPageView view, int index) {
         mProvider.request(index);
@@ -61,6 +76,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         }
         view.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
         view.setProgressText(null);
+        view.setSpeedText(null);
         view.setError(null, null);
     }
 
@@ -99,6 +115,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             }
             page.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
             page.setProgressText(null);
+            page.setSpeedText(null);
             page.setError(null, null);
         }
     }
@@ -109,17 +126,27 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         if (page != null) {
             page.showInfo();
             page.setImage(null);
-            if (mShowIndex) {
-                page.setPage(index + 1);
+            
+            // Check if detailed progress provider is available
+            if (mDetailedProgressProvider != null) {
+                String[] details = mDetailedProgressProvider.getDetailedProgress(index, percent);
+                if (details != null && details.length >= 3) {
+                    page.setDetailedProgress(index + 1, details[1], details[2]);
+                }
             } else {
-                page.hidePage();
+                if (mShowIndex) {
+                    page.setPage(index + 1);
+                } else {
+                    page.hidePage();
+                }
+                if (mProgressTextProvider != null) {
+                    page.setProgressText(mProgressTextProvider.getProgressText(index, percent));
+                } else {
+                    page.setProgressText(null);
+                }
             }
+            
             page.setProgress(percent);
-            if (mProgressTextProvider != null) {
-                page.setProgressText(mProgressTextProvider.getProgressText(index, percent));
-            } else {
-                page.setProgressText(null);
-            }
             page.setError(null, null);
         }
     }
@@ -140,6 +167,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 }
                 page.setProgress(GalleryPageView.PROGRESS_GONE);
                 page.setProgressText(null);
+                page.setSpeedText(null);
                 page.setError(null, null);
             } else {
                 // The image is recycled, request again.
@@ -162,6 +190,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             }
             page.setProgress(GalleryPageView.PROGRESS_GONE);
             page.setProgressText(null);
+            page.setSpeedText(null);
             page.setError(error, mGalleryView);
         }
     }

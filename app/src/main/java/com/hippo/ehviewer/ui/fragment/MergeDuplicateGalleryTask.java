@@ -238,7 +238,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
         
         try {
             // 步骤1: 扫描下载目录
-            notifyProgress(STEP_SCAN, getString(R.string.merge_scanning_galleries));
+            dispatchProgress(STEP_SCAN, getString(R.string.merge_scanning_galleries));
             if (!scanDownloadedGalleries()) {
                 return false;
             }
@@ -248,7 +248,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             }
             
             // 步骤2: 分析重复画廊
-            notifyProgress(STEP_ANALYZE, getString(R.string.merge_analyzing_galleries));
+            dispatchProgress(STEP_ANALYZE, getString(R.string.merge_analyzing_galleries));
             if (!analyzeDuplicateGalleries()) {
                 return false;
             }
@@ -258,7 +258,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             }
             
             // 步骤3: 备份数据库
-            notifyProgress(STEP_BACKUP, getString(R.string.merge_backing_up_database));
+            dispatchProgress(STEP_BACKUP, getString(R.string.merge_backing_up_database));
             if (!backupDatabase()) {
                 return false;
             }
@@ -268,7 +268,7 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
             }
             
             // 步骤4: 合并重复画廊
-            notifyProgress(STEP_MERGE, getString(R.string.merge_merging_galleries));
+            dispatchProgress(STEP_MERGE, getString(R.string.merge_merging_galleries));
             if (!mergeDuplicateGalleries()) {
                 return false;
             }
@@ -407,21 +407,21 @@ public class MergeDuplicateGalleryTask extends AsyncTask<Void, Object, Boolean> 
         }
     }
 
-    private void notifyProgress(int step, String message) {
+    private void dispatchProgress(int step, String message) {
         if (mFragment == null) {
             return;
         }
         super.publishProgress(step, message);
     }
 
-    private void notifyProgress(int step, String message, GalleryGroup group) {
+    private void dispatchProgress(int step, String message, GalleryGroup group) {
         if (mFragment == null) {
             return;
         }
         super.publishProgress(step, message);
     }
 
-    private void notifyProgress(int step, String message, GalleryGroup group, int current, int total) {
+    private void dispatchProgress(int step, String message, GalleryGroup group, int current, int total) {
         mCurrentGallery = current;
         mTotalGalleries = total;
         if (mFragment == null) {

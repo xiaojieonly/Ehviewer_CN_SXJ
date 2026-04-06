@@ -49,10 +49,10 @@ import com.hippo.ehviewer.download.DownloadLogger;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.DirPickerActivity;
 import com.hippo.ehviewer.ui.progress.ProgressDialogManager;
+import com.hippo.ehviewer.task.RebuildDownloadRecordsTask;
 import com.hippo.ehviewer.task.TaskExecutor;
-import com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask;
-import com.hippo.ehviewer.task.impl.RebuildDownloadRecordsTask;
-import com.hippo.ehviewer.task.impl.ScanDownloadFilesTask;
+import com.hippo.ehviewer.task.ScanDownloadTask;
+import com.hippo.ehviewer.task.CleanRedundancyTask;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.ExecutorManager;
@@ -469,8 +469,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 .setTitle(R.string.settings_download_scan_download_files)
                 .setMessage(R.string.settings_download_scan_download_files_summary)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    com.hippo.ehviewer.task.impl.ScanDownloadFilesTask task =
-                            new com.hippo.ehviewer.task.impl.ScanDownloadFilesTask(requireActivity());
+                    ScanDownloadTask task = new ScanDownloadTask(requireContext());
                     com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -482,54 +481,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 .setTitle(R.string.settings_download_reset_media_scan)
                 .setMessage(R.string.settings_download_reset_media_scan_summary)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    resetMediaScan();
+                    com.hippo.ehviewer.task.ResetMediaScanTask task =
+                            new com.hippo.ehviewer.task.ResetMediaScanTask(requireContext());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
 
     private void resetMediaScan() {
-        try {
-            // 获取下载目录
-            UniFile downloadLocation = Settings.getDownloadLocation();
-            if (downloadLocation == null) {
-                Toast.makeText(requireActivity(), "下载目录未设置", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // 发送媒体扫描广播
-            Uri downloadUri = downloadLocation.getUri();
-            if (downloadUri != null) {
-                String downloadPath = downloadUri.getPath();
-                if (downloadPath != null) {
-                    File downloadDir = new File(downloadPath);
-                    if (downloadDir.exists()) {
-                        MediaScannerConnection.scanFile(
-                            requireActivity(),
-                            new String[]{downloadDir.getAbsolutePath()},
-                            null,
-                            (path, uri) -> {
-                                // 扫描完成后的回调
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(requireActivity(), 
-                                        "媒体扫描已重置，相册应用将更新", 
-                                        Toast.LENGTH_SHORT).show();
-                                });
-                            }
-                        );
-                    } else {
-                        Toast.makeText(requireActivity(), "下载目录不存在", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(requireActivity(), "无法获取下载目录路径", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(requireActivity(), "无法获取下载目录URI", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "重置媒体扫描失败", e);
-            Toast.makeText(requireActivity(), "重置媒体扫描失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        com.hippo.ehviewer.task.ResetMediaScanTask task =
+                new com.hippo.ehviewer.task.ResetMediaScanTask(requireContext());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireActivity(),
+                R.string.settings_download_reset_media_scan, Toast.LENGTH_SHORT).show();
     }
 
     private void openDirPicker() {
@@ -564,27 +529,18 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return;
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
-        String fileName = "ehviewer-download-" + sdf.format(new Date()) + ".csv";
-
-        UniFile file = dir.createFile(fileName);
-        if (file == null) {
-            Toast.makeText(getActivity(), R.string.settings_download_export_failed, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try (OutputStream os = file.openOutputStream()) {
-            os.write(DownloadManager.DOWNLOAD_INFO_HEADER.getBytes(StandardCharsets.UTF_8));
-            for (GalleryInfo gi : list) {
-                os.write(gi.toCSV().getBytes(StandardCharsets.UTF_8));
-            }
-            Toast.makeText(getActivity(), getString(R.string.settings_download_export_succeed, file.getUri().toString()), Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            Toast.makeText(getActivity(), R.string.settings_download_export_failed, Toast.LENGTH_SHORT).show();
-        }
+        // 使用统一的后台任务
+        com.hippo.ehviewer.task.ExportDownloadItemsTask task = 
+            new com.hippo.ehviewer.task.ExportDownloadItemsTask(requireActivity());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireActivity(),
+                R.string.settings_download_export_download_items, Toast.LENGTH_SHORT).show();
     }
 
+
+
     private void importDownloadItems() {
+        // 打开文件选择器，选中文件后在onActivityResult中通过ImportDownloadItemsTask处理
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         try {
@@ -634,8 +590,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 break;
             }
             case REQUEST_CODE_PICK_DOWNLOAD_IMPORT_FILE: {
-                if (resultCode == Activity.RESULT_OK) {
-                    new ImportDownloadTask(this, data.getData()).execute();
+                if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                    com.hippo.ehviewer.task.ImportDownloadItemsTask task =
+                        new com.hippo.ehviewer.task.ImportDownloadItemsTask(requireActivity(), data.getData());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                    Toast.makeText(requireActivity(),
+                            R.string.settings_download_import_items, Toast.LENGTH_SHORT).show();
                 }
                 break;
             }
@@ -1700,8 +1660,8 @@ private class RebuildDownloadRecordsTask {
                         .setTitle(R.string.settings_download_rebuild_download_records)
                         .setMessage(R.string.settings_download_rebuild_confirm)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                            com.hippo.ehviewer.task.impl.RebuildDownloadRecordsTask task =
-                                    new com.hippo.ehviewer.task.impl.RebuildDownloadRecordsTask(requireContext());
+                            com.hippo.ehviewer.task.RebuildDownloadRecordsTask task =
+                                    new com.hippo.ehviewer.task.RebuildDownloadRecordsTask(requireContext());
                             com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
                         })
                         .setNegativeButton(android.R.string.cancel, null)
@@ -1757,20 +1717,13 @@ private class RebuildDownloadRecordsTask {
     private void showCleanDownloadLogsDialog() {
         new AlertDialog.Builder(requireActivity())
                 .setTitle(R.string.settings_download_clean_logs)
-                .setMessage("确定要删除7天前的旧日志文件吗？")
+                .setMessage("确定要删除旧日志文件吗？")
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    com.hippo.ehviewer.BackgroundTaskManager taskManager = com.hippo.ehviewer.BackgroundTaskManager.getInstance();
-                    taskManager.submitLongRunningTask(
-                            getString(R.string.settings_download_clean_logs),
-                            getString(R.string.settings_download_clean_logs),
-                            () -> {
-                                mDownloadLogger.cleanOldLogs();
-                                requireActivity().runOnUiThread(() ->
-                                        Toast.makeText(requireActivity(), "旧日志文件清理完成", Toast.LENGTH_SHORT).show());
-                            },
-                            null,
-                            com.hippo.ehviewer.task.BackgroundTask.TaskType.CLEANUP,
-                            true);
+                    com.hippo.ehviewer.task.CleanDownloadLogsTask task =
+                            new com.hippo.ehviewer.task.CleanDownloadLogsTask(requireContext());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                    Toast.makeText(requireActivity(),
+                            R.string.settings_download_clean_logs, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();

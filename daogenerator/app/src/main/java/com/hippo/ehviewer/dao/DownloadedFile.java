@@ -12,6 +12,7 @@ public class DownloadedFile {
     @Id
     @NotNull
     private String token;
+    private String fileToken;
     private long gid;
 
     @NotNull
@@ -34,8 +35,9 @@ public class DownloadedFile {
     }
 
     @Generated
-    public DownloadedFile(String token, long gid, String filename, String md5, String path, Long size, long download_time, Long last_accessed, int status) {
+    public DownloadedFile(String token, String fileToken, long gid, String filename, String md5, String path, Long size, long download_time, Long last_accessed, int status) {
         this.token = token;
+        this.fileToken = fileToken;
         this.gid = gid;
         this.filename = filename;
         this.md5 = md5;
@@ -54,6 +56,14 @@ public class DownloadedFile {
     /** Not-null value; ensure this value is available before it is saved to the database. */
     public void setToken(@NotNull String token) {
         this.token = token;
+    }
+
+    public String getFileToken() {
+        return fileToken;
+    }
+
+    public void setFileToken(String fileToken) {
+        this.fileToken = fileToken;
     }
 
     public long getGid() {

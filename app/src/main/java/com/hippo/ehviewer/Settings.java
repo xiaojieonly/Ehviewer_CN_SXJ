@@ -668,6 +668,42 @@ public class Settings {
         putInt(KEY_START_TRANSFER_TIME, value);
     }
 
+    // Static image transfer time (in seconds, 0.1 to 120)
+    private static final String KEY_STATIC_TRANSFER_TIME = "static_transfer_time";
+    private static final float DEFAULT_STATIC_TRANSFER_TIME = 4.0f;
+
+    public static float getStaticTransferTime() {
+        return getFloat(KEY_STATIC_TRANSFER_TIME, DEFAULT_STATIC_TRANSFER_TIME);
+    }
+
+    public static void putStaticTransferTime(float value) {
+        putFloat(KEY_STATIC_TRANSFER_TIME, Math.max(0.1f, Math.min(120.0f, value)));
+    }
+
+    // Animated image transfer time (in seconds, 0.1 to 120)
+    private static final String KEY_ANIMATED_TRANSFER_TIME = "animated_transfer_time";
+    private static final float DEFAULT_ANIMATED_TRANSFER_TIME = 8.0f;
+
+    public static float getAnimatedTransferTime() {
+        return getFloat(KEY_ANIMATED_TRANSFER_TIME, DEFAULT_ANIMATED_TRANSFER_TIME);
+    }
+
+    public static void putAnimatedTransferTime(float value) {
+        putFloat(KEY_ANIMATED_TRANSFER_TIME, Math.max(0.1f, Math.min(120.0f, value)));
+    }
+
+    // Wait for animated image to finish playing
+    private static final String KEY_WAIT_FOR_ANIMATION = "wait_for_animation";
+    private static final boolean DEFAULT_WAIT_FOR_ANIMATION = true;
+
+    public static boolean getWaitForAnimation() {
+        return getBoolean(KEY_WAIT_FOR_ANIMATION, DEFAULT_WAIT_FOR_ANIMATION);
+    }
+
+    public static void putWaitForAnimation(boolean value) {
+        putBoolean(KEY_WAIT_FOR_ANIMATION, value);
+    }
+
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";
     private static final boolean DEFAULT_KEEP_SCREEN_ON = false;
 

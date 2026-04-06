@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.hippo.ehviewer.task.impl.CompressSelectedGalleriesTask;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.download.DownloadLogger;
 import com.hippo.ehviewer.task.BackgroundTask;
@@ -22,7 +23,10 @@ import com.hippo.ehviewer.task.BackgroundTaskRunner;
 import com.hippo.ehviewer.ui.task.BackgroundTaskInfo;
 import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,7 +34,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.List;
 
 /**
  * 后台任务管理器
@@ -46,6 +49,8 @@ public class BackgroundTaskManager {
     
     private final Context mContext;
     private final Handler mMainHandler;
+
+    private final Map<String, BackgroundTaskFactory> mTaskFactoryMap = new ConcurrentHashMap<>();
     
     // CPU密集型任务线程池（用于文件扫描等）
     private final ExecutorService mCpuExecutor;
@@ -69,10 +74,16 @@ public class BackgroundTaskManager {
     
     // 任务状态管理器
     private final BackgroundTaskStatusManager mTaskStatusManager;
+
+    public interface BackgroundTaskFactory {
+        @Nullable
+        BackgroundTask create(@NonNull Context context, @NonNull String taskId, @Nullable String persistData);
+    }
     
     public static synchronized void initialize(Context context) {
         if (sInstance == null) {
             sInstance = new BackgroundTaskManager(context.getApplicationContext());
+            sInstance.recoverPersistedTasks();
         }
     }
     
@@ -82,7 +93,33 @@ public class BackgroundTaskManager {
         }
         return sInstance;
     }
-    
+
+    public void registerTaskFactory(@NonNull String taskClassName, @NonNull BackgroundTaskFactory factory) {
+        mTaskFactoryMap.put(taskClassName, factory);
+    }
+
+    private void recoverPersistedTasks() {
+        for (BackgroundTaskInfo info : mTaskStatusManager.getActiveTasks()) {
+            if (info.isCompleted() || info.isCancelled() || info.getFuture() != null) {
+                continue;
+            }
+            String className = info.getTaskClassName();
+            String persistData = info.getTaskPersistData();
+            if (persistData == null || className == null) {
+                continue;
+            }
+            BackgroundTaskFactory factory = mTaskFactoryMap.get(className);
+            if (factory == null) {
+                continue;
+            }
+            BackgroundTask task = factory.create(mContext, info.getTaskId(), persistData);
+            if (task != null) {
+                mTaskStatusManager.removeTask(info.getTaskId());
+                submitBackgroundTask(task);
+            }
+        }
+    }
+
     private BackgroundTaskManager(Context context) {
         mContext = context;
         mMainHandler = new Handler(Looper.getMainLooper());
@@ -91,7 +128,12 @@ public class BackgroundTaskManager {
         mDownloadLogger = DownloadLogger.getInstance();
         
         // 初始化任务状态管理器
+        BackgroundTaskStatusManager.initialize(context);
         mTaskStatusManager = BackgroundTaskStatusManager.getInstance();
+
+        // 注册可恢复任务工厂
+        registerTaskFactory(CompressSelectedGalleriesTask.class.getName(), (ctx, taskId, persistData) ->
+                CompressSelectedGalleriesTask.restore(ctx, taskId, persistData));
         
         // CPU线程池：核心线程数 = CPU核心数，最大线程数 = CPU核心数 * 2
         int cpuCount = Runtime.getRuntime().availableProcessors();
@@ -312,7 +354,7 @@ public class BackgroundTaskManager {
         });
 
         String registeredTaskId = mTaskStatusManager.addTask(taskId, taskName, taskDescription, futureTask,
-                task.getTaskType(), task.isUniqueTask());
+                task.getTaskType(), task.isUniqueTask(), task.getTaskClassName(), task.getTaskPersistData());
         if (registeredTaskId == null) {
             return new TaskHandle(taskId, createNoOpFuture());
         }
@@ -543,7 +585,7 @@ public class BackgroundTaskManager {
      * 提交扫描下载文件任务
      * @return Future用于等待任务完成或取消任务
      */
-    public Future<?> submitScanDownloadTask(@Nullable final DownloadedFileManager.ScanProgressListener progressListener) {
+    public Future<?> submitScanDownloadTask(@Nullable final DownloadedFileManagerScanListener progressListener) {
         long startTime = System.currentTimeMillis();
         mDownloadLogger.logBackgroundTaskStart("ScanDownload", "扫描下载文件");
         
@@ -563,7 +605,7 @@ public class BackgroundTaskManager {
             
             try {
                 DownloadedFileManager manager = DownloadedFileManager.getInstance();
-                manager.scanDownloadDirectories(new DownloadedFileManager.ScanProgressListener() {
+                manager.scanDownloadDirectories(new DownloadedFileManagerScanListener() {
                     @Override
                     public void onProgress(final int current, final int total) {
                         mDownloadLogger.logBackgroundTaskProgress("ScanDownload", "扫描下载文件", current, total);

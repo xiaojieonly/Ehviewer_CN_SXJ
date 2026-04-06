@@ -23,8 +23,9 @@ public class DownloadedFilesDao extends AbstractDao<DownloadedFile, String> {
     */
     public static class Properties {
         public final static Property Token = new Property(0, String.class, "token", true, "TOKEN");
-        public final static Property Gid = new Property(1, long.class, "gid", false, "GID");
-        public final static Property Filename = new Property(2, String.class, "filename", false, "FILENAME");
+        public final static Property FileToken = new Property(1, String.class, "fileToken", false, "FILE_TOKEN");
+        public final static Property Gid = new Property(2, long.class, "gid", false, "GID");
+        public final static Property Filename = new Property(3, String.class, "filename", false, "FILENAME");
         public final static Property Md5 = new Property(3, String.class, "md5", false, "MD5");
         public final static Property Path = new Property(4, String.class, "path", false, "PATH");
         public final static Property Size = new Property(5, Long.class, "size", false, "SIZE");
@@ -47,14 +48,15 @@ public class DownloadedFilesDao extends AbstractDao<DownloadedFile, String> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"DOWNLOADED_FILES\" (" + //
                 "\"TOKEN\" TEXT PRIMARY KEY NOT NULL ," + // 0: token
-                "\"GID\" INTEGER NOT NULL ," + // 1: gid
-                "\"FILENAME\" TEXT NOT NULL ," + // 2: filename
-                "\"MD5\" TEXT," + // 3: md5
-                "\"PATH\" TEXT NOT NULL ," + // 4: path
-                "\"SIZE\" INTEGER," + // 5: size
-                "\"DOWNLOAD_TIME\" INTEGER NOT NULL ," + // 6: download_time
-                "\"LAST_ACCESSED\" INTEGER," + // 7: last_accessed
-                "\"STATUS\" INTEGER NOT NULL );"); // 8: status
+                "\"FILE_TOKEN\" TEXT," + // 1: fileToken
+                "\"GID\" INTEGER NOT NULL ," + // 2: gid
+                "\"FILENAME\" TEXT NOT NULL ," + // 3: filename
+                "\"MD5\" TEXT," + // 4: md5
+                "\"PATH\" TEXT NOT NULL ," + // 5: path
+                "\"SIZE\" INTEGER," + // 6: size
+                "\"DOWNLOAD_TIME\" INTEGER NOT NULL ," + // 7: download_time
+                "\"LAST_ACCESSED\" INTEGER," + // 8: last_accessed
+                "\"STATUS\" INTEGER NOT NULL );"); // 9: status
     }
 
     /** Drops the underlying database table. */
@@ -67,52 +69,60 @@ public class DownloadedFilesDao extends AbstractDao<DownloadedFile, String> {
     protected final void bindValues(DatabaseStatement stmt, DownloadedFile entity) {
         stmt.clearBindings();
         stmt.bindString(1, entity.getToken());
-        stmt.bindLong(2, entity.getGid());
-        stmt.bindString(3, entity.getFilename());
+        String fileToken = entity.getFileToken();
+        if (fileToken != null) {
+            stmt.bindString(2, fileToken);
+        }
+        stmt.bindLong(3, entity.getGid());
+        stmt.bindString(4, entity.getFilename());
  
         String md5 = entity.getMd5();
         if (md5 != null) {
-            stmt.bindString(4, md5);
+            stmt.bindString(5, md5);
         }
-        stmt.bindString(5, entity.getPath());
+        stmt.bindString(6, entity.getPath());
  
         Long size = entity.getSize();
         if (size != null) {
-            stmt.bindLong(6, size);
+            stmt.bindLong(7, size);
         }
-        stmt.bindLong(7, entity.getDownload_time());
+        stmt.bindLong(8, entity.getDownload_time());
  
         Long last_accessed = entity.getLast_accessed();
         if (last_accessed != null) {
-            stmt.bindLong(8, last_accessed);
+            stmt.bindLong(9, last_accessed);
         }
-        stmt.bindLong(9, entity.getStatus());
+        stmt.bindLong(10, entity.getStatus());
     }
 
     @Override
     protected final void bindValues(SQLiteStatement stmt, DownloadedFile entity) {
         stmt.clearBindings();
         stmt.bindString(1, entity.getToken());
-        stmt.bindLong(2, entity.getGid());
-        stmt.bindString(3, entity.getFilename());
+        String fileToken = entity.getFileToken();
+        if (fileToken != null) {
+            stmt.bindString(2, fileToken);
+        }
+        stmt.bindLong(3, entity.getGid());
+        stmt.bindString(4, entity.getFilename());
  
         String md5 = entity.getMd5();
         if (md5 != null) {
-            stmt.bindString(4, md5);
+            stmt.bindString(5, md5);
         }
-        stmt.bindString(5, entity.getPath());
+        stmt.bindString(6, entity.getPath());
  
         Long size = entity.getSize();
         if (size != null) {
-            stmt.bindLong(6, size);
+            stmt.bindLong(7, size);
         }
-        stmt.bindLong(7, entity.getDownload_time());
+        stmt.bindLong(8, entity.getDownload_time());
  
         Long last_accessed = entity.getLast_accessed();
         if (last_accessed != null) {
-            stmt.bindLong(8, last_accessed);
+            stmt.bindLong(9, last_accessed);
         }
-        stmt.bindLong(9, entity.getStatus());
+        stmt.bindLong(10, entity.getStatus());
     }
 
     @Override
@@ -124,14 +134,15 @@ public class DownloadedFilesDao extends AbstractDao<DownloadedFile, String> {
     public DownloadedFile readEntity(Cursor cursor, int offset) {
         DownloadedFile entity = new DownloadedFile( //
             cursor.getString(offset + 0), // token
-            cursor.getLong(offset + 1), // gid
-            cursor.getString(offset + 2), // filename
-            cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // md5
-            cursor.getString(offset + 4), // path
-            cursor.isNull(offset + 5) ? null : cursor.getLong(offset + 5), // size
-            cursor.getLong(offset + 6), // download_time
-            cursor.isNull(offset + 7) ? null : cursor.getLong(offset + 7), // last_accessed
-            cursor.getInt(offset + 8) // status
+            cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // fileToken
+            cursor.getLong(offset + 2), // gid
+            cursor.getString(offset + 3), // filename
+            cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4), // md5
+            cursor.getString(offset + 5), // path
+            cursor.isNull(offset + 6) ? null : cursor.getLong(offset + 6), // size
+            cursor.getLong(offset + 7), // download_time
+            cursor.isNull(offset + 8) ? null : cursor.getLong(offset + 8), // last_accessed
+            cursor.getInt(offset + 9) // status
         );
         return entity;
     }
@@ -139,14 +150,15 @@ public class DownloadedFilesDao extends AbstractDao<DownloadedFile, String> {
     @Override
     public void readEntity(Cursor cursor, DownloadedFile entity, int offset) {
         entity.setToken(cursor.getString(offset + 0));
-        entity.setGid(cursor.getLong(offset + 1));
-        entity.setFilename(cursor.getString(offset + 2));
-        entity.setMd5(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
-        entity.setPath(cursor.getString(offset + 4));
-        entity.setSize(cursor.isNull(offset + 5) ? null : cursor.getLong(offset + 5));
-        entity.setDownload_time(cursor.getLong(offset + 6));
-        entity.setLast_accessed(cursor.isNull(offset + 7) ? null : cursor.getLong(offset + 7));
-        entity.setStatus(cursor.getInt(offset + 8));
+        entity.setFileToken(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
+        entity.setGid(cursor.getLong(offset + 2));
+        entity.setFilename(cursor.getString(offset + 3));
+        entity.setMd5(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
+        entity.setPath(cursor.getString(offset + 5));
+        entity.setSize(cursor.isNull(offset + 6) ? null : cursor.getLong(offset + 6));
+        entity.setDownload_time(cursor.getLong(offset + 7));
+        entity.setLast_accessed(cursor.isNull(offset + 8) ? null : cursor.getLong(offset + 8));
+        entity.setStatus(cursor.getInt(offset + 9));
      }
     
     @Override

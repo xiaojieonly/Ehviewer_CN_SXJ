@@ -119,6 +119,24 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
         // TODO
         return Integer.toString(index);
     }
+    
+    @NonNull
+    @Override
+    public String getImageExtension(int index) {
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return "";
+        }
+        String name = fileList[index].getName();
+        if (name == null) {
+            return "";
+        }
+        int dotIndex = name.lastIndexOf('.');
+        if (dotIndex >= 0 && dotIndex < name.length() - 1) {
+            return name.substring(dotIndex).toLowerCase();
+        }
+        return "";
+    }
 
     @Override
     public boolean save(int index, @NonNull UniFile file) {

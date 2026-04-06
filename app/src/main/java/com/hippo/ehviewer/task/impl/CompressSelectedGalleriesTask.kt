@@ -6,7 +6,10 @@ import com.hippo.ehviewer.R
 import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.spider.SpiderDen
 import com.hippo.ehviewer.task.BackgroundTask
+import com.hippo.ehviewer.task.impl.BaseBackgroundTask
 import com.hippo.unifile.UniFile
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.util.zip.ZipEntry
@@ -15,16 +18,18 @@ import java.util.zip.ZipOutputStream
 /**
  * 压缩选择的下载画廊任务
  */
-class CompressSelectedGalleriesTask(
+class CompressSelectedGalleriesTask @JvmOverloads constructor(
     context: Context,
-    private val selectedList: List<DownloadInfo>
+    private val selectedList: List<DownloadInfo>,
+    private val taskId: String = "compress_selected_galleries_${System.currentTimeMillis()}"
 ) : BaseBackgroundTask(context) {
 
     private val outputFileNames = mutableListOf<String>()
+    private val addedEntries = mutableSetOf<String>()
 
     fun getOutputFileNames(): List<String> = outputFileNames
 
-    override fun getTaskId(): String = "compress_selected_galleries_${System.currentTimeMillis()}"
+    override fun getTaskId(): String = taskId
 
     override fun getTaskName(): String = context.getString(R.string.compress_selected_galleries)
 
@@ -32,12 +37,28 @@ class CompressSelectedGalleriesTask(
 
     override fun getTaskType(): BackgroundTask.TaskType = BackgroundTask.TaskType.CLEANUP
 
+    override fun isUniqueTask(): Boolean = false
+
     override fun isPausable(): Boolean = false
 
+    override fun isPersistable(): Boolean = true
+
+    override fun getTaskPersistData(): String? {
+        return JSONObject().apply {
+            val array = JSONArray()
+            for (info in selectedList) {
+                array.put(info.gid)
+            }
+            put("gids", array)
+        }.toString()
+    }
+
     override suspend fun execute(): Result<Unit> {
+        appendTaskLog("开始压缩 ${selectedList.size} 个画廊")
         if (selectedList.isEmpty()) {
             updateProgress(100, context.getString(R.string.compress_selected_galleries))
             notifyCompleted()
+            appendTaskLog("没有要压缩的画廊，任务结束")
             return Result.success(Unit)
         }
 
@@ -63,11 +84,13 @@ class CompressSelectedGalleriesTask(
             for (info in selectedList) {
                 val galleryDir = SpiderDen.getGalleryDownloadDir(info)
                 if (galleryDir == null || !galleryDir.exists()) {
+                    appendTaskLog("画廊 ${info.gid} 不存在，跳过")
                     completedCount++
                     updateProgress(completedCount, context.getString(R.string.compress_selected_galleries) + " " + completedCount + "/" + totalCount)
                     continue
                 }
 
+                appendTaskLog("压缩画廊 ${info.gid} - ${info.title}")
                 val gallerySize = calculateUniFileSize(galleryDir)
 
                 if (splitSizeBytes > 0 && currentPartFile != null && currentPartSize > 0 && currentPartSize + gallerySize > splitSizeBytes) {
@@ -79,6 +102,7 @@ class CompressSelectedGalleriesTask(
                 }
 
                 if (zos == null) {
+                    addedEntries.clear()
                     val baseName = "ehviewer_${System.currentTimeMillis()}"
                     val partFile = createPartZipFile(outputDir, baseName, partIndex)
                         ?: return Result.failure(IOException("Failed to create zip file"))
@@ -97,6 +121,7 @@ class CompressSelectedGalleriesTask(
 
             zos?.close()
             notifyCompleted()
+            appendTaskLog("压缩完成，生成 ${outputFileNames.size} 个压缩包: ${outputFileNames.joinToString(", ")}")
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -104,6 +129,7 @@ class CompressSelectedGalleriesTask(
                 zos?.close()
             } catch (_: Exception) {
             }
+            appendTaskLog("压缩任务出错: ${e.message}")
             notifyError(e)
             Result.failure(e)
         }
@@ -140,8 +166,9 @@ class CompressSelectedGalleriesTask(
     private fun addUniFileToZip(uniFile: UniFile, basePath: String, zos: ZipOutputStream) {
         if (uniFile.isDirectory) {
             val dirPath = if (basePath.endsWith("/")) basePath else "$basePath/"
-            zos.putNextEntry(ZipEntry(dirPath))
-            zos.closeEntry()
+            if (addZipEntry(zos, dirPath)) {
+                zos.closeEntry()
+            }
             val children = uniFile.listFiles() ?: return
             for (child in children) {
                 val childPath = if (dirPath.isEmpty()) child.name ?: "" else dirPath + (child.name ?: "")
@@ -149,7 +176,10 @@ class CompressSelectedGalleriesTask(
             }
         } else if (uniFile.isFile) {
             val entryName = basePath
-            zos.putNextEntry(ZipEntry(entryName))
+            if (!addZipEntry(zos, entryName)) {
+                appendTaskLog("忽略重复条目: $entryName")
+                return
+            }
             uniFile.openInputStream()?.use { input ->
                 BufferedInputStream(input).use { bis ->
                     val buffer = ByteArray(8192)
@@ -163,8 +193,47 @@ class CompressSelectedGalleriesTask(
         }
     }
 
+    private fun addZipEntry(zos: ZipOutputStream, entryName: String): Boolean {
+        if (!addedEntries.add(entryName)) {
+            return false
+        }
+        return try {
+            zos.putNextEntry(ZipEntry(entryName))
+            true
+        } catch (e: java.util.zip.ZipException) {
+            false
+        }
+    }
+
     private fun sanitizeFileName(input: String?): String {
         if (input == null) return ""
         return input.replace(Regex("[\\\\/:*?\"<>|]"), "_")
+    }
+
+    companion object {
+        @JvmStatic
+        fun restore(context: Context, taskId: String, persistData: String?): CompressSelectedGalleriesTask? {
+            if (persistData.isNullOrEmpty()) {
+                return null
+            }
+            return try {
+                val json = JSONObject(persistData)
+                val gids = json.optJSONArray("gids") ?: return null
+                val selected = mutableListOf<DownloadInfo>()
+                for (i in 0 until gids.length()) {
+                    val gid = gids.optLong(i, -1)
+                    if (gid > 0) {
+                        selected.add(DownloadInfo(gid))
+                    }
+                }
+                if (selected.isEmpty()) {
+                    null
+                } else {
+                    CompressSelectedGalleriesTask(context, selected, taskId)
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
     }
 }

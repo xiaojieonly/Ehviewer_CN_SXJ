@@ -14,7 +14,7 @@
     <string name="recycle_bin_delete_permanent">永久删除</string>
     <string name="settings_advanced_compress_split_size_512m">512 兆字节</string>
     <string name="recycle_bin_action_rescan">重新扫描回收站文件夹</string>
-    <string name="settings_advanced_compress_split_size_disabled">残疾</string>
+    <string name="settings_advanced_compress_split_size_disabled">已禁用</string>
     <string name="settings_advanced_compress_split_size_1g">1 GB</string>
     <string name="app_name">EhViewer</string>
     <string name="theme_light">浅色主题</string>
@@ -1052,7 +1052,7 @@
     <string name="task_progress_format">%1$d/%2$d (%3$d%%)</string>
     <string name="task_progress_indeterminate">不确定</string>
     <string name="task_running_time">运行时间：%1$s</string>
-    <string name="task_status_running">跑步</string>
+    <string name="task_status_running">运行中中</string>
     <string name="task_status_completed">已完成</string>
     <string name="task_status_failed">失败</string>
     <string name="task_status_cancelled">已取消</string>
@@ -1181,7 +1181,7 @@
     <string name="recycle_bin_scan_progress">回收站：%1$d/%2$d - %3$s</string>
     <string name="recycle_bin_scan_progress_simple">回收站：%1$d/%2$d</string>
     <string name="task_state_pending">待处理</string>
-    <string name="task_state_running">跑步</string>
+    <string name="task_state_running">运行中</string>
     <string name="task_state_paused">已暂停</string>
     <string name="task_state_completed">已完成</string>
     <string name="task_state_failed">失败</string>
@@ -1355,6 +1355,7 @@
     <string name="scan_download_files_scanning">正在扫描下载目录...</string>
     <string name="scan_download_files_scanning_progress">正在扫描下载目录... (%1$d/%2$d)</string>
     <string name="scan_download_files_failed_title">扫描失败</string>
+    <string name="scan_download_files_cancelled">扫描已取消</string>
     <string name="clean_invalid_download_empty_directory">空目录：%1$s</string>
     <string name="clean_invalid_download_missing_ehviewer_file">缺少.ehviewer文件：%1$s</string>
     <string name="clean_invalid_download_invalid_ehviewer_file">无效的.ehviewer文件：%1$s</string>

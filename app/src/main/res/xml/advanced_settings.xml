@@ -62,6 +62,12 @@
         app:allowDividerAbove="true" />
 
     <Preference
+        android:key="export_database"
+        android:summary="@string/settings_advanced_export_database_summary"
+        android:title="@string/settings_advanced_export_database"
+        app:allowDividerAbove="true" />
+
+    <Preference
         android:key="export_path"
         android:title="@string/settings_advanced_export_path"
         android:summary="@string/settings_advanced_export_path_summary"

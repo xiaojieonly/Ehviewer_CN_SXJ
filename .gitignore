@@ -18,3 +18,4 @@ open_source_licenses.html
 项目结构分析.md
 /伪代码
 /.vscode/settings.json
+/scripts/__pycache__/

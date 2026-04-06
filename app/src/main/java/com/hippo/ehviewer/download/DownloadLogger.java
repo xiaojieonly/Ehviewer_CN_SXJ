@@ -38,6 +38,8 @@ public class DownloadLogger {
     private final ExecutorService mLogExecutor;
     private final BlockingQueue<LogEntry> mLogQueue;
     private final SimpleDateFormat mDateFormat;
+    private final SimpleDateFormat mDayFormat;
+    private String mCurrentLogDate;
     private final Object mLock = new Object();
     
     private File mCurrentLogFile;
@@ -67,6 +69,8 @@ public class DownloadLogger {
         });
         mLogQueue = new LinkedBlockingQueue<>(MAX_LOG_QUEUE_SIZE);
         mDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+        mDayFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        mCurrentLogDate = null;
         mIsLoggingEnabled = Settings.getDownloadLoggingEnabled();
         
         // 启动日志处理线程
@@ -303,14 +307,17 @@ public class DownloadLogger {
      * 判断是否需要创建新的日志文件
      */
     private boolean shouldCreateNewLogFile(long timestamp) {
-        if (mCurrentLogFile == null) return true;
-        
-        // 每天创建一个新的日志文件
-        SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String currentDay = dayFormat.format(new Date(timestamp));
-        String fileDay = dayFormat.format(new Date(mCurrentLogFile.lastModified()));
-        
-        return !currentDay.equals(fileDay);
+        try {
+            String currentDay = mDayFormat.format(new Date(timestamp));
+            if (mCurrentLogDate == null) {
+                // 旧文件日期还不知道，直接判断文件修改时间，避免每次都 new Date(mCurrentLogFile.lastModified())
+                mCurrentLogDate = mCurrentLogFile != null ? mDayFormat.format(new Date(mCurrentLogFile.lastModified())) : null;
+            }
+            return mCurrentLogDate == null || !currentDay.equals(mCurrentLogDate);
+        } catch (Throwable t) {
+            Log.w(TAG, "shouldCreateNewLogFile 日期判断失败，强制切换文件", t);
+            return true;
+        }
     }
     
     /**
@@ -330,8 +337,9 @@ public class DownloadLogger {
         }
         
         // 创建新的日志文件
-        String fileName = LOG_FILE_PREFIX + new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date()) + LOG_FILE_EXTENSION;
+        String fileName = LOG_FILE_PREFIX + mDayFormat.format(new Date()) + LOG_FILE_EXTENSION;
         mCurrentLogFile = new File(logDir, fileName);
+        mCurrentLogDate = mDayFormat.format(new Date());
         mLogFileWriter = new FileWriter(mCurrentLogFile, true); // 追加模式
         
         // 写入文件头
