@@ -27,6 +27,9 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
     
     private val TAG = "CleanInvalidDownload"
     
+    @Volatile
+    private var isPausedFlag = false
+    
     override fun getTaskId(): String = "clean_invalid_download"
     
     override fun getTaskName(): String = context.getString(R.string.settings_download_cleaning)
@@ -113,7 +116,7 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
                 val detail = context.getString(R.string.clean_invalid_download_progress, 
                     processedFiles, totalFiles, cleanedCount, errorCount)
                 updateProgress(progress, detail)
-                delay(50) // 给UI一些更新时间
+                checkPauseState()
             }
             
             updateProgress(95, context.getString(R.string.clean_invalid_download_finalizing))
@@ -304,13 +307,26 @@ class CleanInvalidDownloadTask(context: Context) : BaseBackgroundTask(context) {
         if (!isPausable()) {
             throw UnsupportedOperationException("Task does not support pause")
         }
+        isPausedFlag = true
         updateState(TaskState.PAUSED)
+        appendTaskLog("任务已暂停")
     }
     
     override suspend fun resume() {
         if (!isPausable()) {
             throw UnsupportedOperationException("Task does not support resume")
         }
+        isPausedFlag = false
         updateState(TaskState.RUNNING)
+        appendTaskLog("任务已恢复")
+    }
+    
+    /**
+     * 检查暂停状态，如果暂停则等待
+     */
+    private suspend fun checkPauseState() {
+        while (isPausedFlag) {
+            delay(200)
+        }
     }
 }

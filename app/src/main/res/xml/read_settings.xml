@@ -62,12 +62,48 @@
         app:entries="@array/start_position_entries"
         app:entryValues="@array/start_position_values" />
 
-    <com.hippo.preference.SeekBarPreference
+    <com.hippo.ehviewer.preference.SliderPreference
         android:defaultValue="2"
         android:key="start_transfer_time"
         android:title="@string/settings_read_auto_transfer_time"
         app:allowDividerAbove="true"
-        app:max="15" />
+        app:minValue="1"
+        app:maxValue="15"
+        app:stepSize="1"
+        app:unit="秒"
+        app:showValue="true" />
+
+    <com.hippo.ehviewer.preference.SliderPreference
+        android:defaultValue="40"
+        android:key="static_transfer_time"
+        android:title="@string/settings_read_static_transfer_time"
+        app:allowDividerAbove="true"
+        app:minValue="10"
+        app:maxValue="1200"
+        app:stepSize="10"
+        app:unit="秒"
+        app:showValue="true" />
+
+    <com.hippo.ehviewer.preference.SliderPreference
+        android:defaultValue="80"
+        android:key="animated_transfer_time"
+        android:title="@string/settings_read_animated_transfer_time"
+        app:allowDividerAbove="true"
+        app:minValue="10"
+        app:maxValue="1200"
+        app:stepSize="10"
+        app:unit="秒"
+        app:showValue="true" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="wait_for_animation"
+        android:title="@string/settings_read_wait_for_animation" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="show_transfer_countdown"
+        android:title="@string/settings_read_show_transfer_countdown" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
@@ -114,11 +150,15 @@
         android:key="custom_screen_lightness"
         android:title="@string/settings_read_custom_screen_lightness" />
 
-    <com.hippo.preference.SeekBarPreference
+    <com.hippo.ehviewer.preference.SliderPreference
         android:defaultValue="50"
         android:dependency="custom_screen_lightness"
         android:key="screen_lightness"
         android:title="@string/settings_read_screen_lightness"
-        app:max="200" />
+        app:minValue="0"
+        app:maxValue="200"
+        app:stepSize="5"
+        app:unit="%"
+        app:showValue="true" />
 
 </PreferenceScreen>

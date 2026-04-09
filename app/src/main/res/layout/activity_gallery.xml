@@ -26,68 +26,84 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.hippo.ehviewer.widget.GalleryHeader
-        android:id="@+id/gallery_header"
+    <!-- Transfer countdown - above image layer, below control bars -->
+    <TextView
+        android:id="@+id/transfer_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="80dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="#FF0000"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2" />
+
+    <!-- Title bar - outside GalleryHeader so it gets proper layout -->
+    <LinearLayout
+        android:id="@+id/title_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top">
+        android:layout_gravity="top"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:fitsSystemWindows="true"
+        android:background="?attr/gallerySliderBackgroundColor"
+        android:visibility="invisible">
 
-        <com.hippo.widget.TextClock
-            android:id="@+id/clock"
-            android:layout_width="wrap_content"
+        <!-- Back button -->
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/back"
+            android:src="@drawable/ic_back"
+            app:tint="@android:color/white"
+            tools:ignore="UseCompatTextViewDrawableXml" />
+
+        <!-- Scrolling title -->
+        <TextView
+            android:id="@+id/gallery_title"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:layout_marginTop="@dimen/gallery_widget_margin_v"
-            android:layout_marginRight="@dimen/gallery_widget_margin_h"
-            android:textColor="?android:attr/textColorSecondary"
-            tools:ignore="RtlHardcoded" />
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:fadingEdge="horizontal"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:singleLine="true"
+            android:scrollHorizontally="true"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
 
-        <com.hippo.ehviewer.widget.StrokeTextView
-            android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/gallery_widget_margin_v"
-            app:stroke_color="@android:color/black"
-            app:stroke_width="0.5dp"
-            android:textColor="?android:attr/textColorSecondary" />
-
-        <com.hippo.widget.BatteryView
-            android:id="@+id/battery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:layout_marginLeft="@dimen/gallery_widget_margin_h"
-            android:layout_marginTop="@dimen/gallery_widget_margin_v"
-            android:drawablePadding="4dp"
-            app:color="?android:attr/textColorSecondary"
-            app:warningColor="@color/red_500"
-            tools:ignore="RtlHardcoded" />
-
+        <!-- Badge container -->
         <LinearLayout
-            android:id="@+id/title_container"
+            android:id="@+id/badge_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
+            android:layout_gravity="center_vertical"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/gallery_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="middle"
-                android:maxWidth="200dp"
-                android:maxLines="1"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp"
-                android:visibility="gone" />
+            android:gravity="center_vertical"
+            android:layout_marginStart="4dp">
 
             <TextView
                 android:id="@+id/file_type_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
                 android:background="@drawable/badge_background"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
@@ -96,6 +112,81 @@
                 android:textColor="@android:color/white"
                 android:textSize="10sp"
                 android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/gif_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/badge_background"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:text="@string/animated_badge"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- Menu button -->
+        <ImageButton
+            android:id="@+id/btn_menu"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/gallery_menu_title"
+            android:src="@drawable/ic_more_vert"
+            app:tint="@android:color/white" />
+
+    </LinearLayout>
+
+    <com.hippo.ehviewer.widget.GalleryHeader
+        android:id="@+id/gallery_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:visibility="gone">
+
+        <!-- Status bar row: battery, progress, clock -->
+        <LinearLayout
+            android:id="@+id/status_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <com.hippo.ehviewer.widget.StrokeTextView
+                android:id="@+id/progress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/gallery_widget_margin_v"
+                app:stroke_color="@android:color/black"
+                app:stroke_width="0.5dp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <com.hippo.widget.TextClock
+                android:id="@+id/clock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/gallery_widget_margin_v"
+                android:layout_marginEnd="@dimen/gallery_widget_margin_h"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <com.hippo.widget.BatteryView
+                android:id="@+id/battery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/gallery_widget_margin_h"
+                android:layout_marginTop="@dimen/gallery_widget_margin_v"
+                android:drawablePadding="4dp"
+                app:color="?android:attr/textColorSecondary"
+                app:warningColor="@color/red_500" />
 
         </LinearLayout>
 

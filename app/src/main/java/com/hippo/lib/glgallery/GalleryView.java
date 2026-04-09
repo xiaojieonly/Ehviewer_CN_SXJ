@@ -135,6 +135,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private final int mPageInfoInterval;
     private final int mProgressColor;
     private final int mProgressSize;
+    private final int mProgressTextSize;
     private final int mPageTextColor;
     private final int mPageTextSize;
     private final Typeface mPageTextTypeface;
@@ -188,6 +189,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         private int mPageInfoInterval = 24;
         private int mProgressColor = Color.WHITE;
         private int mProgressSize = 56;
+        private int mProgressTextSize = 168;
         private int mPageTextColor = Color.WHITE;
         private int mPageTextSize = 56;
         private Typeface mPageTextTypeface = Typeface.DEFAULT;
@@ -266,6 +268,11 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
             return this;
         }
 
+        public Builder setProgressTextSize(int progressTextSize) {
+            mProgressTextSize = progressTextSize;
+            return this;
+        }
+
         public Builder setPageTextColor(int pageTextColor) {
             mPageTextColor = pageTextColor;
             return this;
@@ -326,6 +333,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         mPageInfoInterval = build.mPageInfoInterval;
         mProgressColor = build.mProgressColor;
         mProgressSize = build.mProgressSize;
+        mProgressTextSize = build.mProgressTextSize;
         mPageTextColor = build.mPageTextColor;
         mPageTextSize = build.mPageTextSize;
         mPageTextTypeface = build.mPageTextTypeface;
@@ -1066,11 +1074,19 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         }
     }
 
+    /**
+     * Check if the current page's image is still animating (GIF/WebP playing)
+     */
+    public boolean isCurrentPageAnimating() {
+        GalleryPageView page = findPageByIndex(mIndex);
+        return page != null && page.isCurrentPageAnimating();
+    }
+
     GalleryPageView obtainPage() {
         GalleryPageView page = mGalleryPageViewPool.pop();
         if (page == null) {
             page = new GalleryPageView(mPageTextTexture, mProgressTextTexture,
-                    mProgressColor, mBackgroundColor, mProgressSize,
+                    mProgressColor, mBackgroundColor, mProgressSize, mProgressTextSize,
                     mPageMinHeight, mPageInfoInterval);
         }
         return page;

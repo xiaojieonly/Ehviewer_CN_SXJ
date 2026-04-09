@@ -4,13 +4,16 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.R;
 import com.hippo.util.ReadableTime;
 
@@ -170,6 +173,11 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         private final TextView mTimeText;
         private final TextView mStatusText;
         private final ProgressBar mProgressBar;
+        private final View mActionsContainer;
+        private final Button mBtnPause;
+        private final Button mBtnResume;
+        private final Button mBtnCancel;
+        private final Button mBtnDelete;
         
         private BackgroundTaskInfo mTaskInfo;
         
@@ -181,8 +189,18 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             mTimeText = itemView.findViewById(R.id.task_time);
             mStatusText = itemView.findViewById(R.id.task_status);
             mProgressBar = itemView.findViewById(R.id.progress_bar);
+            mActionsContainer = itemView.findViewById(R.id.task_actions);
+            mBtnPause = itemView.findViewById(R.id.btn_pause);
+            mBtnResume = itemView.findViewById(R.id.btn_resume);
+            mBtnCancel = itemView.findViewById(R.id.btn_cancel);
+            mBtnDelete = itemView.findViewById(R.id.btn_delete);
             
             itemView.setOnClickListener(this);
+            
+            mBtnPause.setOnClickListener(v -> handlePause());
+            mBtnResume.setOnClickListener(v -> handleResume());
+            mBtnCancel.setOnClickListener(v -> handleCancel());
+            mBtnDelete.setOnClickListener(v -> handleDelete());
         }
         
         public void bind(@NonNull BackgroundTaskInfo taskInfo) {
@@ -227,10 +245,80 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 } else {
                     status = mContext.getString(R.string.task_status_completed);
                 }
+            } else if (taskInfo.isPaused()) {
+                status = mContext.getString(R.string.task_status_paused);
             } else {
                 status = mContext.getString(R.string.task_status_running);
             }
             mStatusText.setText(status);
+            
+            // 根据任务状态显示/隐藏按钮
+            updateActionButtonVisibility();
+        }
+        
+        private void updateActionButtonVisibility() {
+            if (mTaskInfo == null) {
+                mActionsContainer.setVisibility(View.GONE);
+                return;
+            }
+            
+            boolean isActive = !mTaskInfo.isCompleted() && !mTaskInfo.isCancelled();
+            boolean isPaused = mTaskInfo.isPaused();
+            boolean isCompleted = mTaskInfo.isCompleted() || mTaskInfo.isCancelled();
+            
+            if (isActive) {
+                mActionsContainer.setVisibility(View.VISIBLE);
+                if (isPaused) {
+                    mBtnPause.setVisibility(View.GONE);
+                    mBtnResume.setVisibility(View.VISIBLE);
+                    mBtnCancel.setVisibility(View.VISIBLE);
+                } else {
+                    mBtnPause.setVisibility(View.VISIBLE);
+                    mBtnResume.setVisibility(View.GONE);
+                    mBtnCancel.setVisibility(View.VISIBLE);
+                }
+                mBtnDelete.setVisibility(View.GONE);
+            } else if (isCompleted) {
+                mActionsContainer.setVisibility(View.VISIBLE);
+                mBtnPause.setVisibility(View.GONE);
+                mBtnResume.setVisibility(View.GONE);
+                mBtnCancel.setVisibility(View.GONE);
+                mBtnDelete.setVisibility(View.VISIBLE);
+            } else {
+                mActionsContainer.setVisibility(View.GONE);
+            }
+        }
+        
+        private void handlePause() {
+            if (mTaskInfo == null) return;
+            BackgroundTaskManager.getInstance().pauseTask(mTaskInfo.getTaskId());
+            Toast.makeText(mContext, R.string.task_paused, Toast.LENGTH_SHORT).show();
+            refreshAdapter();
+        }
+        
+        private void handleResume() {
+            if (mTaskInfo == null) return;
+            BackgroundTaskManager.getInstance().resumeTask(mTaskInfo.getTaskId());
+            Toast.makeText(mContext, R.string.task_resumed, Toast.LENGTH_SHORT).show();
+            refreshAdapter();
+        }
+        
+        private void handleCancel() {
+            if (mTaskInfo == null) return;
+            BackgroundTaskManager.getInstance().cancelTask(mTaskInfo.getTaskId());
+            Toast.makeText(mContext, R.string.task_cancelling, Toast.LENGTH_SHORT).show();
+            refreshAdapter();
+        }
+        
+        private void handleDelete() {
+            if (mTaskInfo == null) return;
+            BackgroundTaskManager.getInstance().removeTask(mTaskInfo.getTaskId());
+            refreshAdapter();
+        }
+        
+        private void refreshAdapter() {
+            BackgroundTaskStatusManager manager = BackgroundTaskStatusManager.getInstance();
+            updateData(manager.getActiveTasks(), manager.getCompletedTasks());
         }
         
         @Override

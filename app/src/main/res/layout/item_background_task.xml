@@ -55,7 +55,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="4dp">
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/task_status"
@@ -71,6 +72,52 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/task_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/task_pause"
+            android:textSize="12sp"
+            android:visibility="gone"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <Button
+            android:id="@+id/btn_resume"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/task_resume"
+            android:textSize="12sp"
+            android:visibility="gone"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/task_cancel"
+            android:textSize="12sp"
+            android:visibility="gone"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <Button
+            android:id="@+id/btn_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/task_delete"
+            android:textSize="12sp"
+            android:visibility="gone"
+            style="?android:attr/buttonBarButtonStyle" />
 
     </LinearLayout>
 

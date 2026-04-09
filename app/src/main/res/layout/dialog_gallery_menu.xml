@@ -119,6 +119,7 @@
 
         </LinearLayout>
 
+        <!-- Auto transfer time with stepper -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -132,15 +133,124 @@
                 android:text="@string/settings_read_auto_transfer_time"
                 android:textColor="?android:attr/textColorPrimary" />
 
-            <SeekBar
-                android:id="@+id/start_transfer_time"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:defaultValue="2"
-                android:max="15" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageButton
+                    android:id="@+id/btn_decrease_time"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="减少"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:tint="?android:attr/textColorPrimary" />
+
+                <TextView
+                    android:id="@+id/start_transfer_time_display"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="2"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp" />
+
+                <ImageButton
+                    android:id="@+id/btn_increase_time"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="增加"
+                    android:src="@android:drawable/ic_menu_add"
+                    android:tint="?android:attr/textColorPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="秒"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- New: Static image transfer time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:text="@string/settings_read_static_transfer_time"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <EditText
+                android:id="@+id/static_transfer_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:inputType="numberDecimal"
+                android:text="4.0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="秒"
+                android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
+
+        <!-- New: Animated image transfer time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:text="@string/settings_read_animated_transfer_time"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <EditText
+                android:id="@+id/animated_transfer_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:inputType="numberDecimal"
+                android:text="8.0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="秒"
+                android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
+
+        <!-- New: Wait for animation -->
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/wait_for_animation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_read_wait_for_animation"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <!-- New: Show transfer countdown -->
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/show_transfer_countdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_read_show_transfer_countdown"
+            android:textColor="?android:attr/textColorPrimary" />
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/keep_screen_on"

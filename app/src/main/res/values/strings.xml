@@ -592,6 +592,10 @@
     <string name="settings_read_start_position_bottom_left">Bottom left</string>
     <string name="settings_read_start_position_bottom_right">Bottom right</string>
     <string name="settings_read_auto_transfer_time">Auto Transfer(s)</string>
+    <string name="settings_read_static_transfer_time">Static image transfer time (s)</string>
+    <string name="settings_read_animated_transfer_time">Animated image transfer time (s)</string>
+    <string name="settings_read_wait_for_animation">Wait for animated image to finish</string>
+    <string name="settings_read_show_transfer_countdown">Show transfer countdown</string>
     <string name="settings_read_start_position_center">Center</string>
     <string name="settings_read_keep_screen_on">Keep screen on</string>
     <string name="settings_read_show_clock">Show clock</string>
@@ -957,6 +961,8 @@
     <string name="empty_subscription">Subscription is empty</string>
     <string name="subscription_success">%1$s success</string>
     <string name="yes">Yes</string>
+    <string name="back">Back</string>
+    <string name="animated_badge">GIF</string>
     <string name="cancel">Cancel</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
@@ -1212,6 +1218,15 @@
     <string name="task_status_completed">Completed</string>
     <string name="task_status_failed">Failed</string>
     <string name="task_status_cancelled">Cancelled</string>
+    <string name="task_status_paused">Paused</string>
+    <string name="task_pause">Pause</string>
+    <string name="task_resume">Resume</string>
+    <string name="task_cancel">Cancel</string>
+    <string name="task_delete">Delete</string>
+    <string name="task_paused">Task paused</string>
+    <string name="task_resumed">Task resumed</string>
+    <string name="task_cancelling">Task is being cancelled...</string>
+    <string name="background_task_submitted">Background task submitted</string>
     <string name="task_progress_detail_label">Progress detail</string>
     <string name="task_log_label">Task log</string>
     <string name="task_log_empty">No log entries yet</string>

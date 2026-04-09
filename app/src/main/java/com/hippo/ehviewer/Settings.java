@@ -173,11 +173,21 @@ public class Settings {
             return sSettingsPre.getInt(key, defValue);
         } catch (ClassCastException e) {
             Log.d(TAG, "Get ClassCastException when get " + key + " value", e);
-            //再按string取一次值，如果为空或者不为数字对象返回默认值
+            // 尝试从 float 迁移数据（用于翻页时间设置的迁移）
             try {
-                return NumberUtils.parseIntSafely(sSettingsPre.getString(key, Integer.toString(defValue)), defValue);
-            }catch (Exception e2){
-                Log.d(TAG, "Get Exception when get " + key + " value", e2);
+                float floatValue = sSettingsPre.getFloat(key, defValue);
+                // 将 float（秒）转换为 int（十分之一秒）并保存
+                int intValue = Math.round(floatValue * 10);
+                sSettingsPre.edit().putInt(key, intValue).apply();
+                Log.d(TAG, "Migrated " + key + " from float " + floatValue + " to int " + intValue);
+                return intValue;
+            } catch (Exception e2) {
+                //再按string取一次值，如果为空或者不为数字对象返回默认值
+                try {
+                    return NumberUtils.parseIntSafely(sSettingsPre.getString(key, Integer.toString(defValue)), defValue);
+                }catch (Exception e3){
+                    Log.d(TAG, "Get Exception when get " + key + " value", e3);
+                }
             }
             return defValue;
         }
@@ -668,28 +678,36 @@ public class Settings {
         putInt(KEY_START_TRANSFER_TIME, value);
     }
 
-    // Static image transfer time (in seconds, 0.1 to 120)
+    // Static image transfer time (stored as tenths of seconds, 1 to 1200, representing 0.1 to 120 seconds)
     private static final String KEY_STATIC_TRANSFER_TIME = "static_transfer_time";
-    private static final float DEFAULT_STATIC_TRANSFER_TIME = 4.0f;
+    private static final int DEFAULT_STATIC_TRANSFER_TIME = 40; // 4.0 seconds
 
     public static float getStaticTransferTime() {
-        return getFloat(KEY_STATIC_TRANSFER_TIME, DEFAULT_STATIC_TRANSFER_TIME);
+        return getInt(KEY_STATIC_TRANSFER_TIME, DEFAULT_STATIC_TRANSFER_TIME) / 10.0f;
     }
 
     public static void putStaticTransferTime(float value) {
-        putFloat(KEY_STATIC_TRANSFER_TIME, Math.max(0.1f, Math.min(120.0f, value)));
+        putInt(KEY_STATIC_TRANSFER_TIME, (int) (Math.max(0.1f, Math.min(120.0f, value)) * 10));
+    }
+    
+    public static int getStaticTransferTimeRaw() {
+        return getInt(KEY_STATIC_TRANSFER_TIME, DEFAULT_STATIC_TRANSFER_TIME);
     }
 
-    // Animated image transfer time (in seconds, 0.1 to 120)
+    // Animated image transfer time (stored as tenths of seconds, 1 to 1200, representing 0.1 to 120 seconds)
     private static final String KEY_ANIMATED_TRANSFER_TIME = "animated_transfer_time";
-    private static final float DEFAULT_ANIMATED_TRANSFER_TIME = 8.0f;
+    private static final int DEFAULT_ANIMATED_TRANSFER_TIME = 80; // 8.0 seconds
 
     public static float getAnimatedTransferTime() {
-        return getFloat(KEY_ANIMATED_TRANSFER_TIME, DEFAULT_ANIMATED_TRANSFER_TIME);
+        return getInt(KEY_ANIMATED_TRANSFER_TIME, DEFAULT_ANIMATED_TRANSFER_TIME) / 10.0f;
     }
 
     public static void putAnimatedTransferTime(float value) {
-        putFloat(KEY_ANIMATED_TRANSFER_TIME, Math.max(0.1f, Math.min(120.0f, value)));
+        putInt(KEY_ANIMATED_TRANSFER_TIME, (int) (Math.max(0.1f, Math.min(120.0f, value)) * 10));
+    }
+    
+    public static int getAnimatedTransferTimeRaw() {
+        return getInt(KEY_ANIMATED_TRANSFER_TIME, DEFAULT_ANIMATED_TRANSFER_TIME);
     }
 
     // Wait for animated image to finish playing
@@ -702,6 +720,18 @@ public class Settings {
 
     public static void putWaitForAnimation(boolean value) {
         putBoolean(KEY_WAIT_FOR_ANIMATION, value);
+    }
+
+    // Show transfer countdown when auto-transfer is enabled
+    private static final String KEY_SHOW_TRANSFER_COUNTDOWN = "gallery_show_transfer_countdown";
+    private static final boolean DEFAULT_SHOW_TRANSFER_COUNTDOWN = true;
+
+    public static boolean getShowTransferCountdown() {
+        return getBoolean(KEY_SHOW_TRANSFER_COUNTDOWN, DEFAULT_SHOW_TRANSFER_COUNTDOWN);
+    }
+
+    public static void putShowTransferCountdown(boolean value) {
+        putBoolean(KEY_SHOW_TRANSFER_COUNTDOWN, value);
     }
 
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";

@@ -48,7 +48,9 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -107,6 +109,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -115,6 +118,8 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
+
+    private static final String TAG = "GalleryActivity";
 
     public static final String ACTION_DIR = "dir";
     public static final String ACTION_EH = "eh";
@@ -165,6 +170,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Nullable
     private TextView mFileTypeBadge;
     @Nullable
+    private TextView mGifBadge;
+    @Nullable
+    private View mBadgeContainer;
+    @Nullable
+    private View mTitleBar;
+    @Nullable
+    private ImageButton mBtnBack;
+    @Nullable
+    private ImageButton mBtnMenu;
+    @Nullable
     private BottomIndicatorView mBottomIndicator;
     @Nullable
     private View mSeekBarPanel;
@@ -176,9 +191,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private TextView mRightText;
     @Nullable
     private ReversibleSeekBar mSeekBar;
+    @Nullable
+    private TextView mTransferCountdown;
 
     private ObjectAnimator mSeekBarPanelAnimator;
     private ObjectAnimator mAutoTransferAnimator;
+    private ObjectAnimator mTitleBarAnimator;
 
     private int mLayoutMode;
     private int mSize;
@@ -186,6 +204,76 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private boolean canFinish = false;
     private boolean autoTransferring = false;
+
+    // Countdown timer for auto-play
+    private long mAutoPageStartTime = 0;
+    private long mAutoPageDuration = 0;
+    private final Handler mCountdownHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mCountdownRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!autoTransferring || mTransferCountdown == null) {
+                if (mTransferCountdown != null) {
+                    mTransferCountdown.setVisibility(View.GONE);
+                }
+                return;
+            }
+            long elapsed = System.currentTimeMillis() - mAutoPageStartTime;
+            long remaining = mAutoPageDuration - elapsed;
+            if (remaining > 0) {
+                // Show countdown starting at 1/3 of the total time
+                long showThreshold = mAutoPageDuration / 3;
+                if (elapsed >= showThreshold) {
+                    long seconds = (long) Math.ceil(remaining / 1000.0);
+                    mTransferCountdown.setText(seconds + "s");
+                    mTransferCountdown.setVisibility(View.VISIBLE);
+                }
+                mCountdownHandler.postDelayed(this, 200);
+            } else {
+                mTransferCountdown.setVisibility(View.GONE);
+            }
+        }
+    };
+
+    // Animation waiting for auto page flip
+    private boolean mWaitingForAnimation = false;
+    
+    // Track which pages are currently loading (index -> true = loading)
+    private final java.util.Set<Integer> mLoadingPages = java.util.Collections.synchronizedSet(new java.util.HashSet<Integer>());
+    
+    // Track whether the bottom slider/auto-transfer panel is currently visible
+    private boolean mSliderVisible = false;
+    
+    // Track last page flip time to prevent rapid consecutive flips
+    private long mLastPageFlipTime = 0;
+    private static final long MIN_PAGE_FLIP_INTERVAL = 500; // Minimum 500ms between flips
+    
+    final Runnable mAnimationWaitRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mWaitingForAnimation && mGalleryView != null && mGalleryProvider != null) {
+                int currentIndex = mGalleryView.getCurrentIndex();
+                
+                // Check if current page is still loading
+                if (mLoadingPages.contains(currentIndex)) {
+                    android.util.Log.d(TAG, "[AutoFlip] Page " + currentIndex + " still loading, waiting...");
+                    mCountdownHandler.postDelayed(this, 200);
+                    return;
+                }
+                
+                if (isCurrentPageAnimating()) {
+                    // Still animating, check again shortly
+                    android.util.Log.d(TAG, "[AutoFlip] Animation still running, waiting...");
+                    mCountdownHandler.postDelayed(this, 100);
+                } else {
+                    // Animation done, proceed with page flip
+                    android.util.Log.d(TAG, "[AutoFlip] Page " + currentIndex + " ready, proceeding with flip");
+                    mWaitingForAnimation = false;
+                    doAutoPageFlip();
+                }
+            }
+        }
+    };
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(3);
 
@@ -227,6 +315,18 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mBottomIndicator != null) {
                 mBottomIndicator.setVisibility(View.VISIBLE);
             }
+            // Mark slider as hidden
+            mSliderVisible = false;
+        }
+    };
+
+    private final SimpleAnimatorListener mHideTitleBarListener = new SimpleAnimatorListener() {
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            mTitleBarAnimator = null;
+            if (mTitleBar != null) {
+                mTitleBar.setVisibility(View.INVISIBLE);
+            }
         }
     };
 
@@ -236,6 +336,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mSeekBarPanel != null) {
                 hideSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 hideSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                hideTitleBar(mTitleBarAnimator);
             }
         }
     };
@@ -410,9 +511,17 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mProgress.setVisibility(Settings.getShowProgress() ? View.VISIBLE : View.GONE);
         mBattery.setVisibility(Settings.getShowBattery() ? View.VISIBLE : View.GONE);
         
-        // Initialize title and badge views
+        // Initialize restructured title bar views (direct children of FrameLayout)
+        mTitleBar = ViewUtils.$$(this, R.id.title_bar);
+        mBtnBack = (ImageButton) ViewUtils.$$(this, R.id.btn_back);
+        mBtnMenu = (ImageButton) ViewUtils.$$(this, R.id.btn_menu);
         mGalleryTitle = (TextView) ViewUtils.$$(this, R.id.gallery_title);
         mFileTypeBadge = (TextView) ViewUtils.$$(this, R.id.file_type_badge);
+        mGifBadge = (TextView) ViewUtils.$$(this, R.id.gif_badge);
+        mBadgeContainer = ViewUtils.$$(this, R.id.badge_container);
+        
+        // Always show title bar elements regardless of fullscreen mode
+        setupTitleBar();
         updateGalleryTitle();
         
         // Initialize bottom indicator
@@ -421,16 +530,24 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mBottomIndicator.setOnClickListener(v -> {
                 showSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 showSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                showTitleBar();
             });
         }
 
         mSeekBarPanel = ViewUtils.$$(this, R.id.seek_bar_panel);
         mAutoTransferPanel = (ImageView) ViewUtils.$$(this, R.id.auto_transfer);
+        // Auto-transfer panel visibility is now controlled dynamically based on loading state
+        if (mAutoTransferPanel != null) {
+            mAutoTransferPanel.setVisibility(View.INVISIBLE);
+        }
         mLeftText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.left);
         mRightText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.right);
         mSeekBar = (ReversibleSeekBar) ViewUtils.$$(mSeekBarPanel, R.id.seek_bar);
         mSeekBar.setOnSeekBarChangeListener(this);
         mAutoTransferPanel.setOnClickListener(this::autoRead);
+
+        // Transfer countdown
+        mTransferCountdown = (TextView) ViewUtils.$$(this, R.id.transfer_countdown);
 
         mSize = mGalleryProvider.size();
         mCurrentIndex = startPage;
@@ -543,6 +660,17 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mLeftText = null;
         mRightText = null;
         mSeekBar = null;
+        mTitleBar = null;
+        mBtnBack = null;
+        mBtnMenu = null;
+        mGifBadge = null;
+        mBadgeContainer = null;
+        mTransferCountdown = null;
+
+        // Clean up countdown, animation waiting, and loading states
+        mCountdownHandler.removeCallbacks(mCountdownRunnable);
+        mCountdownHandler.removeCallbacks(mAnimationWaitRunnable);
+        mLoadingPages.clear();
 
         if (transferService != null && !transferService.isShutdown()) {
             transferService.shutdown();
@@ -683,6 +811,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private void autoRead(View view) {
         autoTransferring = !autoTransferring;
+        android.util.Log.d(TAG, "[AutoFlip] Auto-read toggled: " + (autoTransferring ? "ON" : "OFF"));
         if (mAutoTransferPanel == null) {
             return;
         }
@@ -690,28 +819,130 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         if (!autoTransferring) {
             mAutoTransferPanel.setImageResource(R.drawable.ic_start_play_24);
             transferService.shutdown();
+            // Cancel countdown, animation waiting, and loading checks
+            if (mTransferCountdown != null) {
+                mTransferCountdown.setVisibility(View.GONE);
+            }
+            mCountdownHandler.removeCallbacks(mCountdownRunnable);
+            mCountdownHandler.removeCallbacks(mAnimationWaitRunnable);
+            mWaitingForAnimation = false;
+            android.util.Log.d(TAG, "[AutoFlip] Auto-read stopped, all timers cleared");
         } else {
             mAutoTransferPanel.setImageResource(R.drawable.ic_pause_circle);
-            if (transferService.isShutdown()) {
+            if (transferService == null || transferService.isShutdown()) {
                 transferService = Executors.newSingleThreadScheduledExecutor();
             }
             long initialDelay = Settings.getStartTransferTime();
             long waitTime = initialDelay * 2L;
-            try {
-                transferService.scheduleWithFixedDelay(() -> transHandle.post(() -> {
-                    if (mGalleryView == null) {
-                        return;
-                    }
-                    if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
-                        mGalleryView.pageLeft();
-                    } else {
-                        mGalleryView.pageRight();
-                    }
-                }), initialDelay, waitTime, TimeUnit.SECONDS);
-            } catch (IllegalArgumentException ignore) {
-
-            }
+            mAutoPageDuration = waitTime; // Total time between page flips
+            android.util.Log.d(TAG, "[AutoFlip] Auto-read started - initialDelay=" + initialDelay + "s, waitTime=" + waitTime + "s");
+            
+            // Use one-shot schedule with manual rescheduling to support animation wait
+            scheduleNextAutoFlip(initialDelay);
         }
+    }
+
+    /**
+     * Schedule the next auto page flip after the given delay
+     */
+    private void scheduleNextAutoFlip(long delaySeconds) {
+        if (transferService == null || transferService.isShutdown()) {
+            android.util.Log.w(TAG, "[AutoFlip] transferService is unavailable, cannot schedule flip");
+            return;
+        }
+        android.util.Log.d(TAG, "[AutoFlip] Scheduling next flip in " + delaySeconds + "s");
+        try {
+            transferService.schedule(() -> transHandle.post(() -> {
+                if (mGalleryView == null || !autoTransferring) {
+                    android.util.Log.d(TAG, "[AutoFlip] Skipping flip - galleryView=" + (mGalleryView != null) + ", autoTransferring=" + autoTransferring);
+                    return;
+                }
+                
+                // Check if we should wait for animation before flipping
+                if (Settings.getWaitForAnimation() && isCurrentPageAnimating()) {
+                    // Wait for animation to finish before flipping
+                    android.util.Log.d(TAG, "[AutoFlip] Animation in progress, waiting before flip");
+                    mWaitingForAnimation = true;
+                    mCountdownHandler.removeCallbacks(mAnimationWaitRunnable);
+                    mCountdownHandler.postDelayed(mAnimationWaitRunnable, 200);
+                    return;
+                }
+                
+                doAutoPageFlip();
+                // Next flip is scheduled inside doAutoPageFlip()
+            }), delaySeconds, TimeUnit.SECONDS);
+        } catch (RejectedExecutionException e) {
+            android.util.Log.w(TAG, "[AutoFlip] transferService rejected execution, recreating service");
+            transferService = Executors.newSingleThreadScheduledExecutor();
+            scheduleNextAutoFlip(delaySeconds);
+        } catch (IllegalArgumentException ignore) {
+            android.util.Log.w(TAG, "[AutoFlip] Failed to schedule next flip", ignore);
+        }
+    }
+
+    /**
+     * Perform the actual auto page flip and start countdown
+     */
+    private void doAutoPageFlip() {
+        if (mGalleryView == null) return;
+        
+        // Prevent rapid consecutive flips
+        long timeSinceLastFlip = System.currentTimeMillis() - mLastPageFlipTime;
+        if (timeSinceLastFlip < MIN_PAGE_FLIP_INTERVAL) {
+            android.util.Log.d(TAG, "[AutoFlip] Too soon since last flip (" + timeSinceLastFlip + "ms), deferring");
+            mCountdownHandler.postDelayed(mAnimationWaitRunnable, MIN_PAGE_FLIP_INTERVAL - timeSinceLastFlip);
+            mWaitingForAnimation = true;
+            return;
+        }
+        
+        int currentIndex = mGalleryView.getCurrentIndex();
+        
+        // Check if current page is still loading
+        if (mLoadingPages.contains(currentIndex)) {
+            android.util.Log.d(TAG, "[AutoFlip] Page " + currentIndex + " still loading, deferring flip");
+            mCountdownHandler.postDelayed(mAnimationWaitRunnable, 200);
+            mWaitingForAnimation = true;
+            return;
+        }
+        
+        android.util.Log.d(TAG, "[AutoFlip] Executing page flip at index " + currentIndex);
+        
+        // Record flip time
+        mLastPageFlipTime = System.currentTimeMillis();
+        
+        // Reset countdown
+        mAutoPageStartTime = System.currentTimeMillis();
+        if (mTransferCountdown != null) {
+            mTransferCountdown.setVisibility(View.GONE);
+        }
+        mCountdownHandler.removeCallbacks(mCountdownRunnable);
+        mCountdownHandler.postDelayed(mCountdownRunnable, 200);
+        
+        if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+            mGalleryView.pageLeft();
+        } else {
+            mGalleryView.pageRight();
+        }
+        
+        // Schedule next flip after this one completes
+        // mAutoPageDuration is already in SECONDS, no conversion needed
+        long waitTime = mAutoPageDuration > 0 ? mAutoPageDuration : 4L;
+        android.util.Log.d(TAG, "[AutoFlip] Scheduling next flip in " + waitTime + " seconds");
+        scheduleNextAutoFlip(waitTime);
+    }
+
+    /**
+     * Check if the current page image is still animating (GIF/WebP playing)
+     */
+    private boolean isCurrentPageAnimating() {
+        if (mGalleryView == null || mGalleryProvider == null) {
+            return false;
+        }
+        if (!mGalleryProvider.isAnimated(mCurrentIndex)) {
+            return false;
+        }
+        // Try to get the current page view and check animation state
+        return mGalleryView.isCurrentPageAnimating();
     }
 
     public boolean onGenericMotion(View view, MotionEvent motionEvent) {
@@ -875,10 +1106,117 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             
             // Add animated indicator for GIF/WebP animations
             if (mGalleryProvider.isAnimated(mCurrentIndex)) {
-                mFileTypeBadge.setText(badgeText + " 动图");
+                mFileTypeBadge.setText(badgeText + " " + getString(R.string.settings_read_wait_for_animation));
             }
         } else {
             mFileTypeBadge.setVisibility(View.GONE);
+        }
+        
+        // Update GIF badge separately
+        updateGifBadge();
+    }
+
+    /**
+     * Update GIF badge when current page is an animated image
+     */
+    private void updateGifBadge() {
+        if (mGifBadge == null || mGalleryProvider == null) {
+            return;
+        }
+        if (mGalleryProvider.isAnimated(mCurrentIndex)) {
+            mGifBadge.setText("GIF");
+            mGifBadge.setVisibility(View.VISIBLE);
+        } else {
+            mGifBadge.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Setup title bar with back button, scrolling title, and menu button
+     * Note: Title bar visibility is controlled by showSlider/hideSlider
+     */
+    private void setupTitleBar() {
+        if (mTitleBar == null) {
+            return;
+        }
+        
+        // Setup click listeners only (visibility handled by showSlider/hideSlider)
+        if (mBtnBack != null) {
+            mBtnBack.setOnClickListener(v -> onBackPressed());
+        }
+        if (mBtnMenu != null) {
+            mBtnMenu.setOnClickListener(v -> onTapMenuArea());
+        }
+        
+        // Enable marquee scrolling for long titles
+        if (mGalleryTitle != null) {
+            mGalleryTitle.setSelected(true);
+            mGalleryTitle.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+            mGalleryTitle.setMarqueeRepeatLimit(-1);
+        }
+    }
+
+    /**
+     * Show title bar with slide-down animation
+     */
+    private void showTitleBar() {
+        if (mTitleBar == null) return;
+        
+        if (null != mTitleBarAnimator) {
+            mTitleBarAnimator.cancel();
+        }
+        
+        mTitleBar.setTranslationY(-mTitleBar.getHeight());
+        mTitleBar.setVisibility(View.VISIBLE);
+        
+        ObjectAnimator animator = ObjectAnimator.ofFloat(mTitleBar, "translationY", 0.0f);
+        animator.setDuration(SLIDER_ANIMATION_DURING);
+        animator.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
+        animator.addUpdateListener(mUpdateSliderListener);
+        animator.addListener(new SimpleAnimatorListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mTitleBarAnimator = null;
+            }
+        });
+        animator.start();
+        mTitleBarAnimator = animator;
+    }
+
+    /**
+     * Hide title bar with slide-up animation
+     */
+    private void hideTitleBar(ObjectAnimator animator) {
+        if (mTitleBar == null) return;
+        
+        if (null != animator) {
+            animator.cancel();
+        }
+        
+        animator = ObjectAnimator.ofFloat(mTitleBar, "translationY", -mTitleBar.getHeight());
+        animator.setDuration(SLIDER_ANIMATION_DURING);
+        animator.setInterpolator(AnimationUtils.SLOW_FAST_INTERPOLATOR);
+        animator.addUpdateListener(mUpdateSliderListener);
+        animator.addListener(mHideTitleBarListener);
+        animator.start();
+        mTitleBarAnimator = animator;
+    }
+
+    /**
+     * Start title marquee scrolling
+     */
+    private void startTitleMarquee() {
+        if (mGalleryTitle != null) {
+            mGalleryTitle.setSelected(true);
+        }
+    }
+
+    /**
+     * Stop title marquee scrolling
+     */
+    private void stopTitleMarquee() {
+        if (mGalleryTitle != null) {
+            mGalleryTitle.setSelected(false);
         }
     }
 
@@ -922,6 +1260,35 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
         task.setData(NotifyTask.KEY_CURRENT_INDEX, index);
         SimpleHandler.getInstance().post(task);
+        
+        // Update play button visibility when page changes
+        updateAutoTransferVisibility();
+    }
+    
+    /**
+     * Update auto-transfer (play button) visibility based on loading state and slider visibility.
+     * Hide during loading, show only when loading is complete AND slider is visible.
+     */
+    private void updateAutoTransferVisibility() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            runOnUiThread(this::updateAutoTransferVisibility);
+            return;
+        }
+
+        if (mAutoTransferPanel == null || mGalleryView == null) {
+            return;
+        }
+        
+        int currentIndex = mGalleryView.getCurrentIndex();
+        boolean isLoading = mLoadingPages.contains(currentIndex);
+        
+        if (isLoading || !mSliderVisible) {
+            // Hide play button during loading or when slider is hidden
+            mAutoTransferPanel.setVisibility(View.INVISIBLE);
+        } else {
+            // Show play button when loading is complete and slider is visible
+            mAutoTransferPanel.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -1012,6 +1379,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         if (mBottomIndicator != null) {
             mBottomIndicator.setVisibility(View.GONE);
         }
+        
+        // Mark slider as visible
+        if (sliderPanel == mSeekBarPanel) {
+            mSliderVisible = true;
+        }
 
         animator.setDuration(SLIDER_ANIMATION_DURING);
         animator.setInterpolator(AnimationUtils.FAST_SLOW_INTERPOLATOR);
@@ -1023,6 +1395,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mSystemUiHelper.show();
             mShowSystemUi = true;
         }
+        
+        // Update play button visibility when slider is shown
+        updateAutoTransferVisibility();
     }
 
 
@@ -1041,6 +1416,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         animator.addUpdateListener(mUpdateSliderListener);
         animator.addListener(mHideSliderListener);
         animator.start();
+
+        // Also hide title bar
+        hideTitleBar(mTitleBarAnimator);
 
         if (null != mSystemUiHelper) {
             mSystemUiHelper.hide();
@@ -1283,7 +1661,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private final Spinner mReadingDirection;
         private final Spinner mScaleMode;
         private final Spinner mStartPosition;
-        private final SeekBar mStartTransferTime;
+        private final TextView mStartTransferTimeDisplay;
+        private final ImageButton mBtnDecreaseTime;
+        private final ImageButton mBtnIncreaseTime;
+        private final EditText mStaticTransferTime;
+        private final EditText mAnimatedTransferTime;
+        private final SwitchCompat mWaitForAnimation;
+        private final SwitchCompat mShowTransferCountdown;
         private final SwitchCompat mKeepScreenOn;
         private final SwitchCompat mShowClock;
         private final SwitchCompat mShowProgress;
@@ -1302,7 +1686,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mReadingDirection = mView.findViewById(R.id.reading_direction);
             mScaleMode = mView.findViewById(R.id.page_scaling);
             mStartPosition = mView.findViewById(R.id.start_position);
-            mStartTransferTime = mView.findViewById(R.id.start_transfer_time);
+            mStartTransferTimeDisplay = mView.findViewById(R.id.start_transfer_time_display);
+            mBtnDecreaseTime = mView.findViewById(R.id.btn_decrease_time);
+            mBtnIncreaseTime = mView.findViewById(R.id.btn_increase_time);
+            mStaticTransferTime = mView.findViewById(R.id.static_transfer_time);
+            mAnimatedTransferTime = mView.findViewById(R.id.animated_transfer_time);
+            mWaitForAnimation = mView.findViewById(R.id.wait_for_animation);
+            mShowTransferCountdown = mView.findViewById(R.id.show_transfer_countdown);
             mKeepScreenOn = mView.findViewById(R.id.keep_screen_on);
             mShowClock = mView.findViewById(R.id.show_clock);
             mShowProgress = mView.findViewById(R.id.show_progress);
@@ -1318,7 +1708,28 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mReadingDirection.setSelection(Settings.getReadingDirection());
             mScaleMode.setSelection(Settings.getPageScaling());
             mStartPosition.setSelection(Settings.getStartPosition());
-            mStartTransferTime.setProgress(Settings.getStartTransferTime());
+            mStartTransferTimeDisplay.setText(String.valueOf(Settings.getStartTransferTime()));
+            
+            // Stepper button listeners
+            mBtnDecreaseTime.setOnClickListener(v -> {
+                int val = Integer.parseInt(mStartTransferTimeDisplay.getText().toString());
+                if (val > 1) {
+                    mStartTransferTimeDisplay.setText(String.valueOf(val - 1));
+                }
+            });
+            mBtnIncreaseTime.setOnClickListener(v -> {
+                int val = Integer.parseInt(mStartTransferTimeDisplay.getText().toString());
+                if (val < 15) {
+                    mStartTransferTimeDisplay.setText(String.valueOf(val + 1));
+                }
+            });
+            
+            // Initialize new UI elements
+            mStaticTransferTime.setText(String.valueOf(Settings.getStaticTransferTime()));
+            mAnimatedTransferTime.setText(String.valueOf(Settings.getAnimatedTransferTime()));
+            mWaitForAnimation.setChecked(Settings.getWaitForAnimation());
+            mShowTransferCountdown.setChecked(Settings.getShowTransferCountdown());
+            
             mKeepScreenOn.setChecked(Settings.getKeepScreenOn());
             mShowClock.setChecked(Settings.getShowClock());
             mShowProgress.setChecked(Settings.getShowProgress());
@@ -1376,7 +1787,24 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             boolean customScreenLightness = mCustomScreenLightness.isChecked();
 
             int screenLightness = mScreenLightness.getProgress();
-            int transferTime = mStartTransferTime.getProgress();
+            int transferTime;
+            try {
+                transferTime = Integer.parseInt(mStartTransferTimeDisplay.getText().toString());
+            } catch (NumberFormatException e) {
+                transferTime = Settings.getStartTransferTime();
+            }
+            
+            // Get new settings values
+            float staticTransferTime = 4.0f;
+            float animatedTransferTime = 8.0f;
+            try {
+                staticTransferTime = Float.parseFloat(mStaticTransferTime.getText().toString());
+                animatedTransferTime = Float.parseFloat(mAnimatedTransferTime.getText().toString());
+            } catch (NumberFormatException e) {
+                // Use defaults if parsing fails
+            }
+            boolean waitForAnimation = mWaitForAnimation.isChecked();
+            boolean showTransferCountdown = mShowTransferCountdown.isChecked();
 
             boolean oldReadingFullscreen = Settings.getReadingFullscreen();
 
@@ -1385,6 +1813,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             Settings.putPageScaling(scaleMode);
             Settings.putStartPosition(startPosition);
             Settings.putStartTransferTime(transferTime);
+            Settings.putStaticTransferTime(staticTransferTime);
+            Settings.putAnimatedTransferTime(animatedTransferTime);
+            Settings.putWaitForAnimation(waitForAnimation);
+            Settings.putShowTransferCountdown(showTransferCountdown);
             Settings.putKeepScreenOn(keepScreenOn);
             Settings.putShowClock(showClock);
             Settings.putShowProgress(showProgress);
@@ -1483,9 +1915,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mSeekBarPanel.getVisibility() == View.VISIBLE) {
                 hideSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 hideSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                hideTitleBar(mTitleBarAnimator);
             } else {
                 showSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 showSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                showTitleBar();
                 SimpleHandler.getInstance().postDelayed(mHideSliderRunnable, HIDE_SLIDER_DELAY);
             }
         }
@@ -1516,6 +1950,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     GalleryActivity.this.mCurrentIndex = mValue;
                     updateSlider();
                     updateProgress();
+                    android.util.Log.d(TAG, "[AutoFlip] Page changed to " + mValue);
+                    // Cancel animation wait when page changes (manual navigation)
+                    if (mWaitingForAnimation) {
+                        mWaitingForAnimation = false;
+                        mCountdownHandler.removeCallbacks(mAnimationWaitRunnable);
+                    }
                     break;
                 case KEY_TAP_MENU_AREA:
                     onTapMenuArea();
@@ -1541,6 +1981,24 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         @Override
+        public void onBind(com.hippo.lib.glgallery.GalleryPageView view, int index) {
+            // CRITICAL: Mark page as loading BEFORE calling super.onBind()
+            // because super.onBind() calls mProvider.request() which may
+            // synchronously fire notifyPageSucceed() for cached images.
+            // If we add after super.onBind(), the page gets stuck in mLoadingPages forever.
+            mLoadingPages.add(index);
+            android.util.Log.d(TAG, "[AutoFlip] Page " + index + " marked as loading (pre-bind)");
+            
+            super.onBind(view, index);
+        }
+
+        @Override
+        public void onUnbind(com.hippo.lib.glgallery.GalleryPageView view, int index) {
+            super.onUnbind(view, index);
+            mLoadingPages.remove(index);
+        }
+
+        @Override
         public void onDataChanged() {
             super.onDataChanged();
 
@@ -1553,6 +2011,41 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 task.setData(NotifyTask.KEY_SIZE, size);
                 SimpleHandler.getInstance().post(task);
             }
+        }
+
+        @Override
+        public void onPageWait(int index) {
+            super.onPageWait(index);
+            mLoadingPages.add(index);
+            // Hide play button when page starts loading
+            updateAutoTransferVisibility();
+        }
+
+        @Override
+        public void onPagePercent(int index, float percent) {
+            super.onPagePercent(index, percent);
+            // Page is still loading, keep in loading set
+            if (percent < 1.0f) {
+                mLoadingPages.add(index);
+            }
+        }
+
+        @Override
+        public void onPageSucceed(int index, com.hippo.lib.glview.image.ImageWrapper image) {
+            super.onPageSucceed(index, image);
+            mLoadingPages.remove(index);
+            android.util.Log.d(TAG, "[AutoFlip] Page " + index + " loaded successfully");
+            // Show play button if loading is complete and slider is visible
+            updateAutoTransferVisibility();
+        }
+
+        @Override
+        public void onPageFailed(int index, String error) {
+            super.onPageFailed(index, error);
+            mLoadingPages.remove(index);
+            android.util.Log.d(TAG, "[AutoFlip] Page " + index + " loading failed: " + error);
+            // Show play button if loading is complete and slider is visible
+            updateAutoTransferVisibility();
         }
     }
 

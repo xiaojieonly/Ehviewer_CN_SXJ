@@ -10,6 +10,7 @@ import com.hippo.ehviewer.task.BackgroundTask
 import com.hippo.ehviewer.task.TaskState
 import com.hippo.ehviewer.task.BackgroundTask.TaskType
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 /**
  * 扫描下载文件任务
@@ -17,6 +18,9 @@ import kotlinx.coroutines.delay
 class ScanDownloadFilesTask(context: Context) : BaseBackgroundTask(context) {
     
     private val mainHandler = Handler(Looper.getMainLooper())
+    
+    @Volatile
+    private var isPausedFlag = false
     
     override fun getTaskId(): String = "scan_download_files"
     
@@ -49,6 +53,10 @@ class ScanDownloadFilesTask(context: Context) : BaseBackgroundTask(context) {
                     val progress = if (total > 0) (current * 100 / total) else -1
                     val detail = context.getString(R.string.scan_download_files_progress, current, total)
                     updateProgress(progress, detail)
+                    // 检查暂停状态
+                    runBlocking {
+                        checkPauseState()
+                    }
                 }
                 
                 override fun onCompleted() {
@@ -79,15 +87,27 @@ class ScanDownloadFilesTask(context: Context) : BaseBackgroundTask(context) {
         if (!isPausable()) {
             throw UnsupportedOperationException("Task does not support pause")
         }
+        isPausedFlag = true
         updateState(TaskState.PAUSED)
-        // 这里可以实现具体的暂停逻辑
+        appendTaskLog("任务已暂停")
     }
     
     override suspend fun resume() {
         if (!isPausable()) {
             throw UnsupportedOperationException("Task does not support resume")
         }
+        isPausedFlag = false
         updateState(TaskState.RUNNING)
-        // 这里可以实现具体的恢复逻辑
+        appendTaskLog("任务已恢复")
+    }
+    
+    /**
+     * 检查暂停状态，如果暂停则等待
+     * 注意：由于扫描是异步的，暂停效果会在下次进度回调时生效
+     */
+    private suspend fun checkPauseState() {
+        while (isPausedFlag) {
+            delay(200)
+        }
     }
 }

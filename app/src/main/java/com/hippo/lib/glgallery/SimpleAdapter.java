@@ -128,7 +128,9 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             page.setImage(null);
             
             // Check if detailed progress provider is available
+            // Use legacy mode: page number -> progress circle -> progress percent -> speed text
             if (mDetailedProgressProvider != null) {
+                page.setShowDetailedProgress(false);
                 String[] details = mDetailedProgressProvider.getDetailedProgress(index, percent);
                 if (details != null && details.length >= 3) {
                     page.setDetailedProgress(index + 1, details[1], details[2]);

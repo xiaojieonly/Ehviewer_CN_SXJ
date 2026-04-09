@@ -424,8 +424,8 @@ public class BackgroundTaskManager {
 
         String text = detail != null ? line + " - " + detail : line;
         
-        Intent intent = new Intent(mContext, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent intent = new Intent(mContext, com.hippo.ehviewer.ui.task.BackgroundTaskActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -487,10 +487,10 @@ public class BackgroundTaskManager {
 
         String text = detail != null ? line + " - " + detail : line;
         
-        Intent intent = new Intent(mContext, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent intent = new Intent(mContext, com.hippo.ehviewer.ui.task.BackgroundTaskActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-                mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                mContext, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID)
@@ -579,6 +579,41 @@ public class BackgroundTaskManager {
      */
     public BackgroundTaskStatusManager getTaskStatusManager() {
         return mTaskStatusManager;
+    }
+
+    /**
+     * 暂停指定任务
+     */
+    public boolean pauseTask(@NonNull String taskId) {
+        return mTaskStatusManager.pauseTask(taskId);
+    }
+
+    /**
+     * 恢复指定任务
+     */
+    public boolean resumeTask(@NonNull String taskId) {
+        return mTaskStatusManager.resumeTask(taskId);
+    }
+
+    /**
+     * 取消指定任务
+     */
+    public boolean cancelTask(@NonNull String taskId) {
+        return mTaskStatusManager.cancelTask(taskId);
+    }
+
+    /**
+     * 清空已完成的任务
+     */
+    public void clearCompletedTasks() {
+        mTaskStatusManager.clearCompletedTasks();
+    }
+
+    /**
+     * 移除指定任务（从活跃和已完成列表中删除）
+     */
+    public void removeTask(@NonNull String taskId) {
+        mTaskStatusManager.removeTask(taskId);
     }
     
     /**

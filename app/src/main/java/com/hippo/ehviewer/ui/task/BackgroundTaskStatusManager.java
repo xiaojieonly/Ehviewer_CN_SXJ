@@ -236,23 +236,61 @@ public class BackgroundTaskStatusManager {
     }
     
     /**
-     * 取消任务
+     * 暂停指定任务
+     */
+    public boolean pauseTask(@NonNull String taskId) {
+        BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
+        if (taskInfo == null || taskInfo.isCompleted() || taskInfo.isCancelled()) {
+            return false;
+        }
+        taskInfo.setPaused(true);
+        savePersistedTasksAsync();
+        return true;
+    }
+
+    /**
+     * 恢复指定任务
+     */
+    public boolean resumeTask(@NonNull String taskId) {
+        BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
+        if (taskInfo == null || !taskInfo.isPaused()) {
+            return false;
+        }
+        taskInfo.setPaused(false);
+        savePersistedTasksAsync();
+        return true;
+    }
+
+    /**
+     * 取消指定任务
      */
     public boolean cancelTask(@NonNull String taskId) {
         BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
         if (taskInfo != null) {
             boolean cancelled = taskInfo.cancel();
             if (cancelled) {
-                markTaskCompleted(taskId);
+                mActiveTasks.remove(taskId);
+                mCompletedTasks.put(taskId, taskInfo);
+
+                // 限制已完成任务的数量
+                if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
+                    String oldestTaskId = mCompletedTasks.keySet().iterator().next();
+                    mCompletedTasks.remove(oldestTaskId);
+                }
+                savePersistedTasksAsync();
             }
             return cancelled;
         }
         return false;
     }
-    
+
     /**
-     * 获取活跃任务列表
+     * 清除所有已完成的任务
      */
+    public void clearCompletedTasks() {
+        mCompletedTasks.clear();
+        savePersistedTasksAsync();
+    }
     @NonNull
     public List<BackgroundTaskInfo> getActiveTasks() {
         return new ArrayList<>(mActiveTasks.values());
@@ -285,14 +323,6 @@ public class BackgroundTaskStatusManager {
             return taskInfo.getLogMessages();
         }
         return new ArrayList<>();
-    }
-    
-    /**
-     * 清除所有已完成的任务
-     */
-    public void clearCompletedTasks() {
-        mCompletedTasks.clear();
-        savePersistedTasksAsync();
     }
     
     /**

@@ -41,15 +41,19 @@ public class GalleryPageView extends GLFrameLayout {
     private final GLImageMovableTextView mSpeedText; // 新增：速度显示
     private final GLTextureView mError;
     private final GLProgressView mProgress;
+    private int mProgressSizeNormal;
+    private int mProgressSizeWithText;
 
     private final int mMinHeight;
+    private final int mProgressTextSize;
+    private final int mSpeedTextSize;
 
     private int mIndex = INVALID_INDEX;
     private boolean mShowDetailedProgress = false; // 是否显示详细进度（三行信息）
 
         public GalleryPageView(ImageMovableTextTexture pageTextTexture,
             ImageMovableTextTexture progressTextTexture,
-            int progressColor, int progressBgColor, int progressSize,
+            int progressColor, int progressBgColor, int progressSize, int progressTextSize,
             int minHeight, int infoInterval) {
         // Add image
         mImage = new ImageView();
@@ -66,7 +70,7 @@ public class GalleryPageView extends GLFrameLayout {
         glp.gravity = Gravity.CENTER;
         addComponent(mInfo, glp);
 
-        // Add page (Line 1: 第X页)
+        // Add page (Line 1: 页码)
         mPage = new GLImageMovableTextView();
         mPage.setTextTexture(pageTextTexture);
         GLLinearLayout.LayoutParams lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
@@ -74,7 +78,23 @@ public class GalleryPageView extends GLFrameLayout {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mPage, lp);
 
-        // Add progress text (Line 2: 当前进度百分比)
+        // Add progress circle (Line 2: 加载圆圈)
+        mProgress = new GLProgressView();
+        mProgress.setBgColor(progressBgColor);
+        mProgress.setColor(progressColor);
+        // Store both sizes for dynamic sizing based on text visibility
+        mProgressSizeNormal = progressSize;
+        mProgressSizeWithText = progressTextSize;
+        mProgressTextSize = progressTextSize;
+        mSpeedTextSize = progressTextSize / 2; // 速度文字大小为进度文字的一半
+        mProgress.setMinimumWidth(progressSize);
+        mProgress.setMinimumHeight(progressSize);
+        lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        mInfo.addComponent(mProgress, lp);
+
+        // Add progress text (Line 3: 当前进度百分比)
         mProgressText = new GLImageMovableTextView();
         mProgressText.setTextTexture(progressTextTexture);
         mProgressText.setVisibility(GONE);
@@ -83,7 +103,7 @@ public class GalleryPageView extends GLFrameLayout {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mProgressText, lp);
 
-        // Add speed text (Line 3: 当前速率)
+        // Add speed text (Line 4: 当前速率)
         mSpeedText = new GLImageMovableTextView();
         mSpeedText.setTextTexture(progressTextTexture);
         mSpeedText.setVisibility(GONE);
@@ -98,17 +118,6 @@ public class GalleryPageView extends GLFrameLayout {
                 LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         mInfo.addComponent(mError, lp);
-
-        // Add progress circle
-        mProgress = new GLProgressView();
-        mProgress.setBgColor(progressBgColor);
-        mProgress.setColor(progressColor);
-        mProgress.setMinimumWidth(progressSize);
-        mProgress.setMinimumHeight(progressSize);
-        lp = new GLLinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT);
-        lp.gravity = Gravity.CENTER_HORIZONTAL;
-        mInfo.addComponent(mProgress, lp);
 
         mMinHeight = minHeight;
     }
@@ -172,14 +181,28 @@ public class GalleryPageView extends GLFrameLayout {
         if (progress == PROGRESS_GONE) {
             mProgress.setVisibility(GONE);
             mProgressText.setVisibility(GONE);
+            if (mShowDetailedProgress) {
+                mProgress.hideDetailedProgress();
+            }
         } else if (progress == PROGRESS_INDETERMINATE) {
             mProgress.setVisibility(VISIBLE);
             mProgress.setIndeterminate(true);
             mProgressText.setVisibility(GONE);
+            // Use smaller size for indeterminate progress without text
+            mProgress.setMinimumWidth(mProgressSizeNormal);
+            mProgress.setMinimumHeight(mProgressSizeNormal);
+            if (mShowDetailedProgress) {
+                mProgress.hideDetailedProgress();
+            }
         } else {
             mProgress.setVisibility(VISIBLE);
             mProgress.setIndeterminate(false);
             mProgress.setProgress(progress);
+            // Use larger size when showing percentage text
+            mProgress.setMinimumWidth(mProgressSizeWithText);
+            mProgress.setMinimumHeight(mProgressSizeWithText);
+            // Don't hide detailed progress text when updating numeric progress
+            // Text is managed by setDetailedProgress() caller
         }
     }
 
@@ -187,9 +210,15 @@ public class GalleryPageView extends GLFrameLayout {
         if (text == null || text.isEmpty()) {
             mProgressText.setVisibility(GONE);
             mProgressText.setText("");
+            // Revert to smaller size when no text
+            mProgress.setMinimumWidth(mProgressSizeNormal);
+            mProgress.setMinimumHeight(mProgressSizeNormal);
         } else {
             mProgressText.setVisibility(VISIBLE);
             mProgressText.setText(text);
+            // Use larger size when showing text
+            mProgress.setMinimumWidth(mProgressSizeWithText);
+            mProgress.setMinimumHeight(mProgressSizeWithText);
         }
     }
 
@@ -208,37 +237,65 @@ public class GalleryPageView extends GLFrameLayout {
 
     /**
      * Enable or disable detailed progress mode
-     * When enabled, shows three lines: page number, progress percentage, speed
+     * When enabled, text is rendered inside the circle by GLProgressView
+     * When disabled, text views are shown separately below the circle
      */
     public void setShowDetailedProgress(boolean show) {
         mShowDetailedProgress = show;
+        if (show) {
+            // Hide separate text views, let GLProgressView handle inner text
+            mPage.setVisibility(GONE);
+            mProgressText.setVisibility(GONE);
+            mSpeedText.setVisibility(GONE);
+        } else {
+            // Clear inner text from GLProgressView
+            mProgress.hideDetailedProgress();
+        }
     }
 
     /**
      * Set detailed loading info (page index, progress, speed)
+     * When detailed progress is enabled, text is rendered inside the circle
+     * by GLProgressView itself (outer ring wrapping inner content style)
      * @param pageIndex The current page index (1-based for display)
      * @param progressText Progress text like "50%"
      * @param speedText Speed text like "1.5MB/s"
      */
     public void setDetailedProgress(int pageIndex, String progressText, String speedText) {
-        // Show page number
-        mPage.setVisibility(VISIBLE);
-        mPage.setText("第" + pageIndex + "页");
-        
-        // Show progress
-        if (progressText != null && !progressText.isEmpty()) {
-            mProgressText.setVisibility(VISIBLE);
-            mProgressText.setText(progressText);
-        } else {
+        if (mShowDetailedProgress) {
+            // Use GLProgressView's inner text rendering
+            // Hide separate text views since text is inside the circle now
+            mPage.setVisibility(GONE);
             mProgressText.setVisibility(GONE);
-        }
-        
-        // Show speed
-        if (speedText != null && !speedText.isEmpty()) {
-            mSpeedText.setVisibility(VISIBLE);
-            mSpeedText.setText(speedText);
-        } else {
             mSpeedText.setVisibility(GONE);
+            
+            mProgress.setVisibility(VISIBLE);
+            mProgress.setIndeterminate(false);
+            mProgress.setDetailedProgress(pageIndex, progressText, speedText);
+        } else {
+            // Legacy mode: show page -> progress circle -> progress percent -> speed
+            mPage.setVisibility(VISIBLE);
+            mPage.setText("第" + pageIndex + "页");
+            
+            // Keep progress circle visible
+            mProgress.setVisibility(VISIBLE);
+            mProgress.setIndeterminate(false);
+            mProgress.setMinimumWidth(mProgressSizeWithText);
+            mProgress.setMinimumHeight(mProgressSizeWithText);
+            
+            if (progressText != null && !progressText.isEmpty()) {
+                mProgressText.setVisibility(VISIBLE);
+                mProgressText.setText(progressText);
+            } else {
+                mProgressText.setVisibility(GONE);
+            }
+            
+            if (speedText != null && !speedText.isEmpty()) {
+                mSpeedText.setVisibility(VISIBLE);
+                mSpeedText.setText(speedText);
+            } else {
+                mSpeedText.setVisibility(GONE);
+            }
         }
     }
 
@@ -276,5 +333,9 @@ public class GalleryPageView extends GLFrameLayout {
 
     boolean isUnderInfo(float x, float y) {
         return mInfo.bounds().contains((int) x, (int) y);
+    }
+
+    boolean isCurrentPageAnimating() {
+        return mImage.isImageAnimating();
     }
 }
