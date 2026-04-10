@@ -28,6 +28,7 @@ import com.hippo.ehviewer.client.data.userTag.UserTag;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
 import com.hippo.ehviewer.client.exception.EhException;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
@@ -95,6 +96,9 @@ public class SubscriptionDraw {
         frameLayout.setVisibility(View.GONE);
 
         Toolbar toolbar = (Toolbar) ViewUtils.$$(subscriptionView, R.id.toolbar);
+        // Extend the toolbar behind the transparent status bar so its background color
+        // fills the status bar area and avoids the drawer-top color seam.
+        WindowInsetHelper.applyTopSystemBarToPadding(toolbar);
         final TextView tip = (TextView) ViewUtils.$$(subscriptionView, R.id.tip);
         listView = (ListView) ViewUtils.$$(subscriptionView, R.id.list_view);
         AssertUtils.assertNotNull(context);

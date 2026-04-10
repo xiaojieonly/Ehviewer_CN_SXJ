@@ -19,6 +19,7 @@ package com.hippo.ehviewer.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
+import androidx.core.graphics.Insets;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.hippo.drawerlayout.DrawerLayoutChild;
@@ -63,8 +64,12 @@ public class EhDrawerView extends DrawerView implements DrawerLayoutChild {
     }
 
     public void applyDrawerWindowPadding(WindowInsetsCompat insets) {
-        onGetWindowPadding(insets.getInsets(WindowInsetsCompat.Type.systemBars()).top,
-                insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom);
-        setPadding(getPaddingLeft(), mWindowPaddingTop, getPaddingRight(), mWindowPaddingBottom);
+        Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+        onGetWindowPadding(bars.top, bars.bottom);
+        // Do NOT apply the top inset here — the inner Toolbar handles the status bar inset
+        // itself, so its background color extends behind the transparent status bar. Applying
+        // top padding on the drawer root would show the drawer's windowBackground behind the
+        // status bar, producing a visible color seam above the Toolbar.
+        setPadding(getPaddingLeft(), getPaddingTop(), getPaddingRight(), mWindowPaddingBottom);
     }
 }

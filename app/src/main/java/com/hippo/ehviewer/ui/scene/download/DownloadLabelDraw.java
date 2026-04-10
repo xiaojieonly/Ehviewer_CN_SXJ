@@ -17,6 +17,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.scene.Announcer;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ObjectUtils;
@@ -48,6 +49,9 @@ public class DownloadLabelDraw {
         AssertUtils.assertNotNull(context);
 
         toolbar = view.findViewById(R.id.toolbar);
+        // Extend the toolbar behind the transparent status bar so its background color
+        // fills the status bar area and avoids the drawer-top color seam.
+        WindowInsetHelper.applyTopSystemBarToPadding(toolbar);
         toolbar.setTitle(R.string.download_labels);
         toolbar.inflateMenu(R.menu.drawer_download);
         toolbar.setOnMenuItemClickListener(item -> {

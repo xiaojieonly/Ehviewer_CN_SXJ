@@ -19,6 +19,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.dao.QuickSearch;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.util.TagTranslationUtil;
 import com.hippo.scene.Announcer;
 import com.hippo.lib.yorozuya.AssertUtils;
@@ -55,6 +56,9 @@ public class BookmarksDraw {
         View bookmarksView = inflater.inflate(R.layout.bookmarks_draw, null, false);
 
         Toolbar toolbar = (Toolbar) ViewUtils.$$(bookmarksView, R.id.toolbar);
+        // Extend the toolbar behind the transparent status bar so its background color
+        // fills the status bar area and avoids the drawer-top color seam.
+        WindowInsetHelper.applyTopSystemBarToPadding(toolbar);
         final TextView tip = (TextView) ViewUtils.$$(bookmarksView, R.id.tip);
         listView = (ListView) ViewUtils.$$(bookmarksView, R.id.list_view);
 
