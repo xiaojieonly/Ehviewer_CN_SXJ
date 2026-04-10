@@ -151,6 +151,11 @@ public abstract class EhActivity extends AppCompatActivity {
             return;
         }
         final Window window = getWindow();
+        // Clear translucent flags inherited from values-v19 — they add a grey scrim
+        // that overrides statusBarColor and conflicts with edge-to-edge.
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+                | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(getStatusBarColor());
         window.setNavigationBarColor(getNavigationBarColor());
