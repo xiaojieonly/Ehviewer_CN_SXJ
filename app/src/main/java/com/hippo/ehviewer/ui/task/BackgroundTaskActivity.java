@@ -10,12 +10,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.EhActivity;
+import com.hippo.ehviewer.ui.MainActivity;
 
 /**
  * 后台任务管理Activity
@@ -49,11 +50,42 @@ public class BackgroundTaskActivity extends EhActivity {
     }
     
     private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setTitle(R.string.background_task_management);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setHomeButtonEnabled(true);
+            }
         }
+    }
+
+    private void navigateBackOrHome() {
+        if (!isTaskRoot()) {
+            finish();
+        } else {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            navigateBackOrHome();
+            return true;
+        } else if (item.getItemId() == R.id.action_clear_completed) {
+            if (mTaskManager != null && mAdapter != null) {
+                mTaskManager.clearCompletedTasks();
+                mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
+                Toast.makeText(this, R.string.background_task_cleared_completed, Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
     
     private void initViews() {
@@ -76,6 +108,15 @@ public class BackgroundTaskActivity extends EhActivity {
         if (mAdapter != null) {
             mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
         }
+        updateToolbarTitle();
+    }
+    
+    private void updateToolbarTitle() {
+        int activeCount = mTaskManager != null ? mTaskManager.getActiveTasks().size() : 0;
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle(getString(R.string.background_task_management_with_count, activeCount));
+        }
     }
     
     @Override
@@ -85,6 +126,7 @@ public class BackgroundTaskActivity extends EhActivity {
         if (mAdapter != null && mTaskManager != null) {
             mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
         }
+        updateToolbarTitle();
     }
 
     @Override
@@ -92,20 +134,9 @@ public class BackgroundTaskActivity extends EhActivity {
         getMenuInflater().inflate(R.menu.activity_background_task, menu);
         return true;
     }
-    
+
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        } else if (item.getItemId() == R.id.action_clear_completed) {
-            if (mTaskManager != null && mAdapter != null) {
-                mTaskManager.clearCompletedTasks();
-                mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
-                Toast.makeText(this, R.string.background_task_cleared_completed, Toast.LENGTH_SHORT).show();
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    public void onBackPressed() {
+        navigateBackOrHome();
     }
 }

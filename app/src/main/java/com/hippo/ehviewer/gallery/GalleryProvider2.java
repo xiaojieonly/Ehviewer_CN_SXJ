@@ -53,6 +53,11 @@ public abstract class GalleryProvider2 extends GalleryProvider {
     public String getImageExtension(int index) {
         return "";
     }
+
+    @Nullable
+    public String getImagePath(int index) {
+        return null;
+    }
     
     /**
      * Check if the image at index is animated (GIF or animated WebP)

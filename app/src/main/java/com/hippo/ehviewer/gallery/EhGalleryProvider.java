@@ -39,6 +39,7 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     private final SparseLongArray mLastDownloadTime = new SparseLongArray();
     private final SparseLongArray mLastDownloadBytes = new SparseLongArray();
     private final SparseLongArray mDownloadSpeed = new SparseLongArray();
+    private final SparseLongArray mContentLength = new SparseLongArray();
 
     public EhGalleryProvider(Context context, GalleryInfo galleryInfo) {
         mContext = context;
@@ -180,6 +181,7 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
             long speed = deltaTime > 0L ? Math.max(0L, deltaBytes * 1000L / deltaTime) : 0L;
             mDownloadSpeed.put(index, speed);
         }
+        mContentLength.put(index, contentLength);
         mLastDownloadTime.put(index, now);
         mLastDownloadBytes.put(index, receivedSize);
         if (contentLength > 0) {
@@ -199,6 +201,10 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     @Override
     public void onPageFailure(int index, String error, int finished, int downloaded, int total) {
         notifyPageFailed(index, error);
+    }
+
+    public long getPageContentLength(int index) {
+        return mContentLength.get(index, -1L);
     }
 
     @Override

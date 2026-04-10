@@ -382,13 +382,26 @@ public class GalleryDetailParser {
 
             Elements tags = element.child(1).children();
             for (int i = 0, n = tags.size(); i < n; i++) {
-                String tag = tags.get(i).text();
+                Element tagElement = tags.get(i);
+                String tag = tagElement.text();
                 // Sometimes parody tag is followed with '|' and english translate, just remove them
                 int index = tag.indexOf('|');
                 if (index >= 0) {
                     tag = tag.substring(0, index).trim();
                 }
-                group.addTag(tag);
+                
+                // 提取标签URL
+                String tagUrl = null;
+                if ("a".equalsIgnoreCase(tagElement.tagName())) {
+                    tagUrl = tagElement.absUrl("href");
+                    if (tagUrl != null && !tagUrl.isEmpty()) {
+                        group.addTagWithUrl(tag, tagUrl);
+                    } else {
+                        group.addTag(tag);
+                    }
+                } else {
+                    group.addTag(tag);
+                }
             }
 
             return group.size() > 0 ? group : null;

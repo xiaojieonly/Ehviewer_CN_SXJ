@@ -34,6 +34,8 @@
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="80dp"
         android:layout_marginEnd="16dp"
+        android:elevation="4dp"
+        android:translationZ="4dp"
         android:textColor="#FF0000"
         android:textSize="18sp"
         android:textStyle="bold"

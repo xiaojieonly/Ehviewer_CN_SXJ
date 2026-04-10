@@ -243,6 +243,11 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
+            
+            // 根据选择模式动态设置点击监听器
+            EasyRecyclerView recyclerView = mCallback.getRecyclerView();
+            boolean isInCustomChoice = recyclerView != null && recyclerView.isInCustomChoice();
+            holder.setClickListeners(!isInCustomChoice);
         } catch (Exception e) {
             Analytics.recordException(e);
         }
@@ -742,14 +747,28 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             percent = itemView.findViewById(R.id.percent);
             speed = itemView.findViewById(R.id.speed);
 
-            // TODO cancel on click listener when select items
-            thumb.setOnClickListener(this);
-            start.setOnClickListener(this);
-            stop.setOnClickListener(this);
+            // 初始设置点击监听器
+            setClickListeners(true);
 
             boolean isDarkTheme = !AttrResources.getAttrBoolean(mScene.getEHContext(), androidx.appcompat.R.attr.isLightTheme);
             Ripple.addRipple(start, isDarkTheme);
             Ripple.addRipple(stop, isDarkTheme);
+        }
+
+        /**
+         * 动态启用或禁用点击监听器
+         * @param enabled true表示启用点击，false表示禁用（在选择模式下）
+         */
+        private void setClickListeners(boolean enabled) {
+            if (enabled) {
+                thumb.setOnClickListener(this);
+                start.setOnClickListener(this);
+                stop.setOnClickListener(this);
+            } else {
+                thumb.setOnClickListener(null);
+                start.setOnClickListener(null);
+                stop.setOnClickListener(null);
+            }
         }
 
         @Override

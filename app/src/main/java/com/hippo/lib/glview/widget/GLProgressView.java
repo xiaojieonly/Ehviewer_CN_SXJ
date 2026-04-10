@@ -19,6 +19,7 @@ package com.hippo.lib.glview.widget;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
@@ -80,17 +81,19 @@ public class GLProgressView extends GLView {
     private String mPageText = "";
     private String mPercentText = "";
     private String mSpeedText = "";
+
+    private int mBgColor = Color.TRANSPARENT;
     private BitmapTexture mPageTexture = null;
     private BitmapTexture mPercentTexture = null;
     private BitmapTexture mSpeedTexture = null;
 
     // Text style constants as fraction of view size for proper scaling
-    private static final float LARGE_TEXT_FRACTION = 0.22f;   // Percentage text ~22% of view
-    private static final float SMALL_TEXT_FRACTION = 0.11f;   // Page number and speed ~11% of view
+    private static final float INDEX_TEXT_FRACTION = 0.11f;   // Page index text
+    private static final float DETAIL_TEXT_RATIO = 2.0f / 3.0f; // Progress/speed is 2/3 of index text
     
     // Computed pixel values from onLayout
-    private float mLargeTextPx = 0f;
-    private float mSmallTextPx = 0f;
+    private float mIndexTextPx = 0f;
+    private float mDetailTextPx = 0f;
     
     private int mTextColor = Color.WHITE;
     private boolean mShowDetailedProgress = false;
@@ -98,7 +101,7 @@ public class GLProgressView extends GLView {
     public GLProgressView() {
         mGLPaint = new GLPaint();
         mGLPaint.setColor(Color.WHITE);
-        mGLPaint.setBackgroundColor(Color.BLACK);
+        mGLPaint.setBackgroundColor(Color.TRANSPARENT);
         mAnimations = new ArrayList<>();
 
         setupAnimations();
@@ -189,8 +192,8 @@ public class GLProgressView extends GLView {
         
         // Compute text sizes proportional to view dimensions
         int minDim = Math.min(width, height);
-        mLargeTextPx = minDim * LARGE_TEXT_FRACTION;
-        mSmallTextPx = minDim * SMALL_TEXT_FRACTION;
+        mIndexTextPx = minDim * INDEX_TEXT_FRACTION;
+        mDetailTextPx = mIndexTextPx * DETAIL_TEXT_RATIO;
         
         // Invalidate textures so they're recreated with new sizes
         if (mShowDetailedProgress) {
@@ -205,6 +208,7 @@ public class GLProgressView extends GLView {
     }
 
     public void setBgColor(int color) {
+        mBgColor = color;
         mGLPaint.setBackgroundColor(color);
         invalidate();
     }
@@ -304,7 +308,7 @@ public class GLProgressView extends GLView {
         }
     }
 
-    private BitmapTexture createTextTexture(String text, float textSize, boolean bold,int mAscent) {
+    private BitmapTexture createTextTexture(String text, float textSize, boolean bold) {
         if (text == null || text.isEmpty()) {
             return null;
         }
@@ -323,8 +327,10 @@ public class GLProgressView extends GLView {
 
         Bitmap bitmap = Bitmap.createBitmap(textWidth, textHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-        canvas.translate(0, -fm.ascent+mAscent);
+        // Draw from ascent to baseline to avoid clipping for symbols like '.', '%', '/'.
+        canvas.translate(0, -fm.ascent);
         canvas.drawText(text, 0, 0, paint);
+
 
         BitmapTexture texture = new BitmapTexture(bitmap);
         return texture;
@@ -333,17 +339,17 @@ public class GLProgressView extends GLView {
     private void ensureTextTextures() {
         if (!mShowDetailedProgress) return;
         // Skip if layout hasn't happened yet (sizes would be 0)
-        if (mLargeTextPx <= 0f || mSmallTextPx <= 0f) return;
+        if (mIndexTextPx <= 0f || mDetailTextPx <= 0f) return;
 
         // Recreate textures if text content changed
         if (mPercentTexture == null && !mPercentText.isEmpty()) {
-            mPercentTexture = createTextTexture(mPercentText, mLargeTextPx, true,0);
+            mPercentTexture = createTextTexture(mPercentText, mDetailTextPx, true);
         }
         if (mPageTexture == null && !mPageText.isEmpty()) {
-            mPageTexture = createTextTexture(mPageText, mSmallTextPx, false,(int)(mSmallTextPx-mLargeTextPx));
+            mPageTexture = createTextTexture(mPageText, mIndexTextPx, false);
         }
         if (mSpeedTexture == null && !mSpeedText.isEmpty()) {
-            mSpeedTexture = createTextTexture(mSpeedText, mSmallTextPx/2, false,(int)(mSmallTextPx-mLargeTextPx));
+            mSpeedTexture = createTextTexture(mSpeedText, mDetailTextPx, false);
         }
     }
 

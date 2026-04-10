@@ -2035,6 +2035,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             super.onPageSucceed(index, image);
             mLoadingPages.remove(index);
             android.util.Log.d(TAG, "[AutoFlip] Page " + index + " loaded successfully");
+            android.util.Log.d(TAG, "[ImageLoad] " + getImageLogInfo(index, image));
             // Show play button if loading is complete and slider is visible
             updateAutoTransferVisibility();
         }
@@ -2044,8 +2045,51 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             super.onPageFailed(index, error);
             mLoadingPages.remove(index);
             android.util.Log.d(TAG, "[AutoFlip] Page " + index + " loading failed: " + error);
+            android.util.Log.d(TAG, "[ImageLoad] " + getImageLogInfo(index, null) + " error=" + error);
             // Show play button if loading is complete and slider is visible
             updateAutoTransferVisibility();
+        }
+
+        private String getImageLogInfo(int index, com.hippo.lib.glview.image.ImageWrapper image) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("index=").append(index);
+            if (mGalleryProvider != null) {
+                String filename = mGalleryProvider.getImageFilename(index);
+                String extension = mGalleryProvider.getImageExtension(index);
+                if (TextUtils.isEmpty(extension) && filename != null) {
+                    int dotIndex = filename.lastIndexOf('.');
+                    if (dotIndex >= 0 && dotIndex < filename.length() - 1) {
+                        extension = filename.substring(dotIndex).toLowerCase();
+                    }
+                }
+                String fileDisplay = filename != null ? filename : "<unknown>";
+                if (!TextUtils.isEmpty(extension) && !fileDisplay.endsWith(extension)) {
+                    fileDisplay += extension;
+                }
+                sb.append(", file=").append(fileDisplay);
+                String imagePath = null;
+                if (mGalleryProvider instanceof com.hippo.ehviewer.gallery.GalleryProvider2) {
+                    imagePath = ((com.hippo.ehviewer.gallery.GalleryProvider2) mGalleryProvider).getImagePath(index);
+                }
+                if (TextUtils.isEmpty(imagePath) && !TextUtils.isEmpty(fileDisplay)) {
+                    imagePath = fileDisplay;
+                }
+                sb.append(", path=").append(imagePath != null ? imagePath : "<unknown>");
+                sb.append(", type=").append(TextUtils.isEmpty(extension) ? "<unknown>" : extension);
+                if (mGalleryProvider instanceof EhGalleryProvider) {
+                    long contentLength = ((EhGalleryProvider) mGalleryProvider).getPageContentLength(index);
+                    if (contentLength > 0) {
+                        sb.append(", size=").append(contentLength).append("B");
+                    }
+                }
+            }
+            if (image != null) {
+                Boolean animated = image.getAnimated();
+                sb.append(", animated=").append(animated != null ? animated : "<unknown>");
+                sb.append(", delay=").append(image.getDelay()).append("ms");
+                sb.append(", resolution=").append(image.getWidth()).append("x").append(image.getHeight());
+            }
+            return sb.toString();
         }
     }
 

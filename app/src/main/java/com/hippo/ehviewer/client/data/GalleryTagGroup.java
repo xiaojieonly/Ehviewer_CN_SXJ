@@ -20,15 +20,38 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-// TODO Add url field?
 public class GalleryTagGroup implements Parcelable {
 
     public String groupName;
     private final ArrayList<String> mTagList;
+    private final Map<String, String> mTagUrlMap; // 存储标签名到URL的映射
 
     public void addTag(String tag) {
         mTagList.add(tag);
+    }
+
+    /**
+     * 添加标签及其对应的URL
+     * @param tag 标签名称
+     * @param url 标签链接
+     */
+    public void addTagWithUrl(String tag, String url) {
+        mTagList.add(tag);
+        if (url != null && !url.isEmpty()) {
+            mTagUrlMap.put(tag, url);
+        }
+    }
+
+    /**
+     * 获取标签的URL
+     * @param tag 标签名称
+     * @return 标签URL，如果没有则返回null
+     */
+    public String getTagUrl(String tag) {
+        return mTagUrlMap.get(tag);
     }
 
     public int size() {
@@ -48,15 +71,30 @@ public class GalleryTagGroup implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.groupName);
         dest.writeStringList(this.mTagList);
+        // 写入标签URL映射
+        dest.writeInt(mTagUrlMap.size());
+        for (Map.Entry<String, String> entry : mTagUrlMap.entrySet()) {
+            dest.writeString(entry.getKey());
+            dest.writeString(entry.getValue());
+        }
     }
 
     public GalleryTagGroup() {
         mTagList = new ArrayList<>();
+        mTagUrlMap = new HashMap<>();
     }
 
     protected GalleryTagGroup(Parcel in) {
         this.groupName = in.readString();
         this.mTagList = in.createStringArrayList();
+        // 读取标签URL映射
+        this.mTagUrlMap = new HashMap<>();
+        int mapSize = in.readInt();
+        for (int i = 0; i < mapSize; i++) {
+            String key = in.readString();
+            String value = in.readString();
+            mTagUrlMap.put(key, value);
+        }
     }
 
     public static final Creator<GalleryTagGroup> CREATOR = new Creator<GalleryTagGroup>() {

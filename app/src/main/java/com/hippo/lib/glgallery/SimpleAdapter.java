@@ -15,11 +15,15 @@
  */
 package com.hippo.lib.glgallery;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.hippo.lib.glview.image.ImageTexture;
 import com.hippo.lib.glview.image.ImageWrapper;
 import com.hippo.lib.glview.view.GLRootView;
+
+import java.util.Locale;
 
 public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvider.Listener {
 
@@ -76,7 +80,6 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         }
         view.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
         view.setProgressText(null);
-        view.setSpeedText(null);
         view.setError(null, null);
     }
 
@@ -115,7 +118,6 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             }
             page.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
             page.setProgressText(null);
-            page.setSpeedText(null);
             page.setError(null, null);
         }
     }
@@ -128,14 +130,18 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             page.setImage(null);
             
             // Check if detailed progress provider is available
-            // Use legacy mode: page number -> progress circle -> progress percent -> speed text
             if (mDetailedProgressProvider != null) {
-                page.setShowDetailedProgress(false);
+                page.setShowDetailedProgress(true);
                 String[] details = mDetailedProgressProvider.getDetailedProgress(index, percent);
                 if (details != null && details.length >= 3) {
-                    page.setDetailedProgress(index + 1, details[1], details[2]);
+                    String progressText = normalizeProgressText(details[1]);
+                    String speedText = normalizeSpeedText(details[2]);
+                    Log.d("SimpleAdapter", "Detailed progress: page=" + (index + 1)
+                            + " progress=" + progressText + " speed=" + speedText);
+                    page.setDetailedProgress(index + 1, progressText, speedText);
                 }
             } else {
+                page.setShowDetailedProgress(false);
                 if (mShowIndex) {
                     page.setPage(index + 1);
                 } else {
@@ -169,7 +175,6 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 }
                 page.setProgress(GalleryPageView.PROGRESS_GONE);
                 page.setProgressText(null);
-                page.setSpeedText(null);
                 page.setError(null, null);
             } else {
                 // The image is recycled, request again.
@@ -192,7 +197,6 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             }
             page.setProgress(GalleryPageView.PROGRESS_GONE);
             page.setProgressText(null);
-            page.setSpeedText(null);
             page.setError(error, mGalleryView);
         }
     }
@@ -203,6 +207,36 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         if (page != null) {
             mProvider.request(index);
         }
+    }
+
+    private String normalizeProgressText(String progressText) {
+        if (progressText == null) {
+            return "";
+        }
+        String text = progressText.trim();
+        if (!text.isEmpty() && !text.endsWith("%")) {
+            text += "%";
+        }
+        return text;
+    }
+
+    private String normalizeSpeedText(String speedText) {
+        if (speedText == null) {
+            return "";
+        }
+        String text = speedText.trim();
+        if (text.isEmpty()) {
+            return "";
+        }
+        // Normalize common unit variants so glyphs are always available in text texture.
+        text = text.replace("KiB/s", "KB/s")
+                .replace("MiB/s", "MB/s")
+                .replace("GiB/s", "GB/s");
+        text = text.replace("kb/s", "KB/s")
+                .replace("mb/s", "MB/s")
+                .replace("gb/s", "GB/s")
+                .replace("b/s", "B/s");
+        return text.toUpperCase(Locale.US).replace("/S", "/s");
     }
 
     private GalleryPageView findPageByIndex(int index) {

@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.gallery;
 
+import android.net.Uri;
 import android.os.Process;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -118,6 +119,21 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
     public String getImageFilename(int index) {
         // TODO
         return Integer.toString(index);
+    }
+
+    @Nullable
+    @Override
+    public String getImagePath(int index) {
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return null;
+        }
+        UniFile uniFile = fileList[index];
+        if (uniFile == null) {
+            return null;
+        }
+        Uri uri = uniFile.getUri();
+        return uri == null ? null : uri.getPath();
     }
     
     @NonNull

@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import androidx.preference.Preference;
 import android.util.AttributeSet;
 
+import com.hippo.ehviewer.BuildConfig;
 import com.hippo.ehviewer.R;
 
 public class VersionPreference extends Preference {
@@ -52,6 +53,6 @@ public class VersionPreference extends Preference {
             e.printStackTrace();
             version = context.getString(R.string.error_unknown);
         }
-        setSummary(version);
+        setSummary(context.getString(R.string.settings_about_version_summary, version, BuildConfig.BUILD_TIME));
     }
 }

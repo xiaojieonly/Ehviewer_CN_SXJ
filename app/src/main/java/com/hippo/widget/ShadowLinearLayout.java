@@ -49,12 +49,15 @@ public class ShadowLinearLayout extends LinearLayout {
     }
 
     private void init(Context context) {
-        // TODO not only 2dp
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             setOutlineProvider(ViewOutlineProvider.BOUNDS);
             setElevation(LayoutUtils.dp2pix(context, 2));
         } else {
-            setShadow((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_2dp)); // TODO draktheme
+            try {
+                setShadow((NinePatchDrawable) context.getResources().getDrawable(R.drawable.shadow_2dp));
+            } catch (Exception e) {
+                // 如果阴影资源不存在，忽略并继续
+            }
         }
     }
 

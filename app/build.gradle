@@ -33,6 +33,7 @@ android {
         versionCode 111
         versionName "2.0.1.6"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField 'String', 'BUILD_TIME', "\"${new Date().format('yyyy-MM-dd HH:mm:ss')}\""
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
         multiDexEnabled true

@@ -160,8 +160,22 @@ public class LocalGalleryAdapter extends RecyclerView.Adapter<LocalGalleryAdapte
         }
         
         private void loadRealThumbnail(LocalGalleryInfo gallery) {
-            // 简化版本：暂时不加载缩略图
-            // TODO: 实现完整的缩略图加载功能
+            if (gallery.thumb == null || gallery.thumb.isEmpty()) {
+                return;
+            }
+            
+            // 异步加载第一张图片作为缩略图
+            new Thread(() -> {
+                try {
+                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(gallery.thumb);
+                    if (bitmap != null) {
+                        android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+                        mainHandler.post(() -> mThumb.setImageBitmap(bitmap));
+                    }
+                } catch (Exception e) {
+                    // 加载失败，保持占位符
+                }
+            }).start();
         }
     }
 }

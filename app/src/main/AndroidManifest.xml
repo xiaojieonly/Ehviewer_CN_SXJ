@@ -186,6 +186,11 @@
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Settings" />
         <activity
+            android:name=".ui.SystemInfoActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_about_system_info"
+            android:theme="@style/AppTheme.Toolbar" />
+        <activity
             android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/excluded_languages"

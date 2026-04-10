@@ -101,7 +101,6 @@ public class DownloadLabelDraw {
             labels.add(raw.getLabel());
         }
 
-        // TODO handle download label items update
         final List<DownloadLabelItem> downloadLabelList = new ArrayList<>();
 
         for (int i = 0; i < labels.size(); i++) {
@@ -153,7 +152,6 @@ public class DownloadLabelDraw {
             labels.add(raw.getLabel());
         }
 
-        // TODO handle download label items update
         final List<DownloadLabelItem> downloadLabelList = new ArrayList<>();
 
         for (int i = 0; i < labels.size(); i++) {
@@ -165,31 +163,15 @@ public class DownloadLabelDraw {
             downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getLabelCount(label)));
         }
 
-        DownloadLabelAdapter adapter = new DownloadLabelAdapter(Objects.requireNonNull(scene.getEHContext()), R.layout.item_download_label_list, downloadLabelList);
-        listView.setAdapter(adapter);
-
-        listView.setOnItemClickListener((parent, view1, position, id) -> {
-            if (scene.searching) {
-                Toast.makeText(context, R.string.download_searching, Toast.LENGTH_LONG).show();
-                return;
-            }
-            String label;
-            if (position == 0) {
-                label = null;
+        // 更新适配器而不是重新创建，以保持列表状态
+        if (listView != null) {
+            DownloadLabelAdapter adapter = (DownloadLabelAdapter) listView.getAdapter();
+            if (adapter != null) {
+                adapter.updateData(downloadLabelList);
             } else {
-                label = labels.get(position);
+                adapter = new DownloadLabelAdapter(Objects.requireNonNull(scene.getEHContext()), R.layout.item_download_label_list, downloadLabelList);
+                listView.setAdapter(adapter);
             }
-            if (!ObjectUtils.equal(label, scene.mLabel)) {
-                scene.mLabel = label;
-                scene.updateForLabel();
-                if (scene.searchKey != null && !scene.searchKey.isEmpty()) {
-                    scene.startSearching();
-                } else {
-                    scene.updateView();
-                }
-                scene.closeDrawer(Gravity.RIGHT);
-            }
-
-        });
+        }
     }
 }

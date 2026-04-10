@@ -797,6 +797,9 @@
     <string name="settings_privacy_enable_analytics">Enable analytics</string>
     <string name="settings_privacy_about_analytics">About analytics</string>
     <string name="settings_about_version">Build version</string>
+    <string name="settings_about_version_summary">Version %1$s\nBuild time %2$s</string>
+    <string name="settings_about_system_info">System info</string>
+    <string name="settings_about_system_info_summary">View Android, device, WebView and build details</string>
     <string name="settings_about_check_for_updates">Check for updates</string>
     <string name="settings_close_automatic_updates">Turn off automatic updates</string>
     <string name="settings_about_beta_update_channel">Beta update channel</string>
@@ -1200,6 +1203,7 @@
     <string name="wifi_connecting_to_custom_ip">Trying to connect to specified IP: %1$s\nLocal IP:%2$s</string>
     <string name="clean_invalid_download_error_processing_directory">Error processing directory: %1$s - %2$s</string>
     <string name="background_task_management">Background Tasks</string>
+    <string name="background_task_management_with_count">Background Tasks (%1$d active)</string>
     <string name="background_task_detail">Task Details</string>
     <string name="active_tasks">Active Tasks</string>
     <string name="completed_tasks">Completed Tasks</string>
