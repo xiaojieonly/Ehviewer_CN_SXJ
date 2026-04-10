@@ -25,6 +25,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.lib.yorozuya.ViewUtils;
 
 public final class WarningScene extends SolidScene implements View.OnClickListener {
@@ -45,6 +46,7 @@ public final class WarningScene extends SolidScene implements View.OnClickListen
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_warning, container, false);
+        WindowInsetHelper.applySystemBarsToPadding(view);
 
         mReject = ViewUtils.$$(view, R.id.reject);
         mAccept = ViewUtils.$$(view, R.id.accept);

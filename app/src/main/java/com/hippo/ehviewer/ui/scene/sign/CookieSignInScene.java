@@ -43,6 +43,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.client.EhCookieStore;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.scene.SolidScene;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
@@ -85,6 +86,7 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     public View onCreateView2(LayoutInflater inflater,
                               @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_cookie_sign_in, container, false);
+        WindowInsetHelper.applySystemBarsToPadding(view);
         mIpbMemberIdLayout = (TextInputLayout) ViewUtils.$$(view, R.id.ipb_member_id_layout);
         mIpbMemberId = mIpbMemberIdLayout.getEditText();
         AssertUtils.assertNotNull(mIpbMemberId);

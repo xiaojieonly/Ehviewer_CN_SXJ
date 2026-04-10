@@ -30,6 +30,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 
 public abstract class ToolbarScene extends BaseScene {
 
@@ -57,6 +58,7 @@ public abstract class ToolbarScene extends BaseScene {
             return null;
         } else {
             mToolbar = toolbar;
+            installToolbarInsets(toolbar, contentPanel);
             contentPanel.addView(contentView, 0);
             return view;
         }
@@ -66,6 +68,15 @@ public abstract class ToolbarScene extends BaseScene {
     public void onDestroyView() {
         super.onDestroyView();
         mToolbar = null;
+    }
+
+    protected void installToolbarInsets(@Nullable Toolbar toolbar, @Nullable View contentPanel) {
+        if (toolbar != null) {
+            WindowInsetHelper.applyTopSystemBarToPadding(toolbar);
+        }
+        if (contentPanel != null) {
+            WindowInsetHelper.applyBottomSystemBarToPadding(contentPanel);
+        }
     }
 
     @Override

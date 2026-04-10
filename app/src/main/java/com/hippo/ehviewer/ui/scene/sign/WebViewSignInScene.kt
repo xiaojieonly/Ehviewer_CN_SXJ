@@ -21,6 +21,7 @@ import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper
 import com.hippo.ehviewer.ui.scene.SolidScene
 import com.hippo.lib.yorozuya.AssertUtils
 import com.hippo.util.AppHelper
@@ -78,6 +79,7 @@ class WebViewSignInScene : SolidScene() {
         //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
 //        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
         mWebView!!.loadUrl(EhUrl.URL_SIGN_IN)
+        WindowInsetHelper.applySystemBarsToPadding(mWebView!!)
         return mWebView
     }
 

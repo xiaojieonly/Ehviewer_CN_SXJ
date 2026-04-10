@@ -30,6 +30,7 @@ import com.google.android.flexbox.FlexboxLayout;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -143,6 +144,11 @@ public class TagSelectorActivity extends EhActivity {
 
     private void initView() {
         Toolbar toolbar = findViewById(R.id.toolbar);
+        WindowInsetHelper.applyTopSystemBarToPadding(toolbar);
+        View bottomPanel = findViewById(R.id.bottom_panel);
+        if (bottomPanel != null) {
+            WindowInsetHelper.applyBottomSystemBarToPadding(bottomPanel);
+        }
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);

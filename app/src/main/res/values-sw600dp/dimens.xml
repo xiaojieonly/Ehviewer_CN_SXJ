@@ -29,6 +29,9 @@
 
     <!-- 24dp - 4dp, 4dp for card padding -->
     <dimen name="gallery_search_bar_margin_h">20dp</dimen>
+    <dimen name="foldable_dual_pane_spacing">32dp</dimen>
+    <dimen name="foldable_content_max_width">1120dp</dimen>
+    <dimen name="settings_headers_width">360dp</dimen>
 
     <!-- 8dp - 4dp, 4dp for card padding -->
     <dimen name="search_layout_interval">4dp</dimen>

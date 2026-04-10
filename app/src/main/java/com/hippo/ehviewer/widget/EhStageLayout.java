@@ -19,7 +19,10 @@ package com.hippo.ehviewer.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
+import androidx.core.view.WindowInsetsCompat;
+
 import com.hippo.drawerlayout.DrawerLayoutChild;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.scene.StageLayout;
 
 public class EhStageLayout extends StageLayout implements DrawerLayoutChild {
@@ -47,11 +50,20 @@ public class EhStageLayout extends StageLayout implements DrawerLayoutChild {
 
     @Override
     public int getAdditionalTopMargin() {
-        return mWindowPaddingTop;
+        return 0;
     }
 
     @Override
     public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
+        return 0;
+    }
+
+    public void applyStageInsets() {
+        WindowInsetHelper.applySystemBarsToPadding(this);
+    }
+
+    public void applyDrawerWindowPadding(WindowInsetsCompat insets) {
+        onGetWindowPadding(insets.getInsets(WindowInsetsCompat.Type.systemBars()).top,
+                insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom);
     }
 }

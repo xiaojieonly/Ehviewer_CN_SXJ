@@ -27,6 +27,7 @@ import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.text.Html;
 import com.hippo.text.LinkMovementMethod2;
 import com.hippo.lib.yorozuya.ViewUtils;
@@ -48,6 +49,7 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_analytics, container, false);
+        WindowInsetHelper.applySystemBarsToPadding(view);
 
         mReject = ViewUtils.$$(view, R.id.reject);
         mAccept = ViewUtils.$$(view, R.id.accept);

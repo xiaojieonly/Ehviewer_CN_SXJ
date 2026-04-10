@@ -22,15 +22,38 @@
     <com.hippo.ehviewer.widget.EhDrawerLayout
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
-        <com.hippo.ehviewer.widget.EhStageLayout
-            android:id="@+id/fragment_container"
+        <LinearLayout
+            android:id="@+id/adaptive_content_host"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <com.hippo.ehviewer.widget.EhStageLayout
+                android:id="@+id/fragment_container"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <View
+                android:id="@+id/fold_divider"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="?attr/dividerColor"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/secondary_fragment_container"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?android:attr/windowBackground"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <com.hippo.ehviewer.widget.EhNavigationView
+            android:id="@+id/navigation_host"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="left"
@@ -52,7 +75,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="?android:navigationBarColor"
+                        android:background="?android:attr/windowBackground"
                         android:paddingBottom="48dip"
                         android:scrollbars="vertical"
                         app:headerLayout="@layout/nav_header_main"
@@ -81,11 +104,13 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
+                            android:background="?android:attr/windowBackground"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center_vertical|center_horizontal"
                             android:minWidth="88dip"
                             android:minHeight="48dip"
+                            android:textColor="?attr/colorAccent"
                             app:insetForeground="@android:color/transparent" />
                     </LinearLayout>
                 </FrameLayout>

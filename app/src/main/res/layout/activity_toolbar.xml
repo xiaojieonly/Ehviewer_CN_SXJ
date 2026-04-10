@@ -15,6 +15,8 @@
   ~ limitations under the License.
   -->
 
-<merge>
-    <include layout="@layout/scene_toolbar"/>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <include
+        android:id="@+id/toolbar_host"
+        layout="@layout/scene_toolbar" />
 </merge>

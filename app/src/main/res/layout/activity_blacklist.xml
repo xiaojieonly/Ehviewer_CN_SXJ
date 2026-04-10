@@ -20,20 +20,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hippo.easyrecyclerview.EasyRecyclerView
-        android:id="@+id/recycler_view1"
+    <com.hippo.ehviewer.widget.BoundedFrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/keyline_margin"/>
-
-    <TextView
-        android:id="@+id/tip"
-        android:layout_width="228dp"
-        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center_horizontal"
-        android:drawablePadding="16dp"
-        android:text="@string/no_blicklist"
-        style="@style/TextAppearance.AppCompat.Medium"/>
+        android:maxWidth="@dimen/foldable_content_max_width">
+
+        <com.hippo.easyrecyclerview.EasyRecyclerView
+            android:id="@+id/recycler_view1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/keyline_margin"/>
+
+        <TextView
+            android:id="@+id/tip"
+            android:layout_width="228dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawablePadding="16dp"
+            android:gravity="center_horizontal"
+            android:text="@string/no_blicklist"
+            style="@style/TextAppearance.AppCompat.Medium"/>
+    </com.hippo.ehviewer.widget.BoundedFrameLayout>
 
 </FrameLayout>

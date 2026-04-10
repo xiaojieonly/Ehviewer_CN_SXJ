@@ -19,14 +19,19 @@ package com.hippo.ehviewer.ui;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 
 public abstract class ToolbarActivity extends EhActivity {
+
+    private boolean toolbarChromeInstalled;
 
     @Override
     protected int getThemeResId(int theme) {
@@ -43,23 +48,43 @@ public abstract class ToolbarActivity extends EhActivity {
 
     @Override
     public void setContentView(@LayoutRes int layoutResID) {
-        super.setContentView(R.layout.activity_toolbar);
+        ensureToolbarChrome();
         getLayoutInflater().inflate(layoutResID, (ViewGroup) findViewById(R.id.content_panel), true);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        installToolbarInsets();
     }
 
     @Override
     public void setContentView(View view) {
-        super.setContentView(R.layout.activity_toolbar);
+        ensureToolbarChrome();
         ((ViewGroup) findViewById(R.id.content_panel)).addView(view);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        installToolbarInsets();
     }
 
     @Override
     public void setContentView(View view, ViewGroup.LayoutParams params) {
-        super.setContentView(R.layout.activity_toolbar);
+        ensureToolbarChrome();
         ((ViewGroup) findViewById(R.id.content_panel)).addView(view, params);
+        installToolbarInsets();
+    }
+
+    private void ensureToolbarChrome() {
+        if (toolbarChromeInstalled) {
+            return;
+        }
+        super.setContentView(R.layout.activity_toolbar);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        toolbarChromeInstalled = true;
+    }
+
+    protected void installToolbarInsets() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        View contentPanel = findViewById(R.id.content_panel);
+        if (toolbar != null) {
+            WindowInsetHelper.applyTopSystemBarToPadding(toolbar);
+        }
+        if (contentPanel != null) {
+            WindowInsetHelper.applyBottomSystemBarToPadding(contentPanel);
+        }
     }
 
     public void setNavigationIcon(@DrawableRes int resId) {

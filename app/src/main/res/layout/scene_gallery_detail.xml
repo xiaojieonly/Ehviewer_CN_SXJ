@@ -17,36 +17,44 @@
 <!--内容详情页-->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
-        android:id="@+id/scroll_view"
+    <com.hippo.ehviewer.widget.BoundedFrameLayout
+        android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="none"
-        android:overScrollMode="never">
-
-        <include
-            layout="@layout/gallery_detail_content"/>
-
-    </ScrollView>
-
-    <com.hippo.widget.ProgressView
-        android:id="@+id/progress_view"
-        style="@style/ProgressView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"/>
-
-    <TextView
-        android:id="@+id/tip"
-        android:layout_width="228dp"
-        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center_horizontal"
-        android:drawablePadding="8dp"
-        style="@style/TextAppearance.AppCompat.Medium"/>
+        android:maxWidth="@dimen/foldable_content_max_width">
+
+        <ScrollView
+            android:id="@+id/scroll_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <include
+                layout="@layout/gallery_detail_content"/>
+
+        </ScrollView>
+
+        <com.hippo.widget.ProgressView
+            android:id="@+id/progress_view"
+            style="@style/ProgressView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
+
+        <TextView
+            android:id="@+id/tip"
+            android:layout_width="228dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawablePadding="8dp"
+            android:gravity="center_horizontal"
+            style="@style/TextAppearance.AppCompat.Medium"/>
+    </com.hippo.ehviewer.widget.BoundedFrameLayout>
 
 </FrameLayout>

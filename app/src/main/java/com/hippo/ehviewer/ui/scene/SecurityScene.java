@@ -33,6 +33,7 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.SetSecurityActivity;
 import com.hippo.hardware.ShakeDetector;
 import com.hippo.widget.lockpattern.LockPatternUtils;
@@ -171,6 +172,7 @@ public class SecurityScene extends SolidScene implements
     public View onCreateView2(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_security, container, false);
+        WindowInsetHelper.applySystemBarsToPadding(view);
 
         mPatternView = (LockPatternView) ViewUtils.$$(view, R.id.pattern_view);
         mPatternView.setOnPatternListener(this);

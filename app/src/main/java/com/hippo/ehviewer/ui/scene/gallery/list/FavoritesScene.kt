@@ -41,6 +41,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -77,6 +79,7 @@ import com.hippo.ehviewer.ui.dialog.FavoriteListSortDialog
 import com.hippo.ehviewer.ui.scene.BaseScene
 import com.hippo.ehviewer.ui.scene.EhCallback
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper
 import com.hippo.ehviewer.widget.EhDrawerLayout
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper
 import com.hippo.ehviewer.widget.JumpDateSelector
@@ -286,12 +289,29 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mRecyclerView!!.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM)
         mRecyclerView!!.setCustomCheckedListener(this)
 
-        fastScroller.setPadding(
-            fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
-            fastScroller.getPaddingRight(), fastScroller.getPaddingBottom()
-        )
-
-        refreshLayout.setHeaderTranslationY(paddingTopSB.toFloat())
+        WindowInsetHelper.applyTopSystemBarToMargin(mSearchBar!!)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val topInset = WindowInsetHelper.resolveInsets(
+                insets,
+                WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.displayCutout()
+            ).top
+            val bottomInset = WindowInsetHelper.resolveInsets(
+                insets,
+                WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.displayCutout()
+            ).bottom
+            val totalTop = paddingTopSB + topInset
+            mRecyclerView?.setPadding(
+                mRecyclerView!!.paddingLeft, totalTop,
+                mRecyclerView!!.paddingRight, bottomInset
+            )
+            fastScroller.setPadding(
+                fastScroller.paddingLeft, totalTop,
+                fastScroller.paddingRight, bottomInset
+            )
+            refreshLayout.setHeaderTranslationY(totalTop.toFloat())
+            insets
+        }
+        ViewCompat.requestApplyInsets(view)
 
         mLeftDrawable = DrawerArrowDrawable(
             context,
@@ -330,6 +350,8 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
             mHasFirstRefresh = true
             mHelper!!.firstRefresh()
         }
+
+        WindowInsetHelper.applyBottomSystemBarToPadding(mFabLayout!!)
 
         guideCollections()
 

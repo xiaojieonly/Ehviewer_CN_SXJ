@@ -45,8 +45,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 //补一下，不然编译不通过
@@ -58,6 +60,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.ViewCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -73,6 +79,8 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUrlOpener;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
+import com.hippo.ehviewer.ui.adaptive.AdaptiveWindowState;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.main.UserImageChange;
 import com.hippo.ehviewer.ui.scene.AnalyticsScene;
 import com.hippo.ehviewer.ui.scene.BaseScene;
@@ -100,12 +108,16 @@ import com.hippo.ehviewer.ui.scene.sign.WebViewSignInScene;
 import com.hippo.ehviewer.ui.splash.SplashActivity;
 import com.hippo.ehviewer.updater.AppUpdater;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
+import com.hippo.ehviewer.widget.EhDrawerView;
+import com.hippo.ehviewer.widget.EhNavigationView;
+import com.hippo.ehviewer.widget.EhStageLayout;
 import com.hippo.ehviewer.widget.LimitsCountView;
 import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.network.Network;
 import com.hippo.scene.Announcer;
 import com.hippo.scene.SceneFragment;
 import com.hippo.scene.StageActivity;
+import com.hippo.scene.TransitionHelper;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
 import com.hippo.util.GifHandler;
@@ -120,6 +132,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -134,11 +147,18 @@ public final class MainActivity extends StageActivity
     private static final int REQUEST_CODE_SETTINGS = 0;
 
     private static final String KEY_NAV_CHECKED_ITEM = "nav_checked_item";
+    private static final String KEY_SECONDARY_SCENE_TAG_LIST = "secondary_scene_tag_list";
 //    private static final String KEY_CLIP_TEXT_HASH_CODE = "clip_text_hash_code";
 
     /*---------------
      Whole life cycle
      ---------------*/
+    @Nullable
+    private LinearLayout mAdaptiveContentHost;
+    @Nullable
+    private View mFoldDivider;
+    @Nullable
+    private FrameLayout mSecondaryContainer;
     @Nullable
     private EhDrawerLayout mDrawerLayout;
     @Nullable
@@ -157,6 +177,8 @@ public final class MainActivity extends StageActivity
     UserImageChange userImageChange;
 
     private int mNavCheckedItem = 0;
+    @NonNull
+    private final ArrayList<String> mSecondarySceneTagList = new ArrayList<>();
 
     GifHandler gifHandler;
 
@@ -390,10 +412,14 @@ public final class MainActivity extends StageActivity
         }
         setContentView(R.layout.activity_main);
 
+        mAdaptiveContentHost = (LinearLayout) ViewUtils.$$(this, R.id.adaptive_content_host);
+        mFoldDivider = ViewUtils.$$(this, R.id.fold_divider);
+        mSecondaryContainer = (FrameLayout) ViewUtils.$$(this, R.id.secondary_fragment_container);
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
         mDrawerLayout.setDrawerListener(this);
         mNavView = (NavigationView) ViewUtils.$$(this, R.id.nav_view);
         mRightDrawer = (FrameLayout) ViewUtils.$$(this, R.id.right_drawer);
+        applyHostWindowInsets();
         View headerLayout = mNavView.getHeaderView(0);
         mAvatar = (AvatarImageView) ViewUtils.$$(headerLayout, R.id.avatar);
         mAvatar.setOnClickListener(l -> onAvatarChange());
@@ -406,8 +432,7 @@ public final class MainActivity extends StageActivity
 
         limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
 
-        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
-//        mDrawerLayout.setStatusBarColor(0);
+        mDrawerLayout.setStatusBarColor(0);
 
         if (mNavView != null) {
 //            if (Settings.isLogin()){
@@ -416,18 +441,8 @@ public final class MainActivity extends StageActivity
 //            }
             mNavView.setNavigationItemSelectedListener(this);
         }
-        if (Settings.getTheme() == 0) {
-            mChangeTheme.setTextColor(getColor(R.color.theme_change_light));
-
-            mChangeTheme.setBackgroundColor(getColor(R.color.white));
-        } else if (Settings.getTheme() == 1) {
-            mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
-            mChangeTheme.setBackgroundColor(getColor(R.color.grey_850));
-        } else {
-            mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
-            mChangeTheme.setBackgroundColor(getColor(R.color.black));
-        }
-
+        // Keep the drawer footer on theme attrs so dark/black presentation tracks the
+        // current drawer/window surface instead of relying on nav-bar recolor branches.
         mChangeTheme.setText(getThemeText());
         mChangeTheme.setOnClickListener(v -> {
             Settings.putTheme(getNextTheme());
@@ -443,6 +458,7 @@ public final class MainActivity extends StageActivity
         } else {
             onRestore(savedInstanceState);
         }
+        syncSecondaryPaneVisibility();
         EhTagDatabase.update(this);
     }
 
@@ -457,6 +473,47 @@ public final class MainActivity extends StageActivity
     private void initUserImage() {
         File headerBackgroundFile = Settings.getUserImageFile(Settings.USER_BACKGROUND_IMAGE);
         initBackgroundImageData(headerBackgroundFile);
+    }
+
+    private void applyHostWindowInsets() {
+        if (mDrawerLayout == null) {
+            return;
+        }
+        final EhStageLayout stageLayout = findViewById(R.id.fragment_container);
+        final EhNavigationView navigationView = findViewById(R.id.navigation_host);
+        final EhDrawerView rightDrawerView = findViewById(R.id.right_drawer);
+        final View secondaryContainer = findViewById(R.id.secondary_fragment_container);
+        // Neither the primary stage nor the secondary container apply system bar padding —
+        // each scene handles its own insets (ToolbarScene, GalleryDetailScene, etc.).
+        // Applying insets on the container AND the scene would double the offset.
+        // Navigation drawer no longer applies top padding — the nav header image
+        // extends behind the transparent status bar instead of showing a white gap.
+        // Right drawer padding is handled by applyDrawerWindowPadding() in the
+        // DrawerLayout's OnApplyWindowInsetsListener below.  Do NOT also call
+        // applyDrawerInsets() here — it sets a competing listener that overwrites
+        // the padding on every subsequent inset dispatch.
+        // Apply bottom nav bar inset to drawer inner content
+        final View innerNavView = findViewById(R.id.nav_view);
+        if (innerNavView != null) {
+            WindowInsetHelper.applyBottomSystemBarToPadding(innerNavView);
+        }
+        final View changeThemeView = findViewById(R.id.change_theme);
+        if (changeThemeView != null) {
+            WindowInsetHelper.applyBottomSystemBarToPadding(changeThemeView);
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(mDrawerLayout, (view, insets) -> {
+            if (stageLayout != null) {
+                stageLayout.applyDrawerWindowPadding(insets);
+            }
+            if (navigationView != null) {
+                navigationView.applyDrawerWindowPadding(insets);
+            }
+            if (rightDrawerView != null) {
+                rightDrawerView.applyDrawerWindowPadding(insets);
+            }
+            return insets;
+        });
+        WindowInsetHelper.dispatch(mDrawerLayout);
     }
 
     private void initBackgroundImageData(File file) {
@@ -601,18 +658,27 @@ public final class MainActivity extends StageActivity
 
     private void onRestore(Bundle savedInstanceState) {
         mNavCheckedItem = savedInstanceState.getInt(KEY_NAV_CHECKED_ITEM);
+        ArrayList<String> secondarySceneTags = savedInstanceState.getStringArrayList(KEY_SECONDARY_SCENE_TAG_LIST);
+        if (secondarySceneTags != null) {
+            mSecondarySceneTagList.clear();
+            mSecondarySceneTagList.addAll(secondarySceneTags);
+        }
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState, @NonNull PersistableBundle outPersistentState) {
-//        super.onSaveInstanceState(outState, outPersistentState);
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
         outState.putInt(KEY_NAV_CHECKED_ITEM, mNavCheckedItem);
+        outState.putStringArrayList(KEY_SECONDARY_SCENE_TAG_LIST, new ArrayList<>(mSecondarySceneTagList));
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
+        mAdaptiveContentHost = null;
+        mFoldDivider = null;
+        mSecondaryContainer = null;
         mDrawerLayout = null;
         mNavView = null;
         mRightDrawer = null;
@@ -634,6 +700,270 @@ public final class MainActivity extends StageActivity
         super.onTransactScene();
 
         checkClipboardUrl();
+    }
+
+    @Override
+    protected void onAdaptiveWindowStateChanged(@NonNull AdaptiveWindowState state) {
+        syncAdaptiveLayout(state);
+    }
+
+    private void syncAdaptiveLayout(@NonNull AdaptiveWindowState state) {
+        if (mAdaptiveContentHost == null || mSecondaryContainer == null || mFoldDivider == null) {
+            return;
+        }
+        if (!state.supportsDualPane() && !mSecondarySceneTagList.isEmpty()) {
+            collapseSecondaryPaneToPrimary();
+        }
+        syncSecondaryPaneVisibility(state);
+    }
+
+    private void syncSecondaryPaneVisibility() {
+        syncSecondaryPaneVisibility(getAdaptiveWindowState());
+    }
+
+    private void syncSecondaryPaneVisibility(@NonNull AdaptiveWindowState state) {
+        final EhStageLayout primaryContainer = findViewById(R.id.fragment_container);
+        if (primaryContainer == null || mSecondaryContainer == null || mFoldDivider == null) {
+            return;
+        }
+
+        final boolean showSecondary = state.supportsDualPane() && !mSecondarySceneTagList.isEmpty();
+        final LinearLayout.LayoutParams primaryParams =
+                (LinearLayout.LayoutParams) primaryContainer.getLayoutParams();
+        final LinearLayout.LayoutParams secondaryParams =
+                (LinearLayout.LayoutParams) mSecondaryContainer.getLayoutParams();
+        final LinearLayout.LayoutParams dividerParams =
+                (LinearLayout.LayoutParams) mFoldDivider.getLayoutParams();
+
+        if (showSecondary) {
+            primaryParams.width = 0;
+            primaryParams.weight = 1f;
+            secondaryParams.width = 0;
+            secondaryParams.weight = 1f;
+            dividerParams.width = state.useHingeDivider()
+                    ? Math.max(state.getDividerWidthPx(), 1)
+                    : getResources().getDimensionPixelOffset(R.dimen.foldable_dual_pane_spacing);
+            dividerParams.weight = 0f;
+            mSecondaryContainer.setVisibility(View.VISIBLE);
+            mFoldDivider.setVisibility(View.VISIBLE);
+        } else {
+            primaryParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            primaryParams.weight = 0f;
+            secondaryParams.width = 0;
+            secondaryParams.weight = 1f;
+            dividerParams.width = 0;
+            dividerParams.weight = 0f;
+            mSecondaryContainer.setVisibility(View.GONE);
+            mFoldDivider.setVisibility(View.GONE);
+        }
+
+        primaryContainer.setLayoutParams(primaryParams);
+        mSecondaryContainer.setLayoutParams(secondaryParams);
+        mFoldDivider.setLayoutParams(dividerParams);
+    }
+
+    private boolean isSecondaryCapableScene(@NonNull Class<?> clazz) {
+        return GalleryDetailScene.class.isAssignableFrom(clazz)
+                || GalleryInfoScene.class.isAssignableFrom(clazz)
+                || GalleryCommentsScene.class.isAssignableFrom(clazz)
+                || GalleryPreviewsScene.class.isAssignableFrom(clazz);
+    }
+
+    private boolean isSecondaryScene(@Nullable SceneFragment scene) {
+        return scene != null && isSecondarySceneTag(scene.getTag());
+    }
+
+    private boolean isSecondarySceneTag(@Nullable String tag) {
+        return tag != null && mSecondarySceneTagList.contains(tag);
+    }
+
+    private boolean shouldOpenInSecondary(@NonNull SceneFragment requestFrom, @NonNull Announcer announcer) {
+        if (!getAdaptiveWindowState().supportsDualPane()) {
+            return false;
+        }
+        if (!isSecondaryCapableScene(announcer.getClazz())) {
+            return false;
+        }
+        if (isSecondaryScene(requestFrom)) {
+            return true;
+        }
+        return requestFrom instanceof GalleryListScene
+                || requestFrom instanceof FavoritesScene
+                || requestFrom instanceof DownloadsScene
+                || requestFrom instanceof HistoryScene
+                || requestFrom instanceof QuickSearchScene
+                || requestFrom instanceof SubscriptionsScene
+                || requestFrom instanceof EhTopListScene
+                || requestFrom instanceof ProgressScene;
+    }
+
+    @Override
+    public void startScene(@NonNull SceneFragment requestFrom, @NonNull Announcer announcer) {
+        if (shouldOpenInSecondary(requestFrom, announcer)) {
+            startSecondaryScene(announcer);
+            return;
+        }
+        if (isSecondaryScene(requestFrom) && !isSecondaryCapableScene(announcer.getClazz())) {
+            clearSecondaryScenes();
+        }
+        super.startScene(requestFrom, announcer);
+    }
+
+    private void startSecondaryScene(@NonNull Announcer announcer) {
+        if (mSecondaryContainer == null) {
+            super.startScene(announcer);
+            return;
+        }
+
+        final Class<?> clazz = announcer.getClazz();
+        final Bundle args = announcer.getArgs();
+        final TransitionHelper tranHelper = announcer.getTranHelper();
+        final FragmentManager fragmentManager = getSupportFragmentManager();
+        final SceneFragment currentScene = getTopSecondaryScene();
+        final int launchMode = getSceneLaunchMode(clazz);
+
+        if (currentScene != null && clazz.isInstance(currentScene)
+                && launchMode == SceneFragment.LAUNCH_MODE_SINGLE_TOP) {
+            if (args != null) {
+                currentScene.onNewArguments(args);
+            }
+            return;
+        }
+
+        final SceneFragment newScene = newSecondarySceneInstance(clazz);
+        newScene.setArguments(args);
+        final String newTag = "secondary_" + System.currentTimeMillis() + "_" + mSecondarySceneTagList.size();
+        mSecondarySceneTagList.add(newTag);
+
+        final FragmentTransaction transaction = fragmentManager.beginTransaction();
+        if (currentScene != null) {
+            if (tranHelper == null || !tranHelper.onTransition(this, transaction, currentScene, newScene)) {
+                clearTransitions(currentScene);
+                clearTransitions(newScene);
+                transaction.setCustomAnimations(R.anim.scene_open_enter, R.anim.scene_open_exit);
+            }
+            if (!currentScene.isDetached()) {
+                transaction.detach(currentScene);
+            }
+        }
+        transaction.add(R.id.secondary_fragment_container, newScene, newTag);
+        transaction.commitAllowingStateLoss();
+
+        if (announcer.getRequestFrom() != null) {
+            newScene.registerRequestFrom(announcer.getRequestFrom(), announcer.getRequestCode());
+        }
+        syncSecondaryPaneVisibility();
+    }
+
+    private void finishSecondaryScene(@NonNull SceneFragment scene, @Nullable TransitionHelper transitionHelper) {
+        final String tag = scene.getTag();
+        if (tag == null) {
+            return;
+        }
+        final int index = mSecondarySceneTagList.indexOf(tag);
+        if (index < 0) {
+            return;
+        }
+
+        final FragmentManager fragmentManager = getSupportFragmentManager();
+        final Fragment fragment = fragmentManager.findFragmentByTag(tag);
+        if (fragment == null) {
+            mSecondarySceneTagList.remove(index);
+            syncSecondaryPaneVisibility();
+            return;
+        }
+
+        Fragment next = null;
+        if (index == mSecondarySceneTagList.size() - 1 && index > 0) {
+            next = fragmentManager.findFragmentByTag(mSecondarySceneTagList.get(index - 1));
+        }
+
+        final FragmentTransaction transaction = fragmentManager.beginTransaction();
+        if (next != null) {
+            if (transitionHelper == null || !transitionHelper.onTransition(this, transaction, fragment, next)) {
+                clearTransitions(fragment);
+                clearTransitions(next);
+                transaction.setCustomAnimations(R.anim.scene_close_enter, R.anim.scene_close_exit);
+            }
+            transaction.attach(next);
+        }
+        transaction.remove(fragment);
+        transaction.commitAllowingStateLoss();
+
+        mSecondarySceneTagList.remove(index);
+        scene.dispatchResultToRequesters(this);
+        syncSecondaryPaneVisibility();
+    }
+
+    private void clearSecondaryScenes() {
+        if (mSecondarySceneTagList.isEmpty()) {
+            syncSecondaryPaneVisibility();
+            return;
+        }
+        final FragmentManager fragmentManager = getSupportFragmentManager();
+        final FragmentTransaction transaction = fragmentManager.beginTransaction();
+        for (String secondaryTag : mSecondarySceneTagList) {
+            final Fragment fragment = fragmentManager.findFragmentByTag(secondaryTag);
+            if (fragment != null) {
+                transaction.remove(fragment);
+            }
+        }
+        transaction.commitAllowingStateLoss();
+        mSecondarySceneTagList.clear();
+        syncSecondaryPaneVisibility();
+    }
+
+    private void collapseSecondaryPaneToPrimary() {
+        final SceneFragment topSecondaryScene = getTopSecondaryScene();
+        final Announcer announcer;
+        if (topSecondaryScene != null) {
+            final Bundle currentArgs = topSecondaryScene.getArguments();
+            announcer = new Announcer(topSecondaryScene.getClass())
+                    .setArgs(currentArgs != null ? new Bundle(currentArgs) : null);
+        } else {
+            announcer = null;
+        }
+        clearSecondaryScenes();
+        if (announcer != null) {
+            super.startScene(announcer);
+        }
+    }
+
+    @Nullable
+    private SceneFragment getTopSecondaryScene() {
+        if (mSecondarySceneTagList.isEmpty()) {
+            return null;
+        }
+        return findSecondarySceneByTag(mSecondarySceneTagList.get(mSecondarySceneTagList.size() - 1));
+    }
+
+    @Nullable
+    private SceneFragment findSecondarySceneByTag(@NonNull String tag) {
+        final Fragment fragment = getSupportFragmentManager().findFragmentByTag(tag);
+        if (fragment instanceof SceneFragment) {
+            return (SceneFragment) fragment;
+        }
+        return null;
+    }
+
+    @NonNull
+    private SceneFragment newSecondarySceneInstance(@NonNull Class<?> clazz) {
+        try {
+            return (SceneFragment) clazz.newInstance();
+        } catch (InstantiationException e) {
+            throw new IllegalStateException("Can't instance " + clazz.getName(), e);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("The constructor of " + clazz.getName() + " is not visible", e);
+        } catch (ClassCastException e) {
+            throw new IllegalStateException(clazz.getName() + " can not cast to scene", e);
+        }
+    }
+
+    private void clearTransitions(@NonNull Fragment fragment) {
+        fragment.setSharedElementEnterTransition(null);
+        fragment.setSharedElementReturnTransition(null);
+        fragment.setEnterTransition(null);
+        fragment.setExitTransition(null);
     }
 
     private void checkClipboardUrl() {
@@ -698,6 +1028,10 @@ public final class MainActivity extends StageActivity
     public void onSceneViewCreated(SceneFragment scene, Bundle savedInstanceState) {
         super.onSceneViewCreated(scene, savedInstanceState);
 
+        if (isSecondaryScene(scene)) {
+            return;
+        }
+
         if (scene instanceof BaseScene && mRightDrawer != null && mDrawerLayout != null) {
             BaseScene baseScene = (BaseScene) scene;
             mRightDrawer.removeAllViews();
@@ -716,10 +1050,40 @@ public final class MainActivity extends StageActivity
     public void onSceneViewDestroyed(SceneFragment scene) {
         super.onSceneViewDestroyed(scene);
 
+        if (isSecondaryScene(scene)) {
+            return;
+        }
+
         if (scene instanceof BaseScene) {
             BaseScene baseScene = (BaseScene) scene;
             baseScene.destroyDrawerView();
         }
+    }
+
+    @Override
+    public void finishScene(SceneFragment scene, TransitionHelper transitionHelper) {
+        if (isSecondaryScene(scene)) {
+            finishSecondaryScene(scene, transitionHelper);
+            return;
+        }
+        super.finishScene(scene, transitionHelper);
+    }
+
+    @Override
+    public int getSceneStackIndex(@NonNull SceneFragment scene) {
+        if (isSecondaryScene(scene)) {
+            return mSecondarySceneTagList.indexOf(scene.getTag());
+        }
+        return super.getSceneStackIndex(scene);
+    }
+
+    @Override
+    public SceneFragment findSceneByTag(String tag) {
+        SceneFragment primaryScene = super.findSceneByTag(tag);
+        if (primaryScene != null) {
+            return primaryScene;
+        }
+        return tag != null ? findSecondarySceneByTag(tag) : null;
     }
 
     public void updateProfile() {
@@ -871,6 +1235,13 @@ public final class MainActivity extends StageActivity
         if (mDrawerLayout != null && (mDrawerLayout.isDrawerOpen(Gravity.LEFT) ||
                 mDrawerLayout.isDrawerOpen(Gravity.RIGHT))) {
             mDrawerLayout.closeDrawers();
+        } else if (!mSecondarySceneTagList.isEmpty()) {
+            SceneFragment topSecondaryScene = getTopSecondaryScene();
+            if (topSecondaryScene != null) {
+                topSecondaryScene.onBackPressed();
+            } else {
+                super.onBackPressed();
+            }
         } else {
             super.onBackPressed();
         }
@@ -926,6 +1297,10 @@ public final class MainActivity extends StageActivity
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + item.getItemId());
+        }
+
+        if (id != R.id.nav_settings) {
+            clearSecondaryScenes();
         }
 
         if (id != R.id.nav_stub && mDrawerLayout != null) {

@@ -24,8 +24,9 @@
     <androidx.appcompat.widget.Toolbar
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/toolbar"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:minHeight="?attr/actionBarSize"
         android:background="?attr/toolbarColor"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:popupTheme="?attr/toolbarPopupTheme"/>

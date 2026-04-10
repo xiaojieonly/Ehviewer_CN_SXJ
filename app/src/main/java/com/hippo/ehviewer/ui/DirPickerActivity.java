@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.ui.adaptive.AdaptiveWindowState;
 import com.hippo.ripple.Ripple;
 import com.hippo.widget.DirExplorer;
 import com.hippo.lib.yorozuya.FileUtils;
@@ -52,11 +53,13 @@ public class DirPickerActivity extends ToolbarActivity
     private View mDefault;
     @Nullable
     private View mOk;
+    private boolean dualPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dir_picker);
+        dualPane = getAdaptiveWindowState().supportsDualPane();
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
 
         mPath = findViewById(R.id.path);
@@ -80,6 +83,14 @@ public class DirPickerActivity extends ToolbarActivity
         mOk.setOnClickListener(this);
 
         mPath.setText(mDirExplorer.getCurrentFile().getPath());
+    }
+
+    @Override
+    protected void onAdaptiveWindowStateChanged(@NonNull AdaptiveWindowState state) {
+        boolean newDualPane = state.supportsDualPane();
+        if (dualPane != newDualPane) {
+            recreate();
+        }
     }
 
     private File onInit() {

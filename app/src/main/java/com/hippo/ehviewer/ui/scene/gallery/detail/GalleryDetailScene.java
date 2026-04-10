@@ -98,6 +98,7 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
 import com.hippo.ehviewer.ui.dialog.ArchiverDownloadDialog;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.GalleryCommentsScene;
@@ -518,6 +519,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         ViewGroup main = (ViewGroup) ViewUtils.$$(view, R.id.main);
         View mainView = ViewUtils.$$(main, R.id.scroll_view);
+        WindowInsetHelper.applyBottomSystemBarToPadding(mainView);
         View progressView = ViewUtils.$$(main, R.id.progress_view);
         mTip = (TextView) ViewUtils.$$(main, R.id.tip);
         mViewTransition = new ViewTransition(mainView, progressView, mTip);
@@ -560,6 +562,14 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mBelowHeader = mainView.findViewById(R.id.below_header);
         View belowHeader = mBelowHeader;
+        View viewHead = mainView.findViewById(R.id.view_head);
+        if (viewHead != null) {
+            WindowInsetHelper.applyTopSystemBarToPadding(viewHead);
+        }
+        View backAction = mainView.findViewById(R.id.back_action);
+        if (backAction != null) {
+            backAction.setOnClickListener(v -> onBackPressed());
+        }
 
         boolean isDarkTheme = !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme);
         mHeader = ViewUtils.$$(belowHeader, R.id.header);

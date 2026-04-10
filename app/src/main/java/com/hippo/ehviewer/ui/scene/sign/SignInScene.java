@@ -41,6 +41,7 @@ import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.parser.ProfileParser;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.SolidScene;
 import com.hippo.scene.Announcer;
@@ -125,6 +126,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
         View view = inflater.inflate(R.layout.scene_login, container, false);
 
         View loginForm = ViewUtils.$$(view, R.id.login_form);
+        WindowInsetHelper.applySystemBarsToPadding(loginForm);
         mProgress = ViewUtils.$$(view, R.id.progress);
         mUsernameLayout = (TextInputLayout) ViewUtils.$$(loginForm, R.id.username_layout);
         mUsername = mUsernameLayout.getEditText();

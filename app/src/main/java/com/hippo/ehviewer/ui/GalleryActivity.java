@@ -42,7 +42,9 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -60,10 +62,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
+
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 
 import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.AppConfig;
@@ -75,6 +78,7 @@ import com.hippo.ehviewer.gallery.ArchiveGalleryProvider;
 import com.hippo.ehviewer.gallery.DirGalleryProvider;
 import com.hippo.ehviewer.gallery.EhGalleryProvider;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
+import com.hippo.ehviewer.ui.adaptive.AdaptiveWindowState;
 import com.hippo.ehviewer.widget.GalleryGuideView;
 import com.hippo.ehviewer.widget.GalleryHeader;
 import com.hippo.ehviewer.widget.ReversibleSeekBar;
@@ -140,6 +144,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Nullable
     private GLRootView mGLRootView;
     @Nullable
+    private FrameLayout mMainLayout;
+    @Nullable
     private GalleryView mGalleryView;
     @Nullable
     private GalleryProvider2 mGalleryProvider;
@@ -178,6 +184,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private boolean canFinish = false;
     private boolean autoTransferring = false;
+    private int mMainLayoutPaddingTop;
+    private int mMainLayoutPaddingBottom;
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(3);
 
@@ -239,6 +247,26 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             case Settings.THEME_BLACK:
                 return R.style.AppTheme_Gallery_Black;
         }
+    }
+
+    @Override
+    protected boolean shouldUseLightStatusBarIcons() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldUseLightNavigationBarIcons() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldApplyCutoutShortEdges() {
+        return true;
+    }
+
+    @Override
+    protected void onAdaptiveWindowStateChanged(@NonNull AdaptiveWindowState state) {
+        applyReaderAdaptiveLayout(state);
     }
 
     private void buildProvider() {
@@ -323,11 +351,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Override
     @SuppressWarnings({"WrongConstant"})
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        if (Settings.getReadingFullscreen()) {
-            Window w = getWindow();
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        }
         super.onCreate(savedInstanceState);
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
@@ -368,6 +391,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         setContentView(R.layout.activity_gallery);
+        mMainLayout = findViewById(R.id.main);
+        if (mMainLayout != null) {
+            mMainLayoutPaddingTop = mMainLayout.getPaddingTop();
+            mMainLayoutPaddingBottom = mMainLayout.getPaddingBottom();
+        }
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
         Resources resources = getResources();
@@ -379,9 +407,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         // System UI helper
         if (Settings.getReadingFullscreen()) {
-            Window w = getWindow();
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-            w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             mSystemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES | SystemUiHelper.FLAG_IMMERSIVE_STICKY);
             mSystemUiHelper.hide();
             mShowSystemUi = false;
@@ -397,6 +422,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         mSeekBarPanel = ViewUtils.$$(this, R.id.seek_bar_panel);
         mAutoTransferPanel = (ImageView) ViewUtils.$$(this, R.id.auto_transfer);
+        WindowInsetHelper.applyBottomSystemBarToPadding(mSeekBarPanel);
+        WindowInsetHelper.applyBottomSystemBarToMargin(mAutoTransferPanel);
         mLeftText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.left);
         mRightText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.right);
         mSeekBar = (ReversibleSeekBar) ViewUtils.$$(mSeekBarPanel, R.id.seek_bar);
@@ -439,21 +466,74 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         // Screen lightness
         setScreenLightness(Settings.getCustomScreenLightness(), Settings.getScreenLightness());
 
-        // Cutout
+        GalleryHeader galleryHeader = findViewById(R.id.gallery_header);
+        final int galleryHeaderPaddingLeft = galleryHeader.getPaddingLeft();
+        final int galleryHeaderPaddingTop = galleryHeader.getPaddingTop();
+        final int galleryHeaderPaddingRight = galleryHeader.getPaddingRight();
+        final int galleryHeaderPaddingBottom = galleryHeader.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(galleryHeader, (v, insets) -> {
+            final Insets topInsets = WindowInsetHelper.resolveInsets(
+                    insets,
+                    WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()
+            );
+            v.setPadding(
+                    galleryHeaderPaddingLeft,
+                    galleryHeaderPaddingTop + topInsets.top,
+                    galleryHeaderPaddingRight,
+                    galleryHeaderPaddingBottom
+            );
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                galleryHeader.setDisplayCutout(insets.toWindowInsets() != null
+                        ? insets.toWindowInsets().getDisplayCutout()
+                        : null);
+            }
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(galleryHeader);
+
+        // Keep the existing cutout short-edges policy for the fullscreen reader.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-
-            GalleryHeader galleryHeader = findViewById(R.id.gallery_header);
-            galleryHeader.setOnApplyWindowInsetsListener((v, insets) -> {
-                galleryHeader.setDisplayCutout(insets.getDisplayCutout());
-                return insets;
-            });
         }
 
         if (Settings.getGuideGallery()) {
             FrameLayout mainLayout = (FrameLayout) ViewUtils.$$(this, R.id.main);
             mainLayout.addView(new GalleryGuideView(this));
         }
+        applyReaderAdaptiveLayout(getAdaptiveWindowState());
+    }
+
+    private void applyReaderAdaptiveLayout(@NonNull AdaptiveWindowState state) {
+        if (mMainLayout == null) {
+            return;
+        }
+        ViewGroup.LayoutParams layoutParams = mMainLayout.getLayoutParams();
+        FrameLayout.LayoutParams frameLayoutParams;
+        if (layoutParams instanceof FrameLayout.LayoutParams) {
+            frameLayoutParams = (FrameLayout.LayoutParams) layoutParams;
+        } else {
+            frameLayoutParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+        }
+
+        if (state.useHingeDivider()) {
+            int paneWidth = Math.max(1, (state.getWindowWidthPx() - state.getDividerWidthPx()) / 2);
+            frameLayoutParams.width = paneWidth;
+            frameLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            frameLayoutParams.gravity = Gravity.START;
+            mMainLayout.setPadding(0, mMainLayoutPaddingTop, 0, mMainLayoutPaddingBottom);
+        } else {
+            int horizontalPadding = state.supportsDualPane()
+                    ? getResources().getDimensionPixelOffset(R.dimen.foldable_dual_pane_spacing)
+                    : 0;
+            frameLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            frameLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            frameLayoutParams.gravity = Gravity.NO_GRAVITY;
+            mMainLayout.setPadding(horizontalPadding, mMainLayoutPaddingTop, horizontalPadding, mMainLayoutPaddingBottom);
+        }
+        mMainLayout.setLayoutParams(frameLayoutParams);
     }
 
     private boolean isEglAvailable() {

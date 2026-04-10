@@ -27,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.ui.MainActivity;
@@ -165,6 +166,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     public View onCreateView2(LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_progress, container, false);
+        WindowInsetHelper.applySystemBarsToPadding(view);
         View progress = ViewUtils.$$(view, R.id.progress);
         mTip = (TextView) ViewUtils.$$(view, R.id.tip);
 

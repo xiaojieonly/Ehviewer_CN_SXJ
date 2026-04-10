@@ -21,6 +21,9 @@
     <dimen name="progress_padding">18dp</dimen>
     <dimen name="single_max_width">260dp</dimen>
     <dimen name="drawer_max_width">280dp</dimen>
+    <dimen name="foldable_dual_pane_spacing">24dp</dimen>
+    <dimen name="foldable_content_max_width">960dp</dimen>
+    <dimen name="settings_headers_width">320dp</dimen>
 
     <!--  Padding  -->
     <dimen name="dialog_padding_top_material">18dp</dimen>

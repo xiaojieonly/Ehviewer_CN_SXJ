@@ -57,7 +57,7 @@ public class SceneFragment extends Fragment {
     public void startScene(Announcer announcer) {
         FragmentActivity activity = getActivity();
         if (activity instanceof StageActivity) {
-            ((StageActivity) activity).startScene(announcer);
+            ((StageActivity) activity).startScene(this, announcer);
         }
     }
 
@@ -85,7 +85,7 @@ public class SceneFragment extends Fragment {
     public int getStackIndex() {
         FragmentActivity activity = getActivity();
         if (activity instanceof StageActivity) {
-            return ((StageActivity) activity).getSceneIndex(this);
+            return ((StageActivity) activity).getSceneStackIndex(this);
         } else {
             return -1;
         }
@@ -136,6 +136,10 @@ public class SceneFragment extends Fragment {
         mRequestCodeList.add(requestCode);
     }
 
+    public final void registerRequestFrom(@NonNull SceneFragment requestFrom, int requestCode) {
+        addRequest(requestFrom.getTag(), requestCode);
+    }
+
     void returnResult(StageActivity stage) {
         for (int i = 0, size = Math.min(mRequestSceneTagList.size(), mRequestCodeList.size()); i < size; i++) {
             String tag = mRequestSceneTagList.get(i);
@@ -147,6 +151,10 @@ public class SceneFragment extends Fragment {
         }
         mRequestSceneTagList.clear();
         mRequestCodeList.clear();
+    }
+
+    public final void dispatchResultToRequesters(@NonNull StageActivity stage) {
+        returnResult(stage);
     }
 
     protected void onSceneResult(int requestCode, int resultCode, Bundle data) {

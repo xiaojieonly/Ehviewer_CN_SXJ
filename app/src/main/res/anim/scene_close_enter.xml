@@ -16,15 +16,16 @@
   -->
 
 <set
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
 
-    <alpha
-        android:fromAlpha="0.7"
-        android:toAlpha="1.0"
+    <translate
+        android:fromXDelta="-30%"
+        android:toXDelta="0%"
+        android:interpolator="@android:interpolator/decelerate_cubic"
         android:fillEnabled="true"
         android:fillBefore="true"
         android:fillAfter="true"
-        android:interpolator="@anim/decelerate_terz"
-        android:duration="250"/>
+        android:duration="300"/>
 
 </set>

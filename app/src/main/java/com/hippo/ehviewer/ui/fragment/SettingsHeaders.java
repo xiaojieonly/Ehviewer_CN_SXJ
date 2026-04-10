@@ -7,14 +7,13 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.SettingsActivity;
 
-public class SettingsHeaders extends PreferenceFragmentCompat{
+public class SettingsHeaders extends BasePreferenceFragmentCompat {
     private SettingsActivity activity;
     public SettingsHeaders() {
         super();

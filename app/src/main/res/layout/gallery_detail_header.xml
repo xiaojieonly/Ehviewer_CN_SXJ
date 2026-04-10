@@ -49,15 +49,28 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent">
 
+            <ImageView
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/back_action"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:background="?selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="12dp"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/v_arrow_left_dark_x24" />
 
             <com.hippo.widget.LoadImageView
                 android:id="@+id/thumb"
                 android:layout_width="@dimen/gallery_detail_thumb_width"
                 android:layout_height="@dimen/gallery_detail_thumb_height"
                 android:layout_alignWithParentIfMissing="true"
+                android:layout_below="@id/back_action"
                 android:layout_alignParentStart="true"
                 android:layout_marginStart="@dimen/keyline_margin"
-                android:layout_marginTop="@dimen/keyline_margin"
                 android:layout_marginBottom="@dimen/keyline_margin"
                 android:scaleType="fitCenter" />
 

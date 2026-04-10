@@ -58,6 +58,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -97,6 +99,7 @@ import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
+import com.hippo.ehviewer.ui.inset.BottomOverlayInsetHelper;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
 import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
@@ -185,6 +188,13 @@ public class DownloadsScene extends ToolbarScene
      ---------------*/
     @Nullable
     private MyEasyRecyclerView mRecyclerView;
+    @Nullable
+    private FastScroller mFastScroller;
+    @Nullable
+    private View mPaginationContainer;
+    @Nullable
+    private BottomOverlayInsetHelper.Baseline mBottomOverlayBaseline;
+    private int mBottomOverlayInset;
     @Nullable
     private ViewTransition mViewTransition;
     @Nullable
@@ -351,11 +361,19 @@ public class DownloadsScene extends ToolbarScene
 
     private void updatePaginationIndicator() {
         if (mPaginationIndicator == null || mList == null) {
+            applyDownloadsBottomInsets();
             return;
         }
         if (mList.size() < paginationSize || !canPagination) {
             mPaginationIndicator.setVisibility(View.GONE);
+            if (mPaginationContainer != null) {
+                mPaginationContainer.setVisibility(View.GONE);
+            }
+            applyDownloadsBottomInsets();
             return;
+        }
+        if (mPaginationContainer != null) {
+            mPaginationContainer.setVisibility(View.VISIBLE);
         }
         mPaginationIndicator.setVisibility(View.VISIBLE);
         needInitPageSize = true;
@@ -370,6 +388,7 @@ public class DownloadsScene extends ToolbarScene
             myPageChangeListener.setNeedInitPage(needInitPage);
             myPageChangeListener.setDoNotScroll(doNotScroll);
         }
+        applyDownloadsBottomInsets();
     }
 
     @SuppressLint("StringFormatMatches")
@@ -488,8 +507,9 @@ public class DownloadsScene extends ToolbarScene
         mProgressView = (ProgressView) ViewUtils.$$(view, R.id.download_progress_view);
         View content = ViewUtils.$$(view, R.id.content);
         mRecyclerView = (MyEasyRecyclerView) ViewUtils.$$(content, R.id.recycler_view);
-        FastScroller fastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
+        mFastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
+        mPaginationContainer = ViewUtils.$$(view, R.id.pagination_container);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         if (mPaginationIndicator != null) {
             needInitPage = true;
@@ -573,6 +593,7 @@ public class DownloadsScene extends ToolbarScene
         MarginItemDecoration decoration = new MarginItemDecoration(interval, paddingH, paddingV, paddingH, paddingV);
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
+        installDownloadsBottomInsets(content);
 
         // 将拖拽管理器附加到RecyclerView
         if (mDragDropManager != null) {
@@ -590,11 +611,13 @@ public class DownloadsScene extends ToolbarScene
             mInitPosition = -1;
         }
 
-        fastScroller.attachToRecyclerView(mRecyclerView);
-        HandlerDrawable handlerDrawable = new HandlerDrawable();
-        handlerDrawable.setColor(AttrResources.getAttrColor(context, R.attr.widgetColorThemeAccent));
-        fastScroller.setHandlerDrawable(handlerDrawable);
-        fastScroller.setOnDragHandlerListener(this);
+        if (mFastScroller != null) {
+            mFastScroller.attachToRecyclerView(mRecyclerView);
+            HandlerDrawable handlerDrawable = new HandlerDrawable();
+            handlerDrawable.setColor(AttrResources.getAttrColor(context, R.attr.widgetColorThemeAccent));
+            mFastScroller.setHandlerDrawable(handlerDrawable);
+            mFastScroller.setOnDragHandlerListener(this);
+        }
 
         mFabLayout.setExpanded(false, true);
         mFabLayout.setHidePrimaryFab(false);
@@ -616,6 +639,92 @@ public class DownloadsScene extends ToolbarScene
         guide();
         updatePaginationIndicator();
         return view;
+    }
+
+    private void installDownloadsBottomInsets(@NonNull View content) {
+        if (mRecyclerView == null) {
+            return;
+        }
+        final int paginationHeight = resolveLayoutHeight(mPaginationIndicator);
+        final int fabBottomPadding = mFabLayout != null ? mFabLayout.getPaddingBottom() : 0;
+        mBottomOverlayBaseline = BottomOverlayInsetHelper.capture(
+                mRecyclerView.getPaddingBottom(),
+                Math.max(fabBottomPadding, paginationHeight),
+                mFastScroller != null ? mFastScroller.getPaddingBottom() : 0,
+                mPaginationContainer != null ? mPaginationContainer.getPaddingBottom() : 0,
+                fabBottomPadding
+        );
+        // ToolbarScene already pads the outer content host, so downloads only adjusts the
+        // overlay/list surfaces that still need explicit bottom safe-area coordination.
+        ViewCompat.setOnApplyWindowInsetsListener(content, (target, insets) -> {
+            final int navigationInsetBottom = insets.getInsets(
+                    WindowInsetsCompat.Type.navigationBars() | WindowInsetsCompat.Type.displayCutout()
+            ).bottom;
+            final int cutoutInsetBottom = insets.getDisplayCutout() != null
+                    ? insets.getDisplayCutout().getSafeInsetBottom()
+                    : 0;
+            mBottomOverlayInset = Math.max(navigationInsetBottom, cutoutInsetBottom);
+            applyDownloadsBottomInsets();
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(content);
+    }
+
+    private void applyDownloadsBottomInsets() {
+        if (mRecyclerView == null || mBottomOverlayBaseline == null) {
+            return;
+        }
+        final boolean paginationVisible = mPaginationContainer != null
+                && mPaginationContainer.getVisibility() == View.VISIBLE;
+        final boolean fabExpanded = mFabLayout != null && mFabLayout.isExpanded();
+        final BottomOverlayInsetHelper.Resolved resolved = BottomOverlayInsetHelper.resolve(
+                mBottomOverlayBaseline,
+                mBottomOverlayInset,
+                paginationVisible,
+                fabExpanded
+        );
+        mRecyclerView.setPadding(
+                mRecyclerView.getPaddingLeft(),
+                mRecyclerView.getPaddingTop(),
+                mRecyclerView.getPaddingRight(),
+                resolved.recyclerBottomPadding
+        );
+        if (mFastScroller != null) {
+            mFastScroller.setPadding(
+                    mFastScroller.getPaddingLeft(),
+                    mFastScroller.getPaddingTop(),
+                    mFastScroller.getPaddingRight(),
+                    resolved.fastScrollerBottomPadding
+            );
+        }
+        if (mPaginationContainer != null) {
+            mPaginationContainer.setPadding(
+                    mPaginationContainer.getPaddingLeft(),
+                    mPaginationContainer.getPaddingTop(),
+                    mPaginationContainer.getPaddingRight(),
+                    resolved.paginationBottomPadding
+            );
+        }
+        if (mFabLayout != null) {
+            mFabLayout.setPadding(
+                    mFabLayout.getPaddingLeft(),
+                    mFabLayout.getPaddingTop(),
+                    mFabLayout.getPaddingRight(),
+                    resolved.fabBottomPadding
+            );
+        }
+    }
+
+    private int resolveLayoutHeight(@Nullable View view) {
+        if (view == null) {
+            return 0;
+        }
+        final int measured = view.getHeight();
+        if (measured > 0) {
+            return measured;
+        }
+        final ViewGroup.LayoutParams lp = view.getLayoutParams();
+        return lp != null ? Math.max(lp.height, 0) : 0;
     }
 
     private void guide() {
@@ -726,6 +835,10 @@ public class DownloadsScene extends ToolbarScene
         }
 
         mRecyclerView = null;
+        mFastScroller = null;
+        mPaginationContainer = null;
+        mBottomOverlayBaseline = null;
+        mBottomOverlayInset = 0;
         mViewTransition = null;
         mAdapter = null;
         mOriginalAdapter = null;
@@ -1042,6 +1155,7 @@ public class DownloadsScene extends ToolbarScene
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
             mActionFabDrawable.setAdd(ANIMATE_TIME);
         }
+        applyDownloadsBottomInsets();
     }
 
     @Override

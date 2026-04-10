@@ -19,22 +19,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:shareInterpolator="false">
 
-    <alpha
-        android:fromAlpha="0.0"
-        android:toAlpha="1.0"
-        android:interpolator="@anim/decelerate_quart"
-        android:fillEnabled="true"
-        android:fillBefore="false"
-        android:fillAfter="true"
-        android:duration="200"/>
-
     <translate
-        android:fromYDelta="8%"
-        android:toYDelta="0"
+        android:fromXDelta="100%"
+        android:toXDelta="0%"
+        android:interpolator="@android:interpolator/decelerate_cubic"
         android:fillEnabled="true"
         android:fillBefore="true"
         android:fillAfter="true"
-        android:interpolator="@anim/decelerate_quint"
-        android:duration="350"/>
+        android:duration="300"/>
 
 </set>

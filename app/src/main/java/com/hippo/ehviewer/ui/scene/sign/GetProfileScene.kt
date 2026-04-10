@@ -20,6 +20,7 @@ import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.exception.ParseException
 import com.hippo.ehviewer.client.parser.ProfileParser
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper
 import com.hippo.ehviewer.ui.scene.SolidScene
 import com.hippo.ehviewer.ui.scene.sign.SignInScene.AVATAR
 import com.hippo.ehviewer.ui.scene.sign.SignInScene.DISPLAY_NAME
@@ -85,6 +86,7 @@ class GetProfileScene : SolidScene() {
         //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
 //        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
         mWebView!!.loadUrl(EhUrl.URL_FORUMS)
+        WindowInsetHelper.applySystemBarsToPadding(mWebView!!)
 
         return mWebView
     }

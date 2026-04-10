@@ -104,8 +104,10 @@ abstract class GalleryAdapter extends RecyclerView.Adapter<GalleryHolder> {
 
     private void adjustPaddings() {
         RecyclerView recyclerView = mRecyclerView;
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop() + mPaddingTopSB,
+        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
                 recyclerView.getPaddingRight(), recyclerView.getPaddingBottom());
+        // Re-request insets so the scene's inset listener can re-apply top/bottom padding
+        ViewCompat.requestApplyInsets(recyclerView);
     }
 
     public int getType() {

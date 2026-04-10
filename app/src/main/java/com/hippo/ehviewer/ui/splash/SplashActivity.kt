@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.ui.splash
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.R
@@ -23,6 +24,16 @@ class SplashActivity : EhActivity() {
     override fun getThemeResId(theme: Int): Int {
         return R.style.SplashTheme
     }
+
+    override fun shouldUseLightStatusBarIcons(): Boolean = false
+
+    override fun shouldUseLightNavigationBarIcons(): Boolean = false
+
+    override fun getStatusBarColor(): Int = Color.TRANSPARENT
+
+    override fun getNavigationBarColor(): Int = Color.TRANSPARENT
+
+    override fun shouldApplyCutoutShortEdges(): Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
 //        if (!checkUpdate) {

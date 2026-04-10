@@ -17,60 +17,33 @@
 package com.hippo.ehviewer.widget;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
-import androidx.annotation.NonNull;
+
+import androidx.core.view.WindowInsetsCompat;
+
 import com.hippo.drawerlayout.DrawerLayoutChild;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 
 public class EhNavigationView extends LinearLayout implements DrawerLayoutChild {
 
-    private static final int SCRIM_COLOR = 0x44000000;
-    private static final boolean DRAW_SCRIM = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-    private Paint mPaint;
     private int mWindowPaddingTop;
-    private int mWindowPaddingBottom;
 
     public EhNavigationView(Context context) {
         super(context);
-        init();
     }
 
     public EhNavigationView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public EhNavigationView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    private void init() {
-        if (DRAW_SCRIM) {
-            setWillNotDraw(false);
-        }
-    }
-
-    @Override
-    public void draw(@NonNull Canvas canvas) {
-        super.draw(canvas);
-
-        if (DRAW_SCRIM && mWindowPaddingTop > 0) {
-            if (null == mPaint) {
-                mPaint = new Paint();
-                mPaint.setColor(SCRIM_COLOR);
-            }
-            canvas.drawRect(0, 0, getWidth(), mWindowPaddingTop, mPaint);
-        }
     }
 
     @Override
     public void onGetWindowPadding(int top, int bottom) {
         mWindowPaddingTop = top;
-        mWindowPaddingBottom = bottom;
     }
 
     @Override
@@ -80,6 +53,15 @@ public class EhNavigationView extends LinearLayout implements DrawerLayoutChild 
 
     @Override
     public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
+        return 0;
+    }
+
+    public void applyNavigationInsets() {
+        WindowInsetHelper.applyTopSystemBarToPadding(this);
+    }
+
+    public void applyDrawerWindowPadding(WindowInsetsCompat insets) {
+        onGetWindowPadding(insets.getInsets(WindowInsetsCompat.Type.systemBars()).top,
+                insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom);
     }
 }

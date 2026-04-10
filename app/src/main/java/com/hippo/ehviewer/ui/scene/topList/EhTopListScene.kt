@@ -22,6 +22,7 @@ import com.hippo.ehviewer.client.data.ListUrlBuilder
 import com.hippo.ehviewer.client.data.topList.TopListInfo
 import com.hippo.ehviewer.client.data.topList.TopListItem
 import com.hippo.ehviewer.client.exception.EhException
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper
 import com.hippo.ehviewer.ui.scene.BaseScene
 import com.hippo.ehviewer.ui.scene.EhCallback
 import com.hippo.ehviewer.ui.scene.ProgressScene
@@ -79,6 +80,7 @@ class EhTopListScene : BaseScene() {
         spinner.onItemSelectedListener = TopListKindSelectedListener()
 
         val frameLayout = view.findViewById<FrameLayout>(R.id.page_detail_view)
+        WindowInsetHelper.applyVerticalSystemBarsToPadding(frameLayout)
         val transitionView = view.findViewById<View>(R.id.data_loading_view)
         viewTransition = ViewTransition(transitionView, frameLayout)
 

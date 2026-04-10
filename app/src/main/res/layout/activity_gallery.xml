@@ -70,7 +70,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:fitsSystemWindows="true"
         android:orientation="vertical">
 
         <ImageView

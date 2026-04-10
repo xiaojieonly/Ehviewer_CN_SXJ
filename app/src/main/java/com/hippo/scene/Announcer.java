@@ -48,9 +48,21 @@ public final class Announcer {
         return this;
     }
 
+    public TransitionHelper getTranHelper() {
+        return tranHelper;
+    }
+
     public Announcer setRequestCode(SceneFragment requestFrom, int requestCode) {
         this.requestFrom = requestFrom;
         this.requestCode = requestCode;
         return this;
+    }
+
+    public SceneFragment getRequestFrom() {
+        return requestFrom;
+    }
+
+    public int getRequestCode() {
+        return requestCode;
     }
 }

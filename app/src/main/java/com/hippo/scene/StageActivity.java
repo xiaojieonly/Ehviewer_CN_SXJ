@@ -398,6 +398,10 @@ public abstract class StageActivity extends EhActivity {
         }
     }
 
+    public void startScene(@NonNull SceneFragment requestFrom, @NonNull Announcer announcer) {
+        startScene(announcer);
+    }
+
     public void startSceneFirstly(Announcer announcer) {
         Class<?> clazz = announcer.clazz;
         Bundle args = announcer.args;
@@ -476,6 +480,10 @@ public abstract class StageActivity extends EhActivity {
 
     int getSceneIndex(SceneFragment scene) {
         return getTagIndex(scene.getTag());
+    }
+
+    public int getSceneStackIndex(@NonNull SceneFragment scene) {
+        return getSceneIndex(scene);
     }
 
     int getTagIndex(String tag) {

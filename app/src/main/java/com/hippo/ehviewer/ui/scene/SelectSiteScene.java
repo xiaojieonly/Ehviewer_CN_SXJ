@@ -27,6 +27,7 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.lib.yorozuya.ViewUtils;
 
 public class SelectSiteScene extends SolidScene implements View.OnClickListener {
@@ -44,6 +45,7 @@ public class SelectSiteScene extends SolidScene implements View.OnClickListener 
     public View onCreateView2(LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_select_site, container, false);
+        WindowInsetHelper.applySystemBarsToPadding(view);
 
         mRadioGroup = (RadioGroup) ViewUtils.$$(view, R.id.radio_group);
         mOk = ViewUtils.$$(view, R.id.ok);

@@ -54,6 +54,8 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
@@ -100,6 +102,7 @@ import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.TagSelectorActivity;
 import com.hippo.ehviewer.ui.dialog.SelectItemWithIconAdapter;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 import com.hippo.ehviewer.ui.scene.BaseScene;
 import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.ProgressScene;
@@ -676,10 +679,6 @@ public final class GalleryListScene extends BaseScene
         assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
 //        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
-        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
-                fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
-
-        refreshLayout.setHeaderTranslationY(paddingTopSB);
 
         mLeftDrawable = new DrawerArrowDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
         mRightDrawable = new AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
@@ -691,7 +690,7 @@ public final class GalleryListScene extends BaseScene
         setSearchBarSuggestionProvider(mSearchBar);
 
         mSearchLayout.setHelper(this);
-        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop() + paddingTopSB,
+        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop(),
                 mSearchLayout.getPaddingRight(), mSearchLayout.getPaddingBottom() + paddingBottomFab);
 
         mFabLayout.setAutoCancel(true);
@@ -724,9 +723,49 @@ public final class GalleryListScene extends BaseScene
 
         guideQuickSearch();
 
+        installGalleryTopInsets(mainLayout, fastScroller, refreshLayout, paddingTopSB);
+        WindowInsetHelper.applyBottomSystemBarToPadding(mFabLayout);
+
         return view;
     }
 
+    private void installGalleryTopInsets(@NonNull View mainLayout, @NonNull FastScroller fastScroller,
+                                         @NonNull RefreshLayout refreshLayout, int legacyTopOffset) {
+        if (mSearchLayout != null) {
+            WindowInsetHelper.applyTopSystemBarToPadding(mSearchLayout);
+        }
+        if (mSearchBar != null) {
+            WindowInsetHelper.applyTopSystemBarToMargin(mSearchBar);
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(mainLayout, (target, insets) -> {
+            final int topInset = WindowInsetHelper.resolveInsets(
+                    insets,
+                    WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()
+            ).top;
+            final int bottomInset = WindowInsetHelper.resolveInsets(
+                    insets,
+                    WindowInsetsCompat.Type.navigationBars() | WindowInsetsCompat.Type.displayCutout()
+            ).bottom;
+            final int totalTop = legacyTopOffset + topInset;
+            if (mRecyclerView != null) {
+                mRecyclerView.setPadding(
+                        mRecyclerView.getPaddingLeft(),
+                        totalTop,
+                        mRecyclerView.getPaddingRight(),
+                        bottomInset
+                );
+            }
+            fastScroller.setPadding(
+                    fastScroller.getPaddingLeft(),
+                    totalTop,
+                    fastScroller.getPaddingRight(),
+                    bottomInset
+            );
+            refreshLayout.setHeaderTranslationY(totalTop);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(mainLayout);
+    }
 
     private void onThumbItemClick(int position, View view, GalleryInfo gi) {
         LoadImageViewNew thumb = view.findViewById(R.id.thumb_new);

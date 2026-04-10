@@ -1,22 +1,34 @@
 package com.hippo.ehviewer.ui.fragment;
 
 import android.os.Bundle;
+import android.view.View;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceScreen;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.SettingsActivity;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.hippo.ehviewer.ui.inset.WindowInsetHelper;
 
 public class BasePreferenceFragmentCompat extends PreferenceFragmentCompat {
     private SettingsActivity settingsActivity;
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        RecyclerView list = getListView();
+        if (list != null) {
+            list.setClipToPadding(false);
+            WindowInsetHelper.applyBottomSystemBarToPadding(list);
+        }
     }
 
     private void setBaseStyle(Preference preference) {

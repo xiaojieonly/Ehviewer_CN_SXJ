@@ -22,6 +22,7 @@
         <attr name="android:windowBackground" format="color" />
         <attr name="android:navigationBarColor" format="color" />
         <attr name="buttonStyle" format="reference" />
+        <attr name="isLightSystemBarAppearance" format="boolean" />
 
         <attr name="colorEdgeEffect" format="color" />
         <attr name="dividerColor" format="color" />

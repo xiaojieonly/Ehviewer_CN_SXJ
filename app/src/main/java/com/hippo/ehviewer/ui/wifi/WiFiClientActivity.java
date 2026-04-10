@@ -33,7 +33,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import com.hippo.ehviewer.ui.ToolbarActivity;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -59,7 +59,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WiFiClientActivity extends AppCompatActivity {
+public class WiFiClientActivity extends ToolbarActivity {
 
     private final int pCode = 88888;
 
