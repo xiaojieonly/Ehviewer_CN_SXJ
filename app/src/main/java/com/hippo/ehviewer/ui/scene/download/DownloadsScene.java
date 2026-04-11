@@ -705,8 +705,10 @@ public class DownloadsScene extends ToolbarScene
         mFabLayout.setAutoCancel(false);
         mFabLayout.setOnClickFabListener(this);
         mFabLayout.setOnExpandListener(this);
+        mFabLayout.setShowFabFunctionName(Settings.getShowFabFunctionName());
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
+        mFabLayout.getPrimaryFab().setContentDescription(getString(R.string.fab_action_menu));
         
         // 为FloatingActionButton添加标签
         setupFabLabels();
@@ -807,6 +809,14 @@ public class DownloadsScene extends ToolbarScene
                         openDrawer(Gravity.RIGHT);
                     }
                 }).build();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mFabLayout != null) {
+            mFabLayout.setShowFabFunctionName(Settings.getShowFabFunctionName());
+        }
     }
 
     private void startAllDownloads() {

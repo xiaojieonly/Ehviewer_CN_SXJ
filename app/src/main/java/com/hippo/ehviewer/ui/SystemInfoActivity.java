@@ -58,39 +58,53 @@ public class SystemInfoActivity extends EhActivity {
         StringBuilder builder = new StringBuilder();
         builder.append(getString(R.string.settings_about_version)).append(": ")
                 .append(BuildConfig.VERSION_NAME).append('\n');
-        builder.append("Build time: ").append(BuildConfig.BUILD_TIME).append('\n');
-        builder.append("Android: ").append(Build.VERSION.RELEASE)
+        builder.append(getString(R.string.system_info_build_time)).append(": ")
+                .append(BuildConfig.BUILD_TIME).append('\n');
+        builder.append(getString(R.string.system_info_android)).append(": ")
+                .append(Build.VERSION.RELEASE)
                 .append(" (API ").append(Build.VERSION.SDK_INT).append(")").append('\n');
-        builder.append("Security patch: ")
-                .append(Build.VERSION.SECURITY_PATCH == null ? "unknown" : Build.VERSION.SECURITY_PATCH)
+        builder.append(getString(R.string.system_info_security_patch)).append(": ")
+                .append(Build.VERSION.SECURITY_PATCH == null ? getString(R.string.system_info_unknown) : Build.VERSION.SECURITY_PATCH)
                 .append('\n');
-        builder.append("Manufacturer: ").append(Build.MANUFACTURER).append('\n');
-        builder.append("Model: ").append(Build.MODEL).append('\n');
-        builder.append("Brand: ").append(Build.BRAND).append('\n');
-        builder.append("Product: ").append(Build.PRODUCT).append('\n');
-        builder.append("Hardware: ").append(Build.HARDWARE).append('\n');
-        builder.append("Board: ").append(Build.BOARD).append('\n');
-        builder.append("Device: ").append(Build.DEVICE).append('\n');
+        builder.append(getString(R.string.system_info_manufacturer)).append(": ")
+                .append(Build.MANUFACTURER).append('\n');
+        builder.append(getString(R.string.system_info_model)).append(": ")
+                .append(Build.MODEL).append('\n');
+        builder.append(getString(R.string.system_info_brand)).append(": ")
+                .append(Build.BRAND).append('\n');
+        builder.append(getString(R.string.system_info_product)).append(": ")
+                .append(Build.PRODUCT).append('\n');
+        builder.append(getString(R.string.system_info_hardware)).append(": ")
+                .append(Build.HARDWARE).append('\n');
+        builder.append(getString(R.string.system_info_board)).append(": ")
+                .append(Build.BOARD).append('\n');
+        builder.append(getString(R.string.system_info_device)).append(": ")
+                .append(Build.DEVICE).append('\n');
 
         builder.append('\n');
-        builder.append("WebView package:\n");
+        builder.append(getString(R.string.system_info_webview_package)).append('\n');
         PackageInfo webViewPackage = WebView.getCurrentWebViewPackage();
         if (webViewPackage != null) {
-            builder.append("  Package: ").append(webViewPackage.packageName).append('\n');
-            builder.append("  Version: ").append(webViewPackage.versionName)
+            builder.append("  ").append(getString(R.string.system_info_package)).append(": ")
+                    .append(webViewPackage.packageName).append('\n');
+            builder.append("  ").append(getString(R.string.system_info_version)).append(": ")
+                    .append(webViewPackage.versionName)
                     .append(" (code ").append(webViewPackage.versionCode).append(")").append('\n');
         } else {
-            builder.append("  unavailable\n");
+            builder.append("  ").append(getString(R.string.unavailable)).append('\n');
         }
 
         builder.append('\n');
-        builder.append("Application package: ").append(getPackageName()).append('\n');
+        builder.append(getString(R.string.system_info_application_package)).append(": ")
+                .append(getPackageName()).append('\n');
         try {
             PackageInfo appInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            builder.append("Application version: ").append(appInfo.versionName)
+            builder.append(getString(R.string.system_info_application_version)).append(": ")
+                    .append(appInfo.versionName)
                     .append(" (code ").append(appInfo.versionCode).append(")").append('\n');
         } catch (PackageManager.NameNotFoundException e) {
-            builder.append("Application version: unknown\n");
+            builder.append(getString(R.string.system_info_application_version)).append(": ")
+                    .append(getString(R.string.system_info_unknown)).append('\n');
         }
 
         return builder.toString();

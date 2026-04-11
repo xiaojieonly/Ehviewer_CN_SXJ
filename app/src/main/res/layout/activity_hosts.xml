@@ -48,6 +48,7 @@
       android:id="@+id/fab"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
+      android:contentDescription="@string/add_host"
       app:srcCompat="@drawable/v_plus_dark_x24"
       app:backgroundTint="?attr/widgetColorThemePrimary"
       style="@style/Widget.Design.FloatingActionButton"/>

@@ -58,6 +58,7 @@ import com.hippo.easyrecyclerview.LinearDividerItemDecoration;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
@@ -245,6 +246,9 @@ public final class GalleryCommentsScene extends ToolbarScene
 
         addAboveSnackView(mEditPanel);
         addAboveSnackView(mFabLayout);
+        if (mFabLayout != null) {
+            mFabLayout.setShowFabFunctionName(Settings.getShowFabFunctionName());
+        }
 
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 

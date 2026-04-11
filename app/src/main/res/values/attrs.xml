@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <resources>
     <!--前往theames.xml中设置具体值
         res/values/themes.xml-->
@@ -243,6 +242,10 @@
         <attr name="stepSize" format="integer" />
         <attr name="unit" format="string" />
         <attr name="showValue" format="boolean" />
+        <attr name="scale" format="float" />
+        <attr name="precision" format="integer" />
+        <attr name="sliderEntries" format="reference" />
+        <attr name="sliderEntryValues" format="reference" />
     </declare-styleable>
 
 </resources>

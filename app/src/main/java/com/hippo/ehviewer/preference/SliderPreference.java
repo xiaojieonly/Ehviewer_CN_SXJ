@@ -37,6 +37,10 @@ public class SliderPreference extends androidx.preference.Preference {
     private int mCurrentValue = 0;
     private String mUnit = "";
     private boolean mShowValue = true;
+    private float mScale = 1.0f;
+    private int mPrecision = 0;
+    private CharSequence[] mEntries;
+    private int[] mEntryValues;
 
     public SliderPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -57,6 +61,22 @@ public class SliderPreference extends androidx.preference.Preference {
         mStepSize = a.getInt(R.styleable.SliderPreference_stepSize, 1);
         mUnit = a.getString(R.styleable.SliderPreference_unit);
         mShowValue = a.getBoolean(R.styleable.SliderPreference_showValue, true);
+        mScale = a.getFloat(R.styleable.SliderPreference_scale, 1.0f);
+        mPrecision = a.getInt(R.styleable.SliderPreference_precision, 0);
+        mEntries = a.getTextArray(R.styleable.SliderPreference_sliderEntries);
+        int entryValuesResId = a.getResourceId(R.styleable.SliderPreference_sliderEntryValues, 0);
+        if (entryValuesResId != 0) {
+            TypedArray entryValueArray = context.getResources().obtainTypedArray(entryValuesResId);
+            mEntryValues = new int[entryValueArray.length()];
+            for (int i = 0; i < entryValueArray.length(); i++) {
+                try {
+                    mEntryValues[i] = Integer.parseInt(entryValueArray.getString(i));
+                } catch (NumberFormatException e) {
+                    mEntryValues[i] = mMinValue;
+                }
+            }
+            entryValueArray.recycle();
+        }
         a.recycle();
     }
 
@@ -85,14 +105,30 @@ public class SliderPreference extends androidx.preference.Preference {
             valueView.setVisibility(View.GONE);
         }
         
-        seekBar.setMax((mMaxValue - mMinValue) / mStepSize);
-        seekBar.setProgress((mCurrentValue - mMinValue) / mStepSize);
+        if (mEntryValues != null && mEntryValues.length > 0) {
+            int index = findIndexOfValue(mCurrentValue);
+            if (index < 0) {
+                index = 0;
+                mCurrentValue = mEntryValues[0];
+                persistInt(mCurrentValue);
+            }
+            seekBar.setMax(mEntryValues.length - 1);
+            seekBar.setProgress(index);
+        } else {
+            seekBar.setMax((mMaxValue - mMinValue) / mStepSize);
+            seekBar.setProgress((mCurrentValue - mMinValue) / mStepSize);
+        }
         
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    int newValue = mMinValue + progress * mStepSize;
+                    int newValue;
+                    if (mEntryValues != null && mEntryValues.length > 0) {
+                        newValue = mEntryValues[progress];
+                    } else {
+                        newValue = mMinValue + progress * mStepSize;
+                    }
                     if (newValue != mCurrentValue) {
                         mCurrentValue = newValue;
                         if (mShowValue) {
@@ -115,11 +151,36 @@ public class SliderPreference extends androidx.preference.Preference {
     }
 
     private void updateValueText(TextView valueView) {
-        String text = String.valueOf(mCurrentValue);
-        if (mUnit != null && !mUnit.isEmpty()) {
-            text += " " + mUnit;
+        String valueText;
+        if (mEntryValues != null && mEntries != null) {
+            int index = findIndexOfValue(mCurrentValue);
+            if (index >= 0 && index < mEntries.length) {
+                valueText = mEntries[index].toString();
+            } else {
+                valueText = String.valueOf(mCurrentValue);
+            }
+        } else if (mScale == 1.0f) {
+            valueText = String.valueOf(mCurrentValue);
+        } else {
+            String format = "%." + mPrecision + "f";
+            valueText = String.format(format, mCurrentValue * mScale);
         }
-        valueView.setText(text);
+        if (mUnit != null && !mUnit.isEmpty() && (mEntryValues == null || mEntries == null)) {
+            valueText += " " + mUnit;
+        }
+        valueView.setText(valueText);
+    }
+
+    private int findIndexOfValue(int value) {
+        if (mEntryValues == null) {
+            return -1;
+        }
+        for (int i = 0; i < mEntryValues.length; i++) {
+            if (mEntryValues[i] == value) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override

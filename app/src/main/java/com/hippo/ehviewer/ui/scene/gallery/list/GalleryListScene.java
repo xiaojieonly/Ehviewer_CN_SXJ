@@ -739,10 +739,12 @@ public final class GalleryListScene extends BaseScene
         mFabLayout.setHidePrimaryFab(false);
         mFabLayout.setOnClickFabListener(this);
         mFabLayout.setOnExpandListener(this);
+        mFabLayout.setShowFabFunctionName(Settings.getShowFabFunctionName());
         addAboveSnackView(mFabLayout);
 
         mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
+        mFabLayout.getPrimaryFab().setContentDescription(getString(R.string.fab_action_menu));
         
         // 保存按钮的原始位置，用于吸附效果
         View fab = mFabLayout.getPrimaryFab();
@@ -1254,6 +1256,9 @@ public final class GalleryListScene extends BaseScene
             return;
         }
         mSubscriptionDraw.resume();
+        if (mFabLayout != null) {
+            mFabLayout.setShowFabFunctionName(Settings.getShowFabFunctionName());
+        }
     }
 
     @Override

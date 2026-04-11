@@ -678,6 +678,21 @@ public class Settings {
         putInt(KEY_START_TRANSFER_TIME, value);
     }
 
+    private static final String KEY_FAST_TRANSFER_TIME = "fast_transfer_time";
+    private static final int DEFAULT_FAST_TRANSFER_TIME = 5; // 0.5 seconds
+
+    public static float getFastTransferTime() {
+        return getInt(KEY_FAST_TRANSFER_TIME, DEFAULT_FAST_TRANSFER_TIME) / 10.0f;
+    }
+
+    public static void putFastTransferTime(float value) {
+        putInt(KEY_FAST_TRANSFER_TIME, (int) (Math.max(0.1f, Math.min(1.0f, value)) * 10));
+    }
+
+    public static int getFastTransferTimeRaw() {
+        return getInt(KEY_FAST_TRANSFER_TIME, DEFAULT_FAST_TRANSFER_TIME);
+    }
+
     // Static image transfer time (stored as tenths of seconds, 1 to 1200, representing 0.1 to 120 seconds)
     private static final String KEY_STATIC_TRANSFER_TIME = "static_transfer_time";
     private static final int DEFAULT_STATIC_TRANSFER_TIME = 40; // 4.0 seconds
@@ -733,6 +748,30 @@ public class Settings {
     public static void putShowTransferCountdown(boolean value) {
         putBoolean(KEY_SHOW_TRANSFER_COUNTDOWN, value);
     }
+    // Disable click to flip page
+    private static final String KEY_DISABLE_CLICK_PAGE = "gallery_disable_click_page";
+    private static final boolean DEFAULT_DISABLE_CLICK_PAGE = false;
+
+    public static boolean getDisableClickPage() {
+        return getBoolean(KEY_DISABLE_CLICK_PAGE, DEFAULT_DISABLE_CLICK_PAGE);
+    }
+
+    public static void putDisableClickPage(boolean value) {
+        putBoolean(KEY_DISABLE_CLICK_PAGE, value);
+    }
+
+    // Disable gesture to flip page
+    private static final String KEY_DISABLE_GESTURE_PAGE = "gallery_disable_gesture_page";
+    private static final boolean DEFAULT_DISABLE_GESTURE_PAGE = false;
+
+    public static boolean getDisableGesturePage() {
+        return getBoolean(KEY_DISABLE_GESTURE_PAGE, DEFAULT_DISABLE_GESTURE_PAGE);
+    }
+
+    public static void putDisableGesturePage(boolean value) {
+        putBoolean(KEY_DISABLE_GESTURE_PAGE, value);
+    }
+
 
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";
     private static final boolean DEFAULT_KEEP_SCREEN_ON = false;
@@ -1442,6 +1481,17 @@ public class Settings {
 
     public static boolean getSaveCrashLog() {
         return getBoolean(KEY_SAVE_CRASH_LOG, DEFAULT_SAVE_CRASH_LOG);
+    }
+
+    public static final String KEY_SHOW_FAB_FUNCTION_NAME = "show_fab_function_name";
+    private static final boolean DEFAULT_SHOW_FAB_FUNCTION_NAME = false;
+
+    public static boolean getShowFabFunctionName() {
+        return getBoolean(KEY_SHOW_FAB_FUNCTION_NAME, DEFAULT_SHOW_FAB_FUNCTION_NAME);
+    }
+
+    public static void putShowFabFunctionName(boolean value) {
+        putBoolean(KEY_SHOW_FAB_FUNCTION_NAME, value);
     }
 
     public static final String KEY_SECURITY = "security";

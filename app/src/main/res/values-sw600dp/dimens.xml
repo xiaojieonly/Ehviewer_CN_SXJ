@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2016 Hippo Seven
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+    <!-- 灏忓钩鏉?(sw600dp) 灏哄璧勬簮 -->
+    
+    <!-- 鎶藉眽瀹藉害澧炲ぇ -->
+    <dimen name="drawer_max_width">320dp</dimen>
+    
+    <!-- 鍒楄〃椤圭缉鐣ュ浘楂樺害澧炲姞 -->
+    <dimen name="gallery_list_thumb_height">150dp</dimen>
+    <dimen name="gallery_list_thumb_width">100dp</dimen>
+    
+    <!-- 缃戞牸鍒楀璋冩暣 -->
+    <dimen name="gallery_grid_column_width_large">180dp</dimen>
+    <dimen name="gallery_grid_column_width_middle">140dp</dimen>
+    <dimen name="gallery_grid_column_width_small">100dp</dimen>
+    
+    <!-- 骞虫澘涓撶敤缁熶竴鍒楀 (鐢ㄤ簬 Adapter) -->
+    <dimen name="gallery_grid_column_width_tablet">240dp</dimen>
+    
+    <!-- 鍒楄〃鍒楀璋冩暣 -->
+    <dimen name="gallery_list_column_width_long">560dp</dimen>
+    <dimen name="gallery_list_column_width_short">400dp</dimen>
+    
+    <!-- 瀛椾綋澶у皬閫傚害鏀惧ぇ -->
+    <dimen name="text_super_large">26sp</dimen>
+    <dimen name="text_large">24sp</dimen>
+    <dimen name="text_little_large">22sp</dimen>
+    <dimen name="text_medium">20sp</dimen>
+    <dimen name="text_little_small">18sp</dimen>
+    <dimen name="text_small">16sp</dimen>
+    <dimen name="text_super_small">14sp</dimen>
+    
+    <!-- 闂磋窛澧炲ぇ -->
+    <dimen name="keyline_margin">20dp</dimen>
+    <dimen name="gallery_list_interval">4dp</dimen>
+    <dimen name="gallery_list_margin_h">8dp</dimen>
+    <dimen name="gallery_list_margin_v">8dp</dimen>
+    <dimen name="gallery_grid_interval">4dp</dimen>
+    <dimen name="gallery_grid_margin_h">8dp</dimen>
+    <dimen name="gallery_grid_margin_v">8dp</dimen>
+    
+    <!-- RatingView -->
+    <dimen name="rating_size">18dp</dimen>
+    
+    <!-- CategoryTable -->
+    <dimen name="category_table_item_height">48dp</dimen>
+    <dimen name="category_table_item_margin">6dp</dimen>
+</resources>
+

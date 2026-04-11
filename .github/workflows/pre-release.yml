@@ -31,10 +31,10 @@ jobs:
           if [ -f ./gradlew ]; then
             chmod +x ./gradlew
             ./gradlew --version
-            ./gradlew clean app:assembleAppReleaseRelease
+            ./gradlew clean app:assembleAppReleaseRelease -PcanaryBuild=true
           else
             gradle --version
-            gradle clean app:assembleAppReleaseRelease
+            gradle clean app:assembleAppReleaseRelease -PcanaryBuild=true
           fi
 
       - name: Create pre-release version from commit time

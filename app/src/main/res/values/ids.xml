@@ -31,6 +31,8 @@
 
     <item name="fab_translation_y" type="id"/>
     <item name="fab_translation_y_animator" type="id"/>
+    <item name="fab_function_name_label" type="id"/>
+    <item name="fab_function_name_layout_listener" type="id"/>
     
     <!-- Download status filter IDs -->
     <item name="all" type="id"/>

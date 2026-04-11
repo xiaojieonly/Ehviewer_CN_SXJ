@@ -53,6 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tag_filter"
+            android:contentDescription="@string/tag_filter"
             app:srcCompat="@drawable/ic_baseline_filter_none_24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
@@ -60,6 +61,7 @@
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/go_to"
             app:srcCompat="@drawable/v_go_to_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
@@ -67,6 +69,7 @@
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/refresh"
             app:srcCompat="@drawable/v_refresh_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
@@ -75,6 +78,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleX="-1"
+            android:contentDescription="@string/random_download"
             app:srcCompat="@drawable/v_random_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
@@ -83,6 +87,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/multi_select_download"
+            android:contentDescription="@string/multi_select_mode"
             app:srcCompat="@drawable/v_download_primary_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
@@ -91,6 +96,7 @@
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/fab_action_menu"
             app:backgroundTint="?attr/widgetColorThemePrimary"
             style="@style/Widget.Design.FloatingActionButton"/>
 
@@ -107,6 +113,7 @@
             android:id="@+id/search_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/search"
             app:srcCompat="@drawable/v_magnify_dark_x24"
             app:backgroundTint="?attr/widgetColorThemeAccent"
             android:visibility="invisible"

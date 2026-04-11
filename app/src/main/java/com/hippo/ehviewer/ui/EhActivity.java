@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -42,6 +43,10 @@ public abstract class EhActivity extends AppCompatActivity {
      */
     @StyleRes
     protected int getThemeResId(int theme) {
+        Log.d("EhActivity","Current Activity:"+this.getLocalClassName());
+        Log.d("EhActivity", "getThemeResId: theme=" + theme);
+        Log.d("EhActivity", "Settings.getTheme()=" + Settings.getTheme());
+        Log.d("EhActivity", "Settings.isThemeAutoSwitchAvailable()=" + Settings.isThemeAutoSwitchAvailable());
         // 检查是否启用自动主题切换
         if (Settings.isThemeAutoSwitchAvailable()) {
             // 根据系统当前模式自动选择主题

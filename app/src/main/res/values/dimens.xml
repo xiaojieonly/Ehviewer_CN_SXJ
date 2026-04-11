@@ -113,6 +113,10 @@
     <dimen name="fab_layout_secondary_margin">16dp</dimen>
     <dimen name="fab_size">56dp</dimen>
     <dimen name="fab_min_size">40dp</dimen>
+    <dimen name="fab_function_name_padding_horizontal">12dp</dimen>
+    <dimen name="fab_function_name_padding_vertical">6dp</dimen>
+    <dimen name="fab_function_name_margin">10dp</dimen>
+    <dimen name="fab_function_name_corner_radius">16dp</dimen>
 
     <!-- Slider -->
     <dimen name="slider_bubble_width">26dp</dimen>

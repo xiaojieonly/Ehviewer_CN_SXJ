@@ -48,6 +48,8 @@ import com.hippo.ehviewer.widget.SimpleRatingView;
 import com.hippo.ehviewer.widget.TileThumbNew;
 import com.hippo.widget.LoadImageViewNew;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
+import android.content.Context;
+import com.hippo.ehviewer.util.DeviceUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
 
 import java.lang.annotation.Retention;
@@ -94,7 +96,19 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
         mInflater = inflater;
         mResources = resources;
         mRecyclerView = recyclerView;
-        mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
+        
+        // 鏍规嵁璁惧绫诲瀷鍔ㄦ€佽绠楀垵濮嬪垪瀹?
+        Context context = inflater.getContext();
+        int baseColumnWidth = resources.getDimensionPixelOffset(Settings.getDetailSizeResId());
+        
+        // 瀵逛簬骞虫澘璁惧锛屾垜浠皟鏁村垪瀹界瓥鐣?
+        if (DeviceUtils.isTablet(context)) {
+            // 骞虫澘涓婁娇鐢ㄥ浐瀹氬垪鏁拌€屼笉鏄熀浜庡搴︾殑鑷姩璁＄畻
+            mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
+        } else {
+            mLayoutManager = new AutoStaggeredGridLayoutManager(baseColumnWidth, StaggeredGridLayoutManager.VERTICAL);
+        }
+        
         mPaddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
         mShowFavourite = showFavourited;
 
@@ -131,7 +145,18 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
         switch (type) {
             default:
             case GalleryAdapterNew.TYPE_LIST: {
-                int columnWidth = mResources.getDimensionPixelOffset(Settings.getDetailSizeResId());
+                Context context = mInflater.getContext();
+                int columnWidth;
+                
+                // 鏍规嵁璁惧绫诲瀷閫夋嫨鍚堥€傜殑鍒楀璧勬簮
+                if (DeviceUtils.isTablet(context)) {
+                    // 骞虫澘璁惧浣跨敤涓撻棬鐨勫垪瀹借祫婧?
+                    columnWidth = mResources.getDimensionPixelOffset(R.dimen.gallery_grid_column_width_tablet);
+                } else {
+                    // 鎵嬫満璁惧浣跨敤鍘熸湁閫昏緫
+                    columnWidth = mResources.getDimensionPixelOffset(Settings.getDetailSizeResId());
+                }
+                
                 mLayoutManager.setColumnSize(columnWidth);
                 mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
                 if (null != mGirdDecoration) {
@@ -150,7 +175,18 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
                 break;
             }
             case GalleryAdapterNew.TYPE_GRID: {
-                int columnWidth = mResources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+                Context context = mInflater.getContext();
+                int columnWidth;
+                
+                // 鏍规嵁璁惧绫诲瀷閫夋嫨鍚堥€傜殑鍒楀璧勬簮
+                if (DeviceUtils.isTablet(context)) {
+                    // 骞虫澘璁惧浣跨敤涓撻棬鐨勫垪瀹借祫婧?
+                    columnWidth = mResources.getDimensionPixelOffset(R.dimen.gallery_grid_column_width_tablet);
+                } else {
+                    // 鎵嬫満璁惧浣跨敤鍘熸湁閫昏緫
+                    columnWidth = mResources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+                }
+                
                 mLayoutManager.setColumnSize(columnWidth);
                 mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_SUITABLE_SIZE);
                 if (null != mListDecoration) {
@@ -332,3 +368,7 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
     }
 
 }
+
+
+
+

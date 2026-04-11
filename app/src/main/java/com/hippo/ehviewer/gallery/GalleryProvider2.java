@@ -66,7 +66,7 @@ public abstract class GalleryProvider2 extends GalleryProvider {
      */
     public boolean isAnimated(int index) {
         String ext = getImageExtension(index).toLowerCase();
-        return ".gif".equals(ext);
+        return ".gif".equals(ext) || ".webp".equals(ext);
     }
 
     public abstract boolean save(int index, @NonNull UniFile file);

@@ -15,6 +15,10 @@ android {
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '26.1.10909125'
 
+    def isCanaryBuild = project.hasProperty('canaryBuild') && project.property('canaryBuild').toString().toBoolean()
+    def canarySuffix = isCanaryBuild ? ".maoweicao.canary" : ""
+    def releaseFileProviderAuthority = "\"com.xjs.ehviewer${canarySuffix}.fileprovider\""
+
     flavorDimensions "distribute"
     productFlavors {
         appRelease {
@@ -61,7 +65,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
+            if (isCanaryBuild) {
+                applicationIdSuffix ".maoweicao.canary"
+            }
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', releaseFileProviderAuthority
         }
         debug {
             applicationIdSuffix ".debug"
@@ -84,7 +91,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
-        // 允许对 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
+        // 允许 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
         coreLibraryDesugaringEnabled true
     }
 
@@ -186,7 +193,7 @@ dependencies {
 //    implementation 'com.github.bumptech.glide:glide:5.0.5'
 //    kapt 'com.github.bumptech.glide:compiler:5.0.5'
 
-    //事件通知
+    // 事件通知
     implementation 'org.greenrobot:eventbus:3.3.1'
     //loading组件
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
@@ -196,6 +203,12 @@ dependencies {
 
     // 内置轻量级HTTP服务器，用于本地REST端点
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    // SlidingPaneLayout - 支持平滑滑动面板
+    implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
+    
+    // WindowManager API - 提供大屏幕和折叠屏设备更好的适配
+    implementation 'androidx.window:window:1.2.0'
 
 
     testImplementation 'junit:junit:4.13.2'

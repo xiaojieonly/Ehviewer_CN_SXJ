@@ -584,6 +584,18 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         postMethod(METHOD_SET_SCROLL_INTERVAL, interval);
     }
 
+    public void setDisableClickPage(boolean disable) {
+        if (null != mPagerLayoutManager) {
+            mPagerLayoutManager.setDisableClickPage(disable);
+        }
+    }
+
+    public void setDisableGesturePage(boolean disable) {
+        if (null != mPagerLayoutManager) {
+            mPagerLayoutManager.setDisableGesturePage(disable);
+        }
+    }
+
     @Override
     public boolean onSingleTapUp(float x, float y) {
         postMethod(METHOD_ON_SINGLE_TAP_UP, x, y);

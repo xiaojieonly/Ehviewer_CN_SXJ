@@ -55,6 +55,13 @@
         android:summary="@string/settings_advanced_save_crash_log_summary"
         android:title="@string/settings_advanced_save_crash_log" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="show_fab_function_name"
+        android:summary="@string/settings_advanced_show_fab_function_name_summary"
+        android:title="@string/settings_advanced_show_fab_function_name"
+        app:allowDividerAbove="true" />
+
     <Preference
         android:key="dump_logcat"
         android:summary="@string/settings_advanced_dump_logcat_summary"
@@ -94,14 +101,14 @@
         android:title="@string/settings_advanced_clear_memory_cache"
         app:allowDividerAbove="true" />
 
-    <com.hippo.preference.ListPreference
+    <com.hippo.ehviewer.preference.SliderPreference
         android:defaultValue="160"
         android:key="read_cache_size"
-        android:summary="%s"
         android:title="@string/settings_advanced_read_cache_size"
         app:allowDividerAbove="true"
-        app:entries="@array/read_cache_size_entries"
-        app:entryValues="@array/read_cache_size_entry_values" />
+        app:sliderEntries="@array/read_cache_size_entries"
+        app:sliderEntryValues="@array/read_cache_size_entry_values"
+        app:showValue="true" />
 
     <com.hippo.preference.ListPreference
         android:defaultValue="zh-CN"

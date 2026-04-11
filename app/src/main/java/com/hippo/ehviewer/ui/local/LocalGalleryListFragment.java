@@ -40,8 +40,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.LocalGalleryInfo;
-import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhUrl;
@@ -51,6 +51,7 @@ import com.hippo.ehviewer.client.parser.GalleryListParser;
 import com.hippo.ehviewer.UrlOpener;
 import com.hippo.ehviewer.local.LocalGalleryManager;
 import com.hippo.ehviewer.ui.local.adapter.LocalGalleryCardAdapter;
+import com.hippo.widget.FabLabelHelper;
 import com.hippo.yorozuya.ViewUtils;
 
 import android.util.Log;
@@ -138,6 +139,7 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         mEmptyText = view.findViewById(R.id.empty_text);
         
         initViews();
+        updateFabLabels();
         
         return view;
     }
@@ -187,6 +189,20 @@ public class LocalGalleryListFragment extends Fragment implements LocalGalleryCa
         }
 
         updateEmptyView();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateFabLabels();
+    }
+
+    private void updateFabLabels() {
+        boolean show = Settings.getShowFabFunctionName();
+        FabLabelHelper.updateFabLabel(mFabRefresh, show);
+        FabLabelHelper.updateFabLabel(mFabEmptyRecycleBin, show);
+        FabLabelHelper.updateFabLabel(mFabRefreshRecycleBin, show);
+        FabLabelHelper.updateFabLabel(mFabRescanRecycleBin, show);
     }
     
     private void updateEmptyView() {

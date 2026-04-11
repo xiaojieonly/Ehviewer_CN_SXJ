@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
+<!--
   ~ Copyright 2016 Hippo Seven
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -130,24 +131,18 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:text="@string/settings_read_auto_transfer_time"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:text="@string/settings_read_fast_transfer_time"
+                android:textColor="?android:attr/textColorPrimary"
+                android:gravity="center_vertical" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageButton
-                    android:id="@+id/btn_decrease_time"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="减少"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel"
-                    android:tint="?android:attr/textColorPrimary" />
+            <ImageButton
+                android:id="@+id/btn_decrease_time"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="减少"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:tint="?android:attr/textColorPrimary" />
 
                 <TextView
                     android:id="@+id/start_transfer_time_display"
@@ -174,7 +169,6 @@
                     android:text="秒"
                     android:textColor="?android:attr/textColorSecondary" />
             </LinearLayout>
-        </LinearLayout>
 
         <!-- New: Static image transfer time -->
         <LinearLayout
@@ -250,6 +244,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/settings_read_show_transfer_countdown"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/disable_click_page"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_read_disable_click_page"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/disable_gesture_page"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_read_disable_gesture_page"
             android:textColor="?android:attr/textColorPrimary" />
 
         <androidx.appcompat.widget.SwitchCompat

@@ -63,13 +63,15 @@
         app:entryValues="@array/start_position_values" />
 
     <com.hippo.ehviewer.preference.SliderPreference
-        android:defaultValue="2"
-        android:key="start_transfer_time"
-        android:title="@string/settings_read_auto_transfer_time"
+        android:defaultValue="5"
+        android:key="fast_transfer_time"
+        android:title="@string/settings_read_fast_transfer_time"
         app:allowDividerAbove="true"
         app:minValue="1"
-        app:maxValue="15"
+        app:maxValue="10"
         app:stepSize="1"
+        app:scale="0.1"
+        app:precision="1"
         app:unit="秒"
         app:showValue="true" />
 
@@ -80,7 +82,9 @@
         app:allowDividerAbove="true"
         app:minValue="10"
         app:maxValue="1200"
-        app:stepSize="10"
+        app:stepSize="5"
+        app:scale="0.1"
+        app:precision="1"
         app:unit="秒"
         app:showValue="true" />
 
@@ -91,7 +95,9 @@
         app:allowDividerAbove="true"
         app:minValue="10"
         app:maxValue="1200"
-        app:stepSize="10"
+        app:stepSize="5"
+        app:scale="0.1"
+        app:precision="1"
         app:unit="秒"
         app:showValue="true" />
 
@@ -102,8 +108,18 @@
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
-        android:key="show_transfer_countdown"
+        android:key="gallery_show_transfer_countdown"
         android:title="@string/settings_read_show_transfer_countdown" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="gallery_disable_click_page"
+        android:title="@string/settings_read_disable_click_page" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="gallery_disable_gesture_page"
+        android:title="@string/settings_read_disable_gesture_page" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"

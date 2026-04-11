@@ -1,5 +1,59 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="transfer_countdown_format">%1$.1f秒</string>
+
+    <string name="system_info_build_time">构建时间</string>
+    <string name="system_info_android">Android</string>
+    <string name="system_info_security_patch">安全补丁</string>
+    <string name="system_info_manufacturer">制造商</string>
+    <string name="system_info_model">型号</string>
+    <string name="system_info_brand">品牌</string>
+    <string name="system_info_product">产品</string>
+    <string name="system_info_hardware">硬件</string>
+    <string name="system_info_board">主板</string>
+    <string name="system_info_device">设备</string>
+    <string name="system_info_webview_package">WebView 包</string>
+    <string name="system_info_package">包</string>
+    <string name="system_info_version">版本</string>
+    <string name="system_info_application_package">应用包</string>
+    <string name="system_info_application_version">应用版本</string>
+    <string name="system_info_unknown">未知</string>
+
+    <string name="page_menu_details">详情</string>
+    <string name="page_detail_file_name">文件名: </string>
+    <string name="page_detail_file_type">文件类型: </string>
+    <string name="page_detail_file_size">文件大小: </string>
+    <string name="page_detail_file_time">文件时间: </string>
+    <string name="page_detail_file_location">文件位置: </string>
+    <string name="page_detail_is_animated">是否为动画: </string>
+    <string name="page_detail_animation_length">动画长度: </string>
+    <string name="page_detail_animation_length_unknown">未知</string>
+    <string name="page_detail_not_animated">暂无</string>
+
+    <string name="tag_selector_selected_section_title">已选中</string>
+    <string name="tag_selector_empty_selected">未选择标签</string>
+    <string name="tag_selector_search_hint">搜索标签…</string>
+    <string name="tag_selector_selected_count">已选中: %d</string>
+    <string name="tag_selector_other_group">其他</string>
+    <string name="settings_read_disable_click_page">禁用点击翻页</string>
+    <string name="settings_read_disable_gesture_page">禁用手势翻页</string>
+    <string name="fast_reading_mode">快速阅读模式</string>
+    <string name="enter_fast_reading_mode">将使用动画图片间隔 (%1$.1fs) 进行快速阅读，是否继续？</string>
+    <string name="confirm">确认</string>
+    <string name="entered_fast_reading_mode">已进入快速阅读模式</string>
+    <string name="exited_fast_reading_mode">已退出快速阅读模式</string>
+    <string name="settings_advanced_export_data_started">正在后台导出数据…</string>
+    <string name="settings_advanced_import_data_started">正在后台导入数据…</string>
+    <string name="settings_advanced_export_database_started">正在后台导出数据库…</string>
+    <string name="settings_advanced_dump_logcat_started">正在后台导出日志…</string>
+    <string name="settings_about_version_summary">版本 %1$s\n构建时间 %2$s</string>
+    <string name="settings_about_system_info">系统信息</string>
+    <string name="settings_about_system_info_summary">查看 Android、设备、WebView 和构建详细信息</string>
+    <string name="back">返回</string>
+    <string name="animated_badge">GIF</string>
+    <string name="background_task_management_with_count">后台任务 (%1$d 个活动)</string>
+    <string name="settings_download_export_download_items">导出下载项</string>
+
     <string name="compress_success_no_output">压缩完成</string>
     <string name="settings_advanced_compress_split_size">压缩分割大小</string>
     <string name="recycle_bin_action_refresh">刷新回收站</string>
@@ -359,6 +413,9 @@
     <string name="gallery_previews">画廊预览</string>
     <string name="go_to">前往</string>
     <string name="tag_filter">过滤标签</string>
+    <string name="multi_select_mode">多选模式</string>
+    <string name="fab_action_menu">操作菜单</string>
+    <string name="send_comment">发送评论</string>
     <string name="scene_download_title">%1$s 画廊 - %2$s</string>
     <string name="no_download_info">下载项目将在此处显示</string>
     <string name="download_state_none">闲置</string>
@@ -570,7 +627,7 @@
     <string name="settings_read_start_position_top_right">右上角</string>
     <string name="settings_read_start_position_bottom_left">左下角</string>
     <string name="settings_read_start_position_bottom_right">右下角</string>
-    <string name="settings_read_auto_transfer_time">自动翻页时间（秒）</string>
+    <string name="settings_read_fast_transfer_time">快速自动翻页时间（秒）</string>
     <string name="settings_read_static_transfer_time">静图翻页时间（秒）</string>
     <string name="settings_read_animated_transfer_time">动图翻页时间（秒）</string>
     <string name="settings_read_wait_for_animation">等待动图播放完成再翻页</string>
@@ -685,6 +742,8 @@
     <string name="settings_advanced_user_agent_empty">用户代理不能为空</string>
     <string name="settings_advanced_save_crash_log">应用崩溃时保存崩溃日志</string>
     <string name="settings_advanced_save_crash_log_summary">崩溃日志有助于开发者修复程序错误</string>
+    <string name="settings_advanced_show_fab_function_name">显示 FAB 功能名称</string>
+    <string name="settings_advanced_show_fab_function_name_summary">始终显示悬浮操作按钮功能标签，并使用磨砂玻璃背景衬托。</string>
     <string name="settings_advanced_dump_logcat">转储日志</string>
     <string name="settings_advanced_dump_logcat_summary">将日志记录保存到外部存储</string>
     <string name="settings_advanced_dump_logcat_failed">日志转储失败</string>
@@ -695,6 +754,7 @@
     <string name="settings_advanced_clear_memory_cache">清除内存缓存</string>
     <string name="settings_advanced_clear_memory_cache_summary">清除缩略图、画廊信息内存缓存</string>
     <string name="settings_advanced_read_cache_size">读取缓存大小</string>
+    <string name="settings_advanced_read_cache_size_unlimited">不限</string>
     <string name="settings_advanced_app_language_title">应用语言</string>
     <string name="settings_advanced_proxy">代理</string>
     <string name="settings_advanced_proxy_summary_1">%1$s %2$s:%3$d</string>

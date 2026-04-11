@@ -18,10 +18,13 @@ package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.SparseLongArray;
+import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.lib.image.Image;
@@ -158,6 +161,37 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
         } else {
             return "Error"; // TODO
         }
+    }
+
+    @NonNull
+    @Override
+    public String getImageExtension(int index) {
+        if (mSpiderQueen != null) {
+            String extension = mSpiderQueen.getExtension(index);
+            if (!TextUtils.isEmpty(extension)) {
+                return extension.startsWith(".") ? extension : "." + extension;
+            }
+        }
+        return super.getImageExtension(index);
+    }
+
+    @Nullable
+    @Override
+    public String getImagePath(int index) {
+        if (mSpiderQueen != null) {
+            SpiderDen spiderDen = new SpiderDen(mGalleryInfo);
+            UniFile dir = spiderDen.getDownloadDir();
+            if (dir != null) {
+                UniFile file = SpiderDen.findImageFile(dir, index);
+                if (file != null) {
+                    Uri uri = file.getUri();
+                    if (uri != null && !TextUtils.isEmpty(uri.getPath())) {
+                        return uri.getPath();
+                    }
+                }
+            }
+        }
+        return super.getImagePath(index);
     }
 
     @Override
