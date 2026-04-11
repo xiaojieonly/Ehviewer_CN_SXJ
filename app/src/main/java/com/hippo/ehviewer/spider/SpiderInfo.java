@@ -114,7 +114,7 @@ public class SpiderInfo {
 
     @Nullable
     public static SpiderInfo read(@Nullable InputStream is) {
-        if (null == is) {
+        if (is == null) {
             return null;
         }
 
@@ -143,7 +143,7 @@ public class SpiderInfo {
             IOUtils.readAsciiLine(is);
             // Preview pages
             spiderInfo.previewPages = Integer.parseInt(IOUtils.readAsciiLine(is));
-            // Preview pre page
+            // Preview per page
             line = IOUtils.readAsciiLine(is);
             if (version == 1) {
                 // Skip it
@@ -172,7 +172,7 @@ public class SpiderInfo {
                         spiderInfo.pTokenMap.put(index, pToken);
                     }
                 } else {
-                    Log.e(TAG, "Can't parse index and pToken, index = " + pos);
+                    Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + (line == null ? 0 : line.length()));
                 }
             }
         } catch (IOException | NumberFormatException e) {

@@ -48,6 +48,13 @@ android {
         }
     }
 
+    signingConfigs {
+        debug {
+            // Use the default Gradle debug keystore so release builds are installable
+            // in CI/pre-release builds without a separate release keystore.
+        }
+    }
+
     lint {
         disable 'MissingTranslation'
         abortOnError true
@@ -56,6 +63,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
@@ -72,24 +80,28 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
         }
     }
-//    sourceSets {
-//        main {
-//            java.srcDirs += 'src/main/java-gen'
-//        }
-//    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-    }
-    kotlinOptions {
-        jvmTarget = '21'
     }
 
     buildFeatures {
         viewBinding true
     }
 
+}
+
+kotlin {
+    sourceSets {
+        main {
+            kotlin.srcDir("src/main/java")
+        }
+    }
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 //tasks.withType(JavaCompile) {
