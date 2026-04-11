@@ -40,6 +40,7 @@ import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.NumberUtils;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,7 +52,8 @@ public class SpiderInfo {
 
     private static final String VERSION_STR = "VERSION";
     private static final int VERSION = 2;
-
+    /** Upper bound for pages from local file; prevents OOM from corrupted spider_info. */
+    private static final int MAX_SPIDER_INFO_PAGES = 100_000;
     public static final String TOKEN_FAILED = "failed";
 
     public int startPage = 0;
@@ -109,7 +111,6 @@ public class SpiderInfo {
     }
 
     @Nullable
-    @SuppressWarnings("InfiniteLoopStatement")
     public static SpiderInfo read(@Nullable InputStream is) {
         if (null == is) {
             return null;
@@ -150,13 +151,19 @@ public class SpiderInfo {
             // Pages
             spiderInfo.pages = Integer.parseInt(IOUtils.readAsciiLine(is));
             // Check pages
-            if (spiderInfo.pages <= 0) {
+            if (spiderInfo.pages <= 0 || spiderInfo.pages > MAX_SPIDER_INFO_PAGES) {
                 return null;
             }
-            // PToken
+            // PToken (at most one line per page in valid files; cap lines to avoid OOM on corrupt files)
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
-            while (true) { // EOFException will raise
-                line = IOUtils.readAsciiLine(is);
+            // PToken (at most one line per page in valid files; cap lines to avoid OOM on corrupt files)
+            spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
+            for (int linesRead = 0; linesRead < spiderInfo.pages; linesRead++) {
+                try {
+                    line = IOUtils.readAsciiLine(is);
+                } catch (EOFException e) {
+                    break;
+                }
                 if (line == null || line.length() == 0) {
                     continue;
                 }
@@ -164,7 +171,6 @@ public class SpiderInfo {
                 if (pos > 0 && pos < line.length() - 1) {
                     try {
                         int index = Integer.parseInt(line.substring(0, pos));
-                        // 避免创建过大的子字符串，限制pToken长度
                         String pToken = line.substring(pos + 1);
                         if (pToken.length() > 1000) {
                             pToken = pToken.substring(0, 1000);
@@ -175,6 +181,12 @@ public class SpiderInfo {
                         }
                     } catch (NumberFormatException e) {
                         Log.e(TAG, "Can't parse index: " + line.substring(0, Math.min(pos, 20)));
+                    }
+                } else {
+                    Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + (line == null ? 0 : line.length()));
+                }
+            }
+
                     }
                 } else {
                     Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + line.length());
