@@ -112,7 +112,7 @@ public class SpiderInfo {
 
     @Nullable
     public static SpiderInfo read(@Nullable InputStream is) {
-        if (null == is) {
+        if (is == null) {
             return null;
         }
 
@@ -141,7 +141,7 @@ public class SpiderInfo {
             IOUtils.readAsciiLine(is);
             // Preview pages
             spiderInfo.previewPages = Integer.parseInt(IOUtils.readAsciiLine(is));
-            // Preview pre page
+            // Preview per page
             line = IOUtils.readAsciiLine(is);
             if (version == 1) {
                 // Skip it
@@ -154,9 +154,6 @@ public class SpiderInfo {
             if (spiderInfo.pages <= 0 || spiderInfo.pages > MAX_SPIDER_INFO_PAGES) {
                 return null;
             }
-            // PToken (at most one line per page in valid files; cap lines to avoid OOM on corrupt files)
-            spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
-            // PToken (at most one line per page in valid files; cap lines to avoid OOM on corrupt files)
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
             for (int linesRead = 0; linesRead < spiderInfo.pages; linesRead++) {
                 try {
@@ -184,12 +181,6 @@ public class SpiderInfo {
                     }
                 } else {
                     Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + (line == null ? 0 : line.length()));
-                }
-            }
-
-                    }
-                } else {
-                    Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + line.length());
                 }
             }
         } catch (IOException | NumberFormatException e) {

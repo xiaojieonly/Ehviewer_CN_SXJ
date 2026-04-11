@@ -53,6 +53,13 @@ android {
         }
     }
 
+    signingConfigs {
+        debug {
+            // Use the default Gradle debug keystore so release builds are installable
+            // in CI/pre-release builds without a separate release keystore.
+        }
+    }
+
     lint {
         disable 'MissingTranslation'
         disable 'StringFormatMatches'
@@ -63,6 +70,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (isCanaryBuild) {
@@ -82,11 +90,6 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
         }
     }
-//    sourceSets {
-//        main {
-//            java.srcDirs += 'src/main/java-gen'
-//        }
-//    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -98,14 +101,23 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
-    kotlinOptions {
-        jvmTarget = '21'
-    }
 
     buildFeatures {
         viewBinding true
     }
 
+}
+
+kotlin {
+    sourceSets {
+        main {
+            kotlin.srcDir("src/main/java")
+        }
+    }
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 //tasks.withType(JavaCompile) {
