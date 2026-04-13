@@ -17,12 +17,14 @@ import androidx.core.app.NotificationCompat;
 
 import com.hippo.ehviewer.task.impl.CompressSelectedGalleriesTask;
 import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadLogger;
 import com.hippo.ehviewer.task.BackgroundTask;
 import com.hippo.ehviewer.task.BackgroundTaskRunner;
 import com.hippo.ehviewer.ui.task.BackgroundTaskInfo;
 import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -99,8 +101,30 @@ public class BackgroundTaskManager {
     }
 
     private void recoverPersistedTasks() {
-        for (BackgroundTaskInfo info : mTaskStatusManager.getActiveTasks()) {
+        List<BackgroundTaskInfo> activeTasks = new ArrayList<>(mTaskStatusManager.getActiveTasks());
+        for (BackgroundTaskInfo info : activeTasks) {
             if (info.isCompleted() || info.isCancelled() || info.getFuture() != null) {
+                continue;
+            }
+            if (info.getTaskType() == BackgroundTask.TaskType.DOWNLOAD) {
+                String persistData = info.getTaskPersistData();
+                long gid = -1;
+                if (persistData != null) {
+                    try {
+                        gid = Long.parseLong(persistData);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                if (gid >= 0) {
+                    DownloadInfo downloadInfo = EhDB.getDownloadInfo(gid);
+                    if (downloadInfo != null && downloadInfo.state == DownloadInfo.STATE_FINISH) {
+                        mTaskStatusManager.markTaskCompleted(info.getTaskId());
+                    } else {
+                        mTaskStatusManager.markTaskCancelled(info.getTaskId());
+                    }
+                } else {
+                    mTaskStatusManager.markTaskCancelled(info.getTaskId());
+                }
                 continue;
             }
             String className = info.getTaskClassName();
@@ -607,6 +631,15 @@ public class BackgroundTaskManager {
      */
     public void clearCompletedTasks() {
         mTaskStatusManager.clearCompletedTasks();
+    }
+
+    /**
+     * 强力停止并清空所有后台任务
+     */
+    public void forceStopAllTasks() {
+        mTaskStatusManager.clearAllTasks();
+        mActiveTaskCount.set(0);
+        hideForegroundNotification();
     }
 
     /**

@@ -291,6 +291,26 @@ public class BackgroundTaskStatusManager {
         mCompletedTasks.clear();
         savePersistedTasksAsync();
     }
+
+    /**
+     * 取消所有活跃任务并清空所有任务记录
+     */
+    public void clearAllTasks() {
+        List<String> taskIds = new ArrayList<>(mActiveTasks.keySet());
+        for (String taskId : taskIds) {
+            boolean cancelled = cancelTask(taskId);
+            if (!cancelled) {
+                BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
+                if (taskInfo != null) {
+                    taskInfo.setCancelled(true);
+                    mCompletedTasks.put(taskId, taskInfo);
+                }
+            }
+        }
+        mCompletedTasks.clear();
+        savePersistedTasksAsync();
+    }
+
     @NonNull
     public List<BackgroundTaskInfo> getActiveTasks() {
         return new ArrayList<>(mActiveTasks.values());

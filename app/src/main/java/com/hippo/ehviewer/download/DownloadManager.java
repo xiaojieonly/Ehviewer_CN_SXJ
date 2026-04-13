@@ -130,6 +130,22 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     // 当前下载任务的后台任务ID
     @Nullable
     private String mCurrentDownloadTaskId;
+    // 当前下载任务对应的后台任务显示信息
+    @Nullable
+    private String mCurrentDownloadTaskName;
+    @Nullable
+    private String mCurrentDownloadTaskDescription;
+    private static final long DOWNLOAD_STATE_SYNC_INTERVAL_MS = 30000;
+
+    private final Runnable mDownloadStateSyncRunnable = new Runnable() {
+        @Override
+        public void run() {
+            checkCurrentDownloadDatabaseState();
+            if (mCurrentTask != null && mCurrentDownloadTaskId != null) {
+                mMainHandler.postDelayed(this, DOWNLOAD_STATE_SYNC_INTERVAL_MS);
+            }
+        }
+    };
 
     private final ConcurrentPool<NotifyTask> mNotifyTaskPool = new ConcurrentPool<>(5);
     
@@ -240,6 +256,54 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         for (DownloadInfoListener l : mDownloadInfoListeners) {
             l.onReplace(newInfo, oldInfo);
+        }
+    }
+
+    private void startDownloadStateSync() {
+        mMainHandler.removeCallbacks(mDownloadStateSyncRunnable);
+        mMainHandler.postDelayed(mDownloadStateSyncRunnable, DOWNLOAD_STATE_SYNC_INTERVAL_MS);
+    }
+
+    private void stopDownloadStateSync() {
+        mMainHandler.removeCallbacks(mDownloadStateSyncRunnable);
+    }
+
+    private void checkCurrentDownloadDatabaseState() {
+        if (mCurrentTask == null || mCurrentDownloadTaskId == null) {
+            return;
+        }
+
+        DownloadInfo dbInfo = EhDB.getDownloadInfo(mCurrentTask.gid);
+        if (dbInfo == null) {
+            return;
+        }
+
+        if (dbInfo.state == DownloadInfo.STATE_FINISH) {
+            String taskId = mCurrentDownloadTaskId;
+            String taskName = mCurrentDownloadTaskName;
+
+            mBackgroundTaskManager.getTaskStatusManager().markTaskCompleted(taskId);
+            if (taskName != null) {
+                mBackgroundTaskManager.endForegroundTask(taskName);
+            }
+
+            if (mCurrentTask != null) {
+                mCurrentTask.state = DownloadInfo.STATE_FINISH;
+                if (mDownloadListener != null) {
+                    mDownloadListener.onFinish(mCurrentTask);
+                }
+                List<DownloadInfo> list = getInfoListForLabel(mCurrentTask.label);
+                if (list != null) {
+                    for (DownloadInfoListener l : mDownloadInfoListeners) {
+                        l.onUpdate(mCurrentTask, list, mWaitList);
+                    }
+                }
+            }
+
+            mCurrentDownloadTaskId = null;
+            mCurrentDownloadTaskName = null;
+            mCurrentDownloadTaskDescription = null;
+            stopDownloadStateSync();
         }
     }
 
@@ -487,12 +551,21 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             String taskName = "下载: " + galleryTitle;
             String taskDescription = "正在下载 " + galleryTitle;
             mCurrentDownloadTaskId = mBackgroundTaskManager.getTaskStatusManager().addTask(
+                java.util.UUID.randomUUID().toString(),
                 taskName,
                 taskDescription,
                 null,
                 com.hippo.ehviewer.task.BackgroundTask.TaskType.DOWNLOAD,
-                false
+                false,
+                com.hippo.ehviewer.task.BackgroundTask.class.getName(),
+                String.valueOf(info.gid)
             );
+            mCurrentDownloadTaskName = taskName;
+            mCurrentDownloadTaskDescription = taskDescription;
+            if (mCurrentDownloadTaskId != null) {
+                mBackgroundTaskManager.startForegroundTask(taskName, taskDescription);
+                startDownloadStateSync();
+            }
             Log.d(TAG, "[ENSURE] 创建后台任务: " + mCurrentDownloadTaskId);
 
             // Notify start downloading
@@ -515,8 +588,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         try {
             DownloadedFileManager.GalleryFileCheckResult checkResult = DownloadedFileManager.getInstance().checkGalleryFilesExist(gid);
             if (checkResult != null) {
-                Log.d(TAG, "[CHECK] 本地画廊检测（GID=" + gid + "): total=" + checkResult.totalFiles + ", valid=" + checkResult.validFiles + ", missing=" + checkResult.missingFiles + ", invalid=" + checkResult.invalidFiles);
-                return checkResult.totalFiles > 0;
+                boolean complete = checkResult.isComplete();
+                Log.d(TAG, "[CHECK] 本地画廊检测（GID=" + gid + "): total=" + checkResult.totalFiles + ", valid=" + checkResult.validFiles + ", missing=" + checkResult.missingFiles + ", invalid=" + checkResult.invalidFiles + ", complete=" + complete);
+                return complete;
             } else {
                 Log.d(TAG, "[CHECK] 本地画廊检测（GID=" + gid + "): 无记录");
                 return false;
@@ -1529,8 +1603,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         // 结束后台任务
         if (mCurrentDownloadTaskId != null) {
             mBackgroundTaskManager.getTaskStatusManager().markTaskCancelled(mCurrentDownloadTaskId);
+            if (mCurrentDownloadTaskName != null) {
+                mBackgroundTaskManager.endForegroundTask(mCurrentDownloadTaskName);
+            }
+            stopDownloadStateSync();
             Log.d(TAG, "[STOP] 标记后台任务取消: " + mCurrentDownloadTaskId);
             mCurrentDownloadTaskId = null;
+            mCurrentDownloadTaskName = null;
+            mCurrentDownloadTaskDescription = null;
         }
         
         if (info == null) {
@@ -2042,7 +2122,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                                 "下载失败，剩余 " + info.legacy + " 页");
                             Log.d(TAG, "[FINISH] 标记后台任务失败: " + mCurrentDownloadTaskId);
                         }
+                        if (mCurrentDownloadTaskName != null) {
+                            mBackgroundTaskManager.endForegroundTask(mCurrentDownloadTaskName);
+                        }
+                        stopDownloadStateSync();
                         mCurrentDownloadTaskId = null;
+                        mCurrentDownloadTaskName = null;
+                        mCurrentDownloadTaskDescription = null;
                     }
                     
                     // Start next download

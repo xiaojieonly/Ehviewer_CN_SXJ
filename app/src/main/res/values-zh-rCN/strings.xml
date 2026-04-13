@@ -1,5 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="background_task_clear_all">强制停止所有任务</string>
+    <string name="background_task_cleared_all">所有任务已停止并清除</string>
+
     <string name="transfer_countdown_format">%1$.1f秒</string>
 
     <string name="system_info_build_time">构建时间</string>

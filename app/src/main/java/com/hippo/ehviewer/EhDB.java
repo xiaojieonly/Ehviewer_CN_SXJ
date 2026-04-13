@@ -662,6 +662,16 @@ public class EhDB {
         return list;
     }
 
+    @Nullable
+    public static synchronized DownloadInfo getDownloadInfo(long gid) {
+        try {
+            return sDaoSession.getDownloadsDao().load(gid);
+        } catch (Exception e) {
+            Analytics.recordException(e);
+            return null;
+        }
+    }
+
     public static synchronized void moveDownloadInfo(List<DownloadInfo> infos, int fromPosition, int toPosition){
         if (fromPosition == toPosition) {
             return;

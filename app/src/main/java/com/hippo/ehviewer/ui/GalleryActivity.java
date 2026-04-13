@@ -75,6 +75,8 @@ import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.util.GifUtils;
+import com.hippo.ehviewer.util.WebpUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.event.GalleryActivityEvent;
 import com.hippo.ehviewer.gallery.ArchiveGalleryProvider;
@@ -1869,8 +1871,33 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         boolean animated = mGalleryProvider.isAnimated(page);
-        android.util.Log.d(TAG, "[PageDetails] page=" + page + " filename=" + filename + " extension=" + extension + " imageType=" + imageType + " imagePath=" + imagePath + " animated=" + animated);
-        String animationInfo = animated ? getString(R.string.page_detail_animation_length_unknown) : getString(R.string.page_detail_not_animated);
+        Long animationDuration = null;
+        if (!TextUtils.isEmpty(extension) && !TextUtils.isEmpty(imagePath)) {
+            if (".gif".equals(extension)) {
+                Boolean gifAnimated = GifUtils.isAnimatedGifFile(imagePath);
+                if (gifAnimated != null) {
+                    animated = gifAnimated;
+                }
+                animationDuration = GifUtils.getGifAnimationDuration(imagePath);
+            } else if (".webp".equals(extension)) {
+                Long webpDuration = WebpUtils.getAnimatedWebpDuration(imagePath);
+                if (webpDuration != null) {
+                    animationDuration = webpDuration;
+                    animated = webpDuration > 0;
+                }
+            }
+        }
+        android.util.Log.d(TAG, "[PageDetails] page=" + page + " filename=" + filename + " extension=" + extension + " imageType=" + imageType + " imagePath=" + imagePath + " animated=" + animated + " duration=" + animationDuration);
+        String animationInfo;
+        if (animated) {
+            if (animationDuration != null && animationDuration > 0) {
+                animationInfo = String.format(Locale.getDefault(), "%d ms", animationDuration);
+            } else {
+                animationInfo = getString(R.string.page_detail_animation_length_unknown);
+            }
+        } else {
+            animationInfo = getString(R.string.page_detail_not_animated);
+        }
 
         StringBuilder detail = new StringBuilder();
         detail.append(getString(R.string.page_detail_file_name)).append(filename);

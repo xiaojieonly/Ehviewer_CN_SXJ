@@ -1250,6 +1250,8 @@
     <string name="no_background_tasks">No background tasks</string>
     <string name="background_task_clear_completed">Clear completed tasks</string>
     <string name="background_task_cleared_completed">Completed tasks cleared</string>
+    <string name="background_task_clear_all">Force stop all tasks</string>
+    <string name="background_task_cleared_all">All tasks have been stopped and cleared</string>
     <string name="background_task_unique_running">A background task is already running</string>
     <string name="no_description">No description</string>
     <string name="task_progress_label">Progress</string>

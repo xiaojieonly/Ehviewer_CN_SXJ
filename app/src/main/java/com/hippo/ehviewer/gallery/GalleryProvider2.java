@@ -16,8 +16,11 @@
 
 package com.hippo.ehviewer.gallery;
 
+import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.hippo.ehviewer.util.GifUtils;
+import com.hippo.ehviewer.util.WebpUtils;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.unifile.UniFile;
 
@@ -66,7 +69,28 @@ public abstract class GalleryProvider2 extends GalleryProvider {
      */
     public boolean isAnimated(int index) {
         String ext = getImageExtension(index).toLowerCase();
-        return ".gif".equals(ext) || ".webp".equals(ext);
+        if (".gif".equals(ext)) {
+            String imagePath = getImagePath(index);
+            if (!TextUtils.isEmpty(imagePath)) {
+                Boolean animated = GifUtils.isAnimatedGifFile(imagePath);
+                if (animated != null) {
+                    return animated;
+                }
+            }
+            return true;
+        }
+        if (".webp".equals(ext)) {
+            String imagePath = getImagePath(index);
+            if (!TextUtils.isEmpty(imagePath)) {
+                Boolean animated = WebpUtils.isAnimatedWebpFile(imagePath);
+                if (animated != null) {
+                    return animated;
+                }
+            }
+            // Fallback to extension-only behavior when the local path cannot be inspected.
+            return true;
+        }
+        return false;
     }
 
     public abstract boolean save(int index, @NonNull UniFile file);

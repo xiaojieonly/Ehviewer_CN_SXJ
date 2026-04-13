@@ -14,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.EhActivity;
 import com.hippo.ehviewer.ui.MainActivity;
@@ -81,7 +82,18 @@ public class BackgroundTaskActivity extends EhActivity {
             if (mTaskManager != null && mAdapter != null) {
                 mTaskManager.clearCompletedTasks();
                 mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
+                updateToolbarTitle();
                 Toast.makeText(this, R.string.background_task_cleared_completed, Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        } else if (item.getItemId() == R.id.action_clear_all) {
+            if (mAdapter != null) {
+                BackgroundTaskManager.getInstance().forceStopAllTasks();
+                if (mTaskManager != null) {
+                    mAdapter.updateData(mTaskManager.getActiveTasks(), mTaskManager.getCompletedTasks());
+                }
+                updateToolbarTitle();
+                Toast.makeText(this, R.string.background_task_cleared_all, Toast.LENGTH_SHORT).show();
             }
             return true;
         }

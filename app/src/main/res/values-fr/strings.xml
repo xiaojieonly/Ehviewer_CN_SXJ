@@ -16,6 +16,15 @@
 <!-- 法语 -->
 <!-- French translations by UShimamura -->
 <resources>
+    <string name="multi_select_mode">Multi-select mode</string>
+    <string name="fab_action_menu">Action menu</string>
+    <string name="send_comment">Send comment</string>
+    <string name="settings_advanced_show_fab_function_name">Show FAB function names</string>
+    <string name="settings_advanced_show_fab_function_name_summary">Always display floating action button function labels with a translucent background.</string>
+    <string name="settings_advanced_read_cache_size_unlimited">Unlimited</string>
+    <string name="background_task_clear_all">Force stop all tasks</string>
+    <string name="background_task_cleared_all">All tasks have been stopped and cleared</string>
+
     <string name="settings_read_fast_transfer_time">Fast auto flip interval (s)</string>
     <string name="transfer_countdown_format">%1$.1fs</string>
 
