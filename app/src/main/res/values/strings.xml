@@ -672,6 +672,10 @@
     <string name="settings_download_download_order_by_asc_summary">Download in sequence when downloading all galleries</string>
     <string name="settings_download_incremental_update">Incremental download update</string>
     <string name="settings_download_incremental_update_summary">Detect same-name galleries when downloading, keep old versions and create update records</string>
+    <string name="settings_download_show_folder_time">Show folder time on download card</string>
+    <string name="settings_download_show_folder_time_summary">Display folder time in each download card.</string>
+    <string name="settings_download_show_folder_size">Show folder size on download card</string>
+    <string name="settings_download_show_folder_size_summary">Display folder size in each download card.</string>
     <string name="settings_download_merge_duplicate_gallery">Merge duplicate galleries</string>
     <string name="settings_download_merge_duplicate_gallery_summary">Scan and merge duplicate galleries with version progression</string>
     <string name="merge_duplicate_gallery_title">Merge Duplicate Galleries</string>
@@ -1140,6 +1144,14 @@
     <string name="dialog_category_filter_label">Category filter (multiple selection)</string>
     <string name="dialog_status_filter_label">Status filter</string>
     <string name="dialog_sort_method_label">Sort method</string>
+    <string name="dialog_time_range_filter_label">Folder time range (optional)</string>
+    <string name="dialog_time_range_from_hint">From date, e.g. 2026-01-01</string>
+    <string name="dialog_time_range_to_hint">To date, e.g. 2026-12-31</string>
+    <string name="select_datetime_button">Pick</string>
+    <string name="dialog_size_range_filter_label">Folder size range (optional)</string>
+    <string name="dialog_size_range_from_hint">Min size, e.g. 128MB</string>
+    <string name="dialog_size_range_to_hint">Max size, e.g. 2GB</string>
+    <string name="dialog_size_range_tip">Supports B/KB/MB/GB; no unit defaults to MB.</string>
     <string name="dialog_search_download_title">Search download gallery</string>
     <string name="dialog_search_options_label">Search options</string>
     <string name="reset">Reset</string>
@@ -1161,6 +1173,12 @@
     <string name="advanced_filter_apply_changes">Apply filter changes</string>
     <string name="advanced_filter_discard_changes">Discard changes</string>
     <string name="advanced_filter_confirm_reset">Reset all filters to default values?</string>
+    <string name="download_filter_invalid_time">Invalid time format. Use yyyy-MM-dd or yyyy-MM-dd HH:mm</string>
+    <string name="download_filter_invalid_size">Invalid size format. Example: 128MB or 2GB</string>
+    <string name="download_filter_range_invalid">Range is invalid: start value cannot be greater than end value</string>
+    <string name="dialog_filter_duplicate_only">Show duplicate-name galleries only</string>
+    <string name="download_card_folder_time">Time: %1$s</string>
+    <string name="download_card_folder_size">Size: %1$s</string>
     <string name="background_tasks_channel_name">Background tasks</string>
     <string name="background_tasks_channel_description">Background task notifications for scanning download files, merging duplicate galleries, etc.</string>
     <string name="background_task_running">Background task running</string>
@@ -1440,4 +1458,5 @@
     <string name="settings_advanced_recycle_bin_summary">Direct access to recycle bin and purge operations</string>
     <string name="tag_search_entrance">Tag Selector</string>
     <string name="settings_download_export_download_items">Export Download Items</string>
+    <string name="progress_detail_with_total">%1$s %2$d / %3$d</string>
 </resources>

@@ -38,9 +38,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
+import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.download.DownloadGalleryMetaHelper;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
@@ -74,9 +76,12 @@ import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange;
 import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableItemViewHolder;
 
 import java.io.InputStream;
+import java.text.DateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -97,6 +102,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     private View movedItem = null;
 
     private final Map<String, Bitmap> thumbnailCache = new HashMap<>();
+    private final Map<Long, Long> folderTimeCache = new HashMap<>();
+    private final Map<Long, Long> folderSizeCache = new HashMap<>();
 
     public interface DownloadAdapterCallback {
         int getIndexPage();
@@ -235,10 +242,11 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             
             // Log incremental update info
             if (isIncrementalUpdate) {
-                Log.d(TAG, "[ADAPTER] 增量更新画廊: " + title + 
-                          " (完成: " + info.finished + ", 下载: " + info.downloaded + ", 总计: " + info.total + ")");
+                Log.d(TAG, "[ADAPTER] 增量更新画廊: " + title +
+                        " (完成: " + info.finished + ", 下载: " + info.downloaded + ", 总计: " + info.total + ")");
             }
-            
+
+            bindFolderMeta(holder, info);
             bindForState(holder, info);
 
             // Update transition name
@@ -346,6 +354,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         holder.progressBar.setVisibility(View.GONE);
         holder.percent.setVisibility(View.GONE);
         holder.speed.setVisibility(View.GONE);
+        holder.folderTime.setVisibility(Settings.getShowDownloadCardFolderTime() ? View.VISIBLE : View.GONE);
+        holder.folderSize.setVisibility(Settings.getShowDownloadCardFolderSize() ? View.VISIBLE : View.GONE);
         if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
             holder.start.setVisibility(View.GONE);
             holder.stop.setVisibility(View.VISIBLE);
@@ -367,6 +377,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         holder.progressBar.setVisibility(View.VISIBLE);
         holder.percent.setVisibility(View.VISIBLE);
         holder.speed.setVisibility(View.VISIBLE);
+        holder.folderTime.setVisibility(View.GONE);
+        holder.folderSize.setVisibility(View.GONE);
         if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
             holder.start.setVisibility(View.GONE);
             holder.stop.setVisibility(View.VISIBLE);
@@ -404,6 +416,35 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             speed = 0;
         }
         holder.speed.setText(com.hippo.lib.yorozuya.FileUtils.humanReadableByteCount(speed, false) + "/S");
+    }
+
+    private void bindFolderMeta(DownloadHolder holder, DownloadInfo info) {
+        boolean showFolderTime = Settings.getShowDownloadCardFolderTime();
+        boolean showFolderSize = Settings.getShowDownloadCardFolderSize();
+
+        if (showFolderTime) {
+            long folderTime = folderTimeCache.computeIfAbsent(info.gid,
+                    ignored -> DownloadGalleryMetaHelper.getGalleryDirectoryTimestamp(info));
+            String timeText = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault())
+                    .format(new Date(folderTime));
+            holder.folderTime.setText(mScene.getString(R.string.download_card_folder_time, timeText));
+        }
+
+        if (showFolderSize) {
+            long folderSize = folderSizeCache.computeIfAbsent(info.gid, ignored -> {
+                try {
+                    return DownloadedFileManager.getInstance().getGalleryFilesTotalSize(info.gid);
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to query folder size for gid=" + info.gid, e);
+                    return 0L;
+                }
+            });
+            String sizeText = com.hippo.lib.yorozuya.FileUtils.humanReadableByteCount(Math.max(folderSize, 0L), false);
+            holder.folderSize.setText(mScene.getString(R.string.download_card_folder_size, sizeText));
+        }
+
+        holder.folderTime.setVisibility(showFolderTime ? View.VISIBLE : View.GONE);
+        holder.folderSize.setVisibility(showFolderSize ? View.VISIBLE : View.GONE);
     }
 
 
@@ -730,6 +771,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         public final android.widget.ProgressBar progressBar;
         public final TextView percent;
         public final TextView speed;
+        public final TextView folderTime;
+        public final TextView folderSize;
 
         public DownloadHolder(View itemView) {
             super(itemView);
@@ -746,6 +789,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             progressBar = itemView.findViewById(R.id.progress_bar);
             percent = itemView.findViewById(R.id.percent);
             speed = itemView.findViewById(R.id.speed);
+            folderTime = itemView.findViewById(R.id.folder_time);
+            folderSize = itemView.findViewById(R.id.folder_size);
 
             // 初始设置点击监听器
             setClickListeners(true);

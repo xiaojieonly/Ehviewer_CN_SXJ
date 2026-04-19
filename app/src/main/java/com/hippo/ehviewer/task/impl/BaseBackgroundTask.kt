@@ -37,7 +37,24 @@ abstract class BaseBackgroundTask(
     protected fun updateProgress(progress: Int, detail: String? = null) {
         currentProgress = progress
         _progressDetail = detail
-        _progressListener?.onProgressChanged(progress, detail)
+        _progressListener?.onProgressChanged(progress, _progressDetail)
+    }
+
+    /**
+     * 使用当前值/总值更新进度。
+     */
+    protected fun updateProgress(current: Int, total: Int, detail: String?) {
+        _progressDetail = detail
+        currentProgress = if (current >= 0 && total > 0) {
+            ((current * 100L) / total).toInt()
+        } else {
+            -1
+        }
+        if (current >= 0 && total > 0) {
+            _progressListener?.onProgressChanged(current, total, _progressDetail)
+        } else {
+            _progressListener?.onProgressChanged(-1, _progressDetail)
+        }
     }
 
     protected fun appendTaskLog(message: String) {

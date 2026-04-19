@@ -70,6 +70,30 @@
                 android:layout_marginTop="2dp"/>
 
             <TextView
+                android:id="@+id/folder_time"
+                style="@style/CardMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@id/title"
+                android:layout_below="@id/rating"
+                android:layout_marginTop="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/folder_size"
+                style="@style/CardMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@id/title"
+                android:layout_below="@id/folder_time"
+                android:layout_marginTop="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/category"
                 style="@style/CardMessage"
                 android:layout_width="wrap_content"

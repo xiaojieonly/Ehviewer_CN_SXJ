@@ -5,8 +5,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
@@ -15,14 +17,17 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.GalleryTags;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.download.DownloadGalleryMetaHelper;
 import com.hippo.ehviewer.widget.AdvanceSearchTable;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.unifile.UniFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -53,6 +58,7 @@ public class DownloadListInfosExecutor {
     private final String mSearchKey;
 
     private DownloadManager mDownloadManager;
+    private final Map<Long, Long> mGalleryTimeCache = new HashMap<>();
 
     public DownloadListInfosExecutor(@Nullable List<DownloadInfo> mList, String searchKey) {
         this.mList = mList;
@@ -335,6 +341,19 @@ public class DownloadListInfosExecutor {
 
     // 新增方法：同时应用分类过滤、多状态过滤和排序（支持多选分类和多选状态）
     public void executeFilterAndSort(Set<Integer> categoryIds, Set<Integer> statusIds, int sortId) {
+        executeFilterAndSort(categoryIds, statusIds, sortId, null, null, null, null, false);
+    }
+
+    public void executeFilterAndSort(Set<Integer> categoryIds, Set<Integer> statusIds, int sortId,
+                                     @Nullable Long timeFrom, @Nullable Long timeTo,
+                                     @Nullable Long sizeFrom, @Nullable Long sizeTo) {
+        executeFilterAndSort(categoryIds, statusIds, sortId, timeFrom, timeTo, sizeFrom, sizeTo, false);
+    }
+
+    public void executeFilterAndSort(Set<Integer> categoryIds, Set<Integer> statusIds, int sortId,
+                                     @Nullable Long timeFrom, @Nullable Long timeTo,
+                                     @Nullable Long sizeFrom, @Nullable Long sizeTo,
+                                     boolean duplicateOnly) {
         Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 开始, categoryIds=" + categoryIds + ", statusIds=" + statusIds + ", sortId=" + sortId);
         Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 输入列表大小=" + (mList != null ? mList.size() : 0));
         
@@ -353,6 +372,10 @@ public class DownloadListInfosExecutor {
                 filteredList = filterByStates(statusIds, filteredList);
                 Log.d("DownloadListInfos", "executeFilterAndSort(多状态): 状态过滤完成，列表大小=" + filteredList.size());
             }
+
+            filteredList = filterByTimeRange(filteredList, timeFrom, timeTo);
+            filteredList = filterBySizeRange(filteredList, sizeFrom, sizeTo);
+            filteredList = filterDuplicateNamedGalleries(filteredList, duplicateOnly);
 
             // 最后应用排序
             List<DownloadInfo> resultList;
@@ -381,6 +404,127 @@ public class DownloadListInfosExecutor {
         });
     }
 
+    private List<DownloadInfo> filterDuplicateNamedGalleries(@Nullable List<DownloadInfo> sourceList,
+                                                             boolean duplicateOnly) {
+        if (!duplicateOnly) {
+            return sourceList != null ? sourceList : new ArrayList<>();
+        }
+        if (sourceList == null || sourceList.isEmpty()) {
+            return sourceList != null ? sourceList : new ArrayList<>();
+        }
+
+        Map<String, List<DownloadInfo>> grouped = new HashMap<>();
+        for (DownloadInfo info : sourceList) {
+            String key = buildDuplicateGroupingName(info);
+            grouped.computeIfAbsent(key, ignored -> new ArrayList<>()).add(info);
+        }
+
+        Set<Long> duplicatedGids = new HashSet<>();
+        for (List<DownloadInfo> group : grouped.values()) {
+            if (group.size() >= 2) {
+                for (DownloadInfo info : group) {
+                    duplicatedGids.add(info.gid);
+                }
+            }
+        }
+
+        List<DownloadInfo> result = new ArrayList<>();
+        for (DownloadInfo info : sourceList) {
+            if (duplicatedGids.contains(info.gid)) {
+                result.add(info);
+            }
+        }
+        return result;
+    }
+
+    @NonNull
+    private String buildDuplicateGroupingName(@NonNull DownloadInfo info) {
+        String sourceName = null;
+        UniFile dir = SpiderDen.getGalleryDownloadDir(info);
+        if (dir != null) {
+            sourceName = dir.getName();
+        }
+        if (sourceName == null || sourceName.trim().isEmpty()) {
+            sourceName = info.title;
+        }
+        if (sourceName == null) {
+            sourceName = String.valueOf(info.gid);
+        }
+
+        String normalized = sourceName.replaceFirst("^\\\\d+-", "")
+                .replace("🔄", "")
+                .trim()
+                .toLowerCase();
+        return normalized.isEmpty() ? sourceName : normalized;
+    }
+
+    private List<DownloadInfo> filterByTimeRange(@Nullable List<DownloadInfo> sourceList,
+                                                 @Nullable Long timeFrom,
+                                                 @Nullable Long timeTo) {
+        if (sourceList == null || sourceList.isEmpty()) {
+            return sourceList != null ? sourceList : new ArrayList<>();
+        }
+        if (timeFrom == null && timeTo == null) {
+            return sourceList;
+        }
+
+        List<DownloadInfo> result = new ArrayList<>();
+        for (DownloadInfo info : sourceList) {
+            long ts = mGalleryTimeCache.computeIfAbsent(info.gid,
+                    ignored -> DownloadGalleryMetaHelper.getGalleryDirectoryTimestamp(info));
+            if (isInRange(ts, timeFrom, timeTo)) {
+                result.add(info);
+            }
+        }
+        return result;
+    }
+
+    private List<DownloadInfo> filterBySizeRange(@Nullable List<DownloadInfo> sourceList,
+                                                 @Nullable Long sizeFrom,
+                                                 @Nullable Long sizeTo) {
+        if (sourceList == null || sourceList.isEmpty()) {
+            return sourceList != null ? sourceList : new ArrayList<>();
+        }
+        if (sizeFrom == null && sizeTo == null) {
+            return sourceList;
+        }
+
+        Map<Long, Long> sizeMap = loadGallerySizeMap(sourceList);
+        List<DownloadInfo> result = new ArrayList<>();
+        for (DownloadInfo info : sourceList) {
+            long size = sizeMap.getOrDefault(info.gid, 0L);
+            info.fileSize = size;
+            if (isInRange(size, sizeFrom, sizeTo)) {
+                result.add(info);
+            }
+        }
+        return result;
+    }
+
+    private boolean isInRange(long value, @Nullable Long from, @Nullable Long to) {
+        if (from != null && value < from) {
+            return false;
+        }
+        return to == null || value <= to;
+    }
+
+    private Map<Long, Long> loadGallerySizeMap(@NonNull List<DownloadInfo> infos) {
+        List<Long> gids = new ArrayList<>(infos.size());
+        for (DownloadInfo info : infos) {
+            gids.add(info.gid);
+        }
+
+        try {
+            return DownloadedFileManager.getInstance().getGalleryFilesTotalSizeMap(gids);
+        } catch (IllegalStateException e) {
+            Log.w("DownloadListInfos", "DownloadedFileManager not initialized", e);
+            return new HashMap<>();
+        } catch (Exception e) {
+            Log.w("DownloadListInfos", "loadGallerySizeMap failed", e);
+            return new HashMap<>();
+        }
+    }
+
     public List<DownloadInfo> sortByType(int type) {
         Log.d("DownloadListInfos", "sortByType: 开始排序, type=" + type);
         if (mList == null) {
@@ -394,8 +538,12 @@ public class DownloadListInfosExecutor {
 
         // 如果是按文件大小排序，先计算所有文件大小
         if (type == R.id.sort_by_file_size_asc || type == R.id.sort_by_file_size_desc) {
+            Map<Long, Long> sizeMap = loadGallerySizeMap(Arrays.asList(arr));
             for (DownloadInfo info : arr) {
-                if (info.fileSize < 0) { // 未计算过
+                long dbSize = sizeMap.getOrDefault(info.gid, -1L);
+                if (dbSize >= 0) {
+                    info.fileSize = dbSize;
+                } else if (info.fileSize < 0) {
                     info.fileSize = calculateDownloadDirSize(info);
                 }
             }

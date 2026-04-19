@@ -68,6 +68,18 @@
         android:summary="@string/settings_download_incremental_update_summary"
         app:allowDividerAbove="true" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="show_download_card_folder_time"
+        android:title="@string/settings_download_show_folder_time"
+        android:summary="@string/settings_download_show_folder_time_summary" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="show_download_card_folder_size"
+        android:title="@string/settings_download_show_folder_size"
+        android:summary="@string/settings_download_show_folder_size_summary" />
+
     <!-- Default value for debugging: 3 -->
     <com.hippo.ehviewer.preference.SliderPreference
         android:defaultValue="3"

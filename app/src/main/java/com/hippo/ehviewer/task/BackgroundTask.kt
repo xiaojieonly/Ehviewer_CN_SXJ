@@ -104,6 +104,16 @@ interface BackgroundTask {
         fun onProgressChanged(progress: Int, detail: String?)
 
         @MainThread
+        fun onProgressChanged(current: Int, total: Int, detail: String?) {
+            val percent = if (total > 0 && current >= 0) {
+                ((current * 100L) / total).toInt()
+            } else {
+                -1
+            }
+            onProgressChanged(percent, detail)
+        }
+
+        @MainThread
         fun onCompleted()
 
         @MainThread

@@ -1,5 +1,23 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="settings_download_show_folder_time">Show folder time on download card</string>
+    <string name="settings_download_show_folder_time_summary">Display folder time in each download card.</string>
+    <string name="settings_download_show_folder_size">Show folder size on download card</string>
+    <string name="settings_download_show_folder_size_summary">Display folder size in each download card.</string>
+    <string name="dialog_time_range_filter_label">Folder time range (optional)</string>
+    <string name="dialog_time_range_from_hint">From date, e.g. 2026-01-01</string>
+    <string name="dialog_time_range_to_hint">To date, e.g. 2026-12-31</string>
+    <string name="dialog_size_range_filter_label">Folder size range (optional)</string>
+    <string name="dialog_size_range_from_hint">Min size, e.g. 128MB</string>
+    <string name="dialog_size_range_to_hint">Max size, e.g. 2GB</string>
+    <string name="dialog_size_range_tip">Supports B/KB/MB/GB; no unit defaults to MB.</string>
+    <string name="download_filter_invalid_time">Invalid time format. Use yyyy-MM-dd or yyyy-MM-dd HH:mm</string>
+    <string name="download_filter_invalid_size">Invalid size format. Example: 128MB or 2GB</string>
+    <string name="download_filter_range_invalid">Range is invalid: start value cannot be greater than end value</string>
+    <string name="download_card_folder_time">Time: %1$s</string>
+    <string name="download_card_folder_size">Size: %1$s</string>
+    <string name="progress_detail_with_total">%1$s %2$d / %3$d</string>
+
     <string name="multi_select_mode">Multi-select mode</string>
     <string name="fab_action_menu">Action menu</string>
     <string name="send_comment">Send comment</string>

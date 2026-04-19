@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="progress_detail_with_total">%1$s %2$d / %3$d</string>
+
     <string name="background_task_clear_all">强制停止所有任务</string>
     <string name="background_task_cleared_all">所有任务已停止并清除</string>
 
@@ -690,6 +692,10 @@
     <string name="settings_download_clean_logs_summary">删除超过7天的日志文件</string>
     <string name="settings_download_incremental_update">增量下载更新</string>
     <string name="settings_download_incremental_update_summary">下载时检测同名画廊，保留旧版本并创建更新记录</string>
+    <string name="settings_download_show_folder_time">在下载卡片显示文件夹时间</string>
+    <string name="settings_download_show_folder_time_summary">在每个下载卡片中显示文件夹时间。</string>
+    <string name="settings_download_show_folder_size">在下载卡片显示文件夹大小</string>
+    <string name="settings_download_show_folder_size_summary">在每个下载卡片中显示文件夹大小。</string>
     <string name="settings_download_merge_duplicate_gallery">合并重复的画廊</string>
     <string name="settings_download_merge_duplicate_gallery_summary">扫描并合并重复画廊，实现版本演进。</string>
     <string name="merge_duplicate_gallery_title">合并重复画廊</string>
@@ -1167,6 +1173,14 @@ SSID: %1$s
     <string name="dialog_category_filter_label">类别筛选器（多选）</string>
     <string name="dialog_status_filter_label">状态过滤器</string>
     <string name="dialog_sort_method_label">排序方法</string>
+    <string name="dialog_time_range_filter_label">文件夹时间范围（可选）</string>
+    <string name="dialog_time_range_from_hint">开始日期，例如 2026-01-01</string>
+    <string name="dialog_time_range_to_hint">结束日期，例如 2026-12-31</string>
+    <string name="select_datetime_button">选择</string>
+    <string name="dialog_size_range_filter_label">文件夹大小范围（可选）</string>
+    <string name="dialog_size_range_from_hint">最小值，例如 128MB</string>
+    <string name="dialog_size_range_to_hint">最大值，例如 2GB</string>
+    <string name="dialog_size_range_tip">支持 B/KB/MB/GB，不带单位默认按 MB。</string>
     <string name="dialog_search_download_title">搜索下载画廊</string>
     <string name="dialog_search_options_label">搜索选项</string>
     <string name="reset">重置</string>
@@ -1188,6 +1202,12 @@ SSID: %1$s
     <string name="advanced_filter_apply_changes">应用筛选器更改</string>
     <string name="advanced_filter_discard_changes">放弃更改</string>
     <string name="advanced_filter_confirm_reset">将所有过滤器重置为默认值？</string>
+    <string name="download_filter_invalid_time">时间格式无效，请使用 yyyy-MM-dd 或 yyyy-MM-dd HH:mm</string>
+    <string name="download_filter_invalid_size">大小格式无效，例如 128MB 或 2GB</string>
+    <string name="download_filter_range_invalid">范围无效：起始值不能大于结束值</string>
+    <string name="dialog_filter_duplicate_only">仅显示重名画廊</string>
+    <string name="download_card_folder_time">时间：%1$s</string>
+    <string name="download_card_folder_size">大小：%1$s</string>
     <string name="unavailable">不可用</string>
     <string name="merge_scanning_galleries">正在扫描已下载的画廊...</string>
     <string name="merge_start_scan">开始扫描已下载的画廊...</string>

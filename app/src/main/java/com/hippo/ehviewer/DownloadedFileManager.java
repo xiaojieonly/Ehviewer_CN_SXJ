@@ -44,7 +44,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DownloadedFileManager {
@@ -521,6 +523,64 @@ public class DownloadedFileManager {
             Log.e(TAG, "Error getting total files count", e);
             return 0;
         }
+    }
+
+    /**
+     * 获取指定画廊的文件总大小（单位：字节）
+     */
+    public long getGalleryFilesTotalSize(long gid) {
+        List<Long> gids = new ArrayList<>(1);
+        gids.add(gid);
+        return getGalleryFilesTotalSizeMap(gids).getOrDefault(gid, 0L);
+    }
+
+    /**
+     * 批量获取多个画廊文件总大小（单位：字节）
+     */
+    @NonNull
+    public Map<Long, Long> getGalleryFilesTotalSizeMap(@NonNull List<Long> gids) {
+        Map<Long, Long> result = new HashMap<>();
+        if (gids.isEmpty()) {
+            return result;
+        }
+
+        for (Long gid : gids) {
+            if (gid != null) {
+                result.put(gid, 0L);
+            }
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+        String[] args = new String[gids.size() + 1];
+        args[0] = String.valueOf(DownloadedFile.STATUS_NORMAL);
+        for (int i = 0; i < gids.size(); i++) {
+            if (i > 0) {
+                placeholders.append(',');
+            }
+            placeholders.append('?');
+            args[i + 1] = String.valueOf(gids.get(i));
+        }
+
+        String sql = "SELECT GID, SUM(COALESCE(SIZE, 0)) FROM DOWNLOADED_FILES "
+                + "WHERE STATUS = ? AND GID IN (" + placeholders + ") GROUP BY GID";
+
+        Cursor cursor = null;
+        try {
+            cursor = mDownloadedFilesDao.getDatabase().rawQuery(sql, args);
+            while (cursor != null && cursor.moveToNext()) {
+                long gid = cursor.getLong(0);
+                long size = cursor.isNull(1) ? 0L : cursor.getLong(1);
+                result.put(gid, Math.max(size, 0L));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting gallery files total size map", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return result;
     }
 
     /**

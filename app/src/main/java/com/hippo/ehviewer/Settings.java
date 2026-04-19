@@ -1155,6 +1155,28 @@ public class Settings {
         putBoolean(KEY_INCREMENTAL_DOWNLOAD_UPDATE, value);
     }
 
+    public static final String KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME = "show_download_card_folder_time";
+    private static final boolean DEFAULT_SHOW_DOWNLOAD_CARD_FOLDER_TIME = false;
+
+    public static boolean getShowDownloadCardFolderTime() {
+        return getBoolean(KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME, DEFAULT_SHOW_DOWNLOAD_CARD_FOLDER_TIME);
+    }
+
+    public static void putShowDownloadCardFolderTime(boolean value) {
+        putBoolean(KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME, value);
+    }
+
+    public static final String KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE = "show_download_card_folder_size";
+    private static final boolean DEFAULT_SHOW_DOWNLOAD_CARD_FOLDER_SIZE = false;
+
+    public static boolean getShowDownloadCardFolderSize() {
+        return getBoolean(KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE, DEFAULT_SHOW_DOWNLOAD_CARD_FOLDER_SIZE);
+    }
+
+    public static void putShowDownloadCardFolderSize(boolean value) {
+        putBoolean(KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE, value);
+    }
+
     private static final String KEY_MULTI_THREAD_DOWNLOAD = "download_thread";
     private static final int DEFAULT_MULTI_THREAD_DOWNLOAD = 3;
 

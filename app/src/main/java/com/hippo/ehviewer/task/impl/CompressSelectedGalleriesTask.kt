@@ -55,12 +55,15 @@ class CompressSelectedGalleriesTask @JvmOverloads constructor(
 
     override suspend fun execute(): Result<Unit> {
         appendTaskLog("开始压缩 ${selectedList.size} 个画廊")
+        val totalCount = selectedList.size
         if (selectedList.isEmpty()) {
             updateProgress(100, context.getString(R.string.compress_selected_galleries))
             notifyCompleted()
             appendTaskLog("没有要压缩的画廊，任务结束")
             return Result.success(Unit)
         }
+
+        updateProgress(0, totalCount, context.getString(R.string.compress_selected_galleries) + " 0/" + totalCount)
 
         val outputDir = com.hippo.ehviewer.Settings.getExportLocation()
             ?: return Result.failure(IOException("Export location unavailable"))
@@ -72,7 +75,6 @@ class CompressSelectedGalleriesTask @JvmOverloads constructor(
         val splitSizeMb = com.hippo.ehviewer.Settings.getCompressSplitSizeMB()
         val splitSizeBytes = if (splitSizeMb > 0) splitSizeMb * 1024L * 1024L else 0L
 
-        val totalCount = selectedList.size
         var completedCount = 0
         var partIndex = 1
 
@@ -86,7 +88,7 @@ class CompressSelectedGalleriesTask @JvmOverloads constructor(
                 if (galleryDir == null || !galleryDir.exists()) {
                     appendTaskLog("画廊 ${info.gid} 不存在，跳过")
                     completedCount++
-                    updateProgress(completedCount, context.getString(R.string.compress_selected_galleries) + " " + completedCount + "/" + totalCount)
+                    updateProgress(completedCount, totalCount, context.getString(R.string.compress_selected_galleries) + " " + completedCount + "/" + totalCount)
                     continue
                 }
 
@@ -116,7 +118,7 @@ class CompressSelectedGalleriesTask @JvmOverloads constructor(
 
                 currentPartSize += if (gallerySize > 0) gallerySize else 1
                 completedCount++
-                updateProgress(completedCount, context.getString(R.string.compress_selected_galleries) + " " + completedCount + "/" + totalCount)
+                updateProgress(completedCount, totalCount, context.getString(R.string.compress_selected_galleries) + " " + completedCount + "/" + totalCount)
             }
 
             zos?.close()

@@ -23,6 +23,8 @@ import static com.hippo.util.FileUtils.getFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.text.TextUtils;
 import android.widget.ProgressBar;
@@ -33,6 +35,7 @@ import androidx.appcompat.app.AlertDialog;
 import android.content.DialogInterface;
 import java.util.List;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -56,6 +59,8 @@ import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -78,6 +83,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -158,7 +164,11 @@ import com.hippo.ehviewer.task.impl.DeleteRangeDownloadTask;
 import com.hippo.ehviewer.task.impl.StartAllDownloadTask;
 import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -239,6 +249,19 @@ public class DownloadsScene extends ToolbarScene
     private Set<Integer> mSelectedCategories = new HashSet<>();
     private Set<Integer> mSelectedStatuses = new HashSet<>();
     private Set<Integer> mSelectedSorts = new HashSet<>();
+    @Nullable
+    private Long mFilterTimeFrom;
+    @Nullable
+    private Long mFilterTimeTo;
+    @Nullable
+    private Long mFilterSizeFrom;
+    @Nullable
+    private Long mFilterSizeTo;
+    private boolean mFilterDuplicateOnly = false;
+    private String mFilterTimeFromInput = "";
+    private String mFilterTimeToInput = "";
+    private String mFilterSizeFromInput = "";
+    private String mFilterSizeToInput = "";
     //    private final int paginationSize = 5;
     private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
 //    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
@@ -1476,6 +1499,11 @@ public class DownloadsScene extends ToolbarScene
             }
 
             @Override
+            public void onProgressChanged(int current, int total, String detail) {
+                // Progress updates handled via notification, no UI update needed here
+            }
+
+            @Override
             public void onCompleted() {
                 List<String> outFiles = task.getOutputFileNames();
                 String result = outFiles.isEmpty() ? "" : TextUtils.join(", ", outFiles);
@@ -2512,6 +2540,11 @@ public class DownloadsScene extends ToolbarScene
                 }
 
                 @Override
+                public void onProgressChanged(int current, int total, String detail) {
+                    // Progress updates handled via notification
+                }
+
+                @Override
                 public void onCompleted() {
                     // Handled by onCompletedCallback
                 }
@@ -2661,13 +2694,23 @@ public class DownloadsScene extends ToolbarScene
         // 获取CategoryTable
         DownloadCategoryTable categoryTable = dialogView.findViewById(R.id.category_table);
         
-        // 初始化RecyclerView
+        // 初始化RecyclerView和范围输入
         RecyclerView statusRecyclerView = dialogView.findViewById(R.id.status_recycler_view);
         RecyclerView sortRecyclerView = dialogView.findViewById(R.id.sort_recycler_view);
+        EditText timeFromInput = dialogView.findViewById(R.id.filter_time_from_input);
+        EditText timeToInput = dialogView.findViewById(R.id.filter_time_to_input);
+        EditText sizeFromInput = dialogView.findViewById(R.id.filter_size_from_input);
+        EditText sizeToInput = dialogView.findViewById(R.id.filter_size_to_input);
+        Button pickTimeFromButton = dialogView.findViewById(R.id.pick_time_from_button);
+        Button pickTimeToButton = dialogView.findViewById(R.id.pick_time_to_button);
+        CheckBox duplicateOnlyCheckbox = dialogView.findViewById(R.id.filter_duplicate_only_checkbox);
         
-        // 设置布局管理�?
-        statusRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-        sortRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        // 竖屏单列，横屏双列平铺
+        int spanCount = context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 2 : 1;
+        statusRecyclerView.setLayoutManager(new GridLayoutManager(context, spanCount));
+        sortRecyclerView.setLayoutManager(new GridLayoutManager(context, spanCount));
+        statusRecyclerView.setNestedScrollingEnabled(false);
+        sortRecyclerView.setNestedScrollingEnabled(false);
 
         // 准备状态数据（去除全部选项�?
         List<String> statusItems = new ArrayList<>();
@@ -2758,6 +2801,15 @@ public class DownloadsScene extends ToolbarScene
             mSelectedSorts.add(R.id.sort_by_default);
         }
 
+        timeFromInput.setText(mFilterTimeFromInput);
+        timeToInput.setText(mFilterTimeToInput);
+        sizeFromInput.setText(mFilterSizeFromInput);
+        sizeToInput.setText(mFilterSizeToInput);
+        duplicateOnlyCheckbox.setChecked(mFilterDuplicateOnly);
+
+        pickTimeFromButton.setOnClickListener(v -> showDateTimePicker(timeFromInput));
+        pickTimeToButton.setOnClickListener(v -> showDateTimePicker(timeToInput));
+
         // 使用post方法延迟设置选中项，避免在RecyclerView计算布局时调�?
         dialogView.post(() -> {
             mStatusAdapter.setSelectedItems(mSelectedStatuses);
@@ -2798,7 +2850,7 @@ public class DownloadsScene extends ToolbarScene
             mSelectedCategories.clear();
             mSelectedStatuses.clear();
             mSelectedSorts.clear();
-            
+
             mSelectedCategories.add(EhUtils.ALL_CATEGORY);
             // 重置为全选所有状�?
             mSelectedStatuses.add(R.id.download_done);
@@ -2807,10 +2859,25 @@ public class DownloadsScene extends ToolbarScene
             mSelectedStatuses.add(R.id.downloading);
             mSelectedStatuses.add(R.id.failed);
             mSelectedSorts.add(R.id.sort_by_default);
-            
+
+            mFilterTimeFrom = null;
+            mFilterTimeTo = null;
+            mFilterSizeFrom = null;
+            mFilterSizeTo = null;
+            mFilterDuplicateOnly = false;
+            mFilterTimeFromInput = "";
+            mFilterTimeToInput = "";
+            mFilterSizeFromInput = "";
+            mFilterSizeToInput = "";
+            timeFromInput.setText("");
+            timeToInput.setText("");
+            sizeFromInput.setText("");
+            sizeToInput.setText("");
+            duplicateOnlyCheckbox.setChecked(false);
+
             // 重置CategoryTable - 确保所有按钮都是亮起的
             categoryTable.setSelectedCategories(mSelectedCategories);
-            
+
             // 使用post方法延迟设置选中项，避免在RecyclerView计算布局时调�?
             dialogView.post(() -> {
                 mStatusAdapter.setSelectedItems(mSelectedStatuses);
@@ -2819,11 +2886,54 @@ public class DownloadsScene extends ToolbarScene
         });
 
         applyButton.setOnClickListener(v -> {
-            // 获取CategoryTable的选中状�?
             mSelectedCategories = categoryTable.getSelectedCategories();
             Log.d("DownloadsScene", "applySortAndFilter: 获取到的分类=" + mSelectedCategories);
-            
-            // 应用选择
+
+            String timeFromRaw = timeFromInput.getText() != null ? timeFromInput.getText().toString().trim() : "";
+            String timeToRaw = timeToInput.getText() != null ? timeToInput.getText().toString().trim() : "";
+            String sizeFromRaw = sizeFromInput.getText() != null ? sizeFromInput.getText().toString().trim() : "";
+            String sizeToRaw = sizeToInput.getText() != null ? sizeToInput.getText().toString().trim() : "";
+
+            Long parsedTimeFrom = parseTimeInput(timeFromRaw, false);
+            if (timeFromRaw.length() > 0 && parsedTimeFrom == null) {
+                Toast.makeText(context, R.string.download_filter_invalid_time, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Long parsedTimeTo = parseTimeInput(timeToRaw, true);
+            if (timeToRaw.length() > 0 && parsedTimeTo == null) {
+                Toast.makeText(context, R.string.download_filter_invalid_time, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (parsedTimeFrom != null && parsedTimeTo != null && parsedTimeFrom > parsedTimeTo) {
+                Toast.makeText(context, R.string.download_filter_range_invalid, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Long parsedSizeFrom = parseSizeInput(sizeFromRaw);
+            if (sizeFromRaw.length() > 0 && parsedSizeFrom == null) {
+                Toast.makeText(context, R.string.download_filter_invalid_size, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Long parsedSizeTo = parseSizeInput(sizeToRaw);
+            if (sizeToRaw.length() > 0 && parsedSizeTo == null) {
+                Toast.makeText(context, R.string.download_filter_invalid_size, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (parsedSizeFrom != null && parsedSizeTo != null && parsedSizeFrom > parsedSizeTo) {
+                Toast.makeText(context, R.string.download_filter_range_invalid, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            mFilterTimeFrom = parsedTimeFrom;
+            mFilterTimeTo = parsedTimeTo;
+            mFilterSizeFrom = parsedSizeFrom;
+            mFilterSizeTo = parsedSizeTo;
+            mFilterDuplicateOnly = duplicateOnlyCheckbox.isChecked();
+            mFilterTimeFromInput = timeFromRaw;
+            mFilterTimeToInput = timeToRaw;
+            mFilterSizeFromInput = sizeFromRaw;
+            mFilterSizeToInput = sizeToRaw;
+
             Log.d("DownloadsScene", "applyButton clicked: 应用过滤和排序");
             applySortAndFilter();
             mSortFilterDialog.dismiss();
@@ -2863,31 +2973,138 @@ public class DownloadsScene extends ToolbarScene
         
         // 如果需要应用任何过滤或排序
         boolean hasStatusFilter = !mSelectedStatuses.isEmpty() && mSelectedStatuses.size() < 5; // 5是所有状态的数量
-        if (!isAllCategories || hasStatusFilter || selectedSort != R.id.sort_by_default) {
+        boolean hasRangeFilter = mFilterTimeFrom != null || mFilterTimeTo != null
+                || mFilterSizeFrom != null || mFilterSizeTo != null;
+        boolean hasDuplicateFilter = mFilterDuplicateOnly;
+        if (!isAllCategories || hasStatusFilter || selectedSort != R.id.sort_by_default || hasRangeFilter || hasDuplicateFilter) {
             Log.d("DownloadsScene", "applySortAndFilter: 需要应用过滤或排序");
-            isFilteringOrSearching = true;  // 标记进入筛选状�?
+            isFilteringOrSearching = true;  // 标记进入筛选状态
             mProgressView.setVisibility(View.VISIBLE);
             if (mRecyclerView != null) {
                 mRecyclerView.setVisibility(View.GONE);
             }
             
-            // 创建执行器并应用过滤和排�?
+            // 创建执行器并应用过滤和排序
             DownloadListInfosExecutor executor = new DownloadListInfosExecutor(mBackList, mDownloadManager);
             executor.setDownloadSearchingListener(this);
             
-            // 同时应用分类过滤、状态过滤和排序
+            // 同时应用分类过滤、状态过滤和排序（含时间/大小范围）
             Log.d("DownloadsScene", "applySortAndFilter: 调用executeFilterAndSort, categories=" + selectedCategories + ", statuses=" + mSelectedStatuses + ", sort=" + selectedSort);
-            executor.executeFilterAndSort(selectedCategories, mSelectedStatuses, selectedSort);
+            executor.executeFilterAndSort(selectedCategories, mSelectedStatuses, selectedSort,
+                    mFilterTimeFrom, mFilterTimeTo, mFilterSizeFrom, mFilterSizeTo, mFilterDuplicateOnly);
         } else {
             Log.d("DownloadsScene", "applySortAndFilter: 不需要任何过滤或排序，使用原始列表");
-            isFilteringOrSearching = false;  // 标记退出筛选状�?
-            // 不需要任何过滤或排序，直接使用原始列�?
+            isFilteringOrSearching = false;  // 标记退出筛选状态
+            // 不需要任何过滤或排序，直接使用原始列表
             mList = new ArrayList<>(mBackList);
             updateAdapter();
             updateTitle();
             updatePaginationIndicator(true);
             updateView();
             queryUnreadSpiderInfo();
+        }
+    }
+
+    /**
+     * 解析时间输入字符串为毫秒时间戳。
+     * 支持格式: "yyyy-MM-dd" 或 "yyyy-MM-dd HH:mm"
+     * @param input 用户输入
+     * @param isEnd 若为 true 且仅输入日期，则自动补全为当天结束时间 23:59:59.999
+     */
+    @Nullable
+    private Long parseTimeInput(String input, boolean isEnd) {
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+        String s = input.trim();
+        String[] formats = {"yyyy-MM-dd HH:mm", "yyyy-MM-dd"};
+        for (String fmt : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(fmt, Locale.getDefault());
+                sdf.setLenient(false);
+                Date d = sdf.parse(s);
+                if (d != null) {
+                    long ts = d.getTime();
+                    if (isEnd && fmt.equals("yyyy-MM-dd")) {
+                        ts += 24L * 60 * 60 * 1000 - 1; // 补全到当天末尾
+                    }
+                    return ts;
+                }
+            } catch (ParseException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private void showDateTimePicker(@NonNull EditText targetInput) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+
+        final Calendar calendar = Calendar.getInstance();
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                context,
+                (view, year, month, dayOfMonth) -> {
+                    calendar.set(Calendar.YEAR, year);
+                    calendar.set(Calendar.MONTH, month);
+                    calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                    TimePickerDialog timePickerDialog = new TimePickerDialog(
+                            context,
+                            (timeView, hourOfDay, minute) -> {
+                                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                calendar.set(Calendar.MINUTE, minute);
+                                calendar.set(Calendar.SECOND, 0);
+                                calendar.set(Calendar.MILLISECOND, 0);
+
+                                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                                targetInput.setText(outputFormat.format(calendar.getTime()));
+                            },
+                            calendar.get(Calendar.HOUR_OF_DAY),
+                            calendar.get(Calendar.MINUTE),
+                            true
+                    );
+                    timePickerDialog.show();
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+        );
+        datePickerDialog.show();
+    }
+
+    /**
+     * 解析大小输入字符串为字节数。
+     * 支持: 纯数字(视为 MB)，或数字+单位(B/KB/MB/GB)。
+     */
+    @Nullable
+    private Long parseSizeInput(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+        String s = input.trim().toUpperCase(Locale.ROOT);
+        long multiplier = 1024L * 1024L; // 默认 MB
+        String numPart = s;
+        if (s.endsWith("GB")) {
+            multiplier = 1024L * 1024L * 1024L;
+            numPart = s.substring(0, s.length() - 2).trim();
+        } else if (s.endsWith("MB")) {
+            multiplier = 1024L * 1024L;
+            numPart = s.substring(0, s.length() - 2).trim();
+        } else if (s.endsWith("KB")) {
+            multiplier = 1024L;
+            numPart = s.substring(0, s.length() - 2).trim();
+        } else if (s.endsWith("B")) {
+            multiplier = 1L;
+            numPart = s.substring(0, s.length() - 1).trim();
+        }
+        try {
+            double num = Double.parseDouble(numPart);
+            if (num < 0) return null;
+            return (long) (num * multiplier);
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }

@@ -2,11 +2,13 @@ package com.hippo.ehviewer.preference;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.widget.Toast;
+
 import androidx.preference.Preference;
-import com.hippo.ehviewer.R;
+
 import com.hippo.ehviewer.BackgroundTaskManager;
-import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
-import com.hippo.ehviewer.ui.fragment.MergeDuplicateGalleryTask;
+import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.task.MergeDuplicateGalleryTask;
 
 public class MergeDuplicateGalleryPreference2 extends Preference {
 
@@ -35,24 +37,11 @@ public class MergeDuplicateGalleryPreference2 extends Preference {
     protected void onClick() {
         Context context = getContext();
         BackgroundTaskManager taskManager = BackgroundTaskManager.getInstance();
-        BackgroundTaskStatusManager statusManager = taskManager.getTaskStatusManager();
-        
-        // 添加到任务状态管理器
-        String taskId = statusManager.addTask(
-            context.getString(R.string.settings_download_merge_duplicate_gallery),
-            context.getString(R.string.settings_download_merge_duplicate_gallery_summary),
-            null,
-            com.hippo.ehviewer.task.BackgroundTask.TaskType.MERGE,
-            true
-        );
-        if (taskId == null) {
-            android.widget.Toast.makeText(context, R.string.background_task_unique_running, android.widget.Toast.LENGTH_SHORT).show();
+        if (taskManager.getTaskStatusManager().getActiveUniqueNonDownloadTask() != null) {
+            Toast.makeText(context, R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
             return;
         }
-        
-        // 提交任务
-        taskManager.submitMergeDuplicateGalleryTask(() -> {
-            MergeDuplicateGalleryRunner.executeMergeTask(context, taskId, statusManager);
-        });
+        taskManager.submitBackgroundTask(new MergeDuplicateGalleryTask(context));
+        Toast.makeText(context, R.string.settings_download_merge_duplicate_gallery, Toast.LENGTH_SHORT).show();
     }
 }

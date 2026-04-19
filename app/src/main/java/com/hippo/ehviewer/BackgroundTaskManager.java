@@ -21,6 +21,7 @@ import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadLogger;
 import com.hippo.ehviewer.task.BackgroundTask;
 import com.hippo.ehviewer.task.BackgroundTaskRunner;
+import com.hippo.ehviewer.task.MergeDuplicateGalleryTask;
 import com.hippo.ehviewer.ui.task.BackgroundTaskInfo;
 import com.hippo.ehviewer.ui.task.BackgroundTaskStatusManager;
 
@@ -158,6 +159,8 @@ public class BackgroundTaskManager {
         // 注册可恢复任务工厂
         registerTaskFactory(CompressSelectedGalleriesTask.class.getName(), (ctx, taskId, persistData) ->
                 CompressSelectedGalleriesTask.restore(ctx, taskId, persistData));
+        registerTaskFactory(MergeDuplicateGalleryTask.class.getName(), (ctx, taskId, persistData) ->
+            MergeDuplicateGalleryTask.restore(ctx, taskId, persistData));
         
         // CPU线程池：核心线程数 = CPU核心数，最大线程数 = CPU核心数 * 2
         int cpuCount = Runtime.getRuntime().availableProcessors();
@@ -348,6 +351,11 @@ public class BackgroundTaskManager {
             public void onProgressChanged(int progress, @Nullable String detail) {
                 int total = progress >= 0 ? 100 : -1;
                 int current = progress >= 0 ? progress : -1;
+                mTaskStatusManager.updateTaskProgress(taskId, current, total, detail);
+            }
+
+            @Override
+            public void onProgressChanged(int current, int total, @Nullable String detail) {
                 mTaskStatusManager.updateTaskProgress(taskId, current, total, detail);
             }
 
@@ -791,22 +799,6 @@ public class BackgroundTaskManager {
                 task,
                 null,
                 BackgroundTask.TaskType.SCAN,
-                true
-        );
-    }
-    
-    /**
-     * 提交合并重复画廊任务
-     * @param task 合并任务
-     * @return Future用于等待任务完成或取消任务
-     */
-    public Future<?> submitMergeDuplicateGalleryTask(Runnable task) {
-        return submitLongRunningTask(
-                mContext.getString(R.string.settings_download_merge_duplicate_gallery),
-                mContext.getString(R.string.settings_download_merge_duplicate_gallery_summary),
-                task,
-                null,
-                BackgroundTask.TaskType.MERGE,
                 true
         );
     }

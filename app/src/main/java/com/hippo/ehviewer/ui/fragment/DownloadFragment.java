@@ -123,6 +123,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference enableDownloadTimeout = findPreference(Settings.KEY_ENABLE_DOWNLOAD_TIMEOUT);
         Preference downloadTimeout = findPreference(Settings.KEY_DOWNLOAD_TIMEOUT);
         Preference downloadLoggingEnabled = findPreference(Settings.KEY_DOWNLOAD_LOGGING_ENABLED);
+        Preference showFolderTimeOnCard = findPreference(Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME);
+        Preference showFolderSizeOnCard = findPreference(Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE);
         mDownloadLocation = findPreference(KEY_DOWNLOAD_LOCATION);
         Preference exportDownloadItems = findPreference(KEY_EXPORT_DOWNLOAD_ITEMS);
         Preference importDownloadItems = findPreference(KEY_IMPORT_DOWNLOAD_ITEMS);
@@ -179,6 +181,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
         if (downloadLoggingEnabled != null) {
             downloadLoggingEnabled.setOnPreferenceChangeListener(this);
+        }
+        if (showFolderTimeOnCard != null) {
+            showFolderTimeOnCard.setOnPreferenceChangeListener(this);
+        }
+        if (showFolderSizeOnCard != null) {
+            showFolderSizeOnCard.setOnPreferenceChangeListener(this);
         }
 
         if (mDownloadLocation != null) {
@@ -395,24 +403,11 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return true;
         } else if ("merge_duplicate_gallery".equals(key)) {
             com.hippo.ehviewer.BackgroundTaskManager taskManager = com.hippo.ehviewer.BackgroundTaskManager.getInstance();
-            String taskId = taskManager.getTaskStatusManager().addTask(
-                    getString(R.string.settings_download_merge_duplicate_gallery),
-                    getString(R.string.settings_download_merge_duplicate_gallery_summary),
-                    null,
-                    com.hippo.ehviewer.task.BackgroundTask.TaskType.MERGE,
-                    true);
-            if (taskId == null) {
-                Toast.makeText(requireActivity(), R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
-                return true;
+            if (taskManager.getTaskStatusManager().getActiveUniqueNonDownloadTask() != null) {
+            Toast.makeText(requireActivity(), R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
+            return true;
             }
-            taskManager.submitLongRunningTask(
-                    getString(R.string.settings_download_merge_duplicate_gallery),
-                    getString(R.string.settings_download_merge_duplicate_gallery_summary),
-                    () -> com.hippo.ehviewer.preference.MergeDuplicateGalleryRunner.executeMergeTask(
-                            requireContext(), taskId, taskManager.getTaskStatusManager()),
-                    taskId,
-                    com.hippo.ehviewer.task.BackgroundTask.TaskType.MERGE,
-                    true);
+            taskManager.submitBackgroundTask(new com.hippo.ehviewer.task.MergeDuplicateGalleryTask(requireContext()));
             Toast.makeText(requireActivity(), R.string.settings_download_merge_duplicate_gallery, Toast.LENGTH_SHORT).show();
             return true;
         } else if ("scan_download_files".equals(key)) {
@@ -611,6 +606,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             oldValue = Settings.getDownloadLoggingEnabled();
         } else if (Settings.KEY_ENABLE_MIN_DOWNLOAD_SPEED.equals(key)) {
             oldValue = Settings.getEnableMinDownloadSpeed();
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME.equals(key)) {
+            oldValue = Settings.getShowDownloadCardFolderTime();
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE.equals(key)) {
+            oldValue = Settings.getShowDownloadCardFolderSize();
         }
         
         if (Settings.KEY_MEDIA_SCAN.equals(key)) {
@@ -654,6 +653,18 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 if ((Boolean) newValue) {
                     mDownloadLogger.logSettingsChange(key, oldValue, newValue);
                 }
+            }
+            return true;
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME.equals(key)) {
+            if (newValue instanceof Boolean) {
+                Settings.putShowDownloadCardFolderTime((Boolean) newValue);
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
+            }
+            return true;
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE.equals(key)) {
+            if (newValue instanceof Boolean) {
+                Settings.putShowDownloadCardFolderSize((Boolean) newValue);
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
             }
             return true;
         }

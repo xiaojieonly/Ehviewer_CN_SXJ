@@ -1,5 +1,23 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="settings_download_show_folder_time">在下載卡片顯示資料夾時間</string>
+    <string name="settings_download_show_folder_time_summary">在每個下載卡片中顯示資料夾時間。</string>
+    <string name="settings_download_show_folder_size">在下載卡片顯示資料夾大小</string>
+    <string name="settings_download_show_folder_size_summary">在每個下載卡片中顯示資料夾大小。</string>
+    <string name="dialog_time_range_filter_label">資料夾時間範圍（可選）</string>
+    <string name="dialog_time_range_from_hint">開始日期，例如 2026-01-01</string>
+    <string name="dialog_time_range_to_hint">結束日期，例如 2026-12-31</string>
+    <string name="dialog_size_range_filter_label">資料夾大小範圍（可選）</string>
+    <string name="dialog_size_range_from_hint">最小值，例如 128MB</string>
+    <string name="dialog_size_range_to_hint">最大值，例如 2GB</string>
+    <string name="dialog_size_range_tip">支援 B/KB/MB/GB，不帶單位預設按 MB。</string>
+    <string name="download_filter_invalid_time">時間格式無效，請使用 yyyy-MM-dd 或 yyyy-MM-dd HH:mm</string>
+    <string name="download_filter_invalid_size">大小格式無效，例如 128MB 或 2GB</string>
+    <string name="download_filter_range_invalid">範圍無效：起始值不能大於結束值</string>
+    <string name="download_card_folder_time">時間：%1$s</string>
+    <string name="download_card_folder_size">大小：%1$s</string>
+    <string name="progress_detail_with_total">%1$s %2$d / %3$d</string>
+
     <string name="multi_select_mode">Multi-select mode</string>
     <string name="fab_action_menu">Action menu</string>
     <string name="send_comment">Send comment</string>
