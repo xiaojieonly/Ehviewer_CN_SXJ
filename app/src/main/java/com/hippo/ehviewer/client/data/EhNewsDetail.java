@@ -12,12 +12,13 @@ public class EhNewsDetail implements Parcelable {
     private String eventPane;
     private String htmlData;
 
-    public EhNewsDetail(){
+    public EhNewsDetail() {
         eventPane = null;
         this.webData = null;
         this.htmlData = null;
     }
-    public EhNewsDetail(String webData){
+
+    public EhNewsDetail(String webData) {
         eventPane = null;
         this.webData = webData;
     }
@@ -52,20 +53,20 @@ public class EhNewsDetail implements Parcelable {
         }
     };
 
-    public String getEventPane(){
-        if (eventPane!=null){
+    public String getEventPane() {
+        if (eventPane != null) {
             return eventPane;
         }
         Document document = Jsoup.parse(webData);
         Element eventPaneElement = document.getElementById("eventpane");
-        if (eventPaneElement!=null&&eventPaneElement.childrenSize()==3){
+        if (eventPaneElement != null && eventPaneElement.childrenSize() == 3) {
             eventPane = eventPaneElement.html();
         }
         return eventPane;
     }
 
 
-    public String getHtmlData(){
+    public String getHtmlData() {
         Document document = Jsoup.parse(webData);
         Element element = document.child(0);
         return element.outerHtml();

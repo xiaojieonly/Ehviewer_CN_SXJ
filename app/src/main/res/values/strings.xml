@@ -1060,5 +1060,6 @@
     <string name="imported_archive_info_title">Local Import Info</string>
     <string name="imported_archive_info_message">This is an item imported from local storage</string>
     <string name="imported_archive_category">Local Import</string>
-
+    <!-- TagSelectActivity -->
+    <string name="tag_search_entrance">Tag Selector</string>
 </resources>

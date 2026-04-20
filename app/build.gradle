@@ -31,7 +31,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
         versionCode 111
-        versionName "2.0.1.5"
+        versionName "2.0.1.6"
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
@@ -81,8 +81,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-        // 允许对 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
-        coreLibraryDesugaringEnabled true
+    }
+    kotlinOptions {
+        jvmTarget = '21'
     }
 
     buildFeatures {
@@ -115,7 +116,7 @@ dependencies {
     implementation "androidx.activity:activity:1.2.4"
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.biometric:biometric:1.2.0-alpha01'
-    implementation "androidx.browser:browser:1.3.0"
+    implementation "androidx.browser:browser:1.4.0"
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation "androidx.fragment:fragment:1.8.6"
     implementation "androidx.preference:preference-ktx:1.2.1"
@@ -168,9 +169,6 @@ dependencies {
     implementation 'org.greenrobot:greendao:3.0.0'
     // https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation 'org.jsoup:jsoup:1.18.1'
-
-    // Java 8+ 核心库 desugaring，用于在旧 Android 上支持 ThreadLocal.withInitial 等 API
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
     // Glide 图片加载库
 //    implementation 'com.github.bumptech.glide:glide:5.0.5'
