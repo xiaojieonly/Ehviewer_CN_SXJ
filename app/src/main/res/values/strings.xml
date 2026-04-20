@@ -104,6 +104,8 @@
     <string name="register">Register</string>
     <string name="sign_in_via_webview">Sign in via WebView</string>
     <string name="sign_in_via_cookies">Sign in via cookies</string>
+    <string name="webview_unavailable_title">System WebView unavailable</string>
+    <string name="webview_unavailable_message">The system Android System WebView failed to load (it may be broken or mismatched). Try updating \"Android System WebView\" in the app store, switch the WebView implementation in Developer options, or sign in via cookies.</string>
     <string name="display_name_dialog_title">Enter Display Name</string>
     <string name="display_name">Display name</string>
     <string name="display_name_is_empty">Display name is empty</string>

@@ -45,6 +45,8 @@
     <string name="register">注册</string>
     <string name="sign_in_via_webview">通过网页登录</string>
     <string name="sign_in_via_cookies">通过 Cookie 登录</string>
+    <string name="webview_unavailable_title">系统 WebView 不可用</string>
+    <string name="webview_unavailable_message">系统自带的 Android 系统 WebView 无法正常加载（可能已损坏或与系统架构不匹配）。请在应用商店更新「Android 系统 WebView」、在开发者选项中切换 WebView 实现，或使用「通过 Cookie 登录」。</string>
     <string name="display_name_dialog_title">输入昵称</string>
     <string name="display_name">昵称</string>
     <string name="display_name_is_empty">昵称为空</string>

@@ -477,7 +477,7 @@ public class ArchiverDownloadDialog implements
      */
     private static String createFileName(String name, long gid) {
         String result = name == null ? "" : com.hippo.lib.yorozuya.FileUtils.sanitizeFilename(name);
-        final int MAX_FILENAME_LENGTH = 150;
+        final int MAX_FILENAME_LENGTH = 120;
         if (result.length() > MAX_FILENAME_LENGTH) {
             result = result.substring(0, MAX_FILENAME_LENGTH);
         }

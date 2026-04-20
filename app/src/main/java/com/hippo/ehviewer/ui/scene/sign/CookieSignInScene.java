@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,6 +55,8 @@ import okhttp3.HttpUrl;
 
 public class CookieSignInScene extends SolidScene implements EditText.OnEditorActionListener,
         View.OnClickListener {
+
+    private static final String TAG = "CookieSignInScene";
 
     /*---------------
      View life cycle
@@ -295,17 +298,21 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
             store.addCookie(newCookie(EhCookieStore.KEY_IGNEOUS, igneous, EhUrl.DOMAIN_FORUMS));
         }
         HttpUrl httpUrl = HttpUrl.parse(EhUrl.URL_FORUMS);
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.setAcceptCookie(true);
-        if (httpUrl==null){
+        if (httpUrl == null) {
             return;
         }
-        List<Cookie> cookies = store.loadForRequest(httpUrl);
-        for (Cookie cookie : cookies) {
-            String cookieString = formatCookieForWebView(cookie);
-            cookieManager.setCookie(EhUrl.DOMAIN_FORUMS, cookieString);
+        try {
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.setAcceptCookie(true);
+            List<Cookie> cookies = store.loadForRequest(httpUrl);
+            for (Cookie cookie : cookies) {
+                String cookieString = formatCookieForWebView(cookie);
+                cookieManager.setCookie(EhUrl.DOMAIN_FORUMS, cookieString);
+            }
+            cookieManager.flush();
+        } catch (Throwable t) {
+            Log.e(TAG, "CookieManager/WebView unavailable, OkHttp cookies still stored", t);
         }
-        cookieManager.flush();
     }
 
     /**

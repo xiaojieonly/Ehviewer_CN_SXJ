@@ -400,12 +400,16 @@ public class EhApplication extends RecordingApplication {
                         Response response = chain.proceed(chain.request());
                         // 同步Cookie到WebView
                         if (response.headers("Set-Cookie") != null) {
-                            CookieManager cookieManager = CookieManager.getInstance();
-                            String url =chain.request().url().toString();
-                            for (String header : response.headers("Set-Cookie")) {
-                                cookieManager.setCookie(url, header);
+                            try {
+                                CookieManager cookieManager = CookieManager.getInstance();
+                                String url = chain.request().url().toString();
+                                for (String header : response.headers("Set-Cookie")) {
+                                    cookieManager.setCookie(url, header);
+                                }
+                                cookieManager.flush();
+                            } catch (Throwable t) {
+                                Log.e(TAG, "CookieManager/WebView sync skipped", t);
                             }
-                            cookieManager.flush();
                         }
                         return response;
                     })

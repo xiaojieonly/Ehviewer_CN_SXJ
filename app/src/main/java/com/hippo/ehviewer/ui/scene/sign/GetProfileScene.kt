@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.webkit.CookieManager
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -15,6 +16,7 @@ import com.acsbendi.requestinspectorwebview.WebViewRequest
 import com.acsbendi.requestinspectorwebview.WebViewRequestType
 import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
@@ -27,6 +29,7 @@ import com.hippo.ehviewer.ui.scene.sign.SignInScene.REQUEST_CODE_PROFILE
 import com.hippo.lib.yorozuya.AssertUtils
 import com.hippo.util.AppHelper
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.MediaType
@@ -62,32 +65,37 @@ class GetProfileScene : SolidScene() {
             okHttpClient = EhApplication.getOkHttpClient(context!!.applicationContext)
         }
 
-        mWebView = WebView(context!!)
-        val webSettings = mWebView!!.settings
-        webSettings.javaScriptEnabled = true
-        val manager = CookieManager.getInstance()
-        manager.setAcceptCookie(true)
-//        val store = EhApplication.getEhCookieStore(context)
-//        val cookie = store.getCookieHeader(HttpUrl(EhUrl.URL_FORUMS))
-//        manager.setCookie(EhUrl.URL_FORUMS)
+        return try {
+            mWebView = WebView(context!!)
+            val webSettings = mWebView!!.settings
+            webSettings.javaScriptEnabled = true
+            val manager = CookieManager.getInstance()
+            manager.setAcceptCookie(true)
 
-        if (Settings.getDF()&& AppHelper.checkVPN(context)){
-            mWebView!!.webViewClient = ProfileWebViewClientSNI(mWebView!!)
-        }else{
-            mWebView!!.webViewClient = ProfileWebViewClient()
+            if (Settings.getDF()&& AppHelper.checkVPN(context)){
+                mWebView!!.webViewClient = ProfileWebViewClientSNI(mWebView!!)
+            }else{
+                mWebView!!.webViewClient = ProfileWebViewClient()
+            }
+
+            mWebView!!.loadUrl(EhUrl.URL_FORUMS)
+
+            mWebView
+        } catch (t: Throwable) {
+            Log.e(TAG, "WebView/CookieManager init failed", t)
+            val root = FrameLayout(context!!)
+            root.post {
+                AlertDialog.Builder(context!!)
+                    .setTitle(R.string.webview_unavailable_title)
+                    .setMessage(R.string.webview_unavailable_message)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> finish() }
+                    .setOnCancelListener { finish() }
+                    .show()
+            }
+            root
         }
-
-//        mWebView!!.evaluateJavascript(
-//            "(function(){ return document.documentElement.outerHTML; })();"
-//        ) { html ->
-//            println(html)
-//        }
-        //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
-//        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
-        mWebView!!.loadUrl(EhUrl.URL_FORUMS)
-
-        return mWebView
     }
+
 
     private fun readPageContent() {
         mWebView?.evaluateJavascript(

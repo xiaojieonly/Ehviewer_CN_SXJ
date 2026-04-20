@@ -3,9 +3,11 @@ package com.hippo.ehviewer.ui.scene.sign
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.webkit.CookieManager
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -16,14 +18,14 @@ import com.acsbendi.requestinspectorwebview.WebViewRequest
 import com.acsbendi.requestinspectorwebview.WebViewRequestType
 import com.hippo.ehviewer.Analytics
 import com.hippo.ehviewer.EhApplication
-import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhRequestBuilder
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
+import com.hippo.ehviewer.R
 import com.hippo.ehviewer.ui.scene.SolidScene
+import androidx.appcompat.app.AlertDialog
 import com.hippo.lib.yorozuya.AssertUtils
-import com.hippo.util.AppHelper
 import okhttp3.Cookie
 import okhttp3.FormBody
 import okhttp3.HttpUrl
@@ -37,6 +39,10 @@ class WebViewSignInScene : SolidScene() {
     /*---------------
          View life cycle
          ---------------*/
+    companion object {
+        private const val TAG = "WebViewSignInScene"
+    }
+
     private var mWebView: WebView? = null
     private var okHttpClient: OkHttpClient? = null
 
@@ -58,27 +64,34 @@ class WebViewSignInScene : SolidScene() {
         }
         EhUtils.signOut(context!!)
 
-        // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
-        val cookieManager = CookieManager.getInstance()
-        cookieManager.flush()
-        cookieManager.removeAllCookies(null)
-        cookieManager.removeSessionCookies(null)
-        CookieManager.getInstance().setAcceptCookie(true)
-        CookieManager.setAcceptFileSchemeCookies(true)
+        return try {
+            // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
+            val cookieManager = CookieManager.getInstance()
+            cookieManager.flush()
+            cookieManager.removeAllCookies(null)
+            cookieManager.removeSessionCookies(null)
+            CookieManager.getInstance().setAcceptCookie(true)
+            CookieManager.setAcceptFileSchemeCookies(true)
 
-        mWebView = WebView(context)
-        val webSettings = mWebView!!.settings
-        webSettings.javaScriptEnabled = true
-//        if (Settings.getDF()&& AppHelper.Companion.checkVPN(context)){
-//            mWebView!!.webViewClient = LoginWebViewClientSNI(mWebView!!)
-//        }else{
-//            mWebView!!.webViewClient = LoginWebViewClient()
-//        }
-        mWebView!!.webViewClient = LoginWebViewClient()
-        //        mWebView.setWebViewClient(new UConfigActivity.UConfigWebViewClient(webView));
-//        mWebView.setWebChromeClient(new DialogWebChromeClient(this));
-        mWebView!!.loadUrl(EhUrl.URL_SIGN_IN)
-        return mWebView
+            mWebView = WebView(context)
+            val webSettings = mWebView!!.settings
+            webSettings.javaScriptEnabled = true
+            mWebView!!.webViewClient = LoginWebViewClient()
+            mWebView!!.loadUrl(EhUrl.URL_SIGN_IN)
+            mWebView
+        } catch (t: Throwable) {
+            Log.e(TAG, "WebView/CookieManager init failed", t)
+            val root = FrameLayout(context)
+            root.post {
+                AlertDialog.Builder(context)
+                    .setTitle(R.string.webview_unavailable_title)
+                    .setMessage(R.string.webview_unavailable_message)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> finish() }
+                    .setOnCancelListener { finish() }
+                    .show()
+            }
+            root
+        }
     }
 
     override fun onDestroyView() {

@@ -23,6 +23,7 @@ package com.hippo.ehviewer.ui;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Message;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,6 +35,7 @@ import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 
 
 import com.acsbendi.requestinspectorwebview.RequestInspectorOptions;
@@ -63,6 +65,8 @@ import okhttp3.ResponseBody;
 
 public class UConfigActivity extends ToolbarActivity {
 
+    private static final String TAG = "UConfigActivity";
+
     private WebView webView;
     private ProgressView progress;
     private String url;
@@ -78,39 +82,48 @@ public class UConfigActivity extends ToolbarActivity {
             okHttpClient = EhApplication.getOkHttpClient(getApplicationContext());
         }
 
+        try {
+            // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.flush();
+            cookieManager.removeAllCookies(null);
+            cookieManager.removeSessionCookies(null);
 
-        // http://stackoverflow.com/questions/32284642/how-to-handle-an-uncatched-exception
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.flush();
-        cookieManager.removeAllCookies(null);
-        cookieManager.removeSessionCookies(null);
+            // Copy cookies from okhttp cookie store to CookieManager
+            url = EhUrl.getUConfigUrl();
+            EhCookieStore store = EhApplication.getEhCookieStore(this);
+            for (Cookie cookie : store.getCookies(HttpUrl.parse(url))) {
+                cookieManager.setCookie(url, cookie.toString());
+            }
 
-        // Copy cookies from okhttp cookie store to CookieManager
-        url = EhUrl.getUConfigUrl();
-        EhCookieStore store = EhApplication.getEhCookieStore(this);
-        for (Cookie cookie : store.getCookies(HttpUrl.parse(url))) {
-            cookieManager.setCookie(url, cookie.toString());
-        }
+            setContentView(R.layout.activity_u_config);
+            setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
+            webView = (WebView) findViewById(R.id.webview);
 
-        setContentView(R.layout.activity_u_config);
-        setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
-        webView = (WebView) findViewById(R.id.webview);
+            final WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setUseWideViewPort(true); //将图片调整到适合webview的大小
+            settings.setLoadWithOverviewMode(true); // 缩放至屏幕的大小
+            settings.setSupportZoom(true); //支持缩放，默认为true。是下面那个的前提。
+            settings.setBuiltInZoomControls(true); //设置内置的缩放控件。若为false，则该WebView不可缩放
+            settings.setDisplayZoomControls(false); //隐藏原生的缩放控件
 
-        final WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setUseWideViewPort(true); //将图片调整到适合webview的大小
-        settings.setLoadWithOverviewMode(true); // 缩放至屏幕的大小
-        settings.setSupportZoom(true); //支持缩放，默认为true。是下面那个的前提。
-        settings.setBuiltInZoomControls(true); //设置内置的缩放控件。若为false，则该WebView不可缩放
-        settings.setDisplayZoomControls(false); //隐藏原生的缩放控件
-
-        webView.setWebViewClient(new UConfigWebViewClient(webView));
-        webView.setWebChromeClient(new DialogWebChromeClient(this));
+            webView.setWebViewClient(new UConfigWebViewClient(webView));
+            webView.setWebChromeClient(new DialogWebChromeClient(this));
 //        webView.addJavascriptInterface(payloadRecorder, "recorder");
-        webView.loadUrl(url);
-        progress = (ProgressView) findViewById(R.id.progress);
+            webView.loadUrl(url);
+            progress = (ProgressView) findViewById(R.id.progress);
 
-        Snackbar.make(webView, R.string.apply_tip, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(webView, R.string.apply_tip, Snackbar.LENGTH_LONG).show();
+        } catch (Throwable t) {
+            Log.e(TAG, "WebView/CookieManager init failed", t);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.webview_unavailable_title)
+                    .setMessage(R.string.webview_unavailable_message)
+                    .setPositiveButton(android.R.string.ok, (d, w) -> finish())
+                    .setOnCancelListener(d -> finish())
+                    .show();
+        }
     }
 
     private void apply() {
@@ -158,30 +171,39 @@ public class UConfigActivity extends ToolbarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        webView.destroy();
-        webView = null;
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
 
         // Put cookies back to okhttp cookie store
-        CookieManager cookieManager = CookieManager.getInstance();
-        String cookiesString = cookieManager.getCookie(url);
+        if (url == null) {
+            return;
+        }
+        try {
+            CookieManager cookieManager = CookieManager.getInstance();
+            String cookiesString = cookieManager.getCookie(url);
 
-        if (cookiesString != null && !cookiesString.isEmpty()) {
-            EhCookieStore store = EhApplication.getEhCookieStore(this);
-            HttpUrl eUrl = HttpUrl.parse(EhUrl.HOST_E);
-            HttpUrl exUrl = HttpUrl.parse(EhUrl.HOST_EX);
+            if (cookiesString != null && !cookiesString.isEmpty()) {
+                EhCookieStore store = EhApplication.getEhCookieStore(this);
+                HttpUrl eUrl = HttpUrl.parse(EhUrl.HOST_E);
+                HttpUrl exUrl = HttpUrl.parse(EhUrl.HOST_EX);
 
-            // The cookies saved in the uconfig page should be shared between e and ex
-            for (String header : cookiesString.split(";")) {
-                Cookie eCookie = Cookie.parse(eUrl, header);
-                if (eCookie != null) {
-                    store.addCookie(longLive(eCookie));
-                }
+                // The cookies saved in the uconfig page should be shared between e and ex
+                for (String header : cookiesString.split(";")) {
+                    Cookie eCookie = Cookie.parse(eUrl, header);
+                    if (eCookie != null) {
+                        store.addCookie(longLive(eCookie));
+                    }
 
-                Cookie exCookie = Cookie.parse(exUrl, header);
-                if (exCookie != null) {
-                    store.addCookie(longLive(exCookie));
+                    Cookie exCookie = Cookie.parse(exUrl, header);
+                    if (exCookie != null) {
+                        store.addCookie(longLive(exCookie));
+                    }
                 }
             }
+        } catch (Throwable t) {
+            Log.e(TAG, "CookieManager unavailable in onDestroy", t);
         }
     }
 
