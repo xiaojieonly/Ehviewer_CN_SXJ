@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1koygBtTteJtDHZTQYL8wXQ) 提取码：iqev
-- [夸克网盘](https://pan.quark.cn/s/b41421a61e70) 提取码：MrnK
-- [蓝奏云](https://wwbfg.lanzouu.com/iNSBF3m1jveb)，电脑端可正常下载 提取码：i4f8
+- [百度云](https://pan.baidu.com/s/17a5zwo0HeTp_Iqh9P2QwXQ) 提取码：7y92
+- [夸克网盘](https://pan.quark.cn/s/036dd4d5f09d) 提取码：B6J6
+- [蓝奏云](https://wwbfg.lanzouu.com/iFc783oecgmh)，电脑端可正常下载 提取码：dfg8
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:8488a933608f5b3901de8a2bedc669e20ff94839&xt=urn:btmh:1220dbe6fffcb6aff255e089e3bb0cefeb33940c27d82e37163252abe4813c987e33&dn=EhViewer-2.0.1.6.apk&xl=27702785
+- Torrent链接:magnet:?xt=urn:btih:c3aab1194eb843bac7274b87873dc94041310e52&xt=urn:btmh:1220c3640ed2ef7f588376f7dadeffc99463d764608b577beb038378788996fc1ad5&dn=EhViewer-2.0.1.7.apk&xl=27705830
 
 
 点击前往赏饭：
@@ -29,6 +29,17 @@ Telegram群: https://t.me/+WyclP8pPlk-JfbwS
 Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
+
+## 2026/05/01 祝大家五一劳动节快乐~
+### 新版发布2.0.1.7
+
+- 修复SpiderInfo读取时的OOM风险并升级JDK至21
+- 修复图片搜索无法使用的问题
+- orbisai0security：the vendored giflib library performs multiple m... in gifalloc.c
+- 增加对 WebView/CookieManager 初始化失败的异常处理
+- En：修复了已下载项目的按标签搜索功能
+- 猫尾草：restore gradle wrapper jar and properties
+- 升级Gradle至9.3.1及Android插件至9.1.1
 
 ## 2026/04/01 祝大家愚人节伤心
 ### 新版发布2.0.1.6
@@ -45,6 +56,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - miki sayaga：新增一个多标签搜索组合页面（未完成）
 - 修复部分多标签搜索组合页面bug
 - 将部分代码从java迁移到kotlin
+- [百度云](https://pan.baidu.com/s/1koygBtTteJtDHZTQYL8wXQ) 提取码：iqev
+- [夸克网盘](https://pan.quark.cn/s/b41421a61e70) 提取码：MrnK
+- [蓝奏云](https://wwbfg.lanzouu.com/iNSBF3m1jveb)，电脑端可正常下载 提取码：i4f8
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:8488a933608f5b3901de8a2bedc669e20ff94839&xt=urn:btmh:1220dbe6fffcb6aff255e089e3bb0cefeb33940c27d82e37163252abe4813c987e33&dn=EhViewer-2.0.1.6.apk&xl=27702785
+
 
 ## 2026/03/01 提前祝大家元宵节快乐
 ### 新版发布2.0.1.5
