@@ -35,7 +35,7 @@ import kotlin.coroutines.coroutineContext
 class MergeDuplicateGalleryTask @JvmOverloads constructor(
     context: Context,
     private val taskId: String = "merge_duplicate_gallery_${System.currentTimeMillis()}",
-    /** 鎸囧畾鍙壂鎻忓苟鍚堝苟鍗曚釜鐢诲粖锛坓id锛夛紝-1L 琛ㄧず鎵弿鍏ㄩ儴 */
+    /** 指定只扫描并合并单个画廊（gid），-1L 表示扫描全部 */
     private val targetGid: Long = -1L
 ) : BaseBackgroundTask(context) {
 
@@ -50,10 +50,10 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
     private var errorCount = 0
     private var lastError = ""
 
-    /** 鏄惁涓哄崟鐢诲粖鍚堝苟妯″紡 */
+    /** 是否为单画廊合并模式 */
     private val isSingleMode: Boolean get() = targetGid >= 0L
 
-    /** 鍗曠敾寤婃ā寮忎笅缂撳瓨鐨勭敾寤婃爣棰橈紝鐢ㄤ簬浠诲姟鍚?*/
+    /** 单画廊模式下缓存的画廊标题，用于任务�?*/
     private var singleTitle: String? = null
 
     override fun getTaskId(): String = taskId
@@ -89,7 +89,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
         private const val TAG = "MergeDuplicateGalleryTask"
 
         /**
-         * 鍚堝苟鎵弿缁撴灉缂撳瓨锛? 灏忔椂鍐呭叡浜壂鎻忕粨鏋滈伩鍏嶉噸澶嶈В鏋愭枃浠跺厓鏁版嵁銆?
+         * 合并扫描结果缓存�? 小时内共享扫描结果避免重复解析文件元数据�?
          * 瀹氫箟鍦?companion object 鍐呬互渚胯闂鏈夌殑 GalleryFolder 绫诲瀷銆?
          */
         object MergeScanCache {
@@ -150,13 +150,13 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
         }
 
         /**
-         * 涓哄崟涓凡涓嬭浇瀹屾垚鐨勭敾寤婂垱寤哄悎骞朵换鍔★紝鍙壂鎻忎笌鍏跺悓鍚嶇殑鍏朵粬鐢诲粖鐩綍
+         * 为单个已下载完成的画廊创建合并任务，只扫描与其同名的其他画廊目录
          */
         @JvmStatic
         fun mergeForGallery(context: Context, gid: Long): MergeDuplicateGalleryTask {
             val taskId = "merge_single_${gid}_${System.currentTimeMillis()}"
             val task = MergeDuplicateGalleryTask(context, taskId, gid)
-            // 棰勫厛鍔犺浇鏍囬鐢ㄤ簬浠诲姟鍚?
+            // 预先加载标题用于任务�?
             val info = EhDB.getDownloadInfo(gid)
             if (info != null) {
                 val title = com.hippo.ehviewer.client.EhUtils.getSuitableTitle(info)
@@ -170,49 +170,49 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
         initErrorLog()
         initMergeLog()
         return try {
-            logInfo("寮€濮嬫壂鎻忎笅杞界洰褰?)
+            logInfo("弢�始扫描下载目�?)
             dispatchProgress(STEP_SCAN, context.getString(R.string.merge_scanning_galleries), 0, 1)
             ensureNotCancelled()
             if (!scanDownloadedGalleries()) {
-                logError("鎵弿涓嬭浇鐩綍澶辫触")
-                return Result.failure(IllegalStateException(lastError.ifEmpty { "鎵弿涓嬭浇鐩綍澶辫触" }))
+                logError("扫描下载目录失败")
+                return Result.failure(IllegalStateException(lastError.ifEmpty { "扫描下载目录失败" }))
             }
 
             ensureNotCancelled()
-            logInfo("寮€濮嬪垎鏋愰噸澶嶇敾寤?)
+            logInfo("弢�始分析重复画�?)
             dispatchProgress(STEP_ANALYZE, context.getString(R.string.merge_analyzing_galleries), 0, 1)
             if (!analyzeDuplicateGalleries()) {
-                logError("鍒嗘瀽閲嶅鐢诲粖澶辫触")
-                return Result.failure(IllegalStateException(lastError.ifEmpty { "鍒嗘瀽閲嶅鐢诲粖澶辫触" }))
+                logError("分析重复画廊失败")
+                return Result.failure(IllegalStateException(lastError.ifEmpty { "分析重复画廊失败" }))
             }
 
             ensureNotCancelled()
-            logInfo("寮€濮嬪浠芥暟鎹簱")
+            logInfo("弢�始备份数据库")
             dispatchProgress(STEP_BACKUP, context.getString(R.string.merge_backing_up_database), 0, 1)
             if (!backupDatabase()) {
-                logError("澶囦唤鏁版嵁搴撳け璐?)
-                return Result.failure(IllegalStateException(lastError.ifEmpty { "澶囦唤鏁版嵁搴撳け璐? }))
+                logError("备份数据库失�?)
+                return Result.failure(IllegalStateException(lastError.ifEmpty { "备份数据库失�? }))
             }
 
             ensureNotCancelled()
-            logInfo("寮€濮嬪悎骞堕噸澶嶇敾寤?)
+            logInfo("弢�始合并重复画�?)
             dispatchProgress(STEP_MERGE, context.getString(R.string.merge_merging_galleries), 0, maxOf(galleryGroups.size, 1))
             if (!mergeDuplicateGalleries()) {
-                logError("鍚堝苟閲嶅鐢诲粖澶辫触")
-                return Result.failure(IllegalStateException(lastError.ifEmpty { "鍚堝苟閲嶅鐢诲粖澶辫触" }))
+                logError("合并重复画廊失败")
+                return Result.failure(IllegalStateException(lastError.ifEmpty { "合并重复画廊失败" }))
             }
 
             notifyCompleted()
-            logInfo("浠诲姟瀹屾垚: 鍚堝苟 $mergedCount 缁勶紝璺宠繃 $skippedCount 缁勶紝澶嶅埗 $copiedCount 涓枃浠讹紝鍒犻櫎 $deletedCount 涓簮鐩綍")
+            logInfo("任务完成: 合并 $mergedCount 组，跳过 $skippedCount 组，复制 $copiedCount 个文件，删除 $deletedCount 个源目录")
             Result.success(Unit)
         } catch (e: Throwable) {
             if (e is kotlinx.coroutines.CancellationException) {
                 notifyCancelled()
-                logInfo("浠诲姟鍙栨秷")
+                logInfo("任务取消")
                 return Result.failure(e)
             }
-            lastError = e.message ?: "鏈煡閿欒"
-            logError("鍚堝苟杩囩▼涓彂鐢熼敊璇? ${e.message}")
+            lastError = e.message ?: "未知错误"
+            logError("合并过程中发生错�? ${e.message}")
             generateErrorReport()
             notifyError(e)
             Result.failure(e)
@@ -250,16 +250,16 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
 
     private fun initErrorLog() {
         errorLog.setLength(0)
-        errorLog.append("=== 鍚堝苟閲嶅鐢诲粖閿欒鏃ュ織 ===\n")
-        errorLog.append("寮€濮嬫椂闂? ")
+        errorLog.append("=== 合并重复画廊错误日志 ===\n")
+        errorLog.append("弢�始时�? ")
             .append(SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
             .append("\n\n")
     }
 
     private fun initMergeLog() {
         mergeLog.setLength(0)
-        mergeLog.append("=== 鍚堝苟閲嶅鐢诲粖鎿嶄綔鏃ュ織 ===\n")
-        mergeLog.append("寮€濮嬫椂闂? ")
+        mergeLog.append("=== 合并重复画廊操作日志 ===\n")
+        mergeLog.append("弢�始时�? ")
             .append(SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
             .append("\n\n")
     }
@@ -302,10 +302,10 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
 
     private suspend fun scanDownloadedGalleries(): Boolean {
         return try {
-            // 0. 灏濊瘯浣跨敤宸叉湁缂撳瓨锛?灏忔椂鍐呮湁鏁堬級
+            // 0. 尝试使用已有缓存�?小时内有效）
             val cachedBuckets = MergeScanCache.get()
             if (cachedBuckets != null) {
-                logInfo("浣跨敤缂撳瓨鎵弿缁撴灉锛?{cachedBuckets.size} 缁勶級")
+                logInfo("使用缓存扫描结果�?{cachedBuckets.size} 组）")
                 return rebuildFromCache(cachedBuckets)
             }
 
@@ -314,7 +314,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                 infos = Collections.emptyList()
             }
 
-            // 鍗曠敾寤婃ā寮忥細鍏堟壘鍒扮洰鏍囩敾寤婂強鍏舵竻鐞嗗悗鐨勫悕瀛楋紝鍙壂鎻忓尮閰嶇殑鏂囦欢澶?
+            // 单画廊模式：先找到目标画廊及其清理后的名字，只扫描匹配的文件�?
             val targetCleanName: String? = if (isSingleMode) {
                 val targetInfo = infos.find { it.gid == targetGid }
                 if (targetInfo == null) {
@@ -330,7 +330,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                 }
                 val targetName = targetDir.name ?: targetInfo.gid.toString()
                 removeIdPrefix(targetName).also {
-                    logInfo("鍗曠敾寤婃ā寮? 鐩爣鐢诲粖宸叉竻鐞嗗悕绉?\"$it\" (gid=$targetGid)")
+                    logInfo("单画廊模�? 目标画廊已清理名�?\"$it\" (gid=$targetGid)")
                 }
             } else {
                 null
@@ -338,27 +338,27 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
 
             val buckets = LinkedHashMap<String, MutableList<GalleryFolder>>()
             val total = infos.size
-            logInfo("鎵弿鍒?$total 涓笅杞借褰?{if (isSingleMode) "锛堝崟鐢诲粖妯″紡锛? else ""}")
+            logInfo("扫描�?$total 个下载记�?{if (isSingleMode) "（单画廊模式�? else ""}")
 
             for (i in infos.indices) {
                 ensureNotCancelled()
                 val info = infos[i]
                 val dir = SpiderDen.getGalleryDownloadDir(info)
                 if (dir == null || !dir.exists() || !dir.isDirectory) {
-                    dispatchProgress(STEP_SCAN, "鎵弿涓? ${i + 1}/$total", i + 1, maxOf(total, 1))
+                    dispatchProgress(STEP_SCAN, "扫描�? ${i + 1}/$total", i + 1, maxOf(total, 1))
                     continue
                 }
 
                 val name = dir.name ?: info.gid.toString()
                 val cleanName = removeIdPrefix(name)
 
-                // 鍗曠敾寤婃ā寮忥細鎻愬墠杩囨护闈炲尮閰嶇洰褰曪紝閬垮厤鏄傝吹鐨勫厓鏁版嵁瑙ｆ瀽
+                // 单画廊模式：提前过滤非匹配目录，避免昂贵的元数据解析
                 if (isSingleMode && cleanName != targetCleanName) {
-                    dispatchProgress(STEP_SCAN, "鎵弿涓? ${i + 1}/$total", i + 1, maxOf(total, 1))
+                    dispatchProgress(STEP_SCAN, "扫描�? ${i + 1}/$total", i + 1, maxOf(total, 1))
                     continue
                 }
 
-                // 鍙鍖归厤鐨勭洰褰曡繘琛屽畬鏁寸殑鍏冩暟鎹В鏋?
+                // 只对匹配的目录进行完整的元数据解�?
                 val folder = GalleryFolder(
                     info = info,
                     dir = dir,
@@ -370,17 +370,17 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                 )
 
                 logInfo(
-                    "鎵弿鍒颁笅杞界洰褰? ${folder.name}锛屾枃浠舵暟=${folder.fileCount}锛屼慨鏀规椂闂?${folder.modifiedAt}锛屾槸鍚︽湁ehviewer鍏冩暟鎹?${folder.ehMeta != null}"
+                    "扫描到下载目�? ${folder.name}，文件数=${folder.fileCount}，修改时�?${folder.modifiedAt}，是否有ehviewer元数�?${folder.ehMeta != null}"
                 )
 
                 buckets.getOrPut(cleanName) { mutableListOf() }.add(folder)
-                dispatchProgress(STEP_SCAN, "鎵弿涓? ${i + 1}/$total", i + 1, maxOf(total, 1))
+                dispatchProgress(STEP_SCAN, "扫描�? ${i + 1}/$total", i + 1, maxOf(total, 1))
             }
 
-            // 瀛樺叆缂撳瓨渚?1 灏忔椂鍐呭叾浠栦换鍔″鐢?
+            // 存入缓存�?1 小时内其他任务复�?
             if (!isSingleMode) {
                 MergeScanCache.put(HashMap(buckets))
-                logInfo("鍏ㄩ噺鎵弿缁撴灉宸茬紦瀛樿嚦 MergeScanCache")
+                logInfo("全量扫描结果已缓存至 MergeScanCache")
             }
 
             galleryGroups.clear()
@@ -397,36 +397,36 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
             }
 
             if (isSingleMode && galleryGroups.isEmpty()) {
-                logInfo("鍗曠敾寤婃ā寮? 鏈彂鐜扮洰鏍囩敾寤婄殑閲嶅锛屾棤闇€鍚堝苟")
+                logInfo("单画廊模�? 未发现目标画廊的重复，无霢�合并")
             } else {
-                logInfo("鎵弿瀹屾垚锛屽彂鐜?${galleryGroups.size} 缁勫€欓€夐噸澶嶇敾寤?)
+                logInfo("扫描完成，发�?${galleryGroups.size} 组����重复画�?)
             }
             true
         } catch (t: Throwable) {
-            lastError = t.message ?: "鎵弿澶辫触"
-            logError("鎵弿澶辫触: ${t.message}")
+            lastError = t.message ?: "扫描失败"
+            logError("扫描失败: ${t.message}")
             false
         }
     }
 
     /**
-     * 浠庣紦瀛樼殑鍏ㄩ噺 buckets 涓噸寤?galleryGroups銆?
-     * 鍗曠敾寤婃ā寮忥細鍙彁鍙栫洰鏍囩敾寤婃墍鍦ㄧ粍锛涘叏閲忔ā寮忥細鎻愬彇鎵€鏈?>=2 鐨勭粍銆?
+     * 从缓存的全量 buckets 中重�?galleryGroups�?
+     * 单画廊模式：只提取目标画廊所在组；全量模式：提取扢��?>=2 的组�?
      */
     private fun rebuildFromCache(cachedBuckets: Map<String, List<GalleryFolder>>): Boolean {
         galleryGroups.clear()
 
         if (isSingleMode) {
-            // 鍏堟壘鍒扮洰鏍?gid 瀵瑰簲鐨?cleanName
+            // 先找到目�?gid 对应�?cleanName
             val targetCleanName = findTargetCleanNameInCache(cachedBuckets)
             if (targetCleanName == null) {
-                logInfo("鍗曠敾寤婃ā寮? 缂撳瓨涓湭鎵惧埌鐩爣鐢诲粖 gid=$targetGid锛岄噸鏂版壂鎻?)
+                logInfo("单画廊模�? 缓存中未找到目标画廊 gid=$targetGid，重新扫�?)
                 MergeScanCache.invalidate()
                 return false
             }
             val folders = cachedBuckets[targetCleanName]
             if (folders == null || folders.size < 2) {
-                logInfo("鍗曠敾寤婃ā寮? 缂撳瓨涓洰鏍囩敾寤?\"$targetCleanName\" 鏃犻噸澶嶏紝鏃犻渶鍚堝苟")
+                logInfo("单画廊模�? 缓存中目标画�?\"$targetCleanName\" 无重复，无需合并")
                 return true
             }
             galleryGroups.add(
@@ -435,7 +435,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                     folders = folders.toMutableList()
                 )
             )
-            logInfo("浠庣紦瀛樻彁鍙栧垎缁? ${galleryGroups[0].cleanedName} (${galleryGroups[0].folders.size} 涓洰褰?")
+            logInfo("从缓存提取分�? ${galleryGroups[0].cleanedName} (${galleryGroups[0].folders.size} 个目�?")
         } else {
             for ((key, value) in cachedBuckets) {
                 if (value.size < 2) continue
@@ -446,12 +446,12 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                     )
                 )
             }
-            logInfo("浠庣紦瀛橀噸寤?${galleryGroups.size} 缁勫€欓€夐噸澶嶇敾寤?)
+            logInfo("从缓存重�?${galleryGroups.size} 组����重复画�?)
         }
         return true
     }
 
-    /** 鍦ㄧ紦瀛?buckets 涓煡鎵惧寘鍚洰鏍?gid 鐨勫垎缁?key */
+    /** 在缓�?buckets 中查找包含目�?gid 的分�?key */
     private fun findTargetCleanNameInCache(buckets: Map<String, List<GalleryFolder>>): String? {
         for ((key, folders) in buckets) {
             for (f in folders) {
@@ -466,7 +466,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
     private suspend fun analyzeDuplicateGalleries(): Boolean {
         return try {
             val total = maxOf(galleryGroups.size, 1)
-            logInfo("寮€濮嬪垎鏋?${galleryGroups.size} 缁勫€欓€夐噸澶嶇敾寤?)
+            logInfo("弢�始分�?${galleryGroups.size} 组����重复画�?)
             for (i in galleryGroups.indices) {
                 ensureNotCancelled()
                 val group = galleryGroups[i]
@@ -479,39 +479,39 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                     i + 1,
                     total
                 )
-                logInfo("鍒嗘瀽鍒嗙粍 ${group.cleanedName} 绫诲瀷=${group.type.name}锛?{group.reason}")
+                logInfo("分析分组 ${group.cleanedName} 类型=${group.type.name}�?{group.reason}")
             }
             true
         } catch (t: Throwable) {
-            lastError = t.message ?: "鍒嗘瀽澶辫触"
-            logError("鍒嗘瀽澶辫触: ${t.message}")
+            lastError = t.message ?: "分析失败"
+            logError("分析失败: ${t.message}")
             false
         }
     }
 
     private fun backupDatabase(): Boolean {
         return try {
-            dispatchProgress(STEP_BACKUP, "澶囦唤鏁版嵁搴撲腑...", 0, 1)
-            logInfo("寮€濮嬪浠芥暟鎹簱")
+            dispatchProgress(STEP_BACKUP, "备份数据库中...", 0, 1)
+            logInfo("弢�始备份数据库")
             val backedUp = EhDB.backupDatabase(context)
-            dispatchProgress(STEP_BACKUP, if (backedUp) "鏁版嵁搴撳浠藉畬鎴? else "鏁版嵁搴撳浠藉け璐?, 1, 1)
+            dispatchProgress(STEP_BACKUP, if (backedUp) "数据库备份完�? else "数据库备份失�?, 1, 1)
             if (!backedUp) {
-                lastError = "鏁版嵁搴撳浠藉け璐?
+                lastError = "数据库备份失�?
                 logError(lastError)
             } else {
-                logInfo("鏁版嵁搴撳浠芥垚鍔?)
+                logInfo("数据库备份成�?)
             }
             backedUp
         } catch (t: Throwable) {
-            lastError = t.message ?: "澶囦唤澶辫触"
-            logError("澶囦唤澶辫触: ${t.message}")
+            lastError = t.message ?: "备份失败"
+            logError("备份失败: ${t.message}")
             false
         }
     }
 
     private suspend fun mergeDuplicateGalleries(): Boolean {
         return try {
-            logInfo("寮€濮嬪悎骞?${galleryGroups.size} 缁勫€欓€夐噸澶嶇敾寤?)
+            logInfo("弢�始合�?${galleryGroups.size} 组����重复画�?)
             if (galleryGroups.isEmpty()) {
                 return true
             }
@@ -533,21 +533,21 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                 }
                 dispatchProgress(
                     STEP_MERGE,
-                    "鍚堝苟涓? ${group.cleanedName} [${group.type.name}]",
+                    "合并�? ${group.cleanedName} [${group.type.name}]",
                     i + 1,
                     total
                 )
             }
 
             if (hasError) {
-                lastError = "閮ㄥ垎鍒嗙粍鍚堝苟澶辫触"
+                lastError = "部分分组合并失败"
                 false
             } else {
                 true
             }
         } catch (t: Throwable) {
-            lastError = t.message ?: "鍚堝苟澶辫触"
-            logError("鍚堝苟澶辫触: ${t.message}")
+            lastError = t.message ?: "合并失败"
+            logError("合并失败: ${t.message}")
             false
         }
     }
@@ -672,8 +672,8 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
     }
 
     private fun buildTargetReason(group: GalleryGroup): String {
-        val target = group.target ?: return "鏃犲彲鐢ㄧ洰鏍?
-        return "淇濈暀 ${target.name}锛?ehviewer=${if (target.ehMeta != null) "鏈? else "鏃?}锛屼慨鏀规椂闂?${target.modifiedAt}锛屾枃浠舵暟=${target.fileCount}锛?
+        val target = group.target ?: return "无可用目�?
+        return "保留 ${target.name}�?ehviewer=${if (target.ehMeta != null) "�? else "�?}，修改时�?${target.modifiedAt}，文件数=${target.fileCount}�?
     }
 
     private fun processGroup(group: GalleryGroup): MergeStats {
@@ -681,7 +681,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
         val target = group.target
         if (target == null) {
             stats.errors++
-            logError("鍒嗙粍 ${group.cleanedName} 鏃犲彲鐢ㄧ洰鏍?)
+            logError("分组 ${group.cleanedName} 无可用目�?)
             return stats
         }
 
@@ -696,7 +696,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
             return stats
         }
 
-        logInfo("澶勭悊鍒嗙粍 ${group.cleanedName} 绫诲瀷=${group.type.name}锛?{group.reason}")
+        logInfo("处理分组 ${group.cleanedName} 类型=${group.type.name}�?{group.reason}")
 
         if (group.type == RelationshipType.DUPLICATE || group.type == RelationshipType.PROGRESSIVE) {
             for (source in sources) {
@@ -729,7 +729,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                     EhDB.removeDownloadInfo(source.info.gid)
                     stats.deleted++
                 } else {
-                    logError("鍚堝苟鍚庡垹闄ゆ簮鐩綍澶辫触: ${source.name}")
+                    logError("合并后删除源目录失败: ${source.name}")
                     stats.errors++
                 }
             }
@@ -774,7 +774,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
                 val targetFile = createUniqueFile(target.dir, fileName)
                 if (targetFile == null || !copyFile(sourceFile, targetFile)) {
                     stats.errors++
-                    logError("澶嶅埗澶辫触: ${sourceFile.name} -> $fileName")
+                    logError("复制失败: ${sourceFile.name} -> $fileName")
                     continue
                 }
                 newEntries.add(intArrayOf(currentIndex))
@@ -888,7 +888,7 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
             os?.flush()
             true
         } catch (e: IOException) {
-            logError("杩藉姞 .ehviewer 澶辫触: ${e.message}")
+            logError("追加 .ehviewer 失败: ${e.message}")
             false
         } finally {
             closeQuietly(os)

@@ -8,8 +8,8 @@ import com.hippo.ehviewer.BackgroundTaskManager
 import kotlinx.coroutines.Job
 
 /**
- * 鍚庡彴浠诲姟鍩虹瀹炵幇绫?
- * 鎻愪緵閫氱敤鐨勪换鍔＄鐞嗗姛鑳?
+ * 后台任务基础实现�?
+ * 提供通用的任务管理功�?
  */
 abstract class BaseBackgroundTask(
     protected val context: Context
@@ -41,7 +41,7 @@ abstract class BaseBackgroundTask(
     }
 
     /**
-     * 浣跨敤褰撳墠鍊?鎬诲€兼洿鏂拌繘搴︺€?
+     * 使用当前�?总��更新进度��?
      */
     protected fun updateProgress(current: Int, total: Int, detail: String?) {
         _progressDetail = detail
@@ -66,29 +66,29 @@ abstract class BaseBackgroundTask(
     }
 
     /**
-     * 鏇存柊浠诲姟鐘舵€?
+     * 更新任务状��?
      */
     protected fun updateState(state: TaskState) {
         currentState = state
         when (state) {
             TaskState.RUNNING -> {
-                // 浠诲姟寮€濮嬭繍琛屾椂鐨勫鐞?
+                // 任务弢�始运行时的处�?
             }
             TaskState.COMPLETED -> {
                 _progressListener?.onCompleted()
             }
             TaskState.FAILED -> {
-                // 閿欒淇℃伅搴旇鍦ㄥ叿浣撳疄鐜颁腑澶勭悊
+                // 错误信息应该在具体实现中处理
             }
             TaskState.CANCELLED -> {
-                // 鍙栨秷澶勭悊
+                // 取消处理
             }
             else -> {}
         }
     }
 
     /**
-     * 閫氱煡閿欒
+     * 通知错误
      */
     protected fun notifyError(error: Throwable) {
         updateState(TaskState.FAILED)
@@ -103,7 +103,7 @@ abstract class BaseBackgroundTask(
     }
 
     /**
-     * 閫氱煡鍙栨秷
+     * 通知取消
      */
     protected fun notifyCancelled() {
         updateState(TaskState.CANCELLED)
