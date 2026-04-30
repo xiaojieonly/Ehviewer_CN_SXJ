@@ -16,8 +16,15 @@
 
 package com.hippo.lib.glview.widget;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.Typeface;
+import android.text.TextPaint;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
@@ -25,6 +32,7 @@ import androidx.core.view.animation.PathInterpolatorCompat;
 
 import com.hippo.lib.glview.anim.Animation;
 import com.hippo.lib.glview.anim.FloatAnimation;
+import com.hippo.lib.glview.glrenderer.BitmapTexture;
 import com.hippo.lib.glview.glrenderer.GLCanvas;
 import com.hippo.lib.glview.glrenderer.GLPaint;
 import com.hippo.lib.glview.view.AnimationTime;
@@ -69,10 +77,31 @@ public class GLProgressView extends GLView {
 
     private List<Animation> mAnimations;
 
+    // Inner text rendering fields
+    private String mPageText = "";
+    private String mPercentText = "";
+    private String mSpeedText = "";
+
+    private int mBgColor = Color.TRANSPARENT;
+    private BitmapTexture mPageTexture = null;
+    private BitmapTexture mPercentTexture = null;
+    private BitmapTexture mSpeedTexture = null;
+
+    // Text style constants as fraction of view size for proper scaling
+    private static final float INDEX_TEXT_FRACTION = 0.11f;   // Page index text
+    private static final float DETAIL_TEXT_RATIO = 2.0f / 3.0f; // Progress/speed is 2/3 of index text
+    
+    // Computed pixel values from onLayout
+    private float mIndexTextPx = 0f;
+    private float mDetailTextPx = 0f;
+    
+    private int mTextColor = Color.WHITE;
+    private boolean mShowDetailedProgress = false;
+
     public GLProgressView() {
         mGLPaint = new GLPaint();
         mGLPaint.setColor(Color.WHITE);
-        mGLPaint.setBackgroundColor(Color.BLACK);
+        mGLPaint.setBackgroundColor(Color.TRANSPARENT);
         mAnimations = new ArrayList<>();
 
         setupAnimations();
@@ -154,11 +183,23 @@ public class GLProgressView extends GLView {
 
         int width = right - left;
         int height = bottom - top;
-        mGLPaint.setLineWidth(Math.min(width, height) / 12.0f);
+        // Larger outer ring: ~45% of view size (was ~40%)
+        mGLPaint.setLineWidth(Math.min(width, height) / 16.0f);
         mCx = width / 2;
         mCy = height / 2;
-        mRadiusX = width / 48.0f * 19.0f;
-        mRadiusY = height / 48.0f * 19.0f;
+        mRadiusX = width / 48.0f * 22.0f;  // ~45.8% of width, larger outer ring
+        mRadiusY = height / 48.0f * 22.0f; // ~45.8% of height
+        
+        // Compute text sizes proportional to view dimensions
+        int minDim = Math.min(width, height);
+        mIndexTextPx = minDim * INDEX_TEXT_FRACTION;
+        mDetailTextPx = mIndexTextPx * DETAIL_TEXT_RATIO;
+        
+        // Invalidate textures so they're recreated with new sizes
+        if (mShowDetailedProgress) {
+            recycleTextTextures();
+            invalidate(); // Trigger re-render to recreate textures with correct sizes
+        }
     }
 
     public void setColor(int color) {
@@ -167,6 +208,7 @@ public class GLProgressView extends GLView {
     }
 
     public void setBgColor(int color) {
+        mBgColor = color;
         mGLPaint.setBackgroundColor(color);
         invalidate();
     }
@@ -197,6 +239,130 @@ public class GLProgressView extends GLView {
         }
     }
 
+    /**
+     * Set detailed progress text displayed inside the circle.
+     * @param pageIndex Page index (1-based), displayed as "第X页"
+     * @param percent Progress percentage text like "50%"
+     * @param speed Transfer speed text like "1.5MB/s"
+     */
+    public void setDetailedProgress(int pageIndex, String percent, String speed) {
+        mShowDetailedProgress = true;
+        
+        String newPageText = "第" + pageIndex + "页";
+        String newPercentText = percent != null ? percent : "";
+        if(!newPercentText.isEmpty() && !newPercentText.endsWith("%")) {
+            newPercentText += "%";
+        }
+        String newSpeedText = speed != null ? speed : "";
+
+        boolean changed = !newPageText.equals(mPageText)
+                || !newPercentText.equals(mPercentText)
+                || !newSpeedText.equals(mSpeedText);
+
+        mPageText = newPageText;
+        mPercentText = newPercentText;
+        mSpeedText = newSpeedText;
+
+        if (changed) {
+            recycleTextTextures();
+            invalidate();
+        }
+    }
+
+    /**
+     * Disable detailed progress mode (hide inner text)
+     */
+    public void hideDetailedProgress() {
+        if (mShowDetailedProgress) {
+            mShowDetailedProgress = false;
+            recycleTextTextures();
+            mPageText = "";
+            mPercentText = "";
+            mSpeedText = "";
+            invalidate();
+        }
+    }
+
+    public void setTextColor(int color) {
+        if (mTextColor != color) {
+            mTextColor = color;
+            if (mShowDetailedProgress) {
+                recycleTextTextures();
+                invalidate();
+            }
+        }
+    }
+
+    private void recycleTextTextures() {
+        if (mPageTexture != null) {
+            mPageTexture.recycle();
+            mPageTexture = null;
+        }
+        if (mPercentTexture != null) {
+            mPercentTexture.recycle();
+            mPercentTexture = null;
+        }
+        if (mSpeedTexture != null) {
+            mSpeedTexture.recycle();
+            mSpeedTexture = null;
+        }
+    }
+
+    private BitmapTexture createTextTexture(String text, float textSize, boolean bold) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
+        TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        paint.setTextSize(textSize);
+        paint.setColor(mTextColor);
+        if (bold) {
+            paint.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
+        }
+
+        Paint.FontMetricsInt fm = paint.getFontMetricsInt();
+        int textWidth = (int) Math.ceil(paint.measureText(text));
+        int textHeight = fm.bottom - fm.top;
+        if (textWidth <= 0) textWidth = 1;
+        if (textHeight <= 0) textHeight = 1;
+
+        Bitmap bitmap = Bitmap.createBitmap(textWidth, textHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        // Draw from ascent to baseline to avoid clipping for symbols like '.', '%', '/'.
+        canvas.translate(0, -fm.ascent);
+        canvas.drawText(text, 0, 0, paint);
+
+
+        BitmapTexture texture = new BitmapTexture(bitmap);
+        return texture;
+    }
+
+    private void ensureTextTextures() {
+        if (!mShowDetailedProgress) return;
+        // Skip if layout hasn't happened yet (sizes would be 0)
+        if (mIndexTextPx <= 0f || mDetailTextPx <= 0f) return;
+
+        // Recreate textures if text content changed
+        if (mPercentTexture == null && !mPercentText.isEmpty()) {
+            mPercentTexture = createTextTexture(mPercentText, mDetailTextPx, true);
+        }
+        if (mPageTexture == null && !mPageText.isEmpty()) {
+            mPageTexture = createTextTexture(mPageText, mIndexTextPx, false);
+        }
+        if (mSpeedTexture == null && !mSpeedText.isEmpty()) {
+            mSpeedTexture = createTextTexture(mSpeedText, mDetailTextPx, false);
+        }
+    }
+
+    private void drawTextInside(GLCanvas canvas, BitmapTexture texture, int centerX, int centerY, int offsetY) {
+        if (texture == null) return;
+        int w = texture.getWidth();
+        int h = texture.getHeight();
+        canvas.save();
+        canvas.translate(centerX - w / 2, centerY + offsetY - h / 2);
+        canvas.drawTexture(texture, 0, 0, w, h);
+        canvas.restore();
+    }
+
     @Override
     public void onRender(GLCanvas canvas) {
         update();
@@ -206,12 +372,18 @@ public class GLProgressView extends GLView {
         int cx = width / 2;
         int cy = height / 2;
 
+        // Draw outer circle background (full ring)
+        canvas.save();
+        canvas.translate(cx, cy);
+        canvas.drawArc(mCx, mCy, mRadiusX, mRadiusY, 360f, mGLPaint);
+        canvas.restore();
+
+        // Draw progress arc
         float startAngle = (mTrimStart + mTrimOffset) * 360.0f - 90;
         float sweepAngle = Math.max(12.0f, (mTrimEnd - mTrimStart) * 360.0f);
         float rotation = mTrimRotation + startAngle;
 
         canvas.save();
-
         canvas.translate(cx, cy);
         canvas.rotate(rotation, 0, 0, 1);
         if (rotation % 180 != 0) {
@@ -219,10 +391,34 @@ public class GLProgressView extends GLView {
         } else {
             canvas.translate(-cx, -cy);
         }
-
         canvas.drawArc(mCx, mCy, mRadiusX, mRadiusY, sweepAngle, mGLPaint);
-
         canvas.restore();
+
+        // Draw inner text if detailed progress is enabled
+        if (mShowDetailedProgress && !mIndeterminate) {
+            ensureTextTextures();
+            // Calculate vertical spacing for 3 lines inside the circle
+            int pageH = mPageTexture != null ? mPageTexture.getHeight() : 0;
+            int percentH = mPercentTexture != null ? mPercentTexture.getHeight() : 0;
+            int speedH = mSpeedTexture != null ? mSpeedTexture.getHeight() : 0;
+            int totalH = pageH + percentH + speedH;
+            int gap = 6; // pixel gap between lines
+
+            // Position: page at top, percent in middle (large), speed at bottom
+            int yOffset = -(totalH + gap * 2) / 2;
+            
+            if (mPageTexture != null) {
+                drawTextInside(canvas, mPageTexture, cx, cy, yOffset);
+                yOffset += pageH + gap;
+            }
+            if (mPercentTexture != null) {
+                drawTextInside(canvas, mPercentTexture, cx, cy, yOffset);
+                yOffset += percentH + gap;
+            }
+            if (mSpeedTexture != null) {
+                drawTextInside(canvas, mSpeedTexture, cx, cy, yOffset);
+            }
+        }
     }
 
     private void update() {
@@ -239,5 +435,9 @@ public class GLProgressView extends GLView {
         if (invalidate) {
             invalidate();
         }
+    }
+
+    protected void onDetached() {
+        recycleTextTextures();
     }
 }

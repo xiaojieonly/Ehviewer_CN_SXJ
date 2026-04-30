@@ -15,17 +15,37 @@
  */
 package com.hippo.lib.glgallery;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.hippo.lib.glview.image.ImageTexture;
 import com.hippo.lib.glview.image.ImageWrapper;
 import com.hippo.lib.glview.view.GLRootView;
 
+import java.util.Locale;
+
 public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvider.Listener {
 
     private final GalleryProvider mProvider;
     private final ImageTexture.Uploader mUploader;
     private boolean mShowIndex = true;
+    private ProgressTextProvider mProgressTextProvider;
+    private DetailedProgressProvider mDetailedProgressProvider;
+
+    public interface ProgressTextProvider {
+        String getProgressText(int index, float percent);
+    }
+
+    /**
+     * Provider for detailed progress info (page, progress, speed)
+     */
+    public interface DetailedProgressProvider {
+        /**
+         * @return String array with 3 elements: [0]=page text, [1]=progress text, [2]=speed text
+         */
+        String[] getDetailedProgress(int index, float percent);
+    }
 
     public SimpleAdapter(@NonNull GLRootView glRootView, @NonNull GalleryProvider provider) {
         mProvider = provider;
@@ -40,6 +60,14 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         mShowIndex = show;
     }
 
+    public void setProgressTextProvider(ProgressTextProvider provider) {
+        mProgressTextProvider = provider;
+    }
+
+    public void setDetailedProgressProvider(DetailedProgressProvider provider) {
+        mDetailedProgressProvider = provider;
+    }
+
     @Override
     public void onBind(GalleryPageView view, int index) {
         mProvider.request(index);
@@ -51,6 +79,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
             view.hidePage();
         }
         view.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
+        view.setProgressText(null);
         view.setError(null, null);
     }
 
@@ -88,6 +117,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 page.hidePage();
             }
             page.setProgress(GalleryPageView.PROGRESS_INDETERMINATE);
+            page.setProgressText(null);
             page.setError(null, null);
         }
     }
@@ -98,11 +128,32 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         if (page != null) {
             page.showInfo();
             page.setImage(null);
-            if (mShowIndex) {
-                page.setPage(index + 1);
+            
+            // Check if detailed progress provider is available
+            if (mDetailedProgressProvider != null) {
+                page.setShowDetailedProgress(true);
+                String[] details = mDetailedProgressProvider.getDetailedProgress(index, percent);
+                if (details != null && details.length >= 3) {
+                    String progressText = normalizeProgressText(details[1]);
+                    String speedText = normalizeSpeedText(details[2]);
+                    Log.d("SimpleAdapter", "Detailed progress: page=" + (index + 1)
+                            + " progress=" + progressText + " speed=" + speedText);
+                    page.setDetailedProgress(index + 1, progressText, speedText);
+                }
             } else {
-                page.hidePage();
+                page.setShowDetailedProgress(false);
+                if (mShowIndex) {
+                    page.setPage(index + 1);
+                } else {
+                    page.hidePage();
+                }
+                if (mProgressTextProvider != null) {
+                    page.setProgressText(mProgressTextProvider.getProgressText(index, percent));
+                } else {
+                    page.setProgressText(null);
+                }
             }
+            
             page.setProgress(percent);
             page.setError(null, null);
         }
@@ -123,6 +174,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                     page.hidePage();
                 }
                 page.setProgress(GalleryPageView.PROGRESS_GONE);
+                page.setProgressText(null);
                 page.setError(null, null);
             } else {
                 // The image is recycled, request again.
@@ -144,6 +196,7 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
                 page.hidePage();
             }
             page.setProgress(GalleryPageView.PROGRESS_GONE);
+            page.setProgressText(null);
             page.setError(error, mGalleryView);
         }
     }
@@ -154,6 +207,36 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
         if (page != null) {
             mProvider.request(index);
         }
+    }
+
+    private String normalizeProgressText(String progressText) {
+        if (progressText == null) {
+            return "";
+        }
+        String text = progressText.trim();
+        if (!text.isEmpty() && !text.endsWith("%")) {
+            text += "%";
+        }
+        return text;
+    }
+
+    private String normalizeSpeedText(String speedText) {
+        if (speedText == null) {
+            return "";
+        }
+        String text = speedText.trim();
+        if (text.isEmpty()) {
+            return "";
+        }
+        // Normalize common unit variants so glyphs are always available in text texture.
+        text = text.replace("KiB/s", "KB/s")
+                .replace("MiB/s", "MB/s")
+                .replace("GiB/s", "GB/s");
+        text = text.replace("kb/s", "KB/s")
+                .replace("mb/s", "MB/s")
+                .replace("gb/s", "GB/s")
+                .replace("b/s", "B/s");
+        return text.toUpperCase(Locale.US).replace("/S", "/s");
     }
 
     private GalleryPageView findPageByIndex(int index) {

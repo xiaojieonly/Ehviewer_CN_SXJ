@@ -35,10 +35,14 @@ public class GalleryHeader extends ViewGroup {
   private View battery;
   private View progress;
   private View clock;
+  private View title;
+  private View fileTypeBadge;
 
   private Rect batteryRect = new Rect();
   private Rect progressRect = new Rect();
   private Rect clockRect = new Rect();
+  private Rect titleRect = new Rect();
+  private Rect badgeRect = new Rect();
 
   private int[] location = new int[2];
 
@@ -64,6 +68,8 @@ public class GalleryHeader extends ViewGroup {
     battery = findViewById(R.id.battery);
     progress = findViewById(R.id.progress);
     clock = findViewById(R.id.clock);
+    title = findViewById(R.id.gallery_title);
+    fileTypeBadge = findViewById(R.id.file_type_badge);
   }
 
   private void measureChild(Rect rect, View view, int width, int paddingLeft, int paddingRight) {
@@ -73,6 +79,17 @@ public class GalleryHeader extends ViewGroup {
       left = paddingLeft + lp.leftMargin;
     } else if (view == progress) {
       left = paddingLeft + (width - paddingLeft - paddingRight) / 2 - view.getMeasuredWidth() / 2;
+    } else if (view == title) {
+      // Title is positioned below progress, centered horizontally
+      left = paddingLeft + (width - paddingLeft - paddingRight) / 2 - view.getMeasuredWidth() / 2;
+    } else if (view == fileTypeBadge) {
+      // Badge is positioned to the right of title
+      View titleView = title;
+      if (titleView != null && titleView.getVisibility() == VISIBLE) {
+        left = titleRect.right + lp.leftMargin;
+      } else {
+        left = progressRect.right + lp.leftMargin;
+      }
     } else {
       left = width - paddingRight - lp.rightMargin - view.getMeasuredWidth();
     }
@@ -143,9 +160,11 @@ public class GalleryHeader extends ViewGroup {
     int height = 0;
     for (int i = 0; i < getChildCount(); i++) {
       View child = getChildAt(i);
-      measureChild(child, widthMeasureSpec, heightMeasureSpec);
-      MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-      height = Math.max(height, child.getMeasuredHeight() + lp.topMargin);
+      if (child.getVisibility() != GONE) {
+        measureChild(child, widthMeasureSpec, heightMeasureSpec);
+        MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        height = Math.max(height, child.getMeasuredHeight() + lp.topMargin);
+      }
     }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && displayCutout != null) {
@@ -168,6 +187,22 @@ public class GalleryHeader extends ViewGroup {
       measureChild(clockRect, clock, width, 0, 0);
     }
 
+    // Measure title below progress if visible
+    if (title != null && title.getVisibility() == VISIBLE) {
+      int titleTop = progressRect.bottom + 4; // 4dp margin below progress
+      titleRect.set(progressRect.left, titleTop, progressRect.left + title.getMeasuredWidth(), titleTop + title.getMeasuredHeight());
+      height = Math.max(height, titleRect.bottom);
+      
+      // Measure badge next to title
+      if (fileTypeBadge != null && fileTypeBadge.getVisibility() == VISIBLE) {
+        MarginLayoutParams badgeLp = (MarginLayoutParams) fileTypeBadge.getLayoutParams();
+        badgeRect.set(titleRect.right + badgeLp.leftMargin, titleTop, 
+                      titleRect.right + badgeLp.leftMargin + fileTypeBadge.getMeasuredWidth(), 
+                      titleTop + fileTypeBadge.getMeasuredHeight());
+        height = Math.max(height, badgeRect.bottom);
+      }
+    }
+
     setMeasuredDimension(width, height);
   }
 
@@ -176,6 +211,14 @@ public class GalleryHeader extends ViewGroup {
     battery.layout(batteryRect.left, batteryRect.top, batteryRect.right, batteryRect.bottom);
     progress.layout(progressRect.left, progressRect.top, progressRect.right, progressRect.bottom);
     clock.layout(clockRect.left, clockRect.top, clockRect.right, clockRect.bottom);
+    
+    // Layout title and badge
+    if (title != null && title.getVisibility() == VISIBLE) {
+      title.layout(titleRect.left, titleRect.top, titleRect.right, titleRect.bottom);
+    }
+    if (fileTypeBadge != null && fileTypeBadge.getVisibility() == VISIBLE) {
+      fileTypeBadge.layout(badgeRect.left, badgeRect.top, badgeRect.right, badgeRect.bottom);
+    }
 
     getLocationOnScreen(location);
     if (lastX != location[0] || lastY != location[1]) {

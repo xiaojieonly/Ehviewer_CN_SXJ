@@ -601,4 +601,11 @@ class ImageView extends GLView implements ImageTexture.Callback {
     public void invalidateImageTexture(ImageTexture who) {
         invalidate();
     }
+
+    /**
+     * Check if the current image texture is an animated image that is still playing
+     */
+    boolean isImageAnimating() {
+        return mImageTexture != null && mImageTexture.isRunning();
+    }
 }

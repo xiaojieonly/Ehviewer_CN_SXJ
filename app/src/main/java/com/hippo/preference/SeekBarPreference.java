@@ -36,6 +36,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
     private int mProgress;
     private int mMax;
     private boolean mTrackingTouch;
+    private boolean mShowTimeFormat = false; // 显示秒数格式
 
     public SeekBarPreference(Context context) {
         super(context);
@@ -55,6 +56,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SeekBarPreference, defStyleAttr, defStyleRes);
         setMax(a.getInt(R.styleable.SeekBarPreference_max, mMax));
+        mShowTimeFormat = a.getBoolean(R.styleable.SeekBarPreference_showTimeFormat, false);
         a.recycle();
 
         setLayoutResource(R.layout.preference_widget_seekbar);
@@ -66,15 +68,52 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         SeekBar seekBar = (SeekBar) holder.findViewById(R.id.seekbar);
         seekBar.setOnSeekBarChangeListener(this);
         seekBar.setMax(mMax);
+        // 先设置 progress，避免触发 onProgressChanged 中的 setSummary
         seekBar.setProgress(mProgress);
         seekBar.setEnabled(isEnabled());
+        
+        // 在绑定完成后更新 summary 显示当前值
+        if (mShowTimeFormat) {
+            // 使用 post 避免在布局期间调用 setSummary
+            holder.itemView.post(() -> {
+                if (mShowTimeFormat) {
+                    setSummary(formatTimeValue(mProgress));
+                }
+            });
+        }
+    }
+    
+    /**
+     * 设置是否显示时间格式（秒数）
+     */
+    public void setShowTimeFormat(boolean showTimeFormat) {
+        if (mShowTimeFormat != showTimeFormat) {
+            mShowTimeFormat = showTimeFormat;
+            notifyChanged();
+        }
+    }
+    
+    /**
+     * 格式化时间值，将十分之一秒转换为秒显示
+     */
+    private String formatTimeValue(int value) {
+        float seconds = value / 10.0f;
+        if (seconds == (int) seconds) {
+            return (int) seconds + " 秒";
+        } else {
+            return String.format("%.1f 秒", seconds);
+        }
     }
 
 
 
     @Override
     protected void onSetInitialValue(Object defaultValue) {
-        setProgress(getPersistedInt(mProgress));
+        try{
+            setProgress(getPersistedInt(mProgress));
+        }catch (ClassCastException classCastException){
+            setProgress(mProgress);
+        }
     }
 
     @Override
@@ -103,6 +142,10 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         if (progress != mProgress) {
             mProgress = progress;
             persistInt(progress);
+            // 更新 summary 显示
+            if (mShowTimeFormat) {
+                setSummary(formatTimeValue(progress));
+            }
             if (notifyChanged) {
                 notifyChanged();
             }
@@ -131,6 +174,10 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
     @Override
     public void onProgressChanged(
             SeekBar seekBar, int progress, boolean fromUser) {
+        // 只有在用户拖动时才更新 summary，避免在布局期间触发 notifyChanged
+        if (mShowTimeFormat && fromUser) {
+            setSummary(formatTimeValue(progress));
+        }
         if (fromUser && !mTrackingTouch) {
             syncProgress(seekBar);
         }

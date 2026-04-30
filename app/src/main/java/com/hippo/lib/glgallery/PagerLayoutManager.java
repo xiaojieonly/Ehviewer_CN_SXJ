@@ -75,6 +75,8 @@ class PagerLayoutManager extends GalleryView.LayoutManager {
     private int mDeltaY;
     private boolean mCanScrollBetweenPages = false;
     private boolean mStopAnimationFinger;
+    private boolean mDisableClickPage = false;
+    private boolean mDisableGesturePage = false;
 
     private int mInterval;
 
@@ -779,7 +781,23 @@ class PagerLayoutManager extends GalleryView.LayoutManager {
 
     @Override
     public boolean isTapOrPressEnable() {
-        return !mStopAnimationFinger;
+        return !mStopAnimationFinger && !mDisableClickPage;
+    }
+
+    public void setDisableClickPage(boolean disable) {
+        mDisableClickPage = disable;
+    }
+
+    public boolean isDisableClickPage() {
+        return mDisableClickPage;
+    }
+
+    public void setDisableGesturePage(boolean disable) {
+        mDisableGesturePage = disable;
+    }
+
+    public boolean isDisableGesturePage() {
+        return mDisableGesturePage;
     }
 
     @Override
