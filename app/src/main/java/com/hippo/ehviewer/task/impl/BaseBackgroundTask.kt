@@ -117,4 +117,3 @@ abstract class BaseBackgroundTask(
         notifyCancelled()
     }
 }
-

@@ -1169,4 +1169,3 @@ class MergeDuplicateGalleryTask @JvmOverloads constructor(
         NO_EHVIEWER
     }
 }
-
