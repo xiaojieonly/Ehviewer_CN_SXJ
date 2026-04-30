@@ -141,6 +141,13 @@ public class Hosts {
   }
 
   /**
+   * Delete all entries from this hosts.
+   */
+  public void deleteAll() {
+    db.delete(TABLE_HOSTS, null, null);
+  }
+
+  /**
    * Get all data from this host.
    */
   public List<Pair<String, String>> getAll() {

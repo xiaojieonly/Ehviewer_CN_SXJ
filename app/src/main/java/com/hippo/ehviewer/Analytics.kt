@@ -19,6 +19,7 @@ import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
+import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.hippo.scene.SceneFragment
@@ -35,8 +36,23 @@ object Analytics {
 
     @JvmStatic
     fun start(context: Context) {
-        analytics = FirebaseAnalytics.getInstance(context)
-        analytics!!.setUserId(Settings.getUserID())
+        try {
+            FirebaseApp.initializeApp(context)
+        } catch (ex: Exception) {
+            Log.e(LOG_TAG, "FirebaseApp initialize failed", ex)
+            analytics = null
+            return
+        }
+
+        try {
+            analytics = FirebaseAnalytics.getInstance(context)
+        } catch (ex: Exception) {
+            Log.e(LOG_TAG, "FirebaseAnalytics init failed", ex)
+            analytics = null
+            return
+        }
+
+        analytics?.setUserId(Settings.getUserID())
 
         val locale = Locale.getDefault()
         var language = locale.getLanguage()
@@ -48,7 +64,7 @@ object Analytics {
             language = language + "-" + country
         }
         language = language.lowercase(Locale.getDefault())
-        analytics!!.setUserProperty(DEVICE_LANGUAGE, language)
+        analytics?.setUserProperty(DEVICE_LANGUAGE, language)
     }
 
     @JvmStatic
