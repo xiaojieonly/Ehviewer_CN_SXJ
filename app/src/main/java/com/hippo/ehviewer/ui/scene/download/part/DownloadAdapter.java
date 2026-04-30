@@ -344,6 +344,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     }
 
 
+
     // 拖拽排序相关方法实现
     @Override
     public boolean onCheckCanStartDrag(@NonNull DownloadHolder holder, int position, int x, int y) {
