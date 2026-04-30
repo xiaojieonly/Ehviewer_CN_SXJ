@@ -38,14 +38,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
+import com.hippo.ehviewer.DownloadedFileManager;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.download.DownloadGalleryMetaHelper;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.download.DownloadService;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.impl.StartRangeDownloadTask;
+import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.ehviewer.gallery.A7ZipArchive;
 import com.hippo.ehviewer.gallery.Pipe;
 import com.hippo.ehviewer.spider.SpiderInfo;
@@ -61,6 +66,7 @@ import com.hippo.scene.Announcer;
 import com.hippo.unifile.UniFile;
 import com.hippo.unifile.UniRandomAccessFile;
 import com.hippo.util.NaturalComparator;
+import com.hippo.util.ExecutorManager;
 import com.hippo.ehviewer.Analytics;
 import com.hippo.widget.LoadImageView;
 
@@ -70,10 +76,15 @@ import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange;
 import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableItemViewHolder;
 
 import java.io.InputStream;
+import java.text.DateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 下载列表适配器
@@ -84,6 +95,13 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     private static final String TAG = DownloadAdapter.class.getSimpleName();
     public static boolean DRAG_ENABLE = false;
 
+    /** 后台预加载线程池（单线程，避免竞争） */
+    private static final ExecutorService sPreloadExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "FolderMetaPreloader");
+        t.setPriority(Thread.MIN_PRIORITY);
+        return t;
+    });
+
     private final LayoutInflater mInflater;
     private final int mListThumbWidth;
     private final int mListThumbHeight;
@@ -93,6 +111,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
     private View movedItem = null;
 
     private final Map<String, Bitmap> thumbnailCache = new HashMap<>();
+    private final Map<Long, Long> folderTimeCache = new HashMap<>();
+    private final Map<Long, Long> folderSizeCache = new HashMap<>();
 
     public interface DownloadAdapterCallback {
         int getIndexPage();
@@ -178,6 +198,9 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
                 title = "📦 " + title;
             }
+            // Incremental update flag (通过字段控制)
+            boolean isIncrementalUpdate = info.incremental;
+            
             // Handle thumbnail loading for imported archives
             if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
                 // For imported archives, extract first image as thumbnail
@@ -187,8 +210,6 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                         new ThumbDataContainer(info), true, false);
             }
-
-
 
             holder.title.setText(title);
             holder.uploader.setText(info.uploader);
@@ -218,20 +239,58 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 newCategoryText = mScene.getString(R.string.imported_archive_category);
                 categoryColor = 0xFF4CAF50; // Green color for imported archives
             } else {
+                // 显示原有分类，不区分增量更新
                 newCategoryText = EhUtils.getCategory(info.category);
                 categoryColor = EhUtils.getCategoryColor(info.category);
             }
 
             if (!newCategoryText.equals(category.getText())) {
                 category.setText(newCategoryText);
-                category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
+                category.setBackgroundColor(categoryColor);
             }
+            
+            // Log incremental update info
+            if (isIncrementalUpdate) {
+                Log.d(TAG, "[ADAPTER] 增量更新画廊: " + title +
+                        " (完成: " + info.finished + ", 下载: " + info.downloaded + ", 总计: " + info.total + ")");
+            }
+
+            bindFolderMeta(holder, info);
             bindForState(holder, info);
 
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
+            
+            // 根据选择模式动态设置点击监听器
+            EasyRecyclerView recyclerView = mCallback.getRecyclerView();
+            boolean isInCustomChoice = recyclerView != null && recyclerView.isInCustomChoice();
+            holder.setClickListeners(!isInCustomChoice);
         } catch (Exception e) {
             Analytics.recordException(e);
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DownloadHolder holder, int position, @NonNull List<Object> payloads) {
+        // 如果payload不为空且包含"progress"，只更新进度部分
+        if (!payloads.isEmpty() && "progress".equals(payloads.get(0))) {
+            List<DownloadInfo> list = mCallback.getList();
+            if (list == null) {
+                return;
+            }
+
+            try {
+                int pos = mCallback.positionInList(position);
+                DownloadInfo info = list.get(pos);
+                
+                // 只更新进度相关的部分，避免重新加载整个item
+                bindForState(holder, info);
+            } catch (Exception e) {
+                Analytics.recordException(e);
+            }
+        } else {
+            // 如果payload为空，执行完整的bind
+            super.onBindViewHolder(holder, position, payloads);
         }
     }
 
@@ -264,12 +323,17 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             return;
         }
 
+        // Check if this is an incremental update
+        boolean isIncrementalUpdate = info.incremental;
+        
         switch (info.state) {
             case DownloadInfo.STATE_NONE:
-                bindState(holder, info, resources.getString(R.string.download_state_none));
+                String stateText = resources.getString(R.string.download_state_none);
+                bindState(holder, info, stateText);
                 break;
             case DownloadInfo.STATE_WAIT:
-                bindState(holder, info, resources.getString(R.string.download_state_wait));
+                stateText = resources.getString(R.string.download_state_wait);
+                bindState(holder, info, stateText);
                 break;
             case DownloadInfo.STATE_DOWNLOAD:
                 bindProgress(holder, info);
@@ -284,7 +348,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 bindState(holder, info, text);
                 break;
             case DownloadInfo.STATE_FINISH:
-                bindState(holder, info, resources.getString(R.string.download_state_finish));
+                stateText = resources.getString(R.string.download_state_finish);
+                bindState(holder, info, stateText);
                 break;
         }
     }
@@ -298,6 +363,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         holder.progressBar.setVisibility(View.GONE);
         holder.percent.setVisibility(View.GONE);
         holder.speed.setVisibility(View.GONE);
+        holder.folderTime.setVisibility(Settings.getShowDownloadCardFolderTime() ? View.VISIBLE : View.GONE);
+        holder.folderSize.setVisibility(Settings.getShowDownloadCardFolderSize() ? View.VISIBLE : View.GONE);
         if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
             holder.start.setVisibility(View.GONE);
             holder.stop.setVisibility(View.VISIBLE);
@@ -319,6 +386,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         holder.progressBar.setVisibility(View.VISIBLE);
         holder.percent.setVisibility(View.VISIBLE);
         holder.speed.setVisibility(View.VISIBLE);
+        holder.folderTime.setVisibility(View.GONE);
+        holder.folderSize.setVisibility(View.GONE);
         if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
             holder.start.setVisibility(View.GONE);
             holder.stop.setVisibility(View.VISIBLE);
@@ -327,20 +396,100 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             holder.stop.setVisibility(View.GONE);
         }
 
+        // Check if this is an incremental update
+        boolean isIncrementalUpdate = info.incremental;
+        
         if (info.total <= 0 || info.finished < 0) {
             holder.percent.setText(null);
             holder.progressBar.setIndeterminate(true);
         } else {
-            holder.percent.setText(info.finished + "/" + info.total);
+            String progressText;
+            if (isIncrementalUpdate) {
+                progressText = info.finished + "/" + info.total + " (复制：" + info.copyCount + "，下载：" + info.networkCount + ")";
+            } else {
+                progressText = info.finished + "/" + info.total + " (已下载：" + info.downloaded + ")";
+            }
+
+            holder.percent.setText(progressText);
             holder.progressBar.setIndeterminate(false);
             holder.progressBar.setMax(info.total);
             holder.progressBar.setProgress(info.finished);
+
+            if (isIncrementalUpdate) {
+                String galleryTitle = EhUtils.getSuitableTitle(info);
+                Log.d(TAG, "[ADAPTER] 增量更新进度: " + galleryTitle + " - " + progressText);
+            }
         }
         long speed = info.speed;
         if (speed < 0) {
             speed = 0;
         }
         holder.speed.setText(com.hippo.lib.yorozuya.FileUtils.humanReadableByteCount(speed, false) + "/S");
+    }
+
+    private void bindFolderMeta(DownloadHolder holder, DownloadInfo info) {
+        boolean showFolderTime = Settings.getShowDownloadCardFolderTime();
+        boolean showFolderSize = Settings.getShowDownloadCardFolderSize();
+
+        if (showFolderTime) {
+            Long cached = folderTimeCache.get(info.gid);
+            if (cached != null) {
+                String timeText = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault())
+                        .format(new Date(cached));
+                holder.folderTime.setText(mScene.getString(R.string.download_card_folder_time, timeText));
+            } else {
+                holder.folderTime.setText(null);
+            }
+        }
+
+        if (showFolderSize) {
+            Long cached = folderSizeCache.get(info.gid);
+            if (cached != null) {
+                String sizeText = com.hippo.lib.yorozuya.FileUtils.humanReadableByteCount(Math.max(cached, 0L), false);
+                holder.folderSize.setText(mScene.getString(R.string.download_card_folder_size, sizeText));
+            } else {
+                holder.folderSize.setText(null);
+            }
+        }
+
+        holder.folderTime.setVisibility(showFolderTime ? View.VISIBLE : View.GONE);
+        holder.folderSize.setVisibility(showFolderSize ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * 在后台线程预加载所有文件夹元数据（时间、大小），避免 onBindViewHolder 中发生文件 I/O
+     */
+    public void preloadFolderMetaAsync() {
+        if (!Settings.getShowDownloadCardFolderTime() && !Settings.getShowDownloadCardFolderSize()) {
+            return;
+        }
+        sPreloadExecutor.execute(() -> {
+            List<DownloadInfo> list = mCallback.getList();
+            if (list == null) return;
+            boolean needTime = Settings.getShowDownloadCardFolderTime();
+            boolean needSize = Settings.getShowDownloadCardFolderSize();
+            boolean changed = false;
+            for (DownloadInfo info : list) {
+                if (needTime && !folderTimeCache.containsKey(info.gid)) {
+                    long time = DownloadGalleryMetaHelper.getGalleryDirectoryTimestamp(info);
+                    folderTimeCache.put(info.gid, time);
+                    changed = true;
+                }
+                if (needSize && !folderSizeCache.containsKey(info.gid)) {
+                    try {
+                        long size = DownloadedFileManager.getInstance().getGalleryFilesTotalSize(info.gid);
+                        folderSizeCache.put(info.gid, size);
+                    } catch (Exception e) {
+                        Log.w(TAG, "Failed to preload folder size for gid=" + info.gid, e);
+                    }
+                    changed = true;
+                }
+            }
+            if (changed) {
+                // 通知主线程刷新 UI（runOnUiThread 内部已做 activity null 检查）
+                mScene.runOnUiThread(() -> notifyDataSetChanged());
+            }
+        });
     }
 
 
@@ -466,7 +615,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         thumb.setImageResource(R.drawable.v_archive_hh_primary_x48);
 
         // Load thumbnail in background thread
-        new Thread(() -> {
+        ExecutorManager.getComputationExecutor().execute(() -> {
             try {
                 Bitmap thumbnail = extractFirstImageFromArchive(archiveUri);
                 mScene.runOnUiThread(() -> {
@@ -487,7 +636,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 Log.e(TAG, "Failed to load archive thumbnail for " + uriString, e);
                 // Keep the default icon that was already set - no need to change anything
             }
-        }).start();
+        });
     }
 
     private Bitmap extractFirstImageFromArchive(Uri archiveUri) {
@@ -667,6 +816,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         public final android.widget.ProgressBar progressBar;
         public final TextView percent;
         public final TextView speed;
+        public final TextView folderTime;
+        public final TextView folderSize;
 
         public DownloadHolder(View itemView) {
             super(itemView);
@@ -683,15 +834,31 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             progressBar = itemView.findViewById(R.id.progress_bar);
             percent = itemView.findViewById(R.id.percent);
             speed = itemView.findViewById(R.id.speed);
+            folderTime = itemView.findViewById(R.id.folder_time);
+            folderSize = itemView.findViewById(R.id.folder_size);
 
-            // TODO cancel on click listener when select items
-            thumb.setOnClickListener(this);
-            start.setOnClickListener(this);
-            stop.setOnClickListener(this);
+            // 初始设置点击监听器
+            setClickListeners(true);
 
             boolean isDarkTheme = !AttrResources.getAttrBoolean(mScene.getEHContext(), androidx.appcompat.R.attr.isLightTheme);
             Ripple.addRipple(start, isDarkTheme);
             Ripple.addRipple(stop, isDarkTheme);
+        }
+
+        /**
+         * 动态启用或禁用点击监听器
+         * @param enabled true表示启用点击，false表示禁用（在选择模式下）
+         */
+        private void setClickListeners(boolean enabled) {
+            if (enabled) {
+                thumb.setOnClickListener(this);
+                start.setOnClickListener(this);
+                stop.setOnClickListener(this);
+            } else {
+                thumb.setOnClickListener(null);
+                start.setOnClickListener(null);
+                stop.setOnClickListener(null);
+            }
         }
 
         @Override
@@ -733,10 +900,12 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             } else if (start == v) {
                 final DownloadInfo info = list.get(mCallback.positionInList(index));
-                Intent intent = new Intent(context, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
-                context.startService(intent);
+                
+                // 使用后台任务处理单个下载，避免界面卡顿
+                LongList gidList = new LongList();
+                gidList.add(info.gid);
+                StartRangeDownloadTask task = new StartRangeDownloadTask(context, gidList);
+                TaskExecutor.getInstance().execute(task);
             } else if (stop == v) {
                 DownloadManager downloadManager = mCallback.getDownloadManager();
                 if (null != downloadManager) {
