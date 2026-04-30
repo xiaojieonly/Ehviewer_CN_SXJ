@@ -17,9 +17,22 @@ import java.util.List;
 
 public class DownloadLabelAdapter extends ArrayAdapter<DownloadLabelItem> {
 
+    private List<DownloadLabelItem> mData;
 
     public DownloadLabelAdapter(@NonNull Context context, int resource, @NonNull List<DownloadLabelItem> objects) {
         super(context, resource, objects);
+        this.mData = objects;
+    }
+
+    /**
+     * 更新数据并刷新视图
+     * @param newData 新的标签列表
+     */
+    public void updateData(List<DownloadLabelItem> newData) {
+        this.mData = newData;
+        clear();
+        addAll(newData);
+        notifyDataSetChanged();
     }
 
 
