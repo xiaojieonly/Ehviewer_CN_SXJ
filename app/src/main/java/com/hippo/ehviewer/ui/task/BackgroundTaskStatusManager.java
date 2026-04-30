@@ -78,7 +78,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 娣诲姞涓€涓柊鐨勫悗鍙颁换鍔?
+     * 添加一个新的后台任务
      */
     @Nullable
     public String addTask(@NonNull String taskName, @Nullable String taskDescription, @Nullable Future<?> future) {
@@ -134,7 +134,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鏇存柊浠诲姟杩涘害
+     * 更新任务进度
      */
     public void updateTaskProgress(@NonNull String taskId, int current, int total) {
         updateTaskProgress(taskId, current, total, null);
@@ -147,7 +147,7 @@ public class BackgroundTaskStatusManager {
             taskInfo.setTotalProgress(total);
             taskInfo.setProgressDetail(detail);
 
-            // 鏇存柊閫氱煡鏍忚繘搴?
+            // 更新通知栏进度
             BackgroundTaskManager.getInstance().updateTaskProgress(
                 taskInfo.getTaskName(),
                 taskInfo.getTaskDescription(),
@@ -174,7 +174,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鏍囪浠诲姟瀹屾垚
+     * 标记任务完成
      */
     public void markTaskCompleted(@NonNull String taskId) {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
@@ -182,12 +182,12 @@ public class BackgroundTaskStatusManager {
             taskInfo.setQueued(false);
             taskInfo.setCompleted(true);
 
-            // 娣诲姞鍒板凡瀹屾垚浠诲姟鍒楄〃
+            // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);
 
-            // 闄愬埗宸插畬鎴愪换鍔＄殑鏁伴噺
+            // 限制已完成任务的数量
             if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
-                // 绉婚櫎鏈€鏃х殑浠诲姟
+                // 移除最旧的任务
                 String oldestTaskId = mCompletedTasks.keySet().iterator().next();
                 mCompletedTasks.remove(oldestTaskId);
             }
@@ -196,7 +196,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鏍囪浠诲姟鍙栨秷
+     * 标记任务取消
      */
     public void markTaskCancelled(@NonNull String taskId) {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
@@ -204,12 +204,12 @@ public class BackgroundTaskStatusManager {
             taskInfo.setQueued(false);
             taskInfo.setCancelled(true);
 
-            // 娣诲姞鍒板凡瀹屾垚浠诲姟鍒楄〃
+            // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);
 
-            // 闄愬埗宸插畬鎴愪换鍔＄殑鏁伴噺
+            // 限制已完成任务的数量
             if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
-                // 绉婚櫎鏈€鏃х殑浠诲姟
+                // 移除最旧的任务
                 String oldestTaskId = mCompletedTasks.keySet().iterator().next();
                 mCompletedTasks.remove(oldestTaskId);
             }
@@ -218,7 +218,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鏍囪浠诲姟鍑洪敊
+     * 标记任务出错
      */
     public void markTaskError(@NonNull String taskId, @Nullable String errorMessage) {
         BackgroundTaskInfo taskInfo = mActiveTasks.remove(taskId);
@@ -226,12 +226,12 @@ public class BackgroundTaskStatusManager {
             taskInfo.setQueued(false);
             taskInfo.setErrorMessage(errorMessage);
 
-            // 娣诲姞鍒板凡瀹屾垚浠诲姟鍒楄〃
+            // 添加到已完成任务列表
             mCompletedTasks.put(taskId, taskInfo);
 
-            // 闄愬埗宸插畬鎴愪换鍔＄殑鏁伴噺
+            // 限制已完成任务的数量
             if (mCompletedTasks.size() > MAX_COMPLETED_TASKS) {
-                // 绉婚櫎鏈€鏃х殑浠诲姟
+                // 移除最旧的任务
                 String oldestTaskId = mCompletedTasks.keySet().iterator().next();
                 mCompletedTasks.remove(oldestTaskId);
             }
@@ -240,7 +240,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鏆傚仠鎸囧畾浠诲姟
+     * 暂停指定任务
      */
     public boolean pauseTask(@NonNull String taskId) {
         BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
@@ -274,7 +274,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鎭㈠鎸囧畾浠诲姟
+     * 恢复指定任务
      */
     public boolean resumeTask(@NonNull String taskId) {
         BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
@@ -287,7 +287,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鍙栨秷鎸囧畾浠诲姟
+     * 取消指定任务
      */
     public boolean cancelTask(@NonNull String taskId) {
         BackgroundTaskInfo taskInfo = mActiveTasks.get(taskId);
@@ -310,7 +310,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 娓呴櫎鎵€鏈夊凡瀹屾垚鐨勪换鍔?
+     * 清除所有已完成的任务
      */
     public void clearCompletedTasks() {
         mCompletedTasks.clear();
@@ -318,7 +318,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鍙栨秷鎵€鏈夋椿璺冧换鍔″苟娓呯┖鎵€鏈変换鍔¤褰?
+     * 取消所有活跃任务并清空所有任务记录
      */
     public void clearAllTasks() {
         List<String> taskIds = new ArrayList<>(mActiveTasks.keySet());
@@ -342,7 +342,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鑾峰彇宸插畬鎴愪换鍔″垪琛?
+     * 获取已完成任务列表
      */
     @NonNull
     public List<BackgroundTaskInfo> getCompletedTasks() {
@@ -350,7 +350,7 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鑾峰彇鎸囧畾浠诲姟淇℃伅
+     * 获取指定任务信息
      */
     @Nullable
     public BackgroundTaskInfo getTaskInfo(@NonNull String taskId) {
@@ -371,14 +371,14 @@ public class BackgroundTaskStatusManager {
     }
 
     /**
-     * 鑾峰彇娲昏穬浠诲姟鏁伴噺
+     * 获取活跃任务数量
      */
     public int getActiveTaskCount() {
         return mActiveTasks.size();
     }
 
     /**
-     * 鑾峰彇鎵€鏈変换鍔℃暟閲忥紙鍖呮嫭娲昏穬鍜屽凡瀹屾垚鐨勶級
+     * 获取所有任务数量（包括活跃和已完成的）
      */
     public int getTotalTaskCount() {
         return mActiveTasks.size() + mCompletedTasks.size();

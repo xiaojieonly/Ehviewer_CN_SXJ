@@ -177,8 +177,8 @@ public class BackgroundTaskInfo {
     }
 
     /**
-     * 鑾峰彇杩涘害鐧惧垎姣旓紙0-100锛?
-     * 濡傛灉鎬昏繘搴︿负-1锛堜笉纭畾锛夛紝杩斿洖-1
+     * 获取进度百分比（0-100）
+     * 如果总进度为-1（不确定），返回-1
      */
     public int getProgressPercentage() {
         if (totalProgress <= 0) {
@@ -188,7 +188,7 @@ public class BackgroundTaskInfo {
     }
 
     /**
-     * 鑾峰彇杩愯鏃堕暱锛堟绉掞級
+     * 获取运行时长（毫秒）
      */
     public long getRunningTime() {
         return System.currentTimeMillis() - startTime;
@@ -212,7 +212,7 @@ public class BackgroundTaskInfo {
             try (FileWriter writer = new FileWriter(target, true)) {
                 writer.append(stamped).append('\n');
             } catch (IOException ignore) {
-                // 蹇界暐鍐欏叆寮傚父锛屼粛鐒朵繚鐣欏唴瀛樻棩蹇?
+                // 忽略写入异常，仍然保留内存日志
             }
         }
     }
@@ -234,7 +234,7 @@ public class BackgroundTaskInfo {
     }
 
     /**
-     * 鍙栨秷浠诲姟
+     * 取消任务
      */
     public boolean cancel() {
         if (future != null && !future.isDone()) {
