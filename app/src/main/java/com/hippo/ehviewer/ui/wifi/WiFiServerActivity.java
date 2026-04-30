@@ -18,14 +18,18 @@ import static com.hippo.ehviewer.client.wifi.ConnectThread.SEND_MSG_SUCCESS;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,12 +55,13 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
 
-public class WiFiServerActivity extends ToolbarActivity implements AdapterView.OnItemSelectedListener {
+public class WiFiServerActivity extends ToolbarActivity {
 
     private static final int REQUEST_CODE = 996;
 
@@ -83,23 +88,45 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
 
     private Context mContext;
     private TextView textState;
+    private TextView ipAddressesText;
 
     private Button statusButton;
-
-    private int selectIndex = 0;
+    private ProgressBar loadingIndicator;
+    private CheckBox checkboxBookmark;
+    private CheckBox checkboxFavorite;
+    private CheckBox checkboxDownload;
+    
+    private WifiManager wifiManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = getApplicationContext();
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        
         setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
         setContentView(R.layout.activity_wifi_server);
         textState = findViewById(R.id.receive);
-        Spinner spinner = findViewById(R.id.migrate_spinner);
-        spinner.setOnItemSelectedListener(this);
+        ipAddressesText = findViewById(R.id.ip_addresses);
         statusButton = findViewById(R.id.status_change);
+        loadingIndicator = findViewById(R.id.loading_indicator);
+        checkboxBookmark = findViewById(R.id.checkbox_bookmark);
+        checkboxFavorite = findViewById(R.id.checkbox_favorite);
+        checkboxDownload = findViewById(R.id.checkbox_download);
+        
+        // 默认勾选第一个checkbox（书签）
+        checkboxBookmark.setChecked(true);
+        
+        // 设置checkbox监听器，当状态改变时更新按钮状态
+        checkboxBookmark.setOnCheckedChangeListener((buttonView, isChecked) -> updateButtonState());
+        checkboxFavorite.setOnCheckedChangeListener((buttonView, isChecked) -> updateButtonState());
+        checkboxDownload.setOnCheckedChangeListener((buttonView, isChecked) -> updateButtonState());
+        
         statusButton.setOnClickListener(this::onStatusChange);
         updateStatusButton();
+        displayIPAddresses();
+        checkWifiHotspotState();
+        
         boolean result = requestMyPermission();
         if (result) {
             openConnectThread();
@@ -128,20 +155,31 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         //        开启连接线程
         new Thread(() -> {
             try {
+                Log.d("WiFiServer", "Starting listener thread on port " + PORT);
                 listenerThread = new ListenerThread(PORT, handler);
                 listenerThread.start();
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Log.e("WiFiServer", "Thread sleep interrupted", e);
                 }
-                Log.i("ip", "getWifiApIpAddress()" + getWifiApIpAddress());
+                
+                String ipAddress = getWifiApIpAddress();
+                Log.i("WiFiServer", "Detected IP address: " + ipAddress);
+                
+                // 更新IP地址显示
+                runOnUiThread(() -> displayIPAddresses());
+                
                 //本地路由开启通信
                 openSocket();
 
             } catch (IOException e) {
-                e.printStackTrace();
-                runOnUiThread(() -> textState.setText(R.string.wifi_server_connection_fail));
+                Log.e("WiFiServer", "Failed to open connection thread", e);
+                runOnUiThread(() -> {
+                    textState.setText(R.string.wifi_server_connection_fail);
+                    Toast.makeText(mContext, getString(R.string.wifi_server_reconnect_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+                    updateButtonState();
+                });
             }
         }).start();
     }
@@ -159,43 +197,70 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         String ip = getWifiApIpAddress();
         if (ip == null) {
             ip = "192.168.43.1";
+            Log.w("WiFiServer", "Using default IP address: " + ip);
+        } else {
+            Log.d("WiFiServer", "Using detected IP address: " + ip);
         }
-        Socket socket = new Socket(ip, PORT);
-        connectThread = new ConnectThread(WiFiServerActivity.this, socket, handler, IS_SERVER);
-        connectThread.start();
+        
+        try {
+            Log.d("WiFiServer", "Attempting to connect to " + ip + ":" + PORT);
+            Socket socket = new Socket(ip, PORT);
+            connectThread = new ConnectThread(WiFiServerActivity.this, socket, handler, IS_SERVER);
+            connectThread.start();
+            Log.d("WiFiServer", "Socket connection established successfully");
+        } catch (IOException e) {
+            Log.e("WiFiServer", "Failed to connect to " + ip + ":" + PORT, e);
+            throw e;
+        }
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-      selectIndex = position;
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        selectIndex = 999;
-    }
+    // 不再需要这些方法，因为我们已经使用CheckBox替代了Spinner
 
     private void onStatusChange(View view) {
+        Log.d("WiFiServer", "Status button clicked, sending=" + sending + ", dataHands.size()=" + dataHands.size());
+        
         if (sending) {
+            Log.d("WiFiServer", "Stopping data transmission");
             sending = false;
             updateStatusButton();
             return;
         }
+        
         if (!dataHands.isEmpty()){
+            Log.d("WiFiServer", "Resuming data transmission, remaining data: " + dataHands.size());
             sendNextPage();
         }else{
-            switch (selectIndex){
-                case 0:
-                    createBookmarkData();
-                    break;
-                case 1:
-                    createFavoriteData();
-                    break;
-                case 2:
-                    createDownloadData();
-                    break;
-                default:
-                    break;
+            // 检查哪些checkbox被选中
+            boolean bookmarkSelected = checkboxBookmark.isChecked();
+            boolean favoriteSelected = checkboxFavorite.isChecked();
+            boolean downloadSelected = checkboxDownload.isChecked();
+            
+            Log.d("WiFiServer", "Checkbox states - bookmark: " + bookmarkSelected + ", favorite: " + favoriteSelected + ", download: " + downloadSelected);
+            
+            if (!bookmarkSelected && !favoriteSelected && !downloadSelected) {
+                Log.w("WiFiServer", "No data type selected");
+                Toast.makeText(mContext, R.string.wifi_please_select_data_type, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // 根据选择创建数据
+            if (bookmarkSelected) {
+                Log.d("WiFiServer", "Creating bookmark data");
+                createBookmarkData();
+            }
+            if (favoriteSelected) {
+                Log.d("WiFiServer", "Creating favorite data");
+                createFavoriteData();
+            }
+            if (downloadSelected) {
+                Log.d("WiFiServer", "Creating download data");
+                createDownloadData();
+            }
+            
+            // 如果有数据被添加到队列，开始发送
+            if (!dataHands.isEmpty()) {
+                Log.d("WiFiServer", "Starting data transmission with " + dataHands.size() + " data packets");
+                sendNextPage();
             }
         }
     }
@@ -301,6 +366,40 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
         }).start();
     }
 
+    private void updateButtonState() {
+        boolean anyChecked = checkboxBookmark.isChecked() || checkboxFavorite.isChecked() || checkboxDownload.isChecked();
+        boolean enabled = anyChecked && !sending;
+        statusButton.setEnabled(enabled);
+        Log.d("WiFiServer", "Button state updated: enabled=" + enabled + ", anyChecked=" + anyChecked + ", sending=" + sending);
+    }
+    
+    private void checkConnectionState() {
+        if (connectThread != null && connectThread.isSocketClose()) {
+            Log.w("WiFiServer", "Connection is closed, attempting to reconnect");
+            runOnUiThread(() -> {
+                textState.setText(R.string.wifi_server_reconnecting);
+                statusButton.setEnabled(false);
+            });
+            
+            new Thread(() -> {
+                try {
+                    Thread.sleep(2000); // 等待2秒后重连
+                    openSocket();
+                    runOnUiThread(() -> {
+                        textState.setText(R.string.wifi_server_connection_succeeded);
+                        updateButtonState();
+                    });
+                } catch (Exception e) {
+                    Log.e("WiFiServer", "Failed to reconnect", e);
+                    runOnUiThread(() -> {
+                        textState.setText(getString(R.string.wifi_server_reconnect_failed, e.getMessage()));
+                        updateButtonState();
+                    });
+                }
+            }).start();
+        }
+    }
+    
     private void updateStatusButton(){
         String content;
         if (!sending) {
@@ -310,6 +409,9 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
                 content = getString(R.string.wifi_send_start,"("+dataHands.size()+")");
             }
             statusButton.setText(content);
+            loadingIndicator.setVisibility(View.GONE);
+            // 更新按钮可用状态
+            updateButtonState();
             return;
         }
         if (dataHands.isEmpty()){
@@ -318,6 +420,7 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
             content = getString(R.string.wifi_send_stop,"("+dataHands.size()+")");
         }
         statusButton.setText(content);
+        loadingIndicator.setVisibility(View.VISIBLE);
     }
 
 
@@ -332,51 +435,163 @@ public class WiFiServerActivity extends ToolbarActivity implements AdapterView.O
 
     private void sendNextPage() {
         if (dataHands.isEmpty()) {
+            Log.d("WiFiServer", "No more data to send");
             sending = false;
+            updateStatusButton();
             return;
         }
 
         new Thread(() -> {
             sending = true;
-            if (connectThread != null) {
-                WiFiDataHand dataHand = dataHands.removeFirst();
-                runOnUiThread(this::updateStatusButton);
-                if (connectThread.isSocketClose()) {
-                    try {
-                        openSocket();
-                    } catch (IOException e) {
-                        Analytics.recordException(e);
-                    }
+            WiFiDataHand dataHand = dataHands.removeFirst();
+            runOnUiThread(this::updateStatusButton);
+            
+            // 检查connectThread是否为null或已关闭
+            if (connectThread == null || connectThread.isSocketClose()) {
+                Log.w("WiFiServer", "Connection is closed or null, attempting to reconnect");
+                runOnUiThread(() -> textState.setText(R.string.wifi_server_reconnecting));
+                
+                try {
+                    openSocket();
+                    // 等待连接建立
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    Log.e("WiFiServer", "Failed to reconnect", e);
+                    runOnUiThread(() -> {
+                        textState.setText(getString(R.string.wifi_server_reconnect_failed, e.getMessage()));
+                        sending = false;
+                        updateStatusButton();
+                    });
+                    return;
                 }
+            }
+            
+            // 再次检查connectThread
+            if (connectThread != null && !connectThread.isSocketClose()) {
+                // 发送数据
+                Log.d("WiFiServer", "Sending data: " + dataHand.dataType + ", page " + dataHand.pageIndex + "/" + dataHand.pageSize);
                 connectThread.sendData(dataHand);
             } else {
-                runOnUiThread(() -> Toast.makeText(getBaseContext(), R.string.wifi_server_connect_unable, Toast.LENGTH_LONG).show());
-                Log.w("AAA", "connectThread == null");
+                Log.e("WiFiServer", "Failed to initialize connection thread or socket is closed");
+                runOnUiThread(() -> {
+                    Toast.makeText(getBaseContext(), R.string.wifi_server_connect_unable, Toast.LENGTH_LONG).show();
+                    textState.setText("连接线程初始化失败或Socket已关闭");
+                    sending = false;
+                    updateStatusButton();
+                });
             }
         }).start();
     }
 
     public String getWifiApIpAddress() {
         try {
+            // 首先尝试获取WiFi热点IP
             for (Enumeration<NetworkInterface> en = NetworkInterface
                     .getNetworkInterfaces(); en.hasMoreElements(); ) {
                 NetworkInterface intf = en.nextElement();
-                if (intf.getName().contains("wlan")) {
+                if (intf.getName().contains("wlan") || intf.getName().contains("ap")) {
                     for (Enumeration<InetAddress> enumIpAddr = intf
                             .getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
                         InetAddress inetAddress = enumIpAddr.nextElement();
                         if (!inetAddress.isLoopbackAddress()
                                 && (inetAddress.getAddress().length == 4)) {
-                            Log.d("Main", inetAddress.getHostAddress());
-                            return inetAddress.getHostAddress();
+                            String ip = inetAddress.getHostAddress();
+                            Log.d("WiFiServer", "Found WiFi AP IP: " + ip);
+                            return ip;
                         }
+                    }
+                }
+            }
+            
+            // 如果没找到WiFi热点IP，尝试获取其他非回环IP
+            for (Enumeration<NetworkInterface> en = NetworkInterface
+                    .getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                if (intf.isUp() && !intf.isLoopback()) {
+                    for (Enumeration<InetAddress> enumIpAddr = intf
+                            .getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                        InetAddress inetAddress = enumIpAddr.nextElement();
+                        if (!inetAddress.isLoopbackAddress()
+                                && (inetAddress.getAddress().length == 4)
+                                && !inetAddress.getHostAddress().startsWith("127.")) {
+                            String ip = inetAddress.getHostAddress();
+                            Log.d("WiFiServer", "Found alternative IP: " + ip + " from interface: " + intf.getName());
+                            return ip;
+                        }
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e("WiFiServer", "Error getting IP address", ex);
+        }
+        return null;
+    }
+    
+    private void checkWifiHotspotState() {
+        try {
+            // 检查WiFi热点状态
+            if (wifiManager != null) {
+                int apState = getWifiApState();
+                Log.d("WiFiServer", "WiFi AP state: " + apState);
+                
+                if (apState != 13) { // 13 = WIFI_AP_STATE_ENABLED
+                    Log.w("WiFiServer", "WiFi hotspot is not enabled, state: " + apState);
+                    runOnUiThread(() -> {
+                        textState.setText(R.string.wifi_server_hotspot_not_enabled);
+                        Toast.makeText(mContext, R.string.wifi_server_please_enable_hotspot, Toast.LENGTH_LONG).show();
+                    });
+                } else {
+                    Log.d("WiFiServer", "WiFi hotspot is enabled");
+                    runOnUiThread(() -> {
+                        textState.setText(R.string.wifi_server_hotspot_enabled);
+                    });
+                }
+            }
+        } catch (Exception e) {
+            Log.e("WiFiServer", "Error checking WiFi hotspot state", e);
+        }
+    }
+    
+    // 使用反射获取WiFi热点状态，因为API可能被隐藏
+    private int getWifiApState() {
+        try {
+            java.lang.reflect.Method method = wifiManager.getClass().getMethod("getWifiApState");
+            return (int) method.invoke(wifiManager);
+        } catch (Exception e) {
+            Log.e("WiFiServer", "Error getting WiFi AP state", e);
+            return -1;
+        }
+    }
+    
+    private void displayIPAddresses() {
+        List<String> ipList = getAllIPAddresses();
+        if (!ipList.isEmpty()) {
+            String ipText = TextUtils.join(", ", ipList);
+            ipAddressesText.setText(getString(R.string.wifi_server_ip_addresses, ipText));
+        } else {
+            ipAddressesText.setText(getString(R.string.wifi_server_ip_addresses, "未找到"));
+        }
+    }
+    
+    private List<String> getAllIPAddresses() {
+        List<String> ipList = new ArrayList<>();
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                if (intf.isLoopback() || !intf.isUp() || intf.isVirtual()) {
+                    continue;
+                }
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress() && inetAddress.getHostAddress().indexOf(":") < 0) {
+                        ipList.add(inetAddress.getHostAddress());
                     }
                 }
             }
         } catch (SocketException ex) {
             Log.e("Main", ex.toString());
         }
-        return null;
+        return ipList;
     }
 
     @Override
