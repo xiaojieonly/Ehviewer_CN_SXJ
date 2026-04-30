@@ -33,9 +33,12 @@ import androidx.annotation.UiThread;
 
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.ehviewer.Analytics;
+import com.hippo.ehviewer.DownloadedFileManager;
+import com.hippo.ehviewer.dao.DownloadedFile;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.GetText;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.network.NetworkLogger;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhEngine;
 import com.hippo.ehviewer.client.EhRequestBuilder;
@@ -48,6 +51,9 @@ import com.hippo.ehviewer.client.parser.GalleryDetailParser;
 import com.hippo.ehviewer.client.parser.GalleryPageApiParser;
 import com.hippo.ehviewer.client.parser.GalleryPageParser;
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser;
+import com.hippo.ehviewer.dao.DownloadedFile;
+import com.hippo.ehviewer.dao.GalleryVersionMap;
+import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
 import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.glgallery.GalleryProvider;
@@ -59,6 +65,8 @@ import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.lib.yorozuya.IOUtils;
+
+import java.util.List;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.OSUtils;
 import com.hippo.lib.yorozuya.StringUtils;
@@ -89,6 +97,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.Call;
+import okhttp3.Dispatcher;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -120,6 +129,8 @@ public final class SpiderQueen implements Runnable {
     private final OkHttpClient mHttpClient;
     @NonNull
     private final OkHttpClient mHttpImageClient;
+    @NonNull
+    private final OkHttpClient mDownloadHttpClient;
     @NonNull
     private final SimpleDiskCache mSpiderInfoCache;
     @NonNull
@@ -167,6 +178,87 @@ public final class SpiderQueen implements Runnable {
     private final int downloadTimeout;
 
     private long receiveBytesBefore;
+    
+    /** 用于标记应用是否在前台，后台时下载线程应使用更高优先级 */
+    private static volatile boolean sIsAppInForeground = true;
+    
+    /** 网络保活定时器 - 后台时每2分钟做一次轻量网络请求，防止连接被内核断开 */
+    private static Timer sKeepAliveTimer;
+    private static final Object sKeepAliveLock = new Object();
+
+    /**
+     * 由外部(DownloadManager)调用，通知SpiderQueen应用前后台状态变化
+     */
+    public static void notifyAppForegroundState(boolean isForeground) {
+        sIsAppInForeground = isForeground;
+        Log.d(TAG, "App foreground state changed: " + (isForeground ? "foreground" : "background"));
+        NetworkLogger.INSTANCE.logBackground(
+            "App state: " + (isForeground ? "FOREGROUND" : "BACKGROUND") +
+            " | WiFi: " + (isForeground ? "normal" : "keep-alive active")
+        );
+        
+        // 后台时启动网络保活，前台时停止
+        if (!isForeground) {
+            startKeepAlive();
+        } else {
+            stopKeepAlive();
+        }
+    }
+
+    /**
+     * 由外部(DownloadService/NetworkCallback)调用，通知网络已切换
+     * 重启网络保活以适应新网络接口
+     */
+    public static void notifyNetworkChanged() {
+        Log.i(TAG, "Network changed - restarting keepalive");
+        NetworkLogger.INSTANCE.logBackground("Network changed - restarting keepalive timer");
+        // 停止旧保活，重新开始（适应新网络接口）
+        stopKeepAlive();
+        if (!sIsAppInForeground) {
+            startKeepAlive();
+        }
+    }
+    
+    /**
+     * 启动网络保活 - 周期性解析域名，防止 HyperOS 内核级限速导致连接断开
+     */
+    private static void startKeepAlive() {
+        synchronized (sKeepAliveLock) {
+            if (sKeepAliveTimer != null) return;
+            sKeepAliveTimer = new Timer("EhViewer-KeepAlive", true);
+            sKeepAliveTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        // 做一次轻量的 DNS 解析，保持网络路径活跃
+                        // 这比 HTTP 请求更轻量，但足以防止内核将链路标记为空闲
+                        java.net.InetAddress.getByName("e-hentai.org");
+                        if (DEBUG_LOG) {
+                            Log.d(TAG, "Network keepalive ping successful");
+                        }
+                    } catch (Throwable ignored) {
+                        // DNS 失败不影响，说明网络本身有问题
+                    }
+                }
+            }, 120000, 120000); // 首次延迟2分钟，之后每2分钟一次
+            Log.i(TAG, "Network keepalive started (every 2 min)");
+            NetworkLogger.INSTANCE.logBackground("Network keepalive timer started (interval=2min, target=e-hentai.org)");
+        }
+    }
+    
+    /**
+     * 停止网络保活
+     */
+    private static void stopKeepAlive() {
+        synchronized (sKeepAliveLock) {
+            if (sKeepAliveTimer != null) {
+                sKeepAliveTimer.cancel();
+                sKeepAliveTimer = null;
+                Log.i(TAG, "Network keepalive stopped");
+                NetworkLogger.INSTANCE.logBackground("Network keepalive timer stopped");
+            }
+        }
+    }
 
     private SpiderQueen(EhApplication application, @NonNull GalleryInfo galleryInfo) {
         mHttpClient = EhApplication.getOkHttpClient(application);
@@ -178,13 +270,23 @@ public final class SpiderQueen implements Runnable {
         mWorkerMaxCount = MathUtils.clamp(Settings.getMultiThreadDownload(), 1, 10);
         mPreloadNumber = MathUtils.clamp(Settings.getPreloadImage(), 0, 100);
 
+        Dispatcher downloadDispatcher = new Dispatcher();
+        int maxPerHost = Math.max(5, mWorkerMaxCount);
+        downloadDispatcher.setMaxRequestsPerHost(maxPerHost);
+        downloadDispatcher.setMaxRequests(Math.max(64, maxPerHost * 2));
+        mDownloadHttpClient = mHttpClient.newBuilder()
+            .dispatcher(downloadDispatcher)
+            .build();
+
         for (int i = 0; i < DECODE_THREAD_NUM; i++) {
             mDecodeIndexArray[i] = GalleryPageView.INVALID_INDEX;
         }
 
+        // 使用 THREAD_PRIORITY_MORE_FAVORABLE 确保后台下载时不被过度降速
+        // SpiderWorker.run() 中会进一步根据前后台状态动态调整
         mWorkerPoolExecutor = new ThreadPoolExecutor(mWorkerMaxCount, mWorkerMaxCount,
-                0, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
-                new PriorityThreadFactory(SpiderWorker.class.getSimpleName(), Process.THREAD_PRIORITY_BACKGROUND));
+            0, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
+            new PriorityThreadFactory(SpiderWorker.class.getSimpleName(), Process.THREAD_PRIORITY_MORE_FAVORABLE));
         mDownloadDelay = Settings.getDownloadDelay();
         downloadTimeout = Settings.getDownloadTimeout();
     }
@@ -435,6 +537,7 @@ public final class SpiderQueen implements Runnable {
                 Process.THREAD_PRIORITY_BACKGROUND);
         mQueenThread = queenThread;
         queenThread.start();
+        Log.d(TAG, "SpiderQueen thread started with THREAD_PRIORITY_BACKGROUND");
     }
 
     private void stop() {
@@ -743,6 +846,30 @@ public final class SpiderQueen implements Runnable {
         // Read from download dir
         UniFile downloadDir = mSpiderDen.getDownloadDir();
         if (downloadDir != null) {
+            // 首先尝试读取备份的SpiderInfo文件（.ehviewer.[原始ID]）
+            if (Settings.getIncrementalDownloadUpdate()) {
+                GalleryVersionMap versionMap = EhDB.getGalleryVersionMap(mGalleryInfo.gid);
+                if (versionMap != null) {
+                    // 获取所有版本的画廊信息
+                    List<GalleryVersionMap> allVersions = EhDB.getAllVersionsOfGallery(versionMap.getOriginalGid());
+                    for (GalleryVersionMap version : allVersions) {
+                        if (version.getCurrentGid() != mGalleryInfo.gid) {
+                            // 尝试读取备份的SpiderInfo文件
+                            String backupFileName = SPIDER_INFO_FILENAME + "." + version.getCurrentGid();
+                            UniFile backupFile = downloadDir.findFile(backupFileName);
+                            if (backupFile != null) {
+                                spiderInfo = SpiderInfo.read(backupFile);
+                                if (spiderInfo != null) {
+                                    // 找到有效的备份文件，直接返回
+                                    return spiderInfo;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 读取标准的SpiderInfo文件
             UniFile file = downloadDir.findFile(SPIDER_INFO_FILENAME);
             spiderInfo = SpiderInfo.read(file);
             if (spiderInfo != null && spiderInfo.gid == mGalleryInfo.gid &&
@@ -995,6 +1122,16 @@ public final class SpiderQueen implements Runnable {
             Log.i(TAG, Thread.currentThread().getName() + ": start");
         }
 
+        // 如果是下载模式，提高线程优先级以保证后台下载速度
+        if (mDownloadReference > 0) {
+            try {
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+                Log.d(TAG, "SpiderQueen main thread priority raised to THREAD_PRIORITY_DEFAULT for background download");
+            } catch (SecurityException e) {
+                Log.w(TAG, "Failed to set SpiderQueen thread priority", e);
+            }
+        }
+
         runInternal();
 
         // Set mQueenThread null
@@ -1017,6 +1154,216 @@ public final class SpiderQueen implements Runnable {
         if (DEBUG_LOG) {
             Log.i(TAG, Thread.currentThread().getName() + ": end");
         }
+    }
+
+    /**
+     * 添加下载文件信息到DownloadedFileManager
+     */
+    private void addDownloadedFileInfo(int index) {
+        try {
+            SpiderInfo spiderInfo = mSpiderInfo.get();
+            if (spiderInfo == null || spiderInfo.pTokenMap == null) {
+                return;
+            }
+
+            String token = spiderInfo.pTokenMap.get(index);
+            if (token == null || SpiderInfo.TOKEN_FAILED.equals(token)) {
+                return;
+            }
+
+            // 获取文件路径
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            if (downloadDir == null) {
+                return;
+            }
+
+            // 构建文件名（index-token.ext）
+            String filename = index + "-" + token + ".jpg";
+            UniFile file = downloadDir.findFile(filename);
+            if (file == null) {
+                // 尝试其他扩展名
+                String[] extensions = {".png", ".gif", ".webp", ".bmp"};
+                for (String ext : extensions) {
+                    filename = index + "-" + token + ext;
+                    file = downloadDir.findFile(filename);
+                    if (file != null) {
+                        break;
+                    }
+                }
+            }
+
+            if (file == null) {
+                Log.w(TAG, "Downloaded file not found: " + index + "-" + token);
+                return;
+            }
+
+            // 添加到DownloadedFileManager
+            DownloadedFileManager manager = DownloadedFileManager.getInstance();
+            String path = file.getUri().getPath();
+            long size = file.length();
+            manager.addOrUpdateFile(token, spiderInfo.gid, filename, path, size);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding downloaded file info", e);
+        }
+    }
+
+    /**
+     * 复制已存在的文件
+     */
+    private boolean copyExistingFile(DownloadedFile downloadedFile, int index) {
+        try {
+            // 源文件
+            String sourcePath = downloadedFile.getPath();
+            UniFile sourceFile = UniFile.fromFile(new java.io.File(sourcePath));
+            if (sourceFile == null || !sourceFile.exists()) {
+                Log.w(TAG, "Source file not found: " + sourcePath);
+                return false;
+            }
+
+            // 目标目录
+            UniFile downloadDir = mSpiderDen.getDownloadDir();
+            if (downloadDir == null) {
+                return false;
+            }
+
+            // 构建目标文件名
+            String token = downloadedFile.getToken();
+            String sourceFilename = downloadedFile.getFilename();
+            String extension = "";
+            int dotIndex = sourceFilename.lastIndexOf('.');
+            if (dotIndex > 0) {
+                extension = sourceFilename.substring(dotIndex);
+            }
+            String targetFilename = index + "-" + token + extension;
+
+            // 检查目标文件是否已存在
+            UniFile targetFile = downloadDir.findFile(targetFilename);
+            if (targetFile != null && targetFile.exists()) {
+                Log.d(TAG, "Target file already exists: " + targetFilename);
+                return true;
+            }
+
+            // 复制文件
+            targetFile = downloadDir.createFile(targetFilename);
+            if (targetFile == null) {
+                Log.e(TAG, "Failed to create target file: " + targetFilename);
+                return false;
+            }
+
+            // 执行复制
+            java.io.InputStream in = null;
+            java.io.OutputStream out = null;
+            try {
+                in = sourceFile.openInputStream();
+                out = targetFile.openOutputStream();
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                out.flush();
+                
+                // 验证文件完整性
+                if (verifyFileIntegrity(sourceFile, targetFile)) {
+                    Log.d(TAG, "File copied and verified successfully: " + sourceFilename + " -> " + targetFilename);
+                    return true;
+                } else {
+                    Log.e(TAG, "File integrity check failed after copying: " + sourceFilename + " -> " + targetFilename);
+                    // 删除损坏的目标文件
+                    targetFile.delete();
+                    return false;
+                }
+            } finally {
+                try {
+                    if (in != null) in.close();
+                    if (out != null) out.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing streams", e);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error copying existing file", e);
+            return false;
+        }
+    }
+
+    /**
+     * 验证文件完整性
+     */
+    private boolean verifyFileIntegrity(UniFile sourceFile, UniFile targetFile) {
+        try {
+            // 检查文件大小
+            long sourceSize = sourceFile.length();
+            long targetSize = targetFile.length();
+            
+            if (sourceSize != targetSize) {
+                Log.w(TAG, "File size mismatch - source: " + sourceSize + ", target: " + targetSize);
+                return false;
+            }
+            
+            // 对于小文件进行MD5验证
+            if (sourceSize < 10 * 1024 * 1024) { // 小于10MB的文件
+                String sourceMd5 = calculateFileMD5(sourceFile);
+                String targetMd5 = calculateFileMD5(targetFile);
+                
+                if (sourceMd5 == null || targetMd5 == null || !sourceMd5.equals(targetMd5)) {
+                    Log.w(TAG, "File MD5 mismatch - source: " + sourceMd5 + ", target: " + targetMd5);
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Error verifying file integrity", e);
+            return false;
+        }
+    }
+    
+    /**
+     * 计算文件MD5
+     */
+    private String calculateFileMD5(UniFile file) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            java.io.InputStream is = file.openInputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            
+            while ((bytesRead = is.read(buffer)) != -1) {
+                md.update(buffer, 0, bytesRead);
+            }
+            is.close();
+            
+            byte[] hash = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            Log.e(TAG, "Error calculating MD5 for file: " + file.getName(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 检查是否是画廊已移除的错误
+     */
+    private boolean isGalleryRemovedError(String error) {
+        if (error == null) {
+            return false;
+        }
+        
+        // 检查错误消息中是否包含画廊已移除的关键词
+        error = error.toLowerCase();
+        return error.contains("gallery removed") ||
+               error.contains("gallery not found") ||
+               error.contains("404") ||
+               error.contains("not found") ||
+               error.contains("removed") ||
+               error.contains("deleted") ||
+               error.contains("expunged");
     }
 
     private void updatePageState(int index, @State int state) {
@@ -1064,6 +1411,8 @@ public final class SpiderQueen implements Runnable {
         if (state == STATE_FAILED) {
             notifyPageFailure(index, error);
         } else if (state == STATE_FINISHED) {
+            // 添加文件信息到DownloadedFileManager
+            addDownloadedFileInfo(index);
             notifyPageSuccess(index);
         }
     }
@@ -1333,9 +1682,14 @@ public final class SpiderQueen implements Runnable {
                         Log.d(TAG, "Start download image " + index);
                     }
 
-                    // disable Call Timeout for image-downloading requests
-                    Call call = mHttpClient.newBuilder()
-                            .callTimeout(downloadTimeout, TimeUnit.SECONDS).build()
+                        // 扩大连接/读/写超时，避免 10s 连接超时导致频繁失败
+                        int timeoutSec = downloadTimeout <= 0 ? 30 : downloadTimeout;
+                        Call call = mDownloadHttpClient.newBuilder()
+                            .connectTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .readTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .writeTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .callTimeout(timeoutSec, TimeUnit.SECONDS)
+                            .build()
                             .newCall(new EhRequestBuilder(targetImageUrl, referer).build());
                     Response response = call.execute();
                     ResponseBody responseBody = response.body();
@@ -1398,7 +1752,7 @@ public final class SpiderQueen implements Runnable {
                         osPipe.obtain();
                         OutputStream os = osPipe.open();
 
-                        final byte[] data = new byte[1024 * 4];
+                        final byte[] data = new byte[1024 * 32];
                         long receivedSize = 0;
 
                         while (!Thread.currentThread().isInterrupted()) {
@@ -1526,6 +1880,12 @@ public final class SpiderQueen implements Runnable {
             // Remove download failed image
             mSpiderDen.remove(index);
 
+            // 检查是否是画廊已移除的错误
+            if (isGalleryRemovedError(error)) {
+                DownloadedFileManager manager = DownloadedFileManager.getInstance();
+                manager.markGalleryRemoved(mGalleryInfo.gid);
+            }
+
             updatePageState(index, STATE_FAILED, error);
             return !interrupt;
         }
@@ -1584,6 +1944,41 @@ public final class SpiderQueen implements Runnable {
             if (!force && mSpiderDen.contain(index)) {
                 updatePageState(index, STATE_FINISHED);
                 return true;
+            }
+
+            // Check if file already exists in DownloadedFileManager
+            if (!force) {
+                if (spiderInfo != null && spiderInfo.pTokenMap != null) {
+                    String token = spiderInfo.pTokenMap.get(index);
+                    if (token != null && !SpiderInfo.TOKEN_FAILED.equals(token)) {
+                        Log.d(TAG, "[FILE_CHECK] 检查文件是否存在 - 页面: " + index + ", token: " + token);
+                        
+                        DownloadedFileManager manager = DownloadedFileManager.getInstance();
+                        DownloadedFile downloadedFile = manager.getFileByToken(token);
+                        
+                        if (downloadedFile != null) {
+                            Log.d(TAG, "[FILE_CHECK] 在数据库中找到文件记录: " + downloadedFile.getFilename() + 
+                                      " (GID: " + downloadedFile.getGid() + ", 路径: " + downloadedFile.getPath() + ")");
+                            
+                            // 文件已存在，尝试复制文件
+                            if (copyExistingFile(downloadedFile, index)) {
+                                Log.i(TAG, "[FILE_CHECK] 文件复制成功，页面 " + index + " 标记为完成");
+                                updatePageState(index, STATE_FINISHED);
+                                return true;
+                            } else {
+                                Log.w(TAG, "[FILE_CHECK] 文件复制失败，页面 " + index + " 将重新下载");
+                            }
+                        } else {
+                            Log.d(TAG, "[FILE_CHECK] 未找到文件记录，页面 " + index + " 将从网络下载");
+                        }
+                    } else {
+                        Log.d(TAG, "[FILE_CHECK] token为空或失败，页面 " + index + " 将从网络下载");
+                    }
+                } else {
+                    Log.d(TAG, "[FILE_CHECK] spiderInfo或pTokenMap为空，页面 " + index + " 将从网络下载");
+                }
+            } else {
+                Log.d(TAG, "[FILE_CHECK] 强制下载模式，页面 " + index + " 将从网络下载");
             }
 
             // Clear TOKEN_FAILED for force request
@@ -1688,6 +2083,22 @@ public final class SpiderQueen implements Runnable {
         public void run() {
             if (DEBUG_LOG) {
                 Log.i(TAG, Thread.currentThread().getName() + ": start");
+            }
+
+            // 动态提升下载线程优先级，防止后台限速
+            // 前台时使用 MORE_FAVORABLE(-1)，后台时使用 URGENT_DISPLAY(-8)
+            try {
+                if (!sIsAppInForeground) {
+                    // 应用在后台，使用较高优先级对抗系统限速
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+                    if (DEBUG_LOG) {
+                        Log.d(TAG, "SpiderWorker priority: URGENT_DISPLAY (background mode)");
+                    }
+                } else {
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
+                }
+            } catch (SecurityException e) {
+                Log.w(TAG, "Failed to set thread priority", e);
             }
 
             while (mSpiderDen.isReady() && !Thread.currentThread().isInterrupted() && runInternal())

@@ -75,16 +75,21 @@ public final class GalleryListUrlParser {
         }
     }
 
-    // TODO get page
     private static ListUrlBuilder parseUploader(String path) {
         String uploader;
         int prefixLength = PATH_UPLOADER.length();
         int index = path.indexOf('/', prefixLength);
+        String pageParam = null;
 
         if (index < 0) {
             uploader = path.substring(prefixLength);
         } else {
             uploader = path.substring(prefixLength, index);
+            // 尝试提取页码参数
+            int pageIndex = path.indexOf("?", index);
+            if (pageIndex >= 0) {
+                pageParam = path.substring(pageIndex + 1);
+            }
         }
 
         try {
@@ -100,20 +105,30 @@ public final class GalleryListUrlParser {
         ListUrlBuilder builder = new ListUrlBuilder();
         builder.setMode(ListUrlBuilder.MODE_UPLOADER);
         builder.setKeyword(uploader);
+        
+        // 如果有查询字符串，解析页码
+        if (pageParam != null && !pageParam.isEmpty()) {
+            builder.setQuery(pageParam);
+        }
+        
         return builder;
     }
 
-    // TODO get page
     private static ListUrlBuilder parseTag(String path) {
         String tag;
         int prefixLength = PATH_TAG.length();
         int index = path.indexOf('/', prefixLength);
-
+        String pageParam = null;
 
         if (index < 0) {
             tag = path.substring(prefixLength);
         } else {
             tag = path.substring(prefixLength, index);
+            // 尝试提取页码参数
+            int pageIndex = path.indexOf("?", index);
+            if (pageIndex >= 0) {
+                pageParam = path.substring(pageIndex + 1);
+            }
         }
 
         try {
@@ -129,6 +144,12 @@ public final class GalleryListUrlParser {
         ListUrlBuilder builder = new ListUrlBuilder();
         builder.setMode(ListUrlBuilder.MODE_TAG);
         builder.setKeyword(tag);
+        
+        // 如果有查询字符串，解析页码
+        if (pageParam != null && !pageParam.isEmpty()) {
+            builder.setQuery(pageParam);
+        }
+        
         return builder;
     }
 }

@@ -17,9 +17,14 @@
 package com.hippo.ehviewer.gallery;
 
 import android.content.Context;
+import android.os.SystemClock;
+import android.text.TextUtils;
+import android.util.SparseLongArray;
+import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.lib.image.Image;
@@ -34,6 +39,10 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     private final GalleryInfo mGalleryInfo;
     @Nullable
     private SpiderQueen mSpiderQueen;
+    private final SparseLongArray mLastDownloadTime = new SparseLongArray();
+    private final SparseLongArray mLastDownloadBytes = new SparseLongArray();
+    private final SparseLongArray mDownloadSpeed = new SparseLongArray();
+    private final SparseLongArray mContentLength = new SparseLongArray();
 
     public EhGalleryProvider(Context context, GalleryInfo galleryInfo) {
         mContext = context;
@@ -154,6 +163,37 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
         }
     }
 
+    @NonNull
+    @Override
+    public String getImageExtension(int index) {
+        if (mSpiderQueen != null) {
+            String extension = mSpiderQueen.getExtension(index);
+            if (!TextUtils.isEmpty(extension)) {
+                return extension.startsWith(".") ? extension : "." + extension;
+            }
+        }
+        return super.getImageExtension(index);
+    }
+
+    @Nullable
+    @Override
+    public String getImagePath(int index) {
+        if (mSpiderQueen != null) {
+            SpiderDen spiderDen = new SpiderDen(mGalleryInfo);
+            UniFile dir = spiderDen.getDownloadDir();
+            if (dir != null) {
+                UniFile file = SpiderDen.findImageFile(dir, index);
+                if (file != null) {
+                    Uri uri = file.getUri();
+                    if (uri != null && !TextUtils.isEmpty(uri.getPath())) {
+                        return uri.getPath();
+                    }
+                }
+            }
+        }
+        return super.getImagePath(index);
+    }
+
     @Override
     public void onGetPages(int pages) {
         notifyDataChanged();
@@ -166,9 +206,25 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
 
     @Override
     public void onPageDownload(int index, long contentLength, long receivedSize, int bytesRead) {
+        long now = SystemClock.elapsedRealtime();
+        long lastTime = mLastDownloadTime.get(index, 0L);
+        long lastBytes = mLastDownloadBytes.get(index, 0L);
+        if (lastTime > 0L && now > lastTime) {
+            long deltaBytes = receivedSize - lastBytes;
+            long deltaTime = now - lastTime;
+            long speed = deltaTime > 0L ? Math.max(0L, deltaBytes * 1000L / deltaTime) : 0L;
+            mDownloadSpeed.put(index, speed);
+        }
+        mContentLength.put(index, contentLength);
+        mLastDownloadTime.put(index, now);
+        mLastDownloadBytes.put(index, receivedSize);
         if (contentLength > 0) {
             notifyPagePercent(index, (float) receivedSize / contentLength);
         }
+    }
+
+    public long getPageSpeedBytesPerSecond(int index) {
+        return mDownloadSpeed.get(index, 0L);
     }
 
     @Override
@@ -179,6 +235,10 @@ public class EhGalleryProvider extends GalleryProvider2 implements SpiderQueen.O
     @Override
     public void onPageFailure(int index, String error, int finished, int downloaded, int total) {
         notifyPageFailed(index, error);
+    }
+
+    public long getPageContentLength(int index) {
+        return mContentLength.get(index, -1L);
     }
 
     @Override

@@ -83,6 +83,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -1167,13 +1168,34 @@ public class EhEngine {
         String body = null;
         Headers headers = null;
         int code = -1;
+        final long MAX_RESP_BODY_SIZE = 16L * 1024L * 1024L; // 16MB
         try {
             Response response = call.execute();
             code = response.code();
             headers = response.headers();
-            assert response.body() != null;
-            body = response.body().string();
+
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IOException("Empty response body");
+            }
+            long contentLength = responseBody.contentLength();
+            if (contentLength > 0 && contentLength > MAX_RESP_BODY_SIZE) {
+                responseBody.close();
+                throw new IOException("Response body too large: " + contentLength + " bytes");
+            }
+
+            body = responseBody.string();
+
+            if ((long) body.length() > MAX_RESP_BODY_SIZE) {
+                throw new IOException("Response string too large: " + body.length() + " chars");
+            }
+
             return GalleryPageParser.parse(body);
+        } catch (OutOfMemoryError oom) {
+            Log.e(TAG, "OOM when reading gallery page", oom);
+            // 不要将 OOM 重新抛出到线程顶层，尽量让调用链处理为正常失败
+            throwException(call, code, headers, body, oom);
+            throw new IOException("Out of memory when processing gallery page", oom);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);
@@ -1210,13 +1232,32 @@ public class EhEngine {
         String body = null;
         Headers headers = null;
         int code = -1;
+        final long MAX_RESP_BODY_SIZE = 16L * 1024L * 1024L; // 16MB
         try {
             Response response = call.execute();
             code = response.code();
             headers = response.headers();
-            assert response.body() != null;
-            body = response.body().string();
+
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IOException("Empty response body");
+            }
+            long contentLength = responseBody.contentLength();
+            if (contentLength > 0 && contentLength > MAX_RESP_BODY_SIZE) {
+                responseBody.close();
+                throw new IOException("Response body too large: " + contentLength + " bytes");
+            }
+
+            body = responseBody.string();
+            if ((long) body.length() > MAX_RESP_BODY_SIZE) {
+                throw new IOException("Response string too large: " + body.length() + " chars");
+            }
+
             return GalleryPageApiParser.parse(body);
+        } catch (OutOfMemoryError oom) {
+            Log.e(TAG, "OOM when reading gallery page api", oom);
+            throwException(call, code, headers, body, oom);
+            throw new IOException("Out of memory when processing gallery page API", oom);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);
@@ -1238,14 +1279,32 @@ public class EhEngine {
         String body = null;
         Headers headers = null;
         int code = -1;
+        final long MAX_RESP_BODY_SIZE = 16L * 1024L * 1024L; // 16MB
         try {
             Response response = call.execute();
             code = response.code();
             headers = response.headers();
-            assert response.body() != null;
-            body = response.body().string();
+
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IOException("Empty response body");
+            }
+            long contentLength = responseBody.contentLength();
+            if (contentLength > 0 && contentLength > MAX_RESP_BODY_SIZE) {
+                responseBody.close();
+                throw new IOException("Response body too large: " + contentLength + " bytes");
+            }
+
+            body = responseBody.string();
+            if ((long) body.length() > MAX_RESP_BODY_SIZE) {
+                throw new IOException("Response string too large: " + body.length() + " chars");
+            }
 
             return MyTagLitParser.parse(body);
+        } catch (OutOfMemoryError oom) {
+            Log.e(TAG, "OOM when reading watched list", oom);
+            throwException(call, code, headers, body, oom);
+            throw new IOException("Out of memory when processing watched list", oom);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);

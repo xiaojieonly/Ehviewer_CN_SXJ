@@ -58,6 +58,7 @@ public class ConnectThread extends Thread {
     @Override
     public void run() {
         if (socket == null) {
+            Log.e("ConnectThread", "Socket is null, cannot start connection");
             return;
         }
         handler.sendEmptyMessage(DEVICE_CONNECTED);
@@ -81,7 +82,10 @@ public class ConnectThread extends Thread {
             }
             socket.close();
         } catch (IOException e) {
+            Log.e("ConnectThread", "IOException in connection thread", e);
             Analytics.recordException(e);
+            // 通知主线程连接已断开
+            handler.sendEmptyMessage(DEVICE_DISCONNECTED);
         }
     }
 
@@ -115,6 +119,9 @@ public class ConnectThread extends Thread {
      */
     public void sendData(WiFiDataHand dataHand) {
         try {
+            if (socket == null) {
+                throw new IOException("Socket is null");
+            }
             if (outputStream == null) {
                 outputStream = socket.getOutputStream();
             }
@@ -135,6 +142,10 @@ public class ConnectThread extends Thread {
 
     public void dataProcessed(WiFiDataHand response) {
         processed = true;
+        if (socket == null || socket.isClosed()) {
+            Log.e("ConnectThread", "Socket is null or closed, cannot send response");
+            return;
+        }
         WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.RECEIVED);
         wiFiDataHand.setData(response.getData());
         new Thread(()-> sendData(wiFiDataHand)).start();

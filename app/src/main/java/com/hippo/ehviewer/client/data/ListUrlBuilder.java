@@ -496,6 +496,10 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
                 case "f_spt":
                     pageTo = NumberUtils.parseIntSafely(value, -1);
                     break;
+                case "page":
+                    // 处理页码参数
+                    mPageIndex = NumberUtils.parseIntSafely(value, 0);
+                    break;
             }
         }
 

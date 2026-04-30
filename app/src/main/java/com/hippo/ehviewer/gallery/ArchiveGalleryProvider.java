@@ -139,6 +139,13 @@ public class ArchiveGalleryProvider extends GalleryProvider2 {
     // TODO
     return Integer.toString(index);
   }
+  
+  @NonNull
+  @Override
+  public String getImageExtension(int index) {
+    // TODO: Could be enhanced to get actual extension from archive entry
+    return "";
+  }
 
   @Override
   public boolean save(int index, @NonNull UniFile file) {
