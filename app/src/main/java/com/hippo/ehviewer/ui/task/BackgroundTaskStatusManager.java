@@ -28,8 +28,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * 鍚庡彴浠诲姟鐘舵€佺鐞嗗櫒
- * 鐢ㄤ簬璺熻釜鍜岀鐞嗘墍鏈夊悗鍙颁换鍔＄殑鐘舵€?
+ * 后台任务状态管理器
+ * 用于跟踪和管理所有后台任务的状态
  */
 public class BackgroundTaskStatusManager {
     private static final String TAG = "BackgroundTaskStatusManager";
@@ -38,11 +38,11 @@ public class BackgroundTaskStatusManager {
 
     private static BackgroundTaskStatusManager sInstance;
 
-    // 瀛樺偍鎵€鏈夋椿璺冪殑浠诲姟
+    // 存储所有活跃的任务
     private final Map<String, BackgroundTaskInfo> mActiveTasks = new ConcurrentHashMap<>();
-    // 瀛樺偍宸插畬鎴愮殑浠诲姟锛堜繚鐣欐渶杩戠殑涓€浜涳級
+    // 存储已完成的任务（保留最近的一些）
     private final Map<String, BackgroundTaskInfo> mCompletedTasks = new ConcurrentHashMap<>();
-    // 鏈€澶т繚鐣欑殑宸插畬鎴愪换鍔℃暟閲?
+    // 最大保留的已完成任务数量
     private static final int MAX_COMPLETED_TASKS = 50;
 
     private final File mStatusFile;

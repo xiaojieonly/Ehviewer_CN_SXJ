@@ -17,8 +17,8 @@ import java.util.Locale;
 import java.util.concurrent.Future;
 
 /**
- * 鍚庡彴浠诲姟淇℃伅绫?
- * 鐢ㄤ簬瀛樺偍鍜岀鐞嗗悗鍙颁换鍔＄殑鐘舵€佷俊鎭?
+ * 后台任务信息类
+ * 用于存储和管理后台任务的状态信息
  */
 public class BackgroundTaskInfo {
     private final String taskId;
@@ -56,7 +56,7 @@ public class BackgroundTaskInfo {
         this.taskPersistData = taskPersistData;
         this.startTime = startTime;
         this.currentProgress = 0;
-        this.totalProgress = -1; // -1 琛ㄧず涓嶇‘瀹氳繘搴?
+        this.totalProgress = -1; // -1 表示不确定进度
         this.progressDetail = null;
         this.isCompleted = false;
         this.isCancelled = false;

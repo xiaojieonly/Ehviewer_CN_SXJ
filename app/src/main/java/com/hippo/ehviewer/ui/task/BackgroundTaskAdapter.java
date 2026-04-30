@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 鍚庡彴浠诲姟鍒楄〃閫傞厤鍣?
+ * 后台任务列表适配器
  */
 public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -91,17 +91,17 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         int completedCount = mCompletedTasks.size();
 
         if (activeCount == 0 && completedCount == 0) {
-            return 1; // 绌虹姸鎬?
+            return 1; // 空状态
         }
 
         int count = 0;
         if (activeCount > 0) {
-            count += 1; // 娲昏穬浠诲姟鏍囬
-            count += activeCount; // 娲昏穬浠诲姟椤?
+            count += 1; // 活跃任务标题
+            count += activeCount; // 活跃任务项
         }
         if (completedCount > 0) {
-            count += 1; // 宸插畬鎴愪换鍔℃爣棰?
-            count += completedCount; // 宸插畬鎴愪换鍔￠」
+            count += 1; // 已完成任务标题
+            count += completedCount; // 已完成任务项
         }
 
         return count;
