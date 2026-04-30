@@ -92,7 +92,7 @@ public class AboutFragment extends BasePreferenceFragmentCompat
         return true;
     }
 
-    //讨饭页面设置
+    // Donation page settings
     private void showDonationDialog() {
         AlertDialog dialog = new AlertDialog.Builder(getActivity())
                 .setView(R.layout.dialog_donate)

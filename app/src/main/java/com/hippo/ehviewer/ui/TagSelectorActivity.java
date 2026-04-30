@@ -66,7 +66,7 @@ public class TagSelectorActivity extends EhActivity {
 
     private RecyclerView recyclerView;
     private TagAdapter adapter;
-//    private TextView tvSelectedCount;
+    private TextView tvSelectedCount;
     private TextView tvSelectedSectionTitle;
     private TextView tvSelectedEmpty;
     private RecyclerView rvSelectedByGroup;
@@ -97,6 +97,7 @@ public class TagSelectorActivity extends EhActivity {
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
     };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,6 +189,13 @@ public class TagSelectorActivity extends EhActivity {
             cardSelectedTags.setCardBackgroundColor(Color.parseColor("#1E1E1E"));
         }
 
+        // Fix background color issues in some Dark Mode themes
+        // 修复部分深色主题下背景太白的问题
+        if (isDarkMode) {
+            recyclerView.setBackgroundColor(Color.parseColor("#121212"));
+            tvSelectedCount.setTextColor(Color.LTGRAY);
+        }
+
         findViewById(R.id.btn_confirm_search).setOnClickListener(v -> {
             StringBuilder sb = new StringBuilder();
             for (String tag : selectedTags.keySet()) {
@@ -198,6 +206,15 @@ public class TagSelectorActivity extends EhActivity {
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // 关掉页面
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void updateInfo() {
