@@ -1064,4 +1064,15 @@
     <string name="imported_archive_category">Local Import</string>
     <!-- TagSelectActivity -->
     <string name="tag_search_entrance">Tag Selector</string>
+
+    <!-- PR layer6 required strings -->
+    <string name="settings_about_system_info">System Info</string>
+    <string name="background_task_management">Background Task Management</string>
+    <string name="settings_advanced_network_diagnostic">Network Diagnostic</string>
+    <string name="background_task_detail">Task Detail</string>
+    <string name="settings_transfer">Transfer</string>
+    <string name="settings_advanced_database_viewer">Database Viewer</string>
+    <string name="local_gallery_title">Local Gallery</string>
+    <string name="local_gallery_detail_title">Gallery Detail</string>
+    <string name="local_gallery_viewer_title">Gallery Viewer</string>
 </resources>

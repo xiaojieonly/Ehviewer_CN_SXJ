@@ -975,4 +975,15 @@
     <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>
     <string name="imported_archive_category">本地导入</string>
 
+    <!-- PR layer6 required strings -->
+    <string name="settings_about_system_info">系统信息</string>
+    <string name="background_task_management">后台任务管理</string>
+    <string name="settings_advanced_network_diagnostic">网络诊断</string>
+    <string name="background_task_detail">任务详情</string>
+    <string name="settings_transfer">传输</string>
+    <string name="settings_advanced_database_viewer">数据库查看器</string>
+    <string name="local_gallery_title">本地画廊</string>
+    <string name="local_gallery_detail_title">画廊详情</string>
+    <string name="local_gallery_viewer_title">画廊浏览器</string>
+
 </resources>
