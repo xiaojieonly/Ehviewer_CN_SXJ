@@ -8,35 +8,35 @@ import com.hippo.ehviewer.BackgroundTaskManager
 import com.hippo.ehviewer.util.UiThreadHelper
 
 /**
- * Java 鍏煎鐨勪换鍔℃墽琛屽櫒
- * 鐢ㄤ簬浠?Java 浠ｇ爜鎵ц Kotlin 鐨?suspend 鍑芥暟
+ * Java 兼容的任务执行器
+ * 用于从 Java 代码执行 Kotlin 的 suspend 函数
  */
 object TaskExecutor {
 
     /**
-     * 鍦ㄥ悗鍙扮嚎绋嬫墽琛屼换鍔?
-     * @param task 瑕佹墽琛岀殑鍚庡彴浠诲姟
+        * 在后台线程执行任务
+        * @param task 要执行的后台任务
      */
     @JvmStatic
     fun executeTask(task: BackgroundTask) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val result = task.execute()
-                // 纭繚鎴愬姛鍥炶皟鍦ㄤ富绾跨▼鎵ц
+                // 确保成功回调在主线程执行
                 withContext(Dispatchers.Main) {
-                    // 浠诲姟鎴愬姛瀹屾垚鍚庣殑UI鏇存柊鍙互鍦ㄨ繖閲屽鐞?
+                    // 任务成功完成后的 UI 更新可以在这里处理
                 }
             } catch (e: Exception) {
-                // 纭繚閿欒鍥炶皟鍦ㄤ富绾跨▼鎵ц
+                // 确保错误回调在主线程执行
                 withContext(Dispatchers.Main) {
-                    // 閿欒澶勭悊鍜孶I鏇存柊鍙互鍦ㄨ繖閲屽鐞?
+                    // 错误处理和 UI 更新可以在这里处理
                 }
             }
         }
     }
 
     /**
-     * 鑾峰彇 TaskExecutor 瀹炰緥锛堝吋瀹规棫浠ｇ爜锛?
+        * 获取 TaskExecutor 实例（兼容旧代码）
      */
     @JvmStatic
     fun getInstance(): TaskExecutor {
@@ -44,8 +44,8 @@ object TaskExecutor {
     }
 
     /**
-     * 鎵ц鍚庡彴浠诲姟锛堝吋瀹规棫浠ｇ爜锛?
-     * @param task 瑕佹墽琛岀殑鍚庡彴浠诲姟
+        * 执行后台任务（兼容旧代码）
+        * @param task 要执行的后台任务
      */
     @JvmStatic
     fun execute(task: BackgroundTask) {
