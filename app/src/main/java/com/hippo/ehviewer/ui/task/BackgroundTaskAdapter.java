@@ -206,14 +206,14 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public void bind(@NonNull BackgroundTaskInfo taskInfo) {
             mTaskInfo = taskInfo;
 
-            // 浠诲姟鍚嶇О
+            // 任务名称
             mNameText.setText(taskInfo.getTaskName());
 
-            // 浠诲姟鎻忚堪
+            // 任务描述
             String description = taskInfo.getTaskDescription();
             mDescriptionText.setText(description != null ? description : mContext.getString(R.string.no_description));
 
-            // 杩涘害
+            // 进度
             int percentage = taskInfo.getProgressPercentage();
             if (percentage >= 0) {
                 String detail = taskInfo.getProgressDetail();
@@ -231,11 +231,11 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 mProgressBar.setIndeterminate(true);
             }
 
-            // 杩愯鏃堕棿
+            // 运行时间
             long runningTime = taskInfo.getRunningTime();
             mTimeText.setText(mContext.getString(R.string.task_running_time, ReadableTime.getShortTimeInterval(runningTime)));
 
-            // 鐘舵€?
+            // 状态
             String status;
             if (taskInfo.isCancelled()) {
                 status = mContext.getString(R.string.task_status_cancelled);
@@ -254,7 +254,7 @@ public class BackgroundTaskAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             }
             mStatusText.setText(status);
 
-            // 鏍规嵁浠诲姟鐘舵€佹樉绀?闅愯棌鎸夐挳
+            // 根据任务状态显示/隐藏按钮
             updateActionButtonVisibility();
         }
 
