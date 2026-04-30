@@ -50,6 +50,7 @@ import com.hippo.lib.yorozuya.collect.SparseIJArray;
 import com.hippo.lib.yorozuya.collect.SparseJLArray;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1289,6 +1290,10 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                             l.onUpdate(info, list, mWaitList);
                         }
                     }
+
+                    // Download success only: trigger merge task when user enables it.
+                    triggerMergeOnDownloadIfNeeded(info);
+
                     // Start next download
                     ensureDownload();
                     break;
@@ -1383,6 +1388,39 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 if (list != null) {
                     for (DownloadInfoListener l : mDownloadInfoListeners) {
                         l.onUpdate(info, list, mWaitList);
+                    }
+                }
+
+                private void triggerMergeOnDownloadIfNeeded(@NonNull DownloadInfo info) {
+                    if (info.legacy != 0 || !Settings.getMergeOnDownload() || info.gid < 0) {
+                        return;
+                    }
+
+                    try {
+                        Class<?> taskClass = Class.forName("com.hippo.ehviewer.task.MergeDuplicateGalleryTask");
+                        Method mergeForGallery = taskClass.getMethod("mergeForGallery", Context.class, long.class);
+                        Object mergeTask = mergeForGallery.invoke(null, mContext, info.gid);
+                        if (mergeTask == null) {
+                            return;
+                        }
+
+                        Class<?> managerClass = Class.forName("com.hippo.ehviewer.BackgroundTaskManager");
+                        Method getInstance = managerClass.getMethod("getInstance");
+                        Object taskManager = getInstance.invoke(null);
+                        if (taskManager == null) {
+                            return;
+                        }
+
+                        for (Method method : managerClass.getMethods()) {
+                            if ("submitBackgroundTask".equals(method.getName()) && method.getParameterTypes().length == 1) {
+                                method.invoke(taskManager, mergeTask);
+                                return;
+                            }
+                        }
+
+                        Log.w(TAG, "submitBackgroundTask method not found, skip merge trigger");
+                    } catch (Throwable t) {
+                        Log.w(TAG, "Unable to trigger merge task after download", t);
                     }
                 }
             }
