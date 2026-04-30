@@ -9,8 +9,8 @@ object BackgroundTaskRunner {
     private const val TAG = "BackgroundTaskRunner"
 
     /**
-     * 浠ラ樆濉炴柟寮忔墽琛屽悗鍙颁换鍔★紝骞跺湪鎵ц鏈熼棿鎻愬崌绾跨▼浼樺厛绾э紝
-     * 纭繚鍚堝苟銆佸帇缂╃瓑鎿嶄綔鐨勬墽琛岄€熷害涓嶈绯荤粺闄嶄綆銆?
+     * 以阻塞方式执行后台任务，并在执行期间提升线程优先级，
+     * 确保合并、压缩等操作的执行速度不被系统降低。
      */
     @JvmStatic
     fun runBlockingExecute(task: BackgroundTask): Throwable? {
@@ -19,12 +19,12 @@ object BackgroundTaskRunner {
         var originalTidPriority = Process.THREAD_PRIORITY_DEFAULT
         var priorityRestored = false
         try {
-            // 鎻愬崌鍒版甯镐紭鍏堢骇锛岀‘淇濆悗鍙颁换鍔★紙鍚堝苟銆佸帇缂╃瓑锛夐『鍒╂墽琛?
+            // 提升到正常优先级，确保后台任务（合并、压缩等）顺利执行
             originalTidPriority = Process.getThreadPriority(Process.myTid())
             if (originalTidPriority > Process.THREAD_PRIORITY_DEFAULT) {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
                 priorityRestored = true
-                Log.d(TAG, "浠诲姟 ${task.getTaskId()} 绾跨▼浼樺厛绾т粠 $originalTidPriority 鎻愬崌鍒?THREAD_PRIORITY_DEFAULT")
+                Log.d(TAG, "任务 ${task.getTaskId()} 线程优先级从 $originalTidPriority 提升到 THREAD_PRIORITY_DEFAULT")
             }
         } catch (_: Exception) {
         }

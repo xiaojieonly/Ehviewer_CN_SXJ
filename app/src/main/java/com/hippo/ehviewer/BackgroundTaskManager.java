@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 鍚庡彴浠诲姟绠＄悊鍣?
- * 鎻愪緵澶氱嚎绋嬪鐞嗗拰鏁版嵁搴撳崟绾跨▼鎿嶄綔鐨勮兘鍔?
+ * 后台任务管理器
+ * 提供多线程处理和数据库单线程操作的能力
  */
 public class BackgroundTaskManager {
 
@@ -57,17 +57,17 @@ public class BackgroundTaskManager {
 
     private final Map<String, BackgroundTaskFactory> mTaskFactoryMap = new ConcurrentHashMap<>();
 
-    // CPU瀵嗛泦鍨嬩换鍔＄嚎绋嬫睜锛堢敤浜庢枃浠舵壂鎻忕瓑锛?
+    // CPU密集型任务线程池（用于文件扫描等）
     private final ExecutorService mCpuExecutor;
 
-    // 鏁版嵁搴撴搷浣滃崟绾跨▼鎵ц鍣紙纭繚鏁版嵁搴撴搷浣滀覆琛屽寲锛?
+    // 数据库操作单线程执行器（确保数据库操作串行化）
     private final ExecutorService mDbExecutor;
 
-    // IO瀵嗛泦鍨嬩换鍔＄嚎绋嬫睜锛堢敤浜庣綉缁滄垨鏂囦欢IO锛?
+    // IO密集型任务线程池（用于网络或文件IO）
     private final ThreadPoolExecutor mIoExecutor;
     private volatile int mBackgroundConcurrentTasks;
 
-    // 缃戠粶绾跨▼姹狅紙涓撻棬鐢ㄤ簬涓嶦h浜や簰锛?
+    // 网络线程池（专门用于与Eh交互）
     private final ExecutorService mNetworkExecutor;
 
     private NotificationManager mNotificationManager;
@@ -75,7 +75,7 @@ public class BackgroundTaskManager {
     private final AtomicInteger mActiveTaskCount = new AtomicInteger(0);
     private final AtomicInteger mNotificationTaskIndex = new AtomicInteger(0);
 
-    // 涓嬭浇鏃ュ織璁板綍鍣?
+    // 下载日志记录器
     private final DownloadLogger mDownloadLogger;
 
     // 浠诲姟鐘舵€佺鐞嗗櫒
