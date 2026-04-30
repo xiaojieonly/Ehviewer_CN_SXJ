@@ -3193,4 +3193,3 @@ public class DownloadsScene extends ToolbarScene
         }
     }
 }
-
