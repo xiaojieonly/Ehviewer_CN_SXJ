@@ -52,11 +52,9 @@ public class SpiderInfo {
 
     private static final String VERSION_STR = "VERSION";
     private static final int VERSION = 2;
-
     /** Upper bound for pages from local file; prevents OOM from corrupted spider_info. */
     private static final int MAX_SPIDER_INFO_PAGES = 100_000;
-
-    static final String TOKEN_FAILED = "failed";
+    public static final String TOKEN_FAILED = "failed";
 
     public int startPage = 0;
     public long gid = -1;
@@ -114,7 +112,7 @@ public class SpiderInfo {
 
     @Nullable
     public static SpiderInfo read(@Nullable InputStream is) {
-        if (null == is) {
+        if (is == null) {
             return null;
         }
 
@@ -143,7 +141,7 @@ public class SpiderInfo {
             IOUtils.readAsciiLine(is);
             // Preview pages
             spiderInfo.previewPages = Integer.parseInt(IOUtils.readAsciiLine(is));
-            // Preview pre page
+            // Preview per page
             line = IOUtils.readAsciiLine(is);
             if (version == 1) {
                 // Skip it
@@ -156,7 +154,6 @@ public class SpiderInfo {
             if (spiderInfo.pages <= 0 || spiderInfo.pages > MAX_SPIDER_INFO_PAGES) {
                 return null;
             }
-            // PToken (at most one line per page in valid files; cap lines to avoid OOM on corrupt files)
             spiderInfo.pTokenMap = new SparseArray<>(spiderInfo.pages);
             for (int linesRead = 0; linesRead < spiderInfo.pages; linesRead++) {
                 try {
@@ -164,15 +161,26 @@ public class SpiderInfo {
                 } catch (EOFException e) {
                     break;
                 }
-                int pos = line.indexOf(" ");
-                if (pos > 0) {
-                    int index = Integer.parseInt(line.substring(0, pos));
-                    String pToken = line.substring(pos + 1);
-                    if (!TextUtils.isEmpty(pToken)) {
-                        spiderInfo.pTokenMap.put(index, pToken);
+                if (line == null || line.length() == 0) {
+                    continue;
+                }
+                int pos = line.indexOf(' ');
+                if (pos > 0 && pos < line.length() - 1) {
+                    try {
+                        int index = Integer.parseInt(line.substring(0, pos));
+                        String pToken = line.substring(pos + 1);
+                        if (pToken.length() > 1000) {
+                            pToken = pToken.substring(0, 1000);
+                            Log.w(TAG, "PToken too long, truncated to 1000 chars");
+                        }
+                        if (!TextUtils.isEmpty(pToken)) {
+                            spiderInfo.pTokenMap.put(index, pToken);
+                        }
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Can't parse index: " + line.substring(0, Math.min(pos, 20)));
                     }
                 } else {
-                    Log.e(TAG, "Can't parse index and pToken, index = " + pos);
+                    Log.e(TAG, "Can't parse index and pToken, pos = " + pos + ", line length = " + (line == null ? 0 : line.length()));
                 }
             }
         } catch (IOException | NumberFormatException e) {

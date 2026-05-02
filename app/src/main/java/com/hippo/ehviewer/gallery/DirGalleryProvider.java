@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.gallery;
 
+import android.net.Uri;
 import android.os.Process;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -116,8 +117,49 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
     @NonNull
     @Override
     public String getImageFilename(int index) {
-        // TODO
-        return Integer.toString(index);
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return Integer.toString(index);
+        }
+        String name = fileList[index].getName();
+        if (name == null) {
+            return Integer.toString(index);
+        }
+        int dotIndex = name.lastIndexOf('.');
+        return dotIndex >= 0 ? name.substring(0, dotIndex) : name;
+    }
+
+    @Nullable
+    @Override
+    public String getImagePath(int index) {
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return null;
+        }
+        UniFile uniFile = fileList[index];
+        if (uniFile == null) {
+            return null;
+        }
+        Uri uri = uniFile.getUri();
+        return uri == null ? null : uri.getPath();
+    }
+    
+    @NonNull
+    @Override
+    public String getImageExtension(int index) {
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return "";
+        }
+        String name = fileList[index].getName();
+        if (name == null) {
+            return "";
+        }
+        int dotIndex = name.lastIndexOf('.');
+        if (dotIndex >= 0 && dotIndex < name.length() - 1) {
+            return name.substring(dotIndex).toLowerCase();
+        }
+        return "";
     }
 
     @Override

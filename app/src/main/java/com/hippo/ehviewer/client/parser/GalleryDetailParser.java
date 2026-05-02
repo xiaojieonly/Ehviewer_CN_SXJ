@@ -138,7 +138,7 @@ public class GalleryDetailParser {
         galleryDetail.previewSet = parsePreviewSet(document, body);//获取画廊浏览参数（如：之前有观看则从上次看到的位置开始）
         galleryDetail.SpiderInfoPages = parsePages(body);
         galleryDetail.SpiderInfoPreviewPages = parsePreviewPages(body);
-        galleryDetail.SpiderInfoPreviewSet = parsePreviewSet(body);
+        galleryDetail.SpiderInfoPreviewSet = galleryDetail.previewSet;
         return galleryDetail;
     }
 
@@ -382,13 +382,26 @@ public class GalleryDetailParser {
 
             Elements tags = element.child(1).children();
             for (int i = 0, n = tags.size(); i < n; i++) {
-                String tag = tags.get(i).text();
+                Element tagElement = tags.get(i);
+                String tag = tagElement.text();
                 // Sometimes parody tag is followed with '|' and english translate, just remove them
                 int index = tag.indexOf('|');
                 if (index >= 0) {
                     tag = tag.substring(0, index).trim();
                 }
-                group.addTag(tag);
+                
+                // 提取标签URL
+                String tagUrl = null;
+                if ("a".equalsIgnoreCase(tagElement.tagName())) {
+                    tagUrl = tagElement.absUrl("href");
+                    if (tagUrl != null && !tagUrl.isEmpty()) {
+                        group.addTagWithUrl(tag, tagUrl);
+                    } else {
+                        group.addTag(tag);
+                    }
+                } else {
+                    group.addTag(tag);
+                }
             }
 
             return group.size() > 0 ? group : null;
@@ -685,7 +698,19 @@ public class GalleryDetailParser {
     }
 
     public static PreviewSet parsePreviewSet(String body) {
-        return parsePreviewSet(Jsoup.parse(body), body);
+        try {
+            PreviewSet previewSet = parseNormalPreviewSet(body);
+            if (previewSet.size() == 0) {
+                previewSet = parseLargePreviewSet(body);
+            }
+            if (previewSet.size() == 0) {
+                throw new ParseException("加载预览图失败", body);
+            }
+            return previewSet;
+        } catch (ParseException e) {
+            ExceptionUtils.throwIfFatal(e);
+            return new NormalPreviewSet();
+        }
     }
 
     /**

@@ -16,8 +16,11 @@
 
 package com.hippo.ehviewer.gallery;
 
+import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.hippo.ehviewer.util.GifUtils;
+import com.hippo.ehviewer.util.WebpUtils;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.unifile.UniFile;
 
@@ -43,6 +46,52 @@ public abstract class GalleryProvider2 extends GalleryProvider {
      */
     @NonNull
     public abstract String getImageFilename(int index);
+    
+    /**
+     * Get the image extension (with dot, e.g. ".jpg", ".gif")
+     * @param index the page index
+     * @return the extension or empty string if unknown
+     */
+    @NonNull
+    public String getImageExtension(int index) {
+        return "";
+    }
+
+    @Nullable
+    public String getImagePath(int index) {
+        return null;
+    }
+    
+    /**
+     * Check if the image at index is animated (GIF or animated WebP)
+     * @param index the page index
+     * @return true if animated
+     */
+    public boolean isAnimated(int index) {
+        String ext = getImageExtension(index).toLowerCase();
+        if (".gif".equals(ext)) {
+            String imagePath = getImagePath(index);
+            if (!TextUtils.isEmpty(imagePath)) {
+                Boolean animated = GifUtils.isAnimatedGifFile(imagePath);
+                if (animated != null) {
+                    return animated;
+                }
+            }
+            return true;
+        }
+        if (".webp".equals(ext)) {
+            String imagePath = getImagePath(index);
+            if (!TextUtils.isEmpty(imagePath)) {
+                Boolean animated = WebpUtils.isAnimatedWebpFile(imagePath);
+                if (animated != null) {
+                    return animated;
+                }
+            }
+            // Fallback to extension-only behavior when the local path cannot be inspected.
+            return true;
+        }
+        return false;
+    }
 
     public abstract boolean save(int index, @NonNull UniFile file);
 
