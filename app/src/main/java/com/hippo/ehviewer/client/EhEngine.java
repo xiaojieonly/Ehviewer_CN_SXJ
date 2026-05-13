@@ -772,7 +772,11 @@ public class EhEngine {
             headers = response.headers();
             assert response.body() != null;
             body = response.body().string();
-            result = TopListParser.parse(body);
+            try {
+                result = TopListParser.parse(body);
+            } catch (LinkageError e) {
+                throw new ParseException("Top list parser runtime error", body, e);
+            }
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);

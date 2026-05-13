@@ -1690,6 +1690,8 @@ public final class SpiderQueen implements Runnable {
                 Log.i(TAG, Thread.currentThread().getName() + ": start");
             }
 
+            mSpiderDen.prepareDownloadStorage();
+
             while (mSpiderDen.isReady() && !Thread.currentThread().isInterrupted() && runInternal())
                 ;
 
