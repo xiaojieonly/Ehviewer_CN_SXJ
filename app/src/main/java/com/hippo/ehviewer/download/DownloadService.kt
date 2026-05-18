@@ -20,12 +20,18 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.IntDef
@@ -37,6 +43,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.ui.MainActivity
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene
+import com.hippo.ehviewer.util.MiuiOptimizationHelper
 import com.hippo.scene.StageActivity
 import com.hippo.util.ReadableTime
 import com.hippo.lib.yorozuya.FileUtils
@@ -56,28 +63,64 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
     private var mDownloadedDelay: NotificationDelay? = null
     private var m509Delay: NotificationDelay? = null
 
+    // WakeLock 用于防止CPU被限制（针对后台下载优化）
+    private var mWakeLock: PowerManager.WakeLock? = null
+    
+    // 网络回调用于监听网络状态（针对小米系统优化）
+    private var mNetworkCallback: ConnectivityManager.NetworkCallback? = null
+    private var mConnectivityManager: ConnectivityManager? = null
 
     private var CHANNEL_ID: String? = null
 
     override fun onCreate() {
         super.onCreate()
 
+        // 记录设备信息用于调试
+        MiuiOptimizationHelper.logDeviceInfo()
+
         CHANNEL_ID = "$packageName.download"
         mNotifyManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        
+        // 根据设备类型动态调整通知优先级
+        val notificationImportance = MiuiOptimizationHelper.getRecommendedNotificationImportance()
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mNotifyManager!!.createNotificationChannel(
-                NotificationChannel(
-                    CHANNEL_ID, getString(R.string.download_service),
-                    NotificationManager.IMPORTANCE_LOW
-                )
-            )
+            val channel = NotificationChannel(
+                CHANNEL_ID, 
+                getString(R.string.download_service),
+                notificationImportance
+            ).apply {
+                // 针对高版本Android和小米系统的优化
+                if (MiuiOptimizationHelper.needsAggressiveOptimization()) {
+                    setShowBadge(true)
+                    enableVibration(false) // 避免频繁振动
+                    setSound(null, null) // 避免频繁提示音
+                    description = "后台下载服务 - 请勿限制后台运行"
+                }
+            }
+            mNotifyManager!!.createNotificationChannel(channel)
+            
+            Log.i(TAG, "Created notification channel with importance: $notificationImportance")
         }
+        
+        // 初始化 WakeLock（用于防止CPU被限制）
+        initWakeLock()
+        
+        // 初始化网络监听（针对小米系统优化）
+        initNetworkCallback()
+        
         mDownloadManager = EhApplication.getDownloadManager(applicationContext)
         mDownloadManager!!.setDownloadListener(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        
+        // 释放 WakeLock
+        releaseWakeLock()
+        
+        // 释放网络监听
+        releaseNetworkCallback()
 
         mNotifyManager = null
         if (mDownloadManager != null) {
@@ -276,6 +319,9 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         if (mNotifyManager == null) {
             return
         }
+        
+        // 获取 WakeLock 防止后台下载被限制
+        acquireWakeLock()
 
         ensureDownloadingBuilder()
 
@@ -464,7 +510,135 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
     private fun checkStopSelf() {
         if (mDownloadManager == null || mDownloadManager!!.isIdle) {
 //            stopForeground(true);
+            // 释放 WakeLock
+            releaseWakeLock()
             stopSelf()
+        }
+    }
+    
+    /**
+     * 初始化 WakeLock
+     * 用于防止后台下载时CPU被限制，特别是针对Android 14+和小米系统
+     */
+    @SuppressLint("WakelockTimeout")
+    private fun initWakeLock() {
+        try {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            
+            // 使用 PARTIAL_WAKE_LOCK，允许CPU继续运行但屏幕可以关闭
+            mWakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "EhViewer:DownloadWakeLock"
+            ).apply {
+                // 设置为可计数，避免重复释放导致崩溃
+                setReferenceCounted(false)
+            }
+            
+            Log.i(TAG, "WakeLock initialized successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize WakeLock", e)
+        }
+    }
+    
+    /**
+     * 获取 WakeLock
+     */
+    @SuppressLint("WakelockTimeout")
+    private fun acquireWakeLock() {
+        try {
+            if (mWakeLock != null && !mWakeLock!!.isHeld) {
+                // 针对小米系统和Android 14+，使用WakeLock防止后台限制
+                if (MiuiOptimizationHelper.needsAggressiveOptimization()) {
+                    mWakeLock!!.acquire()
+                    Log.i(TAG, "WakeLock acquired (aggressive mode)")
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    // Android 14+ 也需要WakeLock
+                    mWakeLock!!.acquire()
+                    Log.i(TAG, "WakeLock acquired (Android 14+)")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to acquire WakeLock", e)
+        }
+    }
+    
+    /**
+     * 释放 WakeLock
+     */
+    private fun releaseWakeLock() {
+        try {
+            if (mWakeLock != null && mWakeLock!!.isHeld) {
+                mWakeLock!!.release()
+                Log.i(TAG, "WakeLock released")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to release WakeLock", e)
+        }
+    }
+    
+    /**
+     * 初始化网络回调
+     * 用于监听网络状态，针对小米系统优化
+     */
+    private fun initNetworkCallback() {
+        if (!MiuiOptimizationHelper.needsMiuiOptimization()) {
+            return
+        }
+        
+        try {
+            mConnectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mNetworkCallback = object : ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: Network) {
+                        super.onAvailable(network)
+                        Log.d(TAG, "Network available: $network")
+                    }
+                    
+                    override fun onLost(network: Network) {
+                        super.onLost(network)
+                        Log.d(TAG, "Network lost: $network")
+                    }
+                    
+                    override fun onCapabilitiesChanged(
+                        network: Network,
+                        networkCapabilities: NetworkCapabilities
+                    ) {
+                        super.onCapabilitiesChanged(network, networkCapabilities)
+                        // 监听网络能力变化
+                        val isUnmetered = networkCapabilities.hasCapability(
+                            NetworkCapabilities.NET_CAPABILITY_NOT_METERED
+                        )
+                        Log.d(TAG, "Network capabilities changed, unmetered: $isUnmetered")
+                    }
+                }
+                
+                val networkRequest = NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                    .build()
+                
+                mConnectivityManager?.registerNetworkCallback(networkRequest, mNetworkCallback!!)
+                Log.i(TAG, "Network callback registered (MIUI optimization)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize network callback", e)
+        }
+    }
+    
+    /**
+     * 释放网络回调
+     */
+    private fun releaseNetworkCallback() {
+        try {
+            if (mNetworkCallback != null && mConnectivityManager != null) {
+                mConnectivityManager?.unregisterNetworkCallback(mNetworkCallback!!)
+                mNetworkCallback = null
+                mConnectivityManager = null
+                Log.i(TAG, "Network callback unregistered")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to unregister network callback", e)
         }
     }
 
@@ -596,6 +770,7 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         const val KEY_GID: String = "gid"
         const val KEY_GID_LIST: String = "gid_list"
 
+        private const val TAG = "DownloadService"
         private const val ID_DOWNLOADING = 1
         private const val ID_DOWNLOADED = 2
         private const val ID_509 = 3
