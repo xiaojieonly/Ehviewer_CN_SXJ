@@ -34,42 +34,18 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.fragment.SettingsHeaders;
 import com.hippo.util.DrawableManager;
 
-public final class SettingsActivity extends EhActivity {
+public final class SettingsActivity extends ToolbarActivity {
 
     private static final int REQUEST_CODE_FRAGMENT = 0;
 
-    @Override
-    protected int getThemeResId(int theme) {
-      switch (theme) {
-        case Settings.THEME_LIGHT:
-        default:
-          return R.style.AppTheme_Settings;
-        case Settings.THEME_DARK:
-          return R.style.AppTheme_Settings_Dark;
-        case Settings.THEME_BLACK:
-          return R.style.AppTheme_Settings_Black;
-      }
-    }
 
-    private void setActionBarUpIndicator(Drawable drawable) {
-        ActionBarDrawerToggle.Delegate delegate = getDrawerToggleDelegate();
-        if (delegate != null) {
-            delegate.setActionBarUpIndicator(drawable, 0);
-        }
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeButtonEnabled(true);
-            actionBar.setTitle(R.string.settings);
-        }
-    }
 
     @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        setActionBarUpIndicator(DrawableManager.getVectorDrawable(this, R.drawable.v_arrow_left_dark_x24));
+        setNavigationIcon(DrawableManager.getVectorDrawable(this, R.drawable.v_arrow_left_dark_x24));
         if (savedInstanceState==null){
             getSupportFragmentManager()
                     .beginTransaction()

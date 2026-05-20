@@ -52,6 +52,6 @@ public class EhDrawerView extends DrawerView implements DrawerLayoutChild {
 
     @Override
     public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
+        return 0;
     }
 }

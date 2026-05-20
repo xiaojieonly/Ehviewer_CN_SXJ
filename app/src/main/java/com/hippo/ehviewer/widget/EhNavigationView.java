@@ -80,6 +80,6 @@ public class EhNavigationView extends LinearLayout implements DrawerLayoutChild 
 
     @Override
     public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
+        return 0;
     }
 }

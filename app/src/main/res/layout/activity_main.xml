@@ -52,7 +52,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="?android:navigationBarColor"
+                        android:background="?android:attr/windowBackground"
                         android:paddingBottom="48dip"
                         android:scrollbars="vertical"
                         app:headerLayout="@layout/nav_header_main"
