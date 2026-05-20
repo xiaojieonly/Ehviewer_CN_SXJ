@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
@@ -51,6 +52,7 @@ import com.hippo.util.FileUtils;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class ArchiverDownloadDialog implements
@@ -247,7 +249,7 @@ public class ArchiverDownloadDialog implements
             Settings.putArchiverDownload(myDownloadId,galleryDetail);
             detailScene.bindArchiverProgress(galleryDetail);
 
-            context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            ContextCompat.registerReceiver(context, downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_NOT_EXPORTED);
         }
 
         @Override
@@ -473,14 +475,53 @@ public class ArchiverDownloadDialog implements
     }
 
     /**
-     * 统一净化归档文件名，避免 DownloadManager 因非法路径抛错。
+     * Linux 单路径段 NAME_MAX 为 255 字节（UTF-8）；归档保存为 {@code name + ".zip"}，基名须预留后缀长度。
+     */
+    private static final int MAX_ARCHIVER_BASENAME_UTF8_BYTES =
+            255 - ".zip".getBytes(StandardCharsets.UTF_8).length;
+
+    /**
+     * 将字符串截断为不超过 maxBytes 个 UTF-8 字节，不在多字节字符或代理对中间切开。
+     */
+    private static String truncateUtf8ToMaxBytes(String s, int maxBytes) {
+        if (s == null || s.isEmpty() || maxBytes <= 0) {
+            return s == null ? "" : s;
+        }
+        int byteCount = 0;
+        int cutCharEnd = 0;
+        for (int i = 0; i < s.length(); ) {
+            char ch = s.charAt(i);
+            int charUtf8Bytes;
+            int charWidth = 1;
+            if (ch <= 0x7F) {
+                charUtf8Bytes = 1;
+            } else if (ch <= 0x7FF) {
+                charUtf8Bytes = 2;
+            } else if (Character.isHighSurrogate(ch)) {
+                charUtf8Bytes = 4;
+                charWidth = 2;
+                if (i + 1 >= s.length()) {
+                    break;
+                }
+            } else {
+                charUtf8Bytes = 3;
+            }
+            if (byteCount + charUtf8Bytes > maxBytes) {
+                break;
+            }
+            byteCount += charUtf8Bytes;
+            i += charWidth;
+            cutCharEnd = i;
+        }
+        return cutCharEnd < s.length() ? s.substring(0, cutCharEnd) : s;
+    }
+
+    /**
+     * 统一净化归档文件名，避免 DownloadManager 因非法路径或文件名过长抛错。
      */
     private static String createFileName(String name, long gid) {
         String result = name == null ? "" : com.hippo.lib.yorozuya.FileUtils.sanitizeFilename(name);
-        final int MAX_FILENAME_LENGTH = 120;
-        if (result.length() > MAX_FILENAME_LENGTH) {
-            result = result.substring(0, MAX_FILENAME_LENGTH);
-        }
+        result = truncateUtf8ToMaxBytes(result, MAX_ARCHIVER_BASENAME_UTF8_BYTES);
         if (result.isEmpty()) {
             result = gid > 0 ? "archiver_" + gid : "archiver";
         }

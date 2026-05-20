@@ -1,23 +1,18 @@
 {
-  "version": "2.0.1.6",
+  "version": "2.0.1.7",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
     "title": "新版发布2.0.1.6，祝大家愚人节伤心",
     "content": [
-      "搜索时过滤文本中的换行符",
-      "修复下载列表排序奔溃的问题",
-      "优化 EGL 初始化逻辑并增加 OpenGL 渲染故障时的回退机制",
-      "排行榜中，画廊排行从原先的跳转画廊搜索，改为直接跳转对应画廊",
-      "优化归档下载逻辑与文件名生成",
-      "优化解析错误日志清理逻辑并增加异常处理",
-      "优化搜索文本过滤，直接移除换行符而非替换为空格",
-      "修正登录WebView客户端设置及资料获取逻辑",
-      "升级SDK版本并启用coreLibraryDesugaring",
-      "miki sayaga：新增一个多标签搜索组合页面（未完成）",
-      "修复部分多标签搜索组合页面bug",
-      "将部分代码从java迁移到kotlin"
+      "修复SpiderInfo读取时的OOM风险并升级JDK至21",
+      "修复图片搜索无法使用的问题",
+      "orbisai0security：the vendored giflib library performs multiple m... in gifalloc.c",
+      "En：修复了已下载项目的按标签搜索功能",
+      "增加对 WebView/CookieManager 初始化失败的异常处理",
+      "猫尾草：restore gradle wrapper jar and properties",
+      "升级Gradle至9.3.1及Android插件至9.1.1"
     ]
   }
 }

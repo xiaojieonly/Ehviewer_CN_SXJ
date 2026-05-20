@@ -36,6 +36,7 @@ import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.HomeDetail;
+import com.hippo.ehviewer.client.data.TorrentInfo;
 import com.hippo.ehviewer.client.data.userTag.TagPushParam;
 import com.hippo.ehviewer.client.data.userTag.UserTag;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
@@ -714,7 +715,7 @@ public class EhEngine {
         return result;
     }
 
-    public static Pair<String, String>[] getTorrentList(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
+    public static TorrentInfo[] getTorrentList(@Nullable EhClient.Task task, OkHttpClient okHttpClient,
                                                         String url, long gid, String token) throws Throwable {
         String referer = EhUrl.getGalleryDetailUrl(gid, token);
         Log.d(TAG, url);
@@ -728,7 +729,7 @@ public class EhEngine {
 
         String body = null;
         Headers headers = null;
-        Pair<String, String>[] result;
+        TorrentInfo[] result;
         int code = -1;
         try {
             Response response = call.execute();
@@ -771,7 +772,11 @@ public class EhEngine {
             headers = response.headers();
             assert response.body() != null;
             body = response.body().string();
-            result = TopListParser.parse(body);
+            try {
+                result = TopListParser.parse(body);
+            } catch (LinkageError e) {
+                throw new ParseException("Top list parser runtime error", body, e);
+            }
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             throwException(call, code, headers, body, e);

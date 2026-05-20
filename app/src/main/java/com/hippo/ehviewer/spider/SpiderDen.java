@@ -18,8 +18,10 @@ package com.hippo.ehviewer.spider;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.os.Looper;
 import android.webkit.MimeTypeMap;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.hippo.beerbelly.SimpleDiskCache;
@@ -47,8 +49,11 @@ import java.util.Locale;
 
 public final class SpiderDen {
 
+    @NonNull
+    private final GalleryInfo mGalleryInfo;
+    private final Object mDownloadDirLock = new Object();
     @Nullable
-    private final UniFile mDownloadDir;
+    private UniFile mDownloadDir;
     private volatile int mMode = SpiderQueen.MODE_READ;
 
 
@@ -128,8 +133,41 @@ public final class SpiderDen {
     }
 
     public SpiderDen(GalleryInfo galleryInfo) {
+        mGalleryInfo = galleryInfo;
         mGid = galleryInfo.gid;
-        mDownloadDir = getGalleryDownloadDir(galleryInfo);
+    }
+
+    /**
+     * Resolves {@link #mDownloadDir}. Must be called with {@link #mDownloadDirLock} held.
+     * On the main thread, skips SAF directory listing when the DB has no folder name yet
+     * (that listing runs on a worker via {@link #prepareDownloadStorage()}).
+     */
+    @Nullable
+    private UniFile resolveDownloadDirLocked() {
+        if (mDownloadDir != null) {
+            return mDownloadDir;
+        }
+        if (Looper.getMainLooper().getThread() == Thread.currentThread()
+                && EhDB.getDownloadDirname(mGalleryInfo.gid) == null) {
+            return null;
+        }
+        mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+        return mDownloadDir;
+    }
+
+    /**
+     * Ensures the gallery download folder exists. Call from downloader worker threads only.
+     */
+    public boolean prepareDownloadStorage() {
+        if (mMode != SpiderQueen.MODE_DOWNLOAD) {
+            return true;
+        }
+        synchronized (mDownloadDirLock) {
+            if (mDownloadDir == null) {
+                mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+            }
+            return mDownloadDir != null && mDownloadDir.ensureDir();
+        }
     }
 
     public void setMGid(long mGid) {
@@ -138,14 +176,6 @@ public final class SpiderDen {
 
     public void setMode(@SpiderQueen.Mode int mode) {
         mMode = mode;
-
-        if (mode == SpiderQueen.MODE_DOWNLOAD) {
-            ensureDownloadDir();
-        }
-    }
-
-    private boolean ensureDownloadDir() {
-        return mDownloadDir != null && mDownloadDir.ensureDir();
     }
 
     public boolean isReady() {
@@ -153,7 +183,9 @@ public final class SpiderDen {
             case SpiderQueen.MODE_READ:
                 return sCache != null;
             case SpiderQueen.MODE_DOWNLOAD:
-                return mDownloadDir != null && mDownloadDir.isDirectory();
+                synchronized (mDownloadDirLock) {
+                    return mDownloadDir != null && mDownloadDir.isDirectory();
+                }
             default:
                 return false;
         }
@@ -161,11 +193,18 @@ public final class SpiderDen {
 
     @Nullable
     public UniFile getDownloadDir() {
-        return mDownloadDir != null && mDownloadDir.isDirectory() ? mDownloadDir : null;
+        UniFile dir;
+        synchronized (mDownloadDirLock) {
+            dir = resolveDownloadDirLocked();
+        }
+        return dir != null && dir.isDirectory() ? dir : null;
     }
 
+    @Nullable
     public UniFile getDownloadDirName() {
-        return mDownloadDir != null ? mDownloadDir : null;
+        synchronized (mDownloadDirLock) {
+            return resolveDownloadDirLocked();
+        }
     }
 
     private boolean containInCache(int index) {
