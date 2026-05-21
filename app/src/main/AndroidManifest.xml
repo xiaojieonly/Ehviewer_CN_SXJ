@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -12,9 +13,16 @@
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Android 10 (API 29) 及以上版本，可能需要添加 -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" /> <!-- Android 14+ 前台服务类型 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" /> <!-- 后台下载保活用 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" /> <!-- 请求电池优化豁免，防止后台被限制 -->
     <uses-permission android:name="android.permission.CAMERA" /> <!-- 用于获取wifi状态 -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- 使用系统自带下载器 -->
     <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" /> <!-- 自动安装apk -->
@@ -180,6 +188,11 @@
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Settings" />
         <activity
+            android:name=".ui.SystemInfoActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_about_system_info"
+            android:theme="@style/AppTheme.Toolbar" />
+        <activity
             android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/excluded_languages"
@@ -220,6 +233,24 @@
             android:label="@string/my_tags"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
+            android:name="com.hippo.ehviewer.ui.task.BackgroundTaskActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/background_task_management"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.NetworkDiagnosticActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_advanced_network_diagnostic"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.task.BackgroundTaskDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/background_task_detail"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
             android:name=".ui.HostsActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/hosts"
@@ -241,9 +272,53 @@
             android:label="@string/wifi_client"
             android:theme="@style/AppTheme.Toolbar" />
 
+        <activity
+            android:name="com.hippo.ehviewer.ui.transfer.TransferActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_transfer"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <service
+            android:name="com.hippo.ehviewer.transfer.TransferService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.DatabaseViewerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_advanced_database_viewer"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryDetailActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_detail_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <activity
+            android:name="com.hippo.ehviewer.ui.local.LocalGalleryViewerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/local_gallery_viewer_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
+        <service
+            android:name="com.hippo.ehviewer.service.LocalGalleryScanService"
+            android:exported="false" />
+
+        <service
+            android:name="com.hippo.ehviewer.service.RecycleBinScanService"
+            android:exported="false" />
+
         <service
             android:name=".download.DownloadService"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="dataSync|specialUse"
             android:label="@string/download_service_label" />
 
         <provider
