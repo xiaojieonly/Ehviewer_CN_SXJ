@@ -152,6 +152,9 @@ public final class SpiderDen {
             return null;
         }
         mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+        if (mDownloadDir!=null){
+            mDownloadDir.ensureDir();
+        }
         return mDownloadDir;
     }
 

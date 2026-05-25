@@ -1,12 +1,8 @@
 package com.hippo.ehviewer.widget;
 
 import android.app.DownloadManager;
-
 import android.content.Context;
-
 import android.database.Cursor;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
@@ -19,9 +15,9 @@ import androidx.annotation.Nullable;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.download.ArchiverDownloadCompleter;
 
 import java.util.Locale;
-import java.util.logging.LogRecord;
 
 public class ArchiverDownloadProgress extends LinearLayout {
     final Context context;
@@ -79,62 +75,88 @@ public class ArchiverDownloadProgress extends LinearLayout {
         setVisibility(VISIBLE);
         myTextView.setText(context.getString(R.string.archiver_downloading, "0%"));
         myProgressBar.setProgress(0);
-        new Thread(() -> {
-            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            DownloadManager.Query query = new DownloadManager.Query();
-            query.setFilterById(dId);
-            try {
-                boolean done = false;
-                while (!done) {
-                    Cursor cursor = downloadManager.query(query);
-                    boolean queryResult = cursor.moveToNext();
-                    if (!queryResult) {
-                        break;
-                    }
-                    int state = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
-                    if (state == 4) {
-                        int reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
 
-                        switch (reason) {
-                            case DownloadManager.PAUSED_QUEUED_FOR_WIFI:
-                                reasonString = "Waiting for WiFi";
-                                break;
-                            case DownloadManager.PAUSED_WAITING_FOR_NETWORK:
-                                reasonString = "Waiting for connectivity";
-                                break;
-                            case DownloadManager.PAUSED_WAITING_TO_RETRY:
-                                reasonString = "Waiting to retry";
-                                break;
-                            default:
-                                break;
+        ArchiverDownloadCompleter completer = ArchiverDownloadCompleter.getInstance(context);
+        if (completer != null) {
+            completer.ensureReceiverRegistered();
+        }
+
+        new Thread(() -> {
+            DownloadManager downloadManager =
+                    (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            if (downloadManager == null) {
+                postDone();
+                return;
+            }
+            DownloadManager.Query query = new DownloadManager.Query().setFilterById(dId);
+            try {
+                while (true) {
+                    try (Cursor cursor = downloadManager.query(query)) {
+                        if (cursor == null || !cursor.moveToFirst()) {
+                            break;
                         }
-                        post(() -> Toast.makeText(context, reasonString, Toast.LENGTH_LONG).show());
-                        Thread.sleep(6000);
-                        continue;
+                        int state = cursor.getInt(
+                                cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                        if (state == DownloadManager.STATUS_SUCCESSFUL) {
+                            if (completer != null) {
+                                completer.checkAndHandleStatus(dId);
+                            }
+                            break;
+                        }
+                        if (state == DownloadManager.STATUS_FAILED) {
+                            if (completer != null) {
+                                completer.checkAndHandleStatus(dId);
+                            }
+                            break;
+                        }
+                        if (state == DownloadManager.STATUS_PAUSED) {
+                            int reason = cursor.getInt(
+                                    cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
+                            switch (reason) {
+                                case DownloadManager.PAUSED_QUEUED_FOR_WIFI:
+                                    reasonString = "Waiting for WiFi";
+                                    break;
+                                case DownloadManager.PAUSED_WAITING_FOR_NETWORK:
+                                    reasonString = "Waiting for connectivity";
+                                    break;
+                                case DownloadManager.PAUSED_WAITING_TO_RETRY:
+                                    reasonString = "Waiting to retry";
+                                    break;
+                                default:
+                                    break;
+                            }
+                            post(() -> Toast.makeText(context, reasonString, Toast.LENGTH_LONG).show());
+                            Thread.sleep(6000);
+                            continue;
+                        }
+                        long downloaded = cursor.getLong(
+                                cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                        long total = cursor.getLong(
+                                cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                        double progress = total > 0 ? downloaded * 100d / total : 0d;
+                        String result = String.format(Locale.getDefault(), "%.2f", progress) + "%";
+                        myTextView.post(() -> myTextView.setText(
+                                context.getString(R.string.archiver_downloading, result)));
+                        myProgressBar.post(() -> myProgressBar.setProgress((int) progress));
                     }
-                    double downloaded = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                    double total = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-                    double progress = downloaded / total * 100d;
-                    String result = String.format(Locale.getDefault(), "%.2f", progress) + "%";
-                    myTextView.post(() -> {
-                        String text = context.getString(R.string.archiver_downloading, result);
-                        myTextView.setText(text);
-                    });
-                    myProgressBar.post(() -> myProgressBar.setProgress((int) progress));
                     Thread.sleep(1000);
-                    if (progress < 100) {
-                        continue;
-                    }
-                    done = true;
                 }
-                Thread.sleep(6000);
-                this.post(() -> this.setVisibility(GONE));
-            } catch (RuntimeException | InterruptedException e) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                myTextView.post(() -> myTextView.setText(R.string.download_state_failed));
+            } catch (RuntimeException e) {
                 myTextView.post(() -> myTextView.setText(R.string.download_state_failed));
                 e.printStackTrace();
             } finally {
-                showing = false;
+                postDone();
             }
         }).start();
+    }
+
+    private void postDone() {
+        post(() -> {
+            setVisibility(GONE);
+            showing = false;
+        });
     }
 }

@@ -48,6 +48,7 @@ import com.hippo.lib.yorozuya.NumberUtils;
 import java.io.File;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 
 public class Settings {
 
@@ -123,6 +124,39 @@ public class Settings {
 
     public static boolean deleteArchiverDownloadId(long gid){
         return sArchiverPre.edit().remove(gid+"DId").commit();
+    }
+
+    /** 是否存在尚未导入完成的归档 DownloadManager 任务。 */
+    public static boolean hasPendingArchiverDownloads() {
+        if (sArchiverPre == null) {
+            return false;
+        }
+        for (String key : sArchiverPre.getAll().keySet()) {
+            if (key.endsWith("DId")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 所有进行中的归档 downloadId（来自 gid+DId 键）。 */
+    @NonNull
+    public static long[] getPendingArchiverDownloadIds() {
+        if (sArchiverPre == null) {
+            return new long[0];
+        }
+        java.util.ArrayList<Long> ids = new java.util.ArrayList<>();
+        for (Map.Entry<String, ?> entry : sArchiverPre.getAll().entrySet()) {
+            String key = entry.getKey();
+            if (key.endsWith("DId") && entry.getValue() instanceof Long) {
+                ids.add((Long) entry.getValue());
+            }
+        }
+        long[] result = new long[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            result[i] = ids.get(i);
+        }
+        return result;
     }
 
     public static boolean getBoolean(String key, boolean defValue) {
