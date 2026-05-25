@@ -19,6 +19,7 @@ package com.hippo.ehviewer.ui;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
 
@@ -44,6 +45,18 @@ public abstract class EhActivity extends AppCompatActivity {
 //        setTheme(getThemeResId(Settings.getTheme(context)));
         setTheme(getThemeResId(Settings.getTheme()));
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    getWindow().getDecorView().getSystemUiVisibility()
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+            getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
 
         ((EhApplication) getApplication()).registerActivity(this);
 

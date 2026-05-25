@@ -179,7 +179,7 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:configChanges="screenSize|uiMode"
-            android:theme="@style/AppTheme.Settings" />
+            android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
