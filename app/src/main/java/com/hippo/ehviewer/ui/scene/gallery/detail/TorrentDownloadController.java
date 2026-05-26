@@ -301,7 +301,11 @@ class TorrentDownloadController {
                 String[] nameArray = new String[data.length];
                 String postedLabel = mDialog.getContext().getString(R.string.key_posted);
                 for (int i = 0, n = data.length; i < n; i++) {
-                    nameArray[i] = data[i].name + "\n" + postedLabel + ": " + data[i].posted;
+                    TorrentInfo info = data[i];
+                    nameArray[i] = info.name + "\n" +
+                            postedLabel + ": " + info.posted + "\n" +
+                            "⬆ " + info.seeds + "  ⬇ " + info.peers +
+                            "  |  " + info.size;
                 }
                 mProgressView.setVisibility(View.GONE);
                 mErrorText.setVisibility(View.GONE);
