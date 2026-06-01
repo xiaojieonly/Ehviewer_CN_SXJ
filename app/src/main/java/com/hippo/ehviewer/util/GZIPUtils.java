@@ -133,8 +133,17 @@ public class GZIPUtils {
                     File folder = new File(outPathString + File.separator + szName);
                     folder.mkdirs();
                 } else {
+                    if (szName.contains("..")) {
+                        continue;
+                    }
                     File file = new File(outPathString + File.separator + szName);
-                    file.createNewFile();
+                    File parent = file.getParentFile();
+                    if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                        return false;
+                    }
+                    if (!file.exists() && !file.createNewFile()) {
+                        return false;
+                    }
                     // get the output stream of the file
                     FileOutputStream out = new FileOutputStream(file);
                     int len;
