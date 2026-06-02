@@ -152,9 +152,9 @@ public final class SpiderDen {
             return null;
         }
         mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
-        if (mDownloadDir!=null){
-            mDownloadDir.ensureDir();
-        }
+//        if (mDownloadDir!=null){
+//            mDownloadDir.ensureDir();
+//        }
         return mDownloadDir;
     }
 
@@ -179,6 +179,10 @@ public final class SpiderDen {
 
     public void setMode(@SpiderQueen.Mode int mode) {
         mMode = mode;
+    }
+
+    public boolean isDownloadMode() {
+        return mMode == SpiderQueen.MODE_DOWNLOAD;
     }
 
     public boolean isReady() {
@@ -386,12 +390,8 @@ public final class SpiderDen {
     @Nullable
     public OutputStreamPipe openOutputStreamPipe(int index, @Nullable String extension) {
         if (mMode == SpiderQueen.MODE_READ) {
-            // Return the download pipe is the gallery has been downloaded
-            OutputStreamPipe pipe = openDownloadOutputStreamPipe(index, extension);
-            if (pipe == null) {
-                pipe = openCacheOutputStreamPipe(index);
-            }
-            return pipe;
+            // Read mode should only write into app cache.
+            return openCacheOutputStreamPipe(index);
         } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
             return openDownloadOutputStreamPipe(index, extension);
         } else {
@@ -430,11 +430,22 @@ public final class SpiderDen {
     }
 
     @Nullable
+    private InputStreamPipe openDownloadInputStreamPipeReadOnly(int index) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return null;
+        }
+        UniFile file = findImageFile(dir, index);
+        return file != null ? new UniFileInputStreamPipe(file) : null;
+    }
+
+    @Nullable
     public InputStreamPipe openInputStreamPipe(int index) {
         if (mMode == SpiderQueen.MODE_READ) {
-            InputStreamPipe pipe = openDownloadInputStreamPipe(index);
+            InputStreamPipe pipe = openCacheInputStreamPipe(index);
             if (pipe == null) {
-                pipe = openCacheInputStreamPipe(index);
+                // Read mode must not trigger cache-to-download copy.
+                pipe = openDownloadInputStreamPipeReadOnly(index);
             }
             return pipe;
         } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
