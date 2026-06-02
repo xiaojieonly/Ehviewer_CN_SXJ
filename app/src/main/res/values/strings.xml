@@ -697,6 +697,9 @@
     <string name="settings_download_restore_not_found">Not found download items to restore</string>
     <string name="settings_download_restore_failed">Restore failed</string>
     <string name="settings_download_restore_successfully">Restore %d items successfully</string>
+    <string name="settings_download_merge_duplicate_gallery">Merge duplicate galleries</string>
+    <string name="settings_download_merge_duplicate_gallery_summary">Scan and merge duplicate galleries with version progression</string>
+    <string name="settings_download_merge_duplicate_gallery_unavailable">Merge task is not available yet</string>
     <string name="settings_download_clean_redundancy">Clear download redundancy</string>
     <string name="settings_download_clean_redundancy_summary">Remove gallery images which are not in download list but in download location</string>
     <string name="settings_download_clean_redundancy_no_redundancy">No redundancy</string>

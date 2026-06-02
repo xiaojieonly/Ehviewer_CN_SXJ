@@ -91,6 +91,13 @@
         android:summary="@string/settings_download_download_order_by_asc_summary"
         android:title="@string/settings_download_download_order_by_asc" />
 
+    <com.hippo.ehviewer.preference.MergeDuplicateGalleryPreference2
+        android:key="merge_duplicate_gallery"
+        android:summary="@string/settings_download_merge_duplicate_gallery_summary"
+        android:title="@string/settings_download_merge_duplicate_gallery"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
     <com.hippo.ehviewer.preference.RestoreDownloadPreference
         android:key="restore_download_items"
         android:summary="@string/settings_download_restore_download_items_summary"

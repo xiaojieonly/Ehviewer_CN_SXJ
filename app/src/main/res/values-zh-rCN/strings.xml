@@ -609,6 +609,9 @@
     <string name="settings_download_restore_not_found">未找到可恢复下载项</string>
     <string name="settings_download_restore_failed">恢复失败</string>
     <string name="settings_download_restore_successfully">成功恢复 %d 项</string>
+    <string name="settings_download_merge_duplicate_gallery">合并重复画廊</string>
+    <string name="settings_download_merge_duplicate_gallery_summary">扫描并合并重复画廊，支持版本演进</string>
+    <string name="settings_download_merge_duplicate_gallery_unavailable">合并任务暂不可用</string>
     <string name="settings_download_clean_redundancy">清理下载冗余</string>
     <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
