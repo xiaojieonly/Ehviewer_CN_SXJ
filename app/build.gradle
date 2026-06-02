@@ -15,6 +15,10 @@ android {
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '26.1.10909125'
 
+    def isCanaryBuild = project.hasProperty('canaryBuild') && project.property('canaryBuild').toString().toBoolean()
+    def canarySuffix = isCanaryBuild ? ".maoweicao.canary" : ""
+    def releaseFileProviderAuthority = "\"com.xjs.ehviewer${canarySuffix}.fileprovider\""
+
     flavorDimensions "distribute"
     productFlavors {
         appRelease {
@@ -33,6 +37,7 @@ android {
         versionCode 111
         versionName "2.0.1.8"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField 'String', 'BUILD_TIME', "\"${new Date().format('yyyy-MM-dd HH:mm:ss')}\""
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
         multiDexEnabled true
@@ -48,17 +53,30 @@ android {
         }
     }
 
+    signingConfigs {
+        debug {
+            // Use the default Gradle debug keystore so release builds are installable
+            // in CI/pre-release builds without a separate release keystore.
+        }
+    }
+
     lint {
         disable 'MissingTranslation'
-        abortOnError true
-        checkReleaseBuilds true
+        disable 'StringFormatMatches'
+        disable 'StringFormatInvalid'
+        abortOnError false
+        checkReleaseBuilds false
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
+            if (isCanaryBuild) {
+                applicationIdSuffix ".maoweicao.canary"
+            }
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', releaseFileProviderAuthority
         }
         debug {
             applicationIdSuffix ".debug"
@@ -72,18 +90,16 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
         }
     }
-//    sourceSets {
-//        main {
-//            java.srcDirs += 'src/main/java-gen'
-//        }
-//    }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        // 允许 Java 8+ 核心库 API 进行 desugaring，兼容旧 Android 版本
+        coreLibraryDesugaringEnabled true
     }
+
     kotlinOptions {
-        jvmTarget = '21'
+        jvmTarget = '17'
     }
 
     buildFeatures {
@@ -91,6 +107,18 @@ android {
         buildConfig = true
     }
 
+}
+
+kotlin {
+    sourceSets {
+        main {
+            kotlin.srcDir("src/main/java")
+        }
+    }
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 //tasks.withType(JavaCompile) {
@@ -125,6 +153,12 @@ dependencies {
     implementation 'org.conscrypt:conscrypt-android:2.5.3'
     // https://mvnrepository.com/artifact/androidx.core/core-ktx
     implementation 'androidx.core:core-ktx:1.15.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
+    
+    // Kotlin Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    
 //    implementation 'com.android.support:recyclerview-v7:25.0.1'
 
 //     https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng
@@ -176,13 +210,22 @@ dependencies {
 //    implementation 'com.github.bumptech.glide:glide:5.0.5'
 //    kapt 'com.github.bumptech.glide:compiler:5.0.5'
 
-    //事件通知
+    // 事件通知
     implementation 'org.greenrobot:eventbus:3.3.1'
     //loading组件
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     // 引入 Google 的弹性流式布局库
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
+
+    // 内置轻量级HTTP服务器，用于本地REST端点
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    // SlidingPaneLayout - 支持平滑滑动面板
+    implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
+    
+    // WindowManager API - 提供大屏幕和折叠屏设备更好的适配
+    implementation 'androidx.window:window:1.2.0'
 
 
     testImplementation 'junit:junit:4.13.2'

@@ -7,11 +7,10 @@ import android.graphics.Typeface;
 
 import java.util.Arrays;
 
-// TODO support multiline
 /**
  * Works like movable type.<br>
  * <br>
- * Only support single line now
+ * Supports multiline text with '\n' as line separator
  */
 public final class MovableTextTexture extends SpriteTexture {
 
@@ -19,14 +18,21 @@ public final class MovableTextTexture extends SpriteTexture {
     private final float[] mWidths;
     private final float mHeight;
     private final float mMaxWidth;
+    private final float mLineSpacing; // 行间距
 
     private MovableTextTexture(Bitmap bitmap, int count, int[] rects, char[] characters,
             float[] widths, float height, float maxWidth) {
+        this(bitmap, count, rects, characters, widths, height, maxWidth, 0f);
+    }
+
+    private MovableTextTexture(Bitmap bitmap, int count, int[] rects, char[] characters,
+            float[] widths, float height, float maxWidth, float lineSpacing) {
         super(bitmap, false, count, rects);
         mCharacters = characters;
         mWidths = widths;
         mHeight = height;
         mMaxWidth = maxWidth;
+        mLineSpacing = lineSpacing;
     }
 
     public int[] getTextIndexes(String text) {
@@ -88,8 +94,16 @@ public final class MovableTextTexture extends SpriteTexture {
         char[] characters = mCharacters;
         float[] widths = mWidths;
 
+        int startX = x;
         for (int i = 0, n = text.length(); i < n; i++) {
             char ch = text.charAt(i);
+            if (ch == '\n') {
+                // 换行
+                x = startX;
+                y += mHeight + mLineSpacing;
+                continue;
+            }
+            
             int index = Arrays.binarySearch(characters, ch);
             if (index >= 0) {
                 drawSprite(canvas, index, x, y);
@@ -98,6 +112,77 @@ public final class MovableTextTexture extends SpriteTexture {
                 x += mMaxWidth;
             }
         }
+    }
+
+    /**
+     * 绘制多行文本，自动计算总高度
+     * @param canvas GL画布
+     * @param text 要绘制的文本（可包含\n换行符）
+     * @param x 起始x坐标
+     * @param y 起始y坐标
+     * @return 文本的总高度
+     */
+    public float drawMultilineText(GLCanvas canvas, String text, int x, int y) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+
+        String[] lines = text.split("\n", -1); // -1保留末尾的空字符串
+        float totalHeight = 0;
+        
+        for (int i = 0; i < lines.length; i++) {
+            drawText(canvas, lines[i], x, y);
+            totalHeight += mHeight;
+            if (i < lines.length - 1) {
+                totalHeight += mLineSpacing;
+            }
+            y += mHeight + mLineSpacing;
+        }
+        
+        return totalHeight;
+    }
+
+    /**
+     * 计算多行文本的总高度
+     * @param text 文本内容
+     * @return 总高度
+     */
+    public float calculateMultilineHeight(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        
+        int lineCount = 1;
+        for (char c : text.toCharArray()) {
+            if (c == '\n') {
+                lineCount++;
+            }
+        }
+        
+        return lineCount * mHeight + (lineCount - 1) * mLineSpacing;
+    }
+
+    /**
+     * 计算多行文本的最大宽度
+     * @param text 文本内容
+     * @return 最大宽度
+     */
+    public float calculateMultilineWidth(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        
+        String[] lines = text.split("\n", -1);
+        float maxWidth = 0;
+        
+        for (String line : lines) {
+            float lineWidth = getTextWidth(line);
+            if (lineWidth > maxWidth) {
+                maxWidth = lineWidth;
+            }
+        }
+        
+        return maxWidth;
     }
 
     public void drawText(GLCanvas canvas, int[] indexes, int x, int y) {
