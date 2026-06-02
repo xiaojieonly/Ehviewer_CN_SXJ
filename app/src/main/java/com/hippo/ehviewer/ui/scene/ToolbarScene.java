@@ -58,8 +58,28 @@ public abstract class ToolbarScene extends BaseScene {
         } else {
             mToolbar = toolbar;
             contentPanel.addView(contentView, 0);
+            applyStatusBarTopInset(toolbar);
             return view;
         }
+    }
+
+    /**
+     * The scene draws under the transparent status bar — {@code EhStageLayout} no longer reserves
+     * the top inset (so the gallery 瀑布流 can scroll under the bar). Grow the toolbar up into the
+     * status bar so its background fills the bar (status bar takes the toolbar color) while the
+     * title / menu stay centered below the bar.
+     */
+    private static void applyStatusBarTopInset(Toolbar toolbar) {
+        int resId = toolbar.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        int statusBarHeight = resId > 0 ? toolbar.getResources().getDimensionPixelSize(resId) : 0;
+        if (statusBarHeight <= 0) {
+            return;
+        }
+        ViewGroup.LayoutParams lp = toolbar.getLayoutParams();
+        lp.height += statusBarHeight;
+        toolbar.setLayoutParams(lp);
+        toolbar.setPadding(toolbar.getPaddingLeft(), toolbar.getPaddingTop() + statusBarHeight,
+                toolbar.getPaddingRight(), toolbar.getPaddingBottom());
     }
 
     @Override

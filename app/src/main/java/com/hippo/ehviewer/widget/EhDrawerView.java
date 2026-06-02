@@ -43,11 +43,16 @@ public class EhDrawerView extends DrawerView implements DrawerLayoutChild {
     public void onGetWindowPadding(int top, int bottom) {
         mWindowPaddingTop = top;
         mWindowPaddingBottom = bottom;
+        // Let the right drawer bleed under the transparent status bar like the left
+        // navigation drawer, but keep its content (toolbar / pager tabs) below the bar.
+        if (getPaddingTop() != top) {
+            setPadding(getPaddingLeft(), top, getPaddingRight(), getPaddingBottom());
+        }
     }
 
     @Override
     public int getAdditionalTopMargin() {
-        return mWindowPaddingTop;
+        return 0;
     }
 
     @Override

@@ -74,9 +74,29 @@ class EhTopListScene : BaseScene() {
     ): View {
         val view = inflater.inflate(R.layout.scene_gallery_top_list, container, false)
 
+        // The scene draws under the transparent status bar. Make the teal selector bar fill the
+        // status bar region (status bar = bar color, consistent with toolbars on other screens):
+        // dock it full-width to the very top, pad its content below the bar, then push the list
+        // down so it clears the now-taller bar.
+        val res = view.resources
+        var statusBarHeight = 0
+        val sbhId = res.getIdentifier("status_bar_height", "dimen", "android")
+        if (sbhId > 0) statusBarHeight = res.getDimensionPixelSize(sbhId)
+
         val spinner = view.findViewById<Spinner>(R.id.top_list_spinner)
         spinner.setSelection(0)
         spinner.onItemSelectedListener = TopListKindSelectedListener()
+        if (statusBarHeight > 0) {
+            val sideInset = res.getDimensionPixelOffset(R.dimen.top_list_spinner_margin)
+            (spinner.layoutParams as ViewGroup.MarginLayoutParams).let { lp ->
+                lp.leftMargin = 0
+                lp.topMargin = 0
+                lp.rightMargin = 0
+                lp.height = res.getDimensionPixelOffset(R.dimen.top_list_spinner_height) + statusBarHeight
+                spinner.layoutParams = lp
+            }
+            spinner.setPadding(sideInset, statusBarHeight + spinner.paddingTop, sideInset, spinner.paddingBottom)
+        }
 
         val frameLayout = view.findViewById<FrameLayout>(R.id.page_detail_view)
         val transitionView = view.findViewById<View>(R.id.data_loading_view)
@@ -84,6 +104,15 @@ class EhTopListScene : BaseScene() {
 
         recyclerView = view.findViewById(R.id.top_list_recycler_view)
         recyclerView?.layoutManager = LinearLayoutManager(ehContext)
+        if (statusBarHeight > 0) {
+            (recyclerView?.parent as? View)?.let { scroll ->
+                (scroll.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                    lp.topMargin = res.getDimensionPixelOffset(R.dimen.top_list_scrollview_margin_top) +
+                            statusBarHeight - res.getDimensionPixelOffset(R.dimen.top_list_spinner_margin)
+                    scroll.layoutParams = lp
+                }
+            }
+        }
 
         if (!hasFirstRefresh) {
             hasFirstRefresh = true
