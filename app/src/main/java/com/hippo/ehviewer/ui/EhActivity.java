@@ -21,12 +21,20 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.hippo.android.resource.AttrResources;
+import com.hippo.ehviewer.R;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.hippo.content.ContextLocalWrapper;
 import com.hippo.ehviewer.Analytics;
@@ -47,12 +55,7 @@ public abstract class EhActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().getDecorView().setSystemUiVisibility(
-                    getWindow().getDecorView().getSystemUiVisibility()
-                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            );
-            getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+            applyEdgeToEdgeSystemBars();
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setNavigationBarContrastEnforced(false);
@@ -73,8 +76,71 @@ public abstract class EhActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onContentChanged() {
+        super.onContentChanged();
+        applyNavigationBarPaddingIfNeeded();
+    }
+
+    /**
+     * MainActivity uses {@link com.hippo.ehviewer.widget.EhStageLayout} for window insets.
+     * GalleryActivity is fullscreen and handles bottom controls separately.
+     */
+    protected boolean shouldApplyNavigationBarPadding() {
+        return !(this instanceof MainActivity) && !(this instanceof GalleryActivity);
+    }
+
+    private void applyNavigationBarPaddingIfNeeded() {
+        if (!shouldApplyNavigationBarPadding()) {
+            return;
+        }
+        View target = findViewById(R.id.content_panel);
+        if (target == null) {
+            View content = findViewById(android.R.id.content);
+            if (content instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) content;
+                if (group.getChildCount() > 0) {
+                    target = group.getChildAt(0);
+                }
+            }
+        }
+        if (target == null || target.getTag(R.id.navigation_bar_padding_applied) != null) {
+            return;
+        }
+        target.setTag(R.id.navigation_bar_padding_applied, Boolean.TRUE);
+        target.setTag(R.id.navigation_bar_padding_origin_bottom, target.getPaddingBottom());
+        ViewCompat.setOnApplyWindowInsetsListener(target, (v, windowInsets) -> {
+            Insets nav = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            Object origin = v.getTag(R.id.navigation_bar_padding_origin_bottom);
+            int originBottom = origin instanceof Integer ? (Integer) origin : 0;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    originBottom + nav.bottom);
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(target);
+    }
+
+    private void applyEdgeToEdgeSystemBars() {
+        int flags = android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+                && AttrResources.getAttrBoolean(this, android.R.attr.windowLightNavigationBar)) {
+            flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        }
+        getWindow().getDecorView().setSystemUiVisibility(flags);
+        syncNavigationBarWithTheme();
+    }
+
+    private void syncNavigationBarWithTheme() {
+        getWindow().setNavigationBarColor(
+                AttrResources.getAttrColor(this, android.R.attr.windowBackground));
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            syncNavigationBarWithTheme();
+        }
         if(Settings.getEnabledSecurity()){
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
                     WindowManager.LayoutParams.FLAG_SECURE);

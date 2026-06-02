@@ -22,7 +22,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
 
         <item name="popupWindowStyle">@color/popupWindow_background_light</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">?android:attr/windowBackground</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleLight</item>
@@ -94,7 +94,7 @@
         <item name="actionBarStyle">@style/ActionBarStyle</item>
 
         <item name="popupWindowStyle">@color/popupWindow_background_dark</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">?android:attr/windowBackground</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleDark</item>
@@ -160,7 +160,7 @@
         <item name="actionBarStyle">@style/ActionBarStyle</item>
 
         <item name="popupWindowStyle">@color/popupWindow_background_black</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">?android:attr/windowBackground</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleBlack</item>
