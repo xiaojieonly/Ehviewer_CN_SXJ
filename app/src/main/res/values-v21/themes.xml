@@ -29,19 +29,10 @@
         <item name="android:colorEdgeEffect">?attr/colorEdgeEffect</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.Translucent">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
+    <style name="AppTheme.NoActionBar.Translucent" />
 
-    <style name="AppTheme.Dark.NoActionBar.Translucent">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
+    <style name="AppTheme.Dark.NoActionBar.Translucent" />
 
-    <style name="AppTheme.Black.NoActionBar.Translucent">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
+    <style name="AppTheme.Black.NoActionBar.Translucent" />
 
 </resources>

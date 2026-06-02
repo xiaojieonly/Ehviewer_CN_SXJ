@@ -17,3 +17,4 @@ gradle/wrapper/gradle-wrapper.properties
 /download/00000006.gif
 open_source_licenses.html
 /.vscode/settings.json
+/.agent/

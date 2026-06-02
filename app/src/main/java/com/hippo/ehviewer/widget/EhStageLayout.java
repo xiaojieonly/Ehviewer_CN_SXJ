@@ -47,7 +47,9 @@ public class EhStageLayout extends StageLayout implements DrawerLayoutChild {
 
     @Override
     public int getAdditionalTopMargin() {
-        return mWindowPaddingTop;
+        // Let scene content (e.g. the gallery 瀑布流 list) draw under the transparent
+        // status bar — mirrors the immersive bottom navigation bar treatment.
+        return 0;
     }
 
     @Override

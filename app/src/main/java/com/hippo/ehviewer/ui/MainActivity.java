@@ -406,8 +406,8 @@ public final class MainActivity extends StageActivity
 
         limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
 
-        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
-//        mDrawerLayout.setStatusBarColor(0);
+//        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
+        mDrawerLayout.setStatusBarColor(0);
 
         if (mNavView != null) {
 //            if (Settings.isLogin()){
