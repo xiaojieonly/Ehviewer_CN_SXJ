@@ -817,6 +817,14 @@
     <string name="wifi_send_bookmark">ブックマークを移行</string>
     <string name="wifi_send_favorite">お気に入りを移行</string>
     <string name="wifi_send_download">ダウンロードデータを移行</string>
+    <string name="wifi_send_download_location">ダウンロードフォルダを移行</string>
+    <string name="wifi_download_dir_empty">移行可能なギャラリーフォルダが見つかりません</string>
+    <string name="wifi_download_dir_no_location">この端末にダウンロードフォルダが設定されていません</string>
+    <string name="wifi_download_dir_migrating">%1$s を移行中（%2$d/%3$d ファイル）</string>
+    <string name="wifi_download_dir_manifest_received">%1$s（%2$d/%3$d）：スキップ %4$d、転送 %5$d</string>
+    <string name="wifi_download_dir_file_done">ファイルを受信しました：%s</string>
+    <string name="wifi_download_dir_files_progress">%d 個のファイルを受信しました</string>
+    <string name="wifi_download_dir_file_failed">ファイルのチェックサム検証に失敗したため破棄しました</string>
     <string name="wifi_send_done">データの移行が完了しました</string>
     <string name="wifi_send_start">「%s」の移行を開始</string>
     <string name="wifi_send_stop">「%s」の移行を停止</string>

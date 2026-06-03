@@ -614,6 +614,14 @@
     <string name="settings_advanced_wifi_sander_summary">Migration de données via point d\'accès Wi-Fi</string>
     <string name="settings_advanced_wifi_client">Réception de données de migration Wi-Fi</string>
     <string name="settings_advanced_wifi_client_summary">Recevoir les données de migration depuis les points d\'accès Wi-Fi</string>
+    <string name="wifi_send_download_location">Migrer le répertoire de téléchargement</string>
+    <string name="wifi_download_dir_empty">Aucun dossier de galerie migrable trouvé</string>
+    <string name="wifi_download_dir_no_location">Le répertoire de téléchargement n\'est pas défini sur cet appareil</string>
+    <string name="wifi_download_dir_migrating">Migration de %1$s (%2$d/%3$d fichiers)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d) : ignorer %4$d, transférer %5$d</string>
+    <string name="wifi_download_dir_file_done">Fichier reçu : %s</string>
+    <string name="wifi_download_dir_files_progress">%d fichiers reçus</string>
+    <string name="wifi_download_dir_file_failed">Échec de la somme de contrôle du fichier, fichier ignoré</string>
 
     <string name="settings_about">À propos de l\'application</string>
     <string name="settings_about_declaration_summary">EhViewer ne s\'affilie à E-Hentai de aucune manière.</string>

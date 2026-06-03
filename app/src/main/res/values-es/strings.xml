@@ -914,6 +914,14 @@
     <string name="wifi_send_bookmark">Migrar marcadores</string>
     <string name="wifi_send_favorite">Migrar favoritos</string>
     <string name="wifi_send_download">Migrar datos de descarga</string>
+    <string name="wifi_send_download_location">Migrar directorio de descargas</string>
+    <string name="wifi_download_dir_empty">No se encontraron carpetas de galería migrables</string>
+    <string name="wifi_download_dir_no_location">No se ha configurado el directorio de descargas en este dispositivo</string>
+    <string name="wifi_download_dir_migrating">Migrando %1$s (%2$d/%3$d archivos)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): omitir %4$d, transferir %5$d</string>
+    <string name="wifi_download_dir_file_done">Archivo recibido: %s</string>
+    <string name="wifi_download_dir_files_progress">Se recibieron %d archivos</string>
+    <string name="wifi_download_dir_file_failed">Error de suma de comprobación del archivo, descartado</string>
     <string name="wifi_send_done">Migración de datos completada</string>
     <string name="wifi_send_start">Iniciar migración %s</string>
     <string name="wifi_send_stop">Detener migración %s</string>

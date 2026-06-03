@@ -777,6 +777,14 @@
     <string name="wifi_send_bookmark">Lesezeichen migrieren</string>
     <string name="wifi_send_favorite">Favoriten migrieren</string>
     <string name="wifi_send_download">Download-Daten migrieren</string>
+    <string name="wifi_send_download_location">Download-Verzeichnis migrieren</string>
+    <string name="wifi_download_dir_empty">Keine migrierbaren Galerie-Ordner gefunden</string>
+    <string name="wifi_download_dir_no_location">Auf diesem Gerät ist kein Download-Verzeichnis festgelegt</string>
+    <string name="wifi_download_dir_migrating">%1$s wird migriert (%2$d/%3$d Dateien)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): %4$d übersprungen, %5$d zu übertragen</string>
+    <string name="wifi_download_dir_file_done">Datei empfangen: %s</string>
+    <string name="wifi_download_dir_files_progress">%d Dateien empfangen</string>
+    <string name="wifi_download_dir_file_failed">Dateiprüfsumme fehlgeschlagen, verworfen</string>
     <string name="wifi_send_done">Datenmigration abgeschlossen</string>
     <string name="wifi_send_start">Migration %s starten</string>
     <string name="wifi_send_stop">Migration %s stoppen</string>

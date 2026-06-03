@@ -941,6 +941,14 @@
     <string name="wifi_send_bookmark">遷移書籤</string>
     <string name="wifi_send_favorite">遷移收藏</string>
     <string name="wifi_send_download">遷移下載數據</string>
+    <string name="wifi_send_download_location">遷移下載目錄</string>
+    <string name="wifi_download_dir_empty">未找到可遷移的畫廊文件夾</string>
+    <string name="wifi_download_dir_no_location">本機未設置下載目錄</string>
+    <string name="wifi_download_dir_migrating">正在遷移 %1$s（%2$d/%3$d 個文件）</string>
+    <string name="wifi_download_dir_manifest_received">%1$s（%2$d/%3$d）：跳過 %4$d，待傳 %5$d</string>
+    <string name="wifi_download_dir_file_done">已接收文件：%s</string>
+    <string name="wifi_download_dir_files_progress">已接收 %d 個文件</string>
+    <string name="wifi_download_dir_file_failed">文件校驗失敗，已丟棄</string>
     <string name="wifi_send_done">數據遷移完成</string>
     <string name="wifi_send_start">開始遷移 %s</string>
     <string name="wifi_send_stop">停止遷移 %s</string>

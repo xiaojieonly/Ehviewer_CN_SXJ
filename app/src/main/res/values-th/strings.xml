@@ -913,6 +913,14 @@
     <string name="wifi_send_bookmark">ย้ายบุคมาร์ก</string>
     <string name="wifi_send_favorite">ย้ายรายการโปรด</string>
     <string name="wifi_send_download">ย้ายข้อมูลดาวน์โหลด</string>
+    <string name="wifi_send_download_location">ย้ายโฟลเดอร์ดาวน์โหลด</string>
+    <string name="wifi_download_dir_empty">ไม่พบโฟลเดอร์แกลเลอรีที่ย้ายได้</string>
+    <string name="wifi_download_dir_no_location">ยังไม่ได้ตั้งค่าโฟลเดอร์ดาวน์โหลดบนอุปกรณ์นี้</string>
+    <string name="wifi_download_dir_migrating">กำลังย้าย %1$s (%2$d/%3$d ไฟล์)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): ข้าม %4$d, รอส่ง %5$d</string>
+    <string name="wifi_download_dir_file_done">รับไฟล์แล้ว: %s</string>
+    <string name="wifi_download_dir_files_progress">รับไฟล์แล้ว %d ไฟล์</string>
+    <string name="wifi_download_dir_file_failed">ตรวจสอบ checksum ไฟล์ล้มเหลว จึงถูกทิ้ง</string>
     <string name="wifi_send_done">ย้ายข้อมูลเสร็จแล้ว</string>
     <string name="wifi_send_start">เริ่มย้าย%s</string>
     <string name="wifi_send_stop">หยุดย้าย%s</string>
