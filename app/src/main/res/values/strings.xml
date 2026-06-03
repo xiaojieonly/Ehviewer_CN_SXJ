@@ -973,6 +973,14 @@
     <string name="wifi_send_bookmark">Migrate bookmarks</string>
     <string name="wifi_send_favorite">Migrate favorite</string>
     <string name="wifi_send_download">Migrate download data</string>
+    <string name="wifi_send_download_location">Migrate download directory</string>
+    <string name="wifi_download_dir_empty">No downloadable gallery folders found</string>
+    <string name="wifi_download_dir_no_location">Download directory is not set on this device</string>
+    <string name="wifi_download_dir_migrating">Migrating %1$s (%2$d/%3$d files)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): skip %4$d, transfer %5$d</string>
+    <string name="wifi_download_dir_file_done">File received: %s</string>
+    <string name="wifi_download_dir_files_progress">Received %d files</string>
+    <string name="wifi_download_dir_file_failed">File checksum failed, discarded</string>
     <string name="wifi_send_done">Migrate data done</string>
     <string name="wifi_send_start">Start Migrate%s</string>
     <string name="wifi_send_stop">Stop Migrate%s</string>

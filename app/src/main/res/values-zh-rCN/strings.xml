@@ -890,6 +890,14 @@
     <string name="wifi_send_bookmark">迁移书签</string>
     <string name="wifi_send_favorite">迁移本地收藏</string>
     <string name="wifi_send_download">迁移下载数据</string>
+    <string name="wifi_send_download_location">迁移下载目录</string>
+    <string name="wifi_download_dir_empty">未找到可迁移的画廊文件夹</string>
+    <string name="wifi_download_dir_no_location">本机未设置下载目录</string>
+    <string name="wifi_download_dir_migrating">正在迁移 %1$s（%2$d/%3$d 个文件）</string>
+    <string name="wifi_download_dir_manifest_received">%1$s（%2$d/%3$d）：跳过 %4$d，待传 %5$d</string>
+    <string name="wifi_download_dir_file_done">已接收文件：%s</string>
+    <string name="wifi_download_dir_files_progress">已接收 %d 个文件</string>
+    <string name="wifi_download_dir_file_failed">文件校验失败，已丢弃</string>
     <string name="wifi_send_done">该项数据迁移完毕</string>
     <string name="wifi_send_start">开始迁移%s</string>
     <string name="wifi_send_stop">暂停迁移%s</string>
