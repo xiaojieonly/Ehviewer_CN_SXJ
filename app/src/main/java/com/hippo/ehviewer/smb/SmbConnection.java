@@ -310,7 +310,15 @@ public final class SmbConnection {
         try {
             Method method = entry.getClass().getMethod("isDirectory");
             Object value = method.invoke(entry);
-            return value instanceof Boolean && (Boolean) value;
+            if (value instanceof Boolean) {
+                return (Boolean) value;
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            Method method = entry.getClass().getMethod("getFileAttributes");
+            Object attributes = method.invoke(entry);
+            return attributes != null && attributes.toString().contains("DIRECTORY");
         } catch (Exception e) {
             return false;
         }
