@@ -24,6 +24,15 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -36,8 +45,14 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.smb.SmbConfig;
+import com.hippo.ehviewer.smb.SmbConnection;
+import com.hippo.ehviewer.smb.SmbLoginMode;
+import com.hippo.ehviewer.smb.SmbSettings;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.DirPickerActivity;
+import com.hippo.unifile.SmbUri;
+import com.hippo.unifile.SmbUriHandler;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.yorozuya.IOUtils;
@@ -61,6 +76,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     public static final int REQUEST_CODE_PICK_IMAGE_DIR = 0;
     public static final int REQUEST_CODE_PICK_IMAGE_DIR_L = 1;
     private static final int REQUEST_CODE_PICK_DOWNLOAD_IMPORT_FILE = 2;
+    private static final int LOGIN_MODE_ANONYMOUS = 0;
+    private static final int LOGIN_MODE_PASSWORD = 1;
 
     public static final String KEY_DOWNLOAD_LOCATION = "download_location";
     public static final String KEY_EXPORT_DOWNLOAD_ITEMS = "export_download_items";
@@ -180,7 +197,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
     private void showDirPickerDialogKK() {
         new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_kk)
-                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker()).show();
+                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker())
+                .setNegativeButton(R.string.settings_download_smb, (dialog, which) -> openSmbPicker())
+                .show();
     }
 
     private void showDirPickerDialogL() {
@@ -198,6 +217,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_l)
                 .setPositiveButton(R.string.settings_download_continue, listener)
                 .setNeutralButton(R.string.settings_download_document, listener)
+                .setNegativeButton(R.string.settings_download_smb, (dialog, which) -> openSmbPicker())
                 .show();
     }
 
@@ -217,6 +237,161 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             Toast.makeText(getActivity(), R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openSmbPicker() {
+        LinearLayout layout = new LinearLayout(requireActivity());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        layout.setPadding(padding, padding, padding, padding);
+        EditText host = addSmbField(layout, R.string.settings_download_smb_host, "smb://host/share/path");
+        EditText port = addSmbField(layout, R.string.settings_download_smb_port, String.valueOf(SmbUri.DEFAULT_PORT));
+        port.setInputType(InputType.TYPE_CLASS_NUMBER);
+        EditText share = addSmbField(layout, R.string.settings_download_smb_share, "");
+        EditText path = addSmbField(layout, R.string.settings_download_smb_path, "");
+        Spinner loginMode = addSmbLoginMode(layout);
+        EditText username = addSmbField(layout, R.string.settings_download_smb_username, "");
+        EditText password = addSmbField(layout, R.string.settings_download_smb_password, "");
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        loginMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                username.setEnabled(position == LOGIN_MODE_PASSWORD);
+                password.setEnabled(position == LOGIN_MODE_PASSWORD);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_smb)
+                .setView(layout)
+                .setPositiveButton(R.string.settings_download_smb_connect, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+            String hostValue = host.getText().toString().trim();
+            String portValue = port.getText().toString().trim();
+            String shareValue = share.getText().toString().trim();
+            String pathValue = path.getText().toString().trim();
+            String usernameValue = username.getText().toString().trim();
+            String passwordValue = password.getText().toString().trim();
+            if (hostValue.isEmpty() || shareValue.isEmpty()) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int portNumber;
+            try {
+                portNumber = portValue.isEmpty() ? SmbUri.DEFAULT_PORT : Integer.parseInt(portValue);
+            } catch (NumberFormatException e) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            SmbLoginMode loginMode = spinner.getSelectedItemPosition() == LOGIN_MODE_PASSWORD
+                    ? SmbLoginMode.PASSWORD : SmbLoginMode.ANONYMOUS;
+            ProgressDialog progress = ProgressDialog.show(requireActivity(), null,
+                    getString(R.string.settings_download_smb_testing), true, false);
+            new SmbValidateTask(this, dialog, progress, hostValue, portNumber, shareValue,
+                    pathValue, loginMode, usernameValue, passwordValue).execute();
+        }));
+        dialog.show();
+    }
+
+    private EditText addSmbField(ViewGroup parent, int hintRes, String value) {
+        EditText editText = new EditText(requireActivity());
+        editText.setHint(hintRes);
+        editText.setText(value);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        editText.setLayoutParams(params);
+        parent.addView(editText);
+        return editText;
+    }
+
+    private Spinner addSmbLoginMode(ViewGroup parent) {
+        Spinner spinner = new Spinner(requireActivity());
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(requireActivity(),
+                R.array.settings_download_smb_login_modes, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        spinner.setLayoutParams(params);
+        spinner.setGravity(Gravity.START);
+        parent.addView(spinner);
+        return spinner;
+    }
+
+    private static final class SmbValidateTask extends AsyncTask<Void, Void, Throwable> {
+        private final WeakReference<DownloadFragment> fragmentRef;
+        private final AlertDialog dialog;
+        private final ProgressDialog progress;
+        private final String host;
+        private final int port;
+        private final String share;
+        private final String path;
+        private final SmbLoginMode loginMode;
+        private final String username;
+        private final String password;
+
+        private SmbValidateTask(DownloadFragment fragment, AlertDialog dialog, ProgressDialog progress,
+                String host, int port, String share, String path, SmbLoginMode loginMode,
+                String username, String password) {
+            this.fragmentRef = new WeakReference<>(fragment);
+            this.dialog = dialog;
+            this.progress = progress;
+            this.host = host;
+            this.port = port;
+            this.share = share;
+            this.path = path;
+            this.loginMode = loginMode;
+            this.username = username;
+            this.password = password;
+        }
+
+        @Override
+        protected Throwable doInBackground(Void... voids) {
+            try {
+                SmbConfig config = new SmbConfig(host, port, share, path, loginMode,
+                        loginMode == SmbLoginMode.PASSWORD ? username : null,
+                        loginMode == SmbLoginMode.PASSWORD ? password : null);
+                new SmbConnection(config).ensureDirectory(path);
+                UniFile location = new SmbUriHandler().fromUri(fragmentRef.get().requireActivity(), config.toUri().toUri());
+                if (location == null) {
+                    return new IllegalStateException("SMB location is unavailable");
+                }
+                UniFile marker = location.createFile(".ehviewer-smb-test");
+                if (marker == null) {
+                    return new IllegalStateException("SMB location is not writable");
+                }
+                marker.delete();
+                new SmbSettings(fragmentRef.get().requireContext()).saveConfig(config);
+                Settings.putDownloadLocation(location);
+                fragmentRef.get().onUpdateDownloadLocation();
+                return null;
+            } catch (Throwable e) {
+                return e;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Throwable throwable) {
+            progress.dismiss();
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || !fragment.isAdded()) {
+                return;
+            }
+            if (throwable == null) {
+                dialog.dismiss();
+                Toast.makeText(fragment.requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(fragment.requireActivity(), R.string.settings_download_smb_connect_failed, Toast.LENGTH_LONG).show();
+            }
         }
     }
 
