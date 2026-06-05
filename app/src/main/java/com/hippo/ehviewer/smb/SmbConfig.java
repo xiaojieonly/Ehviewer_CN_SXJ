@@ -33,11 +33,11 @@ public final class SmbConfig {
 
     public SmbConfig(@NonNull String host, int port, @NonNull String share, @Nullable String path,
             @NonNull SmbLoginMode loginMode, @Nullable String username, @Nullable String password) {
-        SmbUri.create(host, port, share, path);
-        this.host = host.trim();
-        this.port = port;
-        this.share = share.trim();
-        this.path = SmbUri.create(host, port, share, path).getPath();
+        SmbUri uri = SmbUri.create(host, port, share, path);
+        this.host = uri.getHost();
+        this.port = uri.getPort();
+        this.share = uri.getShare();
+        this.path = uri.getPath();
         this.loginMode = loginMode;
         this.username = username == null ? "" : username.trim();
         this.password = password == null ? "" : password;

@@ -50,13 +50,13 @@ public final class SmbSettings {
         int port = preferences.getInt(KEY_PORT, SmbUri.DEFAULT_PORT);
         String share = preferences.getString(KEY_SHARE, "");
         String path = preferences.getString(KEY_PATH, "");
-        SmbLoginMode loginMode = SmbLoginMode.valueOf(preferences.getString(KEY_LOGIN_MODE, SmbLoginMode.ANONYMOUS.name()));
         String username = preferences.getString(KEY_USERNAME, "");
         String password = credentialStore.load(preferences.getString(KEY_PASSWORD, ""));
         if (TextUtils.isEmpty(host) || TextUtils.isEmpty(share)) {
             return null;
         }
         try {
+            SmbLoginMode loginMode = SmbLoginMode.valueOf(preferences.getString(KEY_LOGIN_MODE, SmbLoginMode.ANONYMOUS.name()));
             return new SmbConfig(host, port, share, path, loginMode,
                     TextUtils.isEmpty(username) ? null : username,
                     TextUtils.isEmpty(password) ? null : password);
