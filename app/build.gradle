@@ -170,6 +170,7 @@ dependencies {
     implementation 'org.greenrobot:greendao:3.0.0'
     // 1.18.x 在部分 Android 运行环境上出现 NoClassDefFoundError(org.jsoup.parser.Tag)
     // 回退到 Android 侧更稳定的版本，避免运行时缺类
+    implementation 'com.hierynomus:smbj:0.12.0'
     implementation 'org.jsoup:jsoup:1.15.4'
 
     // Glide 图片加载库
