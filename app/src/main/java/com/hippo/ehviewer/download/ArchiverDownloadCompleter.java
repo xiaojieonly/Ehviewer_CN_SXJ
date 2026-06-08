@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -75,6 +76,9 @@ public class ArchiverDownloadCompleter {
     }
 
     public static void resumePendingDownloads(Context context) {
+        if ("robolectric".equals(Build.FINGERPRINT)) {
+            return;
+        }
         ArchiverDownloadCompleter completer = getInstance(context);
         if (completer == null) {
             return;

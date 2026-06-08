@@ -25,6 +25,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -250,11 +251,11 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         port.setInputType(InputType.TYPE_CLASS_NUMBER);
         EditText share = addSmbField(layout, R.string.settings_download_smb_share, "");
         EditText path = addSmbField(layout, R.string.settings_download_smb_path, "");
-        Spinner loginMode = addSmbLoginMode(layout);
+        Spinner loginModeSpinner = addSmbLoginMode(layout);
         EditText username = addSmbField(layout, R.string.settings_download_smb_username, "");
         EditText password = addSmbField(layout, R.string.settings_download_smb_password, "");
         password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        loginMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        loginModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 username.setEnabled(position == LOGIN_MODE_PASSWORD);
@@ -290,7 +291,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
                 return;
             }
-            SmbLoginMode loginMode = spinner.getSelectedItemPosition() == LOGIN_MODE_PASSWORD
+            SmbLoginMode loginMode = loginModeSpinner.getSelectedItemPosition() == LOGIN_MODE_PASSWORD
                     ? SmbLoginMode.PASSWORD : SmbLoginMode.ANONYMOUS;
             ProgressDialog progress = ProgressDialog.show(requireActivity(), null,
                     getString(R.string.settings_download_smb_testing), true, false);
@@ -360,23 +361,31 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 SmbConfig config = new SmbConfig(host, port, share, path, loginMode,
                         loginMode == SmbLoginMode.PASSWORD ? username : null,
                         loginMode == SmbLoginMode.PASSWORD ? password : null);
-                new SmbConnection(config).ensureDirectory(path);
-                UniFile location = new SmbUriHandler().fromUri(fragmentRef.get().requireActivity(), config.toUri().toUri());
+                SmbConnection connection = new SmbConnection(config);
+                connection.ensureDirectory(path);
+                String markerPath = markerPath(path);
+                try (OutputStream marker = connection.openOutputStream(markerPath, false)) {
+                }
+                connection.delete(markerPath);
+                DownloadFragment fragment = fragmentRef.get();
+                if (fragment == null) {
+                    return new IllegalStateException("Download settings are unavailable");
+                }
+                new SmbSettings(fragment.requireContext()).saveConfig(config);
+                UniFile location = new SmbUriHandler().fromUri(fragment.requireActivity(), config.toUri().toUri());
                 if (location == null) {
                     return new IllegalStateException("SMB location is unavailable");
                 }
-                UniFile marker = location.createFile(".ehviewer-smb-test");
-                if (marker == null) {
-                    return new IllegalStateException("SMB location is not writable");
-                }
-                marker.delete();
-                new SmbSettings(fragmentRef.get().requireContext()).saveConfig(config);
                 Settings.putDownloadLocation(location);
-                fragmentRef.get().onUpdateDownloadLocation();
+                fragment.onUpdateDownloadLocation();
                 return null;
             } catch (Throwable e) {
                 return e;
             }
+        }
+
+        private static String markerPath(String path) {
+            return TextUtils.isEmpty(path) ? ".ehviewer-smb-test" : path + "/.ehviewer-smb-test";
         }
 
         @Override

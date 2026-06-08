@@ -23,7 +23,12 @@ import static org.junit.Assert.assertTrue;
 import android.net.Uri;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
+@Config(sdk = 30)
+@RunWith(RobolectricTestRunner.class)
 public class SmbUriTest {
 
     @Test

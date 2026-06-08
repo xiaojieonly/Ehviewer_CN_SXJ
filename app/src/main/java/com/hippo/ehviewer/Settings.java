@@ -69,7 +69,6 @@ public class Settings {
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
         sArchiverPre = context.getSharedPreferences("archiver_cache",Context.MODE_PRIVATE);
         sEhConfig = loadEhConfig();
-        new SmbSettings(context);
         UniFile.addUriHandler(new SmbUriHandler());
         if (getDarkModeStatus(context) && isThemeAutoSwitchAvailable()) {
             putTheme(THEME_DARK);

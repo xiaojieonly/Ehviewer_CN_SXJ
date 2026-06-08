@@ -30,7 +30,6 @@ import com.hippo.ehviewer.smb.SmbConnection.SmbEntry;
 import com.hippo.ehviewer.smb.SmbSettings;
 
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -106,7 +105,7 @@ public final class SmbUniFile extends UniFile {
     public String getType() {
         try {
             return connection().mimeType(mSmbUri.getPath());
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             return null;
         }
     }

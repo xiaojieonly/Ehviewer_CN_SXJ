@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.util.Base64;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -70,12 +71,12 @@ public final class SmbCredentialStore {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
             byte[] iv = cipher.getIV();
-            byte[] encrypted = cipher.doFinal(password.getBytes("UTF-8"));
+            byte[] encrypted = cipher.doFinal(password.getBytes(StandardCharsets.UTF_8));
             byte[] combined = new byte[iv.length + encrypted.length];
             System.arraycopy(iv, 0, combined, 0, iv.length);
             System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
             return Base64.encodeToString(combined, Base64.NO_WRAP);
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (GeneralSecurityException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -95,7 +96,7 @@ public final class SmbCredentialStore {
             System.arraycopy(combined, GCM_IV_LENGTH_BYTES, encrypted, 0, encrypted.length);
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
-            return new String(cipher.doFinal(encrypted), "UTF-8");
+            return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException | IllegalArgumentException e) {
             return "";
         }
