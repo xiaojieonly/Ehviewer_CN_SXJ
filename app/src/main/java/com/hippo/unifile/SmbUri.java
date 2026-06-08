@@ -124,6 +124,10 @@ public final class SmbUri {
         if (port < 0) {
             port = DEFAULT_PORT;
         }
+        String rawPath = uri.getEncodedPath();
+        if (rawPath.contains("/../") || rawPath.startsWith("../") || rawPath.endsWith("/..")) {
+            return null;
+        }
         List<String> segments = uri.getPathSegments();
         if (segments.isEmpty()) {
             return null;

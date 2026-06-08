@@ -19,12 +19,12 @@ package com.hippo.ehviewer.smb;
 import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
-import com.hierynomus.msfscc.FileAccessRight;
+import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.msfscc.FileAttributes;
 import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;
 import com.hierynomus.mssmb2.SMB2ShareAccess;
-import com.hierynomus.smbj.SmbClient;
+import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.auth.AuthenticationContext;
 import com.hierynomus.smbj.connection.Connection;
 import com.hierynomus.smbj.session.Session;
@@ -35,14 +35,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
 public final class SmbConnection {
 
-    private static final EnumSet<FileAccessRight> READ_WRITE_ACCESS = EnumSet.of(FileAccessRight.GENERIC_ALL);
+    private static final EnumSet<AccessMask> READ_WRITE_ACCESS = EnumSet.of(AccessMask.GENERIC_ALL);
     private static final EnumSet<FileAttributes> NORMAL_ATTRIBUTES = EnumSet.of(FileAttributes.FILE_ATTRIBUTE_NORMAL);
     private static final EnumSet<SMB2ShareAccess> SHARE_ACCESS = EnumSet.of(
             SMB2ShareAccess.FILE_SHARE_READ,
@@ -53,19 +52,6 @@ public final class SmbConnection {
 
     public SmbConnection(SmbConfig config) {
         this.config = config;
-    }
-
-    public List<String> listShares() throws IOException {
-        SmbClient client = new SmbClient();
-        Connection connection = null;
-        try {
-            connection = client.connect(config.getHost(), config.getPort());
-            Session session = connection.authenticate(authenticationContext());
-            return client.listShares(config.getHost(), session);
-        } finally {
-            closeQuietly(connection);
-            client.close();
-        }
     }
 
     public List<SmbEntry> list(String path) throws IOException {
@@ -161,9 +147,9 @@ public final class SmbConnection {
         File file = null;
         try {
             file = openFile(share, path, append ? SMB2CreateDisposition.FILE_OPEN : SMB2CreateDisposition.FILE_OPEN_IF);
-            OutputStream stream = file.openOutputStream(append);
+            OutputStream stream = file.getOutputStream(append);
             return new SmbOutputStream(stream, file, share);
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             closeQuietly(file);
             share.close();
             throw e;
@@ -175,9 +161,9 @@ public final class SmbConnection {
         File file = null;
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN);
-            InputStream stream = file.openInputStream();
+            InputStream stream = file.getInputStream();
             return new SmbInputStream(stream, file, share);
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             closeQuietly(file);
             share.close();
             throw e;
@@ -195,7 +181,7 @@ public final class SmbConnection {
                 for (SmbEntry entry : listEntries(share, smbPath)) {
                     delete(share, joinSmbPath(smbPath, entry.getName()));
                 }
-                share.rmdir(smbPath);
+                share.rmdir(smbPath, true);
             } else if (share.fileExists(smbPath)) {
                 share.rm(smbPath);
             } else {
@@ -209,12 +195,15 @@ public final class SmbConnection {
 
     public boolean rename(String path, String displayName) throws IOException {
         DiskShare share = openShare();
+        File file = null;
         try {
+            file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN);
             String parent = parentPath(path);
             String target = joinSmbPath(parent, displayName);
-            share.rename(normalizeSmbPath(path), target);
+            file.rename(target, false);
             return true;
         } finally {
+            closeQuietly(file);
             share.close();
         }
     }
@@ -226,14 +215,7 @@ public final class SmbConnection {
             if (TextUtils.isEmpty(smbPath)) {
                 return -1L;
             }
-            String parent = parentPath(smbPath);
-            String name = name(smbPath);
-            for (FileIdBothDirectoryInformation entry : listEntries(share, parent)) {
-                if (name.equals(entry.getFileName()) && !isDirectory(entry)) {
-                    return entry.getEndOfFile();
-                }
-            }
-            return -1L;
+            return share.getFileInformation(smbPath).getStandardInformation().getEndOfFile();
         } finally {
             share.close();
         }
@@ -253,7 +235,7 @@ public final class SmbConnection {
     }
 
     private DiskShare openShare() throws IOException {
-        SmbClient client = new SmbClient();
+        SMBClient client = new SMBClient();
         Connection connection = null;
         try {
             connection = client.connect(config.getHost(), config.getPort());
@@ -261,17 +243,16 @@ public final class SmbConnection {
             return (DiskShare) session.connectShare(config.getShare());
         } catch (IOException | RuntimeException e) {
             closeQuietly(connection);
-            client.close();
+            closeQuietly(client);
             throw e;
         }
     }
 
     private AuthenticationContext authenticationContext() {
         if (config.getLoginMode() == SmbLoginMode.PASSWORD) {
-            char[] password = config.getPassword().toCharArray();
-            return new AuthenticationContext(config.getUsername(), password, password.length);
+            return new AuthenticationContext(config.getUsername(), config.getPassword().toCharArray(), "");
         }
-        return new AuthenticationContext("", new char[0], 0);
+        return AuthenticationContext.anonymous();
     }
 
     private File openFile(DiskShare share, String path, SMB2CreateDisposition disposition) {
@@ -290,7 +271,7 @@ public final class SmbConnection {
                 }
             }
             return results;
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             return new ArrayList<>();
         }
     }
@@ -300,7 +281,7 @@ public final class SmbConnection {
             for (SmbEntry entry : listEntries(share, path)) {
                 delete(share, joinSmbPath(path, entry.getName()));
             }
-            share.rmdir(path);
+            share.rmdir(path, true);
         } else if (share.fileExists(path)) {
             share.rm(path);
         }
@@ -308,17 +289,7 @@ public final class SmbConnection {
 
     private boolean isDirectory(FileIdBothDirectoryInformation entry) {
         try {
-            Method method = entry.getClass().getMethod("isDirectory");
-            Object value = method.invoke(entry);
-            if (value instanceof Boolean) {
-                return (Boolean) value;
-            }
-        } catch (Exception ignored) {
-        }
-        try {
-            Method method = entry.getClass().getMethod("getFileAttributes");
-            Object attributes = method.invoke(entry);
-            return attributes != null && attributes.toString().contains("DIRECTORY");
+            return (entry.getFileAttributes() & FileAttributes.FILE_ATTRIBUTE_DIRECTORY.getValue()) != 0;
         } catch (Exception e) {
             return false;
         }
@@ -359,8 +330,15 @@ public final class SmbConnection {
 
     private static void closeQuietly(Connection connection) {
         if (connection != null) {
-            connection.close();
+            try {
+                connection.close();
+            } catch (IOException ignored) {
+            }
         }
+    }
+
+    private static void closeQuietly(SMBClient client) {
+        client.close();
     }
 
     private static void closeQuietly(File file) {
