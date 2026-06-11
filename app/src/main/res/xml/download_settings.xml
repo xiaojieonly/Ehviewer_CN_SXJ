@@ -111,4 +111,23 @@
         android:title="@string/settings_download_clean_invalid_download"
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="smb_backup_enabled"
+        android:summary="@string/settings_download_smb_backup_summary"
+        android:title="@string/settings_download_smb_backup"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="smb_backup_configure"
+        android:summary="@string/settings_download_smb_backup_not_configured"
+        android:title="@string/settings_download_smb_backup_configure"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="smb_backup_sync_all"
+        android:title="@string/settings_download_smb_backup_sync_all"
+        app:iconSpaceReserved="false" />
 </PreferenceScreen>

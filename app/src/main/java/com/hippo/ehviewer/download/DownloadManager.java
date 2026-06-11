@@ -1274,6 +1274,14 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     info.legacy = mTotal - mFinished;
                     if (info.legacy == 0) {
                         info.state = DownloadInfo.STATE_FINISH;
+                        // Trigger SMB backup if enabled and download location is local
+                        UniFile downloadLoc = Settings.getDownloadLocation();
+                        if (downloadLoc != null) {
+                            Uri locUri = downloadLoc.getUri();
+                            if (locUri == null || !"smb".equals(locUri.getScheme())) {
+                                new com.hippo.ehviewer.smb.SmbBackupManager(mContext).syncGalleryToBackup(info);
+                            }
+                        }
                     } else {
                         info.state = DownloadInfo.STATE_FAILED;
                     }
