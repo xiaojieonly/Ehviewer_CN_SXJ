@@ -241,6 +241,11 @@
             android:configChanges="screenSize|uiMode"
             android:label="@string/wifi_client"
             android:theme="@style/AppTheme.Toolbar" />
+        <activity
+            android:name=".ui.SmbPickerActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/smb_picker_title"
+            android:theme="@style/AppTheme.Toolbar" />
 
         <service
             android:name=".download.DownloadService"
