@@ -234,6 +234,69 @@ public final class SmbConnection {
         return "application/octet-stream";
     }
 
+    public List<String> listShareNames() throws IOException {
+        List<String> result = new ArrayList<>();
+        DiskShare share = openShare();
+        try {
+            List<FileIdBothDirectoryInformation> entries = share.list("");
+            for (FileIdBothDirectoryInformation entry : entries) {
+                String entryName = entry.getFileName();
+                if (".".equals(entryName) || "..".equals(entryName)) {
+                    continue;
+                }
+                try {
+                    if ((entry.getFileAttributes() & FileAttributes.FILE_ATTRIBUTE_DIRECTORY.getValue()) != 0) {
+                        result.add(entryName);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception e) {
+            throw new IOException("Failed to list shares", e);
+        } finally {
+            share.close();
+        }
+        return result;
+    }
+
+    public List<String> listShareNamesFromServer() throws IOException {
+        List<String> result = new ArrayList<>();
+        SMBClient client = new SMBClient();
+        Connection connection = null;
+        Session session = null;
+        try {
+            connection = client.connect(config.getHost(), config.getPort());
+            session = connection.authenticate(authenticationContext());
+            for (String name : new String[]{
+                    "IPC$", "ADMIN$", "C$", "D$",
+                    "public", "share", "homes", "data", "media", "shared",
+                    "smb", "nas", "storage", "backup", "downloads"
+            }) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    com.hierynomus.smbj.share.DiskShare testShare =
+                            (com.hierynomus.smbj.share.DiskShare) session.connectShare(name);
+                    testShare.close();
+                    result.add(name);
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            if (session != null) {
+                try { session.close(); } catch (Exception ignored) {}
+            }
+            closeQuietly(connection);
+            closeQuietly(client);
+        }
+        result.remove("IPC$");
+        result.remove("ADMIN$");
+        result.remove("C$");
+        result.remove("D$");
+        return result;
+    }
+
     private DiskShare openShare() throws IOException {
         SMBClient client = new SMBClient();
         Connection connection = null;
