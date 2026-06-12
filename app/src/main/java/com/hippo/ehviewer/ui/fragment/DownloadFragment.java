@@ -1148,10 +1148,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         private String mFileName = "";
         private int mFileCurrent = 0;
         private int mFileTotal = 0;
-        private long mBytesTotal = 0;
         private long mSpeedBps = 0;
-        private long mSpeedStartBytes = 0;
-        private long mSpeedStartTime = 0;
+        private long mSpeedBytes = 0;
+        private long mSpeedStart = 0;
+        private boolean mBackgroundRequested = false;
 
         private SmbBackupSyncAllTask(DownloadFragment fragment) {
             this.fragmentRef = new WeakReference<>(fragment);
@@ -1165,8 +1165,11 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             progress.setTitle(R.string.settings_download_smb_backup_syncing);
             progress.setMessage(fragment.getString(R.string.settings_download_smb_backup_scanning));
             progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progress.setCancelable(true);
-            progress.setOnCancelListener(d -> cancelled = true);
+            progress.setCancelable(false);
+            progress.setButton(DialogInterface.BUTTON_POSITIVE, fragment.getString(R.string.smb_picker_background_backup),
+                    (d, w) -> { mBackgroundRequested = true; cancelled = true; });
+            progress.setButton(DialogInterface.BUTTON_NEGATIVE, fragment.getString(android.R.string.cancel),
+                    (d, w) -> cancelled = true);
             progress.show();
         }
 
@@ -1189,14 +1192,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             int total = localDirs.length;
             int successCount = 0;
             int failCount = 0;
-            long totalBytes = 0;
-            long speedBytes = 0;
-            long speedStart = System.currentTimeMillis();
 
             SmbConnection connection = new SmbConnection(config);
             try {
                 connection.open();
                 String basePath = config.getPath();
+                mSpeedStart = System.currentTimeMillis();
                 publishProgress(0, total);
 
                 for (int i = 0; i < total; i++) {
@@ -1238,22 +1239,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                     mFileName = name;
                                     mFileCurrent = ++fileIdx;
                                     publishProgress(i + 1, total);
-                                    long fileLen = file.length();
-                                    try (InputStream is = file.openInputStream()) {
-                                        byte[] buf = new byte[8192];
-                                        int n;
-                                        while ((n = is.read(buf)) != -1) {
-                                            connection.writeFile(filePath, is);
-                                            speedBytes += n;
-                                            totalBytes += n;
-                                        }
-                                    }
-                                    long now = System.currentTimeMillis();
-                                    long elapsed = now - speedStart;
-                                    if (elapsed > 1000) {
-                                        mSpeedBps = speedBytes * 1000 / elapsed;
-                                        speedBytes = 0;
-                                        speedStart = now;
+                                    try (InputStream raw = file.openInputStream();
+                                         CountingInputStream cis = new CountingInputStream(raw)) {
+                                        connection.writeFile(filePath, cis);
+                                        mSpeedBytes += cis.getCount();
                                     }
                                 }
                             }
@@ -1261,6 +1250,14 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         successCount++;
                     } catch (Exception e) {
                         failCount++;
+                    }
+
+                    long now = System.currentTimeMillis();
+                    long elapsed = now - mSpeedStart;
+                    if (elapsed > 1000) {
+                        mSpeedBps = mSpeedBytes * 1000 / elapsed;
+                        mSpeedBytes = 0;
+                        mSpeedStart = now;
                     }
                 }
             } catch (Exception e) {
@@ -1315,6 +1312,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             }
             DownloadFragment fragment = fragmentRef.get();
             if (fragment == null || fragment.getActivity() == null) return;
+            if (mBackgroundRequested) {
+                Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_syncing, Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (result[0] > 0 || result[1] > 0) {
                 Toast.makeText(fragment.getActivity(),
                         fragment.getString(R.string.settings_download_smb_backup_sync_done, result[0], result[1]),
@@ -1322,6 +1323,27 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             } else {
                 Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_sync_failed, Toast.LENGTH_SHORT).show();
             }
+        }
+
+        private static class CountingInputStream extends InputStream {
+            private final InputStream delegate;
+            private long count = 0;
+
+            CountingInputStream(InputStream delegate) { this.delegate = delegate; }
+
+            long getCount() { return count; }
+
+            @Override public int read() throws IOException {
+                int b = delegate.read();
+                if (b >= 0) count++;
+                return b;
+            }
+            @Override public int read(byte[] b, int off, int len) throws IOException {
+                int n = delegate.read(b, off, len);
+                if (n > 0) count += n;
+                return n;
+            }
+            @Override public void close() throws IOException { delegate.close(); }
         }
     }
 }
