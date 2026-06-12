@@ -706,6 +706,8 @@
     <string name="smb_picker_new_folder_hint">文件夹名称</string>
     <string name="smb_picker_select_here">选择当前目录</string>
     <string name="smb_picker_background_backup">后台备份</string>
+    <string name="smb_backup_service_name">SMB 备份服务</string>
+    <string name="smb_backup_service_desc">正在将下载内容同步到 SMB 服务器</string>
     <string name="settings_download_continue">Continue</string>
     <string name="settings_download_media_scan">Allow media scan</string>
     <string name="settings_download_media_scan_summary_on">Please hide your gallery apps away from other people</string>
