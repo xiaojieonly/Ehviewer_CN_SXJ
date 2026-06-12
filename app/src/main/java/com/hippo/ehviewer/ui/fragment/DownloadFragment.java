@@ -1158,7 +1158,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             progress = new ProgressDialog(fragment.getActivity());
             progress.setTitle(R.string.settings_download_smb_backup_syncing);
             progress.setMessage(fragment.getString(R.string.settings_download_smb_backup_scanning));
-            progress.setIndeterminate(true);
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progress.setCancelable(true);
             progress.setOnCancelListener(d -> cancelled = true);
             progress.show();
@@ -1199,6 +1199,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             try {
                 connection.open();
                 String basePath = config.getPath();
+                publishProgress(0, total, 0);
 
                 for (int i = 0; i < total; i++) {
                     if (cancelled) break;
@@ -1269,6 +1270,22 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_sync_failed, Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            if (progress != null && values.length >= 3) {
+                int current = values[0];
+                int total = values[1];
+                if (progress.getMax() != total) {
+                    progress.setMax(total);
+                }
+                progress.setProgress(current);
+                String msg = String.format(Locale.US, "%s (%d/%d)",
+                        progress.getContext().getString(R.string.settings_download_smb_backup_syncing),
+                        current, total);
+                progress.setMessage(msg);
             }
         }
     }
