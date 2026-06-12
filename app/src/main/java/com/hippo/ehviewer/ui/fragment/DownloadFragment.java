@@ -583,8 +583,11 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             if (backupSettings.isEnabled()) {
                 SmbConfig config = backupSettings.loadConfig();
                 if (config != null) {
-                    String summary = getString(R.string.settings_download_smb_backup_configured,
-                            config.getHost() + "/" + config.getShare());
+                    String display = config.getHost() + ":" + config.getPort() + "/" + config.getShare();
+                    if (!config.getPath().isEmpty()) {
+                        display += "/" + config.getPath();
+                    }
+                    String summary = getString(R.string.settings_download_smb_backup_configured, display);
                     mSmbBackupConfigure.setSummary(summary);
                 } else {
                     mSmbBackupConfigure.setSummary(R.string.settings_download_smb_backup_not_configured);
@@ -685,14 +688,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
     private void showSmbFolderBrowser(String host, int port, SmbLoginMode loginMode,
             String username, String password, String share) {
+        browseSmbFolder(host, port, loginMode, username, password, share, "");
+    }
+
+    private void browseSmbFolder(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, String currentPath) {
         ProgressDialog progress = ProgressDialog.show(requireActivity(), null,
                 getString(R.string.settings_download_smb_testing), true, false);
+        String pathToShow = currentPath.isEmpty() ? "/" : currentPath;
         new AsyncTask<Void, Void, List<String>>() {
             String error;
             @Override
             protected List<String> doInBackground(Void... voids) {
                 try {
-                    SmbConfig cfg = new SmbConfig(host, port, share, "", loginMode,
+                    SmbConfig cfg = new SmbConfig(host, port, share, currentPath, loginMode,
                             loginMode == SmbLoginMode.PASSWORD ? username : null,
                             loginMode == SmbLoginMode.PASSWORD ? password : null);
                     return new SmbConnection(cfg).listShareNames();
@@ -716,17 +725,26 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 }
                 java.util.Collections.sort(folders, String.CASE_INSENSITIVE_ORDER);
 
-                CharSequence[] items = new CharSequence[folders.size() + 1];
-                for (int i = 0; i < folders.size(); i++) items[i] = folders.get(i);
-                items[folders.size()] = getString(R.string.smb_picker_new_folder);
+                int total = folders.size() + 2;
+                CharSequence[] items = new CharSequence[total];
+                items[0] = getString(R.string.smb_picker_select_here);
+                for (int i = 0; i < folders.size(); i++) {
+                    items[i + 1] = folders.get(i);
+                }
+                items[total - 1] = getString(R.string.smb_picker_new_folder);
 
+                String title = "//" + host + ":" + port + "/" + share + pathToShow;
                 new AlertDialog.Builder(requireActivity())
-                        .setTitle(R.string.settings_download_smb_path)
+                        .setTitle(title)
                         .setItems(items, (dialog, which) -> {
-                            if (which < folders.size()) {
-                                saveSmbBackupConfig(host, port, loginMode, username, password, share, folders.get(which));
+                            if (which == 0) {
+                                saveSmbBackupConfig(host, port, loginMode, username, password, share, currentPath);
+                            } else if (which <= folders.size()) {
+                                String selected = folders.get(which - 1);
+                                String nextPath = currentPath.isEmpty() ? selected : currentPath + "/" + selected;
+                                browseSmbFolder(host, port, loginMode, username, password, share, nextPath);
                             } else {
-                                showNewFolderDialog(host, port, loginMode, username, password, share);
+                                showNewFolderDialog(host, port, loginMode, username, password, share, currentPath);
                             }
                         })
                         .setNegativeButton(android.R.string.cancel, null)
@@ -736,7 +754,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     }
 
     private void showNewFolderDialog(String host, int port, SmbLoginMode loginMode,
-            String username, String password, String share) {
+            String username, String password, String share, String currentPath) {
         EditText input = new EditText(requireActivity());
         input.setHint(R.string.smb_picker_new_folder_hint);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -752,7 +770,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    saveSmbBackupConfig(host, port, loginMode, username, password, share, folderName);
+                    String newPath = currentPath.isEmpty() ? folderName : currentPath + "/" + folderName;
+                    saveSmbBackupConfig(host, port, loginMode, username, password, share, newPath);
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
