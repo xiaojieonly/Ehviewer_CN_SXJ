@@ -1144,6 +1144,14 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         private final WeakReference<DownloadFragment> fragmentRef;
         private ProgressDialog progress;
         private volatile boolean cancelled;
+        private String mGalleryName = "";
+        private String mFileName = "";
+        private int mFileCurrent = 0;
+        private int mFileTotal = 0;
+        private long mBytesTotal = 0;
+        private long mSpeedBps = 0;
+        private long mSpeedStartBytes = 0;
+        private long mSpeedStartTime = 0;
 
         private SmbBackupSyncAllTask(DownloadFragment fragment) {
             this.fragmentRef = new WeakReference<>(fragment);
@@ -1152,9 +1160,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         @Override
         protected void onPreExecute() {
             DownloadFragment fragment = fragmentRef.get();
-            if (fragment == null || fragment.getActivity() == null) {
-                return;
-            }
+            if (fragment == null || fragment.getActivity() == null) return;
             progress = new ProgressDialog(fragment.getActivity());
             progress.setTitle(R.string.settings_download_smb_backup_syncing);
             progress.setMessage(fragment.getString(R.string.settings_download_smb_backup_scanning));
@@ -1167,39 +1173,31 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         @Override
         protected int[] doInBackground(Void... voids) {
             DownloadFragment fragment = fragmentRef.get();
-            if (fragment == null || fragment.getActivity() == null) {
-                return new int[]{0, 0};
-            }
+            if (fragment == null || fragment.getActivity() == null) return new int[]{0, 0};
 
             SmbBackupSettings backupSettings = new SmbBackupSettings(fragment.requireContext());
             SmbConfig config = backupSettings.loadConfigIfEnabled();
-            if (config == null) {
-                return new int[]{0, 0};
-            }
+            if (config == null) return new int[]{0, 0};
 
             UniFile localDir = Settings.getDownloadLocation();
-            if (localDir == null || !localDir.isDirectory()) {
-                return new int[]{0, 0};
-            }
-
-            if (localDir.getUri() != null && "smb".equals(localDir.getUri().getScheme())) {
-                return new int[]{0, 0};
-            }
+            if (localDir == null || !localDir.isDirectory()) return new int[]{0, 0};
+            if (localDir.getUri() != null && "smb".equals(localDir.getUri().getScheme())) return new int[]{0, 0};
 
             UniFile[] localDirs = localDir.listFiles();
-            if (localDirs == null || localDirs.length == 0) {
-                return new int[]{0, 0};
-            }
+            if (localDirs == null || localDirs.length == 0) return new int[]{0, 0};
 
             int total = localDirs.length;
             int successCount = 0;
             int failCount = 0;
+            long totalBytes = 0;
+            long speedBytes = 0;
+            long speedStart = System.currentTimeMillis();
 
             SmbConnection connection = new SmbConnection(config);
             try {
                 connection.open();
                 String basePath = config.getPath();
-                publishProgress(0, total, 0);
+                publishProgress(0, total);
 
                 for (int i = 0; i < total; i++) {
                     if (cancelled) break;
@@ -1208,13 +1206,25 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     String dirname = dir.getName();
                     if (dirname == null || dirname.startsWith(".")) continue;
 
-                    publishProgress(i + 1, total, 0);
+                    mGalleryName = dirname;
+                    mFileName = "";
+                    mFileCurrent = 0;
+                    mFileTotal = 0;
+                    publishProgress(i + 1, total);
+
                     try {
                         String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
                         connection.ensureDirectory(galleryPath);
 
                         UniFile[] files = dir.listFiles();
                         if (files != null) {
+                            int fileCount = 0;
+                            for (UniFile f : files) {
+                                if (f != null && f.getName() != null && !f.getName().startsWith(".")) fileCount++;
+                            }
+                            mFileTotal = fileCount;
+                            int fileIdx = 0;
+
                             for (int j = 0; j < files.length; j++) {
                                 if (cancelled) break;
                                 UniFile file = files[j];
@@ -1225,9 +1235,25 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                 } else {
                                     String filePath = galleryPath + "/" + name;
                                     if (connection.exists(filePath) && connection.length(filePath) == file.length()) continue;
-                                    publishProgress(i + 1, total, j + 1);
+                                    mFileName = name;
+                                    mFileCurrent = ++fileIdx;
+                                    publishProgress(i + 1, total);
+                                    long fileLen = file.length();
                                     try (InputStream is = file.openInputStream()) {
-                                        connection.writeFile(filePath, is);
+                                        byte[] buf = new byte[8192];
+                                        int n;
+                                        while ((n = is.read(buf)) != -1) {
+                                            connection.writeFile(filePath, is);
+                                            speedBytes += n;
+                                            totalBytes += n;
+                                        }
+                                    }
+                                    long now = System.currentTimeMillis();
+                                    long elapsed = now - speedStart;
+                                    if (elapsed > 1000) {
+                                        mSpeedBps = speedBytes * 1000 / elapsed;
+                                        speedBytes = 0;
+                                        speedStart = now;
                                     }
                                 }
                             }
@@ -1247,45 +1273,54 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
 
         @Override
+        protected void onProgressUpdate(Integer... values) {
+            if (progress == null || values.length < 2) return;
+            int current = values[0];
+            int total = values[1];
+            if (progress.getMax() != total) progress.setMax(total);
+            progress.setProgress(current);
+
+            StringBuilder msg = new StringBuilder();
+            msg.append(progress.getContext().getString(R.string.settings_download_smb_backup_syncing));
+            msg.append(String.format(Locale.US, " (%d/%d)", current, total));
+            if (!mGalleryName.isEmpty()) {
+                msg.append("\n").append(mGalleryName);
+                if (mFileTotal > 0) {
+                    msg.append(String.format(Locale.US, " (%d/%d)", mFileCurrent, mFileTotal));
+                }
+            }
+            if (!mFileName.isEmpty()) {
+                msg.append("\n").append(mFileName);
+            }
+            if (mSpeedBps > 0) {
+                if (mSpeedBps > 1024 * 1024) {
+                    msg.append(String.format(Locale.US, "\n%.1f MB/s", mSpeedBps / (1024.0 * 1024.0)));
+                } else if (mSpeedBps > 1024) {
+                    msg.append(String.format(Locale.US, "\n%.1f KB/s", mSpeedBps / 1024.0));
+                } else {
+                    msg.append(String.format(Locale.US, "\n%d B/s", mSpeedBps));
+                }
+            }
+            progress.setMessage(msg.toString());
+        }
+
+        @Override
         protected void onPostExecute(int[] result) {
-            DownloadFragment fragment = fragmentRef.get();
             if (progress != null) {
+                DownloadFragment fragment = fragmentRef.get();
                 if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
-                    try {
-                        if (progress.isShowing()) {
-                            progress.dismiss();
-                        }
-                    } catch (IllegalArgumentException e) {
-                        ExceptionUtils.throwIfFatal(e);
-                    }
+                    try { if (progress.isShowing()) progress.dismiss(); } catch (Exception ignored) {}
                 }
                 progress = null;
             }
-            if (fragment == null || fragment.getActivity() == null) {
-                return;
-            }
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
             if (result[0] > 0 || result[1] > 0) {
                 Toast.makeText(fragment.getActivity(),
                         fragment.getString(R.string.settings_download_smb_backup_sync_done, result[0], result[1]),
                         Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_sync_failed, Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (progress != null && values.length >= 3) {
-                int current = values[0];
-                int total = values[1];
-                if (progress.getMax() != total) {
-                    progress.setMax(total);
-                }
-                progress.setProgress(current);
-                String msg = String.format(Locale.US, "%s (%d/%d)",
-                        progress.getContext().getString(R.string.settings_download_smb_backup_syncing),
-                        current, total);
-                progress.setMessage(msg);
             }
         }
     }
