@@ -24,14 +24,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.smb.SmbConfig;
@@ -66,9 +63,12 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
     private EditText mPortInput;
     private EditText mUsernameInput;
     private EditText mPasswordInput;
+    private EditText mShareInput;
+    private View mConnectButton;
+    private View mGoShareButton;
     private ListView mListView;
     private TextView mPathText;
-    private View mConnectButton;
+    private TextView mStepHint;
     private View mUpButton;
     private View mConfirmButton;
 
@@ -82,8 +82,7 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
     private List<String> mCurrentEntries = new ArrayList<>();
     private List<String> mPathStack = new ArrayList<>();
     private ArrayAdapter<String> mAdapter;
-    private boolean mIsConnected = false;
-    private boolean mIsBrowsingShare = false;
+    private int mStep = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,9 +94,12 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
         mPortInput = findViewById(R.id.smb_port);
         mUsernameInput = findViewById(R.id.smb_username);
         mPasswordInput = findViewById(R.id.smb_password);
+        mShareInput = findViewById(R.id.smb_share);
+        mConnectButton = findViewById(R.id.smb_connect);
+        mGoShareButton = findViewById(R.id.smb_go_share);
         mListView = findViewById(R.id.smb_list);
         mPathText = findViewById(R.id.smb_path);
-        mConnectButton = findViewById(R.id.smb_connect);
+        mStepHint = findViewById(R.id.smb_step_hint);
         mUpButton = findViewById(R.id.smb_up);
         mConfirmButton = findViewById(R.id.smb_confirm);
 
@@ -106,16 +108,12 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
 
         mListView.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < mCurrentEntries.size()) {
-                String selected = mCurrentEntries.get(position);
-                if (mIsBrowsingShare) {
-                    enterFolder(selected);
-                } else {
-                    selectShare(selected);
-                }
+                enterFolder(mCurrentEntries.get(position));
             }
         });
 
         mConnectButton.setOnClickListener(this);
+        mGoShareButton.setOnClickListener(this);
         mUpButton.setOnClickListener(this);
         mConfirmButton.setOnClickListener(this);
 
@@ -125,60 +123,86 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
 
     private void restoreFromIntent() {
         Intent intent = getIntent();
-        if (intent != null) {
+        if (intent != null && intent.hasExtra(EXTRA_HOST)) {
             mHost = intent.getStringExtra(EXTRA_HOST);
             mPort = intent.getIntExtra(EXTRA_PORT, SmbUri.DEFAULT_PORT);
             mUsername = intent.getStringExtra(EXTRA_USERNAME);
             mPassword = intent.getStringExtra(EXTRA_PASSWORD);
             int loginModeOrdinal = intent.getIntExtra(EXTRA_LOGIN_MODE, 0);
             mLoginMode = loginModeOrdinal == 1 ? SmbLoginMode.PASSWORD : SmbLoginMode.ANONYMOUS;
+            mSelectedShare = intent.getStringExtra(EXTRA_SHARE);
+        } else {
+            android.content.SharedPreferences prefs = getSharedPreferences("smb_picker_cache", MODE_PRIVATE);
+            mHost = prefs.getString("host", "");
+            mPort = prefs.getInt("port", SmbUri.DEFAULT_PORT);
+            mUsername = prefs.getString("username", "");
+            mPassword = prefs.getString("password", "");
+            mLoginMode = prefs.getBoolean("has_password", false) ? SmbLoginMode.PASSWORD : SmbLoginMode.ANONYMOUS;
+            mSelectedShare = prefs.getString("share", "");
+        }
 
-            if (mHost != null) {
-                mHostInput.setText(mHost);
-            }
-            mPortInput.setText(String.valueOf(mPort));
-            if (mUsername != null) {
-                mUsernameInput.setText(mUsername);
-            }
-            if (mPassword != null) {
-                mPasswordInput.setText(mPassword);
-            }
+        if (mHost != null && !mHost.isEmpty()) {
+            mHostInput.setText(mHost);
+        }
+        mPortInput.setText(String.valueOf(mPort));
+        if (mUsername != null && !mUsername.isEmpty()) {
+            mUsernameInput.setText(mUsername);
+        }
+        if (mPassword != null && !mPassword.isEmpty()) {
+            mPasswordInput.setText(mPassword);
+        }
+        if (mSelectedShare != null && !mSelectedShare.isEmpty()) {
+            mShareInput.setText(mSelectedShare);
         }
     }
 
+    private void saveConfigToCache() {
+        getSharedPreferences("smb_picker_cache", MODE_PRIVATE).edit()
+                .putString("host", mHost != null ? mHost : "")
+                .putInt("port", mPort)
+                .putString("username", mUsername != null ? mUsername : "")
+                .putString("password", mPassword != null ? mPassword : "")
+                .putBoolean("has_password", mLoginMode == SmbLoginMode.PASSWORD)
+                .putString("share", mSelectedShare != null ? mSelectedShare : "")
+                .apply();
+    }
+
     private void updateUI() {
-        if (mIsConnected) {
-            mHostInput.setEnabled(false);
-            mPortInput.setEnabled(false);
-            mUsernameInput.setEnabled(false);
-            mPasswordInput.setEnabled(false);
-            mConnectButton.setVisibility(View.GONE);
+        boolean showServerConfig = mStep == 0;
+        boolean showShareInput = mStep == 1;
+        boolean showFolderBrowser = mStep == 2;
 
-            mListView.setVisibility(View.VISIBLE);
-            mPathText.setVisibility(View.VISIBLE);
-            mConfirmButton.setVisibility(View.VISIBLE);
+        mHostInput.setVisibility(showServerConfig ? View.VISIBLE : View.GONE);
+        mPortInput.setVisibility(showServerConfig ? View.VISIBLE : View.GONE);
+        mUsernameInput.setVisibility(showServerConfig ? View.VISIBLE : View.GONE);
+        mPasswordInput.setVisibility(showServerConfig ? View.VISIBLE : View.GONE);
+        mConnectButton.setVisibility(showServerConfig ? View.VISIBLE : View.GONE);
 
-            mUpButton.setVisibility(mPathStack.isEmpty() && !mIsBrowsingShare ? View.GONE : View.VISIBLE);
+        mShareInput.setVisibility(showShareInput || showFolderBrowser ? View.VISIBLE : View.GONE);
+        mGoShareButton.setVisibility(showShareInput ? View.VISIBLE : View.GONE);
 
-            String displayPath;
-            if (mIsBrowsingShare) {
-                displayPath = String.format(Locale.US, "//%s:%d/%s%s", mHost, mPort, mSelectedShare,
-                        mCurrentPath.isEmpty() ? "" : "/" + mCurrentPath);
-            } else {
-                displayPath = String.format(Locale.US, "//%s:%d", mHost, mPort);
-            }
+        mListView.setVisibility(showFolderBrowser ? View.VISIBLE : View.GONE);
+        mPathText.setVisibility(showFolderBrowser ? View.VISIBLE : View.GONE);
+        mUpButton.setVisibility(showFolderBrowser && !mPathStack.isEmpty() ? View.VISIBLE : View.GONE);
+        mConfirmButton.setVisibility(showFolderBrowser ? View.VISIBLE : View.GONE);
+
+        if (showServerConfig) {
+            mStepHint.setVisibility(View.VISIBLE);
+            mStepHint.setText(R.string.smb_picker_step_server);
+            mShareInput.setText("");
+        } else if (showShareInput) {
+            mStepHint.setVisibility(View.VISIBLE);
+            mStepHint.setText(R.string.smb_picker_step_share);
+            mShareInput.setEnabled(true);
+            mShareInput.setText(mSelectedShare != null ? mSelectedShare : "");
+            mShareInput.setHint(R.string.settings_download_smb_share);
+            mShareInput.setSelection(mShareInput.getText().length());
+        } else if (showFolderBrowser) {
+            mStepHint.setVisibility(View.GONE);
+            mShareInput.setEnabled(false);
+            String displayPath = String.format(Locale.US, "//%s:%d/%s%s", mHost, mPort, mSelectedShare,
+                    mCurrentPath.isEmpty() ? "" : "/" + mCurrentPath);
             mPathText.setText(displayPath);
-        } else {
-            mHostInput.setEnabled(true);
-            mPortInput.setEnabled(true);
-            mUsernameInput.setEnabled(true);
-            mPasswordInput.setEnabled(true);
-            mConnectButton.setVisibility(View.VISIBLE);
-
-            mListView.setVisibility(View.GONE);
-            mPathText.setVisibility(View.GONE);
-            mUpButton.setVisibility(View.GONE);
-            mConfirmButton.setVisibility(View.GONE);
         }
     }
 
@@ -186,6 +210,8 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
     public void onClick(@NonNull View v) {
         if (v == mConnectButton) {
             onConnect();
+        } else if (v == mGoShareButton) {
+            onGoShare();
         } else if (v == mUpButton) {
             onUp();
         } else if (v == mConfirmButton) {
@@ -214,48 +240,44 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
         mPassword = mPasswordInput.getText().toString().trim();
         mLoginMode = mUsername.isEmpty() ? SmbLoginMode.ANONYMOUS : SmbLoginMode.PASSWORD;
 
-        new LoadSharesTask(this).execute();
+        saveConfigToCache();
+        new TestConnectionTask(this).execute();
     }
 
-    private void onUp() {
-        if (mIsBrowsingShare) {
-            if (mPathStack.isEmpty()) {
-                mIsBrowsingShare = false;
-                mSelectedShare = "";
-                mCurrentPath = "";
-                new LoadSharesTask(this).execute();
-            } else {
-                String prev = mPathStack.remove(mPathStack.size() - 1);
-                mCurrentPath = prev;
-                new LoadFoldersTask(this).execute();
-            }
+    private void onGoShare() {
+        String share = mShareInput.getText().toString().trim();
+        if (share.isEmpty()) {
+            Toast.makeText(this, R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+            return;
         }
-    }
-
-    private void selectShare(String shareName) {
-        mSelectedShare = shareName;
-        mIsBrowsingShare = true;
+        mSelectedShare = share;
+        saveConfigToCache();
         mCurrentPath = "";
         mPathStack.clear();
+        mCurrentEntries.clear();
+        mAdapter.notifyDataSetChanged();
         new LoadFoldersTask(this).execute();
     }
 
-    private void enterFolder(String folderName) {
-        if (mCurrentPath.isEmpty()) {
-            mCurrentPath = folderName;
+    private void onUp() {
+        if (mPathStack.isEmpty()) {
+            mStep = 1;
+            mCurrentEntries.clear();
+            mAdapter.notifyDataSetChanged();
+            updateUI();
         } else {
-            mPathStack.add(mCurrentPath);
-            mCurrentPath = mCurrentPath + "/" + folderName;
+            mCurrentPath = mPathStack.remove(mPathStack.size() - 1);
+            new LoadFoldersTask(this).execute();
         }
+    }
+
+    private void enterFolder(String folderName) {
+        mPathStack.add(mCurrentPath);
+        mCurrentPath = mCurrentPath.isEmpty() ? folderName : mCurrentPath + "/" + folderName;
         new LoadFoldersTask(this).execute();
     }
 
     private void onConfirm() {
-        if (!mIsConnected || mSelectedShare.isEmpty()) {
-            Toast.makeText(this, R.string.settings_download_smb_backup_not_configured, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         Intent resultIntent = new Intent();
         resultIntent.putExtra(RESULT_HOST, mHost);
         resultIntent.putExtra(RESULT_PORT, mPort);
@@ -277,61 +299,52 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
         return super.onOptionsItemSelected(item);
     }
 
-    private static class LoadSharesTask extends AsyncTask<Void, Void, List<String>> {
+    private static class TestConnectionTask extends AsyncTask<Void, Void, String> {
         private final WeakReference<SmbPickerActivity> ref;
         private ProgressDialog progress;
-        private String error;
 
-        LoadSharesTask(SmbPickerActivity activity) {
+        TestConnectionTask(SmbPickerActivity activity) {
             ref = new WeakReference<>(activity);
         }
 
         @Override
         protected void onPreExecute() {
-            SmbPickerActivity activity = ref.get();
-            if (activity != null && !activity.isFinishing()) {
-                progress = ProgressDialog.show(activity, null,
-                        activity.getString(R.string.settings_download_smb_testing), true, false);
+            SmbPickerActivity a = ref.get();
+            if (a != null && !a.isFinishing()) {
+                progress = ProgressDialog.show(a, null,
+                        a.getString(R.string.settings_download_smb_testing), true, false);
             }
         }
 
         @Override
-        protected List<String> doInBackground(Void... voids) {
-            SmbPickerActivity activity = ref.get();
-            if (activity == null) return new ArrayList<>();
+        protected String doInBackground(Void... voids) {
+            SmbPickerActivity a = ref.get();
+            if (a == null) return "Activity unavailable";
             try {
-                SmbConfig config = new SmbConfig(activity.mHost, activity.mPort, "IPC$", "",
-                        activity.mLoginMode,
-                        activity.mLoginMode == SmbLoginMode.PASSWORD ? activity.mUsername : null,
-                        activity.mLoginMode == SmbLoginMode.PASSWORD ? activity.mPassword : null);
-                SmbConnection connection = new SmbConnection(config);
-                return connection.listShareNamesFromServer();
+                SmbConfig config = new SmbConfig(a.mHost, a.mPort, "IPC$", "",
+                        a.mLoginMode,
+                        a.mLoginMode == SmbLoginMode.PASSWORD ? a.mUsername : null,
+                        a.mLoginMode == SmbLoginMode.PASSWORD ? a.mPassword : null);
+                new SmbConnection(config).testConnection();
+                return null;
             } catch (Exception e) {
-                error = e.getMessage();
-                return new ArrayList<>();
+                return e.getMessage();
             }
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        protected void onPostExecute(List<String> shares) {
-            SmbPickerActivity activity = ref.get();
-            if (activity == null || activity.isFinishing()) return;
+        protected void onPostExecute(String error) {
+            SmbPickerActivity a = ref.get();
+            if (a == null || a.isFinishing()) return;
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
-            if (shares != null && !shares.isEmpty()) {
-                activity.mIsConnected = true;
-                activity.mCurrentEntries.clear();
-                activity.mCurrentEntries.addAll(shares);
-                activity.mAdapter.notifyDataSetChanged();
-                activity.updateUI();
+            if (error == null) {
+                a.mStep = 1;
+                a.updateUI();
             } else {
-                String msg = activity.getString(R.string.settings_download_smb_connect_failed);
-                if (error != null) {
-                    msg += "\n" + error;
-                }
-                Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+                Toast.makeText(a, a.getString(R.string.settings_download_smb_connect_failed) + "\n" + error,
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -347,49 +360,47 @@ public class SmbPickerActivity extends ToolbarActivity implements View.OnClickLi
 
         @Override
         protected void onPreExecute() {
-            SmbPickerActivity activity = ref.get();
-            if (activity != null && !activity.isFinishing()) {
-                progress = ProgressDialog.show(activity, null,
-                        activity.getString(R.string.settings_download_smb_testing), true, false);
+            SmbPickerActivity a = ref.get();
+            if (a != null && !a.isFinishing()) {
+                progress = ProgressDialog.show(a, null,
+                        a.getString(R.string.settings_download_smb_testing), true, false);
             }
         }
 
         @Override
         protected List<String> doInBackground(Void... voids) {
-            SmbPickerActivity activity = ref.get();
-            if (activity == null) return new ArrayList<>();
+            SmbPickerActivity a = ref.get();
+            if (a == null) return new ArrayList<>();
             try {
-                SmbConfig config = new SmbConfig(activity.mHost, activity.mPort, activity.mSelectedShare, "",
-                        activity.mLoginMode,
-                        activity.mLoginMode == SmbLoginMode.PASSWORD ? activity.mUsername : null,
-                        activity.mLoginMode == SmbLoginMode.PASSWORD ? activity.mPassword : null);
-                SmbConnection connection = new SmbConnection(config);
-                return connection.listShareNames();
+                SmbConfig config = new SmbConfig(a.mHost, a.mPort, a.mSelectedShare, "",
+                        a.mLoginMode,
+                        a.mLoginMode == SmbLoginMode.PASSWORD ? a.mUsername : null,
+                        a.mLoginMode == SmbLoginMode.PASSWORD ? a.mPassword : null);
+                return new SmbConnection(config).listShareNames();
             } catch (Exception e) {
                 error = e.getMessage();
-                return new ArrayList<>();
+                return null;
             }
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         protected void onPostExecute(List<String> folders) {
-            SmbPickerActivity activity = ref.get();
-            if (activity == null || activity.isFinishing()) return;
+            SmbPickerActivity a = ref.get();
+            if (a == null || a.isFinishing()) return;
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
             if (folders != null) {
-                activity.mCurrentEntries.clear();
-                activity.mCurrentEntries.addAll(folders);
-                activity.mAdapter.notifyDataSetChanged();
-                activity.updateUI();
+                a.mStep = 2;
+                java.util.Collections.sort(folders, String.CASE_INSENSITIVE_ORDER);
+                a.mCurrentEntries.clear();
+                a.mCurrentEntries.addAll(folders);
+                a.mAdapter.notifyDataSetChanged();
+                a.updateUI();
             } else {
-                String msg = activity.getString(R.string.settings_download_smb_connect_failed);
-                if (error != null) {
-                    msg += "\n" + error;
-                }
-                Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+                String msg = a.getString(R.string.settings_download_smb_connect_failed);
+                if (error != null) msg += "\n" + error;
+                Toast.makeText(a, msg, Toast.LENGTH_LONG).show();
             }
         }
     }
