@@ -647,7 +647,6 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
         SmbConfig existing = backupSettings.loadConfig();
         String existingShare = existing != null ? existing.getShare() : "";
-        String existingPath = existing != null ? existing.getPath() : "";
 
         LinearLayout layout = new LinearLayout(requireActivity());
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -655,7 +654,6 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         layout.setPadding(padding, padding, padding, padding);
 
         EditText shareInput = addSmbField(layout, R.string.settings_download_smb_share, existingShare);
-        EditText pathInput = addSmbField(layout, R.string.settings_download_smb_path, existingPath);
 
         TextView hint = new TextView(requireActivity());
         hint.setText(R.string.smb_picker_step_share);
@@ -670,24 +668,106 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         AlertDialog dialog = new AlertDialog.Builder(requireActivity())
                 .setTitle(R.string.settings_download_smb_backup)
                 .setView(layout)
-                .setPositiveButton(android.R.string.ok, (d, which) -> {
-                    String shareValue = shareInput.getText().toString().trim();
-                    String pathValue = pathInput.getText().toString().trim();
-                    if (shareValue.isEmpty()) {
+                .setPositiveButton(android.R.string.ok, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String shareValue = shareInput.getText().toString().trim();
+            if (shareValue.isEmpty()) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dialog.dismiss();
+            showSmbFolderBrowser(host, port, loginMode, username, password, shareValue);
+        }));
+        dialog.show();
+    }
+
+    private void showSmbFolderBrowser(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share) {
+        ProgressDialog progress = ProgressDialog.show(requireActivity(), null,
+                getString(R.string.settings_download_smb_testing), true, false);
+        new AsyncTask<Void, Void, List<String>>() {
+            String error;
+            @Override
+            protected List<String> doInBackground(Void... voids) {
+                try {
+                    SmbConfig cfg = new SmbConfig(host, port, share, "", loginMode,
+                            loginMode == SmbLoginMode.PASSWORD ? username : null,
+                            loginMode == SmbLoginMode.PASSWORD ? password : null);
+                    return new SmbConnection(cfg).listShareNames();
+                } catch (Exception e) {
+                    error = e.getMessage();
+                    return null;
+                }
+            }
+            @Override
+            @SuppressWarnings("unchecked")
+            protected void onPostExecute(List<String> folders) {
+                if (progress != null) {
+                    try { progress.dismiss(); } catch (Exception ignored) {}
+                }
+                if (!isAdded()) return;
+                if (folders == null) {
+                    Toast.makeText(requireActivity(),
+                            getString(R.string.settings_download_smb_connect_failed) + "\n" + error,
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                java.util.Collections.sort(folders, String.CASE_INSENSITIVE_ORDER);
+
+                CharSequence[] items = new CharSequence[folders.size() + 1];
+                for (int i = 0; i < folders.size(); i++) items[i] = folders.get(i);
+                items[folders.size()] = getString(R.string.smb_picker_new_folder);
+
+                new AlertDialog.Builder(requireActivity())
+                        .setTitle(R.string.settings_download_smb_path)
+                        .setItems(items, (dialog, which) -> {
+                            if (which < folders.size()) {
+                                saveSmbBackupConfig(host, port, loginMode, username, password, share, folders.get(which));
+                            } else {
+                                showNewFolderDialog(host, port, loginMode, username, password, share);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            }
+        }.execute();
+    }
+
+    private void showNewFolderDialog(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share) {
+        EditText input = new EditText(requireActivity());
+        input.setHint(R.string.smb_picker_new_folder_hint);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        int pad = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        input.setPadding(pad, pad, pad, pad);
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.smb_picker_new_folder)
+                .setView(input)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String folderName = input.getText().toString().trim();
+                    if (folderName.isEmpty()) {
                         Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    SmbConfig config = new SmbConfig(host, port, shareValue, pathValue, loginMode,
-                            loginMode == SmbLoginMode.PASSWORD ? username : null,
-                            loginMode == SmbLoginMode.PASSWORD ? password : null);
-                    backupSettings.saveConfig(config);
-                    backupSettings.setEnabled(true);
-                    updateSmbBackupSummary();
-                    Toast.makeText(requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
+                    saveSmbBackupConfig(host, port, loginMode, username, password, share, folderName);
                 })
                 .setNegativeButton(android.R.string.cancel, null)
-                .create();
-        dialog.show();
+                .show();
+    }
+
+    private void saveSmbBackupConfig(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, String path) {
+        SmbConfig config = new SmbConfig(host, port, share, path, loginMode,
+                loginMode == SmbLoginMode.PASSWORD ? username : null,
+                loginMode == SmbLoginMode.PASSWORD ? password : null);
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        backupSettings.saveConfig(config);
+        backupSettings.setEnabled(true);
+        updateSmbBackupSummary();
+        Toast.makeText(requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
     }
 
     private class SmbTestTask extends AsyncTask<Void, Void, Throwable> {
