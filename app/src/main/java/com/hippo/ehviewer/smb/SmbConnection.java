@@ -19,6 +19,8 @@ package com.hippo.ehviewer.smb;
 import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
+import androidx.annotation.Nullable;
+
 import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.msfscc.FileAttributes;
 import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
@@ -179,6 +181,10 @@ public final class SmbConnection {
     }
 
     public void writeFile(String path, java.io.InputStream source) throws IOException {
+        writeFile(path, source, null);
+    }
+
+    public void writeFile(String path, java.io.InputStream source, @Nullable java.lang.Runnable onChunk) throws IOException {
         DiskShare share = getShare();
         File file = null;
         try {
@@ -188,6 +194,7 @@ public final class SmbConnection {
                 int n;
                 while ((n = source.read(buf)) != -1) {
                     os.write(buf, 0, n);
+                    if (onChunk != null) onChunk.run();
                 }
             }
         } finally {

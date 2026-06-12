@@ -1241,8 +1241,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                     publishProgress(i + 1, total);
                                     try (InputStream raw = file.openInputStream();
                                          CountingInputStream cis = new CountingInputStream(raw)) {
-                                        connection.writeFile(filePath, cis);
-                                        mSpeedBytes += cis.getCount();
+                                        final int[] lastCount = {0};
+                                        connection.writeFile(filePath, cis, () -> {
+                                            int current = (int) cis.getCount();
+                                            int delta = current - lastCount[0];
+                                            lastCount[0] = current;
+                                            mSpeedBytes += delta;
+                                            long now = System.currentTimeMillis();
+                                            long elapsed = now - mSpeedStart;
+                                            if (elapsed > 1000) {
+                                                mSpeedBps = mSpeedBytes * 1000 / elapsed;
+                                                mSpeedBytes = 0;
+                                                mSpeedStart = now;
+                                            }
+                                        });
                                     }
                                 }
                             }
@@ -1250,14 +1262,6 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         successCount++;
                     } catch (Exception e) {
                         failCount++;
-                    }
-
-                    long now = System.currentTimeMillis();
-                    long elapsed = now - mSpeedStart;
-                    if (elapsed > 1000) {
-                        mSpeedBps = mSpeedBytes * 1000 / elapsed;
-                        mSpeedBytes = 0;
-                        mSpeedStart = now;
                     }
                 }
             } catch (Exception e) {
