@@ -606,6 +606,7 @@
     <string name="smb_picker_new_folder">New folder</string>
     <string name="smb_picker_new_folder_hint">Folder name</string>
     <string name="smb_picker_select_here">Select current directory</string>
+    <string name="smb_picker_background_backup">Background backup</string>
     <string name="settings_download_continue">Continue</string>
     <string name="settings_download_media_scan">Allow media scan</string>
     <string name="settings_download_media_scan_summary_on">Please hide your gallery apps away from other people</string>
