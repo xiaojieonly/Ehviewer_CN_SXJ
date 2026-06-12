@@ -49,13 +49,49 @@ public final class SmbConnection {
             SMB2ShareAccess.FILE_SHARE_DELETE);
 
     private final SmbConfig config;
+    private volatile DiskShare mPersistentShare;
+    private volatile Connection mPersistentConnection;
+    private volatile SMBClient mPersistentClient;
 
     public SmbConnection(SmbConfig config) {
         this.config = config;
     }
 
+    public synchronized void open() throws IOException {
+        if (mPersistentShare != null) return;
+        mPersistentClient = new SMBClient();
+        mPersistentConnection = mPersistentClient.connect(config.getHost(), config.getPort());
+        Session session = mPersistentConnection.authenticate(authenticationContext());
+        mPersistentShare = (DiskShare) session.connectShare(config.getShare());
+    }
+
+    public synchronized void close() {
+        if (mPersistentShare != null) {
+            try { mPersistentShare.close(); } catch (Exception ignored) {}
+            mPersistentShare = null;
+        }
+        if (mPersistentConnection != null) {
+            closeQuietly(mPersistentConnection);
+            mPersistentConnection = null;
+        }
+        if (mPersistentClient != null) {
+            closeQuietly(mPersistentClient);
+            mPersistentClient = null;
+        }
+    }
+
+    public synchronized DiskShare getShare() throws IOException {
+        if (mPersistentShare != null) return mPersistentShare;
+        return openShare();
+    }
+
+    public synchronized void releaseShare(DiskShare share) {
+        if (share == mPersistentShare) return;
+        try { share.close(); } catch (Exception ignored) {}
+    }
+
     public List<SmbEntry> list(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             String smbPath = normalizeSmbPath(path);
             List<FileIdBothDirectoryInformation> entries = share.list(smbPath);
@@ -68,17 +104,17 @@ public final class SmbConnection {
             }
             return results;
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
     public boolean exists(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             String smbPath = normalizeSmbPath(path);
             return TextUtils.isEmpty(smbPath) || share.fileExists(smbPath) || share.folderExists(smbPath);
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
@@ -86,11 +122,11 @@ public final class SmbConnection {
         if (TextUtils.isEmpty(normalizeSmbPath(path))) {
             return true;
         }
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             return share.folderExists(normalizeSmbPath(path));
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
@@ -98,16 +134,16 @@ public final class SmbConnection {
         if (TextUtils.isEmpty(normalizeSmbPath(path))) {
             return false;
         }
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             return share.fileExists(normalizeSmbPath(path));
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
     public boolean ensureDirectory(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             String smbPath = normalizeSmbPath(path);
             if (TextUtils.isEmpty(smbPath)) {
@@ -126,24 +162,42 @@ public final class SmbConnection {
             }
             return true;
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
     public boolean ensureFile(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         File file = null;
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN_IF);
             return true;
         } finally {
             closeQuietly(file);
-            share.close();
+            releaseShare(share);
+        }
+    }
+
+    public void writeFile(String path, java.io.InputStream source) throws IOException {
+        DiskShare share = getShare();
+        File file = null;
+        try {
+            file = openFile(share, path, SMB2CreateDisposition.FILE_OVERWRITE_IF);
+            try (OutputStream os = file.getOutputStream(false)) {
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = source.read(buf)) != -1) {
+                    os.write(buf, 0, n);
+                }
+            }
+        } finally {
+            closeQuietly(file);
+            releaseShare(share);
         }
     }
 
     public OutputStream openOutputStream(String path, boolean append) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         File file = null;
         try {
             file = openFile(share, path, append ? SMB2CreateDisposition.FILE_OPEN : SMB2CreateDisposition.FILE_OPEN_IF);
@@ -151,13 +205,13 @@ public final class SmbConnection {
             return new SmbOutputStream(stream, file, share);
         } catch (RuntimeException e) {
             closeQuietly(file);
-            share.close();
+            releaseShare(share);
             throw e;
         }
     }
 
     public InputStream openInputStream(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         File file = null;
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN);
@@ -165,13 +219,13 @@ public final class SmbConnection {
             return new SmbInputStream(stream, file, share);
         } catch (RuntimeException e) {
             closeQuietly(file);
-            share.close();
+            releaseShare(share);
             throw e;
         }
     }
 
     public boolean delete(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             String smbPath = normalizeSmbPath(path);
             if (TextUtils.isEmpty(smbPath)) {
@@ -189,12 +243,12 @@ public final class SmbConnection {
             }
             return true;
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
     public boolean rename(String path, String displayName) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         File file = null;
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN);
@@ -204,12 +258,12 @@ public final class SmbConnection {
             return true;
         } finally {
             closeQuietly(file);
-            share.close();
+            releaseShare(share);
         }
     }
 
     public long length(String path) throws IOException {
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             String smbPath = normalizeSmbPath(path);
             if (TextUtils.isEmpty(smbPath)) {
@@ -217,7 +271,7 @@ public final class SmbConnection {
             }
             return share.getFileInformation(smbPath).getStandardInformation().getEndOfFile();
         } finally {
-            share.close();
+            releaseShare(share);
         }
     }
 
@@ -236,7 +290,7 @@ public final class SmbConnection {
 
     public List<String> listShareNames() throws IOException {
         List<String> result = new ArrayList<>();
-        DiskShare share = openShare();
+        DiskShare share = getShare();
         try {
             List<FileIdBothDirectoryInformation> entries = share.list("");
             for (FileIdBothDirectoryInformation entry : entries) {
@@ -254,47 +308,22 @@ public final class SmbConnection {
         } catch (Exception e) {
             throw new IOException("Failed to list shares", e);
         } finally {
-            share.close();
+            releaseShare(share);
         }
         return result;
     }
 
-    public List<String> listShareNamesFromServer() throws IOException {
-        List<String> result = new ArrayList<>();
+    public void testConnection() throws IOException {
         SMBClient client = new SMBClient();
         Connection connection = null;
-        Session session = null;
         try {
             connection = client.connect(config.getHost(), config.getPort());
-            session = connection.authenticate(authenticationContext());
-            for (String name : new String[]{
-                    "IPC$", "ADMIN$", "C$", "D$",
-                    "public", "share", "homes", "data", "media", "shared",
-                    "smb", "nas", "storage", "backup", "downloads"
-            }) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    com.hierynomus.smbj.share.DiskShare testShare =
-                            (com.hierynomus.smbj.share.DiskShare) session.connectShare(name);
-                    testShare.close();
-                    result.add(name);
-                } catch (Exception ignored) {
-                }
-            }
+            connection.authenticate(authenticationContext());
         } catch (IOException e) {
             throw e;
         } finally {
-            if (session != null) {
-                try { session.close(); } catch (Exception ignored) {}
-            }
             closeQuietly(connection);
-            closeQuietly(client);
         }
-        result.remove("IPC$");
-        result.remove("ADMIN$");
-        result.remove("C$");
-        result.remove("D$");
-        return result;
     }
 
     private DiskShare openShare() throws IOException {

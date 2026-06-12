@@ -940,6 +940,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     private static final class SmbBackupSyncAllTask extends AsyncTask<Void, Integer, int[]> {
         private final WeakReference<DownloadFragment> fragmentRef;
         private ProgressDialog progress;
+        private volatile boolean cancelled;
 
         private SmbBackupSyncAllTask(DownloadFragment fragment) {
             this.fragmentRef = new WeakReference<>(fragment);
@@ -953,8 +954,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             }
             progress = new ProgressDialog(fragment.getActivity());
             progress.setTitle(R.string.settings_download_smb_backup_syncing);
+            progress.setMessage(fragment.getString(R.string.settings_download_smb_backup_scanning));
             progress.setIndeterminate(true);
-            progress.setCancelable(false);
+            progress.setCancelable(true);
+            progress.setOnCancelListener(d -> cancelled = true);
             progress.show();
         }
 
@@ -976,18 +979,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 return new int[]{0, 0};
             }
 
-            // Only sync when download location is local (not SMB)
             if (localDir.getUri() != null && "smb".equals(localDir.getUri().getScheme())) {
-                return new int[]{0, 0};
-            }
-
-            UniFile smbRoot;
-            try {
-                smbRoot = new SmbUriHandler().fromUri(fragment.requireActivity(), config.toUri().toUri());
-            } catch (Exception e) {
-                return new int[]{0, 0};
-            }
-            if (smbRoot == null) {
                 return new int[]{0, 0};
             }
 
@@ -996,61 +988,58 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 return new int[]{0, 0};
             }
 
+            int total = localDirs.length;
             int successCount = 0;
             int failCount = 0;
 
-            for (UniFile dir : localDirs) {
-                if (!dir.isDirectory()) {
-                    continue;
-                }
-                String dirname = dir.getName();
-                if (dirname == null || dirname.startsWith(".")) {
-                    continue;
-                }
+            SmbConnection connection = new SmbConnection(config);
+            try {
+                connection.open();
+                String basePath = config.getPath();
 
-                try {
-                    UniFile smbGalleryDir = smbRoot.subFile(dirname);
-                    if (smbGalleryDir == null) {
+                for (int i = 0; i < total; i++) {
+                    if (cancelled) break;
+                    UniFile dir = localDirs[i];
+                    if (!dir.isDirectory()) continue;
+                    String dirname = dir.getName();
+                    if (dirname == null || dirname.startsWith(".")) continue;
+
+                    publishProgress(i + 1, total, 0);
+                    try {
+                        String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
+                        connection.ensureDirectory(galleryPath);
+
+                        UniFile[] files = dir.listFiles();
+                        if (files != null) {
+                            for (int j = 0; j < files.length; j++) {
+                                if (cancelled) break;
+                                UniFile file = files[j];
+                                String name = file.getName();
+                                if (name == null) continue;
+                                if (file.isDirectory()) {
+                                    connection.ensureDirectory(galleryPath + "/" + name);
+                                } else {
+                                    String filePath = galleryPath + "/" + name;
+                                    if (connection.exists(filePath) && connection.length(filePath) == file.length()) continue;
+                                    publishProgress(i + 1, total, j + 1);
+                                    try (InputStream is = file.openInputStream()) {
+                                        connection.writeFile(filePath, is);
+                                    }
+                                }
+                            }
+                        }
+                        successCount++;
+                    } catch (Exception e) {
                         failCount++;
-                        continue;
                     }
-                    smbGalleryDir.ensureDir();
-                    copyDir(dir, smbGalleryDir);
-                    successCount++;
-                } catch (Exception e) {
-                    failCount++;
                 }
+            } catch (Exception e) {
+                failCount = total;
+            } finally {
+                connection.close();
             }
 
             return new int[]{successCount, failCount};
-        }
-
-        private void copyDir(UniFile src, UniFile dst) throws IOException {
-            UniFile[] files = src.listFiles();
-            if (files == null) return;
-            for (UniFile file : files) {
-                String name = file.getName();
-                if (name == null) continue;
-                if (file.isDirectory()) {
-                    UniFile sub = dst.subFile(name);
-                    if (sub != null) {
-                        sub.ensureDir();
-                        copyDir(file, sub);
-                    }
-                } else {
-                    UniFile dstFile = dst.subFile(name);
-                    if (dstFile == null) continue;
-                    if (dstFile.exists() && dstFile.length() == file.length()) continue;
-                    try (InputStream is = file.openInputStream();
-                         OutputStream os = dstFile.openOutputStream()) {
-                        byte[] buf = new byte[8192];
-                        int n;
-                        while ((n = is.read(buf)) != -1) {
-                            os.write(buf, 0, n);
-                        }
-                    }
-                }
-            }
         }
 
         @Override

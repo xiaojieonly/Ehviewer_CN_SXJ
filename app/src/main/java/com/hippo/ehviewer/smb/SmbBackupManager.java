@@ -30,7 +30,6 @@ import com.hippo.unifile.UniFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -87,7 +86,6 @@ public final class SmbBackupManager {
             return;
         }
 
-        // Only sync when download location is local (not SMB)
         UniFile downloadLoc = com.hippo.ehviewer.Settings.getDownloadLocation();
         if (downloadLoc == null || (downloadLoc.getUri() != null && "smb".equals(downloadLoc.getUri().getScheme()))) {
             return;
@@ -98,152 +96,112 @@ public final class SmbBackupManager {
             return;
         }
 
-        UniFile smbRoot = getSmbUniFile(config);
-        if (smbRoot == null) {
-            return;
-        }
-
-        String dirname = localDir.getName();
-        if (dirname == null) {
-            return;
-        }
-
+        SmbConnection connection = new SmbConnection(config);
         try {
-            UniFile smbGalleryDir = smbRoot.subFile(dirname);
-            if (smbGalleryDir == null) {
-                return;
+            connection.open();
+            String dirname = localDir.getName();
+            if (dirname == null) return;
+
+            String basePath = config.getPath();
+            String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
+            connection.ensureDirectory(galleryPath);
+
+            UniFile[] files = localDir.listFiles();
+            if (files != null) {
+                for (UniFile file : files) {
+                    String name = file.getName();
+                    if (name == null) continue;
+                    if (file.isDirectory()) {
+                        connection.ensureDirectory(galleryPath + "/" + name);
+                    } else {
+                        String filePath = galleryPath + "/" + name;
+                        if (connection.exists(filePath)) continue;
+                        try (InputStream is = file.openInputStream()) {
+                            connection.writeFile(filePath, is);
+                        }
+                    }
+                }
             }
-            smbGalleryDir.ensureDir();
-            copyDirectory(localDir, smbGalleryDir);
         } catch (Exception e) {
-            Log.e(TAG, "Failed to sync gallery " + dirname + " to SMB backup", e);
+            Log.e(TAG, "Failed to sync gallery " + localDir.getName() + " to SMB backup", e);
+        } finally {
+            connection.close();
         }
     }
 
     private void syncAllInternal() {
+        SmbConfig config = mBackupSettings.loadConfigIfEnabled();
+        if (config == null) {
+            notifyError("SMB backup is not configured");
+            return;
+        }
+
+        UniFile localRoot = getLocalDownloadDir();
+        if (localRoot == null) {
+            notifyError("Local download directory is unavailable");
+            return;
+        }
+
+        UniFile[] localDirs = localRoot.listFiles();
+        if (localDirs == null || localDirs.length == 0) {
+            notifyComplete(0, 0);
+            return;
+        }
+
+        notifyStart();
+
+        int total = localDirs.length;
+        int successCount = 0;
+        int failCount = 0;
+
+        SmbConnection connection = new SmbConnection(config);
         try {
-            SmbConfig config = mBackupSettings.loadConfigIfEnabled();
-            if (config == null) {
-                notifyError("SMB backup is not configured");
-                return;
-            }
-
-            UniFile localRoot = getLocalDownloadDir();
-            if (localRoot == null) {
-                notifyError("Local download directory is unavailable");
-                return;
-            }
-
-            UniFile smbRoot = getSmbUniFile(config);
-            if (smbRoot == null) {
-                notifyError("SMB backup location is unavailable");
-                return;
-            }
-
-            notifyStart();
-
-            UniFile[] localDirs = localRoot.listFiles();
-            if (localDirs == null || localDirs.length == 0) {
-                notifyComplete(0, 0);
-                return;
-            }
-
-            int total = localDirs.length;
-            int successCount = 0;
-            int failCount = 0;
+            connection.open();
+            String basePath = config.getPath();
 
             for (int i = 0; i < total; i++) {
                 UniFile localDir = localDirs[i];
-                if (!localDir.isDirectory()) {
-                    continue;
-                }
-
+                if (!localDir.isDirectory()) continue;
                 String dirname = localDir.getName();
-                if (dirname == null || dirname.startsWith(".")) {
-                    continue;
-                }
+                if (dirname == null || dirname.startsWith(".")) continue;
 
                 notifyProgress(i + 1, total, dirname);
 
                 try {
-                    UniFile smbGalleryDir = smbRoot.subFile(dirname);
-                    if (smbGalleryDir == null) {
-                        failCount++;
-                        continue;
+                    String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
+                    connection.ensureDirectory(galleryPath);
+
+                    UniFile[] files = localDir.listFiles();
+                    if (files != null) {
+                        for (int j = 0; j < files.length; j++) {
+                            UniFile file = files[j];
+                            String name = file.getName();
+                            if (name == null) continue;
+                            if (file.isDirectory()) {
+                                connection.ensureDirectory(galleryPath + "/" + name);
+                            } else {
+                                String filePath = galleryPath + "/" + name;
+                                if (connection.exists(filePath) && connection.length(filePath) == file.length()) continue;
+                                try (InputStream is = file.openInputStream()) {
+                                    connection.writeFile(filePath, is);
+                                }
+                            }
+                        }
                     }
-                    smbGalleryDir.ensureDir();
-                    copyDirectory(localDir, smbGalleryDir);
                     successCount++;
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to sync " + dirname + " to SMB backup", e);
                     failCount++;
                 }
             }
-
-            notifyComplete(successCount, failCount);
-        } finally {
-            mSyncingAll.set(false);
-        }
-    }
-
-    private void copyDirectory(@NonNull UniFile src, @NonNull UniFile dst) throws IOException {
-        UniFile[] files = src.listFiles();
-        if (files == null) {
-            return;
-        }
-
-        for (UniFile file : files) {
-            String name = file.getName();
-            if (name == null) {
-                continue;
-            }
-
-            if (file.isDirectory()) {
-                UniFile subDir = dst.subFile(name);
-                if (subDir != null) {
-                    subDir.ensureDir();
-                    copyDirectory(file, subDir);
-                }
-            } else {
-                copyFile(file, dst);
-            }
-        }
-    }
-
-    private void copyFile(@NonNull UniFile srcFile, @NonNull UniFile dstDir) throws IOException {
-        String name = srcFile.getName();
-        if (name == null) {
-            return;
-        }
-
-        UniFile dstFile = dstDir.subFile(name);
-        if (dstFile == null) {
-            return;
-        }
-
-        if (dstFile.exists() && dstFile.length() == srcFile.length()) {
-            return;
-        }
-
-        try (InputStream is = srcFile.openInputStream();
-             OutputStream os = dstFile.openOutputStream()) {
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-        }
-    }
-
-    @Nullable
-    private UniFile getSmbUniFile(@NonNull SmbConfig config) {
-        try {
-            SmbUri smbUri = config.toUri();
-            return new SmbUriHandler().fromUri(mContext, smbUri.toUri());
         } catch (Exception e) {
-            Log.e(TAG, "Failed to create SMB UniFile", e);
-            return null;
+            Log.e(TAG, "Failed to open SMB connection", e);
+        } finally {
+            connection.close();
         }
+
+        notifyComplete(successCount, failCount);
+        mSyncingAll.set(false);
     }
 
     @Nullable
@@ -258,29 +216,21 @@ public final class SmbBackupManager {
 
     private void notifyStart() {
         SyncListener listener = mListener;
-        if (listener != null) {
-            listener.onSyncStart();
-        }
+        if (listener != null) listener.onSyncStart();
     }
 
     private void notifyProgress(int current, int total, String name) {
         SyncListener listener = mListener;
-        if (listener != null) {
-            listener.onSyncProgress(current, total, name);
-        }
+        if (listener != null) listener.onSyncProgress(current, total, name);
     }
 
     private void notifyComplete(int successCount, int failCount) {
         SyncListener listener = mListener;
-        if (listener != null) {
-            listener.onSyncComplete(successCount, failCount);
-        }
+        if (listener != null) listener.onSyncComplete(successCount, failCount);
     }
 
     private void notifyError(String error) {
         SyncListener listener = mListener;
-        if (listener != null) {
-            listener.onSyncError(error);
-        }
+        if (listener != null) listener.onSyncError(error);
     }
 }
