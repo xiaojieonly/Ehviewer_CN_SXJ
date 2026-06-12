@@ -49,6 +49,7 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.smb.SmbBackupManager;
+import com.hippo.ehviewer.smb.SmbBackupService;
 import com.hippo.ehviewer.smb.SmbBackupSettings;
 import com.hippo.ehviewer.smb.SmbConfig;
 import com.hippo.ehviewer.smb.SmbConnection;
@@ -1317,6 +1318,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             DownloadFragment fragment = fragmentRef.get();
             if (fragment == null || fragment.getActivity() == null) return;
             if (mBackgroundRequested) {
+                SmbBackupService.start(fragment.requireActivity());
                 Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_syncing, Toast.LENGTH_SHORT).show();
                 return;
             }

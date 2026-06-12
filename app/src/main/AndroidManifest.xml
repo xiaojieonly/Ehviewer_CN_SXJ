@@ -246,6 +246,11 @@
             android:name=".download.DownloadService"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
+        <service
+            android:name=".smb.SmbBackupService"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/smb_backup_service_name"
+            android:exported="false" />
 
         <provider
             android:name="com.hippo.content.FileProvider"
