@@ -45,7 +45,9 @@ import com.hippo.easyrecyclerview.LinearDividerItemDecoration;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.Hosts;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
 import com.hippo.ripple.Ripple;
+import com.hippo.widget.FabLabelHelper;
 import com.hippo.lib.yorozuya.LayoutUtils;
 import java.util.List;
 import java.util.Locale;
@@ -101,6 +103,16 @@ public class HostsActivity extends ToolbarActivity
 
     recyclerView.setVisibility(data.isEmpty() ? View.GONE : View.VISIBLE);
     tip.setVisibility(data.isEmpty() ? View.VISIBLE : View.GONE);
+    FabLabelHelper.updateFabLabel(fab, Settings.getShowFabFunctionName());
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    FloatingActionButton fab = findViewById(R.id.fab);
+    if (fab != null) {
+      FabLabelHelper.updateFabLabel(fab, Settings.getShowFabFunctionName());
+    }
   }
 
   @Override

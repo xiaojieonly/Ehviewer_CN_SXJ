@@ -47,6 +47,10 @@ public class EhFragment extends BasePreferenceFragmentCompat
         Preference historyInfoSize = findPreference(Settings.KEY_HISTORY_INFO_SIZE);
         Preference showTagTranslations = findPreference(Settings.KEY_SHOW_TAG_TRANSLATIONS);
         Preference showGalleryComment = findPreference(Settings.KEY_SHOW_GALLERY_COMMENT);
+        Preference enableCommentRatingFilter = findPreference(Settings.KEY_ENABLE_COMMENT_RATING_FILTER);
+        Preference commentRatingThreshold = findPreference(Settings.KEY_COMMENT_RATING_THRESHOLD);
+        Preference manualThumbResolution = findPreference(Settings.KEY_MANUAL_THUMB_RESOLUTION);
+        Preference customThumbResolution = findPreference(Settings.KEY_CUSTOM_THUMB_RESOLUTION);
         Preference tagTranslationsSource = findPreference("tag_translations_source");
 
         // System theme display
@@ -65,6 +69,10 @@ public class EhFragment extends BasePreferenceFragmentCompat
         historyInfoSize.setOnPreferenceChangeListener(this);
         showTagTranslations.setOnPreferenceChangeListener(this);
         showGalleryComment.setOnPreferenceChangeListener(this);
+        enableCommentRatingFilter.setOnPreferenceChangeListener(this);
+        commentRatingThreshold.setOnPreferenceChangeListener(this);
+        manualThumbResolution.setOnPreferenceChangeListener(this);
+        customThumbResolution.setOnPreferenceChangeListener(this);
 
         if (!EhTagDatabase.isPossible(getActivity())) {
             getPreferenceScreen().removePreference(showTagTranslations);
@@ -112,6 +120,18 @@ public class EhFragment extends BasePreferenceFragmentCompat
         } else if (Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
             return true;
+        } else if (Settings.KEY_ENABLE_COMMENT_RATING_FILTER.equals(key)) {
+            getActivity().setResult(Activity.RESULT_OK);
+            return true;
+        } else if (Settings.KEY_COMMENT_RATING_THRESHOLD.equals(key)) {
+            getActivity().setResult(Activity.RESULT_OK);
+            return true;
+        } else if (Settings.KEY_MANUAL_THUMB_RESOLUTION.equals(key)) {
+            getActivity().setResult(Activity.RESULT_OK);
+            return true;
+        } else if (Settings.KEY_CUSTOM_THUMB_RESOLUTION.equals(key)) {
+            getActivity().setResult(Activity.RESULT_OK);
+            return true;
         } else if (Settings.KEY_THEME_AUTO_SWITCH.equals(key) && Boolean.TRUE.equals(newValue)) {
             if (Settings.getDarkModeStatus(getContext())) {
                 Settings.putTheme(Settings.THEME_DARK);
@@ -130,15 +150,15 @@ public class EhFragment extends BasePreferenceFragmentCompat
             int nightMode = uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
             switch (nightMode) {
                 case android.content.res.Configuration.UI_MODE_NIGHT_YES:
-                    return "深色";
+                    return getString(R.string.theme_dark);
                 case android.content.res.Configuration.UI_MODE_NIGHT_NO:
-                    return "浅色";
+                    return getString(R.string.theme_light);
                 case android.content.res.Configuration.UI_MODE_NIGHT_UNDEFINED:
                 default:
-                    return "不可用";
+                    return getString(R.string.unavailable);
             }
         } else {
-            return "不可用";
+            return getString(R.string.unavailable);
         }
     }
 }

@@ -627,6 +627,23 @@ public final class MainActivity extends StageActivity
         setNavCheckedItem(mNavCheckedItem);
 
         checkClipboardUrl();
+
+        // 通知下载管理器应用进入前台
+        EhApplication app = (EhApplication) getApplication();
+        if (app != null && app.getDownloadManager() != null) {
+            app.getDownloadManager().onAppForeground();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // 通知下载管理器应用进入后台
+        EhApplication app = (EhApplication) getApplication();
+        if (app != null && app.getDownloadManager() != null) {
+            app.getDownloadManager().onAppBackground();
+        }
     }
 
     @Override

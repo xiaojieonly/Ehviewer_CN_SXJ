@@ -21,6 +21,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -31,13 +32,49 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import com.hippo.content.ContextLocalWrapper;
 import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import java.util.Locale;
 
 public abstract class EhActivity extends AppCompatActivity {
 
+    /**
+     * 获取主题资源ID，支持自适应模式切换
+     * 子类可以重写此方法以自定义主题行为
+     */
     @StyleRes
-    protected abstract int getThemeResId(int theme);
+    protected int getThemeResId(int theme) {
+        Log.d("EhActivity","Current Activity:"+this.getLocalClassName());
+        Log.d("EhActivity", "getThemeResId: theme=" + theme);
+        Log.d("EhActivity", "Settings.getTheme()=" + Settings.getTheme());
+        Log.d("EhActivity", "Settings.isThemeAutoSwitchAvailable()=" + Settings.isThemeAutoSwitchAvailable());
+        // 检查是否启用自动主题切换
+        if (Settings.isThemeAutoSwitchAvailable()) {
+            // 根据系统当前模式自动选择主题
+            boolean isNightMode = (getResources().getConfiguration().uiMode & 
+                    Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            
+            if (isNightMode) {
+                // 夜间模式使用深色主题
+                return R.style.AppTheme_Gallery_Dark;
+            } else {
+                // 日间模式使用浅色主题
+                return R.style.AppTheme_Gallery_Light;
+            }
+        }
+        
+        // 手动主题选择
+        switch (theme) {
+            case Settings.THEME_LIGHT:
+                return R.style.AppTheme_Gallery_Light;
+            case Settings.THEME_DARK:
+                return R.style.AppTheme_Gallery_Dark;
+            case Settings.THEME_BLACK:
+                return R.style.AppTheme_Gallery_Black;
+            default:
+                return R.style.AppTheme_Gallery;
+        }
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
