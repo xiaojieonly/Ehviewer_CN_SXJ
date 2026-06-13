@@ -17,29 +17,47 @@
 package com.hippo.ehviewer.ui.fragment;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.download.DownloadLogger;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.DirPickerActivity;
+import com.hippo.ehviewer.task.RebuildDownloadRecordsTask;
+import com.hippo.ehviewer.task.TaskExecutor;
+import com.hippo.ehviewer.task.ScanDownloadTask;
+import com.hippo.ehviewer.task.CleanRedundancyTask;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
+import com.hippo.util.ExecutorManager;
+import com.hippo.util.ReadableTime;
+import android.util.Log;
+
+import java.io.File;
 import com.hippo.yorozuya.IOUtils;
 
 import java.io.FileOutputStream;
@@ -50,6 +68,8 @@ import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -58,30 +78,65 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference.OnPreferenceChangeListener,
         Preference.OnPreferenceClickListener {
 
+    private static final String TAG = "DownloadFragment";
     public static final int REQUEST_CODE_PICK_IMAGE_DIR = 0;
     public static final int REQUEST_CODE_PICK_IMAGE_DIR_L = 1;
     private static final int REQUEST_CODE_PICK_DOWNLOAD_IMPORT_FILE = 2;
+
+    // 通知栏相关常量
+    private static final String CHANNEL_ID_DOWNLOAD = "download_channel";
+    private static final int NOTIFICATION_ID_BASE = 1000;
+    private static final int NOTIFICATION_ID_IMPORT = NOTIFICATION_ID_BASE + 1;
+    private static final int NOTIFICATION_ID_CLEAN = NOTIFICATION_ID_BASE + 2;
+    private static final int NOTIFICATION_ID_REPAIR = NOTIFICATION_ID_BASE + 3;
+    private static final int NOTIFICATION_ID_REBUILD = NOTIFICATION_ID_BASE + 4;
 
     public static final String KEY_DOWNLOAD_LOCATION = "download_location";
     public static final String KEY_EXPORT_DOWNLOAD_ITEMS = "export_download_items";
     public static final String KEY_IMPORT_DOWNLOAD_ITEMS = "import_download_items";
     public static final String KEY_CLEAN_INVALID_DOWNLOAD = "clean_invalid_download";
+    public static final String KEY_REPAIR_ALL_DOWNLOADED_GALLERY = "repair_all_downloaded_gallery";
+    public static final String KEY_REPAIR_UNKNOWN_CATEGORY_GALLERY = "repair_unknown_category_gallery";
+    public static final String KEY_REBUILD_DOWNLOAD_RECORDS = "rebuild_download_records";
+    public static final String KEY_VIEW_DOWNLOAD_LOGS = "view_download_logs";
+    public static final String KEY_CLEAN_DOWNLOAD_LOGS = "clean_download_logs";
+    public static final String KEY_RESET_MEDIA_SCAN = "reset_media_scan";
 
     @Nullable
     private Preference mDownloadLocation;
+    
+    // 下载日志记录器
+    private final DownloadLogger mDownloadLogger = DownloadLogger.getInstance();
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         addPreferencesFromResource(R.xml.download_settings);
+        
+        // 初始化通知栏
+        initNotificationChannel();
 
         Preference mediaScan = findPreference(Settings.KEY_MEDIA_SCAN);
+        Preference enableMinDownloadSpeed = findPreference(Settings.KEY_ENABLE_MIN_DOWNLOAD_SPEED);
+        Preference minDownloadSpeed = findPreference(Settings.KEY_MIN_DOWNLOAD_SPEED);
         Preference downloadThread = findPreference("download_thread");
         Preference imageResolution = findPreference(Settings.KEY_IMAGE_RESOLUTION);
+        Preference enableDownloadTimeout = findPreference(Settings.KEY_ENABLE_DOWNLOAD_TIMEOUT);
         Preference downloadTimeout = findPreference(Settings.KEY_DOWNLOAD_TIMEOUT);
+        Preference downloadLoggingEnabled = findPreference(Settings.KEY_DOWNLOAD_LOGGING_ENABLED);
+        Preference showFolderTimeOnCard = findPreference(Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME);
+        Preference showFolderSizeOnCard = findPreference(Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE);
         mDownloadLocation = findPreference(KEY_DOWNLOAD_LOCATION);
         Preference exportDownloadItems = findPreference(KEY_EXPORT_DOWNLOAD_ITEMS);
         Preference importDownloadItems = findPreference(KEY_IMPORT_DOWNLOAD_ITEMS);
         Preference cleanInvalidDownload = findPreference(KEY_CLEAN_INVALID_DOWNLOAD);
+        Preference repairAllDownloadedGallery = findPreference(KEY_REPAIR_ALL_DOWNLOADED_GALLERY);
+        Preference repairUnknownCategoryGallery = findPreference(KEY_REPAIR_UNKNOWN_CATEGORY_GALLERY);
+        Preference rebuildDownloadRecords = findPreference(KEY_REBUILD_DOWNLOAD_RECORDS);
+        Preference mergeDuplicateGallery = findPreference("merge_duplicate_gallery");
+        Preference scanDownloadFiles = findPreference("scan_download_files");
+        Preference viewDownloadLogs = findPreference(KEY_VIEW_DOWNLOAD_LOGS);
+        Preference cleanDownloadLogs = findPreference(KEY_CLEAN_DOWNLOAD_LOGS);
+        Preference resetMediaScan = findPreference(KEY_RESET_MEDIA_SCAN);
         Preference preloadImage = findPreference("preload_image");
         Preference imageResolutionPref = findPreference(Settings.KEY_IMAGE_RESOLUTION);
 
@@ -109,11 +164,29 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         if (mediaScan != null) {
             mediaScan.setOnPreferenceChangeListener(this);
         }
+        if (enableMinDownloadSpeed != null) {
+            enableMinDownloadSpeed.setOnPreferenceChangeListener(this);
+        }
+        if (minDownloadSpeed != null) {
+            minDownloadSpeed.setOnPreferenceChangeListener(this);
+        }
         if (imageResolution != null) {
             imageResolution.setOnPreferenceChangeListener(this);
         }
+        if (enableDownloadTimeout != null) {
+            enableDownloadTimeout.setOnPreferenceChangeListener(this);
+        }
         if (downloadTimeout != null) {
             downloadTimeout.setOnPreferenceChangeListener(this);
+        }
+        if (downloadLoggingEnabled != null) {
+            downloadLoggingEnabled.setOnPreferenceChangeListener(this);
+        }
+        if (showFolderTimeOnCard != null) {
+            showFolderTimeOnCard.setOnPreferenceChangeListener(this);
+        }
+        if (showFolderSizeOnCard != null) {
+            showFolderSizeOnCard.setOnPreferenceChangeListener(this);
         }
 
         if (mDownloadLocation != null) {
@@ -128,6 +201,77 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         if (cleanInvalidDownload != null) {
             cleanInvalidDownload.setOnPreferenceClickListener(this);
         }
+        if (repairAllDownloadedGallery != null) {
+            repairAllDownloadedGallery.setOnPreferenceClickListener(this);
+        }
+        if (repairUnknownCategoryGallery != null) {
+            repairUnknownCategoryGallery.setOnPreferenceClickListener(this);
+        }
+        if (rebuildDownloadRecords != null) {
+            rebuildDownloadRecords.setOnPreferenceClickListener(this);
+        }
+        if (mergeDuplicateGallery != null) {
+            mergeDuplicateGallery.setOnPreferenceClickListener(this);
+        }
+        if (scanDownloadFiles != null) {
+            scanDownloadFiles.setOnPreferenceClickListener(this);
+        }
+        if (resetMediaScan != null) {
+            resetMediaScan.setOnPreferenceClickListener(this);
+        }
+        if (viewDownloadLogs != null) {
+            viewDownloadLogs.setOnPreferenceClickListener(this);
+        }
+        if (cleanDownloadLogs != null) {
+            cleanDownloadLogs.setOnPreferenceClickListener(this);
+        }
+    }
+
+    private void initNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID_DOWNLOAD,
+                    "下载管理",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("下载管理后台任务通知");
+            NotificationManager notificationManager = requireContext().getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private Notification createProgressNotification(String title, String content, int progress, int max) {
+        Intent intent = new Intent(requireContext(), requireActivity().getClass());
+        PendingIntent pendingIntent = PendingIntent.getActivity(requireContext(), 0, intent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(requireContext(), CHANNEL_ID_DOWNLOAD)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true);
+
+        if (max > 0) {
+            builder.setProgress(max, progress, false);
+        } else {
+            builder.setProgress(0, 0, true);
+        }
+
+        return builder.build();
+    }
+
+    private void updateNotification(int notificationId, String title, String content, int progress, int max) {
+        Notification notification = createProgressNotification(title, content, progress, max);
+        NotificationManager notificationManager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(notificationId, notification);
+    }
+
+    private void cancelNotification(int notificationId) {
+        NotificationManager notificationManager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(notificationId);
     }
 
     @Override
@@ -170,9 +314,113 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             new AlertDialog.Builder(requireActivity())
                     .setTitle(R.string.settings_download_clean_invalid_download)
                     .setMessage(R.string.settings_download_clean_invalid_download_confirm)
-                    .setPositiveButton(android.R.string.ok, (dialog, which) -> new CleanInvalidDownloadTask(this).execute())
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask task =
+                                new com.hippo.ehviewer.task.impl.CleanInvalidDownloadTask(requireActivity());
+                        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                        Toast.makeText(requireActivity(),
+                                R.string.settings_download_clean_invalid_download,
+                                Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setNeutralButton(R.string.show_details, (dialog, which) -> showCleanInvalidDownloadDetails())
+                    .show();
+            return true;
+        } else if (KEY_REPAIR_ALL_DOWNLOADED_GALLERY.equals(key)) {
+            new AlertDialog.Builder(requireActivity())
+                    .setTitle(R.string.settings_download_repair_all_downloaded_gallery)
+                    .setMessage(R.string.repair_all_downloaded_gallery_confirm)
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        com.hippo.ehviewer.task.RepairAllDownloadedGalleryTask task =
+                                new com.hippo.ehviewer.task.RepairAllDownloadedGalleryTask(requireContext());
+                        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                        Toast.makeText(requireActivity(),
+                                R.string.settings_download_repair_all_downloaded_gallery,
+                                Toast.LENGTH_SHORT).show();
+                    })
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
+            return true;
+        } else if (KEY_REPAIR_UNKNOWN_CATEGORY_GALLERY.equals(key)) {
+            new AlertDialog.Builder(requireActivity())
+                    .setTitle(R.string.settings_download_repair_unknown_category_gallery)
+                    .setMessage(R.string.repair_unknown_category_gallery_confirm)
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        com.hippo.ehviewer.task.RepairUnknownCategoryGalleryTask task =
+                                new com.hippo.ehviewer.task.RepairUnknownCategoryGalleryTask(requireContext());
+                        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                        Toast.makeText(requireActivity(),
+                                R.string.settings_download_repair_unknown_category_gallery,
+                                Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
+        } else if (KEY_REBUILD_DOWNLOAD_RECORDS.equals(key)) {
+            // 显示Toast并开始预检查
+            Toast.makeText(requireActivity(), R.string.settings_download_rebuilding, Toast.LENGTH_SHORT).show();
+            
+            // 在后台线程执行预检查
+            ExecutorManager.getBackgroundExecutor().execute(() -> {
+                try {
+                    UniFile downloadDir = Settings.getDownloadLocation();
+                    if (downloadDir == null || !downloadDir.isDirectory()) {
+                        showCheckResultOnMainThread("下载目录不存在或无效，无法重建下载记录");
+                        return;
+                    }
+                    
+                    UniFile[] files = downloadDir.listFiles();
+                    if (files == null || files.length == 0) {
+                        showCheckResultOnMainThread("下载目录为空，没有找到任何画廊文件夹");
+                        return;
+                    }
+                    
+                    // 检查是否有.ehviewer文件
+                    boolean hasEhViewerFiles = false;
+                    for (UniFile file : files) {
+                        if (file.isDirectory()) {
+                            UniFile ehViewerFile = file.findFile(DownloadManager.DOWNLOAD_INFO_FILENAME);
+                            if (ehViewerFile != null) {
+                                hasEhViewerFiles = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!hasEhViewerFiles) {
+                        showCheckResultOnMainThread("下载目录中没有找到任何.ehviewer文件，无法重建下载记录");
+                        return;
+                    }
+                    
+                    // 预检查通过，显示确认对话框
+                    showConfirmDialogOnMainThread();
+                    
+                } catch (Exception e) {
+                    Log.e(TAG, "[REBUILD] 预检查时发生错误", e);
+                    showCheckResultOnMainThread("检查下载目录时发生错误: " + e.getMessage());
+                }
+            });
+            return true;
+        } else if ("merge_duplicate_gallery".equals(key)) {
+            com.hippo.ehviewer.BackgroundTaskManager taskManager = com.hippo.ehviewer.BackgroundTaskManager.getInstance();
+            if (taskManager.getTaskStatusManager().getActiveUniqueNonDownloadTask() != null) {
+            Toast.makeText(requireActivity(), R.string.background_task_unique_running, Toast.LENGTH_SHORT).show();
+            return true;
+            }
+            taskManager.submitBackgroundTask(new com.hippo.ehviewer.task.MergeDuplicateGalleryTask(requireContext()));
+            Toast.makeText(requireActivity(), R.string.settings_download_merge_duplicate_gallery, Toast.LENGTH_SHORT).show();
+            return true;
+        } else if ("scan_download_files".equals(key)) {
+            showScanDownloadFilesDialog();
+            return true;
+        } else if (KEY_RESET_MEDIA_SCAN.equals(key)) {
+            showResetMediaScanDialog();
+            return true;
+        } else if (KEY_VIEW_DOWNLOAD_LOGS.equals(key)) {
+            showViewDownloadLogsDialog();
+            return true;
+        } else if (KEY_CLEAN_DOWNLOAD_LOGS.equals(key)) {
+            showCleanDownloadLogsDialog();
             return true;
         }
         return false;
@@ -199,6 +447,39 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 .setPositiveButton(R.string.settings_download_continue, listener)
                 .setNeutralButton(R.string.settings_download_document, listener)
                 .show();
+    }
+
+    private void showScanDownloadFilesDialog() {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_scan_download_files)
+                .setMessage(R.string.settings_download_scan_download_files_summary)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    ScanDownloadTask task = new ScanDownloadTask(requireContext());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void showResetMediaScanDialog() {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_reset_media_scan)
+                .setMessage(R.string.settings_download_reset_media_scan_summary)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    com.hippo.ehviewer.task.ResetMediaScanTask task =
+                            new com.hippo.ehviewer.task.ResetMediaScanTask(requireContext());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void resetMediaScan() {
+        com.hippo.ehviewer.task.ResetMediaScanTask task =
+                new com.hippo.ehviewer.task.ResetMediaScanTask(requireContext());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireActivity(),
+                R.string.settings_download_reset_media_scan, Toast.LENGTH_SHORT).show();
     }
 
     private void openDirPicker() {
@@ -233,27 +514,18 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return;
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
-        String fileName = "ehviewer-download-" + sdf.format(new Date()) + ".csv";
-
-        UniFile file = dir.createFile(fileName);
-        if (file == null) {
-            Toast.makeText(getActivity(), R.string.settings_download_export_failed, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try (OutputStream os = file.openOutputStream()) {
-            os.write(DownloadManager.DOWNLOAD_INFO_HEADER.getBytes(StandardCharsets.UTF_8));
-            for (GalleryInfo gi : list) {
-                os.write(gi.toCSV().getBytes(StandardCharsets.UTF_8));
-            }
-            Toast.makeText(getActivity(), getString(R.string.settings_download_export_succeed, file.getUri().toString()), Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            Toast.makeText(getActivity(), R.string.settings_download_export_failed, Toast.LENGTH_SHORT).show();
-        }
+        // 使用统一的后台任务
+        com.hippo.ehviewer.task.ExportDownloadItemsTask task = 
+            new com.hippo.ehviewer.task.ExportDownloadItemsTask(requireActivity());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireActivity(),
+                R.string.settings_download_export_download_items, Toast.LENGTH_SHORT).show();
     }
 
+
+
     private void importDownloadItems() {
+        // 打开文件选择器，选中文件后在onActivityResult中通过ImportDownloadItemsTask处理
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         try {
@@ -303,8 +575,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 break;
             }
             case REQUEST_CODE_PICK_DOWNLOAD_IMPORT_FILE: {
-                if (resultCode == Activity.RESULT_OK) {
-                    new ImportDownloadTask(this, data.getData()).execute();
+                if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                    com.hippo.ehviewer.task.ImportDownloadItemsTask task =
+                        new com.hippo.ehviewer.task.ImportDownloadItemsTask(requireActivity(), data.getData());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                    Toast.makeText(requireActivity(),
+                            R.string.settings_download_import_items, Toast.LENGTH_SHORT).show();
                 }
                 break;
             }
@@ -317,6 +593,25 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
+        Object oldValue = null;
+        
+        // 获取旧值用于日志记录
+        if (Settings.KEY_MEDIA_SCAN.equals(key)) {
+            oldValue = Settings.getMediaScan();
+        } else if (Settings.KEY_IMAGE_RESOLUTION.equals(key)) {
+            oldValue = Settings.getImageResolution();
+        } else if (Settings.KEY_DOWNLOAD_TIMEOUT.equals(key)) {
+            oldValue = Settings.getDownloadTimeout();
+        } else if (Settings.KEY_DOWNLOAD_LOGGING_ENABLED.equals(key)) {
+            oldValue = Settings.getDownloadLoggingEnabled();
+        } else if (Settings.KEY_ENABLE_MIN_DOWNLOAD_SPEED.equals(key)) {
+            oldValue = Settings.getEnableMinDownloadSpeed();
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME.equals(key)) {
+            oldValue = Settings.getShowDownloadCardFolderTime();
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE.equals(key)) {
+            oldValue = Settings.getShowDownloadCardFolderSize();
+        }
+        
         if (Settings.KEY_MEDIA_SCAN.equals(key)) {
             if (newValue instanceof Boolean) {
                 UniFile downloadLocation = Settings.getDownloadLocation();
@@ -325,16 +620,51 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 } else {
                     CommonOperations.ensureNoMediaFile(downloadLocation);
                 }
+                // 记录设置变更日志
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
+            }
+            return true;
+        } else if (Settings.KEY_ENABLE_MIN_DOWNLOAD_SPEED.equals(key)) {
+            if (newValue instanceof Boolean) {
+                Settings.putEnableMinDownloadSpeed((Boolean) newValue);
+                // 记录设置变更日志
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
             }
             return true;
         } else if (Settings.KEY_IMAGE_RESOLUTION.equals(key)) {
             if (newValue instanceof String) {
                 Settings.putImageResolution((String) newValue);
+                // 记录设置变更日志
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
             }
             return true;
         }else if (Settings.KEY_DOWNLOAD_TIMEOUT.equals(key)) {
             if (newValue instanceof String) {
                 Settings.setDownloadTimeout(toTimeoutTime(newValue));
+                // 记录设置变更日志
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
+            }
+            return true;
+        } else if (Settings.KEY_DOWNLOAD_LOGGING_ENABLED.equals(key)) {
+            if (newValue instanceof Boolean) {
+                // 更新日志设置
+                mDownloadLogger.setLoggingEnabled((Boolean) newValue);
+                // 记录设置变更日志（在禁用日志前记录）
+                if ((Boolean) newValue) {
+                    mDownloadLogger.logSettingsChange(key, oldValue, newValue);
+                }
+            }
+            return true;
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_TIME.equals(key)) {
+            if (newValue instanceof Boolean) {
+                Settings.putShowDownloadCardFolderTime((Boolean) newValue);
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
+            }
+            return true;
+        } else if (Settings.KEY_SHOW_DOWNLOAD_CARD_FOLDER_SIZE.equals(key)) {
+            if (newValue instanceof Boolean) {
+                Settings.putShowDownloadCardFolderSize((Boolean) newValue);
+                mDownloadLogger.logSettingsChange(key, oldValue, newValue);
             }
             return true;
         }
@@ -349,35 +679,52 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
     }
 
-    private static class ImportDownloadTask extends AsyncTask<Void, Integer, Integer> {
-
+    private static class ImportDownloadTask {
+        
         private final WeakReference<DownloadFragment> mFragment;
         private final Uri mUri;
-        private ProgressDialog mProgressDialog;
+        private volatile boolean isCancelled = false;
+        private int mTotalCount = 0;
+        private int mFailCount = 0;
 
         public ImportDownloadTask(DownloadFragment fragment, Uri uri) {
             mFragment = new WeakReference<>(fragment);
             mUri = uri;
         }
 
-        @Override
-        protected void onPreExecute() {
+        public void execute() {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
-            mProgressDialog = new ProgressDialog(fragment.getActivity());
-            mProgressDialog.setTitle(R.string.settings_download_import_items);
-            mProgressDialog.setIndeterminate(false);
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mProgressDialog.setCancelable(false);
-            mProgressDialog.show();
+            
+            onPreExecute();
+            ExecutorManager.getIoExecutor().execute(() -> {
+                Integer result = doInBackground();
+                ExecutorManager.runOnMainThread(() -> onPostExecute(result));
+            });
         }
 
-        @Override
-        protected Integer doInBackground(Void... voids) {
+        private void onPreExecute() {
             DownloadFragment fragment = mFragment.get();
-            if (fragment == null || fragment.getActivity() == null || mUri == null) {
+            if (fragment == null || fragment.getActivity() == null) {
+                return;
+            }
+            
+            // 显示Toast提示
+            Toast.makeText(fragment.getActivity(), 
+                fragment.getString(R.string.settings_download_import_items), 
+                Toast.LENGTH_SHORT).show();
+            
+            // 显示通知栏
+            fragment.updateNotification(NOTIFICATION_ID_IMPORT, 
+                fragment.getString(R.string.settings_download_import_items), 
+                "正在导入下载记录...", 0, 0);
+        }
+
+        private Integer doInBackground() {
+            DownloadFragment fragment = mFragment.get();
+            if (fragment == null || fragment.getActivity() == null || mUri == null || isCancelled) {
                 return 0;
             }
 
@@ -399,246 +746,199 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 }
 
                 DownloadManager downloadManager = EhApplication.getDownloadManager(fragment.requireActivity());
-                int importCount = 0;
+                int successCount = 0;
+                int failCount = 0;
                 int total = galleryInfos.size();
-                publishProgress(0, total);
+                mTotalCount = total;
+                mFailCount = 0; // 重置失败计数
+                publishProgress(0, total, 0, 0);
 
-                for (int i = 0; i < total; i++) {
+                for (int i = 0; i < total && !isCancelled; i++) {
                     GalleryInfo gi = galleryInfos.get(i);
-                    if (downloadManager.getDownloadInfo(gi.gid) == null) {
-                        downloadManager.addDownload(gi, null);
-                        importCount++;
-                    }
-                    publishProgress(i + 1, total);
-                }
-                return importCount;
-            } catch (IOException e) {
-                return 0;
-            }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (mProgressDialog != null) {
-                mProgressDialog.setMax(values[1]);
-                mProgressDialog.setProgress(values[0]);
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Integer result) {
-            DownloadFragment fragment = mFragment.get();
-            if (mProgressDialog != null) {
-                // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
-                if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
                     try {
-                        if (mProgressDialog.isShowing()) {
-                            mProgressDialog.dismiss();
+                        if (downloadManager.getDownloadInfo(gi.gid) == null) {
+                            downloadManager.addDownload(gi, null);
+                            successCount++;
+                        } else {
+                            failCount++; // 已存在，算作失败
+                            mFailCount++;
                         }
-                    } catch (IllegalArgumentException e) {
-                        // 对话框已经不再附加到窗口管理器，忽略异常
-                        ExceptionUtils.throwIfFatal(e);
+                    } catch (Exception e) {
+                        failCount++;
+                        mFailCount++;
+                        // 记录错误日志
+                        Log.e("ImportDownloadTask", "Failed to import gallery: " + gi.title + " (GID: " + gi.gid + ")", e);
                     }
+                    publishProgress(i + 1, total, successCount, failCount);
                 }
-                mProgressDialog = null;
+                // 返回成功个数
+                return successCount;
+            } catch (IOException e) {
+                Log.e("ImportDownloadTask", "Failed to read import file", e);
+                return -1; // 使用-1表示读取文件失败
             }
+        }
+
+        private void publishProgress(int progress, int max, int successCount, int failCount) {
+            DownloadFragment fragment = mFragment.get();
+            if (fragment == null || !fragment.isAdded() || fragment.getActivity() == null) {
+                return;
+            }
+            
+            // 更新通知栏进度
+            String content = "正在导入下载记录... (" + progress + "/" + max + ") - 成功:" + successCount + " 失败:" + failCount;
+            fragment.updateNotification(NOTIFICATION_ID_IMPORT, 
+                fragment.getString(R.string.settings_download_import_items), 
+                content, progress, max);
+        }
+
+        private void onPostExecute(Integer result) {
+            DownloadFragment fragment = mFragment.get();
+            
+            // 取消通知栏
+            if (fragment != null) {
+                fragment.cancelNotification(NOTIFICATION_ID_IMPORT);
+            }
+            
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
-            if (result > 0) {
-                Toast.makeText(fragment.getActivity(), fragment.getString(R.string.settings_download_import_succeed, result), Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(fragment.getActivity(), R.string.settings_download_import_failed, Toast.LENGTH_SHORT).show();
+            
+            if (result == -1) {
+                // 文件读取失败
+                Toast.makeText(fragment.getActivity(), 
+                    fragment.getString(R.string.settings_download_import_read_failed), 
+                    Toast.LENGTH_LONG).show();
+            } else if (result >= 0) {
+                // 显示详细的成功/失败信息
+                String message;
+                if (result > 0) {
+                    message = fragment.getString(R.string.settings_download_import_succeed_with_details, 
+                        result, mFailCount);
+                    if (mFailCount > 0) {
+                        message += "\n" + fragment.getString(R.string.settings_download_import_check_logs);
+                    }
+                } else {
+                    message = fragment.getString(R.string.settings_download_import_failed_all);
+                    message += "\n" + fragment.getString(R.string.settings_download_import_check_logs);
+                }
+                Toast.makeText(fragment.getActivity(), message, Toast.LENGTH_LONG).show();
             }
+        }
+
+        public void cancel() {
+            isCancelled = true;
         }
     }
-
-    private static class CleanInvalidDownloadTask extends AsyncTask<Void, Integer, Integer> {
-
-        private final WeakReference<DownloadFragment> mFragment;
-        private ProgressDialog mProgressDialog;
-        private final List<String> mLogs = new ArrayList<>();
-
-        public CleanInvalidDownloadTask(DownloadFragment fragment) {
-            mFragment = new WeakReference<>(fragment);
+    
+    // 重建下载记录预检查的辅助方法
+    private void showCheckResultOnMainThread(String message) {
+        ExecutorManager.runOnMainThread(() -> {
+            if (isAdded() && getActivity() != null) {
+                Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+    
+    private void showConfirmDialogOnMainThread() {
+        ExecutorManager.runOnMainThread(() -> {
+            if (isAdded() && getActivity() != null) {
+                new AlertDialog.Builder(requireActivity())
+                        .setTitle(R.string.settings_download_rebuild_download_records)
+                        .setMessage(R.string.settings_download_rebuild_confirm)
+                        .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                            com.hippo.ehviewer.task.RebuildDownloadRecordsTask task =
+                                    new com.hippo.ehviewer.task.RebuildDownloadRecordsTask(requireContext());
+                            com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            }
+        });
+    }
+    
+    private void showViewDownloadLogsDialog() {
+        File[] logFiles = mDownloadLogger.getLogFiles();
+        if (logFiles.length == 0) {
+            new AlertDialog.Builder(requireActivity())
+                    .setTitle(R.string.settings_download_view_logs)
+                    .setMessage("没有找到日志文件")
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return;
         }
-
-        @Override
-        protected void onPreExecute() {
-            DownloadFragment fragment = mFragment.get();
-            if (fragment == null || fragment.getActivity() == null) {
-                return;
-            }
-            mProgressDialog = new ProgressDialog(fragment.getActivity());
-            mProgressDialog.setTitle(R.string.settings_download_cleaning);
-            mProgressDialog.setIndeterminate(false);
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mProgressDialog.setCancelable(false);
-            mProgressDialog.show();
+        
+        String[] logFileNames = new String[logFiles.length];
+        for (int i = 0; i < logFiles.length; i++) {
+            logFileNames[i] = logFiles[i].getName() + " (" + (logFiles[i].length() / 1024) + " KB)";
         }
-
-        @Override
-        protected Integer doInBackground(Void... voids) {
-            UniFile downloadDir = Settings.getDownloadLocation();
-            if (downloadDir == null || !downloadDir.isDirectory()) {
-                return 0;
+        
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_view_logs)
+                .setItems(logFileNames, (dialog, which) -> {
+                    File selectedLogFile = logFiles[which];
+                    showLogFileContent(selectedLogFile);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+    
+    private void showLogFileContent(File logFile) {
+        try {
+            String content = new String(java.nio.file.Files.readAllBytes(logFile.toPath()));
+            // 限制显示的字符数，避免界面卡顿
+            if (content.length() > 10000) {
+                content = content.substring(0, 10000) + "\n\n... (内容过长，仅显示前10000个字符)";
             }
-
-            UniFile[] files = downloadDir.listFiles();
-            if (files == null) {
-                return 0;
-            }
-
-            int invalidCount = 0;
-            int total = files.length;
-            publishProgress(0, total);
-
-            DownloadManager downloadManager = EhApplication.getDownloadManager(mFragment.get().requireActivity());
-
-            for (int i = 0; i < total; i++) {
-                UniFile dir = files[i];
-                publishProgress(i + 1, total);
-
-                if (!dir.isDirectory()) {
-                    continue;
-                }
-
-                UniFile[] subFiles = dir.listFiles();
-                if (subFiles == null || subFiles.length == 0) {
-                    mLogs.add("Empty directory: " + dir.getName());
-                    invalidCount++;
-                    dir.delete();
-                    continue;
-                }
-
-                UniFile ehViewerFile = dir.findFile(DownloadManager.DOWNLOAD_INFO_FILENAME);
-                if (ehViewerFile == null) {
-                    mLogs.add("Missing .ehviewer file: " + dir.getName());
-                    invalidCount++;
-                    continue;
-                }
-
-                try {
-                    String content = IOUtils.readString(ehViewerFile.openInputStream(), StandardCharsets.UTF_8.name());
-                    String[] lines = content.split("\n");
-                    if (lines.length < 8) {
-                        mLogs.add("Invalid .ehviewer file: " + dir.getName());
-                        invalidCount++;
-                        // Try to reset if possible
-                        long gid;
-                        try {
-                            gid = Long.parseLong(lines[0]);
-                        } catch (NumberFormatException e) {
-                            gid = -1;
-                        }
-                        if (gid != -1) {
-                            com.hippo.ehviewer.dao.DownloadInfo gi = downloadManager.getDownloadInfo(gid);
-                            if (gi != null) {
-                                gi.state = com.hippo.ehviewer.dao.DownloadInfo.STATE_NONE;
-                                EhDB.putDownloadInfo(gi);
-                            }
-                        }
-                        continue;
-                    }
-                    int pageCount = Integer.parseInt(lines[7]);
-                    int imageFileCount = 0;
-                    for (UniFile subFile : subFiles) {
-                        String name = subFile.getName();
-                        if (name != null && !name.startsWith(".")) {
-                            imageFileCount++;
-                        }
-                    }
-
-                    if (imageFileCount != pageCount) {
-                        mLogs.add("Inconsistent file count: " + dir.getName() + ", expected: " + pageCount + ", actual: " + imageFileCount);
-                        invalidCount++;
-                        for (UniFile subFile : subFiles) {
-                            String name = subFile.getName();
-                            if (name != null && !name.equals(DownloadManager.DOWNLOAD_INFO_FILENAME) && !name.startsWith(".")) {
-                                subFile.delete();
-                            }
-                        }
-                        // Reset to unfinished state
-                        long gid;
-                        try {
-                            gid = Long.parseLong(lines[0]);
-                        } catch (NumberFormatException e) {
-                            gid = -1;
-                        }
-                        if (gid != -1) {
-                            com.hippo.ehviewer.dao.DownloadInfo gi = downloadManager.getDownloadInfo(gid);
-                            if (gi != null) {
-                                gi.state = com.hippo.ehviewer.dao.DownloadInfo.STATE_NONE;
-                                EhDB.putDownloadInfo(gi);
-                            }
-                        }
-                    }
-                } catch (IOException | NumberFormatException e) {
-                    mLogs.add("Error processing directory: " + dir.getName() + " - " + e.getMessage());
-                    invalidCount++;
-                }
-            }
-
-            if (!mLogs.isEmpty()) {
-                saveLog();
-            }
-
-            return invalidCount;
+            
+            new AlertDialog.Builder(requireActivity())
+                    .setTitle("日志文件: " + logFile.getName())
+                    .setMessage(content)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+        } catch (IOException e) {
+            Toast.makeText(requireActivity(), "读取日志文件失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+    
+    private void showCleanDownloadLogsDialog() {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_clean_logs)
+                .setMessage("确定要删除旧日志文件吗？")
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    com.hippo.ehviewer.task.CleanDownloadLogsTask task =
+                            new com.hippo.ehviewer.task.CleanDownloadLogsTask(requireContext());
+                    com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+                    Toast.makeText(requireActivity(),
+                            R.string.settings_download_clean_logs, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (mProgressDialog != null) {
-                mProgressDialog.setMax(values[1]);
-                mProgressDialog.setProgress(values[0]);
-            }
+    private File createRepairLogFile() {
+        File dir = AppConfig.getExternalLogcatDir();
+        if (dir == null) {
+            Log.e(TAG, "无法获取logcat目录");
+            return null;
         }
-
-        @Override
-        protected void onPostExecute(Integer result) {
-            DownloadFragment fragment = mFragment.get();
-            if (mProgressDialog != null) {
-                // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
-                if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
-                    try {
-                        if (mProgressDialog.isShowing()) {
-                            mProgressDialog.dismiss();
-                        }
-                    } catch (IllegalArgumentException e) {
-                        // 对话框已经不再附加到窗口管理器，忽略异常
-                        ExceptionUtils.throwIfFatal(e);
-                    }
-                }
-                mProgressDialog = null;
-            }
-            if (fragment == null || fragment.getActivity() == null) {
-                return;
-            }
-            if (result > 0) {
-                Toast.makeText(fragment.getActivity(), fragment.getString(R.string.settings_download_clean_invalid_done, result), Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(fragment.getActivity(), R.string.settings_download_clean_invalid_no_invalid, Toast.LENGTH_SHORT).show();
-            }
+        if (!dir.exists() && !dir.mkdirs()) {
+            Log.e(TAG, "无法创建logcat目录: " + dir.getAbsolutePath());
+            return null;
         }
-
-        private void saveLog() {
-            UniFile downloadDir = Settings.getDownloadLocation();
-            if (downloadDir == null) {
-                return;
-            }
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm", Locale.US);
-            String fileName = "delfile-" + sdf.format(new Date()) + ".log";
-            UniFile logFile = downloadDir.createFile(fileName);
-            if (logFile != null) {
-                try (OutputStream os = logFile.openOutputStream()) {
-                    for (String log : mLogs) {
-                        os.write((log + "\n").getBytes(StandardCharsets.UTF_8));
-                    }
-                } catch (IOException e) {
-                    // Ignore
-                }
-            }
-        }
+        String name = "repair_gallery_" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".log";
+        return new File(dir, name);
+    }
+    
+    /**
+     * 显示清空无效下载项的详细信息
+     */
+    private void showCleanInvalidDownloadDetails() {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.clean_invalid_download_detail_title)
+                .setMessage(R.string.clean_invalid_download_detail_message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 }
 

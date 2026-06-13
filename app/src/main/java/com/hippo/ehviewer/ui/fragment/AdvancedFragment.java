@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,15 +34,27 @@ import androidx.preference.Preference;
 
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
+import com.hippo.ehviewer.BackgroundTaskManager;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.network.NetworkLogger;
+import com.hippo.ehviewer.ui.DirPickerActivity;
+import com.hippo.unifile.UniFile;
 import com.hippo.ehviewer.ui.wifi.WiFiClientActivity;
 import com.hippo.ehviewer.ui.wifi.WiFiServerActivity;
+import com.hippo.ehviewer.ui.task.BackgroundTaskActivity;
+import com.hippo.ehviewer.ui.transfer.TransferActivity;
+import com.hippo.ehviewer.ui.NetworkDiagnosticActivity;
+import com.hippo.ehviewer.ui.local.LocalGalleryActivity;
 import com.hippo.ehviewer.widget.ProgressHelper;
 import com.hippo.util.LogCat;
 import com.hippo.util.ReadableTime;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class AdvancedFragment extends BasePreferenceFragmentCompat
@@ -53,11 +66,24 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     public static final String LOADING_PROGRESS = "loading_progress";
 
     private static final String KEY_DUMP_LOGCAT = "dump_logcat";
+    private static final String KEY_EXPORT_DATABASE = "export_database";
     private static final String KEY_CLEAR_MEMORY_CACHE = "clear_memory_cache";
+    private static final String KEY_EXPORT_PATH = "export_path";
     private static final String KEY_APP_LANGUAGE = "app_language";
     private static final String KEY_IMPORT_DATA = "import_data";
     private static final String KEY_WIFI_SERVER = "wifi_server";
     private static final String KEY_WIFI_CLIENT = "wifi_client";
+    private static final String KEY_BACKGROUND_TASKS = "background_tasks";
+    private static final String KEY_TRANSFER_SERVICE = "transfer_service";
+    private static final String KEY_NETWORK_DIAGNOSTIC = "network_diagnostic";
+    private static final String KEY_USER_AGENT = "user_agent";
+    private static final String KEY_LOCAL_GALLERY = "local_gallery";
+    private static final String KEY_RECYCLE_BIN = "recycle_bin";
+    private static final String KEY_NETWORK_LOG = "network_log_enabled";
+    private static final String KEY_BACKGROUND_CONCURRENT_TASKS = "background_concurrent_tasks";
+
+    public static final int REQUEST_CODE_PICK_EXPORT_DIR = 10;
+    private static final String TAG = "AdvancedFragment";
 
     private final DbSyncHandle dbSyncHandle = new DbSyncHandle(Looper.getMainLooper());
 
@@ -69,19 +95,53 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         addPreferencesFromResource(R.xml.advanced_settings);
 
         Preference dumpLogcat = findPreference(KEY_DUMP_LOGCAT);
+        Preference exportDatabase = findPreference(KEY_EXPORT_DATABASE);
         Preference clearMemoryCache = findPreference(KEY_CLEAR_MEMORY_CACHE);
+        Preference exportPath = findPreference(KEY_EXPORT_PATH);
         Preference appLanguage = findPreference(KEY_APP_LANGUAGE);
         Preference importData = findPreference(KEY_IMPORT_DATA);
         Preference socketData = findPreference(KEY_WIFI_SERVER);
         Preference clientData = findPreference(KEY_WIFI_CLIENT);
+        Preference backgroundTasks = findPreference(KEY_BACKGROUND_TASKS);
+        Preference transferService = findPreference(KEY_TRANSFER_SERVICE);
+        Preference networkDiagnostic = findPreference(KEY_NETWORK_DIAGNOSTIC);
+        Preference userAgent = findPreference(KEY_USER_AGENT);
+        Preference localGallery = findPreference(KEY_LOCAL_GALLERY);
+        Preference recycleBin = findPreference(KEY_RECYCLE_BIN);
+        Preference networkLog = findPreference(KEY_NETWORK_LOG);
+        Preference backgroundConcurrentTasks = findPreference(KEY_BACKGROUND_CONCURRENT_TASKS);
 
         dumpLogcat.setOnPreferenceClickListener(this);
+        if (exportDatabase != null) {
+            exportDatabase.setOnPreferenceClickListener(this);
+        }
         clearMemoryCache.setOnPreferenceClickListener(this);
+        if (exportPath != null) {
+            exportPath.setOnPreferenceClickListener(this);
+            UniFile exportDir = Settings.getExportLocation();
+            if (exportDir != null && exportDir.getUri() != null) {
+                exportPath.setSummary(exportDir.getUri().toString());
+            }
+        }
         importData.setOnPreferenceClickListener(this);
         socketData.setOnPreferenceClickListener(this);
         clientData.setOnPreferenceClickListener(this);
+        backgroundTasks.setOnPreferenceClickListener(this);
+        transferService.setOnPreferenceClickListener(this);
+        networkDiagnostic.setOnPreferenceClickListener(this);
+        userAgent.setOnPreferenceClickListener(this);
+        localGallery.setOnPreferenceClickListener(this);
+        if (recycleBin != null) {
+            recycleBin.setOnPreferenceClickListener(this);
+        }
 
         appLanguage.setOnPreferenceChangeListener(this);
+        if (networkLog != null) {
+            networkLog.setOnPreferenceChangeListener(this);
+        }
+        if (backgroundConcurrentTasks != null) {
+            backgroundConcurrentTasks.setOnPreferenceChangeListener(this);
+        }
     }
 
     @Override
@@ -95,6 +155,8 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         switch (key) {
             case KEY_DUMP_LOGCAT:
                 return dumpLogcat();
+            case KEY_EXPORT_DATABASE:
+                return exportDatabase();
             case KEY_CLEAR_MEMORY_CACHE:
                 return clearMemoryCache();
             case KEY_IMPORT_DATA:
@@ -105,6 +167,20 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
                 return gotoWiFiServerActivity();
             case KEY_WIFI_CLIENT:
                 return gotoWiFiClientActivity();
+            case KEY_BACKGROUND_TASKS:
+                return gotoBackgroundTaskActivity();
+            case KEY_TRANSFER_SERVICE:
+                return gotoTransferActivity();
+            case KEY_NETWORK_DIAGNOSTIC:
+                return gotoNetworkDiagnosticActivity();
+            case KEY_USER_AGENT:
+                return showUserAgentDialog();
+            case KEY_EXPORT_PATH:
+                return openExportDirPicker();
+            case KEY_LOCAL_GALLERY:
+                return gotoLocalGalleryActivity();
+            case KEY_RECYCLE_BIN:
+                return gotoRecycleBinActivity();
             default:
                 return false;
         }
@@ -124,6 +200,113 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         return false;
     }
 
+    private boolean gotoBackgroundTaskActivity() {
+        Activity activity = getActivity();
+        BackgroundTaskActivity.start(activity);
+        return true;
+    }
+
+    private boolean gotoTransferActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, TransferActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoNetworkDiagnosticActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, NetworkDiagnosticActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoLocalGalleryActivity() {
+        Activity activity = getActivity();
+        Intent intent = new Intent(activity, LocalGalleryActivity.class);
+        activity.startActivity(intent);
+        return true;
+    }
+
+    private boolean gotoRecycleBinActivity() {
+        Activity activity = getActivity();
+        LocalGalleryActivity.startRecycleBin(activity);
+        return true;
+    }
+
+    private boolean openExportDirPicker() {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return false;
+        }
+
+        UniFile uniFile = Settings.getExportLocation();
+        Intent intent = new Intent(activity, DirPickerActivity.class);
+        if (uniFile != null && uniFile.getUri() != null) {
+            intent.putExtra(DirPickerActivity.KEY_FILE_URI, uniFile.getUri());
+        }
+        startActivityForResult(intent, REQUEST_CODE_PICK_EXPORT_DIR);
+        return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_PICK_EXPORT_DIR && resultCode == Activity.RESULT_OK && data != null) {
+            UniFile uniFile = UniFile.fromUri(getContext(), data.getData());
+            if (uniFile != null) {
+                Settings.putExportLocation(uniFile);
+                Preference exportPath = findPreference(KEY_EXPORT_PATH);
+                if (exportPath != null && uniFile.getUri() != null) {
+                    exportPath.setSummary(uniFile.getUri().toString());
+                }
+                String path = uniFile.getUri() != null ? uniFile.getUri().toString() : null;
+                if (path != null) {
+                    Toast.makeText(getContext(), getString(R.string.settings_advanced_export_path_set, path), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    private boolean showUserAgentDialog() {
+        Context context = getContext();
+        if (context == null) return false;
+        
+        // 创建输入框
+        android.widget.EditText editText = new android.widget.EditText(context);
+        editText.setText(com.hippo.ehviewer.Settings.getUserAgent());
+        editText.setSingleLine(false);
+        editText.setHorizontallyScrolling(false);
+        editText.setMinLines(3);
+        editText.setMaxLines(6);
+        editText.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
+        editText.setScroller(new android.widget.Scroller(context));
+        editText.setVerticalScrollBarEnabled(true);
+        
+        // 创建对话框
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.settings_advanced_user_agent)
+                .setView(editText)
+                .setPositiveButton(R.string.settings_advanced_user_agent_restore_default, (dialog, which) -> {
+                    // 恢复默认值
+                    com.hippo.ehviewer.Settings.putUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+                    Toast.makeText(context, R.string.settings_advanced_user_agent_restored, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .setNeutralButton(R.string.settings_advanced_user_agent_save, (dialog, which) -> {
+                    // 保存用户输入的值
+                    String userAgent = editText.getText().toString().trim();
+                    if (!userAgent.isEmpty()) {
+                        com.hippo.ehviewer.Settings.putUserAgent(userAgent);
+                        Toast.makeText(context, R.string.settings_advanced_user_agent_saved, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(context, R.string.settings_advanced_user_agent_empty, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+        
+        return true;
+    }
+
     private boolean clearMemoryCache() {
         ((EhApplication) getActivity().getApplication()).clearMemoryCache();
         Runtime.getRuntime().gc();
@@ -131,19 +314,18 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
     }
 
     private boolean dumpLogcat() {
-        boolean ok;
-        File file = null;
-        File dir = AppConfig.getExternalLogcatDir();
-        if (dir != null) {
-            file = new File(dir, "logcat-" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt");
-            ok = LogCat.save(file);
-        } else {
-            ok = false;
-        }
-        Resources resources = getResources();
-        Toast.makeText(getActivity(),
-                ok ? resources.getString(R.string.settings_advanced_dump_logcat_to, file.getPath()) :
-                        resources.getString(R.string.settings_advanced_dump_logcat_failed), Toast.LENGTH_SHORT).show();
+        com.hippo.ehviewer.task.DumpLogcatTask task =
+                new com.hippo.ehviewer.task.DumpLogcatTask(requireContext());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireContext(), R.string.settings_advanced_dump_logcat_started, Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    private boolean exportDatabase() {
+        com.hippo.ehviewer.task.ExportDatabaseTask task =
+                new com.hippo.ehviewer.task.ExportDatabaseTask(requireContext());
+        com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+        Toast.makeText(requireContext(), R.string.settings_advanced_export_database_started, Toast.LENGTH_SHORT).show();
         return true;
     }
 
@@ -161,28 +343,13 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         Arrays.sort(files);
         new AlertDialog.Builder(context).setItems(files, (dialog, which) -> {
             dialog.dismiss();
-            showProgress(context, dir, files, which);
+            File file = new File(dir, files[which]);
+            com.hippo.ehviewer.task.impl.ImportDataTask task =
+                    new com.hippo.ehviewer.task.impl.ImportDataTask(context, file);
+            com.hippo.ehviewer.BackgroundTaskManager.getInstance().submitBackgroundTask(task);
+            Toast.makeText(context, R.string.settings_advanced_import_data_started, Toast.LENGTH_SHORT).show();
         }).show();
         return false;
-    }
-
-    private void showProgress(final Context context, File dir, String[] files, int which) {
-
-        File file = new File(dir, files[which]);
-        ProgressHelper.showDialog(context, context.getString(R.string.loading_db_file));
-        new Thread(
-                () -> {
-                    String error = EhDB.importDB(context, file, dbSyncHandle);
-                    Message message = new Message();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("error", error);
-                    bundle.putInt(LOADING_STATUS, DB_LOAD_FINISH);
-                    message.setData(bundle);
-                    dbSyncHandle.sendMessage(message);
-                }
-        ).start();
-
-
     }
 
     @Override
@@ -190,6 +357,26 @@ public class AdvancedFragment extends BasePreferenceFragmentCompat
         String key = preference.getKey();
         if (KEY_APP_LANGUAGE.equals(key)) {
             ((EhApplication) getActivity().getApplication()).recreate();
+            return true;
+        }
+        if (KEY_NETWORK_LOG.equals(key)) {
+            NetworkLogger.INSTANCE.onSettingChanged();
+            return true;
+        }
+        if (KEY_BACKGROUND_CONCURRENT_TASKS.equals(key)) {
+            int concurrentTasks;
+            try {
+                concurrentTasks = Integer.parseInt(String.valueOf(newValue));
+            } catch (Exception e) {
+                return false;
+            }
+
+            Settings.putBackgroundConcurrentTasks(concurrentTasks);
+            try {
+                BackgroundTaskManager.getInstance().applyBackgroundConcurrentTaskSetting();
+            } catch (IllegalStateException ignored) {
+            }
+            Toast.makeText(getContext(), R.string.settings_advanced_background_concurrent_tasks_applied, Toast.LENGTH_SHORT).show();
             return true;
         }
         return false;
