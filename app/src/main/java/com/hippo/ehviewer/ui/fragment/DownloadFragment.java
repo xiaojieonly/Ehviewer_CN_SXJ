@@ -84,6 +84,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     public static final String KEY_SMB_BACKUP_ENABLED = "smb_backup_enabled";
     public static final String KEY_SMB_BACKUP_CONFIGURE = "smb_backup_configure";
     public static final String KEY_SMB_BACKUP_SYNC_ALL = "smb_backup_sync_all";
+    public static final String KEY_SMB_BACKUP_AGGRESSIVE = "smb_backup_aggressive";
 
     @Nullable
     private Preference mDownloadLocation;
@@ -167,6 +168,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         if (mSmbBackupSyncAll != null) {
             mSmbBackupSyncAll.setOnPreferenceClickListener(this);
         }
+
+        UniFile downloadLoc = Settings.getDownloadLocation();
+        if (downloadLoc != null && downloadLoc.getUri() != null
+                && "smb".equals(downloadLoc.getUri().getScheme())) {
+            Toast.makeText(requireActivity(), R.string.settings_download_smb_reminder, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -186,6 +193,22 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             } else {
                 mDownloadLocation.setSummary(R.string.settings_download_invalid_download_location);
             }
+        }
+        
+        boolean isSmbDownload = file != null && file.getUri() != null 
+                && "smb".equals(file.getUri().getScheme());
+        
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        boolean backupEnabled = backupSettings.isEnabled();
+        
+        if (mSmbBackupEnabled != null) {
+            mSmbBackupEnabled.setVisible(!isSmbDownload);
+        }
+        if (mSmbBackupConfigure != null) {
+            mSmbBackupConfigure.setVisible(!isSmbDownload && backupEnabled);
+        }
+        if (mSmbBackupSyncAll != null) {
+            mSmbBackupSyncAll.setVisible(!isSmbDownload && backupEnabled);
         }
     }
 
@@ -453,6 +476,13 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
                 backupSettings.setEnabled((Boolean) newValue);
                 updateSmbBackupSummary();
+                onUpdateDownloadLocation();
+            }
+            return true;
+        } else if (KEY_SMB_BACKUP_AGGRESSIVE.equals(key)) {
+            if (newValue instanceof Boolean) {
+                SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+                backupSettings.setAggressiveMode((Boolean) newValue);
             }
             return true;
         }
@@ -601,7 +631,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     SmbConfig cfg = new SmbConfig(host, port, share, currentPath, loginMode,
                             loginMode == SmbLoginMode.PASSWORD ? username : null,
                             loginMode == SmbLoginMode.PASSWORD ? password : null);
-                    return new SmbConnection(cfg).listShareNames();
+                    return new SmbConnection(cfg).listFolders(currentPath);
                 } catch (Exception e) {
                     error = e.getMessage();
                     return null;
@@ -622,15 +652,25 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 }
                 java.util.Collections.sort(folders, String.CASE_INSENSITIVE_ORDER);
 
-                CharSequence[] items = new CharSequence[folders.size()];
-                for (int i = 0; i < folders.size(); i++) items[i] = folders.get(i);
+                java.util.List<CharSequence> itemList = new java.util.ArrayList<>();
+                java.util.List<String> pathList = new java.util.ArrayList<>();
 
+                if (!currentPath.isEmpty()) {
+                    itemList.add("..");
+                    int lastSlash = currentPath.lastIndexOf('/');
+                    pathList.add(lastSlash > 0 ? currentPath.substring(0, lastSlash) : "");
+                }
+                for (String f : folders) {
+                    itemList.add(f);
+                    pathList.add(currentPath.isEmpty() ? f : currentPath + "/" + f);
+                }
+
+                CharSequence[] items = itemList.toArray(new CharSequence[0]);
                 String title = "//" + host + ":" + port + "/" + share + pathToShow;
                 new AlertDialog.Builder(requireActivity())
                         .setTitle(title)
                         .setItems(items, (dialog, which) -> {
-                            String selected = folders.get(which);
-                            String nextPath = currentPath.isEmpty() ? selected : currentPath + "/" + selected;
+                            String nextPath = pathList.get(which);
                             browseSmbFolder(host, port, loginMode, username, password, share, nextPath, forBackup);
                         })
                         .setPositiveButton(R.string.smb_picker_select_here, (d, w) -> {
@@ -767,7 +807,16 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return;
         }
 
-        new SmbBackupSyncAllTask(this).execute();
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_smb_backup_sync_all)
+                .setMessage(R.string.settings_download_smb_backup_sync_all_message)
+                .setPositiveButton(R.string.settings_download_smb_backup_sync_aggressive, (d, w) -> {
+                    SmbBackupService.startWithAggressive(requireContext(), true);
+                })
+                .setNegativeButton(R.string.settings_download_smb_backup_sync_normal, (d, w) -> {
+                    SmbBackupService.startWithAggressive(requireContext(), false);
+                })
+                .show();
     }
 
     private static class ImportDownloadTask extends AsyncTask<Void, Integer, Integer> {

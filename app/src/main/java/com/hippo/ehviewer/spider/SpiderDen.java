@@ -41,6 +41,7 @@ import com.hippo.lib.yorozuya.FileUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.MathUtils;
 import com.hippo.lib.yorozuya.Utilities;
+import com.hippo.ehviewer.smb.SmbCacheSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,6 +85,17 @@ public final class SpiderDen {
     public static UniFile getGalleryDownloadDir(GalleryInfo galleryInfo) {
         UniFile dir = Settings.getDownloadLocation();
         if (dir != null) {
+            if (dir.getUri() != null && "smb".equals(dir.getUri().getScheme())) {
+                File smbCacheDir = SmbCacheSettings.getSmbCacheDir(
+                    com.hippo.ehviewer.EhApplication.getInstance());
+                String dirname = FileUtils.sanitizeFilename(
+                    galleryInfo.gid + "-" + EhUtils.getSuitableTitle(galleryInfo));
+                File galleryDir = new File(smbCacheDir, dirname);
+                if (!galleryDir.exists()) {
+                    galleryDir.mkdirs();
+                }
+                return UniFile.fromFile(galleryDir);
+            }
             // Read from DB
             String dirname = EhDB.getDownloadDirname(galleryInfo.gid);
             if (null != dirname) {

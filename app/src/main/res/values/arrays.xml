@@ -398,6 +398,20 @@
         <item>@string/wifi_send_download</item>
     </string-array>
 
+    <string-array name="smb_cache_threshold_entries" translatable="false">
+        <item>50%%</item>
+        <item>60%%</item>
+        <item>75%%</item>
+        <item>90%%</item>
+    </string-array>
+
+    <string-array name="smb_cache_threshold_values" translatable="false">
+        <item>50</item>
+        <item>60</item>
+        <item>75</item>
+        <item>90</item>
+    </string-array>
+
     <string-array name="update_metadata">
         <item>update_json</item>
         <item>https://raw.githubusercontent.com/xiaojieonly/Ehviewer_CN_SXJ/refs/heads/BiLi_PC_Gamer/feedauthor/update.json</item>
