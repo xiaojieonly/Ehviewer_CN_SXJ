@@ -21,11 +21,22 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: current
+
       - name: Build
         run: |
-          chmod +x ./gradlew
-          ./gradlew app:assembleDebug
-          
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew --version
+            ./gradlew app:assembleDebug
+          else
+            gradle --version
+            gradle app:assembleDebug
+          fi
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
