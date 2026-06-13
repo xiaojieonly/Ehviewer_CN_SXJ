@@ -12,6 +12,7 @@ import com.hippo.ehviewer.dao.GalleryTags;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.DownloadDirname;
+import com.hippo.ehviewer.dao.DownloadedFile;
 import com.hippo.ehviewer.dao.HistoryInfo;
 import com.hippo.ehviewer.dao.QuickSearch;
 import com.hippo.ehviewer.dao.BlackList;
@@ -23,6 +24,7 @@ import com.hippo.ehviewer.dao.GalleryTagsDao;
 import com.hippo.ehviewer.dao.DownloadsDao;
 import com.hippo.ehviewer.dao.DownloadLabelDao;
 import com.hippo.ehviewer.dao.DownloadDirnameDao;
+import com.hippo.ehviewer.dao.DownloadedFilesDao;
 import com.hippo.ehviewer.dao.HistoryDao;
 import com.hippo.ehviewer.dao.QuickSearchDao;
 import com.hippo.ehviewer.dao.BlackListDao;
@@ -43,6 +45,7 @@ public class DaoSession extends AbstractDaoSession {
     private final DaoConfig downloadsDaoConfig;
     private final DaoConfig downloadLabelDaoConfig;
     private final DaoConfig downloadDirnameDaoConfig;
+    private final DaoConfig downloadedFilesDaoConfig;
     private final DaoConfig historyDaoConfig;
     private final DaoConfig quickSearchDaoConfig;
     private final DaoConfig blackListDaoConfig;
@@ -54,6 +57,7 @@ public class DaoSession extends AbstractDaoSession {
     private final DownloadsDao downloadsDao;
     private final DownloadLabelDao downloadLabelDao;
     private final DownloadDirnameDao downloadDirnameDao;
+    private final DownloadedFilesDao downloadedFilesDao;
     private final HistoryDao historyDao;
     private final QuickSearchDao quickSearchDao;
     private final BlackListDao blackListDao;
@@ -77,6 +81,9 @@ public class DaoSession extends AbstractDaoSession {
         downloadDirnameDaoConfig = daoConfigMap.get(DownloadDirnameDao.class).clone();
         downloadDirnameDaoConfig.initIdentityScope(type);
 
+        downloadedFilesDaoConfig = daoConfigMap.get(DownloadedFilesDao.class).clone();
+        downloadedFilesDaoConfig.initIdentityScope(type);
+
         historyDaoConfig = daoConfigMap.get(HistoryDao.class).clone();
         historyDaoConfig.initIdentityScope(type);
 
@@ -99,6 +106,7 @@ public class DaoSession extends AbstractDaoSession {
         downloadsDao = new DownloadsDao(downloadsDaoConfig, this);
         downloadLabelDao = new DownloadLabelDao(downloadLabelDaoConfig, this);
         downloadDirnameDao = new DownloadDirnameDao(downloadDirnameDaoConfig, this);
+        downloadedFilesDao = new DownloadedFilesDao(downloadedFilesDaoConfig, this);
         historyDao = new HistoryDao(historyDaoConfig, this);
         quickSearchDao = new QuickSearchDao(quickSearchDaoConfig, this);
         blackListDao = new BlackListDao(blackListDaoConfig, this);
@@ -110,6 +118,7 @@ public class DaoSession extends AbstractDaoSession {
         registerDao(DownloadInfo.class, downloadsDao);
         registerDao(DownloadLabel.class, downloadLabelDao);
         registerDao(DownloadDirname.class, downloadDirnameDao);
+        registerDao(DownloadedFile.class, downloadedFilesDao);
         registerDao(HistoryInfo.class, historyDao);
         registerDao(QuickSearch.class, quickSearchDao);
         registerDao(BlackList.class, blackListDao);
@@ -123,6 +132,7 @@ public class DaoSession extends AbstractDaoSession {
         downloadsDaoConfig.getIdentityScope().clear();
         downloadLabelDaoConfig.getIdentityScope().clear();
         downloadDirnameDaoConfig.getIdentityScope().clear();
+        downloadedFilesDaoConfig.getIdentityScope().clear();
         historyDaoConfig.getIdentityScope().clear();
         quickSearchDaoConfig.getIdentityScope().clear();
         blackListDaoConfig.getIdentityScope().clear();
@@ -145,6 +155,10 @@ public class DaoSession extends AbstractDaoSession {
 
     public DownloadDirnameDao getDownloadDirnameDao() {
         return downloadDirnameDao;
+    }
+
+    public DownloadedFilesDao getDownloadedFilesDao() {
+        return downloadedFilesDao;
     }
 
     public HistoryDao getHistoryDao() {
