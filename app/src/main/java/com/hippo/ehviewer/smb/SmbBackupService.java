@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SmbBackupService extends Service {
 
     private static final String TAG = "SmbBackupService";
+    private static final int SMB_READ_BUFFER_BYTES = 256 * 1024;
     private static final String CHANNEL_ID = "smb_backup";
     private static final int NOTIFICATION_ID = 0x734D62; // "Smb"
     private static final String ACTION_START = "com.hippo.ehviewer.smb.START";
@@ -142,7 +143,7 @@ public class SmbBackupService extends Service {
     }
 
     private void doSync() {
-        Log.d(TAG, "doSync started");
+        Log.d(TAG, "doSync started, aggressive=" + mAggressive);
         SmbBackupSettings backupSettings = new SmbBackupSettings(this);
         SmbConfig config = backupSettings.loadConfigIfEnabled();
         if (config == null) {
@@ -175,6 +176,8 @@ public class SmbBackupService extends Service {
 
         boolean aggressiveMode = mAggressive;
         long ramBufferSize = aggressiveMode ? backupSettings.getRamBufferSize(this) : 0;
+        Log.d(TAG, "Resolved backup mode, aggressive=" + aggressiveMode
+                + ", ramBufferSize=" + ramBufferSize);
 
         SmbConnection connection = new SmbConnection(config);
         try {
@@ -218,11 +221,21 @@ public class SmbBackupService extends Service {
                                         dirname + " (" + fileIdx + "/" + fileCount + ")", 0);
                                 
                                 if (aggressiveMode && ramBufferSize > 0) {
-                                    uploadWithRamBuffer(connection, file, filePath, ramBufferSize);
-                                } else {
-                                    try (InputStream is = file.openInputStream()) {
-                                        connection.writeFile(filePath, is);
+                                    Log.d(TAG, "Using aggressive RAM-buffer upload for " + filePath
+                                            + ", threshold=" + ramBufferSize);
+                                    try {
+                                        uploadWithRamBuffer(connection, file, filePath, ramBufferSize);
+                                    } catch (OutOfMemoryError e) {
+                                        Log.w(TAG, "Aggressive upload ran out of memory, falling back to stream for "
+                                                + filePath, e);
+                                        uploadWithStream(connection, file, filePath);
                                     }
+                                } else {
+                                    if (aggressiveMode) {
+                                        Log.d(TAG, "Aggressive mode requested but RAM buffer unavailable, using stream for "
+                                                + filePath);
+                                    }
+                                    uploadWithStream(connection, file, filePath);
                                 }
                             }
                         }
@@ -243,31 +256,43 @@ public class SmbBackupService extends Service {
         finish(new int[]{successCount, failCount});
     }
 
+    private void uploadWithStream(SmbConnection connection, UniFile file, String smbPath)
+            throws IOException {
+        try (InputStream is = file.openInputStream()) {
+            connection.writeFile(smbPath, is);
+        }
+    }
+
     private void uploadWithRamBuffer(SmbConnection connection, UniFile file, String smbPath, long bufferSize) throws IOException {
-        byte[] buffer = new byte[(int) Math.min(bufferSize, Integer.MAX_VALUE)];
-        java.io.ByteArrayOutputStream ramBuffer = new java.io.ByteArrayOutputStream();
-        long flushThreshold = bufferSize / 2; // 50% threshold
+        int readBufferSize = (int) Math.max(8192L, Math.min(bufferSize, SMB_READ_BUFFER_BYTES));
+        byte[] buffer = new byte[readBufferSize];
+        java.io.ByteArrayOutputStream ramBuffer = new java.io.ByteArrayOutputStream(
+                Math.min(readBufferSize * 4, 1024 * 1024));
+        long flushThreshold = Math.max(readBufferSize, bufferSize);
+        boolean append = false;
         
         try (InputStream is = file.openInputStream()) {
             int bytesRead;
             while ((bytesRead = is.read(buffer)) != -1) {
                 ramBuffer.write(buffer, 0, bytesRead);
                 if (ramBuffer.size() >= flushThreshold) {
-                    flushRamBufferToSmb(connection, smbPath, ramBuffer);
+                    append = flushRamBufferToSmb(connection, smbPath, ramBuffer, append);
                     ramBuffer.reset();
                 }
             }
             if (ramBuffer.size() > 0) {
-                flushRamBufferToSmb(connection, smbPath, ramBuffer);
+                flushRamBufferToSmb(connection, smbPath, ramBuffer, append);
             }
         }
     }
 
-    private void flushRamBufferToSmb(SmbConnection connection, String smbPath, java.io.ByteArrayOutputStream ramBuffer) throws IOException {
+    private boolean flushRamBufferToSmb(SmbConnection connection, String smbPath,
+            java.io.ByteArrayOutputStream ramBuffer, boolean append) throws IOException {
         byte[] data = ramBuffer.toByteArray();
         try (InputStream is = new java.io.ByteArrayInputStream(data)) {
-            connection.writeFile(smbPath, is);
+            connection.writeFile(smbPath, is, append);
         }
+        return true;
     }
 
     private void updateNotification(int current, int total, String text, int speedBps) {

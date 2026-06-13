@@ -203,21 +203,32 @@ public final class SmbConnection {
     }
 
     public void writeFile(String path, java.io.InputStream source) throws IOException {
-        writeFile(path, source, null);
+        writeFile(path, source, false, null);
     }
 
     public void writeFile(String path, java.io.InputStream source, @Nullable java.lang.Runnable onChunk) throws IOException {
+        writeFile(path, source, false, onChunk);
+    }
+
+    public void writeFile(String path, java.io.InputStream source, boolean append) throws IOException {
+        writeFile(path, source, append, null);
+    }
+
+    public void writeFile(String path, java.io.InputStream source, boolean append,
+            @Nullable java.lang.Runnable onChunk) throws IOException {
+        if (append) {
+            try (OutputStream os = openOutputStream(path, true)) {
+                copyToOutputStream(source, os, onChunk);
+            }
+            return;
+        }
+
         DiskShare share = getShare();
         File file = null;
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OVERWRITE_IF);
             try (OutputStream os = file.getOutputStream(false)) {
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = source.read(buf)) != -1) {
-                    os.write(buf, 0, n);
-                    if (onChunk != null) onChunk.run();
-                }
+                copyToOutputStream(source, os, onChunk);
             }
         } finally {
             closeQuietly(file);
@@ -229,7 +240,7 @@ public final class SmbConnection {
         DiskShare share = getShare();
         File file = null;
         try {
-            file = openFile(share, path, append ? SMB2CreateDisposition.FILE_OPEN : SMB2CreateDisposition.FILE_OPEN_IF);
+            file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN_IF);
             OutputStream stream = file.getOutputStream(append);
             return new SmbOutputStream(stream, file, share);
         } catch (RuntimeException e) {
@@ -451,6 +462,18 @@ public final class SmbConnection {
             return child;
         }
         return parent + "/" + child;
+    }
+
+    private static void copyToOutputStream(InputStream source, OutputStream os,
+            @Nullable Runnable onChunk) throws IOException {
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = source.read(buf)) != -1) {
+            os.write(buf, 0, n);
+            if (onChunk != null) {
+                onChunk.run();
+            }
+        }
     }
 
     private static void closeQuietly(Connection connection) {
