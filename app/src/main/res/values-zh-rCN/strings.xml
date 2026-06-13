@@ -597,6 +597,8 @@
     <string name="settings_download_download_origin_image">下载原图</string>
     <string name="settings_download_download_list_pagination">列表分页</string>
     <string name="settings_download_download_list_pagination_summary">在列表长度大于500时分页功能才会生效</string>
+    <string name="settings_download_merge_on_download">下载时合并同名画廊</string>
+    <string name="settings_download_merge_on_download_summary">下载完成后自动扫描并合并同名的重复画廊文件夹</string>
     <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额与GP迅速流失</string>
     <string name="settings_download_download_order_by_asc">正序下载</string>
     <string name="settings_download_download_order_by_asc_summary">下载全部画廊时正序下载</string>

@@ -1450,6 +1450,18 @@ public class Settings {
         putBoolean(KEY_DOWNLOAD_LIST_PAGINATION, value);
     }
 
+    public static final String KEY_MERGE_ON_DOWNLOAD = "merge_on_download";
+
+    private static final boolean DEFAULT_MERGE_ON_DOWNLOAD = false;
+
+    public static boolean getMergeOnDownload() {
+        return getBoolean(KEY_MERGE_ON_DOWNLOAD, DEFAULT_MERGE_ON_DOWNLOAD);
+    }
+
+    public static void putMergeOnDownload(boolean value) {
+        putBoolean(KEY_MERGE_ON_DOWNLOAD, value);
+    }
+
     public static final String KEY_SHOW_READ_PROGRESS = "show_read_progress";
 
     private static boolean IS_SHOW_READ_PROGRESS = true;

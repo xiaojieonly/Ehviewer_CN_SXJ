@@ -91,6 +91,13 @@
         android:summary="@string/settings_download_download_order_by_asc_summary"
         android:title="@string/settings_download_download_order_by_asc" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="merge_on_download"
+        android:summary="@string/settings_download_merge_on_download_summary"
+        android:title="@string/settings_download_merge_on_download"
+        app:allowDividerAbove="true" />
+
     <com.hippo.ehviewer.preference.RestoreDownloadPreference
         android:key="restore_download_items"
         android:summary="@string/settings_download_restore_download_items_summary"
