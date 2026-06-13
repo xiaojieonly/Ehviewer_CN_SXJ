@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -811,10 +812,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 .setTitle(R.string.settings_download_smb_backup_sync_all)
                 .setMessage(R.string.settings_download_smb_backup_sync_all_message)
                 .setPositiveButton(R.string.settings_download_smb_backup_sync_aggressive, (d, w) -> {
-                    SmbBackupService.startWithAggressive(requireContext(), true);
+                    new SmbBackupSyncAllTask(this, true).execute();
                 })
                 .setNegativeButton(R.string.settings_download_smb_backup_sync_normal, (d, w) -> {
-                    SmbBackupService.startWithAggressive(requireContext(), false);
+                    new SmbBackupSyncAllTask(this, false).execute();
                 })
                 .show();
     }
@@ -1113,7 +1114,11 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
     @SuppressLint("StaticFieldLeak")
     private static final class SmbBackupSyncAllTask extends AsyncTask<Void, Integer, int[]> {
+        private static final String TAG = "SmbBackupSyncAll";
+        private static final int SMB_READ_BUFFER_BYTES = 256 * 1024;
+
         private final WeakReference<DownloadFragment> fragmentRef;
+        private final boolean aggressiveMode;
         private ProgressDialog progress;
         private volatile boolean cancelled;
         private String mGalleryName = "";
@@ -1125,8 +1130,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         private long mSpeedStart = 0;
         private boolean mBackgroundRequested = false;
 
-        private SmbBackupSyncAllTask(DownloadFragment fragment) {
+        private SmbBackupSyncAllTask(DownloadFragment fragment, boolean aggressiveMode) {
             this.fragmentRef = new WeakReference<>(fragment);
+            this.aggressiveMode = aggressiveMode;
         }
 
         @Override
@@ -1164,6 +1170,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             int total = localDirs.length;
             int successCount = 0;
             int failCount = 0;
+            long ramBufferSize = aggressiveMode ? backupSettings.getRamBufferSize(fragment.requireContext()) : 0;
+            Log.d(TAG, "Sync started, aggressive=" + aggressiveMode
+                    + ", ramBufferSize=" + ramBufferSize
+                    + ", totalDirs=" + total);
 
             SmbConnection connection = new SmbConnection(config);
             try {
@@ -1211,22 +1221,22 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                     mFileName = name;
                                     mFileCurrent = ++fileIdx;
                                     publishProgress(i + 1, total);
-                                    try (InputStream raw = file.openInputStream();
-                                         CountingInputStream cis = new CountingInputStream(raw)) {
-                                        final int[] lastCount = {0};
-                                        connection.writeFile(filePath, cis, () -> {
-                                            int current = (int) cis.getCount();
-                                            int delta = current - lastCount[0];
-                                            lastCount[0] = current;
-                                            mSpeedBytes += delta;
-                                            long now = System.currentTimeMillis();
-                                            long elapsed = now - mSpeedStart;
-                                            if (elapsed > 1000) {
-                                                mSpeedBps = mSpeedBytes * 1000 / elapsed;
-                                                mSpeedBytes = 0;
-                                                mSpeedStart = now;
-                                            }
-                                        });
+                                    if (aggressiveMode && ramBufferSize > 0) {
+                                        Log.d(TAG, "Using aggressive RAM-buffer upload for " + filePath
+                                                + ", threshold=" + ramBufferSize);
+                                        try {
+                                            uploadWithRamBuffer(connection, file, filePath, ramBufferSize);
+                                        } catch (OutOfMemoryError e) {
+                                            Log.w(TAG, "Aggressive upload ran out of memory, falling back to stream for "
+                                                    + filePath, e);
+                                            uploadWithStream(connection, file, filePath);
+                                        }
+                                    } else {
+                                        if (aggressiveMode) {
+                                            Log.d(TAG, "Aggressive mode requested but RAM buffer unavailable, using stream for "
+                                                    + filePath);
+                                        }
+                                        uploadWithStream(connection, file, filePath);
                                     }
                                 }
                             }
@@ -1289,7 +1299,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             DownloadFragment fragment = fragmentRef.get();
             if (fragment == null || fragment.getActivity() == null) return;
             if (mBackgroundRequested) {
-                SmbBackupService.start(fragment.requireActivity());
+                Log.d(TAG, "Switching to background backup, aggressive=" + aggressiveMode);
+                SmbBackupService.startWithAggressive(fragment.requireActivity(), aggressiveMode);
                 Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_syncing, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -1300,6 +1311,72 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             } else {
                 Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_sync_failed, Toast.LENGTH_SHORT).show();
             }
+        }
+
+        private Runnable createSpeedTracker(CountingInputStream cis) {
+            final int[] lastCount = {0};
+            return () -> recordTransferredBytes((int) cis.getCount() - lastCount[0], lastCount);
+        }
+
+        private void recordTransferredBytes(int delta, int[] lastCount) {
+            if (delta <= 0) {
+                return;
+            }
+            lastCount[0] += delta;
+            recordTransferredBytes(delta);
+        }
+
+        private void recordTransferredBytes(int delta) {
+            mSpeedBytes += delta;
+            long now = System.currentTimeMillis();
+            long elapsed = now - mSpeedStart;
+            if (elapsed > 1000) {
+                mSpeedBps = mSpeedBytes * 1000 / elapsed;
+                mSpeedBytes = 0;
+                mSpeedStart = now;
+            }
+        }
+
+        private void uploadWithStream(SmbConnection connection, UniFile file, String filePath)
+                throws IOException {
+            try (InputStream raw = file.openInputStream();
+                 CountingInputStream cis = new CountingInputStream(raw)) {
+                connection.writeFile(filePath, cis, createSpeedTracker(cis));
+            }
+        }
+
+        private void uploadWithRamBuffer(SmbConnection connection, UniFile file, String smbPath,
+                long bufferSize) throws IOException {
+            int readBufferSize = (int) Math.max(8192L, Math.min(bufferSize, SMB_READ_BUFFER_BYTES));
+            byte[] buffer = new byte[readBufferSize];
+            java.io.ByteArrayOutputStream ramBuffer = new java.io.ByteArrayOutputStream(
+                    Math.min(readBufferSize * 4, 1024 * 1024));
+            long flushThreshold = Math.max(readBufferSize, bufferSize);
+            boolean append = false;
+
+            try (InputStream raw = file.openInputStream()) {
+                int bytesRead;
+                while (!cancelled && (bytesRead = raw.read(buffer)) != -1) {
+                    ramBuffer.write(buffer, 0, bytesRead);
+                    if (ramBuffer.size() >= flushThreshold) {
+                        append = flushRamBufferToSmb(connection, smbPath, ramBuffer, append);
+                        ramBuffer.reset();
+                    }
+                }
+                if (!cancelled && ramBuffer.size() > 0) {
+                    flushRamBufferToSmb(connection, smbPath, ramBuffer, append);
+                }
+            }
+        }
+
+        private boolean flushRamBufferToSmb(SmbConnection connection, String smbPath,
+                java.io.ByteArrayOutputStream ramBuffer, boolean append) throws IOException {
+            byte[] data = ramBuffer.toByteArray();
+            try (InputStream is = new java.io.ByteArrayInputStream(data)) {
+                connection.writeFile(smbPath, is, append);
+            }
+            recordTransferredBytes(data.length);
+            return true;
         }
 
         private static class CountingInputStream extends InputStream {
@@ -1324,4 +1401,3 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
     }
 }
-

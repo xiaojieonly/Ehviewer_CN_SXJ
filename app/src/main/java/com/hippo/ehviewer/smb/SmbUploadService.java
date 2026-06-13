@@ -221,6 +221,7 @@ public class SmbUploadService extends Service {
         int bufferOffset = 0;
         boolean isLastChunk = false;
         int flushThreshold = DRAM_BUFFER_SIZE / 2; // 50% threshold
+        boolean append = false;
 
         try (FileInputStream fis = new FileInputStream(localFile)) {
             while (!mCancelled && !isLastChunk) {
@@ -232,18 +233,20 @@ public class SmbUploadService extends Service {
                 }
 
                 if (bufferOffset >= flushThreshold || isLastChunk) {
-                    flushToSmb(connection, smbPath, Arrays.copyOf(buffer, bufferOffset), isLastChunk);
+                    append = flushToSmb(connection, smbPath, Arrays.copyOf(buffer, bufferOffset), append);
                     bufferOffset = 0;
                 }
             }
         }
     }
 
-    private void flushToSmb(SmbConnection connection, String smbPath, byte[] data, boolean isLastChunk) throws IOException {
+    private boolean flushToSmb(SmbConnection connection, String smbPath, byte[] data,
+            boolean append) throws IOException {
         connection.ensureDirectory(smbPath.substring(0, smbPath.lastIndexOf('/')));
         try (InputStream is = new ByteArrayInputStream(data)) {
-            connection.writeFile(smbPath, is);
+            connection.writeFile(smbPath, is, append);
         }
+        return true;
     }
 
     private void deleteRecursive(File fileOrDir) {

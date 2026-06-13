@@ -39,6 +39,8 @@ public final class SmbBackupSettings {
     private static final String KEY_AGGRESSIVE_MODE = "aggressive_mode";
 
     private static final int DEFAULT_RAM_PERCENT = 15;
+    private static final long MAX_RAM_BUFFER_BYTES = 32L * 1024 * 1024;
+    private static final long HEAP_RESERVE_BYTES = 32L * 1024 * 1024;
 
     private final SharedPreferences preferences;
     private final SmbCredentialStore credentialStore;
@@ -104,12 +106,31 @@ public final class SmbBackupSettings {
     }
 
     public long getRamBufferSize(Context context) {
-        android.app.ActivityManager am = (android.app.ActivityManager) 
-            context.getSystemService(Context.ACTIVITY_SERVICE);
-        android.app.ActivityManager.MemoryInfo memInfo = new android.app.ActivityManager.MemoryInfo();
-        am.getMemoryInfo(memInfo);
-        long totalRam = memInfo.totalMem;
-        return totalRam * DEFAULT_RAM_PERCENT / 100;
+        Runtime runtime = Runtime.getRuntime();
+        long heapUsed = runtime.totalMemory() - runtime.freeMemory();
+        long heapAvailable = runtime.maxMemory() - heapUsed;
+        if (heapAvailable <= HEAP_RESERVE_BYTES) {
+            return 0L;
+        }
+
+        long heapBudget = (heapAvailable - HEAP_RESERVE_BYTES) / 3;
+        if (heapBudget <= 0L) {
+            return 0L;
+        }
+
+        long deviceTarget = MAX_RAM_BUFFER_BYTES;
+        android.app.ActivityManager am = (android.app.ActivityManager)
+                context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am != null) {
+            android.app.ActivityManager.MemoryInfo memInfo = new android.app.ActivityManager.MemoryInfo();
+            am.getMemoryInfo(memInfo);
+            if (memInfo.totalMem > 0) {
+                deviceTarget = Math.min(memInfo.totalMem * DEFAULT_RAM_PERCENT / 100,
+                        MAX_RAM_BUFFER_BYTES);
+            }
+        }
+
+        return Math.min(deviceTarget, heapBudget);
     }
 
     @Nullable
