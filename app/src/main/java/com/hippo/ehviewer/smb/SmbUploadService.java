@@ -31,28 +31,28 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.MainActivity;
-import com.hippo.unifile.UniFile;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SmbBackupService extends Service {
+public class SmbUploadService extends Service {
 
-    private static final String TAG = "SmbBackupService";
-    private static final String CHANNEL_ID = "smb_backup";
-    private static final int NOTIFICATION_ID = 0x734D62; // "Smb"
-    private static final String ACTION_START = "com.hippo.ehviewer.smb.START";
-    private static final String ACTION_CANCEL = "com.hippo.ehviewer.smb.CANCEL";
-    private static final String EXTRA_AGGRESSIVE = "aggressive";
+    private static final String TAG = "SmbUploadService";
+    private static final String CHANNEL_ID = "smb_upload";
+    private static final int NOTIFICATION_ID = 0x734D55;
+    private static final String ACTION_START = "com.hippo.ehviewer.smb.UPLOAD_START";
+    private static final String ACTION_CANCEL = "com.hippo.ehviewer.smb.UPLOAD_CANCEL";
+
+    private static final int DRAM_BUFFER_SIZE = 100 * 1024 * 1024;
 
     private static final AtomicBoolean sRunning = new AtomicBoolean(false);
 
@@ -61,20 +61,14 @@ public class SmbBackupService extends Service {
     private ExecutorService mExecutor;
     private PowerManager.WakeLock mWakeLock;
     private volatile boolean mCancelled;
-    private volatile boolean mAggressive;
 
     public static boolean isRunning() {
         return sRunning.get();
     }
 
     public static void start(Context context) {
-        startWithAggressive(context, false);
-    }
-
-    public static void startWithAggressive(Context context, boolean aggressive) {
-        Intent intent = new Intent(context, SmbBackupService.class);
+        Intent intent = new Intent(context, SmbUploadService.class);
         intent.setAction(ACTION_START);
-        intent.putExtra(EXTRA_AGGRESSIVE, aggressive);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
@@ -83,7 +77,7 @@ public class SmbBackupService extends Service {
     }
 
     public static void cancel(Context context) {
-        Intent intent = new Intent(context, SmbBackupService.class);
+        Intent intent = new Intent(context, SmbUploadService.class);
         intent.setAction(ACTION_CANCEL);
         context.startService(intent);
     }
@@ -96,15 +90,15 @@ public class SmbBackupService extends Service {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    getString(R.string.smb_backup_service_name),
+                    "SMB 上传",
                     NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription(getString(R.string.smb_backup_service_desc));
+            channel.setDescription("SMB 文件上传进度");
             mNotifyManager.createNotificationChannel(channel);
         }
 
         mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_popup_sync)
-                .setContentTitle(getString(R.string.settings_download_smb_backup_syncing))
+                .setContentTitle("SMB 上传中...")
                 .setOngoing(true)
                 .setOnlyAlertOnce(true);
 
@@ -113,7 +107,7 @@ public class SmbBackupService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         mBuilder.setContentIntent(pi);
 
-        Intent cancelIntent = new Intent(this, SmbBackupService.class);
+        Intent cancelIntent = new Intent(this, SmbUploadService.class);
         cancelIntent.setAction(ACTION_CANCEL);
         PendingIntent cancelPi = PendingIntent.getService(this, 0, cancelIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -131,143 +125,137 @@ public class SmbBackupService extends Service {
 
         if (sRunning.compareAndSet(false, true)) {
             mCancelled = false;
-            mAggressive = intent != null && intent.getBooleanExtra(EXTRA_AGGRESSIVE, false);
             startForeground(NOTIFICATION_ID, mBuilder.build());
             acquireWakeLock();
-            mExecutor.execute(this::doSync);
+            mExecutor.execute(this::doUpload);
         } else {
             stopSelf();
         }
         return START_NOT_STICKY;
     }
 
-    private void doSync() {
-        Log.d(TAG, "doSync started");
-        SmbBackupSettings backupSettings = new SmbBackupSettings(this);
-        SmbConfig config = backupSettings.loadConfigIfEnabled();
+    private void doUpload() {
+        SmbSettings smbSettings = new SmbSettings(this);
+        SmbConfig config = smbSettings.loadConfig();
         if (config == null) {
-            Log.d(TAG, "config is null, aborting");
-            finish(null);
-            return;
-        }
-        Log.d(TAG, "config loaded: " + config.getHost() + "/" + config.getShare());
-
-        UniFile localDir = Settings.getDownloadLocation();
-        Log.d(TAG, "download location: " + (localDir != null ? localDir.getUri() : "null"));
-        if (localDir == null
-                || (localDir.getUri() != null && "smb".equals(localDir.getUri().getScheme()))) {
-            Log.d(TAG, "local dir is null or SMB - aborting");
             finish(null);
             return;
         }
 
-        UniFile[] localDirs = localDir.listFiles();
-        Log.d(TAG, "found " + (localDirs != null ? localDirs.length : 0) + " directories");
-        if (localDirs == null || localDirs.length == 0) {
-            Log.d(TAG, "no directories found - aborting");
-            finish(new int[]{0, 0});
+        File cacheDir = SmbCacheSettings.getSmbCacheDir(this);
+        File[] galleries = cacheDir.listFiles();
+        if (galleries == null || galleries.length == 0) {
+            finish(null);
             return;
         }
 
-        int total = localDirs.length;
+        int total = galleries.length;
         int successCount = 0;
         int failCount = 0;
 
-        boolean aggressiveMode = mAggressive;
-        long ramBufferSize = aggressiveMode ? backupSettings.getRamBufferSize(this) : 0;
-
-        SmbConnection connection = new SmbConnection(config);
+        SmbConnection connection = null;
         try {
-            connection.open();
+            connection = SmbConnection.obtain(config);
             String basePath = config.getPath();
-            updateNotification(0, total, getString(R.string.settings_download_smb_backup_scanning), 0);
+            updateNotification(0, total, "扫描中...", 0);
 
             for (int i = 0; i < total; i++) {
                 if (mCancelled) break;
-                UniFile dir = localDirs[i];
-                if (!dir.isDirectory()) continue;
-                String dirname = dir.getName();
-                if (dirname == null || dirname.startsWith(".")) continue;
+                File gallery = galleries[i];
+                if (!gallery.isDirectory()) continue;
+                String galleryName = gallery.getName();
+                if (galleryName.startsWith(".")) continue;
 
-                String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
-                updateNotification(i + 1, total, dirname, 0);
+                updateNotification(i + 1, total, galleryName, 0);
 
                 try {
-                    connection.ensureDirectory(galleryPath);
-
-                    UniFile[] files = dir.listFiles();
-                    if (files != null) {
-                        int fileCount = 0;
-                        for (UniFile f : files) {
-                            if (f != null && f.getName() != null && !f.getName().startsWith(".")) fileCount++;
-                        }
-                        int fileIdx = 0;
-
-                        for (int j = 0; j < files.length; j++) {
-                            if (mCancelled) break;
-                            UniFile file = files[j];
-                            String name = file.getName();
-                            if (name == null) continue;
-                            if (file.isDirectory()) {
-                                connection.ensureDirectory(galleryPath + "/" + name);
-                            } else {
-                                String filePath = galleryPath + "/" + name;
-                                if (connection.exists(filePath) && connection.length(filePath) == file.length()) continue;
-                                fileIdx++;
-                                updateNotification(i + 1, total,
-                                        dirname + " (" + fileIdx + "/" + fileCount + ")", 0);
-                                
-                                if (aggressiveMode && ramBufferSize > 0) {
-                                    uploadWithRamBuffer(connection, file, filePath, ramBufferSize);
-                                } else {
-                                    try (InputStream is = file.openInputStream()) {
-                                        connection.writeFile(filePath, is);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    uploadGallery(connection, gallery, config);
                     successCount++;
                 } catch (Exception e) {
-                    Log.e(TAG, "Failed to sync " + dirname, e);
+                    Log.e(TAG, "Failed to upload gallery: " + galleryName, e);
                     failCount++;
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "SMB connection failed", e);
             failCount = total;
-        } finally {
-            connection.close();
         }
 
         finish(new int[]{successCount, failCount});
     }
 
-    private void uploadWithRamBuffer(SmbConnection connection, UniFile file, String smbPath, long bufferSize) throws IOException {
-        byte[] buffer = new byte[(int) Math.min(bufferSize, Integer.MAX_VALUE)];
-        java.io.ByteArrayOutputStream ramBuffer = new java.io.ByteArrayOutputStream();
-        long flushThreshold = bufferSize / 2; // 50% threshold
-        
-        try (InputStream is = file.openInputStream()) {
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                ramBuffer.write(buffer, 0, bytesRead);
-                if (ramBuffer.size() >= flushThreshold) {
-                    flushRamBufferToSmb(connection, smbPath, ramBuffer);
-                    ramBuffer.reset();
-                }
+    private void uploadGallery(SmbConnection connection, File galleryDir, SmbConfig config) throws IOException {
+        String basePath = config.getPath();
+        String galleryName = galleryDir.getName();
+        String smbGalleryPath = basePath.isEmpty() ? galleryName : basePath + "/" + galleryName;
+
+        connection.ensureDirectory(smbGalleryPath);
+
+        File[] files = galleryDir.listFiles();
+        if (files == null || files.length == 0) {
+            return;
+        }
+
+        for (File file : files) {
+            if (mCancelled) break;
+            if (file.isDirectory()) {
+                connection.ensureDirectory(smbGalleryPath + "/" + file.getName());
+                continue;
             }
-            if (ramBuffer.size() > 0) {
-                flushRamBufferToSmb(connection, smbPath, ramBuffer);
+
+            String smbFilePath = smbGalleryPath + "/" + file.getName();
+            uploadFile(connection, file, smbFilePath, galleryName);
+        }
+
+        if (!mCancelled) {
+            deleteRecursive(galleryDir);
+        }
+    }
+
+    private void uploadFile(SmbConnection connection, File localFile, String smbPath, String galleryName) throws IOException {
+        if (connection.exists(smbPath) && connection.length(smbPath) == localFile.length()) {
+            return;
+        }
+
+        byte[] buffer = new byte[DRAM_BUFFER_SIZE];
+        int bufferOffset = 0;
+        boolean isLastChunk = false;
+        int flushThreshold = DRAM_BUFFER_SIZE / 2; // 50% threshold
+
+        try (FileInputStream fis = new FileInputStream(localFile)) {
+            while (!mCancelled && !isLastChunk) {
+                int bytesRead = fis.read(buffer, bufferOffset, buffer.length - bufferOffset);
+                if (bytesRead == -1) {
+                    isLastChunk = true;
+                } else {
+                    bufferOffset += bytesRead;
+                }
+
+                if (bufferOffset >= flushThreshold || isLastChunk) {
+                    flushToSmb(connection, smbPath, Arrays.copyOf(buffer, bufferOffset), isLastChunk);
+                    bufferOffset = 0;
+                }
             }
         }
     }
 
-    private void flushRamBufferToSmb(SmbConnection connection, String smbPath, java.io.ByteArrayOutputStream ramBuffer) throws IOException {
-        byte[] data = ramBuffer.toByteArray();
-        try (InputStream is = new java.io.ByteArrayInputStream(data)) {
+    private void flushToSmb(SmbConnection connection, String smbPath, byte[] data, boolean isLastChunk) throws IOException {
+        connection.ensureDirectory(smbPath.substring(0, smbPath.lastIndexOf('/')));
+        try (InputStream is = new ByteArrayInputStream(data)) {
             connection.writeFile(smbPath, is);
         }
+    }
+
+    private void deleteRecursive(File fileOrDir) {
+        if (fileOrDir.isDirectory()) {
+            File[] children = fileOrDir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDir.delete();
     }
 
     private void updateNotification(int current, int total, String text, int speedBps) {
@@ -293,7 +281,7 @@ public class SmbBackupService extends Service {
 
         if (result != null) {
             mBuilder.setProgress(0, 0, false)
-                    .setContentText(getString(R.string.settings_download_smb_backup_sync_done, result[0], result[1]))
+                    .setContentText(String.format(Locale.US, "上传完成: %d 成功, %d 失败", result[0], result[1]))
                     .setOngoing(false)
                     .setAutoCancel(true);
             mNotifyManager.notify(NOTIFICATION_ID, mBuilder.build());
@@ -307,7 +295,7 @@ public class SmbBackupService extends Service {
 
     private void acquireWakeLock() {
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ehviewer:smb_backup");
+        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ehviewer:smb_upload");
         mWakeLock.acquire(30 * 60 * 1000L);
     }
 

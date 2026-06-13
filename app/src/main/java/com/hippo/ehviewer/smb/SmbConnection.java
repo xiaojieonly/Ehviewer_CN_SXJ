@@ -50,6 +50,28 @@ public final class SmbConnection {
             SMB2ShareAccess.FILE_SHARE_WRITE,
             SMB2ShareAccess.FILE_SHARE_DELETE);
 
+    private static final java.util.concurrent.ConcurrentHashMap<String, SmbConnection> sPool =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static String poolKey(SmbConfig config) {
+        return config.getHost() + ":" + config.getPort() + "/" + config.getShare();
+    }
+
+    public static SmbConnection obtain(SmbConfig config) throws IOException {
+        String key = poolKey(config);
+        SmbConnection conn = sPool.get(key);
+        if (conn != null) {
+            if (conn.mPersistentShare != null) {
+                return conn;
+            }
+            sPool.remove(key);
+        }
+        conn = new SmbConnection(config);
+        conn.open();
+        sPool.put(key, conn);
+        return conn;
+    }
+
     private final SmbConfig config;
     private volatile DiskShare mPersistentShare;
     private volatile Connection mPersistentConnection;
@@ -296,10 +318,14 @@ public final class SmbConnection {
     }
 
     public List<String> listShareNames() throws IOException {
+        return listFolders("");
+    }
+
+    public List<String> listFolders(String subPath) throws IOException {
         List<String> result = new ArrayList<>();
         DiskShare share = getShare();
         try {
-            List<FileIdBothDirectoryInformation> entries = share.list("");
+            List<FileIdBothDirectoryInformation> entries = share.list(subPath);
             for (FileIdBothDirectoryInformation entry : entries) {
                 String entryName = entry.getFileName();
                 if (".".equals(entryName) || "..".equals(entryName)) {
@@ -313,7 +339,7 @@ public final class SmbConnection {
                 }
             }
         } catch (Exception e) {
-            throw new IOException("Failed to list shares", e);
+            throw new IOException("Failed to list folders", e);
         } finally {
             releaseShare(share);
         }
@@ -431,13 +457,16 @@ public final class SmbConnection {
         if (connection != null) {
             try {
                 connection.close();
-            } catch (IOException ignored) {
+            } catch (Exception ignored) {
             }
         }
     }
 
     private static void closeQuietly(SMBClient client) {
-        client.close();
+        try {
+            client.close();
+        } catch (Exception ignored) {
+        }
     }
 
     private static void closeQuietly(File file) {

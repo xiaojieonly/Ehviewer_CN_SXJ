@@ -36,6 +36,9 @@ public final class SmbBackupSettings {
     private static final String KEY_LOGIN_MODE = "login_mode";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_PASSWORD = "password";
+    private static final String KEY_AGGRESSIVE_MODE = "aggressive_mode";
+
+    private static final int DEFAULT_RAM_PERCENT = 15;
 
     private final SharedPreferences preferences;
     private final SmbCredentialStore credentialStore;
@@ -90,6 +93,23 @@ public final class SmbBackupSettings {
 
     public void clearConfig() {
         preferences.edit().clear().apply();
+    }
+
+    public boolean isAggressiveMode() {
+        return preferences.getBoolean(KEY_AGGRESSIVE_MODE, false);
+    }
+
+    public void setAggressiveMode(boolean enabled) {
+        preferences.edit().putBoolean(KEY_AGGRESSIVE_MODE, enabled).apply();
+    }
+
+    public long getRamBufferSize(Context context) {
+        android.app.ActivityManager am = (android.app.ActivityManager) 
+            context.getSystemService(Context.ACTIVITY_SERVICE);
+        android.app.ActivityManager.MemoryInfo memInfo = new android.app.ActivityManager.MemoryInfo();
+        am.getMemoryInfo(memInfo);
+        long totalRam = memInfo.totalMem;
+        return totalRam * DEFAULT_RAM_PERCENT / 100;
     }
 
     @Nullable

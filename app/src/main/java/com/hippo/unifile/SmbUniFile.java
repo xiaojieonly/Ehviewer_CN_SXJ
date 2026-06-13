@@ -296,7 +296,11 @@ public final class SmbUniFile extends UniFile {
                 || !mSmbUri.getShare().equals(config.getShare())) {
             throw new IllegalStateException("SMB credentials are not configured for " + mSmbUri);
         }
-        return new SmbConnection(config);
+        try {
+            return SmbConnection.obtain(config);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to connect to SMB", e);
+        }
     }
 
     private String joinPath(String child) {

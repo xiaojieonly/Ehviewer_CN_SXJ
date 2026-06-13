@@ -599,6 +599,12 @@
     <string name="settings_download_smb_backup_sync_failed">Sync failed</string>
     <string name="settings_download_smb_backup_not_configured">SMB backup is not configured</string>
     <string name="settings_download_smb_backup_configured">Configured: %s</string>
+    <string name="settings_download_smb_check_network">Download location is SMB server, please check network connectivity</string>
+    <string name="settings_download_smb_backup_aggressive">Aggressive Mode (RAM Cache)</string>
+    <string name="settings_download_smb_backup_aggressive_summary">Uses 10%%~20%% system RAM to accelerate SMB upload</string>
+    <string name="settings_download_smb_backup_sync_all_message">Select sync mode:\n\nAggressive: Uses RAM for faster upload\nNormal: Standard upload</string>
+    <string name="settings_download_smb_backup_sync_aggressive">Aggressive</string>
+    <string name="settings_download_smb_backup_sync_normal">Normal</string>
     <string name="smb_picker_up">Up</string>
     <string name="smb_picker_title">SMB Server Browser</string>
     <string name="smb_picker_step_server">Step 1: Enter server address and credentials, then tap Connect</string>
@@ -609,6 +615,9 @@
     <string name="smb_picker_background_backup">Background backup</string>
     <string name="smb_backup_service_name">SMB Backup Service</string>
     <string name="smb_backup_service_desc">Syncing downloads to SMB server</string>
+    <string name="settings_download_smb_cache_threshold">Cache Upload Threshold</string>
+    <string name="settings_download_smb_cache_threshold_summary">Auto-upload to SMB when cache exceeds threshold</string>
+    <string name="settings_download_smb_reminder">⚠️ SMB network storage performance may be limited</string>
     <string name="settings_download_continue">Continue</string>
     <string name="settings_download_media_scan">Allow media scan</string>
     <string name="settings_download_media_scan_summary_on">Please hide your gallery apps away from other people</string>

@@ -252,6 +252,11 @@
             android:label="@string/smb_backup_service_name"
             android:exported="false" />
 
+        <service
+            android:name=".smb.SmbUploadService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
         <provider
             android:name="com.hippo.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
