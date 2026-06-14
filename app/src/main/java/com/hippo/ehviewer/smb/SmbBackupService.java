@@ -33,7 +33,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
-import com.hippo.ehviewer.ui.MainActivity;
+import com.hippo.ehviewer.ui.SmbBackupProgressActivity;
 import com.hippo.unifile.UniFile;
 
 import java.io.ByteArrayInputStream;
@@ -56,6 +56,10 @@ public class SmbBackupService extends Service {
     private static final String EXTRA_AGGRESSIVE = "aggressive";
 
     private static final AtomicBoolean sRunning = new AtomicBoolean(false);
+    private static final Object sProgressLock = new Object();
+
+    @Nullable
+    private static ProgressSnapshot sProgressSnapshot;
 
     private NotificationManager mNotifyManager;
     private NotificationCompat.Builder mBuilder;
@@ -66,6 +70,13 @@ public class SmbBackupService extends Service {
 
     public static boolean isRunning() {
         return sRunning.get();
+    }
+
+    @Nullable
+    public static ProgressSnapshot getProgressSnapshot() {
+        synchronized (sProgressLock) {
+            return sProgressSnapshot;
+        }
     }
 
     public static void start(Context context) {
@@ -109,7 +120,8 @@ public class SmbBackupService extends Service {
                 .setOngoing(true)
                 .setOnlyAlertOnce(true);
 
-        Intent mainIntent = new Intent(this, MainActivity.class);
+        Intent mainIntent = new Intent(this, SmbBackupProgressActivity.class);
+        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pi = PendingIntent.getActivity(this, 0, mainIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         mBuilder.setContentIntent(pi);
@@ -296,6 +308,7 @@ public class SmbBackupService extends Service {
     }
 
     private void updateNotification(int current, int total, String text, int speedBps) {
+        updateProgressSnapshot(current, total, text, speedBps);
         mBuilder.setProgress(total, current, false)
                 .setContentText(String.format(Locale.US, "%s (%d/%d)", text, current, total));
         if (speedBps > 0) {
@@ -315,6 +328,7 @@ public class SmbBackupService extends Service {
     private void finish(int[] result) {
         releaseWakeLock();
         sRunning.set(false);
+        clearProgressSnapshot();
 
         if (result != null) {
             mBuilder.setProgress(0, 0, false)
@@ -352,10 +366,40 @@ public class SmbBackupService extends Service {
     @Override
     public void onDestroy() {
         mCancelled = true;
+        clearProgressSnapshot();
         releaseWakeLock();
         if (mExecutor != null) {
             mExecutor.shutdownNow();
         }
         super.onDestroy();
+    }
+
+    private void updateProgressSnapshot(int current, int total, String text, int speedBps) {
+        synchronized (sProgressLock) {
+            sProgressSnapshot = new ProgressSnapshot(current, total, text, speedBps, mAggressive);
+        }
+    }
+
+    private static void clearProgressSnapshot() {
+        synchronized (sProgressLock) {
+            sProgressSnapshot = null;
+        }
+    }
+
+    public static final class ProgressSnapshot {
+        public final int current;
+        public final int total;
+        public final String text;
+        public final int speedBps;
+        public final boolean aggressive;
+
+        private ProgressSnapshot(int current, int total, String text, int speedBps,
+                boolean aggressive) {
+            this.current = current;
+            this.total = total;
+            this.text = text;
+            this.speedBps = speedBps;
+            this.aggressive = aggressive;
+        }
     }
 }
