@@ -575,6 +575,8 @@
     <string name="settings_download_download_origin_image_summary">有効にすると、ダウンロード制限にもっとはやく達する恐れがあります</string>
     <string name="settings_download_download_order_by_asc">昇順でのダウンロードする</string>
     <string name="settings_download_download_order_by_asc_summary">すべてのギャラリーをダウンロードする場合は、順番にダウンロードをします</string>
+    <string name="settings_download_sync_while_reading">閲覧中に同期ダウンロード</string>
+    <string name="settings_download_sync_while_reading_summary">未ダウンロードのギャラリーを閲覧する際、閲覧した画像を自動的にダウンロード先に保存します</string>
     <string name="settings_download_restore_download_items">ダウンロードタスクを復元する</string>
     <string name="settings_download_restore_download_items_summary">ダウンロードディレクトリのダウンロードタスクを復元します</string>
     <string name="settings_download_restoring">復元中</string>

@@ -768,6 +768,17 @@ public class Settings {
         return getBoolean(KEY_MEDIA_SCAN, DEFAULT_MEDIA_SCAN);
     }
 
+    public static final String KEY_SYNC_DOWNLOAD_WHILE_READING = "sync_download_while_reading";
+    private static final boolean DEFAULT_SYNC_DOWNLOAD_WHILE_READING = false;
+
+    public static boolean getSyncDownloadWhileReading() {
+        return getBoolean(KEY_SYNC_DOWNLOAD_WHILE_READING, DEFAULT_SYNC_DOWNLOAD_WHILE_READING);
+    }
+
+    public static void putSyncDownloadWhileReading(boolean value) {
+        putBoolean(KEY_SYNC_DOWNLOAD_WHILE_READING, value);
+    }
+
     private static final String KEY_RECENT_DOWNLOAD_LABEL = "recent_download_label";
     private static final String DEFAULT_RECENT_DOWNLOAD_LABEL = null;
 

@@ -81,44 +81,65 @@ public final class SpiderDen {
         }
     }
 
+    @Nullable
+    private static String findDownloadDirname(GalleryInfo galleryInfo, UniFile parentDir) {
+        String dirname = EhDB.getDownloadDirname(galleryInfo.gid);
+        if (null != dirname) {
+            // Some dirname may be invalid in some version
+            dirname = FileUtils.sanitizeFilename(dirname);
+            EhDB.putDownloadDirname(galleryInfo.gid, dirname);
+            return dirname;
+        }
+
+        // Directory listing is slow on SAF and must not run on the main thread.
+        if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
+            return null;
+        }
+
+        try {
+            UniFile[] files = parentDir.listFiles(new StartWithFilenameFilter(galleryInfo.gid + "-"));
+            if (null != files) {
+                // Get max-length-name dir
+                int maxLength = -1;
+                for (UniFile file : files) {
+                    if (file.isDirectory()) {
+                        String name = file.getName();
+                        int length = name.length();
+                        if (length > maxLength) {
+                            maxLength = length;
+                            dirname = name;
+                        }
+                    }
+                }
+                if (null != dirname) {
+                    EhDB.putDownloadDirname(galleryInfo.gid, dirname);
+                }
+            }
+        } catch (Exception e) {
+            // Failed to list files, maybe storage is unavailable or permission lost
+            android.util.Log.w("SpiderDen", "Failed to list files in download directory", e);
+        }
+        return dirname;
+    }
+
+    /**
+     * Returns the gallery download folder if it already exists or is known in DB.
+     * Never creates a new folder. Safe to call from the UI thread when deleting downloads.
+     */
+    @Nullable
+    public static UniFile getExistingGalleryDownloadDir(GalleryInfo galleryInfo) {
+        UniFile dir = Settings.getDownloadLocation();
+        if (dir == null) {
+            return null;
+        }
+        String dirname = findDownloadDirname(galleryInfo, dir);
+        return dirname != null ? dir.subFile(dirname) : null;
+    }
+
     public static UniFile getGalleryDownloadDir(GalleryInfo galleryInfo) {
         UniFile dir = Settings.getDownloadLocation();
         if (dir != null) {
-            // Read from DB
-            String dirname = EhDB.getDownloadDirname(galleryInfo.gid);
-            if (null != dirname) {
-                // Some dirname may be invalid in some version
-                dirname = FileUtils.sanitizeFilename(dirname);
-                EhDB.putDownloadDirname(galleryInfo.gid, dirname);
-            }
-
-            // Find it
-            if (null == dirname) {
-                try {
-                    UniFile[] files = dir.listFiles(new StartWithFilenameFilter(galleryInfo.gid + "-"));
-                    if (null != files) {
-                        // Get max-length-name dir
-                        int maxLength = -1;
-                        for (UniFile file : files) {
-                            if (file.isDirectory()) {
-                                String name = file.getName();
-                                int length = name.length();
-                                if (length > maxLength) {
-                                    maxLength = length;
-                                    dirname = name;
-                                }
-                            }
-                        }
-                        if (null != dirname) {
-                            EhDB.putDownloadDirname(galleryInfo.gid, dirname);
-                        }
-                    }
-                } catch (Exception e) {
-                    // Failed to list files, maybe storage is unavailable or permission lost
-                    // Continue to create new directory
-                    android.util.Log.w("SpiderDen", "Failed to list files in download directory", e);
-                }
-            }
+            String dirname = findDownloadDirname(galleryInfo, dir);
 
             // Create it
             if (null == dirname) {
@@ -183,6 +204,23 @@ public final class SpiderDen {
 
     public boolean isDownloadMode() {
         return mMode == SpiderQueen.MODE_DOWNLOAD;
+    }
+
+    private boolean shouldSyncDownloadWhileReading() {
+        return mMode == SpiderQueen.MODE_READ && Settings.getSyncDownloadWhileReading();
+    }
+
+    public boolean shouldWriteToDownloadDir() {
+        return isDownloadMode() || shouldSyncDownloadWhileReading();
+    }
+
+    private boolean ensureDownloadDirExists() {
+        synchronized (mDownloadDirLock) {
+            if (mDownloadDir == null) {
+                mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+            }
+            return mDownloadDir != null && mDownloadDir.ensureDir();
+        }
     }
 
     public boolean isReady() {
@@ -390,7 +428,12 @@ public final class SpiderDen {
     @Nullable
     public OutputStreamPipe openOutputStreamPipe(int index, @Nullable String extension) {
         if (mMode == SpiderQueen.MODE_READ) {
-            // Read mode should only write into app cache.
+            if (shouldSyncDownloadWhileReading() && ensureDownloadDirExists()) {
+                OutputStreamPipe pipe = openDownloadOutputStreamPipe(index, extension);
+                if (pipe != null) {
+                    return pipe;
+                }
+            }
             return openCacheOutputStreamPipe(index);
         } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
             return openDownloadOutputStreamPipe(index, extension);
@@ -442,6 +485,13 @@ public final class SpiderDen {
     @Nullable
     public InputStreamPipe openInputStreamPipe(int index) {
         if (mMode == SpiderQueen.MODE_READ) {
+            if (shouldSyncDownloadWhileReading()) {
+                InputStreamPipe pipe = openDownloadInputStreamPipe(index);
+                if (pipe == null) {
+                    pipe = openCacheInputStreamPipe(index);
+                }
+                return pipe;
+            }
             InputStreamPipe pipe = openCacheInputStreamPipe(index);
             if (pipe == null) {
                 // Read mode must not trigger cache-to-download copy.

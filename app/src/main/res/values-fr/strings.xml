@@ -569,6 +569,8 @@
     <string name="settings_download_download_list_pagination_summary">La fonction de pagination ne prendra effet que lorsque la longueur de la liste est supérieure à 500</string>
     <string name="settings_download_download_order_by_asc">Ordre de téléchargement croissant</string>
     <string name="settings_download_download_order_by_asc_summary">Télécharger dans l\'ordre lors du téléchargement de toutes les galeries</string>
+    <string name="settings_download_sync_while_reading">Téléchargement synchronisé pendant la lecture</string>
+    <string name="settings_download_sync_while_reading_summary">Lors de la navigation dans une galerie non téléchargée, enregistre automatiquement les images consultées dans le répertoire de téléchargement</string>
     <string name="settings_download_restore_download_items">Rétablir les galeries téléchargées</string>
     <string name="settings_download_restore_download_items_summary">Rétablir tous objets déjà téléchargés dans la destination de téléchargement</string>
     <string name="settings_download_restoring">Rétablissement en cours</string>

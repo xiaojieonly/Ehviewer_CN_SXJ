@@ -653,6 +653,8 @@
     <string name="settings_download_download_origin_image_summary">這很危險！您可能會收到 509 錯誤</string>
     <string name="settings_download_download_order_by_asc">按升序下載</string>
     <string name="settings_download_download_order_by_asc_summary">下載所有畫廊時按順序下載</string>
+    <string name="settings_download_sync_while_reading">觀看時同步下載</string>
+    <string name="settings_download_sync_while_reading_summary">在瀏覽未下載畫廊時，自動將瀏覽到的圖片保存到下載目錄</string>
     <string name="settings_download_media_scan">允許媒體掃描</string>
     <string name="settings_download_media_scan_summary_on">請避免他人翻看你的圖庫應用</string>
     <string name="settings_download_media_scan_summary_off">大多數圖庫應用將不會顯示下載目錄中的圖片</string>

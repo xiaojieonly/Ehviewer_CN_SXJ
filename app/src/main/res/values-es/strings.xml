@@ -574,6 +574,8 @@
     <string name="settings_download_download_origin_image_summary">¡Es peligroso! Puede obtener error 509</string>
     <string name="settings_download_download_order_by_asc">Orden de descarga ascendente</string>
     <string name="settings_download_download_order_by_asc_summary">Descargar en secuencia al descargar todas las galerías</string>
+    <string name="settings_download_sync_while_reading">Descarga sincronizada al leer</string>
+    <string name="settings_download_sync_while_reading_summary">Al navegar por una galería no descargada, guarda automáticamente las imágenes vistas en el directorio de descarga</string>
     <string name="settings_download_restore_download_items">Restaurar los elementos de descarga</string>
     <string name="settings_download_restore_download_items_summary">Restaurar todos los elementos de descarga en la ruta de descarga</string>
     <string name="settings_download_restoring">Restaurando…</string>

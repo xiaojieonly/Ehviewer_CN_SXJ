@@ -600,6 +600,8 @@
     <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额与GP迅速流失</string>
     <string name="settings_download_download_order_by_asc">正序下载</string>
     <string name="settings_download_download_order_by_asc_summary">下载全部画廊时正序下载</string>
+    <string name="settings_download_sync_while_reading">观看时同步下载</string>
+    <string name="settings_download_sync_while_reading_summary">在浏览未下载画廊时，自动将浏览到的图片保存到下载目录</string>
     <string name="settings_download_media_scan">允许媒体扫描</string>
     <string name="settings_download_media_scan_summary_on">请避免他人翻看你的图库应用</string>
     <string name="settings_download_media_scan_summary_off">大多数图库应用将不会显示下载目录中的图片</string>

@@ -519,6 +519,8 @@
     <string name="settings_download_download_origin_image_summary">Es ist gefährlich! Du könntest einen 509-Fehler bekommen</string>
     <string name="settings_download_download_order_by_asc">Download-Reihenfolge aufsteigend</string>
     <string name="settings_download_download_order_by_asc_summary">Beim Herunterladen aller Galerien in Reihenfolge herunterladen</string>
+    <string name="settings_download_sync_while_reading">Synchron beim Lesen herunterladen</string>
+    <string name="settings_download_sync_while_reading_summary">Beim Durchsuchen einer nicht heruntergeladenen Galerie werden angesehene Bilder automatisch im Download-Verzeichnis gespeichert</string>
     <string name="settings_download_restore_download_items">Download-Elemente wiederherstellen</string>
     <string name="settings_download_restore_download_items_summary">Alle Download-Elemente im Downloadpfad wiederherstellen</string>
     <string name="settings_download_restoring">Elemente werden wiederhergestellt</string>

@@ -862,8 +862,8 @@ public final class SpiderQueen implements Runnable {
     }
 
     private synchronized void writeSpiderInfoToLocal(@NonNull SpiderInfo spiderInfo) {
-        // Only download mode is allowed to write into download dir.
-        if (mSpiderDen.isDownloadMode()) {
+        // Only download mode or sync-while-reading is allowed to write into download dir.
+        if (mSpiderDen.shouldWriteToDownloadDir()) {
             UniFile downloadDir = mSpiderDen.getDownloadDir();
             if (downloadDir != null) {
                 UniFile file = downloadDir.createFile(SPIDER_INFO_FILENAME);

@@ -620,6 +620,8 @@
     <string name="settings_download_download_origin_image_summary">이 옵션은 위험합니다! 509 오류가 발생할 수 있습니다.</string>
     <string name="settings_download_download_order_by_asc">오름차순으로 다운로드</string>
     <string name="settings_download_download_order_by_asc_summary">모든 갤러리를 다운로드할 때 순서대로 다운로드</string>
+    <string name="settings_download_sync_while_reading">읽기 중 동기화 다운로드</string>
+    <string name="settings_download_sync_while_reading_summary">다운로드하지 않은 갤러리를 탐색할 때 보는 이미지를 자동으로 다운로드 디렉터리에 저장합니다</string>
     <string name="settings_download_media_scan">미디어 스캔 허용</string>
     <string name="settings_download_media_scan_summary_on">다른 사람들에게 갤러리 앱을 들키지 마세요.</string>
     <string name="settings_download_media_scan_summary_off">대부분의 갤러리 앱에서 다운로드 경로에 있는 사진을 무시합니다.</string>

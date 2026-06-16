@@ -610,6 +610,8 @@
     <string name="settings_download_download_origin_image_summary">อันตรายนะ! คุณอาจจะเจอรหัสข้อผิดพลาด 509 ได้</string>
     <string name="settings_download_download_order_by_asc">ลำดับการดาวน์โหลดจากน้อยไปมาก</string>
     <string name="settings_download_download_order_by_asc_summary">ดาวน์โหลดตามลำดับเมื่อดาวน์โหลดแกลเลอรี่ทั้งหมด</string>
+    <string name="settings_download_sync_while_reading">ดาวน์โหลดพร้อมกันขณะอ่าน</string>
+    <string name="settings_download_sync_while_reading_summary">เมื่อเรียกดูแกลเลอรี่ที่ยังไม่ได้ดาวน์โหลด จะบันทึกภาพที่ดูโดยอัตโนมัติไปยังไดเรกทอรีดาวน์โหลด</string>
     <string name="settings_download_restore_download_items">คืนรายการดาวน์โหลด</string>
     <string name="settings_download_restore_download_items_summary">คืนรายการดาวน์โหลดทั้งหมดในแหล่งดาวน์โหลด</string>
     <string name="settings_download_restoring">กำลังคืนค่า</string>
