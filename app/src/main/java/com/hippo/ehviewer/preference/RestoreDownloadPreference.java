@@ -66,12 +66,12 @@ public class RestoreDownloadPreference extends Preference {
     }
 
     @Override
-    protected void onDetachedFromHierarchy() {
+    public void onDetached() {
         if (mTask != null) {
             mTask.cancel(true);
             mTask = null;
         }
-        super.onDetachedFromHierarchy();
+        super.onDetached();
     }
 
     private class RestoreTask extends AsyncTask<Void, Object, Object> {
