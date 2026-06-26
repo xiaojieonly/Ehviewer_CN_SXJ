@@ -65,6 +65,15 @@ public class RestoreDownloadPreference extends Preference {
         }
     }
 
+    @Override
+    protected void onDetachedFromHierarchy() {
+        if (mTask != null) {
+            mTask.cancel(true);
+            mTask = null;
+        }
+        super.onDetachedFromHierarchy();
+    }
+
     private class RestoreTask extends AsyncTask<Void, Object, Object> {
 
         private final Context mContext;
@@ -165,10 +174,34 @@ public class RestoreDownloadPreference extends Preference {
             }
         }
 
+        private boolean isContextValid() {
+            if (mContext instanceof Activity) {
+                Activity activity = (Activity) mContext;
+                return !activity.isFinishing() && !activity.isDestroyed();
+            }
+            return true;
+        }
+
+        private void dismissProgressDialog() {
+            if (mProgressDialog == null) {
+                return;
+            }
+            if (isContextValid()) {
+                try {
+                    if (mProgressDialog.isShowing()) {
+                        mProgressDialog.dismiss();
+                    }
+                } catch (IllegalArgumentException e) {
+                    ExceptionUtils.throwIfFatal(e);
+                }
+            }
+            mProgressDialog = null;
+        }
+
         @Override
         protected void onProgressUpdate(Object... values) {
             super.onProgressUpdate(values);
-            if (mProgressDialog != null) {
+            if (mProgressDialog != null && isContextValid()) {
                 int progress = (Integer) values[0];
                 int max = (Integer) values[1];
                 if (progress == -1 && max == -1) {
@@ -183,12 +216,16 @@ public class RestoreDownloadPreference extends Preference {
         }
 
         @Override
+        protected void onCancelled() {
+            mTask = null;
+            dismissProgressDialog();
+        }
+
+        @Override
         @SuppressWarnings("unchecked")
         protected void onPostExecute(Object o) {
             mTask = null;
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
+            dismissProgressDialog();
             if (!(o instanceof List)) {
                 Toast.makeText(mApplication, R.string.settings_download_restore_failed, Toast.LENGTH_SHORT).show();
             } else {
@@ -212,7 +249,7 @@ public class RestoreDownloadPreference extends Preference {
                             mApplication.getString(R.string.settings_download_restore_successfully, count),
                             Toast.LENGTH_SHORT).show();
 
-                    if (mContext instanceof Activity) {
+                    if (isContextValid()) {
                         ((Activity) mContext).setResult(Activity.RESULT_OK);
                     }
                 }
