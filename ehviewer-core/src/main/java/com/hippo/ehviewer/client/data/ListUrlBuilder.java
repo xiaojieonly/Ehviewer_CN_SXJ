@@ -22,7 +22,7 @@ import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_NEXT_PAGE;
 import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_PREV_PAGE;
 import static com.hippo.widget.ContentLayout.ContentHelper.TYPE_SOMEWHERE;
 
-import com.hippo.ehviewer.util.TextUtils;
+import com.hippo.ehviewer.util.TextUtil;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
@@ -174,7 +174,7 @@ public class ListUrlBuilder implements Cloneable {
         mPageTo = pageTo;
     }
 
-    @Nullable
+    
     public String getImagePath() {
         return mImagePath;
     }
@@ -325,7 +325,7 @@ public class ListUrlBuilder implements Cloneable {
     public void setQuery(String query) {
         reset();
 
-        if (TextUtils.isEmpty(query)) {
+        if (TextUtil.isEmpty(query)) {
             return;
         }
 
@@ -665,6 +665,4 @@ public class ListUrlBuilder implements Cloneable {
 
     public ListUrlBuilder() {
     }
-
-    @SuppressWarnings("WrongConstant")
 }

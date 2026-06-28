@@ -38,9 +38,5 @@ public class GalleryCommentList {
       }
     }
     comments = commentarry;
-  } else {
-      comments = null;
-    }
-    hasMore = in.readByte() != 0;
   }
 }
