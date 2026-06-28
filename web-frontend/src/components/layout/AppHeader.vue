@@ -5,6 +5,8 @@
       <div class="nav">
         <router-link to="/favorites" class="nav-link">Favorites</router-link>
         <router-link to="/history" class="nav-link">History</router-link>
+        <router-link to="/downloads" class="nav-link">Downloads</router-link>
+        <router-link to="/settings" class="nav-link">Settings</router-link>
         <span v-if="authStore.isAuthenticated" class="user-info">
           {{ authStore.username }}
         </span>

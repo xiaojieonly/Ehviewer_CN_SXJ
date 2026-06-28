@@ -35,6 +35,16 @@ const router = createRouter({
       name: 'History',
       component: () => import('@/views/HistoryView.vue'),
     },
+    {
+      path: '/downloads',
+      name: 'Downloads',
+      component: () => import('@/views/DownloadView.vue'),
+    },
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: () => import('@/views/SettingsView.vue'),
+    },
   ],
 })
 
