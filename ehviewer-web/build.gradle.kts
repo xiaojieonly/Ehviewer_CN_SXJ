@@ -13,10 +13,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(project(":ehviewer-core"))
     implementation("org.springframework.boot:spring-boot-starter-web")
