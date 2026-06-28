@@ -7,10 +7,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation("com.squareup.okhttp3:okhttp:3.14.7")
     implementation("org.jsoup:jsoup:1.15.4")
