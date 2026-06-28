@@ -19,6 +19,22 @@ const router = createRouter({
       component: () => import('@/views/GalleryDetailView.vue'),
       props: true,
     },
+    {
+      path: '/reader/:gid/:page?',
+      name: 'Reader',
+      component: () => import('@/views/ReaderView.vue'),
+      props: true,
+    },
+    {
+      path: '/favorites',
+      name: 'Favorites',
+      component: () => import('@/views/FavoriteView.vue'),
+    },
+    {
+      path: '/history',
+      name: 'History',
+      component: () => import('@/views/HistoryView.vue'),
+    },
   ],
 })
 
