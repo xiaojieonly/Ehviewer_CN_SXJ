@@ -49,8 +49,7 @@ public class GalleryDetail extends GalleryInfo {
     public PreviewSet SpiderInfoPreviewSet;
 
 //    public String body;
-//    @Nullable
-//    public GalleryDetail oldDetail;
+//    //    public GalleryDetail oldDetail;
 
     public NewVersion[] newVersions;
 

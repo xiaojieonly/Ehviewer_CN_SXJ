@@ -22,7 +22,7 @@ import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_NEXT_PAGE;
 import static com.hippo.widget.ContentLayout.ContentHelper.GOTO_PREV_PAGE;
 import static com.hippo.widget.ContentLayout.ContentHelper.TYPE_SOMEWHERE;
 
-import com.hippo.ehviewer.util.TextUtils;
+import com.hippo.ehviewer.util.TextUtil;
 import java.util.logging.Logger;
 
 import com.hippo.ehviewer.client.EhUrl;
@@ -112,7 +112,7 @@ public class FavListUrlBuilder {
         } else if (mFavCat == FAV_CAT_ALL) {
 //            ub.addQuery("favcat", "all");
         }
-        if (!TextUtils.isEmpty(mKeyword)) {
+        if (!TextUtil.isEmpty(mKeyword)) {
             try {
                 ub.addQuery("f_search", URLEncoder.encode(mKeyword, "UTF-8"));
                 // Name

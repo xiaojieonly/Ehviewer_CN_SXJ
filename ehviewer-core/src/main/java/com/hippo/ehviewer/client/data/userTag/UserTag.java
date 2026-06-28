@@ -24,7 +24,7 @@ public class UserTag {
             String name = tagName;
             //重设标签名称,并跳过已翻译的标签
             if (name != null && 2 == name.split(":").length) {
-                return  TagTranslationUtil.getTagCN(name.split(":"), ehTags);
+                return  TagTranslationUtil.getTagCN(name.split(":"), ehTags.toString());
             }
         }
         return tagName;

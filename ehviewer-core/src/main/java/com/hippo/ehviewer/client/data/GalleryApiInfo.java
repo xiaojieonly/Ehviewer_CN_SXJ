@@ -32,7 +32,7 @@ public class GalleryApiInfo {
     public boolean expunged;
     public float rating;
     public int torrentcount;
-    @Nullable
+    
     public String[] tags;
 
     public GalleryApiInfo() {

@@ -13,6 +13,7 @@ dependencies {
     implementation("org.ccil.cowan.tagsoup:tagsoup:1.2.1")
     implementation("com.hierynomus:smbj:0.12.0")
     implementation("com.alibaba:fastjson:1.2.83")
+    implementation("org.json:json:20231013")
     compileOnly("org.slf4j:slf4j-api:2.0.9")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.slf4j:slf4j-simple:2.0.9")

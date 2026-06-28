@@ -37,10 +37,7 @@ public class WiFiDataHand {
             this.data = object.getJSONObject("data");
             this.pageSize = object.getLongValue("totalSize");
             this.pageIndex = object.getLongValue("part");
-        } catch (Throwable throwable) {
-            Analytics.recordException(throwable);
-            messageType = ERROR;
-            errorMessage = throwable.getMessage();
+        } catch (Exception e) {
             data = new JSONObject();
         }
     }

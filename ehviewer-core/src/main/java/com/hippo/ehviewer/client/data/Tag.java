@@ -11,7 +11,7 @@ public class Tag {
 
     public Tag(String content){
         String[] cArray = content.split("\r");
-        chinese = new String(Base64.decode(cArray[1], Base64.DEFAULT), StandardCharsets.UTF_8);
+        chinese = new String(Base64.getDecoder().decode(cArray[1]), StandardCharsets.UTF_8);
         english = content;
     }
 

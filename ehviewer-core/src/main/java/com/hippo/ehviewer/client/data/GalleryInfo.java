@@ -109,7 +109,7 @@ public class GalleryInfo {
     public String uploader;
     public float rating;
     public boolean rated;
-    @Nullable
+    
     public String[] simpleTags;
     public int pages;
 
@@ -119,7 +119,7 @@ public class GalleryInfo {
     public int spanSize;
     public int spanIndex;
     public int spanGroupIndex;
-    @Nullable
+    
     public ArrayList<String> tgList;
 
     /**
@@ -222,7 +222,7 @@ public class GalleryInfo {
     public GalleryInfo() {
     }
 
-    public DownloadInfo getDownloadInfo(@Nullable DownloadInfo info) {
+    public DownloadInfo getDownloadInfo(DownloadInfo info) {
         DownloadInfo i = new DownloadInfo();
         i.gid = gid;
         i.token = token;

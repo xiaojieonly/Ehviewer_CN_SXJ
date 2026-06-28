@@ -16,8 +16,6 @@
 
 package com.hippo.ehviewer.client;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
@@ -215,7 +213,7 @@ public class EhUrl {
      * 获取‘favorites’连接
      * @return
      */
-    @NonNull
+    
     public static String getPopularUrl() {
         switch (Settings.getGallerySite()) {
             default:
@@ -230,7 +228,7 @@ public class EhUrl {
      * 获取排行榜‘top list’连接
      * @return
      */
-    @NonNull
+    
     public static String getTopListUrl() {
         return URL_TOP_LIST_E;
         /**
@@ -250,12 +248,12 @@ public class EhUrl {
      * 获取排行榜‘top list’连接
      * @return
      */
-    @NonNull
+    
     public static String getEhNewsUrl() {
         return URL_NEWS_E;
     }
 
-    @NonNull
+    
     public static String getImageSearchUrl() {
         switch (Settings.getGallerySite()) {
             default:
@@ -266,7 +264,7 @@ public class EhUrl {
         }
     }
 
-    @NonNull
+    
     public static String getWatchedUrl() {
         switch (Settings.getGallerySite()) {
             default:
