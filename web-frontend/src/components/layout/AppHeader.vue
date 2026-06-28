@@ -3,6 +3,8 @@
     <div class="header-content">
       <router-link to="/" class="logo">EhViewer</router-link>
       <div class="nav">
+        <router-link to="/favorites" class="nav-link">Favorites</router-link>
+        <router-link to="/history" class="nav-link">History</router-link>
         <span v-if="authStore.isAuthenticated" class="user-info">
           {{ authStore.username }}
         </span>
@@ -50,6 +52,14 @@ async function handleLogout() {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+.nav-link {
+  color: #555;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.nav-link:hover {
+  color: #4a90d9;
 }
 .user-info {
   color: #666;
