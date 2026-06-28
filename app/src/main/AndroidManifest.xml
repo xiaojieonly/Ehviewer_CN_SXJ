@@ -256,6 +256,7 @@
             android:name=".smb.SmbBackupService"
             android:foregroundServiceType="dataSync"
             android:label="@string/smb_backup_service_name"
+            android:stopWithTask="false"
             android:exported="false" />
 
         <service
