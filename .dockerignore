@@ -1,0 +1,13 @@
+# .dockerignore
+build/
+.gradle/
+.idea/
+*.iml
+.git
+.gitignore
+node_modules/
+web-frontend/dist/
+ehviewer-core/build/
+ehviewer-web/build/
+app/build/
+daogenerator/build/
