@@ -50,6 +50,11 @@ class EhAuthService(
         return AuthStatusResponse(true, username)
     }
 
+    fun validateToken(token: String?): String? {
+        if (token == null) return null
+        return tokenStore[token]
+    }
+
     fun logout(token: String?) {
         if (token != null) {
             tokenStore.remove(token)
