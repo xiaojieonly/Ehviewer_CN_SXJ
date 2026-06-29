@@ -17,5 +17,6 @@ echo "端口: 8080"
 java -jar "$JAR_FILE" \
     --server.port=8080 \
     --ehviewer.download.path=./data/downloads \
-    --ehviewer.cache.path=./data/cache \
+    --ehviewer.download.cache-path=./data/cache \
+    --ehviewer.download.worker-count=3 \
     --ehviewer.cache.size-mb=10240
