@@ -1,0 +1,20 @@
+# docker-compose.yml
+version: '3.8'
+services:
+  ehviewer:
+    build: .
+    container_name: ehviewer-web
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./cache:/app/cache
+      - ./downloads:/app/downloads
+    environment:
+      - EHVIEWER_SERVER_PORT=8080
+      - EHVIEWER_DOWNLOAD_PATH=/app/downloads
+      - EHVIEWER_CACHE_PATH=/app/cache
+      - EHVIEWER_CACHE_SIZE_MB=10240
+      - EHVIEWER_DOWNLOAD_WORKER_COUNT=3
+      - EHVIEWER_DB_URL=jdbc:sqlite:/app/data/ehviewer.db
+    restart: unless-stopped

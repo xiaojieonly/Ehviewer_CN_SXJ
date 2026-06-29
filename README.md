@@ -221,6 +221,39 @@ Here is the libraries
 - [Slabo](https://github.com/TiroTypeworks/Slabo)
 - [TagSoup](http://home.ccil.org/~cowan/tagsoup/)
 
+## Web App
+
+将 EhViewer Android 应用转换为局域网内任意设备可通过浏览器访问的 Web App。
+
+### 功能
+
+- 浏览、搜索 E-Hentai 画廊
+- 图片阅读器（翻页/滚动/缩放/手势/键盘）
+- 下载管理（多级并发、实时进度）
+- 收藏管理（10 个收藏夹）
+- 评论功能
+- 浏览历史
+- SMB 备份
+- 设置管理
+
+### 快速开始
+
+```bash
+# 构建
+./build.sh
+
+# 启动（Docker）
+docker compose up -d
+
+# 或启动（裸机）
+./start.sh
+
+# 访问
+open http://localhost:8080
+```
+
+详见 [Web App 部署指南](docs/deployment.md)
+
 ## DeepWiki  [<img src="https://devin.ai/assets/deepwiki-badge.png" alt="Ask DeepWiki.com" height="20"/>](https://deepwiki.com/xiaojieonly/Ehviewer_CN_SXJ)
 ## 状态
 
