@@ -45,6 +45,11 @@ const router = createRouter({
       name: 'Settings',
       component: () => import('@/views/SettingsView.vue'),
     },
+    {
+      path: '/smb-backup',
+      name: 'SmbBackup',
+      component: () => import('@/views/SmbBackupView.vue'),
+    },
   ],
 })
 

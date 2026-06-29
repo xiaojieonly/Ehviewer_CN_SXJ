@@ -53,26 +53,6 @@ data class TagDto(
     val tag: String
 )
 
-data class DownloadListResponse(
-    val success: Boolean,
-    val data: List<DownloadItemDto>
-)
-
-data class DownloadItemDto(
-    val id: Long,
-    val gid: Long,
-    val token: String,
-    val title: String?,
-    val titleJpn: String?,
-    val thumb: String?,
-    val category: Int,
-    val state: Int,
-    val total: Int,
-    val done: Int,
-    val label: Int,
-    val downloadDir: String?
-)
-
 data class QuickSearchListResponse(
     val success: Boolean,
     val data: List<QuickSearchDto>

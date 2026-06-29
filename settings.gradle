@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 rootProject.name = "ehviewer"
 include ':app', ':daogenerator'
 include ':ehviewer-core'
-// include ':ehviewer-web'
+include ':ehviewer-web'

@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:sqlite:data/ehviewer.db
+    url: jdbc:sqlite:${EHVIEWER_DATA_DIR:./data}/ehviewer.db
     driver-class-name: org.sqlite.JDBC
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
