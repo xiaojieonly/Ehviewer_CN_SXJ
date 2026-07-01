@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1hFLjNrU-_c1u8iugt82d6g) 提取码：wz2h
-- [夸克网盘](https://pan.quark.cn/s/133080ed0571) 提取码：ekzT
-- [蓝奏云](https://wwbfg.lanzouu.com/i1hv53qtvjba)，电脑端可正常下载 提取码：eg80
+- [百度云](https://pan.baidu.com/s/1P1-yyeTlmUmFQON_gXeWuQ) 提取码：uarn
+- [夸克网盘](https://pan.quark.cn/s/b14f69e08682) 提取码：Zbf7
+- [蓝奏云](https://wwbfg.lanzouu.com/iss0J3twy3gd)，电脑端可正常下载 提取码：61zn
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:a14acab7edec4b1c5f10d291296fda3e19449a0d&xt=urn:btmh:1220f25dba401d5db2cfb2d864114728418c1e7bf746679182a3155ef3e1714539cb&dn=EhViewer-2.0.1.8.apk&xl=27739161
+- Torrent链接:magnet:?xt=urn:btih:f74e6a11875bd09328bbdb3f4a495c9aab8f77fc&xt=urn:btmh:1220afc47e54c541670d468c659aa00401e2d894a2ad381d28138219080e6eb2b5e0&dn=EhViewer-2.0.1.9.apk&xl=27739169
 
 
 点击前往赏饭：
@@ -30,6 +30,17 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 
 # Changelog
+## 2026/07/01 
+### 新版发布2.0.1.9
+
+- 修复底部导航栏导致的页面遮蔽问题
+- 修复浏览画廊时图片会自动下载到下载目录的问题
+- 实现WiFi下载迁移功能：将数据传世方式从json变更为二进制帧，新增了下载目录的迁移项
+- 添加多语言支持的下载目录迁移字符串资源
+- 添加“阅读时同步下载”功能：设置-下载-观看时同步下载
+- 增强下载恢复功能：添加了在从层次结构中分离时取消任务的逻辑
+- 更新 Gradle 版本和插件
+
 
 ## 2026/06/01 祝大家六一儿童节快乐~
 ### 新版发布2.0.1.8
@@ -48,6 +59,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 猫尾草：添加小米系统优化助手，优化后台下载和通知管理
 - 猫尾草：add gradle wrapper jar and properties for CI build
 - Cololi：沉浸式底部导航栏 (#2597)
+- [百度云](https://pan.baidu.com/s/1hFLjNrU-_c1u8iugt82d6g) 提取码：wz2h
+- [夸克网盘](https://pan.quark.cn/s/133080ed0571) 提取码：ekzT
+- [蓝奏云](https://wwbfg.lanzouu.com/i1hv53qtvjba)，电脑端可正常下载 提取码：eg80
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:a14acab7edec4b1c5f10d291296fda3e19449a0d&xt=urn:btmh:1220f25dba401d5db2cfb2d864114728418c1e7bf746679182a3155ef3e1714539cb&dn=EhViewer-2.0.1.8.apk&xl=27739161
+
 
 ## 2026/05/01 祝大家五一劳动节快乐~
 ### 新版发布2.0.1.7

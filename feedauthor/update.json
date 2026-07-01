@@ -1,25 +1,18 @@
 {
-  "version": "2.0.1.8",
+  "version": "2.0.1.9",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.1.8，祝大家儿童节快乐~",
+    "title": "新版发布2.0.1.9",
     "content": [
-      "将 jsoup 从 1.18.1 降级到 1.15.4，以避免在某些 Android 环境中出现 NoClassDefFoundError",
-      "在 EhDB 中添加了空检查，以防止快速搜索操作期间潜在的 NullPointerExceptions",
-      "增强了 EhEngine 中 TopListParser 的错误处理，以在运行时错误上引发更具描述性的 ParseException",
-      "重构SpiderDen，确保访问下载目录时的线程安全",
-      "改进了 ArchiverDownloadDialog 中的文件名处理，以防止非法路径和长文件名",
-      "添加了 ArchiverDownloadCompleter 来处理存档器任务的下载完成和状态检查",
-      "在 EhApplication 中集成挂起的下载恢复",
-      "增强设置，提供管理待处理存档下载的方法",
-      "更新了 ArchiverDownloadDialog 以利用 ArchiverDownloadCompleter 进行下载处理",
-      "改进了 ArchiverDownloadProgress 中的下载进度跟踪",
-      "确保在 SpiderDen 中创建下载目录",
-      "猫尾草：添加小米系统优化助手，优化后台下载和通知管理",
-      "猫尾草：add gradle wrapper jar and properties for CI build",
-      "Cololi：沉浸式底部导航栏 (#2597)"
+      "修复底部导航栏导致的页面遮蔽问题",
+      "修复浏览画廊时图片会自动下载到下载目录的问题",
+      "实现WiFi下载迁移功能：将数据传世方式从json变更为二进制帧，新增了下载目录的迁移项",
+      "添加多语言支持的下载目录迁移字符串资源",
+      "添加“阅读时同步下载”功能：设置-下载-观看时同步下载",
+      "增强下载恢复功能：添加了在从层次结构中分离时取消任务的逻辑",
+      "更新 Gradle 版本和插件"
     ]
   }
 }
