@@ -1,10 +1,10 @@
 {
-  "version": "2.0.1.9",
+  "version": "2.0.2.0",
   "versionCode": 111,
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.1.9",
+    "title": "新版发布2.0.2.0",
     "content": [
       "修复底部导航栏导致的页面遮蔽问题",
       "修复浏览画廊时图片会自动下载到下载目录的问题",

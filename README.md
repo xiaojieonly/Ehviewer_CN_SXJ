@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1P1-yyeTlmUmFQON_gXeWuQ) 提取码：uarn
-- [夸克网盘](https://pan.quark.cn/s/b14f69e08682) 提取码：Zbf7
+- [百度云](https://pan.baidu.com/s/1pKGrfrlU8TQdsdkDEeqzqw) 提取码：f37q
+- [夸克网盘](https://pan.quark.cn/s/abd59b6d1b35) 提取码：rETY
 - [蓝奏云](https://wwbfg.lanzouu.com/iss0J3twy3gd)，电脑端可正常下载 提取码：61zn
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:f74e6a11875bd09328bbdb3f4a495c9aab8f77fc&xt=urn:btmh:1220afc47e54c541670d468c659aa00401e2d894a2ad381d28138219080e6eb2b5e0&dn=EhViewer-2.0.1.9.apk&xl=27739169
+- Torrent链接:magnet:?xt=urn:btih:e4cdea6d913589849976d0780971b95fdd777509&xt=urn:btmh:12202fede45553edafcb9118806ea26e9768f0eb83e94045b20ac7a562ed490bf66d&dn=EhViewer-2.0.2.0.apk&xl=27747309
 
 
 点击前往赏饭：
@@ -31,7 +31,7 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 # Changelog
 ## 2026/07/01 
-### 新版发布2.0.1.9
+### 新版发布2.0.2.0
 
 - 修复底部导航栏导致的页面遮蔽问题
 - 修复浏览画廊时图片会自动下载到下载目录的问题
