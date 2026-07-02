@@ -4,7 +4,7 @@
   "mustUpdate": false,
   "updateContent": {
     "fileDownloadUrl": "",
-    "title": "新版发布2.0.1.8，祝大家儿童节快乐~",
+    "title": "新版发布2.0.1.8，新版有恶性bug，请暂时退回旧版",
     "content": [
       "将 jsoup 从 1.18.1 降级到 1.15.4，以避免在某些 Android 环境中出现 NoClassDefFoundError",
       "在 EhDB 中添加了空检查，以防止快速搜索操作期间潜在的 NullPointerExceptions",
