@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1pKGrfrlU8TQdsdkDEeqzqw) 提取码：f37q
-- [夸克网盘](https://pan.quark.cn/s/abd59b6d1b35) 提取码：rETY
-- [蓝奏云](https://wwbfg.lanzouu.com/iFwEt3txzv8f)，电脑端可正常下载 提取码：bs3a
+- [百度云](https://pan.baidu.com/s/19ZEEdF3waR3hkMghbmu7rw) 提取码：gxsj
+- [夸克网盘](https://pan.quark.cn/s/bffd976d75c4) 提取码：TJDR
+- [蓝奏云](https://wwbfg.lanzouu.com/iZPct3u2hxef)，电脑端可正常下载 提取码：1obh
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:e4cdea6d913589849976d0780971b95fdd777509&xt=urn:btmh:12202fede45553edafcb9118806ea26e9768f0eb83e94045b20ac7a562ed490bf66d&dn=EhViewer-2.0.2.0.apk&xl=27747309
+- Torrent链接:magnet:?xt=urn:btih:76cf0c1951465d0ab5e4e6fc0b4f371aceec8f9c&xt=urn:btmh:12201dbee30e3448b93d0b725ba19c5fe6a19b042dd662fe9ef898d92c3e67ca6c80&dn=EhViewer-2.0.2.1.apk&xl=27747322
 
 
 点击前往赏饭：
