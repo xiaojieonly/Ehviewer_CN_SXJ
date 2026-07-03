@@ -27,6 +27,9 @@
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:name=".EhApplication"
