@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/19ZEEdF3waR3hkMghbmu7rw) 提取码：gxsj
-- [夸克网盘](https://pan.quark.cn/s/bffd976d75c4) 提取码：TJDR
-- [蓝奏云](https://wwbfg.lanzouu.com/iZPct3u2hxef)，电脑端可正常下载 提取码：1obh
+- [百度云](https://pan.baidu.com/s/1rh-lvEc-QjiMtfPi6T1BKA) 提取码：7p6z
+- [夸克网盘](https://pan.quark.cn/s/0de32f69e12a) 提取码：SnVD
+- [蓝奏云](https://wwbfg.lanzouu.com/iWAFL3uefh8d)，电脑端可正常下载 提取码：3txx
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:76cf0c1951465d0ab5e4e6fc0b4f371aceec8f9c&xt=urn:btmh:12201dbee30e3448b93d0b725ba19c5fe6a19b042dd662fe9ef898d92c3e67ca6c80&dn=EhViewer-2.0.2.1.apk&xl=27747322
+- Torrent链接:magnet:?xt=urn:btih:ec1403341edaba853b0836d2d3c5976498572a3c&xt=urn:btmh:1220453fdf4272b27c81d88a4ddae25a64ca524a13e53f835430b4acacb2e7ae3bcb&dn=EhViewer-2.0.2.2.apk&xl=27747451
 
 
 点击前往赏饭：
@@ -30,8 +30,15 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 
 
 # Changelog
+## 2026/07/01
+### 新版发布2.0.2.2
+
+- 修复了浏览历史未正确保存的问题
+- 修复评论时输入框被键盘遮挡的问题
+
+
 ## 2026/07/01 
-### 新版发布2.0.2.0
+### 新版发布2.0.2.1
 
 - 修复底部导航栏导致的页面遮蔽问题
 - 修复浏览画廊时图片会自动下载到下载目录的问题
@@ -40,6 +47,12 @@ Telegram通知群: https://t.me/Ehviewer_xiaojieonly_channel
 - 添加“阅读时同步下载”功能：设置-下载-观看时同步下载
 - 增强下载恢复功能：添加了在从层次结构中分离时取消任务的逻辑
 - 更新 Gradle 版本和插件
+- [百度云](https://pan.baidu.com/s/19ZEEdF3waR3hkMghbmu7rw) 提取码：gxsj
+- [夸克网盘](https://pan.quark.cn/s/bffd976d75c4) 提取码：TJDR
+- [蓝奏云](https://wwbfg.lanzouu.com/iZPct3u2hxef)，电脑端可正常下载 提取码：1obh
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:76cf0c1951465d0ab5e4e6fc0b4f371aceec8f9c&xt=urn:btmh:12201dbee30e3448b93d0b725ba19c5fe6a19b042dd662fe9ef898d92c3e67ca6c80&dn=EhViewer-2.0.2.1.apk&xl=27747322
+
 
 
 ## 2026/06/01 祝大家六一儿童节快乐~
