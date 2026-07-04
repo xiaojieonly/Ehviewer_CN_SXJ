@@ -1074,4 +1074,33 @@
     <string name="imported_archive_category">Local Import</string>
     <!-- TagSelectActivity -->
     <string name="tag_search_entrance">Tag Selector</string>
+
+    <!-- LAN server mode -->
+    <string name="settings_server">Server</string>
+    <string name="server_enabled_title">Enable LAN server mode</string>
+    <string name="server_enabled_summary">Serve the download library to browsers on your local network</string>
+    <string name="server_status_title">Server status</string>
+    <string name="server_status_stopped">Server stopped</string>
+    <string name="server_status_running">Server running on port %d</string>
+    <string name="server_status_error">Failed: %s</string>
+    <string name="server_address_title">LAN addresses</string>
+    <string name="server_no_address">No active LAN address</string>
+    <string name="server_port_title">Server port</string>
+    <string name="server_port_hint">Set preferred port (1-65535)</string>
+    <string name="server_port_summary">Configured port: %d</string>
+    <string name="server_port_summary_fallback">Configured %1$d, currently bound %2$d</string>
+    <string name="server_port_invalid">Please enter a port between 1 and 65535</string>
+    <string name="server_log_level_title">Log level</string>
+    <string name="server_open_logs_title">Open server logs</string>
+    <string name="server_open_logs_summary">View current-session server logs</string>
+    <string name="server_log_empty">No logs in this session</string>
+    <string name="server_help_title">Read-only mode</string>
+    <string name="server_help_summary">This server only allows browsing and viewing files under the configured download directory. Modify/delete controls are intentionally unavailable.</string>
+
+    <string name="server_notification_channel_name">LAN server</string>
+    <string name="server_notification_channel_desc">Foreground notification for EhViewer LAN server mode</string>
+    <string name="server_notification_title">EhViewer LAN server</string>
+    <string name="server_notification_running">Running on port %d</string>
+    <string name="server_notification_stopped">Stopped</string>
+    <string name="server_notification_stop_action">Stop</string>
 </resources>

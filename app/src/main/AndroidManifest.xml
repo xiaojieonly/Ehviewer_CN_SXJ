@@ -245,10 +245,23 @@
             android:label="@string/wifi_client"
             android:theme="@style/AppTheme.Toolbar" />
 
+        <activity
+            android:name=".ui.server.ServerLogActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/server_open_logs_title"
+            android:theme="@style/AppTheme.Toolbar" />
+
         <service
             android:name=".download.DownloadService"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
+
+        <service
+            android:name=".server.service.LanServerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/server_notification_title" />
 
         <provider
             android:name="com.hippo.content.FileProvider"

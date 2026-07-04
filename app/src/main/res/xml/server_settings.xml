@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="server_enabled"
+        android:summary="@string/server_enabled_summary"
+        android:title="@string/server_enabled_title" />
+
+    <Preference
+        android:key="server_status"
+        android:summary="@string/server_status_stopped"
+        android:title="@string/server_status_title"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="server_addresses"
+        android:summary="@string/server_no_address"
+        android:title="@string/server_address_title"
+        app:iconSpaceReserved="false" />
+
+    <androidx.preference.EditTextPreference
+        android:defaultValue="8080"
+        android:key="server_port"
+        android:summary="@string/server_port_hint"
+        android:title="@string/server_port_title"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false"
+        app:useSimpleSummaryProvider="false" />
+
+    <com.hippo.preference.ListPreference
+        android:defaultValue="INFO"
+        android:key="server_log_level"
+        android:title="@string/server_log_level_title"
+        app:entries="@array/server_log_level_entries"
+        app:entryValues="@array/server_log_level_values"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="server_open_logs"
+        android:summary="@string/server_open_logs_summary"
+        android:title="@string/server_open_logs_title"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:summary="@string/server_help_summary"
+        android:title="@string/server_help_title"
+        app:allowDividerAbove="true"
+        app:selectable="false" />
+
+</PreferenceScreen>

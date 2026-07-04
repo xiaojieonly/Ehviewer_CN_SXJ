@@ -866,6 +866,51 @@ public class Settings {
         putBoolean(KEY_DOWNLOAD_ORIGIN_IMAGE, value);
     }
 
+    public static final String KEY_SERVER_ENABLED = "server_enabled";
+    private static final boolean DEFAULT_SERVER_ENABLED = false;
+
+    public static boolean getServerEnabled() {
+        return getBoolean(KEY_SERVER_ENABLED, DEFAULT_SERVER_ENABLED);
+    }
+
+    public static void putServerEnabled(boolean value) {
+        putBoolean(KEY_SERVER_ENABLED, value);
+    }
+
+    public static final String KEY_SERVER_PORT = "server_port";
+    private static final int DEFAULT_SERVER_PORT = 8080;
+
+    public static int getServerPort() {
+        return getIntFromStr(KEY_SERVER_PORT, DEFAULT_SERVER_PORT);
+    }
+
+    public static void putServerPort(int value) {
+        putIntToStr(KEY_SERVER_PORT, value);
+    }
+
+    private static final String KEY_SERVER_BOUND_PORT = "server_bound_port";
+    private static final int DEFAULT_SERVER_BOUND_PORT = 0;
+
+    public static int getServerBoundPort() {
+        return getInt(KEY_SERVER_BOUND_PORT, DEFAULT_SERVER_BOUND_PORT);
+    }
+
+    public static void putServerBoundPort(int value) {
+        putInt(KEY_SERVER_BOUND_PORT, value);
+    }
+
+    public static final String KEY_SERVER_LOG_LEVEL = "server_log_level";
+    private static final String DEFAULT_SERVER_LOG_LEVEL = "INFO";
+
+    @NonNull
+    public static String getServerLogLevel() {
+        return getString(KEY_SERVER_LOG_LEVEL, DEFAULT_SERVER_LOG_LEVEL);
+    }
+
+    public static void putServerLogLevel(@NonNull String value) {
+        putString(KEY_SERVER_LOG_LEVEL, value);
+    }
+
     /********************
      ****** Favorites
      ********************/

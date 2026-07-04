@@ -36,6 +36,12 @@
         app:fragment="com.hippo.ehviewer.ui.fragment.DownloadFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
+        android:icon="@drawable/v_folder_share_dark_x24"
+        android:title="@string/settings_server"
+        app:allowDividerAbove="true"
+        app:fragment="com.hippo.ehviewer.ui.fragment.ServerSettingsFragment" />
+
+    <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sec_primary_x24"
         android:title="@string/settings_privacy"
         app:allowDividerAbove="true"

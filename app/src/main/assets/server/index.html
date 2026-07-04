@@ -1,0 +1,2077 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EhViewer LAN Browser</title>
+  <style>
+    :root {
+      --bg: #f3f5f7;
+      --surface: #ffffff;
+      --text: #132332;
+      --muted: #60758a;
+      --border: #d7e0e8;
+      --accent: #0f7665;
+      --accent-soft: #e1f5f1;
+      --warn: #e97142;
+      --shadow: 0 10px 28px rgba(8, 26, 40, 0.09);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 360px at -5% -15%, #d8eee9 5%, transparent 55%),
+        radial-gradient(900px 320px at 100% -10%, #dce9f9 8%, transparent 55%),
+        var(--bg);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      min-height: 100vh;
+    }
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 12px 20px;
+    }
+    .panel {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      background: rgba(243, 245, 247, 0.92);
+      backdrop-filter: blur(9px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(160px, 220px) minmax(180px, 240px) minmax(220px, 1fr) auto auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .input, .select, button {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 12px;
+      font-size: 14px;
+      min-height: 40px;
+      padding: 9px 12px;
+      color: var(--text);
+    }
+    .input:focus, .select:focus, button:focus {
+      outline: none;
+      border-color: #4a9f90;
+      box-shadow: 0 0 0 2px rgba(74, 159, 144, 0.15);
+    }
+    button {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-soft {
+      border-color: #bdd6dd;
+      background: #edf7fb;
+      color: #21526b;
+    }
+    .modes {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--surface);
+      min-height: 40px;
+    }
+    .mode {
+      min-height: 38px;
+      border: none;
+      border-radius: 0;
+      min-width: 70px;
+      background: transparent;
+    }
+    .mode.active {
+      background: var(--accent-soft);
+      color: #06564a;
+      font-weight: 700;
+    }
+    .path {
+      display: none; /* hidden: not needed for indexed (non-path-based) browsing */
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .pager {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pager button {
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 9px;
+      font-size: 12px;
+    }
+    .pager-text {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 92px;
+      text-align: center;
+    }
+    .items {
+      margin-top: 14px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+    .items.grid {
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    }
+    .item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      min-height: 92px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease;
+    }
+    .item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(8, 26, 40, 0.15);
+    }
+    .items.grid .item {
+      grid-template-columns: 1fr;
+    }
+    .thumb-wrap {
+      width: 84px;
+      height: 92px;
+      border-right: 1px solid var(--border);
+      background: linear-gradient(135deg, #edf3f8, #f5f8fb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #678098;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .items.grid .thumb-wrap {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 2 / 3;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .items.grid .thumb {
+      object-fit: contain;
+      background: #eef2f5;
+    }
+    .thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .meta {
+      padding: 8px 10px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .title {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 700;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .items.grid .title {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stats {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .badge {
+      border: 1px solid #cfe1e8;
+      border-radius: 999px;
+      padding: 1px 7px;
+      background: #f4fafc;
+      color: #35556d;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .stars {
+      color: #f0a522;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .progress-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 6px;
+      min-height: 16px;
+    }
+    .progress-track {
+      height: 4px;
+      border-radius: 999px;
+      background: #ebeff3;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1f927f, #3fb6a1);
+    }
+    .progress-text {
+      font-size: 10px;
+      color: var(--muted);
+      min-width: 44px;
+      text-align: right;
+    }
+    .tag-row {
+      display: none;
+    }
+    .tag {
+      font-size: 11px;
+      background: #fff5e9;
+      border: 1px solid #f4d8bd;
+      color: #8d5a29;
+      border-radius: 999px;
+      padding: 1px 7px;
+    }
+    .row {
+      display: none;
+      grid-template-columns: 68px 1fr;
+      gap: 0;
+      align-items: stretch;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      cursor: pointer;
+      min-height: 64px;
+    }
+    .items.list .row {
+      display: grid;
+    }
+    .items.list .item {
+      display: none;
+    }
+    .row .thumb-wrap {
+      width: 68px;
+      height: 100%;
+      border: none;
+      flex-shrink: 0;
+    }
+    .row .thumb {
+      object-fit: cover;
+      height: 100%;
+    }
+    .row-info {
+      padding: 10px 14px;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto auto;
+      gap: 2px 10px;
+      align-content: center;
+    }
+    .row-title {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+      grid-column: 1 / -1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .row-sub {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row .stars {
+      font-size: 12px;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .row .progress-wrap {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 6px;
+      min-height: 14px;
+    }
+    .row .progress-track {
+      height: 3px;
+      border-radius: 999px;
+      background: #ebeff3;
+      overflow: hidden;
+    }
+    .row .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1f927f, #3fb6a1);
+    }
+    .row .progress-text {
+      font-size: 10px;
+      color: var(--muted);
+      min-width: 40px;
+      text-align: right;
+    }
+    .cell {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .empty {
+      margin-top: 10px;
+      border: 1px dashed #b6c9d8;
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.76);
+    }
+    .empty b {
+      color: #28445c;
+    }
+    /* ── Reader Overlay ── */
+    .reader {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      background: #0a121a;
+      overflow: hidden;
+      overscroll-behavior: contain;
+    }
+    .reader.open {
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-template-columns: 1fr;
+    }
+
+    /* ── Info Overlay Bar ── */
+    .reader-info {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #fff;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+      pointer-events: none;
+      user-select: none;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    }
+    .reader-info > * {
+      pointer-events: auto;
+    }
+    .reader-info .info-left,
+    .reader-info .info-center,
+    .reader-info .info-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ── Close Button ── */
+    .reader-close {
+      position: absolute;
+      top: 8px; right: 14px;
+      z-index: 60;
+      width: 36px; height: 36px;
+      min-width: 36px; min-height: 36px;
+      border: none;
+      padding: 0;
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+      font-size: 22px;
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      font-weight: 300;
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .reader-close:hover {
+      background: rgba(0,0,0,0.6);
+    }
+
+    /* ── Image Stage ── */
+    .reader-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    /* ── Dual-image Slide Container ── */
+    .reader-slide-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reader-slide-img {
+      position: absolute;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      transition: transform 200ms ease-out;
+      will-change: transform;
+    }
+    .reader-slide-img.fit-width  { object-fit: contain; width: 100%; height: auto; max-height: none; }
+    .reader-slide-img.fit-height { object-fit: contain; width: auto; height: 100%; max-width: none; }
+    .reader-slide-img.fit-fixed  { object-fit: none; }
+
+    .reader-empty {
+      color: #d3dfeb;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* ── Tap Zones (3×2 grid) ── */
+    .reader-zone {
+      position: absolute;
+      z-index: 45;
+      cursor: pointer;
+    }
+    .reader-zone.zone-left   { left: 0;    top: 0; width: 33.333%; height: 100%; }
+    .reader-zone.zone-right  { right: 0;   top: 0; width: 33.333%; height: 100%; }
+    .reader-zone.zone-menu   { left: 33.333%; top: 0;  width: 33.333%; height: 50%; }
+    .reader-zone.zone-slider { left: 33.333%; top: 50%; width: 33.333%; height: 50%; }
+
+    /* ── Seek Bar Panel ── */
+    .reader-seek-panel {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 55;
+      background: rgba(0,0,0,0.7);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(100%);
+      transition: transform 200ms ease-out;
+    }
+    .reader-seek-panel.visible {
+      transform: translateY(0);
+    }
+    .reader-seek-panel input[type="range"] {
+      flex: 1;
+      accent-color: #4a9f90;
+    }
+    .reader-seek-panel .seek-page {
+      color: #fff;
+      font-size: 13px;
+      min-width: 60px;
+      text-align: center;
+    }
+    .reader-seek-panel .seek-auto-btn {
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .reader-seek-panel .seek-auto-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ── Settings Dialog ── */
+    .reader-dialog-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reader-dialog {
+      background: #1a2633;
+      border: 1px solid #3f5367;
+      border-radius: 14px;
+      padding: 20px 24px;
+      min-width: 280px;
+      max-width: 360px;
+      width: 90%;
+      color: #e0e8f0;
+      font-size: 14px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .reader-dialog h3 {
+      margin: 0 0 14px 0;
+      font-size: 16px;
+      color: #fff;
+    }
+    .reader-dialog .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .reader-dialog .setting-row:last-child {
+      border-bottom: none;
+    }
+    .reader-dialog label {
+      font-size: 13px;
+    }
+    .reader-dialog select,
+    .reader-dialog button {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #e0e8f0;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .reader-dialog .toggle {
+      width: 44px; height: 24px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      position: relative;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .reader-dialog .toggle.on {
+      background: var(--accent);
+    }
+    .reader-dialog .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+    .reader-dialog .toggle.on::after {
+      transform: translateX(20px);
+    }
+    .reader-dialog .dialog-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .reader-dialog .dialog-actions button {
+      flex: 1;
+      padding: 8px;
+    }
+    .btn-accent {
+      background: var(--accent) !important;
+      border-color: var(--accent) !important;
+      color: #fff !important;
+      font-weight: 600;
+    }
+
+    /* ── Shortcuts Reference ── */
+    .shortcuts-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .shortcuts-table {
+      background: #1a2633;
+      border: 1px solid #3f5367;
+      border-radius: 14px;
+      padding: 20px 24px;
+      color: #e0e8f0;
+      max-width: 420px;
+      width: 90%;
+      font-size: 13px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .shortcuts-table h3 {
+      margin: 0 0 12px 0;
+      color: #fff;
+      font-size: 16px;
+    }
+    .shortcuts-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .shortcuts-table td {
+      padding: 4px 0;
+    }
+    .shortcuts-table td:first-child {
+      font-family: monospace;
+      color: #8ec8b8;
+      width: 160px;
+    }
+    .shortcuts-table td:last-child {
+      color: #a0b4c8;
+    }
+    @media (min-width: 1200px) {
+      .items.grid {
+        grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      }
+    }
+    @media (max-width: 1000px) {
+      .toolbar {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+      .row {
+        grid-template-columns: 56px 1fr;
+      }
+      .row .thumb-wrap {
+        width: 56px;
+      }
+      .row-info {
+        padding: 8px 10px;
+      }
+    }
+
+    /* ── Dark Mode ── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1419;
+        --surface: #1a2530;
+        --text: #e0e8f0;
+        --muted: #889aad;
+        --border: #2a3a4a;
+        --accent: #3fb6a1;
+        --accent-soft: #142820;
+        --shadow: 0 10px 28px rgba(0,0,0,0.35);
+      }
+      body {
+        background:
+          radial-gradient(1200px 360px at -5% -15%, #1a2a25 5%, transparent 55%),
+          radial-gradient(900px 320px at 100% -10%, #1a2430 8%, transparent 55%),
+          var(--bg);
+      }
+      .panel {
+        background: rgba(15,20,25,0.92);
+      }
+      .badge {
+        border-color: #3a5060;
+        background: #1a2a35;
+        color: #90b8c8;
+      }
+      .tag {
+        background: #2a1f15;
+        border-color: #5a4030;
+        color: #c89660;
+      }
+      .btn-soft {
+        border-color: #3a5060;
+        background: #1a2835;
+        color: #90b8c8;
+      }
+      .thumb-wrap {
+        background: linear-gradient(135deg, #1a2530, #1f2a35);
+        color: #607080;
+      }
+      .progress-track {
+        background: #2a3540;
+      }
+      .row .progress-track {
+        background: #2a3540;
+      }
+      .items.grid .thumb {
+        background: #1a2530;
+      }
+      .empty {
+        background: rgba(26,37,48,0.76);
+        border-color: #3a5060;
+      }
+      .empty b {
+        color: #b0c8d8;
+      }
+      .reader-dialog {
+        background: #141e28;
+        border-color: #2a3a4a;
+      }
+      .shortcuts-table {
+        background: #141e28;
+        border-color: #2a3a4a;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="panel">
+      <div class="toolbar">
+        <select id="label" class="select">
+          <option value="">All labels</option>
+        </select>
+        <input id="tags" class="input" placeholder="Tags: manga,doujin" />
+        <input id="search" class="input" placeholder="Search title or tags" />
+        <button id="applyBtn" class="btn-primary">Apply</button>
+        <button id="clearBtn" class="btn-soft">Clear</button>
+        <div class="modes">
+          <button id="gridBtn" class="mode">Grid</button>
+          <button id="listBtn" class="mode">List</button>
+        </div>
+      </div>
+      <div id="path" class="path">/</div>
+      <div id="status" class="status">
+        <span id="statusText"></span>
+        <span class="pager">
+          <button id="prevPageBtn" class="btn-soft">Prev</button>
+          <span id="pagerText" class="pager-text">Page 1/1</span>
+          <button id="nextPageBtn" class="btn-soft">Next</button>
+        </span>
+      </div>
+    </div>
+
+    <div id="items" class="items grid"></div>
+    <div id="empty" class="empty" style="display:none"></div>
+  </div>
+
+  <div id="reader" class="reader" aria-hidden="true">
+    <div id="readerInfo" class="reader-info">
+      <div class="info-left" id="infoClock">--:--</div>
+      <div class="info-center" id="infoProgress">0 / 0</div>
+      <div class="info-right" id="infoBattery"></div>
+    </div>
+    <button id="readerCloseBtn" class="reader-close" title="Close reader">×</button>
+    <div id="readerStage" class="reader-stage">
+      <div class="reader-slide-wrap" id="readerSlideWrap"></div>
+      <div class="reader-zone zone-left" id="zoneLeft"></div>
+      <div class="reader-zone zone-menu" id="zoneMenu"></div>
+      <div class="reader-zone zone-slider" id="zoneSlider"></div>
+      <div class="reader-zone zone-right" id="zoneRight"></div>
+    </div>
+    <div id="readerSeekPanel" class="reader-seek-panel">
+      <span class="seek-page" id="seekPageText">0 / 0</span>
+      <input type="range" id="seekRange" min="0" max="0" value="0" />
+      <button class="seek-auto-btn" id="seekAutoBtn" title="Auto-transfer">▶</button>
+    </div>
+  </div>
+
+  <script>
+    const itemsEl = document.getElementById('items');
+    const emptyEl = document.getElementById('empty');
+    const statusTextEl = document.getElementById('statusText');
+    const pagerTextEl = document.getElementById('pagerText');
+    const labelEl = document.getElementById('label');
+    const tagsEl = document.getElementById('tags');
+    const searchEl = document.getElementById('search');
+    const applyBtn = document.getElementById('applyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const gridBtn = document.getElementById('gridBtn');
+    const listBtn = document.getElementById('listBtn');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const readerEl = document.getElementById('reader');
+    const readerStageEl = document.getElementById('readerStage');
+    const readerCloseBtn = document.getElementById('readerCloseBtn');
+    const readerSlideWrap = document.getElementById('readerSlideWrap');
+    const readerInfoEl = document.getElementById('readerInfo');
+    const infoClockEl = document.getElementById('infoClock');
+    const infoProgressEl = document.getElementById('infoProgress');
+    const infoBatteryEl = document.getElementById('infoBattery');
+    const zoneLeftEl = document.getElementById('zoneLeft');
+    const zoneRightEl = document.getElementById('zoneRight');
+    const zoneMenuEl = document.getElementById('zoneMenu');
+    const zoneSliderEl = document.getElementById('zoneSlider');
+    const seekPanelEl = document.getElementById('readerSeekPanel');
+    const seekRangeEl = document.getElementById('seekRange');
+    const seekPageTextEl = document.getElementById('seekPageText');
+    const seekAutoBtn = document.getElementById('seekAutoBtn');
+
+    // ── Global state ──
+    const state = {
+      path: '',
+      mode: localStorage.getItem('lan_mode') || 'grid',
+      filters: { label: '', tags: '', search: '' },
+      rows: [],
+      loading: false,
+      pendingInputTimer: 0,
+      page: 1,
+      limit: 120,
+      totalPages: 1,
+      totalItems: 0,
+      reader: {
+        gid: 0,
+        title: '',
+        pages: [],           // array of { url, name } preloaded Image elements stored as .img
+        index: 0,
+        // settings (persisted)
+        readingDirection: 'rtl',    // 'rtl' or 'ltr'
+        swapTap: false,
+        scaleMode: 'fit',           // 'fit' | 'fitWidth' | 'fitHeight' | 'fixed'
+        fullscreen: false,
+        autoTransfer: false,
+        autoTransferInterval: 3,    // seconds
+        // runtime
+        currentImg: null,   // reference to the currently displayed <img>
+        nextImg: null,      // reference to the next <img> for slide animation
+        controlsVisible: false,
+        zoom: 1,            // current zoom scale (1 = fit)
+        panX: 0,            // current pan offset X
+        panY: 0,            // current pan offset Y
+        autoTransferTimer: null,
+        clockTimer: null,
+        seekHideTimer: null,
+        controlsHideTimer: null,
+        isDragging: false,
+        dragStartX: 0,
+        dragStartY: 0,
+        dragDeltaX: 0,
+        // multi-pointer pinch state
+        pinchActive: false,
+        pinchStartDist: 0,
+        pinchStartScale: 1,
+        pinchMidX: 0,
+        pinchMidY: 0,
+      },
+    };
+
+    // ── Reader settings persistence ──
+    const READER_SETTINGS_KEY = 'reader_settings';
+
+    function loadReaderSettings() {
+      try {
+        const raw = localStorage.getItem(READER_SETTINGS_KEY);
+        if (raw) {
+          const s = JSON.parse(raw);
+          state.reader.readingDirection = s.readingDirection || 'rtl';
+          state.reader.swapTap = !!s.swapTap;
+          state.reader.scaleMode = s.scaleMode || 'fit';
+          state.reader.fullscreen = !!s.fullscreen;
+          state.reader.autoTransfer = !!s.autoTransfer;
+          state.reader.autoTransferInterval = Number(s.autoTransferInterval) || 3;
+        }
+      } catch (_) { /* ignore corrupt settings */ }
+    }
+
+    function saveReaderSettings() {
+      localStorage.setItem(READER_SETTINGS_KEY, JSON.stringify({
+        readingDirection: state.reader.readingDirection,
+        swapTap: state.reader.swapTap,
+        scaleMode: state.reader.scaleMode,
+        fullscreen: state.reader.fullscreen,
+        autoTransfer: state.reader.autoTransfer,
+        autoTransferInterval: state.reader.autoTransferInterval,
+      }));
+    }
+
+    function loadReadingPosition(gid) {
+      try {
+        const raw = localStorage.getItem('reader_progress');
+        if (raw) {
+          const map = JSON.parse(raw);
+          return (map && typeof map[String(gid)] === 'number') ? map[String(gid)] : -1;
+        }
+      } catch (_) { /* ignore */ }
+      return -1;
+    }
+
+    function saveReadingPosition(gid, index) {
+      try {
+        const raw = localStorage.getItem('reader_progress');
+        const map = raw ? JSON.parse(raw) : {};
+        map[String(gid)] = index;
+        localStorage.setItem('reader_progress', JSON.stringify(map));
+      } catch (_) { /* ignore */ }
+    }
+
+    loadReaderSettings();
+
+    function parseInitialUrlState() {
+      const params = new URLSearchParams(location.search);
+      state.path = params.get('path') || '';
+      state.filters.label = params.get('label') || (params.has('label') ? '' : 'Default');
+      state.filters.tags = params.get('tags') || '';
+      state.filters.search = params.get('search') || '';
+      const page = Number(params.get('page') || '1');
+      state.page = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
+      const mode = params.get('mode');
+      if (mode === 'grid' || mode === 'list') {
+        state.mode = mode;
+      }
+    }
+
+    function updateUrlState() {
+      const params = new URLSearchParams();
+      if (state.path) params.set('path', state.path);
+      if (state.filters.label) params.set('label', state.filters.label);
+      if (state.filters.tags) params.set('tags', state.filters.tags);
+      if (state.filters.search) params.set('search', state.filters.search);
+      params.set('page', String(state.page));
+      params.set('mode', state.mode);
+      history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+    }
+
+    function setMode(mode) {
+      state.mode = mode === 'list' ? 'list' : 'grid';
+      localStorage.setItem('lan_mode', state.mode);
+      itemsEl.className = `items ${state.mode}`;
+      gridBtn.classList.toggle('active', state.mode === 'grid');
+      listBtn.classList.toggle('active', state.mode === 'list');
+      updateUrlState();
+      render();
+    }
+
+    function parseTagsInput(value) {
+      if (!value) return [];
+      return value.split(',').map(x => x.trim()).filter(Boolean);
+    }
+
+    function syncInputsFromState() {
+      labelEl.value = state.filters.label;
+      tagsEl.value = state.filters.tags;
+      searchEl.value = state.filters.search;
+    }
+
+    function syncStateFromInputs() {
+      state.filters.label = labelEl.value.trim();
+      state.filters.tags = tagsEl.value.trim();
+      state.filters.search = searchEl.value.trim();
+    }
+
+    function resetToFirstPage() {
+      state.page = 1;
+    }
+
+    function fmtSize(size) {
+      if (!size || size < 1) return '-';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let value = size;
+      let unit = 0;
+      while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit += 1;
+      }
+      return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+    }
+
+    function fmtTime(ts) {
+      if (!ts || ts < 1) return '-';
+      return new Date(ts).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+      const value = text == null ? '' : String(text);
+      return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function stars(rating) {
+      if (rating == null || Number.isNaN(Number(rating))) {
+        return '<span class="stars">-</span>';
+      }
+      const v = Math.round(Math.max(0, Math.min(5, Number(rating))) * 2) / 2;
+      return `<span class="stars" title="${v.toFixed(1)}">★ ${v.toFixed(1)}/5</span>`;
+    }
+
+    function progressMarkup(progress, pageCount) {
+      const current = Number.isFinite(Number(progress?.current)) ? Math.max(0, Number(progress.current)) : 0;
+      const total = Number.isFinite(Number(progress?.total)) ? Math.max(1, Number(progress.total)) : Number(pageCount) || 0;
+      if (total <= 0) return '<span class="cell">-</span>';
+      const pct = Math.round((current / total) * 100);
+      return `
+        <div class="progress-wrap">
+          <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, Math.max(0, pct))}%"></div></div>
+          <div class="progress-text">${current}/${total}</div>
+        </div>
+      `;
+    }
+
+    function itemThumb(item) {
+      const title = escapeHtml(item.title || item.name || 'item');
+      if (item.thumbnailUrl && typeof item.thumbnailUrl === 'string') {
+        return `<img class="thumb" src="${escapeHtml(item.thumbnailUrl)}" alt="${title}" loading="lazy" />`;
+      }
+      if (item.image && item.url) {
+        return `<img class="thumb" src="${escapeHtml(item.url)}" alt="${title}" loading="lazy" />`;
+      }
+      return `<span>${item.directory ? 'DIR' : 'FILE'}</span>`;
+    }
+
+    function itemMeta(item) {
+      const tags = Array.isArray(item.tags) ? item.tags.slice(0, 4) : [];
+      const labels = Array.isArray(item.labels) ? item.labels : [];
+      const pages = item.pageCount ? `${item.pageCount}P` : '-';
+      return { tags, labels, pages, safeTitle: escapeHtml(item.title || item.name || 'Untitled') };
+    }
+
+    function cardMarkup(item) {
+      const { safeTitle } = itemMeta(item);
+      const uploader = escapeHtml(item.uploader || '-');
+      return `
+        <article class="item" data-path="${escapeHtml(item.path || '')}" data-dir="${item.directory ? '1' : '0'}">
+          <div class="thumb-wrap">${itemThumb(item)}</div>
+          <div class="meta">
+            <h3 class="title" title="${safeTitle}">${safeTitle}</h3>
+            <div class="stats">
+              ${stars(item.rating)}
+              ${uploader !== '-' ? `<span class="badge">${escapeHtml(uploader)}</span>` : ''}
+            </div>
+            ${progressMarkup(item.readProgress, item.pageCount)}
+          </div>
+        </article>
+      `;
+    }
+
+    function rowMarkup(item) {
+      const { safeTitle } = itemMeta(item);
+      const uploader = escapeHtml(item.uploader || '-');
+      const sizeStr = item.directory ? 'Folder' : fmtSize(item.size);
+      return `
+        <article class="row" data-path="${escapeHtml(item.path || '')}" data-dir="${item.directory ? '1' : '0'}">
+          <div class="thumb-wrap">${itemThumb(item)}</div>
+          <div class="row-info">
+            <div class="row-title">${safeTitle}</div>
+            <div class="row-sub">${uploader !== '-' ? escapeHtml(uploader) : sizeStr}</div>
+            <div>${stars(item.rating)}</div>
+            ${progressMarkup(item.readProgress, item.pageCount)}
+          </div>
+        </article>
+      `;
+    }
+
+    function updateLabelOptions(availableLabels) {
+      // Only rebuild the dropdown when the available labels actually change,
+      // not on every filter change. This ensures users can switch labels
+      // without being forced back to "All labels" first.
+      const labels = Array.isArray(availableLabels) ? availableLabels : [];
+      if (labels.length === 0) return;
+      // Build full option list: "All labels" (no filter) + all available labels
+      const fullOptions = ['', ...labels];
+      const currentValue = labelEl.value;
+      const isRebuildNeeded = labelEl.options.length !== fullOptions.length
+        || fullOptions.some((l, i) => labelEl.options[i]?.value !== l);
+      if (!isRebuildNeeded) {
+        // Just update the selected value without rebuilding
+        const selected = fullOptions.includes(state.filters.label) ? state.filters.label : '';
+        labelEl.value = selected;
+        return;
+      }
+      labelEl.innerHTML = fullOptions.map(l => {
+        if (l === '') return '<option value="">All labels</option>';
+        return `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`;
+      }).join('');
+      const selected = fullOptions.includes(state.filters.label) ? state.filters.label : '';
+      labelEl.value = selected;
+      if (!labelEl.value) state.filters.label = '';
+    }
+
+    function render() {
+      const rows = state.rows || [];
+      const hasFilter = Boolean(state.filters.label || state.filters.tags || state.filters.search);
+      const filterSummary = [
+        state.filters.label ? `label=${state.filters.label}` : '',
+        state.filters.tags ? `tags=${state.filters.tags}` : '',
+        state.filters.search ? `search=${state.filters.search}` : '',
+      ].filter(Boolean).join(' | ');
+      statusTextEl.textContent = state.loading
+        ? 'Loading...'
+        : `${rows.length} shown / ${state.totalItems} total${filterSummary ? ` · ${filterSummary}` : ''}`;
+      pagerTextEl.textContent = `Page ${state.page}/${Math.max(1, state.totalPages)}`;
+      prevPageBtn.disabled = state.loading || state.page <= 1;
+      nextPageBtn.disabled = state.loading || state.page >= state.totalPages;
+
+      if (!rows.length) {
+        itemsEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        emptyEl.innerHTML = hasFilter
+          ? '<b>No items match your filters.</b><br/>Try clearing filters or adjusting keywords.'
+          : '<b>This folder is empty.</b>';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      const isGrid = state.mode === 'grid';
+      itemsEl.innerHTML = rows.map(item => isGrid ? cardMarkup(item) : rowMarkup(item)).join('');
+
+      [...itemsEl.querySelectorAll('[data-path]')].forEach(el => {
+        el.addEventListener('click', () => {
+          const path = el.getAttribute('data-path') || '';
+          const isDir = el.getAttribute('data-dir') === '1';
+          if (isDir) {
+            load(path);
+            return;
+          }
+          const target = rows.find(x => (x.path || '') === path);
+          if (target) {
+            openReader(target);
+          }
+        });
+      });
+    }
+
+    function isReaderOpen() {
+      return readerEl.classList.contains('open');
+    }
+
+    function isZoomed() {
+      return Math.abs(state.reader.zoom - 1) > 0.001;
+    }
+
+    // ── Scale mode CSS ──
+    function applyScaleMode(img) {
+      if (!img) return;
+      img.classList.remove('fit-width', 'fit-height', 'fit-fixed');
+      const sm = state.reader.scaleMode;
+      if (sm === 'fitWidth') img.classList.add('fit-width');
+      else if (sm === 'fitHeight') img.classList.add('fit-height');
+      else if (sm === 'fixed') img.classList.add('fit-fixed');
+    }
+
+    function applyZoomAndPan(img) {
+      if (!img) return;
+      img.style.transform = `scale(${state.reader.zoom}) translate(${state.reader.panX}px, ${state.reader.panY}px)`;
+    }
+
+    // ── Page navigation ──
+    function pageCount() { return state.reader.pages.length; }
+    function currentIdx() { return Math.max(0, Math.min(pageCount() - 1, state.reader.index)); }
+
+    function navigateToPage(idx, direction) {
+      const pages = state.reader.pages;
+      if (!pages.length) return;
+      _removeAdjacent();
+      const oldIdx = currentIdx();
+      const newIdx = Math.max(0, Math.min(pages.length - 1, idx));
+      if (newIdx === oldIdx) { updateReaderUI(); return; }
+      // Reset zoom on any page change
+      state.reader.zoom = 1;
+      state.reader.panX = 0;
+      state.reader.panY = 0;
+      state.reader.index = newIdx;
+      const delta = Math.abs(newIdx - oldIdx);
+      if (delta > 1 || !direction) {
+        // instant jump (seek bar or large jump)
+        showPageInstant(newIdx);
+      } else {
+        // slide animation
+        showPageSlide(newIdx, direction);
+      }
+      updateReaderUI();
+      updateReadingProgress();
+    }
+
+    function prevPage() {
+      navigateToPage(currentIdx() - 1, -1);
+    }
+
+    function nextPage() {
+      navigateToPage(currentIdx() + 1, 1);
+    }
+
+    function getEffectivePrev() {
+      return state.reader.swapTap ? 1 : -1;
+    }
+    function getEffectiveNext() {
+      return state.reader.swapTap ? -1 : 1;
+    }
+
+    // ── Slide animation ──
+    function showPageInstant(idx) {
+      const pages = state.reader.pages;
+      const img = pages[idx].img;
+      // Reset zoom on instant jumps too
+      state.reader.zoom = 1;
+      state.reader.panX = 0;
+      state.reader.panY = 0;
+      readerSlideWrap.innerHTML = '';
+      img.style.transform = '';
+      img.style.transition = 'none';
+      img.style.zIndex = '';
+      applyScaleMode(img);
+      readerSlideWrap.appendChild(img);
+      state.reader.currentImg = img;
+      state.reader.nextImg = null;
+    }
+
+    function showPageSlide(newIdx, direction) {
+      const pages = state.reader.pages;
+      const newImg = pages[newIdx].img;
+      const oldImg = state.reader.currentImg;
+
+      // Clean up any pending transition
+      if (state.reader.nextImg && state.reader.nextImg !== newImg) {
+        state.reader.nextImg.style.transition = 'none';
+        state.reader.nextImg.style.transform = '';
+        if (state.reader.nextImg.parentNode) state.reader.nextImg.remove();
+      }
+
+      applyScaleMode(newImg);
+      // Position new image off-screen, respecting reading direction
+      // In RTL: forward → new page comes from LEFT; in LTR: forward → new page comes from RIGHT
+      const isLTR = state.reader.readingDirection === 'ltr';
+      const slideDir = direction * (isLTR ? 1 : -1);
+      newImg.style.transition = 'none';
+      newImg.style.transform = `translateX(${slideDir * 100}%)`;
+      newImg.style.zIndex = '1';  // incoming on top
+      if (!newImg.parentNode) readerSlideWrap.appendChild(newImg);
+
+      // Force reflow
+      newImg.offsetHeight;
+
+      // Animate only the incoming image; remove outgoing instantly
+      if (oldImg) {
+        oldImg.style.transition = 'none';
+        oldImg.style.transform = '';
+        if (oldImg.parentNode) oldImg.remove();
+      }
+      newImg.style.transition = 'transform 200ms ease-out';
+      newImg.style.transform = 'translateX(0)';
+
+      state.reader.nextImg = newImg;
+
+      // On transition end, clean up
+      const onEnd = () => {
+        newImg.removeEventListener('transitionend', onEnd);
+        if (oldImg && oldImg.parentNode) oldImg.remove();
+        state.reader.currentImg = newImg;
+        state.reader.nextImg = null;
+        newImg.style.transition = '';
+        newImg.style.transform = '';
+        // Reset zoom
+        state.reader.zoom = 1;
+        state.reader.panX = 0;
+        state.reader.panY = 0;
+      };
+      newImg.addEventListener('transitionend', onEnd);
+    }
+
+    // ── Preload + open/close ──
+    async function openReader(item) {
+      const gid = Number(item.path || '0');
+      if (!Number.isFinite(gid) || gid <= 0) return;
+
+      readerEl.classList.add('open');
+      readerEl.setAttribute('aria-hidden', 'false');
+      readerSlideWrap.innerHTML = '<div class="reader-empty">Loading reader...</div>';
+      state.reader.gid = gid;
+      state.reader.title = item.title || item.name || `Item ${gid}`;
+      state.reader.pages = [];
+      state.reader.index = 0;
+      state.reader.zoom = 1;
+      state.reader.panX = 0;
+      state.reader.panY = 0;
+
+      try {
+        const res = await fetch(`/api/reader?gid=${encodeURIComponent(String(gid))}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const pageList = Array.isArray(data.pages) ? data.pages : [];
+        const savedPos = loadReadingPosition(gid);
+        const startIdxRaw = savedPos >= 0 ? savedPos : Number(data.startIndex || 0);
+        const startIdx = Number.isFinite(startIdxRaw) ? Math.max(0, Math.floor(startIdxRaw)) : 0;
+
+        // Preload all images
+        const pages = pageList.map(p => {
+          const img = new Image();
+          img.src = p.url || '';
+          img.alt = p.name || '';
+          img.className = 'reader-slide-img';
+          img.draggable = false;
+          return { url: p.url, name: p.name, img };
+        });
+
+        state.reader.pages = pages;
+        state.reader.index = Math.min(startIdx, pages.length - 1);
+        state.reader.title = data.title || state.reader.title;
+
+        showPageInstant(state.reader.index);
+        updateReaderUI();
+        startClock();
+        updateBattery();
+      } catch (error) {
+        readerSlideWrap.innerHTML = `<div class="reader-empty">Failed to open reader: ${escapeHtml(error.message || String(error))}</div>`;
+      }
+    }
+
+    function closeReader() {
+      stopAutoTransfer();
+      stopClock();
+      clearTimeout(state.reader.seekHideTimer);
+      clearTimeout(state.reader.controlsHideTimer);
+      clearTimeout(state.reader._debounceTimer);
+      clearTimeout(state.reader._autoResumeTimer);
+      state.reader._debounceTimer = null;
+      state.reader._autoResumeTimer = null;
+      const gid = state.reader.gid;
+      if (gid > 0) saveReadingPosition(gid, currentIdx());
+      // Clean up preloaded images
+      state.reader.pages = [];
+      readerSlideWrap.innerHTML = '';
+      state.reader.currentImg = null;
+      state.reader.nextImg = null;
+      state.reader.zoom = 1;
+      state.reader.panX = 0;
+      state.reader.panY = 0;
+      readerEl.classList.remove('open');
+      readerEl.setAttribute('aria-hidden', 'true');
+      if (state.reader.fullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // ── UI updates ──
+    function updateReaderUI() {
+      const pages = state.reader.pages;
+      const idx = currentIdx();
+      const total = pages.length;
+      infoProgressEl.textContent = total ? `${idx + 1} / ${total}` : '0 / 0';
+      seekPageTextEl.textContent = total ? `${idx + 1} / ${total}` : '0 / 0';
+      seekRangeEl.max = Math.max(0, total - 1);
+      seekRangeEl.value = idx;
+    }
+
+    function updateReadingProgress() {
+      if (!state.reader._debounceTimer) {
+        state.reader._debounceTimer = setTimeout(() => {
+          state.reader._debounceTimer = null;
+          const gid = state.reader.gid;
+          if (gid > 0) saveReadingPosition(gid, currentIdx());
+        }, 2000);
+      }
+    }
+
+    // ── Info overlay: clock + battery ──
+    function startClock() {
+      stopClock();
+      const tick = () => {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        infoClockEl.textContent = `${hh}:${mm}`;
+      };
+      tick();
+      state.reader.clockTimer = setInterval(tick, 1000);
+    }
+
+    function stopClock() {
+      if (state.reader.clockTimer) { clearInterval(state.reader.clockTimer); state.reader.clockTimer = null; }
+    }
+
+    async function updateBattery() {
+      try {
+        if (navigator.getBattery) {
+          const bat = await navigator.getBattery();
+          const pct = Math.round(bat.level * 100);
+          const icon = bat.charging ? '⚡' : (pct > 80 ? '🔋' : pct > 40 ? '🔋' : pct > 15 ? '🪫' : '⚠');
+          infoBatteryEl.textContent = `${icon} ${pct}%`;
+          bat.addEventListener('levelchange', updateBattery);
+          bat.addEventListener('chargingchange', updateBattery);
+        } else {
+          infoBatteryEl.textContent = '';
+        }
+      } catch (_) { infoBatteryEl.textContent = ''; }
+    }
+
+    // ── Seek bar panel ──
+    function toggleSeekPanel() {
+      const visible = seekPanelEl.classList.toggle('visible');
+      resetSeekHideTimer();
+    }
+
+    function resetSeekHideTimer() {
+      clearTimeout(state.reader.seekHideTimer);
+      if (seekPanelEl.classList.contains('visible')) {
+        state.reader.seekHideTimer = setTimeout(() => {
+          seekPanelEl.classList.remove('visible');
+        }, 3000);
+      }
+    }
+
+    // ── Auto-transfer ──
+    function startAutoTransfer(intervalSec) {
+      stopAutoTransfer();
+      state.reader.autoTransfer = true;
+      state.reader.autoTransferInterval = intervalSec;
+      saveReaderSettings();
+      seekAutoBtn.classList.add('active');
+      seekAutoBtn.textContent = '⏸';
+      state.reader.autoTransferTimer = setInterval(() => {
+        const idx = currentIdx();
+        if (idx >= pageCount() - 1) {
+          stopAutoTransfer();
+          return;
+        }
+        nextPage();
+      }, intervalSec * 1000);
+    }
+
+    function stopAutoTransfer() {
+      if (state.reader.autoTransferTimer) {
+        clearInterval(state.reader.autoTransferTimer);
+        state.reader.autoTransferTimer = null;
+      }
+      if (state.reader._autoResumeTimer) {
+        clearTimeout(state.reader._autoResumeTimer);
+        state.reader._autoResumeTimer = null;
+      }
+      state.reader.autoTransfer = false;
+      seekAutoBtn.classList.remove('active');
+      seekAutoBtn.textContent = '▶';
+      saveReaderSettings();
+    }
+
+    function toggleAutoTransfer() {
+      if (state.reader.autoTransfer) {
+        stopAutoTransfer();
+      } else {
+        startAutoTransfer(state.reader.autoTransferInterval);
+      }
+    }
+
+    function pauseAutoTransferOnInteraction() {
+      if (state.reader.autoTransfer) {
+        // Pause briefly, then resume
+        stopAutoTransfer();
+        state.reader._autoResumeTimer = setTimeout(() => {
+          state.reader._autoResumeTimer = null;
+          startAutoTransfer(state.reader.autoTransferInterval);
+        }, 3000);
+      }
+    }
+
+    // ── Settings dialog ──
+    function openSettingsDialog() {
+      removeDialog();
+      const overlay = document.createElement('div');
+      overlay.className = 'reader-dialog-overlay';
+      overlay.id = 'readerDialogOverlay';
+
+      const at = state.reader.autoTransfer;
+      const atInt = state.reader.autoTransferInterval;
+
+      overlay.innerHTML = `
+        <div class="reader-dialog">
+          <h3>Reader Settings</h3>
+          <div class="setting-row">
+            <label>Reading Direction</label>
+            <select id="dlgDirection">
+              <option value="rtl" ${state.reader.readingDirection === 'rtl' ? 'selected' : ''}>Right-to-Left (Manga)</option>
+              <option value="ltr" ${state.reader.readingDirection === 'ltr' ? 'selected' : ''}>Left-to-Right</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Swap Tap/Swipe</label>
+            <button class="toggle ${state.reader.swapTap ? 'on' : ''}" id="dlgSwap"></button>
+          </div>
+          <div class="setting-row">
+            <label>Page Scaling</label>
+            <select id="dlgScaleMode">
+              <option value="fit" ${state.reader.scaleMode === 'fit' ? 'selected' : ''}>Fit</option>
+              <option value="fitWidth" ${state.reader.scaleMode === 'fitWidth' ? 'selected' : ''}>Fit Width</option>
+              <option value="fitHeight" ${state.reader.scaleMode === 'fitHeight' ? 'selected' : ''}>Fit Height</option>
+              <option value="fixed" ${state.reader.scaleMode === 'fixed' ? 'selected' : ''}>Fixed</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Fullscreen</label>
+            <button class="toggle ${state.reader.fullscreen ? 'on' : ''}" id="dlgFullscreen"></button>
+          </div>
+          <div class="setting-row">
+            <label>Auto-Transfer</label>
+            <button class="toggle ${at ? 'on' : ''}" id="dlgAutoTransfer"></button>
+          </div>
+          <div class="setting-row">
+            <label>Interval</label>
+            <select id="dlgInterval">
+              <option value="1" ${atInt === 1 ? 'selected' : ''}>1s</option>
+              <option value="2" ${atInt === 2 ? 'selected' : ''}>2s</option>
+              <option value="3" ${atInt === 3 ? 'selected' : ''}>3s</option>
+              <option value="5" ${atInt === 5 ? 'selected' : ''}>5s</option>
+            </select>
+          </div>
+          <div class="dialog-actions">
+            <button id="dlgShortcuts">Keyboard Shortcuts</button>
+            <button id="dlgCloseReader" class="btn-accent">Close Reader</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      // Event handlers
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) removeDialog(); });
+
+      const toggleBtn = (id, getter, setter) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+          const val = !getter();
+          setter(val);
+          btn.classList.toggle('on', val);
+          saveReaderSettings();
+          if (id === 'dlgFullscreen') toggleFullscreen();
+        });
+      };
+
+      toggleBtn('dlgSwap', () => state.reader.swapTap, (v) => { state.reader.swapTap = v; });
+      toggleBtn('dlgFullscreen', () => state.reader.fullscreen, (v) => { state.reader.fullscreen = v; });
+      toggleBtn('dlgAutoTransfer', () => state.reader.autoTransfer, (v) => { v ? startAutoTransfer(state.reader.autoTransferInterval) : stopAutoTransfer(); });
+
+      document.getElementById('dlgDirection').addEventListener('change', (e) => {
+        state.reader.readingDirection = e.target.value;
+        saveReaderSettings();
+      });
+      document.getElementById('dlgScaleMode').addEventListener('change', (e) => {
+        state.reader.scaleMode = e.target.value;
+        state.reader.zoom = 1; state.reader.panX = 0; state.reader.panY = 0;
+        saveReaderSettings();
+        const img = state.reader.currentImg;
+        if (img) { applyScaleMode(img); applyZoomAndPan(img); }
+      });
+      document.getElementById('dlgInterval').addEventListener('change', (e) => {
+        state.reader.autoTransferInterval = Number(e.target.value);
+        saveReaderSettings();
+        if (state.reader.autoTransfer) startAutoTransfer(state.reader.autoTransferInterval);
+      });
+      document.getElementById('dlgShortcuts').addEventListener('click', showShortcuts);
+      document.getElementById('dlgCloseReader').addEventListener('click', () => { removeDialog(); closeReader(); });
+    }
+
+    function removeDialog() {
+      const existing = document.getElementById('readerDialogOverlay');
+      if (existing) existing.remove();
+    }
+
+    // ── Fullscreen ──
+    async function toggleFullscreen() {
+      if (state.reader.fullscreen) {
+        try { await readerEl.requestFullscreen(); } catch (_) {}
+      } else if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch (_) {}
+      }
+    }
+
+    // ── Keyboard shortcuts ──
+    function showShortcuts() {
+      removeDialog();
+      const existing = document.getElementById('shortcutsOverlay');
+      if (existing) { existing.remove(); return; }
+      const overlay = document.createElement('div');
+      overlay.className = 'shortcuts-overlay';
+      overlay.id = 'shortcutsOverlay';
+      overlay.innerHTML = `
+        <div class="shortcuts-table">
+          <h3>Keyboard Shortcuts</h3>
+          <table>
+            <tr><td>← ↑ PageUp</td><td>Previous page</td></tr>
+            <tr><td>→ ↓ PageDown</td><td>Next page</td></tr>
+            <tr><td>Space</td><td>Next page</td></tr>
+            <tr><td>Home</td><td>First page</td></tr>
+            <tr><td>End</td><td>Last page</td></tr>
+            <tr><td>M</td><td>Settings menu</td></tr>
+            <tr><td>F</td><td>Toggle fullscreen</td></tr>
+            <tr><td>Esc</td><td>Hide controls / Close reader</td></tr>
+          </table>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+      document.addEventListener('keydown', function closeShortcuts(e) {
+        if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', closeShortcuts); }
+      });
+    }
+
+    // ── Unified pointer handling (1 finger = swipe, 2 fingers = pinch + pan) ──
+    // Modeled after iOS Books app: two-finger gestures for zoom/pan, one finger always swipes.
+    //
+    // Critical: never modify img.style.transform in pointerdown — that destroys existing
+    // zoom/pan and causes a visual bounce when the second finger arrives for a pinch.
+    readerStageEl._activePointers = new Map();
+
+    function getPinchDist(p1, p2) {
+      const dx = p1.x - p2.x;
+      const dy = p1.y - p2.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function getPinchMid(p1, p2) {
+      return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    }
+
+    readerStageEl.addEventListener('pointerdown', (e) => {
+      if (!isReaderOpen()) return;
+      e.preventDefault();
+      readerStageEl._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      pauseAutoTransferOnInteraction();
+      resetSeekHideTimer();
+
+      const count = readerStageEl._activePointers.size;
+
+      if (count === 1) {
+        // Potential swipe: record start. DOM is not touched yet — the adjacent
+        // image is positioned on the first pointermove once direction is known.
+        state.reader.isDragging = true;
+        state.reader._adjacentImg = null;
+        state.reader._adjacentIdx = -1;
+        state.reader.dragStartX = e.clientX;
+        state.reader.dragStartY = e.clientY;
+        state.reader.dragDeltaX = 0;
+      } else if (count === 2) {
+        // Second finger → pinch. Cancel drag and clean up any adjacent image.
+        state.reader.isDragging = false;
+        _removeAdjacent();
+        state.reader.pinchActive = true;
+        const img = state.reader.currentImg;
+        if (img) img.style.transition = 'none';
+        const pts = [...readerStageEl._activePointers.values()];
+        state.reader.pinchStartDist = getPinchDist(pts[0], pts[1]);
+        state.reader.pinchStartScale = state.reader.zoom;
+        const mid = getPinchMid(pts[0], pts[1]);
+        state.reader.pinchLastMid = mid;
+      }
+    });
+
+    function _removeAdjacent() {
+      const adj = state.reader._adjacentImg;
+      if (adj && adj.parentNode) adj.remove();
+      state.reader._adjacentImg = null;
+      state.reader._adjacentIdx = -1;
+    }
+
+    function _ensureAdjacent(dx) {
+      const stepWidth = readerStageEl.clientWidth;
+      const absDx = Math.abs(dx);
+      if (absDx < 3) return; // too early to tell direction
+
+      // Determine forward direction
+      const isLTR = state.reader.readingDirection === 'ltr';
+      const swapped = state.reader.swapTap;
+      let forward;
+      if (isLTR) forward = dx < 0;
+      else forward = dx > 0;
+      if (swapped) forward = !forward;
+
+      const newAdjIdx = currentIdx() + (forward ? 1 : -1);
+      const pages = state.reader.pages;
+
+      // Invalid or already showing this adjacent page?
+      if (newAdjIdx < 0 || newAdjIdx >= pages.length) {
+        _removeAdjacent();
+        return;
+      }
+      if (newAdjIdx === state.reader._adjacentIdx) return;
+
+      // Swap adjacent image
+      _removeAdjacent();
+      const adj = pages[newAdjIdx].img;
+      applyScaleMode(adj);
+      adj.style.transition = 'none';
+      // Adjacent side: RTL forward → left (−), LTR forward → right (+)
+      const offset = (forward === isLTR) ? stepWidth : -stepWidth;
+      adj.style.transform = `translateX(${dx + offset}px)`;
+      adj.style.zIndex = '0';
+      if (state.reader.currentImg) state.reader.currentImg.style.zIndex = '1';
+      readerSlideWrap.appendChild(adj);
+      state.reader._adjacentImg = adj;
+      state.reader._adjacentIdx = newAdjIdx;
+      state.reader._adjacentOffset = offset;
+    }
+
+    readerStageEl.addEventListener('pointermove', (e) => {
+      if (!isReaderOpen()) return;
+      e.preventDefault();
+
+      if (readerStageEl._activePointers.has(e.pointerId)) {
+        readerStageEl._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      const count = readerStageEl._activePointers.size;
+
+      if (count >= 2 && state.reader.pinchActive) {
+        // ── Two-finger pinch zoom + pan (1:1 with finger movement) ──
+        const pts = [...readerStageEl._activePointers.values()];
+        if (pts.length >= 2) {
+          const dist = getPinchDist(pts[0], pts[1]);
+          const scale = Math.min(5, Math.max(0.5,
+            state.reader.pinchStartScale * (dist / state.reader.pinchStartDist)));
+          state.reader.zoom = scale;
+
+          const mid = getPinchMid(pts[0], pts[1]);
+          state.reader.panX += mid.x - state.reader.pinchLastMid.x;
+          state.reader.panY += mid.y - state.reader.pinchLastMid.y;
+          state.reader.pinchLastMid = mid;
+
+          const img = state.reader.currentImg;
+          if (img) applyZoomAndPan(img);
+        }
+      } else if (count === 1 && state.reader.isDragging) {
+        // ── One-finger drag: current + adjacent image move as a seamless strip ──
+        const dx = e.clientX - state.reader.dragStartX;
+        state.reader.dragDeltaX = dx;
+        _ensureAdjacent(dx);
+
+        const img = state.reader.currentImg;
+        if (img && !state.reader.nextImg) {
+          img.style.transition = 'none';
+          img.style.transform = `translateX(${dx}px)`;
+        }
+        const adj = state.reader._adjacentImg;
+        if (adj) {
+          adj.style.transition = 'none';
+          adj.style.transform = `translateX(${dx + state.reader._adjacentOffset}px)`;
+        }
+      }
+    });
+
+    readerStageEl.addEventListener('pointerup', (e) => {
+      if (!isReaderOpen()) return;
+      readerStageEl._activePointers.delete(e.pointerId);
+
+      const count = readerStageEl._activePointers.size;
+
+      // Pinch ended?
+      if (count < 2 && state.reader.pinchActive) {
+        state.reader.pinchActive = false;
+        state.reader.isDragging = false;
+        const img = state.reader.currentImg;
+        if (img && !state.reader.nextImg) applyZoomAndPan(img);
+      }
+
+      // Swipe commit: all fingers lifted, was dragging
+      if (count === 0 && state.reader.isDragging) {
+        state.reader.isDragging = false;
+        const dx = state.reader.dragDeltaX;
+        const absDx = Math.abs(dx);
+        const img = state.reader.currentImg;
+
+        if (absDx < 5) {
+          _removeAdjacent();
+          if (img && !state.reader.nextImg) applyZoomAndPan(img);
+          return;
+        }
+
+        if (absDx > 50 && state.reader._adjacentIdx >= 0) {
+          // Commit: snap current image back to origin instantly, remove adjacent,
+          // then let navigateToPage → showPageSlide handle the sole smooth animation.
+          const targetIdx = state.reader._adjacentIdx;
+          if (img) {
+            img.style.transition = 'none';
+            img.style.transform = 'translateX(0px)';
+          }
+          _removeAdjacent();
+          navigateToPage(targetIdx, dx > 0 ? 1 : -1);
+        } else {
+          // Spring back: animate both images back to origin
+          _removeAdjacent();
+          if (img) {
+            img.style.transition = 'transform 200ms ease-out';
+            applyZoomAndPan(img);
+          }
+        }
+      }
+    });
+
+    readerStageEl.addEventListener('pointercancel', (e) => {
+      readerStageEl._activePointers.delete(e.pointerId);
+      if (readerStageEl._activePointers.size < 2) {
+        state.reader.pinchActive = false;
+      }
+      if (state.reader.isDragging) {
+        state.reader.isDragging = false;
+        _removeAdjacent();
+        const img = state.reader.currentImg;
+        if (img && !state.reader.nextImg) applyZoomAndPan(img);
+      }
+    });
+
+    // ── Ctrl+Wheel zoom ──
+    readerStageEl.addEventListener('wheel', (e) => {
+      if (!isReaderOpen()) return;
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const delta = -e.deltaY * 0.005;
+        const newZoom = Math.min(5, Math.max(0.5, state.reader.zoom + delta));
+        state.reader.zoom = newZoom;
+        const img = state.reader.currentImg;
+        if (img) applyZoomAndPan(img);
+      } else {
+        e.preventDefault(); // block scroll-through
+      }
+    }, { passive: false });
+
+    // ── Double-tap to reset zoom ──
+    readerStageEl.addEventListener('dblclick', (e) => {
+      if (!isReaderOpen()) return;
+      state.reader.zoom = 1;
+      state.reader.panX = 0;
+      state.reader.panY = 0;
+      const img = state.reader.currentImg;
+      if (img) {
+        img.style.transition = 'transform 300ms ease-out';
+        applyZoomAndPan(img);
+      }
+    });
+
+    // ── Tap zone handlers ──
+    function setupTapZone(el, handler) {
+      let downX = 0, downY = 0;
+      el.addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
+      el.addEventListener('pointerup', (e) => {
+        const dx = e.clientX - downX;
+        const dy = e.clientY - downY;
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
+          handler(e);
+        }
+      });
+    }
+
+    setupTapZone(zoneLeftEl, () => {
+      navigateToPage(currentIdx() + getEffectiveNext(), 1);
+    });
+    setupTapZone(zoneRightEl, () => {
+      navigateToPage(currentIdx() + getEffectivePrev(), -1);
+    });
+    setupTapZone(zoneMenuEl, () => openSettingsDialog());
+    setupTapZone(zoneSliderEl, () => toggleSeekPanel());
+
+    // ── Seek bar events ──
+    seekRangeEl.addEventListener('input', () => {
+      const val = Number(seekRangeEl.value);
+      seekPageTextEl.textContent = `${val + 1} / ${pageCount()}`;
+    });
+    seekRangeEl.addEventListener('change', () => {
+      const val = Number(seekRangeEl.value);
+      navigateToPage(val, null); // instant jump
+      resetSeekHideTimer();
+    });
+    seekAutoBtn.addEventListener('click', toggleAutoTransfer);
+
+    // ── Close button ──
+    readerCloseBtn.addEventListener('click', closeReader);
+
+    // ── Keyboard navigation ──
+    document.addEventListener('keydown', (event) => {
+      if (!isReaderOpen()) return;
+      const key = event.key;
+
+      // Settings dialog or shortcuts open → only Escape works
+      if (document.getElementById('readerDialogOverlay') || document.getElementById('shortcutsOverlay')) {
+        if (key === 'Escape') {
+          removeDialog();
+          const sc = document.getElementById('shortcutsOverlay');
+          if (sc) sc.remove();
+        }
+        return;
+      }
+
+      switch (key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+        case 'PageUp':
+          event.preventDefault();
+          navigateToPage(currentIdx() + getEffectivePrev(), -1);
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case 'PageDown':
+          event.preventDefault();
+          navigateToPage(currentIdx() + getEffectiveNext(), 1);
+          break;
+        case ' ':
+          event.preventDefault();
+          navigateToPage(currentIdx() + getEffectiveNext(), 1);
+          break;
+        case 'Home':
+          event.preventDefault();
+          navigateToPage(0, null);
+          break;
+        case 'End':
+          event.preventDefault();
+          navigateToPage(pageCount() - 1, null);
+          break;
+        case 'm':
+        case 'M':
+          event.preventDefault();
+          openSettingsDialog();
+          break;
+        case 'f':
+        case 'F':
+          event.preventDefault();
+          state.reader.fullscreen = !state.reader.fullscreen;
+          saveReaderSettings();
+          toggleFullscreen();
+          break;
+        case 'Escape':
+          event.preventDefault();
+          if (seekPanelEl.classList.contains('visible')) {
+            seekPanelEl.classList.remove('visible');
+          } else {
+            closeReader();
+          }
+          break;
+      }
+      resetSeekHideTimer();
+    });
+
+    // ── Click-outside-zoomed to reset ──
+    readerEl.addEventListener('click', (e) => {
+      if (!isReaderOpen()) return;
+      if (Math.abs(state.reader.zoom - 1) < 0.001) return;
+      // If click is on the reader backdrop itself, not on the image
+      if (e.target === readerEl || e.target === readerStageEl) {
+        state.reader.zoom = 1;
+        state.reader.panX = 0;
+        state.reader.panY = 0;
+        const img = state.reader.currentImg;
+        if (img) {
+          img.style.transition = 'transform 300ms ease-out';
+          applyZoomAndPan(img);
+        }
+      }
+    });
+
+    async function fetchBrowse(path) {
+      syncStateFromInputs();
+      const params = new URLSearchParams();
+      params.set('path', path || '');
+      params.set('version', '2');
+      params.set('include_thumbnails', 'true');
+      if (state.filters.label) params.set('label', state.filters.label);
+      const tags = parseTagsInput(state.filters.tags);
+      if (tags.length) params.set('tags', tags.join(','));
+      if (state.filters.search) params.set('search', state.filters.search);
+      params.set('limit', String(state.limit));
+      params.set('page', String(state.page));
+      const response = await fetch(`/api/browse?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function load(path) {
+      state.loading = true;
+      render();
+      try {
+        const data = await fetchBrowse(path);
+        state.path = data.currentPath || '';
+        const items = Array.isArray(data.items) ? data.items : [];
+        state.rows = items;
+        const paging = data.pagination || {};
+        const total = Number(paging.total || items.length || 0);
+        const pageCount = Number(paging.pageCount || 1);
+        state.totalItems = Number.isFinite(total) ? total : items.length;
+        state.totalPages = Math.max(1, Number.isFinite(pageCount) ? Math.floor(pageCount) : 1);
+        if (state.page > state.totalPages) state.page = state.totalPages;
+
+        updateLabelOptions(data.availableLabels);
+        updateUrlState();
+      } catch (error) {
+        state.rows = [];
+        emptyEl.style.display = 'block';
+        emptyEl.innerHTML = `<b>Failed to load.</b><br/>${escapeHtml(error.message || String(error))}`;
+      } finally {
+        state.loading = false;
+        render();
+      }
+    }
+
+    function scheduleRealtimeApply() {
+      clearTimeout(state.pendingInputTimer);
+      state.pendingInputTimer = setTimeout(() => {
+        resetToFirstPage();
+        load(state.path);
+      }, 230);
+    }
+
+    parseInitialUrlState();
+    syncInputsFromState();
+    setMode(state.mode);
+
+    applyBtn.addEventListener('click', () => {
+      resetToFirstPage();
+      load(state.path);
+    });
+    clearBtn.addEventListener('click', () => {
+      state.filters.label = '';
+      state.filters.tags = '';
+      state.filters.search = '';
+      resetToFirstPage();
+      syncInputsFromState();
+      load(state.path);
+    });
+    gridBtn.addEventListener('click', () => setMode('grid'));
+    listBtn.addEventListener('click', () => setMode('list'));
+    labelEl.addEventListener('change', () => {
+      resetToFirstPage();
+      load(state.path);
+    });
+    tagsEl.addEventListener('change', () => {
+      resetToFirstPage();
+      load(state.path);
+    });
+    searchEl.addEventListener('input', scheduleRealtimeApply);
+
+    prevPageBtn.addEventListener('click', () => {
+      if (state.page <= 1) return;
+      state.page -= 1;
+      load(state.path);
+    });
+    nextPageBtn.addEventListener('click', () => {
+      if (state.page >= state.totalPages) return;
+      state.page += 1;
+      load(state.path);
+    });
+
+    load(state.path);
+  </script>
+</body>
+</html>
