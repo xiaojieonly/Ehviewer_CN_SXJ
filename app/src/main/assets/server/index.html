@@ -45,9 +45,31 @@
     }
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(160px, 220px) minmax(180px, 240px) minmax(220px, 1fr) auto auto auto;
+      grid-template-columns: minmax(140px, 200px) minmax(160px, 1fr) auto auto;
       gap: 8px;
       align-items: center;
+    }
+    .tag-toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .tag-toggle {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 3px 11px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--muted);
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .tag-toggle.on {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
     }
     .input, .select, button {
       border: 1px solid var(--border);
@@ -136,6 +158,11 @@
     .items.grid {
       grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
     }
+    /* Thumbnail size variants */
+    .items.grid.thumb-small { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    .items.grid.thumb-small .thumb-wrap { aspect-ratio: 2/3; }
+    .items.grid.thumb-large { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .items.grid.thumb-large .thumb-wrap { aspect-ratio: 2/3; }
     .item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -255,6 +282,11 @@
       color: var(--muted);
       min-width: 44px;
       text-align: right;
+    }
+    .item-time {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
     }
     .tag-row {
       display: none;
@@ -745,6 +777,16 @@
         background: #141e28;
         border-color: #2a3a4a;
       }
+      .tag-toggle {
+        border-color: #3a5060;
+        background: #1a2835;
+        color: #889aad;
+      }
+      .tag-toggle.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
     }
   </style>
 </head>
@@ -753,16 +795,10 @@
     <div class="panel">
       <div class="toolbar">
         <select id="label" class="select">
-          <option value="">All labels</option>
         </select>
-        <input id="tags" class="input" placeholder="Tags: manga,doujin" />
-        <input id="search" class="input" placeholder="Search title or tags" />
-        <button id="applyBtn" class="btn-primary">Apply</button>
-        <button id="clearBtn" class="btn-soft">Clear</button>
-        <div class="modes">
-          <button id="gridBtn" class="mode">Grid</button>
-          <button id="listBtn" class="mode">List</button>
-        </div>
+        <input id="search" class="input" placeholder="Search title, tags, uploader" />
+        <button id="applyBtn" class="btn-primary">Search</button>
+        <button id="settingsBtn" class="btn-soft">Settings</button>
       </div>
       <div id="path" class="path">/</div>
       <div id="status" class="status">
@@ -806,12 +842,9 @@
     const statusTextEl = document.getElementById('statusText');
     const pagerTextEl = document.getElementById('pagerText');
     const labelEl = document.getElementById('label');
-    const tagsEl = document.getElementById('tags');
     const searchEl = document.getElementById('search');
     const applyBtn = document.getElementById('applyBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const gridBtn = document.getElementById('gridBtn');
-    const listBtn = document.getElementById('listBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
     const prevPageBtn = document.getElementById('prevPageBtn');
     const nextPageBtn = document.getElementById('nextPageBtn');
     const readerEl = document.getElementById('reader');
@@ -832,10 +865,27 @@
     const seekAutoBtn = document.getElementById('seekAutoBtn');
 
     // ── Global state ──
+    const TAG_CATEGORIES = [
+      { value: 'misc', label: 'Misc' },
+      { value: 'doujinshi', label: 'Doujinshi' },
+      { value: 'manga', label: 'Manga' },
+      { value: 'artistcg', label: 'Artist CG' },
+      { value: 'gamecg', label: 'Game CG' },
+      { value: 'imageset', label: 'Image Set' },
+      { value: 'cosplay', label: 'Cosplay' },
+      { value: 'asianporn', label: 'Asian Porn' },
+      { value: 'non-h', label: 'Non-H' },
+      { value: 'western', label: 'Western' },
+    ];
+
     const state = {
       path: '',
       mode: localStorage.getItem('lan_mode') || 'grid',
-      filters: { label: '', tags: '', search: '' },
+      filters: { label: '', tags: '', search: '', sort: 'modified', order: '' },
+      activeTags: [],
+      // Display settings
+      pageLimit: Number(localStorage.getItem('lan_limit')) || 120,
+      thumbSize: localStorage.getItem('lan_thumb') || 'normal',  // 'small' | 'normal' | 'large'
       rows: [],
       loading: false,
       pendingInputTimer: 0,
@@ -933,9 +983,12 @@
     function parseInitialUrlState() {
       const params = new URLSearchParams(location.search);
       state.path = params.get('path') || '';
-      state.filters.label = params.get('label') || (params.has('label') ? '' : 'Default');
+      state.filters.label = params.get('label') || 'Default';
       state.filters.tags = params.get('tags') || '';
       state.filters.search = params.get('search') || '';
+      state.filters.sort = params.get('sort') || 'modified';
+      state.filters.order = params.get('order') || '';
+      state.activeTags = state.filters.tags ? state.filters.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       const page = Number(params.get('page') || '1');
       state.page = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
       const mode = params.get('mode');
@@ -950,6 +1003,8 @@
       if (state.filters.label) params.set('label', state.filters.label);
       if (state.filters.tags) params.set('tags', state.filters.tags);
       if (state.filters.search) params.set('search', state.filters.search);
+      if (state.filters.sort && state.filters.sort !== 'modified') params.set('sort', state.filters.sort);
+      if (state.filters.order) params.set('order', state.filters.order);
       params.set('page', String(state.page));
       params.set('mode', state.mode);
       history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
@@ -959,8 +1014,11 @@
       state.mode = mode === 'list' ? 'list' : 'grid';
       localStorage.setItem('lan_mode', state.mode);
       itemsEl.className = `items ${state.mode}`;
-      gridBtn.classList.toggle('active', state.mode === 'grid');
-      listBtn.classList.toggle('active', state.mode === 'list');
+      if (state.mode === 'grid') {
+        itemsEl.classList.remove('thumb-small', 'thumb-large');
+        if (state.thumbSize === 'small') itemsEl.classList.add('thumb-small');
+        if (state.thumbSize === 'large') itemsEl.classList.add('thumb-large');
+      }
       updateUrlState();
       render();
     }
@@ -971,16 +1029,24 @@
     }
 
     function syncInputsFromState() {
+      _updatingLabel = true;
       labelEl.value = state.filters.label;
-      tagsEl.value = state.filters.tags;
+      _updatingLabel = false;
       searchEl.value = state.filters.search;
     }
 
     function syncStateFromInputs() {
-      state.filters.label = labelEl.value.trim();
-      state.filters.tags = tagsEl.value.trim();
+      // Only sync label from the dropdown if it has been populated (options loaded).
+      // On first load the <select> is empty and .value is '',
+      // which would overwrite the default 'Default' label filter.
+      if (labelEl.options.length > 0) {
+        state.filters.label = labelEl.value.trim();
+      }
       state.filters.search = searchEl.value.trim();
+      state.filters.tags = state.activeTags.join(',');
     }
+
+    // ── Tag toggles (rendered inside settings popup only) ──
 
     function resetToFirstPage() {
       state.page = 1;
@@ -999,8 +1065,18 @@
     }
 
     function fmtTime(ts) {
-      if (!ts || ts < 1) return '-';
-      return new Date(ts).toLocaleString();
+      // ts is download time (epoch millis from DownloadInfo.time / item.modified).
+      // 0 means the time was never set (e.g. items added before the time column existed,
+      // or restored via WiFi transfer with a zero timestamp).
+      if (!ts || ts < 1) return 'Unknown';
+      const d = new Date(ts);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      const ss = String(d.getSeconds()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
     }
 
     function escapeHtml(text) {
@@ -1055,6 +1131,7 @@
     function cardMarkup(item) {
       const { safeTitle } = itemMeta(item);
       const uploader = escapeHtml(item.uploader || '-');
+      const timeStr = fmtTime(item.modified);
       return `
         <article class="item" data-path="${escapeHtml(item.path || '')}" data-dir="${item.directory ? '1' : '0'}">
           <div class="thumb-wrap">${itemThumb(item)}</div>
@@ -1065,6 +1142,7 @@
               ${uploader !== '-' ? `<span class="badge">${escapeHtml(uploader)}</span>` : ''}
             </div>
             ${progressMarkup(item.readProgress, item.pageCount)}
+            <div class="item-time">${escapeHtml(timeStr)}</div>
           </div>
         </article>
       `;
@@ -1074,12 +1152,13 @@
       const { safeTitle } = itemMeta(item);
       const uploader = escapeHtml(item.uploader || '-');
       const sizeStr = item.directory ? 'Folder' : fmtSize(item.size);
+      const timeStr = fmtTime(item.modified);
       return `
         <article class="row" data-path="${escapeHtml(item.path || '')}" data-dir="${item.directory ? '1' : '0'}">
           <div class="thumb-wrap">${itemThumb(item)}</div>
           <div class="row-info">
             <div class="row-title">${safeTitle}</div>
-            <div class="row-sub">${uploader !== '-' ? escapeHtml(uploader) : sizeStr}</div>
+            <div class="row-sub">${uploader !== '-' ? escapeHtml(uploader) : sizeStr} · ${escapeHtml(timeStr)}</div>
             <div>${stars(item.rating)}</div>
             ${progressMarkup(item.readProgress, item.pageCount)}
           </div>
@@ -1087,30 +1166,26 @@
       `;
     }
 
+    let _updatingLabel = false;
+
     function updateLabelOptions(availableLabels) {
-      // Only rebuild the dropdown when the available labels actually change,
-      // not on every filter change. This ensures users can switch labels
-      // without being forced back to "All labels" first.
       const labels = Array.isArray(availableLabels) ? availableLabels : [];
       if (labels.length === 0) return;
-      // Build full option list: "All labels" (no filter) + all available labels
-      const fullOptions = ['', ...labels];
-      const currentValue = labelEl.value;
+      const fullOptions = labels;
       const isRebuildNeeded = labelEl.options.length !== fullOptions.length
         || fullOptions.some((l, i) => labelEl.options[i]?.value !== l);
+      _updatingLabel = true;
       if (!isRebuildNeeded) {
-        // Just update the selected value without rebuilding
-        const selected = fullOptions.includes(state.filters.label) ? state.filters.label : '';
+        const selected = fullOptions.includes(state.filters.label) ? state.filters.label : fullOptions[0] || '';
         labelEl.value = selected;
-        return;
+      } else {
+        labelEl.innerHTML = fullOptions.map(l => {
+          return `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`;
+        }).join('');
+        const selected = fullOptions.includes(state.filters.label) ? state.filters.label : fullOptions[0] || '';
+        labelEl.value = selected;
       }
-      labelEl.innerHTML = fullOptions.map(l => {
-        if (l === '') return '<option value="">All labels</option>';
-        return `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`;
-      }).join('');
-      const selected = fullOptions.includes(state.filters.label) ? state.filters.label : '';
-      labelEl.value = selected;
-      if (!labelEl.value) state.filters.label = '';
+      _updatingLabel = false;
     }
 
     function render() {
@@ -1994,10 +2069,11 @@
       params.set('version', '2');
       params.set('include_thumbnails', 'true');
       if (state.filters.label) params.set('label', state.filters.label);
-      const tags = parseTagsInput(state.filters.tags);
-      if (tags.length) params.set('tags', tags.join(','));
+      if (state.filters.tags) params.set('tags', state.filters.tags);
       if (state.filters.search) params.set('search', state.filters.search);
-      params.set('limit', String(state.limit));
+      if (state.filters.sort && state.filters.sort !== 'modified') params.set('sort', state.filters.sort);
+      if (state.filters.order) params.set('order', state.filters.order);
+      params.set('limit', String(state.pageLimit));
       params.set('page', String(state.page));
       const response = await fetch(`/api/browse?${params.toString()}`);
       if (!response.ok) {
@@ -2041,6 +2117,143 @@
       }, 230);
     }
 
+    // ── Settings popup ──
+    function toggleSettingsPopup() {
+      const existing = document.getElementById('settingsPopup');
+      if (existing) { existing.remove(); return; }
+      renderSettingsPopup();
+    }
+
+    function renderSettingsPopup() {
+      const existing = document.getElementById('settingsPopup');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'reader-dialog-overlay';
+      overlay.id = 'settingsPopup';
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+      overlay.innerHTML = `
+        <div class="reader-dialog" style="max-width:380px">
+          <h3>Display & Filter Settings</h3>
+          <div class="setting-row">
+            <label>View Mode</label>
+            <select id="popupMode">
+              <option value="grid" ${state.mode === 'grid' ? 'selected' : ''}>Grid</option>
+              <option value="list" ${state.mode === 'list' ? 'selected' : ''}>List</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Items per page</label>
+            <select id="popupLimit">
+              <option value="60" ${state.pageLimit === 60 ? 'selected' : ''}>60</option>
+              <option value="120" ${state.pageLimit === 120 ? 'selected' : ''}>120</option>
+              <option value="240" ${state.pageLimit === 240 ? 'selected' : ''}>240</option>
+              <option value="480" ${state.pageLimit === 480 ? 'selected' : ''}>480</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Thumbnail Size</label>
+            <select id="popupThumb">
+              <option value="small" ${state.thumbSize === 'small' ? 'selected' : ''}>Small</option>
+              <option value="normal" ${state.thumbSize === 'normal' ? 'selected' : ''}>Normal</option>
+              <option value="large" ${state.thumbSize === 'large' ? 'selected' : ''}>Large</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Sort By</label>
+            <select id="popupSort">
+              <option value="modified" ${state.filters.sort === 'modified' && !state.filters.order ? 'selected' : ''}>Download Order ↓</option>
+              <option value="modified_asc" ${state.filters.sort === 'modified' && state.filters.order === 'asc' ? 'selected' : ''}>Download Order ↑</option>
+              <option value="title" ${state.filters.sort === 'title' && !state.filters.order ? 'selected' : ''}>Title A-Z</option>
+              <option value="title_asc" ${state.filters.sort === 'title' && state.filters.order === 'asc' ? 'selected' : ''}>Title Z-A</option>
+              <option value="rating" ${state.filters.sort === 'rating' && !state.filters.order ? 'selected' : ''}>Rating ↓</option>
+              <option value="rating_asc" ${state.filters.sort === 'rating' && state.filters.order === 'asc' ? 'selected' : ''}>Rating ↑</option>
+              <option value="pageCount" ${state.filters.sort === 'pageCount' ? 'selected' : ''}>Pages ↓</option>
+              <option value="size" ${state.filters.sort === 'size' ? 'selected' : ''}>Size ↓</option>
+            </select>
+          </div>
+          <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px">
+            <label>Category Filters</label>
+            <div id="popupTags" class="tag-toggles" style="margin-top:0"></div>
+          </div>
+          <div class="dialog-actions" style="margin-top:12px">
+            <button id="popupClear" style="flex:1">Clear All</button>
+            <button id="popupApply" class="btn-accent" style="flex:1">Apply</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      // Wire popup events
+      document.getElementById('popupMode').addEventListener('change', (e) => setMode(e.target.value));
+      document.getElementById('popupSort').addEventListener('change', () => {
+        const val = document.getElementById('popupSort').value;
+        if (val.endsWith('_asc')) {
+          state.filters.sort = val.replace('_asc', '');
+          state.filters.order = 'asc';
+        } else {
+          state.filters.sort = val;
+          state.filters.order = '';
+        }
+        updateUrlState();
+      });
+      document.getElementById('popupApply').addEventListener('click', () => {
+        const newLimit = Number(document.getElementById('popupLimit').value);
+        const newThumb = document.getElementById('popupThumb').value;
+        if (newLimit !== state.pageLimit) {
+          state.pageLimit = newLimit;
+          state.limit = newLimit;
+          localStorage.setItem('lan_limit', String(newLimit));
+        }
+        if (newThumb !== state.thumbSize) {
+          state.thumbSize = newThumb;
+          localStorage.setItem('lan_thumb', newThumb);
+        }
+        overlay.remove();
+        resetToFirstPage();
+        load(state.path);
+      });
+      document.getElementById('popupClear').addEventListener('click', () => {
+        const defaultLabel = labelEl.options[0]?.value || '';
+        state.filters.label = defaultLabel;
+        state.filters.tags = '';
+        state.filters.search = '';
+        state.filters.sort = 'modified';
+        state.filters.order = '';
+        state.activeTags = [];
+        state.pageLimit = 120;
+        state.limit = 120;
+        state.thumbSize = 'normal';
+        localStorage.removeItem('lan_limit');
+        localStorage.removeItem('lan_thumb');
+        _updatingLabel = true;
+        labelEl.value = defaultLabel;
+        _updatingLabel = false;
+        searchEl.value = '';
+        overlay.remove();
+        resetToFirstPage();
+        syncInputsFromState();
+        load(state.path);
+      });
+
+      // Render tag toggles inside popup
+      const popupTagContainer = document.getElementById('popupTags');
+      popupTagContainer.innerHTML = TAG_CATEGORIES.map(cat => {
+        const on = state.activeTags.includes(cat.value);
+        return `<span class="tag-toggle${on ? ' on' : ''}" data-tag="${escapeHtml(cat.value)}">${escapeHtml(cat.label)}</span>`;
+      }).join('');
+      popupTagContainer.querySelectorAll('.tag-toggle').forEach(el => {
+        el.addEventListener('click', () => {
+          const tag = el.getAttribute('data-tag');
+          const idx = state.activeTags.indexOf(tag);
+          if (idx >= 0) state.activeTags.splice(idx, 1);
+          else state.activeTags.push(tag);
+          renderSettingsPopup(); // re-render to update toggles
+        });
+      });
+    }
+
     parseInitialUrlState();
     syncInputsFromState();
     setMode(state.mode);
@@ -2049,21 +2262,9 @@
       resetToFirstPage();
       load(state.path);
     });
-    clearBtn.addEventListener('click', () => {
-      state.filters.label = '';
-      state.filters.tags = '';
-      state.filters.search = '';
-      resetToFirstPage();
-      syncInputsFromState();
-      load(state.path);
-    });
-    gridBtn.addEventListener('click', () => setMode('grid'));
-    listBtn.addEventListener('click', () => setMode('list'));
+    settingsBtn.addEventListener('click', toggleSettingsPopup);
     labelEl.addEventListener('change', () => {
-      resetToFirstPage();
-      load(state.path);
-    });
-    tagsEl.addEventListener('change', () => {
+      if (_updatingLabel) return;
       resetToFirstPage();
       load(state.path);
     });

@@ -243,6 +243,8 @@ public final class SimpleHttpServer {
         String labelFilter = BrowseFilterUtils.normalizeFilterValue(query.get("label"));
         List<String> tagFilters = BrowseFilterUtils.parseTagFilters(query.get("tags"));
         String searchFilter = BrowseFilterUtils.normalizeFilterValue(query.get("search"));
+        String sortField = BrowseFilterUtils.normalizeFilterValue(query.get("sort"));
+        String sortOrder = BrowseFilterUtils.normalizeFilterValue(query.get("order"));
         Pagination pagination;
         try {
             pagination = parsePagination(query.get("page"), query.get("limit"));
@@ -252,7 +254,7 @@ public final class SimpleHttpServer {
         }
 
         if (version >= API_VERSION_V2) {
-            serveBrowseV2Indexed(os, path, includeThumbnails, labelFilter, tagFilters, searchFilter, pagination);
+            serveBrowseV2Indexed(os, path, includeThumbnails, labelFilter, tagFilters, searchFilter, sortField, sortOrder, pagination);
             return;
         }
 
@@ -342,6 +344,8 @@ public final class SimpleHttpServer {
                                       @Nullable String labelFilter,
                                       @NonNull List<String> tagFilters,
                                       @Nullable String searchFilter,
+                                      @Nullable String sortField,
+                                      @Nullable String sortOrder,
                                       @NonNull Pagination pagination) throws IOException {
         String normalizedPath = PathValidator.normalizePath(path);
         if (!normalizedPath.isEmpty()) {
@@ -365,7 +369,35 @@ public final class SimpleHttpServer {
             browseItems.add(item);
         }
 
-        browseItems.sort((a, b) -> Long.compare(b.modified, a.modified));
+        // Sort only when an explicit sort field is requested.
+        // When no sort is specified, preserve the in-app download order from
+        // getAllDownloadInfoList() (which reflects drag-reorder adjustments).
+        if (sortField != null) {
+            boolean ascending = "asc".equalsIgnoreCase(sortOrder != null ? sortOrder : "");
+            Comparator<BrowseItem> itemComparator;
+            if ("title".equalsIgnoreCase(sortField)) {
+                Comparator<BrowseItem> c = Comparator.comparing(
+                        i -> i.metadata != null && i.metadata.title != null ? i.metadata.title.toLowerCase() : "");
+                itemComparator = ascending ? c : c.reversed();
+            } else if ("rating".equalsIgnoreCase(sortField)) {
+                Comparator<BrowseItem> c = Comparator.comparing(
+                        i -> i.metadata != null && i.metadata.rating != null ? i.metadata.rating : 0f);
+                itemComparator = ascending ? c : c.reversed();
+            } else if ("pageCount".equalsIgnoreCase(sortField)) {
+                Comparator<BrowseItem> c = Comparator.comparing(
+                        i -> i.metadata != null && i.metadata.pageCount != null ? i.metadata.pageCount : 0);
+                itemComparator = ascending ? c : c.reversed();
+            } else if ("size".equalsIgnoreCase(sortField)) {
+                Comparator<BrowseItem> c = Comparator.comparing(i -> i.size);
+                itemComparator = ascending ? c : c.reversed();
+            } else {
+                // Explicit "modified" sort requested
+                itemComparator = (a, b) -> ascending
+                        ? Long.compare(a.modified, b.modified)
+                        : Long.compare(b.modified, a.modified);
+            }
+            browseItems.sort(itemComparator);
+        }
 
         List<BrowseItem> pageItems = browseItems;
         if (pagination.enabled) {
@@ -431,9 +463,14 @@ public final class SimpleHttpServer {
                 ? Collections.emptyList()
                 : Collections.singletonList(info.label);
         metadata.tags = extractIndexedTags(info);
-        metadata.uploader = TextUtils.isEmpty(info.uploader) ? "-" : info.uploader;
+        // Include category in tags so tag toggles can filter by category
         String categoryText = EhUtils.getCategory(info.category);
         metadata.category = TextUtils.isEmpty(categoryText) ? "-" : categoryText;
+        if (!TextUtils.isEmpty(categoryText) && !metadata.tags.contains(categoryText)) {
+            metadata.tags = new ArrayList<>(metadata.tags);
+            metadata.tags.add(0, categoryText);
+        }
+        metadata.uploader = TextUtils.isEmpty(info.uploader) ? "-" : info.uploader;
 
         metadata.thumbnailUrl = includeThumbnails ? "/api/thumb?gid=" + info.gid : null;
 
