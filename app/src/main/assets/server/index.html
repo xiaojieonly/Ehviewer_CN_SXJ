@@ -1254,30 +1254,39 @@
       }
 
       applyScaleMode(newImg);
-      // Position new image off-screen, respecting reading direction
       // In RTL: forward → new page comes from LEFT; in LTR: forward → new page comes from RIGHT
       const isLTR = state.reader.readingDirection === 'ltr';
       const slideDir = direction * (isLTR ? 1 : -1);
+
+      // Position new image off-screen
       newImg.style.transition = 'none';
       newImg.style.transform = `translateX(${slideDir * 100}%)`;
-      newImg.style.zIndex = '1';  // incoming on top
+      newImg.style.opacity = '1';
+      newImg.style.zIndex = '1';
       if (!newImg.parentNode) readerSlideWrap.appendChild(newImg);
+
+      // Reset old image to origin (unzoomed, centered) in case drag offset it
+      if (oldImg) {
+        oldImg.style.transition = 'none';
+        oldImg.style.transform = 'translateX(0px)';
+        oldImg.style.opacity = '1';
+        oldImg.style.zIndex = '0';
+      }
 
       // Force reflow
       newImg.offsetHeight;
 
-      // Animate only the incoming image; remove outgoing instantly
+      // Animate: new slides in, old slides out + fades out — both move as one strip
       if (oldImg) {
-        oldImg.style.transition = 'none';
-        oldImg.style.transform = '';
-        if (oldImg.parentNode) oldImg.remove();
+        oldImg.style.transition = 'transform 200ms ease-out, opacity 150ms ease-in';
+        oldImg.style.transform = `translateX(${-slideDir * 100}%)`;
+        oldImg.style.opacity = '0';
       }
       newImg.style.transition = 'transform 200ms ease-out';
       newImg.style.transform = 'translateX(0)';
 
       state.reader.nextImg = newImg;
 
-      // On transition end, clean up
       const onEnd = () => {
         newImg.removeEventListener('transitionend', onEnd);
         if (oldImg && oldImg.parentNode) oldImg.remove();
