@@ -112,7 +112,6 @@ import com.hippo.util.GifHandler;
 import com.hippo.util.PermissionRequester;
 import com.hippo.widget.AvatarImageView;
 import com.hippo.lib.yorozuya.IOUtils;
-import com.hippo.lib.yorozuya.ResourcesUtils;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.ViewUtils;
 
@@ -406,8 +405,7 @@ public final class MainActivity extends StageActivity
 
         limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
 
-        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
-//        mDrawerLayout.setStatusBarColor(0);
+        mDrawerLayout.setStatusBarColor(0);
 
         if (mNavView != null) {
 //            if (Settings.isLogin()){
