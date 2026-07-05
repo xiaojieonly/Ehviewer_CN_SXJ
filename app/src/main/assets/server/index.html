@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>EhViewer LAN Browser</title>
   <style>
     :root {
@@ -118,9 +118,6 @@
       background: var(--accent-soft);
       color: #06564a;
       font-weight: 700;
-    }
-    .path {
-      display: none; /* hidden: not needed for indexed (non-path-based) browsing */
     }
     .status {
       margin-top: 8px;
@@ -288,17 +285,6 @@
       color: var(--muted);
       white-space: nowrap;
     }
-    .tag-row {
-      display: none;
-    }
-    .tag {
-      font-size: 11px;
-      background: #fff5e9;
-      border: 1px solid #f4d8bd;
-      color: #8d5a29;
-      border-radius: 999px;
-      padding: 1px 7px;
-    }
     .row {
       display: none;
       grid-template-columns: 68px 1fr;
@@ -414,6 +400,43 @@
       display: grid;
       grid-template-rows: 1fr;
       grid-template-columns: 1fr;
+    }
+    /* Fullscreen: override the fixed+inset layout so the reader fills the entire
+       fullscreen context. Padding respects the device safe areas (status bar,
+       home indicator) so content doesn't overlap system UI. */
+    .reader:fullscreen,
+    .reader:-webkit-full-screen {
+      position: static;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-template-columns: 1fr;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+    /* Ensure all interior containers stretch fully within the padded area */
+    .reader:fullscreen .reader-stage,
+    .reader:-webkit-full-screen .reader-stage,
+    .reader:fullscreen .reader-slide-wrap,
+    .reader:-webkit-full-screen .reader-slide-wrap {
+      width: 100%;
+      height: 100%;
+    }
+    /* Nudge overlays so they sit just inside the safe area rather than under it */
+    .reader:fullscreen .reader-info,
+    .reader:-webkit-full-screen .reader-info {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .reader:fullscreen .reader-close,
+    .reader:-webkit-full-screen .reader-close {
+      top: calc(8px + env(safe-area-inset-top, 0px));
+    }
+    .reader:fullscreen .reader-seek-panel,
+    .reader:-webkit-full-screen .reader-seek-panel {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* ── Info Overlay Bar ── */
@@ -614,6 +637,8 @@
     }
     .reader-dialog .toggle {
       width: 44px; height: 24px;
+      min-height: 24px;
+      padding: 0;
       border-radius: 12px;
       background: rgba(255,255,255,0.15);
       position: relative;
@@ -739,11 +764,6 @@
         background: #1a2a35;
         color: #90b8c8;
       }
-      .tag {
-        background: #2a1f15;
-        border-color: #5a4030;
-        color: #c89660;
-      }
       .btn-soft {
         border-color: #3a5060;
         background: #1a2835;
@@ -800,7 +820,6 @@
         <button id="applyBtn" class="btn-primary">Search</button>
         <button id="settingsBtn" class="btn-soft">Settings</button>
       </div>
-      <div id="path" class="path">/</div>
       <div id="status" class="status">
         <span id="statusText"></span>
         <span class="pager">
@@ -851,7 +870,6 @@
     const readerStageEl = document.getElementById('readerStage');
     const readerCloseBtn = document.getElementById('readerCloseBtn');
     const readerSlideWrap = document.getElementById('readerSlideWrap');
-    const readerInfoEl = document.getElementById('readerInfo');
     const infoClockEl = document.getElementById('infoClock');
     const infoProgressEl = document.getElementById('infoProgress');
     const infoBatteryEl = document.getElementById('infoBattery');
@@ -890,7 +908,6 @@
       loading: false,
       pendingInputTimer: 0,
       page: 1,
-      limit: 120,
       totalPages: 1,
       totalItems: 0,
       reader: {
@@ -899,8 +916,6 @@
         pages: [],           // array of { url, name } preloaded Image elements stored as .img
         index: 0,
         // settings (persisted)
-        readingDirection: 'rtl',    // 'rtl' or 'ltr'
-        swapTap: false,
         scaleMode: 'fit',           // 'fit' | 'fitWidth' | 'fitHeight' | 'fixed'
         fullscreen: false,
         autoTransfer: false,
@@ -908,14 +923,12 @@
         // runtime
         currentImg: null,   // reference to the currently displayed <img>
         nextImg: null,      // reference to the next <img> for slide animation
-        controlsVisible: false,
         zoom: 1,            // current zoom scale (1 = fit)
         panX: 0,            // current pan offset X
         panY: 0,            // current pan offset Y
         autoTransferTimer: null,
         clockTimer: null,
         seekHideTimer: null,
-        controlsHideTimer: null,
         isDragging: false,
         dragStartX: 0,
         dragStartY: 0,
@@ -937,8 +950,6 @@
         const raw = localStorage.getItem(READER_SETTINGS_KEY);
         if (raw) {
           const s = JSON.parse(raw);
-          state.reader.readingDirection = s.readingDirection || 'rtl';
-          state.reader.swapTap = !!s.swapTap;
           state.reader.scaleMode = s.scaleMode || 'fit';
           state.reader.fullscreen = !!s.fullscreen;
           state.reader.autoTransfer = !!s.autoTransfer;
@@ -949,8 +960,6 @@
 
     function saveReaderSettings() {
       localStorage.setItem(READER_SETTINGS_KEY, JSON.stringify({
-        readingDirection: state.reader.readingDirection,
-        swapTap: state.reader.swapTap,
         scaleMode: state.reader.scaleMode,
         fullscreen: state.reader.fullscreen,
         autoTransfer: state.reader.autoTransfer,
@@ -979,6 +988,16 @@
     }
 
     loadReaderSettings();
+
+    // When the user exits fullscreen via a browser gesture (e.g. iPad swipe or Esc),
+    // turn off the preference so the toggle reflects reality and the next reader
+    // open won't auto-enter fullscreen.
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && readerEl.classList.contains('open')) {
+        state.reader.fullscreen = false;
+        saveReaderSettings();
+      }
+    });
 
     function parseInitialUrlState() {
       const params = new URLSearchParams(location.search);
@@ -1021,11 +1040,6 @@
       }
       updateUrlState();
       render();
-    }
-
-    function parseTagsInput(value) {
-      if (!value) return [];
-      return value.split(',').map(x => x.trim()).filter(Boolean);
     }
 
     function syncInputsFromState() {
@@ -1121,22 +1135,19 @@
       return `<span>${item.directory ? 'DIR' : 'FILE'}</span>`;
     }
 
-    function itemMeta(item) {
-      const tags = Array.isArray(item.tags) ? item.tags.slice(0, 4) : [];
-      const labels = Array.isArray(item.labels) ? item.labels : [];
-      const pages = item.pageCount ? `${item.pageCount}P` : '-';
-      return { tags, labels, pages, safeTitle: escapeHtml(item.title || item.name || 'Untitled') };
+    function safeTitle(item) {
+      return escapeHtml(item.title || item.name || 'Untitled');
     }
 
     function cardMarkup(item) {
-      const { safeTitle } = itemMeta(item);
+      const st = safeTitle(item);
       const uploader = escapeHtml(item.uploader || '-');
       const timeStr = fmtTime(item.modified);
       return `
         <article class="item" data-path="${escapeHtml(item.path || '')}" data-dir="${item.directory ? '1' : '0'}">
           <div class="thumb-wrap">${itemThumb(item)}</div>
           <div class="meta">
-            <h3 class="title" title="${safeTitle}">${safeTitle}</h3>
+            <h3 class="title" title="${st}">${st}</h3>
             <div class="stats">
               ${stars(item.rating)}
               ${uploader !== '-' ? `<span class="badge">${escapeHtml(uploader)}</span>` : ''}
@@ -1149,7 +1160,7 @@
     }
 
     function rowMarkup(item) {
-      const { safeTitle } = itemMeta(item);
+      const st = safeTitle(item);
       const uploader = escapeHtml(item.uploader || '-');
       const sizeStr = item.directory ? 'Folder' : fmtSize(item.size);
       const timeStr = fmtTime(item.modified);
@@ -1157,7 +1168,7 @@
         <article class="row" data-path="${escapeHtml(item.path || '')}" data-dir="${item.directory ? '1' : '0'}">
           <div class="thumb-wrap">${itemThumb(item)}</div>
           <div class="row-info">
-            <div class="row-title">${safeTitle}</div>
+            <div class="row-title">${st}</div>
             <div class="row-sub">${uploader !== '-' ? escapeHtml(uploader) : sizeStr} · ${escapeHtml(timeStr)}</div>
             <div>${stars(item.rating)}</div>
             ${progressMarkup(item.readProgress, item.pageCount)}
@@ -1291,13 +1302,6 @@
       navigateToPage(currentIdx() + 1, 1);
     }
 
-    function getEffectivePrev() {
-      return state.reader.swapTap ? 1 : -1;
-    }
-    function getEffectiveNext() {
-      return state.reader.swapTap ? -1 : 1;
-    }
-
     // ── Slide animation ──
     function showPageInstant(idx) {
       const pages = state.reader.pages;
@@ -1329,9 +1333,8 @@
       }
 
       applyScaleMode(newImg);
-      // In RTL: forward → new page comes from LEFT; in LTR: forward → new page comes from RIGHT
-      const isLTR = state.reader.readingDirection === 'ltr';
-      const slideDir = direction * (isLTR ? 1 : -1);
+      // RTL reading: forward → new page slides in from LEFT
+      const slideDir = -direction;
 
       // Position new image off-screen
       newImg.style.transition = 'none';
@@ -1420,6 +1423,10 @@
         updateReaderUI();
         startClock();
         updateBattery();
+        // Auto-enter fullscreen if the user's preference is enabled
+        if (state.reader.fullscreen && !document.fullscreenElement) {
+          try { await readerEl.requestFullscreen(); } catch (_) {}
+        }
       } catch (error) {
         readerSlideWrap.innerHTML = `<div class="reader-empty">Failed to open reader: ${escapeHtml(error.message || String(error))}</div>`;
       }
@@ -1429,7 +1436,6 @@
       stopAutoTransfer();
       stopClock();
       clearTimeout(state.reader.seekHideTimer);
-      clearTimeout(state.reader.controlsHideTimer);
       clearTimeout(state.reader._debounceTimer);
       clearTimeout(state.reader._autoResumeTimer);
       state.reader._debounceTimer = null;
@@ -1444,11 +1450,16 @@
       state.reader.zoom = 1;
       state.reader.panX = 0;
       state.reader.panY = 0;
-      readerEl.classList.remove('open');
-      readerEl.setAttribute('aria-hidden', 'true');
-      if (state.reader.fullscreen && document.fullscreenElement) {
+      // Always exit fullscreen so the user can interact with the page normally
+      if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
+      // Dismiss any open overlays that may have been hidden behind fullscreen
+      removeDialog();
+      const sc = document.getElementById('shortcutsOverlay');
+      if (sc) sc.remove();
+      readerEl.classList.remove('open');
+      readerEl.setAttribute('aria-hidden', 'true');
     }
 
     // ── UI updates ──
@@ -1561,12 +1572,18 @@
     }
 
     function pauseAutoTransferOnInteraction() {
-      if (state.reader.autoTransfer) {
-        // Pause briefly, then resume
-        stopAutoTransfer();
+      // Pause the interval without toggling the setting or saving to storage
+      if (state.reader.autoTransfer && state.reader.autoTransferTimer) {
+        clearInterval(state.reader.autoTransferTimer);
+        state.reader.autoTransferTimer = null;
+        if (state.reader._autoResumeTimer) clearTimeout(state.reader._autoResumeTimer);
         state.reader._autoResumeTimer = setTimeout(() => {
           state.reader._autoResumeTimer = null;
-          startAutoTransfer(state.reader.autoTransferInterval);
+          state.reader.autoTransferTimer = setInterval(() => {
+            const idx = currentIdx();
+            if (idx >= pageCount() - 1) { stopAutoTransfer(); return; }
+            nextPage();
+          }, state.reader.autoTransferInterval * 1000);
         }, 3000);
       }
     }
@@ -1584,17 +1601,7 @@
       overlay.innerHTML = `
         <div class="reader-dialog">
           <h3>Reader Settings</h3>
-          <div class="setting-row">
-            <label>Reading Direction</label>
-            <select id="dlgDirection">
-              <option value="rtl" ${state.reader.readingDirection === 'rtl' ? 'selected' : ''}>Right-to-Left (Manga)</option>
-              <option value="ltr" ${state.reader.readingDirection === 'ltr' ? 'selected' : ''}>Left-to-Right</option>
-            </select>
-          </div>
-          <div class="setting-row">
-            <label>Swap Tap/Swipe</label>
-            <button class="toggle ${state.reader.swapTap ? 'on' : ''}" id="dlgSwap"></button>
-          </div>
+
           <div class="setting-row">
             <label>Page Scaling</label>
             <select id="dlgScaleMode">
@@ -1645,14 +1652,9 @@
         });
       };
 
-      toggleBtn('dlgSwap', () => state.reader.swapTap, (v) => { state.reader.swapTap = v; });
       toggleBtn('dlgFullscreen', () => state.reader.fullscreen, (v) => { state.reader.fullscreen = v; });
       toggleBtn('dlgAutoTransfer', () => state.reader.autoTransfer, (v) => { v ? startAutoTransfer(state.reader.autoTransferInterval) : stopAutoTransfer(); });
 
-      document.getElementById('dlgDirection').addEventListener('change', (e) => {
-        state.reader.readingDirection = e.target.value;
-        saveReaderSettings();
-      });
       document.getElementById('dlgScaleMode').addEventListener('change', (e) => {
         state.reader.scaleMode = e.target.value;
         state.reader.zoom = 1; state.reader.panX = 0; state.reader.panY = 0;
@@ -1677,6 +1679,12 @@
     // ── Fullscreen ──
     async function toggleFullscreen() {
       if (state.reader.fullscreen) {
+        // Dismiss any open overlays before entering fullscreen so they don't
+        // end up hidden behind the fullscreen element
+        removeDialog();
+        const sc = document.getElementById('shortcutsOverlay');
+        if (sc) sc.remove();
+        seekPanelEl.classList.remove('visible');
         try { await readerEl.requestFullscreen(); } catch (_) {}
       } else if (document.fullscreenElement) {
         try { await document.exitFullscreen(); } catch (_) {}
@@ -1698,6 +1706,8 @@
             <tr><td>← ↑ PageUp</td><td>Previous page</td></tr>
             <tr><td>→ ↓ PageDown</td><td>Next page</td></tr>
             <tr><td>Space</td><td>Next page</td></tr>
+            <tr><td>Tap left / Swipe →</td><td>Next page (RTL)</td></tr>
+            <tr><td>Tap right / Swipe ←</td><td>Previous page (RTL)</td></tr>
             <tr><td>Home</td><td>First page</td></tr>
             <tr><td>End</td><td>Last page</td></tr>
             <tr><td>M</td><td>Settings menu</td></tr>
@@ -1775,13 +1785,8 @@
       const absDx = Math.abs(dx);
       if (absDx < 3) return; // too early to tell direction
 
-      // Determine forward direction
-      const isLTR = state.reader.readingDirection === 'ltr';
-      const swapped = state.reader.swapTap;
-      let forward;
-      if (isLTR) forward = dx < 0;
-      else forward = dx > 0;
-      if (swapped) forward = !forward;
+      // RTL reading: swipe right (dx > 0) = forward
+      const forward = dx > 0;
 
       const newAdjIdx = currentIdx() + (forward ? 1 : -1);
       const pages = state.reader.pages;
@@ -1798,8 +1803,8 @@
       const adj = pages[newAdjIdx].img;
       applyScaleMode(adj);
       adj.style.transition = 'none';
-      // Adjacent side: RTL forward → left (−), LTR forward → right (+)
-      const offset = (forward === isLTR) ? stepWidth : -stepWidth;
+      // RTL forward → adjacent page is on the left (−)
+      const offset = forward ? -stepWidth : stepWidth;
       adj.style.transform = `translateX(${dx + offset}px)`;
       adj.style.zIndex = '0';
       if (state.reader.currentImg) state.reader.currentImg.style.zIndex = '1';
@@ -1958,10 +1963,10 @@
     }
 
     setupTapZone(zoneLeftEl, () => {
-      navigateToPage(currentIdx() + getEffectiveNext(), 1);
+      navigateToPage(currentIdx() + 1, 1);
     });
     setupTapZone(zoneRightEl, () => {
-      navigateToPage(currentIdx() + getEffectivePrev(), -1);
+      navigateToPage(currentIdx() - 1, -1);
     });
     setupTapZone(zoneMenuEl, () => openSettingsDialog());
     setupTapZone(zoneSliderEl, () => toggleSeekPanel());
@@ -2001,17 +2006,17 @@
         case 'ArrowUp':
         case 'PageUp':
           event.preventDefault();
-          navigateToPage(currentIdx() + getEffectivePrev(), -1);
+          navigateToPage(currentIdx() - 1, -1);
           break;
         case 'ArrowRight':
         case 'ArrowDown':
         case 'PageDown':
           event.preventDefault();
-          navigateToPage(currentIdx() + getEffectiveNext(), 1);
+          navigateToPage(currentIdx() + 1, 1);
           break;
         case ' ':
           event.preventDefault();
-          navigateToPage(currentIdx() + getEffectiveNext(), 1);
+          navigateToPage(currentIdx() + 1, 1);
           break;
         case 'Home':
           event.preventDefault();
@@ -2203,7 +2208,6 @@
         const newThumb = document.getElementById('popupThumb').value;
         if (newLimit !== state.pageLimit) {
           state.pageLimit = newLimit;
-          state.limit = newLimit;
           localStorage.setItem('lan_limit', String(newLimit));
         }
         if (newThumb !== state.thumbSize) {
@@ -2223,7 +2227,6 @@
         state.filters.order = '';
         state.activeTags = [];
         state.pageLimit = 120;
-        state.limit = 120;
         state.thumbSize = 'normal';
         localStorage.removeItem('lan_limit');
         localStorage.removeItem('lan_thumb');
