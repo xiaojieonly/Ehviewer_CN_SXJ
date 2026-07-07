@@ -41,8 +41,14 @@ PatchHeadInputStream* create_patch_head_input_stream(
     return NULL;
   }
 
+  // Validate patch parameters before copying
+  if (patch == NULL || patch_length == 0) {
+    free(patch_head_input_stream);
+    return NULL;
+  }
+
   // Copy patch
-  patch_copy = (unsigned char*) malloc(patch_length * sizeof(char));
+  patch_copy = (unsigned char*) malloc(patch_length);
   if (patch_copy == NULL) {
     WTF_OM;
     free(patch_head_input_stream);
@@ -61,7 +67,9 @@ PatchHeadInputStream* create_patch_head_input_stream(
 size_t read_patch_head_input_stream(JNIEnv* env, PatchHeadInputStream* patch_head_input_stream,
     unsigned char* buffer, int offset, size_t size)
 {
-  size_t len = MIN(size, patch_head_input_stream->patch_length - patch_head_input_stream->read_count);
+  size_t remaining = (patch_head_input_stream->read_count < patch_head_input_stream->patch_length)
+      ? patch_head_input_stream->patch_length - patch_head_input_stream->read_count : 0;
+  size_t len = MIN(size, remaining);
   int buffer_offset = offset;
 
   if (len > 0) {
