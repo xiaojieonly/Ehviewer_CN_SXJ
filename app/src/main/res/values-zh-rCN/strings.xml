@@ -985,4 +985,13 @@
     <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>
     <string name="imported_archive_category">本地导入</string>
 
+    <string name="pagination_previous">上一页</string>
+    <string name="pagination_next">下一页</string>
+    <string name="pagination_minimal_status">%1$d / %2$d · 共 %3$d</string>
+    <string name="pagination_swipe_hint">第 %1$d 页，共 %2$d 页。单击打开快速翻页，左右滑动切换页面。</string>
+    <string name="pagination_per_page">每页 %d 项</string>
+    <string name="pagination_per_page_short">%d/页</string>
+    <string name="pagination_quick_status">第 %1$d / %2$d 页</string>
+    <string name="pagination_quick_title">快速翻页</string>
+    <string name="pagination_close">关闭快速翻页</string>
 </resources>

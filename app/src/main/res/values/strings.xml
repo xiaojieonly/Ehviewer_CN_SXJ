@@ -1074,4 +1074,13 @@
     <string name="imported_archive_category">Local Import</string>
     <!-- TagSelectActivity -->
     <string name="tag_search_entrance">Tag Selector</string>
+    <string name="pagination_previous">Previous page</string>
+    <string name="pagination_next">Next page</string>
+    <string name="pagination_minimal_status">%1$d / %2$d · %3$d items</string>
+    <string name="pagination_swipe_hint">Page %1$d of %2$d. Tap for quick page controls, or swipe left or right to change page.</string>
+    <string name="pagination_per_page">%d per page</string>
+    <string name="pagination_per_page_short">%d/page</string>
+    <string name="pagination_quick_status">Page %1$d / %2$d</string>
+    <string name="pagination_quick_title">Quick page</string>
+    <string name="pagination_close">Close quick page</string>
 </resources>

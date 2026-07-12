@@ -53,22 +53,14 @@
                 <com.hippo.ehviewer.widget.MyEasyRecyclerView
                     android:id="@+id/recycler_view"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="5" />
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
-                <com.sxj.paginationlib.PaginationIndicator
+                <com.hippo.ehviewer.widget.MinimalPaginationView
                     android:id="@+id/indicator"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:visibility="gone"
-                    app:number_tip_count="5"
-                    app:count_text="@string/pagination_count"
-                    app:page_and_item="@string/pagination_page_and_item"
-                    app:rect_size="30dp"
-                    app:selected_color="?attr/drawableColorThemePrimary"
-                    app:text_size="14sp"
-                    app:unselected_color="?attr/drawableColorSecondary" />
+                    android:layout_height="48dp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <com.hippo.easyrecyclerview.FastScroller

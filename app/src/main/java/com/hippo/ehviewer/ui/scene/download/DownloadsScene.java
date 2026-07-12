@@ -100,7 +100,7 @@ import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
-import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
+import com.hippo.ehviewer.widget.MinimalPaginationView;
 import com.hippo.ehviewer.widget.MyEasyRecyclerView;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.lib.yorozuya.AssertUtils;
@@ -116,7 +116,6 @@ import com.hippo.widget.FabLayout;
 import com.hippo.widget.ProgressView;
 import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
-import com.sxj.paginationlib.PaginationIndicator;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -168,17 +167,12 @@ public class DownloadsScene extends ToolbarScene
     private List<DownloadInfo> mBackList;
 
     /*---------------
-     List pagination
+    List pagination
      ---------------*/
     private int indexPage = 1;
-    private int pageSize = 1;
+    private int pageSize = 50;
     private boolean canPagination = true;
     private final int paginationSize = 500;
-    //    private final int paginationSize = 5;
-    private final int[] perPageCountChoices = {50, 100, 200, 300, 500};
-//    private final int[] perPageCountChoices = {1, 2, 3, 4, 5};
-
-    private MyPageChangeListener myPageChangeListener;
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
 
@@ -209,7 +203,7 @@ public class DownloadsScene extends ToolbarScene
     private AlertDialog mSearchDialog;
     private SearchBar mSearchBar;
     @Nullable
-    private PaginationIndicator mPaginationIndicator;
+    private MinimalPaginationView mPaginationIndicator;
 
     private DownloadLabelDraw downloadLabelDraw;
     @Nullable
@@ -221,10 +215,6 @@ public class DownloadsScene extends ToolbarScene
     private int mInitPosition = -1;
 
     public boolean searching = false;
-    private boolean doNotScroll = false;
-
-    private boolean needInitPage = false;
-    private boolean needInitPageSize = false;
 
     @Nullable
     private Spinner mCategorySpinner;
@@ -360,18 +350,8 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         mPaginationIndicator.setVisibility(View.VISIBLE);
-        needInitPageSize = true;
-        mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
-//        mPaginationIndicator.setTotalCount();
-        mPaginationIndicator.setListener(myPageChangeListener);
-
-        // 同步分页监听器的状态
-        if (myPageChangeListener != null) {
-            myPageChangeListener.setIndexPage(indexPage);
-            myPageChangeListener.setPageSize(pageSize);
-            myPageChangeListener.setNeedInitPage(needInitPage);
-            myPageChangeListener.setDoNotScroll(doNotScroll);
-        }
+        mPaginationIndicator.setPagination(mList.size(), pageSize, indexPage);
+        indexPage = mPaginationIndicator.getCurrentPage();
     }
 
     @SuppressLint("StringFormatMatches")
@@ -493,12 +473,7 @@ public class DownloadsScene extends ToolbarScene
         FastScroller fastScroller = (FastScroller) ViewUtils.$$(content, R.id.fast_scroller);
         mFabLayout = (FabLayout) ViewUtils.$$(view, R.id.fab_layout);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
-        if (mPaginationIndicator != null) {
-            needInitPage = true;
-        }
-        mPaginationIndicator = (PaginationIndicator) ViewUtils.$$(view, R.id.indicator);
-
-        mPaginationIndicator.setPerPageCountChoices(perPageCountChoices, getPageSizePos(pageSize));
+        mPaginationIndicator = (MinimalPaginationView) ViewUtils.$$(view, R.id.indicator);
 
         mViewTransition = new ViewTransition(content, tip);
 
@@ -524,21 +499,21 @@ public class DownloadsScene extends ToolbarScene
         mDragDropManager.setCheckCanDropEnabled(false);
         mRecyclerView.setAdapter(mAdapter);
 
-        // 初始化分页监听器
-        myPageChangeListener = new MyPageChangeListener(indexPage, pageSize, needInitPage, doNotScroll, mOriginalAdapter, mRecyclerView);
-
-        // 设置分页监听器的回调
-        myPageChangeListener.setPageChangeCallback(new MyPageChangeListener.PageChangeCallback() {
-            @Override
-            public void onPageChanged(int newIndexPage) {
-                indexPage = newIndexPage;
-            }
-
-            @Override
-            public void onPageSizeChanged(int newPageSize) {
-                pageSize = newPageSize;
-            }
+        mPaginationIndicator.setOnPageChangeListener(newIndexPage -> {
+            indexPage = newIndexPage;
+            mOriginalAdapter.notifyDataSetChanged();
+            if (mRecyclerView != null) mRecyclerView.scrollToPosition(0);
         });
+        mPaginationIndicator.setOnPageSizeChangeListener(newPageSize -> {
+            int firstVisibleIndex = Math.max(0, (indexPage - 1) * pageSize);
+            pageSize = newPageSize;
+            indexPage = firstVisibleIndex / pageSize + 1;
+            updatePaginationIndicator();
+            mOriginalAdapter.notifyDataSetChanged();
+            if (mRecyclerView != null) mRecyclerView.scrollToPosition(0);
+        });
+        mPaginationIndicator.setOnInteractionStateChangeListener(
+                this::setPaginationDrawerLock);
         mLayoutManager = new AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL);
         mLayoutManager.setColumnSize(resources.getDimensionPixelOffset(Settings.getDetailSizeResId()));
         mLayoutManager.setStrategy(AutoStaggeredGridLayoutManager.STRATEGY_MIN_SIZE);
@@ -712,6 +687,11 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onDestroyView() {
+        if (mPaginationIndicator != null) {
+            mPaginationIndicator.dismissFastPanel();
+            mPaginationIndicator.setOnInteractionStateChangeListener(null);
+        }
+        setPaginationDrawerLock(false);
         super.onDestroyView();
 
         if (null != mShowcaseView) {
@@ -733,7 +713,18 @@ public class DownloadsScene extends ToolbarScene
         mOriginalAdapter = null;
         mLayoutManager = null;
         mDragDropManager = null;
+        mPaginationIndicator = null;
         EventBus.getDefault().unregister(this);
+    }
+
+    private void setPaginationDrawerLock(boolean active) {
+        boolean keepLocked = active
+                || (mRecyclerView != null && mRecyclerView.isInCustomChoice())
+                || (mFabLayout != null && mFabLayout.isExpanded());
+        int mode = keepLocked ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+                : DrawerLayout.LOCK_MODE_UNLOCKED;
+        setDrawerLockMode(mode, Gravity.LEFT);
+        setDrawerLockMode(mode, Gravity.RIGHT);
     }
 
     @Override
@@ -1629,23 +1620,10 @@ public class DownloadsScene extends ToolbarScene
         if (mList != null && mList.size() > paginationSize && canPagination) {
             indexPage = position / pageSize + 1;
         }
-        doNotScroll = true;
         if (mPaginationIndicator != null) {
-            mPaginationIndicator.skip2Pos(indexPage);
+            mPaginationIndicator.skipToPage(indexPage);
         }
         mRecyclerView.scrollToPosition(listIndexInPage(position));
-    }
-
-
-    private int getPageSizePos(int pageSize) {
-        int index = 0;
-        for (int i = 0; i < perPageCountChoices.length; i++) {
-            if (pageSize == perPageCountChoices[i]) {
-                index = i;
-                break;
-            }
-        }
-        return index;
     }
 
     private void importLocalArchive() {
