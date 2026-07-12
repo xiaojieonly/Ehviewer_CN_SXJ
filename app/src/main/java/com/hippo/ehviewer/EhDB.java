@@ -37,6 +37,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.dao.BlackList;
 import com.hippo.ehviewer.dao.BlackListDao;
+import com.hippo.ehviewer.dao.BookmarkInfo;
 import com.hippo.ehviewer.dao.DaoMaster;
 import com.hippo.ehviewer.dao.DaoSession;
 import com.hippo.ehviewer.dao.DownloadDirname;
@@ -74,8 +75,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class EhDB {
 
@@ -893,9 +896,23 @@ public class EhDB {
     }
 
     private static <T> boolean copyDao(AbstractDao<T, ?> from, AbstractDao<T, ?> to) {
+        return copyDao(from, to, null, null, 0);
+    }
+
+    public interface ExportProgressListener {
+        void onProgress(int current, int total);
+    }
+
+    private static <T> boolean copyDao(AbstractDao<T, ?> from, AbstractDao<T, ?> to,
+                                       ExportProgressListener listener, int[] current,
+                                       int total) {
         try (CloseableListIterator<T> iterator = from.queryBuilder().listIterator()) {
             while (iterator.hasNext()) {
                 to.insert(iterator.next());
+                if (current != null) {
+                    current[0]++;
+                    if (listener != null) listener.onProgress(current[0], total);
+                }
             }
         } catch (IOException e) {
             return false;
@@ -904,6 +921,11 @@ public class EhDB {
     }
 
     public static synchronized boolean exportDB(Context context, File file) {
+        return exportDB(context, file, null);
+    }
+
+    public static synchronized boolean exportDB(Context context, File file,
+                                                ExportProgressListener listener) {
         final String ehExportName = "eh.export.db";
 
         // Ensure source database has ARCHIVE_URI column
@@ -921,24 +943,52 @@ public class EhDB {
 
         try {
             // Copy data to a export db
+            int total;
             try (SQLiteDatabase db = helper.getWritableDatabase()) {
                 DaoMaster daoMaster = new DaoMaster(db);
                 DaoSession exportSession = daoMaster.newSession();
-                if (! copyDao(sDaoSession.getDownloadsDao(), exportSession.getDownloadsDao()))
+                long counted = sDaoSession.getDownloadsDao().count()
+                        + sDaoSession.getDownloadLabelDao().count()
+                        + sDaoSession.getDownloadDirnameDao().count()
+                        + sDaoSession.getHistoryDao().count()
+                        + sDaoSession.getQuickSearchDao().count()
+                        + sDaoSession.getLocalFavoritesDao().count()
+                        + sDaoSession.getBookmarksBao().count()
+                        + sDaoSession.getFilterDao().count()
+                        + sDaoSession.getBlackListDao().count()
+                        + sDaoSession.getGalleryTagsDao().count() + 1L;
+                total = (int) Math.min(Integer.MAX_VALUE, Math.max(1L, counted));
+                int[] current = {0};
+                if (listener != null) listener.onProgress(0, total);
+                if (!copyDao(sDaoSession.getDownloadsDao(), exportSession.getDownloadsDao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getDownloadLabelDao(), exportSession.getDownloadLabelDao()))
+                if (!copyDao(sDaoSession.getDownloadLabelDao(), exportSession.getDownloadLabelDao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getDownloadDirnameDao(), exportSession.getDownloadDirnameDao()))
+                if (!copyDao(sDaoSession.getDownloadDirnameDao(), exportSession.getDownloadDirnameDao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getHistoryDao(), exportSession.getHistoryDao()))
+                if (!copyDao(sDaoSession.getHistoryDao(), exportSession.getHistoryDao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getQuickSearchDao(), exportSession.getQuickSearchDao()))
+                if (!copyDao(sDaoSession.getQuickSearchDao(), exportSession.getQuickSearchDao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getLocalFavoritesDao(), exportSession.getLocalFavoritesDao()))
+                if (!copyDao(sDaoSession.getLocalFavoritesDao(), exportSession.getLocalFavoritesDao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getBookmarksBao(), exportSession.getBookmarksBao()))
+                if (!copyDao(sDaoSession.getBookmarksBao(), exportSession.getBookmarksBao(),
+                        listener, current, total))
                     return false;
-                if (!copyDao(sDaoSession.getFilterDao(), exportSession.getFilterDao()))
+                if (!copyDao(sDaoSession.getFilterDao(), exportSession.getFilterDao(),
+                        listener, current, total))
+                    return false;
+                if (!copyDao(sDaoSession.getBlackListDao(), exportSession.getBlackListDao(),
+                        listener, current, total))
+                    return false;
+                if (!copyDao(sDaoSession.getGalleryTagsDao(), exportSession.getGalleryTagsDao(),
+                        listener, current, total))
                     return false;
             }
 
@@ -953,6 +1003,7 @@ public class EhDB {
                 is = new FileInputStream(dbFile);
                 os = new FileOutputStream(file);
                 IOUtils.copy(is, os);
+                if (listener != null) listener.onProgress(total, total);
                 return true;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -1033,7 +1084,12 @@ public class EhDB {
             }
 
             // Bookmarks
-            // TODO
+            List<BookmarkInfo> bookmarkInfoList = session.getBookmarksBao().queryBuilder().list();
+            for (BookmarkInfo bookmark : bookmarkInfoList) {
+                if (sDaoSession.getBookmarksBao().load(bookmark.gid) == null) {
+                    sDaoSession.getBookmarksBao().insert(bookmark);
+                }
+            }
 
             // Filter
             List<Filter> filterList = session.getFilterDao().queryBuilder().list();
@@ -1046,17 +1102,23 @@ public class EhDB {
 
             List<BlackList> blackList = session.getBlackListDao().queryBuilder().list();
             List<BlackList> currentBlackList = sDaoSession.getBlackListDao().queryBuilder().list();
+            Set<String> currentBlackNames = new HashSet<>();
+            for (BlackList current : currentBlackList) {
+                if (current.badgayname != null) currentBlackNames.add(current.badgayname);
+            }
             for (BlackList black : blackList) {
-                if (!currentBlackList.contains(black)) {
+                if (black.badgayname != null && currentBlackNames.add(black.badgayname)) {
                     insertBlackList(black);
                 }
             }
 
             List<GalleryTags> galleryTagsList = session.getGalleryTagsDao().queryBuilder().list();
             List<GalleryTags> currentGalleryTags = sDaoSession.getGalleryTagsDao().queryBuilder().list();
+            Set<Long> currentGalleryIds = new HashSet<>();
+            for (GalleryTags current : currentGalleryTags) currentGalleryIds.add(current.gid);
             for (GalleryTags tags : galleryTagsList) {
-                if (!currentGalleryTags.contains(tags)) {
-                    insertGalleryTags(tags);
+                if (currentGalleryIds.add(tags.gid)) {
+                    sDaoSession.getGalleryTagsDao().insert(tags);
                 }
             }
 

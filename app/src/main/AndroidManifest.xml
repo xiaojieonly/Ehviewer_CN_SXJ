@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" /> <!-- Android 14+ 前台服务类型 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CAMERA" /> <!-- 用于获取wifi状态 -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- 使用系统自带下载器 -->
     <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" /> <!-- 自动安装apk -->
@@ -249,6 +250,27 @@
             android:name=".download.DownloadService"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
+
+        <service
+            android:name=".sync.nas.NasSyncService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/settings_nas" />
+
+        <service
+            android:name=".preference.DataBackupService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/settings_advanced_export_data" />
+
+        <receiver
+            android:name=".sync.nas.NasSyncAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="com.hippo.content.FileProvider"

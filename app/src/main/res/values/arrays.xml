@@ -399,5 +399,29 @@
         <item>https://raw.githubusercontent.com/xiaojieonly/Ehviewer_CN_SXJ/refs/heads/BiLi_PC_Gamer/feedauthor/update.json</item>
     </string-array>
 
+    <string-array name="nas_download_behavior_entries">
+        <item>@string/settings_nas_download_phone</item>
+        <item>@string/settings_nas_download_phone_nas</item>
+        <item>@string/settings_nas_download_nas_only</item>
+    </string-array>
+
+    <string-array name="nas_download_behavior_values">
+        <item>phone</item>
+        <item>phone_nas</item>
+        <item>nas_only</item>
+    </string-array>
+
+    <string-array name="nas_schedule_mode_entries">
+        <item>@string/settings_nas_schedule_bidirectional</item>
+        <item>@string/settings_nas_schedule_upload</item>
+        <item>@string/settings_nas_schedule_download</item>
+    </string-array>
+
+    <string-array name="nas_schedule_mode_values">
+        <item>bidirectional</item>
+        <item>upload</item>
+        <item>download</item>
+    </string-array>
+
 
 </resources>

@@ -36,6 +36,12 @@
         app:fragment="com.hippo.ehviewer.ui.fragment.DownloadFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
+        android:icon="@drawable/v_nas_primary_x24"
+        android:title="@string/settings_nas"
+        app:allowDividerAbove="true"
+        app:fragment="com.hippo.ehviewer.ui.fragment.NasFragment" />
+
+    <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sec_primary_x24"
         android:title="@string/settings_privacy"
         app:allowDividerAbove="true"

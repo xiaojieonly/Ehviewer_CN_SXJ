@@ -37,6 +37,8 @@ public class DownloadInfo extends GalleryInfo {
 	public static final int STATE_FINISH = 3;
 	public static final int STATE_FAILED = 4;
 	public static final int STATE_UPDATE = 5;
+	/** Transient list item backed by the NAS catalog and not stored in the downloads database. */
+	public static final int STATE_NAS_ONLY = 7;
 	public static final int GOTO_NEW = 6;
 	public long speed;
 	public long remaining;

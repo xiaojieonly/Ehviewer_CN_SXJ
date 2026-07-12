@@ -107,10 +107,12 @@ public class DownloadLabelDraw {
         for (int i = 0; i < labels.size(); i++) {
             String label = labels.get(i);
             if (i == 0) {
-                downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getDefaultDownloadInfoList().size()));
+                downloadLabelList.add(new DownloadLabelItem(label,
+                        scene.getEffectiveLabelCount(null)));
                 continue;
             }
-            downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getLabelCount(label)));
+            downloadLabelList.add(new DownloadLabelItem(label,
+                    scene.getEffectiveLabelCount(label)));
         }
 
         listView = (ListView) view.findViewById(R.id.list_view);
@@ -136,8 +138,8 @@ public class DownloadLabelDraw {
                 } else {
                     scene.updateView();
                 }
-                scene.closeDrawer(Gravity.RIGHT);
             }
+            scene.closeDrawer(Gravity.RIGHT);
 
         });
         return view;
@@ -159,10 +161,12 @@ public class DownloadLabelDraw {
         for (int i = 0; i < labels.size(); i++) {
             String label = labels.get(i);
             if (i == 0) {
-                downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getDefaultDownloadInfoList().size()));
+                downloadLabelList.add(new DownloadLabelItem(label,
+                        scene.getEffectiveLabelCount(null)));
                 continue;
             }
-            downloadLabelList.add(new DownloadLabelItem(label, downloadManager.getLabelCount(label)));
+            downloadLabelList.add(new DownloadLabelItem(label,
+                    scene.getEffectiveLabelCount(label)));
         }
 
         DownloadLabelAdapter adapter = new DownloadLabelAdapter(Objects.requireNonNull(scene.getEHContext()), R.layout.item_download_label_list, downloadLabelList);
@@ -187,8 +191,8 @@ public class DownloadLabelDraw {
                 } else {
                     scene.updateView();
                 }
-                scene.closeDrawer(Gravity.RIGHT);
             }
+            scene.closeDrawer(Gravity.RIGHT);
 
         });
     }

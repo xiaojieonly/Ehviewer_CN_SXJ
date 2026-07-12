@@ -18,12 +18,14 @@ package com.hippo.ehviewer.ui.scene.download;
 
 import static com.hippo.ehviewer.spider.SpiderDen.getExistingGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
+import static com.hippo.ehviewer.spider.SpiderDen.findImageFile;
 import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
 import static com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter.DRAG_ENABLE;
 import static com.hippo.util.FileUtils.getFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,6 +38,7 @@ import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Display;
@@ -95,11 +98,20 @@ import com.hippo.ehviewer.event.SomethingNeedRefresh;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.sync.DownloadListInfosExecutor;
 import com.hippo.ehviewer.sync.DownloadSpiderInfoExecutor;
+import com.hippo.ehviewer.sync.nas.NasCatalogClient;
+import com.hippo.ehviewer.sync.nas.NasCatalogEntry;
+import com.hippo.ehviewer.sync.nas.NasCatalogStore;
+import com.hippo.ehviewer.sync.nas.NasConfigStore;
+import com.hippo.ehviewer.sync.nas.NasSyncConfig;
+import com.hippo.ehviewer.sync.nas.NasSyncEngine;
+import com.hippo.ehviewer.sync.nas.NasSyncService;
 import com.hippo.ehviewer.ui.GalleryActivity;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.ViewLifeCircle;
 import com.hippo.ehviewer.ui.scene.ToolbarScene;
 import com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter;
+import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
+import com.hippo.ehviewer.ui.scene.gallery.list.EnterGalleryDetailTransaction;
 import com.hippo.ehviewer.ui.scene.download.part.MyPageChangeListener;
 import com.hippo.ehviewer.widget.MyEasyRecyclerView;
 import com.hippo.ehviewer.widget.SearchBar;
@@ -108,8 +120,10 @@ import com.hippo.lib.yorozuya.ObjectUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.lib.yorozuya.collect.LongList;
 import com.hippo.ripple.Ripple;
+import com.hippo.scene.Announcer;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.DrawableManager;
+import com.hippo.util.ExceptionUtils;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.FabLayout;
@@ -123,14 +137,19 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.InputStream;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class DownloadsScene extends ToolbarScene
         implements DownloadManager.DownloadInfoListener, DownloadSearchCallback,
@@ -181,6 +200,8 @@ public class DownloadsScene extends ToolbarScene
     private MyPageChangeListener myPageChangeListener;
 
     private final Map<Long, SpiderInfo> mSpiderInfoMap = new HashMap<>();
+    private final Map<Long, NasCatalogEntry> mNasCatalogMap = new LinkedHashMap<>();
+    private final Map<Long, Boolean> mLocalAvailability = new HashMap<>();
 
     /*---------------
      View life cycle
@@ -330,13 +351,50 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
 
+        mLocalAvailability.clear();
         if (mLabel == null) {
-            mList = mDownloadManager.getDefaultDownloadInfoList();
+            List<DownloadInfo> localItems = mDownloadManager.getDefaultDownloadInfoList();
+            refreshNasCatalog();
+
+            Map<Long, DownloadInfo> localByGid = new HashMap<>();
+            for (DownloadInfo info : localItems) localByGid.put(info.gid, info);
+            List<NasCatalogEntry> nasItems = new ArrayList<>(mNasCatalogMap.values());
+            Collections.reverse(nasItems);
+            mList = new ArrayList<>(localItems.size() + nasItems.size());
+            Set<Long> added = new HashSet<>();
+            for (NasCatalogEntry entry : nasItems) {
+                if (!entry.label.isEmpty()) continue;
+                DownloadInfo local = localByGid.get(entry.gid);
+                if (local != null) {
+                    mList.add(local);
+                    added.add(entry.gid);
+                } else if (mDownloadManager.getDownloadInfo(entry.gid) == null) {
+                    mList.add(NasCatalogStore.asNasOnlyDownload(entry));
+                    added.add(entry.gid);
+                }
+            }
+            for (DownloadInfo local : localItems) {
+                if (!added.contains(local.gid)) mList.add(local);
+            }
         } else {
-            mList = mDownloadManager.getLabelDownloadInfoList(mLabel);
-            if (mList == null) {
+            List<DownloadInfo> localLabelItems = mDownloadManager.getLabelDownloadInfoList(mLabel);
+            if (localLabelItems == null) {
                 mLabel = null;
                 mList = mDownloadManager.getDefaultDownloadInfoList();
+            } else {
+                refreshNasCatalog();
+                mList = new ArrayList<>(localLabelItems);
+                Set<Long> localGids = new HashSet<>();
+                for (DownloadInfo info : mDownloadManager.getAllDownloadInfoList()) {
+                    localGids.add(info.gid);
+                }
+                List<NasCatalogEntry> nasItems = new ArrayList<>(mNasCatalogMap.values());
+                Collections.reverse(nasItems);
+                for (NasCatalogEntry entry : nasItems) {
+                    if (mLabel.equals(entry.label) && !localGids.contains(entry.gid)) {
+                        mList.add(0, NasCatalogStore.asNasOnlyDownload(entry));
+                    }
+                }
             }
         }
 
@@ -349,6 +407,41 @@ public class DownloadsScene extends ToolbarScene
         updatePaginationIndicator();
         Settings.putRecentDownloadLabel(mLabel);
         queryUnreadSpiderInfo();
+    }
+
+    private void refreshNasCatalog() {
+        Context context = getEHContext();
+        if (context == null) return;
+        mNasCatalogMap.clear();
+        if (!NasConfigStore.isEnabled(context)) return;
+        for (NasCatalogEntry entry : NasCatalogStore.load(context)) {
+            if (NasCatalogStore.isHiddenLocally(context, entry.gid)
+                    && (mDownloadManager == null
+                    || mDownloadManager.getDownloadInfo(entry.gid) == null)) continue;
+            mNasCatalogMap.put(entry.gid, entry);
+        }
+    }
+
+    public long getEffectiveLabelCount(@Nullable String label) {
+        if (mDownloadManager == null) return 0L;
+        if (label != null) {
+            long count = mDownloadManager.getLabelCount(label);
+            refreshNasCatalog();
+            for (NasCatalogEntry entry : mNasCatalogMap.values()) {
+                if (label.equals(entry.label)
+                        && mDownloadManager.getDownloadInfo(entry.gid) == null) count++;
+            }
+            return count;
+        }
+        long count = mDownloadManager.getDefaultDownloadInfoList().size();
+        Context context = getEHContext();
+        if (context == null || !NasConfigStore.isEnabled(context)) return count;
+        refreshNasCatalog();
+        for (NasCatalogEntry entry : mNasCatalogMap.values()) {
+            if (entry.label.isEmpty()
+                    && mDownloadManager.getDownloadInfo(entry.gid) == null) count++;
+        }
+        return count;
     }
 
     private void updatePaginationIndicator() {
@@ -410,6 +503,10 @@ public class DownloadsScene extends ToolbarScene
     public View onCreateView3(LayoutInflater inflater,
                               @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.scene_download, container, false);
+
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
 
         Context context = getEHContext();
         assert context != null;
@@ -746,6 +843,20 @@ public class DownloadsScene extends ToolbarScene
         return R.menu.scene_download;
     }
 
+    @Override
+    public void onMenuCreated(@NonNull android.view.Menu menu) {
+        Context context = getEHContext();
+        boolean nasEnabled = context != null && NasConfigStore.isEnabled(context);
+        MenuItem upload = menu.findItem(R.id.action_nas_upload_all);
+        MenuItem metadata = menu.findItem(R.id.action_nas_upload_metadata);
+        MenuItem download = menu.findItem(R.id.action_nas_download_all);
+        MenuItem downloadMetadata = menu.findItem(R.id.action_nas_download_metadata);
+        if (upload != null) upload.setVisible(nasEnabled);
+        if (metadata != null) metadata.setVisible(nasEnabled);
+        if (download != null) download.setVisible(nasEnabled);
+        if (downloadMetadata != null) downloadMetadata.setVisible(nasEnabled);
+    }
+
     @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
@@ -830,6 +941,23 @@ public class DownloadsScene extends ToolbarScene
             case R.id.import_local_archive:
                 importLocalArchive();
                 return true;
+            case R.id.action_nas_upload_all:
+                confirmBulkNasSync(NasSyncEngine.Direction.UPLOAD_TO_NAS);
+                return true;
+            case R.id.action_nas_upload_metadata:
+                confirmBulkNasSync(NasSyncEngine.Direction.UPLOAD_DATABASE_TO_NAS);
+                return true;
+            case R.id.action_nas_download_all:
+                confirmBulkNasSync(NasSyncEngine.Direction.DOWNLOAD_TO_PHONE);
+                return true;
+            case R.id.action_nas_download_metadata: {
+                Context context = getEHContext();
+                if (context == null) return false;
+                NasSyncService.start(context, NasSyncService.ACTION_IMPORT_DATABASE);
+                Toast.makeText(context, R.string.nas_sync_started_background,
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            }
 //            case R.id.misc:
 //            case R.id.doujinshi:
 //            case R.id.manga:
@@ -845,6 +973,41 @@ public class DownloadsScene extends ToolbarScene
 //                return true;
         }
         return false;
+    }
+
+    private void confirmBulkNasSync(@NonNull NasSyncEngine.Direction direction) {
+        Context context = getEHContext();
+        if (context == null) return;
+        if (!NasConfigStore.isEnabled(context)) {
+            Toast.makeText(context, R.string.settings_nas_disabled, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final int title;
+        final int message;
+        final String action;
+        if (direction == NasSyncEngine.Direction.UPLOAD_TO_NAS) {
+            title = R.string.nas_upload_all;
+            message = R.string.nas_upload_all_confirm;
+            action = NasSyncService.ACTION_UPLOAD_ALL;
+        } else if (direction == NasSyncEngine.Direction.UPLOAD_DATABASE_TO_NAS) {
+            title = R.string.nas_upload_metadata;
+            message = R.string.nas_upload_metadata_confirm;
+            action = NasSyncService.ACTION_UPLOAD_METADATA;
+        } else {
+            title = R.string.nas_download_all;
+            message = R.string.nas_download_all_confirm;
+            action = NasSyncService.ACTION_DOWNLOAD_ALL;
+        }
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    NasSyncService.start(context, action);
+                    Toast.makeText(context, R.string.nas_sync_started_background,
+                            Toast.LENGTH_SHORT).show();
+                })
+                .show();
     }
 
     private void gotoSearch(Context context) {
@@ -972,45 +1135,53 @@ public class DownloadsScene extends ToolbarScene
                 return false;
             }
 
-            DownloadInfo downloadInfo = list.get(positionInList(position));
-            Intent intent = new Intent(activity, GalleryActivity.class);
-            // Check if this is an imported archive
-            if (downloadInfo.archiveUri != null && downloadInfo.archiveUri.startsWith("content://")) {
-                // This is an imported archive, ensure URI permission is available
-                Uri archiveUri = Uri.parse(downloadInfo.archiveUri);
-                try {
-                    // Test if we can access the URI
-                    try (InputStream testStream = getEHContext().getContentResolver().openInputStream(archiveUri)) {
-                        if (testStream == null) {
-                            Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
-                            return true;
-                        }
-                    }
-                } catch (SecurityException e) {
-                    // Try to restore permission
-                    try {
-                        getEHContext().getContentResolver().takePersistableUriPermission(archiveUri,
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    } catch (Exception ex) {
-                        Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
-                        Analytics.recordException(ex);
-                        return true;
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                intent.setAction(Intent.ACTION_VIEW);
-                intent.setData(archiveUri);
-            } else {
-                // This is a normal download, use ACTION_EH
-                intent.setAction(GalleryActivity.ACTION_EH);
-                intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, downloadInfo);
-            }
-//            startActivity(intent);
-            galleryActivityLauncher.launch(intent);
+            return readDownload(list.get(positionInList(position)));
+        }
+    }
+
+    public boolean readDownload(@NonNull DownloadInfo downloadInfo) {
+        Activity activity = getActivity2();
+        Context context = getEHContext();
+        if (activity == null || context == null) return false;
+        if (isEffectivelyNasOnly(downloadInfo)) {
+            readNasGallery(downloadInfo);
             return true;
         }
+
+        Intent intent = new Intent(activity, GalleryActivity.class);
+        if (downloadInfo.archiveUri != null && downloadInfo.archiveUri.startsWith("content://")) {
+            Uri archiveUri = Uri.parse(downloadInfo.archiveUri);
+            try {
+                try (InputStream testStream = context.getContentResolver().openInputStream(archiveUri)) {
+                    if (testStream == null) {
+                        Toast.makeText(context, R.string.archive_not_accessible,
+                                Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                }
+            } catch (SecurityException e) {
+                try {
+                    context.getContentResolver().takePersistableUriPermission(archiveUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ex) {
+                    Toast.makeText(context, R.string.archive_permission_lost,
+                            Toast.LENGTH_LONG).show();
+                    Analytics.recordException(ex);
+                    return true;
+                }
+            } catch (Exception e) {
+                Toast.makeText(context, R.string.archive_not_accessible,
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.setData(archiveUri);
+        } else {
+            intent.setAction(GalleryActivity.ACTION_EH);
+            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, downloadInfo);
+        }
+        galleryActivityLauncher.launch(intent);
+        return true;
     }
 
     @Override
@@ -1026,6 +1197,82 @@ public class DownloadsScene extends ToolbarScene
         recyclerView.toggleItemChecked(position);
 
         return true;
+    }
+
+    public void requestNasGallerySync(@NonNull DownloadInfo info) {
+        Context context = getEHContext();
+        NasCatalogEntry entry = mNasCatalogMap.get(info.gid);
+        if (context == null || entry == null) return;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.nas_gallery_sync_title)
+                .setMessage(getString(R.string.nas_gallery_sync_message, entry.title))
+                .setPositiveButton(R.string.nas_gallery_sync_action, (dialog, which) -> {
+                    NasSyncService.downloadGallery(context, entry.gid);
+                    Toast.makeText(context, R.string.nas_sync_started_background,
+                            Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    public void openNasGallery(@NonNull DownloadInfo info) {
+        NasCatalogEntry entry = mNasCatalogMap.get(info.gid);
+        if (entry == null) return;
+        if (info.token != null && !info.token.isEmpty()) {
+            openDownloadDetails(info, null);
+            return;
+        }
+        new NasGalleryPrepareTask(this, entry, false)
+                .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    public void readNasGallery(@NonNull DownloadInfo info) {
+        NasCatalogEntry entry = mNasCatalogMap.get(info.gid);
+        if (entry == null) return;
+        // The existing EhGalleryProvider can stream missing pages through NasPageFetcher,
+        // but it needs the gallery's .ehviewer metadata in the local download directory first.
+        new NasGalleryPrepareTask(this, entry, true)
+                .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    private void openDownloadReader(@NonNull DownloadInfo info) {
+        Activity activity = getActivity2();
+        if (activity == null) return;
+        Intent intent = new Intent(activity, GalleryActivity.class);
+        intent.setAction(GalleryActivity.ACTION_EH);
+        intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, info);
+        galleryActivityLauncher.launch(intent);
+    }
+
+    private void openDownloadDetails(@NonNull DownloadInfo info, @Nullable View transitionView) {
+        Bundle args = new Bundle();
+        args.putString(GalleryDetailScene.KEY_ACTION,
+                GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
+        args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, info);
+        Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
+        if (transitionView != null) {
+            announcer.setTranHelper(new EnterGalleryDetailTransaction(transitionView));
+        }
+        startScene(announcer);
+    }
+
+    @NonNull
+    private static String nasErrorMessage(@NonNull DownloadsScene scene, Throwable error) {
+        return scene.getString(R.string.nas_gallery_sync_failed_prefix) + errorDetail(error);
+    }
+
+    @NonNull
+    private static String errorDetail(Throwable error) {
+        StringBuilder detail = new StringBuilder();
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < 4; depth++, current = current.getCause()) {
+            if (detail.length() > 0) detail.append(" → ");
+            detail.append(current.getClass().getSimpleName());
+            String message = current.getLocalizedMessage();
+            if (!TextUtils.isEmpty(message)) detail.append(": ").append(message);
+        }
+        if (detail.length() == 0) detail.append("Unknown error");
+        return detail.toString();
     }
 
     @SuppressLint("RtlHardcoded")
@@ -1079,7 +1326,8 @@ public class DownloadsScene extends ToolbarScene
             LongList gidList = null;
             List<DownloadInfo> downloadInfoList = null;
             boolean collectGid = position == 1 || position == 2 || position == 3; // Start, Stop, Delete
-            boolean collectDownloadInfo = position == 3 || position == 4; // Delete or Move
+            boolean collectDownloadInfo = position >= 1 && position <= 4;
+            // Start needs the objects too, so NAS-only rows can use the SMB download path.
             if (collectGid) {
                 gidList = new LongList();
             }
@@ -1102,23 +1350,41 @@ public class DownloadsScene extends ToolbarScene
 
             switch (position) {
                 case 1: { // Start
-                    if (gidList.isEmpty()) {
+                    if (downloadInfoList.isEmpty()) {
                         break;
                     }
-                    Intent intent = new Intent(activity, DownloadService.class);
-                    intent.setAction(DownloadService.ACTION_START_RANGE);
-                    intent.putExtra(DownloadService.KEY_GID_LIST, gidList);
-                    activity.startService(intent);
+                    LongList localGids = new LongList();
+                    for (DownloadInfo info : downloadInfoList) {
+                        if (isEffectivelyNasOnly(info)) {
+                            NasSyncService.downloadGallery(context, info.gid);
+                        } else {
+                            localGids.add(info.gid);
+                        }
+                    }
+                    if (!localGids.isEmpty()) {
+                        Intent intent = new Intent(activity, DownloadService.class);
+                        intent.setAction(DownloadService.ACTION_START_RANGE);
+                        intent.putExtra(DownloadService.KEY_GID_LIST, localGids);
+                        activity.startService(intent);
+                    }
                     // Cancel check mode
                     recyclerView.outOfCustomChoiceMode();
                     break;
                 }
                 case 2: { // Stop
-                    if (gidList.isEmpty()) {
+                    if (downloadInfoList.isEmpty()) {
                         break;
                     }
-                    if (null != mDownloadManager) {
-                        mDownloadManager.stopRangeDownload(gidList);
+                    LongList localGids = new LongList();
+                    for (DownloadInfo info : downloadInfoList) {
+                        if (isEffectivelyNasOnly(info)) {
+                            NasSyncService.cancelGallery(context, info.gid);
+                        } else {
+                            localGids.add(info.gid);
+                        }
+                    }
+                    if (null != mDownloadManager && !localGids.isEmpty()) {
+                        mDownloadManager.stopRangeDownload(localGids);
                     }
                     // Cancel check mode
                     recyclerView.outOfCustomChoiceMode();
@@ -1128,12 +1394,33 @@ public class DownloadsScene extends ToolbarScene
                     if (downloadInfoList.isEmpty()) {
                         break;
                     }
+                    boolean containsNas = false;
+                    for (DownloadInfo info : downloadInfoList) {
+                        if (mNasCatalogMap.containsKey(info.gid)) {
+                            containsNas = true;
+                            break;
+                        }
+                    }
+                    if (containsNas) {
+                        DeleteRangeDialogHelper helper = new DeleteRangeDialogHelper(
+                                downloadInfoList, null);
+                        new AlertDialog.Builder(context)
+                                .setTitle(R.string.download_remove_dialog_title)
+                                .setMessage(R.string.nas_delete_scope_message)
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setNeutralButton(R.string.nas_delete_local_only,
+                                        (dialog, which) -> helper.performDelete(false, true))
+                                .setPositiveButton(R.string.nas_delete_local_and_remote,
+                                        (dialog, which) -> helper.performDelete(true, true))
+                                .show();
+                        break;
+                    }
                     CheckBoxDialogBuilder builder = new CheckBoxDialogBuilder(context,
                             getString(R.string.download_remove_dialog_message_2, gidList.size()),
                             getString(R.string.download_remove_dialog_check_text),
                             Settings.getRemoveImageFiles());
                     DeleteRangeDialogHelper helper = new DeleteRangeDialogHelper(
-                            downloadInfoList, gidList, builder);
+                            downloadInfoList, builder);
                     builder.setTitle(R.string.download_remove_dialog_title)
                             .setPositiveButton(android.R.string.ok, helper)
                             .show();
@@ -1200,14 +1487,24 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
 
-        Intent intent = new Intent(activity, GalleryActivity.class);
-        intent.setAction(GalleryActivity.ACTION_EH);
-        intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, list.get(position));
-        galleryActivityLauncher.launch(intent);
+        DownloadInfo info = list.get(position);
+        if (isEffectivelyNasOnly(info)) {
+            readNasGallery(info);
+        } else {
+            Intent intent = new Intent(activity, GalleryActivity.class);
+            intent.setAction(GalleryActivity.ACTION_EH);
+            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, info);
+            galleryActivityLauncher.launch(intent);
+        }
     }
 
     @Override
     public void onAdd(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
+        if (mLabel == null && mList != list) {
+            updateForLabel();
+            updateView();
+            return;
+        }
         if (mList != list) {
             return;
         }
@@ -1261,9 +1558,13 @@ public class DownloadsScene extends ToolbarScene
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onReload() {
+        if (mLabel == null) {
+            updateForLabel();
+        }
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
+        if (downloadLabelDraw != null) downloadLabelDraw.updateDownloadLabels();
         updateView();
     }
 
@@ -1271,34 +1572,40 @@ public class DownloadsScene extends ToolbarScene
     public void onChange() {
         mLabel = null;
         updateForLabel();
+        if (downloadLabelDraw != null) downloadLabelDraw.updateDownloadLabels();
         updateView();
     }
 
     @Override
     public void onRenameLabel(String from, String to) {
-        if (!ObjectUtils.equal(mLabel, from)) {
-            return;
+        if (ObjectUtils.equal(mLabel, from)) {
+            mLabel = to;
+            updateForLabel();
+            updateView();
         }
-
-        mLabel = to;
-        updateForLabel();
-        updateView();
+        if (downloadLabelDraw != null) downloadLabelDraw.updateDownloadLabels();
     }
 
     @Override
     public void onRemove(@NonNull DownloadInfo info, @NonNull List<DownloadInfo> list, int position) {
+        if (mLabel == null && mList != list) {
+            updateForLabel();
+            updateView();
+            return;
+        }
         if (mList != list) {
             return;
         }
         if (mAdapter != null) {
             mAdapter.notifyItemRemoved(listIndexInPage(position));
         }
+        if (downloadLabelDraw != null) downloadLabelDraw.updateDownloadLabels();
         updateView();
     }
 
     @Override
     public void onUpdateLabels() {
-        // TODO
+        if (downloadLabelDraw != null) downloadLabelDraw.updateDownloadLabels();
     }
 
     @Nullable
@@ -1361,6 +1668,37 @@ public class DownloadsScene extends ToolbarScene
     @Override
     public MyEasyRecyclerView getRecyclerView() {
         return mRecyclerView;
+    }
+
+    @Override
+    @Nullable
+    public NasCatalogEntry getNasCatalogEntry(long gid) {
+        return mNasCatalogMap.get(gid);
+    }
+
+    @Override
+    public boolean isGalleryAvailableLocally(@NonNull DownloadInfo info) {
+        if (info.archiveUri != null && info.archiveUri.startsWith("content://")) return true;
+        NasCatalogEntry entry = mNasCatalogMap.get(info.gid);
+        // Entries outside the NAS catalog retain the original local-download behavior.
+        if (entry == null) return true;
+        if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
+            return true;
+        }
+        Boolean cached = mLocalAvailability.get(info.gid);
+        if (cached != null) return cached;
+        UniFile root = Settings.getDownloadLocation();
+        UniFile directory = root != null ? root.findFile(entry.directoryName) : null;
+        // A database imported from another device may leave an empty directory or only a
+        // thumbnail behind. Neither means the comic itself is stored on this device.
+        boolean available = directory != null && directory.isDirectory()
+                && findImageFile(directory, 0) != null;
+        mLocalAvailability.put(info.gid, available);
+        return available;
+    }
+
+    private boolean isEffectivelyNasOnly(@NonNull DownloadInfo info) {
+        return mNasCatalogMap.containsKey(info.gid) && !isGalleryAvailableLocally(info);
     }
 
 
@@ -1598,8 +1936,15 @@ public class DownloadsScene extends ToolbarScene
             return;
         }
         List<DownloadInfo> requestList = new ArrayList<>();
-        for (int i = 0; i < mList.size(); i++) {
+        int start = mList.size() > paginationSize && canPagination
+                ? Math.max(0, pageSize * (indexPage - 1)) : 0;
+        int end = mList.size() > paginationSize && canPagination
+                ? Math.min(mList.size(), start + pageSize) : mList.size();
+        // Local availability is intentionally lazy. Checking all 3,500 imported rows here would
+        // recreate the long UI-blocking directory scan that the database workflow avoids.
+        for (int i = start; i < end; i++) {
             DownloadInfo info = mList.get(i);
+            if (isEffectivelyNasOnly(info)) continue;
             if (!mSpiderInfoMap.containsKey(info.gid) || mSpiderInfoMap.get(info.gid) == null) {
                 requestList.add(info);
             }
@@ -1618,7 +1963,11 @@ public class DownloadsScene extends ToolbarScene
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updateDownloadLabels(SomethingNeedRefresh somethingNeedRefresh) {
-        if (somethingNeedRefresh.isDownloadLabelDrawNeed()) {
+        if (somethingNeedRefresh.isDownloadInfoNeed()) {
+            updateForLabel();
+            updateView();
+        }
+        if (somethingNeedRefresh.isDownloadLabelDrawNeed() && downloadLabelDraw != null) {
             downloadLabelDraw.updateDownloadLabels();
         }
     }
@@ -1857,6 +2206,10 @@ public class DownloadsScene extends ToolbarScene
             boolean checked = mBuilder.isChecked();
             Settings.putRemoveImageFiles(checked);
             if (checked) {
+                Context context = getEHContext();
+                if (context != null && NasCatalogStore.find(context, mGalleryInfo.gid) != null) {
+                    NasCatalogStore.markRemoteOnly(context, mGalleryInfo.gid);
+                }
                 UniFile file = getExistingGalleryDownloadDir(mGalleryInfo);
                 EhDB.removeDownloadDirname(mGalleryInfo.gid);
                 if (file != null) {
@@ -1871,13 +2224,11 @@ public class DownloadsScene extends ToolbarScene
     private class DeleteRangeDialogHelper implements DialogInterface.OnClickListener {
 
         private final List<DownloadInfo> mDownloadInfoList;
-        private final LongList mGidList;
-        private final CheckBoxDialogBuilder mBuilder;
+        @Nullable private final CheckBoxDialogBuilder mBuilder;
 
         public DeleteRangeDialogHelper(List<DownloadInfo> downloadInfoList,
-                                       LongList gidList, CheckBoxDialogBuilder builder) {
+                                       @Nullable CheckBoxDialogBuilder builder) {
             mDownloadInfoList = downloadInfoList;
-            mGidList = gidList;
             mBuilder = builder;
         }
 
@@ -1886,22 +2237,73 @@ public class DownloadsScene extends ToolbarScene
             if (which != DialogInterface.BUTTON_POSITIVE) {
                 return;
             }
+            performDelete(false, mBuilder != null && mBuilder.isChecked());
+        }
+
+        void performDelete(boolean deleteRemote, boolean deleteLocalFiles) {
 
             // Cancel check mode
             if (mRecyclerView != null) {
                 mRecyclerView.outOfCustomChoiceMode();
             }
 
-            // Delete
-            if (null != mDownloadManager) {
-                mDownloadManager.deleteRangeDownload(mGidList);
+            Context context = getEHContext();
+            LongList managedGids = new LongList();
+            List<DownloadInfo> localFiles = new ArrayList<>();
+            int hiddenNasEntries = 0;
+            for (DownloadInfo info : mDownloadInfoList) {
+                boolean nasOnly = isEffectivelyNasOnly(info);
+                boolean storedOnNas = mNasCatalogMap.containsKey(info.gid);
+                if (storedOnNas && deleteRemote && context != null) {
+                    NasSyncService.cancelGallery(context, info.gid);
+                    NasCatalogStore.hideLocally(context, info.gid);
+                    NasSyncService.deleteGallery(context, info.gid);
+                    hiddenNasEntries++;
+                } else if (nasOnly) {
+                    if (context != null) {
+                        NasCatalogStore.hideLocally(context, info.gid);
+                        NasSyncService.cancelGallery(context, info.gid);
+                    }
+                    // Dragging or moving can materialize a synthetic NAS row in the database
+                    // before DownloadManager owns it. Remove that row as part of the local hide.
+                    EhDB.removeDownloadInfo(info.gid);
+                    EhDB.removeDownloadDirname(info.gid);
+                    hiddenNasEntries++;
+                }
+                if (mDownloadManager != null
+                        && mDownloadManager.getDownloadInfo(info.gid) != null) {
+                    managedGids.add(info.gid);
+                }
+                if (!nasOnly) {
+                    localFiles.add(info);
+                }
+            }
+
+            // Local-only hides synthetic NAS rows; the explicit remote option queues a guarded
+            // SMB deletion and updates the canonical metadata database in the background.
+            if (null != mDownloadManager && !managedGids.isEmpty()) {
+                mDownloadManager.deleteRangeDownload(managedGids);
             }
 
             // Delete image files
-            boolean checked = mBuilder.isChecked();
-            Settings.putRemoveImageFiles(checked);
-            if (checked) {
-                deleteGalleryFilesAsync(mDownloadInfoList);
+            Settings.putRemoveImageFiles(deleteLocalFiles);
+            if (deleteLocalFiles) {
+                if (context != null) {
+                    for (DownloadInfo info : localFiles) {
+                        if (NasCatalogStore.find(context, info.gid) != null) {
+                            NasCatalogStore.markRemoteOnly(context, info.gid);
+                        }
+                    }
+                }
+                deleteGalleryFilesAsync(localFiles);
+            }
+            if (hiddenNasEntries > 0 && context != null) {
+                Toast.makeText(context, deleteRemote
+                                ? R.string.nas_gallery_remote_delete_started
+                                : R.string.nas_gallery_hidden_locally,
+                        Toast.LENGTH_SHORT).show();
+                updateForLabel();
+                updateView();
             }
         }
     }
@@ -1933,7 +2335,25 @@ public class DownloadsScene extends ToolbarScene
             } else {
                 label = mLabels[which];
             }
-            EhApplication.getDownloadManager(context).changeLabel(mDownloadInfoList, label);
+            DownloadManager manager = EhApplication.getDownloadManager(context);
+            List<DownloadInfo> nasOnly = new ArrayList<>();
+            for (DownloadInfo info : mDownloadInfoList) {
+                if (isEffectivelyNasOnly(info) && manager.getDownloadInfo(info.gid) == null) {
+                    nasOnly.add(info);
+                }
+            }
+            if (!nasOnly.isEmpty()) manager.addDownload(nasOnly);
+            List<DownloadInfo> managed = new ArrayList<>(mDownloadInfoList.size());
+            for (DownloadInfo info : mDownloadInfoList) {
+                DownloadInfo actual = manager.getDownloadInfo(info.gid);
+                managed.add(actual != null ? actual : info);
+            }
+            manager.changeLabel(managed, label);
+            try {
+                NasCatalogStore.updateFromDownloads(context, managed);
+            } catch (IOException error) {
+                Log.e(TAG, "Unable to update NAS catalog labels", error);
+            }
         }
     }
 
@@ -2021,4 +2441,105 @@ public class DownloadsScene extends ToolbarScene
         updateView();
         queryUnreadSpiderInfo();
     }
+
+    private static final class NasGalleryPrepareTask extends AsyncTask<Void, Void, DownloadInfo> {
+        private final WeakReference<DownloadsScene> sceneReference;
+        private final Context applicationContext;
+        private final NasCatalogEntry entry;
+        private final boolean openReader;
+        private ProgressDialog progressDialog;
+        private Throwable error;
+
+        NasGalleryPrepareTask(@NonNull DownloadsScene scene, @NonNull NasCatalogEntry entry,
+                              boolean openReader) {
+            sceneReference = new WeakReference<>(scene);
+            Context context = scene.getEHContext();
+            if (context == null) throw new IllegalStateException("Scene is not attached");
+            applicationContext = context.getApplicationContext();
+            this.entry = entry;
+            this.openReader = openReader;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            DownloadsScene scene = sceneReference.get();
+            if (scene == null || !scene.isAdded()) return;
+            progressDialog = new ProgressDialog(scene.getEHContext());
+            progressDialog.setTitle(R.string.nas_gallery_sync_title);
+            progressDialog.setMessage(scene.getString(R.string.nas_gallery_sync_preparing));
+            progressDialog.setIndeterminate(true);
+            progressDialog.setCancelable(true);
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.setOnCancelListener(dialog -> cancel(true));
+            progressDialog.show();
+        }
+
+        @Override
+        protected DownloadInfo doInBackground(Void... ignored) {
+            NasSyncConfig config = NasConfigStore.load(applicationContext);
+            try {
+                if (!NasConfigStore.isEnabled(applicationContext)) {
+                    throw new IOException("NAS is disabled");
+                }
+                UniFile localRoot = Settings.getDownloadLocation();
+                if (localRoot == null) throw new IOException("Download directory is not configured");
+                UniFile metadata = new NasCatalogClient(config).prepareMetadata(localRoot, entry);
+                SpiderInfo spiderInfo = SpiderInfo.read(metadata);
+                if (spiderInfo == null || spiderInfo.gid != entry.gid) {
+                    if (metadata.delete()) {
+                        config = NasConfigStore.load(applicationContext);
+                        metadata = new NasCatalogClient(config).prepareMetadata(localRoot, entry);
+                        spiderInfo = SpiderInfo.read(metadata);
+                    }
+                }
+                if (spiderInfo == null || spiderInfo.gid != entry.gid) {
+                    throw new IOException("Invalid .ehviewer metadata in NAS gallery");
+                }
+                EhDB.putDownloadDirname(entry.gid, entry.directoryName);
+                NasCatalogStore.markPartiallyCached(applicationContext, entry.gid);
+                DownloadInfo info = NasCatalogStore.asNasOnlyDownload(entry);
+                info.token = spiderInfo.token;
+                info.total = spiderInfo.pages;
+                return info;
+            } catch (Throwable throwable) {
+                ExceptionUtils.throwIfFatal(throwable);
+                error = throwable;
+                config.clearPassword();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(DownloadInfo info) {
+            dismiss();
+            DownloadsScene scene = sceneReference.get();
+            if (scene == null || !scene.isAdded() || info == null) {
+                if (scene != null && scene.isAdded() && error != null) {
+                    Toast.makeText(scene.getEHContext(), nasErrorMessage(scene, error),
+                            Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+            if (openReader) {
+                scene.openDownloadReader(info);
+            } else {
+                scene.openDownloadDetails(info, null);
+            }
+            if (scene.mAdapter != null) scene.mAdapter.notifyDataSetChanged();
+        }
+
+        @Override protected void onCancelled() { dismiss(); }
+        @Override protected void onCancelled(DownloadInfo info) { dismiss(); }
+
+        private void dismiss() {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                try {
+                    progressDialog.dismiss();
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+            progressDialog = null;
+        }
+    }
+
 }

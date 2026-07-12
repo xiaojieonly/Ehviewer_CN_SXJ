@@ -18,14 +18,7 @@ package com.hippo.ehviewer.preference;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
-import com.hippo.ehviewer.AppConfig;
-import com.hippo.ehviewer.EhDB;
-import com.hippo.ehviewer.GetText;
-import com.hippo.ehviewer.R;
-import com.hippo.util.ReadableTime;
-import java.io.File;
 
 public class ExportDataPreference extends TaskPreference {
 
@@ -55,23 +48,12 @@ public class ExportDataPreference extends TaskPreference {
 
     @Override
     protected Object doInBackground(Void... voids) {
-      File dir = AppConfig.getExternalDataDir();
-      if (dir != null) {
-        File file = new File(dir, ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".db");
-        if (EhDB.exportDB(getApplication(), file)) {
-          return file;
-        }
-      }
-      return null;
+      DataBackupService.startExport(getApplication());
+      return Boolean.TRUE;
     }
 
     @Override
     protected void onPostExecute(Object o) {
-      Toast.makeText(getApplication(),
-          (o instanceof File)
-              ? GetText.getString(R.string.settings_advanced_export_data_to, ((File) o).getPath())
-              : GetText.getString(R.string.settings_advanced_export_data_failed),
-          Toast.LENGTH_SHORT).show();
       super.onPostExecute(o);
     }
   }

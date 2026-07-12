@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="nas_sync_enabled"
+        android:summary="@string/settings_nas_enable_summary"
+        android:title="@string/settings_nas_enable"
+        app:iconSpaceReserved="false" />
+
+    <PreferenceCategory android:title="@string/settings_nas_connection_category">
+
+        <Preference
+            android:key="nas_connection_status"
+            android:summary="@string/settings_nas_status_checking"
+            android:title="@string/settings_nas_status"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="nas_setup"
+            android:summary="@string/settings_nas_not_configured"
+            android:title="@string/settings_nas_setup_short"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="nas_account"
+            android:selectable="false"
+            android:summary="@string/settings_nas_guest"
+            android:title="@string/settings_nas_account"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_nas_download_category">
+
+        <com.hippo.preference.ListPreference
+            android:defaultValue="phone"
+            android:key="nas_download_behavior"
+            android:title="@string/settings_nas_download_behavior"
+            app:entries="@array/nas_download_behavior_entries"
+            app:entryValues="@array/nas_download_behavior_values"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_nas_schedule_category">
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="nas_sync_enabled"
+            android:key="nas_schedule_enabled"
+            android:summary="@string/settings_nas_schedule_enable_summary"
+            android:title="@string/settings_nas_schedule_enable"
+            app:iconSpaceReserved="false" />
+
+        <com.hippo.preference.ListPreference
+            android:defaultValue="bidirectional"
+            android:dependency="nas_schedule_enabled"
+            android:key="nas_schedule_mode"
+            android:title="@string/settings_nas_schedule_mode"
+            app:entries="@array/nas_schedule_mode_entries"
+            app:entryValues="@array/nas_schedule_mode_values"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:dependency="nas_schedule_enabled"
+            android:key="nas_schedule_time"
+            android:summary="03:00"
+            android:title="@string/settings_nas_schedule_time"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_nas_actions_category">
+
+        <Preference
+            android:dependency="nas_sync_enabled"
+            android:key="nas_import_database"
+            android:summary="@string/settings_nas_import_database_summary"
+            android:title="@string/settings_nas_import_database"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:dependency="nas_sync_enabled"
+            android:key="nas_sync_merge"
+            android:summary="@string/settings_download_nas_sync_description"
+            android:title="@string/settings_nas_sync_merge"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

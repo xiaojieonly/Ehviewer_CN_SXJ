@@ -44,6 +44,7 @@ import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.ui.MainActivity
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene
 import com.hippo.ehviewer.util.MiuiOptimizationHelper
+import com.hippo.ehviewer.sync.nas.NasSyncService
 import com.hippo.scene.StageActivity
 import com.hippo.util.ReadableTime
 import com.hippo.lib.yorozuya.FileUtils
@@ -394,6 +395,9 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         ensureDownloadedBuilder()
 
         val finish = info.state == DownloadInfo.STATE_FINISH
+        if (finish) {
+            NasSyncService.onDownloadFinished(applicationContext, info)
+        }
         val gid = info.gid
         val index = sItemStateArray.indexOfKey(gid)
         if (index < 0) { // Not contain

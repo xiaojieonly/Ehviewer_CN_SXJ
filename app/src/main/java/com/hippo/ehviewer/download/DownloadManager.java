@@ -37,6 +37,7 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
+import com.hippo.ehviewer.sync.nas.NasCatalogStore;
 import com.hippo.lib.image.Image;
 //import com.hippo.lib.image.Image1;
 import com.hippo.unifile.UniFile;
@@ -224,16 +225,8 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     @Nullable
     public long getLabelCount(String label) {
-        try {
-            if (mLabelCountMap.containsKey(label)) {
-                return mLabelCountMap.get(label);
-            } else {
-                return 0;
-            }
-        } catch (NullPointerException e) {
-            Analytics.recordException(e);
-            return 0;
-        }
+        List<DownloadInfo> list = getInfoListForLabel(label);
+        return list != null ? list.size() : 0L;
     }
 
     public List<DownloadInfo> getAllDownloadInfoList() {
@@ -567,6 +560,46 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         });
     }
 
+    /** Applies a completed NAS restore in one list refresh without replacing active downloads. */
+    public void mergeNasDownloadedInfo(@NonNull List<DownloadInfo> restored) {
+        Map<Long, DownloadInfo> replacements = new HashMap<>();
+        for (DownloadInfo info : restored) {
+            DownloadInfo existing = mAllInfoMap.get(info.gid);
+            if (existing == null) {
+                mAllInfoList.add(info);
+                mAllInfoMap.put(info.gid, info);
+            } else if (existing.state == DownloadInfo.STATE_NAS_ONLY) {
+                replacements.put(info.gid, info);
+                mAllInfoMap.put(info.gid, info);
+            }
+        }
+        if (!replacements.isEmpty()) {
+            java.util.ListIterator<DownloadInfo> iterator = mAllInfoList.listIterator();
+            while (iterator.hasNext()) {
+                DownloadInfo replacement = replacements.get(iterator.next().gid);
+                if (replacement != null) iterator.set(replacement);
+            }
+        }
+
+        mDefaultInfoList.clear();
+        for (LinkedList<DownloadInfo> list : mMap.values()) list.clear();
+        for (DownloadInfo info : mAllInfoList) {
+            LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
+            if (list == null) {
+                list = new LinkedList<>();
+                mMap.put(info.label, list);
+                if (!containLabel(info.label)) mLabelList.add(EhDB.addDownloadLabel(info.label));
+            }
+            list.add(info);
+        }
+        Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
+        Collections.sort(mDefaultInfoList, DATE_DESC_COMPARATOR);
+        for (LinkedList<DownloadInfo> list : mMap.values()) {
+            Collections.sort(list, DATE_DESC_COMPARATOR);
+        }
+        for (DownloadInfoListener listener : mDownloadInfoListeners) listener.onReload();
+    }
+
     public void addDownloadLabel(List<DownloadLabel> downloadLabelList) {
         for (DownloadLabel label : downloadLabelList) {
             String labelString = label.getLabel();
@@ -591,12 +624,6 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         // Add to label download list
         LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
-        if (!mLabelCountMap.containsKey(label)) {
-            mLabelCountMap.put(label, 1L);
-        } else {
-            long value = mLabelCountMap.get(label) + 1L;
-            mLabelCountMap.put(label, value);
-        }
         if (list == null) {
             Log.e(TAG, "Can't find download info list with label: " + label);
             return;
@@ -960,6 +987,21 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         mMap.put(label, new LinkedList<>());
     }
 
+    public void mergeNasLabels(@NonNull List<String> labels) {
+        boolean changed = false;
+        for (String label : labels) {
+            if (label == null || label.isEmpty() || containLabel(label)) continue;
+            mLabelList.add(EhDB.addDownloadLabel(label));
+            mMap.put(label, new LinkedList<>());
+            changed = true;
+        }
+        if (changed) {
+            for (DownloadInfoListener listener : mDownloadInfoListeners) {
+                listener.onUpdateLabels();
+            }
+        }
+    }
+
     public void moveLabel(int fromPosition, int toPosition) {
         final DownloadLabel item = mLabelList.remove(fromPosition);
         mLabelList.add(toPosition, item);
@@ -999,6 +1041,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         }
         // Put list back with new label
         mMap.put(to, list);
+        try {
+            NasCatalogStore.renameLabel(mContext, from, to);
+        } catch (IOException error) {
+            Log.w(TAG, "Unable to rename label in NAS catalog", error);
+        }
 
         // Notify listener
         for (DownloadInfoListener l : mDownloadInfoListeners) {
@@ -1037,6 +1084,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
         // Sort
         Collections.sort(mDefaultInfoList, DATE_DESC_COMPARATOR);
+        try {
+            NasCatalogStore.deleteLabel(mContext, label);
+        } catch (IOException error) {
+            Log.w(TAG, "Unable to delete label from NAS catalog", error);
+        }
 
         // Notify listener
         for (DownloadInfoListener l : mDownloadInfoListeners) {

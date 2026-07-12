@@ -164,6 +164,8 @@ dependencies {
     // 还是旧版稳定好用
     implementation 'com.squareup.okhttp3:okhttp:3.14.7'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.7'
+    implementation 'com.hierynomus:smbj:0.14.0'
+    implementation 'eu.agno3.jcifs:jcifs-ng:2.1.10'
     implementation 'com.github.xiaojieonly:Android-Request-Inspector-WebView:70403bb'
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'

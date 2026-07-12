@@ -21,8 +21,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,10 +32,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.ViewCompat;
+import androidx.core.widget.ImageViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.android.resource.AttrResources;
@@ -45,10 +50,13 @@ import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.download.DownloadManager;
-import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.gallery.A7ZipArchive;
 import com.hippo.ehviewer.gallery.Pipe;
 import com.hippo.ehviewer.spider.SpiderInfo;
+import com.hippo.ehviewer.sync.nas.NasCatalogEntry;
+import com.hippo.ehviewer.sync.nas.NasCatalogStore;
+import com.hippo.ehviewer.sync.nas.NasConfigStore;
+import com.hippo.ehviewer.sync.nas.NasThumbnailLoader;
 import com.hippo.ehviewer.ui.scene.TransitionNameFactory;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
@@ -70,6 +78,7 @@ import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange;
 import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableItemViewHolder;
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +114,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         Map<Long, SpiderInfo> getSpiderInfoMap();
         DownloadManager getDownloadManager();
         EasyRecyclerView getRecyclerView();
+        @Nullable NasCatalogEntry getNasCatalogEntry(long gid);
+        boolean isGalleryAvailableLocally(@NonNull DownloadInfo info);
     }
 
     public DownloadAdapter(DownloadsScene scene, DownloadAdapterCallback callback) {
@@ -172,6 +183,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         try {
             int pos = mCallback.positionInList(position);
             DownloadInfo info = list.get(pos);
+            NasCatalogEntry nasEntry = mCallback.getNasCatalogEntry(info.gid);
 
             String title = EhUtils.getSuitableTitle(info);
             // Add special prefix for imported archives
@@ -179,11 +191,20 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 title = "📦 " + title;
             }
             // Handle thumbnail loading for imported archives
-            if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            boolean locallyAvailable = mCallback.isGalleryAvailableLocally(info);
+            boolean nasOnly = nasEntry != null && !locallyAvailable;
+            if (nasEntry != null) {
+                Context context = mScene.getEHContext();
+                if (context != null) {
+                    // Local .thumb -> NAS cache/SMB -> online thumbnail URL.
+                    NasThumbnailLoader.load(context, holder.thumb, nasEntry, info.thumb);
+                }
+            } else if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
                 // For imported archives, extract first image as thumbnail
                 loadArchiveThumbnail(holder.thumb, Uri.parse(info.archiveUri));
             } else {
                 // Normal thumbnail loading for regular downloads
+                holder.thumb.setTag(R.id.thumb, null);
                 holder.thumb.load(EhCacheKeyFactory.getThumbKey(info.gid), info.thumb,
                         new ThumbDataContainer(info), true, false);
             }
@@ -226,13 +247,34 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 category.setText(newCategoryText);
                 category.setBackgroundColor(EhUtils.getCategoryColor(info.category));
             }
-            bindForState(holder, info);
+            bindForState(holder, info, nasOnly);
+            Context storageContext = mScene.getEHContext();
+            boolean nasEnabled = storageContext != null
+                    && NasConfigStore.isEnabled(storageContext);
+            holder.storageState.setVisibility(nasEnabled ? View.VISIBLE : View.GONE);
+            boolean partiallyCached = storageContext != null
+                    && NasCatalogStore.isPartiallyCached(storageContext, info.gid);
+            boolean fullyCached = storageContext != null
+                    && NasCatalogStore.isFullyCached(storageContext, info.gid);
+            float localAlpha = fullyCached || (locallyAvailable && !partiallyCached)
+                    ? 1.0f : 0.58f;
+            bindStorageIcon(holder.phoneIcon, locallyAvailable, localAlpha);
+            bindStorageIcon(holder.cloudIcon, nasEntry != null, 1.0f);
 
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         } catch (Exception e) {
             Analytics.recordException(e);
         }
+    }
+
+    private void bindStorageIcon(ImageView icon, boolean active, float activeAlpha) {
+        Context context = mScene.getEHContext();
+        if (context == null) return;
+        int color = AttrResources.getAttrColor(context, active
+                ? androidx.appcompat.R.attr.colorPrimary : android.R.attr.textColorSecondary);
+        ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(color));
+        icon.setAlpha(active ? activeAlpha : 0.20f);
     }
 
     @Override
@@ -249,7 +291,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         return Math.min(count, mCallback.getPageSize());
     }
 
-    private void bindForState(DownloadHolder holder, DownloadInfo info) {
+    private void bindForState(DownloadHolder holder, DownloadInfo info,
+                              boolean effectivelyNasOnly) {
         Resources resources = mScene.getResources2();
         if (null == resources) {
             return;
@@ -261,6 +304,14 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 info.archiveUri.startsWith("content://");
         if (isImportedArchive) {
             bindState(holder, info, resources.getString(R.string.download_state_finish));
+            return;
+        }
+
+        if (effectivelyNasOnly) {
+            bindState(holder, info, resources.getString(R.string.download_state_nas_only));
+            holder.readProgress.setVisibility(View.GONE);
+            holder.start.setVisibility(View.VISIBLE);
+            holder.stop.setVisibility(View.GONE);
             return;
         }
 
@@ -375,6 +426,12 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         
         if (fromPosInList >= 0 && fromPosInList < list.size() &&
                 toPosInList >= 0 && toPosInList < list.size()) {
+            int first = Math.min(fromPosInList, toPosInList);
+            int last = Math.max(fromPosInList, toPosInList);
+            // Synthetic NAS-only rows are not necessarily materialized in DOWNLOADS yet. Insert
+            // just the affected range so the existing time-based ordering transaction can update
+            // every row safely.
+            for (int i = first; i <= last; i++) EhDB.putDownloadInfo(list.get(i));
             // 先更新数据库中的顺序（通过 time 字段）
             EhDB.moveDownloadInfo(list, fromPosInList, toPosInList);
 
@@ -386,6 +443,16 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 list.add(toPosInList, item);
             } catch (UnsupportedOperationException e) {
                 Log.w(TAG, "onMoveItem: list is unmodifiable, only DB order updated", e);
+            }
+
+            Context storageContext = mScene.getEHContext();
+            if (storageContext != null) {
+                try {
+                    NasCatalogStore.updateFromDownloads(storageContext,
+                            list.subList(first, last + 1));
+                } catch (IOException e) {
+                    Log.e(TAG, "Unable to persist NAS download order", e);
+                }
             }
 
             // 通知适配器刷新界面
@@ -449,12 +516,13 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
     private void loadArchiveThumbnail(LoadImageView thumb, Uri archiveUri) {
         String uriString = archiveUri.toString();
+        thumb.setTag(R.id.thumb, uriString);
 
         // Check cache first
         if (thumbnailCache.containsKey(uriString)) {
             Bitmap cachedThumbnail = thumbnailCache.get(uriString);
             if (cachedThumbnail != null && !cachedThumbnail.isRecycled()) {
-                thumb.setImageBitmap(cachedThumbnail);
+                setStaticThumbnail(thumb, cachedThumbnail);
                 return;
             } else {
                 // Remove invalid cached entry
@@ -463,22 +531,23 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         }
 
         // Set default icon immediately as fallback
-        thumb.setImageResource(R.drawable.v_archive_hh_primary_x48);
+        thumb.load(R.drawable.v_archive_hh_primary_x48);
 
         // Load thumbnail in background thread
         new Thread(() -> {
             try {
                 Bitmap thumbnail = extractFirstImageFromArchive(archiveUri);
                 mScene.runOnUiThread(() -> {
+                    if (!uriString.equals(thumb.getTag(R.id.thumb))) return;
                     if (thumbnail != null && !thumbnail.isRecycled()) {
                         // Cache the thumbnail
                         thumbnailCache.put(uriString, thumbnail);
-                        thumb.setImageBitmap(thumbnail);
+                        setStaticThumbnail(thumb, thumbnail);
                     } else {
                         // If extraction fails, check if we have a previous cached thumbnail
                         Bitmap fallbackThumbnail = thumbnailCache.get(uriString);
                         if (fallbackThumbnail != null && !fallbackThumbnail.isRecycled()) {
-                            thumb.setImageBitmap(fallbackThumbnail);
+                            setStaticThumbnail(thumb, fallbackThumbnail);
                         }
                         // Otherwise keep the default archive icon that was already set
                     }
@@ -488,6 +557,11 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
                 // Keep the default icon that was already set - no need to change anything
             }
         }).start();
+    }
+
+    private static void setStaticThumbnail(@NonNull LoadImageView thumb,
+                                           @NonNull Bitmap bitmap) {
+        thumb.load(new BitmapDrawable(thumb.getResources(), bitmap));
     }
 
     private Bitmap extractFirstImageFromArchive(Uri archiveUri) {
@@ -667,6 +741,9 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         public final android.widget.ProgressBar progressBar;
         public final TextView percent;
         public final TextView speed;
+        public final View storageState;
+        public final ImageView phoneIcon;
+        public final ImageView cloudIcon;
 
         public DownloadHolder(View itemView) {
             super(itemView);
@@ -683,6 +760,9 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             progressBar = itemView.findViewById(R.id.progress_bar);
             percent = itemView.findViewById(R.id.percent);
             speed = itemView.findViewById(R.id.speed);
+            storageState = itemView.findViewById(R.id.storage_state);
+            phoneIcon = itemView.findViewById(R.id.phone_icon);
+            cloudIcon = itemView.findViewById(R.id.cloud_icon);
 
             // TODO cancel on click listener when select items
             thumb.setOnClickListener(this);
@@ -713,7 +793,10 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             if (thumb == v) {
                 DownloadInfo currentInfo = list.get(mScene.positionInList(index));
-                if (currentInfo.archiveUri != null && currentInfo.archiveUri.startsWith("content://")) {
+                if (!mCallback.isGalleryAvailableLocally(currentInfo)
+                        && mCallback.getNasCatalogEntry(currentInfo.gid) != null) {
+                    mScene.openNasGallery(currentInfo);
+                } else if (currentInfo.archiveUri != null && currentInfo.archiveUri.startsWith("content://")) {
                     // Show info dialog for imported archive
                     String message = mScene.getString(R.string.imported_archive_info_message) + "\n\n" + currentInfo.archiveUri;
                     new AlertDialog.Builder(context)
@@ -733,10 +816,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
             } else if (start == v) {
                 final DownloadInfo info = list.get(mCallback.positionInList(index));
-                Intent intent = new Intent(context, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, info);
-                context.startService(intent);
+                mScene.readDownload(info);
             } else if (stop == v) {
                 DownloadManager downloadManager = mCallback.getDownloadManager();
                 if (null != downloadManager) {

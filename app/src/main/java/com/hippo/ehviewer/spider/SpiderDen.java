@@ -26,11 +26,13 @@ import androidx.annotation.Nullable;
 
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.ehviewer.EhDB;
+import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
+import com.hippo.ehviewer.sync.nas.NasPageFetcher;
 import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.io.UniFileOutputStreamPipe;
 import com.hippo.streampipe.InputStreamPipe;
@@ -351,8 +353,13 @@ public final class SpiderDen {
     }
 
     public boolean contain(int index) {
+        boolean contained;
         if (mMode == SpiderQueen.MODE_READ) {
-            return containInCache(index) || containInDownloadDir(index);
+            contained = containInCache(index) || containInDownloadDir(index);
+            if (!contained) {
+                contained = NasPageFetcher.fetch(EhApplication.getInstance(), mGalleryInfo, index);
+            }
+            return contained;
         } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
             return containInDownloadDir(index) || copyFromCacheToDownloadDir(index);
         } else {

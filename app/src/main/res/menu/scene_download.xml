@@ -191,4 +191,24 @@
         android:title="@string/import_local_archive"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_nas_upload_all"
+        android:title="@string/nas_upload_all"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_nas_upload_metadata"
+        android:title="@string/nas_upload_metadata"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_nas_download_all"
+        android:title="@string/nas_download_all"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_nas_download_metadata"
+        android:title="@string/settings_nas_import_database"
+        app:showAsAction="never"/>
+
 </menu>
