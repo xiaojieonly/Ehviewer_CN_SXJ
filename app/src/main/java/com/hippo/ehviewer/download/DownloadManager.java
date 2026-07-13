@@ -212,12 +212,17 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     /**
      * 用新版本画廊替换下载列表中的旧版本，并复用旧版本的下载目录：
-     * 新版本下载时按文件存在性跳过已下载页，只下载新增/缺失页
+     * 新版本下载时按文件存在性跳过已下载页，只下载新增/缺失页。
+     *
+     * @param startAfterMigrate true 时迁移完成后立即开始下载；false 只迁移，
+     *                          等用户在下载列表或详情页手动启动
      */
-    public void updateDownloadToNewVersion(@NonNull DownloadInfo oldInfo, @NonNull GalleryInfo newGallery) {
+    public void updateDownloadToNewVersion(@NonNull DownloadInfo oldInfo, @NonNull GalleryInfo newGallery, boolean startAfterMigrate) {
         if (containDownloadInfo(newGallery.gid)) {
-            // 新版本已在下载列表中，直接开始下载
-            startDownload(newGallery, null);
+            // 新版本已在下载列表中
+            if (startAfterMigrate) {
+                startDownload(newGallery, null);
+            }
             return;
         }
 
@@ -255,13 +260,15 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 // 目录复用失败仅意味着新版本从零下载，不影响数据正确性
                 Log.e(TAG, "Failed to reuse old download dir for new version", e);
             }
-            SimpleHandler.getInstance().post(() -> {
-                Intent intent = new Intent(mContext, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_LABEL, newInfo.label);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, newInfo);
-                mContext.startService(intent);
-            });
+            if (startAfterMigrate) {
+                SimpleHandler.getInstance().post(() -> {
+                    Intent intent = new Intent(mContext, DownloadService.class);
+                    intent.setAction(DownloadService.ACTION_START);
+                    intent.putExtra(DownloadService.KEY_LABEL, newInfo.label);
+                    intent.putExtra(DownloadService.KEY_GALLERY_INFO, newInfo);
+                    mContext.startService(intent);
+                });
+            }
         });
     }
 

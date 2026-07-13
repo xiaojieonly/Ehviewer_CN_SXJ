@@ -994,6 +994,7 @@
     <string name="gallery_update_dialog_message">覆蓋舊畫廊：只保留下載的版本，舊版本將被刪除。\n下載為新畫廊：下載的畫廊將作為新畫廊存在，新畫廊和舊畫廊都將被保存。</string>
     <string name="gallery_update_download_as_new">下載為新畫廊</string>
     <string name="gallery_update_override_old">覆蓋舊畫廊</string>
+    <string name="gallery_update_migrated">已切換為新版本，啟動下載只會下載新增內容</string>
     <string name="loading_db_file">數據載入中…</string>
     <string name="settings_eh_history_size">歷史記錄數量</string>
     <string name="history_info_unlimited">無限制</string>

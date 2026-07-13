@@ -87,6 +87,7 @@ import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.download.DownloadService;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
@@ -310,6 +311,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     private GalleryUpdateDialog myUpdateDialog;
     private GalleryListSceneDialog tagDialog;
+
+    // 检测到画廊更新后静默迁移下载项：标记本次 RESULT_UPDATE 请求来自自动迁移
+    private boolean mAutoMigrate;
+    // 每个场景实例只发起一次自动迁移请求
+    private boolean mAutoMigrateRequested;
 
     private boolean useNetWorkLoadThumb = false;
 
@@ -1005,13 +1011,21 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 mHaveNewVersion.setVisibility(View.GONE);
             }
         }
-        // 已完成的下载存在新版本时，把下载状态改回未完成，提示用户增量更新。
+        // 已完成的下载存在新版本时，把下载状态改回未完成，并静默把下载项迁移为
+        // 最新版本（不自动开始下载）。迁移后无论从下载列表还是详情页启动，
+        // 都会复用旧目录、跳过已有文件，只下载新增页。
         // 放在 bindViewSecond：网络回调与详情缓存两条路径都会经过这里
         Context ehContext = getEHContext();
         if (ehContext != null && gd.newVersions != null && gd.newVersions.length > 0
                 && EhApplication.getDownloadManager(ehContext).getDownloadState(gd.gid) == DownloadInfo.STATE_FINISH) {
             EhApplication.getDownloadManager(ehContext).markDownloadInfoUpdated(gd.gid);
             updateDownloadState();
+            if (!mAutoMigrateRequested) {
+                mAutoMigrateRequested = true;
+                mAutoMigrate = true;
+                request(gd.newVersions[gd.newVersions.length - 1].versionUrl,
+                        GetGalleryDetailListener.RESULT_UPDATE);
+            }
         }
         if (null == mGalleryInfo) {
             mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
@@ -1728,6 +1742,22 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         GalleryInfo galleryInfo = getGalleryInfo();
         if (galleryInfo != null) {
             if (EhApplication.getDownloadManager(mContext).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
+                // 更新迁移后旧画廊已被新版本替代：此时直接启动新版本的增量下载
+                if (mGalleryDetail != null && mGalleryDetail.newVersions != null && mGalleryDetail.newVersions.length > 0) {
+                    GalleryInfo newest = mGalleryDetail.getNewGalleryDetail(mGalleryDetail.newVersions.length - 1);
+                    DownloadInfo newInfo = newest == null ? null
+                            : EhApplication.getDownloadManager(mContext).getDownloadInfo(newest.gid);
+                    MainActivity activity2 = getActivity2();
+                    if (newInfo != null && activity2 != null) {
+                        Intent intent = new Intent(activity2, DownloadService.class);
+                        intent.setAction(DownloadService.ACTION_START);
+                        intent.putExtra(DownloadService.KEY_LABEL, newInfo.label);
+                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, newInfo);
+                        activity2.startService(intent);
+                        showTip(R.string.added_to_download_list, LENGTH_SHORT);
+                        return;
+                    }
+                }
                 CommonOperations.startDownload(activity, galleryInfo, false);
             } else if (mGalleryDetail != null && mGalleryDetail.gid == galleryInfo.gid
                     && mGalleryDetail.newVersions != null && mGalleryDetail.newVersions.length > 0) {
@@ -1921,10 +1951,16 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     /**
      * 覆盖更新下载：用新版本替换下载列表中的旧版本并复用其下载目录，
-     * 已下载的页会被跳过，只下载新增内容
+     * 已下载的页会被跳过，只下载新增内容。
+     * 自动迁移（打开详情检测到更新）只替换下载项不开始下载；
+     * 用户在对话框里主动选择"覆盖下载"则迁移后立即开始下载。
      */
     protected void onGetGalleryDetailUpdateSuccess(GalleryDetail result) {
-        adjustViewVisibility(STATE_NORMAL, true);
+        boolean auto = mAutoMigrate;
+        mAutoMigrate = false;
+        if (!auto) {
+            adjustViewVisibility(STATE_NORMAL, true);
+        }
         Context context = getEHContext();
         if (context == null || result == null) {
             return;
@@ -1932,18 +1968,24 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         DownloadManager downloadManager = EhApplication.getDownloadManager(context);
         DownloadInfo oldInfo = mGalleryDetail == null ? null : downloadManager.getDownloadInfo(mGalleryDetail.gid);
         if (oldInfo == null) {
-            // 旧版本不在下载列表中，按新画廊下载
-            CommonOperations.startDownload(activity, result, false);
+            // 旧版本不在下载列表中，主动更新时按新画廊下载
+            MainActivity activity2 = getActivity2();
+            if (!auto && activity2 != null) {
+                CommonOperations.startDownload(activity2, result, false);
+            }
             return;
         }
-        downloadManager.updateDownloadToNewVersion(oldInfo, result);
-        showTip(R.string.added_to_download_list, LENGTH_SHORT);
-
-        // 跳转到新版本详情页
-        Bundle args = new Bundle();
-        args.putString(KEY_ACTION, ACTION_GALLERY_INFO);
-        args.putParcelable(KEY_GALLERY_INFO, result);
-        startScene(new Announcer(GalleryDetailScene.class).setArgs(args));
+        downloadManager.updateDownloadToNewVersion(oldInfo, result, !auto);
+        if (auto) {
+            showTip(R.string.gallery_update_migrated, LENGTH_SHORT);
+        } else {
+            showTip(R.string.added_to_download_list, LENGTH_SHORT);
+            // 跳转到新版本详情页
+            Bundle args = new Bundle();
+            args.putString(KEY_ACTION, ACTION_GALLERY_INFO);
+            args.putParcelable(KEY_GALLERY_INFO, result);
+            startScene(new Announcer(GalleryDetailScene.class).setArgs(args));
+        }
     }
 
     private void onRateGallerySuccess(RateGalleryParser.Result result) {

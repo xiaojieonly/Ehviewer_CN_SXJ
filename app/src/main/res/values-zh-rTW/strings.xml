@@ -943,6 +943,7 @@
     <string name="gallery_update_dialog_message">覆蓋舊圖庫：僅保留下載的版本，舊版本將被刪除。\n下載為新圖庫：下載的圖庫將作為新圖庫存在，新圖庫和舊圖庫都將被保存。</string>
     <string name="gallery_update_download_as_new">下載為新圖庫</string>
     <string name="gallery_update_override_old">覆蓋舊圖庫</string>
+    <string name="gallery_update_migrated">已切換為新版本，啟動下載只會下載新增內容</string>
     <string name="loading_db_file">資料載入中…</string>
     <string name="settings_eh_history_size">歷史記錄數量</string>
     <string name="history_info_unlimited">無限制</string>
