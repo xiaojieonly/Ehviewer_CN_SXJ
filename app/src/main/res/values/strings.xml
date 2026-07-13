@@ -445,6 +445,7 @@
     <string name="download_state_wait">Waiting</string>
     <string name="download_state_downloading">Downloading</string>
     <string name="download_state_downloaded">Downloaded</string>
+    <string name="download_state_not_finished">Not finished</string>
     <string name="download_state_failed">Failed</string>
     <string name="download_state_failed_2">%d incomplete</string>
     <string name="download_state_finish">Done</string>

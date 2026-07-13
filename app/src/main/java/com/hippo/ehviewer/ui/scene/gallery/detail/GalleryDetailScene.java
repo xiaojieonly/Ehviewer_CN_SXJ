@@ -86,6 +86,7 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
@@ -1720,6 +1721,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (galleryInfo != null) {
             if (EhApplication.getDownloadManager(mContext).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
                 CommonOperations.startDownload(activity, galleryInfo, false);
+            } else if (mGalleryDetail != null && mGalleryDetail.gid == galleryInfo.gid
+                    && mGalleryDetail.newVersions != null && mGalleryDetail.newVersions.length > 0) {
+                // 有新版本：提供增量更新（复用旧目录，只下载新增页）或下载为新画廊
+                String latestVersionUrl = mGalleryDetail.newVersions[mGalleryDetail.newVersions.length - 1].versionUrl;
+                myUpdateDialog.showChooseDialog(latestVersionUrl);
             } else {
                 new AlertDialog.Builder(mContext)
                         .setTitle(R.string.download_remove_dialog_title)
@@ -1881,6 +1887,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 EhDB.putDownloadInfo(mDownloadInfo);
             }
         }
+        // 已完成的下载存在新版本时，把下载状态改回未完成，提示用户增量更新
+        if (result.newVersions != null && result.newVersions.length > 0
+                && mDownloadState == DownloadInfo.STATE_FINISH) {
+            EhApplication.getDownloadManager(mContext).markDownloadInfoUpdated(result.gid);
+            updateDownloadState();
+        }
         adjustViewVisibility(STATE_NORMAL, true);
         bindViewSecond();
         if (myUpdateDialog != null && myUpdateDialog.autoDownload) {
@@ -1903,6 +1915,33 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     protected void onGetGalleryDetailUpdateFailure(Exception e) {
         Analytics.recordException(e);
         adjustViewVisibility(STATE_NORMAL, true);
+    }
+
+    /**
+     * 覆盖更新下载：用新版本替换下载列表中的旧版本并复用其下载目录，
+     * 已下载的页会被跳过，只下载新增内容
+     */
+    protected void onGetGalleryDetailUpdateSuccess(GalleryDetail result) {
+        adjustViewVisibility(STATE_NORMAL, true);
+        Context context = getEHContext();
+        if (context == null || result == null) {
+            return;
+        }
+        DownloadManager downloadManager = EhApplication.getDownloadManager(context);
+        DownloadInfo oldInfo = mGalleryDetail == null ? null : downloadManager.getDownloadInfo(mGalleryDetail.gid);
+        if (oldInfo == null) {
+            // 旧版本不在下载列表中，按新画廊下载
+            CommonOperations.startDownload(activity, result, false);
+            return;
+        }
+        downloadManager.updateDownloadToNewVersion(oldInfo, result);
+        showTip(R.string.added_to_download_list, LENGTH_SHORT);
+
+        // 跳转到新版本详情页
+        Bundle args = new Bundle();
+        args.putString(KEY_ACTION, ACTION_GALLERY_INFO);
+        args.putParcelable(KEY_GALLERY_INFO, result);
+        startScene(new Announcer(GalleryDetailScene.class).setArgs(args));
     }
 
     private void onRateGallerySuccess(RateGalleryParser.Result result) {

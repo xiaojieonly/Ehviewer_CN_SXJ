@@ -56,10 +56,7 @@ public class GalleryUpdateDialog {
         dialog.show();
     }
 
-    private void showChooseDialog(String url) {
-        if (choseDialog != null) {
-            choseDialog.show();
-        }
+    public void showChooseDialog(String url) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         choseDialog = builder.setTitle(R.string.gallery_update_dialog_title)
                 .setMessage(R.string.gallery_update_dialog_message)

@@ -799,6 +799,7 @@ public class DownloadsScene extends ToolbarScene
             case R.id.all:
             case R.id.sort_by_default:
             case R.id.download_done:
+            case R.id.download_not_finished:
             case R.id.not_started:
             case R.id.waiting:
             case R.id.downloading:

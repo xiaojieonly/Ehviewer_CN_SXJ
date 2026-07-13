@@ -87,6 +87,9 @@ public class DownloadListInfosExecutor {
                 case R.id.download_done:
                     resultList = filterDownloadState(DownloadInfo.STATE_FINISH);
                     break;
+                case R.id.download_not_finished:
+                    resultList = filterNotDownloadState(DownloadInfo.STATE_FINISH);
+                    break;
                 case R.id.not_started:
                     resultList = filterDownloadState(DownloadInfo.STATE_NONE);
                     break;
@@ -322,6 +325,20 @@ public class DownloadListInfosExecutor {
         for (int i = 0; i < mList.size(); i++) {
             DownloadInfo info = mList.get(i);
             if (info.state == state) {
+                list.add(info);
+            }
+        }
+        return list;
+    }
+
+    private List<DownloadInfo> filterNotDownloadState(int state) {
+        List<DownloadInfo> list = new ArrayList<>();
+        if (mList == null) {
+            return list;
+        }
+        for (int i = 0; i < mList.size(); i++) {
+            DownloadInfo info = mList.get(i);
+            if (info.state != state) {
                 list.add(info);
             }
         }

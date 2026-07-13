@@ -33,7 +33,11 @@ class GetGalleryDetailListener(
 
         // Notify success
         val scene = scene
-        scene?.onGetGalleryDetailSuccess(result)
+        if (resultMode == RESULT_UPDATE) {
+            scene?.onGetGalleryDetailUpdateSuccess(result)
+        } else {
+            scene?.onGetGalleryDetailSuccess(result)
+        }
     }
 
     override fun onFailure(e: Exception) {

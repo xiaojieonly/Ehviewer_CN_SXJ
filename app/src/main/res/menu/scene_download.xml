@@ -38,6 +38,10 @@
                         android:title="@string/download_state_downloaded"
                         app:showAsAction="ifRoom"/>
                     <item
+                        android:id="@+id/download_not_finished"
+                        android:title="@string/download_state_not_finished"
+                        app:showAsAction="ifRoom"/>
+                    <item
                         android:id="@+id/not_started"
                         android:title="@string/download_state_none"
                         app:showAsAction="ifRoom"/>

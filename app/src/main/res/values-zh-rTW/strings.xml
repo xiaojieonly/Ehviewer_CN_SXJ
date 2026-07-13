@@ -359,6 +359,7 @@
     <string name="download_state_wait">等待中</string>
     <string name="download_state_downloading">下載中</string>
     <string name="download_state_downloaded">已下載</string>
+    <string name="download_state_not_finished">未完成</string>
     <string name="download_state_failed">下載失敗</string>
     <string name="download_state_failed_2">還有 %d 尚未完成</string>
     <string name="download_state_finish">大功告成</string>
