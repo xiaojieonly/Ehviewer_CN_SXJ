@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -188,6 +189,80 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadInfoListener l : mDownloadInfoListeners) {
             l.onReplace(newInfo, oldInfo);
         }
+    }
+
+    /**
+     * 已完成的下载在详情页发现新版本时，把状态改回未完成，
+     * 提示用户可以增量更新下载
+     */
+    public void markDownloadInfoUpdated(long gid) {
+        DownloadInfo info = mAllInfoMap.get(gid);
+        if (info == null || info.state != DownloadInfo.STATE_FINISH) {
+            return;
+        }
+        info.state = DownloadInfo.STATE_NONE;
+        EhDB.putDownloadInfo(info);
+        List<DownloadInfo> list = getInfoListForLabel(info.label);
+        if (list != null) {
+            for (DownloadInfoListener l : mDownloadInfoListeners) {
+                l.onUpdate(info, list, mWaitList);
+            }
+        }
+    }
+
+    /**
+     * 用新版本画廊替换下载列表中的旧版本，并复用旧版本的下载目录：
+     * 新版本下载时按文件存在性跳过已下载页，只下载新增/缺失页
+     */
+    public void updateDownloadToNewVersion(@NonNull DownloadInfo oldInfo, @NonNull GalleryInfo newGallery) {
+        if (containDownloadInfo(newGallery.gid)) {
+            // 新版本已在下载列表中，直接开始下载
+            startDownload(newGallery, null);
+            return;
+        }
+
+        // 停止旧版本的下载
+        stopDownloadInternal(oldInfo.gid);
+
+        DownloadInfo newInfo = new DownloadInfo(newGallery);
+        newInfo.label = oldInfo.label;
+        newInfo.time = oldInfo.time == 0 ? System.currentTimeMillis() : oldInfo.time;
+        newInfo.state = DownloadInfo.STATE_NONE;
+
+        // 替换内存中的列表项并通知界面
+        replaceInfo(newInfo, oldInfo);
+
+        // 替换数据库记录
+        EhDB.removeDownloadInfo(oldInfo.gid);
+        EhDB.putDownloadInfo(newInfo);
+
+        // 目录迁移涉及 SAF 目录扫描，必须在 IO 线程执行
+        IoThreadPoolExecutor.Companion.getInstance().execute(() -> {
+            try {
+                UniFile dir = SpiderDen.getExistingGalleryDownloadDir(oldInfo);
+                String dirname = dir != null ? dir.getName() : null;
+                if (dirname != null && dir.isDirectory()) {
+                    // 把新画廊的下载目录指向旧目录，旧页文件因此被跳过
+                    EhDB.putDownloadDirname(newInfo.gid, dirname);
+                    EhDB.removeDownloadDirname(oldInfo.gid);
+                    // 旧版本的 .ehviewer 与新画廊 gid/token 不符，删除后由新画廊重新生成
+                    UniFile spiderFile = dir.findFile(DOWNLOAD_INFO_FILENAME);
+                    if (spiderFile != null) {
+                        spiderFile.delete();
+                    }
+                }
+            } catch (Exception e) {
+                // 目录复用失败仅意味着新版本从零下载，不影响数据正确性
+                Log.e(TAG, "Failed to reuse old download dir for new version", e);
+            }
+            SimpleHandler.getInstance().post(() -> {
+                Intent intent = new Intent(mContext, DownloadService.class);
+                intent.setAction(DownloadService.ACTION_START);
+                intent.putExtra(DownloadService.KEY_LABEL, newInfo.label);
+                intent.putExtra(DownloadService.KEY_GALLERY_INFO, newInfo);
+                mContext.startService(intent);
+            });
+        });
     }
 
     @Nullable
@@ -421,6 +496,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     void startRangeDownload(LongList gidList) {
         boolean update = false;
+        List<DownloadInfo> updated = new ArrayList<>(gidList.size());
         boolean downloadOrder = Settings.getDownloadOrder();
         if (downloadOrder) {
             for (int i = 0, n = gidList.size(); i < n; i++) {
@@ -439,8 +515,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     info.state = DownloadInfo.STATE_WAIT;
                     // Add to wait list
                     mWaitList.add(info);
-                    // Update in DB
-                    EhDB.putDownloadInfo(info);
+                    updated.add(info);
                 }
             }
         } else {
@@ -460,12 +535,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     info.state = DownloadInfo.STATE_WAIT;
                     // Add to wait list
                     mWaitList.add(info);
-                    // Update in DB
-                    EhDB.putDownloadInfo(info);
+                    updated.add(info);
                 }
             }
         }
 
+        // Update in DB in a single transaction
+        EhDB.putDownloadInfoList(updated);
 
         if (update) {
             // Notify Listener
@@ -482,6 +558,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         // Start all STATE_NONE and STATE_FAILED item
         LinkedList<DownloadInfo> allInfoList = mAllInfoList;
         LinkedList<DownloadInfo> waitList = mWaitList;
+        List<DownloadInfo> updated = new ArrayList<>();
         boolean downloadOrder = Settings.getDownloadOrder();
         if (downloadOrder) {
             for (DownloadInfo info : allInfoList) {
@@ -491,8 +568,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     info.state = DownloadInfo.STATE_WAIT;
                     // Add to wait list
                     waitList.add(info);
-                    // Update in DB
-                    EhDB.putDownloadInfo(info);
+                    updated.add(info);
                 }
             }
         } else {
@@ -503,12 +579,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     info.state = DownloadInfo.STATE_WAIT;
                     // Add to wait list
                     waitList.addFirst(info);
-                    // Update in DB
-                    EhDB.putDownloadInfo(info);
+                    updated.add(info);
                 }
             }
         }
 
+        // Update in DB in a single transaction
+        EhDB.putDownloadInfoList(updated);
 
         if (update) {
             // Notify Listener
@@ -521,6 +598,8 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     }
 
     public void addDownload(List<DownloadInfo> downloadInfoList) {
+        List<DownloadInfo> added = new ArrayList<>(downloadInfoList.size());
+        HashSet<String> affectedLabels = new HashSet<>();
         for (DownloadInfo info : downloadInfoList) {
             if (containDownloadInfo(info.gid)) {
                 // Contain
@@ -545,19 +624,28 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 }
             }
             list.add(info);
-            // Sort
-            Collections.sort(list, DATE_DESC_COMPARATOR);
+            affectedLabels.add(info.label);
 
             // Add to all download list and map
             mAllInfoList.add(info);
             mAllInfoMap.put(info.gid, info);
-
-            // Save to
-            EhDB.putDownloadInfo(info);
+            added.add(info);
         }
 
-        // Sort all download list
-        Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
+        if (!added.isEmpty()) {
+            // Save to DB in a single transaction
+            EhDB.putDownloadInfoList(added);
+
+            // Sort each affected label list once
+            for (String label : affectedLabels) {
+                LinkedList<DownloadInfo> list = getInfoListForLabel(label);
+                if (list != null) {
+                    Collections.sort(list, DATE_DESC_COMPARATOR);
+                }
+            }
+            // Sort all download list
+            Collections.sort(mAllInfoList, DATE_DESC_COMPARATOR);
+        }
 
         // Notify
         new Handler(Looper.getMainLooper()).post(() -> {
@@ -692,11 +780,12 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
 
     public void stopAllDownload() {
         // Stop all in wait list
-        for (DownloadInfo info : mWaitList) {
+        List<DownloadInfo> updated = new ArrayList<>(mWaitList);
+        for (DownloadInfo info : updated) {
             info.state = DownloadInfo.STATE_NONE;
-            // Update in DB
-            EhDB.putDownloadInfo(info);
         }
+        // Update in DB in a single transaction
+        EhDB.putDownloadInfoList(updated);
         mWaitList.clear();
 
         // Stop current
@@ -740,6 +829,9 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
     public void deleteRangeDownload(LongList gidList) {
         stopRangeDownloadInternal(gidList);
 
+        List<DownloadInfo> toRemove = new ArrayList<>(gidList.size());
+        HashSet<Long> gidSet = new HashSet<>();
+        HashSet<String> affectedLabels = new HashSet<>();
         for (int i = 0, n = gidList.size(); i < n; i++) {
             long gid = gidList.get(i);
             DownloadInfo info = mAllInfoMap.get(gid);
@@ -747,18 +839,34 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 Log.d(TAG, "Can't get download info with gid: " + gid);
                 continue;
             }
+            toRemove.add(info);
+            gidSet.add(gid);
+            affectedLabels.add(info.label);
+            mAllInfoMap.remove(gid);
+        }
 
-            // Remove from DB
-            EhDB.removeDownloadInfo(info.gid);
+        if (!toRemove.isEmpty()) {
+            // Remove from DB in a single transaction
+            EhDB.removeDownloadInfoList(toRemove);
 
-            // Remove from all info map
-            mAllInfoList.remove(info);
-            mAllInfoMap.remove(info.gid);
+            // Remove from all info list in one pass
+            for (Iterator<DownloadInfo> iterator = mAllInfoList.iterator(); iterator.hasNext(); ) {
+                if (gidSet.contains(iterator.next().gid)) {
+                    iterator.remove();
+                }
+            }
 
-            // Remove from label list
-            LinkedList<DownloadInfo> list = getInfoListForLabel(info.label);
-            if (list != null) {
-                list.remove(info);
+            // Remove from each affected label list in one pass
+            for (String label : affectedLabels) {
+                LinkedList<DownloadInfo> list = getInfoListForLabel(label);
+                if (list == null) {
+                    continue;
+                }
+                for (Iterator<DownloadInfo> iterator = list.iterator(); iterator.hasNext(); ) {
+                    if (gidSet.contains(iterator.next().gid)) {
+                        iterator.remove();
+                    }
+                }
             }
         }
 
@@ -884,6 +992,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             }
 
             // Check all in wait list
+            List<DownloadInfo> updated = new ArrayList<>();
             for (Iterator<DownloadInfo> iterator = mWaitList.iterator(); iterator.hasNext(); ) {
                 DownloadInfo info = iterator.next();
                 if (gidList.contains(info.gid)) {
@@ -891,10 +1000,11 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     iterator.remove();
                     // Update state
                     info.state = DownloadInfo.STATE_NONE;
-                    // Update in DB
-                    EhDB.putDownloadInfo(info);
+                    updated.add(info);
                 }
             }
+            // Update in DB in a single transaction
+            EhDB.putDownloadInfoList(updated);
         }
     }
 
@@ -913,6 +1023,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             return;
         }
 
+        List<DownloadInfo> changed = new ArrayList<>(list.size());
         for (DownloadInfo info : list) {
             if (ObjectUtils.equal(info.label, label)) {
                 continue;
@@ -927,10 +1038,13 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             srcList.remove(info);
             dstList.add(info);
             info.label = label;
-            Collections.sort(dstList, DATE_DESC_COMPARATOR);
+            changed.add(info);
+        }
 
-            // Save to DB
-            EhDB.putDownloadInfo(info);
+        if (!changed.isEmpty()) {
+            Collections.sort(dstList, DATE_DESC_COMPARATOR);
+            // Save to DB in a single transaction
+            EhDB.putDownloadInfoList(changed);
         }
 
         for (DownloadInfoListener l : mDownloadInfoListeners) {

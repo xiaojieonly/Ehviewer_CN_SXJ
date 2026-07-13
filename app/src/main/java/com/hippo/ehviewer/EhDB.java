@@ -459,18 +459,31 @@ public class EhDB {
 
     // Insert or update
     public static synchronized void putDownloadInfo(DownloadInfo downloadInfo) {
-        DownloadsDao dao = sDaoSession.getDownloadsDao();
-        if (null != dao.load(downloadInfo.gid)) {
-            // Update
-            dao.update(downloadInfo);
-        } else {
-            // Insert
-            dao.insert(downloadInfo);
+        sDaoSession.getDownloadsDao().insertOrReplace(downloadInfo);
+    }
+
+    // Insert or update in a single transaction
+    public static synchronized void putDownloadInfoList(List<DownloadInfo> downloadInfoList) {
+        if (downloadInfoList == null || downloadInfoList.isEmpty()) {
+            return;
         }
+        sDaoSession.getDownloadsDao().insertOrReplaceInTx(downloadInfoList);
     }
 
     public static synchronized void removeDownloadInfo(long gid) {
         sDaoSession.getDownloadsDao().deleteByKey(gid);
+    }
+
+    // Remove in a single transaction
+    public static synchronized void removeDownloadInfoList(List<DownloadInfo> downloadInfoList) {
+        if (downloadInfoList == null || downloadInfoList.isEmpty()) {
+            return;
+        }
+        List<Long> keys = new ArrayList<>(downloadInfoList.size());
+        for (DownloadInfo info : downloadInfoList) {
+            keys.add(info.gid);
+        }
+        sDaoSession.getDownloadsDao().deleteByKeyInTx(keys);
     }
 
     @Nullable
