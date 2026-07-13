@@ -1005,6 +1005,14 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 mHaveNewVersion.setVisibility(View.GONE);
             }
         }
+        // 已完成的下载存在新版本时，把下载状态改回未完成，提示用户增量更新。
+        // 放在 bindViewSecond：网络回调与详情缓存两条路径都会经过这里
+        Context ehContext = getEHContext();
+        if (ehContext != null && gd.newVersions != null && gd.newVersions.length > 0
+                && EhApplication.getDownloadManager(ehContext).getDownloadState(gd.gid) == DownloadInfo.STATE_FINISH) {
+            EhApplication.getDownloadManager(ehContext).markDownloadInfoUpdated(gd.gid);
+            updateDownloadState();
+        }
         if (null == mGalleryInfo) {
             mThumb.load(EhCacheKeyFactory.getThumbKey(gd.gid), gd.thumb);
         } else {
@@ -1886,12 +1894,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 mDownloadInfo.state = mDownloadState;
                 EhDB.putDownloadInfo(mDownloadInfo);
             }
-        }
-        // 已完成的下载存在新版本时，把下载状态改回未完成，提示用户增量更新
-        if (result.newVersions != null && result.newVersions.length > 0
-                && mDownloadState == DownloadInfo.STATE_FINISH) {
-            EhApplication.getDownloadManager(mContext).markDownloadInfoUpdated(result.gid);
-            updateDownloadState();
         }
         adjustViewVisibility(STATE_NORMAL, true);
         bindViewSecond();
