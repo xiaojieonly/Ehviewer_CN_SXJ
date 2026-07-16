@@ -101,6 +101,18 @@
         android:summary="@string/settings_advanced_domain_fronting_summary"
         android:title="@string/settings_advanced_domain_fronting_title" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="cf_auto_retry"
+        android:summary="@string/settings_advanced_cf_auto_retry_summary"
+        android:title="@string/settings_advanced_cf_auto_retry_title"
+        app:allowDividerAbove="true" />
+
+    <androidx.preference.EditTextPreference
+        android:key="cf_connecting_ip"
+        android:title="@string/settings_advanced_cf_connecting_ip_title"
+        android:dialogTitle="@string/settings_advanced_cf_connecting_ip_title" />
+
     <!--    <com.hippo.preference.SwitchPreference-->
     <!--        android:defaultValue="false"-->
     <!--        android:key="url_replace"-->

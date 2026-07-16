@@ -1335,6 +1335,39 @@ public class Settings {
     }
 
 
+    public static final String KEY_CF_AUTO_RETRY = "cf_auto_retry";
+
+    public static boolean getCfAutoRetry() {
+        return getBoolean(KEY_CF_AUTO_RETRY, false);
+    }
+
+    public static void putCfAutoRetry(boolean value) {
+        putBoolean(KEY_CF_AUTO_RETRY, value);
+    }
+
+    public static final String KEY_CF_CONNECTING_IP = "cf_connecting_ip";
+
+    public static String getCfConnectingIp() {
+        return getString(KEY_CF_CONNECTING_IP, null);
+    }
+
+    public static void putCfConnectingIp(String value) {
+        putString(KEY_CF_CONNECTING_IP, value);
+    }
+
+    public static String generateUsWarpIp() {
+        java.util.Random random = new java.util.Random();
+        char[] choices = {'8', 'a', 'c', 'e'};
+        char x = choices[random.nextInt(4)];
+        int cityFirstNibble = random.nextInt(10);
+        int cityRest = random.nextInt(0x1000);
+        int rand7 = random.nextInt(0x1000);
+        int rand8 = random.nextInt(0x1000);
+        return String.format("2a09:bac1:76%c0:%x%03x:0000:0000:0%03x:0%03x",
+                x, cityFirstNibble, cityRest, rand7, rand8);
+    }
+
+
     private static final String KEY_DOWNLOAD_DELAY = "download_delay";
     private static final int DEFAULT_DOWNLOAD_DELAY = 0;
 

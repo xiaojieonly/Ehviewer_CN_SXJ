@@ -98,6 +98,7 @@ import okhttp3.Cache;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.Response;
 
 public class EhApplication extends RecordingApplication {
@@ -177,6 +178,9 @@ public class EhApplication extends RecordingApplication {
         GetText.initialize(this);
         StatusCodeException.initialize(this);
         Settings.initialize(this);
+        if (Settings.getCfConnectingIp() == null) {
+            Settings.putCfConnectingIp(Settings.generateUsWarpIp());
+        }
         ArchiverDownloadCompleter.resumePendingDownloads(this);
         ReadableTime.initialize(this);
         Html.initialize(this);
@@ -402,10 +406,44 @@ public class EhApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
 //                    .dispatcher(dispatcher)
+                    .addInterceptor(chain -> {
+                        Request request = chain.request();
+                        Response response = chain.proceed(request);
+                        if ("exhentai.org".equals(request.url().host())) {
+                            boolean mysteryIgneous = false;
+                            for (String setCookie : response.headers("Set-Cookie")) {
+                                if (setCookie.contains("igneous=mystery")) {
+                                    mysteryIgneous = true;
+                                    break;
+                                }
+                            }
+                            if (mysteryIgneous && Settings.getCfAutoRetry()) {
+                                response.close();
+                                String cfIp = Settings.getCfConnectingIp();
+                                if (cfIp != null && !cfIp.isEmpty()) {
+                                    Request retryRequest = request.newBuilder()
+                                            .header("CF-Connecting-IP", cfIp)
+                                            .header("X-Retry-Igneous", "1")
+                                            .build();
+                                    response = chain.proceed(retryRequest);
+                                }
+                            }
+                        }
+                        return response;
+                    })
                     .dns(new EhHosts(application))
-                    .addNetworkInterceptor(sprocket -> {
+                    .addNetworkInterceptor(chain -> {
+                        Request request = chain.request();
+                        if (request.header("X-Retry-Igneous") != null) {
+                            String cookieHeader = request.header("Cookie");
+                            String filtered = stripCookie(cookieHeader, "igneous");
+                            request = request.newBuilder()
+                                    .removeHeader("X-Retry-Igneous")
+                                    .header("Cookie", filtered)
+                                    .build();
+                        }
                         try {
-                            return sprocket.proceed(sprocket.request());
+                            return chain.proceed(request);
                         } catch (NullPointerException e) {
                             throw new NullPointerException(e.getMessage());
                         }
@@ -637,6 +675,19 @@ public class EhApplication extends RecordingApplication {
     @NonNull
     public static String getDeveloperEmail() {
         return "xiaojieonly$foxmail.com".replace('$', '@');
+    }
+
+    private static String stripCookie(String cookieHeader, String cookieName) {
+        if (cookieHeader == null) return "";
+        StringBuilder result = new StringBuilder();
+        for (String part : cookieHeader.split(";")) {
+            String trimmed = part.trim();
+            if (!trimmed.startsWith(cookieName + "=") && !trimmed.equals(cookieName)) {
+                if (result.length() > 0) result.append("; ");
+                result.append(trimmed);
+            }
+        }
+        return result.toString();
     }
 
     public void registerActivity(Activity activity) {

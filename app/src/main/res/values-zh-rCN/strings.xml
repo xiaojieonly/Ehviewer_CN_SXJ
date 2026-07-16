@@ -699,6 +699,10 @@
     <string name="settings_advanced_domain_fronting_title">域名前置</string>
     <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁</string>
     <string name="settings_eh_refresh_igneous">刷新 IGNEOUS</string>
+    <string name="settings_advanced_cf_auto_retry_title">IGNEOUS 自动重试</string>
+    <string name="settings_advanced_cf_auto_retry_summary">igneous=mystery 时自动使用 CF-Connecting-IP 重试</string>
+    <string name="settings_advanced_cf_connecting_ip_title">CF-Connecting-IP</string>
+    <string name="settings_advanced_cf_connecting_ip_summary">CF-Connecting-IP 头内的伪装 IP 地址</string>
     <string name="settings_advanced_url_replace_title">url伪装,需关闭SNI</string>
     <string name="settings_advanced_url_replace_summary">url伪装(需重启，开启后账户功能失效)</string>
     <string name="share_favorites_dialog_title">分享收藏</string>
