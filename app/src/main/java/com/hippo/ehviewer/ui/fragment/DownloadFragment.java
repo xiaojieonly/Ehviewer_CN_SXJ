@@ -641,33 +641,37 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
     private void browseSmbFolder(String host, int port, SmbLoginMode loginMode,
             String username, String password, String share, String currentPath, boolean forBackup) {
+        ExecutorService executor = mExecutor;
+        Handler handler = mMainHandler;
+        if (executor == null || handler == null) return;
+
         ProgressDialog progress = ProgressDialog.show(requireActivity(), null,
                 getString(R.string.settings_download_smb_testing), true, false);
         String pathToShow = currentPath.isEmpty() ? "/" : currentPath;
-        new AsyncTask<Void, Void, List<String>>() {
-            String error;
-            @Override
-            protected List<String> doInBackground(Void... voids) {
-                try {
-                    SmbConfig cfg = new SmbConfig(host, port, share, currentPath, loginMode,
-                            loginMode == SmbLoginMode.PASSWORD ? username : null,
-                            loginMode == SmbLoginMode.PASSWORD ? password : null);
-                    return new SmbConnection(cfg).listFolders(currentPath);
-                } catch (Exception e) {
-                    error = e.getMessage();
-                    return null;
-                }
+
+        executor.execute(() -> {
+            List<String> result;
+            Throwable failure;
+            try {
+                SmbConfig cfg = new SmbConfig(host, port, share, currentPath, loginMode,
+                        loginMode == SmbLoginMode.PASSWORD ? username : null,
+                        loginMode == SmbLoginMode.PASSWORD ? password : null);
+                result = new SmbConnection(cfg).listFolders(currentPath);
+                failure = null;
+            } catch (Throwable e) {
+                result = null;
+                failure = e;
             }
-            @Override
-            @SuppressWarnings("unchecked")
-            protected void onPostExecute(List<String> folders) {
+            final List<String> folders = result;
+            final Throwable throwable = failure;
+            handler.post(() -> {
                 if (progress != null) {
                     try { progress.dismiss(); } catch (Exception ignored) {}
                 }
                 if (!isAdded()) return;
                 if (folders == null) {
                     Toast.makeText(requireActivity(),
-                            getString(R.string.settings_download_smb_connect_failed) + "\n" + error,
+                            getSmbErrorMessage(getResources(), throwable),
                             Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -705,8 +709,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                 showNewFolderDialog(host, port, loginMode, username, password, share, currentPath, forBackup))
                         .setNegativeButton(android.R.string.cancel, null)
                         .show();
-            }
-        }.execute();
+            });
+        });
     }
 
     private void showNewFolderDialog(String host, int port, SmbLoginMode loginMode,
