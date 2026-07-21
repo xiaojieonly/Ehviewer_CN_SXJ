@@ -361,7 +361,7 @@ public class SmbBackupService extends Service {
         if (mWakeLock == null || !mWakeLock.isHeld()) {
             PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
             mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ehviewer:smb_backup");
-            mWakeLock.acquire();
+            mWakeLock.acquire(30 * 60 * 1000L);
         }
     }
 
