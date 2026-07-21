@@ -63,13 +63,18 @@ public final class SmbUniFile extends UniFile {
         if (!isSafeName(displayName)) {
             return null;
         }
+        SmbConnection conn = null;
         try {
-            SmbConnection connection = connection();
-            connection.openOutputStream(joinPath(displayName), false).close();
+            conn = connection();
+            conn.openOutputStream(joinPath(displayName), false).close();
             return subFile(displayName);
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to create SMB file " + displayName, e);
             return null;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -78,13 +83,18 @@ public final class SmbUniFile extends UniFile {
         if (!isSafeName(displayName)) {
             return null;
         }
+        SmbConnection conn = null;
         try {
-            SmbConnection connection = connection();
-            connection.ensureDirectory(joinPath(displayName));
+            conn = connection();
+            conn.ensureDirectory(joinPath(displayName));
             return subFile(displayName);
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to create SMB directory " + displayName, e);
             return null;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -103,28 +113,46 @@ public final class SmbUniFile extends UniFile {
     @Nullable
     @Override
     public String getType() {
+        SmbConnection conn = null;
         try {
-            return connection().mimeType(mSmbUri.getPath());
+            conn = connection();
+            return conn.mimeType(mSmbUri.getPath());
         } catch (RuntimeException e) {
             return null;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
     @Override
     public boolean isDirectory() {
+        SmbConnection conn = null;
         try {
-            return connection().isDirectory(mSmbUri.getPath());
+            conn = connection();
+            return conn.isDirectory(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
     @Override
     public boolean isFile() {
+        SmbConnection conn = null;
         try {
-            return connection().isFile(mSmbUri.getPath());
+            conn = connection();
+            return conn.isFile(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -135,10 +163,16 @@ public final class SmbUniFile extends UniFile {
 
     @Override
     public long length() {
+        SmbConnection conn = null;
         try {
-            return connection().length(mSmbUri.getPath());
+            conn = connection();
+            return conn.length(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             return -1L;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -154,21 +188,33 @@ public final class SmbUniFile extends UniFile {
 
     @Override
     public boolean ensureDir() {
+        SmbConnection conn = null;
         try {
-            return connection().ensureDirectory(mSmbUri.getPath());
+            conn = connection();
+            return conn.ensureDirectory(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to ensure SMB directory " + mSmbUri.getPath(), e);
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
     @Override
     public boolean ensureFile() {
+        SmbConnection conn = null;
         try {
-            return connection().ensureFile(mSmbUri.getPath());
+            conn = connection();
+            return conn.ensureFile(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to ensure SMB file " + mSmbUri.getPath(), e);
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -183,28 +229,42 @@ public final class SmbUniFile extends UniFile {
 
     @Override
     public boolean delete() {
+        SmbConnection conn = null;
         try {
-            return connection().delete(mSmbUri.getPath());
+            conn = connection();
+            return conn.delete(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to delete SMB path " + mSmbUri.getPath(), e);
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
     @Override
     public boolean exists() {
+        SmbConnection conn = null;
         try {
-            return connection().exists(mSmbUri.getPath());
+            conn = connection();
+            return conn.exists(mSmbUri.getPath());
         } catch (IOException | RuntimeException e) {
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
     @Nullable
     @Override
     public UniFile[] listFiles() {
+        SmbConnection conn = null;
         try {
-            List<SmbEntry> entries = connection().list(mSmbUri.getPath());
+            conn = connection();
+            List<SmbEntry> entries = conn.list(mSmbUri.getPath());
             UniFile[] results = new UniFile[entries.size()];
             for (int i = 0; i < entries.size(); i++) {
                 SmbEntry entry = entries.get(i);
@@ -215,6 +275,10 @@ public final class SmbUniFile extends UniFile {
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to list SMB directory " + mSmbUri.getPath(), e);
             return null;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -244,10 +308,16 @@ public final class SmbUniFile extends UniFile {
         if (!isSafeName(displayName)) {
             return null;
         }
+        SmbConnection conn = null;
         try {
-            return connection().exists(joinPath(displayName)) ? subFile(displayName) : null;
+            conn = connection();
+            return conn.exists(joinPath(displayName)) ? subFile(displayName) : null;
         } catch (IOException | RuntimeException e) {
             return null;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 
@@ -256,11 +326,17 @@ public final class SmbUniFile extends UniFile {
         if (!isSafeName(displayName)) {
             return false;
         }
+        SmbConnection conn = null;
         try {
-            return connection().rename(mSmbUri.getPath(), displayName);
+            conn = connection();
+            return conn.rename(mSmbUri.getPath(), displayName);
         } catch (IOException | RuntimeException e) {
             Log.w(TAG, "Failed to rename SMB path " + mSmbUri.getPath(), e);
             return false;
+        } finally {
+            if (conn != null) {
+                conn.release();
+            }
         }
     }
 

@@ -767,11 +767,14 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     }
 
     private static String getSmbErrorMessage(Resources res, Throwable throwable) {
-        // Walk the cause chain to find the most specific exception
         Throwable t = throwable;
         while (t != null) {
             if (t instanceof com.hierynomus.mssmb2.SMBApiException) {
-                return res.getString(R.string.settings_download_smb_error_auth);
+                long status = ((com.hierynomus.mssmb2.SMBApiException) t).getStatusCode();
+                if (status == com.hierynomus.mserref.NtStatus.STATUS_LOGON_FAILURE.getValue()
+                        || status == com.hierynomus.mserref.NtStatus.STATUS_LOGON_TYPE_NOT_GRANTED.getValue()) {
+                    return res.getString(R.string.settings_download_smb_error_auth);
+                }
             }
             if (t instanceof java.net.ConnectException
                     || t instanceof java.net.SocketTimeoutException) {
