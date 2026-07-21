@@ -178,6 +178,10 @@ public class SmbUploadService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "SMB connection failed", e);
             failCount = total;
+        } finally {
+            if (connection != null) {
+                connection.release();
+            }
         }
 
         finish(new int[]{successCount, failCount});
