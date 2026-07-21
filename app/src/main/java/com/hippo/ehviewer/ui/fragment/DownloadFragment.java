@@ -25,6 +25,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -70,6 +72,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference.OnPreferenceChangeListener,
@@ -95,10 +99,16 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     private Preference mSmbBackupSyncAll;
     @Nullable
     private com.hippo.preference.SwitchPreference mSmbBackupEnabled;
+    @Nullable
+    private ExecutorService mExecutor;
+    private Handler mMainHandler;
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         addPreferencesFromResource(R.xml.download_settings);
+
+        mExecutor = Executors.newCachedThreadPool();
+        mMainHandler = new Handler(Looper.getMainLooper());
 
         Preference mediaScan = findPreference(Settings.KEY_MEDIA_SCAN);
         Preference downloadThread = findPreference("download_thread");
@@ -174,6 +184,15 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         if (downloadLoc != null && downloadLoc.getUri() != null
                 && "smb".equals(downloadLoc.getUri().getScheme())) {
             Toast.makeText(requireActivity(), R.string.settings_download_smb_reminder, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (mExecutor != null) {
+            mExecutor.shutdownNow();
+            mExecutor = null;
         }
     }
 
@@ -338,7 +357,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             String userValue = username.getText().toString().trim();
             String passValue = password.getText().toString().trim();
             SmbLoginMode loginMode = userValue.isEmpty() ? SmbLoginMode.ANONYMOUS : SmbLoginMode.PASSWORD;
-            new SmbTestTask(dialog, hostValue, portNumber, loginMode, userValue, passValue, false).execute();
+            new SmbTestTask(DownloadFragment.this, dialog, hostValue, portNumber, loginMode, userValue, passValue, false).execute();
         }));
         dialog.show();
     }
@@ -562,7 +581,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             String userValue = username.getText().toString().trim();
             String passValue = password.getText().toString().trim();
             SmbLoginMode loginMode = userValue.isEmpty() ? SmbLoginMode.ANONYMOUS : SmbLoginMode.PASSWORD;
-            new SmbTestTask(dialog, hostValue, portNumber, loginMode, userValue, passValue, true).execute();
+            new SmbTestTask(DownloadFragment.this, dialog, hostValue, portNumber, loginMode, userValue, passValue, true).execute();
         }));
         dialog.show();
     }
@@ -743,7 +762,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Toast.makeText(requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
     }
 
-    private class SmbTestTask extends AsyncTask<Void, Void, Throwable> {
+    private static class SmbTestTask {
+        private final WeakReference<DownloadFragment> fragmentRef;
         private final AlertDialog dialog;
         private final String host;
         private final int port;
@@ -753,8 +773,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         private final boolean forBackup;
         private ProgressDialog progress;
 
-        SmbTestTask(AlertDialog dialog, String host, int port, SmbLoginMode loginMode,
-                String username, String password, boolean forBackup) {
+        SmbTestTask(DownloadFragment fragment, AlertDialog dialog, String host, int port,
+                SmbLoginMode loginMode, String username, String password, boolean forBackup) {
+            this.fragmentRef = new WeakReference<>(fragment);
             this.dialog = dialog;
             this.host = host;
             this.port = port;
@@ -764,38 +785,45 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             this.forBackup = forBackup;
         }
 
-        @Override
-        protected void onPreExecute() {
-            progress = ProgressDialog.show(requireActivity(), null,
-                    getString(R.string.settings_download_smb_testing), true, false);
+        void execute() {
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+
+            progress = ProgressDialog.show(fragment.requireActivity(), null,
+                    fragment.getString(R.string.settings_download_smb_testing), true, false);
+
+            executor.execute(() -> {
+                Throwable result;
+                try {
+                    SmbConfig config = new SmbConfig(host, port, "IPC$", "",
+                            loginMode,
+                            loginMode == SmbLoginMode.PASSWORD ? username : null,
+                            loginMode == SmbLoginMode.PASSWORD ? password : null);
+                    new SmbConnection(config).testConnection();
+                    result = null;
+                } catch (Throwable e) {
+                    result = e;
+                }
+                final Throwable error = result;
+                handler.post(() -> onPostExecute(error));
+            });
         }
 
-        @Override
-        protected Throwable doInBackground(Void... voids) {
-            try {
-                SmbConfig config = new SmbConfig(host, port, "IPC$", "",
-                        loginMode,
-                        loginMode == SmbLoginMode.PASSWORD ? username : null,
-                        loginMode == SmbLoginMode.PASSWORD ? password : null);
-                new SmbConnection(config).testConnection();
-                return null;
-            } catch (Throwable e) {
-                return e;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Throwable throwable) {
+        private void onPostExecute(Throwable throwable) {
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
-            if (!isAdded()) return;
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || !fragment.isAdded()) return;
             if (throwable == null) {
                 dialog.dismiss();
-                showSmbShareDialog(host, port, loginMode, username, password, forBackup);
+                fragment.showSmbShareDialog(host, port, loginMode, username, password, forBackup);
             } else {
-                Toast.makeText(requireActivity(),
-                        getString(R.string.settings_download_smb_connect_failed) + "\n" + throwable.getMessage(),
+                Toast.makeText(fragment.requireActivity(),
+                        fragment.getString(R.string.settings_download_smb_connect_failed) + "\n" + throwable.getMessage(),
                         Toast.LENGTH_LONG).show();
             }
         }
@@ -1113,12 +1141,13 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     }
 
     @SuppressLint("StaticFieldLeak")
-    private static final class SmbBackupSyncAllTask extends AsyncTask<Void, Integer, int[]> {
+    private static final class SmbBackupSyncAllTask {
         private static final String TAG = "SmbBackupSyncAll";
         private static final int SMB_READ_BUFFER_BYTES = 256 * 1024;
 
         private final WeakReference<DownloadFragment> fragmentRef;
         private final boolean aggressiveMode;
+        private Handler mHandler;
         private ProgressDialog progress;
         private volatile boolean cancelled;
         private String mGalleryName = "";
@@ -1135,10 +1164,15 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             this.aggressiveMode = aggressiveMode;
         }
 
-        @Override
-        protected void onPreExecute() {
+        void execute() {
             DownloadFragment fragment = fragmentRef.get();
             if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+            mHandler = handler;
+
+            // onPreExecute equivalent (runs on main thread)
             progress = new ProgressDialog(fragment.getActivity());
             progress.setTitle(R.string.settings_download_smb_backup_syncing);
             progress.setMessage(fragment.getString(R.string.settings_download_smb_backup_scanning));
@@ -1149,10 +1183,14 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             progress.setButton(DialogInterface.BUTTON_NEGATIVE, fragment.getString(android.R.string.cancel),
                     (d, w) -> cancelled = true);
             progress.show();
+
+            executor.execute(() -> {
+                int[] result = doInBackground();
+                handler.post(() -> onPostExecute(result));
+            });
         }
 
-        @Override
-        protected int[] doInBackground(Void... voids) {
+        private int[] doInBackground() {
             DownloadFragment fragment = fragmentRef.get();
             if (fragment == null || fragment.getActivity() == null) return new int[]{0, 0};
 
@@ -1180,7 +1218,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 connection.open();
                 String basePath = config.getPath();
                 mSpeedStart = System.currentTimeMillis();
-                publishProgress(0, total);
+                postProgress(0, total);
 
                 for (int i = 0; i < total; i++) {
                     if (cancelled) break;
@@ -1193,7 +1231,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     mFileName = "";
                     mFileCurrent = 0;
                     mFileTotal = 0;
-                    publishProgress(i + 1, total);
+                    postProgress(i + 1, total);
 
                     try {
                         String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
@@ -1220,7 +1258,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                     if (connection.exists(filePath) && connection.length(filePath) == file.length()) continue;
                                     mFileName = name;
                                     mFileCurrent = ++fileIdx;
-                                    publishProgress(i + 1, total);
+                                    postProgress(i + 1, total);
                                     if (aggressiveMode && ramBufferSize > 0) {
                                         Log.d(TAG, "Using aggressive RAM-buffer upload for " + filePath
                                                 + ", threshold=" + ramBufferSize);
@@ -1255,11 +1293,14 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return new int[]{successCount, failCount};
         }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (progress == null || values.length < 2) return;
-            int current = values[0];
-            int total = values[1];
+        private void postProgress(int current, int total) {
+            if (mHandler != null) {
+                mHandler.post(() -> onProgressUpdate(current, total));
+            }
+        }
+
+        private void onProgressUpdate(int current, int total) {
+            if (progress == null) return;
             if (progress.getMax() != total) progress.setMax(total);
             progress.setProgress(current);
 
@@ -1287,8 +1328,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             progress.setMessage(msg.toString());
         }
 
-        @Override
-        protected void onPostExecute(int[] result) {
+        private void onPostExecute(int[] result) {
             if (progress != null) {
                 DownloadFragment fragment = fragmentRef.get();
                 if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
