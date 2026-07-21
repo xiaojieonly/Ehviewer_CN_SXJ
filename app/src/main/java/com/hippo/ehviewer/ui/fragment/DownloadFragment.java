@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -762,6 +763,22 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Toast.makeText(requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
     }
 
+    private static String getSmbErrorMessage(Resources res, Throwable throwable) {
+        // Walk the cause chain to find the most specific exception
+        Throwable t = throwable;
+        while (t != null) {
+            if (t instanceof com.hierynomus.mssmb2.SMBApiException) {
+                return res.getString(R.string.settings_download_smb_error_auth);
+            }
+            if (t instanceof java.net.ConnectException
+                    || t instanceof java.net.SocketTimeoutException) {
+                return res.getString(R.string.settings_download_smb_error_connect);
+            }
+            t = t.getCause();
+        }
+        return res.getString(R.string.settings_download_smb_error_generic, throwable.getMessage());
+    }
+
     private static class SmbTestTask {
         private final WeakReference<DownloadFragment> fragmentRef;
         private final AlertDialog dialog;
@@ -822,25 +839,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 dialog.dismiss();
                 fragment.showSmbShareDialog(host, port, loginMode, username, password, forBackup);
             } else {
-                String errorMessage = getSmbErrorMessage(throwable);
+                String errorMessage = getSmbErrorMessage(fragment.getResources(), throwable);
                 Toast.makeText(fragment.requireActivity(), errorMessage, Toast.LENGTH_LONG).show();
             }
-        }
-
-        private static String getSmbErrorMessage(Throwable throwable) {
-            // Walk the cause chain to find the most specific exception
-            Throwable t = throwable;
-            while (t != null) {
-                if (t instanceof com.hierynomus.mssmb2.SMBApiException) {
-                    return "认证失败，请检查用户名和密码";
-                }
-                if (t instanceof java.net.ConnectException
-                        || t instanceof java.net.SocketTimeoutException) {
-                    return "无法连接到服务器，请检查地址和网络";
-                }
-                t = t.getCause();
-            }
-            return "连接错误: " + throwable.getMessage();
         }
     }
 
