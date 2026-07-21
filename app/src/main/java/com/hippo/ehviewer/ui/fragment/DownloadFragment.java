@@ -868,33 +868,45 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 .show();
     }
 
-    private static class ImportDownloadTask extends AsyncTask<Void, Integer, Integer> {
+    private static class ImportDownloadTask {
 
         private final WeakReference<DownloadFragment> mFragment;
         private final Uri mUri;
         private ProgressDialog mProgressDialog;
+        private Handler mHandler;
 
         public ImportDownloadTask(DownloadFragment fragment, Uri uri) {
             mFragment = new WeakReference<>(fragment);
             mUri = uri;
         }
 
-        @Override
-        protected void onPreExecute() {
+        void execute() {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) {
+                return;
+            }
+            mHandler = handler;
+
+            // onPreExecute equivalent (runs on main thread)
             mProgressDialog = new ProgressDialog(fragment.getActivity());
             mProgressDialog.setTitle(R.string.settings_download_import_items);
             mProgressDialog.setIndeterminate(false);
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             mProgressDialog.setCancelable(false);
             mProgressDialog.show();
+
+            executor.execute(() -> {
+                int result = doInBackground();
+                handler.post(() -> onPostExecute(result));
+            });
         }
 
-        @Override
-        protected Integer doInBackground(Void... voids) {
+        private int doInBackground() {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || fragment.getActivity() == null || mUri == null) {
                 return 0;
@@ -920,7 +932,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 DownloadManager downloadManager = EhApplication.getDownloadManager(fragment.requireActivity());
                 int importCount = 0;
                 int total = galleryInfos.size();
-                publishProgress(0, total);
+                postProgress(0, total);
 
                 for (int i = 0; i < total; i++) {
                     GalleryInfo gi = galleryInfos.get(i);
@@ -928,7 +940,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         downloadManager.addDownload(gi, null);
                         importCount++;
                     }
-                    publishProgress(i + 1, total);
+                    postProgress(i + 1, total);
                 }
                 return importCount;
             } catch (IOException e) {
@@ -936,16 +948,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             }
         }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (mProgressDialog != null) {
-                mProgressDialog.setMax(values[1]);
-                mProgressDialog.setProgress(values[0]);
+        private void postProgress(int current, int total) {
+            if (mHandler != null) {
+                mHandler.post(() -> onProgressUpdate(current, total));
             }
         }
 
-        @Override
-        protected void onPostExecute(Integer result) {
+        private void onProgressUpdate(int current, int total) {
+            if (mProgressDialog != null) {
+                mProgressDialog.setMax(total);
+                mProgressDialog.setProgress(current);
+            }
+        }
+
+        private void onPostExecute(int result) {
             DownloadFragment fragment = mFragment.get();
             if (mProgressDialog != null) {
                 // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
