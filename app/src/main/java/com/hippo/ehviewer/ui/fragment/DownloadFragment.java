@@ -822,10 +822,25 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 dialog.dismiss();
                 fragment.showSmbShareDialog(host, port, loginMode, username, password, forBackup);
             } else {
-                Toast.makeText(fragment.requireActivity(),
-                        fragment.getString(R.string.settings_download_smb_connect_failed) + "\n" + throwable.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                String errorMessage = getSmbErrorMessage(throwable);
+                Toast.makeText(fragment.requireActivity(), errorMessage, Toast.LENGTH_LONG).show();
             }
+        }
+
+        private static String getSmbErrorMessage(Throwable throwable) {
+            // Walk the cause chain to find the most specific exception
+            Throwable t = throwable;
+            while (t != null) {
+                if (t instanceof com.hierynomus.mssmb2.SMBApiException) {
+                    return "认证失败，请检查用户名和密码";
+                }
+                if (t instanceof java.net.ConnectException
+                        || t instanceof java.net.SocketTimeoutException) {
+                    return "无法连接到服务器，请检查地址和网络";
+                }
+                t = t.getCause();
+            }
+            return "连接错误: " + throwable.getMessage();
         }
     }
 
