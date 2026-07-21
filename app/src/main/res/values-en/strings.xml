@@ -588,6 +588,9 @@
     <string name="settings_download_smb_testing">Testing SMB location</string>
     <string name="settings_download_smb_connected">SMB location saved</string>
     <string name="settings_download_smb_connect_failed">Failed to connect or write SMB location</string>
+    <string name="settings_download_smb_error_auth">Authentication failed. Please check your username and password.</string>
+    <string name="settings_download_smb_error_connect">Cannot connect to server. Please check the address and network.</string>
+    <string name="settings_download_smb_error_generic">Connection error: %s</string>
     <string name="settings_download_smb_invalid_config">Invalid SMB configuration</string>
     <string name="settings_download_smb_backup">SMB backup</string>
     <string name="settings_download_smb_backup_summary">Sync downloads to SMB server as backup</string>
