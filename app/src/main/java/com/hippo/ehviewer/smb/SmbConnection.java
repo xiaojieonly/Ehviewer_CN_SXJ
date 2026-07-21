@@ -519,7 +519,7 @@ public final class SmbConnection {
 
     private static void copyToOutputStream(InputStream source, OutputStream os,
             @Nullable Runnable onChunk) throws IOException {
-        byte[] buf = new byte[8192];
+        byte[] buf = new byte[256 * 1024];
         int n;
         while ((n = source.read(buf)) != -1) {
             os.write(buf, 0, n);
