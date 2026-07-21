@@ -600,6 +600,8 @@
     <string name="settings_download_download_origin_image_summary">这很危险！勾选此项会导致下载配额与GP迅速流失</string>
     <string name="settings_download_download_order_by_asc">正序下载</string>
     <string name="settings_download_download_order_by_asc_summary">下载全部画廊时正序下载</string>
+    <string name="settings_download_sync_while_reading">观看时同步下载</string>
+    <string name="settings_download_sync_while_reading_summary">在浏览未下载画廊时，自动将浏览到的图片保存到下载目录</string>
     <string name="settings_download_media_scan">允许媒体扫描</string>
     <string name="settings_download_media_scan_summary_on">请避免他人翻看你的图库应用</string>
     <string name="settings_download_media_scan_summary_off">大多数图库应用将不会显示下载目录中的图片</string>
@@ -890,6 +892,14 @@
     <string name="wifi_send_bookmark">迁移书签</string>
     <string name="wifi_send_favorite">迁移本地收藏</string>
     <string name="wifi_send_download">迁移下载数据</string>
+    <string name="wifi_send_download_location">迁移下载目录</string>
+    <string name="wifi_download_dir_empty">未找到可迁移的画廊文件夹</string>
+    <string name="wifi_download_dir_no_location">本机未设置下载目录</string>
+    <string name="wifi_download_dir_migrating">正在迁移 %1$s（%2$d/%3$d 个文件）</string>
+    <string name="wifi_download_dir_manifest_received">%1$s（%2$d/%3$d）：跳过 %4$d，待传 %5$d</string>
+    <string name="wifi_download_dir_file_done">已接收文件：%s</string>
+    <string name="wifi_download_dir_files_progress">已接收 %d 个文件</string>
+    <string name="wifi_download_dir_file_failed">文件校验失败，已丢弃</string>
     <string name="wifi_send_done">该项数据迁移完毕</string>
     <string name="wifi_send_start">开始迁移%s</string>
     <string name="wifi_send_stop">暂停迁移%s</string>

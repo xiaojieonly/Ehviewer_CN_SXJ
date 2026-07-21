@@ -209,8 +209,25 @@ public final class SpiderQueen implements Runnable {
         return queen;
     }
 
-    @UiThread
+//    @UiThread
+//    public static int findStartPage(@NonNull Context context, @NonNull GalleryInfo galleryInfo) {
+//        Log.e("StartTime",System.currentTimeMillis()+"");
+//        SpiderInfo fromDownload = SpiderInfo.getSpiderInfo(galleryInfo);
+//        SpiderInfo fromCache = readSpiderInfoFromCache(context, galleryInfo.gid);
+//
+//        int startPage = 0;
+//        if (isValidSpiderInfo(fromDownload, galleryInfo)) {
+//            startPage = fromDownload.startPage;
+//        }
+//        if (isValidSpiderInfo(fromCache, galleryInfo)) {
+//            startPage = Math.max(startPage, fromCache.startPage);
+//        }
+//        Log.e("EndTime",System.currentTimeMillis()+"");
+//        return startPage;
+//    }
+
     public static int findStartPage(@NonNull Context context, @NonNull GalleryInfo galleryInfo) {
+        Log.e("StartTime",System.currentTimeMillis()+"");
         SpiderInfo spiderInfo = null;
         SimpleDiskCache msic;
         EhApplication application = (EhApplication) context.getApplicationContext();
@@ -233,7 +250,33 @@ public final class SpiderQueen implements Runnable {
         if (spiderInfo != null) {
             startPage = spiderInfo.startPage;
         }
+        Log.e("EndTime",System.currentTimeMillis()+"");
         return startPage;
+    }
+
+    @Nullable
+    private static SpiderInfo readSpiderInfoFromCache(@NonNull Context context, long gid) {
+        EhApplication application = (EhApplication) context.getApplicationContext();
+        SimpleDiskCache cache = EhApplication.getSpiderInfoCache(application);
+        InputStreamPipe pipe = cache.getInputStreamPipe(Long.toString(gid));
+        if (pipe == null) {
+            return null;
+        }
+        try {
+            pipe.obtain();
+            return SpiderInfo.read(pipe.open());
+        } catch (IOException ignore) {
+            return null;
+        } finally {
+            pipe.close();
+            pipe.release();
+        }
+    }
+
+    private static boolean isValidSpiderInfo(@Nullable SpiderInfo spiderInfo,
+            @NonNull GalleryInfo galleryInfo) {
+        return spiderInfo != null && spiderInfo.gid == galleryInfo.gid
+                && TextUtils.equals(spiderInfo.token, galleryInfo.token);
     }
 
     @UiThread
@@ -721,13 +764,20 @@ public final class SpiderQueen implements Runnable {
 
     @SuppressLint("StaticFieldLeak")
     public void putStartPage(int page) {
-        final SpiderInfo spiderInfo = mSpiderInfo.get();
+        SpiderInfo spiderInfo = mSpiderInfo.get();
+        if (spiderInfo == null) {
+            spiderInfo = readSpiderInfoFromLocal();
+            if (spiderInfo != null) {
+                mSpiderInfo.lazySet(spiderInfo);
+            }
+        }
         if (spiderInfo != null) {
             spiderInfo.startPage = page;
+            final SpiderInfo infoToWrite = spiderInfo;
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
-                    writeSpiderInfoToLocal(spiderInfo);
+                    writeSpiderInfoToLocal(infoToWrite);
                     return null;
                 }
             }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
@@ -740,36 +790,46 @@ public final class SpiderQueen implements Runnable {
             return spiderInfo;
         }
 
-        // Read from download dir
+        SpiderInfo fromDownload = null;
         UniFile downloadDir = mSpiderDen.getDownloadDir();
         if (downloadDir != null) {
             UniFile file = downloadDir.findFile(SPIDER_INFO_FILENAME);
-            spiderInfo = SpiderInfo.read(file);
-            if (spiderInfo != null && spiderInfo.gid == mGalleryInfo.gid &&
-                    spiderInfo.token.equals(mGalleryInfo.token)) {
-                return spiderInfo;
+            SpiderInfo read = SpiderInfo.read(file);
+            if (isValidSpiderInfo(read, mGalleryInfo)) {
+                fromDownload = read;
             }
         }
 
-        // Read from cache
-        InputStreamPipe pipe = mSpiderInfoCache.getInputStreamPipe(Long.toString(mGalleryInfo.gid));
-        if (null != pipe) {
-            try {
-                pipe.obtain();
-                spiderInfo = SpiderInfo.read(pipe.open());
-                if (spiderInfo != null && spiderInfo.gid == mGalleryInfo.gid &&
-                        spiderInfo.token.equals(mGalleryInfo.token)) {
-                    return spiderInfo;
-                }
-            } catch (IOException e) {
-                // Ignore
-            } finally {
-                pipe.close();
-                pipe.release();
-            }
+        SpiderInfo fromCache = readSpiderInfoFromCache(mGalleryInfo.gid);
+        if (!isValidSpiderInfo(fromCache, mGalleryInfo)) {
+            fromCache = null;
         }
 
-        return null;
+        if (fromDownload == null) {
+            return fromCache;
+        }
+        if (fromCache == null) {
+            return fromDownload;
+        }
+        fromDownload.startPage = Math.max(fromDownload.startPage, fromCache.startPage);
+        return fromDownload;
+    }
+
+    @Nullable
+    private SpiderInfo readSpiderInfoFromCache(long gid) {
+        InputStreamPipe pipe = mSpiderInfoCache.getInputStreamPipe(Long.toString(gid));
+        if (pipe == null) {
+            return null;
+        }
+        try {
+            pipe.obtain();
+            return SpiderInfo.read(pipe.open());
+        } catch (IOException e) {
+            return null;
+        } finally {
+            pipe.close();
+            pipe.release();
+        }
     }
 
     private void readPreviews(String body, int index, SpiderInfo spiderInfo) throws ParseException {
@@ -862,7 +922,7 @@ public final class SpiderQueen implements Runnable {
     }
 
     private synchronized void writeSpiderInfoToLocal(@NonNull SpiderInfo spiderInfo) {
-        // Write to download dir
+        // Sync reading progress into an existing download folder; does not create one.
         UniFile downloadDir = mSpiderDen.getDownloadDir();
         if (downloadDir != null) {
             UniFile file = downloadDir.createFile(SPIDER_INFO_FILENAME);
@@ -874,7 +934,7 @@ public final class SpiderQueen implements Runnable {
             }
         }
 
-        // Read from cache
+        // Write to cache
         OutputStreamPipe pipe = mSpiderInfoCache.getOutputStreamPipe(Long.toString(mGalleryInfo.gid));
         try {
             pipe.obtain();

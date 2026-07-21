@@ -734,6 +734,8 @@
     <string name="settings_download_download_origin_image_summary">It is dangerous! You may get 509 error</string>
     <string name="settings_download_download_order_by_asc">Download order by asc</string>
     <string name="settings_download_download_order_by_asc_summary">Download in sequence when downloading all galleries</string>
+    <string name="settings_download_sync_while_reading">Sync download while reading</string>
+    <string name="settings_download_sync_while_reading_summary">When browsing an undownloaded gallery, automatically save viewed images to the download directory</string>
     <string name="settings_download_restore_download_items">Restore download items</string>
     <string name="settings_download_restore_download_items_summary">Restore all download items in download location</string>
     <string name="settings_download_restoring">Restoring</string>
@@ -1016,6 +1018,14 @@
     <string name="wifi_send_bookmark">Migrate bookmarks</string>
     <string name="wifi_send_favorite">Migrate favorite</string>
     <string name="wifi_send_download">Migrate download data</string>
+    <string name="wifi_send_download_location">Migrate download directory</string>
+    <string name="wifi_download_dir_empty">No downloadable gallery folders found</string>
+    <string name="wifi_download_dir_no_location">Download directory is not set on this device</string>
+    <string name="wifi_download_dir_migrating">Migrating %1$s (%2$d/%3$d files)</string>
+    <string name="wifi_download_dir_manifest_received">%1$s (%2$d/%3$d): skip %4$d, transfer %5$d</string>
+    <string name="wifi_download_dir_file_done">File received: %s</string>
+    <string name="wifi_download_dir_files_progress">Received %d files</string>
+    <string name="wifi_download_dir_file_failed">File checksum failed, discarded</string>
     <string name="wifi_send_done">Migrate data done</string>
     <string name="wifi_send_start">Start Migrate%s</string>
     <string name="wifi_send_stop">Stop Migrate%s</string>

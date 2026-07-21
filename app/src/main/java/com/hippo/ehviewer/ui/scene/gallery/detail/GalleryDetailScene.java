@@ -686,6 +686,15 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        GalleryInfo info = getGalleryInfo();
+        if (info != null && mGalleryDetail != null && mPages != null) {
+            bindReadProgress(info);
+        }
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
 

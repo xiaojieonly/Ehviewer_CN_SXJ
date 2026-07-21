@@ -27,6 +27,9 @@
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:name=".EhApplication"
@@ -179,7 +182,7 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:configChanges="screenSize|uiMode"
-            android:theme="@style/AppTheme.Toolbar" />
+            android:theme="@style/AppTheme.Settings" />
         <activity
             android:name=".ui.SmbBackupProgressActivity"
             android:configChanges="screenSize|uiMode"
