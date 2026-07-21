@@ -50,6 +50,8 @@ public final class SmbConnection {
             SMB2ShareAccess.FILE_SHARE_WRITE,
             SMB2ShareAccess.FILE_SHARE_DELETE);
 
+    private static final int MAX_POOL_SIZE = 4;
+
     private static final java.util.concurrent.ConcurrentHashMap<String, SmbConnection> sPool =
             new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -59,17 +61,36 @@ public final class SmbConnection {
 
     public static SmbConnection obtain(SmbConfig config) throws IOException {
         String key = poolKey(config);
-        SmbConnection conn = sPool.get(key);
-        if (conn != null) {
-            if (conn.mPersistentShare != null) {
-                return conn;
-            }
-            sPool.remove(key);
+        SmbConnection conn = sPool.computeIfAbsent(key, k -> {
+            if (sPool.size() >= MAX_POOL_SIZE) return null;
+            return new SmbConnection(config);
+        });
+        if (conn == null) {
+            // Pool is full, create a non-pooled connection
+            conn = new SmbConnection(config);
+            conn.open();
+            return conn;
         }
-        conn = new SmbConnection(config);
-        conn.open();
-        sPool.put(key, conn);
+        try {
+            conn.open();
+        } catch (IOException e) {
+            sPool.remove(key, conn);
+            throw e;
+        }
+        if (!conn.isHealthy()) {
+            sPool.remove(key, conn);
+            conn.close();
+            conn = new SmbConnection(config);
+            conn.open();
+            sPool.put(key, conn);
+        }
         return conn;
+    }
+
+    private boolean isHealthy() {
+        return mPersistentShare != null
+                && mPersistentConnection != null
+                && mPersistentConnection.isConnected();
     }
 
     private final SmbConfig config;
