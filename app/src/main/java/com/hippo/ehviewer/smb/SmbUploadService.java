@@ -31,6 +31,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.MainActivity;
 
 import java.io.BufferedInputStream;
@@ -89,15 +90,15 @@ public class SmbUploadService extends Service {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    "SMB 上传",
+                    getString(R.string.smb_upload_service_name),
                     NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription("SMB 文件上传进度");
+            channel.setDescription(getString(R.string.smb_upload_service_desc));
             mNotifyManager.createNotificationChannel(channel);
         }
 
         mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_popup_sync)
-                .setContentTitle("SMB 上传中...")
+                .setContentTitle(getString(R.string.settings_download_smb_upload_syncing))
                 .setOngoing(true)
                 .setOnlyAlertOnce(true);
 
@@ -156,7 +157,7 @@ public class SmbUploadService extends Service {
         try {
             connection = SmbConnection.obtain(config);
             String basePath = config.getPath();
-            updateNotification(0, total, "扫描中...", 0);
+            updateNotification(0, total, getString(R.string.settings_download_smb_upload_scanning), 0);
 
             for (int i = 0; i < total; i++) {
                 if (mCancelled) break;
@@ -261,7 +262,7 @@ public class SmbUploadService extends Service {
 
         if (result != null) {
             mBuilder.setProgress(0, 0, false)
-                    .setContentText(String.format(Locale.US, "上传完成: %d 成功, %d 失败", result[0], result[1]))
+                    .setContentText(getString(R.string.settings_download_smb_upload_sync_done, result[0], result[1]))
                     .setOngoing(false)
                     .setAutoCancel(true);
             mNotifyManager.notify(NOTIFICATION_ID, mBuilder.build());

@@ -686,7 +686,6 @@
     <string name="settings_download_smb_connect">连接并保存</string>
     <string name="settings_download_smb_testing">正在测试 SMB 连接</string>
     <string name="settings_download_smb_connected">SMB 位置已保存</string>
-    <string name="settings_download_smb_connect_failed">连接或写入 SMB 位置失败</string>
     <string name="settings_download_smb_error_auth">认证失败，请检查用户名和密码</string>
     <string name="settings_download_smb_error_connect">无法连接到服务器，请检查地址和网络</string>
     <string name="settings_download_smb_error_generic">连接错误：%s</string>
@@ -698,6 +697,11 @@
     <string name="settings_download_smb_backup_syncing">正在同步到 SMB 备份…</string>
     <string name="settings_download_smb_backup_scanning">正在扫描下载内容…</string>
     <string name="settings_download_smb_backup_sync_done">同步完成：%1$d 项成功，%2$d 项失败</string>
+    <string name="smb_upload_service_name">SMB 上传</string>
+    <string name="smb_upload_service_desc">SMB 文件上传进度</string>
+    <string name="settings_download_smb_upload_syncing">SMB 上传中...</string>
+    <string name="settings_download_smb_upload_sync_done">上传完成: %1$d 成功, %2$d 失败</string>
+    <string name="settings_download_smb_upload_scanning">扫描中...</string>
     <string name="settings_download_smb_backup_sync_failed">同步失败</string>
     <string name="settings_download_smb_backup_not_configured">SMB 备份未配置</string>
     <string name="settings_download_smb_backup_configured">已配置：%s</string>

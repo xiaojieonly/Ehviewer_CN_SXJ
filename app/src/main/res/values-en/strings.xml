@@ -587,7 +587,6 @@
     <string name="settings_download_smb_connect">Connect and save</string>
     <string name="settings_download_smb_testing">Testing SMB location</string>
     <string name="settings_download_smb_connected">SMB location saved</string>
-    <string name="settings_download_smb_connect_failed">Failed to connect or write SMB location</string>
     <string name="settings_download_smb_error_auth">Authentication failed. Please check your username and password.</string>
     <string name="settings_download_smb_error_connect">Cannot connect to server. Please check the address and network.</string>
     <string name="settings_download_smb_error_generic">Connection error: %s</string>
@@ -599,6 +598,11 @@
     <string name="settings_download_smb_backup_syncing">Syncing to SMB backup…</string>
     <string name="settings_download_smb_backup_scanning">Scanning downloads…</string>
     <string name="settings_download_smb_backup_sync_done">Sync completed: %1$d succeeded, %2$d failed</string>
+    <string name="smb_upload_service_name">SMB Upload</string>
+    <string name="smb_upload_service_desc">SMB file upload progress</string>
+    <string name="settings_download_smb_upload_syncing">SMB uploading...</string>
+    <string name="settings_download_smb_upload_sync_done">Upload complete: %1$d succeeded, %2$d failed</string>
+    <string name="settings_download_smb_upload_scanning">Scanning...</string>
     <string name="settings_download_smb_backup_sync_failed">Sync failed</string>
     <string name="settings_download_smb_backup_not_configured">SMB backup is not configured</string>
     <string name="settings_download_smb_backup_configured">Configured: %s</string>

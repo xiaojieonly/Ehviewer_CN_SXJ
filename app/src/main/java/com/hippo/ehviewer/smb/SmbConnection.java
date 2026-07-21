@@ -62,34 +62,37 @@ public final class SmbConnection {
 
     public static SmbConnection obtain(SmbConfig config) throws IOException {
         String key = poolKey(config);
-        SmbConnection conn = sPool.computeIfAbsent(key, k -> {
-            if (sPool.size() >= MAX_POOL_SIZE) return null;
-            SmbConnection pooled = new SmbConnection(config);
-            pooled.mPooled = true;
-            return pooled;
-        });
-        if (conn == null) {
-            // Pool is full, create a non-pooled connection
-            conn = new SmbConnection(config);
-            conn.mPooled = false;
-            conn.open();
-            return conn;
-        }
-        try {
-            conn.open();
-        } catch (IOException e) {
-            sPool.remove(key, conn);
-            throw e;
-        }
-        if (!conn.isHealthy()) {
-            sPool.remove(key, conn);
-            conn.close();
+        synchronized (SmbConnection.class) {
+            SmbConnection conn = sPool.get(key);
+            if (conn != null && conn.isHealthy()) {
+                return conn;
+            }
+            if (conn != null) {
+                sPool.remove(key);
+                conn.close();
+            }
+            if (sPool.size() >= MAX_POOL_SIZE) {
+                conn = new SmbConnection(config);
+                conn.mPooled = false;
+                try {
+                    conn.open();
+                } catch (IOException e) {
+                    conn.close();
+                    throw e;
+                }
+                return conn;
+            }
             conn = new SmbConnection(config);
             conn.mPooled = true;
-            conn.open();
+            try {
+                conn.open();
+            } catch (IOException e) {
+                conn.close();
+                throw e;
+            }
             sPool.put(key, conn);
+            return conn;
         }
-        return conn;
     }
 
     private boolean isHealthy() {
