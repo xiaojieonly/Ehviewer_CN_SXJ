@@ -687,6 +687,9 @@
     <string name="settings_download_smb_testing">正在测试 SMB 连接</string>
     <string name="settings_download_smb_connected">SMB 位置已保存</string>
     <string name="settings_download_smb_connect_failed">连接或写入 SMB 位置失败</string>
+    <string name="settings_download_smb_error_auth">认证失败，请检查用户名和密码</string>
+    <string name="settings_download_smb_error_connect">无法连接到服务器，请检查地址和网络</string>
+    <string name="settings_download_smb_error_generic">连接错误：%s</string>
     <string name="settings_download_smb_invalid_config">SMB 配置无效</string>
     <string name="settings_download_smb_backup">SMB 备份</string>
     <string name="settings_download_smb_backup_summary">将下载内容同步到 SMB 服务器作为备份</string>
