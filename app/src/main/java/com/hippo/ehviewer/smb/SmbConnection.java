@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public final class SmbConnection {
 
@@ -106,7 +107,7 @@ public final class SmbConnection {
 
     public synchronized void open() throws IOException {
         if (mPersistentShare != null) return;
-        mPersistentClient = new SMBClient();
+        mPersistentClient = createClient();
         mPersistentConnection = mPersistentClient.connect(config.getHost(), config.getPort());
         Session session = mPersistentConnection.authenticate(authenticationContext());
         mPersistentShare = (DiskShare) session.connectShare(config.getShare());
@@ -397,7 +398,7 @@ public final class SmbConnection {
     }
 
     public void testConnection() throws IOException {
-        SMBClient client = new SMBClient();
+        SMBClient client = createClient();
         Connection connection = null;
         try {
             connection = client.connect(config.getHost(), config.getPort());
@@ -411,7 +412,7 @@ public final class SmbConnection {
     }
 
     private DiskShare openShare() throws IOException {
-        SMBClient client = new SMBClient();
+        SMBClient client = createClient();
         Connection connection = null;
         try {
             connection = client.connect(config.getHost(), config.getPort());
@@ -425,6 +426,15 @@ public final class SmbConnection {
             closeQuietly(client);
             throw e;
         }
+    }
+
+    private static SMBClient createClient() {
+        com.hierynomus.smbj.SmbConfig smbConfig = com.hierynomus.smbj.SmbConfig.builder()
+                .withConnectTimeout(10, TimeUnit.SECONDS)
+                .withReadTimeout(30, TimeUnit.SECONDS)
+                .withTimeout(30, TimeUnit.SECONDS)
+                .build();
+        return new SMBClient(smbConfig);
     }
 
     private AuthenticationContext authenticationContext() {
