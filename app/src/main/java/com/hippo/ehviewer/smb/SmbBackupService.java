@@ -21,10 +21,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -70,7 +68,6 @@ public class SmbBackupService extends Service {
     private volatile boolean mCancelled;
     private volatile boolean mAggressive;
     private Intent mLastStartIntent;
-    private BroadcastReceiver mScreenStateReceiver;
 
     public static boolean isRunning() {
         return sRunning.get();
@@ -143,7 +140,6 @@ public class SmbBackupService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_CANCEL.equals(intent.getAction())) {
             mCancelled = true;
-            unregisterScreenStateReceiver();
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -154,7 +150,6 @@ public class SmbBackupService extends Service {
             mLastStartIntent = intent != null ? new Intent(intent) : null;
             startForeground(NOTIFICATION_ID, mBuilder.build());
             acquireWakeLock();
-            registerScreenStateReceiver();
             mExecutor.execute(this::doSync);
         } else {
             stopSelf();
@@ -334,7 +329,6 @@ public class SmbBackupService extends Service {
     }
 
     private void finish(int[] result) {
-        unregisterScreenStateReceiver();
         releaseWakeLock();
         sRunning.set(false);
         clearProgressSnapshot();
@@ -381,49 +375,12 @@ public class SmbBackupService extends Service {
     @Override
     public void onDestroy() {
         mCancelled = true;
-        unregisterScreenStateReceiver();
         clearProgressSnapshot();
         releaseWakeLock();
         if (mExecutor != null) {
             mExecutor.shutdownNow();
         }
         super.onDestroy();
-    }
-
-    private void registerScreenStateReceiver() {
-        if (mScreenStateReceiver != null) return;
-        mScreenStateReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                    Log.d(TAG, "Screen off - ensuring WakeLock is held");
-                    acquireWakeLock();
-                } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                    Log.d(TAG, "Screen on - ensuring WakeLock is held");
-                    acquireWakeLock();
-                }
-            }
-        };
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(Intent.ACTION_SCREEN_ON);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(mScreenStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(mScreenStateReceiver, filter);
-        }
-    }
-
-    private void unregisterScreenStateReceiver() {
-        if (mScreenStateReceiver != null) {
-            try {
-                unregisterReceiver(mScreenStateReceiver);
-            } catch (Exception e) {
-                Log.w(TAG, "Failed to unregister screen state receiver", e);
-            }
-            mScreenStateReceiver = null;
-        }
     }
 
     private void updateProgressSnapshot(int current, int total, String text, int speedBps) {
