@@ -430,7 +430,7 @@ public final class SmbConnection {
 
     private static SMBClient createClient() {
         com.hierynomus.smbj.SmbConfig smbConfig = com.hierynomus.smbj.SmbConfig.builder()
-                .withConnectTimeout(10, TimeUnit.SECONDS)
+                .withSoTimeout(10, TimeUnit.SECONDS)
                 .withReadTimeout(30, TimeUnit.SECONDS)
                 .withTimeout(30, TimeUnit.SECONDS)
                 .build();
