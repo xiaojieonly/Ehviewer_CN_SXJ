@@ -6,10 +6,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.client.data.wifi.WiFiDataHand;
 
-import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,12 +20,15 @@ import java.net.Socket;
 
 public class ConnectThread extends Thread {
 
-    public static final int DEVICE_CONNECTING = 1;//有设备正在连接热点
-    public static final int DEVICE_CONNECTED = 2;//有设备连上热点
-    public static final int DEVICE_DISCONNECTED = 3;//有设备连上热点
-    public static final int SEND_MSG_SUCCESS = 4;//发送消息成功
-    public static final int SEND_MSG_ERROR = 5;//发送消息失败
-    public static final int GET_MSG = 6;//获取新消息
+    public static final int DEVICE_CONNECTING = 1;
+    public static final int DEVICE_CONNECTED = 2;
+    public static final int DEVICE_DISCONNECTED = 3;
+    public static final int SEND_MSG_SUCCESS = 4;
+    public static final int SEND_MSG_ERROR = 5;
+    public static final int GET_MSG = 6;
+    public static final int GET_FILE_CHUNK = 7;
+    public static final int GET_DIR_MANIFEST = 8;
+    public static final int GET_DIR_ACK = 9;
 
     public static final int IS_SERVER = 101;
     public static final int IS_CLIENT = 102;
@@ -36,15 +42,32 @@ public class ConnectThread extends Thread {
 
     public static final int DATA_TYPE_FAVORITE_INFO = 1004;
     public static final String FAVORITE_INFO_DATA_KEY = "favorite_info";
+
+    public static final int DATA_TYPE_DOWNLOAD_DIR_MANIFEST = 1005;
+    public static final int DATA_TYPE_DOWNLOAD_DIR_ACK = 1006;
+    public static final int DATA_TYPE_DOWNLOAD_DIR_FILE = 1007;
+
     private final Socket socket;
     private final Handler handler;
     private final int connectKind;
     private OutputStream outputStream;
     Context context;
 
-    private boolean processed = true;
-
     private boolean close = false;
+
+    private final Object sendLock = new Object();
+
+    @Nullable
+    private volatile FileChunkReceiver fileChunkReceiver;
+
+    /** 在读取线程同步处理文件块，避免主线程队列堆积大对象。 */
+    public interface FileChunkReceiver {
+        void onFileChunk(@NonNull WiFiDownloadMigrationHelper.FileChunk chunk);
+    }
+
+    public void setFileChunkReceiver(@Nullable FileChunkReceiver receiver) {
+        this.fileChunkReceiver = receiver;
+    }
 
     public ConnectThread(Context context, Socket socket, Handler handler, int connectKind) {
         setName("ConnectThread");
@@ -65,105 +88,161 @@ public class ConnectThread extends Thread {
             InputStream inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
 
-            while (!isInterrupted()) {
-                //获取数据流
-                WiFiDataHand wiFiDataHand = isToResponse(inputStream);
+            while (!isInterrupted() && !close) {
+                WiFiFrame frame = readNextFrame(inputStream);
                 if (close) {
                     break;
                 }
-                if (wiFiDataHand != null) {
-                    if (connectKind == IS_CLIENT) {
-                        solveTheData(wiFiDataHand);
-                    } else {
-                        sendNextData(wiFiDataHand);
-                    }
+                if (frame != null) {
+                    dispatchFrame(frame);
                 }
             }
-            socket.close();
         } catch (IOException e) {
-            Analytics.recordException(e);
+            if (!close) {
+                Analytics.recordException(e);
+            }
+        } finally {
+            close = true;
+            try {
+                if (!socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException ignored) {
+            }
+            handler.sendEmptyMessage(DEVICE_DISCONNECTED);
         }
     }
 
-    private void sendNextData(WiFiDataHand wiFiDataHand) {
-        if (wiFiDataHand.messageType != WiFiDataHand.RECEIVED) {
-            return;
+    @Nullable
+    private WiFiFrame readNextFrame(InputStream inputStream) {
+        try {
+            return WiFiFrameCodec.readFrame(inputStream);
+        } catch (EOFException e) {
+            Log.i("ConnectThread", "Connection closed by peer");
+            close = true;
+            return null;
+        } catch (IOException e) {
+            if (!close && !socket.isClosed() && !isInterrupted()) {
+                Analytics.recordException(e);
+            }
+            close = true;
+            return null;
         }
-        Message message = Message.obtain();
-        message.what = SEND_MSG_SUCCESS;
-        Bundle bundle = new Bundle();
-        bundle.putString("MSG", wiFiDataHand.toString());
-        message.setData(bundle);
-        handler.sendMessage(message);
     }
 
-    private void solveTheData(WiFiDataHand wiFiDataHand) {
-        if (wiFiDataHand.messageType != WiFiDataHand.SEND) {
-            return;
+    private void dispatchFrame(@NonNull WiFiFrame frame) {
+        if (connectKind == IS_CLIENT) {
+            if (frame.messageType != WiFiDataHand.SEND) {
+                return;
+            }
+            if (frame.dataType == DATA_TYPE_DOWNLOAD_DIR_FILE) {
+                WiFiDownloadMigrationHelper.FileChunk chunk =
+                        WiFiFrameCodec.decodeFileChunk(frame);
+                if (chunk != null) {
+                    FileChunkReceiver receiver = fileChunkReceiver;
+                    if (receiver != null) {
+                        receiver.onFileChunk(chunk);
+                    } else {
+                        Message message = Message.obtain();
+                        message.what = GET_FILE_CHUNK;
+                        message.obj = chunk;
+                        handler.sendMessage(message);
+                    }
+                }
+            } else if (frame.dataType == DATA_TYPE_DOWNLOAD_DIR_MANIFEST) {
+                WiFiDownloadMigrationHelper.DirManifest manifest =
+                        WiFiFrameCodec.decodeManifest(frame);
+                if (manifest != null) {
+                    Message message = Message.obtain();
+                    message.what = GET_DIR_MANIFEST;
+                    message.obj = manifest;
+                    handler.sendMessage(message);
+                }
+            } else {
+                WiFiDataHand hand = WiFiFrameCodec.decodeDataHand(frame);
+                deliverDataHand(hand);
+            }
+        } else {
+            if (frame.messageType != WiFiDataHand.RECEIVED) {
+                return;
+            }
+            if (frame.dataType == DATA_TYPE_DOWNLOAD_DIR_ACK) {
+                WiFiDownloadMigrationHelper.DirAck ack = WiFiFrameCodec.decodeAck(frame);
+                if (ack != null) {
+                    Message message = Message.obtain();
+                    message.what = GET_DIR_ACK;
+                    message.obj = ack;
+                    handler.sendMessage(message);
+                }
+            } else {
+                WiFiDataHand hand = WiFiFrameCodec.decodeDataHand(frame);
+                Message message = Message.obtain();
+                message.what = SEND_MSG_SUCCESS;
+                Bundle bundle = new Bundle();
+                bundle.putString("MSG", hand.toString());
+                message.obj = hand;
+                message.setData(bundle);
+                handler.sendMessage(message);
+            }
         }
+    }
+
+    private void deliverDataHand(@NonNull WiFiDataHand hand) {
         Message message = Message.obtain();
         message.what = GET_MSG;
         Bundle bundle = new Bundle();
-        bundle.putString("MSG", wiFiDataHand.toString());
+        bundle.putString("MSG", hand.toString());
+        message.obj = hand;
         message.setData(bundle);
         handler.sendMessage(message);
     }
 
-
-    /**
-     * 发送数据
-     */
     public void sendData(WiFiDataHand dataHand) {
+        sendFrame(WiFiFrameCodec.encode(dataHand), dataHand.toString());
+    }
+
+    public void sendFrame(@NonNull WiFiFrame frame) {
+        sendFrame(frame, frame.dataType + "/" + frame.pageIndex);
+    }
+
+    private void sendFrame(@NonNull WiFiFrame frame, String logLabel) {
+        if (close || socket.isClosed()) {
+            return;
+        }
         try {
-            if (outputStream == null) {
-                outputStream = socket.getOutputStream();
+            synchronized (sendLock) {
+                if (close || socket.isClosed()) {
+                    return;
+                }
+                if (outputStream == null) {
+                    outputStream = socket.getOutputStream();
+                }
+                WiFiFrameCodec.writeFrame(outputStream, frame);
             }
-            Log.i("ConnectThread", "发送数据:" + (outputStream == null));
-            outputStream.write(dataHand.getSendBytes());
-            outputStream.flush();
-            Log.i("ConnectThread", "发送消息：" + dataHand);
+            Log.i("ConnectThread", "发送帧：" + logLabel);
         } catch (IOException e) {
             e.printStackTrace();
             Message message = Message.obtain();
             message.what = SEND_MSG_ERROR;
             Bundle bundle = new Bundle();
-            bundle.putString("MSG", dataHand.toString());
+            bundle.putString("MSG", logLabel);
             message.setData(bundle);
             handler.sendMessage(message);
         }
     }
 
     public void dataProcessed(WiFiDataHand response) {
-        processed = true;
         WiFiDataHand wiFiDataHand = new WiFiDataHand(WiFiDataHand.RECEIVED);
+        wiFiDataHand.dataType = response.dataType;
         wiFiDataHand.setData(response.getData());
-        new Thread(()-> sendData(wiFiDataHand)).start();
+        wiFiDataHand.pageIndex = response.pageIndex;
+        wiFiDataHand.pageSize = response.pageSize;
+        new Thread(() -> sendData(wiFiDataHand)).start();
     }
 
-    private WiFiDataHand isToResponse(InputStream inputStream) {
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            byte[] bytes = new byte[1024];
-            String result = "";
-            for (int length; (length = inputStream.read(bytes)) != -1; ) {
-                outputStream.write(bytes, 0, length);
-                result = outputStream.toString("UTF-8");
-                if (result.endsWith("}:END")) {
-                    result = result.substring(0, result.length() - 4);
-                    break;
-                }
-            }
-            if (result.isEmpty()) {
-                return null;
-            }
-            return new WiFiDataHand(result);
-        } catch (Throwable throwable) {
-            Analytics.recordException(throwable);
-            if (socket.isClosed()) {
-                interrupt();
-            }
-            return null;
-        }
+    public void sendDirAck(long gid, @NonNull String dirname,
+            @NonNull java.util.List<String> filesNeeded) {
+        new Thread(() -> sendFrame(WiFiFrameCodec.encodeAck(gid, dirname, filesNeeded))).start();
     }
 
     public void closeConnect() {
@@ -171,13 +250,13 @@ public class ConnectThread extends Thread {
             socket.close();
             interrupt();
             close = true;
-        } catch (IOException|NullPointerException e) {
+        } catch (IOException | NullPointerException e) {
             Analytics.recordException(e);
         }
     }
 
     public boolean isSocketClose() {
-        if (socket==null){
+        if (socket == null) {
             return true;
         }
         return socket.isClosed();

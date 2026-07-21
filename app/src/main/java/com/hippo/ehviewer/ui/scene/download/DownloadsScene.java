@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.ui.scene.download;
 
+import static com.hippo.ehviewer.spider.SpiderDen.getExistingGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderDen.getGalleryDownloadDir;
 import static com.hippo.ehviewer.spider.SpiderInfo.getSpiderInfo;
 import static com.hippo.ehviewer.ui.scene.download.part.DownloadAdapter.DRAG_ENABLE;
@@ -123,6 +124,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -780,6 +782,7 @@ public class DownloadsScene extends ToolbarScene
                         .setMessage(R.string.reset_reading_progress_message)
                         .setNegativeButton(android.R.string.cancel, null)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                            resetReadingProgressInUi();
                             if (mDownloadManager != null) {
                                 mDownloadManager.resetAllReadingProgress();
                             }
@@ -1376,6 +1379,22 @@ public class DownloadsScene extends ToolbarScene
         }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance(), files);
     }
 
+    private static void deleteGalleryFilesAsync(List<? extends GalleryInfo> galleryInfoList) {
+        new AsyncTask<List<? extends GalleryInfo>, Void, Void>() {
+            @Override
+            protected Void doInBackground(List<? extends GalleryInfo>... params) {
+                for (GalleryInfo info : params[0]) {
+                    UniFile file = getGalleryDownloadDir(info);
+                    EhDB.removeDownloadDirname(info.gid);
+                    if (file != null) {
+                        file.delete();
+                    }
+                }
+                return null;
+            }
+        }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance(), galleryInfoList);
+    }
+
     @Override
     public void onClickTitle() {
         if (!mSearchMode) {
@@ -1572,6 +1591,18 @@ public class DownloadsScene extends ToolbarScene
                 }
 
             }
+        }
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void resetReadingProgressInUi() {
+        for (SpiderInfo spiderInfo : mSpiderInfoMap.values()) {
+            if (spiderInfo != null) {
+                spiderInfo.startPage = 0;
+            }
+        }
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -1839,11 +1870,13 @@ public class DownloadsScene extends ToolbarScene
             boolean checked = mBuilder.isChecked();
             Settings.putRemoveImageFiles(checked);
             if (checked) {
-                // Remove download path
+                UniFile file = getExistingGalleryDownloadDir(mGalleryInfo);
                 EhDB.removeDownloadDirname(mGalleryInfo.gid);
-                // Delete file
-                UniFile file = getGalleryDownloadDir(mGalleryInfo);
-                deleteFileAsync(file);
+                if (file != null) {
+                    deleteFileAsync(file);
+                } else {
+                    deleteGalleryFilesAsync(Collections.singletonList(mGalleryInfo));
+                }
             }
         }
     }
@@ -1881,17 +1914,7 @@ public class DownloadsScene extends ToolbarScene
             boolean checked = mBuilder.isChecked();
             Settings.putRemoveImageFiles(checked);
             if (checked) {
-                UniFile[] files = new UniFile[mDownloadInfoList.size()];
-                int i = 0;
-                for (DownloadInfo info : mDownloadInfoList) {
-                    // Remove download path
-                    EhDB.removeDownloadDirname(info.gid);
-                    // Put file
-                    files[i] = getGalleryDownloadDir(info);
-                    i++;
-                }
-                // Delete file
-                deleteFileAsync(files);
+                deleteGalleryFilesAsync(mDownloadInfoList);
             }
         }
     }

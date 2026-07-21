@@ -600,6 +600,8 @@
     <string name="settings_download_download_list_pagination_summary">分頁功能僅在列表長度大於 500 時生效</string>
     <string name="settings_download_download_order_by_asc">以升序下載</string>
     <string name="settings_download_download_order_by_asc_summary">當下載全部圖庫時照順序下載</string>
+    <string name="settings_download_sync_while_reading">觀看時同步下載</string>
+    <string name="settings_download_sync_while_reading_summary">在瀏覽未下載圖庫時，自動將瀏覽到的圖片保存到下載目錄</string>
     <string name="settings_download_media_scan">允許其他程式進行媒體掃描</string>
     <string name="settings_download_media_scan_summary_on">請別讓別人看到你的相簿</string>
     <string name="settings_download_media_scan_summary_off">大部分相簿軟體將會忽略顯示下載路徑中的影像</string>
@@ -890,6 +892,14 @@
     <string name="wifi_send_bookmark">遷移書籤</string>
     <string name="wifi_send_favorite">遷移收藏</string>
     <string name="wifi_send_download">遷移下載資料</string>
+    <string name="wifi_send_download_location">遷移下載目錄</string>
+    <string name="wifi_download_dir_empty">未找到可遷移的畫廊資料夾</string>
+    <string name="wifi_download_dir_no_location">本機未設定下載目錄</string>
+    <string name="wifi_download_dir_migrating">正在遷移 %1$s（%2$d/%3$d 個檔案）</string>
+    <string name="wifi_download_dir_manifest_received">%1$s（%2$d/%3$d）：略過 %4$d，待傳 %5$d</string>
+    <string name="wifi_download_dir_file_done">已接收檔案：%s</string>
+    <string name="wifi_download_dir_files_progress">已接收 %d 個檔案</string>
+    <string name="wifi_download_dir_file_failed">檔案校驗失敗，已丟棄</string>
     <string name="wifi_send_done">遷移資料完成</string>
     <string name="wifi_send_start">開始遷移%s</string>
     <string name="wifi_send_stop">停止遷移%s</string>
