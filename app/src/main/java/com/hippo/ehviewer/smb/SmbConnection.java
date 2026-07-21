@@ -64,11 +64,14 @@ public final class SmbConnection {
         String key = poolKey(config);
         SmbConnection conn = sPool.computeIfAbsent(key, k -> {
             if (sPool.size() >= MAX_POOL_SIZE) return null;
-            return new SmbConnection(config);
+            SmbConnection pooled = new SmbConnection(config);
+            pooled.mPooled = true;
+            return pooled;
         });
         if (conn == null) {
             // Pool is full, create a non-pooled connection
             conn = new SmbConnection(config);
+            conn.mPooled = false;
             conn.open();
             return conn;
         }
@@ -82,6 +85,7 @@ public final class SmbConnection {
             sPool.remove(key, conn);
             conn.close();
             conn = new SmbConnection(config);
+            conn.mPooled = true;
             conn.open();
             sPool.put(key, conn);
         }
@@ -95,6 +99,7 @@ public final class SmbConnection {
     }
 
     private final SmbConfig config;
+    private boolean mPooled;
     private volatile DiskShare mPersistentShare;
     private volatile Connection mPersistentConnection;
     private volatile SMBClient mPersistentClient;
@@ -133,6 +138,12 @@ public final class SmbConnection {
         if (mTransientClient != null) {
             closeQuietly(mTransientClient);
             mTransientClient = null;
+        }
+    }
+
+    public synchronized void release() {
+        if (!mPooled) {
+            close();
         }
     }
 
