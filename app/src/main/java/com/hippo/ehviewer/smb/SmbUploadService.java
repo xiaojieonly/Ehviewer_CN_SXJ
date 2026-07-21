@@ -33,12 +33,11 @@ import androidx.core.app.NotificationCompat;
 
 import com.hippo.ehviewer.ui.MainActivity;
 
-import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,7 +51,7 @@ public class SmbUploadService extends Service {
     private static final String ACTION_START = "com.hippo.ehviewer.smb.UPLOAD_START";
     private static final String ACTION_CANCEL = "com.hippo.ehviewer.smb.UPLOAD_CANCEL";
 
-    private static final int DRAM_BUFFER_SIZE = 100 * 1024 * 1024;
+    private static final int STREAM_BUFFER_SIZE = 256 * 1024;
 
     private static final AtomicBoolean sRunning = new AtomicBoolean(false);
 
@@ -217,36 +216,10 @@ public class SmbUploadService extends Service {
             return;
         }
 
-        byte[] buffer = new byte[DRAM_BUFFER_SIZE];
-        int bufferOffset = 0;
-        boolean isLastChunk = false;
-        int flushThreshold = DRAM_BUFFER_SIZE / 2; // 50% threshold
-        boolean append = false;
-
-        try (FileInputStream fis = new FileInputStream(localFile)) {
-            while (!mCancelled && !isLastChunk) {
-                int bytesRead = fis.read(buffer, bufferOffset, buffer.length - bufferOffset);
-                if (bytesRead == -1) {
-                    isLastChunk = true;
-                } else {
-                    bufferOffset += bytesRead;
-                }
-
-                if (bufferOffset >= flushThreshold || isLastChunk) {
-                    append = flushToSmb(connection, smbPath, Arrays.copyOf(buffer, bufferOffset), append);
-                    bufferOffset = 0;
-                }
-            }
-        }
-    }
-
-    private boolean flushToSmb(SmbConnection connection, String smbPath, byte[] data,
-            boolean append) throws IOException {
         connection.ensureDirectory(smbPath.substring(0, smbPath.lastIndexOf('/')));
-        try (InputStream is = new ByteArrayInputStream(data)) {
-            connection.writeFile(smbPath, is, append);
+        try (InputStream is = new BufferedInputStream(new FileInputStream(localFile), STREAM_BUFFER_SIZE)) {
+            connection.writeFile(smbPath, is, false);
         }
-        return true;
     }
 
     private void deleteRecursive(File fileOrDir) {
