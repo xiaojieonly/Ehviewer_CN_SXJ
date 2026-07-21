@@ -19,6 +19,9 @@ gradle/
 local.properties
 app/.cxx/
 
+# Qwen Code
+.qwen/
+
 # Node
 node_modules/
 web-frontend/dist/
