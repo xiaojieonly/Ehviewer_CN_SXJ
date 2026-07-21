@@ -242,7 +242,7 @@ public final class SmbConnection {
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN_IF);
             OutputStream stream = file.getOutputStream(append);
-            return new SmbOutputStream(stream, file, share);
+            return new SmbOutputStream(stream, file, share, this);
         } catch (RuntimeException e) {
             closeQuietly(file);
             releaseShare(share);
@@ -256,7 +256,7 @@ public final class SmbConnection {
         try {
             file = openFile(share, path, SMB2CreateDisposition.FILE_OPEN);
             InputStream stream = file.getInputStream();
-            return new SmbInputStream(stream, file, share);
+            return new SmbInputStream(stream, file, share, this);
         } catch (RuntimeException e) {
             closeQuietly(file);
             releaseShare(share);
@@ -502,11 +502,13 @@ public final class SmbConnection {
         private final InputStream delegate;
         private final File file;
         private final DiskShare share;
+        private final SmbConnection connection;
 
-        private SmbInputStream(InputStream delegate, File file, DiskShare share) {
+        private SmbInputStream(InputStream delegate, File file, DiskShare share, SmbConnection connection) {
             this.delegate = delegate;
             this.file = file;
             this.share = share;
+            this.connection = connection;
         }
 
         @Override
@@ -527,7 +529,7 @@ public final class SmbConnection {
                 try {
                     file.close();
                 } finally {
-                    share.close();
+                    connection.releaseShare(share);
                 }
             }
         }
@@ -537,11 +539,13 @@ public final class SmbConnection {
         private final OutputStream delegate;
         private final File file;
         private final DiskShare share;
+        private final SmbConnection connection;
 
-        private SmbOutputStream(OutputStream delegate, File file, DiskShare share) {
+        private SmbOutputStream(OutputStream delegate, File file, DiskShare share, SmbConnection connection) {
             this.delegate = delegate;
             this.file = file;
             this.share = share;
+            this.connection = connection;
         }
 
         @Override
@@ -567,7 +571,7 @@ public final class SmbConnection {
                 try {
                     file.close();
                 } finally {
-                    share.close();
+                    connection.releaseShare(share);
                 }
             }
         }
