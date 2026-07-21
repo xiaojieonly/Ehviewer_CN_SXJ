@@ -76,6 +76,8 @@ public final class SmbConnection {
     private volatile DiskShare mPersistentShare;
     private volatile Connection mPersistentConnection;
     private volatile SMBClient mPersistentClient;
+    private volatile Connection mTransientConnection;
+    private volatile SMBClient mTransientClient;
 
     public SmbConnection(SmbConfig config) {
         this.config = config;
@@ -102,6 +104,14 @@ public final class SmbConnection {
             closeQuietly(mPersistentClient);
             mPersistentClient = null;
         }
+        if (mTransientConnection != null) {
+            closeQuietly(mTransientConnection);
+            mTransientConnection = null;
+        }
+        if (mTransientClient != null) {
+            closeQuietly(mTransientClient);
+            mTransientClient = null;
+        }
     }
 
     public synchronized DiskShare getShare() throws IOException {
@@ -112,6 +122,14 @@ public final class SmbConnection {
     public synchronized void releaseShare(DiskShare share) {
         if (share == mPersistentShare) return;
         try { share.close(); } catch (Exception ignored) {}
+        if (mTransientConnection != null) {
+            closeQuietly(mTransientConnection);
+            mTransientConnection = null;
+        }
+        if (mTransientClient != null) {
+            closeQuietly(mTransientClient);
+            mTransientClient = null;
+        }
     }
 
     public List<SmbEntry> list(String path) throws IOException {
@@ -367,6 +385,7 @@ public final class SmbConnection {
             throw e;
         } finally {
             closeQuietly(connection);
+            closeQuietly(client);
         }
     }
 
@@ -376,7 +395,10 @@ public final class SmbConnection {
         try {
             connection = client.connect(config.getHost(), config.getPort());
             Session session = connection.authenticate(authenticationContext());
-            return (DiskShare) session.connectShare(config.getShare());
+            DiskShare share = (DiskShare) session.connectShare(config.getShare());
+            mTransientClient = client;
+            mTransientConnection = connection;
+            return share;
         } catch (IOException | RuntimeException e) {
             closeQuietly(connection);
             closeQuietly(client);
