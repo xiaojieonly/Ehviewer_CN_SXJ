@@ -12,6 +12,12 @@ gradle/
 .idea/
 *.iml
 .vscode/
+.codewhale/
+.deepseek/
+
+# Android
+local.properties
+app/.cxx/
 
 # Node
 node_modules/
