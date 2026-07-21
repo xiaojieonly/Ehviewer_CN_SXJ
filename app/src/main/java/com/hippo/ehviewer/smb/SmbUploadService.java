@@ -292,7 +292,11 @@ public class SmbUploadService extends Service {
             mNotifyManager.cancel(NOTIFICATION_ID);
         }
 
-        stopForeground(STOP_FOREGROUND_REMOVE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);
+        }
         stopSelf();
     }
 
