@@ -101,8 +101,8 @@ class Image private constructor(
             }
         }
         if (mObtainedDrawable == null) {
-            mObtainedDrawable = drawable!!
-//            throw IllegalArgumentException("数据解码出错")
+            mObtainedDrawable = drawable
+                ?: throw IllegalArgumentException("数据解码出错")
         }
     }
 
