@@ -266,6 +266,15 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         val resources = context!!.getResources()
         val paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar)
 
+        // Height of the transparent status bar. The scene now draws under it, so push the
+        // floating search bar and the list's resting top down — the 瀑布流 still scrolls
+        // under the bar because the RecyclerView keeps clipToPadding=false.
+        var statusBarHeight = 0
+        val statusBarResId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        if (statusBarResId > 0) {
+            statusBarHeight = resources.getDimensionPixelSize(statusBarResId)
+        }
+
         mHelper = FavoritesHelper()
         mHelper!!.setEmptyString(resources.getString(R.string.gallery_list_empty_hit))
         contentLayout.setHelper(mHelper)
@@ -281,17 +290,22 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         )
         mRecyclerView!!.setDrawSelectorOnTop(true)
         mRecyclerView!!.setClipToPadding(false)
+        mRecyclerView!!.setPadding(
+            mRecyclerView!!.getPaddingLeft(),
+            mRecyclerView!!.getPaddingTop() + statusBarHeight,
+            mRecyclerView!!.getPaddingRight(), mRecyclerView!!.getPaddingBottom()
+        )
         mRecyclerView!!.setOnItemClickListener(this)
         mRecyclerView!!.setOnItemLongClickListener(this)
         mRecyclerView!!.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM)
         mRecyclerView!!.setCustomCheckedListener(this)
 
         fastScroller.setPadding(
-            fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
+            fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB + statusBarHeight,
             fastScroller.getPaddingRight(), fastScroller.getPaddingBottom()
         )
 
-        refreshLayout.setHeaderTranslationY(paddingTopSB.toFloat())
+        refreshLayout.setHeaderTranslationY((paddingTopSB + statusBarHeight).toFloat())
 
         mLeftDrawable = DrawerArrowDrawable(
             context,
@@ -307,6 +321,10 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mSearchBar!!.setHelper(this)
         mSearchBar!!.setAllowEmptySearch(false)
         updateSearchBar()
+        // Offset the floating search bar below the transparent status bar.
+        val searchBarLp = mSearchBar!!.layoutParams as ViewGroup.MarginLayoutParams
+        searchBarLp.topMargin += statusBarHeight
+        mSearchBar!!.layoutParams = searchBarLp
         mSearchBarMover = SearchBarMover(this, mSearchBar, mRecyclerView)
 
         mActionFabDrawable =

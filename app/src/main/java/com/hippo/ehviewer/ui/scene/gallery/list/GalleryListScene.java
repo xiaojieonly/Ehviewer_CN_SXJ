@@ -657,6 +657,16 @@ public final class GalleryListScene extends BaseScene
         int paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
         int paddingBottomFab = resources.getDimensionPixelOffset(R.dimen.gallery_padding_bottom_fab);
 
+        // Height of the transparent status bar. The scene now draws under it (see
+        // EhStageLayout#getAdditionalTopMargin), so push the floating search bar and the
+        // list's resting top down by this amount — the 瀑布流 still scrolls under the bar
+        // because the RecyclerView keeps clipToPadding=false.
+        int statusBarHeight = 0;
+        int statusBarResId = resources.getIdentifier("status_bar_height", "dimen", "android");
+        if (statusBarResId > 0) {
+            statusBarHeight = resources.getDimensionPixelSize(statusBarResId);
+        }
+
 
         mViewTransition = new ViewTransition(contentLayout, mSearchLayout);
 
@@ -671,15 +681,18 @@ public final class GalleryListScene extends BaseScene
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
         mRecyclerView.setClipToPadding(false);
+        mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(),
+                mRecyclerView.getPaddingTop() + statusBarHeight,
+                mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
         mRecyclerView.setOnItemClickListener(this);
         mRecyclerView.setOnItemLongClickListener(this);
         assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
 //        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
-        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
+        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB + statusBarHeight,
                 fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
 
-        refreshLayout.setHeaderTranslationY(paddingTopSB);
+        refreshLayout.setHeaderTranslationY(paddingTopSB + statusBarHeight);
 
         mLeftDrawable = new DrawerArrowDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
         mRightDrawable = new AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.drawableColorPrimary));
@@ -690,8 +703,13 @@ public final class GalleryListScene extends BaseScene
         setSearchBarHint(context, mSearchBar);
         setSearchBarSuggestionProvider(mSearchBar);
 
+        // Offset the floating search bar below the transparent status bar.
+        ViewGroup.MarginLayoutParams searchBarLp = (ViewGroup.MarginLayoutParams) mSearchBar.getLayoutParams();
+        searchBarLp.topMargin += statusBarHeight;
+        mSearchBar.setLayoutParams(searchBarLp);
+
         mSearchLayout.setHelper(this);
-        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop() + paddingTopSB,
+        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop() + paddingTopSB + statusBarHeight,
                 mSearchLayout.getPaddingRight(), mSearchLayout.getPaddingBottom() + paddingBottomFab);
 
         mFabLayout.setAutoCancel(true);

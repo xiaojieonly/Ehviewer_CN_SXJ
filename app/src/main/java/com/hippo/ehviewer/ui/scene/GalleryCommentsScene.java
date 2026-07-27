@@ -298,10 +298,12 @@ public final class GalleryCommentsScene extends ToolbarScene
             return;
         }
         ViewCompat.setOnApplyWindowInsetsListener(mEditPanel, (v, insets) -> {
-            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            int bottom = Math.max(
+                    insets.getInsets(WindowInsetsCompat.Type.ime()).bottom,
+                    insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom);
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            if (lp.bottomMargin != imeBottom) {
-                lp.bottomMargin = imeBottom;
+            if (lp.bottomMargin != bottom) {
+                lp.bottomMargin = bottom;
                 v.setLayoutParams(lp);
             }
             return insets;

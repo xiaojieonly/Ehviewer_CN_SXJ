@@ -25,6 +25,8 @@
         <item name="android:navigationBarColor">@color/white</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleLight</item>
 
         <item name="android:windowBackground">@color/white</item>
@@ -97,6 +99,8 @@
         <item name="android:navigationBarColor">@color/grey_850</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleDark</item>
 
         <item name="android:windowBackground">@color/grey_850</item>
@@ -163,6 +167,8 @@
         <item name="android:navigationBarColor">@android:color/black</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="buttonStyle">@style/ThemeChangeButtonStyleBlack</item>
 
         <item name="android:windowBackground">@android:color/black</item>

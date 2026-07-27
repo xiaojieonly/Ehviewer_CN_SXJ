@@ -21,13 +21,19 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
@@ -70,12 +76,42 @@ public final class SettingsActivity extends EhActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         setActionBarUpIndicator(DrawableManager.getVectorDrawable(this, R.drawable.v_arrow_left_dark_x24));
+        setupTransparentNavigationBar();
         if (savedInstanceState==null){
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.settings,new SettingsHeaders())
                     .commit();
         }
+    }
+
+    /**
+     * 让设置列表绘制到透明的系统导航栏之下，实现沉浸式效果。
+     * 列表加上等高的底部 padding 并关闭 clipToPadding，使内容可以滚动到导航栏之下。
+     */
+    private void setupTransparentNavigationBar() {
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f,
+                            @NonNull View v, @Nullable Bundle savedInstanceState) {
+                        if (!(f instanceof PreferenceFragmentCompat)) {
+                            return;
+                        }
+                        RecyclerView list = ((PreferenceFragmentCompat) f).getListView();
+                        if (list == null) {
+                            return;
+                        }
+                        list.setClipToPadding(false);
+                        ViewCompat.setOnApplyWindowInsetsListener(list, (rv, insets) -> {
+                            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+                            rv.setPadding(rv.getPaddingLeft(), rv.getPaddingTop(),
+                                    rv.getPaddingRight(), bottom);
+                            return insets;
+                        });
+                        ViewCompat.requestApplyInsets(list);
+                    }
+                }, true);
     }
 
     @Override

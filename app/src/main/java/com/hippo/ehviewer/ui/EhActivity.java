@@ -46,6 +46,29 @@ public abstract class EhActivity extends AppCompatActivity {
         setTheme(getThemeResId(Settings.getTheme()));
         super.onCreate(savedInstanceState);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    getWindow().getDecorView().getSystemUiVisibility()
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+            getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+            getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int visibility = getWindow().getDecorView().getSystemUiVisibility();
+            if (Settings.getTheme() == Settings.THEME_LIGHT) {
+                visibility |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            } else {
+                visibility &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            getWindow().getDecorView().setSystemUiVisibility(visibility);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
+
         ((EhApplication) getApplication()).registerActivity(this);
 
         if (Analytics.isEnabled()) {
