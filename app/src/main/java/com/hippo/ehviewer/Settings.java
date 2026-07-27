@@ -565,6 +565,28 @@ public class Settings {
         putIntToStr(KEY_READING_DIRECTION, value);
     }
 
+    private static final String KEY_READING_DUAL_PAGE = "reading_dual_page";
+    private static final boolean DEFAULT_READING_DUAL_PAGE = true;
+
+    public static boolean getReadingDualPage() {
+        return getBoolean(KEY_READING_DUAL_PAGE, DEFAULT_READING_DUAL_PAGE);
+    }
+
+    public static void putReadingDualPage(boolean value) {
+        putBoolean(KEY_READING_DUAL_PAGE, value);
+    }
+
+    private static final String KEY_READING_FIRST_PAGE_COVER = "reading_first_page_cover";
+    private static final boolean DEFAULT_READING_FIRST_PAGE_COVER = true;
+
+    public static boolean getReadingFirstPageCover() {
+        return getBoolean(KEY_READING_FIRST_PAGE_COVER, DEFAULT_READING_FIRST_PAGE_COVER);
+    }
+
+    public static void putReadingFirstPageCover(boolean value) {
+        putBoolean(KEY_READING_FIRST_PAGE_COVER, value);
+    }
+
     private static final String KEY_PAGE_SCALING = "page_scaling";
     private static final int DEFAULT_PAGE_SCALING = GalleryView.SCALE_FIT;
 

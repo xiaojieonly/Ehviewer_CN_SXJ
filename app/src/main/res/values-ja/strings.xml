@@ -528,6 +528,8 @@
     <string name="settings_read_reading_direction_left_to_right">左から右へ</string>
     <string name="settings_read_reading_direction_right_to_Left">右から左へ</string>
     <string name="settings_read_reading_direction_top_to_bottom">上から下へ</string>
+    <string name="settings_read_dual_page">横画面で見開き表示</string>
+    <string name="settings_read_first_page_cover">最初のページを表紙として表示</string>
     <string name="settings_read_page_scaling">ページの拡大</string>
     <string name="settings_read_page_scaling_actual_size">元のサイズ</string>
     <string name="settings_read_page_scaling_fit_to_width">幅に合わせる</string>

@@ -575,6 +575,8 @@
     <string name="settings_read_reading_direction_left_to_right">왼쪽에서 오른쪽으로</string>
     <string name="settings_read_reading_direction_right_to_Left">오른쪽에서 왼쪽으로</string>
     <string name="settings_read_reading_direction_top_to_bottom">위에서 아래로</string>
+    <string name="settings_read_dual_page">가로 모드 두 페이지 보기</string>
+    <string name="settings_read_first_page_cover">첫 페이지를 표지로 표시</string>
     <string name="settings_read_page_scaling">페이지 표시</string>
     <string name="settings_read_page_scaling_actual_size">실제 크기</string>
     <string name="settings_read_page_scaling_fit_to_width">너비에 맞춤</string>

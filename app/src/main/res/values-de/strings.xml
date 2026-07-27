@@ -473,6 +473,8 @@
     <string name="settings_read_reading_direction_left_to_right">Von links nach rechts</string>
     <string name="settings_read_reading_direction_right_to_Left">Von rechts nach links</string>
     <string name="settings_read_reading_direction_top_to_bottom">Von oben nach unter</string>
+    <string name="settings_read_dual_page">Doppelseite im Querformat</string>
+    <string name="settings_read_first_page_cover">Erste Seite als Deckblatt</string>
     <string name="settings_read_page_scaling">Seitenskalierung</string>
     <string name="settings_read_page_scaling_actual_size">Originale Größe</string>
     <string name="settings_read_page_scaling_fit_to_width">Nach der Länge anpassen</string>

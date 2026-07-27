@@ -44,6 +44,17 @@
         app:entries="@array/reading_direction_entries"
         app:entryValues="@array/reading_direction_entry_values" />
 
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="reading_dual_page"
+        android:title="@string/settings_read_dual_page"
+        app:allowDividerAbove="true" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="reading_first_page_cover"
+        android:title="@string/settings_read_first_page_cover" />
+
     <com.hippo.preference.ListPreference
         android:defaultValue="3"
         android:key="page_scaling"
