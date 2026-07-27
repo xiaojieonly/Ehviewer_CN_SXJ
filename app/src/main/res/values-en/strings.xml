@@ -29,7 +29,7 @@
 
     <string name="settings_about_donate_guide">guide</string>
 
-    <string name="app_name">EhViewer</string>
+    <string name="app_name">AnotherViewer</string>
 
     <string name="site_e" translatable="false">e-hentai</string>
     <string name="site_ex" translatable="false">exhentai</string>
@@ -575,6 +575,56 @@
     <string name="settings_download_pick_dir_kk">On Android 4.4+, apps can\'t write any data on your external SD card, unless you root the system and apply a patch. But &lt;SD card&gt;/Android/data/com.hippo.ehviewer is an exception. It is writable for this app.</string>
     <string name="settings_download_pick_dir_l">Android 5.0+ provides new API to write on external SD card. Tap the \"DOCUMENT\" if you want to set SD card as download location.</string>
     <string name="settings_download_document">Document</string>
+    <string name="settings_download_smb">SMB</string>
+    <string name="settings_download_smb_host">Server</string>
+    <string name="settings_download_smb_port">Port</string>
+    <string name="settings_download_smb_share">Share</string>
+    <string name="settings_download_smb_path">Folder path</string>
+    <string name="settings_download_smb_username">Username</string>
+    <string name="settings_download_smb_password">Password</string>
+    <string name="settings_download_smb_login_anonymous">Anonymous</string>
+    <string name="settings_download_smb_login_password">Username and password</string>
+    <string name="settings_download_smb_connect">Connect and save</string>
+    <string name="settings_download_smb_testing">Testing SMB location</string>
+    <string name="settings_download_smb_connected">SMB location saved</string>
+    <string name="settings_download_smb_error_auth">Authentication failed. Please check your username and password.</string>
+    <string name="settings_download_smb_error_connect">Cannot connect to server. Please check the address and network.</string>
+    <string name="settings_download_smb_error_generic">Connection error: %s</string>
+    <string name="settings_download_smb_invalid_config">Invalid SMB configuration</string>
+    <string name="settings_download_smb_backup">SMB backup</string>
+    <string name="settings_download_smb_backup_summary">Sync downloads to SMB server as backup</string>
+    <string name="settings_download_smb_backup_configure">Configure backup server</string>
+    <string name="settings_download_smb_backup_sync_all">Sync all downloads to backup</string>
+    <string name="settings_download_smb_backup_syncing">Syncing to SMB backup…</string>
+    <string name="settings_download_smb_backup_scanning">Scanning downloads…</string>
+    <string name="settings_download_smb_backup_sync_done">Sync completed: %1$d succeeded, %2$d failed</string>
+    <string name="smb_upload_service_name">SMB Upload</string>
+    <string name="smb_upload_service_desc">SMB file upload progress</string>
+    <string name="settings_download_smb_upload_syncing">SMB uploading...</string>
+    <string name="settings_download_smb_upload_sync_done">Upload complete: %1$d succeeded, %2$d failed</string>
+    <string name="settings_download_smb_upload_scanning">Scanning...</string>
+    <string name="settings_download_smb_backup_sync_failed">Sync failed</string>
+    <string name="settings_download_smb_backup_not_configured">SMB backup is not configured</string>
+    <string name="settings_download_smb_backup_configured">Configured: %s</string>
+    <string name="settings_download_smb_check_network">Download location is SMB server, please check network connectivity</string>
+    <string name="settings_download_smb_backup_aggressive">Aggressive Mode (RAM Cache)</string>
+    <string name="settings_download_smb_backup_aggressive_summary">Uses 10%%~20%% system RAM to accelerate SMB upload</string>
+    <string name="settings_download_smb_backup_sync_all_message">Select sync mode:\n\nAggressive: Uses RAM for faster upload\nNormal: Standard upload</string>
+    <string name="settings_download_smb_backup_sync_aggressive">Aggressive</string>
+    <string name="settings_download_smb_backup_sync_normal">Normal</string>
+    <string name="smb_picker_up">Up</string>
+    <string name="smb_picker_title">SMB Server Browser</string>
+    <string name="smb_picker_step_server">Step 1: Enter server address and credentials, then tap Connect</string>
+    <string name="smb_picker_step_share">Step 2: Enter the share name on this server, then tap OK</string>
+    <string name="smb_picker_new_folder">New folder</string>
+    <string name="smb_picker_new_folder_hint">Folder name</string>
+    <string name="smb_picker_select_here">Select current directory</string>
+    <string name="smb_picker_background_backup">Background backup</string>
+    <string name="smb_backup_service_name">SMB Backup Service</string>
+    <string name="smb_backup_service_desc">Syncing downloads to SMB server</string>
+    <string name="settings_download_smb_cache_threshold">Cache Upload Threshold</string>
+    <string name="settings_download_smb_cache_threshold_summary">Auto-upload to SMB when cache exceeds threshold</string>
+    <string name="settings_download_smb_reminder">⚠️ SMB network storage performance may be limited</string>
     <string name="settings_download_continue">Continue</string>
     <string name="settings_download_media_scan">Allow media scan</string>
     <string name="settings_download_media_scan_summary_on">Please hide your gallery apps away from other people</string>

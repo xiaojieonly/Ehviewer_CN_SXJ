@@ -16,14 +16,25 @@
 
 package com.hippo.ehviewer.ui.fragment;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.InputType;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -36,13 +47,22 @@ import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.download.DownloadManager;
+import com.hippo.ehviewer.smb.SmbBackupManager;
+import com.hippo.ehviewer.smb.SmbBackupService;
+import com.hippo.ehviewer.smb.SmbBackupSettings;
+import com.hippo.ehviewer.smb.SmbConfig;
+import com.hippo.ehviewer.smb.SmbConnection;
+import com.hippo.ehviewer.smb.SmbLoginMode;
+import com.hippo.ehviewer.smb.SmbSettings;
+import com.hippo.ehviewer.smb.SmbSyncEngine;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.DirPickerActivity;
+import com.hippo.unifile.SmbUri;
+import com.hippo.unifile.SmbUriHandler;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.yorozuya.IOUtils;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,6 +73,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference.OnPreferenceChangeListener,
@@ -61,18 +83,33 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     public static final int REQUEST_CODE_PICK_IMAGE_DIR = 0;
     public static final int REQUEST_CODE_PICK_IMAGE_DIR_L = 1;
     private static final int REQUEST_CODE_PICK_DOWNLOAD_IMPORT_FILE = 2;
-
     public static final String KEY_DOWNLOAD_LOCATION = "download_location";
     public static final String KEY_EXPORT_DOWNLOAD_ITEMS = "export_download_items";
     public static final String KEY_IMPORT_DOWNLOAD_ITEMS = "import_download_items";
     public static final String KEY_CLEAN_INVALID_DOWNLOAD = "clean_invalid_download";
+    public static final String KEY_SMB_BACKUP_ENABLED = "smb_backup_enabled";
+    public static final String KEY_SMB_BACKUP_CONFIGURE = "smb_backup_configure";
+    public static final String KEY_SMB_BACKUP_SYNC_ALL = "smb_backup_sync_all";
+    public static final String KEY_SMB_BACKUP_AGGRESSIVE = "smb_backup_aggressive";
 
     @Nullable
     private Preference mDownloadLocation;
+    @Nullable
+    private Preference mSmbBackupConfigure;
+    @Nullable
+    private Preference mSmbBackupSyncAll;
+    @Nullable
+    private com.hippo.preference.SwitchPreference mSmbBackupEnabled;
+    @Nullable
+    private ExecutorService mExecutor;
+    private Handler mMainHandler;
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         addPreferencesFromResource(R.xml.download_settings);
+
+        mExecutor = Executors.newCachedThreadPool();
+        mMainHandler = new Handler(Looper.getMainLooper());
 
         Preference mediaScan = findPreference(Settings.KEY_MEDIA_SCAN);
         Preference downloadThread = findPreference("download_thread");
@@ -84,6 +121,9 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         Preference cleanInvalidDownload = findPreference(KEY_CLEAN_INVALID_DOWNLOAD);
         Preference preloadImage = findPreference("preload_image");
         Preference imageResolutionPref = findPreference(Settings.KEY_IMAGE_RESOLUTION);
+        mSmbBackupEnabled = findPreference(KEY_SMB_BACKUP_ENABLED);
+        mSmbBackupConfigure = findPreference(KEY_SMB_BACKUP_CONFIGURE);
+        mSmbBackupSyncAll = findPreference(KEY_SMB_BACKUP_SYNC_ALL);
 
         onUpdateDownloadLocation();
 
@@ -128,12 +168,42 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         if (cleanInvalidDownload != null) {
             cleanInvalidDownload.setOnPreferenceClickListener(this);
         }
+
+        updateSmbBackupSummary();
+
+        if (mSmbBackupEnabled != null) {
+            mSmbBackupEnabled.setOnPreferenceChangeListener(this);
+        }
+        if (mSmbBackupConfigure != null) {
+            mSmbBackupConfigure.setOnPreferenceClickListener(this);
+        }
+        if (mSmbBackupSyncAll != null) {
+            mSmbBackupSyncAll.setOnPreferenceClickListener(this);
+        }
+
+        UniFile downloadLoc = Settings.getDownloadLocation();
+        if (downloadLoc != null && downloadLoc.getUri() != null
+                && "smb".equals(downloadLoc.getUri().getScheme())) {
+            Toast.makeText(requireActivity(), R.string.settings_download_smb_reminder, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (mExecutor != null) {
+            mExecutor.shutdownNow();
+            mExecutor = null;
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         mDownloadLocation = null;
+        mSmbBackupConfigure = null;
+        mSmbBackupSyncAll = null;
+        mSmbBackupEnabled = null;
     }
 
     public void onUpdateDownloadLocation() {
@@ -144,6 +214,22 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             } else {
                 mDownloadLocation.setSummary(R.string.settings_download_invalid_download_location);
             }
+        }
+        
+        boolean isSmbDownload = file != null && file.getUri() != null 
+                && "smb".equals(file.getUri().getScheme());
+        
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        boolean backupEnabled = backupSettings.isEnabled();
+        
+        if (mSmbBackupEnabled != null) {
+            mSmbBackupEnabled.setVisible(!isSmbDownload);
+        }
+        if (mSmbBackupConfigure != null) {
+            mSmbBackupConfigure.setVisible(!isSmbDownload && backupEnabled);
+        }
+        if (mSmbBackupSyncAll != null) {
+            mSmbBackupSyncAll.setVisible(!isSmbDownload && backupEnabled);
         }
     }
 
@@ -174,13 +260,21 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
             return true;
+        } else if (KEY_SMB_BACKUP_CONFIGURE.equals(key)) {
+            openSmbBackupPicker();
+            return true;
+        } else if (KEY_SMB_BACKUP_SYNC_ALL.equals(key)) {
+            startSmbBackupSyncAll();
+            return true;
         }
         return false;
     }
 
     private void showDirPickerDialogKK() {
         new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_kk)
-                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker()).show();
+                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker())
+                .setNegativeButton(R.string.settings_download_smb, (dialog, which) -> openSmbPicker())
+                .show();
     }
 
     private void showDirPickerDialogL() {
@@ -198,6 +292,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_l)
                 .setPositiveButton(R.string.settings_download_continue, listener)
                 .setNeutralButton(R.string.settings_download_document, listener)
+                .setNegativeButton(R.string.settings_download_smb, (dialog, which) -> openSmbPicker())
                 .show();
     }
 
@@ -218,6 +313,66 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             ExceptionUtils.throwIfFatal(e);
             Toast.makeText(getActivity(), R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void openSmbPicker() {
+        SmbSettings smbSettings = new SmbSettings(requireContext());
+        SmbConfig existing = smbSettings.loadConfig();
+
+        LinearLayout layout = new LinearLayout(requireActivity());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        layout.setPadding(padding, padding, padding, padding);
+
+        EditText host = addSmbField(layout, R.string.settings_download_smb_host,
+                existing != null ? existing.getHost() : "");
+        EditText port = addSmbField(layout, R.string.settings_download_smb_port,
+                existing != null ? String.valueOf(existing.getPort()) : String.valueOf(SmbUri.DEFAULT_PORT));
+        port.setInputType(InputType.TYPE_CLASS_NUMBER);
+        EditText username = addSmbField(layout, R.string.settings_download_smb_username,
+                existing != null ? existing.getUsername() : "");
+        EditText password = addSmbField(layout, R.string.settings_download_smb_password,
+                existing != null ? existing.getPassword() : "");
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_smb)
+                .setView(layout)
+                .setPositiveButton(R.string.settings_download_smb_connect, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String hostValue = host.getText().toString().trim();
+            String portValue = port.getText().toString().trim();
+            if (hostValue.isEmpty()) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int portNumber;
+            try {
+                portNumber = portValue.isEmpty() ? SmbUri.DEFAULT_PORT : Integer.parseInt(portValue);
+            } catch (NumberFormatException e) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String userValue = username.getText().toString().trim();
+            String passValue = password.getText().toString().trim();
+            SmbLoginMode loginMode = userValue.isEmpty() ? SmbLoginMode.ANONYMOUS : SmbLoginMode.PASSWORD;
+            new SmbTestTask(DownloadFragment.this, dialog, hostValue, portNumber, loginMode, userValue, passValue, false).execute();
+        }));
+        dialog.show();
+    }
+
+    private EditText addSmbField(ViewGroup parent, int hintRes, String value) {
+        EditText editText = new EditText(requireActivity());
+        editText.setHint(hintRes);
+        editText.setText(value);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        editText.setLayoutParams(params);
+        parent.addView(editText);
+        return editText;
     }
 
     private void exportDownloadItems() {
@@ -337,6 +492,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 Settings.setDownloadTimeout(toTimeoutTime(newValue));
             }
             return true;
+        } else if (KEY_SMB_BACKUP_ENABLED.equals(key)) {
+            if (newValue instanceof Boolean) {
+                SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+                backupSettings.setEnabled((Boolean) newValue);
+                updateSmbBackupSummary();
+                onUpdateDownloadLocation();
+            }
+            return true;
+        } else if (KEY_SMB_BACKUP_AGGRESSIVE.equals(key)) {
+            if (newValue instanceof Boolean) {
+                SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+                backupSettings.setAggressiveMode((Boolean) newValue);
+            }
+            return true;
         }
         return false;
     }
@@ -349,33 +518,398 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
     }
 
-    private static class ImportDownloadTask extends AsyncTask<Void, Integer, Integer> {
+    private void updateSmbBackupSummary() {
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        if (mSmbBackupConfigure != null) {
+            if (backupSettings.isEnabled()) {
+                SmbConfig config = backupSettings.loadConfig();
+                if (config != null) {
+                    String display = config.getHost() + ":" + config.getPort() + "/" + config.getShare();
+                    if (!config.getPath().isEmpty()) {
+                        display += "/" + config.getPath();
+                    }
+                    String summary = getString(R.string.settings_download_smb_backup_configured, display);
+                    mSmbBackupConfigure.setSummary(summary);
+                } else {
+                    mSmbBackupConfigure.setSummary(R.string.settings_download_smb_backup_not_configured);
+                }
+            } else {
+                mSmbBackupConfigure.setSummary(R.string.settings_download_smb_backup_not_configured);
+            }
+        }
+    }
+
+    private void openSmbBackupPicker() {
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        SmbConfig existing = backupSettings.loadConfig();
+
+        LinearLayout layout = new LinearLayout(requireActivity());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        layout.setPadding(padding, padding, padding, padding);
+
+        EditText host = addSmbField(layout, R.string.settings_download_smb_host,
+                existing != null ? existing.getHost() : "");
+        EditText port = addSmbField(layout, R.string.settings_download_smb_port,
+                existing != null ? String.valueOf(existing.getPort()) : String.valueOf(SmbUri.DEFAULT_PORT));
+        port.setInputType(InputType.TYPE_CLASS_NUMBER);
+        EditText username = addSmbField(layout, R.string.settings_download_smb_username,
+                existing != null ? existing.getUsername() : "");
+        EditText password = addSmbField(layout, R.string.settings_download_smb_password,
+                existing != null ? existing.getPassword() : "");
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_smb_backup)
+                .setView(layout)
+                .setPositiveButton(R.string.settings_download_smb_connect, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String hostValue = host.getText().toString().trim();
+            String portValue = port.getText().toString().trim();
+            if (hostValue.isEmpty()) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int portNumber;
+            try {
+                portNumber = portValue.isEmpty() ? SmbUri.DEFAULT_PORT : Integer.parseInt(portValue);
+            } catch (NumberFormatException e) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String userValue = username.getText().toString().trim();
+            String passValue = password.getText().toString().trim();
+            SmbLoginMode loginMode = userValue.isEmpty() ? SmbLoginMode.ANONYMOUS : SmbLoginMode.PASSWORD;
+            new SmbTestTask(DownloadFragment.this, dialog, hostValue, portNumber, loginMode, userValue, passValue, true).execute();
+        }));
+        dialog.show();
+    }
+
+    private void showSmbShareDialog(String host, int port, SmbLoginMode loginMode,
+            String username, String password, boolean forBackup) {
+        SmbConfig existing = null;
+        if (forBackup) {
+            SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+            existing = backupSettings.loadConfig();
+        } else {
+            SmbSettings smbSettings = new SmbSettings(requireContext());
+            existing = smbSettings.loadConfig();
+        }
+        String existingShare = existing != null ? existing.getShare() : "";
+
+        LinearLayout layout = new LinearLayout(requireActivity());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        layout.setPadding(padding, padding, padding, padding);
+
+        EditText shareInput = addSmbField(layout, R.string.settings_download_smb_share, existingShare);
+
+        TextView hint = new TextView(requireActivity());
+        hint.setText(R.string.smb_picker_step_share);
+        hint.setTextSize(12);
+        hint.setTextColor(getResources().getColor(android.R.color.darker_gray));
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hintParams.bottomMargin = padding;
+        hint.setLayoutParams(hintParams);
+        layout.addView(hint, 0);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(forBackup ? R.string.settings_download_smb_backup : R.string.settings_download_smb)
+                .setView(layout)
+                .setPositiveButton(android.R.string.ok, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String shareValue = shareInput.getText().toString().trim();
+            if (shareValue.isEmpty()) {
+                Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dialog.dismiss();
+            showSmbFolderBrowser(host, port, loginMode, username, password, shareValue, forBackup);
+        }));
+        dialog.show();
+    }
+
+    private void showSmbFolderBrowser(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, boolean forBackup) {
+        browseSmbFolder(host, port, loginMode, username, password, share, "", forBackup);
+    }
+
+    private void browseSmbFolder(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, String currentPath, boolean forBackup) {
+        ExecutorService executor = mExecutor;
+        Handler handler = mMainHandler;
+        if (executor == null || handler == null) return;
+
+        ProgressDialog progress = ProgressDialog.show(requireActivity(), null,
+                getString(R.string.settings_download_smb_testing), true, false);
+        String pathToShow = currentPath.isEmpty() ? "/" : currentPath;
+
+        executor.execute(() -> {
+            List<String> result;
+            Throwable failure;
+            try {
+                SmbConfig cfg = new SmbConfig(host, port, share, currentPath, loginMode,
+                        loginMode == SmbLoginMode.PASSWORD ? username : null,
+                        loginMode == SmbLoginMode.PASSWORD ? password : null);
+                result = new SmbConnection(cfg).listFolders(currentPath);
+                failure = null;
+            } catch (Throwable e) {
+                result = null;
+                failure = e;
+            }
+            final List<String> folders = result;
+            final Throwable throwable = failure;
+            handler.post(() -> {
+                if (progress != null) {
+                    try { progress.dismiss(); } catch (Exception ignored) {}
+                }
+                if (!isAdded()) return;
+                if (folders == null) {
+                    Toast.makeText(requireActivity(),
+                            getSmbErrorMessage(getResources(), throwable),
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                java.util.Collections.sort(folders, String.CASE_INSENSITIVE_ORDER);
+
+                java.util.List<CharSequence> itemList = new java.util.ArrayList<>();
+                java.util.List<String> pathList = new java.util.ArrayList<>();
+
+                if (!currentPath.isEmpty()) {
+                    itemList.add("..");
+                    int lastSlash = currentPath.lastIndexOf('/');
+                    pathList.add(lastSlash > 0 ? currentPath.substring(0, lastSlash) : "");
+                }
+                for (String f : folders) {
+                    itemList.add(f);
+                    pathList.add(currentPath.isEmpty() ? f : currentPath + "/" + f);
+                }
+
+                CharSequence[] items = itemList.toArray(new CharSequence[0]);
+                String title = "//" + host + ":" + port + "/" + share + pathToShow;
+                new AlertDialog.Builder(requireActivity())
+                        .setTitle(title)
+                        .setItems(items, (dialog, which) -> {
+                            String nextPath = pathList.get(which);
+                            browseSmbFolder(host, port, loginMode, username, password, share, nextPath, forBackup);
+                        })
+                        .setPositiveButton(R.string.smb_picker_select_here, (d, w) -> {
+                            if (forBackup) {
+                                saveSmbBackupConfig(host, port, loginMode, username, password, share, currentPath);
+                            } else {
+                                saveSmbDownloadLocationConfig(host, port, loginMode, username, password, share, currentPath);
+                            }
+                        })
+                        .setNeutralButton(R.string.smb_picker_new_folder, (d, w) ->
+                                showNewFolderDialog(host, port, loginMode, username, password, share, currentPath, forBackup))
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            });
+        });
+    }
+
+    private void showNewFolderDialog(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, String currentPath, boolean forBackup) {
+        EditText input = new EditText(requireActivity());
+        input.setHint(R.string.smb_picker_new_folder_hint);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        int pad = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        input.setPadding(pad, pad, pad, pad);
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.smb_picker_new_folder)
+                .setView(input)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String folderName = input.getText().toString().trim();
+                    if (folderName.isEmpty()) {
+                        Toast.makeText(requireActivity(), R.string.settings_download_smb_invalid_config, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String newPath = currentPath.isEmpty() ? folderName : currentPath + "/" + folderName;
+                    if (forBackup) {
+                        saveSmbBackupConfig(host, port, loginMode, username, password, share, newPath);
+                    } else {
+                        saveSmbDownloadLocationConfig(host, port, loginMode, username, password, share, newPath);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void saveSmbBackupConfig(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, String path) {
+        SmbConfig config = new SmbConfig(host, port, share, path, loginMode,
+                loginMode == SmbLoginMode.PASSWORD ? username : null,
+                loginMode == SmbLoginMode.PASSWORD ? password : null);
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        backupSettings.saveConfig(config);
+        backupSettings.setEnabled(true);
+        updateSmbBackupSummary();
+        Toast.makeText(requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
+    }
+
+    private void saveSmbDownloadLocationConfig(String host, int port, SmbLoginMode loginMode,
+            String username, String password, String share, String path) {
+        SmbConfig config = new SmbConfig(host, port, share, path, loginMode,
+                loginMode == SmbLoginMode.PASSWORD ? username : null,
+                loginMode == SmbLoginMode.PASSWORD ? password : null);
+        new SmbSettings(requireContext()).saveConfig(config);
+        UniFile location = new SmbUriHandler().fromUri(requireActivity(), config.toUri().toUri());
+        if (location != null) {
+            Settings.putDownloadLocation(location);
+            onUpdateDownloadLocation();
+        }
+        Toast.makeText(requireActivity(), R.string.settings_download_smb_connected, Toast.LENGTH_SHORT).show();
+    }
+
+    private static String getSmbErrorMessage(Resources res, Throwable throwable) {
+        Throwable t = throwable;
+        while (t != null) {
+            if (t instanceof com.hierynomus.mssmb2.SMBApiException) {
+                long status = ((com.hierynomus.mssmb2.SMBApiException) t).getStatusCode();
+                if (status == com.hierynomus.mserref.NtStatus.STATUS_LOGON_FAILURE.getValue()
+                        || status == com.hierynomus.mserref.NtStatus.STATUS_LOGON_TYPE_NOT_GRANTED.getValue()) {
+                    return res.getString(R.string.settings_download_smb_error_auth);
+                }
+            }
+            if (t instanceof java.net.ConnectException
+                    || t instanceof java.net.SocketTimeoutException) {
+                return res.getString(R.string.settings_download_smb_error_connect);
+            }
+            t = t.getCause();
+        }
+        return res.getString(R.string.settings_download_smb_error_generic, throwable.getMessage());
+    }
+
+    private static class SmbTestTask {
+        private final WeakReference<DownloadFragment> fragmentRef;
+        private final AlertDialog dialog;
+        private final String host;
+        private final int port;
+        private final SmbLoginMode loginMode;
+        private final String username;
+        private final String password;
+        private final boolean forBackup;
+        private ProgressDialog progress;
+
+        SmbTestTask(DownloadFragment fragment, AlertDialog dialog, String host, int port,
+                SmbLoginMode loginMode, String username, String password, boolean forBackup) {
+            this.fragmentRef = new WeakReference<>(fragment);
+            this.dialog = dialog;
+            this.host = host;
+            this.port = port;
+            this.loginMode = loginMode;
+            this.username = username;
+            this.password = password;
+            this.forBackup = forBackup;
+        }
+
+        void execute() {
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+
+            progress = ProgressDialog.show(fragment.requireActivity(), null,
+                    fragment.getString(R.string.settings_download_smb_testing), true, false);
+
+            executor.execute(() -> {
+                Throwable result;
+                try {
+                    SmbConfig config = new SmbConfig(host, port, "IPC$", "",
+                            loginMode,
+                            loginMode == SmbLoginMode.PASSWORD ? username : null,
+                            loginMode == SmbLoginMode.PASSWORD ? password : null);
+                    new SmbConnection(config).testConnection();
+                    result = null;
+                } catch (Throwable e) {
+                    result = e;
+                }
+                final Throwable error = result;
+                handler.post(() -> onPostExecute(error));
+            });
+        }
+
+        private void onPostExecute(Throwable throwable) {
+            if (progress != null) {
+                try { progress.dismiss(); } catch (Exception ignored) {}
+            }
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || !fragment.isAdded()) return;
+            if (throwable == null) {
+                dialog.dismiss();
+                fragment.showSmbShareDialog(host, port, loginMode, username, password, forBackup);
+            } else {
+                String errorMessage = getSmbErrorMessage(fragment.getResources(), throwable);
+                Toast.makeText(fragment.requireActivity(), errorMessage, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void startSmbBackupSyncAll() {
+        SmbBackupSettings backupSettings = new SmbBackupSettings(requireContext());
+        if (!backupSettings.isEnabled() || backupSettings.loadConfig() == null) {
+            Toast.makeText(requireActivity(), R.string.settings_download_smb_backup_not_configured, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_download_smb_backup_sync_all)
+                .setMessage(R.string.settings_download_smb_backup_sync_all_message)
+                .setPositiveButton(R.string.settings_download_smb_backup_sync_aggressive, (d, w) -> {
+                    new SmbBackupSyncAllTask(this, true).execute();
+                })
+                .setNegativeButton(R.string.settings_download_smb_backup_sync_normal, (d, w) -> {
+                    new SmbBackupSyncAllTask(this, false).execute();
+                })
+                .show();
+    }
+
+    private static class ImportDownloadTask {
 
         private final WeakReference<DownloadFragment> mFragment;
         private final Uri mUri;
         private ProgressDialog mProgressDialog;
+        private Handler mHandler;
 
         public ImportDownloadTask(DownloadFragment fragment, Uri uri) {
             mFragment = new WeakReference<>(fragment);
             mUri = uri;
         }
 
-        @Override
-        protected void onPreExecute() {
+        void execute() {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) {
+                return;
+            }
+            mHandler = handler;
+
+            // onPreExecute equivalent (runs on main thread)
             mProgressDialog = new ProgressDialog(fragment.getActivity());
             mProgressDialog.setTitle(R.string.settings_download_import_items);
             mProgressDialog.setIndeterminate(false);
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             mProgressDialog.setCancelable(false);
             mProgressDialog.show();
+
+            executor.execute(() -> {
+                int result = doInBackground();
+                handler.post(() -> onPostExecute(result));
+            });
         }
 
-        @Override
-        protected Integer doInBackground(Void... voids) {
+        private int doInBackground() {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || fragment.getActivity() == null || mUri == null) {
                 return 0;
@@ -401,7 +935,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 DownloadManager downloadManager = EhApplication.getDownloadManager(fragment.requireActivity());
                 int importCount = 0;
                 int total = galleryInfos.size();
-                publishProgress(0, total);
+                postProgress(0, total);
 
                 for (int i = 0; i < total; i++) {
                     GalleryInfo gi = galleryInfos.get(i);
@@ -409,7 +943,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                         downloadManager.addDownload(gi, null);
                         importCount++;
                     }
-                    publishProgress(i + 1, total);
+                    postProgress(i + 1, total);
                 }
                 return importCount;
             } catch (IOException e) {
@@ -417,16 +951,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             }
         }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (mProgressDialog != null) {
-                mProgressDialog.setMax(values[1]);
-                mProgressDialog.setProgress(values[0]);
+        private void postProgress(int current, int total) {
+            if (mHandler != null) {
+                mHandler.post(() -> onProgressUpdate(current, total));
             }
         }
 
-        @Override
-        protected void onPostExecute(Integer result) {
+        private void onProgressUpdate(int current, int total) {
+            if (mProgressDialog != null) {
+                mProgressDialog.setMax(total);
+                mProgressDialog.setProgress(current);
+            }
+        }
+
+        private void onPostExecute(int result) {
             DownloadFragment fragment = mFragment.get();
             if (mProgressDialog != null) {
                 // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
@@ -453,32 +991,44 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         }
     }
 
-    private static class CleanInvalidDownloadTask extends AsyncTask<Void, Integer, Integer> {
+    private static class CleanInvalidDownloadTask {
 
         private final WeakReference<DownloadFragment> mFragment;
         private ProgressDialog mProgressDialog;
         private final List<String> mLogs = new ArrayList<>();
+        private Handler mHandler;
 
         public CleanInvalidDownloadTask(DownloadFragment fragment) {
             mFragment = new WeakReference<>(fragment);
         }
 
-        @Override
-        protected void onPreExecute() {
+        void execute() {
             DownloadFragment fragment = mFragment.get();
             if (fragment == null || fragment.getActivity() == null) {
                 return;
             }
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) {
+                return;
+            }
+            mHandler = handler;
+
+            // onPreExecute equivalent (runs on main thread)
             mProgressDialog = new ProgressDialog(fragment.getActivity());
             mProgressDialog.setTitle(R.string.settings_download_cleaning);
             mProgressDialog.setIndeterminate(false);
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             mProgressDialog.setCancelable(false);
             mProgressDialog.show();
+
+            executor.execute(() -> {
+                int result = doInBackground();
+                handler.post(() -> onPostExecute(result));
+            });
         }
 
-        @Override
-        protected Integer doInBackground(Void... voids) {
+        private int doInBackground() {
             UniFile downloadDir = Settings.getDownloadLocation();
             if (downloadDir == null || !downloadDir.isDirectory()) {
                 return 0;
@@ -491,13 +1041,13 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
 
             int invalidCount = 0;
             int total = files.length;
-            publishProgress(0, total);
+            postProgress(0, total);
 
             DownloadManager downloadManager = EhApplication.getDownloadManager(mFragment.get().requireActivity());
 
             for (int i = 0; i < total; i++) {
                 UniFile dir = files[i];
-                publishProgress(i + 1, total);
+                postProgress(i + 1, total);
 
                 if (!dir.isDirectory()) {
                     continue;
@@ -586,16 +1136,20 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return invalidCount;
         }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (mProgressDialog != null) {
-                mProgressDialog.setMax(values[1]);
-                mProgressDialog.setProgress(values[0]);
+        private void postProgress(int current, int total) {
+            if (mHandler != null) {
+                mHandler.post(() -> onProgressUpdate(current, total));
             }
         }
 
-        @Override
-        protected void onPostExecute(Integer result) {
+        private void onProgressUpdate(int current, int total) {
+            if (mProgressDialog != null) {
+                mProgressDialog.setMax(total);
+                mProgressDialog.setProgress(current);
+            }
+        }
+
+        private void onPostExecute(int result) {
             DownloadFragment fragment = mFragment.get();
             if (mProgressDialog != null) {
                 // 检查 Fragment 是否仍然附加到 Activity，避免在 Activity 销毁后关闭对话框导致崩溃
@@ -640,5 +1194,181 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             }
         }
     }
-}
 
+    @SuppressLint("StaticFieldLeak")
+    private static final class SmbBackupSyncAllTask {
+        private static final String TAG = "SmbBackupSyncAll";
+
+        private final WeakReference<DownloadFragment> fragmentRef;
+        private final boolean aggressiveMode;
+        private Handler mHandler;
+        private ProgressDialog progress;
+        private volatile boolean cancelled;
+        private String mGalleryName = "";
+        private String mFileName = "";
+        private int mFileCurrent = 0;
+        private int mFileTotal = 0;
+        private int mCurrentIndex = 0;
+        private int mTotalCount = 0;
+        private long mSpeedBps = 0;
+        private boolean mBackgroundRequested = false;
+
+        private SmbBackupSyncAllTask(DownloadFragment fragment, boolean aggressiveMode) {
+            this.fragmentRef = new WeakReference<>(fragment);
+            this.aggressiveMode = aggressiveMode;
+        }
+
+        void execute() {
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+            mHandler = handler;
+
+            // onPreExecute equivalent (runs on main thread)
+            progress = new ProgressDialog(fragment.getActivity());
+            progress.setTitle(R.string.settings_download_smb_backup_syncing);
+            progress.setMessage(fragment.getString(R.string.settings_download_smb_backup_scanning));
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progress.setCancelable(false);
+            progress.setButton(DialogInterface.BUTTON_POSITIVE, fragment.getString(R.string.smb_picker_background_backup),
+                    (d, w) -> { mBackgroundRequested = true; cancelled = true; });
+            progress.setButton(DialogInterface.BUTTON_NEGATIVE, fragment.getString(android.R.string.cancel),
+                    (d, w) -> cancelled = true);
+            progress.show();
+
+            executor.execute(() -> {
+                int[] result = doInBackground();
+                handler.post(() -> onPostExecute(result));
+            });
+        }
+
+        private int[] doInBackground() {
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return new int[]{0, 0};
+
+            SmbBackupSettings backupSettings = new SmbBackupSettings(fragment.requireContext());
+            SmbConfig config = backupSettings.loadConfigIfEnabled();
+            if (config == null) return new int[]{0, 0};
+
+            UniFile localDir = Settings.getDownloadLocation();
+            if (localDir == null || !localDir.isDirectory()) return new int[]{0, 0};
+            if (localDir.getUri() != null && "smb".equals(localDir.getUri().getScheme())) return new int[]{0, 0};
+
+            UniFile[] localDirs = localDir.listFiles();
+            if (localDirs == null || localDirs.length == 0) return new int[]{0, 0};
+
+            long ramBufferSize = aggressiveMode ? backupSettings.getRamBufferSize(fragment.requireContext()) : 0;
+            Log.d(TAG, "Sync started, aggressive=" + aggressiveMode
+                    + ", ramBufferSize=" + ramBufferSize
+                    + ", totalDirs=" + localDirs.length);
+
+            SmbSyncEngine.Source source = SmbSyncEngine.uniFileSource(localDir);
+            SmbSyncEngine.Options options = new SmbSyncEngine.Options();
+            options.aggressive = aggressiveMode;
+            options.ramBufferSize = ramBufferSize;
+
+            SmbSyncEngine.Callback callback = new SmbSyncEngine.Callback() {
+                @Override
+                public void onScan(int total) {
+                    postProgress(0, total);
+                }
+
+                @Override
+                public void onGallery(int index, int total, String name) {
+                    mGalleryName = name;
+                    mFileName = "";
+                    mFileCurrent = 0;
+                    mFileTotal = 0;
+                    mSpeedBps = 0;
+                    mCurrentIndex = index;
+                    mTotalCount = total;
+                    postProgress(index, total);
+                }
+
+                @Override
+                public void onFile(int fileIndex, int fileTotal, String name) {
+                    mFileName = name;
+                    mFileCurrent = fileIndex;
+                    mFileTotal = fileTotal;
+                    postProgress(mCurrentIndex, mTotalCount);
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return cancelled;
+                }
+
+                @Override
+                public void onSpeed(long bytesPerSecond) {
+                    mSpeedBps = bytesPerSecond;
+                    postProgress(mCurrentIndex, mTotalCount);
+                }
+            };
+
+            SmbSyncEngine.Result result = SmbSyncEngine.sync(config, source, callback, options);
+            return new int[]{result.success, result.fail};
+        }
+
+        private void postProgress(int current, int total) {
+            if (mHandler != null) {
+                mHandler.post(() -> onProgressUpdate(current, total));
+            }
+        }
+
+        private void onProgressUpdate(int current, int total) {
+            if (progress == null) return;
+            if (progress.getMax() != total) progress.setMax(total);
+            progress.setProgress(current);
+
+            StringBuilder msg = new StringBuilder();
+            msg.append(progress.getContext().getString(R.string.settings_download_smb_backup_syncing));
+            msg.append(String.format(Locale.US, " (%d/%d)", current, total));
+            if (!mGalleryName.isEmpty()) {
+                msg.append("\n").append(mGalleryName);
+                if (mFileTotal > 0) {
+                    msg.append(String.format(Locale.US, " (%d/%d)", mFileCurrent, mFileTotal));
+                }
+            }
+            if (!mFileName.isEmpty()) {
+                msg.append("\n").append(mFileName);
+            }
+            if (mSpeedBps > 0) {
+                if (mSpeedBps > 1024 * 1024) {
+                    msg.append(String.format(Locale.US, "\n%.1f MB/s", mSpeedBps / (1024.0 * 1024.0)));
+                } else if (mSpeedBps > 1024) {
+                    msg.append(String.format(Locale.US, "\n%.1f KB/s", mSpeedBps / 1024.0));
+                } else {
+                    msg.append(String.format(Locale.US, "\n%d B/s", mSpeedBps));
+                }
+            }
+            progress.setMessage(msg.toString());
+        }
+
+        private void onPostExecute(int[] result) {
+            if (progress != null) {
+                DownloadFragment fragment = fragmentRef.get();
+                if (fragment != null && fragment.isAdded() && fragment.getActivity() != null) {
+                    try { if (progress.isShowing()) progress.dismiss(); } catch (Exception ignored) {}
+                }
+                progress = null;
+            }
+            DownloadFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            if (mBackgroundRequested) {
+                Log.d(TAG, "Switching to background backup, aggressive=" + aggressiveMode);
+                SmbBackupService.startWithAggressive(fragment.requireActivity(), aggressiveMode);
+                Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_syncing, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (result[0] > 0 || result[1] > 0) {
+                Toast.makeText(fragment.getActivity(),
+                        fragment.getString(R.string.settings_download_smb_backup_sync_done, result[0], result[1]),
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(fragment.getActivity(), R.string.settings_download_smb_backup_sync_failed, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+}

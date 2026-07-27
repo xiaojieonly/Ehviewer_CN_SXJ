@@ -184,6 +184,12 @@
             android:configChanges="screenSize|uiMode"
             android:theme="@style/AppTheme.Settings" />
         <activity
+            android:name=".ui.SmbBackupProgressActivity"
+            android:configChanges="screenSize|uiMode"
+            android:label="@string/settings_download_smb_backup_syncing"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Toolbar" />
+        <activity
             android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
             android:label="@string/excluded_languages"
@@ -249,6 +255,17 @@
             android:name=".download.DownloadService"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
+        <service
+            android:name=".smb.SmbBackupService"
+            android:foregroundServiceType="dataSync"
+            android:label="@string/smb_backup_service_name"
+            android:stopWithTask="false"
+            android:exported="false" />
+
+        <service
+            android:name=".smb.SmbUploadService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <provider
             android:name="com.hippo.content.FileProvider"

@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:sqlite:${EHVIEWER_DATA_DIR:./data}/ehviewer.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+ehviewer:
+  download:
+    path: ./data/downloads
+    cache-path: ./data/cache
+    cache-size-mb: 10240
+    worker-count: 3
+    download-delay: 0
+    download-timeout: 60000
+    max-concurrent-galleries: 3
+    max-concurrent-images: 3
+  smb:
+    enabled: false
+  security:
+    session-timeout: 86400
+    encryption-key-path: ./data/security.key

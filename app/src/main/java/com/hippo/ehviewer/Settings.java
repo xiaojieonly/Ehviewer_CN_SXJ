@@ -36,8 +36,12 @@ import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.FavListUrlBuilder;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.ui.CommonOperations;
+import com.hippo.ehviewer.smb.SmbConfig;
+import com.hippo.ehviewer.smb.SmbSettings;
 import com.hippo.ehviewer.ui.scene.gallery.list.GalleryListScene;
 import com.hippo.lib.glgallery.GalleryView;
+import com.hippo.unifile.SmbUri;
+import com.hippo.unifile.SmbUriHandler;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
@@ -65,6 +69,7 @@ public class Settings {
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
         sArchiverPre = context.getSharedPreferences("archiver_cache",Context.MODE_PRIVATE);
         sEhConfig = loadEhConfig();
+        UniFile.addUriHandler(new SmbUriHandler());
         if (getDarkModeStatus(context) && isThemeAutoSwitchAvailable()) {
             putTheme(THEME_DARK);
         }
@@ -748,6 +753,12 @@ public class Settings {
 
     public static void putDownloadLocation(@NonNull UniFile location) {
         Uri uri = location.getUri();
+        if (SmbUri.SCHEME.equals(uri.getScheme())) {
+            SmbConfig config = new SmbSettings(sContext).loadConfig();
+            if (config != null) {
+                new SmbSettings(sContext).saveConfig(config);
+            }
+        }
         putString(KEY_DOWNLOAD_SAVE_SCHEME, uri.getScheme());
         putString(KEY_DOWNLOAD_SAVE_AUTHORITY, uri.getEncodedAuthority());
         putString(KEY_DOWNLOAD_SAVE_PATH, uri.getEncodedPath());

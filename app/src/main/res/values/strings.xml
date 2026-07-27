@@ -58,7 +58,7 @@
     <string name="settings_eh_system_theme">系统主题</string>
 
 
-    <string name="app_name">EhViewer</string>
+    <string name="app_name">AnotherViewer</string>
 
     <string name="site_e" translatable="false">e-hentai</string>
     <string name="site_ex" translatable="false">exhentai</string>
@@ -674,6 +674,56 @@
     <string name="settings_download_pick_dir_kk">On Android 4.4+, apps can\'t write any data on your external SD card, unless you root the system and apply a patch. But &lt;SD card&gt;/Android/data/com.hippo.ehviewer is an exception. It is writable for this app.</string>
     <string name="settings_download_pick_dir_l">Android 5.0+ provides new API to write on external SD card. Tap the \"DOCUMENT\" if you want to set SD card as download location.</string>
     <string name="settings_download_document">Document</string>
+    <string name="settings_download_smb">SMB</string>
+    <string name="settings_download_smb_host">服务器</string>
+    <string name="settings_download_smb_port">端口</string>
+    <string name="settings_download_smb_share">共享名称</string>
+    <string name="settings_download_smb_path">文件夹路径</string>
+    <string name="settings_download_smb_username">用户名</string>
+    <string name="settings_download_smb_password">密码</string>
+    <string name="settings_download_smb_login_anonymous">匿名</string>
+    <string name="settings_download_smb_login_password">用户名和密码</string>
+    <string name="settings_download_smb_connect">连接并保存</string>
+    <string name="settings_download_smb_testing">正在测试 SMB 连接</string>
+    <string name="settings_download_smb_connected">SMB 位置已保存</string>
+    <string name="settings_download_smb_error_auth">认证失败，请检查用户名和密码</string>
+    <string name="settings_download_smb_error_connect">无法连接到服务器，请检查地址和网络</string>
+    <string name="settings_download_smb_error_generic">连接错误：%s</string>
+    <string name="settings_download_smb_invalid_config">SMB 配置无效</string>
+    <string name="settings_download_smb_backup">SMB 备份</string>
+    <string name="settings_download_smb_backup_summary">将下载内容同步到 SMB 服务器作为备份</string>
+    <string name="settings_download_smb_backup_configure">配置备份服务器</string>
+    <string name="settings_download_smb_backup_sync_all">同步所有下载到备份</string>
+    <string name="settings_download_smb_backup_syncing">正在同步到 SMB 备份…</string>
+    <string name="settings_download_smb_backup_scanning">正在扫描下载内容…</string>
+    <string name="settings_download_smb_backup_sync_done">同步完成：%1$d 项成功，%2$d 项失败</string>
+    <string name="smb_upload_service_name">SMB 上传</string>
+    <string name="smb_upload_service_desc">SMB 文件上传进度</string>
+    <string name="settings_download_smb_upload_syncing">SMB 上传中...</string>
+    <string name="settings_download_smb_upload_sync_done">上传完成: %1$d 成功, %2$d 失败</string>
+    <string name="settings_download_smb_upload_scanning">扫描中...</string>
+    <string name="settings_download_smb_backup_sync_failed">同步失败</string>
+    <string name="settings_download_smb_backup_not_configured">SMB 备份未配置</string>
+    <string name="settings_download_smb_backup_configured">已配置：%s</string>
+    <string name="settings_download_smb_check_network">当前下载位置为 SMB 服务器，请确认网络可正常访问</string>
+    <string name="settings_download_smb_backup_aggressive">激进模式（内存缓存）</string>
+    <string name="settings_download_smb_backup_aggressive_summary">占用 10%%~20%% 系统内存加速 SMB 上传</string>
+    <string name="settings_download_smb_backup_sync_all_message">选择同步模式：\n\n激进模式：占用内存加速上传\n普通模式：标准上传</string>
+    <string name="settings_download_smb_backup_sync_aggressive">激进模式</string>
+    <string name="settings_download_smb_backup_sync_normal">普通模式</string>
+    <string name="smb_picker_up">返回上级</string>
+    <string name="smb_picker_title">SMB 服务器浏览</string>
+    <string name="smb_picker_step_server">步骤 1：输入服务器地址和凭据，然后点击连接</string>
+    <string name="smb_picker_step_share">步骤 2：输入服务器上的共享名称，然后点击确定</string>
+    <string name="smb_picker_new_folder">新建文件夹</string>
+    <string name="smb_picker_new_folder_hint">文件夹名称</string>
+    <string name="smb_picker_select_here">选择当前目录</string>
+    <string name="smb_picker_background_backup">后台备份</string>
+    <string name="smb_backup_service_name">SMB 备份服务</string>
+    <string name="smb_backup_service_desc">正在将下载内容同步到 SMB 服务器</string>
+    <string name="settings_download_smb_cache_threshold">缓存上传阈值</string>
+    <string name="settings_download_smb_cache_threshold_summary">缓存占用超过阈值时自动上传到 SMB</string>
+    <string name="settings_download_smb_reminder">⚠️ SMB网络存储性能可能受限</string>
     <string name="settings_download_continue">Continue</string>
     <string name="settings_download_media_scan">Allow media scan</string>
     <string name="settings_download_media_scan_summary_on">Please hide your gallery apps away from other people</string>

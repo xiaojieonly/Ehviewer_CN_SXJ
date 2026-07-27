@@ -151,6 +151,11 @@
         <item>300</item>
     </string-array>
 
+    <string-array name="settings_download_smb_login_modes" translatable="false">
+        <item>@string/settings_download_smb_login_anonymous</item>
+        <item>@string/settings_download_smb_login_password</item>
+    </string-array>
+
 
     <string-array name="thumb_resolution_entries" translatable="false">
         <item>@string/settings_eh_thumb_resolution_auto</item>
@@ -392,6 +397,20 @@
         <item>@string/wifi_send_favorite</item>
         <item>@string/wifi_send_download</item>
         <item>@string/wifi_send_download_location</item>
+    </string-array>
+
+    <string-array name="smb_cache_threshold_entries" translatable="false">
+        <item>50%%</item>
+        <item>60%%</item>
+        <item>75%%</item>
+        <item>90%%</item>
+    </string-array>
+
+    <string-array name="smb_cache_threshold_values" translatable="false">
+        <item>50</item>
+        <item>60</item>
+        <item>75</item>
+        <item>90</item>
     </string-array>
 
     <string-array name="update_metadata">

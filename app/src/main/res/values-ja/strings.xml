@@ -41,7 +41,7 @@
     <string name="network_remind">VPN が有効になっていることが検出されました。ネットワークセキュリティに注意してください</string>
     <!--    <string name="network_remind">It has been detected that the vpn is enabled, please pay attention to network security</string>-->
     <string name="no_blicklist">これはブラックリストです</string>
-    <string name="app_name">EhViewer</string>
+    <string name="app_name">AnotherViewer</string>
     <!-- Theme -->
     <string name="theme_light">ライトテーマ</string>
     <string name="theme_dark">ダークテーマ</string>

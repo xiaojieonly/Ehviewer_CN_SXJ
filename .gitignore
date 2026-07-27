@@ -1,19 +1,38 @@
-.gradle
-/local.properties
-.DS_Store
-/build
-/src
+# Build outputs
+build/
+*.class
+*.jar
+*.war
+
+# Gradle
+.gradle/
+gradle/
+
+# IDE
+.idea/
 *.iml
-.idea
-/captures
-release
-google-services.json
-java_pid10692.hprof
-gradle/wrapper/gradle-wrapper.jar
-gradle/wrapper/gradle-wrapper.properties
-/app/.cxx/
-/Commend.md
-/.kotlin/
-/download/00000006.gif
-open_source_licenses.html
-/.vscode/settings.json
+.vscode/
+.codewhale/
+.deepseek/
+
+# Android
+local.properties
+app/.cxx/
+
+# Qwen Code
+.qwen/
+
+# Node
+node_modules/
+web-frontend/dist/
+
+# Data
+data/
+*.db
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

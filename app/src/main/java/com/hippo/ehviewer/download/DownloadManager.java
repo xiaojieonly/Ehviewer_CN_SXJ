@@ -39,7 +39,11 @@ import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.lib.image.Image;
 //import com.hippo.lib.image.Image1;
+import com.hippo.ehviewer.smb.SmbCacheSettings;
+import com.hippo.ehviewer.smb.SmbUploadService;
 import com.hippo.unifile.UniFile;
+
+import java.io.File;
 import com.hippo.util.IoThreadPoolExecutor;
 import com.hippo.lib.yorozuya.ConcurrentPool;
 import com.hippo.lib.yorozuya.MathUtils;
@@ -1274,6 +1278,21 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     info.legacy = mTotal - mFinished;
                     if (info.legacy == 0) {
                         info.state = DownloadInfo.STATE_FINISH;
+                        // Check if download location is SMB and trigger upload if cache threshold reached
+                        UniFile downloadLoc = Settings.getDownloadLocation();
+                        if (downloadLoc != null && downloadLoc.getUri() != null
+                                && "smb".equals(downloadLoc.getUri().getScheme())) {
+                            // Download is to local cache, check if we need to upload
+                            File smbCacheDir = SmbCacheSettings.getSmbCacheDir(mContext);
+                            long cacheSize = SmbCacheSettings.getDirSize(smbCacheDir);
+                            SmbCacheSettings cacheSettings = new SmbCacheSettings(mContext);
+                            if (cacheSize >= cacheSettings.getThresholdBytes()) {
+                                SmbUploadService.start(mContext);
+                            }
+                        } else if (downloadLoc != null) {
+                            // Original SMB backup logic for local paths
+                            new com.hippo.ehviewer.smb.SmbBackupManager(mContext).syncGalleryToBackup(info);
+                        }
                     } else {
                         info.state = DownloadInfo.STATE_FAILED;
                     }

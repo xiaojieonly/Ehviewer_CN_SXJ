@@ -518,6 +518,12 @@ public final class MainActivity extends StageActivity
         if (null == uniFile || uniFile.ensureDir()) {
             return;
         }
+        if (uniFile.getUri() != null && "smb".equals(uniFile.getUri().getScheme())) {
+            if (new com.hippo.ehviewer.smb.SmbSettings(this).loadConfig() != null) {
+                Toast.makeText(this, R.string.settings_download_smb_check_network, Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
         new AlertDialog.Builder(this)
                 .setTitle(R.string.waring)
                 .setMessage(R.string.invalid_download_location)

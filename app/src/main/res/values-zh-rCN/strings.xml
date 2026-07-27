@@ -16,7 +16,7 @@
 
 <resources>
 
-    <string name="app_name">EhViewer</string>
+    <string name="app_name">AnotherViewer</string>
 
     <!-- Theme -->
     <string name="theme_light">亮色主题</string>
