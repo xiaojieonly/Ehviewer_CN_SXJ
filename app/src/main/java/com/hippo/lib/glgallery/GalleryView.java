@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GalleryView extends GLView implements GestureRecognizer.Listener {
 
-    @IntDef({LAYOUT_LEFT_TO_RIGHT, LAYOUT_RIGHT_TO_LEFT, LAYOUT_TOP_TO_BOTTOM})
+    @IntDef({LAYOUT_LEFT_TO_RIGHT, LAYOUT_RIGHT_TO_LEFT, LAYOUT_TOP_TO_BOTTOM, LAYOUT_DUAL_PAGE})
     @Retention(RetentionPolicy.SOURCE)
     public @interface LayoutMode {}
 
@@ -67,6 +67,10 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     public static final int LAYOUT_LEFT_TO_RIGHT = 0;
     public static final int LAYOUT_RIGHT_TO_LEFT = 1;
     public static final int LAYOUT_TOP_TO_BOTTOM = 2;
+    public static final int LAYOUT_DUAL_PAGE = 3;
+
+    public static final int SPREAD_LEFT_TO_RIGHT = SpreadLayoutManager.MODE_LEFT_TO_RIGHT;
+    public static final int SPREAD_RIGHT_TO_LEFT = SpreadLayoutManager.MODE_RIGHT_TO_LEFT;
 
     public static final int SCALE_ORIGIN = ImageView.SCALE_ORIGIN;
     public static final int SCALE_FIT_WIDTH = ImageView.SCALE_FIT_WIDTH;
@@ -108,6 +112,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private static final int METHOD_ON_ATTACH_TO_ROOT = 20;
     private static final int METHOD_SET_PAGER_INTERVAL = 21;
     private static final int METHOD_SET_SCROLL_INTERVAL = 22;
+    private static final int METHOD_SET_SPREAD_MODE = 23;
 
     private final Context mContext;
     private Adapter mAdapter;
@@ -119,6 +124,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
     private PagerLayoutManager mPagerLayoutManager;
     private ScrollLayoutManager mScrollLayoutManager;
+    private SpreadLayoutManager mSpreadLayoutManager;
     @Nullable
     private LayoutManager mLayoutManager;
 
@@ -157,6 +163,8 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private final Rect mSliderArea = new Rect();
 
     private int mLayoutMode = LAYOUT_RIGHT_TO_LEFT;
+    private int mSpreadMode = SpreadLayoutManager.MODE_RIGHT_TO_LEFT;
+    private boolean mCoverEnabled = true;
     private int mScaleMode = ImageView.SCALE_FIT;
     private int mStartPosition = ImageView.START_POSITION_TOP_LEFT;
     private int mIndex;
@@ -175,6 +183,8 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         private Listener mListener;
 
         private int mLayoutMode = LAYOUT_LEFT_TO_RIGHT;
+        private int mSpreadMode = SpreadLayoutManager.MODE_RIGHT_TO_LEFT;
+        private boolean mCoverEnabled = true;
         private int mScaleMode = SCALE_FIT;
         private int mStartPosition = START_POSITION_TOP_LEFT;
         private int mStartPage = 0;
@@ -207,6 +217,16 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
         public Builder setLayoutMode(@LayoutMode int layoutMode) {
             mLayoutMode = layoutMode;
+            return this;
+        }
+
+        public Builder setSpreadMode(int spreadMode) {
+            mSpreadMode = spreadMode;
+            return this;
+        }
+
+        public Builder setCoverEnabled(boolean coverEnabled) {
+            mCoverEnabled = coverEnabled;
             return this;
         }
 
@@ -314,6 +334,8 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         mEdgeView = new GLEdgeView(build.mEdgeColor);
 
         mLayoutMode = build.mLayoutMode;
+        mSpreadMode = build.mSpreadMode;
+        mCoverEnabled = build.mCoverEnabled;
         mScaleMode = build.mScaleMode;
         mStartPosition = build.mStartPosition;
         mIndex = MathUtils.clamp(build.mStartPage, 0, Integer.MAX_VALUE);
@@ -350,6 +372,14 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         }
     }
 
+    private void ensureSpreadLayoutManager() {
+        if (mSpreadLayoutManager == null) {
+            mSpreadLayoutManager = new SpreadLayoutManager(mContext, this,
+                    mScaleMode, mStartPosition, 1.0f, mPagerInterval);
+            mSpreadLayoutManager.setCoverEnabled(mCoverEnabled);
+        }
+    }
+
     private void attachLayoutManager() {
         if (null != mLayoutManager) {
             return;
@@ -378,6 +408,14 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                 mScrollLayoutManager.setCurrentIndex(mIndex);
                 mAdapter = null;
                 mLayoutManager = mScrollLayoutManager;
+                break;
+            case LAYOUT_DUAL_PAGE:
+                ensureSpreadLayoutManager();
+                mSpreadLayoutManager.setMode(mSpreadMode);
+                mSpreadLayoutManager.onAttach(mAdapter);
+                mSpreadLayoutManager.setCurrentIndex(mIndex);
+                mAdapter = null;
+                mLayoutManager = mSpreadLayoutManager;
                 break;
         }
 
@@ -442,7 +480,8 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     public static int sanitizeLayoutMode(int layoutMode) {
         if (layoutMode != GalleryView.LAYOUT_LEFT_TO_RIGHT &&
                 layoutMode != GalleryView.LAYOUT_RIGHT_TO_LEFT &&
-                layoutMode != GalleryView.LAYOUT_TOP_TO_BOTTOM) {
+                layoutMode != GalleryView.LAYOUT_TOP_TO_BOTTOM &&
+                layoutMode != GalleryView.LAYOUT_DUAL_PAGE) {
             return GalleryView.LAYOUT_LEFT_TO_RIGHT;
         } else {
             return layoutMode;
@@ -535,6 +574,10 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
     public void setLayoutMode(@LayoutMode int layoutMode) {
         postMethod(METHOD_SET_LAYOUT_MODE, layoutMode);
+    }
+
+    public void setSpreadMode(int spreadMode) {
+        postMethod(METHOD_SET_SPREAD_MODE, spreadMode);
     }
 
     public void setCurrentPage(int page) {
@@ -855,9 +898,32 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                 mScrollLayoutManager.setCurrentIndex(index);
                 mLayoutManager = mScrollLayoutManager;
                 break;
+            case LAYOUT_DUAL_PAGE:
+                if (mLayoutManager == mSpreadLayoutManager) {
+                    mSpreadLayoutManager.setMode(mSpreadMode);
+                } else {
+                    ensureSpreadLayoutManager();
+                    mSpreadLayoutManager.setMode(mSpreadMode);
+                    int idx = mLayoutManager.getInternalCurrentIndex();
+                    mSpreadLayoutManager.onAttach(mLayoutManager.onDetach());
+                    mSpreadLayoutManager.setCurrentIndex(idx);
+                    mLayoutManager = mSpreadLayoutManager;
+                }
+                break;
         }
 
         requestFill();
+    }
+
+    private void setSpreadModeInternal(int spreadMode) {
+        if (mSpreadMode == spreadMode) {
+            return;
+        }
+        mSpreadMode = spreadMode;
+        if (mLayoutManager == mSpreadLayoutManager && mSpreadLayoutManager != null) {
+            mSpreadLayoutManager.setMode(spreadMode);
+            requestFill();
+        }
     }
 
     private void setCurrentPageInternal(int page) {
@@ -982,6 +1048,9 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                     break;
                 case METHOD_SET_LAYOUT_MODE:
                     setLayoutModeInternal((Integer) args[0]);
+                    break;
+                case METHOD_SET_SPREAD_MODE:
+                    setSpreadModeInternal((Integer) args[0]);
                     break;
                 case METHOD_SET_CURRENT_PAGE:
                     setCurrentPageInternal((Integer) args[0]);
