@@ -113,6 +113,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private static final int METHOD_SET_PAGER_INTERVAL = 21;
     private static final int METHOD_SET_SCROLL_INTERVAL = 22;
     private static final int METHOD_SET_SPREAD_MODE = 23;
+    private static final int METHOD_SET_SPLIT_X = 24;
 
     private final Context mContext;
     private Adapter mAdapter;
@@ -165,6 +166,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private int mLayoutMode = LAYOUT_RIGHT_TO_LEFT;
     private int mSpreadMode = SpreadLayoutManager.MODE_RIGHT_TO_LEFT;
     private boolean mCoverEnabled = true;
+    private int mSplitX = -1;
     private int mScaleMode = ImageView.SCALE_FIT;
     private int mStartPosition = ImageView.START_POSITION_TOP_LEFT;
     private int mIndex;
@@ -377,6 +379,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
             mSpreadLayoutManager = new SpreadLayoutManager(mContext, this,
                     mScaleMode, mStartPosition, 1.0f, mPagerInterval);
             mSpreadLayoutManager.setCoverEnabled(mCoverEnabled);
+            mSpreadLayoutManager.setSplitX(mSplitX);
         }
     }
 
@@ -578,6 +581,10 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
     public void setSpreadMode(int spreadMode) {
         postMethod(METHOD_SET_SPREAD_MODE, spreadMode);
+    }
+
+    public void setSplitX(int splitX) {
+        postMethod(METHOD_SET_SPLIT_X, splitX);
     }
 
     public void setCurrentPage(int page) {
@@ -926,6 +933,16 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         }
     }
 
+    private void setSplitXInternal(int splitX) {
+        if (mSplitX == splitX) {
+            return;
+        }
+        mSplitX = splitX;
+        if (mLayoutManager == mSpreadLayoutManager && mSpreadLayoutManager != null) {
+            mSpreadLayoutManager.setSplitX(splitX);
+        }
+    }
+
     private void setCurrentPageInternal(int page) {
         if (mLayoutManager != null) {
             mLayoutManager.setCurrentIndex(page);
@@ -1051,6 +1068,9 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                     break;
                 case METHOD_SET_SPREAD_MODE:
                     setSpreadModeInternal((Integer) args[0]);
+                    break;
+                case METHOD_SET_SPLIT_X:
+                    setSplitXInternal((Integer) args[0]);
                     break;
                 case METHOD_SET_CURRENT_PAGE:
                     setCurrentPageInternal((Integer) args[0]);

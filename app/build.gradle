@@ -125,6 +125,8 @@ dependencies {
     implementation 'org.conscrypt:conscrypt-android:2.5.3'
     // https://mvnrepository.com/artifact/androidx.core/core-ktx
     implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.window:window:1.0.0'
+    implementation 'androidx.window:window-java:1.0.0'
 //    implementation 'com.android.support:recyclerview-v7:25.0.1'
 
 //     https://mvnrepository.com/artifact/com.fpliu.ndk.pkg.prefab.android.21/libpng

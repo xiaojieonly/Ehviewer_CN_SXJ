@@ -59,6 +59,13 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.util.Consumer;
+import androidx.window.java.layout.WindowInfoTrackerCallbackAdapter;
+import androidx.window.layout.DisplayFeature;
+import androidx.window.layout.FoldingFeature;
+import androidx.window.layout.WindowInfoTracker;
+import androidx.window.layout.WindowLayoutInfo;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
@@ -175,6 +182,24 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private int mLayoutMode;
     private int mSpreadMode;
+    private WindowInfoTrackerCallbackAdapter mWindowInfoTracker;
+    private final Consumer<WindowLayoutInfo> mWindowLayoutInfoConsumer = info -> {
+        if (mGalleryView == null) {
+            return;
+        }
+        int splitX = -1;
+        for (DisplayFeature feature : info.getDisplayFeatures()) {
+            if (feature instanceof FoldingFeature) {
+                FoldingFeature fold = (FoldingFeature) feature;
+                // Only a vertical fold (crease/hinge) defines a side-by-side seam.
+                if (fold.getOrientation() == FoldingFeature.Orientation.VERTICAL) {
+                    splitX = fold.getBounds().centerX();
+                }
+                break;
+            }
+        }
+        mGalleryView.setSplitX(splitX);
+    };
     private int mSize;
     private int mCurrentIndex;
 
@@ -388,6 +413,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(layoutMode).setSpreadMode(spreadMode).setCoverEnabled(Settings.getReadingFirstPageCover()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
         mGLRootView.setContentPane(mGalleryView);
         mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
+        mWindowInfoTracker = new WindowInfoTrackerCallbackAdapter(WindowInfoTracker.getOrCreate(this));
+        mWindowInfoTracker.addWindowLayoutInfoListener(this,
+                ContextCompat.getMainExecutor(this), mWindowLayoutInfoConsumer);
         mGalleryProvider.setListener(mGalleryAdapter);
         mGalleryProvider.setGLRoot(mGLRootView);
 
@@ -504,6 +532,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     @Override
     protected void onDestroy() {
+        if (mWindowInfoTracker != null) {
+            mWindowInfoTracker.removeWindowLayoutInfoListener(mWindowLayoutInfoConsumer);
+            mWindowInfoTracker = null;
+        }
         if (!transferService.isShutdown()) {
             transferService.shutdown();
             transferService = null;

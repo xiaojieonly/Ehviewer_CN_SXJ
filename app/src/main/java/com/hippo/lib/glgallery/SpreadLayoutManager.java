@@ -79,6 +79,7 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
     @Mode
     private int mMode = MODE_RIGHT_TO_LEFT;
     private boolean mCoverEnabled = true;
+    private int mSplitX = -1;
     private int mScaleMode;
     private int mStartPosition;
     private float mScaleValue;
@@ -145,6 +146,16 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
             removeErrorView();
             removeAllPages();
             resetParameters();
+            mGalleryView.requestFill();
+        }
+    }
+
+    public void setSplitX(int splitX) {
+        if (mSplitX == splitX) {
+            return;
+        }
+        mSplitX = splitX;
+        if (mAdapter != null) {
             mGalleryView.requestFill();
         }
     }
@@ -437,7 +448,7 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
      */
     private void layoutSpread(GalleryPageView p0, GalleryPageView p1, int left, int width,
             int height, int widthSpec, int heightSpec, boolean readingLeftToRight) {
-        int seam = width / 2;
+        int seam = (mSplitX > 0 && mSplitX < width) ? mSplitX : width / 2;
         if (p1 == null) {
             // Single page (cover or trailing): center a half-width slot.
             int slotLeft = left + (width - seam) / 2;
