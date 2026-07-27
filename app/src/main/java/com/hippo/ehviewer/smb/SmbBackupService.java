@@ -36,10 +36,6 @@ import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.ui.SmbBackupProgressActivity;
 import com.hippo.unifile.UniFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,7 +44,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SmbBackupService extends Service {
 
     private static final String TAG = "SmbBackupService";
-    private static final int SMB_READ_BUFFER_BYTES = 256 * 1024;
     private static final String CHANNEL_ID = "smb_backup";
     private static final int NOTIFICATION_ID = 0x734D62; // "Smb"
     private static final String ACTION_START = "com.hippo.ehviewer.smb.START";
@@ -185,129 +180,54 @@ public class SmbBackupService extends Service {
             return;
         }
 
-        int total = localDirs.length;
-        int successCount = 0;
-        int failCount = 0;
-
         boolean aggressiveMode = mAggressive;
         long ramBufferSize = aggressiveMode ? backupSettings.getRamBufferSize(this) : 0;
         Log.d(TAG, "Resolved backup mode, aggressive=" + aggressiveMode
                 + ", ramBufferSize=" + ramBufferSize);
 
-        SmbConnection connection = new SmbConnection(config);
-        try {
-            connection.open();
-            String basePath = config.getPath();
-            updateNotification(0, total, getString(R.string.settings_download_smb_backup_scanning), 0);
+        SmbSyncEngine.Source source = SmbSyncEngine.uniFileSource(localDir);
 
-            for (int i = 0; i < total; i++) {
-                if (mCancelled) break;
-                UniFile dir = localDirs[i];
-                if (!dir.isDirectory()) continue;
-                String dirname = dir.getName();
-                if (dirname == null || dirname.startsWith(".")) continue;
+        SmbSyncEngine.Options options = new SmbSyncEngine.Options();
+        options.aggressive = aggressiveMode;
+        options.ramBufferSize = ramBufferSize;
 
-                String galleryPath = basePath.isEmpty() ? dirname : basePath + "/" + dirname;
-                updateNotification(i + 1, total, dirname, 0);
+        final int[] galleryIndex = new int[1];
+        final int[] galleryTotal = new int[1];
+        final String[] galleryName = new String[1];
 
-                try {
-                    connection.ensureDirectory(galleryPath);
-
-                    UniFile[] files = dir.listFiles();
-                    if (files != null) {
-                        int fileCount = 0;
-                        for (UniFile f : files) {
-                            if (f != null && f.getName() != null && !f.getName().startsWith(".")) fileCount++;
-                        }
-                        int fileIdx = 0;
-
-                        for (int j = 0; j < files.length; j++) {
-                            if (mCancelled) break;
-                            UniFile file = files[j];
-                            String name = file.getName();
-                            if (name == null) continue;
-                            if (file.isDirectory()) {
-                                connection.ensureDirectory(galleryPath + "/" + name);
-                            } else {
-                                String filePath = galleryPath + "/" + name;
-                                if (connection.exists(filePath) && connection.length(filePath) == file.length()) continue;
-                                fileIdx++;
-                                updateNotification(i + 1, total,
-                                        dirname + " (" + fileIdx + "/" + fileCount + ")", 0);
-                                
-                                if (aggressiveMode && ramBufferSize > 0) {
-                                    Log.d(TAG, "Using aggressive RAM-buffer upload for " + filePath
-                                            + ", threshold=" + ramBufferSize);
-                                    try {
-                                        uploadWithRamBuffer(connection, file, filePath, ramBufferSize);
-                                    } catch (OutOfMemoryError e) {
-                                        Log.w(TAG, "Aggressive upload ran out of memory, falling back to stream for "
-                                                + filePath, e);
-                                        uploadWithStream(connection, file, filePath);
-                                    }
-                                } else {
-                                    if (aggressiveMode) {
-                                        Log.d(TAG, "Aggressive mode requested but RAM buffer unavailable, using stream for "
-                                                + filePath);
-                                    }
-                                    uploadWithStream(connection, file, filePath);
-                                }
-                            }
-                        }
-                    }
-                    successCount++;
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to sync " + dirname, e);
-                    failCount++;
-                }
+        SmbSyncEngine.Callback callback = new SmbSyncEngine.Callback() {
+            @Override
+            public void onScan(int total) {
+                updateNotification(0, total, getString(R.string.settings_download_smb_backup_scanning), 0);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "SMB connection failed", e);
-            failCount = total;
-        } finally {
-            connection.close();
-        }
 
-        finish(new int[]{successCount, failCount});
-    }
-
-    private void uploadWithStream(SmbConnection connection, UniFile file, String smbPath)
-            throws IOException {
-        try (InputStream is = file.openInputStream()) {
-            connection.writeFile(smbPath, is);
-        }
-    }
-
-    private void uploadWithRamBuffer(SmbConnection connection, UniFile file, String smbPath, long bufferSize) throws IOException {
-        int readBufferSize = (int) Math.max(8192L, Math.min(bufferSize, SMB_READ_BUFFER_BYTES));
-        byte[] buffer = new byte[readBufferSize];
-        java.io.ByteArrayOutputStream ramBuffer = new java.io.ByteArrayOutputStream(
-                Math.min(readBufferSize * 4, 1024 * 1024));
-        long flushThreshold = Math.max(readBufferSize, bufferSize);
-        boolean append = false;
-        
-        try (InputStream is = file.openInputStream()) {
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                ramBuffer.write(buffer, 0, bytesRead);
-                if (ramBuffer.size() >= flushThreshold) {
-                    append = flushRamBufferToSmb(connection, smbPath, ramBuffer, append);
-                    ramBuffer.reset();
-                }
+            @Override
+            public void onGallery(int index, int total, String name) {
+                galleryIndex[0] = index;
+                galleryTotal[0] = total;
+                galleryName[0] = name;
+                updateNotification(index, total, name, 0);
             }
-            if (ramBuffer.size() > 0) {
-                flushRamBufferToSmb(connection, smbPath, ramBuffer, append);
-            }
-        }
-    }
 
-    private boolean flushRamBufferToSmb(SmbConnection connection, String smbPath,
-            java.io.ByteArrayOutputStream ramBuffer, boolean append) throws IOException {
-        byte[] data = ramBuffer.toByteArray();
-        try (InputStream is = new java.io.ByteArrayInputStream(data)) {
-            connection.writeFile(smbPath, is, append);
-        }
-        return true;
+            @Override
+            public void onFile(int fileIndex, int fileTotal, String name) {
+                updateNotification(galleryIndex[0], galleryTotal[0],
+                        galleryName[0] + " (" + fileIndex + "/" + fileTotal + ")", 0);
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return mCancelled;
+            }
+
+            @Override
+            public void onSpeed(long bytesPerSecond) {
+            }
+        };
+
+        SmbSyncEngine.Result result = SmbSyncEngine.sync(config, source, callback, options);
+
+        finish(new int[]{result.success, result.fail});
     }
 
     private void updateNotification(int current, int total, String text, int speedBps) {
