@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -34,11 +33,7 @@ import androidx.core.app.NotificationCompat;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.ui.MainActivity;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,13 +41,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SmbUploadService extends Service {
 
-    private static final String TAG = "SmbUploadService";
     private static final String CHANNEL_ID = "smb_upload";
     private static final int NOTIFICATION_ID = 0x734D55;
     private static final String ACTION_START = "com.hippo.ehviewer.smb.UPLOAD_START";
     private static final String ACTION_CANCEL = "com.hippo.ehviewer.smb.UPLOAD_CANCEL";
-
-    private static final int STREAM_BUFFER_SIZE = 256 * 1024;
 
     private static final AtomicBoolean sRunning = new AtomicBoolean(false);
 
@@ -149,94 +141,39 @@ public class SmbUploadService extends Service {
             return;
         }
 
-        int total = galleries.length;
-        int successCount = 0;
-        int failCount = 0;
+        SmbSyncEngine.Source source = SmbSyncEngine.fileSource(cacheDir);
 
-        SmbConnection connection = null;
-        try {
-            connection = SmbConnection.obtain(config);
-            String basePath = config.getPath();
-            updateNotification(0, total, getString(R.string.settings_download_smb_upload_scanning), 0);
+        SmbSyncEngine.Options options = new SmbSyncEngine.Options();
+        options.deleteAfterUpload = true;
 
-            for (int i = 0; i < total; i++) {
-                if (mCancelled) break;
-                File gallery = galleries[i];
-                if (!gallery.isDirectory()) continue;
-                String galleryName = gallery.getName();
-                if (galleryName.startsWith(".")) continue;
-
-                updateNotification(i + 1, total, galleryName, 0);
-
-                try {
-                    uploadGallery(connection, gallery, config);
-                    successCount++;
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to upload gallery: " + galleryName, e);
-                    failCount++;
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "SMB connection failed", e);
-            failCount = total;
-        } finally {
-            if (connection != null) {
-                connection.release();
-            }
-        }
-
-        finish(new int[]{successCount, failCount});
-    }
-
-    private void uploadGallery(SmbConnection connection, File galleryDir, SmbConfig config) throws IOException {
-        String basePath = config.getPath();
-        String galleryName = galleryDir.getName();
-        String smbGalleryPath = basePath.isEmpty() ? galleryName : basePath + "/" + galleryName;
-
-        connection.ensureDirectory(smbGalleryPath);
-
-        File[] files = galleryDir.listFiles();
-        if (files == null || files.length == 0) {
-            return;
-        }
-
-        for (File file : files) {
-            if (mCancelled) break;
-            if (file.isDirectory()) {
-                connection.ensureDirectory(smbGalleryPath + "/" + file.getName());
-                continue;
+        SmbSyncEngine.Callback callback = new SmbSyncEngine.Callback() {
+            @Override
+            public void onScan(int total) {
+                updateNotification(0, total, getString(R.string.settings_download_smb_upload_scanning), 0);
             }
 
-            String smbFilePath = smbGalleryPath + "/" + file.getName();
-            uploadFile(connection, file, smbFilePath, galleryName);
-        }
-
-        if (!mCancelled) {
-            deleteRecursive(galleryDir);
-        }
-    }
-
-    private void uploadFile(SmbConnection connection, File localFile, String smbPath, String galleryName) throws IOException {
-        if (connection.exists(smbPath) && connection.length(smbPath) == localFile.length()) {
-            return;
-        }
-
-        connection.ensureDirectory(smbPath.substring(0, smbPath.lastIndexOf('/')));
-        try (InputStream is = new BufferedInputStream(new FileInputStream(localFile), STREAM_BUFFER_SIZE)) {
-            connection.writeFile(smbPath, is, false);
-        }
-    }
-
-    private void deleteRecursive(File fileOrDir) {
-        if (fileOrDir.isDirectory()) {
-            File[] children = fileOrDir.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    deleteRecursive(child);
-                }
+            @Override
+            public void onGallery(int index, int total, String name) {
+                updateNotification(index, total, name, 0);
             }
-        }
-        fileOrDir.delete();
+
+            @Override
+            public void onFile(int fileIndex, int fileTotal, String name) {
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return mCancelled;
+            }
+
+            @Override
+            public void onSpeed(long bytesPerSecond) {
+            }
+        };
+
+        SmbSyncEngine.Result result = SmbSyncEngine.sync(config, source, callback, options);
+
+        finish(new int[]{result.success, result.fail});
     }
 
     private void updateNotification(int current, int total, String text, int speedBps) {
