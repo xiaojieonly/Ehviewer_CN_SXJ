@@ -138,6 +138,7 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
             return;
         }
         mCoverEnabled = coverEnabled;
+        invalidateSpreadMap();
         if (mAdapter != null) {
             cancelAllAnimations();
             removeProgress();
@@ -251,45 +252,87 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
 
     // ---- Spread computation ----
 
+    private static final float WIDE_THRESHOLD = 1.15f;
+
+    // Precomputed pairing: page -> its spread's start page; spread start -> spread size.
+    private int[] mSpreadStartForPage;
+    private int[] mSpreadSizeByStart;
+    private int mSpreadMapSize = -1;
+
     private int size() {
         return mAdapter.size();
     }
 
+    private boolean isWide(int index) {
+        return mAdapter != null && mAdapter.getPageRatio(index) > WIDE_THRESHOLD;
+    }
+
+    private void invalidateSpreadMap() {
+        mSpreadMapSize = -1;
+    }
+
+    private void ensureSpreadMap() {
+        int size = size();
+        if (size <= 0) {
+            mSpreadMapSize = -1;
+            return;
+        }
+        if (mSpreadMapSize == size && mSpreadStartForPage != null) {
+            return;
+        }
+        mSpreadStartForPage = new int[size];
+        mSpreadSizeByStart = new int[size];
+        int i = 0;
+        if (mCoverEnabled) {
+            mSpreadSizeByStart[0] = 1;
+            mSpreadStartForPage[0] = 0;
+            i = 1;
+        }
+        while (i < size) {
+            if (isWide(i)) {
+                // Wide page stands alone.
+                mSpreadSizeByStart[i] = 1;
+                mSpreadStartForPage[i] = i;
+                i += 1;
+            } else if (i + 1 < size && !isWide(i + 1)) {
+                // Pair two consecutive non-wide pages.
+                mSpreadSizeByStart[i] = 2;
+                mSpreadStartForPage[i] = i;
+                mSpreadStartForPage[i + 1] = i;
+                i += 2;
+            } else {
+                // Non-wide page without a non-wide neighbour stands alone.
+                mSpreadSizeByStart[i] = 1;
+                mSpreadStartForPage[i] = i;
+                i += 1;
+            }
+        }
+        mSpreadMapSize = size;
+    }
+
     /** Number of pages (1 or 2) in the spread that starts at {@code start}. */
     private int spreadSize(int start) {
-        int size = size();
-        if (start < 0 || start >= size) {
+        ensureSpreadMap();
+        if (start < 0 || mSpreadSizeByStart == null || start >= mSpreadSizeByStart.length) {
             return 0;
         }
-        if (mCoverEnabled && start == 0) {
-            return 1;
-        }
-        return (start + 1 < size) ? 2 : 1;
+        return mSpreadSizeByStart[start];
     }
 
     /** First page index of the spread containing {@code page}. */
     private int spreadStartOf(int page) {
-        if (page < 0) {
+        ensureSpreadMap();
+        if (page < 0 || mSpreadStartForPage == null || page >= mSpreadStartForPage.length) {
             return -1;
         }
-        if (mCoverEnabled) {
-            if (page == 0) {
-                return 0;
-            }
-            return 1 + 2 * ((page - 1) / 2);
-        } else {
-            return 2 * (page / 2);
-        }
+        return mSpreadStartForPage[page];
     }
 
     private int prevSpreadStart(int start) {
         if (start <= 0) {
             return -1;
         }
-        if (mCoverEnabled && start == 1) {
-            return 0;
-        }
-        return start - 2;
+        return spreadStartOf(start - 1);
     }
 
     private int nextSpreadStart(int start) {
@@ -779,6 +822,7 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
         removeErrorView();
         removeAllPages();
         resetParameters();
+        invalidateSpreadMap();
         mGalleryView.requestFill();
     }
 

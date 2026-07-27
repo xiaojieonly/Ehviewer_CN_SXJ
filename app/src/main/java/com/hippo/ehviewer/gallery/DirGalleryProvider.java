@@ -16,6 +16,7 @@
 
 package com.hippo.ehviewer.gallery;
 
+import android.graphics.BitmapFactory;
 import android.os.Process;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -52,6 +53,7 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
     private final Stack<Integer> mRequests = new Stack<>();
     private final AtomicInteger mDecodingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
     private final AtomicReference<UniFile[]> mFileList = new AtomicReference<>();
+    private volatile float[] mRatios;
     @Nullable
     private Thread mBgThread;
     private volatile int mSize = STATE_WAIT;
@@ -118,6 +120,42 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
     public String getImageFilename(int index) {
         // TODO
         return Integer.toString(index);
+    }
+
+    @Override
+    public float getPageRatio(int index) {
+        float[] ratios = mRatios;
+        if (ratios != null && index >= 0 && index < ratios.length) {
+            return ratios[index];
+        }
+        return 0.7f;
+    }
+
+    private void scanRatios(UniFile[] files) {
+        float[] ratios = new float[files.length];
+        Arrays.fill(ratios, 0.7f);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        for (int i = 0; i < files.length; i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+            InputStream is = null;
+            try {
+                is = files[i].openInputStream();
+                options.outWidth = 0;
+                options.outHeight = 0;
+                BitmapFactory.decodeStream(is, null, options);
+                if (options.outWidth > 0 && options.outHeight > 0) {
+                    ratios[i] = (float) options.outWidth / options.outHeight;
+                }
+            } catch (Exception e) {
+                // Keep default ratio
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
+        }
+        mRatios = ratios;
     }
 
     @Override
@@ -193,6 +231,9 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
 
         // Put file list
         mFileList.lazySet(files);
+
+        // Pre-scan image dimensions for dual-page pairing
+        scanRatios(files);
 
         // Set state normal and notify
         mSize = files.length;

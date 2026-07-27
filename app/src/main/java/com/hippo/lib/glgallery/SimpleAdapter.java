@@ -72,6 +72,11 @@ public class SimpleAdapter extends GalleryView.Adapter implements GalleryProvide
     }
 
     @Override
+    public float getPageRatio(int index) {
+        return mProvider.getPageRatio(index);
+    }
+
+    @Override
     public void onDataChanged() {
         mGalleryView.onDataChanged();
     }

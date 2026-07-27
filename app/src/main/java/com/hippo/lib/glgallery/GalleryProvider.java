@@ -73,6 +73,11 @@ public abstract class GalleryProvider {
      */
     public abstract int size();
 
+    /** Width/height ratio of the page at {@code index}, or 0.7 (portrait) if unknown. */
+    public float getPageRatio(int index) {
+        return 0.7f;
+    }
+
     public final void request(int index) {
         ImageWrapper imageWrapper = mImageCache.get(index);
         if (imageWrapper != null) {

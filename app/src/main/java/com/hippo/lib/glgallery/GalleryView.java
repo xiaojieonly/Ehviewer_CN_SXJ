@@ -1232,6 +1232,11 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         public abstract String getError();
 
         public abstract int size();
+
+        /** Width/height ratio of the page at {@code index}, or 0.7 (portrait) if unknown. */
+        public float getPageRatio(int index) {
+            return 0.7f;
+        }
     }
 
     public static abstract class LayoutManager {
