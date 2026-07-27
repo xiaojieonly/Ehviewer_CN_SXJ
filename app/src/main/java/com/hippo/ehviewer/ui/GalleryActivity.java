@@ -24,6 +24,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.res.Configuration;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -173,6 +174,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private ObjectAnimator mAutoTransferAnimator;
 
     private int mLayoutMode;
+    private int mSpreadMode;
     private int mSize;
     private int mCurrentIndex;
 
@@ -371,7 +373,19 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
         Resources resources = getResources();
-        mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(Settings.getReadingDirection()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
+        int readingDirection = Settings.getReadingDirection();
+        boolean landscape = resources.getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        int layoutMode = readingDirection;
+        int spreadMode = GalleryView.SPREAD_RIGHT_TO_LEFT;
+        if (landscape && Settings.getReadingDualPage()
+                && (readingDirection == GalleryView.LAYOUT_LEFT_TO_RIGHT
+                    || readingDirection == GalleryView.LAYOUT_RIGHT_TO_LEFT)) {
+            layoutMode = GalleryView.LAYOUT_DUAL_PAGE;
+            spreadMode = readingDirection == GalleryView.LAYOUT_RIGHT_TO_LEFT
+                    ? GalleryView.SPREAD_RIGHT_TO_LEFT
+                    : GalleryView.SPREAD_LEFT_TO_RIGHT;
+        }
+        mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(layoutMode).setSpreadMode(spreadMode).setCoverEnabled(Settings.getReadingFirstPageCover()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
         mGLRootView.setContentPane(mGalleryView);
         mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
         mGalleryProvider.setListener(mGalleryAdapter);
@@ -408,6 +422,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         if (mGalleryView != null) {
             mLayoutMode = mGalleryView.getLayoutMode();
         }
+        mSpreadMode = spreadMode;
         updateSlider();
 
         // Update keep screen on
@@ -576,14 +591,14 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         // Check volume
         if (Settings.getVolumePage()) {
             if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT && unReverse) {
+                if (isRightToLeft() && unReverse) {
                     mGalleryView.pageRight();
                 } else {
                     mGalleryView.pageLeft();
                 }
                 return true;
             } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT && unReverse) {
+                if (isRightToLeft() && unReverse) {
                     mGalleryView.pageLeft();
                 } else {
                     mGalleryView.pageRight();
@@ -596,7 +611,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         switch (keyCode) {
             case KeyEvent.KEYCODE_PAGE_UP:
             case KeyEvent.KEYCODE_DPAD_UP:
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                if (isRightToLeft()) {
                     mGalleryView.pageRight();
                 } else {
                     mGalleryView.pageLeft();
@@ -607,7 +622,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 return true;
             case KeyEvent.KEYCODE_PAGE_DOWN:
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                if (isRightToLeft()) {
                     mGalleryView.pageLeft();
                 } else {
                     mGalleryView.pageRight();
@@ -673,7 +688,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     if (mGalleryView == null) {
                         return;
                     }
-                    if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                    if (isRightToLeft()) {
                         mGalleryView.pageLeft();
                     } else {
                         mGalleryView.pageRight();
@@ -694,7 +709,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (motionEvent.getAction() == MotionEvent.ACTION_SCROLL) {
                 float scrollY = motionEvent.getAxisValue(MotionEvent.AXIS_VSCROLL);
                 if (scrollY == 0) return false;  // wrong input
-                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                if (isRightToLeft()) {
                     if (scrollY > 0) {
                         mGalleryView.pageLeft();
                     } else {
@@ -725,6 +740,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+    private boolean isRightToLeft() {
+        return mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT
+                || (mLayoutMode == GalleryView.LAYOUT_DUAL_PAGE
+                    && mSpreadMode == GalleryView.SPREAD_RIGHT_TO_LEFT);
+    }
+
     @SuppressLint("SetTextI18n")
     private void updateSlider() {
         if (mSeekBar == null || mRightText == null || mLeftText == null || mSize <= 0 || mCurrentIndex < 0) {
@@ -733,7 +754,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         TextView start;
         TextView end;
-        if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+        if (isRightToLeft()) {
             start = mRightText;
             end = mLeftText;
             mSeekBar.setReverse(true);
@@ -752,7 +773,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @SuppressLint("SetTextI18n")
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         TextView start;
-        if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+        if (isRightToLeft()) {
             start = mRightText;
         } else {
             start = mLeftText;
