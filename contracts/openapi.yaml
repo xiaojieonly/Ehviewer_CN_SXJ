@@ -1,0 +1,2288 @@
+openapi: 3.0.3
+info:
+  title: EhViewer WebUI Backend API
+  description: |
+    REST API for the EhViewer WebUI backend (Spring Boot).
+    Covers existing controller endpoints and planned roadmap endpoints
+    (image streaming, cache management, processing pipeline, sync, health).
+  version: 1.0.0
+  contact:
+    name: EhViewer WebUI Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Auth
+    description: Authentication and session management
+  - name: Gallery
+    description: Gallery search, detail, history, favorites, quick search
+  - name: Favorite
+    description: Remote favorites management (E-Hentai server-side)
+  - name: History
+    description: Local browsing history
+  - name: Download
+    description: Download task management and labels
+  - name: Comment
+    description: Gallery comments
+  - name: Settings
+    description: Server settings
+  - name: Image
+    description: Image proxy and streaming
+  - name: Cache
+    description: Cache statistics and management
+  - name: Processing
+    description: Image enhancement processing pipeline
+  - name: Sync
+    description: Android-Server sync protocol
+  - name: Archive
+    description: Gallery archive download
+  - name: Torrent
+    description: Gallery torrent download
+  - name: SMB
+    description: SMB network backup and sync
+  - name: Health
+    description: Health check and metrics
+
+paths:
+  # ============================================================
+  # Auth
+  # ============================================================
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      summary: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Registration failed (e.g. username taken)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Authenticate and obtain a bearer token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /api/v1/auth/status:
+    get:
+      tags: [Auth]
+      operationId: getAuthStatus
+      summary: Check current authentication status
+      parameters:
+        - name: Authorization
+          in: header
+          required: false
+          schema:
+            type: string
+          description: "Bearer token (e.g. 'Bearer <token>')"
+      responses:
+        '200':
+          description: Auth status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthStatusResponse'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Invalidate the current session token
+      parameters:
+        - name: Authorization
+          in: header
+          required: false
+          schema:
+            type: string
+          description: "Bearer token to invalidate"
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  # ============================================================
+  # Gallery
+  # ============================================================
+  /api/v1/gallery/search:
+    get:
+      tags: [Gallery]
+      operationId: searchGallery
+      summary: Search galleries with keyword, category filter, and pagination
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search keyword
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Category bitmask filter
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-based)
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Number of results per page
+      responses:
+        '200':
+          description: Gallery list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GalleryListResponse'
+
+  /api/v1/gallery/{gid}:
+    get:
+      tags: [Gallery]
+      operationId: getGalleryDetail
+      summary: Get full detail for a single gallery
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Gallery ID
+      responses:
+        '200':
+          description: Gallery detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GalleryDetailDto'
+        '404':
+          description: Gallery not found
+
+  /api/v1/gallery/history:
+    get:
+      tags: [Gallery]
+      operationId: getGalleryHistory
+      summary: Get paginated gallery browsing history (via GalleryService)
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Gallery history list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GalleryListResponse'
+
+  /api/v1/gallery/history/{gid}:
+    post:
+      tags: [Gallery]
+      operationId: addToHistory
+      summary: Record a gallery visit into history
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToHistoryRequest'
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/gallery/favorites:
+    get:
+      tags: [Gallery]
+      operationId: getLocalFavorites
+      summary: Get local favorites list
+      responses:
+        '200':
+          description: Local favorites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GalleryListResponse'
+
+  /api/v1/gallery/quick-search:
+    get:
+      tags: [Gallery]
+      operationId: getQuickSearches
+      summary: List saved quick search presets
+      responses:
+        '200':
+          description: Quick search list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickSearchListResponse'
+    post:
+      tags: [Gallery]
+      operationId: createQuickSearch
+      summary: Create a new quick search preset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickSearchDto'
+      responses:
+        '200':
+          description: Created quick search
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickSearchDto'
+
+  /api/v1/gallery/quick-search/{id}:
+    delete:
+      tags: [Gallery]
+      operationId: deleteQuickSearch
+      summary: Delete a quick search preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================================
+  # Favorite (remote E-Hentai favorites)
+  # ============================================================
+  /api/v1/favorite/list:
+    get:
+      tags: [Favorite]
+      operationId: listFavorites
+      summary: List favorites from a specific slot with pagination
+      parameters:
+        - name: slot
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Favorite folder slot (0-9)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number (1-based)
+      responses:
+        '200':
+          description: Favorite list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteListResponse'
+
+  /api/v1/favorite/add:
+    post:
+      tags: [Favorite]
+      operationId: addFavorite
+      summary: Add a gallery to favorites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteAddRequest'
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/favorite/remove:
+    delete:
+      tags: [Favorite]
+      operationId: removeFavorite
+      summary: Remove a gallery from favorites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteRemoveRequest'
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================================
+  # History (dedicated controller)
+  # ============================================================
+  /api/v1/history/list:
+    get:
+      tags: [History]
+      operationId: listHistory
+      summary: List all browsing history entries
+      responses:
+        '200':
+          description: History list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryListResponse'
+
+  /api/v1/history/clear:
+    delete:
+      tags: [History]
+      operationId: clearHistory
+      summary: Clear all browsing history
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================================
+  # Download
+  # ============================================================
+  /api/v1/download/list:
+    get:
+      tags: [Download]
+      operationId: listDownloads
+      summary: List download tasks, optionally filtered by label
+      parameters:
+        - name: label
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Label ID filter
+      responses:
+        '200':
+          description: Download list with labels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadListResponse'
+
+  /api/v1/download/info/{id}:
+    get:
+      tags: [Download]
+      operationId: getDownloadInfo
+      summary: Get a single download task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Download item (may be null)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadItem'
+
+  /api/v1/download/add:
+    post:
+      tags: [Download]
+      operationId: addDownload
+      summary: Add a new download task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadAddRequest'
+      responses:
+        '200':
+          description: Whether the task was added
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/start/{id}:
+    post:
+      tags: [Download]
+      operationId: startDownload
+      summary: Start or resume a download task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Whether the operation succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/start-all:
+    post:
+      tags: [Download]
+      operationId: startAllDownloads
+      summary: Start all pending download tasks
+      responses:
+        '200':
+          description: Always true
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/pause/{id}:
+    post:
+      tags: [Download]
+      operationId: pauseDownload
+      summary: Pause a running download task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Whether the operation succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/cancel/{id}:
+    post:
+      tags: [Download]
+      operationId: cancelDownload
+      summary: Cancel a download task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Whether the operation succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/delete/{id}:
+    delete:
+      tags: [Download]
+      operationId: deleteDownload
+      summary: Delete a download task and optionally its files
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Whether the operation succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/label:
+    post:
+      tags: [Download]
+      operationId: createLabel
+      summary: Create a new download label
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadLabelRequest'
+      responses:
+        '200':
+          description: Whether the label was created
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/download/label/{id}:
+    delete:
+      tags: [Download]
+      operationId: deleteLabel
+      summary: Delete a download label
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Whether the label was deleted
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  # ============================================================
+  # Comment
+  # ============================================================
+  /api/v1/comment/list/{gid}:
+    get:
+      tags: [Comment]
+      operationId: listComments
+      summary: List comments for a gallery
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Comment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  /api/v1/comment/post:
+    post:
+      tags: [Comment]
+      operationId: postComment
+      summary: Post a comment on a gallery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentPostRequest'
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/comment/vote:
+    post:
+      tags: [Comment]
+      operationId: voteComment
+      summary: Vote on a comment (upvote or downvote)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentVoteRequest'
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================================
+  # Settings
+  # ============================================================
+  /api/v1/settings:
+    get:
+      tags: [Settings]
+      operationId: getSettings
+      summary: Get current server settings
+      responses:
+        '200':
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingsResponse'
+    put:
+      tags: [Settings]
+      operationId: updateSettings
+      summary: Update server settings (partial update supported)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsUpdateRequest'
+      responses:
+        '200':
+          description: Whether the update succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  # ============================================================
+  # Image (existing proxy + new streaming)
+  # ============================================================
+  /api/v1/image/proxy:
+    get:
+      tags: [Image]
+      operationId: proxyImage
+      summary: Proxy and cache an image by its original URL
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Original image URL to proxy
+      responses:
+        '200':
+          description: Image binary data
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Image not found in cache
+
+  /api/v1/image/cache/status:
+    get:
+      tags: [Image]
+      operationId: getImageCacheStatus
+      summary: Get image cache size information
+      responses:
+        '200':
+          description: Cache status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageCacheStatus'
+
+  /api/v1/image/cache/clear:
+    post:
+      tags: [Image]
+      operationId: clearImageCache
+      summary: Clear all cached proxy images
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/image/{galleryId}/{page}:
+    get:
+      tags: [Image]
+      operationId: streamGalleryImage
+      summary: Stream a single gallery page image with on-demand fetching and caching
+      description: |
+        Returns the image for a specific page of a gallery. On cache miss, the server
+        fetches the image via the core parser, caches it, and returns it.
+        Supports HTTP Range requests for partial content.
+        Optionally returns an AI-enhanced version if available.
+        The `w` parameter enables responsive image delivery at a requested width.
+      parameters:
+        - name: galleryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Gallery ID
+        - name: page
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Page number (0-based)
+        - name: w
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: |
+            Requested image width in pixels for responsive delivery.
+            The server will resize the image to this width preserving aspect ratio.
+            If omitted, the original resolution is returned.
+        - name: enhanced
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: If true, return the AI-enhanced version (if processed); otherwise return original
+        - name: Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: HTTP Range header for partial content (e.g. "bytes=0-1023")
+      responses:
+        '200':
+          description: Full image
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: MIME type of the image (image/jpeg, image/png, image/webp)
+            Accept-Ranges:
+              schema:
+                type: string
+              description: "Always 'bytes'"
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: Partial content (Range request)
+          headers:
+            Content-Range:
+              schema:
+                type: string
+              description: "Range specifier (e.g. 'bytes 0-1023/4096')"
+            Content-Type:
+              schema:
+                type: string
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Gallery or page not found
+        '429':
+          description: Rate limited (concurrent fetch limit for this gallery reached)
+
+  # ============================================================
+  # Cache (roadmap Phase 1)
+  # ============================================================
+  /api/v1/cache/stats:
+    get:
+      tags: [Cache]
+      operationId: getCacheStats
+      summary: Get cache usage statistics
+      description: Returns disk and memory cache usage including size, entry count, and hit rates.
+      responses:
+        '200':
+          description: Cache statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheStats'
+
+  /api/v1/cache/gallery/{id}:
+    delete:
+      tags: [Cache]
+      operationId: clearGalleryCache
+      summary: Clear all cached images for a specific gallery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Gallery ID
+      responses:
+        '200':
+          description: Success flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Gallery not found in cache
+
+  # ============================================================
+  # Processing (roadmap Phase 1)
+  # ============================================================
+  /api/v1/process/gallery/{id}:
+    post:
+      tags: [Processing]
+      operationId: triggerGalleryProcessing
+      summary: Trigger AI image enhancement for all pages of a gallery
+      description: |
+        Enqueues all pages of the gallery for background AI enhancement (e.g. waifu2x upscale/denoise).
+        Returns a task ID that can be used to query progress.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Gallery ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessingRequest'
+      responses:
+        '200':
+          description: Processing task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingTaskResponse'
+        '404':
+          description: Gallery not found
+        '409':
+          description: Processing already in progress for this gallery
+
+  /api/v1/process/status/{taskId}:
+    get:
+      tags: [Processing]
+      operationId: getProcessingStatus
+      summary: Query the progress of an image processing task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID returned by triggerGalleryProcessing
+      responses:
+        '200':
+          description: Processing status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingStatus'
+        '404':
+          description: Task not found
+
+  # ============================================================
+  # Sync (roadmap Phase 2)
+  # ============================================================
+  /api/v1/sync/push:
+    post:
+      tags: [Sync]
+      operationId: syncPush
+      summary: Push client changes to the server
+      description: |
+        Receives a batch of changes from an Android client. Changes are merged
+        using entity-specific strategies (union merge for favorites/history,
+        last-write-wins for reading progress).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        '200':
+          description: Push result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPushResponse'
+        '401':
+          description: Invalid or missing API token
+
+  /api/v1/sync/pull:
+    get:
+      tags: [Sync]
+      operationId: syncPull
+      summary: Pull server changes since a given timestamp
+      description: |
+        Returns all server-side changes that occurred after the given timestamp.
+        The client should store the returned server timestamp for the next pull.
+      parameters:
+        - name: since
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unix timestamp (milliseconds) — return changes after this time
+      responses:
+        '200':
+          description: Server changes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPullResponse'
+        '401':
+          description: Invalid or missing API token
+
+  /api/v1/sync/status:
+    get:
+      tags: [Sync]
+      operationId: getSyncStatus
+      summary: Get current sync status and connected devices
+      responses:
+        '200':
+          description: Sync status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatus'
+
+  # ============================================================
+  # Archive
+  # ============================================================
+  /api/v1/archive/list/{gid}:
+    get:
+      tags: [Archive]
+      operationId: listArchives
+      summary: List available archive downloads for a gallery
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Archive list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchiveListResponse'
+
+  /api/v1/archive/download:
+    post:
+      tags: [Archive]
+      operationId: downloadArchive
+      summary: Start downloading a gallery archive
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchiveDownloadRequest'
+      responses:
+        '200':
+          description: Whether the download was initiated
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  # ============================================================
+  # Torrent
+  # ============================================================
+  /api/v1/torrent/list/{gid}:
+    get:
+      tags: [Torrent]
+      operationId: listTorrents
+      summary: List available torrents for a gallery
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Torrent list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TorrentListResponse'
+
+  /api/v1/torrent/download:
+    get:
+      tags: [Torrent]
+      operationId: downloadTorrent
+      summary: Download a torrent file by token
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Torrent download token
+      responses:
+        '200':
+          description: Whether the download was initiated
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  # ============================================================
+  # SMB
+  # ============================================================
+  /api/v1/smb/config:
+    get:
+      tags: [SMB]
+      operationId: getSmbConfig
+      summary: Get current SMB backup configuration
+      responses:
+        '200':
+          description: SMB config (may be null if never configured)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmbConfigResponse'
+    put:
+      tags: [SMB]
+      operationId: updateSmbConfig
+      summary: Create or update SMB backup configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmbConfigUpdateRequest'
+      responses:
+        '200':
+          description: Whether the update succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/smb/test-connection:
+    post:
+      tags: [SMB]
+      operationId: testSmbConnection
+      summary: Test connectivity to an SMB share
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmbTestConnectionRequest'
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmbTestConnectionResponse'
+
+  /api/v1/smb/sync:
+    post:
+      tags: [SMB]
+      operationId: startSmbSync
+      summary: Start an SMB backup sync operation
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmbSyncRequest'
+      responses:
+        '200':
+          description: Whether the sync was started
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/smb/cancel:
+    post:
+      tags: [SMB]
+      operationId: cancelSmbSync
+      summary: Cancel an in-progress SMB sync
+      responses:
+        '200':
+          description: Whether the cancel succeeded
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /api/v1/smb/progress:
+    get:
+      tags: [SMB]
+      operationId: getSmbProgress
+      summary: Get current SMB sync progress
+      responses:
+        '200':
+          description: Sync progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmbSyncProgress'
+
+  # ============================================================
+  # Health (roadmap Phase 1)
+  # ============================================================
+  /api/v1/health:
+    get:
+      tags: [Health]
+      operationId: healthCheck
+      summary: Server health check
+      description: Returns overall server health including subsystem status.
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Server is degraded or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/metrics:
+    get:
+      tags: [Health]
+      operationId: getMetrics
+      summary: Get basic server metrics
+      description: Returns basic operational metrics (uptime, memory, active downloads, cache stats).
+      responses:
+        '200':
+          description: Server metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+# ==============================================================
+# Components
+# ==============================================================
+components:
+  schemas:
+    # ----------------------------------------------------------
+    # Auth
+    # ----------------------------------------------------------
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        token:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+
+    AuthStatusResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        username:
+          type: string
+          nullable: true
+
+    # ----------------------------------------------------------
+    # Gallery
+    # ----------------------------------------------------------
+    GalleryListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GalleryItemDto'
+        total:
+          type: integer
+
+    GalleryItemDto:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        posted:
+          type: string
+          nullable: true
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        rated:
+          type: boolean
+        simpleLanguage:
+          type: string
+          nullable: true
+        simpleTags:
+          type: array
+          items:
+            type: string
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
+        pages:
+          type: integer
+        favoriteSlot:
+          type: integer
+        favoriteName:
+          type: string
+          nullable: true
+
+    GalleryDetailDto:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        posted:
+          type: string
+          nullable: true
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        rated:
+          type: boolean
+        simpleLanguage:
+          type: string
+          nullable: true
+        simpleTags:
+          type: array
+          items:
+            type: string
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
+        pages:
+          type: integer
+        favoriteSlot:
+          type: integer
+        favoriteName:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagDto'
+        imageUrl:
+          type: string
+          nullable: true
+
+    TagDto:
+      type: object
+      properties:
+        namespace:
+          type: string
+          nullable: true
+        tag:
+          type: string
+
+    AddToHistoryRequest:
+      type: object
+      properties:
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+
+    QuickSearchListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickSearchDto'
+
+    QuickSearchDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        mode:
+          type: integer
+        category:
+          type: integer
+        keyword:
+          type: string
+          nullable: true
+        advanceSearch:
+          type: integer
+        minRating:
+          type: integer
+        pageFrom:
+          type: integer
+        pageTo:
+          type: integer
+
+    # ----------------------------------------------------------
+    # Favorite
+    # ----------------------------------------------------------
+    FavoriteListResponse:
+      type: object
+      properties:
+        favorites:
+          type: array
+          items:
+            $ref: '#/components/schemas/FavoriteItem'
+        totalPages:
+          type: integer
+        currentPage:
+          type: integer
+
+    FavoriteItem:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+        titleJpn:
+          type: string
+        thumb:
+          type: string
+        category:
+          type: string
+        rating:
+          type: number
+          format: float
+        uploader:
+          type: string
+          nullable: true
+        posted:
+          type: string
+          nullable: true
+
+    FavoriteAddRequest:
+      type: object
+      required: [gid, token, category]
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        category:
+          type: integer
+
+    FavoriteRemoveRequest:
+      type: object
+      required: [gid, token, category]
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        category:
+          type: integer
+
+    # ----------------------------------------------------------
+    # History
+    # ----------------------------------------------------------
+    HistoryListResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryItem'
+
+    HistoryItem:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+        titleJpn:
+          type: string
+        thumb:
+          type: string
+        category:
+          type: string
+        rating:
+          type: number
+          format: float
+        mode:
+          type: integer
+        time:
+          type: integer
+          format: int64
+
+    # ----------------------------------------------------------
+    # Download
+    # ----------------------------------------------------------
+    DownloadListResponse:
+      type: object
+      properties:
+        downloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadItem'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadLabel'
+
+    DownloadItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        state:
+          type: integer
+          description: "Download state: 0=pending, 1=downloading, 2=paused, 3=done, 4=failed"
+        total:
+          type: integer
+        done:
+          type: integer
+        label:
+          type: integer
+        downloadDir:
+          type: string
+          nullable: true
+
+    DownloadLabel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        label:
+          type: string
+        time:
+          type: integer
+          format: int64
+
+    DownloadAddRequest:
+      type: object
+      required: [gid, token]
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        label:
+          type: integer
+          default: 0
+
+    DownloadLabelRequest:
+      type: object
+      required: [label]
+      properties:
+        label:
+          type: string
+
+    DownloadProgress:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        state:
+          type: integer
+        downloaded:
+          type: integer
+        total:
+          type: integer
+        speed:
+          type: integer
+          format: int64
+        label:
+          type: integer
+
+    # ----------------------------------------------------------
+    # Comment
+    # ----------------------------------------------------------
+    CommentListResponse:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentItem'
+
+    CommentItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uploader:
+          type: string
+        comment:
+          type: string
+        time:
+          type: string
+        score:
+          type: integer
+
+    CommentPostRequest:
+      type: object
+      required: [gid, comment]
+      properties:
+        gid:
+          type: integer
+          format: int64
+        comment:
+          type: string
+
+    CommentVoteRequest:
+      type: object
+      required: [gid, commentId, vote]
+      properties:
+        gid:
+          type: integer
+          format: int64
+        commentId:
+          type: integer
+          format: int64
+        vote:
+          type: integer
+          description: "1 for upvote, -1 for downvote"
+
+    # ----------------------------------------------------------
+    # Settings
+    # ----------------------------------------------------------
+    SettingsResponse:
+      type: object
+      properties:
+        download:
+          $ref: '#/components/schemas/DownloadSettings'
+        cache:
+          $ref: '#/components/schemas/CacheSettings'
+        smb:
+          $ref: '#/components/schemas/SmbSettings'
+
+    DownloadSettings:
+      type: object
+      properties:
+        path:
+          type: string
+        workerCount:
+          type: integer
+        downloadDelay:
+          type: integer
+        downloadTimeout:
+          type: integer
+          format: int64
+        maxConcurrentGalleries:
+          type: integer
+        maxConcurrentImages:
+          type: integer
+
+    CacheSettings:
+      type: object
+      properties:
+        path:
+          type: string
+        sizeMb:
+          type: integer
+          format: int64
+
+    SmbSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+
+    SettingsUpdateRequest:
+      type: object
+      properties:
+        download:
+          $ref: '#/components/schemas/DownloadSettings'
+        cache:
+          $ref: '#/components/schemas/CacheSettings'
+        smb:
+          $ref: '#/components/schemas/SmbSettings'
+
+    # ----------------------------------------------------------
+    # Image
+    # ----------------------------------------------------------
+    ImageCacheStatus:
+      type: object
+      properties:
+        cacheSize:
+          type: integer
+          format: int64
+          description: Current cache size in bytes
+
+    # ----------------------------------------------------------
+    # Cache (roadmap)
+    # ----------------------------------------------------------
+    CacheStats:
+      type: object
+      properties:
+        diskCacheSizeBytes:
+          type: integer
+          format: int64
+          description: Total disk cache size in bytes
+        diskCacheMaxBytes:
+          type: integer
+          format: int64
+          description: Configured disk cache capacity in bytes
+        memoryCacheEntries:
+          type: integer
+          description: Number of entries in memory (hot) cache
+        memoryCacheMaxEntries:
+          type: integer
+          description: Configured memory cache entry limit
+        hitCount:
+          type: integer
+          format: int64
+          description: Total cache hits since startup
+        missCount:
+          type: integer
+          format: int64
+          description: Total cache misses since startup
+        hitRate:
+          type: number
+          format: double
+          description: Cache hit rate (0.0 - 1.0)
+
+    # ----------------------------------------------------------
+    # Processing (roadmap)
+    # ----------------------------------------------------------
+    ProcessingRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [UPSCALE_2X, UPSCALE_4X, DENOISE, DENOISE_UPSCALE]
+          default: UPSCALE_2X
+          description: Processing type to apply
+        outputFormat:
+          type: string
+          enum: [png, webp, jpg]
+          default: png
+          description: Output image format
+        quality:
+          type: integer
+          default: 90
+          minimum: 1
+          maximum: 100
+          description: Output quality (for lossy formats)
+
+    ProcessingTaskResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          description: Unique task identifier for status polling
+        galleryId:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          description: Number of pages enqueued for processing
+        state:
+          type: string
+          enum: [PENDING, PROCESSING, DONE, FAILED]
+
+    ProcessingStatus:
+      type: object
+      properties:
+        taskId:
+          type: string
+        galleryId:
+          type: integer
+          format: int64
+        state:
+          type: string
+          enum: [PENDING, PROCESSING, DONE, FAILED]
+        totalPages:
+          type: integer
+        processedPages:
+          type: integer
+        failedPages:
+          type: integer
+        currentPage:
+          type: integer
+          description: Page currently being processed (-1 if idle)
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        error:
+          type: string
+          nullable: true
+          description: Error message if state is FAILED
+
+    # ----------------------------------------------------------
+    # Sync (roadmap)
+    # ----------------------------------------------------------
+    SyncPushRequest:
+      type: object
+      properties:
+        clientTimestamp:
+          type: integer
+          format: int64
+          description: Client's current timestamp (ms) for conflict resolution
+        favorites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncFavoriteEntry'
+          description: Favorite changes (union merge)
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncHistoryEntry'
+          description: History changes (last-write-wins)
+        downloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncDownloadEntry'
+          description: Download list changes (union merge + state sync)
+        readingProgress:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncReadingProgressEntry'
+          description: Reading progress changes (last-write-wins)
+        quickSearches:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickSearchDto'
+          description: Quick search presets (union merge)
+
+    SyncFavoriteEntry:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+        category:
+          type: integer
+        time:
+          type: integer
+          format: int64
+
+    SyncHistoryEntry:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+        time:
+          type: integer
+          format: int64
+        mode:
+          type: integer
+
+    SyncDownloadEntry:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+        state:
+          type: integer
+        label:
+          type: integer
+        time:
+          type: integer
+          format: int64
+
+    SyncReadingProgressEntry:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          description: Last read page number
+        time:
+          type: integer
+          format: int64
+          description: Timestamp of last read (ms)
+
+    SyncPushResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        serverTimestamp:
+          type: integer
+          format: int64
+          description: Server timestamp after applying changes (use for next pull)
+        conflicts:
+          type: integer
+          description: Number of conflicts resolved by last-write-wins
+
+    SyncPullResponse:
+      type: object
+      properties:
+        serverTimestamp:
+          type: integer
+          format: int64
+          description: Current server timestamp (use as 'since' for next pull)
+        favorites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncFavoriteEntry'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncHistoryEntry'
+        downloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncDownloadEntry'
+        readingProgress:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncReadingProgressEntry'
+        quickSearches:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickSearchDto'
+
+    SyncStatus:
+      type: object
+      properties:
+        lastSyncTimestamp:
+          type: integer
+          format: int64
+          nullable: true
+          description: Timestamp of last successful sync (ms)
+        connectedDevices:
+          type: integer
+          description: Number of currently connected client devices
+        syncInProgress:
+          type: boolean
+        totalFavorites:
+          type: integer
+        totalHistory:
+          type: integer
+        totalDownloads:
+          type: integer
+
+    # ----------------------------------------------------------
+    # Archive
+    # ----------------------------------------------------------
+    ArchiveListResponse:
+      type: object
+      properties:
+        archives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveItem'
+
+    ArchiveItem:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        url:
+          type: string
+        name:
+          type: string
+        size:
+          type: string
+        price:
+          type: string
+        credit:
+          type: string
+
+    ArchiveDownloadRequest:
+      type: object
+      required: [gid, url]
+      properties:
+        gid:
+          type: integer
+          format: int64
+        url:
+          type: string
+
+    # ----------------------------------------------------------
+    # Torrent
+    # ----------------------------------------------------------
+    TorrentListResponse:
+      type: object
+      properties:
+        torrents:
+          type: array
+          items:
+            $ref: '#/components/schemas/TorrentItem'
+
+    TorrentItem:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        name:
+          type: string
+        size:
+          type: string
+        addedTime:
+          type: string
+
+    # ----------------------------------------------------------
+    # SMB
+    # ----------------------------------------------------------
+    SmbConfigResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        host:
+          type: string
+        port:
+          type: integer
+        share:
+          type: string
+        path:
+          type: string
+          nullable: true
+        loginMode:
+          type: string
+        username:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+
+    SmbConfigUpdateRequest:
+      type: object
+      required: [host, share]
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+          default: 445
+        share:
+          type: string
+        path:
+          type: string
+          nullable: true
+        loginMode:
+          type: string
+          default: GUEST
+          description: "GUEST or USER"
+        username:
+          type: string
+          nullable: true
+        password:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+          default: false
+
+    SmbTestConnectionRequest:
+      type: object
+      required: [host, share]
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+          default: 445
+        share:
+          type: string
+        path:
+          type: string
+          nullable: true
+        loginMode:
+          type: string
+          default: GUEST
+        username:
+          type: string
+          nullable: true
+        password:
+          type: string
+          nullable: true
+
+    SmbTestConnectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    SmbSyncRequest:
+      type: object
+      properties:
+        aggressive:
+          type: boolean
+          default: false
+          description: If true, perform a full re-sync instead of incremental
+
+    SmbSyncProgress:
+      type: object
+      properties:
+        state:
+          type: string
+          description: "IDLE, RUNNING, CANCELLED, DONE, ERROR"
+        totalFiles:
+          type: integer
+        syncedFiles:
+          type: integer
+        currentFile:
+          type: string
+        speed:
+          type: integer
+          format: int64
+          description: Transfer speed in bytes/second
+
+    # ----------------------------------------------------------
+    # Health
+    # ----------------------------------------------------------
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, DEGRADED]
+        components:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthComponent'
+
+    HealthComponent:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, DEGRADED]
+        details:
+          type: string
+          nullable: true
+
+    MetricsResponse:
+      type: object
+      properties:
+        uptimeSeconds:
+          type: integer
+          format: int64
+        jvmMemoryUsedBytes:
+          type: integer
+          format: int64
+        jvmMemoryMaxBytes:
+          type: integer
+          format: int64
+        activeDownloads:
+          type: integer
+        queuedProcessingTasks:
+          type: integer
+        diskCacheUsedBytes:
+          type: integer
+          format: int64
+        diskCacheMaxBytes:
+          type: integer
+          format: int64
+        totalGalleriesServed:
+          type: integer
+          format: int64
+
+    # ----------------------------------------------------------
+    # Common
+    # ----------------------------------------------------------
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean

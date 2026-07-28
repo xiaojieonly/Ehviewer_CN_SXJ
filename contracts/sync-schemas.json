@@ -1,0 +1,522 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ehviewer.local/schemas/sync/index.json",
+  "title": "EhViewer Android-Server Sync Protocol Schemas",
+  "description": "JSON Schema definitions for all sync entities and wrapper messages in the EhViewer Android-Server sync protocol. Draft 2020-12.",
+  "$defs": {
+    "galleryInfoBase": {
+      "$id": "https://ehviewer.local/schemas/sync/gallery-info-base.json",
+      "title": "GalleryInfoBase",
+      "description": "Shared gallery metadata fields inherited by favorites, history, downloads, and bookmarks. Mirrors com.hippo.ehviewer.web.entity.GalleryInfoBase / com.hippo.ehviewer.client.data.GalleryInfo.",
+      "type": "object",
+      "properties": {
+        "gid": {
+          "type": "integer",
+          "description": "Gallery ID (unique identifier from EH site)",
+          "minimum": 0
+        },
+        "token": {
+          "type": "string",
+          "description": "Gallery token for API access",
+          "maxLength": 128
+        },
+        "title": {
+          "type": ["string", "null"],
+          "description": "English/romaji title",
+          "maxLength": 512
+        },
+        "titleJpn": {
+          "type": ["string", "null"],
+          "description": "Japanese title",
+          "maxLength": 512
+        },
+        "thumb": {
+          "type": ["string", "null"],
+          "description": "Thumbnail URL",
+          "maxLength": 2048
+        },
+        "category": {
+          "type": "integer",
+          "description": "Gallery category bitmask (Doujinshi=1, Manga=2, ArtistCG=4, GameCG=8, Western=16, Non-H=32, ImageSet=64, Cosplay=128, AsianPorn=256, Misc=512)"
+        },
+        "posted": {
+          "type": ["string", "null"],
+          "description": "Posted date string as displayed on EH site",
+          "maxLength": 64
+        },
+        "uploader": {
+          "type": ["string", "null"],
+          "description": "Uploader username",
+          "maxLength": 256
+        },
+        "rating": {
+          "type": "number",
+          "description": "Average rating (0.0–5.0)",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "rated": {
+          "type": "boolean",
+          "description": "Whether the current user has rated this gallery"
+        },
+        "simpleLanguage": {
+          "type": ["string", "null"],
+          "description": "Simplified language code (e.g. EN, JP, ZH)",
+          "maxLength": 512
+        },
+        "simpleTags": {
+          "type": ["string", "null"],
+          "description": "Semicolon-separated tag list"
+        },
+        "thumbWidth": {
+          "type": "integer",
+          "description": "Thumbnail width in pixels",
+          "minimum": 0
+        },
+        "thumbHeight": {
+          "type": "integer",
+          "description": "Thumbnail height in pixels",
+          "minimum": 0
+        },
+        "spanSize": {
+          "type": "integer",
+          "description": "Grid layout span size",
+          "minimum": 0
+        },
+        "spanIndex": {
+          "type": "integer",
+          "description": "Grid layout span index",
+          "minimum": 0
+        },
+        "spanGroupIndex": {
+          "type": "integer",
+          "description": "Grid layout span group index",
+          "minimum": 0
+        },
+        "favoriteSlot": {
+          "type": "integer",
+          "description": "Favorite folder slot (-2 = not favorited on EH, 0–9 = folder index)",
+          "minimum": -2,
+          "maximum": 9
+        },
+        "favoriteName": {
+          "type": ["string", "null"],
+          "description": "Favorite folder name",
+          "maxLength": 256
+        },
+        "pages": {
+          "type": "integer",
+          "description": "Total page count of the gallery",
+          "minimum": 0
+        }
+      },
+      "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages"]
+    },
+    "syncMetadata": {
+      "$id": "https://ehviewer.local/schemas/sync/sync-metadata.json",
+      "title": "SyncMetadata",
+      "description": "Common sync metadata fields present on every sync entity for conflict resolution and soft-delete support.",
+      "type": "object",
+      "properties": {
+        "lastModified": {
+          "type": "integer",
+          "description": "Epoch milliseconds when this entity was last modified on the source device. Used for last-write-wins conflict resolution.",
+          "minimum": 0
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "Unique identifier of the device that last modified this entity. Format: platform-uuid (e.g. android-550e8400-e29b-41d4-a716-446655440000, server-main).",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete flag. true = entity has been deleted on the source device. Union-merge entities use this instead of removing the record.",
+          "default": false
+        }
+      },
+      "required": ["lastModified", "deviceId"]
+    },
+    "syncFavorite": {
+      "$id": "https://ehviewer.local/schemas/sync/favorite.json",
+      "title": "SyncFavorite",
+      "description": "A local favorite entry. Mirrors com.hippo.ehviewer.dao.LocalFavoriteInfo. Merge strategy: union merge (do not delete remote entries).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/galleryInfoBase" },
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "time": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the gallery was added to local favorites",
+          "minimum": 0
+        }
+      },
+      "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "time", "lastModified", "deviceId"]
+    },
+    "syncHistory": {
+      "$id": "https://ehviewer.local/schemas/sync/history.json",
+      "title": "SyncHistory",
+      "description": "A browsing history entry. Mirrors com.hippo.ehviewer.dao.HistoryInfo. Merge strategy: last-write-wins by timestamp.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/galleryInfoBase" },
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "mode": {
+          "type": "integer",
+          "description": "Search mode context in which the gallery was viewed (maps to ListUrlBuilder search mode constants)"
+        },
+        "time": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the gallery was last viewed",
+          "minimum": 0
+        }
+      },
+      "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "time", "lastModified", "deviceId"]
+    },
+    "syncDownload": {
+      "$id": "https://ehviewer.local/schemas/sync/download.json",
+      "title": "SyncDownload",
+      "description": "A download task entry. Mirrors com.hippo.ehviewer.dao.DownloadInfo. Merge strategy: union merge + status sync.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/galleryInfoBase" },
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "state": {
+          "type": "integer",
+          "description": "Download state: -1=INVALID, 0=NONE, 1=WAIT, 2=DOWNLOADING, 3=FINISHED, 4=FAILED, 5=UPDATE, 6=GOTO_NEW",
+          "enum": [-1, 0, 1, 2, 3, 4, 5, 6]
+        },
+        "legacy": {
+          "type": "integer",
+          "description": "Legacy download format flag (0=current format, 1=legacy format)"
+        },
+        "time": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the download was created",
+          "minimum": 0
+        },
+        "label": {
+          "type": ["string", "null"],
+          "description": "Download label/category name for organizing downloads",
+          "maxLength": 256
+        },
+        "archiveUri": {
+          "type": ["string", "null"],
+          "description": "URI for imported archive files (content:// or file://)",
+          "maxLength": 2048
+        },
+        "total": {
+          "type": "integer",
+          "description": "Total number of images/pages to download",
+          "minimum": 0
+        },
+        "finished": {
+          "type": "integer",
+          "description": "Number of images/pages fully downloaded",
+          "minimum": 0
+        },
+        "downloaded": {
+          "type": "integer",
+          "description": "Number of images/pages downloaded in current session",
+          "minimum": 0
+        },
+        "fileSize": {
+          "type": "integer",
+          "description": "Total folder size in bytes. -1 means not yet computed.",
+          "minimum": -1
+        }
+      },
+      "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "state", "legacy", "time", "total", "lastModified", "deviceId"]
+    },
+    "syncBookmark": {
+      "$id": "https://ehviewer.local/schemas/sync/bookmark.json",
+      "title": "SyncBookmark",
+      "description": "Reading progress bookmark (page position). Mirrors com.hippo.ehviewer.dao.BookmarkInfo. Merge strategy: last-write-wins by timestamp.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/galleryInfoBase" },
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "page": {
+          "type": "integer",
+          "description": "Current reading page index (0-based)",
+          "minimum": 0
+        },
+        "time": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the bookmark was last updated",
+          "minimum": 0
+        }
+      },
+      "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "page", "time", "lastModified", "deviceId"]
+    },
+    "syncFilter": {
+      "$id": "https://ehviewer.local/schemas/sync/filter.json",
+      "title": "SyncFilter",
+      "description": "A content filter rule. Mirrors com.hippo.ehviewer.dao.Filter. Merge strategy: union merge. Idempotency key: (mode, text).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "mode": {
+          "type": "integer",
+          "description": "Filter type/mode (0=title, 1=uploader, 2=tag, 3=tag namespace, etc.)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Filter pattern text",
+          "maxLength": 512
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the filter is active",
+          "default": true
+        }
+      },
+      "required": ["mode", "text", "enabled", "lastModified", "deviceId"]
+    },
+    "syncQuickSearch": {
+      "$id": "https://ehviewer.local/schemas/sync/quick-search.json",
+      "title": "SyncQuickSearch",
+      "description": "A saved quick search preset. Mirrors com.hippo.ehviewer.dao.QuickSearch. Merge strategy: union merge. Idempotency key: name.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the quick search preset",
+          "maxLength": 256
+        },
+        "mode": {
+          "type": "integer",
+          "description": "Search mode (0=normal, 1=subscription, 2=specify URL, etc.)"
+        },
+        "category": {
+          "type": "integer",
+          "description": "Category bitmask filter for the search"
+        },
+        "keyword": {
+          "type": ["string", "null"],
+          "description": "Search keyword(s)",
+          "maxLength": 512
+        },
+        "advanceSearch": {
+          "type": "integer",
+          "description": "Advanced search options bitmask"
+        },
+        "minRating": {
+          "type": "integer",
+          "description": "Minimum rating filter (0=disabled, 2–5 = star threshold)",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "pageFrom": {
+          "type": "integer",
+          "description": "Page range start (0 = no lower bound)",
+          "minimum": 0
+        },
+        "pageTo": {
+          "type": "integer",
+          "description": "Page range end (0 = no upper bound)",
+          "minimum": 0
+        },
+        "time": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the quick search was created",
+          "minimum": 0
+        }
+      },
+      "required": ["name", "mode", "category", "advanceSearch", "minRating", "pageFrom", "pageTo", "lastModified", "deviceId"]
+    },
+    "syncDownloadLabel": {
+      "$id": "https://ehviewer.local/schemas/sync/download-label.json",
+      "title": "SyncDownloadLabel",
+      "description": "A download label/category for organizing downloads. Mirrors com.hippo.ehviewer.dao.DownloadLabel. Merge strategy: union merge. Idempotency key: label.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/syncMetadata" }
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Label name",
+          "maxLength": 256
+        },
+        "time": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the label was created",
+          "minimum": 0
+        }
+      },
+      "required": ["label", "time", "lastModified", "deviceId"]
+    },
+    "syncEntityCollection": {
+      "$id": "https://ehviewer.local/schemas/sync/entity-collection.json",
+      "title": "SyncEntityCollection",
+      "description": "A collection of all sync entity arrays, used inside push/pull messages.",
+      "type": "object",
+      "properties": {
+        "favorites": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncFavorite" },
+          "description": "Local favorite entries"
+        },
+        "history": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncHistory" },
+          "description": "Browsing history entries"
+        },
+        "downloads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncDownload" },
+          "description": "Download task entries"
+        },
+        "bookmarks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncBookmark" },
+          "description": "Reading progress bookmarks"
+        },
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncFilter" },
+          "description": "Content filter rules"
+        },
+        "quickSearches": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncQuickSearch" },
+          "description": "Saved quick search presets"
+        },
+        "downloadLabels": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/syncDownloadLabel" },
+          "description": "Download label categories"
+        }
+      },
+      "additionalProperties": false
+    },
+    "syncPushRequest": {
+      "$id": "https://ehviewer.local/schemas/sync/push-request.json",
+      "title": "SyncPushRequest",
+      "description": "Client-to-server push request. Sent to POST /api/sync/push. Contains all locally-modified entities since last sync.",
+      "type": "object",
+      "properties": {
+        "entities": {
+          "$ref": "#/$defs/syncEntityCollection",
+          "description": "All modified entities grouped by type"
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "Identifier of the pushing device",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "Epoch milliseconds when this push was initiated by the client",
+          "minimum": 0
+        }
+      },
+      "required": ["entities", "deviceId", "timestamp"],
+      "additionalProperties": false
+    },
+    "syncPullResponse": {
+      "$id": "https://ehviewer.local/schemas/sync/pull-response.json",
+      "title": "SyncPullResponse",
+      "description": "Server-to-client pull response. Returned by GET /api/sync/pull?since={timestamp}. Contains all server-side changes since the given timestamp.",
+      "type": "object",
+      "properties": {
+        "entities": {
+          "$ref": "#/$defs/syncEntityCollection",
+          "description": "All server-side modified entities grouped by type"
+        },
+        "serverTimestamp": {
+          "type": "integer",
+          "description": "Epoch milliseconds of the server's current time. Client uses this as the 'since' value for the next pull.",
+          "minimum": 0
+        }
+      },
+      "required": ["entities", "serverTimestamp"],
+      "additionalProperties": false
+    },
+    "connectedDevice": {
+      "$id": "https://ehviewer.local/schemas/sync/connected-device.json",
+      "title": "ConnectedDevice",
+      "description": "Metadata about a device that has synced with the server.",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "description": "Unique device identifier",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "deviceName": {
+          "type": ["string", "null"],
+          "description": "Human-readable device name (e.g. 'Pixel 8 Pro', 'Server-Main')",
+          "maxLength": 256
+        },
+        "platform": {
+          "type": "string",
+          "description": "Device platform",
+          "enum": ["android", "server", "web", "ios", "other"]
+        },
+        "lastSeen": {
+          "type": "integer",
+          "description": "Epoch milliseconds of the last sync from this device",
+          "minimum": 0
+        }
+      },
+      "required": ["deviceId", "platform", "lastSeen"]
+    },
+    "entityCounts": {
+      "$id": "https://ehviewer.local/schemas/sync/entity-counts.json",
+      "title": "EntityCounts",
+      "description": "Per-entity-type counts of records stored on the server.",
+      "type": "object",
+      "properties": {
+        "favorites": { "type": "integer", "minimum": 0 },
+        "history": { "type": "integer", "minimum": 0 },
+        "downloads": { "type": "integer", "minimum": 0 },
+        "bookmarks": { "type": "integer", "minimum": 0 },
+        "filters": { "type": "integer", "minimum": 0 },
+        "quickSearches": { "type": "integer", "minimum": 0 },
+        "downloadLabels": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels"]
+    },
+    "syncStatusResponse": {
+      "$id": "https://ehviewer.local/schemas/sync/status-response.json",
+      "title": "SyncStatusResponse",
+      "description": "Server sync status. Returned by GET /api/sync/status.",
+      "type": "object",
+      "properties": {
+        "lastSyncTimestamp": {
+          "type": "integer",
+          "description": "Epoch milliseconds of the most recent sync operation across all devices",
+          "minimum": 0
+        },
+        "connectedDevices": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/connectedDevice" },
+          "description": "List of devices that have previously synced with this server"
+        },
+        "entityCounts": {
+          "$ref": "#/$defs/entityCounts",
+          "description": "Current record counts per entity type on the server"
+        }
+      },
+      "required": ["lastSyncTimestamp", "connectedDevices", "entityCounts"],
+      "additionalProperties": false
+    }
+  }
+}
