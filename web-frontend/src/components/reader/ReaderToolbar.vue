@@ -1,102 +1,172 @@
 <template>
-  <div class="reader-toolbar" :class="{ hidden: hidden }">
-    <div class="toolbar-top">
-      <button class="btn-back" @click="$emit('back')">← Back</button>
-      <span class="page-info">{{ currentIndex + 1 }} / {{ totalPages }}</span>
-    </div>
-    <div class="toolbar-bottom">
-      <button @click="$emit('prevPage')">◀</button>
-      <button @click="$emit('toggleSettings')">⚙</button>
-      <button @click="$emit('nextPage')">▶</button>
-    </div>
+  <div
+    class="reader-toolbar"
+    :class="{ 'reader-toolbar--hidden': !visible }"
+    :dir="rtl ? 'rtl' : 'ltr'"
+    :aria-hidden="!visible"
+  >
+    <button
+      type="button"
+      class="reader-toolbar__btn"
+      aria-label="Back to gallery"
+      :tabindex="visible ? 0 : -1"
+      @click="emit('back')"
+    >
+      <!-- Material arrow_back (mirrored under RTL via dir) -->
+      <svg
+        class="reader-toolbar__icon reader-toolbar__icon--back"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+          fill="currentColor"
+        />
+      </svg>
+    </button>
+
+    <h1 class="reader-toolbar__title" :title="title">{{ title }}</h1>
+
+    <button
+      type="button"
+      class="reader-toolbar__btn"
+      aria-label="Reader settings"
+      :tabindex="visible ? 0 : -1"
+      @click="emit('open-settings')"
+    >
+      <!-- Material settings gear -->
+      <svg class="reader-toolbar__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+          fill="currentColor"
+        />
+      </svg>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  hidden: boolean
-  currentIndex: number
-  totalPages: number
-}>()
+/**
+ * ReaderToolbar.vue — top overlay bar for the web reader (the Android
+ * GalleryActivity is chrome-less; the web replica adds back / title /
+ * settings access). Slides out with the scene-translate animation
+ * (`--duration-scene-translate` + `--ease-decelerate-quint`, matching
+ * `anim/scene_open_enter.xml`) and sits above a semi-transparent dark
+ * gradient scrim so the title stays legible over any page.
+ *
+ * `rtl` mirrors the whole bar (back button on the right, arrow flipped)
+ * for right-to-left reading direction.
+ */
+interface ReaderToolbarProps {
+  visible: boolean
+  title: string
+  /** Mirror layout for RTL reading direction. @default false */
+  rtl?: boolean
+}
 
-defineEmits<{
-  back: []
-  prevPage: []
-  nextPage: []
-  toggleSettings: []
-}>()
+interface ReaderToolbarEmits {
+  (e: 'back'): void
+  (e: 'open-settings'): void
+}
+
+withDefaults(defineProps<ReaderToolbarProps>(), {
+  rtl: false,
+})
+const emit = defineEmits<ReaderToolbarEmits>()
 </script>
 
 <style scoped>
 .reader-toolbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 50;
-  transition: opacity 0.2s;
-}
-.reader-toolbar.hidden {
-  opacity: 0;
-}
-.reader-toolbar.hidden * {
-  pointer-events: none;
-}
-.toolbar-top {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
+  z-index: 30;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(rgba(0, 0, 0, 0.7), transparent);
-  pointer-events: auto;
+  gap: 4px;
+  height: var(--toolbar-height); /* 56dp actionBarSize */
+  padding: 0 4px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-black) 72%, transparent),
+    color-mix(in srgb, var(--color-black) 0%, transparent)
+  );
+  transition:
+    transform var(--duration-scene-translate) var(--ease-decelerate-quint),
+    visibility 0s linear 0s;
 }
-.btn-back {
-  padding: 0.3rem 0.8rem;
-  border: none;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  cursor: pointer;
-  font-size: 0.9rem;
+
+.reader-toolbar--hidden {
+  transform: translateY(-100%);
+  visibility: hidden;
+  transition:
+    transform var(--duration-scene-translate) var(--ease-decelerate-quint),
+    visibility 0s linear var(--duration-scene-translate);
 }
-.page-info {
-  color: white;
-  font-size: 0.9rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+.reader-toolbar__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-white);
+  font-size: var(--text-medium); /* 18sp */
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: start;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--color-black) 60%, transparent);
+  white-space: nowrap;
 }
-.toolbar-bottom {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-  padding: 1rem;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-  pointer-events: auto;
-}
-.toolbar-bottom button {
+
+.reader-toolbar__btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
   width: 48px;
   height: 48px;
+  padding: 0;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 1.2rem;
+  background: transparent;
+  color: var(--color-white);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition:
+    background 150ms var(--ease-decelerate-quart),
+    transform 150ms var(--ease-decelerate-quart);
 }
-.toolbar-bottom button:hover {
-  background: rgba(255, 255, 255, 0.3);
+
+.reader-toolbar__btn:hover {
+  background: color-mix(in srgb, var(--color-white) 12%, transparent);
+}
+
+.reader-toolbar__btn:active {
+  background: color-mix(in srgb, var(--color-white) 22%, transparent);
+  transform: scale(0.92);
+}
+
+.reader-toolbar__btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.reader-toolbar__icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--color-black) 50%, transparent));
+}
+
+/* Flip the back arrow when the bar is mirrored for RTL reading. */
+.reader-toolbar[dir='rtl'] .reader-toolbar__icon--back {
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-toolbar,
+  .reader-toolbar--hidden {
+    transition-duration: 1ms;
+  }
 }
 </style>
