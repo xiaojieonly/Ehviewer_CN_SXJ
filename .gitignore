@@ -29,6 +29,8 @@ web-frontend/dist/
 # Data
 data/
 *.db
+.dev-data/*
+!.dev-data/.gitkeep
 
 # Logs
 *.log
