@@ -12,7 +12,8 @@ import java.util.concurrent.ConcurrentHashMap
 @Service
 class EhAuthService(
     private val authRepository: AuthConfigRepository,
-    private val encryptionService: EncryptionService
+    private val encryptionService: EncryptionService,
+    private val sessionManager: EhSessionManager
 ) {
     private val tokenStore = ConcurrentHashMap<String, String>()
 
@@ -44,10 +45,33 @@ class EhAuthService(
         return AuthResponse(true, "Login successful", token, request.username)
     }
 
+    /**
+     * Establish an E-Hentai session through the unified cookie store shared with
+     * ehviewer-core. On success the login cookies live in [EhSessionManager.cookieStore]
+     * and are reused by core's HTTP client.
+     */
+    fun loginEh(username: String, password: String): AuthResponse {
+        return sessionManager.signIn(username, password).fold(
+            onSuccess = { displayName ->
+                AuthResponse(true, "E-Hentai login successful", username = displayName ?: username)
+            },
+            onFailure = { err ->
+                AuthResponse(false, "E-Hentai login failed: ${err.message}")
+            }
+        )
+    }
+
     fun getStatus(token: String?): AuthStatusResponse {
-        if (token == null) return AuthStatusResponse(false)
-        val username = tokenStore[token] ?: return AuthStatusResponse(false)
-        return AuthStatusResponse(true, username)
+        // E-Hentai session state is reported regardless of the WebUI token so clients
+        // can detect an expired E-Hentai login and prompt for re-login.
+        val ehStatus = sessionManager.getStatus()
+        val username = token?.let { tokenStore[it] }
+        return AuthStatusResponse(
+            authenticated = username != null,
+            username = username,
+            ehSessionValid = ehStatus.state == EhSessionManager.SessionState.VALID,
+            ehSessionExpired = ehStatus.expired
+        )
     }
 
     fun validateToken(token: String?): String? {
@@ -59,5 +83,8 @@ class EhAuthService(
         if (token != null) {
             tokenStore.remove(token)
         }
+        // Also tear down the shared E-Hentai session so core's client stops sending
+        // the (now unwanted) login cookies.
+        sessionManager.signOut()
     }
 }
