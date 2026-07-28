@@ -1,0 +1,665 @@
+/* ==========================================================================
+   EhViewer Design Tokens — CSS Custom Properties
+   Extracted from Android res/values/*.xml (SINGLE SOURCE OF TRUTH)
+   Three themes: Light (default), Dark, Black (AMOLED)
+   ========================================================================== */
+
+/* === Base tokens (theme-independent) === */
+:root {
+  /* -----------------------------------------------------------------------
+     Brand colors (colors.xml)
+     ----------------------------------------------------------------------- */
+  --color-primary: #009688;          /* teal_500 / colorPrimary */
+  --color-primary-dark: #00796b;     /* teal_700 / colorPrimaryDark */
+  --color-accent: #e040fb;           /* purple_a200 / colorAccent */
+  --color-accent-a400: #d500f9;      /* purple_a400 */
+  --color-accent-a700: #aa00ff;      /* purple_a700 */
+  --color-rating-star: #f9a825;      /* yellow_800 */
+
+  /* -----------------------------------------------------------------------
+     Category colors — 10 categories (colors.xml)
+     ----------------------------------------------------------------------- */
+  --color-cat-doujinshi: #f44336;    /* red_500 */
+  --color-cat-manga: #ff9800;        /* orange */
+  --color-cat-artist-cg: #fbc02d;    /* yellow 700 */
+  --color-cat-game-cg: #4caf50;      /* green */
+  --color-cat-western: #8bc34a;      /* light green */
+  --color-cat-non-h: #2196f3;        /* blue */
+  --color-cat-image-set: #3f51b5;    /* indigo */
+  --color-cat-cosplay: #9c27b0;      /* purple */
+  --color-cat-asian-porn: #9575cd;   /* deep purple 300 */
+  --color-cat-misc: #f06292;         /* pink 300 */
+
+  /* -----------------------------------------------------------------------
+     Grey scale — 35 steps from grey_975 to grey_100 (colors.xml)
+     ----------------------------------------------------------------------- */
+  --grey-975: #080808;
+  --grey-950: #111111;
+  --grey-925: #191919;
+  --grey-900: #212121;
+  --grey-875: #292929;
+  --grey-850: #323232;
+  --grey-825: #3a3a3a;
+  --grey-800: #424242;
+  --grey-775: #4a4a4a;
+  --grey-750: #525252;
+  --grey-725: #595959;
+  --grey-700: #616161;
+  --grey-675: #666666;
+  --grey-650: #6b6b6b;
+  --grey-625: #707070;
+  --grey-600: #757575;
+  --grey-575: #7f7f7f;
+  --grey-550: #8a8a8a;
+  --grey-525: #949494;
+  --grey-500: #9e9e9e;
+  --grey-475: #a6a6a6;
+  --grey-450: #aeaeae;
+  --grey-425: #b5b5b5;
+  --grey-400: #bdbdbd;
+  --grey-375: #c6c6c6;
+  --grey-350: #cfcfcf;
+  --grey-325: #d7d7d7;
+  --grey-300: #e0e0e0;
+  --grey-275: #e4e4e4;
+  --grey-250: #e7e7e7;
+  --grey-225: #ebebeb;
+  --grey-200: #eeeeee;
+  --grey-175: #f0f0f0;
+  --grey-150: #f2f2f2;
+  --grey-125: #f3f3f3;
+  --grey-100: #f5f5f5;
+
+  /* -----------------------------------------------------------------------
+     Additional palette colors (colors.xml)
+     ----------------------------------------------------------------------- */
+  --color-red-500: #f44336;
+  --color-teal-500: #009688;
+  --color-teal-700: #00796b;
+  --color-purple-500: #9c27b0;
+  --color-purple-a200: #e040fb;
+  --color-purple-a400: #d500f9;
+  --color-purple-a700: #aa00ff;
+  --color-cyan-600: #00acc1;
+  --color-blue-fa: #58acfa;
+  --color-light-green-600: #7cb342;
+  --color-deep-green-600: #31b404;
+  --color-yellow-800: #f9a825;
+  --color-deep-orange-400: #ff7043;
+  --color-brown-500: #795548;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Loading indicator colors (colors.xml) */
+  --loading-indicator-red: #e53935;
+  --loading-indicator-purple: #aa00ff;
+  --loading-indicator-blue: #1d87e4;
+  --loading-indicator-cyan: #00acc1;
+  --loading-indicator-green: #7cb342;
+  --loading-indicator-yellow: #f9a825;
+  --loading-indicator-orange: #ff7043;
+
+  /* Light blue palette (colors.xml) */
+  --light-blue-50: #e1f5fe;
+  --light-blue-200: #81d4fa;
+  --light-blue-600: #039be5;
+  --light-blue-900: #01579b;
+  --light-blue-a200: #40c4ff;
+  --light-blue-a400: #00b0ff;
+
+  /* -----------------------------------------------------------------------
+     Typography scale (dimens.xml — sp → px 1:1)
+     ----------------------------------------------------------------------- */
+  --text-super-large: 24px;          /* text_super_large 24sp */
+  --text-large: 22px;                /* text_large 22sp */
+  --text-little-large: 20px;         /* text_little_large 20sp */
+  --text-medium: 18px;               /* text_medium 18sp */
+  --text-little-small: 16px;         /* text_little_small 16sp */
+  --text-small: 14px;                /* text_small 14sp */
+  --text-super-small: 12px;          /* text_super_small 12sp */
+  --text-more-super-small: 6px;      /* text_more_super_small 6sp */
+
+  /* Gallery reader text sizes (dimens.xml) */
+  --gallery-page-text: 56px;         /* gallery_page_text 56sp */
+  --gallery-page-text-size: 56px;    /* gallery_page_text_size 56sp */
+  --gallery-error-text-size: 24px;   /* gallery_error_text_size 24sp */
+
+  /* -----------------------------------------------------------------------
+     Card specs (styles.xml — CardView.Normal)
+     ----------------------------------------------------------------------- */
+  --card-radius: 2px;                /* cardCornerRadius 2dp */
+  --card-elevation: 2px;             /* cardElevation 2dp */
+  --card-max-elevation: 2px;         /* cardMaxElevation 2dp */
+  --card-content-padding: 0px;       /* contentPadding 0dp */
+
+  /* -----------------------------------------------------------------------
+     Thumbnail sizes (dimens.xml)
+     ----------------------------------------------------------------------- */
+  --thumb-list-width: 80px;          /* gallery_list_thumb_width 80dp */
+  --thumb-list-height: 120px;        /* gallery_list_thumb_height 120dp */
+  --thumb-detail-width: 128px;       /* gallery_detail_thumb_width 128dp */
+  --thumb-detail-height: 192px;      /* gallery_detail_thumb_height 192dp */
+
+  /* Grid triangle category badge (roadmap: 32×24dp) */
+  --thumb-triangle-width: 32px;
+  --thumb-triangle-height: 24px;
+
+  /* Thumbnail aspect ratio clamping (FixedThumb attrs) */
+  --thumb-min-aspect: 0.333;
+  --thumb-max-aspect: 1.333;
+
+  /* -----------------------------------------------------------------------
+     Gallery grid column widths (dimens.xml)
+     ----------------------------------------------------------------------- */
+  --gallery-list-column-width-long: 480px;
+  --gallery-list-column-width-short: 320px;
+  --gallery-grid-column-width-large: 160px;
+  --gallery-grid-column-width-middle: 120px;
+  --gallery-grid-column-width-small: 80px;
+
+  /* -----------------------------------------------------------------------
+     Gallery list/grid spacing (dimens.xml — default portrait)
+     ----------------------------------------------------------------------- */
+  --gallery-list-interval: 0px;      /* gallery_list_interval 0dp */
+  --gallery-list-margin-h: 4px;      /* gallery_list_margin_h 4dp */
+  --gallery-list-margin-v: 4px;      /* gallery_list_margin_v 4dp */
+  --gallery-grid-interval: 0px;      /* gallery_grid_interval 0dp */
+  --gallery-grid-margin-h: 4px;      /* gallery_grid_margin_h 4dp */
+  --gallery-grid-margin-v: 4px;      /* gallery_grid_margin_v 4dp */
+  --gallery-search-bar-margin-h: 6px; /* gallery_search_bar_margin_h 6dp */
+  --gallery-search-bar-margin-v: 8px; /* gallery_search_bar_margin_v 8dp */
+  --gallery-padding-top-search-bar: 64px;
+  --gallery-padding-bottom-fab: 80px;
+
+  /* -----------------------------------------------------------------------
+     Navigation (dimens.xml + layout)
+     ----------------------------------------------------------------------- */
+  --drawer-width: 280px;             /* drawer_max_width 280dp */
+  --drawer-header-height: 160px;     /* nav_header_main.xml layout_height 160dp */
+  --toolbar-height: 56px;            /* actionBarSize (Material standard) */
+
+  /* -----------------------------------------------------------------------
+     FAB (dimens.xml)
+     ----------------------------------------------------------------------- */
+  --fab-size: 56px;                  /* fab_size 56dp */
+  --fab-size-mini: 40px;             /* fab_min_size 40dp */
+  --fab-layout-primary-margin: 24px; /* fab_layout_primary_margin 24dp */
+  --fab-layout-secondary-margin: 16px; /* fab_layout_secondary_margin 16dp */
+  --corner-fab-margin: 16px;         /* corner_fab_margin 16dp */
+
+  /* -----------------------------------------------------------------------
+     Animation curves (anim/decelerate_quart.xml, decelerate_quint.xml)
+     Android DecelerateInterpolator factor=2.0 → quart approximation
+     Android DecelerateInterpolator factor=2.5 → quint approximation
+     ----------------------------------------------------------------------- */
+  --ease-decelerate-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-decelerate-quint: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-scene-opacity: 200ms;   /* scene_open_enter alpha duration */
+  --duration-scene-translate: 350ms; /* scene_open_enter translate duration */
+  --scene-translate-from: 8%;        /* fromYDelta 8% */
+
+  /* -----------------------------------------------------------------------
+     Progress spinner (styles.xml — ProgressView)
+     ----------------------------------------------------------------------- */
+  --spinner-default: 48px;           /* ProgressView minWidth/minHeight 48dp */
+  --spinner-small: 16px;             /* ProgressView.Small 16dp */
+  --spinner-large: 76px;             /* ProgressView.Large 76dp */
+
+  /* -----------------------------------------------------------------------
+     SeekBar panel (activity_gallery.xml + colors.xml)
+     ----------------------------------------------------------------------- */
+  --seekbar-panel-height: 48px;      /* FrameLayout height 48dp */
+  --seekbar-page-label: 32px;        /* left/right TextView width 32dp */
+  --seekbar-panel-padding-h: 16px;   /* paddingLeft/Right 16dp */
+
+  /* -----------------------------------------------------------------------
+     Rating (dimens.xml)
+     ----------------------------------------------------------------------- */
+  --rating-size: 16px;               /* rating_size 16dp */
+  --rating-interval: 1px;            /* rating_interval 1dp */
+
+  /* -----------------------------------------------------------------------
+     Spacing & layout (dimens.xml)
+     ----------------------------------------------------------------------- */
+  --keyline-margin: 16px;            /* keyline_margin 16dp */
+  --spacing: 8px;                    /* spacing 8dp */
+  --single-max-width: 260px;         /* single_max_width 260dp */
+  --progress-bar-height: 24px;       /* progress_bar_height 24dp */
+  --progress-padding: 18dp;          /* progress_padding 18dp */
+
+  /* Search layout (dimens.xml) */
+  --search-layout-interval: 0px;
+  --search-layout-margin-h: 4px;
+  --search-layout-margin-v: 4px;
+  --search-item-interval: 8px;
+  --search-category-title-height: 48px;
+  --image-search-max-size: 240px;
+
+  /* Category table (dimens.xml) */
+  --category-table-item-height: 40px;
+  --category-table-item-margin: 4px;
+
+  /* Slider (dimens.xml + styles.xml) */
+  --slider-bubble-width: 26px;
+  --slider-bubble-height: 32px;
+  --slider-thickness: 2px;
+  --slider-radius: 6px;
+  --slider-text-size: 12px;
+
+  /* Gallery reader misc (dimens.xml) */
+  --gallery-pager-interval: 48px;
+  --gallery-scroll-interval: 28px;
+  --gallery-page-min-height: 256px;
+  --gallery-page-info-interval: 24px;
+  --gallery-progress-size: 56px;
+  --gallery-widget-margin-h: 12px;
+  --gallery-widget-margin-v: 12px;
+  --gallery-guide-divider-width: 3px;
+
+  /* DrawerArrowDrawable (dimens.xml) */
+  --dad-drawable-size: 24px;
+  --dad-bar-size: 18px;
+  --dad-top-bottom-bar-arrow-size: 11.31px;
+  --dad-thickness: 2px;
+  --dad-gap-between-bars: 3px;
+  --dad-middle-bar-arrow-size: 16px;
+
+  /* AddDeleteDrawable (dimens.xml) */
+  --add-size: 20px;
+  --add-thickness: 2px;
+
+  /* Lock pattern (dimens.xml) */
+  --lock-pattern-dot-line-width: 3px;
+  --lock-pattern-dot-size: 12px;
+  --lock-pattern-dot-size-activated: 28px;
+
+  /* Preference (dimens.xml) */
+  --preference-widget-width: 48px;
+  --preference-item-padding-side: 8px;
+  --preference-item-padding-inner: 8px;
+
+  /* Top list (dimens.xml) */
+  --top-list-spinner-height: 50px;
+  --top-list-spinner-elevation: 3px;
+  --top-list-spinner-margin: 12px;
+  --top-list-scrollview-margin-top: 74px;
+  --top-list-item-table-margin: 18px;
+  --top-list-item-margin-bottom: 7px;
+  --top-list-item-radius: 5px;
+  --top-list-item-margin-width: 24px;
+
+  /* Dialog (dimens.xml) */
+  --dialog-padding-top-material: 18px;
+  --title-text-top-padding: 6px;
+
+  /* Switch (dimens.xml) */
+  --switch-padding: 8px;
+
+  /* Download (dimens.xml) */
+  --download-search-bar-height: 40px;
+  --button-space-between: 20px;
+
+  /* Spinner (dimens.xml) */
+  --spinner-horizontal-padding: 16px;
+
+  /* Limits (dimens.xml) */
+  --limits-layout-margin-h: 24px;
+  --limits-home-item-margin-h: 30px;
+  --limits-layout-margin-v: 2px;
+  --limits-layout-padding: 12px;
+
+  /* Popup (dimens.xml) */
+  --photo-select-margin-top: 12px;
+  --photo-select-margin-bottom: 12px;
+  --popup-text-padding: 4px;
+  --popup-text-margin: 12px;
+
+  /* Advance search (dimens.xml) */
+  --advance-search-table-item-margin: 4px;
+
+  /* Corner FAB download (dimens.xml) */
+  --corner-fab-margin-download-bottom: 70px;
+  --corner-fab-margin-download-right: 3px;
+
+  /* Gallery tab layout (dimens.xml) */
+  --gallery-tab-layout-pad: 2px;
+  --gallery-tab-layout-spacing: 3px;
+
+  /* New version (colors.xml) */
+  --new-version-bg-color: rgba(255, 235, 59, 0.902); /* #E6FFEB3B */
+
+  /* Guide (colors.xml) */
+  --guide-bg: rgba(0, 150, 136, 0.898); /* #e5009688 */
+}
+
+/* ==========================================================================
+   Light theme (default)
+   Source: themes.xml BaseTheme + colors.xml
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  /* Backgrounds */
+  --color-bg: #ffffff;                          /* windowBackground @color/white */
+  --color-surface: #f5f5f5;                     /* contentColorPrimary = grey_100 */
+  --color-surface-activated: #e0e0e0;           /* content_activated_light = grey_300 */
+  --color-background-floating: #ffffff;
+
+  /* Divider */
+  --color-divider: rgba(0, 0, 0, 0.125);        /* divider_light #20000000 */
+
+  /* Toolbar */
+  --color-toolbar: #009688;                     /* toolbarColor = colorPrimary */
+
+  /* Text colors (Material Light) */
+  --text-color-primary: rgba(0, 0, 0, 0.87);    /* android textColorPrimary light */
+  --text-color-secondary: rgba(0, 0, 0, 0.54);  /* android textColorSecondary light */
+
+  /* Drawable colors */
+  --drawable-color-primary: rgba(0, 0, 0, 0.54);   /* primary_drawable_light #8a000000 */
+  --drawable-color-secondary: rgba(0, 0, 0, 0.26); /* secondary_drawable_light #42000000 */
+  --drawable-color-theme-primary: #009688;
+
+  /* Theme text colors */
+  --text-color-theme-primary: #009688;           /* textColorThemePrimary = colorPrimary */
+  --text-color-theme-primary2: #1d87e4;          /* textColorThemePrimary2 = loading_indicator_blue */
+  --text-color-theme-accent: #e040fb;            /* textColorThemeAccent = colorAccent */
+
+  /* Content colors */
+  --content-color-primary: #f5f5f5;              /* content_light = grey_100 */
+  --content-color-theme-primary: #009688;
+  --content-color-theme-accent: #e040fb;
+
+  /* Widget colors */
+  --widget-color: #eeeeee;                       /* widget_light = grey_200 */
+  --widget-color-theme-primary: #009688;
+  --widget-color-theme-accent: #e040fb;
+
+  /* Progress */
+  --progress-color: #e040fb;                     /* progress_light = colorAccent */
+
+  /* Tags */
+  --tag-group-background: #e040fb;               /* tag_group_background_light = colorAccent */
+  --tag-background: #009688;                     /* tag_background_light = colorPrimary */
+
+  /* Gallery detail */
+  --gallery-detail-header-title-color: #ffffff;  /* textColorPrimaryInverse */
+  --gallery-detail-header-background: #009688;   /* contentColorThemePrimary */
+  --gallery-detail-button-background: #f5f5f5;   /* grey_100 */
+
+  /* Popup window */
+  --popup-window-background: #f2f2f2;            /* popupWindow_background_light */
+
+  /* Edge effect */
+  --color-edge-effect: #009688;                  /* colorEdgeEffect = colorPrimary */
+
+  /* Navigation bar */
+  --navigation-bar-color: #ffffff;
+
+  /* Icon */
+  --icon-color: #f5f5f5;                         /* icon_color = grey_100 */
+
+  /* Limits */
+  --limit-count-bg: #009688;                     /* colorLimitCountBg */
+  --limits-shape-color: #009688;                 /* shape_color_limits = teal_500 */
+  --home-shadow: #cfcfcf;                        /* home_shadow_color = grey_350 */
+
+  /* Shadow */
+  --shadow-color: rgba(0, 0, 0, 0.22);           /* shadow_light #38000000 */
+
+  /* Big icon */
+  --big-icon-color: rgba(0, 0, 0, 0.12);         /* big_icon #1f000000 */
+
+  /* Check text view mask */
+  --check-text-view-mask: rgba(0, 0, 0, 0.54);   /* #8a000000 */
+
+  /* Gallery slider */
+  --gallery-slider-background: #424242;           /* grey_800 (dark theme reader) */
+
+  /* Lock pattern */
+  --lock-pattern-regular-color: rgba(0, 0, 0, 0.54); /* #8a000000 */
+  --lock-pattern-success-color: #009688;
+  --lock-pattern-error-color: #f44336;
+
+  /* Guide */
+  --guide-background-color: rgba(0, 150, 136, 0.898); /* #e5009688 */
+
+  /* Button theme change */
+  --button-text-color: #e040fb;                  /* colorAccent */
+  --button-background-color: #ffffff;
+
+  /* Translucent */
+  --translucent-bg: rgba(255, 255, 255, 0.5);    /* #80ffffff */
+
+  /* Black overlay */
+  --black-overlay: rgba(0, 0, 0, 0.4);           /* #66000000 */
+}
+
+/* ==========================================================================
+   Dark theme
+   Source: themes.xml BaseTheme.Dark + colors.xml
+   ========================================================================== */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --color-bg: #323232;                           /* windowBackground = grey_850 */
+  --color-surface: #3a3a3a;                      /* contentColorPrimary = content_dark = grey_825 */
+  --color-surface-activated: #757575;            /* content_activated_dark = grey_600 */
+  --color-background-floating: #323232;          /* colorBackgroundFloating = grey_850 */
+
+  /* Divider */
+  --color-divider: rgba(255, 255, 255, 0.125);   /* divider_dark #20ffffff */
+
+  /* Toolbar */
+  --color-toolbar: #323232;                      /* toolbarColor = colorBackground = grey_850 */
+
+  /* Text colors (Material Dark) */
+  --text-color-primary: #ffffff;                 /* primary_drawable_dark = #ffffffff */
+  --text-color-secondary: rgba(255, 255, 255, 0.7); /* android textColorSecondary dark */
+
+  /* Drawable colors */
+  --drawable-color-primary: #ffffff;             /* primary_drawable_dark #ffffffff */
+  --drawable-color-secondary: rgba(255, 255, 255, 0.3); /* secondary_drawable_dark #4dffffff */
+  --drawable-color-theme-primary: #ffffff;
+
+  /* Theme text colors */
+  --text-color-theme-primary: rgba(255, 255, 255, 0.7); /* textColorSecondary */
+  --text-color-theme-primary2: rgba(255, 255, 255, 0.7);
+  --text-color-theme-accent: rgba(255, 255, 255, 0.7);
+
+  /* Content colors */
+  --content-color-primary: #3a3a3a;              /* content_dark = grey_825 */
+  --content-color-theme-primary: #3a3a3a;        /* = contentColorPrimary */
+  --content-color-theme-accent: #3a3a3a;         /* = contentColorPrimary */
+
+  /* Widget colors */
+  --widget-color: #616161;                       /* widget_dark = grey_700 */
+  --widget-color-theme-primary: #616161;
+  --widget-color-theme-accent: #616161;
+
+  /* Progress */
+  --progress-color: #757575;                     /* progress_dark = grey_600 */
+
+  /* Tags */
+  --tag-group-background: #4a4a4a;               /* tag_group_background_dark = grey_775 */
+  --tag-background: #4a4a4a;                     /* tag_background_dark = grey_775 */
+
+  /* Gallery detail */
+  --gallery-detail-header-title-color: #ffffff;  /* textColorPrimary */
+  --gallery-detail-header-background: #3a3a3a;   /* contentColorThemePrimary */
+  --gallery-detail-button-background: #424242;   /* grey_800 */
+
+  /* Popup window */
+  --popup-window-background: #2e2e2e;            /* popupWindow_background_dark */
+
+  /* Edge effect */
+  --color-edge-effect: #9e9e9e;                  /* grey_500 */
+
+  /* Navigation bar */
+  --navigation-bar-color: #323232;               /* grey_850 */
+
+  /* Icon */
+  --icon-color: #f5f5f5;                         /* icon_color_dark = grey_100 */
+
+  /* Limits */
+  --limit-count-bg: #009688;                     /* colorLimitCountBgDark */
+  --limits-shape-color: #666666;                 /* shape_color_limits_dart = grey_675 */
+  --home-shadow: #3a3a3a;                        /* home_shadow_color_dark = grey_825 */
+
+  /* Gallery slider */
+  --gallery-slider-background: #424242;           /* gallery_slider_background_dark = grey_800 */
+
+  /* Lock pattern */
+  --lock-pattern-regular-color: rgba(255, 255, 255, 0.54); /* #8affffff */
+  --lock-pattern-success-color: #009688;
+  --lock-pattern-error-color: #f44336;
+
+  /* Guide */
+  --guide-background-color: rgba(48, 48, 48, 0.898); /* #e5303030 */
+
+  /* Button theme change */
+  --button-text-color: #009688;                  /* colorPrimary */
+  --button-background-color: #323232;            /* grey_850 */
+
+  /* ColorPrimaryDark override */
+  --color-primary-dark: #212121;                 /* grey_900 */
+
+  /* ColorAccent override (dark uses primary) */
+  --color-accent: #009688;                       /* colorAccent = colorPrimary in dark */
+}
+
+/* ==========================================================================
+   Black (AMOLED) theme
+   Source: themes.xml BaseTheme.Black + colors.xml
+   ========================================================================== */
+[data-theme="black"] {
+  /* Backgrounds */
+  --color-bg: #000000;                           /* windowBackground = black */
+  --color-surface: #191919;                      /* contentColorPrimary = content_black = grey_925 */
+  --color-surface-activated: #616161;            /* content_activated_black = grey_700 */
+  --color-background-floating: #000000;          /* colorBackgroundFloating = black */
+
+  /* Divider */
+  --color-divider: rgba(255, 255, 255, 0.125);   /* divider_dark #20ffffff (same as dark) */
+
+  /* Toolbar */
+  --color-toolbar: #000000;                      /* toolbarColor = black */
+
+  /* Text colors (Material Black) */
+  --text-color-primary: rgba(255, 255, 255, 0.85); /* primary_text_material_black ≈ #d9ffffff */
+  --text-color-secondary: rgba(255, 255, 255, 0.7);
+
+  /* Drawable colors */
+  --drawable-color-primary: rgba(255, 255, 255, 0.8);  /* primary_drawable_black #ccffffff */
+  --drawable-color-secondary: rgba(255, 255, 255, 0.24); /* secondary_drawable_black #3dffffff */
+  --drawable-color-theme-primary: rgba(255, 255, 255, 0.8);
+
+  /* Theme text colors */
+  --text-color-theme-primary: rgba(255, 255, 255, 0.7); /* textColorSecondary */
+  --text-color-theme-primary2: rgba(255, 255, 255, 0.7);
+  --text-color-theme-accent: rgba(255, 255, 255, 0.7);
+
+  /* Content colors */
+  --content-color-primary: #191919;              /* content_black = grey_925 */
+  --content-color-theme-primary: #191919;        /* = contentColorPrimary */
+  --content-color-theme-accent: #191919;         /* = contentColorPrimary */
+
+  /* Widget colors */
+  --widget-color: #323232;                       /* widget_black = grey_850 */
+  --widget-color-theme-primary: #323232;
+  --widget-color-theme-accent: #323232;
+
+  /* Progress */
+  --progress-color: #616161;                     /* progress_black = grey_700 */
+
+  /* Tags */
+  --tag-group-background: #292929;               /* tag_group_background_black = grey_875 */
+  --tag-background: #292929;                     /* tag_background_black = grey_875 */
+
+  /* Gallery detail */
+  --gallery-detail-header-title-color: #ffffff;  /* textColorPrimary */
+  --gallery-detail-header-background: #000000;   /* black */
+  --gallery-detail-button-background: #212121;   /* grey_900 */
+
+  /* Popup window */
+  --popup-window-background: #151515;            /* popupWindow_background_black */
+
+  /* Edge effect */
+  --color-edge-effect: #9e9e9e;                  /* grey_500 */
+
+  /* Navigation bar */
+  --navigation-bar-color: #000000;
+
+  /* Icon */
+  --icon-color: #f5f5f5;                         /* icon_color_black = grey_100 */
+
+  /* Limits */
+  --limit-count-bg: #009688;                     /* colorLimitCountBgBlack */
+  --limits-shape-color: #666666;                 /* shape_color_limits_black = grey_675 */
+  --home-shadow: #3a3a3a;                        /* home_shadow_color_black = grey_825 */
+
+  /* Gallery slider */
+  --gallery-slider-background: #212121;           /* gallery_slider_background_black = grey_900 */
+
+  /* Lock pattern */
+  --lock-pattern-regular-color: rgba(255, 255, 255, 0.54);
+  --lock-pattern-success-color: #009688;
+  --lock-pattern-error-color: #f44336;
+
+  /* Guide */
+  --guide-background-color: rgba(0, 0, 0, 0.898); /* #e5000000 */
+
+  /* Button theme change */
+  --button-text-color: #009688;                  /* colorPrimary */
+  --button-background-color: #000000;
+
+  /* ColorPrimaryDark override */
+  --color-primary-dark: #000000;
+
+  /* ColorAccent override (black uses primary) */
+  --color-accent: #009688;                       /* colorAccent = colorPrimary in black */
+
+  /* Primary text disabled (black theme specific) */
+  --text-color-disabled: rgba(255, 255, 255, 0.3); /* primary_text_disabled_material_black #4dffffff */
+}
+
+/* ==========================================================================
+   Responsive breakpoints (derived from Android qualifiers + AutoStaggeredGrid)
+   See contracts/responsive-strategy.md for full rationale
+   ========================================================================== */
+:root {
+  /* Android sw600dp qualifier → tablet portrait */
+  --breakpoint-sm: 600px;
+  /* Android sw720dp qualifier → large tablet / landscape */
+  --breakpoint-lg: 720px;
+  /* Gallery list column widths drive auto-column breakpoints */
+  --column-width-list-long: 480px;
+  --column-width-list-short: 320px;
+  --column-width-grid-large: 160px;
+  --column-width-grid-middle: 120px;
+  --column-width-grid-small: 80px;
+}
+
+/* ==========================================================================
+   sw600dp overrides (values-sw600dp/dimens.xml)
+   Applied via media query at ≥600px viewport width
+   ========================================================================== */
+@media (min-width: 600px) {
+  :root {
+    --keyline-margin: 24px;              /* keyline_margin 24dp */
+    --single-max-width: 480px;           /* single_max_width 480dp */
+    --gallery-list-interval: 4px;        /* gallery_list_interval 4dp */
+    --gallery-list-margin-h: 20px;       /* gallery_list_margin_h 20dp */
+    --gallery-grid-margin-h: 20px;       /* gallery_grid_margin_h 20dp */
+    --gallery-search-bar-margin-h: 20px; /* gallery_search_bar_margin_h 20dp */
+    --search-layout-interval: 4px;       /* search_layout_interval 4dp */
+    --search-layout-margin-h: 20px;      /* search_layout_margin_h 20dp */
+  }
+}
+
+/* ==========================================================================
+   Landscape overrides (values-land/dimens.xml)
+   ========================================================================== */
+@media (orientation: landscape) {
+  :root {
+    --preference-widget-width: 72px;     /* preference_widget_width 72dp */
+  }
+}
