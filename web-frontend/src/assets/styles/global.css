@@ -1,17 +1,8 @@
-:root {
-  --primary-color: #4a90d9;
-  --primary-hover: #357abd;
-  --danger-color: #e74c3c;
-  --success-color: #2ecc71;
-  --warning-color: #f39c12;
-  --text-color: #333;
-  --text-secondary: #666;
-  --border-color: #ddd;
-  --background-color: #f5f5f5;
-  --card-background: white;
-  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  --radius: 8px;
-}
+/* ==========================================================================
+   Global resets & base styles
+   Design tokens live in src/styles/tokens.css (SINGLE SOURCE OF TRUTH).
+   This file must NOT define color/spacing custom properties — use tokens.
+   ========================================================================== */
 
 * {
   margin: 0;
@@ -19,20 +10,28 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  color: var(--text-color);
-  background: var(--background-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-color-primary);
+  background: var(--color-bg);
   line-height: 1.5;
+  transition: color var(--duration-scene-opacity) var(--ease-decelerate-quart),
+    background-color var(--duration-scene-opacity) var(--ease-decelerate-quart);
 }
 
 a {
-  color: var(--primary-color);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--primary-hover);
+  color: var(--color-primary-dark);
 }
 
 button {
@@ -43,4 +42,42 @@ button {
 img {
   max-width: 100%;
   height: auto;
+}
+
+/* Scrollbar styling (WebKit) — subtle, theme-aware */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--drawable-color-secondary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--drawable-color-primary);
+}
+
+/* Focus visible outline for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Utility: visually hidden (screen-reader only) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
