@@ -1,0 +1,55 @@
+# ===========================================================================
+# EhViewer Web — systemd service unit
+#
+# Install:
+#   sudo cp deploy/ehviewer-web.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now ehviewer-web
+#
+# Logs:
+#   journalctl -u ehviewer-web -f
+# ===========================================================================
+
+[Unit]
+Description=EhViewer Web Server
+Documentation=https://github.com/SXJ-Li/Ehviewer_CN_SXJ
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ehviewer
+Group=ehviewer
+
+# JAR location — adjust to your deployment path
+ExecStart=/usr/bin/java \
+    -Xms256m -Xmx1024m \
+    -XX:+UseG1GC \
+    -jar /opt/ehviewer/ehviewer-web.jar \
+    --server.port=8080 \
+    --ehviewer.download.path=/opt/ehviewer/data/downloads \
+    --ehviewer.download.cache-path=/opt/ehviewer/data/cache \
+    --ehviewer.security.encryption-key-path=/opt/ehviewer/data/security.key
+
+WorkingDirectory=/opt/ehviewer
+Environment=EHVIEWER_DATA_DIR=/opt/ehviewer/data/db
+Environment=JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=143
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ehviewer/data
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

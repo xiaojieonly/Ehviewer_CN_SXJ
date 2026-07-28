@@ -1,0 +1,69 @@
+# ===========================================================================
+# EhViewer Web — Caddy reverse proxy with automatic HTTPS
+#
+# Caddy automatically obtains and renews Let's Encrypt certificates.
+# Install: https://caddyserver.com/docs/install
+#
+# Usage:
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Replace "ehviewer.example.com" with your actual domain.
+# For LAN-only access without HTTPS, use the HTTP-only block below.
+# ===========================================================================
+
+# --- HTTPS (recommended for PWA — Service Worker requires secure context) ---
+ehviewer.example.com {
+    reverse_proxy localhost:8080
+
+    # WebSocket support (STOMP over SockJS)
+    @websocket {
+        path /ws/*
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @websocket localhost:8080
+
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+
+    # Gzip compression for text assets
+    encode gzip zstd
+
+    # Cache static assets (content-hashed by Vite)
+    @static path /assets/*
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # API responses — short cache
+    @api path /api/*
+    header @api Cache-Control "no-cache"
+
+    # Access log
+    log {
+        output file /var/log/caddy/ehviewer-access.log
+        format json
+    }
+}
+
+# --- HTTP-only (LAN access, no domain needed) ---
+# Uncomment this block and comment out the HTTPS block above for LAN-only use.
+# Note: PWA features (Service Worker) will NOT work without HTTPS or localhost.
+#
+# :80 {
+#     reverse_proxy localhost:8080
+#
+#     @websocket {
+#         path /ws/*
+#         header Connection *Upgrade*
+#         header Upgrade websocket
+#     }
+#     reverse_proxy @websocket localhost:8080
+#
+#     encode gzip zstd
+# }
