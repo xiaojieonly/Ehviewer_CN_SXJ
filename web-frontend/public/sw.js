@@ -1,0 +1,318 @@
+/* ==========================================================================
+ * EhViewer Service Worker
+ *
+ * Caching architecture (roadmap Phase 3.3):
+ *   - App Shell pre-cache on install (entry HTML + manifest + icons).
+ *     Vite emits content-hashed JS/CSS bundles whose names are unknown at
+ *     SW authoring time, so those are captured into the shell cache at
+ *     runtime (CacheFirst — safe because hashed names are immutable).
+ *   - API responses (/api/*): NetworkFirst with cache fallback, so gallery
+ *     lists stay fresh online but remain readable offline.
+ *   - Images: CacheFirst with expiration (max 500 entries, 30 days) so
+ *     cached galleries can be read offline without unbounded growth.
+ *   - Navigations: NetworkFirst, falling back to the cached app shell.
+ *
+ * Cache versioning: bump CACHE_NAME (e.g. 'ehviewer-v2') to invalidate
+ * every sub-cache on the next activate.
+ * ========================================================================== */
+
+'use strict'
+
+const CACHE_NAME = 'ehviewer-v1'
+
+const SHELL_CACHE = `${CACHE_NAME}-shell`
+const API_CACHE = `${CACHE_NAME}-api`
+const IMAGE_CACHE = `${CACHE_NAME}-images`
+
+const CURRENT_CACHES = new Set([SHELL_CACHE, API_CACHE, IMAGE_CACHE])
+
+/** Image cache limits (roadmap: max 500 entries / 30 days). */
+const IMAGE_MAX_ENTRIES = 500
+const IMAGE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+/** Header stamped onto cached image responses for age checks. */
+const CACHED_AT_HEADER = 'x-sw-cached-at'
+
+/**
+ * App shell pre-cached on install. Hashed build assets (assets/*.js,
+ * assets/*.css) are added to SHELL_CACHE at runtime on first fetch.
+ */
+const APP_SHELL_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+]
+
+/* --------------------------------------------------------------------------
+ * Install — pre-cache the app shell
+ * ------------------------------------------------------------------------ */
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(SHELL_CACHE)
+      .then((cache) => cache.addAll(APP_SHELL_URLS))
+      .then(() => self.skipWaiting())
+  )
+})
+
+/* --------------------------------------------------------------------------
+ * Activate — purge caches from previous SW versions
+ * ------------------------------------------------------------------------ */
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith('ehviewer-') && !CURRENT_CACHES.has(key))
+            .map((key) => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
+  )
+})
+
+/* --------------------------------------------------------------------------
+ * Fetch — route requests to the matching caching strategy
+ * ------------------------------------------------------------------------ */
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  const url = new URL(request.url)
+
+  // Only handle http(s). Leaves WebSocket upgrades (/ws) and data:/blob:
+  // URLs alone.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return
+
+  // Never intercept non-GET requests (mutations must always hit network).
+  if (request.method !== 'GET') return
+
+  // Range requests (video/audio seeking, partial image resume) bypass the
+  // cache — serving a full cached body for a Range request is invalid.
+  if (request.headers.has('range')) return
+
+  // 1. Navigation requests — NetworkFirst, fall back to cached shell.
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstNavigation(request))
+    return
+  }
+
+  // 2. API GETs — NetworkFirst with cache fallback.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
+    event.respondWith(networkFirstApi(request))
+    return
+  }
+
+  // 3. Images (same-origin /api/image/* and any cross-origin image) —
+  //    CacheFirst with expiration.
+  if (isImageRequest(request, url)) {
+    event.respondWith(cacheFirstImage(request))
+    return
+  }
+
+  // 4. Same-origin static assets (hashed JS/CSS bundles, fonts, icons) —
+  //    CacheFirst into the shell cache (immutable, content-hashed names).
+  if (url.origin === self.location.origin) {
+    event.respondWith(cacheFirstStatic(request))
+  }
+  // Everything else falls through to the browser default (network).
+})
+
+/* --------------------------------------------------------------------------
+ * Strategy: navigation — NetworkFirst
+ * ------------------------------------------------------------------------ */
+
+async function networkFirstNavigation(request) {
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      const cache = await caches.open(SHELL_CACHE)
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch (err) {
+    const cache = await caches.open(SHELL_CACHE)
+    // Try the exact URL first (SPA routes are all served by index.html),
+    // then the cached shell entry.
+    const cached = (await cache.match(request)) || (await cache.match('/index.html'))
+    return cached || Response.error()
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Strategy: API — NetworkFirst with cache fallback
+ * ------------------------------------------------------------------------ */
+
+async function networkFirstApi(request) {
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      const cache = await caches.open(API_CACHE)
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch (err) {
+    const cache = await caches.open(API_CACHE)
+    const cached = await cache.match(request)
+    if (cached) return cached
+    // Offline and never cached — return a parseable JSON error so the app
+    // can show a friendly offline state instead of a network error.
+    return new Response(JSON.stringify({ error: 'offline', message: 'No cached data available' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Strategy: images — CacheFirst with expiration (500 entries / 30 days)
+ * ------------------------------------------------------------------------ */
+
+async function cacheFirstImage(request) {
+  const cache = await caches.open(IMAGE_CACHE)
+  const cached = await cache.match(request)
+
+  if (cached) {
+    if (isFreshImage(cached)) return cached
+    // Expired — evict and revalidate from network.
+    await cache.delete(request)
+  }
+
+  try {
+    const response = await fetch(request)
+    if (isCacheableImage(response)) {
+      await cache.put(request, stampResponse(response.clone()))
+      await enforceImageLimits(cache)
+    }
+    return response
+  } catch (err) {
+    // Network failed — serve the stale entry if we have one (stale beats
+    // nothing for an offline reader).
+    return cached || Response.error()
+  }
+}
+
+function isImageRequest(request, url) {
+  if (request.destination === 'image') return true
+  if (url.pathname.startsWith('/api/image/')) return true
+  return /\.(png|jpe?g|gif|webp|avif|svg|ico)(\?.*)?$/i.test(url.pathname)
+}
+
+function isCacheableImage(response) {
+  // Same-origin 200s, or cross-origin opaque responses (CDN thumbnails).
+  return response.ok || response.type === 'opaque'
+}
+
+/** Clone the response with a cache timestamp header attached. */
+function stampResponse(response) {
+  const headers = new Headers(response.headers)
+  headers.set(CACHED_AT_HEADER, String(Date.now()))
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
+}
+
+function isFreshImage(response) {
+  const cachedAt = Number(response.headers.get(CACHED_AT_HEADER))
+  if (!cachedAt) return false // Legacy entry without a stamp — revalidate.
+  return Date.now() - cachedAt < IMAGE_MAX_AGE_MS
+}
+
+/**
+ * Evict oldest entries beyond IMAGE_MAX_ENTRIES. cache.keys() preserves
+ * insertion order, so deleting from the front approximates LRU.
+ */
+async function enforceImageLimits(cache) {
+  const keys = await cache.keys()
+  if (keys.length <= IMAGE_MAX_ENTRIES) return
+  const excess = keys.slice(0, keys.length - IMAGE_MAX_ENTRIES)
+  await Promise.all(excess.map((key) => cache.delete(key)))
+}
+
+/* --------------------------------------------------------------------------
+ * Strategy: same-origin static assets — CacheFirst (immutable bundles)
+ * ------------------------------------------------------------------------ */
+
+async function cacheFirstStatic(request) {
+  const cache = await caches.open(SHELL_CACHE)
+  const cached = await cache.match(request)
+  if (cached) return cached
+
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      await cache.put(request, response.clone())
+    }
+    return response
+  } catch (err) {
+    return Response.error()
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Message handler — cache management from the app
+ *
+ *   { type: 'SKIP_WAITING' }       → activate the waiting worker (updates)
+ *   { type: 'CLEAR_IMAGE_CACHE' }  → wipe the image cache (settings page)
+ *   { type: 'GET_CACHE_STATS' }    → reply with per-cache entry counts
+ * ------------------------------------------------------------------------ */
+
+self.addEventListener('message', (event) => {
+  const data = event.data
+  if (!data || typeof data.type !== 'string') return
+
+  switch (data.type) {
+    case 'SKIP_WAITING':
+      self.skipWaiting()
+      break
+
+    case 'CLEAR_IMAGE_CACHE':
+      event.waitUntil(
+        caches
+          .delete(IMAGE_CACHE)
+          .then(() => reply(event, { type: 'IMAGE_CACHE_CLEARED' }))
+      )
+      break
+
+    case 'GET_CACHE_STATS':
+      event.waitUntil(
+        collectCacheStats().then((stats) =>
+          reply(event, { type: 'CACHE_STATS', stats })
+        )
+      )
+      break
+  }
+})
+
+function reply(event, message) {
+  // Prefer the source client; fall back to broadcasting to everyone.
+  if (event.source && typeof event.source.postMessage === 'function') {
+    event.source.postMessage(message)
+    return
+  }
+  return self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => client.postMessage(message))
+  })
+}
+
+async function collectCacheStats() {
+  const stats = {}
+  for (const name of [SHELL_CACHE, API_CACHE, IMAGE_CACHE]) {
+    const cache = await caches.open(name)
+    const keys = await cache.keys()
+    stats[name] = keys.length
+  }
+  if (self.navigator && self.navigator.storage && self.navigator.storage.estimate) {
+    const estimate = await self.navigator.storage.estimate()
+    stats.storageUsage = estimate.usage || 0
+    stats.storageQuota = estimate.quota || 0
+  }
+  return stats
+}
