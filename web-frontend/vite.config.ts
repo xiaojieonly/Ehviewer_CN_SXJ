@@ -24,6 +24,9 @@ export default defineConfig({
   },
   build: {
     outDir: '../ehviewer-web/src/main/resources/static',
+    // outDir is outside the project root, so Vite would otherwise leave
+    // stale content-hashed bundles from previous builds piling up here.
+    emptyOutDir: true,
     sourcemap: false,
     minify: 'terser',
     terserOptions: {
