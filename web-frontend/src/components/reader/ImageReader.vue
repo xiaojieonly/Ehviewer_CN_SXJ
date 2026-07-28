@@ -341,23 +341,26 @@ defineExpose({ toggleChrome })
   background: var(--grey-975); /* #080808 — reader backdrop */
 }
 
-/* GalleryHeader sits just under the toolbar scrim. */
+/* GalleryHeader sits just under the toolbar scrim (which now grows by the
+   status-bar / cutout inset). */
 .image-reader__status-bar {
   position: absolute;
-  top: var(--toolbar-height);
+  top: calc(var(--toolbar-height) + var(--safe-area-top));
   left: 0;
   right: 0;
   z-index: 20;
   pointer-events: none;
 }
 
-/* Bottom SeekBarPanel slides away with the chrome. */
+/* Bottom SeekBarPanel slides away with the chrome. Padded so the slider
+   clears the home indicator; the slide-out transform still hides it fully. */
 .image-reader__seekbar {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 30;
+  padding-bottom: var(--safe-area-bottom);
   transition:
     transform var(--duration-scene-translate) var(--ease-decelerate-quint),
     visibility 0s linear 0s;
@@ -376,7 +379,8 @@ defineExpose({ toggleChrome })
 .image-reader__autoplay {
   position: absolute;
   right: var(--keyline-margin);
-  bottom: calc(var(--seekbar-panel-height) + 12px);
+  /* Sits above the seekbar, which is itself raised by the home-indicator inset. */
+  bottom: calc(var(--seekbar-panel-height) + var(--safe-area-bottom) + 12px);
   z-index: 40;
   display: inline-flex;
   align-items: center;

@@ -121,8 +121,10 @@ function onBackdropClick() {
 /* Cluster --------------------------------------------------------------- */
 .fab-layout__cluster {
   position: fixed;
-  right: var(--corner-fab-margin); /* 16px */
-  bottom: var(--corner-fab-margin);
+  /* 16px corner margin + safe-area insets, so the FABs clear the home
+     indicator (bottom) and any rounded-corner / cutout edge (right). */
+  right: calc(var(--corner-fab-margin) + var(--safe-area-right));
+  bottom: calc(var(--corner-fab-margin) + var(--safe-area-bottom));
   z-index: 100;
   display: flex;
   flex-direction: column;

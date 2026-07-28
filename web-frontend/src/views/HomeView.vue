@@ -313,7 +313,9 @@ onMounted(() => {
    tops everything. */
 .home__searchbar {
   position: absolute;
-  top: 0;
+  /* Offset below the status bar / cutout; the list clears the bar via
+     --gallery-padding-top-search-bar, which carries the same inset. */
+  top: var(--safe-area-top);
   left: 0;
   right: 0;
   z-index: 4;

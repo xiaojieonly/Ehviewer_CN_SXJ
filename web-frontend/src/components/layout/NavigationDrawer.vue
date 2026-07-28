@@ -287,8 +287,10 @@ function onThemeToggle(): void {
   flex-direction: column;
   justify-content: space-between;
   flex-shrink: 0;
-  height: var(--drawer-header-height); /* 160px */
-  padding: var(--keyline-margin);
+  /* 160px + status-bar inset; the gradient bleeds into the inset area while
+     the avatar / username stay in the 160px band below it. */
+  height: calc(var(--drawer-header-height) + var(--safe-area-top));
+  padding: calc(var(--keyline-margin) + var(--safe-area-top)) var(--keyline-margin) var(--keyline-margin);
   /* sadpanda_low_poly placeholder — low-poly teal gradient. */
   background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
 }
@@ -378,7 +380,8 @@ function onThemeToggle(): void {
 .navigation-drawer__footer {
   flex-shrink: 0;
   border-top: 1px solid var(--color-divider);
-  padding: var(--spacing) var(--keyline-margin);
+  /* Bottom inset keeps the quota / theme controls clear of the home indicator. */
+  padding: var(--spacing) var(--keyline-margin) calc(var(--spacing) + var(--safe-area-bottom));
 }
 
 .navigation-drawer__quota {

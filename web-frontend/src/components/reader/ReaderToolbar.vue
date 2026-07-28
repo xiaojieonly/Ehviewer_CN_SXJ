@@ -86,8 +86,10 @@ const emit = defineEmits<ReaderToolbarEmits>()
   display: flex;
   align-items: center;
   gap: 4px;
-  height: var(--toolbar-height); /* 56dp actionBarSize */
-  padding: 0 4px;
+  /* 56dp actionBarSize + status-bar / cutout inset; the scrim fills the
+     inset area while the buttons sit in the 56dp band below it. */
+  height: calc(var(--toolbar-height) + var(--safe-area-top));
+  padding: var(--safe-area-top) 4px 0;
   background: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--color-black) 72%, transparent),

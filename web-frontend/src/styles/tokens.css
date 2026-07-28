@@ -7,6 +7,18 @@
 /* === Base tokens (theme-independent) === */
 :root {
   /* -----------------------------------------------------------------------
+     Safe-area insets (iOS/iPadOS PWA, viewport-fit=cover)
+     Resolve to 0 where there is no notch / home indicator, so they are safe
+     to add unconditionally. Used to keep edge-anchored chrome (reader bars,
+     FAB, drawer header/footer, floating search bars) clear of the status
+     bar, display cutout and home indicator.
+     ----------------------------------------------------------------------- */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+
+  /* -----------------------------------------------------------------------
      Brand colors (colors.xml)
      ----------------------------------------------------------------------- */
   --color-primary: #009688;          /* teal_500 / colorPrimary */
@@ -168,8 +180,11 @@
   --gallery-grid-margin-v: 4px;      /* gallery_grid_margin_v 4dp */
   --gallery-search-bar-margin-h: 6px; /* gallery_search_bar_margin_h 6dp */
   --gallery-search-bar-margin-v: 8px; /* gallery_search_bar_margin_v 8dp */
-  --gallery-padding-top-search-bar: 64px;
-  --gallery-padding-bottom-fab: 80px;
+  /* Clearance for the floating search bar / FAB cluster. The bars themselves
+     are offset by the safe-area insets (status bar / home indicator), so the
+     content that clears them must grow by the same amount. */
+  --gallery-padding-top-search-bar: calc(64px + var(--safe-area-top));
+  --gallery-padding-bottom-fab: calc(80px + var(--safe-area-bottom));
 
   /* -----------------------------------------------------------------------
      Navigation (dimens.xml + layout)
