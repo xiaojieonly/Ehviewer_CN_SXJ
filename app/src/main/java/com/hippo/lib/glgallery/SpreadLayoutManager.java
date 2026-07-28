@@ -449,17 +449,20 @@ class SpreadLayoutManager extends GalleryView.LayoutManager {
     private void layoutSpread(GalleryPageView p0, GalleryPageView p1, int left, int width,
             int height, int widthSpec, int heightSpec, boolean readingLeftToRight) {
         int seam = (mSplitX > 0 && mSplitX < width) ? mSplitX : width / 2;
+        int rightHalf = width - seam;
+        int seamSpec = GLView.MeasureSpec.makeMeasureSpec(seam, GLView.MeasureSpec.EXACTLY);
+        int rightSpec = GLView.MeasureSpec.makeMeasureSpec(rightHalf, GLView.MeasureSpec.EXACTLY);
         if (p1 == null) {
             // Single page (cover or trailing): center a half-width slot.
             int slotLeft = left + (width - seam) / 2;
-            layoutPage(p0, widthSpec, heightSpec, slotLeft, 0, slotLeft + seam, height);
+            layoutPage(p0, seamSpec, heightSpec, slotLeft, 0, slotLeft + seam, height);
         } else if (readingLeftToRight) {
-            layoutPage(p0, widthSpec, heightSpec, left, 0, left + seam, height);
-            layoutPage(p1, widthSpec, heightSpec, left + seam, 0, left + width, height);
+            layoutPage(p0, seamSpec, heightSpec, left, 0, left + seam, height);
+            layoutPage(p1, rightSpec, heightSpec, left + seam, 0, left + width, height);
         } else {
             // RTL: first page on the right half.
-            layoutPage(p1, widthSpec, heightSpec, left, 0, left + seam, height);
-            layoutPage(p0, widthSpec, heightSpec, left + seam, 0, left + width, height);
+            layoutPage(p1, seamSpec, heightSpec, left, 0, left + seam, height);
+            layoutPage(p0, rightSpec, heightSpec, left + seam, 0, left + width, height);
         }
     }
 
