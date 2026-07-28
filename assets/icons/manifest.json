@@ -1,0 +1,449 @@
+{
+  "files": [
+    {
+      "source": "drawable/v_adb_primary_x24.xml",
+      "output": "v_adb_primary_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_alert_red_x48.xml",
+      "output": "v_alert_red_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_archive_hh_primary_x48.xml",
+      "output": "v_archive_hh_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_archiver_primary_x48.xml",
+      "output": "v_archiver_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_arrow_left_dark_x24.xml",
+      "output": "v_arrow_left_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_book_open_primary_x24.xml",
+      "output": "v_book_open_primary_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_book_open_x24.xml",
+      "output": "v_book_open_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_bug_black_x48.xml",
+      "output": "v_bug_black_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_chart_accent_x48.xml",
+      "output": "v_chart_accent_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_check_all_dark_x24.xml",
+      "output": "v_check_all_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_check_dark_x24.xml",
+      "output": "v_check_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_clear_all_dark_x24.xml",
+      "output": "v_clear_all_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_close_dark_x24.xml",
+      "output": "v_close_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_cookie_brown_x48.xml",
+      "output": "v_cookie_brown_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_copy_x24.xml",
+      "output": "v_copy_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_delete_dark_x24.xml",
+      "output": "v_delete_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_delete_red_x24.xml",
+      "output": "v_delete_red_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_delete_x24.xml",
+      "output": "v_delete_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_dots_vertical_secondary_dark_x24.xml",
+      "output": "v_dots_vertical_secondary_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_download_black_x24.xml",
+      "output": "v_download_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_download_box_dark_x24.xml",
+      "output": "v_download_box_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_download_dark_x24.xml",
+      "output": "v_download_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_download_primary_x24.xml",
+      "output": "v_download_primary_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_download_x16.xml",
+      "output": "v_download_x16.svg",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "source": "drawable/v_download_x24.xml",
+      "output": "v_download_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_eh_subscription_black_x24.xml",
+      "output": "v_eh_subscription_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_file_find_primary_x48.xml",
+      "output": "v_file_find_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_fire_black_x24.xml",
+      "output": "v_fire_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_folder_add_dark_x24.xml",
+      "output": "v_folder_add_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_folder_move_dark_x24.xml",
+      "output": "v_folder_move_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_folder_share_dark_x24.xml",
+      "output": "v_folder_share_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_go_to_dark_x24.xml",
+      "output": "v_go_to_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_heart_black_x24.xml",
+      "output": "v_heart_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_heart_box_dark_x24.xml",
+      "output": "v_heart_box_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_heart_broken_x24.xml",
+      "output": "v_heart_broken_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_heart_outline_primary_x48.xml",
+      "output": "v_heart_outline_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_heart_primary_x48.xml",
+      "output": "v_heart_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_heart_x16.xml",
+      "output": "v_heart_x16.svg",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "source": "drawable/v_heart_x24.xml",
+      "output": "v_heart_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_help_circle_x24.xml",
+      "output": "v_help_circle_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_history_black_x24.xml",
+      "output": "v_history_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_homepage_black_x24.xml",
+      "output": "v_homepage_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_info_dark_x24.xml",
+      "output": "v_info_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_info_outline_dark_x24.xml",
+      "output": "v_info_outline_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_info_primary_x24.xml",
+      "output": "v_info_primary_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_magnify_dark_x24.xml",
+      "output": "v_magnify_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_magnify_x24.xml",
+      "output": "v_magnify_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_mobile_hand_left_off_x24.xml",
+      "output": "v_mobile_hand_left_off_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_mobile_hand_left_x24.xml",
+      "output": "v_mobile_hand_left_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_pause_dark_x24.xml",
+      "output": "v_pause_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_pause_x24.xml",
+      "output": "v_pause_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_pencil_dark_x24.xml",
+      "output": "v_pencil_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_play_dark_x24.xml",
+      "output": "v_play_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_play_x24.xml",
+      "output": "v_play_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_plus_dark_x24.xml",
+      "output": "v_plus_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_random_dark_x24.xml",
+      "output": "v_random_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_refresh_dark_x24.xml",
+      "output": "v_refresh_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_reorder_x24.xml",
+      "output": "v_reorder_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_reply_dark_x24.xml",
+      "output": "v_reply_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_sad_panda_primary_x24.xml",
+      "output": "v_sad_panda_primary_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_sec_primary_x24.xml",
+      "output": "v_sec_primary_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_send_dark_x24.xml",
+      "output": "v_send_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_settings_black_x24.xml",
+      "output": "v_settings_black_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_settings_dark_x24.xml",
+      "output": "v_settings_dark_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_share_primary_x48.xml",
+      "output": "v_share_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_similar_primary_x48.xml",
+      "output": "v_similar_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_slider_bubble.xml",
+      "output": "v_slider_bubble.svg",
+      "width": 26,
+      "height": 32
+    },
+    {
+      "source": "drawable/v_star_half_x16.xml",
+      "output": "v_star_half_x16.svg",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "source": "drawable/v_star_outline_x16.xml",
+      "output": "v_star_outline_x16.svg",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "source": "drawable/v_star_x16.xml",
+      "output": "v_star_x16.svg",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "source": "drawable/v_thumb_up_primary_x48.xml",
+      "output": "v_thumb_up_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable/v_top_lists_x24.xml",
+      "output": "v_top_lists_x24.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "source": "drawable/v_utorrent_primary_x48.xml",
+      "output": "v_utorrent_primary_x48.svg",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "drawable-v21/v_download_x16.xml",
+      "output": "v_download_x16.svg",
+      "width": 16,
+      "height": 16
+    }
+  ],
+  "total": 74
+}
