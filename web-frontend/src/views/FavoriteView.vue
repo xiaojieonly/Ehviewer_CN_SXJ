@@ -1,145 +1,385 @@
 <template>
   <div class="favorite-view">
     <AppHeader />
-    <div class="content">
-      <h2>Favorites</h2>
-      <div v-if="loading" class="loading">Loading...</div>
-      <div v-else-if="favorites.length === 0" class="empty">No favorites yet</div>
-      <div v-else class="favorites-grid">
-        <div
-          v-for="item in favorites"
-          :key="item.gid"
-          class="favorite-card"
-          @click="$router.push(`/gallery/${item.gid}`)"
-        >
-          <div class="thumb-wrapper">
-            <img v-if="item.thumb" :src="item.thumb" :alt="item.title" class="thumb" loading="lazy" />
-          </div>
-          <div class="card-info">
-            <h3 class="title">{{ item.title }}</h3>
-            <div class="meta">
-              <span class="rating">★ {{ item.rating?.toFixed(1) }}</span>
-              <span class="category">{{ item.category }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-if="totalPages > 1" class="pagination">
-        <button :disabled="currentPage <= 1" @click="loadPage(currentPage - 1)">Previous</button>
-        <span>Page {{ currentPage }} / {{ totalPages }}</span>
-        <button :disabled="currentPage >= totalPages" @click="loadPage(currentPage + 1)">Next</button>
-      </div>
+
+    <div class="favorite-view__heading">
+      <h1 class="favorite-view__title">Favorites</h1>
+      <span v-if="state === 'content'" class="favorite-view__count">
+        {{ favorites.length }} galleries
+      </span>
     </div>
+
+    <!-- Favorite folder filter — Android FavoritesScene's folder spinner,
+         reimagined as a scrollable chip strip (Favorites 0 … Favorites 9,
+         the EhConfig.DEFAULT_FAV_CAT_NAMES) -->
+    <nav class="slot-bar" aria-label="Favorite folders">
+      <button
+        v-for="(name, slot) in SLOT_NAMES"
+        :key="slot"
+        type="button"
+        class="slot-bar__chip"
+        :class="{ 'slot-bar__chip--active': activeSlot === slot }"
+        :aria-current="activeSlot === slot ? 'true' : undefined"
+        @click="selectSlot(slot, $event)"
+      >
+        {{ name }}
+      </button>
+    </nav>
+
+    <ContentLayout
+      ref="contentRef"
+      class="favorite-view__content"
+      :state="state"
+      v-model:refreshing="refreshing"
+      :loading-more="loadingMore"
+      empty-text="No favorites"
+      error-text="Failed to load favorites"
+      @refresh="onRefresh"
+      @retry="onRetry"
+      @load-more="onLoadMore"
+    >
+      <ul class="gallery-list">
+        <li
+          v-for="(gallery, index) in favorites"
+          :key="gallery.gid"
+          class="gallery-list__row"
+          :style="{ animationDelay: `${Math.min(index * 24, 240)}ms` }"
+        >
+          <!-- Same horizontal card as the gallery list (AppCard, list mode) -->
+          <AppCard :gallery="gallery" mode="list" @click="openGallery" />
+          <!-- Favorite slot indicator (folder 0–9) -->
+          <span class="slot-badge" :title="`In ${SLOT_NAMES[activeSlot]}`">
+            <AppIcon name="heart" size="12px" />
+            {{ activeSlot }}
+          </span>
+        </li>
+      </ul>
+    </ContentLayout>
+
+    <!-- FabLayout replica: refresh + back-to-top mini FABs
+         (scene_favorites.xml v_refresh / v_go_to cluster) -->
+    <FabLayout
+      v-model:expanded="fabExpanded"
+      primary-icon="reorder"
+      :actions="fabActions"
+      @click-secondary="onFabAction"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { favoriteApi, type FavoriteItem } from '@/api/favorite'
+/**
+ * FavoriteView — web replica of Android `FavoritesScene`:
+ * ContentLayout (pull-to-refresh + infinite paging + empty tip) filled with
+ * the standard gallery list card (80×120 thumb, title, uploader, rating,
+ * category chip), a favorite-folder filter strip (slots 0–9), and the
+ * scene's FabLayout cluster (refresh / go-to-top).
+ *
+ * The API is slot-scoped (`/favorite/list?slot=N&page=M`), mirroring the
+ * Android scene which always shows exactly one folder; each row carries a
+ * heart badge with the folder number it belongs to.
+ *
+ * Backend note: `FavoriteItem.category` is the stringified `EhConfig` bit
+ * (FavoriteService maps `entity.category.toString()`), so rows are converted
+ * to `GalleryInfo` (numeric bit) before being handed to `AppCard`.
+ */
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { favoriteApi } from '@/api/favorite'
+import type { FavoriteItem } from '@/api/favorite'
+import {
+  CATEGORY_BIT_VALUES,
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  type FabAction,
+  type GalleryInfo,
+} from '@/types/components'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import ContentLayout from '@/components/layout/ContentLayout.vue'
+import FabLayout from '@/components/atoms/FabLayout.vue'
+import AppCard from '@/components/atoms/AppCard.vue'
+import AppIcon from '@/components/atoms/AppIcon.vue'
 
-const favorites = ref<FavoriteItem[]>([])
-const loading = ref(false)
+/** View states matching ContentLayout's internal ViewTransition. */
+type ViewState = 'loading' | 'content' | 'empty' | 'error'
+
+/** Android `EhConfig.DEFAULT_FAV_CAT_NAMES` — "Favorites 0" … "Favorites 9". */
+const SLOT_NAMES: readonly string[] = Array.from({ length: 10 }, (_, i) => `Favorites ${i}`)
+
+/** Unknown category fallback — Android `EhUtils.UNKNOWN` bit. */
+const CATEGORY_UNKNOWN_BIT = 0x400
+
+/* ---------------------------------------------- category string → bit --- */
+
+const NAME_TO_BIT = new Map<string, number>()
+for (const key of CATEGORY_ORDER) {
+  NAME_TO_BIT.set(CATEGORY_LABELS[key].toLowerCase(), CATEGORY_BIT_VALUES[key])
+  NAME_TO_BIT.set(key, CATEGORY_BIT_VALUES[key])
+}
+
+/**
+ * Normalizes a backend category string to its `EhConfig` bit value.
+ * Accepts stringified bits ("2"), labels ("Artist CG") and keys ("artist_cg").
+ */
+function categoryBit(raw: string): number {
+  const trimmed = raw.trim()
+  if (trimmed !== '' && !Number.isNaN(Number(trimmed))) return Number(trimmed)
+  return NAME_TO_BIT.get(trimmed.toLowerCase()) ?? CATEGORY_UNKNOWN_BIT
+}
+
+/* --------------------------------------------------------------- data --- */
+
+const router = useRouter()
+
+const favorites = ref<GalleryInfo[]>([])
+const activeSlot = ref(0)
 const currentPage = ref(1)
 const totalPages = ref(1)
+const state = ref<ViewState>('loading')
+const refreshing = ref(false)
+const loadingMore = ref(false)
+const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 
-async function loadPage(page: number) {
-  loading.value = true
-  try {
-    const res = await favoriteApi.listFavorites(0, page)
-    favorites.value = res.favorites
-    currentPage.value = res.currentPage
-    totalPages.value = res.totalPages
-  } catch (e) {
-    console.error('Failed to load favorites', e)
-  } finally {
-    loading.value = false
+/** Maps a backend favorite row onto the `GalleryInfo` shape AppCard renders. */
+function toGalleryInfo(item: FavoriteItem): GalleryInfo {
+  return {
+    gid: item.gid,
+    token: item.token,
+    title: item.title || item.titleJpn || 'Untitled',
+    titleJpn: item.titleJpn,
+    thumb: item.thumb,
+    category: categoryBit(item.category),
+    posted: item.posted ?? '',
+    uploader: item.uploader ?? '',
+    rating: item.rating,
+    rated: false,
+    simpleLanguage: '',
+    simpleTags: [],
+    thumbWidth: 0,
+    thumbHeight: 0,
+    pages: 0,
+    favoriteSlot: activeSlot.value,
+    favoriteName: SLOT_NAMES[activeSlot.value] ?? '',
   }
 }
 
-onMounted(() => loadPage(1))
+async function loadPage(page: number, append: boolean): Promise<void> {
+  if (append) loadingMore.value = true
+  try {
+    const response = await favoriteApi.listFavorites(activeSlot.value, page)
+    const mapped = response.favorites.map(toGalleryInfo)
+    if (append) {
+      const known = new Set(favorites.value.map((gallery) => gallery.gid))
+      favorites.value.push(...mapped.filter((gallery) => !known.has(gallery.gid)))
+    } else {
+      favorites.value = mapped
+    }
+    currentPage.value = response.currentPage
+    totalPages.value = response.totalPages
+    state.value = favorites.value.length === 0 ? 'empty' : 'content'
+  } catch (error) {
+    console.error('Failed to load favorites', error)
+    if (!append && favorites.value.length === 0) state.value = 'error'
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+function selectSlot(slot: number, event: MouseEvent): void {
+  if (slot === activeSlot.value) return
+  activeSlot.value = slot
+  const el = event.currentTarget
+  if (el instanceof HTMLElement) {
+    el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }
+  favorites.value = []
+  state.value = 'loading'
+  void loadPage(1, false)
+}
+
+async function onRefresh(): Promise<void> {
+  await loadPage(1, false)
+  refreshing.value = false
+}
+
+function onRetry(): void {
+  state.value = 'loading'
+  void loadPage(1, false)
+}
+
+/** Footer near-bottom → next page (Android ContentLayout footer refresh). */
+function onLoadMore(): void {
+  if (state.value !== 'content' || loadingMore.value || refreshing.value) return
+  if (currentPage.value >= totalPages.value) return
+  void loadPage(currentPage.value + 1, true)
+}
+
+function openGallery(gallery: GalleryInfo): void {
+  void router.push(`/gallery/${gallery.gid}`)
+}
+
+/* --------------------------------------------------------------- FAB ---- */
+
+const fabExpanded = ref(false)
+
+const fabActions: FabAction[] = [
+  { id: 'refresh', icon: 'refresh-dark', label: 'Refresh favorites' },
+  { id: 'scroll-top', icon: 'go-to-dark', label: 'Back to top' },
+]
+
+function onFabAction(action: FabAction): void {
+  fabExpanded.value = false
+  if (action.id === 'refresh') {
+    state.value = 'loading'
+    void loadPage(1, false)
+  } else if (action.id === 'scroll-top') {
+    contentRef.value?.scrollToTop()
+  }
+}
+
+onMounted(() => {
+  void loadPage(1, false)
+})
 </script>
 
 <style scoped>
 .favorite-view {
-  min-height: 100vh;
-  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--color-bg);
 }
-.content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
+
+.favorite-view__content {
+  flex: 1;
+  min-height: 0;
 }
-.content h2 {
-  margin-bottom: 1rem;
-  color: #333;
+
+/* ------------------------------------------------------------ heading --- */
+.favorite-view__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing);
+  flex-shrink: 0;
+  padding: 14px max(var(--gallery-list-margin-h), 4px) 0;
 }
-.favorites-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
+
+.favorite-view__title {
+  font-size: var(--text-super-large); /* 24sp */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-color-primary);
 }
-.favorite-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: box-shadow 0.2s;
+
+.favorite-view__count {
+  font-size: var(--text-super-small); /* 12sp */
+  color: var(--text-color-secondary);
+  font-variant-numeric: tabular-nums;
 }
-.favorite-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+/* ----------------------------------------------------------- slot bar --- */
+.slot-bar {
+  display: flex;
+  gap: var(--spacing);
+  flex-shrink: 0;
+  overflow-x: auto;
+  padding: var(--spacing) max(var(--gallery-list-margin-h), 4px);
+  border-bottom: 1px solid var(--color-divider);
+  scrollbar-width: none;
 }
-.thumb-wrapper {
-  aspect-ratio: 1;
-  background: #fafafa;
+
+.slot-bar::-webkit-scrollbar {
+  display: none;
 }
-.thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.card-info {
-  padding: 0.5rem;
-}
-.title {
-  font-size: 0.85rem;
-  margin: 0 0 0.3rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+.slot-bar__chip {
+  flex: 0 0 auto;
+  padding: 5px 14px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius); /* 2dp — CheckTextView, not a pill */
+  background: transparent;
+  color: var(--text-color-secondary);
+  font-family: inherit;
+  font-size: var(--text-super-small); /* 12sp */
+  font-weight: 500;
   white-space: nowrap;
-  color: #333;
-}
-.meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: #666;
-}
-.rating {
-  color: #f39c12;
-}
-.loading, .empty {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-.pagination button {
-  padding: 0.4rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
   cursor: pointer;
+  transition:
+    background-color 160ms var(--ease-decelerate-quart),
+    border-color 160ms var(--ease-decelerate-quart),
+    color 160ms var(--ease-decelerate-quart),
+    transform 120ms var(--ease-decelerate-quart);
 }
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+
+.slot-bar__chip:hover {
+  border-color: var(--color-primary);
+  color: var(--text-color-primary);
+}
+
+.slot-bar__chip:active {
+  transform: scale(0.95);
+}
+
+.slot-bar__chip--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.slot-bar__chip--active:hover {
+  color: var(--color-white);
+}
+
+.slot-bar__chip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* -------------------------------------------------------------- list ---- */
+.gallery-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--gallery-list-margin-v) var(--gallery-list-margin-h)
+    var(--gallery-padding-bottom-fab);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--column-width-list-long)), 1fr));
+}
+
+.gallery-list__row {
+  position: relative;
+  animation: item-in 240ms var(--ease-decelerate-quart) both;
+}
+
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Favorite slot indicator — heart + folder number, accent background. */
+.slot-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--card-radius);
+  background: var(--color-accent);
+  color: var(--color-white);
+  font-size: var(--text-super-small); /* 12sp */
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 1px 3px var(--shadow-color);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-list__row {
+    animation: none;
+  }
 }
 </style>
