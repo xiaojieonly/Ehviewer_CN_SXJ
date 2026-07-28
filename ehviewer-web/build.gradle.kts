@@ -27,6 +27,7 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-community-dialects:6.6.4.Final")
     implementation("org.springframework.security:spring-security-messaging")
     implementation("com.hierynomus:smbj:0.12.0")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
     runtimeOnly("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
