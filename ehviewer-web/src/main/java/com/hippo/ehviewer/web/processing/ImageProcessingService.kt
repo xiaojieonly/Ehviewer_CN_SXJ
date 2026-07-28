@@ -2,6 +2,7 @@ package com.hippo.ehviewer.web.processing
 
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -26,7 +27,7 @@ class ImageProcessingService(
     private val eventPublisher: ApplicationEventPublisher,
     @Value("\${ehviewer.processing.concurrency:1}") private val concurrency: Int,
     @Value("\${ehviewer.cache.image-path:./data/cache}") private val cachePath: String
-) {
+) : DisposableBean {
     private val logger = LoggerFactory.getLogger(ImageProcessingService::class.java)
 
     private val tasks = ConcurrentHashMap<String, ProcessingTaskStatus>()
@@ -242,6 +243,13 @@ class ImageProcessingService(
 
     private fun updateStatus(taskId: String, transform: (ProcessingTaskStatus) -> ProcessingTaskStatus) {
         tasks.computeIfPresent(taskId) { _, status -> transform(status) }
+    }
+
+    override fun destroy() {
+        scope.cancel()
+        runBlocking {
+            scope.coroutineContext.job.join()
+        }
     }
 }
 

@@ -15,6 +15,7 @@ java {
 
 dependencies {
     implementation(project(":ehviewer-core"))
+    implementation("com.squareup.okhttp3:okhttp:3.14.7")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
@@ -30,4 +31,8 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
     runtimeOnly("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
