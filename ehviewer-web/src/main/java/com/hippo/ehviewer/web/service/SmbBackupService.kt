@@ -1,5 +1,13 @@
 package com.hippo.ehviewer.web.service
 
+import com.hierynomus.msdtyp.AccessMask
+import com.hierynomus.msfscc.FileAttributes
+import com.hierynomus.mssmb2.SMB2CreateDisposition
+import com.hierynomus.mssmb2.SMB2CreateOptions
+import com.hierynomus.mssmb2.SMB2ShareAccess
+import com.hierynomus.smbj.SMBClient
+import com.hierynomus.smbj.auth.AuthenticationContext
+import com.hierynomus.smbj.share.DiskShare
 import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.entity.SmbConfigEntity
 import com.hippo.ehviewer.web.repository.SmbConfigRepository
@@ -50,22 +58,26 @@ class SmbBackupService(
 
     fun testConnection(request: SmbTestConnectionRequest): SmbTestConnectionResponse {
         return try {
-            val client = com.hierynomus.smbj.SMBClient()
-            val connection = client.connect(request.host, request.port)
-            val session = if (request.loginMode == "GUEST") {
-                connection.connect()
-            } else {
-                connection.authenticate(com.hierynomus.smbj.auth.AuthContext(
-                    request.username ?: "",
-                    request.password?.toCharArray() ?: charArrayOf(),
-                    ""
-                ))
+            val client = SMBClient()
+            client.use { c ->
+                val connection = c.connect(request.host, request.port)
+                val session = if (request.loginMode == "GUEST") {
+                    connection.authenticate(
+                        AuthenticationContext("", charArrayOf(), "")
+                    )
+                } else {
+                    connection.authenticate(
+                        AuthenticationContext(
+                            request.username ?: "",
+                            request.password?.toCharArray() ?: charArrayOf(),
+                            ""
+                        )
+                    )
+                }
+                session.connectShare(request.share).close()
+                session.close()
+                connection.close()
             }
-            val share = session.connectShare(request.share)
-            share.close()
-            session.close()
-            connection.close()
-            client.close()
             SmbTestConnectionResponse(true, "连接成功")
         } catch (e: Exception) {
             logger.error("SMB test connection failed", e)
@@ -105,73 +117,81 @@ class SmbBackupService(
 
     private fun executeSync(config: SmbConfigEntity, aggressive: Boolean) {
         try {
-            val client = com.hierynomus.smbj.SMBClient()
-            val connection = client.connect(config.host, config.port)
-            val session = if (config.loginMode == "GUEST") {
-                connection.connect()
-            } else {
-                connection.authenticate(com.hierynomus.smbj.auth.AuthContext(
-                    config.username ?: "",
-                    config.password?.toCharArray() ?: charArrayOf(),
-                    ""
-                ))
-            }
-            val share = session.connectShare(config.share)
-
-            val downloadDir = File("./data/downloads")
-            if (downloadDir.exists()) {
-                val files = downloadDir.listFiles() ?: emptyArray()
-                var synced = 0
-
-                for (file in files) {
-                    if (Thread.currentThread().isInterrupted) break
-
-                    val progress = SmbSyncProgress(
-                        state = "syncing",
-                        totalFiles = files.size,
-                        syncedFiles = synced,
-                        currentFile = file.name,
-                        speed = 0
+            val client = SMBClient()
+            client.use { c ->
+                val connection = c.connect(config.host, config.port)
+                val session = if (config.loginMode == "GUEST") {
+                    connection.authenticate(
+                        AuthenticationContext("", charArrayOf(), "")
                     )
-                    currentProgress.set(progress)
-                    eventPublisher.publishEvent(progress)
+                } else {
+                    connection.authenticate(
+                        AuthenticationContext(
+                            config.username ?: "",
+                            config.password?.toCharArray() ?: charArrayOf(),
+                            ""
+                        )
+                    )
+                }
+                val share = session.connectShare(config.share) as DiskShare
 
-                    val remotePath = buildString {
-                        config.path?.let { append(it.trimEnd('/')).append('/') }
-                        append(file.name)
-                    }
+                val downloadDir = File("./data/downloads")
+                if (downloadDir.exists()) {
+                    val files = downloadDir.listFiles() ?: emptyArray()
+                    var synced = 0
 
-                    if (file.isDirectory) {
-                        try {
-                            share.mkdir(remotePath)
-                        } catch (_: Exception) {
+                    for (file in files) {
+                        if (Thread.currentThread().isInterrupted) break
+
+                        val progress = SmbSyncProgress(
+                            state = "syncing",
+                            totalFiles = files.size,
+                            syncedFiles = synced,
+                            currentFile = file.name,
+                            speed = 0
+                        )
+                        currentProgress.set(progress)
+                        eventPublisher.publishEvent(progress)
+
+                        val remotePath = buildString {
+                            config.path?.let { append(it.trimEnd('/')).append('/') }
+                            append(file.name)
                         }
-                        file.listFiles()?.forEach { child ->
-                            if (child.isFile) {
-                                val childPath = "$remotePath/${child.name}"
-                                share.openFile(
-                                    childPath,
-                                    com.hierynomus.smbj.SMB2CreateDisposition.FILE_OVERWRITE_IF,
-                                    null, null,
-                                    com.hierynomus.smbj.SMB2ShareAccess.ALL,
-                                    null, null
-                                ).use { fOut ->
-                                    child.inputStream().use { fIn ->
-                                        fIn.copyTo(fOut.outputStream)
+
+                        if (file.isDirectory) {
+                            try {
+                                share.mkdir(remotePath)
+                            } catch (_: Exception) {
+                            }
+                            file.listFiles()?.forEach { child ->
+                                if (child.isFile) {
+                                    val childPath = "$remotePath/${child.name}"
+                                    val remoteFile = share.openFile(
+                                        childPath,
+                                        setOf(AccessMask.GENERIC_WRITE),
+                                        setOf(FileAttributes.FILE_ATTRIBUTE_NORMAL),
+                                        SMB2ShareAccess.ALL,
+                                        SMB2CreateDisposition.FILE_OVERWRITE_IF,
+                                        setOf(SMB2CreateOptions.FILE_NON_DIRECTORY_FILE)
+                                    )
+                                    remoteFile.outputStream.use { fOut ->
+                                        child.inputStream().use { fIn ->
+                                            fIn.copyTo(fOut)
+                                        }
                                     }
+                                    remoteFile.close()
                                 }
                             }
                         }
+
+                        synced++
                     }
-
-                    synced++
                 }
-            }
 
-            share.close()
-            session.close()
-            connection.close()
-            client.close()
+                share.close()
+                session.close()
+                connection.close()
+            }
 
             val completed = SmbSyncProgress(
                 state = "completed",
