@@ -469,8 +469,23 @@ public class EhDB {
         }
     }
 
+    // Insert or update a group of downloads in one transaction.
+    public static synchronized void putDownloadInfoList(List<DownloadInfo> downloadInfoList) {
+        if (downloadInfoList == null || downloadInfoList.isEmpty()) {
+            return;
+        }
+        sDaoSession.getDownloadsDao().insertOrReplaceInTx(downloadInfoList);
+    }
+
     public static synchronized void removeDownloadInfo(long gid) {
         sDaoSession.getDownloadsDao().deleteByKey(gid);
+    }
+
+    public static synchronized void removeDownloadInfoList(List<DownloadInfo> downloadInfoList) {
+        if (downloadInfoList == null || downloadInfoList.isEmpty()) {
+            return;
+        }
+        sDaoSession.getDownloadsDao().deleteInTx(downloadInfoList);
     }
 
     @Nullable

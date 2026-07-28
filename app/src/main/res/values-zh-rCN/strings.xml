@@ -980,6 +980,7 @@
     <string name="import_archive_invalid_format">不支持的压缩包格式</string>
     <string name="import_archive_already_imported">压缩包已导入</string>
     <string name="import_archive_success">压缩包导入成功</string>
+    <string name="import_archive_too_many">已选择 %1$d 个压缩包，单次最多导入 %2$d 个。</string>
     <string name="archive_not_accessible">压缩包文件无法访问</string>
     <string name="imported_archive_info_title">本地导入信息</string>
     <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>

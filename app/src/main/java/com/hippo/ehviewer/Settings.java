@@ -53,17 +53,25 @@ import java.util.Map;
 public class Settings {
 
     private static final String TAG = Settings.class.getSimpleName();
+    private static final String ARCHIVE_READING_PROGRESS_PREFS = "archive_reading_progress";
+    private static final String ARCHIVE_PAGE_COUNT_PREFS = "archive_page_count";
 
     @SuppressLint("StaticFieldLeak")
     private static Context sContext;
     private static SharedPreferences sSettingsPre;
     private static SharedPreferences sArchiverPre;
+    private static SharedPreferences sArchiveReadingProgressPre;
+    private static SharedPreferences sArchivePageCountPre;
     private static EhConfig sEhConfig;
 
     public static void initialize(Context context) {
         sContext = context.getApplicationContext();
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
         sArchiverPre = context.getSharedPreferences("archiver_cache",Context.MODE_PRIVATE);
+        sArchiveReadingProgressPre = sContext.getSharedPreferences(
+                ARCHIVE_READING_PROGRESS_PREFS, Context.MODE_PRIVATE);
+        sArchivePageCountPre = sContext.getSharedPreferences(
+                ARCHIVE_PAGE_COUNT_PREFS, Context.MODE_PRIVATE);
         sEhConfig = loadEhConfig();
         if (getDarkModeStatus(context) && isThemeAutoSwitchAvailable()) {
             putTheme(THEME_DARK);
@@ -96,6 +104,73 @@ public class Settings {
         ehConfig.excludedNamespaces = getExcludedTagNamespaces();
         ehConfig.setDirty();
         return ehConfig;
+    }
+
+    public static int getArchiveReadingProgress(long gid) {
+        if (gid < 0) {
+            return 0;
+        }
+        return Math.max(sArchiveReadingProgressPre.getInt(Long.toString(gid), 0), 0);
+    }
+
+    public static void putArchiveReadingProgress(long gid, int page) {
+        if (gid < 0 || page < 0) {
+            return;
+        }
+        String key = Long.toString(gid);
+        SharedPreferences.Editor editor = sArchiveReadingProgressPre.edit();
+        if (page == 0) {
+            editor.remove(key);
+        } else {
+            editor.putInt(key, page);
+        }
+        editor.apply();
+    }
+
+    public static int getArchivePageCount(long gid) {
+        if (gid < 0) {
+            return 0;
+        }
+        return Math.max(sArchivePageCountPre.getInt(Long.toString(gid), 0), 0);
+    }
+
+    public static void putArchivePageCount(long gid, int pageCount) {
+        if (gid < 0 || pageCount < 0) {
+            return;
+        }
+        String key = Long.toString(gid);
+        SharedPreferences.Editor editor = sArchivePageCountPre.edit();
+        if (pageCount == 0) {
+            editor.remove(key);
+        } else {
+            editor.putInt(key, pageCount);
+        }
+        editor.apply();
+    }
+
+    public static void removeArchiveReadingProgress(long... gids) {
+        if (gids == null || gids.length == 0) {
+            return;
+        }
+        SharedPreferences.Editor progressEditor = sArchiveReadingProgressPre.edit();
+        SharedPreferences.Editor pageCountEditor = sArchivePageCountPre.edit();
+        boolean changed = false;
+        for (long gid : gids) {
+            if (gid >= 0) {
+                String key = Long.toString(gid);
+                progressEditor.remove(key);
+                pageCountEditor.remove(key);
+                changed = true;
+            }
+        }
+        if (changed) {
+            progressEditor.apply();
+            pageCountEditor.apply();
+        }
+    }
+
+    public static void clearArchiveReadingProgress() {
+        sArchiveReadingProgressPre.edit().clear().apply();
     }
 
     public static GalleryInfo getArchiverDownload(long downloadId){

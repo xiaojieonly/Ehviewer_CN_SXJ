@@ -70,6 +70,7 @@ import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.data.GalleryInfo;
+import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.event.GalleryActivityEvent;
 import com.hippo.ehviewer.gallery.ArchiveGalleryProvider;
 import com.hippo.ehviewer.gallery.DirGalleryProvider;
@@ -228,6 +229,14 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     };
 
+    private long getImportedArchiveGid() {
+        if (mGalleryInfo instanceof DownloadInfo downloadInfo && mUri != null &&
+                mUri.toString().equals(downloadInfo.archiveUri)) {
+            return downloadInfo.gid;
+        }
+        return -1L;
+    }
+
     @Override
     protected int getThemeResId(int theme) {
         switch (theme) {
@@ -257,7 +266,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         } else if (Intent.ACTION_VIEW.equals(mAction)) {
             if (mUri != null) {
                 // Only support zip now
-                mGalleryProvider = new ArchiveGalleryProvider(this, mUri);
+                mGalleryProvider = new ArchiveGalleryProvider(this, mUri, getImportedArchiveGid());
             }
         }
     }
