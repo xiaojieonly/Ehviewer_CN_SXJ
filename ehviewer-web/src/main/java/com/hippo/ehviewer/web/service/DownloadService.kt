@@ -1,23 +1,23 @@
 package com.hippo.ehviewer.web.service
 
+import com.hippo.ehviewer.client.EhEngine
+import com.hippo.ehviewer.client.EhRequestBuilder
+import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.entity.DownloadInfoEntity
 import com.hippo.ehviewer.web.entity.DownloadLabelEntity
 import com.hippo.ehviewer.web.repository.DownloadInfoRepository
 import com.hippo.ehviewer.web.repository.DownloadLabelRepository
+import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.io.File
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Service
 class DownloadService(
@@ -30,17 +30,12 @@ class DownloadService(
     private val logger = LoggerFactory.getLogger(DownloadService::class.java)
     private val downloadThreads = ConcurrentHashMap<Long, Thread>()
     private val workerPool: ExecutorService = Executors.newFixedThreadPool(config.download.workerCount)
-    private val httpClient: HttpClient = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofMillis(config.download.downloadTimeout))
+    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(config.download.downloadTimeout, TimeUnit.MILLISECONDS)
+        .readTimeout(config.download.downloadTimeout, TimeUnit.MILLISECONDS)
+        .followRedirects(true)
+        .followSslRedirects(true)
         .build()
-
-    companion object {
-        private const val EHOST = "https://e-hentai.org/"
-        private const val PAGE_URL_TEMPLATE = "${EHOST}s/%s/%d-%d"
-        private const val IMAGE_URL_PATTERN = """<img[^>]*src="([^"]+)"[^>]*style"""
-        private const val SHOW_KEY_PATTERN = """var showkey="([0-9a-z]+)";"""
-        private const val API_URL = "${EHOST}api.php"
-    }
 
     fun listDownloads(labelId: Int? = null): DownloadListResponse {
         val downloads = if (labelId != null && labelId != 0) {
@@ -185,13 +180,25 @@ class DownloadService(
         return true
     }
 
+    fun getActiveDownloadCount(): Int = downloadThreads.size
+
+    fun getCompletedDownloadCount(): Long = downloadRepository.findByState(3).size.toLong()
+
+    fun getFailedDownloadCount(): Long = downloadRepository.findByState(4).size.toLong()
+
+    fun getActiveDownloads(): List<DownloadItem> {
+        return downloadThreads.keys.mapNotNull { id ->
+            getDownloadInfo(id)
+        }
+    }
+
     private fun executeDownload(entity: DownloadInfoEntity) {
         try {
             val downloadDir = File(entity.downloadDir ?: return)
             downloadDir.mkdirs()
 
-            val galleryPageUrl = String.format(PAGE_URL_TEMPLATE, entity.token, entity.gid, 1)
-            val totalPages = entity.total.takeIf { it > 0 } ?: fetchPageCount(galleryPageUrl)
+            val totalPages = entity.total.takeIf { it > 0 }
+                ?: fetchPageCount(entity.gid, entity.token)
 
             entity.total = totalPages
             entity.state = 2
@@ -255,56 +262,49 @@ class DownloadService(
         ))
     }
 
-    private fun fetchPageCount(url: String): Int {
+    /**
+     * Fetches the total page count for a gallery using ehviewer-core's GalleryDetailParser
+     * via EhEngine.getGalleryDetail().
+     */
+    private fun fetchPageCount(gid: Long, token: String): Int {
         return try {
-            val request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .header("Referer", EHOST)
-                .GET()
-                .build()
-            val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
-            val body = response.body()
-            val match = Regex("""Pages</td><td[^>]*>(\d+)""").find(body)
-            match?.groupValues?.get(1)?.toIntOrNull() ?: 1
+            val galleryDetailUrl = EhUrl.getGalleryDetailUrl(gid, token)
+            val galleryDetail = EhEngine.getGalleryDetail(null, okHttpClient, galleryDetailUrl)
+            galleryDetail.pages.takeIf { it > 0 } ?: 1
         } catch (e: Exception) {
-            logger.warn("Failed to fetch page count, defaulting to 1", e)
+            logger.warn("Failed to fetch page count for gid=$gid, defaulting to 1", e)
             1
         }
     }
 
+    /**
+     * Fetches the image URL for a specific gallery page using ehviewer-core's
+     * GalleryPageParser via EhEngine.getGalleryPage().
+     */
     private fun fetchImageUrl(gid: Long, token: String, page: Int): String? {
         return try {
-            val url = String.format(PAGE_URL_TEMPLATE, token, gid, page)
-            val request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .header("Referer", EHOST)
-                .GET()
-                .build()
-            val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
-            val body = response.body()
-            val match = Regex(IMAGE_URL_PATTERN).find(body)
-            match?.groupValues?.get(1)
+            val pageUrl = EhUrl.getHost() + "s/" + token + "/" + gid + "-" + page
+            val result = EhEngine.getGalleryPage(null, okHttpClient, pageUrl, gid, token)
+            result.imageUrl
         } catch (e: Exception) {
-            logger.warn("Failed to fetch image URL for page $page", e)
+            logger.warn("Failed to fetch image URL for gid=$gid page=$page", e)
             null
         }
     }
 
+    /**
+     * Downloads image bytes using OkHttp with EhRequestBuilder for proper
+     * referer/header handling consistent with ehviewer-core conventions.
+     */
     private fun downloadImage(url: String): ByteArray? {
         return try {
             val cached = imageCacheService.getCachedImage(url)
             if (cached != null) return cached
 
-            val request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .header("Referer", EHOST)
-                .GET()
-                .build()
-            val response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
-            if (response.statusCode() == 200) response.body() else null
+            val request = EhRequestBuilder(url, EhUrl.getReferer()).build()
+            okHttpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) response.body()?.bytes() else null
+            }
         } catch (e: Exception) {
             logger.warn("Failed to download image from $url", e)
             null
