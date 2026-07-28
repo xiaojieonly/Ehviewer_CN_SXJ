@@ -1,144 +1,215 @@
 <template>
   <div class="comment-list">
-    <h3>Comments</h3>
-    <div class="comment-input">
-      <textarea v-model="newComment" placeholder="Write a comment..." rows="3"></textarea>
-      <button @click="submitComment" :disabled="!newComment.trim() || submitting" class="btn-submit">
-        {{ submitting ? 'Posting...' : 'Post' }}
-      </button>
+    <!-- Loading: ProgressView replica, centered (Android comment scene) -->
+    <div v-if="loading" class="comment-list__loading">
+      <ProgressSpinner size="small" />
     </div>
-    <div v-if="loading" class="loading">Loading comments...</div>
-    <div v-else-if="comments.length === 0" class="empty">No comments yet</div>
-    <div v-else class="comments">
-      <div v-for="comment in comments" :key="comment.id" class="comment-item">
-        <div class="comment-header">
-          <span class="author">{{ comment.uploader }}</span>
-          <span class="time">{{ comment.time }}</span>
-        </div>
-        <div class="comment-body">{{ comment.comment }}</div>
-        <div class="comment-footer">
-          <button class="btn-vote" @click="$emit('vote', comment.id, 1)">👍 {{ comment.score }}</button>
-          <button class="btn-vote" @click="$emit('vote', comment.id, -1)">👎</button>
-        </div>
+
+    <TransitionGroup
+      v-else-if="comments.length > 0"
+      tag="div"
+      name="comment"
+      class="comment-list__items"
+    >
+      <CommentItem
+        v-for="comment in comments"
+        :key="comment.id"
+        :comment="comment"
+        :voting="votingId === comment.id"
+        @vote="(commentId, vote) => emit('vote', commentId, vote)"
+      />
+    </TransitionGroup>
+
+    <!-- Post box pinned at the bottom (Android comment input row) -->
+    <form class="comment-list__form" @submit.prevent="submitComment">
+      <label class="comment-list__label" for="comment-list-input">Comment</label>
+      <textarea
+        id="comment-list-input"
+        v-model="draft"
+        class="comment-list__input"
+        rows="3"
+        placeholder="Say something about this gallery…"
+        :disabled="posting"
+      />
+      <div class="comment-list__form-foot">
+        <button
+          type="submit"
+          class="comment-list__submit"
+          :disabled="!draft.trim() || posting"
+        >
+          {{ posting ? 'Posting…' : 'Post' }}
+        </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
 <script setup lang="ts">
+/**
+ * CommentList — the gallery detail comment section body: a vertical stack
+ * of `CommentItem` cards (Android `gallery_detail_comments.xml` +
+ * `item_gallery_comment.xml`) with the post input pinned at the bottom.
+ *
+ * Empty-state copy is owned by the host screen (Android shows a centered
+ * `textColorThemeAccent` status line — "No comments" / "No more comments"),
+ * so this component renders nothing between the spinner and the form when
+ * the list is empty.
+ *
+ * Data flow is fully controlled by the parent: the list is a prop, and
+ * posting / voting emit events the parent performs against `commentApi`.
+ */
 import { ref } from 'vue'
-import type { CommentItem } from '@/api/comment'
+import type { CommentItem as CommentModel } from '@/api/comment'
+import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import CommentItem from './CommentItem.vue'
 
-defineProps<{
-  comments: CommentItem[]
-  loading: boolean
-}>()
+withDefaults(
+  defineProps<{
+    /** Comments to render (already fetched by the parent). */
+    comments: CommentModel[]
+    /** Initial comment fetch in progress. */
+    loading: boolean
+    /** A post request is in flight (disables the form). @default false */
+    posting?: boolean
+    /** `id` of the comment whose vote request is in flight, if any. */
+    votingId?: number | null
+  }>(),
+  {
+    posting: false,
+    votingId: null,
+  },
+)
 
 const emit = defineEmits<{
-  submit: [comment: string]
-  vote: [commentId: number, vote: number]
+  /** Post button tapped with the trimmed draft text. */
+  (e: 'submit', comment: string): void
+  /** Vote button tapped on a comment (`1` up / `-1` down). */
+  (e: 'vote', commentId: number, vote: number): void
 }>()
 
-const newComment = ref('')
-const submitting = ref(false)
+const draft = ref('')
 
-async function submitComment() {
-  if (!newComment.value.trim()) return
-  submitting.value = true
-  try {
-    emit('submit', newComment.value.trim())
-    newComment.value = ''
-  } finally {
-    submitting.value = false
-  }
+function submitComment() {
+  const text = draft.value.trim()
+  if (!text) return
+  emit('submit', text)
+  draft.value = ''
 }
 </script>
 
 <style scoped>
-.comment-list {
-  margin-top: 2rem;
+.comment-list__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--keyline-margin) 0;
 }
-.comment-list h3 {
-  margin-bottom: 1rem;
-  color: #333;
-}
-.comment-input {
-  margin-bottom: 1.5rem;
-}
-.comment-input textarea {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  resize: vertical;
-  font-family: inherit;
-}
-.comment-input textarea:focus {
-  outline: none;
-  border-color: #4a90d9;
-}
-.btn-submit {
-  margin-top: 0.5rem;
-  padding: 0.4rem 1rem;
-  background: #4a90d9;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.btn-submit:disabled {
-  background: #b0c4de;
-  cursor: not-allowed;
-}
-.loading, .empty {
-  text-align: center;
-  padding: 1.5rem;
-  color: #666;
-}
-.comments {
+
+.comment-list__items {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing);
 }
-.comment-item {
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 1rem;
+
+/* List transitions (Vue TransitionGroup, `comment-*` classes) */
+.comment-enter-active {
+  transition:
+    opacity 240ms var(--ease-decelerate-quart),
+    transform 240ms var(--ease-decelerate-quart);
 }
-.comment-header {
+
+.comment-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.comment-move {
+  transition: transform 240ms var(--ease-decelerate-quart);
+}
+
+/* ------------------------------------------------------------ post form --- */
+.comment-list__form {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: calc(var(--spacing) + 4px);
 }
-.author {
-  font-weight: 500;
-  color: #333;
+
+.comment-list__label {
+  font-size: clamp(11px, var(--text-super-small), 14px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
 }
-.time {
-  font-size: 0.8rem;
-  color: #999;
-}
-.comment-body {
-  color: #555;
+
+.comment-list__input {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px;
+  resize: vertical;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius);
+  background-color: var(--color-surface);
+  color: var(--text-color-primary);
+  font-family: inherit;
+  font-size: clamp(13px, var(--text-small), 16px);
   line-height: 1.5;
-  white-space: pre-wrap;
+  transition: border-color 120ms var(--ease-decelerate-quart);
 }
-.comment-footer {
-  margin-top: 0.5rem;
+
+.comment-list__input::placeholder {
+  color: var(--text-color-secondary);
+  opacity: 0.75;
+}
+
+.comment-list__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.comment-list__input:disabled {
+  opacity: 0.6;
+}
+
+.comment-list__form-foot {
   display: flex;
-  gap: 0.5rem;
+  justify-content: flex-end;
 }
-.btn-vote {
-  padding: 0.2rem 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
+
+.comment-list__submit {
+  min-height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--card-radius);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: clamp(13px, var(--text-small), 16px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
-  font-size: 0.8rem;
+  transition:
+    background-color 120ms var(--ease-decelerate-quart),
+    transform 120ms var(--ease-decelerate-quart),
+    opacity 120ms var(--ease-decelerate-quart);
 }
-.btn-vote:hover {
-  background: #f5f5f5;
+
+.comment-list__submit:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.comment-list__submit:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.comment-list__submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.comment-list__submit:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 </style>
