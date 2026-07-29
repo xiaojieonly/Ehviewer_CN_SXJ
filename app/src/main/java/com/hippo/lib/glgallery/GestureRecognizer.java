@@ -62,7 +62,7 @@ class GestureRecognizer {
         MyGestureListener gestureListener = new MyGestureListener();
         mGestureDetector = new GestureDetectorCompat(context, gestureListener,
                 null /* ignoreMultitouch */);
-        mGestureDetector.setOnDoubleTapListener(gestureListener);
+        mGestureDetector.setOnDoubleTapListener(null);
         mScaleDetector = new ScaleGestureDetector(
                 context, new MyScaleListener());
         mDownUpDetector = new DownUpDetector(new MyDownUpListener());
@@ -90,7 +90,7 @@ class GestureRecognizer {
                 extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            return mListener.onSingleTapUp(e.getX(), e.getY());
+            return mListener.onSingleTapConfirmed(e.getX(), e.getY());
         }
 
         @Override
