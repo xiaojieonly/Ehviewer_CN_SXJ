@@ -1,0 +1,21 @@
+/*
+ * Keeps generated Gradle output outside OneDrive.
+ *
+ * Usage on Windows:
+ *   .\gradlew.bat -I gradle\onedrive-build.init.gradle app:assembleRelease
+ *
+ * This is an opt-in init script, so normal builds and CI are unchanged.
+ */
+def localAppData = System.getenv("LOCALAPPDATA")
+def buildRoot = new File(
+        localAppData != null && !localAppData.isBlank()
+                ? localAppData
+                : gradle.gradleUserHomeDir,
+        "EhViewerNz/gradle-build")
+
+gradle.beforeProject { project ->
+    def projectDirectory = project.path == ":"
+            ? "root"
+            : project.path.substring(1).replace(':', '/')
+    project.layout.buildDirectory.set(new File(buildRoot, projectDirectory))
+}
