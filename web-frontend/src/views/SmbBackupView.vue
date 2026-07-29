@@ -794,8 +794,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 var(--toolbar-height);
-  padding: 0 12px 0 4px;
+  /* 延伸进状态栏/刘海区域（与 ReaderToolbar 相同的模式）：工具栏背景色
+     填充安全区，控件本体位于其下方，等价于 Android 的着色状态栏。 */
+  flex: 0 0 calc(var(--toolbar-height) + var(--safe-area-top));
+  padding: var(--safe-area-top) 12px 0 4px;
   background: var(--color-toolbar);
   color: var(--color-white);
   box-shadow: 0 2px 4px var(--shadow-color);
@@ -864,7 +866,8 @@ onUnmounted(() => {
 .smb-column {
   max-width: 760px;
   margin: 0 auto;
-  padding: 4px var(--keyline-margin) 56px;
+  /* 底部叠加 Home 指示条安全区，滚动到底时最后一张卡片不被遮挡。 */
+  padding: 4px var(--keyline-margin) calc(56px + var(--safe-area-bottom));
 }
 
 .smb-group__title {
@@ -1578,7 +1581,8 @@ onUnmounted(() => {
 .snackbar {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  /* 避开 Home 指示条（无刘海设备解析为 0）。 */
+  bottom: calc(24px + var(--safe-area-bottom));
   translate: -50% 0;
   z-index: 300;
   max-width: min(480px, calc(100vw - 32px));

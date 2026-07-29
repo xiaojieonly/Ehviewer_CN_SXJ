@@ -699,8 +699,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 var(--toolbar-height);
-  padding: 0 8px 0 4px;
+  /* Extend the bar up into the status-bar / cutout zone (same pattern as
+     ReaderToolbar): the toolbar background fills the inset area while the
+     controls sit below it, exactly like Android's tinted status bar. */
+  flex: 0 0 calc(var(--toolbar-height) + var(--safe-area-top));
+  padding: var(--safe-area-top) 8px 0 4px;
   background: var(--color-toolbar);
   color: var(--color-white);
   box-shadow: 0 2px 4px var(--shadow-color);
@@ -765,7 +768,9 @@ onMounted(async () => {
 .settings-column {
   max-width: 760px;
   margin: 0 auto;
-  padding: 4px var(--keyline-margin) 56px;
+  /* Bottom grows by the home-indicator inset so the last preference card
+     clears it when the body is scrolled to the end. */
+  padding: 4px var(--keyline-margin) calc(56px + var(--safe-area-bottom));
 }
 
 /* ----------------------------- preference group --------------------------- */
@@ -1202,7 +1207,8 @@ button.pref:active {
 .snackbar {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  /* Clear the home indicator in standalone PWA mode (0 where absent). */
+  bottom: calc(24px + var(--safe-area-bottom));
   translate: -50% 0;
   z-index: 300;
   max-width: min(480px, calc(100vw - 32px));

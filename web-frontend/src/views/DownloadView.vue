@@ -414,6 +414,11 @@ onMounted(() => {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
+  /* Standalone PWA: push the header row + label tabs below the status bar /
+     cutout. border-box keeps the column at 100dvh — the flex:1
+     ContentLayout shrinks instead of overflowing. The list bottom already
+     clears the home indicator via --gallery-padding-bottom-fab. */
+  padding-top: var(--safe-area-top);
   background: var(--color-bg);
 }
 
@@ -614,7 +619,10 @@ onMounted(() => {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 96px;
+  /* The FAB cluster is offset by --safe-area-bottom (FabLayout) — carry the
+     same inset so the toast keeps its distance above the FABs / home
+     indicator on cutout devices. */
+  bottom: calc(96px + var(--safe-area-bottom));
   transform: translateX(-50%);
   z-index: 300;
   padding: 10px 20px;

@@ -174,7 +174,11 @@ async function handleRegister(): Promise<void> {
   align-items: center;
   justify-content: center;
   min-height: 100dvh;
-  padding: 24px;
+  /* Grow the top/bottom padding by the safe-area insets so the centered
+     card (spectrum strip, brand block, footnote) never collides with the
+     status bar / notch or the home indicator in standalone PWA mode.
+     Resolves to plain 24px on devices without cutouts. */
+  padding: calc(24px + var(--safe-area-top)) 24px calc(24px + var(--safe-area-bottom));
   background: var(--color-bg);
   overflow: hidden;
 }

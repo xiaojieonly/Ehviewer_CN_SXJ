@@ -658,6 +658,13 @@ onMounted(async () => {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  /* The SearchBar sits in normal flow at the head of this column, so the
+     whole column (bar → filter panel → results bar → ContentLayout) clears
+     the status bar / cutout together. The drawer sibling already carries its
+     own safe-area padding — do not pad `.search-scene` itself. The results
+     bottom clears the FAB cluster via --gallery-padding-bottom-fab, which
+     already includes --safe-area-bottom (no double offset). */
+  padding-top: var(--safe-area-top);
 }
 
 .search-scene__content {
@@ -983,7 +990,10 @@ onMounted(async () => {
 .snackbar {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--corner-fab-margin) + var(--fab-size) + 16px);
+  /* The FAB cluster below is offset by --safe-area-bottom (FabLayout), so
+     the snack carries the same inset to stay clear of both the FABs and the
+     home indicator. */
+  bottom: calc(var(--corner-fab-margin) + var(--fab-size) + 16px + var(--safe-area-bottom));
   translate: -50% 0;
   z-index: 300;
   max-width: min(480px, calc(100vw - 32px));

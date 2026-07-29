@@ -248,6 +248,11 @@ onMounted(() => {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
+  /* Standalone PWA: push the header row + slot bar + list below the status
+     bar / cutout. border-box keeps the column at 100dvh — the flex:1
+     ContentLayout shrinks instead of overflowing. The list bottom already
+     clears the home indicator via --gallery-padding-bottom-fab. */
+  padding-top: var(--safe-area-top);
   background: var(--color-bg);
 }
 

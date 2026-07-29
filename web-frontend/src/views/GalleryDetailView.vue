@@ -462,6 +462,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .gallery-detail {
   min-height: 100vh;
+  /* Standalone PWA: the whole document clears the status bar / notch at the
+     top (header row + detail band shift down together) and the home
+     indicator at the bottom (comment post box at the document end keeps its
+     clearance). Both resolve to 0 on devices without cutouts. */
+  padding: var(--safe-area-top) 0 var(--safe-area-bottom);
   background-color: var(--color-bg);
   color: var(--text-color-primary);
 }
@@ -875,7 +880,8 @@ onBeforeUnmount(() => {
 .gallery-detail__toast {
   position: fixed;
   left: 50%;
-  bottom: 32px;
+  /* Clear the home indicator in standalone PWA mode (0 where absent). */
+  bottom: calc(32px + var(--safe-area-bottom));
   transform: translateX(-50%);
   z-index: 300;
   max-width: calc(100vw - 32px);
