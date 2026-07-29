@@ -587,7 +587,7 @@
     <string name="settings_read_start_position_top_right">오른쪽 상단</string>
     <string name="settings_read_start_position_bottom_left">왼쪽 하단</string>
     <string name="settings_read_start_position_bottom_right">오른쪽 하단</string>
-    <string name="settings_read_auto_transfer_time">자동 전환 시간(초)</string>
+    <string name="settings_read_auto_transfer_time">자동 전환 시간(ms)</string>
     <string name="settings_read_start_position_center">중앙</string>
     <string name="settings_read_keep_screen_on">화면 켜짐 유지</string>
     <string name="settings_read_show_clock">시계 표시</string>

@@ -34,6 +34,7 @@ import com.hippo.ehviewer.R;
 public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarChangeListener {
 
     private int mProgress;
+    private int mMin;
     private int mMax;
     private boolean mTrackingTouch;
 
@@ -54,7 +55,8 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SeekBarPreference, defStyleAttr, defStyleRes);
-        setMax(a.getInt(R.styleable.SeekBarPreference_max, mMax));
+        mMin = a.getInt(R.styleable.SeekBarPreference_min, mMin);
+        mMax = Math.max(a.getInt(R.styleable.SeekBarPreference_max, mMax), mMin);
         a.recycle();
 
         setLayoutResource(R.layout.preference_widget_seekbar);
@@ -65,8 +67,8 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         super.onBindViewHolder(holder);
         SeekBar seekBar = (SeekBar) holder.findViewById(R.id.seekbar);
         seekBar.setOnSeekBarChangeListener(this);
-        seekBar.setMax(mMax);
-        seekBar.setProgress(mProgress);
+        seekBar.setMax(mMax - mMin);
+        seekBar.setProgress(mProgress - mMin);
         seekBar.setEnabled(isEnabled());
     }
 
@@ -74,7 +76,8 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
 
     @Override
     protected void onSetInitialValue(Object defaultValue) {
-        setProgress(getPersistedInt(mProgress));
+        int defaultProgress = defaultValue instanceof Integer ? (Integer) defaultValue : mMin;
+        setProgress(getPersistedInt(defaultProgress));
     }
 
     @Override
@@ -83,8 +86,19 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
     }
 
     public void setMax(int max) {
-        if (max != mMax) {
-            mMax = max;
+        int newMax = Math.max(max, mMin);
+        if (newMax != mMax) {
+            mMax = newMax;
+            setProgress(mProgress, false);
+            notifyChanged();
+        }
+    }
+
+    public void setMin(int min) {
+        if (min != mMin) {
+            mMin = min;
+            mMax = Math.max(mMax, mMin);
+            setProgress(mProgress, false);
             notifyChanged();
         }
     }
@@ -97,8 +111,8 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         if (progress > mMax) {
             progress = mMax;
         }
-        if (progress < 0) {
-            progress = 0;
+        if (progress < mMin) {
+            progress = mMin;
         }
         if (progress != mProgress) {
             mProgress = progress;
@@ -118,12 +132,12 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
      * returns true, otherwise set the seekBar's progress to the stored value
      */
     void syncProgress(SeekBar seekBar) {
-        int progress = seekBar.getProgress();
+        int progress = seekBar.getProgress() + mMin;
         if (progress != mProgress) {
             if (callChangeListener(progress)) {
                 setProgress(progress, false);
             } else {
-                seekBar.setProgress(mProgress);
+                seekBar.setProgress(mProgress - mMin);
             }
         }
     }
@@ -144,7 +158,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         mTrackingTouch = false;
-        if (seekBar.getProgress() != mProgress) {
+        if (seekBar.getProgress() + mMin != mProgress) {
             syncProgress(seekBar);
         }
     }
@@ -166,6 +180,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         // Save the instance state
         final SavedState myState = new SavedState(superState);
         myState.progress = mProgress;
+        myState.min = mMin;
         myState.max = mMax;
         return myState;
     }
@@ -182,6 +197,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
         SavedState myState = (SavedState) state;
         super.onRestoreInstanceState(myState.getSuperState());
         mProgress = myState.progress;
+        mMin = myState.min;
         mMax = myState.max;
         notifyChanged();
     }
@@ -194,6 +210,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
      */
     private static class SavedState extends BaseSavedState {
         int progress;
+        int min;
         int max;
 
         public SavedState(Parcel source) {
@@ -201,6 +218,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
 
             // Restore the click counter
             progress = source.readInt();
+            min = source.readInt();
             max = source.readInt();
         }
 
@@ -210,6 +228,7 @@ public class SeekBarPreference extends Preference implements SeekBar.OnSeekBarCh
 
             // Save the click counter
             dest.writeInt(progress);
+            dest.writeInt(min);
             dest.writeInt(max);
         }
 

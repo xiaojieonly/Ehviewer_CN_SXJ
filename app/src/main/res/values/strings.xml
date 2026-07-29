@@ -655,7 +655,7 @@
     <string name="settings_read_start_position_top_right">Top right</string>
     <string name="settings_read_start_position_bottom_left">Bottom left</string>
     <string name="settings_read_start_position_bottom_right">Bottom right</string>
-    <string name="settings_read_auto_transfer_time">Auto Transfer(s)</string>
+    <string name="settings_read_auto_transfer_time">Auto Transfer(ms)</string>
     <string name="settings_read_direct_save">Direct save</string>
     <string name="settings_read_double_tap_zoom">Double-tap to zoom</string>
     <string name="settings_read_start_position_center">Center</string>

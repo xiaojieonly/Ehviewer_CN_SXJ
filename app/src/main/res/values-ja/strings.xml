@@ -540,7 +540,7 @@
     <string name="settings_read_start_position_top_right">右上隅</string>
     <string name="settings_read_start_position_bottom_left">左下隅</string>
     <string name="settings_read_start_position_bottom_right">右下隅</string>
-    <string name="settings_read_auto_transfer_time">自動送り</string>
+    <string name="settings_read_auto_transfer_time">自動送り (ms)</string>
     <string name="settings_read_start_position_center">中心</string>
     <string name="settings_read_keep_screen_on">画面を常に ON にする</string>
     <string name="settings_read_show_clock">時計を表示する</string>

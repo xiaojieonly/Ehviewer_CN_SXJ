@@ -85,7 +85,7 @@ public class Settings {
                 putDF(true);
             }
         }
-
+        getStartTransferTime();
     }
 
     private static EhConfig loadEhConfig() {
@@ -585,14 +585,28 @@ public class Settings {
     }
 
     private static final String KEY_START_TRANSFER_TIME = "start_transfer_time";
-    private static final int DEFAULT_START_TRANSFER_TIME = 2;
+    public static final int MIN_START_TRANSFER_TIME_MS = 20;
+    public static final int MAX_START_TRANSFER_TIME_MS = 30000;
+    private static final int LEGACY_MAX_START_TRANSFER_TIME_SECONDS = 15;
+    private static final int DEFAULT_START_TRANSFER_TIME_MS = 2000;
 
     public static int getStartTransferTime() {
-        return getInt(KEY_START_TRANSFER_TIME, DEFAULT_START_TRANSFER_TIME);
+        int storedValue = getInt(KEY_START_TRANSFER_TIME, DEFAULT_START_TRANSFER_TIME_MS);
+        int value = storedValue;
+        if (value >= 0 && value <= LEGACY_MAX_START_TRANSFER_TIME_SECONDS) {
+            value *= 1000;
+        }
+        int clamped = MathUtils.clamp(
+                value, MIN_START_TRANSFER_TIME_MS, MAX_START_TRANSFER_TIME_MS);
+        if (clamped != storedValue || !sSettingsPre.contains(KEY_START_TRANSFER_TIME)) {
+            putInt(KEY_START_TRANSFER_TIME, clamped);
+        }
+        return clamped;
     }
 
     public static void putStartTransferTime(int value) {
-        putInt(KEY_START_TRANSFER_TIME, value);
+        putInt(KEY_START_TRANSFER_TIME,
+                MathUtils.clamp(value, MIN_START_TRANSFER_TIME_MS, MAX_START_TRANSFER_TIME_MS));
     }
 
     private static final String KEY_DIRECT_SAVE = "gallery_direct_save";

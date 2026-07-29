@@ -37,7 +37,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.os.SystemClock;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -49,6 +51,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -116,6 +119,8 @@ import javax.microedition.khronos.egl.EGLDisplay;
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
 
     private static final String TAG = "GalleryActivity";
+    private static final int MIN_START_TRANSFER_SLIDER_TIME_MS = 100;
+    private static final int MAX_START_TRANSFER_SLIDER_TIME_MS = 15000;
 
     public static final String ACTION_DIR = "dir";
     public static final String ACTION_EH = "eh";
@@ -685,7 +690,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     } else {
                         mGalleryView.pageRight();
                     }
-                }), initialDelay, waitTime, TimeUnit.SECONDS);
+                }), initialDelay, waitTime, TimeUnit.MILLISECONDS);
             } catch (IllegalArgumentException ignore) {
 
             }
@@ -1186,6 +1191,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private final Spinner mScaleMode;
         private final Spinner mStartPosition;
         private final SeekBar mStartTransferTime;
+        private final EditText mStartTransferTimeInput;
         private final SwitchCompat mDirectSave;
         private final SwitchCompat mDoubleTapZoom;
         private final SwitchCompat mKeepScreenOn;
@@ -1207,6 +1213,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mScaleMode = mView.findViewById(R.id.page_scaling);
             mStartPosition = mView.findViewById(R.id.start_position);
             mStartTransferTime = mView.findViewById(R.id.start_transfer_time);
+            mStartTransferTimeInput = mView.findViewById(R.id.start_transfer_time_input);
             mDirectSave = mView.findViewById(R.id.direct_save);
             mDoubleTapZoom = mView.findViewById(R.id.double_tap_zoom);
             mKeepScreenOn = mView.findViewById(R.id.keep_screen_on);
@@ -1224,7 +1231,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mReadingDirection.setSelection(Settings.getReadingDirection());
             mScaleMode.setSelection(Settings.getPageScaling());
             mStartPosition.setSelection(Settings.getStartPosition());
-            mStartTransferTime.setProgress(Settings.getStartTransferTime());
+            configureStartTransferTime();
             mDirectSave.setChecked(Settings.getDirectSave());
             mDoubleTapZoom.setChecked(Settings.getDoubleTapZoom());
             mKeepScreenOn.setChecked(Settings.getKeepScreenOn());
@@ -1249,6 +1256,100 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
 
             mCustomScreenLightness.setOnCheckedChangeListener((buttonView, isChecked) -> mScreenLightness.setEnabled(isChecked));
+        }
+
+        private void configureStartTransferTime() {
+            int transferTime = Settings.getStartTransferTime();
+            mStartTransferTime.setMax(
+                    transferTimeToProgress(MAX_START_TRANSFER_SLIDER_TIME_MS));
+            mStartTransferTime.setProgress(transferTimeToProgress(transferTime));
+            setTransferTimeInput(transferTime);
+
+            mStartTransferTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        setTransferTimeInput(progressToTransferTime(progress));
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
+            });
+            mStartTransferTimeInput.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    Integer transferTime = parseTransferTime(s.toString());
+                    if (transferTime != null) {
+                        mStartTransferTime.setProgress(transferTimeToProgress(transferTime));
+                    }
+                }
+            });
+            mStartTransferTimeInput.setOnFocusChangeListener((view, hasFocus) -> {
+                if (!hasFocus) {
+                    setTransferTimeInput(getTransferTimeInput());
+                }
+            });
+        }
+
+        private int progressToTransferTime(int progress) {
+            if (progress <= 9) {
+                return (progress + 1) * 100;
+            } else {
+                return (progress - 8) * 1000;
+            }
+        }
+
+        private int transferTimeToProgress(int transferTime) {
+            int clamped = MathUtils.clamp(transferTime,
+                    MIN_START_TRANSFER_SLIDER_TIME_MS, MAX_START_TRANSFER_SLIDER_TIME_MS);
+            if (clamped <= 1000) {
+                return Math.round((clamped - 100) / 100.0f);
+            } else {
+                return 9 + Math.round((clamped - 1000) / 1000.0f);
+            }
+        }
+
+        @Nullable
+        private Integer parseTransferTime(String value) {
+            if (TextUtils.isEmpty(value)) {
+                return null;
+            }
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
+        private int getTransferTimeInput() {
+            Integer transferTime = parseTransferTime(mStartTransferTimeInput.getText().toString());
+            if (transferTime == null) {
+                return Settings.getStartTransferTime();
+            }
+            return MathUtils.clamp(transferTime,
+                    Settings.MIN_START_TRANSFER_TIME_MS, Settings.MAX_START_TRANSFER_TIME_MS);
+        }
+
+        private void setTransferTimeInput(int transferTime) {
+            String value = Integer.toString(transferTime);
+            if (!value.contentEquals(mStartTransferTimeInput.getText())) {
+                mStartTransferTimeInput.setText(value);
+                mStartTransferTimeInput.setSelection(value.length());
+            }
         }
 
         private void onVolumePageChange(CompoundButton compoundButton, boolean b) {
@@ -1286,7 +1387,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             boolean customScreenLightness = mCustomScreenLightness.isChecked();
 
             int screenLightness = mScreenLightness.getProgress();
-            int transferTime = mStartTransferTime.getProgress();
+            int transferTime = getTransferTimeInput();
 
             boolean oldReadingFullscreen = Settings.getReadingFullscreen();
 

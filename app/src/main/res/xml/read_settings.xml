@@ -63,11 +63,12 @@
         app:entryValues="@array/start_position_values" />
 
     <com.hippo.preference.SeekBarPreference
-        android:defaultValue="2"
+        android:defaultValue="2000"
         android:key="start_transfer_time"
         android:title="@string/settings_read_auto_transfer_time"
         app:allowDividerAbove="true"
-        app:max="15" />
+        app:min="20"
+        app:max="30000" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"

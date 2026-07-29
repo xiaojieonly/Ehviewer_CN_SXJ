@@ -216,6 +216,7 @@
     </declare-styleable>
 
     <declare-styleable name="SeekBarPreference">
+        <attr name="min" format="integer" />
         <attr name="max" format="integer" />
     </declare-styleable>
     <declare-styleable name="FullscreenAttrs">

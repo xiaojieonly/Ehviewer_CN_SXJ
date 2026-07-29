@@ -486,7 +486,7 @@
     <string name="settings_read_start_position_bottom_left">Unter links</string>
     <string name="settings_read_start_position_bottom_right">Unter rechts</string>
     <string name="settings_read_start_position_center">Die Mitte</string>
-    <string name="settings_read_auto_transfer_time">Automatische Übertragung (s)</string>
+    <string name="settings_read_auto_transfer_time">Automatische Übertragung (ms)</string>
     <string name="settings_read_keep_screen_on">Bildschirm wach bleiben lassen</string>
     <string name="settings_read_reverse_volume_page">Lautstärketasten-Umblätterrichtung umkehren</string>
     <string name="settings_read_show_clock">Uhr anzeigen</string>

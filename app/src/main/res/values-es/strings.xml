@@ -538,7 +538,7 @@
     <string name="settings_read_start_position_top_right">Abajo a la derecha</string>
     <string name="settings_read_start_position_bottom_left">Abajo a la izquierda</string>
     <string name="settings_read_start_position_bottom_right">Abajo a la derecha</string>
-    <string name="settings_read_auto_transfer_time">Transferencia automática (s)</string>
+    <string name="settings_read_auto_transfer_time">Transferencia automática (ms)</string>
     <string name="settings_read_start_position_center">Centro</string>
     <string name="settings_read_keep_screen_on">Pantalla siempre encendida</string>
     <string name="settings_read_show_clock">Mostrar reloj</string>

@@ -122,23 +122,47 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
-            <TextView
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="1"
-                android:text="@string/settings_read_auto_transfer_time"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="@string/settings_read_auto_transfer_time"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <EditText
+                    android:id="@+id/start_transfer_time_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="2"
+                    android:gravity="end"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:maxLength="5"
+                    android:selectAllOnFocus="true"
+                    android:singleLine="true"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+            </LinearLayout>
 
             <SeekBar
                 android:id="@+id/start_transfer_time"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:defaultValue="2"
-                android:max="15" />
+                android:max="23" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
+
         </LinearLayout>
 
         <androidx.appcompat.widget.SwitchCompat
