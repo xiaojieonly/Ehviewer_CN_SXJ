@@ -32,9 +32,12 @@ async function handleLogout() {
 </script>
 
 <style scoped>
+/* Themed against design tokens so the header blends with the safe-area
+   strip above it (which shows the view's --color-bg) in all three themes.
+   --color-background-floating matches --color-bg in Light/Dark/Black. */
 .app-header {
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--color-background-floating);
+  border-bottom: 1px solid var(--color-divider);
   padding: 0.75rem 1rem;
 }
 .header-content {
@@ -47,7 +50,7 @@ async function handleLogout() {
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #4a90d9;
+  color: var(--color-primary);
   text-decoration: none;
 }
 .nav {
@@ -56,21 +59,21 @@ async function handleLogout() {
   gap: 1rem;
 }
 .nav-link {
-  color: #555;
+  color: var(--text-color-secondary);
   text-decoration: none;
   font-size: 0.9rem;
 }
 .nav-link:hover {
-  color: #4a90d9;
+  color: var(--color-primary);
 }
 .user-info {
-  color: #666;
+  color: var(--text-color-secondary);
 }
 .btn-logout {
   padding: 0.3rem 0.8rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-divider);
   border-radius: 4px;
-  background: white;
+  background: var(--color-background-floating);
   cursor: pointer;
   color: #e74c3c;
 }
