@@ -671,13 +671,6 @@
     <string name="settings_download">Download</string>
     <string name="settings_download_download_location">Download location</string>
     <string name="settings_download_manual_save_location">Manual image save location</string>
-    <string name="settings_download_manual_save_location_default_summary">Default: %s</string>
-    <string name="settings_download_manual_save_location_fallback_summary">Selected folder unavailable; using default: %s</string>
-    <string name="settings_download_manual_save_location_unavailable">No writable manual image save location</string>
-    <string name="settings_download_manual_save_location_explanation">Used only by Save in the reader page menu and taps on the save area. Gallery download location is not changed.</string>
-    <string name="settings_download_manual_save_location_choose">Choose folder</string>
-    <string name="settings_download_manual_save_location_use_default">Use default</string>
-    <string name="settings_download_manual_save_location_error">Can\'t retain write access to the selected folder</string>
     <string name="settings_download_invalid_download_location">Invalid download location</string>
     <string name="settings_download_cant_get_download_location">Can\'t get download location</string>
     <string name="settings_download_pick_dir_kk">On Android 4.4+, apps can\'t write any data on your external SD card, unless you root the system and apply a patch. But &lt;SD card&gt;/Android/data/com.hippo.ehviewer is an exception. It is writable for this app.</string>

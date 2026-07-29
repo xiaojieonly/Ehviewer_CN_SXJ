@@ -24,8 +24,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
@@ -63,6 +63,7 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     public static final int REQUEST_CODE_PICK_IMAGE_DIR_L = 1;
     private static final int REQUEST_CODE_PICK_DOWNLOAD_IMPORT_FILE = 2;
     private static final int REQUEST_CODE_PICK_MANUAL_IMAGE_DIR = 3;
+    private static final int REQUEST_CODE_PICK_MANUAL_IMAGE_DIR_L = 4;
 
     public static final String KEY_DOWNLOAD_LOCATION = "download_location";
     public static final String KEY_MANUAL_IMAGE_SAVE_LOCATION = "manual_image_save_location";
@@ -159,24 +160,14 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     }
 
     private void onUpdateManualImageSaveLocation() {
-        if (mManualImageSaveLocation == null) {
-            return;
-        }
-
-        Uri configuredUri = Settings.getManualImageSaveLocationUri();
-        UniFile configured = Settings.getConfiguredManualImageSaveLocation();
-        UniFile effective = Settings.getManualImageSaveLocation();
-        if (configured != null) {
-            mManualImageSaveLocation.setSummary(configured.getUri().toString());
-        } else if (effective != null) {
-            int summary = configuredUri == null
-                    ? R.string.settings_download_manual_save_location_default_summary
-                    : R.string.settings_download_manual_save_location_fallback_summary;
-            mManualImageSaveLocation.setSummary(
-                    getString(summary, effective.getUri().toString()));
-        } else {
-            mManualImageSaveLocation.setSummary(
-                    R.string.settings_download_manual_save_location_unavailable);
+        UniFile file = Settings.getManualImageSaveLocation();
+        if (mManualImageSaveLocation != null) {
+            if (file != null) {
+                mManualImageSaveLocation.setSummary(file.getUri().toString());
+            } else {
+                mManualImageSaveLocation.setSummary(
+                        R.string.settings_download_invalid_download_location);
+            }
         }
     }
 
@@ -184,17 +175,10 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         if (KEY_DOWNLOAD_LOCATION.equals(key)) {
-            int sdk = Build.VERSION.SDK_INT;
-            if (sdk < Build.VERSION_CODES.KITKAT) {
-                openDirPicker();
-            } else if (sdk < Build.VERSION_CODES.LOLLIPOP) {
-                showDirPickerDialogKK();
-            } else {
-                showDirPickerDialogL();
-            }
+            selectLocation(false);
             return true;
         } else if (KEY_MANUAL_IMAGE_SAVE_LOCATION.equals(key)) {
-            showManualImageSaveLocationDialog();
+            selectLocation(true);
             return true;
         } else if (KEY_EXPORT_DOWNLOAD_ITEMS.equals(key)) {
             exportDownloadItems();
@@ -214,67 +198,32 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
         return false;
     }
 
-    private void showManualImageSaveLocationDialog() {
-        new AlertDialog.Builder(requireActivity())
-                .setMessage(R.string.settings_download_manual_save_location_explanation)
-                .setPositiveButton(R.string.settings_download_manual_save_location_choose,
-                        (dialog, which) -> openManualImageDirPicker())
-                .setNeutralButton(R.string.settings_download_manual_save_location_use_default,
-                        (dialog, which) -> {
-                            Uri oldUri = Settings.getManualImageSaveLocationUri();
-                            Settings.clearManualImageSaveLocation();
-                            releasePersistablePermission(oldUri);
-                            onUpdateManualImageSaveLocation();
-                        })
-                .setNegativeButton(android.R.string.cancel, null)
+    private void selectLocation(boolean manualSaveLocation) {
+        int sdk = Build.VERSION.SDK_INT;
+        if (sdk < Build.VERSION_CODES.KITKAT) {
+            openDirPicker(manualSaveLocation);
+        } else if (sdk < Build.VERSION_CODES.LOLLIPOP) {
+            showDirPickerDialogKK(manualSaveLocation);
+        } else {
+            showDirPickerDialogL(manualSaveLocation);
+        }
+    }
+
+    private void showDirPickerDialogKK(boolean manualSaveLocation) {
+        new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_kk)
+                .setPositiveButton(R.string.settings_download_continue,
+                        (dialog, which) -> openDirPicker(manualSaveLocation))
                 .show();
     }
 
-    private void openManualImageDirPicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
-        Uri current = Settings.getManualImageSaveLocationUri();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && current != null) {
-            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, current);
-        }
-        try {
-            startActivityForResult(intent, REQUEST_CODE_PICK_MANUAL_IMAGE_DIR);
-        } catch (Throwable e) {
-            ExceptionUtils.throwIfFatal(e);
-            Toast.makeText(getActivity(), R.string.error_cant_find_activity, Toast.LENGTH_SHORT)
-                    .show();
-        }
-    }
-
-    private void releasePersistablePermission(@Nullable Uri uri) {
-        if (uri == null || !"content".equals(uri.getScheme())) {
-            return;
-        }
-        try {
-            requireActivity().getContentResolver().releasePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        } catch (RuntimeException ignored) {
-            // The provider might have revoked the grant already.
-        }
-    }
-
-    private void showDirPickerDialogKK() {
-        new AlertDialog.Builder(requireActivity()).setMessage(R.string.settings_download_pick_dir_kk)
-                .setPositiveButton(R.string.settings_download_continue, (dialog, which) -> openDirPicker()).show();
-    }
-
-    private void showDirPickerDialogL() {
+    private void showDirPickerDialogL(boolean manualSaveLocation) {
         DialogInterface.OnClickListener listener = (dialog, which) -> {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
-                    openDirPicker();
+                    openDirPicker(manualSaveLocation);
                     break;
                 case DialogInterface.BUTTON_NEUTRAL:
-                    openDirPickerL();
+                    openDirPickerL(manualSaveLocation);
                     break;
             }
         };
@@ -285,19 +234,25 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 .show();
     }
 
-    private void openDirPicker() {
-        UniFile uniFile = Settings.getDownloadLocation();
+    private void openDirPicker(boolean manualSaveLocation) {
+        UniFile uniFile = manualSaveLocation
+                ? Settings.getManualImageSaveLocation()
+                : Settings.getDownloadLocation();
         Intent intent = new Intent(getActivity(), DirPickerActivity.class);
         if (uniFile != null) {
             intent.putExtra(DirPickerActivity.KEY_FILE_URI, uniFile.getUri());
         }
-        startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE_DIR);
+        startActivityForResult(intent, manualSaveLocation
+                ? REQUEST_CODE_PICK_MANUAL_IMAGE_DIR
+                : REQUEST_CODE_PICK_IMAGE_DIR);
     }
 
-    private void openDirPickerL() {
+    private void openDirPickerL(boolean manualSaveLocation) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         try {
-            startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE_DIR_L);
+            startActivityForResult(intent, manualSaveLocation
+                    ? REQUEST_CODE_PICK_MANUAL_IMAGE_DIR_L
+                    : REQUEST_CODE_PICK_IMAGE_DIR_L);
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             Toast.makeText(getActivity(), R.string.error_cant_find_activity, Toast.LENGTH_SHORT).show();
@@ -355,12 +310,12 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             return;
         }
         switch (requestCode) {
-            case REQUEST_CODE_PICK_IMAGE_DIR: {
+            case REQUEST_CODE_PICK_IMAGE_DIR:
+            case REQUEST_CODE_PICK_MANUAL_IMAGE_DIR: {
                 if (resultCode == Activity.RESULT_OK) {
                     UniFile uniFile = UniFile.fromUri(getActivity(), data.getData());
                     if (uniFile != null) {
-                        Settings.putDownloadLocation(uniFile);
-                        onUpdateDownloadLocation();
+                        putLocation(requestCode == REQUEST_CODE_PICK_MANUAL_IMAGE_DIR, uniFile);
                     } else {
                         Toast.makeText(getActivity(), R.string.settings_download_cant_get_download_location,
                                 Toast.LENGTH_SHORT).show();
@@ -368,7 +323,8 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                 }
                 break;
             }
-            case REQUEST_CODE_PICK_IMAGE_DIR_L: {
+            case REQUEST_CODE_PICK_IMAGE_DIR_L:
+            case REQUEST_CODE_PICK_MANUAL_IMAGE_DIR_L: {
                 if (resultCode == Activity.RESULT_OK) {
                     Uri treeUri = data.getData();
                     if (treeUri != null) {
@@ -376,54 +332,13 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
                                 treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                         UniFile uniFile = UniFile.fromTreeUri(getActivity(), treeUri);
                         if (uniFile != null) {
-                            Settings.putDownloadLocation(uniFile);
-                            onUpdateDownloadLocation();
+                            putLocation(
+                                    requestCode == REQUEST_CODE_PICK_MANUAL_IMAGE_DIR_L,
+                                    uniFile);
                         } else {
                             Toast.makeText(getActivity(), R.string.settings_download_cant_get_download_location,
                                     Toast.LENGTH_SHORT).show();
                         }
-                    }
-                }
-                break;
-            }
-            case REQUEST_CODE_PICK_MANUAL_IMAGE_DIR: {
-                if (resultCode == Activity.RESULT_OK) {
-                    Uri treeUri = data.getData();
-                    int takeFlags = data.getFlags()
-                            & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    if (treeUri == null
-                            || (takeFlags & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == 0) {
-                        Toast.makeText(getActivity(),
-                                R.string.settings_download_manual_save_location_error,
-                                Toast.LENGTH_SHORT).show();
-                        break;
-                    }
-
-                    try {
-                        requireActivity().getContentResolver().takePersistableUriPermission(
-                                treeUri, takeFlags);
-                    } catch (RuntimeException e) {
-                        Toast.makeText(getActivity(),
-                                R.string.settings_download_manual_save_location_error,
-                                Toast.LENGTH_SHORT).show();
-                        break;
-                    }
-
-                    UniFile uniFile = UniFile.fromTreeUri(getActivity(), treeUri);
-                    if (uniFile != null && uniFile.exists()
-                            && uniFile.isDirectory() && uniFile.canWrite()) {
-                        Uri oldUri = Settings.getManualImageSaveLocationUri();
-                        Settings.putManualImageSaveLocation(uniFile);
-                        if (oldUri != null && !oldUri.equals(treeUri)) {
-                            releasePersistablePermission(oldUri);
-                        }
-                        onUpdateManualImageSaveLocation();
-                    } else {
-                        releasePersistablePermission(treeUri);
-                        Toast.makeText(getActivity(),
-                                R.string.settings_download_manual_save_location_error,
-                                Toast.LENGTH_SHORT).show();
                     }
                 }
                 break;
@@ -437,6 +352,16 @@ public class DownloadFragment extends PreferenceFragmentCompat implements
             default: {
                 super.onActivityResult(requestCode, resultCode, data);
             }
+        }
+    }
+
+    private void putLocation(boolean manualSaveLocation, @NonNull UniFile location) {
+        if (manualSaveLocation) {
+            Settings.putManualImageSaveLocation(location);
+            onUpdateManualImageSaveLocation();
+        } else {
+            Settings.putDownloadLocation(location);
+            onUpdateDownloadLocation();
         }
     }
 
