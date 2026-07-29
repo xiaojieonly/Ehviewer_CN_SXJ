@@ -8,6 +8,25 @@ if (file('google-services.json').exists()) {
     apply plugin: 'com.google.firebase.crashlytics'
 }
 
+def releaseKeystoreFile = rootProject.file("ehviewernz.jks")
+def signingPropertiesFile = rootProject.file("keystore.properties")
+def hasReleaseKeystore = releaseKeystoreFile.isFile()
+def hasSigningProperties = signingPropertiesFile.isFile()
+if (hasReleaseKeystore != hasSigningProperties) {
+    throw new GradleException("Both ehviewernz.jks and keystore.properties must be provided together")
+}
+def releaseSigningProperties = new Properties()
+if (hasSigningProperties) {
+    signingPropertiesFile.withInputStream { releaseSigningProperties.load(it) }
+    def missingSigningProperties = ["storePassword", "keyAlias", "keyPassword"].findAll {
+        !releaseSigningProperties.getProperty(it)?.trim()
+    }
+    if (!missingSigningProperties.isEmpty()) {
+        throw new GradleException("Missing EhViewerNz signing properties: ${missingSigningProperties.join(', ')}")
+    }
+}
+def hasReleaseSigning = hasReleaseKeystore && hasSigningProperties
+
 android {
     namespace 'com.hippo.ehviewer'
     testNamespace 'com.hippo.ehviewer.debug'
@@ -54,11 +73,25 @@ android {
         checkReleaseBuilds true
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile releaseKeystoreFile
+                storePassword releaseSigningProperties.getProperty("storePassword")
+                keyAlias releaseSigningProperties.getProperty("keyAlias")
+                keyPassword releaseSigningProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.nz.ehviewernz.fileprovider"'
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.getByName("release")
+            }
         }
         debug {
             applicationIdSuffix ".debug"
