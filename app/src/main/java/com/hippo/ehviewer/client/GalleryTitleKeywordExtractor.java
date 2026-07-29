@@ -25,7 +25,7 @@ import java.util.List;
  */
 public final class GalleryTitleKeywordExtractor {
 
-    private static final int BRACKET_SEARCH_WORD_LIMIT = 6;
+    private static final int BRACKET_SEARCH_WORD_LIMIT = 8;
 
     // The order is significant: higher-priority bracket types come first.
     private static final Bracket[] BRACKETS = {
@@ -157,29 +157,22 @@ public final class GalleryTitleKeywordExtractor {
     }
 
     private static boolean isWithinBracketSearchLimit(String title, int openingIndex) {
+        List<String> words = splitWords(title.substring(0, openingIndex));
         int wordCount = 0;
-        boolean inWord = false;
-        for (int i = 0; i < openingIndex; i++) {
-            char ch = title.charAt(i);
-            if (isWordSeparator(ch)) {
-                inWord = false;
-            } else if (!inWord) {
-                wordCount++;
-                if (wordCount >= BRACKET_SEARCH_WORD_LIMIT) {
-                    return false;
-                }
-                inWord = true;
+        for (int i = 0; i < words.size(); i++) {
+            if (isAiGeneratedGroup(words, i)) {
+                i++;
             }
+            wordCount++;
         }
-        return true;
+        return wordCount < BRACKET_SEARCH_WORD_LIMIT;
     }
 
     private static String findFirstFeasibleWord(String title) {
         List<String> words = splitWords(title);
         for (int i = 0; i < words.size(); i++) {
             String word = words.get(i);
-            if ("AI".equalsIgnoreCase(word) && i + 1 < words.size()
-                    && "Generated".equalsIgnoreCase(words.get(i + 1))) {
+            if (isAiGeneratedGroup(words, i)) {
                 i++;
                 continue;
             }
@@ -205,6 +198,12 @@ public final class GalleryTitleKeywordExtractor {
             }
         }
         return result;
+    }
+
+    private static boolean isAiGeneratedGroup(List<String> words, int index) {
+        return "AI".equalsIgnoreCase(words.get(index))
+                && index + 1 < words.size()
+                && "Generated".equalsIgnoreCase(words.get(index + 1));
     }
 
     private static boolean isWordSeparator(char ch) {
