@@ -8,8 +8,11 @@
  *     runtime (CacheFirst — safe because hashed names are immutable).
  *   - API responses (/api/*): NetworkFirst with cache fallback, so gallery
  *     lists stay fresh online but remain readable offline.
- *   - Images: CacheFirst with expiration (max 500 entries, 30 days) so
- *     cached galleries can be read offline without unbounded growth.
+ *   - Images: CacheFirst with expiration (max 500 entries, 30 days) and
+ *     quota-aware eviction — navigator.storage.estimate() is checked on
+ *     every insert and the entry budget halves above 80% of the origin
+ *     quota, so cached galleries stay readable offline without unbounded
+ *     growth.
  *   - Navigations: NetworkFirst, falling back to the cached app shell.
  *
  * Cache versioning: bump CACHE_NAME (e.g. 'ehviewer-v2') to invalidate
@@ -29,6 +32,13 @@ const CURRENT_CACHES = new Set([SHELL_CACHE, API_CACHE, IMAGE_CACHE])
 /** Image cache limits (roadmap: max 500 entries / 30 days). */
 const IMAGE_MAX_ENTRIES = 500
 const IMAGE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * Storage-pressure threshold (navigator.storage.estimate). Once the origin
+ * uses more than this fraction of its quota, the image budget is halved so
+ * we shed entries before the browser evicts the whole origin itself.
+ */
+const STORAGE_PRESSURE_RATIO = 0.8
 
 /** Header stamped onto cached image responses for age checks. */
 const CACHED_AT_HEADER = 'x-sw-cached-at'
@@ -210,6 +220,11 @@ function isCacheableImage(response) {
 
 /** Clone the response with a cache timestamp header attached. */
 function stampResponse(response) {
+  // Opaque responses (cross-origin, no-cors) report status 0 and expose no
+  // writable headers — the Response constructor rejects status 0 with a
+  // RangeError. Cache them unstamped instead; isFreshImage() then treats
+  // them as due-for-revalidation online, and they still serve offline.
+  if (response.type === 'opaque') return response
   const headers = new Headers(response.headers)
   headers.set(CACHED_AT_HEADER, String(Date.now()))
   return new Response(response.body, {
@@ -226,13 +241,30 @@ function isFreshImage(response) {
 }
 
 /**
- * Evict oldest entries beyond IMAGE_MAX_ENTRIES. cache.keys() preserves
+ * Evict oldest entries beyond the image budget. cache.keys() preserves
  * insertion order, so deleting from the front approximates LRU.
+ *
+ * The budget is quota-aware: navigator.storage.estimate() is consulted on
+ * every pass, and under storage pressure (> STORAGE_PRESSURE_RATIO of the
+ * origin quota in use) it is halved to proactively free space.
  */
 async function enforceImageLimits(cache) {
+  let maxEntries = IMAGE_MAX_ENTRIES
+  if (self.navigator && self.navigator.storage && self.navigator.storage.estimate) {
+    try {
+      const estimate = await self.navigator.storage.estimate()
+      const usage = estimate.usage || 0
+      const quota = estimate.quota || 0
+      if (quota > 0 && usage / quota > STORAGE_PRESSURE_RATIO) {
+        maxEntries = Math.floor(IMAGE_MAX_ENTRIES / 2)
+      }
+    } catch (err) {
+      // estimate() unavailable — keep the default budget.
+    }
+  }
   const keys = await cache.keys()
-  if (keys.length <= IMAGE_MAX_ENTRIES) return
-  const excess = keys.slice(0, keys.length - IMAGE_MAX_ENTRIES)
+  if (keys.length <= maxEntries) return
+  const excess = keys.slice(0, keys.length - maxEntries)
   await Promise.all(excess.map((key) => cache.delete(key)))
 }
 

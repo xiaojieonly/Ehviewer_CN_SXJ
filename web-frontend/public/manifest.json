@@ -1,15 +1,39 @@
 {
+  "id": "/",
   "name": "EhViewer",
   "short_name": "EhViewer",
   "description": "E-Hentai gallery viewer and reader",
+  "lang": "zh-CN",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#009688",
   "background_color": "#ffffff",
+  "categories": ["entertainment", "books"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "首页",
+      "short_name": "首页",
+      "url": "/",
+      "description": "画廊列表"
+    },
+    {
+      "name": "搜索",
+      "short_name": "搜索",
+      "url": "/search",
+      "description": "搜索画廊"
+    },
+    {
+      "name": "收藏",
+      "short_name": "收藏",
+      "url": "/favorites",
+      "description": "我的收藏"
+    }
   ]
 }

@@ -92,3 +92,52 @@ export function clearImageCache(timeoutMs = 5000): Promise<void> {
     }, timeoutMs)
   })
 }
+
+/**
+ * Cache statistics reported by the SW (sw.js `collectCacheStats`).
+ * Entry counts are keyed by the SW's versioned cache names
+ * (e.g. `ehviewer-v1-shell`), so iterate entries rather than relying on
+ * fixed keys.
+ */
+export interface CacheStats {
+  /** Entry count per SW cache, keyed by cache name. */
+  [cacheName: string]: number | undefined
+  /** Bytes used by this origin, from navigator.storage.estimate(). */
+  storageUsage?: number
+  /** Storage quota granted to this origin, in bytes. */
+  storageQuota?: number
+}
+
+/**
+ * Ask the active SW for per-cache entry counts and the origin's storage
+ * usage/quota (sw.js message protocol, backed by navigator.storage.estimate).
+ * Intended for the settings page cache-management UI (roadmap 3.5).
+ * Resolves when the SW replies; rejects on timeout or if no SW controls
+ * the page.
+ */
+export function getCacheStats(timeoutMs = 5000): Promise<CacheStats> {
+  return new Promise((resolve, reject) => {
+    const controller = navigator.serviceWorker?.controller
+    if (!controller) {
+      reject(new Error('No active service worker'))
+      return
+    }
+
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'CACHE_STATS' && event.data.stats) {
+        navigator.serviceWorker.removeEventListener('message', onMessage)
+        if (timer !== undefined) clearTimeout(timer)
+        resolve(event.data.stats as CacheStats)
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    controller.postMessage({ type: 'GET_CACHE_STATS' })
+
+    timer = setTimeout(() => {
+      navigator.serviceWorker.removeEventListener('message', onMessage)
+      reject(new Error('Timed out waiting for cache stats'))
+    }, timeoutMs)
+  })
+}
