@@ -152,7 +152,7 @@ public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
 
         UniFile src = fileList[index];
         String extension = FileUtils.getExtensionFromFilename(src.getName());
-        UniFile dst = dir.subFile(null != extension ? filename + "." + extension : filename);
+        UniFile dst = dir.createFile(null != extension ? filename + "." + extension : filename);
         if (null == dst) {
             return null;
         }

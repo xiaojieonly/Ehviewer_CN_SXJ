@@ -23,6 +23,11 @@
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
+    <Preference
+        android:key="manual_image_save_location"
+        android:title="@string/settings_download_manual_save_location"
+        app:iconSpaceReserved="false" />
+
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
         android:key="media_scan"

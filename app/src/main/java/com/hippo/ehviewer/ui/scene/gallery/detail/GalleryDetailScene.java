@@ -74,6 +74,7 @@ import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.client.GalleryTagSearchKeywordResolver;
 import com.hippo.ehviewer.client.GalleryTitleKeywordExtractor;
 import com.hippo.ehviewer.client.data.GalleryComment;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
@@ -1384,11 +1385,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             return;
         }
 
-        String artist = getArtist(gd.tags);
-        if (null != artist) {
+        String tagKeyword = GalleryTagSearchKeywordResolver.resolveArtistActionTag(gd.tags);
+        if (null != tagKeyword) {
             ListUrlBuilder lub = new ListUrlBuilder();
             lub.setMode(ListUrlBuilder.MODE_TAG);
-            lub.setKeyword("artist:" + artist);
+            lub.setKeyword(tagKeyword);
             GalleryListScene.startScene(this, lub);
             return;
         }

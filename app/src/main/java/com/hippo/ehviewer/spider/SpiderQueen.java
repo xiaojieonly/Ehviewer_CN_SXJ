@@ -702,7 +702,7 @@ public final class SpiderQueen implements Runnable {
             BitmapFactory.decodeStream(pipe.open(), null, options);
             pipe.close();
             String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(options.outMimeType);
-            UniFile dst = dir.subFile(null != extension ? filename + "." + extension : filename);
+            UniFile dst = dir.createFile(null != extension ? filename + "." + extension : filename);
             if (null == dst) {
                 return null;
             }

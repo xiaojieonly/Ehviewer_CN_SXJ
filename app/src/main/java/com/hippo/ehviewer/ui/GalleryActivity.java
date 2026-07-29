@@ -115,6 +115,8 @@ import javax.microedition.khronos.egl.EGLDisplay;
 
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
 
+    private static final String TAG = "GalleryActivity";
+
     public static final String ACTION_DIR = "dir";
     public static final String ACTION_EH = "eh";
 
@@ -996,13 +998,22 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             return;
         }
 
-        File dir = AppConfig.getExternalImageDir();
-        if (null == dir) {
+        UniFile configuredDir = Settings.getConfiguredManualImageSaveLocation();
+        UniFile defaultDir = UniFile.fromFile(AppConfig.getExternalImageDir());
+        UniFile effectiveDir = configuredDir != null ? configuredDir : defaultDir;
+        if (effectiveDir == null) {
             Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
             return;
         }
-        UniFile file;
-        if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
+
+        UniFile file = saveImageInDirectory(page, effectiveDir);
+        // A persisted SAF grant can be revoked while the reader is open. Keep the historical
+        // EhViewer/image directory as a last-resort destination for this manual save only.
+        if (file == null && configuredDir != null && defaultDir != null
+                && !configuredDir.getUri().equals(defaultDir.getUri())) {
+            file = saveImageInDirectory(page, defaultDir);
+        }
+        if (file == null) {
             Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -1011,6 +1022,20 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         // Sync media store
         sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, file.getUri()));
+    }
+
+    @Nullable
+    private UniFile saveImageInDirectory(int page, @NonNull UniFile dir) {
+        try {
+            return mGalleryProvider != null
+                    ? mGalleryProvider.save(
+                            page, dir, mGalleryProvider.getImageFilename(page))
+                    : null;
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Log.w(TAG, "Failed to save image to " + dir.getUri(), e);
+            return null;
+        }
     }
 
     private void saveImageTo(int page) {

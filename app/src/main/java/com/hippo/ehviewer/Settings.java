@@ -761,6 +761,67 @@ public class Settings {
         }
     }
 
+    /**
+     * The destination used only by the reader's manual "Save" actions. Gallery downloads keep
+     * using {@link #getDownloadLocation()}.
+     */
+    private static final String KEY_MANUAL_IMAGE_SAVE_LOCATION =
+            "manual_image_save_location";
+
+    @Nullable
+    public static Uri getManualImageSaveLocationUri() {
+        String value = getString(KEY_MANUAL_IMAGE_SAVE_LOCATION, null);
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try {
+            return Uri.parse(value);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            return null;
+        }
+    }
+
+    /**
+     * Returns the configured manual image directory only when it is still accessible and
+     * writable. A revoked Storage Access Framework grant is therefore treated as unavailable.
+     */
+    @Nullable
+    public static UniFile getConfiguredManualImageSaveLocation() {
+        Uri uri = getManualImageSaveLocationUri();
+        if (uri == null) {
+            return null;
+        }
+        try {
+            UniFile dir = UniFile.fromUri(sContext, uri);
+            return dir != null && dir.exists() && dir.isDirectory() && dir.canWrite() ? dir : null;
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            return null;
+        }
+    }
+
+    /**
+     * Returns the effective manual image destination. The historical EhViewer/image directory is
+     * retained as a fallback so saving keeps working when no custom directory is selected or its
+     * persisted permission is later revoked.
+     */
+    @Nullable
+    public static UniFile getManualImageSaveLocation() {
+        UniFile configured = getConfiguredManualImageSaveLocation();
+        return configured != null
+                ? configured
+                : UniFile.fromFile(AppConfig.getExternalImageDir());
+    }
+
+    public static void putManualImageSaveLocation(@NonNull UniFile location) {
+        putString(KEY_MANUAL_IMAGE_SAVE_LOCATION, location.getUri().toString());
+    }
+
+    public static void clearManualImageSaveLocation() {
+        sSettingsPre.edit().remove(KEY_MANUAL_IMAGE_SAVE_LOCATION).apply();
+    }
+
     public static final String KEY_MEDIA_SCAN = "media_scan";
     private static final boolean DEFAULT_MEDIA_SCAN = false;
 
