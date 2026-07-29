@@ -9,7 +9,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "test:visual": "playwright test --config e2e/playwright.config.ts && node e2e/compare.mjs",
+    "test:visual:update": "VISUAL_MODE=update playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.0.0",
@@ -20,6 +22,7 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/pngjs": "^6.0.5",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitest/coverage-v8": "^3.2.1",

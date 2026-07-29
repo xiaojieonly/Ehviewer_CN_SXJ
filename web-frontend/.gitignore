@@ -1,2 +1,8 @@
 node_modules/
 dist/
+
+# e2e visual-regression artifacts (baseline/ IS committed — it is the source of truth)
+e2e/actual/
+e2e/diff/
+e2e/test-results/
+/playwright-report/
