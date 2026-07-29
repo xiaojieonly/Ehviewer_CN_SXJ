@@ -224,7 +224,9 @@ public final class GalleryTitleKeywordExtractor {
                 || "Patreon".equalsIgnoreCase(value)
                 || "Pixiv".equalsIgnoreCase(value)
                 || "Fanbox".equalsIgnoreCase(value)
-                || "Artist".equalsIgnoreCase(value);
+                || "Animated".equalsIgnoreCase(value)
+                || "Artist".equalsIgnoreCase(value)
+                || "Part".equalsIgnoreCase(value);
     }
 
     private static final class Bracket {
