@@ -567,6 +567,10 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
         postMethod(METHOD_SET_SCROLL_INTERVAL, interval);
     }
 
+    public void setDoubleTapEnabled(boolean enabled) {
+        mGestureRecognizer.setDoubleTapEnabled(enabled);
+    }
+
     @Override
     public boolean onSingleTapUp(float x, float y) {
         postMethod(METHOD_ON_SINGLE_TAP_UP, x, y);

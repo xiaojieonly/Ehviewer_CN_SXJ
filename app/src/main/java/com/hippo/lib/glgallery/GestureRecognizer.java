@@ -56,16 +56,23 @@ class GestureRecognizer {
     private final ScaleGestureDetector mScaleDetector;
     private final DownUpDetector mDownUpDetector;
     private final Listener mListener;
+    private final MyGestureListener mGestureListener;
+    private boolean mDoubleTapEnabled;
 
     public GestureRecognizer(Context context, Listener listener) {
         mListener = listener;
-        MyGestureListener gestureListener = new MyGestureListener();
-        mGestureDetector = new GestureDetectorCompat(context, gestureListener,
+        mGestureListener = new MyGestureListener();
+        mGestureDetector = new GestureDetectorCompat(context, mGestureListener,
                 null /* ignoreMultitouch */);
-        mGestureDetector.setOnDoubleTapListener(null);
+        setDoubleTapEnabled(false);
         mScaleDetector = new ScaleGestureDetector(
                 context, new MyScaleListener());
         mDownUpDetector = new DownUpDetector(new MyDownUpListener());
+    }
+
+    public void setDoubleTapEnabled(boolean enabled) {
+        mDoubleTapEnabled = enabled;
+        mGestureDetector.setOnDoubleTapListener(enabled ? mGestureListener : null);
     }
 
     public void onTouchEvent(MotionEvent event) {
@@ -90,7 +97,11 @@ class GestureRecognizer {
                 extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            return mListener.onSingleTapConfirmed(e.getX(), e.getY());
+            if (mDoubleTapEnabled) {
+                return mListener.onSingleTapUp(e.getX(), e.getY());
+            } else {
+                return mListener.onSingleTapConfirmed(e.getX(), e.getY());
+            }
         }
 
         @Override

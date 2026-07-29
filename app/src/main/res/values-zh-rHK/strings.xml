@@ -627,6 +627,8 @@
     <string name="settings_read_show_battery">顯示電量</string>
     <string name="settings_read_show_page_interval">顯示頁面間隔</string>
     <string name="settings_read_auto_transfer_time">自動翻頁時間（秒）</string>
+    <string name="settings_read_direct_save">直接儲存</string>
+    <string name="settings_read_double_tap_zoom">雙擊放大</string>
     <string name="settings_read_volume_page">使用音量鍵翻頁</string>
     <string name="settings_read_reverse_volume_page">反轉音量鍵翻頁方向</string>
     <string name="settings_read_reading_fullscreen">全螢幕</string>

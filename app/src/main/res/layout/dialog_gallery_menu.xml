@@ -141,6 +141,20 @@
                 android:max="15" />
         </LinearLayout>
 
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/direct_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_read_direct_save"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/double_tap_zoom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_read_double_tap_zoom"
+            android:textColor="?android:attr/textColorPrimary" />
+
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/keep_screen_on"

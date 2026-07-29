@@ -378,6 +378,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
         Resources resources = getResources();
         mGalleryView = new GalleryView.Builder(this, mGalleryAdapter).setListener(this).setLayoutMode(Settings.getReadingDirection()).setScaleMode(Settings.getPageScaling()).setStartPosition(Settings.getStartPosition()).setStartPage(startPage).setBackgroundColor(AttrResources.getAttrColor(this, android.R.attr.colorBackground)).setEdgeColor(AttrResources.getAttrColor(this, R.attr.colorEdgeEffect) & 0xffffff | 0x33000000).setPagerInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_pager_interval) : 0).setScrollInterval(Settings.getShowPageInterval() ? resources.getDimensionPixelOffset(R.dimen.gallery_scroll_interval) : 0).setPageMinHeight(resources.getDimensionPixelOffset(R.dimen.gallery_page_min_height)).setPageInfoInterval(resources.getDimensionPixelOffset(R.dimen.gallery_page_info_interval)).setProgressColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimary)).setProgressSize(resources.getDimensionPixelOffset(R.dimen.gallery_progress_size)).setPageTextColor(AttrResources.getAttrColor(this, android.R.attr.textColorSecondary)).setPageTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_page_text_size)).setPageTextTypeface(Typeface.DEFAULT).setErrorTextColor(resources.getColor(R.color.red_500, null)).setErrorTextSize(resources.getDimensionPixelOffset(R.dimen.gallery_error_text_size)).setDefaultErrorString(resources.getString(R.string.error_unknown)).setEmptyString(resources.getString(R.string.error_empty)).build();
+        mGalleryView.setDoubleTapEnabled(Settings.getDoubleTapZoom());
         mGLRootView.setContentPane(mGalleryView);
         mGLRootView.setOnGenericMotionListener(this::onGenericMotion);
         mGalleryProvider.setListener(mGalleryAdapter);
@@ -1185,6 +1186,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private final Spinner mScaleMode;
         private final Spinner mStartPosition;
         private final SeekBar mStartTransferTime;
+        private final SwitchCompat mDirectSave;
+        private final SwitchCompat mDoubleTapZoom;
         private final SwitchCompat mKeepScreenOn;
         private final SwitchCompat mShowClock;
         private final SwitchCompat mShowProgress;
@@ -1204,6 +1207,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mScaleMode = mView.findViewById(R.id.page_scaling);
             mStartPosition = mView.findViewById(R.id.start_position);
             mStartTransferTime = mView.findViewById(R.id.start_transfer_time);
+            mDirectSave = mView.findViewById(R.id.direct_save);
+            mDoubleTapZoom = mView.findViewById(R.id.double_tap_zoom);
             mKeepScreenOn = mView.findViewById(R.id.keep_screen_on);
             mShowClock = mView.findViewById(R.id.show_clock);
             mShowProgress = mView.findViewById(R.id.show_progress);
@@ -1220,6 +1225,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mScaleMode.setSelection(Settings.getPageScaling());
             mStartPosition.setSelection(Settings.getStartPosition());
             mStartTransferTime.setProgress(Settings.getStartTransferTime());
+            mDirectSave.setChecked(Settings.getDirectSave());
+            mDoubleTapZoom.setChecked(Settings.getDoubleTapZoom());
             mKeepScreenOn.setChecked(Settings.getKeepScreenOn());
             mShowClock.setChecked(Settings.getShowClock());
             mShowProgress.setChecked(Settings.getShowProgress());
@@ -1266,6 +1273,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             int layoutMode = GalleryView.sanitizeLayoutMode(mReadingDirection.getSelectedItemPosition());
             int scaleMode = GalleryView.sanitizeScaleMode(mScaleMode.getSelectedItemPosition());
             int startPosition = GalleryView.sanitizeStartPosition(mStartPosition.getSelectedItemPosition());
+            boolean directSave = mDirectSave.isChecked();
+            boolean doubleTapZoom = mDoubleTapZoom.isChecked();
             boolean keepScreenOn = mKeepScreenOn.isChecked();
             boolean showClock = mShowClock.isChecked();
             boolean showProgress = mShowProgress.isChecked();
@@ -1286,6 +1295,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             Settings.putPageScaling(scaleMode);
             Settings.putStartPosition(startPosition);
             Settings.putStartTransferTime(transferTime);
+            Settings.putDirectSave(directSave);
+            Settings.putDoubleTapZoom(doubleTapZoom);
             Settings.putKeepScreenOn(keepScreenOn);
             Settings.putShowClock(showClock);
             Settings.putShowProgress(showProgress);
@@ -1322,6 +1333,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mGalleryView.setLayoutMode(layoutMode);
             mGalleryView.setScaleMode(scaleMode);
             mGalleryView.setStartPosition(startPosition);
+            mGalleryView.setDoubleTapEnabled(doubleTapZoom);
             if (keepScreenOn) {
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             } else {
@@ -1399,6 +1411,13 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         private void onTapSaveArea(int index) {
+            if (Settings.getDirectSave()) {
+                if (mGalleryView != null) {
+                    mGalleryView.pageLeft();
+                }
+                return;
+            }
+
             if (mGalleryProvider == null || index < 0 || index >= mSize) {
                 return;
             }

@@ -595,6 +595,28 @@ public class Settings {
         putInt(KEY_START_TRANSFER_TIME, value);
     }
 
+    private static final String KEY_DIRECT_SAVE = "gallery_direct_save";
+    private static final boolean DEFAULT_DIRECT_SAVE = false;
+
+    public static boolean getDirectSave() {
+        return getBoolean(KEY_DIRECT_SAVE, DEFAULT_DIRECT_SAVE);
+    }
+
+    public static void putDirectSave(boolean value) {
+        putBoolean(KEY_DIRECT_SAVE, value);
+    }
+
+    private static final String KEY_DOUBLE_TAP_ZOOM = "gallery_double_tap_zoom";
+    private static final boolean DEFAULT_DOUBLE_TAP_ZOOM = false;
+
+    public static boolean getDoubleTapZoom() {
+        return getBoolean(KEY_DOUBLE_TAP_ZOOM, DEFAULT_DOUBLE_TAP_ZOOM);
+    }
+
+    public static void putDoubleTapZoom(boolean value) {
+        putBoolean(KEY_DOUBLE_TAP_ZOOM, value);
+    }
+
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";
     private static final boolean DEFAULT_KEEP_SCREEN_ON = false;
 
