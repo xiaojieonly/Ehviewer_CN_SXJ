@@ -277,6 +277,7 @@
     <string name="share">공유</string>
     <string name="rate">평가</string>
     <string name="similar_gallery">유사</string>
+    <string name="gallery_artist">작가</string>
     <string name="search_cover">커버 검색</string>
     <string name="no_tags">태그 없음</string>
     <string name="no_comments">코멘트 없음</string>

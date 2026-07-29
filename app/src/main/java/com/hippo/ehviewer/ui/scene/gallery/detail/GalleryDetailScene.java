@@ -74,6 +74,7 @@ import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUtils;
+import com.hippo.ehviewer.client.GalleryTitleKeywordExtractor;
 import com.hippo.ehviewer.client.data.GalleryComment;
 import com.hippo.ehviewer.client.data.GalleryCommentList;
 import com.hippo.ehviewer.client.data.GalleryDetail;
@@ -247,6 +248,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private TextView mShare;
     @Nullable
     private TextView mRate;
+    @Nullable
+    private TextView mArtist;
     @Nullable
     private TextView mSimilar;
     @Nullable
@@ -608,6 +611,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mArchiver = (TextView) ViewUtils.$$(mActions, R.id.archiver);
         mShare = (TextView) ViewUtils.$$(mActions, R.id.share);
         mRate = (TextView) ViewUtils.$$(mActions, R.id.rate);
+        mArtist = (TextView) ViewUtils.$$(mActions, R.id.artist);
         mSimilar = (TextView) ViewUtils.$$(mActions, R.id.similar);
         mSearchCover = (TextView) ViewUtils.$$(mActions, R.id.search_cover);
         Ripple.addRipple(mHeartGroup, isDarkTheme);
@@ -616,6 +620,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Ripple.addRipple(mArchiver, isDarkTheme);
         Ripple.addRipple(mShare, isDarkTheme);
         Ripple.addRipple(mRate, isDarkTheme);
+        Ripple.addRipple(mArtist, isDarkTheme);
         Ripple.addRipple(mSimilar, isDarkTheme);
         Ripple.addRipple(mSearchCover, isDarkTheme);
         mHeartGroup.setOnClickListener(this);
@@ -625,6 +630,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mArchiver.setOnClickListener(this);
         mShare.setOnClickListener(this);
         mRate.setOnClickListener(this);
+        mArtist.setOnClickListener(this);
         mSimilar.setOnClickListener(this);
         mSearchCover.setOnClickListener(this);
         ensureActionDrawable(context);
@@ -739,6 +745,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mArchiver = null;
         mShare = null;
         mRate = null;
+        mArtist = null;
         mSimilar = null;
         mSearchCover = null;
 
@@ -852,6 +859,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Drawable rate = DrawableManager.getVectorDrawable(context, R.drawable.v_thumb_up_primary_x48);
         if (mRate != null) {
             setActionDrawable(mRate, rate);
+        }
+        Drawable artist = DrawableManager.getVectorDrawable(context, R.drawable.v_artist_primary_x48);
+        if (mArtist != null) {
+            setActionDrawable(mArtist, artist);
         }
         Drawable similar = DrawableManager.getVectorDrawable(context, R.drawable.v_similar_primary_x48);
         if (mSimilar != null) {
@@ -1367,6 +1378,38 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         return null;
     }
 
+    private void showArtistGalleryList() {
+        GalleryDetail gd = mGalleryDetail;
+        if (null == gd) {
+            return;
+        }
+
+        String artist = getArtist(gd.tags);
+        if (null != artist) {
+            ListUrlBuilder lub = new ListUrlBuilder();
+            lub.setMode(ListUrlBuilder.MODE_TAG);
+            lub.setKeyword("artist:" + artist);
+            GalleryListScene.startScene(this, lub);
+            return;
+        }
+
+        String keyword = GalleryTitleKeywordExtractor.extractArtistKeyword(gd.title);
+        if (null != keyword) {
+            ListUrlBuilder lub = new ListUrlBuilder();
+            lub.setMode(ListUrlBuilder.MODE_NORMAL);
+            lub.setKeyword(keyword);
+            GalleryListScene.startScene(this, lub);
+            return;
+        }
+
+        if (null != gd.uploader) {
+            ListUrlBuilder lub = new ListUrlBuilder();
+            lub.setMode(ListUrlBuilder.MODE_UPLOADER);
+            lub.setKeyword(gd.uploader);
+            GalleryListScene.startScene(this, lub);
+        }
+    }
+
     private void showSimilarGalleryList() {
         GalleryDetail gd = mGalleryDetail;
         if (null == gd) {
@@ -1557,6 +1600,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     .setPositiveButton(android.R.string.ok, helper)
                     .show();
             helper.setDialog(dialog, mGalleryDetail.rating);
+        } else if (mArtist == v) {
+            showArtistGalleryList();
         } else if (mSimilar == v) {
             showSimilarGalleryList();
         } else if (mSearchCover == v) {

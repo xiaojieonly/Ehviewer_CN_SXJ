@@ -275,6 +275,7 @@
     <string name="share">แชร์</string>
     <string name="rate">คะแนน</string>
     <string name="similar_gallery">เหมือน</string>
+    <string name="gallery_artist">ศิลปิน</string>
     <string name="search_cover">ค้นหาปก</string>
     <string name="no_tags">ไม่มีแท็ก</string>
     <string name="no_comments">ไม่มีความคิดเห็น</string>

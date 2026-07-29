@@ -338,6 +338,7 @@
     <string name="share">Share</string>
     <string name="rate">Rate</string>
     <string name="similar_gallery">Similar</string>
+    <string name="gallery_artist">Artist</string>
     <string name="search_cover">Search Cover</string>
     <string name="no_tags">No tags</string>
     <string name="no_comments">No comments</string>

@@ -262,6 +262,7 @@
     <string name="share">Partager</string>
     <string name="rate">Noter</string>
     <string name="similar_gallery">Similaire(s)</string>
+    <string name="gallery_artist">Artiste</string>
     <string name="search_cover">Chercher le couverture</string>
     <string name="no_tags">Aucun tag</string>
     <string name="no_comments">Aucun commentaire</string>

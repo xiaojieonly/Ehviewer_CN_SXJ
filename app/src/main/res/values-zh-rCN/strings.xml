@@ -250,6 +250,7 @@
     <string name="share">分享</string>
     <string name="rate">评分</string>
     <string name="similar_gallery">相似画廊</string>
+    <string name="gallery_artist">作者</string>
     <string name="search_cover">搜索封面</string>
     <string name="no_tags">暂无标签</string>
     <string name="no_comments">暂无评论</string>

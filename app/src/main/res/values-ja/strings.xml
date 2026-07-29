@@ -245,6 +245,7 @@
     <string name="share">共有</string>
     <string name="rate">評価</string>
     <string name="similar_gallery">類似のギャラリー</string>
+    <string name="gallery_artist">作者</string>
     <string name="search_cover">カバーを検索</string>
     <string name="no_tags">タグなし</string>
     <string name="no_comments">コメントなし</string>

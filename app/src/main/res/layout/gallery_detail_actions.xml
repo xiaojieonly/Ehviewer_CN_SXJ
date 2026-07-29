@@ -85,6 +85,24 @@
                 android:textColor="?android:attr/textColorPrimary"/>
 
             <TextView
+                android:id="@+id/artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/gallery_artist"
+                android:drawablePadding="8dp"
+                android:textColor="?android:attr/textColorPrimary"/>
+
+            <TextView
+                android:id="@+id/similar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/similar_gallery"
+                android:drawablePadding="8dp"
+                android:textColor="?android:attr/textColorPrimary"/>
+
+            <TextView
                 android:id="@+id/torrent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -107,15 +125,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/h_h"
                 android:gravity="center_horizontal"
-                android:drawablePadding="8dp"
-                android:textColor="?android:attr/textColorPrimary"/>
-
-            <TextView
-                android:id="@+id/similar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:text="@string/similar_gallery"
                 android:drawablePadding="8dp"
                 android:textColor="?android:attr/textColorPrimary"/>
 
