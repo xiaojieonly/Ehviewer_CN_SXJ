@@ -906,4 +906,28 @@
     <string name="imported_archive_info_message">This is an item imported from local storage</string>
     <string name="imported_archive_category">Local Import</string>
 
+    <!-- WebUI server sync -->
+    <string name="settings_webui">Server Sync</string>
+    <string name="settings_webui_configure">Configure server</string>
+    <string name="settings_webui_not_configured">No server configured</string>
+    <string name="settings_webui_configured">Configured: %s</string>
+    <string name="settings_webui_status">Connection status</string>
+    <string name="settings_webui_status_idle">Tap to check connection</string>
+    <string name="settings_webui_status_checking">Checking…</string>
+    <string name="settings_webui_sync_now">Sync now</string>
+    <string name="settings_webui_sync_now_summary">Sync favorites and browsing history</string>
+    <string name="settings_webui_last_sync">Last sync: %s</string>
+    <string name="settings_webui_host">Server address (IP)</string>
+    <string name="settings_webui_port">Port</string>
+    <string name="settings_webui_username">Username</string>
+    <string name="settings_webui_password">Password</string>
+    <string name="settings_webui_connect">Connect and save</string>
+    <string name="settings_webui_testing">Testing server connection</string>
+    <string name="settings_webui_connected">Server connected</string>
+    <string name="settings_webui_invalid_config">Invalid server configuration</string>
+    <string name="settings_webui_connect_failed">Connection failed: %s</string>
+    <string name="settings_webui_syncing">Syncing…</string>
+    <string name="settings_webui_sync_done">Sync complete: uploaded %1$d favorites / %2$d history, pulled %3$d favorites / %4$d history</string>
+    <string name="settings_webui_sync_failed">Sync failed: %s</string>
+
 </resources>

@@ -36,6 +36,12 @@
         app:fragment="com.hippo.ehviewer.ui.fragment.DownloadFragment" />
 
     <com.hippo.ehviewer.ui.fragment.BasePreference
+        android:icon="@drawable/v_cloud_sync_primary_x24"
+        android:title="@string/settings_webui"
+        app:allowDividerAbove="true"
+        app:fragment="com.hippo.ehviewer.ui.fragment.WebUiSyncFragment" />
+
+    <com.hippo.ehviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sec_primary_x24"
         android:title="@string/settings_privacy"
         app:allowDividerAbove="true"

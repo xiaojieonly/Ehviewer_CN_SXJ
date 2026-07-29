@@ -874,6 +874,53 @@ public class EhDB {
         dao.deleteAll();
     }
 
+    // --- WebUI sync helpers (additive; used by com.hippo.ehviewer.webui.WebUiSyncEngine) ---
+
+    /** Materialized snapshot of all history records for building a sync push. */
+    public static synchronized List<HistoryInfo> getAllHistoryForSync() {
+        HistoryDao dao = sDaoSession.getHistoryDao();
+        LazyList<HistoryInfo> lazy = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time).listLazy();
+        try {
+            return new ArrayList<>(lazy);
+        } finally {
+            lazy.close();
+        }
+    }
+
+    /**
+     * Last-write-wins upsert of a history record pulled from the sync server.
+     * Inserts when absent; updates only when the incoming record is newer
+     * (by {@code time}, which carries the sync lastModified for history).
+     */
+    public static synchronized void applySyncedHistory(HistoryInfo incoming) {
+        HistoryDao dao = sDaoSession.getHistoryDao();
+        HistoryInfo existing = dao.load(incoming.gid);
+        if (existing == null) {
+            dao.insert(incoming);
+            return;
+        }
+        if (incoming.time > existing.time) {
+            existing.token = incoming.token;
+            existing.title = incoming.title;
+            existing.titleJpn = incoming.titleJpn;
+            existing.thumb = incoming.thumb;
+            existing.category = incoming.category;
+            existing.posted = incoming.posted;
+            existing.uploader = incoming.uploader;
+            existing.rating = incoming.rating;
+            existing.simpleTags = incoming.simpleTags;
+            existing.simpleLanguage = incoming.simpleLanguage;
+            existing.mode = incoming.mode;
+            existing.time = incoming.time;
+            dao.update(existing);
+        }
+    }
+
+    /** Hard-delete a history record by gid (history uses hard-delete per sync rules). */
+    public static synchronized void removeHistoryByKey(long gid) {
+        sDaoSession.getHistoryDao().deleteByKey(gid);
+    }
+
     public static synchronized List<Filter> getAllFilter() {
         return sDaoSession.getFilterDao().queryBuilder().list();
     }

@@ -1126,4 +1126,28 @@
     <string name="imported_archive_category">Local Import</string>
     <!-- TagSelectActivity -->
     <string name="tag_search_entrance">Tag Selector</string>
+
+    <!-- WebUI server sync -->
+    <string name="settings_webui">服务器同步</string>
+    <string name="settings_webui_configure">配置服务器</string>
+    <string name="settings_webui_not_configured">未配置服务器</string>
+    <string name="settings_webui_configured">已配置：%s</string>
+    <string name="settings_webui_status">连接状态</string>
+    <string name="settings_webui_status_idle">点击检查连接</string>
+    <string name="settings_webui_status_checking">正在检查…</string>
+    <string name="settings_webui_sync_now">立即同步</string>
+    <string name="settings_webui_sync_now_summary">同步收藏与浏览历史</string>
+    <string name="settings_webui_last_sync">上次同步：%s</string>
+    <string name="settings_webui_host">服务器地址（IP）</string>
+    <string name="settings_webui_port">端口</string>
+    <string name="settings_webui_username">用户名</string>
+    <string name="settings_webui_password">密码</string>
+    <string name="settings_webui_connect">连接并保存</string>
+    <string name="settings_webui_testing">正在测试服务器连接</string>
+    <string name="settings_webui_connected">服务器已连接</string>
+    <string name="settings_webui_invalid_config">服务器配置无效</string>
+    <string name="settings_webui_connect_failed">连接失败：%s</string>
+    <string name="settings_webui_syncing">正在同步…</string>
+    <string name="settings_webui_sync_done">同步完成：上传收藏 %1$d / 历史 %2$d，拉取收藏 %3$d / 历史 %4$d</string>
+    <string name="settings_webui_sync_failed">同步失败：%s</string>
 </resources>
