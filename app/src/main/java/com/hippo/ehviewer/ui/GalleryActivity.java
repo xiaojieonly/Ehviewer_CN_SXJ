@@ -1512,7 +1512,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         private void onTapSaveArea(int index) {
-            if (Settings.getDirectSave()) {
+            if (!Settings.getDirectSave()) {
                 if (mGalleryView != null) {
                     mGalleryView.pageLeft();
                 }
