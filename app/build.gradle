@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.xjs.ehviewer"
+        applicationId "com.nz.ehviewernz"
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
@@ -58,11 +58,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.nz.ehviewernz.fileprovider"'
         }
         debug {
             applicationIdSuffix ".debug"
-            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.nz.ehviewernz.debug.fileprovider"'
         }
     }
 
