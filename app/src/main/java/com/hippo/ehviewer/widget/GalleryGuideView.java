@@ -31,15 +31,20 @@ import com.hippo.lib.yorozuya.ViewUtils;
 
 public class GalleryGuideView extends ViewGroup implements View.OnClickListener {
 
+    private static final float LEFT_COLUMN_END = 9.0f / 25.0f;
+    private static final float RIGHT_COLUMN_START = 16.0f / 25.0f;
+    private static final float SAVE_AREA_TOP = 3.0f / 10.0f;
+
     private int mBgColor;
     private Paint mPaint;
-    private final float[] mPoints = new float[3 * 4];
+    private final float[] mPoints = new float[4 * 4];
     private int mStep;
 
     private TextView mLeftText;
     private TextView mRightText;
     private TextView mMenuText;
     private TextView mProgressText;
+    private TextView mSaveText;
     private TextView mLongClickText;
 
     public GalleryGuideView(Context context) {
@@ -75,6 +80,7 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
         mRightText = null;
         mMenuText = null;
         mProgressText = null;
+        mSaveText = null;
         mLongClickText = null;
 
         switch (mStep) {
@@ -95,6 +101,7 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
         mRightText = (TextView) getChildAt(1);
         mMenuText = (TextView) getChildAt(2);
         mProgressText = (TextView) getChildAt(3);
+        mSaveText = (TextView) getChildAt(4);
     }
 
     private void bind2() {
@@ -115,14 +122,19 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
 
         switch (mStep) {
             case 0:
-                mLeftText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
+                int leftDivider = (int) (LEFT_COLUMN_END * widthSize);
+                int rightDivider = (int) (RIGHT_COLUMN_START * widthSize);
+                int saveDivider = (int) (SAVE_AREA_TOP * heightSize);
+                mLeftText.measure(MeasureSpec.makeMeasureSpec(leftDivider, MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(saveDivider, MeasureSpec.EXACTLY));
+                mRightText.measure(MeasureSpec.makeMeasureSpec(widthSize - rightDivider, MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
-                mRightText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY));
-                mMenuText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
+                mMenuText.measure(MeasureSpec.makeMeasureSpec(rightDivider - leftDivider, MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(heightSize / 2, MeasureSpec.EXACTLY));
-                mProgressText.measure(MeasureSpec.makeMeasureSpec(widthSize / 3, MeasureSpec.EXACTLY),
+                mProgressText.measure(MeasureSpec.makeMeasureSpec(rightDivider - leftDivider, MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(heightSize / 2, MeasureSpec.EXACTLY));
+                mSaveText.measure(MeasureSpec.makeMeasureSpec(leftDivider, MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(heightSize - saveDivider, MeasureSpec.EXACTLY));
                 break;
             default:
             case 1:
@@ -141,10 +153,14 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
 
         switch (mStep) {
             case 0:
-                mLeftText.layout(0, 0, width / 3, height);
-                mRightText.layout(width * 2 / 3, 0, width, height);
-                mMenuText.layout(width / 3, 0, width * 2 / 3, height / 2);
-                mProgressText.layout(width / 3, height / 2, width * 2 / 3, height);
+                int leftDivider = (int) (LEFT_COLUMN_END * width);
+                int rightDivider = (int) (RIGHT_COLUMN_START * width);
+                int saveDivider = (int) (SAVE_AREA_TOP * height);
+                mLeftText.layout(0, 0, leftDivider, saveDivider);
+                mRightText.layout(rightDivider, 0, width, height);
+                mMenuText.layout(leftDivider, 0, rightDivider, height / 2);
+                mProgressText.layout(leftDivider, height / 2, rightDivider, height);
+                mSaveText.layout(0, saveDivider, leftDivider, height);
                 break;
             default:
             case 1:
@@ -158,20 +174,25 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
         super.onSizeChanged(w, h, oldw, oldh);
 
         if (0 == mStep) {
-            mPoints[0] = w / 3;
+            mPoints[0] = (int) (LEFT_COLUMN_END * w);
             mPoints[1] = 0;
-            mPoints[2] = w / 3;
+            mPoints[2] = (int) (LEFT_COLUMN_END * w);
             mPoints[3] = h;
 
-            mPoints[4] = w * 2 / 3;
+            mPoints[4] = (int) (RIGHT_COLUMN_START * w);
             mPoints[5] = 0;
-            mPoints[6] = w * 2 / 3;
+            mPoints[6] = (int) (RIGHT_COLUMN_START * w);
             mPoints[7] = h;
 
-            mPoints[8] = w / 3;
+            mPoints[8] = (int) (LEFT_COLUMN_END * w);
             mPoints[9] = h / 2;
-            mPoints[10] = w * 2 / 3;
+            mPoints[10] = (int) (RIGHT_COLUMN_START * w);
             mPoints[11] = h / 2;
+
+            mPoints[12] = 0;
+            mPoints[13] = (int) (SAVE_AREA_TOP * h);
+            mPoints[14] = (int) (LEFT_COLUMN_END * w);
+            mPoints[15] = (int) (SAVE_AREA_TOP * h);
         }
     }
 

@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.InputDevice;
@@ -127,6 +128,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private static final long SLIDER_ANIMATION_DURING = 150;
     private static final long HIDE_SLIDER_DELAY = 3000;
+    private static final long QUICK_SAVE_DEBOUNCE_MS = 1000L;
 
     private static final int WRITE_REQUEST_CODE = 43;
 
@@ -175,6 +177,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private int mLayoutMode;
     private int mSize;
     private int mCurrentIndex;
+    private long mLastQuickSaveAt;
+    private int mLastQuickSaveIndex = -1;
 
     private boolean canFinish = false;
     private boolean autoTransferring = false;
@@ -801,6 +805,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     @Override
+    public void onTapSaveArea(int index) {
+        NotifyTask task = mNotifyTaskPool.pop();
+        if (task == null) {
+            task = new NotifyTask();
+        }
+        task.setData(NotifyTask.KEY_TAP_SAVE_AREA, index);
+        SimpleHandler.getInstance().post(task);
+    }
+
+    @Override
     public void onTapMenuArea() {
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
@@ -1320,6 +1334,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         public static final int KEY_TAP_MENU_AREA = 4;
         public static final int KEY_TAP_ERROR_TEXT = 5;
         public static final int KEY_LONG_PRESS_PAGE = 6;
+        public static final int KEY_TAP_SAVE_AREA = 7;
 
         private int mKey;
         private int mValue;
@@ -1358,6 +1373,23 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
         }
 
+        private void onTapSaveArea(int index) {
+            if (mGalleryProvider == null || index < 0 || index >= mSize) {
+                return;
+            }
+
+            long now = SystemClock.elapsedRealtime();
+            if (index == mLastQuickSaveIndex
+                    && mLastQuickSaveAt != 0L
+                    && now - mLastQuickSaveAt < QUICK_SAVE_DEBOUNCE_MS) {
+                return;
+            }
+
+            saveImage(index);
+            mLastQuickSaveIndex = index;
+            mLastQuickSaveAt = SystemClock.elapsedRealtime();
+        }
+
         private void onLongPressPage(final int index) {
             showPageDialog(index);
         }
@@ -1390,6 +1422,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     break;
                 case KEY_LONG_PRESS_PAGE:
                     onLongPressPage(mValue);
+                    break;
+                case KEY_TAP_SAVE_AREA:
+                    onTapSaveArea(mValue);
                     break;
             }
             mNotifyTaskPool.push(this);

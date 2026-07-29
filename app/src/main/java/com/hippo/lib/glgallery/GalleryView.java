@@ -80,10 +80,11 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     public static final int START_POSITION_BOTTOM_RIGHT = ImageView.START_POSITION_BOTTOM_RIGHT;
     public static final int START_POSITION_CENTER = ImageView.START_POSITION_CENTER;
 
-    private static final float[] LEFT_AREA = {0.0f, 0.0f, 1.0f / 3.0f, 1f};
-    private static final float[] RIGHT_AREA = {2.0f / 3.0f, 0.0f, 1.0f, 1f};
-    private static final float[] MENU_AREA = {1.0f / 3.0f, 0.0f, 2.0f / 3.0f, 1.0f / 2.0f};
-    private static final float[] SLIDER_AREA = {1.0f / 3.0f, 1.0f / 2.0f, 2.0f / 3.0f, 1.0f};
+    private static final float[] LEFT_AREA = {0.0f, 0.0f, 9.0f / 25.0f, 3.0f / 10.0f};
+    private static final float[] RIGHT_AREA = {16.0f / 25.0f, 0.0f, 1.0f, 1.0f};
+    private static final float[] MENU_AREA = {9.0f / 25.0f, 0.0f, 16.0f / 25.0f, 1.0f / 2.0f};
+    private static final float[] SLIDER_AREA = {9.0f / 25.0f, 1.0f / 2.0f, 16.0f / 25.0f, 1.0f};
+    private static final float[] SAVE_AREA = {0.0f, 3.0f / 10.0f, 9.0f / 25.0f, 1.0f};
 
     private static final int METHOD_ON_SINGLE_TAP_UP = 0;
     private static final int METHOD_ON_SINGLE_TAP_CONFIRMED = 1;
@@ -155,6 +156,7 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     private final Rect mRightArea = new Rect();
     private final Rect mMenuArea = new Rect();
     private final Rect mSliderArea = new Rect();
+    private final Rect mSaveArea = new Rect();
 
     private int mLayoutMode = LAYOUT_RIGHT_TO_LEFT;
     private int mScaleMode = ImageView.SCALE_FIT;
@@ -664,6 +666,8 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
                     (int) (MENU_AREA[2] * width), (int) (MENU_AREA[3] * height));
             mSliderArea.set((int) (SLIDER_AREA[0] * width), (int) (SLIDER_AREA[1] * height),
                     (int) (SLIDER_AREA[2] * width), (int) (SLIDER_AREA[3] * height));
+            mSaveArea.set((int) (SAVE_AREA[0] * width), (int) (SAVE_AREA[1] * height),
+                    (int) (SAVE_AREA[2] * width), (int) (SAVE_AREA[3] * height));
         }
     }
 
@@ -704,6 +708,11 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
             page.isUnderInfo(x - page.bounds().left, y - page.bounds().top)) {
             if (mListener != null) {
                 mListener.onTapErrorText(page.getIndex());
+            }
+        } else if (mSaveArea.contains((int) x, (int) y)) {
+            int index = mLayoutManager.getInternalCurrentIndex();
+            if (index != GalleryPageView.INVALID_INDEX && mListener != null) {
+                mListener.onTapSaveArea(index);
             }
         } else if (mSliderArea.contains((int) x, (int) y)) {
             if (mListener != null) {
@@ -1237,6 +1246,9 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
 
         @RenderThread
         void onTapSliderArea();
+
+        @RenderThread
+        void onTapSaveArea(int index);
 
         @RenderThread
         void onTapMenuArea();
