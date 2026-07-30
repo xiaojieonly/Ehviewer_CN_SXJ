@@ -62,13 +62,20 @@
         app:entries="@array/start_position_entries"
         app:entryValues="@array/start_position_values" />
 
-    <com.hippo.preference.SeekBarPreference
-        android:defaultValue="2000"
+    <com.hippo.ehviewer.preference.StartTransferTimePreference
         android:key="start_transfer_time"
         android:title="@string/settings_read_auto_transfer_time"
-        app:allowDividerAbove="true"
-        app:min="20"
-        app:max="30000" />
+        app:allowDividerAbove="true" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="gallery_direct_save"
+        android:title="@string/settings_read_direct_save" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
+        android:key="gallery_double_tap_zoom"
+        android:title="@string/settings_read_double_tap_zoom" />
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"

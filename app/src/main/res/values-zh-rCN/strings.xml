@@ -259,6 +259,7 @@
     <string name="no_previews">没有预览</string>
     <string name="no_more_previews">已显示所有预览</string>
     <string name="more_previews">查看更多预览</string>
+    <string name="more_previews_with_pages">查看更多预览 共%1$d页</string>
     <string name="refresh">刷新</string>
     <string name="open_in_other_app">在其他应用中打开</string>
     <string name="rate_successfully">评分成功</string>
@@ -529,6 +530,8 @@
     <string name="settings_eh_excluded_languages_summary">在主页与搜索中隐藏指定语言的画廊</string>
     <string name="settings_eh_show_jpn_title">显示日文标题</string>
     <string name="settings_eh_show_gallery_comment">显示画廊评论</string>
+    <string name="settings_eh_gallery_preview_immediate_jump">画廊预览立即跳转</string>
+    <string name="settings_eh_gallery_preview_immediate_jump_summary">在画廊详细页最下方打开画廊预览时，直接跳转至新内容 (第二页)</string>
     <string name="settings_eh_show_gallery_rating">显示画廊评分</string>
     <string name="settings_eh_show_eh_event">显示E站事件</string>
     <string name="settings_eh_show_eh_limits">显示E站配额</string>
@@ -568,6 +571,8 @@
     <string name="settings_read_start_position_bottom_left">左下角</string>
     <string name="settings_read_start_position_bottom_right">右下角</string>
     <string name="settings_read_auto_transfer_time">自动翻页(ms)</string>
+    <string name="settings_read_auto_transfer_time_value">%1$d ms</string>
+    <string name="settings_read_auto_transfer_time_range">请输入 %1$d 至 %2$d ms</string>
     <string name="settings_read_direct_save">直接保存</string>
     <string name="settings_read_double_tap_zoom">双击放大</string>
     <string name="settings_read_start_position_center">中心</string>

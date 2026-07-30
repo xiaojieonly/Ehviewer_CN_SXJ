@@ -33,7 +33,7 @@ public class GalleryGuideView extends ViewGroup implements View.OnClickListener 
 
     private static final float LEFT_COLUMN_END = 9.0f / 25.0f;
     private static final float RIGHT_COLUMN_START = 16.0f / 25.0f;
-    private static final float SAVE_AREA_TOP = 1.0f / 5.0f;
+    private static final float SAVE_AREA_TOP = 4.0f / 5.0f;
 
     private int mBgColor;
     private Paint mPaint;

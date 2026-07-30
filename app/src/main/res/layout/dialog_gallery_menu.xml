@@ -133,7 +133,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
+                    android:layout_weight="2"
                     android:text="@string/settings_read_auto_transfer_time"
                     android:textColor="?android:attr/textColorPrimary" />
 
@@ -142,8 +142,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
-                    android:layout_weight="2"
-                    android:gravity="end"
+                    android:layout_weight="1"
+                    android:gravity="center"
                     android:imeOptions="actionDone"
                     android:inputType="number"
                     android:maxLength="5"
@@ -157,7 +157,8 @@
                 android:id="@+id/start_transfer_time"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:max="23" />
+                android:max="23"
+                android:translationY="12dp" />
 
             <Space
                 android:layout_width="match_parent"

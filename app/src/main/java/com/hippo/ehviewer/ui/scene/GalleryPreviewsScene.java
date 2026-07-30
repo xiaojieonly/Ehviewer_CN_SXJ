@@ -68,6 +68,7 @@ import java.util.Locale;
 public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerView.OnItemClickListener {
 
     public static final String KEY_GALLERY_INFO = "gallery_info";
+    public static final String KEY_INITIAL_PAGE = "initial_page";
     private final static String KEY_HAS_FIRST_REFRESH = "has_first_refresh";
 
     /*---------------
@@ -77,6 +78,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     private EhClient mClient;
     @Nullable
     private GalleryInfo mGalleryInfo;
+    private int mInitialPage;
 
     /*---------------
      View life cycle
@@ -112,6 +114,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         }
 
         mGalleryInfo = args.getParcelable(KEY_GALLERY_INFO);
+        mInitialPage = Math.max(0, args.getInt(KEY_INITIAL_PAGE, 0));
     }
 
     private void onRestore(@NonNull Bundle savedInstanceState) {
@@ -165,7 +168,12 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         // Only refresh for the first time
         if (!mHasFirstRefresh) {
             mHasFirstRefresh = true;
-            mHelper.firstRefresh();
+            if (mInitialPage > 0) {
+                mHelper.doGetData(ContentLayout.ContentHelper.TYPE_SOMEWHERE, mInitialPage,
+                        ContentLayout.ContentHelper.REFRESH_TYPE_PROGRESS_VIEW);
+            } else {
+                mHelper.firstRefresh();
+            }
         }
 
         return contentLayout;

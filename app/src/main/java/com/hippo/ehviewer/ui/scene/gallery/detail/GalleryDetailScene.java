@@ -265,6 +265,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private LinearLayout mComments;
     @Nullable
     private TextView mCommentsText;
+    @Nullable
+    private TextView mMorePreviews;
     // Previews
     @Nullable
     private View mPreviews;
@@ -653,6 +655,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Ripple.addRipple(mComments, isDarkTheme);
         mComments.setOnClickListener(this);
 
+        mMorePreviews = (TextView) ViewUtils.$$(belowHeader, R.id.more_previews);
+        Ripple.addRipple(mMorePreviews, isDarkTheme);
+        mMorePreviews.setOnClickListener(this);
+
         mPreviews = ViewUtils.$$(belowHeader, R.id.previews);
         mGridLayout = (SimpleGridAutoSpanLayout) ViewUtils.$$(mPreviews, R.id.grid_layout);
         mPreviewText = (TextView) ViewUtils.$$(mPreviews, R.id.preview_text);
@@ -755,6 +761,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mComments = null;
         mCommentsText = null;
+        mMorePreviews = null;
 
         mPreviews = null;
         mGridLayout = null;
@@ -1195,10 +1202,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private void bindPreviews(GalleryDetail gd) {
         LayoutInflater inflater = getLayoutInflater2();
         Resources resources = getResources2();
-        if (null == resources || null == mGridLayout || null == mPreviewText) {
+        if (null == resources || null == mGridLayout || null == mPreviewText ||
+                null == mMorePreviews) {
             return;
         }
 
+        mMorePreviews.setText(resources.getString(
+                R.string.more_previews_with_pages, gd.pages));
         mGridLayout.removeAllViews();
         PreviewSet previewSet = gd.previewSet;
 
@@ -1474,6 +1484,19 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
+    private void openGalleryPreviews(boolean jumpToNewContent) {
+        if (mGalleryDetail == null) {
+            return;
+        }
+
+        Bundle args = new Bundle();
+        args.putParcelable(GalleryPreviewsScene.KEY_GALLERY_INFO, mGalleryDetail);
+        if (jumpToNewContent && mGalleryDetail.previewPages > 1) {
+            args.putInt(GalleryPreviewsScene.KEY_INITIAL_PAGE, 1);
+        }
+        startScene(new Announcer(GalleryPreviewsScene.class).setArgs(args));
+    }
+
     @Override
     public void onClick(View v) {
         mContext = getEHContext();
@@ -1620,12 +1643,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             startScene(new Announcer(GalleryCommentsScene.class)
                     .setArgs(args)
                     .setRequestCode(this, REQUEST_CODE_COMMENT_GALLERY));
+        } else if (mMorePreviews == v) {
+            openGalleryPreviews(false);
         } else if (mPreviews == v) {
-            if (null != mGalleryDetail) {
-                Bundle args = new Bundle();
-                args.putParcelable(GalleryPreviewsScene.KEY_GALLERY_INFO, mGalleryDetail);
-                startScene(new Announcer(GalleryPreviewsScene.class).setArgs(args));
-            }
+            openGalleryPreviews(Settings.getGalleryPreviewImmediateJump());
         } else if (mTitle == v) {
             if (mGalleryDetail != null && mGalleryDetail.title != null) {
                 ClipboardUtil.copyText(mGalleryDetail.title);

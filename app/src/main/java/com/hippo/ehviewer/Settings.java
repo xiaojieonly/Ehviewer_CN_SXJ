@@ -1467,6 +1467,20 @@ public class Settings {
         putBoolean(KEY_SHOW_GALLERY_COMMENT, value);
     }
 
+    public static final String KEY_GALLERY_PREVIEW_IMMEDIATE_JUMP =
+            "gallery_preview_immediate_jump";
+
+    private static final boolean DEFAULT_GALLERY_PREVIEW_IMMEDIATE_JUMP = true;
+
+    public static boolean getGalleryPreviewImmediateJump() {
+        return getBoolean(KEY_GALLERY_PREVIEW_IMMEDIATE_JUMP,
+                DEFAULT_GALLERY_PREVIEW_IMMEDIATE_JUMP);
+    }
+
+    public static void putGalleryPreviewImmediateJump(boolean value) {
+        putBoolean(KEY_GALLERY_PREVIEW_IMMEDIATE_JUMP, value);
+    }
+
     public static final String KEY_SHOW_GALLERY_RATING = "show_gallery_rating";
 
     private static boolean IS_SHOW_GALLERY_Rating = true;

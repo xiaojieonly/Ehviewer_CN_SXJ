@@ -80,11 +80,11 @@ public final class GalleryView extends GLView implements GestureRecognizer.Liste
     public static final int START_POSITION_BOTTOM_RIGHT = ImageView.START_POSITION_BOTTOM_RIGHT;
     public static final int START_POSITION_CENTER = ImageView.START_POSITION_CENTER;
 
-    private static final float[] LEFT_AREA = {0.0f, 0.0f, 9.0f / 25.0f, 1.0f / 5.0f};
+    private static final float[] LEFT_AREA = {0.0f, 0.0f, 9.0f / 25.0f, 4.0f / 5.0f};
     private static final float[] RIGHT_AREA = {16.0f / 25.0f, 0.0f, 1.0f, 1.0f};
     private static final float[] MENU_AREA = {9.0f / 25.0f, 0.0f, 16.0f / 25.0f, 1.0f / 2.0f};
     private static final float[] SLIDER_AREA = {9.0f / 25.0f, 1.0f / 2.0f, 16.0f / 25.0f, 1.0f};
-    private static final float[] SAVE_AREA = {0.0f, 1.0f / 5.0f, 9.0f / 25.0f, 1.0f};
+    private static final float[] SAVE_AREA = {0.0f, 4.0f / 5.0f, 9.0f / 25.0f, 1.0f};
 
     private static final int METHOD_ON_SINGLE_TAP_UP = 0;
     private static final int METHOD_ON_SINGLE_TAP_CONFIRMED = 1;

@@ -185,6 +185,12 @@
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="true"
+        android:key="gallery_preview_immediate_jump"
+        android:summary="@string/settings_eh_gallery_preview_immediate_jump_summary"
+        android:title="@string/settings_eh_gallery_preview_immediate_jump" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
         android:key="show_gallery_rating"
         android:title="@string/settings_eh_show_gallery_rating" />
 

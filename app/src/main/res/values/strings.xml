@@ -347,6 +347,7 @@
     <string name="no_previews">No previews</string>
     <string name="no_more_previews">No more previews</string>
     <string name="more_previews">More previews</string>
+    <string name="more_previews_with_pages">More previews · %1$d pages</string>
     <string name="refresh">Refresh</string>
     <string name="open_in_other_app">Open with other app</string>
     <string name="rate_successfully">Rate successfully</string>
@@ -617,6 +618,8 @@
     <string name="settings_eh_excluded_tag_namespaces_summary">Exclude certain namespaces from a default tag search</string>
     <string name="settings_eh_show_jpn_title">Show Japanese title</string>
     <string name="settings_eh_show_gallery_comment">Show Gallery Comment</string>
+    <string name="settings_eh_gallery_preview_immediate_jump">Jump to new gallery previews</string>
+    <string name="settings_eh_gallery_preview_immediate_jump_summary">When opening gallery previews from the bottom of gallery details, jump directly to new content (page 2)</string>
     <string name="settings_eh_show_gallery_rating">Show Gallery Rating</string>
     <string name="settings_eh_show_eh_event">Show EH events</string>
     <string name="settings_eh_show_eh_limits">Show EH limits</string>
@@ -656,6 +659,8 @@
     <string name="settings_read_start_position_bottom_left">Bottom left</string>
     <string name="settings_read_start_position_bottom_right">Bottom right</string>
     <string name="settings_read_auto_transfer_time">Auto Transfer(ms)</string>
+    <string name="settings_read_auto_transfer_time_value">%1$d ms</string>
+    <string name="settings_read_auto_transfer_time_range">Enter a value from %1$d to %2$d ms</string>
     <string name="settings_read_direct_save">Direct save</string>
     <string name="settings_read_double_tap_zoom">Double-tap to zoom</string>
     <string name="settings_read_start_position_center">Center</string>
