@@ -47,13 +47,13 @@
     <!-- Category -->
 
     <string name="homepage">Page d\'accueil</string>
+    <string name="personal">Profil</string>
     <string name="subscription">Tags suivis</string>
     <string name="whats_hot">Plus vus</string>
     <string name="top_lists">Les meilleures listes</string>
     <string name="favourite">Favoris</string>
     <string name="history">Historique</string>
     <string name="downloads">Téléchargement</string>
-    <string name="news">Actualités</string>
     <string name="settings">Paramètres</string>
 
     <string name="username">Nom d\'utilisateur</string>

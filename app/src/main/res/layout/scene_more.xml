@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  「个人」场景:顶部资料卡(背景/头像/账户名)与额度,下方为设置菜单(主题、应用设置入口)
+  -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 资料卡:背景图 + 头像 + 账户名 -->
+        <FrameLayout
+            android:id="@+id/profile_card"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_rounded_20"
+            android:clipToOutline="true">
+
+            <ImageView
+                android:id="@+id/header_background"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:baseline="0dp"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop"
+                android:src="@drawable/sadpanda_low_poly" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginLeft="24dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="vertical">
+
+                <com.hippo.widget.AvatarImageView
+                    android:id="@+id/avatar"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_marginBottom="12dp"
+                    android:scaleType="centerCrop"
+                    app:image_circle="true" />
+
+                <TextView
+                    android:id="@+id/display_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/text_little_large"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- 账户额度:未登录或设置关闭时自身隐藏 -->
+        <com.hippo.ehviewer.widget.LimitsCountView
+            android:id="@+id/limits_count_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- 设置菜单组 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_rounded_20"
+            android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/theme_row"
+            style="@style/MoreEntryRow">
+
+            <ImageView
+                style="@style/MoreEntryIcon"
+                android:src="@drawable/v_theme_black_x24" />
+
+            <TextView
+                style="@style/MoreEntryLabel"
+                android:text="@string/theme" />
+
+            <TextView
+                android:id="@+id/theme_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="@dimen/text_small" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/entry_settings"
+            style="@style/MoreEntryRow">
+
+            <ImageView
+                style="@style/MoreEntryIcon"
+                android:src="@drawable/v_settings_black_x24" />
+
+            <TextView
+                style="@style/MoreEntryLabel"
+                android:text="@string/settings" />
+        </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

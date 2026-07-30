@@ -135,6 +135,11 @@ public final class GalleryCommentsScene extends ToolbarScene
     @Nullable
     private ViewTransition mViewTransition;
 
+    // 沉浸式避让基准(onCreateView3 记录,onApplyWindowInsets 按基准重算,幂等)
+    private int mPaddingBottomFab = 0;
+    private int mListBasePaddingBottom = 0;
+    private int mFabBasePaddingBottom = 0;
+
     private Drawable mSendDrawable;
     private Drawable mPencilDrawable;
     private long mCommentId;
@@ -225,6 +230,10 @@ public final class GalleryCommentsScene extends ToolbarScene
         Resources resources = context.getResources();
         int paddingBottomFab = resources.getDimensionPixelOffset(R.dimen.gallery_padding_bottom_fab);
 
+        // 沉浸式避让基准
+        mPaddingBottomFab = paddingBottomFab;
+        mFabBasePaddingBottom = mFabLayout.getPaddingBottom();
+
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_sad_pandroid);
         assert drawable != null;
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
@@ -245,8 +254,9 @@ public final class GalleryCommentsScene extends ToolbarScene
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setOnItemClickListener(this);
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
         mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerView.getPaddingTop(),
-                mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom() + paddingBottomFab);
+                mRecyclerView.getPaddingRight(), mListBasePaddingBottom + paddingBottomFab);
         // Cancel change animator
         RecyclerView.ItemAnimator itemAnimator = mRecyclerView.getItemAnimator();
         if (itemAnimator instanceof DefaultItemAnimator) {
@@ -266,6 +276,24 @@ public final class GalleryCommentsScene extends ToolbarScene
         updateView(false);
 
         return view;
+    }
+
+    /**
+     * 沉浸式避让:列表底部预留 80dp(FAB)+ 底部导航占位,FAB 底部同步让位;toolbar 由父类处理。
+     * 按基准值重算,可重复调用(幂等)
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        if (null != mRecyclerView) {
+            mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerView.getPaddingTop(),
+                    mRecyclerView.getPaddingRight(),
+                    mListBasePaddingBottom + mPaddingBottomFab + bottomOccupied);
+        }
+        if (null != mFabLayout) {
+            mFabLayout.setPadding(mFabLayout.getPaddingLeft(), mFabLayout.getPaddingTop(),
+                    mFabLayout.getPaddingRight(), mFabBasePaddingBottom + bottomOccupied);
+        }
     }
 
     @Override
@@ -329,10 +357,12 @@ public final class GalleryCommentsScene extends ToolbarScene
             if (keyboardHeight < rootHeight * 0.15f) {
                 keyboardHeight = 0;
             }
+            // 键盘弹出时贴键盘,收起时让出底部导航占位
+            int bottomMargin = keyboardHeight > 0 ? keyboardHeight : getBottomOccupiedHeight();
             ViewGroup.MarginLayoutParams lp =
                     (ViewGroup.MarginLayoutParams) mEditPanel.getLayoutParams();
-            if (lp.bottomMargin != keyboardHeight) {
-                lp.bottomMargin = keyboardHeight;
+            if (lp.bottomMargin != bottomMargin) {
+                lp.bottomMargin = bottomMargin;
                 mEditPanel.setLayoutParams(lp);
             }
         };

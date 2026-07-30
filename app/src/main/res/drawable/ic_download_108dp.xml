@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <!-- 24dp 下载字形放大居中(自适应图标前景,内容限制在安全区内) -->
+  <group
+      android:scaleX="1.2"
+      android:scaleY="1.2"
+      android:translateX="39.6"
+      android:translateY="39.6">
+    <path
+        android:pathData="M19,9h-4V3H9v6H5l7,7 7-7zM5,18v2h14v-2H5z"
+        android:fillColor="@color/colorPrimary"/>
+  </group>
+</vector>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  悬浮 app bar 版工具栏场景布局:app bar 叠于内容之上,可随列表滚动抬升收起,
+  内容(列表)通过 paddingTop 留位并可滚入该区域。场景顶到屏幕顶端
+  (needFitStatusBar=false):app bar 容器背景延伸进状态栏区域,
+  收起后列表内容沉浸式滚入状态栏区域。
+  仅 useOverlayAppBar() 返回 true 的 ToolbarScene 子类使用(历史/下载)。
+  -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/content_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/appbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="?attr/toolbarColor"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.Toolbar
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/toolbar"
+            android:layout_height="?attr/actionBarSize"
+            android:layout_width="match_parent"
+            android:background="?attr/toolbarColor"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:popupTheme="?attr/toolbarPopupTheme"/>
+
+    </LinearLayout>
+</FrameLayout>

@@ -24,6 +24,9 @@ class SplashActivity : EhActivity() {
         return R.style.SplashTheme
     }
 
+    // SplashTheme 通过 windowFullscreen 自行隐藏状态栏,不做 edge-to-edge
+    override fun isEdgeToEdgeEnabled(): Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
 //        if (!checkUpdate) {
 //            Distribute.setListener(EhDistributeListener())

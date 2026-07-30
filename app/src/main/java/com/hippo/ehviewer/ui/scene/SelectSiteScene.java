@@ -35,7 +35,7 @@ public class SelectSiteScene extends SolidScene implements View.OnClickListener 
     private View mOk;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 

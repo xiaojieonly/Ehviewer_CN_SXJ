@@ -35,4 +35,13 @@
     <item name="navigation_bar_padding_applied" type="id"/>
     <item name="navigation_bar_padding_origin_bottom" type="id"/>
 
+    <item name="nav_more" type="id"/>
+    <item name="nav_homepage" type="id"/>
+    <item name="nav_subscription" type="id"/>
+    <item name="nav_whats_hot" type="id"/>
+    <item name="nav_top_lists" type="id"/>
+    <item name="nav_favourite" type="id"/>
+    <item name="nav_history" type="id"/>
+    <item name="nav_downloads" type="id"/>
+
 </resources>

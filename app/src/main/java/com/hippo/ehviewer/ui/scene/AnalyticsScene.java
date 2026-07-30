@@ -39,7 +39,7 @@ public class AnalyticsScene extends SolidScene implements View.OnClickListener {
     private View mAccept;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 

@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.FrameLayout
+import android.widget.ScrollView
 import android.widget.Spinner
 import androidx.annotation.IntDef
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -57,6 +58,10 @@ class EhTopListScene : BaseScene() {
     private var ehTopListDetail: EhTopListDetail? = null
     private var viewTransition: ViewTransition? = null
     private var recyclerView: RecyclerView? = null
+    private var scrollView: ScrollView? = null
+
+    // 沉浸式避让基准(onCreateView2 记录,onApplyWindowInsets 按基准重算,幂等)
+    private var scrollBasePaddingBottom = 0
     private var client: EhClient? = null
     private var request: EhRequest? = null
     private var hasFirstRefresh = false
@@ -77,6 +82,13 @@ class EhTopListScene : BaseScene() {
         val spinner = view.findViewById<Spinner>(R.id.top_list_spinner)
         spinner.setSelection(0)
         spinner.onItemSelectedListener = TopListKindSelectedListener()
+
+        // 沉浸式避让基准
+        scrollView = view.findViewById(R.id.top_list_scroll_view)
+        scrollView?.let {
+            scrollBasePaddingBottom = it.paddingBottom
+            it.clipToPadding = false
+        }
 
         val frameLayout = view.findViewById<FrameLayout>(R.id.page_detail_view)
         val transitionView = view.findViewById<View>(R.id.data_loading_view)
@@ -100,9 +112,25 @@ class EhTopListScene : BaseScene() {
         return view
     }
 
+    override fun needFitNavigationBar(): Boolean {
+        return false
+    }
+
+    /**
+     * 沉浸式避让:ScrollView 底部让出底部导航占位,顶部由舞台容器统一避让。
+     * 按基准值重算,可重复调用(幂等)
+     */
+    override fun onApplyWindowInsets(statusBarInset: Int, bottomOccupied: Int) {
+        scrollView?.let {
+            it.setPadding(it.paddingLeft, it.paddingTop, it.paddingRight,
+                scrollBasePaddingBottom + bottomOccupied)
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         viewTransition = null
+        scrollView = null
     }
 
     override fun onBackPressed() {

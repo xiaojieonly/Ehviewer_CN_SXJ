@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Activity 关闭:下层 Activity 从左轻微回位并淡入(M3 back) -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0"
+        android:interpolator="@anim/interpolator_emphasized_decelerate"
+        android:duration="150" />
+    <translate
+        android:fromXDelta="-8%"
+        android:toXDelta="0"
+        android:interpolator="@anim/interpolator_emphasized_decelerate"
+        android:duration="300" />
+</set>

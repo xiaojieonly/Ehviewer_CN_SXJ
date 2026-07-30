@@ -132,6 +132,8 @@ public class Slider extends View {
         mPopup.setOutsideTouchable(false);
         mPopup.setTouchable(false);
         mPopup.setFocusable(false);
+        // M3 弹出动效:锚点 fade+scale
+        mPopup.setAnimationStyle(R.style.PopupWindow);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Slider);
         textPaint.setColor(a.getColor(R.styleable.Slider_textColor, Color.WHITE));

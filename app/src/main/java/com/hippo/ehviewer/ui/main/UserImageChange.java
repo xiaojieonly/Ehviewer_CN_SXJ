@@ -18,6 +18,7 @@ import android.transition.TransitionSet;
 import android.transition.Visibility;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.animation.PathInterpolator;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
@@ -125,6 +126,8 @@ public class UserImageChange implements PermissionCallBack {
         enterTransitionSet.setDuration(300);
         Slide enterSlide = new Slide(Gravity.BOTTOM);
         enterSlide.setMode(Visibility.MODE_IN);
+        // M3 emphasized:进入减速
+        enterSlide.setInterpolator(new PathInterpolator(0.05f, 0.7f, 0.1f, 1f));
         enterTransitionSet.addTransition(enterSlide);
         enterTransitionSet.setOrdering(TransitionSet.ORDERING_TOGETHER);
         popupWindow.setEnterTransition(enterTransitionSet);
@@ -133,6 +136,8 @@ public class UserImageChange implements PermissionCallBack {
         exitTransitionSet.setDuration(300);
         Slide exitSlide = new Slide(Gravity.BOTTOM);
         exitSlide.setMode(Visibility.MODE_OUT);
+        // M3 emphasized:退出加速
+        exitSlide.setInterpolator(new PathInterpolator(0.3f, 0f, 0.8f, 0.15f));
         exitTransitionSet.addTransition(exitSlide);
         exitTransitionSet.setOrdering(TransitionSet.ORDERING_TOGETHER);
         popupWindow.setExitTransition(exitTransitionSet);
@@ -198,7 +203,7 @@ public class UserImageChange implements PermissionCallBack {
                 outputImage.getPath());
         if (dialogType == CHANGE_BACKGROUND) {
             imageChangeCallBack.backgroundSourceChange(new File(outputImage.getPath()));
-        } else {
+        } else if (avatar != null) {
             avatar.setImageBitmap(BitmapFactory.decodeFile(outputImage.getPath()));
         }
     }
@@ -267,7 +272,7 @@ public class UserImageChange implements PermissionCallBack {
         if (dialogType == CHANGE_BACKGROUND) {
             imageChangeCallBack.backgroundSourceChange(new File(newImagePath));
 //            background.setImageBitmap(BitmapFactory.decodeFile(toFile.getPath()));
-        } else {
+        } else if (avatar != null) {
             avatar.setImageBitmap(BitmapFactory.decodeFile(toFile.getPath()));
         }
     }

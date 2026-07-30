@@ -210,10 +210,11 @@
     </style>
 
     <style name="CardView.Normal">
-        <item name="cardCornerRadius">2dp</item>
+        <!-- M3 卡片:12dp 圆角,1dp 阴影 -->
+        <item name="cardCornerRadius">12dp</item>
         <item name="cardUseCompatPadding">true</item>
-        <item name="cardElevation">2dp</item>
-        <item name="cardMaxElevation">2dp</item>
+        <item name="cardElevation">1dp</item>
+        <item name="cardMaxElevation">1dp</item>
         <item name="cardPreventCornerOverlap">true</item>
         <item name="cardBackgroundColor">?attr/contentColorPrimary</item>
         <item name="contentPadding">0dp</item>
@@ -221,6 +222,44 @@
 
     <style name="CardView.Reactive" parent="CardView.Normal">
         <item name="cardBackgroundColor">?attr/contentColorReactive</item>
+    </style>
+
+    <!-- M3 风格搜索栏:stadium 全圆角(56dp 行高一半),扁平 tonal 容器无投影 -->
+    <style name="CardView.SearchBar">
+        <item name="cardCornerRadius">28dp</item>
+        <item name="cardUseCompatPadding">false</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardMaxElevation">0dp</item>
+        <item name="cardPreventCornerOverlap">true</item>
+        <item name="cardBackgroundColor">?attr/searchBarContainerColor</item>
+        <item name="contentPadding">0dp</item>
+    </style>
+
+    <!-- M3 Outlined 文本框:12dp 全圆角描边;经主题 textInputStyle 全局生效 -->
+    <style name="Widget.App.TextInputLayout.OutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="boxStrokeColor">@color/textfield_stroke</item>
+    </style>
+
+    <!-- M3 FAB:16dp 圆角方形 -->
+    <style name="ShapeAppearanceOverlay.App.Fab" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- iOS 风格对话框:28dp 圆角;M3 fade+scale 动效 -->
+    <style name="GlassAlertDialog" parent="MaterialAlertDialog.MaterialComponents">
+        <item name="shapeAppearance">@style/GlassDialogShape</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.MaterialComponents.Button.TextButton.Dialog</item>
+        <item name="android:windowAnimationStyle">@style/GlassDialogAnimation</item>
+    </style>
+
+    <style name="GlassDialogShape" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
     </style>
 
     <style name="ClipTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
@@ -254,10 +293,24 @@
 
     </style>
 
-    <!--  组件动画  -->
+    <!--  组件动画:M3 弹出菜单锚点 fade+scale  -->
     <style name="PopupWindow">
-        <item name="android:windowEnterAnimation">@anim/pop_enter</item>
-        <item name="android:windowExitAnimation">@anim/pop_exit</item>
+        <item name="android:windowEnterAnimation">@anim/popup_menu_enter</item>
+        <item name="android:windowExitAnimation">@anim/popup_menu_exit</item>
+    </style>
+
+    <!--  M3 Activity 转场:forward/back slide+fade  -->
+    <style name="GlassActivityAnimation" parent="android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/activity_open_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/activity_open_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/activity_close_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/activity_close_exit</item>
+    </style>
+
+    <!--  M3 对话框动效:fade+scale  -->
+    <style name="GlassDialogAnimation" parent="android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
     </style>
 
     <style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
@@ -274,5 +327,33 @@
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
+    <!-- 「更多」场景入口行 -->
+    <style name="MoreEntryRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="MoreEntryIcon">
+        <item name="android:layout_width">24dp</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:layout_marginRight">20dp</item>
+        <item name="android:tint">?android:attr/textColorSecondary</item>
+    </style>
+
+    <style name="MoreEntryLabel">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">16sp</item>
+    </style>
 
 </resources>

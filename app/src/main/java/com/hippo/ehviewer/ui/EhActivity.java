@@ -19,14 +19,17 @@ package com.hippo.ehviewer.ui;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.hippo.content.ContextLocalWrapper;
 import com.hippo.ehviewer.Analytics;
@@ -46,6 +49,10 @@ public abstract class EhActivity extends AppCompatActivity {
         setTheme(getThemeResId(Settings.getTheme()));
         super.onCreate(savedInstanceState);
 
+        if (isEdgeToEdgeEnabled()) {
+            applyEdgeToEdge();
+        }
+
         ((EhApplication) getApplication()).registerActivity(this);
 
         if (Analytics.isEnabled()) {
@@ -58,6 +65,28 @@ public abstract class EhActivity extends AppCompatActivity {
         super.onDestroy();
 
         ((EhApplication) getApplication()).unregisterActivity(this);
+    }
+
+    /**
+     * 是否需要沉浸式系统栏;windowFullscreen 等自行管理系统栏的页面可覆写关闭
+     */
+    protected boolean isEdgeToEdgeEnabled() {
+        return true;
+    }
+
+    /**
+     * 全应用沉浸式:内容延伸至系统栏区域,状态栏/导航栏透明并关闭系统自动对比度蒙层,
+     * 图标明暗由各叶主题的 windowLightStatusBar/windowLightNavigationBar 控制
+     */
+    protected void applyEdgeToEdge() {
+        Window window = getWindow();
+        WindowCompat.setDecorFitsSystemWindows(window, false);
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.setStatusBarContrastEnforced(false);
+            window.setNavigationBarContrastEnforced(false);
+        }
     }
 
     @Override

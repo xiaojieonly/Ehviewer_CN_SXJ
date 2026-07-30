@@ -25,79 +25,31 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
-        <com.hippo.ehviewer.widget.EhStageLayout
-            android:id="@+id/fragment_container"
+        <com.hippo.ehviewer.widget.MainContentLayout
+            android:id="@+id/main_content"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
 
-        <com.hippo.ehviewer.widget.EhNavigationView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="left"
-            android:background="?android:attr/windowBackground"
-            android:maxWidth="@dimen/drawer_max_width"
-            android:orientation="vertical"
-            app:insetForeground="@android:color/transparent">
-
-            <FrameLayout
+            <com.hippo.ehviewer.widget.EhStageLayout
+                android:id="@+id/fragment_container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent" />
 
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
+            <com.hippo.ehviewer.widget.BottomNavBar
+                android:id="@+id/bottom_nav"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:visibility="gone" />
 
-                    <com.google.android.material.navigation.NavigationView
-                        android:id="@+id/nav_view"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="?android:navigationBarColor"
-                        android:paddingBottom="48dip"
-                        android:scrollbars="vertical"
-                        app:headerLayout="@layout/nav_header_main"
-                        app:insetForeground="@android:color/transparent"
-                        app:menu="@menu/nav_drawer_main" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|center">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <com.hippo.ehviewer.widget.LimitsCountView
-                            android:id="@+id/limits_count_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:maxHeight="180dp"/>
-
-                        <TextView
-                            android:id="@+id/change_theme"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_vertical|center_horizontal"
-                            android:minWidth="88dip"
-                            android:minHeight="48dip"
-                            app:insetForeground="@android:color/transparent" />
-                    </LinearLayout>
-                </FrameLayout>
-            </FrameLayout>
-        </com.hippo.ehviewer.widget.EhNavigationView>
+        </com.hippo.ehviewer.widget.MainContentLayout>
 
         <com.hippo.ehviewer.widget.EhDrawerView
             android:id="@+id/right_drawer"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="right"
-            android:background="?android:attr/windowBackground"
+            android:background="?attr/glassFillColor"
             android:clickable="true"
             android:maxWidth="@dimen/drawer_max_width" />
 

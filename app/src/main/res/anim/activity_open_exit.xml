@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Activity 打开:当前 Activity 轻微左移淡出(M3 forward 底层页) -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+    <alpha
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:duration="150" />
+    <translate
+        android:fromXDelta="0"
+        android:toXDelta="-8%"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:duration="300" />
+</set>

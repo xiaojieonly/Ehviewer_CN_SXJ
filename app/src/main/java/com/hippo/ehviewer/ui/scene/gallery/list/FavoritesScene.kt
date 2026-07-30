@@ -77,6 +77,7 @@ import com.hippo.ehviewer.ui.dialog.FavoriteListSortDialog
 import com.hippo.ehviewer.ui.scene.BaseScene
 import com.hippo.ehviewer.ui.scene.EhCallback
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene
+import com.hippo.ehviewer.widget.BottomNavHider
 import com.hippo.ehviewer.widget.EhDrawerLayout
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper
 import com.hippo.ehviewer.widget.JumpDateSelector
@@ -120,6 +121,13 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
 
     @ViewLifeCircle
     private var mSearchBarMover: SearchBarMover? = null
+
+    // 沉浸式避让基准(onCreateView2 记录,onApplyWindowInsets 按基准重算,幂等)
+    private var mPaddingTopSB = 0
+    private var mListBasePaddingTop = -1
+    private var mListBasePaddingBottom = 0
+    private var mFastScrollerBasePaddingTop = 0
+    private var mFabBasePaddingBottom = 0
 
     @ViewLifeCircle
     private var mLeftDrawable: DrawerArrowDrawable? = null
@@ -181,6 +189,9 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
     @ViewLifeCircle
     private var sortDialog: FavoriteListSortDialog? = null
 
+
+    // 最外层 tab 场景,显示底部导航栏
+    override fun needShowBottomNav(): Boolean = true
 
     override fun getNavCheckedItem(): Int {
         return R.id.nav_favourite
@@ -266,12 +277,18 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         val resources = context!!.getResources()
         val paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar)
 
+        mPaddingTopSB = paddingTopSB
+
         mHelper = FavoritesHelper()
         mHelper!!.setEmptyString(resources.getString(R.string.gallery_list_empty_hit))
         contentLayout.setHelper(mHelper)
         contentLayout.getFastScroller().setOnDragHandlerListener(this)
 
         mAdapter = FavoritesAdapter(inflater, resources, mRecyclerView!!, Settings.getListMode())
+        // Adapter 构造时已为搜索栏加入顶部 padding,记录列表 padding 基准供沉浸式重算
+        mListBasePaddingTop = mRecyclerView!!.paddingTop
+        mListBasePaddingBottom = mRecyclerView!!.paddingBottom
+        mFabBasePaddingBottom = mFabLayout!!.paddingBottom
         mRecyclerView!!.setSelector(
             Ripple.generateRippleDrawable(
                 context, !AttrResources.getAttrBoolean(
@@ -286,8 +303,9 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mRecyclerView!!.setChoiceMode(EasyRecyclerView.CHOICE_MODE_MULTIPLE_CUSTOM)
         mRecyclerView!!.setCustomCheckedListener(this)
 
+        mFastScrollerBasePaddingTop = fastScroller.getPaddingTop()
         fastScroller.setPadding(
-            fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
+            fastScroller.getPaddingLeft(), mFastScrollerBasePaddingTop + paddingTopSB,
             fastScroller.getPaddingRight(), fastScroller.getPaddingBottom()
         )
 
@@ -298,6 +316,8 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
             AttrResources.getAttrColor(context, R.attr.drawableColorPrimary)
         )
         mSearchBar!!.setLeftDrawable(mLeftDrawable)
+        // 左侧导航抽屉已移除:非搜索态隐藏左图标
+        mSearchBar!!.setLeftIconVisibility(if (mSearchMode) View.VISIBLE else View.GONE)
         mSearchBar!!.setRightDrawable(
             DrawableManager.getVectorDrawable(
                 context,
@@ -308,9 +328,11 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mSearchBar!!.setAllowEmptySearch(false)
         updateSearchBar()
         mSearchBarMover = SearchBarMover(this, mSearchBar, mRecyclerView)
+        // 列表滚动联动底部导航栏:下滚隐藏/上滑显示,IDLE 吸附
+        mRecyclerView?.let { BottomNavHider(activity2, it) }
 
         mActionFabDrawable =
-            AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark))
+            AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.fabIconColor))
         mFabLayout!!.getPrimaryFab().setImageDrawable(mActionFabDrawable)
         mFabLayout!!.setExpanded(false, false)
         mFabLayout!!.setAutoCancel(true)
@@ -334,6 +356,31 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         guideCollections()
 
         return view
+    }
+
+    override fun needFitNavigationBar(): Boolean {
+        return false
+    }
+
+    /**
+     * 底部避让:列表与 FAB 底部让出底部导航占位。
+     * 按基准值重算,可重复调用(幂等);顶部由父容器按状态栏 inset 统一处理
+     */
+    override fun onApplyWindowInsets(statusBarInset: Int, bottomOccupied: Int) {
+        mRecyclerView?.let {
+            if (mListBasePaddingTop >= 0) {
+                it.setPadding(
+                    it.paddingLeft, mListBasePaddingTop,
+                    it.paddingRight, mListBasePaddingBottom + bottomOccupied
+                )
+            }
+        }
+        mFabLayout?.let {
+            it.setPadding(
+                it.paddingLeft, it.paddingTop,
+                it.paddingRight, mFabBasePaddingBottom + bottomOccupied
+            )
+        }
     }
 
     private fun guideCollections() {
@@ -659,8 +706,6 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
 
         if (mSearchMode) {
             exitSearchMode(true)
-        } else {
-            toggleDrawer(Gravity.LEFT)
         }
     }
 
@@ -1003,7 +1048,6 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
             mHelper!!.setRefreshLayoutEnable(false)
         }
         // Lock drawer
-        setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT)
         setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT)
     }
 
@@ -1021,7 +1065,6 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         }
 
         // Unlock drawer
-        setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT)
         setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT)
     }
 
@@ -1051,6 +1094,7 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         }
         mSearchMode = true
         mSearchBar!!.setState(SearchBar.STATE_SEARCH_LIST, animation)
+        mSearchBar!!.setLeftIconVisibility(View.VISIBLE)
         mSearchBarMover!!.returnSearchBarPosition(animation)
         mLeftDrawable!!.setArrow(ANIMATE_TIME)
     }
@@ -1061,6 +1105,7 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         }
         mSearchMode = false
         mSearchBar!!.setState(SearchBar.STATE_NORMAL, animation)
+        mSearchBar!!.setLeftIconVisibility(View.GONE)
         mSearchBarMover!!.returnSearchBarPosition()
         mLeftDrawable!!.setMenu(ANIMATE_TIME)
     }

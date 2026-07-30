@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M3 Outlined 文本框描边色:聚焦主题色,默认次级文字色 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorPrimary" android:state_focused="true" />
+    <item android:color="?attr/colorPrimary" android:state_hovered="true" />
+    <item android:color="?android:attr/textColorSecondary" />
+</selector>

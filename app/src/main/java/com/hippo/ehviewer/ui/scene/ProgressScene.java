@@ -69,7 +69,7 @@ public final class ProgressScene extends BaseScene implements View.OnClickListen
     private ViewTransition mViewTransition;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 

@@ -32,14 +32,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.hippo.ehviewer.widget.SearchBar
-        android:id="@+id/search_bar"
+    <LinearLayout
+        android:id="@+id/search_bar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:layout_marginLeft="@dimen/gallery_search_bar_margin_h"
         android:layout_marginRight="@dimen/gallery_search_bar_margin_h"
-        android:layout_marginTop="@dimen/gallery_search_bar_margin_v"
-        style="@style/CardView.Normal"/>
+        android:layout_marginTop="@dimen/gallery_search_bar_margin_v">
+
+        <com.hippo.ehviewer.widget.SearchBar
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/CardView.SearchBar"/>
+
+        <com.hippo.ehviewer.widget.SegmentedControl
+            android:id="@+id/mode_segmented"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/gallery_segmented_height"
+            android:layout_marginTop="@dimen/gallery_segmented_margin_top"
+            android:visibility="gone"/>
+    </LinearLayout>
 
     <com.hippo.widget.FabLayout
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -54,21 +68,27 @@
             android:layout_height="wrap_content"
             android:id="@+id/tag_filter"
             app:srcCompat="@drawable/ic_baseline_filter_none_24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:tint="?attr/fabIconColor"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+            app:backgroundTint="?attr/fabContainerColor"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/v_go_to_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:tint="?attr/fabIconColor"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+            app:backgroundTint="?attr/fabContainerColor"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/v_refresh_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:tint="?attr/fabIconColor"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+            app:backgroundTint="?attr/fabContainerColor"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -76,14 +96,18 @@
             android:layout_height="wrap_content"
             android:scaleX="-1"
             app:srcCompat="@drawable/v_random_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:tint="?attr/fabIconColor"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+            app:backgroundTint="?attr/fabContainerColor"
             style="@style/Widget.Design.FloatingActionButton.Mini"/>
 
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:backgroundTint="?attr/widgetColorThemePrimary"
+            app:tint="?attr/fabIconColor"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+            app:backgroundTint="?attr/fabContainerColor"
             style="@style/Widget.Design.FloatingActionButton"/>
 
     </com.hippo.widget.FabLayout>
@@ -100,7 +124,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/v_magnify_dark_x24"
-            app:backgroundTint="?attr/widgetColorThemeAccent"
+            app:tint="?attr/fabIconColor"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+            app:backgroundTint="?attr/fabContainerColor"
             android:visibility="invisible"
             android:scaleX="0"
             android:scaleY="0"

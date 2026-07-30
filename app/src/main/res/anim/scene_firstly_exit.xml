@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底部 tab 切换(fade through)退出:快速淡出 -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <alpha
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:fillEnabled="true"
+        android:fillBefore="false"
+        android:fillAfter="true"
+        android:duration="100" />
+</set>

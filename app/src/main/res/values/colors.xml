@@ -225,4 +225,21 @@
     <color name="light_blue_50">#FFE1F5FE</color>
     <color name="light_blue_200">#FF81D4FA</color>
 
+    <!-- 沉浸式表面色(themes.xml 中 glassFill/navBar/fab/searchBar 容器引用;fab 与 navBarIndicator 共用) -->
+    <!-- 浅色 -->
+    <color name="glass_fill_light">#FFFFFFFF</color>
+    <color name="nav_bar_container_light">#D9F7F7F7</color>
+    <color name="nav_bar_indicator_light">#FFD6EFEB</color>
+    <color name="search_bar_container_light">#FFF2F2F2</color>
+    <!-- 深色 -->
+    <color name="glass_fill_dark">#FF323232</color>
+    <color name="nav_bar_container_dark">#D92D2D2D</color>
+    <color name="nav_bar_indicator_dark">#FF1F3D39</color>
+    <color name="search_bar_container_dark">#FF3E3E3E</color>
+    <!-- 纯黑 -->
+    <color name="glass_fill_black">#FF1A1A1A</color>
+    <color name="nav_bar_container_black">#D9141414</color>
+    <color name="nav_bar_indicator_black">#FF17302C</color>
+    <color name="search_bar_container_black">#FF1F1F1F</color>
+
 </resources>

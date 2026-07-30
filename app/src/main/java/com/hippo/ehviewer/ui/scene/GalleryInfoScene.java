@@ -66,6 +66,9 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
     @Nullable
     private EasyRecyclerView mRecyclerView;
 
+    // 沉浸式避让基准(onCreateView3 记录,onApplyWindowInsets 按基准重算,幂等)
+    private int mListBasePaddingBottom = 0;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -165,6 +168,8 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
         AssertUtils.assertNotNull(context);
 
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
+        // 沉浸式避让基准
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
         InfoAdapter adapter = new InfoAdapter();
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.VERTICAL, false));
@@ -179,6 +184,15 @@ public final class GalleryInfoScene extends ToolbarScene implements EasyRecycler
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setOnItemClickListener(this);
         return view;
+    }
+
+    /**
+     * 沉浸式避让:列表底部让出底部导航占位;toolbar 由父类处理
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        applyBottomOccupiedPadding(mRecyclerView, mListBasePaddingBottom, bottomOccupied);
     }
 
     @Override

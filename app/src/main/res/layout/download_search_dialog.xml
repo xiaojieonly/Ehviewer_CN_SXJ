@@ -6,7 +6,7 @@
 
     <com.hippo.ehviewer.widget.SearchBar
         android:id="@+id/download_search_bar"
-        style="@style/CardView.Normal"
+        style="@style/CardView.SearchBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/download_search_hint"

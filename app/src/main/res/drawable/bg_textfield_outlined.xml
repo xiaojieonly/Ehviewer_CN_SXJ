@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M3 Outlined 文本框背景(裸 EditText 用):默认 1dp 描边,聚焦 2dp 主题色,12dp 圆角 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <stroke android:width="2dp" android:color="?attr/colorPrimary" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <stroke android:width="1dp" android:color="?android:attr/textColorSecondary" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</selector>

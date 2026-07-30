@@ -16,8 +16,8 @@
   -->
 
 <!-- Layout used by SwitchPreference for the switch widget style. This is inflated
-     inside android.R.layout.preference. -->
-<androidx.appcompat.widget.SwitchCompat
+     inside android.R.layout.preference. M3:宽轨填充式开关(设置页为 Material3 主题) -->
+<com.google.android.material.materialswitch.MaterialSwitch
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/switchWidget"
     android:layout_width="wrap_content"

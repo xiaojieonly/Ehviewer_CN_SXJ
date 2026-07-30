@@ -19,13 +19,14 @@ package com.hippo.ehviewer.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import com.hippo.drawerlayout.DrawerLayoutChild;
 import com.hippo.scene.StageLayout;
 
-public class EhStageLayout extends StageLayout implements DrawerLayoutChild {
-
-    private int mWindowPaddingTop;
-    private int mWindowPaddingBottom;
+/**
+ * 场景容器。沉浸式改造后不再是 DrawerLayout 的直接子 View
+ * (外层套了 MainContentLayout),窗口 inset 由 MainContentLayout 分发,
+ * 不再实现 DrawerLayoutChild。
+ */
+public class EhStageLayout extends StageLayout {
 
     public EhStageLayout(Context context) {
         super(context);
@@ -37,21 +38,5 @@ public class EhStageLayout extends StageLayout implements DrawerLayoutChild {
 
     public EhStageLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-    }
-
-    @Override
-    public void onGetWindowPadding(int top, int bottom) {
-        mWindowPaddingTop = top;
-        mWindowPaddingBottom = bottom;
-    }
-
-    @Override
-    public int getAdditionalTopMargin() {
-        return mWindowPaddingTop;
-    }
-
-    @Override
-    public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
     }
 }

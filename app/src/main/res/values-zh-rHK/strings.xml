@@ -55,15 +55,14 @@
     <string name="theme_black">黑色主題</string>
 
     <string name="homepage">主頁</string>
+    <string name="personal">個人</string>
     <string name="subscription">訂閲</string>
     <string name="whats_hot">熱門</string>
     <string name="top_lists">排行榜</string>
     <string name="favourite">收藏</string>
     <string name="history">歷史</string>
     <string name="downloads">下載</string>
-    <string name="news">新聞</string>
     <string name="settings">設定</string>
-    <string name="stub" translatable="false">Stub</string>
 
     <string name="username">用戶名</string>
     <string name="password">密碼</string>

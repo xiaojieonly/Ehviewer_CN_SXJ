@@ -488,6 +488,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     @Override
+    protected boolean isEdgeToEdgeEnabled() {
+        return false;
+    }
+
+    @Override
     protected void onDestroy() {
         if (!transferService.isShutdown()) {
             transferService.shutdown();

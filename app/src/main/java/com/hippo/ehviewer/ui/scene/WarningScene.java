@@ -36,7 +36,7 @@ public final class WarningScene extends SolidScene implements View.OnClickListen
     private View mAccept;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 

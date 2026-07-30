@@ -24,14 +24,15 @@
     <string name="theme_black">黑色主题</string>
 
     <string name="homepage">主页</string>
+    <string name="personal">个人</string>
     <string name="subscription">订阅</string>
     <string name="whats_hot">热门</string>
     <string name="top_lists">排行榜</string>
     <string name="favourite">收藏</string>
     <string name="history">历史</string>
     <string name="downloads">下载</string>
-    <string name="news">新闻</string>
     <string name="settings">设置</string>
+    <string name="theme">主题</string>
 
     <string name="username">用户名</string>
     <string name="password">密码</string>

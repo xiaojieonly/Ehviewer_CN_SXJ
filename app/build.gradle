@@ -35,6 +35,7 @@ android {
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['zh', 'zh-rCN', 'zh-rHK', 'zh-rTW', 'es', 'ja', 'ko', 'fr', 'de', 'th']
         testOptions.unitTests.includeAndroidResources = true
+        testInstrumentationRunner "android.test.InstrumentationTestRunner"
         multiDexEnabled true
         ndk {
             moduleName "native-lib"
@@ -100,6 +101,11 @@ android {
 dependencies {
 //    测试工具
 //    debugCompileOnly 'com.gu.android:toolargetool:0.3.0'
+
+    // UI 自动化测试:android-31+ 已从 android.jar 移除 android.test/junit3,
+    // 仅编译期引用 SDK 自带可选库,运行时由设备系统库提供(见 androidTest/AndroidManifest.xml)
+    androidTestCompileOnly files("${android.sdkDirectory}/platforms/android-${android.compileSdk}/optional/android.test.runner.jar")
+    androidTestCompileOnly files("${android.sdkDirectory}/platforms/android-${android.compileSdk}/optional/android.test.base.jar")
 
     implementation 'com.google.android.material:material:1.13.0'
 

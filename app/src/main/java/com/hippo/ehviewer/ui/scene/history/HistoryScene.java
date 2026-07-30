@@ -70,6 +70,7 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.util.DrawableManager;
 import com.hippo.view.ViewTransition;
 import com.hippo.widget.LoadImageView;
+import com.hippo.widget.SearchBarMover;
 import com.hippo.widget.recyclerview.AutoStaggeredGridLayoutManager;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.ViewUtils;
@@ -79,7 +80,8 @@ import org.greenrobot.greendao.query.LazyList;
 
 public class HistoryScene extends ToolbarScene
         implements EasyRecyclerView.OnItemClickListener,
-        EasyRecyclerView.OnItemLongClickListener{
+        EasyRecyclerView.OnItemLongClickListener,
+        SearchBarMover.Helper {
 
     /*---------------
      View life cycle
@@ -92,10 +94,34 @@ public class HistoryScene extends ToolbarScene
     private RecyclerView.Adapter<?> mAdapter;
     @Nullable
     private LazyList<HistoryInfo> mLazyList;
+    @Nullable
+    private FastScroller mFastScroller;
+    @Nullable
+    private SearchBarMover mSearchBarMover;
+
+    // 沉浸式避让基准(onCreateView3 记录,onApplyWindowInsets 按基准重算,幂等)
+    private int mListBasePaddingTop = 0;
+    private int mListBasePaddingBottom = 0;
+    private int mFastScrollerBasePaddingTop = 0;
+    private int mFastScrollerBasePaddingBottom = 0;
+
+    // 最外层 tab 场景,显示底部导航栏
+    @Override
+    public boolean needShowBottomNav() {
+        return true;
+    }
 
     @Override
     public int getNavCheckedItem() {
         return R.id.nav_history;
+    }
+
+    /**
+     * app bar 悬浮于列表之上,随滚动抬升收起;收起后列表沉浸式顶到状态栏下沿
+     */
+    @Override
+    protected boolean useOverlayAppBar() {
+        return true;
     }
 
     @Nullable
@@ -147,6 +173,13 @@ public class HistoryScene extends ToolbarScene
         guardManager.attachRecyclerView(mRecyclerView);
         swipeManager.attachRecyclerView(mRecyclerView);
 
+        // 沉浸式避让基准
+        mListBasePaddingTop = mRecyclerView.getPaddingTop();
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
+        mFastScroller = fastScroller;
+        mFastScrollerBasePaddingTop = fastScroller.getPaddingTop();
+        mFastScrollerBasePaddingBottom = fastScroller.getPaddingBottom();
+
         fastScroller.attachToRecyclerView(mRecyclerView);
         HandlerDrawable handlerDrawable = new HandlerDrawable();
         handlerDrawable.setColor(AttrResources.getAttrColor(context, R.attr.widgetColorThemeAccent));
@@ -158,17 +191,59 @@ public class HistoryScene extends ToolbarScene
         return view;
     }
 
+    /**
+     * 沉浸式避让:列表与底部停靠的 FastScroller 底部让出底部导航占位;toolbar 由父类处理。
+     * 按基准值重算,可重复调用(幂等)
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        if (null != mRecyclerView) {
+            mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerView.getPaddingTop(),
+                    mRecyclerView.getPaddingRight(), mListBasePaddingBottom + bottomOccupied);
+        }
+        if (null != mFastScroller) {
+            mFastScroller.setPadding(mFastScroller.getPaddingLeft(), mFastScroller.getPaddingTop(),
+                    mFastScroller.getPaddingRight(), mFastScrollerBasePaddingBottom + bottomOccupied);
+        }
+    }
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setTitle(R.string.history);
-        setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
+        // 作为底部导航 tab 根场景,不再显示返回箭头
+
+        if (mRecyclerView != null) {
+            mSearchBarMover = attachOverlayAppBar(this, mRecyclerView, mFastScroller,
+                    mListBasePaddingTop, mFastScrollerBasePaddingTop);
+        }
+    }
+
+    @Override
+    public boolean isValidView(RecyclerView recyclerView) {
+        return recyclerView == mRecyclerView;
+    }
+
+    @Nullable
+    @Override
+    public RecyclerView getValidRecyclerView() {
+        return mRecyclerView;
+    }
+
+    @Override
+    public boolean forceShowSearchBar() {
+        return false;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
 
+        if (null != mSearchBarMover) {
+            mSearchBarMover.cancelAnimation();
+            mSearchBarMover = null;
+        }
         if (null != mLazyList) {
             mLazyList.close();
             mLazyList = null;
@@ -181,6 +256,7 @@ public class HistoryScene extends ToolbarScene
             mRecyclerView = null;
         }
 
+        mFastScroller = null;
         mViewTransition = null;
         mAdapter = null;
     }
@@ -208,7 +284,7 @@ public class HistoryScene extends ToolbarScene
 
     @Override
     public void onNavigationClick(View view) {
-        onBackPressed();
+        // 底部导航 tab 根场景,无上级可退
     }
 
     @Override

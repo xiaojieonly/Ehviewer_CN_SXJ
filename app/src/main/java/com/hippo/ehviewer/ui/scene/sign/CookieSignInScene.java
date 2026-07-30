@@ -79,7 +79,7 @@ public class CookieSignInScene extends SolidScene implements EditText.OnEditorAc
     private Button importInClipboard;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 

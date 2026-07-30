@@ -104,35 +104,45 @@
                 style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 app:srcCompat="@drawable/v_check_all_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 app:srcCompat="@drawable/v_play_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 app:srcCompat="@drawable/v_pause_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 app:srcCompat="@drawable/v_delete_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 style="@style/Widget.Design.FloatingActionButton.Mini"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 app:srcCompat="@drawable/v_folder_move_dark_x24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -140,20 +150,26 @@
                 android:layout_height="wrap_content"
                 android:scaleX="-1"
                 app:srcCompat="@drawable/v_random_dark_x24"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 style="@style/Widget.Design.FloatingActionButton.Mini"/>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/v_mobile_hand_left_off_x24"
-                app:backgroundTint="?attr/widgetColorThemeAccent"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 style="@style/Widget.Design.FloatingActionButton.Mini"/>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:backgroundTint="?attr/widgetColorThemePrimary"
+                app:tint="?attr/fabIconColor"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Fab"
+                app:backgroundTint="?attr/fabContainerColor"
                 style="@style/Widget.Design.FloatingActionButton"/>
 
         </com.hippo.widget.FabLayout>

@@ -20,6 +20,7 @@
     <!-- ========== -->
     <style name="BaseTheme" parent="Theme.MaterialComponents.Light">
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="materialAlertDialogTheme">@style/GlassAlertDialog</item>
 
         <item name="popupWindowStyle">@color/popupWindow_background_light</item>
         <item name="android:navigationBarColor">@color/white</item>
@@ -34,6 +35,15 @@
         <item name="colorEdgeEffect">@color/colorPrimary</item>
         <item name="dividerColor">@color/divider_light</item>
         <item name="toolbarColor">@color/colorPrimary</item>
+        <item name="glassFillColor">@color/glass_fill_light</item>
+        <item name="glassStrokeColor">#1A000000</item>
+        <item name="navBarContainerColor">@color/nav_bar_container_light</item>
+        <item name="navBarIndicatorColor">@color/nav_bar_indicator_light</item>
+        <item name="fabContainerColor">@color/nav_bar_indicator_light</item>
+        <item name="fabIconColor">@color/colorPrimaryDark</item>
+        <item name="searchBarContainerColor">@color/search_bar_container_light</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnimation</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.OutlinedBox</item>
         <item name="textColorThemePrimary">@color/colorPrimary</item>
         <item name="textColorThemePrimary2">@color/loading_indicator_blue</item>
         <item name="textColorThemeAccent">@color/colorAccent</item>
@@ -77,6 +87,13 @@
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <!-- 全应用沉浸式:系统栏透明,内容延伸至系统栏区域;图标明暗按主题 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
     </style>
 
     <style name="AppTheme.NoActionBar.Translucent" parent="AppTheme">
@@ -88,6 +105,7 @@
     <!-- =============== -->
     <style name="BaseTheme.Dark" parent="Theme.MaterialComponents">
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="materialAlertDialogTheme">@style/GlassAlertDialog</item>
         <item name="colorPrimaryDark">@color/grey_900</item>
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorControlActivated">@color/colorPrimary</item>
@@ -106,6 +124,15 @@
         <item name="colorEdgeEffect">@color/grey_500</item>
         <item name="dividerColor">@color/divider_dark</item>
         <item name="toolbarColor">?android:attr/colorBackground</item>
+        <item name="glassFillColor">@color/glass_fill_dark</item>
+        <item name="glassStrokeColor">#1AFFFFFF</item>
+        <item name="navBarContainerColor">@color/nav_bar_container_dark</item>
+        <item name="navBarIndicatorColor">@color/nav_bar_indicator_dark</item>
+        <item name="fabContainerColor">@color/nav_bar_indicator_dark</item>
+        <item name="fabIconColor">#FF80CBC4</item>
+        <item name="searchBarContainerColor">@color/search_bar_container_dark</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnimation</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.OutlinedBox</item>
         <item name="textColorThemePrimary">?android:attr/textColorSecondary</item>
         <item name="textColorThemeAccent">?android:attr/textColorSecondary</item>
         <item name="drawableColorPrimary">@color/primary_drawable_dark</item>
@@ -145,6 +172,13 @@
     <style name="AppTheme.Dark.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <!-- 全应用沉浸式:系统栏透明,深色主题用亮色图标 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
     </style>
 
     <style name="AppTheme.Dark.NoActionBar.Translucent" />
@@ -154,6 +188,7 @@
     <!-- =============== -->
     <style name="BaseTheme.Black" parent="Theme.MaterialComponents">
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="materialAlertDialogTheme">@style/GlassAlertDialog</item>
         <item name="colorPrimaryDark">@android:color/black</item>
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorControlActivated">@color/colorPrimary</item>
@@ -172,6 +207,15 @@
         <item name="colorEdgeEffect">@color/grey_500</item>
         <item name="dividerColor">@color/divider_dark</item>
         <item name="toolbarColor">@android:color/black</item>
+        <item name="glassFillColor">@color/glass_fill_black</item>
+        <item name="glassStrokeColor">#1AFFFFFF</item>
+        <item name="navBarContainerColor">@color/nav_bar_container_black</item>
+        <item name="navBarIndicatorColor">@color/nav_bar_indicator_black</item>
+        <item name="fabContainerColor">@color/nav_bar_indicator_black</item>
+        <item name="fabIconColor">#FF80CBC4</item>
+        <item name="searchBarContainerColor">@color/search_bar_container_black</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnimation</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.OutlinedBox</item>
         <item name="textColorThemePrimary">?android:attr/textColorSecondary</item>
         <item name="textColorThemeAccent">?android:attr/textColorSecondary</item>
         <item name="drawableColorPrimary">@color/primary_drawable_black</item>
@@ -210,6 +254,13 @@
     <style name="AppTheme.Black.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <!-- 全应用沉浸式:系统栏透明,纯黑主题用亮色图标 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
     </style>
 
     <style name="AppTheme.Black.NoActionBar.Translucent" />
@@ -217,11 +268,22 @@
     <!-- ========= -->
     <!-- App Theme -->
     <!-- ========= -->
-    <style name="AppTheme.Main" parent="AppTheme.NoActionBar.Translucent" />
+    <!-- MainActivity 沉浸式:系统状态栏/导航栏透明,内容区延伸至系统栏,
+         状态栏图标按主题明暗切换;关闭系统导航栏自动对比度蒙层 -->
+    <style name="AppTheme.Main" parent="AppTheme.NoActionBar.Translucent">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+    </style>
 
-    <style name="AppTheme.Main.Dark" parent="AppTheme.Dark.NoActionBar.Translucent" />
+    <style name="AppTheme.Main.Dark" parent="AppTheme.Dark.NoActionBar.Translucent">
+    </style>
 
-    <style name="AppTheme.Main.Black" parent="AppTheme.Black.NoActionBar.Translucent" />
+    <style name="AppTheme.Main.Black" parent="AppTheme.Black.NoActionBar.Translucent">
+    </style>
 
     <style name="AppTheme.Toolbar" parent="AppTheme.NoActionBar" />
 
@@ -233,6 +295,13 @@
         <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_dark</item>
         <item name="windowNoTitle">true</item>
 <!--        <item name="android:windowFullscreen">true</item>-->
+        <!-- 阅读器沉浸式:系统栏透明,阅读背景恒深色,用亮色图标 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
     </style>
 
     <style name="AppTheme.Gallery.Dark" />
@@ -241,11 +310,195 @@
         <item name="gallerySliderBackgroundColor">@color/gallery_slider_background_black</item>
     </style>
 
-    <style name="AppTheme.Settings" parent="AppTheme" />
+    <!-- 设置页:Material 3 交互;NoActionBar,顶栏由 MaterialToolbar 承载,
+         页面与顶栏同色,列表滚动时 AppBar 抬升着色;系统栏透明沉浸式。
+     自定义配色/控件 attr 与 BaseTheme 对齐(设置页内对话框、开关、文本框等依赖) -->
+    <style name="AppTheme.Settings" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="android:colorBackground">@color/white</item>
+        <item name="android:windowBackground">@color/white</item>
+        <item name="colorBackgroundFloating">@color/white</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
 
-    <style name="AppTheme.Settings.Dark" parent="AppTheme.Dark" />
+        <item name="materialAlertDialogTheme">@style/GlassAlertDialog</item>
+        <item name="popupWindowStyle">@color/popupWindow_background_light</item>
+        <item name="buttonStyle">@style/ThemeChangeButtonStyleLight</item>
+        <item name="colorEdgeEffect">@color/colorPrimary</item>
+        <item name="dividerColor">@color/divider_light</item>
+        <item name="toolbarColor">@color/colorPrimary</item>
+        <item name="glassFillColor">@color/glass_fill_light</item>
+        <item name="glassStrokeColor">#1A000000</item>
+        <item name="navBarContainerColor">@color/nav_bar_container_light</item>
+        <item name="navBarIndicatorColor">@color/nav_bar_indicator_light</item>
+        <item name="fabContainerColor">@color/nav_bar_indicator_light</item>
+        <item name="fabIconColor">@color/colorPrimaryDark</item>
+        <item name="searchBarContainerColor">@color/search_bar_container_light</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnimation</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.OutlinedBox</item>
+        <item name="textColorThemePrimary">@color/colorPrimary</item>
+        <item name="textColorThemePrimary2">@color/loading_indicator_blue</item>
+        <item name="textColorThemeAccent">@color/colorAccent</item>
+        <item name="drawableColorPrimary">@color/primary_drawable_light</item>
+        <item name="drawableColorSecondary">@color/secondary_drawable_light</item>
+        <item name="drawableColorThemePrimary">@color/colorPrimary</item>
+        <item name="contentColorPrimary">@color/content_light</item>
+        <item name="contentColorThemePrimary">@color/colorPrimary</item>
+        <item name="contentColorThemeAccent">@color/colorAccent</item>
+        <item name="contentColorReactive">@color/content_reactive_light</item>
+        <item name="widgetColorThemePrimary">@color/colorPrimary</item>
+        <item name="widgetColorThemeAccent">@color/colorAccent</item>
+        <item name="progressColor">@color/progress_light</item>
+        <item name="guideBackgroundColor">@color/guide_bg</item>
+        <item name="guideTitleColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="guideTextColor">?android:attr/textColorSecondaryInverse</item>
+        <item name="tagGroupBackgroundColor">@color/tag_group_background_light</item>
+        <item name="tagBackgroundColor">@color/tag_background_light</item>
+        <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="galleryDetailHeaderBackgroundColor">?attr/contentColorThemePrimary</item>
+        <item name="galleryDetailButtonBackgroundColor">
+            @color/gallery_detail_button_background_light
+        </item>
+        <item name="preferenceHeaderBackground">@drawable/preference_header_background_light</item>
+        <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+        <item name="galleryDetailDivider">@drawable/divider_gallery_detail_light</item>
+        <item name="limitCountBgColor">@color/colorLimitCountBg</item>
+        <item name="limits_shape_color">@color/shape_color_limits</item>
+        <item name="home_shadow">@color/home_shadow_color</item>
+        <item name="iconColor">@color/icon_color</item>
+    </style>
 
-    <style name="AppTheme.Settings.Black" parent="AppTheme.Black" />
+    <style name="AppTheme.Settings.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/grey_900</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorControlActivated">@color/colorPrimary</item>
+        <item name="colorSurface">@color/grey_850</item>
+        <item name="android:colorBackground">@color/grey_850</item>
+        <item name="android:windowBackground">@color/grey_850</item>
+        <item name="colorBackgroundFloating">@color/grey_850</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+
+        <item name="materialAlertDialogTheme">@style/GlassAlertDialog</item>
+        <item name="popupWindowStyle">@color/popupWindow_background_dark</item>
+        <item name="buttonStyle">@style/ThemeChangeButtonStyleDark</item>
+        <item name="colorEdgeEffect">@color/grey_500</item>
+        <item name="dividerColor">@color/divider_dark</item>
+        <item name="toolbarColor">?android:attr/colorBackground</item>
+        <item name="glassFillColor">@color/glass_fill_dark</item>
+        <item name="glassStrokeColor">#1AFFFFFF</item>
+        <item name="navBarContainerColor">@color/nav_bar_container_dark</item>
+        <item name="navBarIndicatorColor">@color/nav_bar_indicator_dark</item>
+        <item name="fabContainerColor">@color/nav_bar_indicator_dark</item>
+        <item name="fabIconColor">#FF80CBC4</item>
+        <item name="searchBarContainerColor">@color/search_bar_container_dark</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnimation</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.OutlinedBox</item>
+        <item name="textColorThemePrimary">?android:attr/textColorSecondary</item>
+        <item name="textColorThemeAccent">?android:attr/textColorSecondary</item>
+        <item name="drawableColorPrimary">@color/primary_drawable_dark</item>
+        <item name="drawableColorSecondary">@color/secondary_drawable_dark</item>
+        <item name="drawableColorThemePrimary">@color/primary_drawable_dark</item>
+        <item name="contentColorPrimary">@color/content_dark</item>
+        <item name="contentColorThemePrimary">?attr/contentColorPrimary</item>
+        <item name="contentColorThemeAccent">?attr/contentColorPrimary</item>
+        <item name="contentColorReactive">@color/content_reactive_dark</item>
+        <item name="widgetColorThemePrimary">@color/widget_dark</item>
+        <item name="widgetColorThemeAccent">@color/widget_dark</item>
+        <item name="progressColor">@color/progress_dark</item>
+        <item name="guideBackgroundColor">#e5303030</item>
+        <item name="guideTitleColor">?android:attr/textColorPrimary</item>
+        <item name="guideTextColor">?android:attr/textColorSecondary</item>
+        <item name="tagGroupBackgroundColor">@color/tag_group_background_dark</item>
+        <item name="tagBackgroundColor">@color/tag_background_dark</item>
+        <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimary</item>
+        <item name="galleryDetailHeaderBackgroundColor">?attr/contentColorThemePrimary</item>
+        <item name="galleryDetailButtonBackgroundColor">
+            @color/gallery_detail_button_background_dark
+        </item>
+        <item name="preferenceHeaderBackground">@drawable/preference_header_background_dark</item>
+        <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
+        <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
+        <item name="limitCountBgColor">@color/colorLimitCountBgDark</item>
+        <item name="limits_shape_color">@color/shape_color_limits_dart</item>
+        <item name="home_shadow">@color/home_shadow_color_dark</item>
+        <item name="iconColor">@color/icon_color_dark</item>
+    </style>
+
+    <style name="AppTheme.Settings.Black" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorControlActivated">@color/colorPrimary</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="colorBackgroundFloating">@android:color/black</item>
+        <item name="android:textColorPrimary">@color/primary_text_material_black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+
+        <item name="materialAlertDialogTheme">@style/GlassAlertDialog</item>
+        <item name="popupWindowStyle">@color/popupWindow_background_black</item>
+        <item name="buttonStyle">@style/ThemeChangeButtonStyleBlack</item>
+        <item name="colorEdgeEffect">@color/grey_500</item>
+        <item name="dividerColor">@color/divider_dark</item>
+        <item name="toolbarColor">@android:color/black</item>
+        <item name="glassFillColor">@color/glass_fill_black</item>
+        <item name="glassStrokeColor">#1AFFFFFF</item>
+        <item name="navBarContainerColor">@color/nav_bar_container_black</item>
+        <item name="navBarIndicatorColor">@color/nav_bar_indicator_black</item>
+        <item name="fabContainerColor">@color/nav_bar_indicator_black</item>
+        <item name="fabIconColor">#FF80CBC4</item>
+        <item name="searchBarContainerColor">@color/search_bar_container_black</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnimation</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.OutlinedBox</item>
+        <item name="textColorThemePrimary">?android:attr/textColorSecondary</item>
+        <item name="textColorThemeAccent">?android:attr/textColorSecondary</item>
+        <item name="drawableColorPrimary">@color/primary_drawable_black</item>
+        <item name="drawableColorSecondary">@color/secondary_drawable_black</item>
+        <item name="drawableColorThemePrimary">@color/primary_drawable_black</item>
+        <item name="contentColorPrimary">@color/content_black</item>
+        <item name="contentColorThemePrimary">?attr/contentColorPrimary</item>
+        <item name="contentColorThemeAccent">?attr/contentColorPrimary</item>
+        <item name="contentColorReactive">@color/content_reactive_black</item>
+        <item name="widgetColorThemePrimary">@color/widget_black</item>
+        <item name="widgetColorThemeAccent">@color/widget_black</item>
+        <item name="progressColor">@color/progress_black</item>
+        <item name="guideBackgroundColor">#e5000000</item>
+        <item name="guideTitleColor">?android:attr/textColorPrimary</item>
+        <item name="guideTextColor">?android:attr/textColorSecondary</item>
+        <item name="tagGroupBackgroundColor">@color/tag_group_background_black</item>
+        <item name="tagBackgroundColor">@color/tag_background_black</item>
+        <item name="galleryDetailHeaderTitleColor">?android:attr/textColorPrimary</item>
+        <item name="galleryDetailHeaderBackgroundColor">@android:color/black</item>
+        <item name="galleryDetailButtonBackgroundColor">
+            @color/gallery_detail_button_background_black
+        </item>
+        <item name="preferenceHeaderBackground">@drawable/preference_header_background_black</item>
+        <item name="toolbarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
+        <item name="galleryDetailDivider">@drawable/divider_gallery_detail_dark</item>
+        <item name="limitCountBgColor">@color/colorLimitCountBgBlack</item>
+        <item name="limits_shape_color">@color/shape_color_limits_black</item>
+        <item name="home_shadow">@color/home_shadow_color_black</item>
+        <item name="iconColor">@color/icon_color_black</item>
+    </style>
 
     <style name="SplashTheme" parent="BaseTheme">
         ==========

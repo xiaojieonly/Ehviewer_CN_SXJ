@@ -19,6 +19,7 @@ package com.hippo.widget;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.view.View;
+import android.view.animation.PathInterpolator;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import com.hippo.lib.yorozuya.MathUtils;
@@ -28,11 +29,19 @@ import com.hippo.lib.yorozuya.ViewUtils;
 public class SearchBarMover extends RecyclerView.OnScrollListener {
 
     private static final long ANIMATE_TIME = 300L;
+    /** M3 emphasized 曲线 */
+    private static final PathInterpolator EMPHASIZED_DECELERATE =
+            new PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
+    private static final PathInterpolator EMPHASIZED_ACCELERATE =
+            new PathInterpolator(0.3f, 0f, 0.8f, 0.15f);
 
     private boolean mShow;
     private ValueAnimator mSearchBarMoveAnimator;
     private final Helper mHelper;
     private final View mSearchBar;
+    @Nullable
+    private OnBarVisibilityListener mVisibilityListener;
+    private boolean mLastFullyHidden;
 
     public SearchBarMover(Helper helper, View searchBar,@Nullable RecyclerView... recyclerViews) {
         mHelper = helper;
@@ -51,6 +60,25 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
         }
     }
 
+    /**
+     * 栏「完全隐藏↔部分可见」状态翻转回调(底边越过父容器顶时触发),
+     * 供状态栏样式等联动;吸附动画与拖拽滚动都会上报
+     */
+    public void setOnBarVisibilityListener(@Nullable OnBarVisibilityListener listener) {
+        mVisibilityListener = listener;
+    }
+
+    private void dispatchVisibilityIfChanged() {
+        if (mVisibilityListener == null) {
+            return;
+        }
+        boolean fullyHidden = ViewUtils.getY2(mSearchBar) <= 0;
+        if (fullyHidden != mLastFullyHidden) {
+            mLastFullyHidden = fullyHidden;
+            mVisibilityListener.onBarVisibilityChanged(fullyHidden);
+        }
+    }
+
     @Override
     public void onScrollStateChanged(RecyclerView recyclerView, int newState){
         if (newState == RecyclerView.SCROLL_STATE_IDLE && mHelper.isValidView(recyclerView)) {
@@ -65,6 +93,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
             int offsetYStep = MathUtils.clamp(-dy, -oldBottom, -(int) mSearchBar.getTranslationY());
             if (offsetYStep != 0) {
                 ViewUtils.translationYBy(mSearchBar, offsetYStep);
+                dispatchVisibilityIfChanged();
             }
         }
     }
@@ -124,6 +153,8 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
             mShow = show;
             final ValueAnimator va = ValueAnimator.ofInt(0, offset);
             va.setDuration(ANIMATE_TIME);
+            // M3 emphasized:展开减速、收起加速
+            va.setInterpolator(show ? EMPHASIZED_DECELERATE : EMPHASIZED_ACCELERATE);
             va.addListener(new SimpleAnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
@@ -138,6 +169,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
                     int offsetStep = value - lastValue;
                     lastValue = value;
                     ViewUtils.translationYBy(mSearchBar, offsetStep);
+                    dispatchVisibilityIfChanged();
                 }
             });
             mSearchBarMoveAnimator = va;
@@ -147,6 +179,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
                 mSearchBarMoveAnimator.cancel();
             }
             ViewUtils.translationYBy(mSearchBar, offset);
+            dispatchVisibilityIfChanged();
         }
     }
 
@@ -182,6 +215,8 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
             mShow = true;
             final ValueAnimator va = ValueAnimator.ofInt(0, offset);
             va.setDuration(ANIMATE_TIME);
+            // M3 emphasized:展开减速
+            va.setInterpolator(EMPHASIZED_DECELERATE);
             va.addListener(new SimpleAnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
@@ -196,6 +231,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
                     int offsetStep = value - lastValue;
                     lastValue = value;
                     ViewUtils.translationYBy(mSearchBar, offsetStep);
+                    dispatchVisibilityIfChanged();
                 }
             });
             mSearchBarMoveAnimator = va;
@@ -205,6 +241,7 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
                 mSearchBarMoveAnimator.cancel();
             }
             ViewUtils.translationYBy(mSearchBar, offset);
+            dispatchVisibilityIfChanged();
         }
     }
 
@@ -216,5 +253,13 @@ public class SearchBarMover extends RecyclerView.OnScrollListener {
         RecyclerView getValidRecyclerView();
 
         boolean forceShowSearchBar();
+    }
+
+    public interface OnBarVisibilityListener {
+
+        /**
+         * @param fullyHidden true = 栏底边已完全移出父容器顶(不可见);false = 重新部分可见
+         */
+        void onBarVisibilityChanged(boolean fullyHidden);
     }
 }

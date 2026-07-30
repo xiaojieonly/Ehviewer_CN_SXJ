@@ -31,6 +31,7 @@
             android:textAlignment="center" />
 
         <ScrollView
+            android:id="@+id/top_list_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="@dimen/top_list_scrollview_margin_top">

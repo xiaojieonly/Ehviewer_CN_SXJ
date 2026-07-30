@@ -50,13 +50,13 @@
     <string name="theme_black">ธีมสีดำ</string>
 
     <string name="homepage">หน้าหลัก</string>
+    <string name="personal">โปรไฟล์</string>
     <string name="subscription">การสมัครสมาชิก</string>
     <string name="whats_hot">เรื่องที่กำลังมาแรงมากๆ</string>
     <string name="top_lists">รายการยอดนิยม</string>
     <string name="favourite">รายการโปรด</string>
     <string name="history">ประวัติเข้าชม</string>
     <string name="downloads">ดาวน์โหลด</string>
-    <string name="news">ข่าวสาร</string>
     <string name="settings">การตั้งค่า</string>
 
     <string name="username">ชื่อผู้ใช้</string>
