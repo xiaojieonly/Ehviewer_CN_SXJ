@@ -589,17 +589,12 @@ public class Settings {
     public static final int MAX_START_TRANSFER_TIME_MS = 30000;
     public static final int MIN_START_TRANSFER_SLIDER_TIME_MS = 100;
     public static final int MAX_START_TRANSFER_SLIDER_TIME_MS = 15000;
-    private static final int LEGACY_MAX_START_TRANSFER_TIME_SECONDS = 15;
     private static final int DEFAULT_START_TRANSFER_TIME_MS = 2000;
 
     public static int getStartTransferTime() {
         int storedValue = getInt(KEY_START_TRANSFER_TIME, DEFAULT_START_TRANSFER_TIME_MS);
-        int value = storedValue;
-        if (value >= 0 && value <= LEGACY_MAX_START_TRANSFER_TIME_SECONDS) {
-            value *= 1000;
-        }
         int clamped = MathUtils.clamp(
-                value, MIN_START_TRANSFER_TIME_MS, MAX_START_TRANSFER_TIME_MS);
+                storedValue, MIN_START_TRANSFER_TIME_MS, MAX_START_TRANSFER_TIME_MS);
         if (clamped != storedValue || !sSettingsPre.contains(KEY_START_TRANSFER_TIME)) {
             putInt(KEY_START_TRANSFER_TIME, clamped);
         }
