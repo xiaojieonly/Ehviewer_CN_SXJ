@@ -16,29 +16,79 @@
 
 package com.hippo.ehviewer.preference;
 
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.text.InputType;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.SeekBar;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceViewHolder;
 
-import com.google.android.material.textfield.TextInputLayout;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
-import com.hippo.lib.yorozuya.ViewUtils;
-import com.hippo.preference.DialogPreference;
+import com.hippo.lib.yorozuya.MathUtils;
 
-public class StartTransferTimePreference extends DialogPreference implements View.OnClickListener {
+public class StartTransferTimePreference extends Preference {
 
-    private TextInputLayout mInputLayout;
+    @Nullable
     private EditText mInput;
+    @Nullable
+    private SeekBar mSeekBar;
+
+    private boolean mBinding;
+
+    private final TextWatcher mTextWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence text, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence text, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable text) {
+            if (mBinding) {
+                return;
+            }
+
+            Integer transferTime = parseTransferTime(text.toString());
+            if (transferTime == null ||
+                    transferTime < Settings.MIN_START_TRANSFER_TIME_MS ||
+                    transferTime > Settings.MAX_START_TRANSFER_TIME_MS) {
+                return;
+            }
+
+            Settings.putStartTransferTime(transferTime);
+            if (mSeekBar != null) {
+                mSeekBar.setProgress(Settings.startTransferTimeToProgress(transferTime));
+            }
+        }
+    };
+
+    private final SeekBar.OnSeekBarChangeListener mSeekBarChangeListener =
+            new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        setTransferTime(Settings.startTransferProgressToTime(progress));
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
+            };
 
     public StartTransferTimePreference(Context context) {
         super(context);
@@ -57,85 +107,95 @@ public class StartTransferTimePreference extends DialogPreference implements Vie
 
     private void init() {
         setPersistent(false);
-        setDialogLayoutResource(R.layout.dialog_edittext_builder);
-        setPositiveButtonText(android.R.string.ok);
-        setNegativeButtonText(android.R.string.cancel);
-        updateSummary();
-    }
-
-    private void updateSummary() {
-        setSummary(getContext().getString(
-                R.string.settings_read_auto_transfer_time_value,
-                Settings.getStartTransferTime()));
+        setSelectable(false);
+        setLayoutResource(R.layout.preference_start_transfer_time);
     }
 
     @Override
-    protected boolean needInputMethod() {
-        return true;
-    }
+    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
+        super.onBindViewHolder(holder);
 
-    @Override
-    protected void onBindDialogView(@NonNull View view) {
-        super.onBindDialogView(view);
+        if (mInput != null) {
+            mInput.removeTextChangedListener(mTextWatcher);
+        }
+        if (mSeekBar != null) {
+            mSeekBar.setOnSeekBarChangeListener(null);
+        }
 
-        mInputLayout = (TextInputLayout) view;
-        mInput = (EditText) ViewUtils.$$(view, R.id.edit_text);
-        mInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        mInput.setGravity(Gravity.CENTER);
-        mInput.setText(Integer.toString(Settings.getStartTransferTime()));
-        mInput.selectAll();
+        mInput = (EditText) holder.findViewById(R.id.start_transfer_time_input);
+        mSeekBar = (SeekBar) holder.findViewById(R.id.start_transfer_time);
+        if (mInput == null || mSeekBar == null) {
+            return;
+        }
+
+        int transferTime = Settings.getStartTransferTime();
+        mSeekBar.setMax(Settings.startTransferTimeToProgress(
+                Settings.MAX_START_TRANSFER_SLIDER_TIME_MS));
+
+        mBinding = true;
+        mInput.setText(Integer.toString(transferTime));
+        mInput.setSelection(mInput.length());
+        mSeekBar.setProgress(Settings.startTransferTimeToProgress(transferTime));
+        mBinding = false;
+
+        mInput.addTextChangedListener(mTextWatcher);
+        mInput.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) {
+                commitInput();
+            }
+        });
         mInput.setOnEditorActionListener((textView, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                onClick(textView);
+                commitInput();
                 return true;
             }
             return false;
         });
+        mSeekBar.setOnSeekBarChangeListener(mSeekBarChangeListener);
     }
 
-    @Override
-    protected void onDialogCreated(AlertDialog dialog) {
-        super.onDialogCreated(dialog);
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(this);
-    }
-
-    @Override
-    public void onClick(View view) {
-        Dialog dialog = getDialog();
-        if (dialog == null || mInputLayout == null || mInput == null) {
-            return;
+    @Nullable
+    private Integer parseTransferTime(String value) {
+        if (TextUtils.isEmpty(value)) {
+            return null;
         }
-
-        int value;
         try {
-            value = Integer.parseInt(mInput.getText().toString().trim());
+            return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            value = -1;
+            return null;
         }
-
-        if (value < Settings.MIN_START_TRANSFER_TIME_MS ||
-                value > Settings.MAX_START_TRANSFER_TIME_MS) {
-            mInputLayout.setError(getContext().getString(
-                    R.string.settings_read_auto_transfer_time_range,
-                    Settings.MIN_START_TRANSFER_TIME_MS,
-                    Settings.MAX_START_TRANSFER_TIME_MS));
-            return;
-        }
-
-        mInputLayout.setError(null);
-        if (!callChangeListener(value)) {
-            return;
-        }
-
-        Settings.putStartTransferTime(value);
-        updateSummary();
-        dialog.dismiss();
     }
 
-    @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        super.onDialogClosed(positiveResult);
-        mInputLayout = null;
-        mInput = null;
+    private void commitInput() {
+        if (mInput == null) {
+            return;
+        }
+
+        Integer transferTime = parseTransferTime(mInput.getText().toString());
+        if (transferTime == null) {
+            transferTime = Settings.getStartTransferTime();
+        } else {
+            transferTime = MathUtils.clamp(transferTime,
+                    Settings.MIN_START_TRANSFER_TIME_MS,
+                    Settings.MAX_START_TRANSFER_TIME_MS);
+        }
+        setTransferTime(transferTime);
+    }
+
+    private void setTransferTime(int transferTime) {
+        Settings.putStartTransferTime(transferTime);
+
+        mBinding = true;
+        if (mInput != null) {
+            String value = Integer.toString(transferTime);
+            if (!value.contentEquals(mInput.getText())) {
+                mInput.setText(value);
+                mInput.setSelection(value.length());
+            }
+        }
+        if (mSeekBar != null) {
+            mSeekBar.setProgress(Settings.startTransferTimeToProgress(transferTime));
+        }
+        mBinding = false;
     }
 }

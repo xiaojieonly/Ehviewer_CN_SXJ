@@ -119,8 +119,6 @@ import javax.microedition.khronos.egl.EGLDisplay;
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
 
     private static final String TAG = "GalleryActivity";
-    private static final int MIN_START_TRANSFER_SLIDER_TIME_MS = 100;
-    private static final int MAX_START_TRANSFER_SLIDER_TIME_MS = 15000;
 
     public static final String ACTION_DIR = "dir";
     public static final String ACTION_EH = "eh";
@@ -1261,15 +1259,17 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private void configureStartTransferTime() {
             int transferTime = Settings.getStartTransferTime();
             mStartTransferTime.setMax(
-                    transferTimeToProgress(MAX_START_TRANSFER_SLIDER_TIME_MS));
-            mStartTransferTime.setProgress(transferTimeToProgress(transferTime));
+                    Settings.startTransferTimeToProgress(
+                            Settings.MAX_START_TRANSFER_SLIDER_TIME_MS));
+            mStartTransferTime.setProgress(
+                    Settings.startTransferTimeToProgress(transferTime));
             setTransferTimeInput(transferTime);
 
             mStartTransferTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     if (fromUser) {
-                        setTransferTimeInput(progressToTransferTime(progress));
+                        setTransferTimeInput(Settings.startTransferProgressToTime(progress));
                     }
                 }
 
@@ -1294,7 +1294,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 public void afterTextChanged(Editable s) {
                     Integer transferTime = parseTransferTime(s.toString());
                     if (transferTime != null) {
-                        mStartTransferTime.setProgress(transferTimeToProgress(transferTime));
+                        mStartTransferTime.setProgress(
+                                Settings.startTransferTimeToProgress(transferTime));
                     }
                 }
             });
@@ -1303,24 +1304,6 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     setTransferTimeInput(getTransferTimeInput());
                 }
             });
-        }
-
-        private int progressToTransferTime(int progress) {
-            if (progress <= 9) {
-                return (progress + 1) * 100;
-            } else {
-                return (progress - 8) * 1000;
-            }
-        }
-
-        private int transferTimeToProgress(int transferTime) {
-            int clamped = MathUtils.clamp(transferTime,
-                    MIN_START_TRANSFER_SLIDER_TIME_MS, MAX_START_TRANSFER_SLIDER_TIME_MS);
-            if (clamped <= 1000) {
-                return Math.round((clamped - 100) / 100.0f);
-            } else {
-                return 9 + Math.round((clamped - 1000) / 1000.0f);
-            }
         }
 
         @Nullable

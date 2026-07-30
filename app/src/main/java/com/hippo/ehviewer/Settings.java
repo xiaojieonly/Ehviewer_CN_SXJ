@@ -587,6 +587,8 @@ public class Settings {
     private static final String KEY_START_TRANSFER_TIME = "start_transfer_time";
     public static final int MIN_START_TRANSFER_TIME_MS = 20;
     public static final int MAX_START_TRANSFER_TIME_MS = 30000;
+    public static final int MIN_START_TRANSFER_SLIDER_TIME_MS = 100;
+    public static final int MAX_START_TRANSFER_SLIDER_TIME_MS = 15000;
     private static final int LEGACY_MAX_START_TRANSFER_TIME_SECONDS = 15;
     private static final int DEFAULT_START_TRANSFER_TIME_MS = 2000;
 
@@ -607,6 +609,24 @@ public class Settings {
     public static void putStartTransferTime(int value) {
         putInt(KEY_START_TRANSFER_TIME,
                 MathUtils.clamp(value, MIN_START_TRANSFER_TIME_MS, MAX_START_TRANSFER_TIME_MS));
+    }
+
+    public static int startTransferProgressToTime(int progress) {
+        if (progress <= 9) {
+            return (progress + 1) * 100;
+        } else {
+            return (progress - 8) * 1000;
+        }
+    }
+
+    public static int startTransferTimeToProgress(int transferTime) {
+        int clamped = MathUtils.clamp(transferTime,
+                MIN_START_TRANSFER_SLIDER_TIME_MS, MAX_START_TRANSFER_SLIDER_TIME_MS);
+        if (clamped <= 1000) {
+            return Math.round((clamped - 100) / 100.0f);
+        } else {
+            return 9 + Math.round((clamped - 1000) / 1000.0f);
+        }
     }
 
     private static final String KEY_DIRECT_SAVE = "gallery_direct_save";
