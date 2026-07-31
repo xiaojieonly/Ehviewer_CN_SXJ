@@ -29,6 +29,11 @@
             android:icon="@drawable/v_eh_subscription_black_x24"/>
 
         <item
+            android:id="@+id/nav_bookmark_subscription"
+            android:title="@string/bookmark_subscription"
+            android:icon="@drawable/ic_baseline_bookmarks_24"/>
+
+        <item
             android:id="@+id/nav_whats_hot"
             android:title="@string/whats_hot"
             android:icon="@drawable/v_fire_black_x24"/>

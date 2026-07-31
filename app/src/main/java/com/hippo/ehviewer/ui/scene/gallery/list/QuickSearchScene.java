@@ -24,7 +24,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -163,6 +165,7 @@ public final class QuickSearchScene extends ToolbarScene {
         public final TextView label;
         public final View dragHandler;
         public final View delete;
+        public final ImageView subscription;
 
         public QuickSearchHolder(View itemView) {
             super(itemView);
@@ -170,8 +173,10 @@ public final class QuickSearchScene extends ToolbarScene {
             label = (TextView) ViewUtils.$$(itemView, R.id.label);
             dragHandler = ViewUtils.$$(itemView, R.id.drag_handler);
             delete = ViewUtils.$$(itemView, R.id.delete);
+            subscription = (ImageView) ViewUtils.$$(itemView, R.id.bookmark_subscription);
 
             delete.setOnClickListener(this);
+            subscription.setOnClickListener(this);
         }
 
         @Override
@@ -183,6 +188,23 @@ public final class QuickSearchScene extends ToolbarScene {
             }
 
             final QuickSearch quickSearch = mQuickSearchList.get(position);
+            if (v == subscription) {
+                if (!BookmarkSubscriptionCoordinator.isSupported(quickSearch)) {
+                    Toast.makeText(context, R.string.bookmark_subscription_unsupported,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                quickSearch.subscribed = !quickSearch.subscribed;
+                EhDB.updateQuickSearch(quickSearch);
+                if (mAdapter != null) {
+                    mAdapter.notifyDataSetChanged();
+                }
+                Toast.makeText(context, getString(quickSearch.subscribed
+                                ? R.string.bookmark_subscription_enabled
+                                : R.string.bookmark_subscription_disabled,
+                        quickSearch.name), Toast.LENGTH_SHORT).show();
+                return;
+            }
             new AlertDialog.Builder(context)
                     .setTitle(R.string.delete_quick_search_title)
                     .setMessage(getString(R.string.delete_quick_search_message, quickSearch.name))
@@ -223,7 +245,12 @@ public final class QuickSearchScene extends ToolbarScene {
         @Override
         public void onBindViewHolder(QuickSearchHolder holder, int position) {
             if (mQuickSearchList != null) {
-                holder.label.setText(mQuickSearchList.get(position).name);
+                QuickSearch quickSearch = mQuickSearchList.get(position);
+                holder.label.setText(quickSearch.name);
+                holder.subscription.setAlpha(quickSearch.subscribed ? 1f : 0.32f);
+                holder.subscription.setContentDescription(getString(quickSearch.subscribed
+                        ? R.string.bookmark_subscription_disable
+                        : R.string.bookmark_subscription_enable));
             }
         }
 

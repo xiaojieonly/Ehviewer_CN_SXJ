@@ -83,6 +83,14 @@
 
     <string name="homepage">Homepage</string>
     <string name="subscription">Subscription</string>
+    <string name="bookmark_subscription">Bookmark subscriptions</string>
+    <string name="bookmark_subscription_empty">No subscribed bookmarks. Open the bookmark manager from the right drawer and enable at least one subscription.</string>
+    <string name="bookmark_subscription_enable">Add to bookmark subscriptions</string>
+    <string name="bookmark_subscription_disable">Remove from bookmark subscriptions</string>
+    <string name="bookmark_subscription_enabled">Added “%s” to bookmark subscriptions</string>
+    <string name="bookmark_subscription_disabled">Removed “%s” from bookmark subscriptions</string>
+    <string name="bookmark_subscription_unsupported">This bookmark type cannot be subscribed to</string>
+    <string name="bookmark_subscription_partial_failure">Some bookmark subscriptions could not be loaded</string>
     <string name="whats_hot">What\'s hot</string>
     <string name="top_lists">Top Lists</string>
     <string name="favourite">Favourite</string>

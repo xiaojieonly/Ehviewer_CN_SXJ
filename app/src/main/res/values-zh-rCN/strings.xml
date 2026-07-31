@@ -25,6 +25,14 @@
 
     <string name="homepage">主页</string>
     <string name="subscription">订阅</string>
+    <string name="bookmark_subscription">书签订阅</string>
+    <string name="bookmark_subscription_empty">暂无已订阅书签。请从右侧书签栏进入书签管理，并至少启用一个书签订阅。</string>
+    <string name="bookmark_subscription_enable">加入书签订阅</string>
+    <string name="bookmark_subscription_disable">移出书签订阅</string>
+    <string name="bookmark_subscription_enabled">已将“%s”加入书签订阅</string>
+    <string name="bookmark_subscription_disabled">已将“%s”移出书签订阅</string>
+    <string name="bookmark_subscription_unsupported">此类型的书签无法加入订阅</string>
+    <string name="bookmark_subscription_partial_failure">部分书签订阅加载失败</string>
     <string name="whats_hot">热门</string>
     <string name="top_lists">排行榜</string>
     <string name="favourite">收藏</string>

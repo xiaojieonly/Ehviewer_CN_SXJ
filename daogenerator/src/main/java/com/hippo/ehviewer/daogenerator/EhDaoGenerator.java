@@ -32,7 +32,7 @@ public class EhDaoGenerator {
     private static final String OUT_DIR = "app/src/main/java";
     private static final String DELETE_DIR = OUT_DIR+"/com/hippo/ehviewer/dao";
 
-    private static final int VERSION = 6;
+    private static final int VERSION = 8;
 
     private static final String DOWNLOAD_INFO_PATH = OUT_DIR+"/com/hippo/ehviewer/dao/DownloadInfo.java";
     private static final String HISTORY_INFO_PATH = OUT_DIR+"/com/hippo/ehviewer/dao/HistoryInfo.java";
@@ -246,6 +246,8 @@ public class EhDaoGenerator {
         // Since 4
         entity.addIntProperty("pageTo").notNull();
         entity.addLongProperty("time").notNull();
+        // Since 8
+        entity.addBooleanProperty("subscribed").notNull();
     }
 
     private static void addLocalFavorites(Schema schema) {
@@ -508,6 +510,7 @@ public class EhDaoGenerator {
         javaClass.getField("pageFrom").setPublic();
         javaClass.getField("pageTo").setPublic();
         javaClass.getField("time").setPublic();
+        javaClass.getField("subscribed").setPublic();
 
         javaClass.addMethod("\t@Override\n" +
                 "\tpublic String toString() {\n" +
@@ -526,6 +529,7 @@ public class EhDaoGenerator {
                 "\t\tobject.put(\"pageFrom\",pageFrom);\n" +
                 "\t\tobject.put(\"pageTo\",pageTo);\n" +
                 "\t\tobject.put(\"time\",time);\n" +
+                "\t\tobject.put(\"subscribed\",subscribed);\n" +
                 "\t\treturn object;\n" +
                 "\t}");
         javaClass.addMethod("public static QuickSearch quickSearchFromJson(JSONObject object){\n" +
@@ -539,6 +543,7 @@ public class EhDaoGenerator {
                 "\t\tsearch.pageFrom = object.getIntValue(\"pageFrom\");\n" +
                 "\t\tsearch.pageTo = object.getIntValue(\"pageTo\");\n" +
                 "\t\tsearch.time = object.getLongValue(\"time\");\n" +
+                "\t\tsearch.subscribed = object.getBooleanValue(\"subscribed\");\n" +
                 "\t\treturn search;\n" +
                 "\t}");
 

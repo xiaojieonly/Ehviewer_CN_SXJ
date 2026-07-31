@@ -899,6 +899,13 @@ public final class MainActivity extends StageActivity
                 startSceneFirstly(new Announcer(GalleryListScene.class)
                         .setArgs(nav_subscription));
                 break;
+            case R.id.nav_bookmark_subscription:
+                Bundle navBookmarkSubscription = new Bundle();
+                navBookmarkSubscription.putString(GalleryListScene.KEY_ACTION,
+                        GalleryListScene.ACTION_BOOKMARK_SUBSCRIPTION);
+                startSceneFirstly(new Announcer(GalleryListScene.class)
+                        .setArgs(navBookmarkSubscription));
+                break;
             case R.id.nav_whats_hot:
                 Bundle nav_whats_hot = new Bundle();
                 nav_whats_hot.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
