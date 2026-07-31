@@ -52,14 +52,6 @@
             <include
                 layout="@layout/gallery_detail_comments"/>
 
-            <TextView
-                android:id="@+id/more_previews"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="@dimen/keyline_margin"
-                android:textColor="?attr/textColorThemeAccent"/>
-
             <include
                 layout="@layout/gallery_detail_previews"/>
 <!--            <include-->

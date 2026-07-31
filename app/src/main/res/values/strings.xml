@@ -353,7 +353,6 @@
     <string name="no_previews">No previews</string>
     <string name="no_more_previews">No more previews</string>
     <string name="more_previews">More previews</string>
-    <string name="more_previews_with_pages">More previews · %1$d pages</string>
     <string name="refresh">Refresh</string>
     <string name="open_in_other_app">Open with other app</string>
     <string name="rate_successfully">Rate successfully</string>

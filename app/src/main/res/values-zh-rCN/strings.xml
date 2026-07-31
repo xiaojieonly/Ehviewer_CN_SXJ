@@ -265,7 +265,6 @@
     <string name="no_previews">没有预览</string>
     <string name="no_more_previews">已显示所有预览</string>
     <string name="more_previews">查看更多预览</string>
-    <string name="more_previews_with_pages">查看更多预览 共%1$d页</string>
     <string name="refresh">刷新</string>
     <string name="open_in_other_app">在其他应用中打开</string>
     <string name="rate_successfully">评分成功</string>

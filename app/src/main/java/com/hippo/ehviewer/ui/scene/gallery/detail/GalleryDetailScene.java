@@ -26,6 +26,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -40,6 +41,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.ViewConfiguration;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -120,6 +123,7 @@ import com.hippo.ehviewer.widget.GalleryRatingBar;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.LayoutUtils;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.reveal.ViewAnimationUtils;
@@ -282,9 +286,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private LinearLayout mComments;
     @Nullable
     private TextView mCommentsText;
-    @Nullable
-    private TextView mMorePreviews;
     // Previews
+    @Nullable
+    private GalleryDetailScrollView mDetailScrollView;
+    @Nullable
+    private View mSwipePreviewIndicator;
+    private int mSwipePreviewIndicatorOffset;
+    private boolean mSwipePreviewIndicatorVisible;
     @Nullable
     private View mPreviews;
     @Nullable
@@ -539,7 +547,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         View view = inflater.inflate(R.layout.scene_gallery_detail, container, false);
 
         ViewGroup main = (ViewGroup) ViewUtils.$$(view, R.id.main);
-        View mainView = ViewUtils.$$(main, R.id.scroll_view);
+        mDetailScrollView = (GalleryDetailScrollView) ViewUtils.$$(main, R.id.scroll_view);
+        View mainView = mDetailScrollView;
         View progressView = ViewUtils.$$(main, R.id.progress_view);
         mTip = (TextView) ViewUtils.$$(main, R.id.tip);
         mViewTransition = new ViewTransition(mainView, progressView, mTip);
@@ -547,8 +556,33 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         assert context != null;
         AssertUtils.assertNotNull(context);
 
+        mSwipePreviewIndicator = ViewUtils.$$(main, R.id.swipe_preview_indicator);
+        GradientDrawable swipePreviewIndicatorBackground = new GradientDrawable();
+        swipePreviewIndicatorBackground.setColor(
+                AttrResources.getAttrColor(context, android.R.attr.textColorSecondary));
+        swipePreviewIndicatorBackground.setCornerRadius(LayoutUtils.dp2pix(context, 2));
+        mSwipePreviewIndicator.setBackground(swipePreviewIndicatorBackground);
+        mSwipePreviewIndicatorOffset = LayoutUtils.dp2pix(context, 28);
+        mSwipePreviewIndicator.setTranslationX(mSwipePreviewIndicatorOffset);
+        main.addOnLayoutChangeListener((v, left, top, right, bottom,
+                                        oldLeft, oldTop, oldRight, oldBottom) -> {
+            View indicator = mSwipePreviewIndicator;
+            int indicatorHeight = (bottom - top) / 2;
+            if (indicator != null && indicatorHeight > 0
+                    && indicator.getLayoutParams().height != indicatorHeight) {
+                ViewGroup.LayoutParams layoutParams = indicator.getLayoutParams();
+                layoutParams.height = indicatorHeight;
+                indicator.setLayoutParams(layoutParams);
+            }
+        });
+
         View actionsScrollView = ViewUtils.$$(view, R.id.actions_scroll_view);
+        int drawerGestureSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         setDrawerGestureBlocker(new DrawerLayout.GestureBlocker() {
+            private float mInitialMotionX;
+            private float mInitialMotionY;
+            private boolean mBlockForPreviewSwipe;
+
             private void transformPointToViewLocal(int[] point, View child) {
                 ViewParent viewParent = child.getParent();
 
@@ -567,13 +601,47 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
             @Override
             public boolean shouldBlockGesture(MotionEvent ev) {
+                int action = ev.getActionMasked();
+                if (action == MotionEvent.ACTION_DOWN) {
+                    mInitialMotionX = ev.getX();
+                    mInitialMotionY = ev.getY();
+                    mBlockForPreviewSwipe = false;
+                } else if ((action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_UP)
+                        && !mBlockForPreviewSwipe) {
+                    float distanceX = ev.getX() - mInitialMotionX;
+                    float distanceY = ev.getY() - mInitialMotionY;
+                    mBlockForPreviewSwipe = distanceX <= -drawerGestureSlop
+                            && Math.abs(distanceX) > Math.abs(distanceY);
+                }
+
                 int[] point = new int[]{(int) ev.getX(), (int) ev.getY()};
                 transformPointToViewLocal(point, actionsScrollView);
-                return !isDrawersVisible()
-                        && point[0] > 0 && point[0] < actionsScrollView.getWidth()
-                        && point[1] > 0 && point[1] < actionsScrollView.getHeight();
+                boolean blockForActions = point[0] > 0
+                        && point[0] < actionsScrollView.getWidth()
+                        && point[1] > 0
+                        && point[1] < actionsScrollView.getHeight();
+                boolean blockGesture = !isDrawersVisible()
+                        && (mBlockForPreviewSwipe || blockForActions);
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    mBlockForPreviewSwipe = false;
+                }
+                return blockGesture;
             }
         });
+        mDetailScrollView.setSwipeExclusionView(actionsScrollView);
+        mDetailScrollView.setOnSwipeLeftListener(
+                new GalleryDetailScrollView.OnSwipeLeftListener() {
+                    @Override
+                    public void onSwipeLeftReadyChanged(boolean ready) {
+                        setSwipePreviewIndicatorVisible(ready, false);
+                    }
+
+                    @Override
+                    public void onSwipeLeft() {
+                        setSwipePreviewIndicatorVisible(false, true);
+                        openGalleryPreviews(false, true);
+                    }
+                });
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_sad_pandroid);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
@@ -675,10 +743,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Ripple.addRipple(mComments, isDarkTheme);
         mComments.setOnClickListener(this);
 
-        mMorePreviews = (TextView) ViewUtils.$$(belowHeader, R.id.more_previews);
-        Ripple.addRipple(mMorePreviews, isDarkTheme);
-        mMorePreviews.setOnClickListener(this);
-
         mPreviews = ViewUtils.$$(belowHeader, R.id.previews);
         mGridLayout = (SimpleGridAutoSpanLayout) ViewUtils.$$(mPreviews, R.id.grid_layout);
         mPreviewText = (TextView) ViewUtils.$$(mPreviews, R.id.preview_text);
@@ -736,6 +800,16 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         EhApplication.getDownloadManager(context).removeDownloadInfoListener(this);
 
         setDrawerGestureBlocker(null);
+        if (mDetailScrollView != null) {
+            mDetailScrollView.setOnSwipeLeftListener(null);
+            mDetailScrollView.setSwipeExclusionView(null);
+            mDetailScrollView = null;
+        }
+        if (mSwipePreviewIndicator != null) {
+            mSwipePreviewIndicator.animate().cancel();
+            mSwipePreviewIndicator = null;
+        }
+        mSwipePreviewIndicatorVisible = false;
 
         mTip = null;
         mViewTransition = null;
@@ -782,7 +856,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mComments = null;
         mCommentsText = null;
-        mMorePreviews = null;
 
         mPreviews = null;
         mGridLayout = null;
@@ -1227,13 +1300,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private void bindPreviews(GalleryDetail gd) {
         LayoutInflater inflater = getLayoutInflater2();
         Resources resources = getResources2();
-        if (null == resources || null == mGridLayout || null == mPreviewText ||
-                null == mMorePreviews) {
+        if (null == resources || null == mGridLayout || null == mPreviewText) {
             return;
         }
 
-        mMorePreviews.setText(resources.getString(
-                R.string.more_previews_with_pages, gd.pages));
         mGridLayout.removeAllViews();
         PreviewSet previewSet = gd.previewSet;
 
@@ -1515,7 +1585,45 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
+    private void setSwipePreviewIndicatorVisible(boolean visible, boolean completing) {
+        View indicator = mSwipePreviewIndicator;
+        if (indicator == null || mSwipePreviewIndicatorVisible == visible) {
+            return;
+        }
+
+        mSwipePreviewIndicatorVisible = visible;
+        indicator.animate().cancel();
+        if (visible) {
+            indicator.setVisibility(View.VISIBLE);
+            indicator.setAlpha(0f);
+            indicator.setTranslationX(mSwipePreviewIndicatorOffset);
+            indicator.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(160L)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        } else {
+            indicator.animate()
+                    .alpha(0f)
+                    .translationX(completing ? 0f : mSwipePreviewIndicatorOffset)
+                    .setDuration(completing ? 180L : 130L)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .withEndAction(() -> {
+                        if (!mSwipePreviewIndicatorVisible
+                                && indicator == mSwipePreviewIndicator) {
+                            indicator.setVisibility(View.INVISIBLE);
+                        }
+                    })
+                    .start();
+        }
+    }
+
     private void openGalleryPreviews(boolean jumpToNewContent) {
+        openGalleryPreviews(jumpToNewContent, false);
+    }
+
+    private void openGalleryPreviews(boolean jumpToNewContent, boolean swipeTransition) {
         if (mGalleryDetail == null) {
             return;
         }
@@ -1525,7 +1633,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (jumpToNewContent && mGalleryDetail.previewPages > 1) {
             args.putInt(GalleryPreviewsScene.KEY_INITIAL_PAGE, 1);
         }
-        startScene(new Announcer(GalleryPreviewsScene.class).setArgs(args));
+        Announcer announcer = new Announcer(GalleryPreviewsScene.class).setArgs(args);
+        if (swipeTransition) {
+            announcer.setTranHelper(new OpenGalleryPreviewsTransaction());
+        }
+        startScene(announcer);
     }
 
     @Override
@@ -1676,8 +1788,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             startScene(new Announcer(GalleryCommentsScene.class)
                     .setArgs(args)
                     .setRequestCode(this, REQUEST_CODE_COMMENT_GALLERY));
-        } else if (mMorePreviews == v) {
-            openGalleryPreviews(false);
         } else if (mPreviews == v) {
             openGalleryPreviews(Settings.getGalleryPreviewImmediateJump());
         } else if (mTitle == v) {
@@ -2293,6 +2403,29 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 return true;
             }
         }
+
+    private static class OpenGalleryPreviewsTransaction implements TransitionHelper {
+
+        @Override
+        public boolean onTransition(Context context, FragmentTransaction transaction,
+                                    Fragment exit, Fragment enter) {
+            if (!(enter instanceof GalleryPreviewsScene)) {
+                return false;
+            }
+
+            exit.setSharedElementEnterTransition(null);
+            exit.setSharedElementReturnTransition(null);
+            exit.setEnterTransition(null);
+            exit.setExitTransition(null);
+            enter.setSharedElementEnterTransition(null);
+            enter.setSharedElementReturnTransition(null);
+            enter.setEnterTransition(null);
+            enter.setExitTransition(null);
+            transaction.setCustomAnimations(R.anim.scene_gallery_preview_enter,
+                    R.anim.scene_gallery_preview_exit);
+            return true;
+        }
+    }
 
     private static class ModifyFavoritesListener extends EhCallback<GalleryDetailScene, Void> {
 
