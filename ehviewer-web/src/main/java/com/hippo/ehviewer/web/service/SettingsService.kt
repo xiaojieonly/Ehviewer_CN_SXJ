@@ -23,7 +23,9 @@ class SettingsService(private val config: EhCoreConfigProperties) {
             ),
             smb = SmbSettings(
                 enabled = config.smb.enabled
-            )
+            ),
+            security = SecuritySettings(),
+            processing = ProcessingSettings()
         )
     }
 

@@ -22,6 +22,7 @@ data class AuthResponse(
 data class AuthStatusResponse(
     val authenticated: Boolean,
     val username: String? = null,
+    val authRequired: Boolean = false,
     // E-Hentai session state sourced from the unified cookie store shared with ehviewer-core.
     val ehSessionValid: Boolean = false,
     val ehSessionExpired: Boolean = false
