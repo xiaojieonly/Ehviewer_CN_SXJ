@@ -37,6 +37,19 @@
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
+    <Preference
+        android:key="webui_sync_preferences"
+        android:summary="@string/settings_webui_sync_preferences_summary"
+        android:title="@string/settings_webui_sync_preferences"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="webui_pull_preferences"
+        android:summary="@string/settings_webui_pull_preferences_summary"
+        android:title="@string/settings_webui_pull_preferences"
+        app:iconSpaceReserved="false" />
+
     <SwitchPreferenceCompat
         android:key="webui_remote_read"
         android:summary="@string/settings_webui_remote_read_summary"

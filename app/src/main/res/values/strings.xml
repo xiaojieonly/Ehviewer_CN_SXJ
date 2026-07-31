@@ -1152,6 +1152,14 @@
     <string name="settings_webui_sync_failed">同步失败：%s</string>
     <string name="settings_webui_remote_read">远程阅读</string>
     <string name="settings_webui_remote_read_summary">连接服务器时，从服务器流式加载图片（而非直连 EH）；已读页面保留在本地缓存</string>
+    <string name="settings_webui_sync_preferences">同步配置</string>
+    <string name="settings_webui_sync_preferences_summary">将本机设置上传到 WebUI 服务器</string>
+    <string name="settings_webui_pull_preferences">拉取配置</string>
+    <string name="settings_webui_pull_preferences_summary">从 WebUI 服务器恢复设置</string>
+    <string name="settings_webui_preferences_syncing">正在同步配置…</string>
+    <string name="settings_webui_preferences_pushed">本机设置已上传</string>
+    <string name="settings_webui_preferences_pulled">设置已从服务器恢复</string>
+    <string name="settings_webui_preferences_failed">同步配置失败：%s</string>
     <string name="download_choose_location">下载位置</string>
     <string name="download_local">本机下载</string>
     <string name="download_delegate_server">在服务器上下载</string>

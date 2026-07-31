@@ -17,6 +17,7 @@
 package com.hippo.ehviewer.ui.fragment;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,6 +37,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.hippo.ehviewer.R;
+import com.hippo.ehviewer.webui.PreferenceSyncHelper;
 import com.hippo.ehviewer.webui.WebUiApiClient;
 import com.hippo.ehviewer.webui.WebUiConfig;
 import com.hippo.ehviewer.webui.WebUiSettings;
@@ -58,11 +60,15 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     private static final String KEY_CONFIGURE = "webui_configure";
     private static final String KEY_STATUS = "webui_status";
     private static final String KEY_SYNC_NOW = "webui_sync_now";
+    private static final String KEY_SYNC_PREFERENCES = "webui_sync_preferences";
+    private static final String KEY_PULL_PREFERENCES = "webui_pull_preferences";
     private static final String KEY_REMOTE_READ = "webui_remote_read";
 
     private Preference mConfigure;
     private Preference mStatus;
     private Preference mSyncNow;
+    private Preference mSyncPreferences;
+    private Preference mPullPreferences;
 
     private ExecutorService mExecutor;
     private Handler mMainHandler;
@@ -76,6 +82,8 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         mConfigure = findPreference(KEY_CONFIGURE);
         mStatus = findPreference(KEY_STATUS);
         mSyncNow = findPreference(KEY_SYNC_NOW);
+        mSyncPreferences = findPreference(KEY_SYNC_PREFERENCES);
+        mPullPreferences = findPreference(KEY_PULL_PREFERENCES);
 
         if (mConfigure != null) {
             mConfigure.setOnPreferenceClickListener(p -> {
@@ -92,6 +100,18 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         if (mSyncNow != null) {
             mSyncNow.setOnPreferenceClickListener(p -> {
                 syncNow();
+                return true;
+            });
+        }
+        if (mSyncPreferences != null) {
+            mSyncPreferences.setOnPreferenceClickListener(p -> {
+                syncPreferences();
+                return true;
+            });
+        }
+        if (mPullPreferences != null) {
+            mPullPreferences.setOnPreferenceClickListener(p -> {
+                pullPreferences();
                 return true;
             });
         }
@@ -238,6 +258,26 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             return;
         }
         new SyncTask(this).execute(config, settings.deviceId(), settings.lastSyncTimestamp());
+    }
+
+    private void syncPreferences() {
+        WebUiSettings settings = new WebUiSettings(requireContext());
+        WebUiConfig config = settings.loadConfig();
+        if (config == null || TextUtils.isEmpty(config.getToken())) {
+            Toast.makeText(requireActivity(), R.string.settings_webui_not_configured, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new PreferencePushTask(this).execute(config, settings.deviceId());
+    }
+
+    private void pullPreferences() {
+        WebUiSettings settings = new WebUiSettings(requireContext());
+        WebUiConfig config = settings.loadConfig();
+        if (config == null || TextUtils.isEmpty(config.getToken())) {
+            Toast.makeText(requireActivity(), R.string.settings_webui_not_configured, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new PreferencePullTask(this).execute(config, settings.deviceId());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -402,6 +442,104 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             } else {
                 Toast.makeText(fragment.requireActivity(),
                         fragment.getString(R.string.settings_webui_sync_failed, messageOf(error)),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    /** Uploads local preferences to the server via {@link PreferenceSyncHelper}. */
+    private static final class PreferencePushTask {
+        private final WeakReference<WebUiSyncFragment> fragmentRef;
+        private ProgressDialog progress;
+
+        PreferencePushTask(WebUiSyncFragment fragment) {
+            this.fragmentRef = new WeakReference<>(fragment);
+        }
+
+        void execute(WebUiConfig config, String deviceId) {
+            WebUiSyncFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+            Context context = fragment.getContext();
+            if (context == null) return;
+
+            progress = ProgressDialog.show(fragment.requireActivity(), null,
+                    fragment.getString(R.string.settings_webui_preferences_syncing), true, false);
+
+            executor.execute(() -> {
+                Throwable error = null;
+                try {
+                    PreferenceSyncHelper.pushToServer(config, context, deviceId);
+                } catch (Throwable e) {
+                    error = e;
+                }
+                final Throwable finalError = error;
+                handler.post(() -> onPostExecute(finalError));
+            });
+        }
+
+        private void onPostExecute(Throwable error) {
+            if (progress != null) {
+                try { progress.dismiss(); } catch (Exception ignored) {}
+            }
+            WebUiSyncFragment fragment = fragmentRef.get();
+            if (fragment == null || !fragment.isAdded()) return;
+            if (error == null) {
+                Toast.makeText(fragment.requireActivity(), R.string.settings_webui_preferences_pushed, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(fragment.requireActivity(),
+                        fragment.getString(R.string.settings_webui_preferences_failed, messageOf(error)),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    /** Downloads server preferences and applies them locally via {@link PreferenceSyncHelper}. */
+    private static final class PreferencePullTask {
+        private final WeakReference<WebUiSyncFragment> fragmentRef;
+        private ProgressDialog progress;
+
+        PreferencePullTask(WebUiSyncFragment fragment) {
+            this.fragmentRef = new WeakReference<>(fragment);
+        }
+
+        void execute(WebUiConfig config, String deviceId) {
+            WebUiSyncFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+            Context context = fragment.getContext();
+            if (context == null) return;
+
+            progress = ProgressDialog.show(fragment.requireActivity(), null,
+                    fragment.getString(R.string.settings_webui_preferences_syncing), true, false);
+
+            executor.execute(() -> {
+                Throwable error = null;
+                try {
+                    PreferenceSyncHelper.pullFromServer(config, context, deviceId);
+                } catch (Throwable e) {
+                    error = e;
+                }
+                final Throwable finalError = error;
+                handler.post(() -> onPostExecute(finalError));
+            });
+        }
+
+        private void onPostExecute(Throwable error) {
+            if (progress != null) {
+                try { progress.dismiss(); } catch (Exception ignored) {}
+            }
+            WebUiSyncFragment fragment = fragmentRef.get();
+            if (fragment == null || !fragment.isAdded()) return;
+            if (error == null) {
+                Toast.makeText(fragment.requireActivity(), R.string.settings_webui_preferences_pulled, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(fragment.requireActivity(),
+                        fragment.getString(R.string.settings_webui_preferences_failed, messageOf(error)),
                         Toast.LENGTH_LONG).show();
             }
         }
