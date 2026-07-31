@@ -929,5 +929,12 @@
     <string name="settings_webui_syncing">Syncing…</string>
     <string name="settings_webui_sync_done">Sync complete: uploaded %1$d favorites / %2$d history, pulled %3$d favorites / %4$d history</string>
     <string name="settings_webui_sync_failed">Sync failed: %s</string>
+    <string name="settings_webui_remote_read">Remote reading</string>
+    <string name="settings_webui_remote_read_summary">When connected, stream pages from the server instead of EH; read pages stay in the local cache</string>
+    <string name="download_choose_location">Download to</string>
+    <string name="download_local">This device</string>
+    <string name="download_delegate_server">On the server</string>
+    <string name="download_delegate_started">Download started on server</string>
+    <string name="download_delegate_failed">Server download failed</string>
 
 </resources>

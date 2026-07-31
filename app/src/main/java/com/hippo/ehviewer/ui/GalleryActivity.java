@@ -83,6 +83,9 @@ import com.hippo.ehviewer.gallery.ArchiveGalleryProvider;
 import com.hippo.ehviewer.gallery.DirGalleryProvider;
 import com.hippo.ehviewer.gallery.EhGalleryProvider;
 import com.hippo.ehviewer.gallery.GalleryProvider2;
+import com.hippo.ehviewer.gallery.WebUiGalleryProvider;
+import com.hippo.ehviewer.webui.WebUiConfig;
+import com.hippo.ehviewer.webui.WebUiSettings;
 import com.hippo.ehviewer.widget.GalleryGuideView;
 import com.hippo.ehviewer.widget.GalleryHeader;
 import com.hippo.ehviewer.widget.ReversibleSeekBar;
@@ -279,7 +282,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
         } else if (ACTION_EH.equals(mAction)) {
             if (mGalleryInfo != null) {
-                mGalleryProvider = new EhGalleryProvider(this, mGalleryInfo);
+                // Remote reading (roadmap §2.4): when a WebUI server is
+                // configured and enabled, stream pages from the server instead
+                // of EH. Falls back to the normal provider otherwise.
+                WebUiSettings webUiSettings = new WebUiSettings(this);
+                WebUiConfig webUiConfig = webUiSettings.loadConfig();
+                if (webUiConfig != null && webUiSettings.remoteReadEnabled()) {
+                    mGalleryProvider = new WebUiGalleryProvider(mGalleryInfo, webUiConfig);
+                } else {
+                    mGalleryProvider = new EhGalleryProvider(this, mGalleryInfo);
+                }
             }
         } else if (Intent.ACTION_VIEW.equals(mAction)) {
             if (mUri != null) {

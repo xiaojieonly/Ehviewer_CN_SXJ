@@ -40,6 +40,7 @@ public final class WebUiSettings {
     private static final String KEY_TOKEN = "token";
     private static final String KEY_DEVICE_ID = "device_id";
     private static final String KEY_LAST_SYNC_TIMESTAMP = "last_sync_timestamp";
+    private static final String KEY_REMOTE_READ = "remote_read_enabled";
 
     private final SharedPreferences preferences;
     private final WebUiCredentialStore credentialStore;
@@ -115,5 +116,18 @@ public final class WebUiSettings {
 
     public void setLastSyncTimestamp(long timestamp) {
         preferences.edit().putLong(KEY_LAST_SYNC_TIMESTAMP, timestamp).apply();
+    }
+
+    /**
+     * Whether GalleryActivity should read galleries from the WebUI server
+     * instead of EH directly when a server is configured (roadmap 2.4).
+     * Off by default; pages still stream through the local SpiderDen cache.
+     */
+    public boolean remoteReadEnabled() {
+        return preferences.getBoolean(KEY_REMOTE_READ, false);
+    }
+
+    public void setRemoteReadEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_REMOTE_READ, enabled).apply();
     }
 }

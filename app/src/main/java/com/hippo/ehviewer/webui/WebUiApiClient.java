@@ -19,8 +19,12 @@ package com.hippo.ehviewer.webui;
 import androidx.annotation.NonNull;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
@@ -114,6 +118,84 @@ public final class WebUiApiClient {
             throw new IOException("Empty pull response");
         }
         return response;
+    }
+
+    // ---- Remote reading (I5 §2.4) ----
+
+    /**
+     * GET /api/v1/gallery/{gid} — returns the page count of a gallery from the
+     * server's index. Used by {@link com.hippo.ehviewer.gallery.WebUiGalleryProvider}
+     * to size the reader before any image is fetched.
+     *
+     * @return page count, or {@code -1} if the server payload has no {@code pages} field
+     */
+    public static int getGalleryPages(@NonNull WebUiConfig config, long gid) throws IOException {
+        String json = get(config.baseUrl() + "/api/v1/gallery/" + gid, config.getToken());
+        JSONObject detail = JSON.parseObject(json);
+        if (detail == null) {
+            throw new IOException("Empty gallery detail response");
+        }
+        return detail.getIntValue("pages");
+    }
+
+    /**
+     * GET /api/v1/image/{galleryId}/{page} — streams the raw bytes of one page.
+     * The caller owns the returned {@link Response} and must close it.
+     * The server fetches from EH on cache miss, so the phone never talks to EH.
+     */
+    @NonNull
+    public static Response fetchImage(@NonNull WebUiConfig config, long gid, int page) throws IOException {
+        Request.Builder builder = new Request.Builder()
+                .url(config.baseUrl() + "/api/v1/image/" + gid + "/" + page)
+                .get();
+        addAuth(builder, config.getToken());
+        return client().newCall(builder.build()).execute();
+    }
+
+    // ---- Delegated download (I5 §2.5) ----
+
+    /**
+     * POST /api/v1/download/add — registers a download task on the server.
+     * Idempotent by gid: returns {@code false} when the task already exists.
+     */
+    public static boolean addDownload(@NonNull WebUiConfig config,
+            @NonNull WebUiDownloadModels.DownloadAddRequest request) throws IOException {
+        String json = postJson(config.baseUrl() + "/api/v1/download/add", config.getToken(),
+                JSON.toJSONString(request));
+        return Boolean.parseBoolean(json.trim());
+    }
+
+    /**
+     * GET /api/v1/download/list — lists server-side download tasks. The server
+     * assigns each task a numeric {@code id} on add, which the client needs to
+     * start/pause it; we resolve it by gid from this list.
+     */
+    @NonNull
+    public static List<WebUiDownloadModels.DownloadListItem> listDownloads(@NonNull WebUiConfig config)
+            throws IOException {
+        String json = get(config.baseUrl() + "/api/v1/download/list", config.getToken());
+        JSONObject root = JSON.parseObject(json);
+        JSONArray downloads = root != null ? root.getJSONArray("downloads") : null;
+        List<WebUiDownloadModels.DownloadListItem> items = new ArrayList<>();
+        if (downloads == null) {
+            return items;
+        }
+        for (int i = 0, n = downloads.size(); i < n; i++) {
+            JSONObject obj = downloads.getJSONObject(i);
+            WebUiDownloadModels.DownloadListItem item = new WebUiDownloadModels.DownloadListItem();
+            item.id = obj.getLongValue("id");
+            item.gid = obj.getLongValue("gid");
+            item.state = obj.getIntValue("state");
+            item.title = obj.getString("title");
+            items.add(item);
+        }
+        return items;
+    }
+
+    /** POST /api/v1/download/start/{id} — starts or resumes a server-side task. */
+    public static boolean startDownload(@NonNull WebUiConfig config, long id) throws IOException {
+        String json = postJson(config.baseUrl() + "/api/v1/download/start/" + id, config.getToken(), "");
+        return Boolean.parseBoolean(json.trim());
     }
 
     private static String get(String url, String token) throws IOException {

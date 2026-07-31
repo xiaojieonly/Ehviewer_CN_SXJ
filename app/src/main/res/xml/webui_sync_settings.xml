@@ -37,4 +37,11 @@
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
+    <SwitchPreferenceCompat
+        android:key="webui_remote_read"
+        android:summary="@string/settings_webui_remote_read_summary"
+        android:title="@string/settings_webui_remote_read"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
 </PreferenceScreen>

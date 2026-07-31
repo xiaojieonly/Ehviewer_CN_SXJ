@@ -6,6 +6,7 @@ build/
 
 # Gradle
 .gradle/
+.gradle-user-home/
 gradle/
 
 # IDE

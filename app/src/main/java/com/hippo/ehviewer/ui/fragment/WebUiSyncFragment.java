@@ -33,6 +33,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.webui.WebUiApiClient;
@@ -57,6 +58,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     private static final String KEY_CONFIGURE = "webui_configure";
     private static final String KEY_STATUS = "webui_status";
     private static final String KEY_SYNC_NOW = "webui_sync_now";
+    private static final String KEY_REMOTE_READ = "webui_remote_read";
 
     private Preference mConfigure;
     private Preference mStatus;
@@ -90,6 +92,20 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         if (mSyncNow != null) {
             mSyncNow.setOnPreferenceClickListener(p -> {
                 syncNow();
+                return true;
+            });
+        }
+
+        // Remote reading toggle (roadmap §2.4). Persisted via WebUiSettings
+        // (custom prefs file, like the credential store) rather than the
+        // default preference store, so keep it non-persistent here.
+        SwitchPreferenceCompat remoteRead = findPreference(KEY_REMOTE_READ);
+        if (remoteRead != null) {
+            WebUiSettings settings = new WebUiSettings(requireContext());
+            remoteRead.setChecked(settings.remoteReadEnabled());
+            remoteRead.setPersistent(false);
+            remoteRead.setOnPreferenceChangeListener((pref, newValue) -> {
+                settings.setRemoteReadEnabled(Boolean.TRUE.equals(newValue));
                 return true;
             });
         }
