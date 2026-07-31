@@ -18,10 +18,24 @@ export interface SmbSettings {
   enabled: boolean
 }
 
+export interface SecuritySettings {
+  requireAuth: boolean
+  sessionTimeout: number
+}
+
+export interface ProcessingSettings {
+  enabled: boolean
+  defaultType: string
+  outputFormat: string
+  outputQuality: number
+}
+
 export interface Settings {
   download: DownloadSettings
   cache: CacheSettings
   smb: SmbSettings
+  security: SecuritySettings
+  processing: ProcessingSettings
 }
 
 export const settingsApi = {
