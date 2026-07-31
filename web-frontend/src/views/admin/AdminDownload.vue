@@ -328,7 +328,7 @@ const savedFlash = ref(false)
 let savedTimer: number | undefined
 let saveTimer: number | undefined
 
-/** Debounced PUT /settings — mirrors SettingsView committing prefs on change. */
+/** Debounced PUT /settings — mirrors the settings page committing prefs on change. */
 function scheduleServerSave(): void {
   if (saveTimer) window.clearTimeout(saveTimer)
   saveTimer = window.setTimeout(async () => {

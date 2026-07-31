@@ -1,7 +1,7 @@
 <!--
   AdminAdvanced.vue — 管理面板「高级」页（Wave 6）.
 
-  复用 AdminLayout 内容区与 SettingsView 的偏好分组 / 对话框样式：
+  复用 AdminLayout 内容区与 settings 页的偏好分组 / 对话框样式：
 
     - 界面语言：项目当前无 i18n 机制，仅将偏好写入 localStorage
       （`ehviewer-admin-advanced-ui`），文案后续接入 i18n 时再消费；

@@ -38,6 +38,9 @@
       <!-- Menu: 9-item single-select group (nav_drawer_main.xml + admin). -->
       <nav class="navigation-drawer__menu" role="menu" aria-label="菜单">
         <template v-for="item in items" :key="item.id">
+          <!-- Web-only admin entry is visually separated from the Android
+               mirror items by a divider. -->
+          <div v-if="item.id === 'admin'" class="navigation-drawer__divider" role="separator" />
           <slot name="item" :item="item" :active="item.id === activeId">
             <button
               type="button"
@@ -367,8 +370,7 @@ function onThemeToggle(): void {
   white-space: nowrap;
 }
 
-/* Single-checked group: the active row is tinted primary. */
-.navigation-drawer__item.is-active {
+/* Single-checked group: the active row is tinted primary. */.navigation-drawer__item.is-active {
   background: rgba(0, 150, 136, 0.12);
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--text-color-theme-primary);
@@ -376,6 +378,13 @@ function onThemeToggle(): void {
 
 .navigation-drawer__item.is-active .navigation-drawer__item-icon {
   color: var(--color-primary);
+}
+
+/* Divider above the web-only admin entry. */
+.navigation-drawer__divider {
+  height: 1px;
+  margin: var(--spacing) var(--keyline-margin);
+  background: var(--color-divider);
 }
 
 /* ---------------------------------- footer ------------------------------ */

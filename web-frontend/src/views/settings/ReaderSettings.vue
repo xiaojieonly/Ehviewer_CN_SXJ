@@ -1,7 +1,7 @@
 <!--
   ReaderSettings.vue — 阅读器偏好设置（/settings/reader）。
 
-  结构沿用 SettingsView.vue 的 preference 样式约定（pref-group / pref-card /
+  结构沿用原设置页的 preference 样式约定（pref-group / pref-card /
   pref / segment / switch / stepper），选项值与枚举对齐
   `src/components/reader/PageMode.vue`（READING_DIRECTION_LTR/RTL/VERTICAL、
   auto/single/dual/scroll）。所有变更通过 preferencesStore.updateReader

@@ -1,7 +1,7 @@
 <!--
   AdminProcessing.vue — 管理面板「图像处理」页（Wave 6）.
 
-  复用 AdminLayout 内容区与 SettingsView 的偏好分组样式
+  复用 AdminLayout 内容区与 settings 页的偏好分组样式
   （.pref-group / .pref-card / .pref / .switch / .select），持久化走
   PUT /settings 的 processing 段（与 AdminAccess 相同的本地类型 + 断言模式）：
 

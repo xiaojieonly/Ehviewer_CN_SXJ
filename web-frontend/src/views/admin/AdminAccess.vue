@@ -242,7 +242,7 @@ onMounted(async () => {
 }
 
 /* ----------------------------- preference group --------------------------- */
-/* Reuses SettingsView's group/card/row/switch/field spec (roadmap §卡片规范). */
+/* Reuses the settings page's group/card/row/switch/field spec (roadmap §卡片规范). */
 
 .pref-group__title {
   margin: 22px 4px 8px;

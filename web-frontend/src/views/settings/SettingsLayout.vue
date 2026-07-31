@@ -1,8 +1,8 @@
 <!--
   SettingsLayout.vue — shell for the nested /settings routes: toolbar +
   horizontal tab strip (通用 / 阅读器 / 隐私) + <router-view> content.
-  Style follows SettingsView.vue's toolbar / column conventions with the
-  existing design-token variables.
+  Style follows the original settings page's toolbar / column conventions
+  with the existing design-token variables.
 -->
 <script setup lang="ts">
 import { useRoute } from 'vue-router'

@@ -1,7 +1,7 @@
 <!--
   AdminServer.vue — 管理面板「服务器」页（Wave 6）.
 
-  复用 AdminLayout 内容区（本组件渲染在其 <router-view /> 内）与 SettingsView
+  复用 AdminLayout 内容区（本组件渲染在其 <router-view /> 内）与 settings 页
   的偏好分组样式（.pref-group / .pref-card / .pref / .switch），并沿用其
   服务端设置持久化模式（PUT /settings）：
 
@@ -245,7 +245,7 @@ onMounted(async () => {
   color: var(--text-color-secondary);
 }
 
-/* ----------------------------- 偏好分组（同 SettingsView） ----------------- */
+/* ----------------------------- 偏好分组（同 settings 页） ----------------- */
 
 .pref-group__title {
   margin: 22px 4px 8px;
