@@ -1,6 +1,7 @@
 <template>
   <div class="app-layout">
     <NavigationDrawer
+      v-if="showChrome"
       v-model:open="drawerOpen"
       :items="navItems"
       :active-item-id="activeNavId"
@@ -9,7 +10,23 @@
       @select="handleNavSelect"
       @toggle-theme="themeStore.toggleTheme()"
     />
-    <main class="app-content">
+
+    <!-- Hamburger trigger — visible only on narrow viewports where the drawer
+         is modal (hidden ≥720px where the drawer is persistent). Positioned
+         fixed so it floats above every view's content. -->
+    <button
+      v-if="showHamburger"
+      type="button"
+      class="app-hamburger"
+      aria-label="打开导航菜单"
+      @click="drawerOpen = true"
+    >
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+        <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+      </svg>
+    </button>
+
+    <main class="app-content" :class="{ 'app-content--full': !showChrome }">
       <router-view />
     </main>
   </div>
@@ -18,7 +35,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import NavigationDrawer from '@/components/layout/NavigationDrawer.vue'
+import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/NavigationDrawer.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import type { NavItem } from '@/types/components'
@@ -30,20 +47,18 @@ const themeStore = useThemeStore()
 
 const drawerOpen = ref(false)
 
-const navItems: NavItem[] = [
-  { id: 'homepage', label: '首页', icon: 'homepage-black' },
-  { id: 'subscription', label: '订阅', icon: 'eh-subscription-black' },
-  { id: 'whats-hot', label: '热门', icon: 'fire-black' },
-  { id: 'top-lists', label: '排行', icon: 'top-lists' },
-  { id: 'favourites', label: '收藏', icon: 'heart-black' },
-  { id: 'history', label: '历史', icon: 'history-black' },
-  { id: 'downloads', label: '下载', icon: 'download-black' },
-  { id: 'settings', label: '设置', icon: 'settings-black' },
-]
+/** Use the canonical 8-item list from NavigationDrawer (single source of truth). */
+const navItems = DEFAULT_NAV_ITEMS
+
+/** Routes that should hide the hamburger (login has its own layout, reader is fullscreen). */
+const CHROME_HIDDEN_ROUTES = new Set(['Login', 'Reader'])
+
+const showChrome = computed(() => !CHROME_HIDDEN_ROUTES.has(route.name as string))
+const showHamburger = computed(() => showChrome.value)
 
 const routeToNav: Record<string, string> = {
   '/': 'homepage',
-  '/favorites': 'favourites',
+  '/favorites': 'favourite',
   '/history': 'history',
   '/downloads': 'downloads',
   '/settings': 'settings',
@@ -57,9 +72,9 @@ function handleNavSelect(item: NavItem) {
   const paths: Record<string, string> = {
     homepage: '/',
     subscription: '/',
-    'whats-hot': '/',
-    'top-lists': '/',
-    favourites: '/favorites',
+    whats_hot: '/',
+    top_lists: '/',
+    favourite: '/favorites',
     history: '/history',
     downloads: '/downloads',
     settings: '/settings',
@@ -96,9 +111,50 @@ watch(
 }
 
 /* Persistent drawer on wide viewports — content shifts right */
-@media (min-width: 600px) {
+@media (min-width: 720px) {
   .app-content {
     margin-left: var(--drawer-width);
+  }
+}
+
+/* Full-width content when chrome (drawer) is hidden (login / reader). */
+.app-content--full {
+  margin-left: 0 !important;
+}
+
+/* Floating hamburger — narrow viewports only (drawer is modal <720px). */
+.app-hamburger {
+  position: fixed;
+  top: calc(8px + var(--safe-area-top));
+  left: 8px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background-floating);
+  color: var(--drawable-color-primary);
+  box-shadow: 0 1px 4px var(--shadow-color);
+  cursor: pointer;
+  transition: background 150ms linear;
+}
+
+.app-hamburger:hover {
+  background: var(--color-surface);
+}
+
+.app-hamburger:active {
+  background: var(--color-surface-activated);
+}
+
+/* Hidden on wide viewports where the drawer is persistent. */
+@media (min-width: 720px) {
+  .app-hamburger {
+    display: none;
   }
 }
 </style>
