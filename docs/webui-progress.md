@@ -1,6 +1,6 @@
 # WebUI 协同系统 — 工作记录 / 执行进度
 
-> 状态快照：2026-07-29
+> 状态快照：2026-07-31
 > 规划文档：`webui-roadmap.md`（v3，定义"做什么"）+ `webui-parallel-execution.md`（定义"如何并行做"）
 > 本文档记录**实际执行进度**，与上述规划对照。规划层细节以那两份文档为准。
 
@@ -13,8 +13,8 @@
 | Wave 0 契约冻结 | ✅ 完成 | CA1-CA7 + CB1 + CB2，契约存于 `contracts/` |
 | Wave 1 最大并行 | ✅ 完成 | 后端 B1-B10 + 前端组件 F1-F9，200 前端测试全绿 |
 | Wave 2 屏幕复刻 | ✅ 完成 | S1-S7 七屏 + NavigationDrawer 全局集成（App.vue） |
-| Wave 3 集成与高级 | 🔄 大部完成 | I1/I2/I3/I4 ✅；I5 增量 1 ✅（远程阅读/委托下载待做） |
-| Wave 4 硬化与验收 | 🔄 进行中 | H2 ✅、H3 ✅、H4 ✅（部署）；H1 在途；真机 QA 待做 |
+| Wave 3 集成与高级 | ✅ 完成 | I1/I2/I3/I4 ✅；I5 增量 1 ✅ + 增量 2 ✅（远程阅读 §2.4 + 委托下载 §2.5） |
+| Wave 4 硬化与验收 | 🔄 进行中 | H1 ✅、H2 ✅、H3 ✅、H4 ✅（部署）；真机 QA 待做 |
 
 ---
 
@@ -42,6 +42,10 @@
 | `e21c5f5` | **feat (H3)**：剩余 8 视图安全区（Search/Login/Favorite/History/Download/Settings/Smb/GalleryDetail），复用 `--safe-area-*`，规避双重偏移。 |
 | `9ebefbc` | **fix (H3 后续)**：AppHeader 主题化——硬编码白底在 Dark/Black 主题下压在深色安全区带上，改用 `--color-background-floating` 等令牌。 |
 | `18c24f7` | **feat (I5 增量 1)**：Android 同步客户端——连接管理 + 收藏/历史同步。详见 §6。 |
+| `cf2ea37` | **chore (H1)**：Playwright 视觉回归依赖 + npm scripts + .gitignore（actual/diff/test-results 排除）。 |
+| `cbb918c` | **feat (H1)**：视觉回归套件——Playwright 截图捕获（6 路由×3 主题×2 视口=36 屏）+ pixelmatch 比对（≤1% 阈值）+ 36 张 web 基线。 |
+| `4cce046` | **feat (I5 §2.4)**：Android 远程阅读——`WebUiGalleryProvider`（SpiderDen 缓存优先 + 服务器 `/api/v1/image` 拉流 + 解码）、GalleryActivity 接入、设置页"远程阅读"开关（双语）、`WebUiApiClient` 扩展（gallery 页数/图片流/download 端点）。 |
+| `37568f0` | **feat (I5 §2.5)**：Android 委托下载——详情页下载弹"本机/服务器"选择，`download/add`（gid 幂等）→ `list` 解析服务端 id → `start/{id}`；`WebUiDownloadModels` wire DTO。 |
 
 ---
 
@@ -93,10 +97,10 @@ I5 子代理在深度探索 app/ 代码库（约 84 次工具调用、累积 ~49
 
 | 项 | 优先级 | 说明 |
 |----|--------|------|
-| **H1 视觉回归套件** | 高（在途） | Playwright + pixelmatch，三主题×多视口。已生成 36 张基线 + `playwright.config.ts`/`visual.spec.ts`/`compare.mjs` + `test:visual` scripts；子代理仍在运行，**未提交**。基线当前为 web 自渲染，应替换为 Android 真机三主题截图。 |
-| **I5 §2.4 远程阅读** | 中 | 服务器流 GalleryProvider 数据源，复用现有阅读器。内容审核敏感，宜 lead 受控推进。 |
-| **I5 §2.5 委托下载** | 中 | "委托给服务器"作为新下载来源，复用现有下载系统。内容审核敏感。 |
-| **503 友好离线态** | 低 | sw.js 已返回 `{error:'offline'}` 503，但 `client.ts`/视图未消费，离线且无缓存时显示通用错误。需贯穿视图错误处理路径。 |
+| **H1 视觉回归套件** | ✅ 完成 | Playwright + pixelmatch，6 路由×3 主题×2 视口=36 屏。`cf2ea37` + `cbb918c`。基线当前为 web 自渲染，应替换为 Android 真机三主题截图。 |
+| **I5 §2.4 远程阅读** | ✅ 完成 | `WebUiGalleryProvider`（`4cce046`）：SpiderDen 缓存优先 + 服务器 `/api/v1/image` 拉流 + 解码；设置页开关启用。 |
+| **I5 §2.5 委托下载** | ✅ 完成 | 详情页"本机/服务器"选择（`37568f0`）：`download/add` → `list` → `start/{id}`。 |
+| **503 友好离线态** | ✅ 完成 | `client.ts` 识别 SW 503 `{error:'offline'}` → `OfflineError`；HomeView 显示"当前离线，且无本地缓存可用"；`isOfflinePayload` 单测 5 条。 |
 | **真机 QA** | 中 | iPad Safari A2HS 全屏、飞行模式阅读已缓存画廊、maskable 图标（Android）、SW 更新流。CLI 无法覆盖。 |
 | **AppHeader 冗余**（可选） | 低 | AppHeader 导航与 NavigationDrawer 重复；4 视图（Favorite/History/Download/GalleryDetail）仍用 AppHeader。可考虑统一为抽屉。 |
 | **waifu2x 实装** | 范围外 | 接口已在 B7 冻结，实装明确为本路线图范围外（后续 session）。 |
@@ -105,10 +109,10 @@ I5 子代理在深度探索 app/ 代码库（约 84 次工具调用、累积 ~49
 
 ## 8. 验证状态（截至快照）
 
-- 前端：`vue-tsc --noEmit` 0 错误；`vitest` 200/200 全绿；`vite build` 成功（terser 修复后）。
+- 前端：`vue-tsc --noEmit` 0 错误；`vitest` 全绿（200 + 新增 5 条离线判定）；`vite build` 成功（terser 修复后）。
 - 后端：JUnit5 40 测试通过。
-- Android：`:app:compileAppReleaseDebugJavaWithJavac` BUILD SUCCESSFUL（含 I5 增量 1）。
-- 构建配方（本机）：gradle wrapper 9.4.1 分发包损坏，用缓存 9.5.0 + AS JBR 21（`JAVA_HOME` 必须指向 JBR，系统 java 是 1.8）。详见 `webui-roadmap.md` Phase 4 / 项目构建记忆。
+- Android：`:app:compileAppReleaseDebugJavaWithJavac` BUILD SUCCESSFUL（含 I5 增量 1 + 增量 2 §2.4/§2.5）。
+- 构建配方（本机/沙盒）：gradle wrapper 9.4.1 分发包损坏；沙盒 Bash 对 `~/.gradle` 只读，需 `GRADLE_USER_HOME=<workspace>/.gradle-user-home`（已 gitignore，从 `~/.gradle` 复制而来）+ AS JBR 21（`JAVA_HOME` 指向 JBR）+ gradle 9.5.0 分发直连；Kotlin daemon 在沙盒内不可用（自动 fallback 进程内编译）。详见 `webui-roadmap.md` Phase 4 / 项目构建记忆。
 
 ---
 
