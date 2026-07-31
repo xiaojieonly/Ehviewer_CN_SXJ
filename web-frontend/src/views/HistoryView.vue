@@ -1,7 +1,5 @@
 <template>
   <div class="history-view">
-    <AppHeader />
-
     <div class="history-view__heading">
       <h1 class="history-view__title">History</h1>
       <span v-if="state === 'content'" class="history-view__count">
@@ -110,7 +108,6 @@ import {
   type FabAction,
   type GalleryInfo,
 } from '@/types/components'
-import AppHeader from '@/components/layout/AppHeader.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppCard from '@/components/atoms/AppCard.vue'

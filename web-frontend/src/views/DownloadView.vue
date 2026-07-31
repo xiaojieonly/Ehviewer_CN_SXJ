@@ -1,7 +1,5 @@
 <template>
   <div class="download-view">
-    <AppHeader />
-
     <!-- Download label tabs (Android DownloadsScene label spinner, reimagined
          as a scrollable tab strip; active tab gets the primary underline) -->
     <nav class="label-tabs" aria-label="Download labels">
@@ -125,7 +123,6 @@ import type { DownloadItem, DownloadLabel } from '@/api/download'
 import { useWebSocket } from '@/composables/useWebSocket'
 import type { DownloadProgress } from '@/composables/useWebSocket'
 import type { FabAction } from '@/types/components'
-import AppHeader from '@/components/layout/AppHeader.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import DownloadItemCard from '@/components/download/DownloadItem.vue'

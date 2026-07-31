@@ -1,7 +1,5 @@
 <template>
   <div class="favorite-view">
-    <AppHeader />
-
     <div class="favorite-view__heading">
       <h1 class="favorite-view__title">Favorites</h1>
       <span v-if="state === 'content'" class="favorite-view__count">
@@ -94,7 +92,6 @@ import {
   type FabAction,
   type GalleryInfo,
 } from '@/types/components'
-import AppHeader from '@/components/layout/AppHeader.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppCard from '@/components/atoms/AppCard.vue'

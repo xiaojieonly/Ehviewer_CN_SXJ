@@ -1,7 +1,5 @@
 <template>
   <div class="gallery-detail">
-    <AppHeader />
-
     <!-- Loading state (Android: centered ProgressView) -->
     <div v-if="loading" class="gallery-detail__state">
       <ProgressSpinner size="large" />
@@ -214,7 +212,6 @@ import { favoriteApi } from '@/api/favorite'
 import { downloadApi } from '@/api/download'
 import { CATEGORY_BY_BIT } from '@/types/components'
 import type { GalleryDetail } from '@/types'
-import AppHeader from '@/components/layout/AppHeader.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'

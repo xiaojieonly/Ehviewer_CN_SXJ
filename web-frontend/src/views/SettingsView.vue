@@ -20,29 +20,11 @@
 -->
 <template>
   <div class="settings-scene">
-    <NavigationDrawer
-      v-model:open="drawerOpen"
-      :items="DEFAULT_NAV_ITEMS"
-      active-item-id="settings"
-      :username="authStore.username ?? undefined"
-      :theme="themeStore.currentTheme"
-      @select="onNavSelect"
-      @toggle-theme="themeStore.toggleTheme()"
-    />
-
     <div class="settings-scene__main">
       <header class="toolbar">
-        <button
-          type="button"
-          class="toolbar__nav"
-          aria-label="Open menu"
-          @click="drawerOpen = true"
-        >
-          <AppIcon name="reorder" />
-        </button>
-        <h1 class="toolbar__title">Settings</h1>
+        <h1 class="toolbar__title">设置</h1>
         <Transition name="saved">
-          <span v-if="savedFlash" class="toolbar__saved" role="status">Saved</span>
+          <span v-if="savedFlash" class="toolbar__saved" role="status">已保存</span>
         </Transition>
       </header>
 
@@ -50,14 +32,14 @@
         <div class="settings-column">
           <!-- ═══ Account ═══════════════════════════════════════════════ -->
           <section class="pref-group">
-            <h2 class="pref-group__title">Account</h2>
+            <h2 class="pref-group__title">账户</h2>
             <div class="pref-card">
               <div class="pref">
                 <span class="pref__avatar" aria-hidden="true">{{ userInitial }}</span>
                 <div class="pref__text">
-                  <span class="pref__title">{{ authStore.username ?? 'Guest' }}</span>
+                  <span class="pref__title">{{ authStore.username ?? '游客' }}</span>
                   <span class="pref__summary">
-                    {{ authStore.isAuthenticated ? 'Signed in to this server' : 'Not signed in' }}
+                    {{ authStore.isAuthenticated ? '已连接到此服务器' : '未登录' }}
                   </span>
                 </div>
               </div>
@@ -65,8 +47,8 @@
               <button type="button" class="pref pref--action" @click="confirmLogout">
                 <AppIcon name="delete-red" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title pref__title--danger">Log out</span>
-                  <span class="pref__summary">End the session on this device</span>
+                  <span class="pref__title pref__title--danger">退出登录</span>
+                  <span class="pref__summary">结束此设备上的会话</span>
                 </div>
               </button>
             </div>
@@ -74,15 +56,15 @@
 
           <!-- ═══ Theme ═════════════════════════════════════════════════ -->
           <section class="pref-group">
-            <h2 class="pref-group__title">Theme</h2>
+            <h2 class="pref-group__title">主题</h2>
             <div class="pref-card">
               <div class="pref">
                 <AppIcon name="chart-accent" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Appearance</span>
-                  <span class="pref__summary">Current: {{ themeLabel }}</span>
+                  <span class="pref__title">外观</span>
+                  <span class="pref__summary">当前：{{ themeLabel }}</span>
                 </div>
-                <div class="segment" role="radiogroup" aria-label="Theme">
+                <div class="segment" role="radiogroup" aria-label="主题">
                   <button
                     v-for="option in THEME_OPTIONS"
                     :key="option.value"
@@ -101,15 +83,15 @@
 
           <!-- ═══ Gallery list ══════════════════════════════════════════ -->
           <section class="pref-group">
-            <h2 class="pref-group__title">Gallery list</h2>
+            <h2 class="pref-group__title">画廊列表</h2>
             <div class="pref-card">
               <div class="pref">
                 <AppIcon name="reorder" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">List size</span>
-                  <span class="pref__summary">Card height in list layout</span>
+                  <span class="pref__title">列表尺寸</span>
+                  <span class="pref__summary">列表布局中的卡片高度</span>
                 </div>
-                <div class="segment" role="radiogroup" aria-label="List size">
+                <div class="segment" role="radiogroup" aria-label="列表尺寸">
                   <button
                     v-for="option in LIST_SIZE_OPTIONS"
                     :key="option.value"
@@ -127,10 +109,10 @@
               <div class="pref">
                 <AppIcon name="book-open" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Grid size</span>
-                  <span class="pref__summary">Thumbnail column width in grid layout</span>
+                  <span class="pref__title">网格尺寸</span>
+                  <span class="pref__summary">网格布局中的缩略图列宽</span>
                 </div>
-                <div class="segment" role="radiogroup" aria-label="Grid size">
+                <div class="segment" role="radiogroup" aria-label="网格尺寸">
                   <button
                     v-for="option in GRID_SIZE_OPTIONS"
                     :key="option.value"
@@ -148,15 +130,15 @@
               <div class="pref">
                 <AppIcon name="info-outline-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Show tags</span>
-                  <span class="pref__summary">Display tag chips on gallery cards</span>
+                  <span class="pref__title">显示标签</span>
+                  <span class="pref__summary">在画廊卡片上显示标签</span>
                 </div>
                 <button
                   type="button"
                   class="switch"
                   role="switch"
                   :aria-checked="ui.showTags"
-                  aria-label="Show tags"
+                  aria-label="显示标签"
                   @click="ui.showTags = !ui.showTags"
                 >
                   <span class="switch__thumb" />
@@ -167,15 +149,15 @@
 
           <!-- ═══ Reader ════════════════════════════════════════════════ -->
           <section class="pref-group">
-            <h2 class="pref-group__title">Reader</h2>
+            <h2 class="pref-group__title">阅读器</h2>
             <div class="pref-card">
               <div class="pref">
                 <AppIcon name="mobile-hand-left" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Reading direction</span>
+                  <span class="pref__title">阅读方向</span>
                   <span class="pref__summary">{{ directionLabel }}</span>
                 </div>
-                <div class="segment" role="radiogroup" aria-label="Reading direction">
+                <div class="segment" role="radiogroup" aria-label="阅读方向">
                   <button
                     v-for="option in DIRECTION_OPTIONS"
                     :key="option.value"
@@ -193,10 +175,10 @@
               <div class="pref">
                 <AppIcon name="book-open-primary" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Default page mode</span>
+                  <span class="pref__title">默认翻页模式</span>
                   <span class="pref__summary">{{ pageModeLabel }}</span>
                 </div>
-                <div class="segment" role="radiogroup" aria-label="Default page mode">
+                <div class="segment" role="radiogroup" aria-label="默认翻页模式">
                   <button
                     v-for="option in PAGE_MODE_OPTIONS"
                     :key="option.value"
@@ -214,14 +196,14 @@
               <div class="pref">
                 <AppIcon name="play-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Auto-play interval</span>
-                  <span class="pref__summary">Seconds per page in auto-play</span>
+                  <span class="pref__title">自动播放间隔</span>
+                  <span class="pref__summary">自动播放时每页停留秒数</span>
                 </div>
                 <div class="stepper">
                   <button
                     type="button"
                     class="stepper__btn"
-                    aria-label="Decrease interval"
+                    aria-label="减少间隔"
                     :disabled="ui.autoPlayInterval <= 1"
                     @click="ui.autoPlayInterval = Math.max(1, ui.autoPlayInterval - 1)"
                   >
@@ -231,7 +213,7 @@
                   <button
                     type="button"
                     class="stepper__btn"
-                    aria-label="Increase interval"
+                    aria-label="增加间隔"
                     :disabled="ui.autoPlayInterval >= 30"
                     @click="ui.autoPlayInterval = Math.min(30, ui.autoPlayInterval + 1)"
                   >
@@ -244,13 +226,13 @@
 
           <!-- ═══ Download ══════════════════════════════════════════════ -->
           <section class="pref-group">
-            <h2 class="pref-group__title">Download</h2>
+            <h2 class="pref-group__title">下载</h2>
             <div class="pref-card">
               <button type="button" class="pref pref--action" @click="openPathDialog">
                 <AppIcon name="folder-share-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Download path</span>
-                  <span class="pref__summary">{{ server?.download.path || 'Not set' }}</span>
+                  <span class="pref__title">下载路径</span>
+                  <span class="pref__summary">{{ server?.download.path || '未设置' }}</span>
                 </div>
                 <AppIcon name="pencil-dark" class="pref__chevron" size="20px" />
               </button>
@@ -258,14 +240,14 @@
               <div class="pref">
                 <AppIcon name="download-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Concurrent downloads</span>
-                  <span class="pref__summary">Worker threads fetching images</span>
+                  <span class="pref__title">并发下载数</span>
+                  <span class="pref__summary">获取图片的工作线程数</span>
                 </div>
                 <div class="stepper">
                   <button
                     type="button"
                     class="stepper__btn"
-                    aria-label="Fewer concurrent downloads"
+                    aria-label="减少并发下载数"
                     :disabled="!server || server.download.workerCount <= 1"
                     @click="bumpWorkers(-1)"
                   >
@@ -275,7 +257,7 @@
                   <button
                     type="button"
                     class="stepper__btn"
-                    aria-label="More concurrent downloads"
+                    aria-label="增加并发下载数"
                     :disabled="!server || server.download.workerCount >= 10"
                     @click="bumpWorkers(1)"
                   >
@@ -287,15 +269,15 @@
               <div class="pref">
                 <AppIcon name="go-to-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Auto-start downloads</span>
-                  <span class="pref__summary">Resume queued downloads immediately</span>
+                  <span class="pref__title">自动开始下载</span>
+                  <span class="pref__summary">立即恢复排队中的下载</span>
                 </div>
                 <button
                   type="button"
                   class="switch"
                   role="switch"
                   :aria-checked="ui.autoStartDownload"
-                  aria-label="Auto-start downloads"
+                  aria-label="自动开始下载"
                   @click="ui.autoStartDownload = !ui.autoStartDownload"
                 >
                   <span class="switch__thumb" />
@@ -306,15 +288,15 @@
 
           <!-- ═══ Advanced ══════════════════════════════════════════════ -->
           <section class="pref-group">
-            <h2 class="pref-group__title">Advanced</h2>
+            <h2 class="pref-group__title">高级</h2>
             <div class="pref-card">
               <button type="button" class="pref pref--action" @click="confirmClearCache">
                 <AppIcon name="clear-all-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Clear cache</span>
+                  <span class="pref__title">清除缓存</span>
                   <span class="pref__summary">
-                    Cached thumbnails and local data
-                    <template v-if="server"> · {{ server.cache.sizeMb }} MB reserved</template>
+                    已缓存的缩略图和本地数据
+                    <template v-if="server"> · {{ server.cache.sizeMb }} MB 已预留</template>
                   </span>
                 </div>
               </button>
@@ -322,16 +304,16 @@
               <button type="button" class="pref pref--action" @click="confirmClearHistory">
                 <AppIcon name="history-black" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">Clear search history</span>
-                  <span class="pref__summary">Remove all recent search keywords</span>
+                  <span class="pref__title">清除搜索历史</span>
+                  <span class="pref__summary">删除所有最近搜索关键词</span>
                 </div>
               </button>
               <div class="pref-divider" />
               <button type="button" class="pref pref--action" @click="aboutOpen = true">
                 <AppIcon name="info-dark" class="pref__icon" />
                 <div class="pref__text">
-                  <span class="pref__title">About</span>
-                  <span class="pref__summary">Version and credits</span>
+                  <span class="pref__title">关于</span>
+                  <span class="pref__summary">版本与致谢</span>
                 </div>
               </button>
             </div>
@@ -343,8 +325,8 @@
     <!-- Edit download path dialog. -->
     <Transition name="dialog">
       <div v-if="pathDialogOpen" class="dialog-scrim" @click.self="pathDialogOpen = false">
-        <div class="dialog" role="dialog" aria-modal="true" aria-label="Download path">
-          <h2 class="dialog__title">Download path</h2>
+        <div class="dialog" role="dialog" aria-modal="true" aria-label="下载路径">
+          <h2 class="dialog__title">下载路径</h2>
           <label class="field">
             <input
               v-model="pathDraft"
@@ -352,11 +334,11 @@
               placeholder=" "
               @keydown.enter.prevent="savePath"
             />
-            <span class="field__label">Server-side path</span>
+            <span class="field__label">服务器端路径</span>
           </label>
           <div class="dialog__actions">
-            <button type="button" class="btn-text" @click="pathDialogOpen = false">Cancel</button>
-            <button type="button" class="btn-primary" @click="savePath">Save</button>
+            <button type="button" class="btn-text" @click="pathDialogOpen = false">取消</button>
+            <button type="button" class="btn-primary" @click="savePath">保存</button>
           </div>
         </div>
       </div>
@@ -369,7 +351,7 @@
           <h2 class="dialog__title">{{ confirmState.title }}</h2>
           <p class="dialog__message">{{ confirmState.message }}</p>
           <div class="dialog__actions">
-            <button type="button" class="btn-text" @click="confirmState = null">Cancel</button>
+            <button type="button" class="btn-text" @click="confirmState = null">取消</button>
             <button type="button" class="btn-primary btn-primary--danger" @click="runConfirm">
               {{ confirmState.confirmLabel }}
             </button>
@@ -381,18 +363,18 @@
     <!-- About dialog. -->
     <Transition name="dialog">
       <div v-if="aboutOpen" class="dialog-scrim" @click.self="aboutOpen = false">
-        <div class="dialog" role="dialog" aria-modal="true" aria-label="About">
+        <div class="dialog" role="dialog" aria-modal="true" aria-label="关于">
           <div class="about">
             <AppIcon name="sad-panda-primary" size="56px" />
             <h2 class="about__name">AnotherViewer <span>WebUI</span></h2>
-            <p class="about__version">Version 1.0.0 · companion client</p>
+            <p class="about__version">版本 1.0.0 · 伴侣客户端</p>
             <p class="about__note">
-              Pixel-faithful web replica of the CN SXJ Android app —
-              same tokens, same layouts, three themes.
+              CN SXJ Android 应用的像素级 Web 复刻——
+              相同的设计令牌、相同的布局、三套主题。
             </p>
           </div>
           <div class="dialog__actions">
-            <button type="button" class="btn-text" @click="aboutOpen = false">Close</button>
+            <button type="button" class="btn-text" @click="aboutOpen = false">关闭</button>
           </div>
         </div>
       </div>
@@ -408,12 +390,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { NavItem } from '@/types/components'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore, type Theme } from '@/stores/theme'
-import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/NavigationDrawer.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 
 const router = useRouter()
@@ -423,9 +403,9 @@ const themeStore = useThemeStore()
 /* ------------------------------ option lists ----------------------------- */
 
 const THEME_OPTIONS: ReadonlyArray<{ value: Theme; label: string }> = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'black', label: 'Black' },
+  { value: 'light', label: '亮色' },
+  { value: 'dark', label: '暗色' },
+  { value: 'black', label: '纯黑' },
 ]
 
 type ListSize = 'long' | 'short'
@@ -434,39 +414,31 @@ type ReadingDirection = 'ltr' | 'rtl' | 'vertical'
 type PageMode = 'pager' | 'scroll'
 
 const LIST_SIZE_OPTIONS: ReadonlyArray<{ value: ListSize; label: string }> = [
-  { value: 'long', label: 'Long' },
-  { value: 'short', label: 'Short' },
+  { value: 'long', label: '高' },
+  { value: 'short', label: '矮' },
 ]
 
 const GRID_SIZE_OPTIONS: ReadonlyArray<{ value: GridSize; label: string }> = [
-  { value: 'large', label: 'Large' },
-  { value: 'middle', label: 'Middle' },
-  { value: 'small', label: 'Small' },
+  { value: 'large', label: '大' },
+  { value: 'middle', label: '中' },
+  { value: 'small', label: '小' },
 ]
 
 const DIRECTION_OPTIONS: ReadonlyArray<{ value: ReadingDirection; label: string }> = [
-  { value: 'ltr', label: 'LTR' },
-  { value: 'rtl', label: 'RTL' },
-  { value: 'vertical', label: 'Vertical' },
+  { value: 'ltr', label: '左到右' },
+  { value: 'rtl', label: '右到左' },
+  { value: 'vertical', label: '纵向' },
 ]
 
 const PAGE_MODE_OPTIONS: ReadonlyArray<{ value: PageMode; label: string }> = [
-  { value: 'pager', label: 'Pager' },
-  { value: 'scroll', label: 'Scroll' },
+  { value: 'pager', label: '翻页' },
+  { value: 'scroll', label: '滚动' },
 ]
 
 const DIRECTION_LABELS: Readonly<Record<ReadingDirection, string>> = {
-  ltr: 'Left to right',
-  rtl: 'Right to left',
-  vertical: 'Vertical (webtoon style)',
-}
-
-const NAV_ROUTES: Readonly<Record<string, string>> = {
-  homepage: '/',
-  favourite: '/favorites',
-  history: '/history',
-  downloads: '/downloads',
-  settings: '/settings',
+  ltr: '从左到右',
+  rtl: '从右到左',
+  vertical: '纵向（条漫模式）',
 }
 
 /* ----------------------------- client settings ---------------------------- */
@@ -536,7 +508,7 @@ function scheduleServerSave(): void {
       flashSaved()
     } catch (error) {
       console.error('[SettingsView] failed to persist settings', error)
-      showSnack('Could not save settings on the server')
+      showSnack('无法在服务器上保存设置')
     }
   }, 600)
 }
@@ -588,9 +560,9 @@ function runConfirm(): void {
 
 function confirmLogout(): void {
   confirmState.value = {
-    title: 'Log out',
-    message: 'End the current session? You will return to the login screen.',
-    confirmLabel: 'Log out',
+    title: '退出登录',
+    message: '结束当前会话？您将返回到登录界面。',
+    confirmLabel: '退出',
     action: () => {
       void authStore.logout().then(() => router.push('/login'))
     },
@@ -599,9 +571,9 @@ function confirmLogout(): void {
 
 function confirmClearCache(): void {
   confirmState.value = {
-    title: 'Clear cache',
-    message: 'Remove locally cached thumbnails and transient data from this browser?',
-    confirmLabel: 'Clear',
+    title: '清除缓存',
+    message: '删除此浏览器中本地缓存的缩略图和临时数据？',
+    confirmLabel: '清除',
     action: () => {
       let cleared = 0
       for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -611,30 +583,29 @@ function confirmClearCache(): void {
           cleared++
         }
       }
-      showSnack(cleared > 0 ? `Cleared ${cleared} cached item${cleared === 1 ? '' : 's'}` : 'Cache is already empty')
+      showSnack(cleared > 0 ? `已清除 ${cleared} 个缓存项` : '缓存已为空')
     },
   }
 }
 
 function confirmClearHistory(): void {
   confirmState.value = {
-    title: 'Clear search history',
-    message: 'Delete every recent search keyword stored on this device?',
-    confirmLabel: 'Delete',
+    title: '清除搜索历史',
+    message: '删除此设备上存储的所有最近搜索关键词？',
+    confirmLabel: '删除',
     action: () => {
       try {
         localStorage.removeItem('ehviewer-search-history')
       } catch {
         // ignore
       }
-      showSnack('Search history cleared')
+      showSnack('搜索历史已清除')
     },
   }
 }
 
 /* --------------------------------- chrome --------------------------------- */
 
-const drawerOpen = ref(false)
 const snack = ref('')
 let snackTimer: number | undefined
 
@@ -643,18 +614,14 @@ const userInitial = computed<string>(
 )
 
 const themeLabel = computed<string>(
-  () => THEME_OPTIONS.find((option) => option.value === themeStore.currentTheme)?.label ?? 'Light',
+  () => THEME_OPTIONS.find((option) => option.value === themeStore.currentTheme)?.label ?? '亮色',
 )
 
 const directionLabel = computed<string>(() => DIRECTION_LABELS[ui.readingDirection])
 
 const pageModeLabel = computed<string>(() =>
-  ui.pageMode === 'pager' ? 'Paged (swipe between pages)' : 'Continuous vertical scroll',
+  ui.pageMode === 'pager' ? '翻页模式（左右滑动翻页）' : '连续纵向滚动',
 )
-
-function onNavSelect(item: NavItem): void {
-  router.push(NAV_ROUTES[item.id] ?? '/')
-}
 
 function showSnack(message: string): void {
   snack.value = message
@@ -671,26 +638,23 @@ onMounted(async () => {
     server.value = await settingsApi.get()
   } catch (error) {
     console.error('[SettingsView] failed to load settings', error)
-    showSnack('Could not load server settings')
+    showSnack('无法加载服务器设置')
   }
 })
 </script>
 
 <style scoped>
-/* Scene shell — horizontal flex; the drawer panel becomes a static sibling
-   column at ≥720px (see NavigationDrawer responsive behavior). */
+/* Scene shell — the drawer is provided by App.vue; this is just the content column. */
 .settings-scene {
-  display: flex;
   height: 100dvh;
   background: var(--color-bg);
   overflow: hidden;
 }
 
 .settings-scene__main {
-  flex: 1 1 auto;
-  min-width: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 /* --------------------------------- toolbar -------------------------------- */
@@ -699,33 +663,12 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  /* Extend the bar up into the status-bar / cutout zone (same pattern as
-     ReaderToolbar): the toolbar background fills the inset area while the
-     controls sit below it, exactly like Android's tinted status bar. */
   flex: 0 0 calc(var(--toolbar-height) + var(--safe-area-top));
-  padding: var(--safe-area-top) 8px 0 4px;
+  padding: var(--safe-area-top) 16px 0 16px;
   background: var(--color-toolbar);
   color: var(--color-white);
   box-shadow: 0 2px 4px var(--shadow-color);
   z-index: 10;
-}
-
-.toolbar__nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-white);
-  cursor: pointer;
-  transition: background-color 150ms var(--ease-decelerate-quart);
-}
-
-.toolbar__nav:hover {
-  background: color-mix(in srgb, var(--color-white) 12%, transparent);
 }
 
 .toolbar__title {
