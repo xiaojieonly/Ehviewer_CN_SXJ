@@ -17,10 +17,12 @@ class SyncService(
     private val filterRepository: FilterRepository,
     private val quickSearchRepository: QuickSearchRepository,
     private val deviceRepository: SyncDeviceRepository,
+    private val preferenceRepository: UserPreferenceRepository,
+    private val preferenceService: UserPreferenceService,
 ) {
 
     @Transactional
-    fun push(request: SyncPushRequest): SyncPushResponse {
+    fun push(request: SyncPushRequest, username: String): SyncPushResponse {
         var conflicts = 0
         val e = request.entities
 
@@ -31,14 +33,20 @@ class SyncService(
         conflicts += e.filters.sumOf { if (mergeFilter(it)) 1 else 0 }
         conflicts += e.quickSearches.sumOf { if (mergeQuickSearch(it)) 1 else 0 }
 
+        e.preferences?.let { pref ->
+            // last-write-wins: 只有推送方更新时才覆盖
+            preferenceService.replace(username, pref.preferences, pref.deviceId)
+        }
+
         val now = System.currentTimeMillis()
         updateDevice(request.deviceId, now)
 
         return SyncPushResponse(success = true, serverTimestamp = now, conflicts = conflicts)
     }
 
-    fun pull(since: Long): SyncPullResponse {
+    fun pull(since: Long, username: String): SyncPullResponse {
         val now = System.currentTimeMillis()
+        val prefEntity = preferenceRepository.findByUsername(username)
         val entities = SyncEntityCollection(
             favorites = favoriteRepository.findAll().filter { it.time > since }.map { it.toSyncFavoriteDto() },
             history = historyRepository.findAll().filter { it.time > since }.map { it.toSyncHistoryDto() },
@@ -46,6 +54,11 @@ class SyncService(
             bookmarks = bookmarkRepository.findAll().filter { it.time > since }.map { it.toSyncBookmarkDto() },
             filters = filterRepository.findAll().map { it.toSyncFilterDto() },
             quickSearches = quickSearchRepository.findAll().map { it.toSyncQuickSearchDto() },
+            preferences = SyncPreferencesDto(
+                preferences = preferenceService.getRaw(username),
+                lastModified = prefEntity?.updatedAt ?: 0,
+                deviceId = prefEntity?.updatedBy ?: "",
+            ),
         )
         return SyncPullResponse(entities = entities, serverTimestamp = now)
     }

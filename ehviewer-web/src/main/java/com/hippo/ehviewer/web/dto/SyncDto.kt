@@ -144,6 +144,12 @@ data class SyncQuickSearchDto(
 
 // --- Wrapper messages ---
 
+data class SyncPreferencesDto(
+    val preferences: String = "{}",      // 完整偏好 JSON 字符串
+    val lastModified: Long = 0,
+    val deviceId: String = "",
+)
+
 data class SyncEntityCollection(
     val favorites: List<SyncFavoriteDto> = emptyList(),
     val history: List<SyncHistoryDto> = emptyList(),
@@ -151,6 +157,7 @@ data class SyncEntityCollection(
     val bookmarks: List<SyncBookmarkDto> = emptyList(),
     val filters: List<SyncFilterDto> = emptyList(),
     val quickSearches: List<SyncQuickSearchDto> = emptyList(),
+    val preferences: SyncPreferencesDto? = null,   // 新增
 )
 
 data class SyncPushRequest(

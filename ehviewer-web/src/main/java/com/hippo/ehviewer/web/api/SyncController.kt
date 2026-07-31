@@ -6,6 +6,7 @@ import com.hippo.ehviewer.web.dto.SyncPushResponse
 import com.hippo.ehviewer.web.dto.SyncStatusResponse
 import com.hippo.ehviewer.web.service.SyncService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -13,13 +14,19 @@ import org.springframework.web.bind.annotation.*
 class SyncController(private val syncService: SyncService) {
 
     @PostMapping("/push")
-    fun push(@RequestBody request: SyncPushRequest): ResponseEntity<SyncPushResponse> {
-        return ResponseEntity.ok(syncService.push(request))
+    fun push(
+        @RequestBody request: SyncPushRequest,
+        authentication: Authentication,
+    ): ResponseEntity<SyncPushResponse> {
+        return ResponseEntity.ok(syncService.push(request, authentication.name))
     }
 
     @GetMapping("/pull")
-    fun pull(@RequestParam since: Long): ResponseEntity<SyncPullResponse> {
-        return ResponseEntity.ok(syncService.pull(since))
+    fun pull(
+        @RequestParam since: Long,
+        authentication: Authentication,
+    ): ResponseEntity<SyncPullResponse> {
+        return ResponseEntity.ok(syncService.pull(since, authentication.name))
     }
 
     @GetMapping("/status")
