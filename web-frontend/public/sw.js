@@ -1,5 +1,5 @@
 /* ==========================================================================
- * EhViewer Service Worker
+ * AnotherViewer Service Worker
  *
  * Caching architecture (roadmap Phase 3.3):
  *   - App Shell pre-cache on install (entry HTML + manifest + icons).

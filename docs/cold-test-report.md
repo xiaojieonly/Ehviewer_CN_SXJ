@@ -1,4 +1,4 @@
-# EhViewer Web App — RHEL9 冷测试报告
+# AnotherViewer Web App — RHEL9 冷测试报告
 
 **测试日期**: 2026-06-29
 **目标环境**: Red Hat Enterprise Linux 9

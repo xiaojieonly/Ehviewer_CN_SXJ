@@ -1,6 +1,6 @@
-# EhViewer Web App 架构设计文档
+# AnotherViewer Web App 架构设计文档
 
-> 将 EhViewer Android 应用转换为局域网内任意设备可通过浏览器访问的 Web App，
+> 将 Android 应用转换为局域网内任意设备可通过浏览器访问的 Web App，
 > 获得与 Android App 一致的完整体验，且不受设备性能限制。
 
 ---

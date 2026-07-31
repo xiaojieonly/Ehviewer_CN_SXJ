@@ -1,4 +1,4 @@
-# EhViewer Web PWA 离线能力说明
+# AnotherViewer PWA 离线能力说明
 
 对应 roadmap Phase 3.3。本文档描述离线/安装能力的实现方式与手动验证方法。
 
@@ -45,7 +45,7 @@
 ## 5. iOS / iPadOS 适配
 
 - `apple-mobile-web-app-capable: yes` + `status-bar-style: black-translucent`：添加到主屏幕后全屏运行，无 Safari UI。
-- `apple-mobile-web-app-title: EhViewer`：主屏幕图标名称。
+- `apple-mobile-web-app-title: AnotherViewer`：主屏幕图标名称。
 - `apple-touch-icon` 四尺寸（180 iPhone / 167 iPad Pro / 152 iPad / 120 旧 iPhone），由 `icon-512.png` 缩放生成。
 - `viewport-fit=cover` + `tokens.css` 中的 `--safe-area-*` 令牌（`env(safe-area-inset-*)`）：刘海/圆角/Home 指示条安全区适配。
 - 主题色：`<meta name="theme-color">` 由 `src/stores/theme.ts` 随 light/dark/black 主题实时改写（#009688 / #323232 / #000000），manifest 中为初始值。
@@ -54,7 +54,7 @@
 
 ### 6.1 添加到主屏幕（iPad Safari）
 
-- [ ] Safari 打开站点 → 分享 → "添加到主屏幕"，名称显示 **EhViewer**
+- [ ] Safari 打开站点 → 分享 → "添加到主屏幕"，名称显示 **AnotherViewer**
 - [ ] 主屏幕图标清晰（152/167px，无模糊、无异常裁切）
 - [ ] 从图标启动：全屏运行，**无地址栏/工具栏**，状态栏半透明融入背景
 - [ ] 切换 light/dark/black 主题，状态栏/启动背景颜色跟随

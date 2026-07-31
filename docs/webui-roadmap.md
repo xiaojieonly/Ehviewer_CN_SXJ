@@ -8,7 +8,7 @@
 
 ## 目标
 
-将 EhViewer (AnotherViewer) 拓展为 **Android 客户端 + 本地服务器 WebUI** 的混合架构：
+将 AnotherViewer 拓展为 **Android 客户端 + 本地服务器 WebUI** 的混合架构：
 
 - iPad 等无法 sideload 的设备通过浏览器（PWA）获得完整阅读体验
 - **WebUI 与 Android 端像素级复刻**：设计语言、操作逻辑、交互反馈完全一致
@@ -497,7 +497,7 @@ java -jar ehviewer-web/build/libs/ehviewer-web-*.jar \
 `/etc/systemd/system/ehviewer-web.service`：
 ```ini
 [Unit]
-Description=EhViewer Web Server
+Description=AnotherViewer Web Server
 After=network-online.target
 Wants=network-online.target
 

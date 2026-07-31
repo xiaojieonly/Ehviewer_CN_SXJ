@@ -14,7 +14,7 @@
     </div>
     <div class="form-group">
       <label>远程路径</label>
-      <input v-model="config.path" placeholder="可选，如 EhViewer" />
+      <input v-model="config.path" placeholder="可选，如 AnotherViewer" />
     </div>
     <div class="form-group">
       <label>登录模式</label>

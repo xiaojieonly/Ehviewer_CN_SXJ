@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "EhViewer",
-  "short_name": "EhViewer",
+  "name": "AnotherViewer",
+  "short_name": "AnotherViewer",
   "description": "E-Hentai gallery viewer and reader",
   "lang": "zh-CN",
   "start_url": "/",

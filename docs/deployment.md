@@ -92,7 +92,7 @@ nohup ./start.sh > ehviewer.log 2>&1 &
 
 ```ini
 [Unit]
-Description=EhViewer Web
+Description=AnotherViewer Web
 After=network.target
 
 [Service]

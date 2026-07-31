@@ -1,7 +1,7 @@
 <template>
   <header class="app-header">
     <div class="header-content">
-      <router-link to="/" class="logo">EhViewer</router-link>
+      <router-link to="/" class="logo">AnotherViewer</router-link>
       <div class="nav">
         <router-link to="/favorites" class="nav-link">Favorites</router-link>
         <router-link to="/history" class="nav-link">History</router-link>

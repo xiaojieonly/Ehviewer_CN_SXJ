@@ -109,8 +109,8 @@ I5 子代理在深度探索 app/ 代码库（约 84 次工具调用、累积 ~49
 
 ## 8. 验证状态（截至快照）
 
-- 前端：`vue-tsc --noEmit` 0 错误；`vitest` 全绿（200 + 新增 5 条离线判定）；`vite build` 成功（terser 修复后）。
-- 后端：JUnit5 40 测试通过。
+- 前端：`vue-tsc --noEmit` 0 错误；`vitest` 全绿（205）；`vite build` 成功（terser 修复后）。
+- 后端：JUnit5 43 测试通过（新增 EhCallPatternConsistencyTest 3 条）。
 - Android：`:app:compileAppReleaseDebugJavaWithJavac` BUILD SUCCESSFUL（含 I5 增量 1 + 增量 2 §2.4/§2.5）。
 - 构建配方（本机/沙盒）：gradle wrapper 9.4.1 分发包损坏；沙盒 Bash 对 `~/.gradle` 只读，需 `GRADLE_USER_HOME=<workspace>/.gradle-user-home`（已 gitignore，从 `~/.gradle` 复制而来）+ AS JBR 21（`JAVA_HOME` 指向 JBR）+ gradle 9.5.0 分发直连；Kotlin daemon 在沙盒内不可用（自动 fallback 进程内编译）。详见 `webui-roadmap.md` Phase 4 / 项目构建记忆。
 
@@ -122,3 +122,55 @@ I5 子代理在深度探索 app/ 代码库（约 84 次工具调用、累积 ~49
 - I5 远程阅读/委托下载受内容审核制约，自主子代理不可靠。
 - PWA 需 HTTPS（iPad SW 要求安全上下文），局域网部署需自签证书 + 信任或 Nginx/Caddy 反代（H4 部署配置已含）。
 - iOS A2HS 图标抓取不经页面 SW，安装瞬间必须在线（已写入 `public/PWA.md` 已知边界）。
+
+---
+
+## 10. 本 session（2026-07-31）工作记录
+
+**主题**：WebUI HTTP 可用性验证 + WebUI/Android 调用一致性审计 + 品牌更名 AnotherViewer。
+
+### 10.1 验证修复
+
+- **vitest 环境修复（Node 26）**：Node 22+ 实验性全局 `localStorage`（未带
+  `--localstorage-file` 时为 `undefined`）导致 happy-dom 环境下 theme 15 条测试失败。
+  新增 `src/test/setup.ts`（happy-dom `Storage` 回填 `localStorage`/`sessionStorage`）
+  + `vitest.config.ts` `setupFiles`。前端 205 测试恢复全绿。
+- **HTTP 冒烟（纯本地，无真实站点流量）**：
+  - mock server（8080）+ Vite dev（3000）：前端入口 / PWA / 27 个 API 端点全部 200
+    （gallery 详情 / 图片流 / process 用 fixtures 真实数据）。
+  - 真后端（bootJar）：发现并修复 SecurityConfig——静态资源 / SPA 深链 / `/ws` 曾被
+    `anyRequest().authenticated()` 挡成 403，浏览器连 SPA 壳都加载不出；改为
+    `/api/**` 需 Bearer、其余放行。修复后静态 200、无 token 的 `/api/**` 403、
+    带 token 全部 200、`/ws/info` 200。
+
+### 10.2 调用一致性审计（WebUI 后端 vs Android 端）
+
+按用户要求不做真实联网测试，改为静态对照 `app/` 与 `ehviewer-core` 的调用栈：
+
+- 解析器 / URL 构造：app 与 core 的 parser 全套逐字节一致；`EhUrl` 仅注解差异。
+- **EhRequestBuilder**：app 继承 `ChromeRequestBuilder`（Host + Chrome 118 UA +
+  Accept + Accept-Language）；core 原为裸 Builder → 已移植相同请求头，所有
+  `EhEngine` 上游请求同指纹。
+- **EhConfig 分类位值**：core 原值相对 app 整体移位 → 已对齐
+  （misc=1 … western=512, all=1023）。
+- **Cookie/会话统一**：`DownloadService` 原自建无 cookie jar 的 OkHttpClient →
+  改为注入 `EhSessionManager` 共享客户端，下载链路复用登录态。
+- **健康探针 UA**：`HealthController` 的 e-hentai HEAD 探针 UA 对齐 Chrome 指纹。
+- 新增 `EhCallPatternConsistencyTest`（3 条）固化上述契约。
+
+### 10.3 品牌更名
+
+- 前端可见文案 / PWA 元数据（`<title>`、manifest、apple-mobile-web-app-title、
+  AppHeader logo、Settings about、`PWA.md`、sw.js 注释）→ **AnotherViewer**。
+- 活动文档（roadmap / deployment / architecture / cold-test-report）中的产品命名
+  与标题 → AnotherViewer。
+- 源码声明（`com.hippo.ehviewer` 包名、类名、许可证头）与代码注释**保留**，确保
+  开源合规。
+- 删除 `docs/superpowers/` 下 2026-06-28 历史 WebUI 规划存档 6 份（git 历史可恢复）；
+  07-29/07-30 其他功能线的计划保留。
+
+### 10.4 验证状态
+
+- 前端：`vue-tsc` 0 错误；vitest 205/205；`vite build` 成功。
+- 后端：JUnit 43/43；`bootJar` 构建成功。
+- 冒烟：mock + 真后端 HTTP 全链路通过（无真实站点请求）。

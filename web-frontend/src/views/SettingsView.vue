@@ -384,10 +384,10 @@
         <div class="dialog" role="dialog" aria-modal="true" aria-label="About">
           <div class="about">
             <AppIcon name="sad-panda-primary" size="56px" />
-            <h2 class="about__name">EhViewer <span>WebUI</span></h2>
+            <h2 class="about__name">AnotherViewer <span>WebUI</span></h2>
             <p class="about__version">Version 1.0.0 · companion client</p>
             <p class="about__note">
-              Pixel-faithful web replica of the EhViewer CN SXJ Android app —
+              Pixel-faithful web replica of the CN SXJ Android app —
               same tokens, same layouts, three themes.
             </p>
           </div>
