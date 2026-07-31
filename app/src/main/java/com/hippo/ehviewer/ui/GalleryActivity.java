@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -54,6 +55,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -166,6 +168,16 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     @Nullable
     private View mBattery;
     @Nullable
+    private View mQuickSettingsPanel;
+    @Nullable
+    private ImageButton mQuickScreenOrientation;
+    @Nullable
+    private ImageButton mQuickReadingDirection;
+    @Nullable
+    private ImageButton mQuickDirectSave;
+    @Nullable
+    private ImageButton mQuickDoubleTapZoom;
+    @Nullable
     private View mSeekBarPanel;
     @Nullable
     private ImageView mAutoTransferPanel;
@@ -178,6 +190,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
     private ObjectAnimator mSeekBarPanelAnimator;
     private ObjectAnimator mAutoTransferAnimator;
+    private ObjectAnimator mQuickSettingsAnimator;
 
     private int mLayoutMode;
     private int mSize;
@@ -202,6 +215,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (null != mAutoTransferPanel) {
                 mAutoTransferPanel.requestLayout();
             }
+            if (null != mQuickSettingsPanel) {
+                mQuickSettingsPanel.requestLayout();
+            }
         }
     };
 
@@ -210,6 +226,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         public void onAnimationEnd(Animator animation) {
             mSeekBarPanelAnimator = null;
             mAutoTransferAnimator = null;
+            mQuickSettingsAnimator = null;
         }
     };
 
@@ -224,6 +241,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mAutoTransferPanel != null) {
                 mAutoTransferPanel.setVisibility(View.INVISIBLE);
             }
+            mQuickSettingsAnimator = null;
+            if (mQuickSettingsPanel != null) {
+                mQuickSettingsPanel.setVisibility(View.INVISIBLE);
+            }
         }
     };
 
@@ -233,6 +254,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mSeekBarPanel != null) {
                 hideSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 hideSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                hideSlider(mQuickSettingsPanel, mQuickSettingsAnimator);
             }
         }
     };
@@ -405,6 +427,32 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mProgress.setVisibility(Settings.getShowProgress() ? View.VISIBLE : View.GONE);
         mBattery.setVisibility(Settings.getShowBattery() ? View.VISIBLE : View.GONE);
 
+        mQuickSettingsPanel = ViewUtils.$$(this, R.id.quick_settings_panel);
+        mQuickScreenOrientation = (ImageButton) ViewUtils.$$(
+                mQuickSettingsPanel, R.id.quick_screen_orientation);
+        mQuickReadingDirection = (ImageButton) ViewUtils.$$(
+                mQuickSettingsPanel, R.id.quick_reading_direction);
+        mQuickDirectSave = (ImageButton) ViewUtils.$$(
+                mQuickSettingsPanel, R.id.quick_direct_save);
+        mQuickDoubleTapZoom = (ImageButton) ViewUtils.$$(
+                mQuickSettingsPanel, R.id.quick_double_tap_zoom);
+        mQuickScreenOrientation.setOnClickListener(this::toggleQuickScreenOrientation);
+        mQuickReadingDirection.setOnClickListener(this::toggleQuickReadingDirection);
+        mQuickDirectSave.setOnClickListener(this::toggleQuickDirectSave);
+        mQuickDoubleTapZoom.setOnClickListener(this::toggleQuickDoubleTapZoom);
+        ViewCompat.setOnApplyWindowInsetsListener(mQuickSettingsPanel, (view, insets) -> {
+            int statusBarInset = insets.getInsets(
+                    WindowInsetsCompat.Type.statusBars()).top;
+            FrameLayout.LayoutParams layoutParams =
+                    (FrameLayout.LayoutParams) view.getLayoutParams();
+            if (layoutParams.topMargin != statusBarInset) {
+                layoutParams.topMargin = statusBarInset;
+                view.setLayoutParams(layoutParams);
+            }
+            return insets;
+        });
+        updateQuickSettingsButtons();
+
         mSeekBarPanel = ViewUtils.$$(this, R.id.seek_bar_panel);
         mAutoTransferPanel = (ImageView) ViewUtils.$$(this, R.id.auto_transfer);
         mLeftText = (TextView) ViewUtils.$$(mSeekBarPanel, R.id.left);
@@ -519,6 +567,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         mClock = null;
         mProgress = null;
         mBattery = null;
+        mQuickSettingsPanel = null;
+        mQuickScreenOrientation = null;
+        mQuickReadingDirection = null;
+        mQuickDirectSave = null;
+        mQuickDoubleTapZoom = null;
         mSeekBarPanel = null;
         mAutoTransferPanel = null;
         mLeftText = null;
@@ -560,6 +613,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         if (mGLRootView != null) {
             mGLRootView.onResume();
         }
+        updateQuickSettingsButtons();
     }
 
     @Override
@@ -735,6 +789,99 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
     }
 
+    private void updateQuickSettingsButtons() {
+        if (mQuickScreenOrientation == null || mQuickReadingDirection == null
+                || mQuickDirectSave == null || mQuickDoubleTapZoom == null) {
+            return;
+        }
+
+        int screenRotation = Settings.getScreenRotation();
+        boolean landscape;
+        if (screenRotation == 1) {
+            landscape = false;
+        } else if (screenRotation == 2) {
+            landscape = true;
+        } else {
+            landscape = getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_LANDSCAPE;
+        }
+        mQuickScreenOrientation.setImageResource(landscape
+                ? R.drawable.v_screen_landscape_x24
+                : R.drawable.v_screen_portrait_x24);
+
+        int readingDirection = Settings.getReadingDirection();
+        mQuickReadingDirection.setImageResource(
+                readingDirection == GalleryView.LAYOUT_RIGHT_TO_LEFT
+                        ? R.drawable.v_arrow_left_x24
+                        : R.drawable.v_arrow_right_x24);
+
+        updateQuickToggleButton(mQuickDirectSave, Settings.getDirectSave());
+        updateQuickToggleButton(mQuickDoubleTapZoom, Settings.getDoubleTapZoom());
+    }
+
+    private static void updateQuickToggleButton(ImageButton button, boolean enabled) {
+        button.setSelected(enabled);
+        button.setImageAlpha(enabled ? 255 : 115);
+    }
+
+    private void keepQuickSettingsVisible() {
+        SimpleHandler.getInstance().removeCallbacks(mHideSliderRunnable);
+        SimpleHandler.getInstance().postDelayed(mHideSliderRunnable, HIDE_SLIDER_DELAY);
+    }
+
+    private void toggleQuickScreenOrientation(View view) {
+        int screenRotation = Settings.getScreenRotation();
+        boolean currentlyLandscape;
+        if (screenRotation == 1) {
+            currentlyLandscape = false;
+        } else if (screenRotation == 2) {
+            currentlyLandscape = true;
+        } else {
+            currentlyLandscape = getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_LANDSCAPE;
+        }
+
+        boolean useLandscape = !currentlyLandscape;
+        Settings.putScreenRotation(useLandscape ? 2 : 1);
+        updateQuickSettingsButtons();
+        keepQuickSettingsVisible();
+        setRequestedOrientation(useLandscape
+                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+    }
+
+    private void toggleQuickReadingDirection(View view) {
+        if (mGalleryView == null) {
+            return;
+        }
+        int currentDirection = Settings.getReadingDirection();
+        int newDirection = currentDirection == GalleryView.LAYOUT_LEFT_TO_RIGHT
+                ? GalleryView.LAYOUT_RIGHT_TO_LEFT
+                : GalleryView.LAYOUT_LEFT_TO_RIGHT;
+        Settings.putReadingDirection(newDirection);
+        mLayoutMode = newDirection;
+        mGalleryView.setLayoutMode(newDirection);
+        updateSlider();
+        updateQuickSettingsButtons();
+        keepQuickSettingsVisible();
+    }
+
+    private void toggleQuickDirectSave(View view) {
+        Settings.putDirectSave(!Settings.getDirectSave());
+        updateQuickSettingsButtons();
+        keepQuickSettingsVisible();
+    }
+
+    private void toggleQuickDoubleTapZoom(View view) {
+        boolean enabled = !Settings.getDoubleTapZoom();
+        Settings.putDoubleTapZoom(enabled);
+        if (mGalleryView != null) {
+            mGalleryView.setDoubleTapEnabled(enabled);
+        }
+        updateQuickSettingsButtons();
+        keepQuickSettingsVisible();
+    }
+
     @SuppressLint("SetTextI18n")
     private void updateSlider() {
         if (mSeekBar == null || mRightText == null || mLeftText == null || mSize <= 0 || mCurrentIndex < 0) {
@@ -881,12 +1028,15 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
 
     private void showSlider(View sliderPanel, ObjectAnimator animator) {
-        if (null != mSeekBarPanelAnimator) {
+        if (null != animator) {
             animator.cancel();
         }
         if (sliderPanel == mAutoTransferPanel) {
             sliderPanel.setTranslationX(sliderPanel.getWidth());
             animator = ObjectAnimator.ofFloat(sliderPanel, "translationX", 0.0f);
+        } else if (sliderPanel == mQuickSettingsPanel) {
+            sliderPanel.setTranslationY(-sliderPanel.getHeight());
+            animator = ObjectAnimator.ofFloat(sliderPanel, "translationY", 0.0f);
         } else {
             sliderPanel.setTranslationY(sliderPanel.getHeight());
             animator = ObjectAnimator.ofFloat(sliderPanel, "translationY", 0.0f);
@@ -914,6 +1064,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
         if (sliderPanel == mAutoTransferPanel) {
             animator = ObjectAnimator.ofFloat(sliderPanel, "translationX", sliderPanel.getWidth());
+        } else if (sliderPanel == mQuickSettingsPanel) {
+            animator = ObjectAnimator.ofFloat(sliderPanel, "translationY", -sliderPanel.getHeight());
         } else {
             animator = ObjectAnimator.ofFloat(sliderPanel, "translationY", sliderPanel.getHeight());
         }
@@ -1439,6 +1591,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             // Update slider
             mLayoutMode = layoutMode;
             updateSlider();
+            updateQuickSettingsButtons();
 
             if (oldReadingFullscreen != readingFullscreen) {
                 recreate();
@@ -1472,7 +1625,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         }
 
         private void onTapSliderArea() {
-            if (mSeekBarPanel == null || mSize <= 0 || mCurrentIndex < 0 || mAutoTransferPanel == null) {
+            if (mSeekBarPanel == null || mSize <= 0 || mCurrentIndex < 0
+                    || mAutoTransferPanel == null || mQuickSettingsPanel == null) {
                 return;
             }
 
@@ -1481,9 +1635,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             if (mSeekBarPanel.getVisibility() == View.VISIBLE) {
                 hideSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 hideSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                hideSlider(mQuickSettingsPanel, mQuickSettingsAnimator);
             } else {
+                updateQuickSettingsButtons();
                 showSlider(mSeekBarPanel, mSeekBarPanelAnimator);
                 showSlider(mAutoTransferPanel, mAutoTransferAnimator);
+                showSlider(mQuickSettingsPanel, mQuickSettingsAnimator);
                 SimpleHandler.getInstance().postDelayed(mHideSliderRunnable, HIDE_SLIDER_DELAY);
             }
         }

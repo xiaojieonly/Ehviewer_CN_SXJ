@@ -67,6 +67,60 @@
     </com.hippo.ehviewer.widget.GalleryHeader>
 
     <LinearLayout
+        android:id="@+id/quick_settings_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="?attr/gallerySliderBackgroundColor"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:visibility="invisible">
+
+        <ImageButton
+            android:id="@+id/quick_screen_orientation"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_read_screen_rotation"
+            android:padding="12dp"
+            android:src="@drawable/v_screen_portrait_x24" />
+
+        <ImageButton
+            android:id="@+id/quick_reading_direction"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_read_reading_direction"
+            android:padding="12dp"
+            android:src="@drawable/v_arrow_left_x24" />
+
+        <ImageButton
+            android:id="@+id/quick_direct_save"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_read_direct_save"
+            android:padding="12dp"
+            android:src="@drawable/v_save_x24" />
+
+        <ImageButton
+            android:id="@+id/quick_double_tap_zoom"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_read_double_tap_zoom"
+            android:padding="12dp"
+            android:src="@drawable/v_magnify_x24" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
