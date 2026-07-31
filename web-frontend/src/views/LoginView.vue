@@ -27,7 +27,7 @@
 
       <div class="login-brand">
         <AppIcon name="sad-panda-primary" size="72px" class="login-brand__mark" />
-        <h1 class="login-brand__name"><span>Eh</span>Viewer</h1>
+        <h1 class="login-brand__name"><span>Another</span>Viewer</h1>
         <p class="login-brand__tag">Web companion client</p>
       </div>
 
