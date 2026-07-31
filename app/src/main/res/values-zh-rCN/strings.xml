@@ -33,6 +33,7 @@
     <string name="bookmark_subscription_disabled">已将“%s”移出书签订阅</string>
     <string name="bookmark_subscription_unsupported">此类型的书签无法加入订阅</string>
     <string name="bookmark_subscription_partial_failure">部分书签订阅加载失败</string>
+    <string name="search_corresponding_bookmarks">搜索对应书签</string>
     <string name="whats_hot">热门</string>
     <string name="top_lists">排行榜</string>
     <string name="favourite">收藏</string>

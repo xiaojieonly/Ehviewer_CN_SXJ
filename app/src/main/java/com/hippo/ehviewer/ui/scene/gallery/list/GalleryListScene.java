@@ -140,7 +140,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-public final class GalleryListScene extends BaseScene
+public class GalleryListScene extends BaseScene
         implements EasyRecyclerView.OnItemClickListener, EasyRecyclerView.OnItemLongClickListener,
         SearchBar.Helper, SearchBar.OnStateChangeListener, FastScroller.OnDragHandlerListener,
         SearchLayout.Helper, SearchBarMover.Helper, View.OnClickListener, FabLayout.OnClickFabListener,
@@ -1323,14 +1323,29 @@ public final class GalleryListScene extends BaseScene
 
         boolean downloaded = mDownloadManager.getDownloadState(gi.gid) != DownloadInfo.STATE_INVALID;
         boolean favourited = gi.favoriteSlot != -2;
+        ListUrlBuilder matchingBookmarkSearch = isBookmarkSubscriptionMode()
+                && mBookmarkSubscriptionCoordinator != null
+                ? mBookmarkSubscriptionCoordinator.buildSearchForGallery(gi.gid) : null;
 
-        CharSequence[] items = new CharSequence[]{
+        CharSequence[] items = matchingBookmarkSearch != null
+                ? new CharSequence[]{
+                context.getString(R.string.read),
+                context.getString(downloaded ? R.string.delete_downloads : R.string.download),
+                context.getString(favourited ? R.string.remove_from_favourites : R.string.add_to_favourites),
+                context.getString(R.string.search_corresponding_bookmarks),
+        } : new CharSequence[]{
                 context.getString(R.string.read),
                 context.getString(downloaded ? R.string.delete_downloads : R.string.download),
                 context.getString(favourited ? R.string.remove_from_favourites : R.string.add_to_favourites),
         };
 
-        int[] icons = new int[]{
+        int[] icons = matchingBookmarkSearch != null
+                ? new int[]{
+                R.drawable.v_book_open_x24,
+                downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24,
+                favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
+                R.drawable.v_magnify_x24,
+        } : new int[]{
                 R.drawable.v_book_open_x24,
                 downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24,
                 favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
@@ -1388,9 +1403,22 @@ public final class GalleryListScene extends BaseScene
                                 CommonOperations.addToFavorites(activity, gi, new AddToFavoriteListener(context, activity.getStageId(), getTag()), false);
                             }
                             break;
+                        case 3: // Search matching bookmark subscriptions
+                            if (matchingBookmarkSearch != null) {
+                                searchMatchingBookmarks(matchingBookmarkSearch);
+                            }
+                            break;
                     }
                 }).show();
         return true;
+    }
+
+    private void searchMatchingBookmarks(ListUrlBuilder builder) {
+        builder.setPageIndex(0);
+        Bundle args = new Bundle();
+        args.putString(KEY_ACTION, ACTION_LIST_URL_BUILDER);
+        args.putParcelable(KEY_LIST_URL_BUILDER, builder);
+        startScene(new Announcer(BookmarkSearchResultScene.class).setArgs(args));
     }
 
 

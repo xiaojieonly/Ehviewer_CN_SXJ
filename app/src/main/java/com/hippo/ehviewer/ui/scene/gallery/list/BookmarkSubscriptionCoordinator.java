@@ -30,8 +30,13 @@ import com.hippo.ehviewer.dao.QuickSearch;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,7 +47,7 @@ import java.util.Set;
 final class BookmarkSubscriptionCoordinator {
 
     private static final int DEFAULT_BATCH_SIZE = 25;
-    private static final int MAX_CONCURRENT_REQUESTS = 3;
+    private static final int MAX_CONCURRENT_REQUESTS = 5;
 
     interface Listener {
         void onBookmarkSubscriptionBatch(int taskId, List<GalleryInfo> data,
@@ -54,6 +59,7 @@ final class BookmarkSubscriptionCoordinator {
 
     private static final class Source {
         final int id;
+        final QuickSearch quickSearch;
         final ListUrlBuilder builder = new ListUrlBuilder();
         final ArrayList<GalleryInfo> buffer = new ArrayList<>();
 
@@ -72,6 +78,7 @@ final class BookmarkSubscriptionCoordinator {
 
         Source(int id, QuickSearch quickSearch) {
             this.id = id;
+            this.quickSearch = quickSearch;
             builder.set(quickSearch);
             builder.setPageIndex(0);
         }
@@ -97,6 +104,8 @@ final class BookmarkSubscriptionCoordinator {
     private final ArrayList<Source> mSources = new ArrayList<>();
     private final ArrayDeque<PendingRequest> mRequestQueue = new ArrayDeque<>();
     private final Set<Long> mEmittedGids = new HashSet<>();
+    private final Map<Long, LinkedHashSet<QuickSearch>> mMatchingQuickSearches =
+            new HashMap<>();
     private final ArrayList<GalleryInfo> mPendingBatch = new ArrayList<>();
 
     private int mGeneration;
@@ -155,6 +164,74 @@ final class BookmarkSubscriptionCoordinator {
 
     boolean isLoading() {
         return mLoading;
+    }
+
+    @Nullable
+    ListUrlBuilder buildSearchForGallery(long gid) {
+        LinkedHashSet<QuickSearch> matches = mMatchingQuickSearches.get(gid);
+        if (matches == null || matches.isEmpty()) {
+            return null;
+        }
+
+        ListUrlBuilder builder = new ListUrlBuilder();
+        if (matches.size() == 1) {
+            builder.set(matches.iterator().next());
+            builder.setPageIndex(0);
+            return builder;
+        }
+
+        LinkedHashMap<String, String> uniqueTerms = new LinkedHashMap<>();
+        int excludedCategories = 0;
+        int advanceSearch = 0;
+        int minRating = -1;
+        int pageFrom = -1;
+        int pageTo = -1;
+        boolean hasAdvanceSearch = false;
+
+        for (QuickSearch quickSearch : matches) {
+            switch (quickSearch.mode) {
+                case ListUrlBuilder.MODE_UPLOADER:
+                    addUniqueTerm(uniqueTerms, toExactFieldSearch(
+                            "uploader", quickSearch.keyword));
+                    break;
+                case ListUrlBuilder.MODE_TAG:
+                    addUniqueTerm(uniqueTerms, toExactTagSearch(quickSearch.keyword));
+                    break;
+                default:
+                    addKeywordTerms(uniqueTerms, quickSearch.keyword);
+                    break;
+            }
+
+            if (quickSearch.category >= 0) {
+                excludedCategories |= quickSearch.category;
+            }
+            if (quickSearch.advanceSearch != -1) {
+                hasAdvanceSearch = true;
+                advanceSearch |= quickSearch.advanceSearch;
+            }
+            if (quickSearch.minRating != -1) {
+                minRating = Math.max(minRating, quickSearch.minRating);
+            }
+            if (quickSearch.pageFrom != -1) {
+                pageFrom = Math.max(pageFrom, quickSearch.pageFrom);
+            }
+            if (quickSearch.pageTo != -1) {
+                pageTo = pageTo == -1
+                        ? quickSearch.pageTo : Math.min(pageTo, quickSearch.pageTo);
+            }
+        }
+
+        builder.reset();
+        builder.setMode(ListUrlBuilder.MODE_NORMAL);
+        builder.setCategory(excludedCategories);
+        builder.setKeyword(String.join(" ", uniqueTerms.values()));
+        if (hasAdvanceSearch) {
+            builder.setAdvanceSearch(advanceSearch);
+            builder.setMinRating(minRating);
+            builder.setPageFrom(pageFrom);
+            builder.setPageTo(pageTo);
+        }
+        return builder;
     }
 
     void refresh(int taskId, List<QuickSearch> quickSearches) {
@@ -223,6 +300,7 @@ final class BookmarkSubscriptionCoordinator {
         mSources.clear();
         mPendingBatch.clear();
         mEmittedGids.clear();
+        mMatchingQuickSearches.clear();
     }
 
     private boolean containsEquivalentSource(QuickSearch quickSearch) {
@@ -309,6 +387,10 @@ final class BookmarkSubscriptionCoordinator {
         source.buffer.clear();
         source.bufferIndex = 0;
         source.buffer.addAll(result.galleryInfoList);
+        for (GalleryInfo galleryInfo : result.galleryInfoList) {
+            mMatchingQuickSearches.computeIfAbsent(galleryInfo.gid,
+                    ignored -> new LinkedHashSet<>()).add(source.quickSearch);
+        }
         source.buffer.sort((first, second) -> -compareGalleryOrder(first, second));
 
         if (result.rawResultCount > 0) {
@@ -452,6 +534,74 @@ final class BookmarkSubscriptionCoordinator {
         String second = secondPosted != null ? secondPosted : "";
         int dateComparison = first.compareTo(second);
         return dateComparison != 0 ? dateComparison : Long.compare(firstGid, secondGid);
+    }
+
+    private static void addKeywordTerms(Map<String, String> terms, @Nullable String keyword) {
+        if (TextUtils.isEmpty(keyword)) {
+            return;
+        }
+        StringBuilder term = new StringBuilder();
+        char quote = 0;
+        boolean escaped = false;
+        for (int i = 0; i < keyword.length(); i++) {
+            char current = keyword.charAt(i);
+            if (escaped) {
+                term.append(current);
+                escaped = false;
+            } else if (current == '\\') {
+                term.append(current);
+                escaped = true;
+            } else if ((current == '\"' || current == '\'')
+                    && (quote == 0 || quote == current)) {
+                quote = quote == 0 ? current : 0;
+                term.append(current);
+            } else if (Character.isWhitespace(current) && quote == 0) {
+                addUniqueTerm(terms, term.toString());
+                term.setLength(0);
+            } else {
+                term.append(current);
+            }
+        }
+        addUniqueTerm(terms, term.toString());
+    }
+
+    private static void addUniqueTerm(Map<String, String> terms, @Nullable String term) {
+        if (term == null) {
+            return;
+        }
+        String normalized = term.trim();
+        if (!normalized.isEmpty()) {
+            terms.putIfAbsent(normalized.toLowerCase(Locale.ROOT), normalized);
+        }
+    }
+
+    private static String toExactTagSearch(@Nullable String tag) {
+        if (TextUtils.isEmpty(tag)) {
+            return "";
+        }
+        int separator = tag.indexOf(':');
+        if (separator <= 0 || separator == tag.length() - 1) {
+            return quoteExactValue(tag);
+        }
+        return tag.substring(0, separator + 1)
+                + quoteExactValue(tag.substring(separator + 1));
+    }
+
+    private static String toExactFieldSearch(String field, @Nullable String value) {
+        return TextUtils.isEmpty(value) ? "" : field + ':' + quoteExactValue(value);
+    }
+
+    private static String quoteExactValue(String value) {
+        String normalized = value.trim();
+        if (normalized.length() >= 2 && normalized.charAt(0) == '\"'
+                && normalized.charAt(normalized.length() - 1) == '\"') {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        if (!normalized.endsWith("$")) {
+            normalized += '$';
+        }
+        return "\"" + normalized.replace("\\", "\\\\")
+                .replace("\"", "\\\"") + "\"";
     }
 
     private boolean hasMore() {

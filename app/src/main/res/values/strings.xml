@@ -91,6 +91,7 @@
     <string name="bookmark_subscription_disabled">Removed “%s” from bookmark subscriptions</string>
     <string name="bookmark_subscription_unsupported">This bookmark type cannot be subscribed to</string>
     <string name="bookmark_subscription_partial_failure">Some bookmark subscriptions could not be loaded</string>
+    <string name="search_corresponding_bookmarks">Search corresponding bookmarks</string>
     <string name="whats_hot">What\'s hot</string>
     <string name="top_lists">Top Lists</string>
     <string name="favourite">Favourite</string>
