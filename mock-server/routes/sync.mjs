@@ -68,4 +68,23 @@ router.get('/status', (req, res) => {
   });
 });
 
+// GET /api/v1/sync/devices — paired devices
+router.get('/devices', (req, res) => {
+  res.json(connectedDevices.map((d) => ({
+    deviceId: d.deviceId,
+    deviceName: d.deviceName || d.deviceId,
+    platform: d.platform || 'other',
+    pairedAt: d.pairedAt || Date.now() - 86400000,
+    lastSeen: d.lastSeen || Date.now(),
+  })));
+});
+
+// DELETE /api/v1/sync/devices/:deviceId — revoke a device
+router.delete('/devices/:deviceId', (req, res) => {
+  const { deviceId } = req.params;
+  const idx = connectedDevices.findIndex((d) => d.deviceId === deviceId);
+  if (idx >= 0) connectedDevices.splice(idx, 1);
+  res.json({ success: true });
+});
+
 export default router;

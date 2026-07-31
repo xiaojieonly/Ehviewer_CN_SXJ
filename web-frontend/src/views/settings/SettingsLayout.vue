@@ -11,6 +11,7 @@ const tabs = [
   { path: '/settings/general', label: '通用' },
   { path: '/settings/reader', label: '阅读器' },
   { path: '/settings/privacy', label: '隐私' },
+  { path: '/settings/transfer', label: '传输' },
 ]
 
 const route = useRoute()

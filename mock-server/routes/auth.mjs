@@ -46,4 +46,28 @@ router.post('/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully', token: null, username: null });
 });
 
+// POST /api/v1/auth/pair — generate a short-lived pairing code
+router.post('/pair', (req, res) => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  res.json({ code, expiresAt: Date.now() + 10 * 60 * 1000 });
+});
+
+// POST /api/v1/auth/pair/complete — exchange code for a device token
+router.post('/pair/complete', (req, res) => {
+  const { code, deviceId, deviceName, platform } = req.body || {};
+  if (!code || !deviceId || !deviceName) {
+    return res.json({ success: false, message: 'Pairing code is invalid or expired', token: '', username: null });
+  }
+  res.json({
+    success: true,
+    message: 'Pairing successful',
+    token: `mock-device-token-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    username: 'default',
+  });
+});
+
 export default router;

@@ -53,6 +53,7 @@ const router = createRouter({
         { path: 'general', name: 'SettingsGeneral', component: () => import('@/views/settings/GeneralSettings.vue') },
         { path: 'reader', name: 'SettingsReader', component: () => import('@/views/settings/ReaderSettings.vue') },
         { path: 'privacy', name: 'SettingsPrivacy', component: () => import('@/views/settings/PrivacySettings.vue') },
+        { path: 'transfer', name: 'SettingsTransfer', component: () => import('@/views/settings/TransferSettings.vue') },
       ],
     },
     {
@@ -62,6 +63,7 @@ const router = createRouter({
         { path: '', redirect: '/admin/download' },
         { path: 'download', name: 'AdminDownload', component: () => import('@/views/admin/AdminDownload.vue') },
         { path: 'server', name: 'AdminServer', component: () => import('@/views/admin/AdminServer.vue') },
+        { path: 'devices', name: 'AdminDevices', component: () => import('@/views/admin/AdminDevices.vue') },
         { path: 'access', name: 'AdminAccess', component: () => import('@/views/admin/AdminAccess.vue') },
         { path: 'processing', name: 'AdminProcessing', component: () => import('@/views/admin/AdminProcessing.vue') },
         { path: 'advanced', name: 'AdminAdvanced', component: () => import('@/views/admin/AdminAdvanced.vue') },

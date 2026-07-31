@@ -119,6 +119,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthStatusResponse'
 
+  /api/v1/auth/pair:
+    post:
+      tags: [Auth]
+      operationId: generatePairCode
+      summary: Generate a short-lived single-use pairing code for device pairing
+      responses:
+        '200':
+          description: Pairing code generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairCodeResponse'
+
+  /api/v1/auth/pair/complete:
+    post:
+      tags: [Auth]
+      operationId: completePairing
+      summary: Exchange a pairing code for a device-scoped bearer token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PairCompleteRequest'
+      responses:
+        '200':
+          description: Device paired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairCompleteResponse'
+        '400':
+          description: Invalid or expired pairing code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairCompleteResponse'
+
   /api/v1/auth/logout:
     post:
       tags: [Auth]
@@ -1024,6 +1062,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/SyncStatus'
 
+  /api/v1/sync/devices:
+    get:
+      tags: [Sync]
+      operationId: listDevices
+      summary: List paired devices
+      responses:
+        '200':
+          description: Paired device list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceInfo'
+
+  /api/v1/sync/devices/{deviceId}:
+    delete:
+      tags: [Sync]
+      operationId: revokeDevice
+      summary: Revoke a paired device and invalidate its token
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
   # ============================================================
   # Archive
   # ============================================================
@@ -1291,6 +1366,61 @@ components:
         username:
           type: string
           nullable: true
+
+    PairCodeResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Six-character alphanumeric pairing code
+        expiresAt:
+          type: integer
+          format: int64
+          description: Expiry timestamp (ms epoch)
+
+    PairCompleteRequest:
+      type: object
+      required: [code, deviceId, deviceName]
+      properties:
+        code:
+          type: string
+        deviceId:
+          type: string
+        deviceName:
+          type: string
+        platform:
+          type: string
+          default: android
+
+    PairCompleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        token:
+          type: string
+        username:
+          type: string
+          nullable: true
+
+    DeviceInfo:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        deviceName:
+          type: string
+        platform:
+          type: string
+        pairedAt:
+          type: integer
+          format: int64
+        lastSeen:
+          type: integer
+          format: int64
+
 
     # ----------------------------------------------------------
     # Gallery
