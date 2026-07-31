@@ -139,6 +139,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private static final long HIDE_SLIDER_DELAY = 3000;
     private static final long QUICK_SAVE_DEBOUNCE_MS = 1000L;
     private static final long SAVE_NOTICE_DURATION_MS = 2000L;
+    private static final long SAVE_NOTICE_ENTER_DURATION_MS = 180L;
     private static final long SAVE_NOTICE_FADE_DURATION_MS = 200L;
 
     private static final int WRITE_REQUEST_CODE = 43;
@@ -1231,7 +1232,18 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
         // Keep every notice alive for its own duration. Adding the newest one last puts it
         // visually above older notices without cancelling or queueing either one.
+        notice.setAlpha(0.0f);
+        notice.setScaleX(0.94f);
+        notice.setScaleY(0.94f);
+        notice.setTranslationY(10.0f * density);
         host.addView(notice, layoutParams);
+        notice.animate()
+                .alpha(1.0f)
+                .scaleX(1.0f)
+                .scaleY(1.0f)
+                .translationY(0.0f)
+                .setDuration(SAVE_NOTICE_ENTER_DURATION_MS)
+                .start();
         notice.postDelayed(() -> {
             if (!ViewCompat.isAttachedToWindow(notice)) {
                 return;
