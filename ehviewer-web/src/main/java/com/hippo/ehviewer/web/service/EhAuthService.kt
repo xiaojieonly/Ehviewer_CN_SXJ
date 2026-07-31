@@ -13,7 +13,8 @@ import java.util.concurrent.ConcurrentHashMap
 class EhAuthService(
     private val authRepository: AuthConfigRepository,
     private val encryptionService: EncryptionService,
-    private val sessionManager: EhSessionManager
+    private val sessionManager: EhSessionManager,
+    private val serverConfig: ServerConfigService
 ) {
     private val tokenStore = ConcurrentHashMap<String, String>()
 
@@ -66,9 +67,11 @@ class EhAuthService(
         // can detect an expired E-Hentai login and prompt for re-login.
         val ehStatus = sessionManager.getStatus()
         val username = token?.let { tokenStore[it] }
+        val authRequired = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)
         return AuthStatusResponse(
             authenticated = username != null,
             username = username,
+            authRequired = authRequired,
             ehSessionValid = ehStatus.state == EhSessionManager.SessionState.VALID,
             ehSessionExpired = ehStatus.expired
         )
