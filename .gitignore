@@ -1,5 +1,6 @@
 # Build outputs
 build/
+ehviewer-core/build/
 *.class
 *.jar
 *.war
