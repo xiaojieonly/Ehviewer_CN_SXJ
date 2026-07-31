@@ -48,10 +48,12 @@ function makeGallery(gid, category, title, titleJpn, opts = {}) {
   const year = 2020 + Math.floor(Math.random() * 6);
   const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
   const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+  const token = `${gid.toString(16)}${Math.random().toString(16).slice(2, 12)}`;
 
   return {
     gid,
-    token: `${gid.toString(16)}${Math.random().toString(16).slice(2, 12)}`,
+    token,
+    galleryUrl: `https://e-hentai.org/g/${gid}/${token}/`,
     title,
     titleJpn,
     thumb: `https://ehgt.org/t/mock/${gid}/thumb.jpg`,

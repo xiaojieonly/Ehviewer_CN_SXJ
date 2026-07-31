@@ -1315,6 +1315,9 @@ components:
           format: int64
         token:
           type: string
+        galleryUrl:
+          type: string
+          readOnly: true
         title:
           type: string
           nullable: true
@@ -1364,6 +1367,9 @@ components:
           format: int64
         token:
           type: string
+        galleryUrl:
+          type: string
+          readOnly: true
         title:
           type: string
           nullable: true

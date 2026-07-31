@@ -16,6 +16,8 @@ export interface GalleryInfo {
   pages: number
   favoriteSlot: number
   favoriteName: string
+  /** Server-generated gallery detail URL (share/copy link). */
+  galleryUrl?: string
 }
 
 export interface GalleryDetail extends GalleryInfo {

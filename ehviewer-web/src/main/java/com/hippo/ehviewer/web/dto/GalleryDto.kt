@@ -9,6 +9,7 @@ data class GalleryListResponse(
 data class GalleryItemDto(
     val gid: Long,
     val token: String,
+    val galleryUrl: String,
     val title: String?,
     val titleJpn: String?,
     val thumb: String?,
@@ -29,6 +30,7 @@ data class GalleryItemDto(
 data class GalleryDetailDto(
     val gid: Long,
     val token: String,
+    val galleryUrl: String,
     val title: String?,
     val titleJpn: String?,
     val thumb: String?,

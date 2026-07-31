@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.web.service
 
+import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.entity.GalleryInfoBase
 import com.hippo.ehviewer.web.entity.HistoryInfoEntity
@@ -42,6 +43,7 @@ class GalleryService(
         return GalleryDetailDto(
             gid = history.gid,
             token = history.token,
+            galleryUrl = EhUrl.getGalleryDetailUrl(history.gid, history.token),
             title = history.title,
             titleJpn = history.titleJpn,
             thumb = history.thumb,
@@ -150,6 +152,7 @@ class GalleryService(
     private fun GalleryInfoBase.toDto() = GalleryItemDto(
         gid = gid,
         token = token,
+        galleryUrl = EhUrl.getGalleryDetailUrl(gid, token),
         title = title,
         titleJpn = titleJpn,
         thumb = thumb,

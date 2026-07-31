@@ -376,7 +376,7 @@ async function toggleFavorite() {
 async function share() {
   const g = gallery.value
   if (!g) return
-  const url = `https://e-hentai.org/g/${g.gid}/${g.token}/`
+  const url = g.galleryUrl ?? `https://e-hentai.org/g/${g.gid}/${g.token}/`
   if (typeof navigator.share === 'function') {
     try {
       await navigator.share({ title: g.title, url })
