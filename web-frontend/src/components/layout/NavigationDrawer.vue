@@ -35,7 +35,7 @@
         </div>
       </slot>
 
-      <!-- Menu: 8-item single-select group (nav_drawer_main.xml). -->
+      <!-- Menu: 9-item single-select group (nav_drawer_main.xml + admin). -->
       <nav class="navigation-drawer__menu" role="menu" aria-label="菜单">
         <template v-for="item in items" :key="item.id">
           <slot name="item" :item="item" :active="item.id === activeId">
@@ -105,7 +105,8 @@ import type { NavItem } from '@/types/components'
  * `res/menu/nav_drawer_main.xml` (homepage / subscription / whats_hot /
  * top_lists / favourite / history / downloads / settings), Chinese labels
  * per the CN fork's strings, icons from the converted VectorDrawable
- * registry (`v_*_black_x24.svg`).
+ * registry (`v_*_black_x24.svg`). A 9th web-only entry (admin panel) is
+ * appended after settings.
  */
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'homepage', label: '首页', icon: 'homepage-black' },
@@ -116,6 +117,7 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'history', label: '历史', icon: 'history-black' },
   { id: 'downloads', label: '下载', icon: 'download-black' },
   { id: 'settings', label: '设置', icon: 'settings-black' },
+  { id: 'admin', label: '管理面板', icon: 'settings-dark' },
 ]
 </script>
 
@@ -124,7 +126,7 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
  * NavigationDrawer — web replica of the Android DrawerLayout
  * (roadmap §导航结构): 280px panel with a 160px header (sadpanda low-poly
  * background placeholder, 64px circular avatar, 14px white username), the
- * 8-item single-select menu group, and a footer with the LimitsCountView
+ * 9-item single-select menu group, and a footer with the LimitsCountView
  * quota replica + theme toggle.
  *
  * Responsive behavior: modal overlay with scrim on narrow viewports;

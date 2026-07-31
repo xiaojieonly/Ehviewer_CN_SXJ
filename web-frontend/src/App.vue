@@ -62,10 +62,15 @@ const routeToNav: Record<string, string> = {
   '/history': 'history',
   '/downloads': 'downloads',
   '/settings': 'settings',
+  '/admin': 'admin',
   '/search': 'homepage',
 }
 
-const activeNavId = computed(() => routeToNav[route.path] ?? null)
+const activeNavId = computed(() => {
+  if (route.path.startsWith('/settings')) return 'settings'
+  if (route.path.startsWith('/admin')) return 'admin'
+  return routeToNav[route.path] ?? null
+})
 
 function handleNavSelect(item: NavItem) {
   drawerOpen.value = false
@@ -78,6 +83,7 @@ function handleNavSelect(item: NavItem) {
     history: '/history',
     downloads: '/downloads',
     settings: '/settings',
+    admin: '/admin',
   }
   const target = paths[item.id] ?? '/'
   if (route.path !== target) {
