@@ -20,14 +20,19 @@ package com.hippo.ehviewer.ui.scene.gallery.detail;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.DocumentsContract;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Gravity;
@@ -44,6 +49,7 @@ import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.webkit.MimeTypeMap;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -57,11 +63,14 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.transition.TransitionInflater;
 
 import com.hippo.android.resource.AttrResources;
+import com.hippo.app.CheckBoxDialogBuilder;
 import com.hippo.beerbelly.BeerBelly;
+import com.hippo.content.FileProvider;
 import com.hippo.drawable.RoundSideRectDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.AppConfig;
+import com.hippo.ehviewer.BuildConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
@@ -88,6 +97,7 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
@@ -120,6 +130,7 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
+import com.hippo.unifile.UniFile;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -143,6 +154,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -164,6 +176,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private static final int STATE_REFRESH = 1;
     private static final int STATE_REFRESH_HEADER = 2;
     private static final int STATE_FAILED = 3;
+
+    private static final int LOCAL_ACTION_DELETE = 0;
+    private static final int LOCAL_ACTION_OPEN_FOLDER = 1;
+    private static final int LOCAL_ACTION_OPEN_IMAGE = 2;
+    private static final int LOCAL_ACTION_COPY_PATH = 3;
 
     public final static String KEY_ACTION = "action";
     public static final String ACTION_GALLERY_INFO = "action_gallery_info";
@@ -253,6 +270,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private TextView mArtist;
     @Nullable
     private TextView mSimilar;
+    @Nullable
+    private TextView mLocalDelete;
     @Nullable
     private TextView mSearchCover;
     // Tags
@@ -616,6 +635,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRate = (TextView) ViewUtils.$$(mActions, R.id.rate);
         mArtist = (TextView) ViewUtils.$$(mActions, R.id.artist);
         mSimilar = (TextView) ViewUtils.$$(mActions, R.id.similar);
+        mLocalDelete = (TextView) ViewUtils.$$(mActions, R.id.local_delete);
         mSearchCover = (TextView) ViewUtils.$$(mActions, R.id.search_cover);
         Ripple.addRipple(mHeartGroup, isDarkTheme);
         Ripple.addRipple(mTorrent, isDarkTheme);
@@ -625,6 +645,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Ripple.addRipple(mRate, isDarkTheme);
         Ripple.addRipple(mArtist, isDarkTheme);
         Ripple.addRipple(mSimilar, isDarkTheme);
+        Ripple.addRipple(mLocalDelete, isDarkTheme);
         Ripple.addRipple(mSearchCover, isDarkTheme);
         mHeartGroup.setOnClickListener(this);
         mHeartGroup.setOnLongClickListener(this);
@@ -635,6 +656,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRate.setOnClickListener(this);
         mArtist.setOnClickListener(this);
         mSimilar.setOnClickListener(this);
+        mLocalDelete.setOnClickListener(this);
         mSearchCover.setOnClickListener(this);
         ensureActionDrawable(context);
 
@@ -754,6 +776,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRate = null;
         mArtist = null;
         mSimilar = null;
+        mLocalDelete = null;
         mSearchCover = null;
 
         mTags = null;
@@ -875,6 +898,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Drawable similar = DrawableManager.getVectorDrawable(context, R.drawable.v_similar_primary_x48);
         if (mSimilar != null) {
             setActionDrawable(mSimilar, similar);
+        }
+        Drawable localDelete = DrawableManager.getVectorDrawable(context, R.drawable.v_delete_primary_x48);
+        if (mLocalDelete != null) {
+            setActionDrawable(mLocalDelete, localDelete);
         }
         Drawable searchCover = DrawableManager.getVectorDrawable(context, R.drawable.v_file_find_primary_x48);
         if (mSearchCover != null) {
@@ -1371,6 +1398,15 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         request();
                     }
                     break;
+                case R.id.action_open_local_gallery_folder:
+                    handleLocalGalleryAction(LOCAL_ACTION_OPEN_FOLDER);
+                    break;
+                case R.id.action_open_local_gallery_image:
+                    handleLocalGalleryAction(LOCAL_ACTION_OPEN_IMAGE);
+                    break;
+                case R.id.action_copy_local_gallery_path:
+                    handleLocalGalleryAction(LOCAL_ACTION_COPY_PATH);
+                    break;
             }
             return true;
         });
@@ -1628,6 +1664,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             showArtistGalleryList();
         } else if (mSimilar == v) {
             showSimilarGalleryList();
+        } else if (mLocalDelete == v) {
+            handleLocalGalleryAction(LOCAL_ACTION_DELETE);
         } else if (mSearchCover == v) {
             showCoverGalleryList();
         } else if (mComments == v) {
@@ -1797,6 +1835,315 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
+    private static class LocalGalleryFiles {
+        final GalleryInfo galleryInfo;
+        final UniFile directory;
+        final UniFile firstImage;
+
+        LocalGalleryFiles(GalleryInfo galleryInfo, UniFile directory, UniFile firstImage) {
+            this.galleryInfo = galleryInfo;
+            this.directory = directory;
+            this.firstImage = firstImage;
+        }
+    }
+
+    private boolean hasLocalDownloadState() {
+        return mDownloadState == DownloadInfo.STATE_FINISH
+                || mDownloadState == DownloadInfo.STATE_NONE;
+    }
+
+    private void updateLocalDeleteVisibility() {
+        if (mLocalDelete != null) {
+            mLocalDelete.setVisibility(hasLocalDownloadState() ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void handleLocalGalleryAction(int action) {
+        Context context = getEHContext();
+        GalleryInfo galleryInfo = getGalleryInfo();
+        if (context == null || galleryInfo == null) {
+            showNoLocalGalleryFiles();
+            return;
+        }
+        if (action == LOCAL_ACTION_DELETE && !hasLocalDownloadState()) {
+            showNoLocalGalleryFiles();
+            return;
+        }
+
+        if (executorService == null) {
+            executorService = EhApplication.getExecutorService(context);
+        }
+        executorService.submit(() -> {
+            LocalGalleryFiles localFiles = findLocalGalleryFiles(galleryInfo);
+            handler.post(() -> {
+                if (!isAdded() || mActions == null) {
+                    return;
+                }
+                if (localFiles == null) {
+                    showNoLocalGalleryFiles();
+                    return;
+                }
+                switch (action) {
+                    case LOCAL_ACTION_DELETE:
+                        showLocalDeleteDialog(localFiles);
+                        break;
+                    case LOCAL_ACTION_OPEN_FOLDER:
+                        openLocalGalleryFolder(localFiles.directory);
+                        break;
+                    case LOCAL_ACTION_OPEN_IMAGE:
+                        openLocalGalleryImage(localFiles.firstImage);
+                        break;
+                    case LOCAL_ACTION_COPY_PATH:
+                        copyLocalGalleryPath(localFiles.directory);
+                        break;
+                }
+            });
+        });
+    }
+
+    @Nullable
+    private LocalGalleryFiles findLocalGalleryFiles(GalleryInfo galleryInfo) {
+        try {
+            UniFile directory = SpiderDen.getExistingGalleryDownloadDir(galleryInfo);
+            if (directory == null || !directory.exists() || !directory.isDirectory()) {
+                return null;
+            }
+            UniFile[] files = directory.listFiles();
+            if (files == null) {
+                return null;
+            }
+            UniFile firstImage = null;
+            String firstImageName = null;
+            for (UniFile file : files) {
+                if (!isImageFile(file)) {
+                    continue;
+                }
+                String name = file.getName();
+                if (firstImage == null || (name != null
+                        && (firstImageName == null || name.compareTo(firstImageName) < 0))) {
+                    firstImage = file;
+                    firstImageName = name;
+                }
+            }
+            return firstImage != null
+                    ? new LocalGalleryFiles(galleryInfo, directory, firstImage)
+                    : null;
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            return null;
+        }
+    }
+
+    private static boolean isImageFile(UniFile file) {
+        if (!file.isFile()) {
+            return false;
+        }
+        String name = file.getName();
+        if (name != null) {
+            String extension = MimeTypeMap.getFileExtensionFromUrl(name).toLowerCase(Locale.US);
+            if ("jpg".equals(extension) || "jpeg".equals(extension)
+                    || "png".equals(extension) || "gif".equals(extension)
+                    || "webp".equals(extension) || "bmp".equals(extension)
+                    || "avif".equals(extension)) {
+                return true;
+            }
+        }
+        String type = file.getType();
+        return type != null && type.startsWith("image/");
+    }
+
+    private void showNoLocalGalleryFiles() {
+        Context context = getEHContext();
+        if (context != null) {
+            Toast.makeText(context, R.string.no_local_gallery_files, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showLocalDeleteDialog(LocalGalleryFiles localFiles) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        CheckBoxDialogBuilder builder = new CheckBoxDialogBuilder(context,
+                getString(R.string.download_remove_dialog_message, localFiles.galleryInfo.title),
+                getString(R.string.download_remove_dialog_check_text), true);
+        builder.setTitle(R.string.download_remove_dialog_title)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    EhApplication.getDownloadManager(context)
+                            .deleteDownload(localFiles.galleryInfo.gid);
+
+                    boolean deleteFiles = builder.isChecked();
+                    Settings.putRemoveImageFiles(deleteFiles);
+                    if (deleteFiles) {
+                        EhDB.removeDownloadDirname(localFiles.galleryInfo.gid);
+                        if (executorService == null) {
+                            executorService = EhApplication.getExecutorService(context);
+                        }
+                        executorService.submit(localFiles.directory::delete);
+                    }
+                })
+                .show();
+    }
+
+    private void openLocalGalleryFolder(UniFile directory) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        try {
+            Uri uri = getDirectoryOpenUri(context, directory);
+            Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.setClipData(ClipData.newRawUri("gallery", uri));
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            try {
+                Uri uri = getDirectoryOpenUri(context, directory);
+                Intent fallback = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                        .putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+                startActivity(fallback);
+            } catch (Throwable inner) {
+                ExceptionUtils.throwIfFatal(inner);
+                Toast.makeText(context, R.string.cannot_open_local_gallery,
+                        Toast.LENGTH_SHORT).show();
+            }
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Toast.makeText(context, R.string.cannot_open_local_gallery,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openLocalGalleryImage(UniFile image) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        try {
+            Uri uri = getShareableUri(context, image);
+            String type = image.getType();
+            if (TextUtils.isEmpty(type)) {
+                type = "image/*";
+            }
+            Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, type)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.setClipData(ClipData.newRawUri("gallery_image", uri));
+            startActivity(intent);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Toast.makeText(context, R.string.cannot_open_local_gallery,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void copyLocalGalleryPath(UniFile directory) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        String path = getLocalGalleryPath(context, directory.getUri());
+        if (TextUtils.isEmpty(path)) {
+            Toast.makeText(context, R.string.cannot_get_local_gallery_path,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ClipboardUtil.copyText(path);
+        Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+    }
+
+    private static Uri getShareableUri(Context context, UniFile file) {
+        Uri uri = file.getUri();
+        if ("file".equals(uri.getScheme())) {
+            return FileProvider.getUriForFile(context, BuildConfig.FILE_PROVIDER_AUTHORITY,
+                    new File(uri.getPath()));
+        }
+        return uri;
+    }
+
+    private static Uri getDirectoryOpenUri(Context context, UniFile directory) {
+        Uri uri = directory.getUri();
+        if ("file".equals(uri.getScheme())) {
+            Uri documentUri = getExternalStorageDocumentUri(uri.getPath());
+            if (documentUri != null) {
+                return documentUri;
+            }
+            return FileProvider.getUriForFile(context, BuildConfig.FILE_PROVIDER_AUTHORITY,
+                    new File(uri.getPath()));
+        }
+        return uri;
+    }
+
+    @Nullable
+    private static Uri getExternalStorageDocumentUri(@Nullable String path) {
+        if (path == null) {
+            return null;
+        }
+        String externalPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        String documentId;
+        if (path.equals(externalPath) || path.startsWith(externalPath + File.separator)) {
+            String relative = path.substring(externalPath.length()).replace(File.separatorChar, '/');
+            if (relative.startsWith("/")) {
+                relative = relative.substring(1);
+            }
+            documentId = relative.isEmpty() ? "primary" : "primary:" + relative;
+        } else if (path.startsWith("/storage/")) {
+            String remainder = path.substring("/storage/".length());
+            int slash = remainder.indexOf('/');
+            String volume = slash >= 0 ? remainder.substring(0, slash) : remainder;
+            String relative = slash >= 0 ? remainder.substring(slash + 1) : "";
+            documentId = relative.isEmpty() ? volume : volume + ":" + relative;
+        } else {
+            return null;
+        }
+        return new Uri.Builder()
+                .scheme("content")
+                .authority("com.android.externalstorage.documents")
+                .appendPath("document")
+                .appendPath(documentId)
+                .build();
+    }
+
+    @Nullable
+    private static String getLocalGalleryPath(Context context, Uri uri) {
+        if ("file".equals(uri.getScheme())) {
+            return useSdcardAlias(uri.getPath());
+        }
+        if ("com.android.externalstorage.documents".equals(uri.getAuthority())
+                && DocumentsContract.isDocumentUri(context, uri)) {
+            try {
+                String documentId = DocumentsContract.getDocumentId(uri);
+                int colon = documentId.indexOf(':');
+                String volume = colon >= 0 ? documentId.substring(0, colon) : documentId;
+                String relative = colon >= 0 ? documentId.substring(colon + 1) : "";
+                String root = "primary".equalsIgnoreCase(volume)
+                        ? "/sdcard"
+                        : "/storage/" + volume;
+                return relative.isEmpty() ? root : root + "/" + relative;
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String useSdcardAlias(@Nullable String path) {
+        if (path == null) {
+            return null;
+        }
+        String externalPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        if (path.equals(externalPath)) {
+            return "/sdcard";
+        }
+        if (path.startsWith(externalPath + File.separator)) {
+            return "/sdcard" + path.substring(externalPath.length())
+                    .replace(File.separatorChar, '/');
+        }
+        return path.replace(File.separatorChar, '/');
+    }
+
     public void startUpdateDownload(String updateUrl) {
         if (mGalleryDetail == null || mGalleryDetail.newVersions == null) {
             return;
@@ -1877,6 +2224,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 //                mDownload.setText(R.string.new_version);
 //                break;
         }
+        updateLocalDeleteVisibility();
     }
 
     private void updateDownloadState() {

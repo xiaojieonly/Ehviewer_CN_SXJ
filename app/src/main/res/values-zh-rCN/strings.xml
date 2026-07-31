@@ -250,6 +250,13 @@
     <string name="share">分享</string>
     <string name="rate">评分</string>
     <string name="similar_gallery">相似画廊</string>
+    <string name="local_delete">本地删除</string>
+    <string name="local_gallery_folder">本地画廊文件夹</string>
+    <string name="open_local_gallery_image">打开本地画廊图片</string>
+    <string name="copy_local_gallery_path">复制画廊本地路径</string>
+    <string name="no_local_gallery_files">不存在本地画廊文件</string>
+    <string name="cannot_open_local_gallery">没有可打开该本地画廊项目的应用</string>
+    <string name="cannot_get_local_gallery_path">无法获取画廊本地路径</string>
     <string name="gallery_artist">作者</string>
     <string name="search_cover">搜索封面</string>
     <string name="no_tags">暂无标签</string>
