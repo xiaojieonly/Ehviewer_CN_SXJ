@@ -240,7 +240,7 @@
   --spacing: 8px;                    /* spacing 8dp */
   --single-max-width: 260px;         /* single_max_width 260dp */
   --progress-bar-height: 24px;       /* progress_bar_height 24dp */
-  --progress-padding: 18dp;          /* progress_padding 18dp */
+  --progress-padding: 18px;          /* progress_padding 18dp */
 
   /* Search layout (dimens.xml) */
   --search-layout-interval: 0px;
