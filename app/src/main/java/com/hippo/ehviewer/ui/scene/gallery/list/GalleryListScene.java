@@ -1327,29 +1327,23 @@ public class GalleryListScene extends BaseScene
                 && mBookmarkSubscriptionCoordinator != null
                 ? mBookmarkSubscriptionCoordinator.buildSearchForGallery(gi.gid) : null;
 
-        CharSequence[] items = matchingBookmarkSearch != null
-                ? new CharSequence[]{
-                context.getString(R.string.read),
-                context.getString(downloaded ? R.string.delete_downloads : R.string.download),
-                context.getString(favourited ? R.string.remove_from_favourites : R.string.add_to_favourites),
-                context.getString(R.string.search_corresponding_bookmarks),
-        } : new CharSequence[]{
-                context.getString(R.string.read),
-                context.getString(downloaded ? R.string.delete_downloads : R.string.download),
-                context.getString(favourited ? R.string.remove_from_favourites : R.string.add_to_favourites),
-        };
+        int menuSize = matchingBookmarkSearch != null ? 4 : 3;
+        CharSequence[] items = new CharSequence[menuSize];
+        items[0] = context.getString(R.string.read);
+        items[1] = context.getString(downloaded
+                ? R.string.delete_downloads : R.string.download);
+        items[2] = context.getString(favourited
+                ? R.string.remove_from_favourites : R.string.add_to_favourites);
 
-        int[] icons = matchingBookmarkSearch != null
-                ? new int[]{
-                R.drawable.v_book_open_x24,
-                downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24,
-                favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
-                R.drawable.v_magnify_x24,
-        } : new int[]{
-                R.drawable.v_book_open_x24,
-                downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24,
-                favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24,
-        };
+        int[] icons = new int[menuSize];
+        icons[0] = R.drawable.v_book_open_x24;
+        icons[1] = downloaded ? R.drawable.v_delete_x24 : R.drawable.v_download_x24;
+        icons[2] = favourited ? R.drawable.v_heart_broken_x24 : R.drawable.v_heart_x24;
+
+        if (matchingBookmarkSearch != null) {
+            items[3] = context.getString(R.string.search_corresponding_bookmarks);
+            icons[3] = R.drawable.v_magnify_x24;
+        }
 
         @SuppressLint("InflateParams") LinearLayout linearLayout = (LinearLayout) getLayoutInflater2().inflate(R.layout.gallery_item_dialog_coustom_title, null);
 

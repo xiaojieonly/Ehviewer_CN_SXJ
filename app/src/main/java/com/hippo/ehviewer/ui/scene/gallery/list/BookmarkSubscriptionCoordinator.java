@@ -65,8 +65,6 @@ final class BookmarkSubscriptionCoordinator {
 
         int bufferIndex;
         int pageIndex;
-        int pages;
-        int loadedPages;
         @Nullable String nextHref;
         @Nullable String boundaryPosted;
         long boundaryGid;
@@ -112,11 +110,9 @@ final class BookmarkSubscriptionCoordinator {
     private int mTaskId;
     private int mActiveRequests;
     private int mInitialRequestsRemaining;
-    private int mObservedBatchSize;
     private int mBatchSize = DEFAULT_BATCH_SIZE;
     private boolean mRefresh;
     private boolean mLoading;
-    private boolean mHadFailure;
     @Nullable private Exception mFirstFailure;
     private String mSubscriptionFingerprint = "";
 
@@ -176,7 +172,6 @@ final class BookmarkSubscriptionCoordinator {
         ListUrlBuilder builder = new ListUrlBuilder();
         if (matches.size() == 1) {
             builder.set(matches.iterator().next());
-            builder.setPageIndex(0);
             return builder;
         }
 
@@ -221,10 +216,9 @@ final class BookmarkSubscriptionCoordinator {
             }
         }
 
-        builder.reset();
         builder.setMode(ListUrlBuilder.MODE_NORMAL);
         builder.setCategory(excludedCategories);
-        builder.setKeyword(String.join(" ", uniqueTerms.values()));
+        builder.setKeyword(TextUtils.join(" ", uniqueTerms.values()));
         if (hasAdvanceSearch) {
             builder.setAdvanceSearch(advanceSearch);
             builder.setMinRating(minRating);
@@ -239,11 +233,8 @@ final class BookmarkSubscriptionCoordinator {
         mTaskId = taskId;
         mRefresh = true;
         mLoading = true;
-        mHadFailure = false;
         mFirstFailure = null;
-        mObservedBatchSize = 0;
-        mPendingBatch.clear();
-        mEmittedGids.clear();
+        mBatchSize = 0;
         mSubscriptionFingerprint = getFingerprint(quickSearches);
 
         for (QuickSearch quickSearch : quickSearches) {
@@ -275,9 +266,7 @@ final class BookmarkSubscriptionCoordinator {
         mTaskId = taskId;
         mRefresh = false;
         mLoading = true;
-        mHadFailure = false;
         mFirstFailure = null;
-        mPendingBatch.clear();
         continueProducing();
     }
 
@@ -289,8 +278,6 @@ final class BookmarkSubscriptionCoordinator {
         mActiveRequests = 0;
         mInitialRequestsRemaining = 0;
         for (Source source : mSources) {
-            source.queued = false;
-            source.loading = false;
             if (source.request != null) {
                 EhRequest request = source.request;
                 source.request = null;
@@ -379,19 +366,23 @@ final class BookmarkSubscriptionCoordinator {
         }
         Source source = mSources.get(sourceId);
         finishRequest(source, initial);
-        source.loadedPages++;
 
         if (initial) {
-            mObservedBatchSize = Math.max(mObservedBatchSize, result.rawResultCount);
+            mBatchSize = Math.max(mBatchSize, result.rawResultCount);
         }
         source.buffer.clear();
         source.bufferIndex = 0;
         source.buffer.addAll(result.galleryInfoList);
         for (GalleryInfo galleryInfo : result.galleryInfoList) {
-            mMatchingQuickSearches.computeIfAbsent(galleryInfo.gid,
-                    ignored -> new LinkedHashSet<>()).add(source.quickSearch);
+            LinkedHashSet<QuickSearch> matches = mMatchingQuickSearches.get(galleryInfo.gid);
+            if (matches == null) {
+                matches = new LinkedHashSet<>();
+                mMatchingQuickSearches.put(galleryInfo.gid, matches);
+            }
+            matches.add(source.quickSearch);
         }
-        source.buffer.sort((first, second) -> -compareGalleryOrder(first, second));
+        Collections.sort(source.buffer,
+                (first, second) -> -compareGalleryOrder(first, second));
 
         if (result.rawResultCount > 0) {
             source.boundaryPosted = result.rawTailPosted;
@@ -400,7 +391,6 @@ final class BookmarkSubscriptionCoordinator {
         }
 
         source.nextHref = result.nextHref;
-        source.pages = result.pages;
         boolean hasHref = !TextUtils.isEmpty(result.nextHref);
         boolean hasIndexedPage = result.pages > 0 && source.pageIndex + 1 < result.pages;
         source.exhausted = !hasHref && !hasIndexedPage;
@@ -415,7 +405,6 @@ final class BookmarkSubscriptionCoordinator {
         Source source = mSources.get(sourceId);
         finishRequest(source, initial);
         source.exhausted = true;
-        mHadFailure = true;
         if (mFirstFailure == null) {
             mFirstFailure = error;
         }
@@ -434,9 +423,8 @@ final class BookmarkSubscriptionCoordinator {
     private void afterRequestFinished() {
         pumpRequests();
         if (mInitialRequestsRemaining == 0) {
-            if (mRefresh) {
-                mBatchSize = mObservedBatchSize > 0
-                        ? mObservedBatchSize : DEFAULT_BATCH_SIZE;
+            if (mRefresh && mBatchSize == 0) {
+                mBatchSize = DEFAULT_BATCH_SIZE;
             }
             continueProducing();
         }
@@ -571,7 +559,10 @@ final class BookmarkSubscriptionCoordinator {
         }
         String normalized = term.trim();
         if (!normalized.isEmpty()) {
-            terms.putIfAbsent(normalized.toLowerCase(Locale.ROOT), normalized);
+            String key = normalized.toLowerCase(Locale.ROOT);
+            if (!terms.containsKey(key)) {
+                terms.put(key, normalized);
+            }
         }
     }
 
@@ -624,7 +615,7 @@ final class BookmarkSubscriptionCoordinator {
 
         ArrayList<GalleryInfo> data = new ArrayList<>(mPendingBatch);
         boolean refresh = mRefresh;
-        boolean partialFailure = mHadFailure;
+        boolean partialFailure = mFirstFailure != null;
         mPendingBatch.clear();
         mLoading = false;
         mRefresh = false;
