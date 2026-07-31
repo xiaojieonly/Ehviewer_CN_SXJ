@@ -110,10 +110,19 @@ watch(
   transition: margin-left var(--duration-scene-translate) var(--ease-decelerate-quint);
 }
 
-/* Persistent drawer on wide viewports — content shifts right */
+/* Wide viewports: drawer panel is position:static (in-flow), so use flex
+   to lay it out side-by-side with the content column.
+   height:100vh ensures the drawer panel's height:100% resolves correctly. */
 @media (min-width: 720px) {
+  .app-layout {
+    display: flex;
+    height: 100vh;
+  }
+
   .app-content {
-    margin-left: var(--drawer-width);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-y: auto;
   }
 }
 
