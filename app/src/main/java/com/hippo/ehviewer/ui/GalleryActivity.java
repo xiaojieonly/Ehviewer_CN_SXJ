@@ -30,6 +30,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
@@ -47,6 +48,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -136,6 +138,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     private static final long SLIDER_ANIMATION_DURING = 150;
     private static final long HIDE_SLIDER_DELAY = 3000;
     private static final long QUICK_SAVE_DEBOUNCE_MS = 1000L;
+    private static final long SAVE_NOTICE_DURATION_MS = 2000L;
+    private static final long SAVE_NOTICE_FADE_DURATION_MS = 200L;
 
     private static final int WRITE_REQUEST_CODE = 43;
 
@@ -988,12 +992,14 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     }
 
     @Override
-    public void onLongPressPage(int index) {
+    public void onLongPressPage(int index, boolean nextPageArea) {
         NotifyTask task = mNotifyTaskPool.pop();
         if (task == null) {
             task = new NotifyTask();
         }
-        task.setData(NotifyTask.KEY_LONG_PRESS_PAGE, index);
+        task.setData(nextPageArea
+                ? NotifyTask.KEY_LONG_PRESS_NEXT_PAGE_AREA
+                : NotifyTask.KEY_LONG_PRESS_PAGE, index);
         SimpleHandler.getInstance().post(task);
     }
 
@@ -1158,7 +1164,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         UniFile defaultDir = UniFile.fromFile(AppConfig.getExternalImageDir());
         UniFile effectiveDir = configuredDir != null ? configuredDir : defaultDir;
         if (effectiveDir == null) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            showSaveNotice(getText(R.string.error_cant_save_image));
             return;
         }
 
@@ -1170,14 +1176,76 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             file = saveImageInDirectory(page, defaultDir);
         }
         if (file == null) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            showSaveNotice(getText(R.string.error_cant_save_image));
             return;
         }
 
-        Toast.makeText(this, getString(R.string.image_saved, file.getUri()), Toast.LENGTH_SHORT).show();
+        showSaveNotice(getString(R.string.image_saved, file.getUri()));
 
         // Sync media store
         sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, file.getUri()));
+    }
+
+    private void showSaveNotice(CharSequence message) {
+        FrameLayout host = findViewById(R.id.main);
+        if (host == null) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        float density = getResources().getDisplayMetrics().density;
+        int horizontalPadding = Math.round(16.0f * density);
+        int verticalPadding = Math.round(10.0f * density);
+
+        TextView notice = new TextView(this);
+        notice.setText(message);
+        notice.setTextColor(0xffffffff);
+        notice.setTextSize(14.0f);
+        notice.setGravity(Gravity.CENTER);
+        notice.setMaxLines(2);
+        notice.setEllipsize(TextUtils.TruncateAt.END);
+        notice.setMinHeight(Math.round(56.0f * density));
+        notice.setPadding(horizontalPadding, verticalPadding,
+                horizontalPadding, verticalPadding);
+        notice.setElevation(6.0f * density);
+
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0xff323232);
+        background.setCornerRadius(12.0f * density);
+        notice.setBackground(background);
+
+        WindowInsetsCompat rootInsets = ViewCompat.getRootWindowInsets(host);
+        int navigationBarInset = rootInsets != null
+                ? rootInsets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+                : 0;
+        int availableWidth = host.getWidth() > 0
+                ? host.getWidth()
+                : getResources().getDisplayMetrics().widthPixels;
+        int noticeWidth = Math.min(
+                Math.max(availableWidth - Math.round(48.0f * density), 1),
+                Math.round(520.0f * density));
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                noticeWidth, FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        layoutParams.bottomMargin = navigationBarInset + Math.round(64.0f * density);
+
+        // Keep every notice alive for its own duration. Adding the newest one last puts it
+        // visually above older notices without cancelling or queueing either one.
+        host.addView(notice, layoutParams);
+        notice.postDelayed(() -> {
+            if (!ViewCompat.isAttachedToWindow(notice)) {
+                return;
+            }
+            notice.animate()
+                    .alpha(0.0f)
+                    .setDuration(SAVE_NOTICE_FADE_DURATION_MS)
+                    .withEndAction(() -> {
+                        if (notice.getParent() == host) {
+                            host.removeView(notice);
+                        }
+                    })
+                    .start();
+        }, SAVE_NOTICE_DURATION_MS - SAVE_NOTICE_FADE_DURATION_MS);
     }
 
     @Nullable
@@ -1201,12 +1269,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         File dir = getCacheDir();
         UniFile file;
         if (null == (file = mGalleryProvider.save(page, UniFile.fromFile(dir), mGalleryProvider.getImageFilename(page)))) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            showSaveNotice(getText(R.string.error_cant_save_image));
             return;
         }
         String filename = file.getName();
         if (filename == null) {
-            Toast.makeText(this, R.string.error_cant_save_image, Toast.LENGTH_SHORT).show();
+            showSaveNotice(getText(R.string.error_cant_save_image));
             return;
         }
         mCacheFileName = filename;
@@ -1251,7 +1319,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
 
                 cacheFile.delete();
 
-                Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+                showSaveNotice(getString(R.string.image_saved, uri.getPath()));
                 // Sync media store
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
             }
@@ -1291,7 +1359,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 cacheFile.deleteOnExit();
             }
 
-            Toast.makeText(this, getString(R.string.image_saved, uri.getPath()), Toast.LENGTH_SHORT).show();
+            showSaveNotice(getString(R.string.image_saved, uri.getPath()));
             // Sync media store
             sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
         }
@@ -1343,6 +1411,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         private final SeekBar mStartTransferTime;
         private final EditText mStartTransferTimeInput;
         private final SwitchCompat mDirectSave;
+        private final SwitchCompat mQuickSaveTurnPage;
         private final SwitchCompat mDoubleTapZoom;
         private final SwitchCompat mKeepScreenOn;
         private final SwitchCompat mShowClock;
@@ -1365,6 +1434,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mStartTransferTime = mView.findViewById(R.id.start_transfer_time);
             mStartTransferTimeInput = mView.findViewById(R.id.start_transfer_time_input);
             mDirectSave = mView.findViewById(R.id.direct_save);
+            mQuickSaveTurnPage = mView.findViewById(R.id.quick_save_turn_page);
             mDoubleTapZoom = mView.findViewById(R.id.double_tap_zoom);
             mKeepScreenOn = mView.findViewById(R.id.keep_screen_on);
             mShowClock = mView.findViewById(R.id.show_clock);
@@ -1383,6 +1453,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mStartPosition.setSelection(Settings.getStartPosition());
             configureStartTransferTime();
             mDirectSave.setChecked(Settings.getDirectSave());
+            mQuickSaveTurnPage.setChecked(Settings.getQuickSaveTurnPage());
             mDoubleTapZoom.setChecked(Settings.getDoubleTapZoom());
             mKeepScreenOn.setChecked(Settings.getKeepScreenOn());
             mShowClock.setChecked(Settings.getShowClock());
@@ -1396,7 +1467,11 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             mScreenLightness.setProgress(Settings.getScreenLightness());
             mScreenLightness.setEnabled(Settings.getCustomScreenLightness());
 
+            mDirectSave.setOnCheckedChangeListener(this::onDirectSaveChange);
             mVolumePage.setOnCheckedChangeListener(this::onVolumePageChange);
+
+            mQuickSaveTurnPage.setVisibility(
+                    Settings.getDirectSave() ? View.VISIBLE : View.GONE);
 
             if (Settings.getVolumePage()) {
                 mReverseVolumePage.setVisibility(View.VISIBLE);
@@ -1495,6 +1570,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             }
         }
 
+        private void onDirectSaveChange(CompoundButton compoundButton, boolean checked) {
+            mQuickSaveTurnPage.setVisibility(checked ? View.VISIBLE : View.GONE);
+        }
+
         public View getView() {
             return mView;
         }
@@ -1510,6 +1589,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             int scaleMode = GalleryView.sanitizeScaleMode(mScaleMode.getSelectedItemPosition());
             int startPosition = GalleryView.sanitizeStartPosition(mStartPosition.getSelectedItemPosition());
             boolean directSave = mDirectSave.isChecked();
+            boolean quickSaveTurnPage = mQuickSaveTurnPage.isChecked();
             boolean doubleTapZoom = mDoubleTapZoom.isChecked();
             boolean keepScreenOn = mKeepScreenOn.isChecked();
             boolean showClock = mShowClock.isChecked();
@@ -1532,6 +1612,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             Settings.putStartPosition(startPosition);
             Settings.putStartTransferTime(transferTime);
             Settings.putDirectSave(directSave);
+            Settings.putQuickSaveTurnPage(quickSaveTurnPage);
             Settings.putDoubleTapZoom(doubleTapZoom);
             Settings.putKeepScreenOn(keepScreenOn);
             Settings.putShowClock(showClock);
@@ -1609,6 +1690,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
         public static final int KEY_TAP_ERROR_TEXT = 5;
         public static final int KEY_LONG_PRESS_PAGE = 6;
         public static final int KEY_TAP_SAVE_AREA = 7;
+        public static final int KEY_LONG_PRESS_NEXT_PAGE_AREA = 8;
 
         private int mKey;
         private int mValue;
@@ -1659,6 +1741,10 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                 return;
             }
 
+            performQuickSave(index);
+        }
+
+        private void performQuickSave(int index) {
             if (mGalleryProvider == null || index < 0 || index >= mSize) {
                 return;
             }
@@ -1673,10 +1759,26 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             saveImage(index);
             mLastQuickSaveIndex = index;
             mLastQuickSaveAt = SystemClock.elapsedRealtime();
+
+            if (Settings.getQuickSaveTurnPage() && mGalleryView != null) {
+                if (mLayoutMode == GalleryView.LAYOUT_RIGHT_TO_LEFT) {
+                    mGalleryView.pageLeft();
+                } else {
+                    mGalleryView.pageRight();
+                }
+            }
         }
 
         private void onLongPressPage(final int index) {
             showPageDialog(index);
+        }
+
+        private void onLongPressNextPageArea(final int index) {
+            if (Settings.getDirectSave()) {
+                performQuickSave(index);
+            } else {
+                showPageDialog(index);
+            }
         }
 
         @Override
@@ -1710,6 +1812,9 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
                     break;
                 case KEY_TAP_SAVE_AREA:
                     onTapSaveArea(mValue);
+                    break;
+                case KEY_LONG_PRESS_NEXT_PAGE_AREA:
+                    onLongPressNextPageArea(mValue);
                     break;
             }
             mNotifyTaskPool.push(this);

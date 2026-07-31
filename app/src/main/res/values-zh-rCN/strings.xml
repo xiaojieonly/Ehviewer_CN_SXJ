@@ -251,7 +251,6 @@
     <string name="rate">评分</string>
     <string name="similar_gallery">相似画廊</string>
     <string name="local_delete">本地删除</string>
-    <string name="local_gallery_folder">本地画廊文件夹</string>
     <string name="open_local_gallery_image">打开本地画廊图片</string>
     <string name="copy_local_gallery_path">复制画廊本地路径</string>
     <string name="no_local_gallery_files">不存在本地画廊文件</string>
@@ -578,7 +577,8 @@
     <string name="settings_read_start_position_bottom_left">左下角</string>
     <string name="settings_read_start_position_bottom_right">右下角</string>
     <string name="settings_read_auto_transfer_time">自动翻页(ms)</string>
-    <string name="settings_read_direct_save">直接保存</string>
+    <string name="settings_read_direct_save">快速保存</string>
+    <string name="settings_read_quick_save_turn_page">保存后翻页</string>
     <string name="settings_read_double_tap_zoom">双击放大</string>
     <string name="settings_read_start_position_center">中心</string>
     <string name="settings_read_keep_screen_on">屏幕常亮</string>

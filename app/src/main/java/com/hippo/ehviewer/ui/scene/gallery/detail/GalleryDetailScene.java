@@ -20,7 +20,6 @@ package com.hippo.ehviewer.ui.scene.gallery.detail;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -178,9 +177,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private static final int STATE_FAILED = 3;
 
     private static final int LOCAL_ACTION_DELETE = 0;
-    private static final int LOCAL_ACTION_OPEN_FOLDER = 1;
-    private static final int LOCAL_ACTION_OPEN_IMAGE = 2;
-    private static final int LOCAL_ACTION_COPY_PATH = 3;
+    private static final int LOCAL_ACTION_OPEN_IMAGE = 1;
+    private static final int LOCAL_ACTION_COPY_PATH = 2;
 
     public final static String KEY_ACTION = "action";
     public static final String ACTION_GALLERY_INFO = "action_gallery_info";
@@ -1398,9 +1396,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         request();
                     }
                     break;
-                case R.id.action_open_local_gallery_folder:
-                    handleLocalGalleryAction(LOCAL_ACTION_OPEN_FOLDER);
-                    break;
                 case R.id.action_open_local_gallery_image:
                     handleLocalGalleryAction(LOCAL_ACTION_OPEN_IMAGE);
                     break;
@@ -1887,9 +1882,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     case LOCAL_ACTION_DELETE:
                         showLocalDeleteDialog(localFiles);
                         break;
-                    case LOCAL_ACTION_OPEN_FOLDER:
-                        openLocalGalleryFolder(localFiles.directory);
-                        break;
                     case LOCAL_ACTION_OPEN_IMAGE:
                         openLocalGalleryImage(localFiles.firstImage);
                         break;
@@ -1985,36 +1977,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 .show();
     }
 
-    private void openLocalGalleryFolder(UniFile directory) {
-        Context context = getEHContext();
-        if (context == null) {
-            return;
-        }
-        try {
-            Uri uri = getDirectoryOpenUri(context, directory);
-            Intent intent = new Intent(Intent.ACTION_VIEW)
-                    .setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.setClipData(ClipData.newRawUri("gallery", uri));
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            try {
-                Uri uri = getDirectoryOpenUri(context, directory);
-                Intent fallback = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                        .putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
-                startActivity(fallback);
-            } catch (Throwable inner) {
-                ExceptionUtils.throwIfFatal(inner);
-                Toast.makeText(context, R.string.cannot_open_local_gallery,
-                        Toast.LENGTH_SHORT).show();
-            }
-        } catch (Throwable e) {
-            ExceptionUtils.throwIfFatal(e);
-            Toast.makeText(context, R.string.cannot_open_local_gallery,
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
-
     private void openLocalGalleryImage(UniFile image) {
         Context context = getEHContext();
         if (context == null) {
@@ -2060,49 +2022,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                     new File(uri.getPath()));
         }
         return uri;
-    }
-
-    private static Uri getDirectoryOpenUri(Context context, UniFile directory) {
-        Uri uri = directory.getUri();
-        if ("file".equals(uri.getScheme())) {
-            Uri documentUri = getExternalStorageDocumentUri(uri.getPath());
-            if (documentUri != null) {
-                return documentUri;
-            }
-            return FileProvider.getUriForFile(context, BuildConfig.FILE_PROVIDER_AUTHORITY,
-                    new File(uri.getPath()));
-        }
-        return uri;
-    }
-
-    @Nullable
-    private static Uri getExternalStorageDocumentUri(@Nullable String path) {
-        if (path == null) {
-            return null;
-        }
-        String externalPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String documentId;
-        if (path.equals(externalPath) || path.startsWith(externalPath + File.separator)) {
-            String relative = path.substring(externalPath.length()).replace(File.separatorChar, '/');
-            if (relative.startsWith("/")) {
-                relative = relative.substring(1);
-            }
-            documentId = relative.isEmpty() ? "primary" : "primary:" + relative;
-        } else if (path.startsWith("/storage/")) {
-            String remainder = path.substring("/storage/".length());
-            int slash = remainder.indexOf('/');
-            String volume = slash >= 0 ? remainder.substring(0, slash) : remainder;
-            String relative = slash >= 0 ? remainder.substring(slash + 1) : "";
-            documentId = relative.isEmpty() ? volume : volume + ":" + relative;
-        } else {
-            return null;
-        }
-        return new Uri.Builder()
-                .scheme("content")
-                .authority("com.android.externalstorage.documents")
-                .appendPath("document")
-                .appendPath(documentId)
-                .build();
     }
 
     @Nullable

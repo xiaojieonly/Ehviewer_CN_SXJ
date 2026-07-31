@@ -27,10 +27,6 @@
         android:title="@string/open_in_other_app"/>
 
     <item
-        android:id="@+id/action_open_local_gallery_folder"
-        android:title="@string/local_gallery_folder"/>
-
-    <item
         android:id="@+id/action_open_local_gallery_image"
         android:title="@string/open_local_gallery_image"/>
 

@@ -635,6 +635,17 @@ public class Settings {
         putBoolean(KEY_DIRECT_SAVE, value);
     }
 
+    private static final String KEY_QUICK_SAVE_TURN_PAGE = "gallery_quick_save_turn_page";
+    private static final boolean DEFAULT_QUICK_SAVE_TURN_PAGE = false;
+
+    public static boolean getQuickSaveTurnPage() {
+        return getBoolean(KEY_QUICK_SAVE_TURN_PAGE, DEFAULT_QUICK_SAVE_TURN_PAGE);
+    }
+
+    public static void putQuickSaveTurnPage(boolean value) {
+        putBoolean(KEY_QUICK_SAVE_TURN_PAGE, value);
+    }
+
     private static final String KEY_DOUBLE_TAP_ZOOM = "gallery_double_tap_zoom";
     private static final boolean DEFAULT_DOUBLE_TAP_ZOOM = false;
 
