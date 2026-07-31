@@ -60,9 +60,10 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     private static final String KEY_CONFIGURE = "webui_configure";
     private static final String KEY_STATUS = "webui_status";
     private static final String KEY_SYNC_NOW = "webui_sync_now";
+    private static final String KEY_REMOTE_READ = "webui_remote_read";
+    private static final String KEY_PAIR = "webui_pair";
     private static final String KEY_SYNC_PREFERENCES = "webui_sync_preferences";
     private static final String KEY_PULL_PREFERENCES = "webui_pull_preferences";
-    private static final String KEY_REMOTE_READ = "webui_remote_read";
 
     private Preference mConfigure;
     private Preference mStatus;
@@ -100,6 +101,14 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         if (mSyncNow != null) {
             mSyncNow.setOnPreferenceClickListener(p -> {
                 syncNow();
+                return true;
+            });
+        }
+
+        Preference pair = findPreference(KEY_PAIR);
+        if (pair != null) {
+            pair.setOnPreferenceClickListener(p -> {
+                showPairDialog();
                 return true;
             });
         }
@@ -237,6 +246,65 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     }
 
     // ---------------------------------------------------------------------------------------------
+    // Pairing dialog
+    // ---------------------------------------------------------------------------------------------
+
+    /** Pairs this device via a server-generated pairing code (no password needed). */
+    private void showPairDialog() {
+        WebUiConfig existing = new WebUiSettings(requireContext()).loadConfig();
+
+        LinearLayout layout = new LinearLayout(requireActivity());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.dialog_padding_top_material);
+        layout.setPadding(padding, padding, padding, padding);
+
+        Spinner protocol = new Spinner(requireActivity());
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireActivity(),
+                android.R.layout.simple_spinner_item, new String[]{"http", "https"});
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        protocol.setAdapter(adapter);
+        if (existing != null && WebUiConfig.PROTOCOL_HTTPS.equals(existing.getProtocol())) {
+            protocol.setSelection(1);
+        }
+        layout.addView(protocol);
+
+        EditText host = addField(layout, R.string.settings_webui_host,
+                existing != null ? existing.getHost() : "");
+        EditText port = addField(layout, R.string.settings_webui_port,
+                existing != null ? String.valueOf(existing.getPort()) : String.valueOf(WebUiConfig.DEFAULT_PORT));
+        port.setInputType(InputType.TYPE_CLASS_NUMBER);
+        EditText code = addField(layout, R.string.settings_webui_pair_code, "");
+        code.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.settings_webui_pair)
+                .setView(layout)
+                .setPositiveButton(R.string.settings_webui_pair_confirm, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String hostValue = host.getText().toString().trim();
+            String portValue = port.getText().toString().trim();
+            String codeValue = code.getText().toString().trim();
+            if (hostValue.isEmpty() || codeValue.length() < 4) {
+                Toast.makeText(requireActivity(), R.string.settings_webui_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int portNumber;
+            try {
+                portNumber = portValue.isEmpty() ? WebUiConfig.DEFAULT_PORT : Integer.parseInt(portValue);
+            } catch (NumberFormatException e) {
+                Toast.makeText(requireActivity(), R.string.settings_webui_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String protocolValue = protocol.getSelectedItemPosition() == 1 ? "https" : "http";
+            new PairTask(this, dialog, protocolValue, hostValue, portNumber, codeValue.toUpperCase()).execute();
+        }));
+        dialog.show();
+    }
+
+    // ---------------------------------------------------------------------------------------------
     // Status / sync actions
     // ---------------------------------------------------------------------------------------------
 
@@ -353,6 +421,84 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             } else {
                 Toast.makeText(fragment.requireActivity(),
                         fragment.getString(R.string.settings_webui_connect_failed, messageOf(error)),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    /** Exchanges a pairing code for a device token, persists the connection, then pulls preferences. */
+    private static final class PairTask {
+        private final WeakReference<WebUiSyncFragment> fragmentRef;
+        private final AlertDialog dialog;
+        private final String protocol;
+        private final String host;
+        private final int port;
+        private final String code;
+        private ProgressDialog progress;
+
+        PairTask(WebUiSyncFragment fragment, AlertDialog dialog, String protocol, String host,
+                int port, String code) {
+            this.fragmentRef = new WeakReference<>(fragment);
+            this.dialog = dialog;
+            this.protocol = protocol;
+            this.host = host;
+            this.port = port;
+            this.code = code;
+        }
+
+        void execute() {
+            WebUiSyncFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.getActivity() == null) return;
+            ExecutorService executor = fragment.mExecutor;
+            Handler handler = fragment.mMainHandler;
+            if (executor == null || handler == null) return;
+
+            progress = ProgressDialog.show(fragment.requireActivity(), null,
+                    fragment.getString(R.string.settings_webui_pairing), true, false);
+
+            executor.execute(() -> {
+                String username = null;
+                String token = null;
+                Throwable error = null;
+                try {
+                    WebUiConfig probe = new WebUiConfig(protocol, host, port, "", "");
+                    WebUiSettings settings = new WebUiSettings(fragment.getContext());
+                    WebUiSyncModels.PairCompleteResponse auth =
+                            WebUiApiClient.pairComplete(probe, code, settings.deviceId(),
+                                    android.os.Build.MODEL, "android");
+                    if (!auth.success || TextUtils.isEmpty(auth.token)) {
+                        throw new java.io.IOException(TextUtils.isEmpty(auth.message)
+                                ? "Pairing failed" : auth.message);
+                    }
+                    username = auth.username;
+                    token = auth.token;
+                } catch (Throwable e) {
+                    error = e;
+                }
+                final String savedUsername = username;
+                final String savedToken = token;
+                final Throwable finalError = error;
+                handler.post(() -> onPostExecute(savedUsername, savedToken, finalError));
+            });
+        }
+
+        private void onPostExecute(String username, String token, Throwable error) {
+            if (progress != null) {
+                try { progress.dismiss(); } catch (Exception ignored) {}
+            }
+            WebUiSyncFragment fragment = fragmentRef.get();
+            if (fragment == null || !fragment.isAdded()) return;
+            if (error == null) {
+                WebUiConfig config = new WebUiConfig(protocol, host, port, username, token);
+                new WebUiSettings(fragment.requireContext()).saveConfig(config);
+                dialog.dismiss();
+                fragment.updateConfigureSummary();
+                Toast.makeText(fragment.requireActivity(), R.string.settings_webui_pair_done, Toast.LENGTH_LONG).show();
+                // Pull server preferences onto the device right after pairing.
+                fragment.pullPreferences();
+            } else {
+                Toast.makeText(fragment.requireActivity(),
+                        fragment.getString(R.string.settings_webui_pair_failed, messageOf(error)),
                         Toast.LENGTH_LONG).show();
             }
         }

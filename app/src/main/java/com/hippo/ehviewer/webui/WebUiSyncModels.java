@@ -172,4 +172,19 @@ public final class WebUiSyncModels {
         public String token;
         public String username;
     }
+
+    /** POST /api/v1/auth/pair/complete body. */
+    public static class PairCompleteRequest {
+        public String code;
+        public String deviceId;
+        public String deviceName;
+        public String platform;
+    }
+
+    public static class PairCompleteResponse {
+        public boolean success;
+        public String message;
+        public String token;
+        public String username;
+    }
 }

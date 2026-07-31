@@ -38,6 +38,19 @@
         app:iconSpaceReserved="false" />
 
     <Preference
+        android:key="webui_pair"
+        android:summary="@string/settings_webui_pair_summary"
+        android:title="@string/settings_webui_pair"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="webui_sync_preferences"
+        android:title="@string/settings_webui_sync_preferences"
+        android:summary="@string/settings_webui_sync_preferences_summary"
+        app:iconSpaceReserved="false" />
+
+    <Preference
         android:key="webui_sync_preferences"
         android:summary="@string/settings_webui_sync_preferences_summary"
         android:title="@string/settings_webui_sync_preferences"

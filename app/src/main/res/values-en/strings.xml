@@ -939,6 +939,13 @@
     <string name="settings_webui_preferences_pushed">Local settings uploaded</string>
     <string name="settings_webui_preferences_pulled">Settings restored from server</string>
     <string name="settings_webui_preferences_failed">Settings sync failed: %s</string>
+    <string name="settings_webui_pair">Pair with server</string>
+    <string name="settings_webui_pair_summary">Connect with a pairing code from the server, no password needed</string>
+    <string name="settings_webui_pair_code">Pairing code (from the server admin panel)</string>
+    <string name="settings_webui_pair_confirm">Pair</string>
+    <string name="settings_webui_pairing">Pairing…</string>
+    <string name="settings_webui_pair_done">Paired, pulling server settings</string>
+    <string name="settings_webui_pair_failed">Pairing failed: %s</string>
     <string name="download_choose_location">Download to</string>
     <string name="download_local">This device</string>
     <string name="download_delegate_server">On the server</string>

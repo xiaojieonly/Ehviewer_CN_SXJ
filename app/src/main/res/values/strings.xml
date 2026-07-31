@@ -1160,6 +1160,13 @@
     <string name="settings_webui_preferences_pushed">本机设置已上传</string>
     <string name="settings_webui_preferences_pulled">设置已从服务器恢复</string>
     <string name="settings_webui_preferences_failed">同步配置失败：%s</string>
+    <string name="settings_webui_pair">配对服务器</string>
+    <string name="settings_webui_pair_summary">用服务器生成的配对码连接，无需输入密码</string>
+    <string name="settings_webui_pair_code">配对码（在服务器管理面板获取）</string>
+    <string name="settings_webui_pair_confirm">配对</string>
+    <string name="settings_webui_pairing">正在配对…</string>
+    <string name="settings_webui_pair_done">配对成功，正在拉取服务器配置</string>
+    <string name="settings_webui_pair_failed">配对失败：%s</string>
     <string name="download_choose_location">下载位置</string>
     <string name="download_local">本机下载</string>
     <string name="download_delegate_server">在服务器上下载</string>

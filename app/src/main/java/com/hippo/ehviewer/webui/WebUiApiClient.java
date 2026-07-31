@@ -97,6 +97,27 @@ public final class WebUiApiClient {
         return response;
     }
 
+    /**
+     * POST /api/v1/auth/pair/complete — exchanges a pairing code for a device
+     * token. permitAll on the server; no Authorization header is sent.
+     */
+    @NonNull
+    public static WebUiSyncModels.PairCompleteResponse pairComplete(@NonNull WebUiConfig config,
+            @NonNull String code, @NonNull String deviceId, @NonNull String deviceName,
+            @NonNull String platform) throws IOException {
+        WebUiSyncModels.PairCompleteRequest body = new WebUiSyncModels.PairCompleteRequest();
+        body.code = code;
+        body.deviceId = deviceId;
+        body.deviceName = deviceName;
+        body.platform = platform;
+        String json = postJson(config.baseUrl() + "/api/v1/auth/pair/complete", null, JSON.toJSONString(body));
+        WebUiSyncModels.PairCompleteResponse response = JSON.parseObject(json, WebUiSyncModels.PairCompleteResponse.class);
+        if (response == null) {
+            throw new IOException("Empty pair response");
+        }
+        return response;
+    }
+
     /** POST /api/v1/sync/push — uploads local changes. */
     @NonNull
     public static WebUiSyncModels.PushResponse push(@NonNull WebUiConfig config,
