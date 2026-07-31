@@ -31,7 +31,7 @@
       :refreshing="refreshing"
       :loading-more="loadingMore"
       empty-text="这里什么都没有"
-      error-text="加载失败，请稍后重试"
+      :error-text="errorText"
       @update:refreshing="refreshing = $event"
       @refresh="onRefresh"
       @load-more="onLoadMore"
@@ -76,6 +76,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { galleryApi } from '@/api/gallery'
+import { isOfflineError } from '@/api/client'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
@@ -110,6 +111,8 @@ const total = ref(0)
 const contentState = ref<HomeContentState>('loading')
 const refreshing = ref(false)
 const loadingMore = ref(false)
+/** Error-state copy; switched to an offline tip when the SW reports 503 offline. */
+const errorText = ref('加载失败，请稍后重试')
 const contentLayoutRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 
 /** Monotonic request guard — stale responses (fast refresh / search) drop. */
@@ -141,7 +144,10 @@ async function loadPage(target: number, mode: 'replace' | 'append'): Promise<voi
     console.error('[HomeView] 加载画廊列表失败', error)
     // Append failures keep the loaded content; replace failures show the
     // error tip (retry button re-triggers a refresh).
-    if (mode === 'replace') contentState.value = 'error'
+    if (mode === 'replace') {
+      errorText.value = isOfflineError(error) ? '当前离线，且无本地缓存可用' : '加载失败，请稍后重试'
+      contentState.value = 'error'
+    }
   } finally {
     if (seq === requestSeq && mode === 'append') loadingMore.value = false
   }
