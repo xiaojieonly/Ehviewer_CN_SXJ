@@ -4,6 +4,10 @@
 
 An E-Hentai Application for Android, based on [EhViewer](https://github.com/seven332/EhViewer) and its derivatives.
 
+本仓库同时包含 **Android 客户端**与**本地 Web App（局域网服务器）**，两者可以协同工作：收藏/历史同步、远程阅读、委托下载。
+
+This repository contains both the **Android client** and a **local Web App (LAN server)**. The two work together: favorites/history sync, remote reading, and delegated downloads.
+
 ### [常见问题汇总 / FAQ](FAQ.md)
 
 主要改动包括如下：
@@ -36,6 +40,9 @@ Linux
 
 The apk is in `app/build/outputs/apk`
 
+Web App（后端 + 前端）的构建与启动方式见下方 [Web App](#web-app) 一节。
+To build and run the Web App (backend + frontend), see the [Web App](#web-app) section below.
+
 ## Web App
 
 将 Android 客户端转换为局域网内任意设备可通过浏览器访问的 Web App。
@@ -50,6 +57,7 @@ The apk is in `app/build/outputs/apk`
 - 浏览历史
 - SMB 备份
 - 设置管理
+- Android 协同：收藏/历史同步、远程阅读、委托下载（Android 端在"服务器同步"设置中配置）
 
 ### 快速开始
 
