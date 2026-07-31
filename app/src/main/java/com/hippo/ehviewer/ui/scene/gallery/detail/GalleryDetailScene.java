@@ -89,6 +89,10 @@ import com.hippo.ehviewer.dao.Filter;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
+import com.hippo.ehviewer.webui.WebUiApiClient;
+import com.hippo.ehviewer.webui.WebUiConfig;
+import com.hippo.ehviewer.webui.WebUiDownloadModels;
+import com.hippo.ehviewer.webui.WebUiSettings;
 import com.hippo.ehviewer.ui.MainActivity;
 import com.hippo.ehviewer.ui.annotation.WholeLifeCircle;
 import com.hippo.ehviewer.ui.dialog.ArchiverDownloadDialog;
@@ -131,6 +135,7 @@ import com.hippo.widget.SimpleGridAutoSpanLayout;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Retention;
@@ -1719,6 +1724,27 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         GalleryInfo galleryInfo = getGalleryInfo();
         if (galleryInfo != null) {
             if (EhApplication.getDownloadManager(mContext).getDownloadState(galleryInfo.gid) == DownloadInfo.STATE_INVALID) {
+                // Delegated download (roadmap §2.5): when a WebUI server is
+                // configured, let the user choose where the task runs. Without
+                // a server the original one-tap flow is unchanged.
+                WebUiSettings webUiSettings = new WebUiSettings(mContext);
+                WebUiConfig webUiConfig = webUiSettings.loadConfig();
+                if (webUiConfig != null) {
+                    new AlertDialog.Builder(mContext)
+                            .setTitle(R.string.download_choose_location)
+                            .setItems(new CharSequence[]{
+                                    getString(R.string.download_local),
+                                    getString(R.string.download_delegate_server)
+                            }, (dialog, which) -> {
+                                if (which == 0) {
+                                    CommonOperations.startDownload(activity, galleryInfo, false);
+                                } else {
+                                    delegateDownloadToServer(galleryInfo, webUiConfig);
+                                }
+                            })
+                            .show();
+                    return;
+                }
                 CommonOperations.startDownload(activity, galleryInfo, false);
             } else {
                 new AlertDialog.Builder(mContext)
@@ -1728,6 +1754,41 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         .show();
             }
         }
+    }
+
+    /**
+     * Registers the gallery as a download task on the WebUI server and starts
+     * it there: {@code POST /api/v1/download/add} (idempotent by gid) then
+     * resolves the server-side task id via {@code GET /api/v1/download/list}
+     * and starts it with {@code POST /api/v1/download/start/{id}}. Files land
+     * on the server; nothing is stored on the phone.
+     */
+    private void delegateDownloadToServer(@NonNull GalleryInfo galleryInfo, @NonNull WebUiConfig config) {
+        executorService.execute(() -> {
+            boolean ok = false;
+            try {
+                WebUiDownloadModels.DownloadAddRequest request = new WebUiDownloadModels.DownloadAddRequest();
+                request.gid = galleryInfo.gid;
+                request.token = galleryInfo.token;
+                request.title = galleryInfo.title;
+                request.thumb = galleryInfo.thumb;
+                WebUiApiClient.addDownload(config, request);
+                List<WebUiDownloadModels.DownloadListItem> items = WebUiApiClient.listDownloads(config);
+                for (WebUiDownloadModels.DownloadListItem item : items) {
+                    if (item.gid == galleryInfo.gid) {
+                        ok = WebUiApiClient.startDownload(config, item.id);
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                ok = false;
+            }
+            final boolean success = ok;
+            if (activity != null) {
+                activity.runOnUiThread(() -> showTip(success
+                        ? R.string.download_delegate_started : R.string.download_delegate_failed, LENGTH_SHORT));
+            }
+        });
     }
 
     public void startUpdateDownload(String updateUrl) {
