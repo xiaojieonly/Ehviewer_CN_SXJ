@@ -38,7 +38,7 @@ The apk is in `app/build/outputs/apk`
 
 ## Web App
 
-将 EhViewer Android 应用转换为局域网内任意设备可通过浏览器访问的 Web App。
+将 Android 客户端转换为局域网内任意设备可通过浏览器访问的 Web App。
 
 ### 功能
 
