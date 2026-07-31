@@ -5,7 +5,10 @@ import com.hippo.ehviewer.web.dto.*
 import org.springframework.stereotype.Service
 
 @Service
-class SettingsService(private val config: EhCoreConfigProperties) {
+class SettingsService(
+    private val config: EhCoreConfigProperties,
+    private val serverConfig: ServerConfigService,
+) {
 
     fun getSettings(): SettingsResponse {
         return SettingsResponse(
@@ -24,8 +27,16 @@ class SettingsService(private val config: EhCoreConfigProperties) {
             smb = SmbSettings(
                 enabled = config.smb.enabled
             ),
-            security = SecuritySettings(),
-            processing = ProcessingSettings()
+            security = SecuritySettings(
+                requireAuth = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false),
+                sessionTimeout = serverConfig.getLong(ServerConfigService.KEY_SESSION_TIMEOUT, 86400),
+            ),
+            processing = ProcessingSettings(
+                enabled = serverConfig.getBoolean("processing.enabled", false),
+                defaultType = serverConfig.get("processing.default_type", "UPSCALE_2X"),
+                outputFormat = serverConfig.get("processing.output_format", "png"),
+                outputQuality = serverConfig.get("processing.output_quality", "90").toIntOrNull() ?: 90,
+            ),
         )
     }
 
@@ -44,6 +55,16 @@ class SettingsService(private val config: EhCoreConfigProperties) {
         }
         request.smb?.let { smb ->
             config.smb.enabled = smb.enabled
+        }
+        request.security?.let { sec ->
+            serverConfig.setBoolean(ServerConfigService.KEY_REQUIRE_AUTH, sec.requireAuth)
+            serverConfig.set(ServerConfigService.KEY_SESSION_TIMEOUT, sec.sessionTimeout.toString())
+        }
+        request.processing?.let { proc ->
+            serverConfig.setBoolean("processing.enabled", proc.enabled)
+            serverConfig.set("processing.default_type", proc.defaultType)
+            serverConfig.set("processing.output_format", proc.outputFormat)
+            serverConfig.set("processing.output_quality", proc.outputQuality.toString())
         }
         return true
     }

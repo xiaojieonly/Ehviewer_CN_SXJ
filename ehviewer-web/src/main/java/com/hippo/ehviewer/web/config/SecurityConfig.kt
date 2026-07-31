@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.web.config
 
 import com.hippo.ehviewer.web.service.EhAuthService
+import com.hippo.ehviewer.web.service.ServerConfigService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -21,12 +22,13 @@ class SecurityConfig {
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        authService: EhAuthService
+        authService: EhAuthService,
+        serverConfigService: ServerConfigService
     ): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .addFilterBefore(AuthTokenFilter(authService), UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(AuthTokenFilter(authService, serverConfigService), UsernamePasswordAuthenticationFilter::class.java)
             .authorizeHttpRequests {
                 it.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/status", "/api/v1/auth/logout").permitAll()
