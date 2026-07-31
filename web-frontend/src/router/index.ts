@@ -76,13 +76,29 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('token')
-  if (to.name !== 'Login' && !token) {
-    next({ name: 'Login' })
-  } else {
+router.beforeEach(async (to, _from, next) => {
+  if (to.name === 'Login') {
     next()
+    return
   }
+  // 检查服务器是否要求登录
+  const token = localStorage.getItem('token')
+  if (token) {
+    next()
+    return
+  }
+  // 无 token 时查询服务器是否需要认证
+  try {
+    const { authApi } = await import('@/api/auth')
+    const status = await authApi.status()
+    if (!status.authRequired) {
+      next() // 服务器不要求登录，放行
+      return
+    }
+  } catch {
+    // 服务器不可达，走正常登录流程
+  }
+  next({ name: 'Login' })
 })
 
 export default router
