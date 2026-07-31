@@ -18,8 +18,8 @@
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/your-repo/ehviewer-web.git
-cd ehviewer-web
+git clone https://github.com/PegionFish/Ehviewer_CN_SXJ.git
+cd Ehviewer_CN_SXJ
 ```
 
 2. 构建
@@ -67,8 +67,8 @@ services:
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/your-repo/ehviewer-web.git
-cd ehviewer-web
+git clone https://github.com/PegionFish/Ehviewer_CN_SXJ.git
+cd Ehviewer_CN_SXJ
 ```
 
 2. 构建

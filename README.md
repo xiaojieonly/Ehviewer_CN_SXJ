@@ -81,13 +81,19 @@ open http://localhost:8080
 
 本项目是 [EhViewer](https://github.com/seven332/EhViewer) 的 Fork 的 Fork。
 
+本项目基于当前上游 [PegionFish/Ehviewer_CN_SXJ](https://github.com/PegionFish/Ehviewer_CN_SXJ) 继续开发：EhViewer → [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ) → AnotherViewer。
+
 - 感谢 EhViewer 奠基人 [Hippo/seven332](https://github.com/seven332)
 - 感谢 [xiaojieonly](https://github.com/xiaojieonly) 维护的 [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ) 中文分支，本项目基于其代码继续开发
+- 感谢当前上游 [PegionFish/Ehviewer_CN_SXJ](https://github.com/PegionFish/Ehviewer_CN_SXJ)，本项目在其基础上继续开发
 
 This project is a fork of a fork of [EhViewer](https://github.com/seven332/EhViewer).
 
+This project continues development on top of the current upstream [PegionFish/Ehviewer_CN_SXJ](https://github.com/PegionFish/Ehviewer_CN_SXJ): EhViewer → [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ) → AnotherViewer.
+
 - Thanks to [Hippo/seven332](https://github.com/seven332), the founder of EhViewer
 - Thanks to [xiaojieonly](https://github.com/xiaojieonly) for maintaining [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ), the Chinese fork this project is based on
+- Thanks to [PegionFish/Ehviewer_CN_SXJ](https://github.com/PegionFish/Ehviewer_CN_SXJ), the current upstream this project is based on
 
 本项目受到了诸多开源项目的帮助
 This project has received help from many open source projects
