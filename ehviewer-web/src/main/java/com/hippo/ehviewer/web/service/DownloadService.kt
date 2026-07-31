@@ -9,7 +9,6 @@ import com.hippo.ehviewer.web.entity.DownloadInfoEntity
 import com.hippo.ehviewer.web.entity.DownloadLabelEntity
 import com.hippo.ehviewer.web.repository.DownloadInfoRepository
 import com.hippo.ehviewer.web.repository.DownloadLabelRepository
-import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -17,7 +16,6 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 @Service
 class DownloadService(
@@ -25,17 +23,21 @@ class DownloadService(
     private val labelRepository: DownloadLabelRepository,
     private val config: EhCoreConfigProperties,
     private val eventPublisher: ApplicationEventPublisher,
-    private val imageCacheService: ImageCacheService
+    private val imageCacheService: ImageCacheService,
+    private val sessionManager: EhSessionManager
 ) {
     private val logger = LoggerFactory.getLogger(DownloadService::class.java)
     private val downloadThreads = ConcurrentHashMap<Long, Thread>()
     private val workerPool: ExecutorService = Executors.newFixedThreadPool(config.download.workerCount)
-    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(config.download.downloadTimeout, TimeUnit.MILLISECONDS)
-        .readTimeout(config.download.downloadTimeout, TimeUnit.MILLISECONDS)
-        .followRedirects(true)
-        .followSslRedirects(true)
-        .build()
+
+    /**
+     * All E-Hentai traffic must go through the shared [EhSessionManager] client
+     * so login cookies (ipb_member_id / ipb_pass_hash) are attached to download
+     * detail/page/image requests — same session semantics as the Android app,
+     * whose OkHttp client is wired to the same cookie jar as its UI requests.
+     */
+    private val okHttpClient
+        get() = sessionManager.okHttpClient
 
     fun listDownloads(labelId: Int? = null): DownloadListResponse {
         val downloads = if (labelId != null && labelId != 0) {

@@ -31,7 +31,13 @@ class SecurityConfig {
                 it.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/status", "/api/v1/auth/logout").permitAll()
                     .requestMatchers("/api/v1/health", "/api/v1/metrics", "/api/v1/metrics/**").permitAll()
-                    .anyRequest().authenticated()
+                    // Everything else under /api requires the bearer token; the
+                    // SPA shell, static/PWA assets, SPA deep links and the SockJS
+                    // handshake (/ws/**) stay public — the frontend authenticates
+                    // REST calls via Authorization header and the WebSocket via
+                    // the STOMP CONNECT frame (see composables/useWebSocket.ts).
+                    .requestMatchers("/api/**").authenticated()
+                    .anyRequest().permitAll()
             }
             .cors {}
         return http.build()

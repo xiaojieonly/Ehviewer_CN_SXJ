@@ -161,7 +161,8 @@ class HealthController(
             val request = HttpRequest.newBuilder()
                 .uri(URI.create("https://e-hentai.org"))
                 .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                // Same fingerprint as the app's ChromeRequestBuilder / core EhRequestBuilder.
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
                 .timeout(Duration.ofSeconds(10))
                 .build()
             val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
