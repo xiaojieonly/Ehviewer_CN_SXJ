@@ -4,6 +4,7 @@ import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.service.EhAuthService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -33,5 +34,16 @@ class AuthController(private val authService: EhAuthService) {
         val token = authHeader?.removePrefix("Bearer ")
         authService.logout(token)
         return ResponseEntity.ok(AuthResponse(true, "Logged out"))
+    }
+
+    @PostMapping("/pair")
+    fun generatePairCode(authentication: Authentication): ResponseEntity<PairCodeResponse> {
+        return ResponseEntity.ok(authService.generatePairCode(authentication.name))
+    }
+
+    @PostMapping("/pair/complete")
+    fun completePairing(@Valid @RequestBody request: PairCompleteRequest): ResponseEntity<PairCompleteResponse> {
+        val response = authService.completePairing(request)
+        return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
     }
 }

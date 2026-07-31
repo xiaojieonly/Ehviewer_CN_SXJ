@@ -27,3 +27,24 @@ data class AuthStatusResponse(
     val ehSessionValid: Boolean = false,
     val ehSessionExpired: Boolean = false
 )
+
+// --- Device pairing ---
+
+data class PairCodeResponse(
+    val code: String,
+    val expiresAt: Long,
+)
+
+data class PairCompleteRequest(
+    @field:NotBlank val code: String,
+    @field:NotBlank val deviceId: String,
+    @field:NotBlank val deviceName: String,
+    val platform: String = "android",
+)
+
+data class PairCompleteResponse(
+    val success: Boolean,
+    val message: String = "",
+    val token: String = "",
+    val username: String = "",
+)

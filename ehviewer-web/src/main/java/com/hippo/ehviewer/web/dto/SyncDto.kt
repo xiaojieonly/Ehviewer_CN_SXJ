@@ -198,3 +198,11 @@ data class SyncStatusResponse(
     val connectedDevices: List<ConnectedDeviceDto>,
     val entityCounts: EntityCountsDto,
 )
+
+data class DeviceInfoDto(
+    val deviceId: String,
+    val deviceName: String,
+    val platform: String,
+    val pairedAt: Long,
+    val lastSeen: Long,
+)

@@ -3,10 +3,14 @@ package com.hippo.ehviewer.web.service
 import com.hippo.ehviewer.web.dto.AuthResponse
 import com.hippo.ehviewer.web.dto.AuthStatusResponse
 import com.hippo.ehviewer.web.dto.LoginRequest
+import com.hippo.ehviewer.web.dto.PairCodeResponse
+import com.hippo.ehviewer.web.dto.PairCompleteRequest
+import com.hippo.ehviewer.web.dto.PairCompleteResponse
 import com.hippo.ehviewer.web.dto.RegisterRequest
 import com.hippo.ehviewer.web.entity.AuthConfigEntity
 import com.hippo.ehviewer.web.repository.AuthConfigRepository
 import org.springframework.stereotype.Service
+import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -14,9 +18,19 @@ class EhAuthService(
     private val authRepository: AuthConfigRepository,
     private val encryptionService: EncryptionService,
     private val sessionManager: EhSessionManager,
-    private val serverConfig: ServerConfigService
+    private val serverConfig: ServerConfigService,
+    private val deviceService: DeviceService
 ) {
     private val tokenStore = ConcurrentHashMap<String, String>()
+    private val pairCodes = ConcurrentHashMap<String, PairCodeEntry>()
+
+    private class PairCodeEntry(val username: String, val expiresAt: Long)
+
+    companion object {
+        const val PAIR_CODE_TTL_SECONDS = 600L
+        const val PAIR_CODE_LENGTH = 6
+        private val PAIR_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    }
 
     fun register(request: RegisterRequest): AuthResponse {
         if (authRepository.existsByUsername(request.username)) {
@@ -89,5 +103,44 @@ class EhAuthService(
         // Also tear down the shared E-Hentai session so core's client stops sending
         // the (now unwanted) login cookies.
         sessionManager.signOut()
+    }
+
+    // -------------------------------------------------------------------------
+    // Device pairing
+    // -------------------------------------------------------------------------
+
+    /** Generates a short-lived single-use pairing code for the given username. */
+    fun generatePairCode(username: String, ttlSeconds: Long = PAIR_CODE_TTL_SECONDS): PairCodeResponse {
+        val secureRandom = SecureRandom()
+        val code = buildString(PAIR_CODE_LENGTH) {
+            repeat(PAIR_CODE_LENGTH) {
+                append(PAIR_CODE_ALPHABET[secureRandom.nextInt(PAIR_CODE_ALPHABET.length)])
+            }
+        }
+        pairCodes[code] = PairCodeEntry(username, System.currentTimeMillis() + ttlSeconds * 1000)
+        return PairCodeResponse(code, System.currentTimeMillis() + ttlSeconds * 1000)
+    }
+
+    /**
+     * Exchanges a pairing code for a device-scoped token. Single-use; codes
+     * expire after 10 minutes. The returned token authenticates the device as
+     * the user who generated the code.
+     */
+    fun completePairing(request: PairCompleteRequest): PairCompleteResponse {
+        val entry = pairCodes.remove(request.code)
+        if (entry == null || entry.expiresAt < System.currentTimeMillis()) {
+            return PairCompleteResponse(false, "Pairing code is invalid or expired")
+        }
+        val token = encryptionService.generateToken()
+        tokenStore[token] = entry.username
+        deviceService.register(request.deviceId, request.deviceName, request.platform, token, entry.username)
+        return PairCompleteResponse(true, "Pairing successful", token, entry.username)
+    }
+
+    /** Revokes a paired device and invalidates its token. */
+    fun revokeDevice(deviceId: String) {
+        val token = deviceService.findToken(deviceId) ?: return
+        tokenStore.remove(token)
+        deviceService.delete(deviceId)
     }
 }

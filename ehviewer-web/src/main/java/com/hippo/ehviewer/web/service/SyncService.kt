@@ -44,8 +44,9 @@ class SyncService(
         return SyncPushResponse(success = true, serverTimestamp = now, conflicts = conflicts)
     }
 
-    fun pull(since: Long, username: String): SyncPullResponse {
+    fun pull(since: Long, username: String, deviceId: String = ""): SyncPullResponse {
         val now = System.currentTimeMillis()
+        if (deviceId.isNotEmpty()) updateDevice(deviceId, now)
         val prefEntity = preferenceRepository.findByUsername(username)
         val entities = SyncEntityCollection(
             favorites = favoriteRepository.findAll().filter { it.time > since }.map { it.toSyncFavoriteDto() },

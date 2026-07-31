@@ -23,4 +23,13 @@ class SyncDeviceEntity {
 
     @Column(nullable = false)
     var lastSyncTimestamp: Long = 0
+
+    @Column(nullable = false)
+    var pairedAt: Long = 0
+
+    @Column(length = 256)
+    var token: String? = null
+
+    @Column(nullable = false, length = 256)
+    var username: String = "default"
 }
