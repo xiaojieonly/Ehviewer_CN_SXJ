@@ -876,7 +876,13 @@ public class EhDB {
 
     // --- WebUI sync helpers (additive; used by com.hippo.ehviewer.webui.WebUiSyncEngine) ---
 
-    /** Materialized snapshot of all history records for building a sync push. */
+    /**
+     * Materialized snapshot of all history records for building a sync push.
+     * The model has no lastModified field; the wire DTO requires one
+     * (sync-schemas.json syncMetadata), so the caller (WebUiSyncEngine)
+     * fabricates {@code lastModified = time}, which {@code time} already
+     * exposes here.
+     */
     public static synchronized List<HistoryInfo> getAllHistoryForSync() {
         HistoryDao dao = sDaoSession.getHistoryDao();
         LazyList<HistoryInfo> lazy = dao.queryBuilder().orderDesc(HistoryDao.Properties.Time).listLazy();
@@ -889,8 +895,10 @@ public class EhDB {
 
     /**
      * Last-write-wins upsert of a history record pulled from the sync server.
-     * Inserts when absent; updates only when the incoming record is newer
-     * (by {@code time}, which carries the sync lastModified for history).
+     * Inserts when absent; updates only when the incoming record wins the LWW
+     * comparison of sync-conflict-rules.md §3.2. The comparator keys on
+     * {@code lastModified} when both sides carry it, falling back to
+     * {@code time} when lastModified is absent or 0.
      */
     public static synchronized void applySyncedHistory(HistoryInfo incoming) {
         HistoryDao dao = sDaoSession.getHistoryDao();
@@ -899,7 +907,14 @@ public class EhDB {
             dao.insert(incoming);
             return;
         }
-        if (incoming.time > existing.time) {
+        // LWW on lastModified per sync-conflict-rules.md §3.2. HistoryInfo has
+        // no lastModified field, so the rule's absence/0 fallback applies: the
+        // effective LWW timestamp is `time`, which is exactly the value the
+        // sync engine sends as lastModified on push (WebUiSyncEngine.buildPush
+        // fabricates lastModified = time), keeping both sides comparable.
+        long incomingLastModified = incoming.time;
+        long existingLastModified = existing.time;
+        if (incomingLastModified > existingLastModified) {
             existing.token = incoming.token;
             existing.title = incoming.title;
             existing.titleJpn = incoming.titleJpn;
@@ -908,8 +923,18 @@ public class EhDB {
             existing.posted = incoming.posted;
             existing.uploader = incoming.uploader;
             existing.rating = incoming.rating;
+            existing.rated = incoming.rated;
             existing.simpleTags = incoming.simpleTags;
+            existing.pages = incoming.pages;
+            existing.thumbWidth = incoming.thumbWidth;
+            existing.thumbHeight = incoming.thumbHeight;
+            existing.spanSize = incoming.spanSize;
+            existing.spanIndex = incoming.spanIndex;
+            existing.spanGroupIndex = incoming.spanGroupIndex;
+            existing.tgList = incoming.tgList;
             existing.simpleLanguage = incoming.simpleLanguage;
+            existing.favoriteSlot = incoming.favoriteSlot;
+            existing.favoriteName = incoming.favoriteName;
             existing.mode = incoming.mode;
             existing.time = incoming.time;
             dao.update(existing);
@@ -919,6 +944,29 @@ public class EhDB {
     /** Hard-delete a history record by gid (history uses hard-delete per sync rules). */
     public static synchronized void removeHistoryByKey(long gid) {
         sDaoSession.getHistoryDao().deleteByKey(gid);
+    }
+
+    // --- WebUI sync helpers: favorite tombstones & metadata LWW (additive) ---
+
+    /** Loads one local favorite by gid, or {@code null} when absent. */
+    public static synchronized LocalFavoriteInfo loadLocalFavorite(long gid) {
+        return sDaoSession.getLocalFavoritesDao().load(gid);
+    }
+
+    /**
+     * Replaces an existing local favorite with the given (loaded) record,
+     * keeping its original add {@code time} so list ordering is preserved.
+     * Inserts instead when the row no longer exists (removed concurrently).
+     */
+    public static synchronized void updateLocalFavorite(LocalFavoriteInfo info) {
+        LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
+        LocalFavoriteInfo existing = dao.load(info.gid);
+        if (existing == null) {
+            dao.insert(info);
+            return;
+        }
+        info.time = existing.time;
+        dao.update(info);
     }
 
     public static synchronized List<Filter> getAllFilter() {

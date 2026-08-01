@@ -73,6 +73,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
 
     private ExecutorService mExecutor;
     private Handler mMainHandler;
+    private boolean mSyncInProgress;
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
@@ -325,6 +326,12 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             Toast.makeText(requireActivity(), R.string.settings_webui_not_configured, Toast.LENGTH_SHORT).show();
             return;
         }
+        if (mSyncInProgress) {
+            Toast.makeText(requireActivity(), R.string.settings_webui_syncing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        mSyncInProgress = true;
+        if (mSyncNow != null) mSyncNow.setEnabled(false);
         new SyncTask(this).execute(config, settings.deviceId(), settings.lastSyncTimestamp());
     }
 
@@ -576,7 +583,10 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
             WebUiSyncFragment fragment = fragmentRef.get();
-            if (fragment == null || !fragment.isAdded()) return;
+            if (fragment == null) return;
+            fragment.mSyncInProgress = false;
+            if (fragment.mSyncNow != null) fragment.mSyncNow.setEnabled(true);
+            if (!fragment.isAdded()) return;
             if (error == null && result != null) {
                 new WebUiSettings(fragment.requireContext()).setLastSyncTimestamp(result.serverTimestamp);
                 fragment.updateLastSyncSummary();

@@ -51,7 +51,7 @@ import okhttp3.ResponseBody;
 public final class PreferenceSyncHelper {
 
     private static final String PATH_PUSH = "/api/v1/sync/push";
-    private static final String PATH_PULL = "/api/v1/sync/pull?since=0";
+    private static final String PATH_PULL = "/api/v1/sync/pull";
 
     private static final MediaType JSON_MEDIA = MediaType.parse("application/json; charset=utf-8");
 
@@ -539,6 +539,15 @@ public final class PreferenceSyncHelper {
      * Uploads the local preferences to the server. The body follows the sync
      * push contract with {@code entities.preferences} carrying the exported
      * document. Throws {@link IOException} on transport or server errors.
+     *
+     * <p>Note on {@code lastModified}: the server's preferences merge is
+     * currently always-overwrite — {@code SyncService.push} delegates to
+     * {@code UserPreferenceService.replace}, which stores the incoming document
+     * unconditionally and stamps its own server {@code updatedAt} wall clock
+     * without comparing the client's timestamp. The real value sent below is
+     * therefore informational for now, but keeps the push metadata schema
+     * compliant (syncMetadata requires {@code lastModified}) and stays
+     * meaningful if the server ever starts comparing it.
      */
     public static void pushToServer(@NonNull WebUiConfig config, @NonNull Context context, @NonNull String deviceId)
             throws IOException {
@@ -546,7 +555,9 @@ public final class PreferenceSyncHelper {
         try {
             JSONObject entity = new JSONObject();
             entity.put("preferences", exportPreferences(context));
-            entity.put("lastModified", 0);
+            // No per-key timestamps exist in Settings, so the wall clock at push
+            // time is the best available "last modified" signal for this device.
+            entity.put("lastModified", System.currentTimeMillis());
             entity.put("deviceId", deviceId);
             JSONObject entities = new JSONObject();
             entities.put("preferences", entity);
@@ -564,13 +575,25 @@ public final class PreferenceSyncHelper {
     }
 
     /**
-     * Fetches the server preferences (since=0 returns the whole document) and
-     * applies them locally. A missing or empty preferences entity is a no-op.
-     * Throws {@link IOException} on transport or server errors.
+     * Fetches the server preferences and applies them locally. A missing or
+     * empty preferences entity is a no-op. Throws {@link IOException} on
+     * transport or server errors.
+     *
+     * <p>The {@code since} query value is the persisted sync high-water mark
+     * (0 on first sync). The server always returns the full preferences entity
+     * regardless of {@code since} — only the other entity lists (favorites,
+     * history, …) are filtered by it — so the document is never truncated;
+     * passing the real mark just avoids re-listing those entities on every
+     * cycle. The high-water mark is only read here, never advanced: it is owned
+     * by the main sync task ({@code WebUiSyncFragment.SyncTask} persists the
+     * server timestamp via {@code WebUiSettings#setLastSyncTimestamp}), and
+     * advancing it from an interleaved preferences pull could skip favorites or
+     * history that the main cycle has not pulled yet.
      */
     public static void pullFromServer(@NonNull WebUiConfig config, @NonNull Context context, @NonNull String deviceId)
             throws IOException {
-        String json = get(config.baseUrl() + PATH_PULL, config.getToken());
+        long since = new WebUiSettings(context).lastSyncTimestamp();
+        String json = get(config.baseUrl() + PATH_PULL + "?since=" + since, config.getToken());
         JSONObject root = parseResponse(json);
         if (root == null) {
             throw new IOException("Empty pull response");
