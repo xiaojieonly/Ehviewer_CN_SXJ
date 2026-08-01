@@ -139,8 +139,10 @@ class EhAuthService(
 
     /** Revokes a paired device and invalidates its token. */
     fun revokeDevice(deviceId: String) {
-        val token = deviceService.findToken(deviceId) ?: return
-        tokenStore.remove(token)
+        val token = deviceService.findToken(deviceId)
+        if (!token.isNullOrEmpty()) {
+            tokenStore.remove(token)
+        }
         deviceService.delete(deviceId)
     }
 }

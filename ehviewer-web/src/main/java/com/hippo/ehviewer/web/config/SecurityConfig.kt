@@ -32,6 +32,7 @@ class SecurityConfig {
             .authorizeHttpRequests {
                 it.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/status", "/api/v1/auth/logout").permitAll()
+                    .requestMatchers("/api/v1/auth/pair/complete").permitAll()
                     .requestMatchers("/api/v1/health", "/api/v1/metrics", "/api/v1/metrics/**").permitAll()
                     // Everything else under /api requires the bearer token; the
                     // SPA shell, static/PWA assets, SPA deep links and the SockJS

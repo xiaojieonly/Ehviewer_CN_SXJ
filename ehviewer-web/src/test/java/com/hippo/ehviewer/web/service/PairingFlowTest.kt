@@ -13,7 +13,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.doNothing
+import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import java.util.concurrent.ConcurrentHashMap
 
@@ -53,7 +53,7 @@ class PairingFlowTest {
         }
         `when`(repo.findByDeviceId(anyString())).thenAnswer { inv -> store[inv.getArgument(0)] }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
-        doNothing().`when`(repo).delete(any(SyncDeviceEntity::class.java))
+        doAnswer { inv -> store.values.remove(inv.getArgument(0)) }.`when`(repo).delete(any(SyncDeviceEntity::class.java))
         return repo
     }
 
@@ -123,6 +123,18 @@ class PairingFlowTest {
         // Revocation removes the device and its token stops resolving.
         authService.revokeDevice("android-revoke")
         assertNull(authService.validateToken(completed.token))
+        assertNull(deviceRepo.findByDeviceId("android-revoke"))
+    }
+
+    @Test
+    fun `revoking an unpaired device still removes it`() {
+        val deviceRepo = mockDeviceRepo()
+        val authService = newAuthService(deviceRepo)
+        // Device auto-created by a push (no token) — revoke must still delete it.
+        deviceRepo.save(SyncDeviceEntity().apply { deviceId = "android-nopair" })
+
+        authService.revokeDevice("android-nopair")
+        assertNull(deviceRepo.findByDeviceId("android-nopair"))
     }
 
     @Test

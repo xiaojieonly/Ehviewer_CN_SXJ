@@ -24,12 +24,12 @@ class SyncDeviceEntity {
     @Column(nullable = false)
     var lastSyncTimestamp: Long = 0
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BIGINT NOT NULL DEFAULT 0")
     var pairedAt: Long = 0
 
     @Column(length = 256)
     var token: String? = null
 
-    @Column(nullable = false, length = 256)
+    @Column(nullable = false, length = 256, columnDefinition = "VARCHAR(256) NOT NULL DEFAULT 'default'")
     var username: String = "default"
 }
