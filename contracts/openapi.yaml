@@ -212,6 +212,33 @@ paths:
         '401':
           description: Authentication required (token missing or invalid)
 
+  /api/v1/auth/change-password:
+    post:
+      tags: [Auth]
+      operationId: changePassword
+      summary: Change the WebUI account password (auth mode must be enabled)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: "Wrong old password, invalid new password length, or auth disabled"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Authentication required (token missing or invalid)
+
   # ============================================================
   # Gallery
   # ============================================================
@@ -1587,6 +1614,19 @@ components:
           type: string
         password:
           type: string
+
+    ChangePasswordRequest:
+      type: object
+      required: [oldPassword, newPassword]
+      properties:
+        oldPassword:
+          type: string
+          description: Current password
+        newPassword:
+          type: string
+          minLength: 6
+          maxLength: 72
+          description: New password (BCrypt truncates beyond 72 bytes)
 
     AuthResponse:
       type: object
