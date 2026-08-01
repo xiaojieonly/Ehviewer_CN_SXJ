@@ -43,8 +43,8 @@
           class="gallery-list__row"
           :style="{ animationDelay: `${Math.min(index * 24, 240)}ms` }"
         >
-          <!-- Same horizontal card as the gallery list (AppCard, list mode) -->
-          <AppCard :gallery="gallery" mode="list" @click="openGallery" />
+          <!-- Same horizontal card as the gallery list (GalleryCard, list mode) -->
+          <GalleryCard :gallery="gallery" mode="list" @click="openGallery" />
           <!-- Favorite slot indicator (folder 0–9) -->
           <span class="slot-badge" :title="`In ${SLOT_NAMES[activeSlot]}`">
             <AppIcon name="heart" size="12px" />
@@ -79,7 +79,7 @@
  *
  * Backend note: `FavoriteItem.category` is the stringified `EhConfig` bit
  * (FavoriteService maps `entity.category.toString()`), so rows are converted
- * to `GalleryInfo` (numeric bit) before being handed to `AppCard`.
+ * to `GalleryInfo` (numeric bit) before being handed to `GalleryCard`.
  */
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -94,7 +94,7 @@ import {
 } from '@/types/components'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
-import AppCard from '@/components/atoms/AppCard.vue'
+import GalleryCard from '@/components/gallery/GalleryCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 
 /** View states matching ContentLayout's internal ViewTransition. */
@@ -140,7 +140,7 @@ const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** Monotonic request guard — stale responses (slot switches / refresh) drop. */
 let requestSeq = 0
 
-/** Maps a backend favorite row onto the `GalleryInfo` shape AppCard renders. */
+/** Maps a backend favorite row onto the `GalleryInfo` shape GalleryCard renders. */
 function toGalleryInfo(item: FavoriteItem): GalleryInfo {
   return {
     gid: item.gid,

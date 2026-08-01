@@ -1,13 +1,5 @@
 <template>
-  <article
-    class="gallery-card"
-    :class="`gallery-card--${mode}`"
-    role="button"
-    tabindex="0"
-    @click="emit('click', gallery)"
-    @keydown.enter.prevent="emit('click', gallery)"
-    @keydown.space.prevent="emit('click', gallery)"
-  >
+  <AppCard :mode="mode" @click="emit('click', gallery)">
     <!-- List mode — replicates `item_gallery_list.xml`: fixed 80×120dp (2:3)
          thumbnail left, info column right (title / japanese title / rating /
          category chip / page count / tags / posted). -->
@@ -68,7 +60,7 @@
       </div>
       <h3 class="gallery-card__grid-title">{{ gallery.title }}</h3>
     </template>
-  </article>
+  </AppCard>
 </template>
 
 <script setup lang="ts">
@@ -78,13 +70,11 @@
  * frozen `GalleryCardProps` / `GalleryCardEmits` / `GalleryCardSlots`
  * contracts from `@/types/components`.
  *
- * Card surface: reproduces the AppCard spec exactly — 2dp radius
- * (`--card-radius`), 2dp elevation (`--card-elevation` / `--card-max-elevation`
- * shadow), 2dp outer margin, background `--color-surface`
- * (`contentColorPrimary`, theme-aware). The current `AppCard.vue` atom
- * hardcodes its own (leaner) gallery content and exposes no default slot, so
- * the richer S1 content below cannot be composed inside it; the surface
- * treatment is replicated with the same tokens instead.
+ * Built on the `AppCard` surface atom (2dp radius / 2dp elevation shadow /
+ * 2dp outer margin, `contentColorPrimary` background): `mode` is forwarded
+ * so the surface flexes row (list) / column (grid), the body renders in the
+ * default slot, and AppCard's click / keyboard activation is re-emitted
+ * with the gallery payload.
  *
  * - `list`: fixed 80×120dp thumbnail (`--thumb-list-width/height`, 2:3,
  *   CENTER_CROP), right column = title (16sp, 2 lines), japanese title (12sp,
@@ -106,6 +96,7 @@ import {
   type GalleryCardProps,
   type GalleryCardSlots,
 } from '@/types/components'
+import AppCard from '@/components/atoms/AppCard.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
@@ -151,20 +142,13 @@ onMounted(() => {
 
 <style scoped>
 /* --------------------------------------------------------------------------
-   Card surface — AppCard spec (roadmap §卡片规范): 2dp radius / 2dp elevation
-   shadow / 2dp outer margin, `contentColorPrimary` background.
+   Card surface — inherited from the AppCard atom (2dp radius / 2dp elevation
+   shadow / 2dp outer margin, `contentColorPrimary` background). The root IS
+   `.app-card`, so the selectors below extend it with the gallery-specific
+   interactions (entrance reveal, active press, hover title tint).
    -------------------------------------------------------------------------- */
-.gallery-card {
-  margin: 2px;
-  background: var(--color-surface);
-  border-radius: var(--card-radius);
-  box-shadow: 0 var(--card-elevation) var(--card-max-elevation) var(--shadow-color);
-  overflow: hidden;
-  cursor: pointer;
+.app-card {
   user-select: none;
-  transition:
-    box-shadow var(--duration-scene-opacity) var(--ease-decelerate-quart),
-    transform var(--duration-scene-opacity) var(--ease-decelerate-quart);
   /* Entrance reveal; `--enter-delay` is staggered by GalleryGrid. Fill mode
      `backwards` (not `both`) so post-animation hover/active transforms win. */
   animation: gallery-card-enter var(--duration-scene-translate) var(--ease-decelerate-quint)
@@ -172,29 +156,8 @@ onMounted(() => {
   animation-delay: var(--enter-delay, 0ms);
 }
 
-.gallery-card:hover {
-  box-shadow: 0 calc(var(--card-elevation) * 2) calc(var(--card-max-elevation) * 4)
-    var(--shadow-color);
-}
-
-.gallery-card:active {
+.app-card:active {
   transform: scale(0.98);
-}
-
-.gallery-card:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
-}
-
-.gallery-card--list {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-}
-
-.gallery-card--grid {
-  display: flex;
-  flex-direction: column;
 }
 
 /* --------------------------------------------------------------------------
@@ -224,7 +187,7 @@ onMounted(() => {
   opacity: 1;
 }
 
-.gallery-card:hover .gallery-card__img {
+.app-card:hover .gallery-card__img {
   transform: scale(1.045);
 }
 
@@ -252,7 +215,7 @@ onMounted(() => {
   transition: color 150ms var(--ease-decelerate-quart);
 }
 
-.gallery-card:hover .gallery-card__title {
+.app-card:hover .gallery-card__title {
   color: var(--text-color-theme-primary);
 }
 
@@ -346,7 +309,7 @@ onMounted(() => {
   transition: color 150ms var(--ease-decelerate-quart);
 }
 
-.gallery-card:hover .gallery-card__grid-title {
+.app-card:hover .gallery-card__grid-title {
   color: var(--text-color-theme-primary);
 }
 
@@ -363,7 +326,7 @@ onMounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gallery-card {
+  .app-card {
     animation: none;
     transition: none;
   }

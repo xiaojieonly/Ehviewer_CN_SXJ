@@ -10,7 +10,7 @@
     SearchLayout     — expandable filter panel (embeds CategoryTable,
                        keyword-mode radio group, AdvanceSearchTable replica);
     ContentLayout    — results with pull-to-refresh + infinite paging;
-    AppCard          — gallery card in list/grid mode (auto-column grid per
+    GalleryCard      — gallery card in list/grid mode (auto-column grid per
                        contracts/responsive-strategy.md §4);
     FabLayout        — primary FAB opens the filter panel, secondary FABs
                        manage quick searches and toggle list/grid.
@@ -123,7 +123,7 @@
         @retry="onRefresh"
       >
         <div class="results" :class="`results--${viewMode}`">
-          <AppCard
+          <GalleryCard
             v-for="gallery in galleries"
             :key="gallery.gid"
             :gallery="gallery"
@@ -245,7 +245,7 @@ import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/Navigat
 import SearchBar from '@/components/search/SearchBar.vue'
 import SearchLayout from '@/components/search/SearchLayout.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
-import AppCard from '@/components/atoms/AppCard.vue'
+import GalleryCard from '@/components/gallery/GalleryCard.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 

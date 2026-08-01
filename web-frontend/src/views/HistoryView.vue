@@ -24,8 +24,8 @@
           class="gallery-list__row"
           :style="{ animationDelay: `${Math.min(index * 24, 240)}ms` }"
         >
-          <!-- Same horizontal card as the gallery list (AppCard, list mode) -->
-          <AppCard :gallery="entry.gallery" mode="list" @click="openGallery" />
+          <!-- Same horizontal card as the gallery list (GalleryCard, list mode) -->
+          <GalleryCard :gallery="entry.gallery" mode="list" @click="openGallery" />
           <!-- Last-viewed timestamp -->
           <span
             class="time-badge"
@@ -95,7 +95,7 @@
  *
  * Backend note: `HistoryItem.category` is the stringified `EhConfig` bit
  * (HistoryService maps `entity.category.toString()`), so rows are converted
- * to `GalleryInfo` (numeric bit) before being handed to `AppCard`.
+ * to `GalleryInfo` (numeric bit) before being handed to `GalleryCard`.
  */
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -110,7 +110,7 @@ import {
 } from '@/types/components'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
-import AppCard from '@/components/atoms/AppCard.vue'
+import GalleryCard from '@/components/gallery/GalleryCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 
 /** View states matching ContentLayout's internal ViewTransition. */
@@ -152,7 +152,7 @@ const state = ref<ViewState>('loading')
 const refreshing = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 
-/** Maps a backend history row onto the `GalleryInfo` shape AppCard renders. */
+/** Maps a backend history row onto the `GalleryInfo` shape GalleryCard renders. */
 function toGalleryInfo(item: HistoryItem): GalleryInfo {
   return {
     gid: item.gid,
