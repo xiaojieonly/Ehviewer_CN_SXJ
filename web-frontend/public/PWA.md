@@ -20,8 +20,8 @@
 | --- | --- | --- | --- |
 | App Shell（`/`、`/index.html`、manifest、图标） | install 时预缓存 | `*-shell` | Vite 产物带内容 hash，运行时首次命中后写入 shell 缓存（CacheFirst，hash 名不可变，可安全长缓存） |
 | 导航请求（SPA 路由） | NetworkFirst → 回退已缓存 shell | `*-shell` | 在线时刷新最新 HTML；离线时任意已访问路由可打开 |
-| API GET（`/api/*`） | NetworkFirst → 回退缓存 | `*-api` | 画廊列表/详情在线保持最新，**离线可读已缓存画廊**；离线且无缓存时返回可解析 JSON：`{"error":"offline",...}`（HTTP 503），供应用层展示友好离线态 |
-| 图片（`/api/image/*` 及所有 image 请求） | CacheFirst + 过期淘汰 | `*-images` | 上限 500 条 / 30 天；每次写入调用 `navigator.storage.estimate()`，用量超过配额 80% 时上限减半，主动释放空间 |
+| API GET（`/api/*`） | NetworkFirst → 回退缓存（30 分钟 TTL） | `*-api` | 画廊列表/详情在线保持最新；写入时打时间戳，**离线仅回退 30 分钟内的缓存**（`API_MAX_AGE_MS`），过期条目直接清除；离线且无新鲜缓存时返回可解析 JSON：`{"error":"offline",...}`（HTTP 503），供应用层展示友好离线态 |
+| 图片（`/api/v1/image/*` 及所有 image 请求） | CacheFirst + 过期淘汰 | `*-images` | 上限 500 条 / 30 天；每次写入调用 `navigator.storage.estimate()`，用量超过配额 80% 时上限减半，主动释放空间 |
 | 同源静态资源（hashed JS/CSS/字体） | CacheFirst | `*-shell` | 内容寻址，永久安全 |
 
 不拦截：非 GET 请求、WebSocket（`/ws`）、Range 请求、跨域非图片请求。
@@ -67,7 +67,7 @@
 - [ ] DevTools → Application → Cache Storage：确认 `ehviewer-v1-shell` / `-api` / `-images` 均有内容
 - [ ] 开启飞行模式（或 DevTools 勾选 Offline）
 - [ ] 重新打开应用 → 首页/已访问路由可加载（shell 回退）
-- [ ] 进入之前浏览过的画廊详情 → 元数据可显示（API 缓存回退）
+- [ ] 进入之前浏览过的画廊详情 → 元数据可显示（API 缓存回退，需在 30 分钟 TTL 内；超时则返回 503 JSON）
 - [ ] 进入阅读器翻阅之前加载过的页面 → 图片正常显示（图片缓存）
 - [ ] 请求一个**从未访问过**的接口 → 收到 HTTP 503 + JSON `{"error":"offline",...}`，而不是浏览器原始网络错误页
 - [ ] 恢复网络后刷新 → 数据恢复最新

@@ -7,7 +7,9 @@
  *     SW authoring time, so those are captured into the shell cache at
  *     runtime (CacheFirst — safe because hashed names are immutable).
  *   - API responses (/api/*): NetworkFirst with cache fallback, so gallery
- *     lists stay fresh online but remain readable offline.
+ *     lists stay fresh online but remain readable offline; cached entries
+ *     carry a timestamp and are only served within API_MAX_AGE_MS (30 min),
+ *     stale entries are evicted instead of being served indefinitely.
  *   - Images: CacheFirst with expiration (max 500 entries, 30 days) and
  *     quota-aware eviction — navigator.storage.estimate() is checked on
  *     every insert and the entry budget halves above 80% of the origin
@@ -32,6 +34,13 @@ const CURRENT_CACHES = new Set([SHELL_CACHE, API_CACHE, IMAGE_CACHE])
 /** Image cache limits (roadmap: max 500 entries / 30 days). */
 const IMAGE_MAX_ENTRIES = 500
 const IMAGE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * API cache freshness (NetworkFirst fallback): an entry is only served
+ * offline while younger than this. 30 minutes keeps offline-read galleries
+ * fresh without pinning stale data into the cache forever.
+ */
+const API_MAX_AGE_MS = 30 * 60 * 1000
 
 /**
  * Storage-pressure threshold (navigator.storage.estimate). Once the origin
@@ -112,16 +121,18 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // 2. API GETs — NetworkFirst with cache fallback.
-  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstApi(request))
+  // 2. Images (same-origin /api/v1/image/* and any cross-origin image) —
+  //    CacheFirst with expiration. Must precede the generic /api/ rule so
+  //    same-origin reader images are never diverted into the API cache.
+  if (isImageRequest(request, url)) {
+    event.respondWith(cacheFirstImage(request))
     return
   }
 
-  // 3. Images (same-origin /api/image/* and any cross-origin image) —
-  //    CacheFirst with expiration.
-  if (isImageRequest(request, url)) {
-    event.respondWith(cacheFirstImage(request))
+  // 3. API GETs (images excluded by rule 2) — NetworkFirst with cache
+  //    fallback and a 30-minute freshness window.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
+    event.respondWith(networkFirstApi(request))
     return
   }
 
@@ -155,7 +166,7 @@ async function networkFirstNavigation(request) {
 }
 
 /* --------------------------------------------------------------------------
- * Strategy: API — NetworkFirst with cache fallback
+ * Strategy: API — NetworkFirst with cache fallback (30-minute TTL)
  * ------------------------------------------------------------------------ */
 
 async function networkFirstApi(request) {
@@ -163,14 +174,15 @@ async function networkFirstApi(request) {
     const response = await fetch(request)
     if (response.ok) {
       const cache = await caches.open(API_CACHE)
-      cache.put(request, response.clone())
+      cache.put(request, stampResponse(response.clone()))
     }
     return response
   } catch (err) {
     const cache = await caches.open(API_CACHE)
     const cached = await cache.match(request)
-    if (cached) return cached
-    // Offline and never cached — return a parseable JSON error so the app
+    if (cached && isFreshApi(cached)) return cached
+    if (cached) await cache.delete(request) // Stale — evict, don't serve.
+    // Offline and no fresh cache — return a parseable JSON error so the app
     // can show a friendly offline state instead of a network error.
     return new Response(JSON.stringify({ error: 'offline', message: 'No cached data available' }), {
       status: 503,
@@ -209,8 +221,16 @@ async function cacheFirstImage(request) {
 
 function isImageRequest(request, url) {
   if (request.destination === 'image') return true
+  // Reader images (streamGalleryImage) and proxy images live under
+  // /api/v1/image/; match the prefix (and the legacy /api/image/ form) so
+  // query variants like ?w= or ?enhanced= stay inside this rule. Cache keys
+  // are the full request URL including the query string, so each width /
+  // enhancement variant is cached separately.
+  if (url.pathname.startsWith('/api/v1/image/')) return true
   if (url.pathname.startsWith('/api/image/')) return true
-  return /\.(png|jpe?g|gif|webp|avif|svg|ico)(\?.*)?$/i.test(url.pathname)
+  // pathname never carries the query string, so extension checks are
+  // query-agnostic by construction.
+  return /\.(png|jpe?g|gif|webp|avif|svg|ico)$/i.test(url.pathname)
 }
 
 function isCacheableImage(response) {
@@ -234,10 +254,18 @@ function stampResponse(response) {
   })
 }
 
-function isFreshImage(response) {
+function isFresh(response, maxAgeMs) {
   const cachedAt = Number(response.headers.get(CACHED_AT_HEADER))
   if (!cachedAt) return false // Legacy entry without a stamp — revalidate.
-  return Date.now() - cachedAt < IMAGE_MAX_AGE_MS
+  return Date.now() - cachedAt < maxAgeMs
+}
+
+function isFreshImage(response) {
+  return isFresh(response, IMAGE_MAX_AGE_MS)
+}
+
+function isFreshApi(response) {
+  return isFresh(response, API_MAX_AGE_MS)
 }
 
 /**
