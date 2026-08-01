@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 
-import authRoutes from './routes/auth.mjs';
+import authRoutes, { validateToken, isAuthRequired } from './routes/auth.mjs';
 import galleryRoutes from './routes/gallery.mjs';
 import favoriteRoutes from './routes/favorite.mjs';
 import historyRoutes from './routes/history.mjs';
@@ -18,6 +18,8 @@ import archiveRoutes from './routes/archive.mjs';
 import torrentRoutes from './routes/torrent.mjs';
 import smbRoutes from './routes/smb.mjs';
 import healthRoutes from './routes/health.mjs';
+import proxyRoutes from './routes/proxy.mjs';
+import preferenceRoutes from './routes/preferences.mjs';
 import { setupWebSocket } from './ws/progress.mjs';
 
 const app = express();
@@ -45,6 +47,36 @@ app.use((req, res, next) => {
   next();
 });
 
+// Auth guard for protected /api/** routes. Helpers come from routes/auth.mjs
+// (named exports): validateToken(token) -> boolean, isAuthRequired() -> boolean.
+// When require_auth is off (default) all /api routes stay public, matching the
+// backend's behavior when security.require_auth = false.
+
+const PERMIT_ALL_API_PATHS = new Set([
+  '/api/v1/auth/register',
+  '/api/v1/auth/login',
+  '/api/v1/auth/status',
+  '/api/v1/auth/pair/complete',
+  '/api/v1/health',
+]);
+
+app.use('/api', (req, res, next) => {
+  const fullPath = req.baseUrl + req.path;
+  if (PERMIT_ALL_API_PATHS.has(fullPath) || fullPath.startsWith('/api/v1/metrics')) {
+    return next();
+  }
+  if (!isAuthRequired()) {
+    return next();
+  }
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (token && validateToken(token)) {
+    return next();
+  }
+  // The real backend's entry point (SecurityConfig) returns 401, not 403.
+  res.status(401).json({ success: false, message: 'Authentication required' });
+});
+
 // Mount routes under /api/v1
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/gallery', galleryRoutes);
@@ -53,6 +85,8 @@ app.use('/api/v1/history', historyRoutes);
 app.use('/api/v1/download', downloadRoutes);
 app.use('/api/v1/comment', commentRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/proxy', proxyRoutes);
+app.use('/api/v1/preferences', preferenceRoutes);
 app.use('/api/v1/image', imageRoutes);
 app.use('/api/v1/cache', cacheRoutes);
 app.use('/api/v1/process', processRoutes);
@@ -76,8 +110,10 @@ app.get('/', (req, res) => {
       download: '/api/v1/download/{list,info,:id,add,start,start-all,pause,cancel,delete,label}',
       comment: '/api/v1/comment/{list/:gid,post,vote}',
       settings: '/api/v1/settings',
+      proxy: '/api/v1/proxy/{test}',
+      preferences: '/api/v1/preferences',
       image: '/api/v1/image/{proxy,cache/status,cache/clear,:galleryId/:page}',
-      cache: '/api/v1/cache/{stats,gallery/:id,clear}',
+      cache: '/api/v1/cache/{stats,gallery/:id}',
       process: '/api/v1/process/{gallery/:id,status/:taskId}',
       sync: '/api/v1/sync/{push,pull,status}',
       archive: '/api/v1/archive/{list/:gid,download}',
