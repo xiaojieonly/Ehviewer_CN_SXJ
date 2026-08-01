@@ -32,7 +32,7 @@ Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
 # Changelog
 
 ## 2026/08/01
-### 新版发布2.0.2.3
+### 新版发布2.0.2.3 建军节快乐~
 
 - 修复页码显示延迟的问题
 - 添加重置阅读进度功能以更新UI
