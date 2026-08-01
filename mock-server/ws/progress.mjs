@@ -1,4 +1,15 @@
 // Simulated download/processing progress via STOMP over SockJS
+//
+// Download messages mirror the REAL backend exactly (see
+// ehviewer-web/.../websocket/DownloadProgressHandler.kt): the bare
+// DownloadProgress DTO {gid, state, downloaded, total, speed, label} is
+// published on BOTH /topic/download/{gid} AND /topic/download/all.
+//
+// NOTE: the real handler publishes NO envelope topics, so
+// /topic/download/progress and /topic/download/state are intentionally NOT
+// emitted here (contract §7.4 migration: the frontend's subscribeAll /
+// subscribeDownload parse the bare DTO from the legacy topics). Enveloped
+// messages remain only for process.* / system.health.
 import sockjs from 'sockjs';
 import { galleries } from '../fixtures/galleries.mjs';
 
@@ -44,26 +55,26 @@ function parseStompFrame(data) {
   return { command, headers, body };
 }
 
-// Active simulated downloads
+// Download state ints (match backend DTO / frontend DownloadItem.vue)
+const STATE_DOWNLOADING = 2;
+const STATE_FINISH = 3;
+
+// Active simulated downloads — bare DTO shape, as DownloadService publishes it
 const activeDownloads = [
   {
-    taskId: 'dl-2801001',
-    galleryId: galleries[0].gid,
-    galleryName: galleries[0].title,
-    downloadedPages: Math.floor(galleries[0].pages * 0.6),
-    totalPages: galleries[0].pages,
+    gid: galleries[0].gid,
+    state: STATE_DOWNLOADING,
+    downloaded: Math.floor(galleries[0].pages * 0.6),
+    total: galleries[0].pages,
     speed: 2097152,
-    state: 'downloading',
     label: 1,
   },
   {
-    taskId: 'dl-2801003',
-    galleryId: galleries[2].gid,
-    galleryName: galleries[2].title,
-    downloadedPages: 0,
-    totalPages: galleries[2].pages,
+    gid: galleries[2].gid,
+    state: STATE_DOWNLOADING,
+    downloaded: 0,
+    total: galleries[2].pages,
     speed: 1048576,
-    state: 'downloading',
     label: 1,
   },
 ];
@@ -141,17 +152,19 @@ export function setupWebSocket(server) {
           if (destination === '/app/ping') {
             try {
               const body = JSON.parse(frame.body);
-              const pong = envelope('system.pong', {
+              // Contract Appendix B: PongResponse is a DIRECT reply (not
+              // enveloped). Address it with the subscription id of the entry
+              // matching /topic/pong (NOT the first subscription in the map).
+              const pong = JSON.stringify({
                 clientTime: body.clientTime,
                 serverTime: Date.now(),
               });
-              // Send pong to /topic/pong for all subscriptions matching it
-              for (const [, dest] of subscriptions) {
+              for (const [subId, dest] of subscriptions) {
                 if (dest === '/topic/pong') {
                   conn.write(stompFrame('MESSAGE', {
                     destination: dest,
                     'content-type': 'application/json',
-                    subscription: subscriptions.keys().next().value,
+                    subscription: subId,
                   }, pong));
                 }
               }
@@ -211,46 +224,36 @@ export function setupWebSocket(server) {
   // Periodic broadcast: download progress (every 2s)
   setInterval(() => {
     for (const dl of activeDownloads) {
-      if (dl.state === 'downloading') {
-        dl.downloadedPages = Math.min(dl.downloadedPages + Math.floor(Math.random() * 3) + 1, dl.totalPages);
-        dl.speed = Math.floor(Math.random() * 3145728) + 524288; // 0.5-3.5 MB/s
+      if (dl.state !== STATE_DOWNLOADING) continue;
+      dl.downloaded = Math.min(dl.downloaded + Math.floor(Math.random() * 3) + 1, dl.total);
+      dl.speed = Math.floor(Math.random() * 3145728) + 524288; // 0.5-3.5 MB/s
 
-        if (dl.downloadedPages >= dl.totalPages) {
-          dl.state = 'completed';
-          dl.speed = 0;
-        }
-
-        const msg = envelope('download.progress', {
-          taskId: dl.taskId,
-          galleryId: dl.galleryId,
-          galleryName: dl.galleryName,
-          downloadedPages: dl.downloadedPages,
-          totalPages: dl.totalPages,
-          speed: dl.speed,
-          state: dl.state,
-          label: dl.label,
-        });
-
-        broadcast(connections, ['/topic/download/progress', `/topic/download/${dl.galleryId}`], msg);
-
-        // Also send state change when completed
-        if (dl.state === 'completed') {
-          const stateMsg = envelope('download.state', {
-            taskId: dl.taskId,
-            galleryId: dl.galleryId,
-            state: 'completed',
-            previousState: 'downloading',
-          });
-          broadcast(connections, ['/topic/download/state', `/topic/download/${dl.galleryId}`], stateMsg);
-        }
+      if (dl.downloaded >= dl.total) {
+        dl.state = STATE_FINISH;
+        dl.speed = 0;
       }
+
+      // Bare DTO exactly as DownloadProgressHandler.kt sends it, on BOTH
+      // legacy topics. Envelope topics (/topic/download/progress,
+      // /topic/download/state) are intentionally NOT published — the real
+      // backend does not publish them.
+      const dto = JSON.stringify({
+        gid: dl.gid,
+        state: dl.state,
+        downloaded: dl.downloaded,
+        total: dl.total,
+        speed: dl.speed,
+        label: dl.label,
+      });
+
+      broadcast(connections, ['/topic/download/all', `/topic/download/${dl.gid}`], dto);
     }
 
     // Reset completed downloads to simulate continuous activity
     for (const dl of activeDownloads) {
-      if (dl.state === 'completed') {
-        dl.downloadedPages = 0;
-        dl.state = 'downloading';
+      if (dl.state === STATE_FINISH) {
+        dl.downloaded = 0;
+        dl.state = STATE_DOWNLOADING;
         dl.speed = 1048576;
       }
     }
@@ -271,9 +274,17 @@ export function setupWebSocket(server) {
       });
       broadcast(connections, ['/topic/process/all', `/topic/process/${activeProcess.taskId}`], completedMsg);
 
-      // Reset
+      // Restart a fresh job (emit process.started on the new lifecycle)
       activeProcess.processedPages = 0;
       activeProcess.currentPage = 1;
+      const startedMsg = envelope('process.started', {
+        taskId: activeProcess.taskId,
+        galleryId: activeProcess.galleryId,
+        totalPages: activeProcess.totalPages,
+        processingType: 'UPSCALE_2X',
+        processorId: 'noop',
+      });
+      broadcast(connections, ['/topic/process/all', `/topic/process/${activeProcess.taskId}`], startedMsg);
     } else {
       const msg = envelope('process.progress', {
         taskId: activeProcess.taskId,
@@ -291,7 +302,7 @@ export function setupWebSocket(server) {
     const msg = envelope('system.health', {
       cacheUsage: 1073741824,
       cacheCapacity: 5368709120,
-      activeDownloads: activeDownloads.filter(d => d.state === 'downloading').length,
+      activeDownloads: activeDownloads.filter(d => d.state === STATE_DOWNLOADING).length,
       processingQueue: 1,
       memoryUsage: 268435456,
       memoryMax: 1073741824,
