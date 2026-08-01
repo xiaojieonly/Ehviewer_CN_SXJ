@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.web.service
 
+import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.entity.ServerConfigEntity
 import com.hippo.ehviewer.web.repository.ServerConfigRepository
 import okhttp3.Headers
@@ -12,10 +13,12 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
@@ -24,26 +27,34 @@ import java.util.Optional
 /**
  * Guard for the runtime-mutable outbound proxy used for E-Hentai traffic:
  * settings come from server_config, and the selector/authenticator handed to
- * the shared OkHttp client must reflect them per connection attempt.
+ * the shared OkHttp client must reflect them per connection attempt. The proxy
+ * password is stored encrypted at rest and must be decrypted for use.
  */
 class WebProxyManagerTest {
 
+    @TempDir
+    lateinit var tempDir: File
+
     private lateinit var serverConfig: ServerConfigService
     private lateinit var manager: WebProxyManager
+    private val storedValues = HashMap<String, String>()
 
     /** In-memory-backed real [ServerConfigService]; no Mockito matcher pitfalls. */
     @BeforeEach
     fun setUp() {
         val repo = mock(ServerConfigRepository::class.java)
-        val map = HashMap<String, ServerConfigEntity>()
-        `when`(repo.findById(anyString())).thenAnswer { Optional.ofNullable(map[it.getArgument(0)]) }
-        `when`(repo.existsById(anyString())).thenAnswer { map.containsKey(it.getArgument(0)) }
+        val entities = HashMap<String, ServerConfigEntity>()
+        `when`(repo.findById(anyString())).thenAnswer { Optional.ofNullable(entities[it.getArgument(0)]) }
+        `when`(repo.existsById(anyString())).thenAnswer { entities.containsKey(it.getArgument(0)) }
         `when`(repo.save(any(ServerConfigEntity::class.java))).thenAnswer { inv ->
             val entity = inv.getArgument<ServerConfigEntity>(0)
-            map[entity.key] = entity
+            entities[entity.key] = entity
+            storedValues[entity.key] = entity.value
             entity
         }
-        serverConfig = ServerConfigService(repo)
+        val config = EhCoreConfigProperties()
+        config.security.encryptionKeyPath = File(tempDir, "test.key").absolutePath
+        serverConfig = ServerConfigService(repo, EncryptionService(), config)
         manager = WebProxyManager(serverConfig)
     }
 
@@ -122,5 +133,18 @@ class WebProxyManagerTest {
             .headers(Headers.Builder().add("Proxy-Authenticate", "Basic realm=\"proxy\"").build())
             .build()
         assertNull(manager.authenticator().authenticate(null, response))
+    }
+
+    @Test
+    fun `proxy password is encrypted at rest and decrypted for use`() {
+        enableProxy("http", "192.168.1.5", 8080)
+        serverConfig.set(WebProxyManager.KEY_USERNAME, "bob")
+        serverConfig.set(WebProxyManager.KEY_PASSWORD, "s3cret-pass")
+
+        // The stored value must not be the plaintext password.
+        val stored = storedValues[WebProxyManager.KEY_PASSWORD]!!
+        assertTrue(stored != "s3cret-pass" && stored.startsWith("enc:v1:"))
+        // The manager (and any consumer) sees the decrypted plaintext.
+        assertEquals("s3cret-pass", manager.settings().password)
     }
 }

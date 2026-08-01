@@ -28,7 +28,7 @@ class SettingsService(
                 enabled = config.smb.enabled
             ),
             security = SecuritySettings(
-                requireAuth = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false),
+                requireAuth = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true),
                 sessionTimeout = serverConfig.getLong(ServerConfigService.KEY_SESSION_TIMEOUT, 86400),
             ),
             processing = ProcessingSettings(
@@ -43,7 +43,8 @@ class SettingsService(
                 host = serverConfig.get(WebProxyManager.KEY_HOST),
                 port = serverConfig.get(WebProxyManager.KEY_PORT, "0").toIntOrNull() ?: 0,
                 username = serverConfig.get(WebProxyManager.KEY_USERNAME),
-                password = serverConfig.get(WebProxyManager.KEY_PASSWORD),
+                password = "",
+                proxyPasswordSet = serverConfig.get(WebProxyManager.KEY_PASSWORD).isNotEmpty(),
             ),
         )
     }
@@ -80,7 +81,11 @@ class SettingsService(
             serverConfig.set(WebProxyManager.KEY_HOST, proxy.host)
             serverConfig.set(WebProxyManager.KEY_PORT, proxy.port.toString())
             serverConfig.set(WebProxyManager.KEY_USERNAME, proxy.username)
-            serverConfig.set(WebProxyManager.KEY_PASSWORD, proxy.password)
+            // An empty/absent password means "keep the stored one" — the GET
+            // endpoint never echoes it back, so the UI cannot resend it.
+            if (!proxy.password.isNullOrEmpty()) {
+                serverConfig.set(WebProxyManager.KEY_PASSWORD, proxy.password)
+            }
         }
         return true
     }

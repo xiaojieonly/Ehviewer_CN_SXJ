@@ -55,6 +55,7 @@ data class ProxySettings(
     val port: Int = 0,
     val username: String = "",
     val password: String = "",
+    val proxyPasswordSet: Boolean = false,
 )
 
 /** Optional request body for POST /api/v1/proxy/test — tests the given values. */
