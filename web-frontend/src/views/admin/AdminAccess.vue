@@ -22,38 +22,24 @@
       </header>
 
       <!-- ═══ Login ═══════════════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">登录</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="sec-primary" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">需要登录</span>
-              <span class="pref__summary">访问此服务器需要用户名和密码</span>
-            </div>
-            <button
-              type="button"
-              class="switch"
-              role="switch"
-              :aria-checked="security.requireAuth"
+      <section>
+        <SectionHeader title="登录" />
+        <PrefCard>
+          <PrefRow icon="sec-primary" title="需要登录" summary="访问此服务器需要用户名和密码">
+            <AppSwitch
+              :model-value="security.requireAuth"
               aria-label="需要登录"
               :disabled="loading"
-              @click="toggleRequireAuth"
-            >
-              <span class="switch__thumb" />
-            </button>
-          </div>
-          <div v-if="!security.requireAuth" class="access-warning" role="alert">
-            <AppIcon name="info-dark" class="access-warning__icon" size="18px" />
-            <span>关闭后，局域网内任何人都可以访问此服务器</span>
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="history-black" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">Session 超时（秒）</span>
-              <span class="pref__summary">无操作后会话自动失效的时长</span>
-            </div>
+              @update:model-value="toggleRequireAuth"
+            />
+            <template #below>
+              <div v-if="!security.requireAuth" class="access-warning" role="alert">
+                <AppIcon name="info-dark" class="access-warning__icon" size="18px" />
+                <span>关闭后，局域网内任何人都可以访问此服务器</span>
+              </div>
+            </template>
+          </PrefRow>
+          <PrefRow icon="history-black" title="Session 超时（秒）" summary="无操作后会话自动失效的时长">
             <input
               class="pref__number"
               type="number"
@@ -65,34 +51,25 @@
               aria-label="Session 超时（秒）"
               @change="onTimeoutChange"
             />
-          </div>
-        </div>
+          </PrefRow>
+        </PrefCard>
       </section>
 
       <!-- ═══ Change password ═════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">修改密码</h2>
-        <div class="pref-card">
+      <section>
+        <SectionHeader title="修改密码" />
+        <PrefCard>
           <div class="access-form">
             <!-- TODO(Wave 6): 后端暂无 change-password 端点，接入 authApi 后启用 -->
-            <label class="field">
-              <input v-model="password.old" type="password" placeholder=" " autocomplete="current-password" />
-              <span class="field__label">旧密码</span>
-            </label>
-            <label class="field">
-              <input v-model="password.new" type="password" placeholder=" " autocomplete="new-password" />
-              <span class="field__label">新密码</span>
-            </label>
-            <label class="field">
-              <input v-model="password.confirm" type="password" placeholder=" " autocomplete="new-password" />
-              <span class="field__label">确认新密码</span>
-            </label>
+            <AppTextField v-model="password.old" label="旧密码" type="password" />
+            <AppTextField v-model="password.new" label="新密码" type="password" />
+            <AppTextField v-model="password.confirm" label="确认新密码" type="password" />
             <button type="button" class="btn-primary" disabled title="后端暂未提供修改密码接口">
               修改密码
             </button>
           </div>
-          <p class="access-form__note">后端暂未提供修改密码接口，敬请期待。</p>
-        </div>
+        </PrefCard>
+        <p class="access-form__note">后端暂未提供修改密码接口，敬请期待。</p>
       </section>
     </div>
 
@@ -108,6 +85,7 @@ import { onMounted, reactive, ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /** 后端 SettingsResponse.security 的字段（settings.ts 尚未声明，见组件头注释）。 */
 interface SecuritySettings {
@@ -241,68 +219,6 @@ onMounted(async () => {
   opacity: 0;
 }
 
-/* ----------------------------- preference group --------------------------- */
-/* Reuses the settings page's group/card/row/switch/field spec (roadmap §卡片规范). */
-
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-.pref {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ---------------------------- warning callout ----------------------------- */
 
 .access-warning {
@@ -325,48 +241,6 @@ onMounted(async () => {
 
 .access-warning__icon :deep(svg path) {
   fill: currentColor;
-}
-
-/* --------------------------------- switch --------------------------------- */
-
-.switch {
-  position: relative;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
-}
-
-.switch:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 /* ------------------------------ number input ------------------------------ */
@@ -408,54 +282,9 @@ onMounted(async () => {
 }
 
 .access-form__note {
-  margin: 10px var(--keyline-margin) 14px;
+  margin: 10px 4px 14px;
   font-size: clamp(11px, 12px, 14px);
   color: var(--text-color-secondary);
-}
-
-/* Outlined material field (divider border → primary on focus). */
-.field {
-  position: relative;
-  display: block;
-}
-
-.field input {
-  width: 100%;
-  padding: 14px 12px 10px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: transparent;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
-}
-
-.field input:focus {
-  border-color: var(--color-primary);
-}
-
-.field__label {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  translate: 0 -50%;
-  padding: 0 4px;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-secondary);
-  pointer-events: none;
-  transition:
-    top 150ms var(--ease-decelerate-quart),
-    font-size 150ms var(--ease-decelerate-quart),
-    color 150ms var(--ease-decelerate-quart);
-}
-
-.field input:focus + .field__label,
-.field input:not(:placeholder-shown) + .field__label {
-  top: 0;
-  font-size: clamp(10px, 12px, 13px);
-  color: var(--color-primary);
-  background: var(--color-background-floating);
 }
 
 /* --------------------------------- buttons -------------------------------- */
