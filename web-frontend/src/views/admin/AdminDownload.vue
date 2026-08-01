@@ -23,24 +23,19 @@
     <main class="admin-download__body">
       <div class="admin-download__column">
         <!-- ═══ 基础设置 ══════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">基础设置</h2>
-          <div class="pref-card">
-            <button type="button" class="pref pref--action" @click="openPathDialog">
-              <AppIcon name="folder-share-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">下载路径</span>
-                <span class="pref__summary">{{ server?.download.path || '未设置' }}</span>
-              </div>
-              <AppIcon name="pencil-dark" class="pref__chevron" size="20px" />
-            </button>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="download-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">并发线程数</span>
-                <span class="pref__summary">获取图片的工作线程数（1–10）</span>
-              </div>
+        <section>
+          <SectionHeader title="基础设置" />
+          <PrefCard>
+            <PrefRow
+              icon="folder-share-dark"
+              title="下载路径"
+              :summary="server?.download.path || '未设置'"
+            >
+              <button type="button" class="pref-action-btn" aria-label="修改下载路径" @click="openPathDialog">
+                <AppIcon name="pencil-dark" size="20px" />
+              </button>
+            </PrefRow>
+            <PrefRow icon="download-dark" title="并发线程数" summary="获取图片的工作线程数（1–10）">
               <div class="stepper">
                 <button
                   type="button"
@@ -62,14 +57,8 @@
                   +
                 </button>
               </div>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="pause-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">下载延迟</span>
-                <span class="pref__summary">两次下载请求之间的间隔（毫秒）</span>
-              </div>
+            </PrefRow>
+            <PrefRow icon="pause-dark" title="下载延迟" summary="两次下载请求之间的间隔（毫秒）">
               <label class="num-field">
                 <input
                   v-model.number="serverDelay"
@@ -79,14 +68,8 @@
                   :disabled="!server"
                 />
               </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="refresh-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">下载超时</span>
-                <span class="pref__summary">单个图片下载超时时间（毫秒）</span>
-              </div>
+            </PrefRow>
+            <PrefRow icon="refresh-dark" title="下载超时" summary="单个图片下载超时时间（毫秒）">
               <label class="num-field">
                 <input
                   v-model.number="serverTimeout"
@@ -96,20 +79,15 @@
                   :disabled="!server"
                 />
               </label>
-            </div>
-          </div>
+            </PrefRow>
+          </PrefCard>
         </section>
 
         <!-- ═══ 并发限制 ═════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">并发限制</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="folder-add-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">最大并发画廊数</span>
-                <span class="pref__summary">同时下载的画廊数量上限（1–20）</span>
-              </div>
+        <section>
+          <SectionHeader title="并发限制" />
+          <PrefCard>
+            <PrefRow icon="folder-add-dark" title="最大并发画廊数" summary="同时下载的画廊数量上限（1–20）">
               <div class="stepper">
                 <button
                   type="button"
@@ -133,14 +111,8 @@
                   +
                 </button>
               </div>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="download-primary" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">最大并发图片数</span>
-                <span class="pref__summary">每个画廊同时获取的图片数量上限（1–20）</span>
-              </div>
+            </PrefRow>
+            <PrefRow icon="download-primary" title="最大并发图片数" summary="每个画廊同时获取的图片数量上限（1–20）">
               <div class="stepper">
                 <button
                   type="button"
@@ -164,14 +136,8 @@
                   +
                 </button>
               </div>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="download-box-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">预加载图片数</span>
-                <span class="pref__summary">提前加载的后续图片数量（1–20） · 仅本设备生效</span>
-              </div>
+            </PrefRow>
+            <PrefRow icon="download-box-dark" title="预加载图片数" summary="提前加载的后续图片数量（1–20） · 仅本设备生效">
               <div class="stepper">
                 <button
                   type="button"
@@ -193,95 +159,59 @@
                   +
                 </button>
               </div>
-            </div>
-          </div>
+            </PrefRow>
+          </PrefCard>
         </section>
 
         <!-- ═══ 列表与行为 ═══════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">列表与行为</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="reorder" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">下载列表分页</span>
-                <span class="pref__summary">下载列表按页加载而非一次载入全部 · 仅本设备生效</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="local.paginated"
+        <section>
+          <SectionHeader title="列表与行为" />
+          <PrefCard>
+            <PrefRow icon="reorder" title="下载列表分页" summary="下载列表按页加载而非一次载入全部 · 仅本设备生效">
+              <AppSwitch
+                :model-value="local.paginated"
                 aria-label="下载列表分页"
-                @click="local.paginated = !local.paginated"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="check-all-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">排序方向</span>
-                <span class="pref__summary">
-                  {{ local.sortAscending ? '升序（按添加时间先后）' : '降序（最新在前）' }} ·
-                  仅本设备生效
-                </span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="local.sortAscending"
+                @update:model-value="(v) => (local.paginated = v)"
+              />
+            </PrefRow>
+            <PrefRow
+              icon="check-all-dark"
+              title="排序方向"
+              :summary="`${local.sortAscending ? '升序（按添加时间先后）' : '降序（最新在前）'} · 仅本设备生效`"
+            >
+              <AppSwitch
+                :model-value="local.sortAscending"
                 aria-label="排序方向"
-                @click="local.sortAscending = !local.sortAscending"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="play-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">自动开始下载</span>
-                <span class="pref__summary">立即恢复排队中的下载 · 仅本设备生效</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="local.autoStart"
+                @update:model-value="(v) => (local.sortAscending = v)"
+              />
+            </PrefRow>
+            <PrefRow icon="play-dark" title="自动开始下载" summary="立即恢复排队中的下载 · 仅本设备生效">
+              <AppSwitch
+                :model-value="local.autoStart"
                 aria-label="自动开始下载"
-                @click="local.autoStart = !local.autoStart"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-          </div>
+                @update:model-value="(v) => (local.autoStart = v)"
+              />
+            </PrefRow>
+          </PrefCard>
         </section>
 
         <!-- ═══ 维护 ═════════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">维护</h2>
-          <div class="pref-card">
+        <section>
+          <SectionHeader title="维护" />
+          <PrefCard>
             <!-- TODO: downloadApi 暂未提供批量清理冗余文件接口，待后端补充后接入。 -->
-            <button type="button" class="pref pref--action" @click="notImplemented">
-              <AppIcon name="clear-all-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">清理冗余文件</span>
-                <span class="pref__summary">删除不再被任何下载引用的临时文件 · TODO：待后端接口</span>
-              </div>
-            </button>
-            <div class="pref-divider" />
+            <PrefRow icon="clear-all-dark" title="清理冗余文件" summary="删除不再被任何下载引用的临时文件 · TODO：待后端接口">
+              <button type="button" class="pref-action-btn" aria-label="清理冗余文件" @click="notImplemented">
+                <AppIcon name="go-to-dark" size="20px" />
+              </button>
+            </PrefRow>
             <!-- TODO: downloadApi 暂未提供批量清理无效下载接口，待后端补充后接入。 -->
-            <button type="button" class="pref pref--action" @click="notImplemented">
-              <AppIcon name="delete-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">清理无效下载</span>
-                <span class="pref__summary">移除状态异常且无法恢复的下载记录 · TODO：待后端接口</span>
-              </div>
-            </button>
-          </div>
+            <PrefRow icon="delete-dark" title="清理无效下载" summary="移除状态异常且无法恢复的下载记录 · TODO：待后端接口">
+              <button type="button" class="pref-action-btn" aria-label="清理无效下载" @click="notImplemented">
+                <AppIcon name="go-to-dark" size="20px" />
+              </button>
+            </PrefRow>
+          </PrefCard>
         </section>
       </div>
     </main>
@@ -291,15 +221,7 @@
       <div v-if="pathDialogOpen" class="dialog-scrim" @click.self="pathDialogOpen = false">
         <div class="dialog" role="dialog" aria-modal="true" aria-label="下载路径">
           <h2 class="dialog__title">下载路径</h2>
-          <label class="field">
-            <input
-              v-model="pathDraft"
-              type="text"
-              placeholder=" "
-              @keydown.enter.prevent="savePath"
-            />
-            <span class="field__label">服务器端路径</span>
-          </label>
+          <AppTextField v-model="pathDraft" label="服务器端路径" @keydown.enter.prevent="savePath" />
           <div class="dialog__actions">
             <button type="button" class="btn-text" @click="pathDialogOpen = false">取消</button>
             <button type="button" class="btn-primary" @click="savePath">保存</button>
@@ -320,6 +242,7 @@ import { onMounted, reactive, ref, watch, type Ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /* ----------------------------- server settings ---------------------------- */
 
@@ -560,126 +483,24 @@ onMounted(async () => {
 
 /* ----------------------------- preference group --------------------------- */
 
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px); /* 14sp ideal — Android preference category */
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-/* Card surface per roadmap §卡片规范 — 2dp radius / elevation. */
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-/* ------------------------------ preference row ---------------------------- */
-
-.pref {
-  display: flex;
+/* Row-level action button (download path / maintenance rows). */
+.pref-action-btn {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px; /* Android preference item height */
-  padding: 10px var(--keyline-margin);
-}
-
-button.pref {
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  transition: background-color 120ms var(--ease-decelerate-quart);
-}
-
-button.pref:hover {
-  background: var(--color-surface);
-}
-
-button.pref:active {
-  background: var(--color-surface-activated);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px); /* 16sp — Android preference title */
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px); /* 12sp — Android preference summary */
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pref__chevron {
-  flex: 0 0 20px;
-  color: var(--drawable-color-secondary);
-}
-
-/* ---------------------------------- switch --------------------------------- */
-
-.switch {
-  position: relative;
-  flex: 0 0 36px;
+  justify-content: center;
   width: 36px;
-  height: 20px;
+  height: 36px;
+  padding: 0;
   border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
   border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
+  background: transparent;
+  color: var(--drawable-color-secondary);
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-decelerate-quart);
 }
 
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
+.pref-action-btn:hover {
+  background: var(--color-surface);
 }
 
 /* ---------------------------------- stepper -------------------------------- */
@@ -812,51 +633,6 @@ button.pref:active {
 .dialog-leave-to .dialog {
   transform: translateY(16px) scale(0.97);
   opacity: 0;
-}
-
-/* Outlined material field (divider border → primary on focus). */
-.field {
-  position: relative;
-  display: block;
-}
-
-.field input {
-  width: 100%;
-  padding: 14px 12px 10px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: transparent;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
-}
-
-.field input:focus {
-  border-color: var(--color-primary);
-}
-
-.field__label {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  translate: 0 -50%;
-  padding: 0 4px;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-secondary);
-  pointer-events: none;
-  transition:
-    top 150ms var(--ease-decelerate-quart),
-    font-size 150ms var(--ease-decelerate-quart),
-    color 150ms var(--ease-decelerate-quart);
-}
-
-.field input:focus + .field__label,
-.field input:not(:placeholder-shown) + .field__label {
-  top: 0;
-  font-size: clamp(10px, 12px, 13px);
-  color: var(--color-primary);
-  background: var(--color-background-floating);
 }
 
 /* --------------------------------- buttons --------------------------------- */
