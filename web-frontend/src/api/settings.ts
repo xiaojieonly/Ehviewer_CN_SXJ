@@ -30,12 +30,22 @@ export interface ProcessingSettings {
   outputQuality: number
 }
 
+export interface ProxySettings {
+  enabled: boolean
+  type: string
+  host: string
+  port: number
+  username: string
+  password: string
+}
+
 export interface Settings {
   download: DownloadSettings
   cache: CacheSettings
   smb: SmbSettings
   security: SecuritySettings
   processing: ProcessingSettings
+  proxy: ProxySettings
 }
 
 export const settingsApi = {

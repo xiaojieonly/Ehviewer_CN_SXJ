@@ -64,6 +64,7 @@ const router = createRouter({
         { path: 'download', name: 'AdminDownload', component: () => import('@/views/admin/AdminDownload.vue') },
         { path: 'server', name: 'AdminServer', component: () => import('@/views/admin/AdminServer.vue') },
         { path: 'devices', name: 'AdminDevices', component: () => import('@/views/admin/AdminDevices.vue') },
+        { path: 'proxy', name: 'AdminProxy', component: () => import('@/views/admin/AdminProxy.vue') },
         { path: 'access', name: 'AdminAccess', component: () => import('@/views/admin/AdminAccess.vue') },
         { path: 'processing', name: 'AdminProcessing', component: () => import('@/views/admin/AdminProcessing.vue') },
         { path: 'advanced', name: 'AdminAdvanced', component: () => import('@/views/admin/AdminAdvanced.vue') },

@@ -744,6 +744,25 @@ paths:
               schema:
                 type: boolean
 
+  /api/v1/proxy/test:
+    post:
+      tags: [Settings]
+      operationId: testProxy
+      summary: Test connectivity to E-Hentai through a proxy (saved settings when no body)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyTestRequest'
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyTestResponse'
+
   # ============================================================
   # Image (existing proxy + new streaming)
   # ============================================================
@@ -1869,6 +1888,12 @@ components:
           $ref: '#/components/schemas/CacheSettings'
         smb:
           $ref: '#/components/schemas/SmbSettings'
+        security:
+          $ref: '#/components/schemas/SecuritySettings'
+        processing:
+          $ref: '#/components/schemas/ProcessingSettings'
+        proxy:
+          $ref: '#/components/schemas/ProxySettings'
 
     DownloadSettings:
       type: object
@@ -1911,6 +1936,81 @@ components:
           $ref: '#/components/schemas/CacheSettings'
         smb:
           $ref: '#/components/schemas/SmbSettings'
+        security:
+          $ref: '#/components/schemas/SecuritySettings'
+        processing:
+          $ref: '#/components/schemas/ProcessingSettings'
+        proxy:
+          $ref: '#/components/schemas/ProxySettings'
+
+    SecuritySettings:
+      type: object
+      properties:
+        requireAuth:
+          type: boolean
+        sessionTimeout:
+          type: integer
+          format: int64
+
+    ProcessingSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        defaultType:
+          type: string
+        outputFormat:
+          type: string
+        outputQuality:
+          type: integer
+
+    ProxySettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        type:
+          type: string
+          enum: [http, socks5]
+          default: http
+        host:
+          type: string
+        port:
+          type: integer
+        username:
+          type: string
+        password:
+          type: string
+
+    # ----------------------------------------------------------
+    # Proxy
+    # ----------------------------------------------------------
+    ProxyTestRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        type:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        username:
+          type: string
+        password:
+          type: string
+
+    ProxyTestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        latencyMs:
+          type: integer
+          format: int64
+        error:
+          type: string
 
     # ----------------------------------------------------------
     # Image
