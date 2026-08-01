@@ -103,6 +103,16 @@
                 android:textColor="?android:attr/textColorPrimary"/>
 
             <TextView
+                android:id="@+id/local_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/local_delete"
+                android:drawablePadding="8dp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:visibility="gone"/>
+
+            <TextView
                 android:id="@+id/torrent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -50,4 +50,25 @@
         android:textStyle="bold"
         tools:ignore="SpUsage"/>
 
+    <FrameLayout
+        android:id="@+id/selection_outline"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/gallery_selection_outline"
+        android:clickable="false"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="24dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="9dp"
+            android:layout_marginBottom="9dp"
+            android:background="@drawable/gallery_selection_mark_background"
+            android:contentDescription="@null"
+            android:padding="2dp"
+            app:srcCompat="@drawable/v_check_contrast_x24" />
+    </FrameLayout>
+
 </androidx.cardview.widget.CardView>

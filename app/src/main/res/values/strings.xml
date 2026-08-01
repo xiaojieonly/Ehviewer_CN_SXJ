@@ -83,6 +83,15 @@
 
     <string name="homepage">Homepage</string>
     <string name="subscription">Subscription</string>
+    <string name="bookmark_subscription">Bookmark subscriptions</string>
+    <string name="bookmark_subscription_empty">No subscribed bookmarks. Open the bookmark manager from the right drawer and enable at least one subscription.</string>
+    <string name="bookmark_subscription_enable">Add to bookmark subscriptions</string>
+    <string name="bookmark_subscription_disable">Remove from bookmark subscriptions</string>
+    <string name="bookmark_subscription_enabled">Added “%s” to bookmark subscriptions</string>
+    <string name="bookmark_subscription_disabled">Removed “%s” from bookmark subscriptions</string>
+    <string name="bookmark_subscription_unsupported">This bookmark type cannot be subscribed to</string>
+    <string name="bookmark_subscription_partial_failure">Some bookmark subscriptions could not be loaded</string>
+    <string name="search_corresponding_bookmarks">Search corresponding bookmarks</string>
     <string name="whats_hot">What\'s hot</string>
     <string name="top_lists">Top Lists</string>
     <string name="favourite">Favourite</string>
@@ -297,6 +306,7 @@
 
     <string name="stop_downloading">Stop downloading</string>
     <string name="delete_downloads">Delete downloads</string>
+    <string name="multi_select">Multi-select</string>
 
     <string name="quick_search">Quick search</string>
     <string name="quick_search_tip">Tap \"+\" to add Quick Search</string>
@@ -338,6 +348,12 @@
     <string name="share">Share</string>
     <string name="rate">Rate</string>
     <string name="similar_gallery">Similar</string>
+    <string name="local_delete">Local Delete</string>
+    <string name="open_local_gallery_image">Open Local Gallery Image</string>
+    <string name="copy_local_gallery_path">Copy Gallery Local Path</string>
+    <string name="no_local_gallery_files">No local gallery files</string>
+    <string name="cannot_open_local_gallery">No app can open this local gallery item</string>
+    <string name="cannot_get_local_gallery_path">Can\'t get the local gallery path</string>
     <string name="gallery_artist">Artist</string>
     <string name="search_cover">Search Cover</string>
     <string name="no_tags">No tags</string>
@@ -347,7 +363,6 @@
     <string name="no_previews">No previews</string>
     <string name="no_more_previews">No more previews</string>
     <string name="more_previews">More previews</string>
-    <string name="more_previews_with_pages">More previews · %1$d pages</string>
     <string name="refresh">Refresh</string>
     <string name="open_in_other_app">Open with other app</string>
     <string name="rate_successfully">Rate successfully</string>
@@ -659,7 +674,8 @@
     <string name="settings_read_start_position_bottom_left">Bottom left</string>
     <string name="settings_read_start_position_bottom_right">Bottom right</string>
     <string name="settings_read_auto_transfer_time">Auto Transfer(ms)</string>
-    <string name="settings_read_direct_save">Direct save</string>
+    <string name="settings_read_direct_save">Quick save</string>
+    <string name="settings_read_quick_save_turn_page">Turn page after saving</string>
     <string name="settings_read_double_tap_zoom">Double-tap to zoom</string>
     <string name="settings_read_start_position_center">Center</string>
     <string name="settings_read_keep_screen_on">Keep screen on</string>

@@ -21,6 +21,7 @@ public class QuickSearch {
 	public int pageFrom;
 	public int pageTo;
 	public long time;
+	public boolean subscribed;
 
 	@Generated
 	public QuickSearch() {
@@ -32,7 +33,7 @@ public class QuickSearch {
 
 	@Generated
 	public QuickSearch(Long id, String name, int mode, int category, String keyword, int advanceSearch, int minRating,
-			int pageFrom, int pageTo, long time) {
+			int pageFrom, int pageTo, long time, boolean subscribed) {
 		this.id = id;
 		this.name = name;
 		this.mode = mode;
@@ -43,6 +44,7 @@ public class QuickSearch {
 		this.pageFrom = pageFrom;
 		this.pageTo = pageTo;
 		this.time = time;
+		this.subscribed = subscribed;
 	}
 
 	public Long getId() {
@@ -125,6 +127,14 @@ public class QuickSearch {
 		this.time = time;
 	}
 
+	public boolean getSubscribed() {
+		return subscribed;
+	}
+
+	public void setSubscribed(boolean subscribed) {
+		this.subscribed = subscribed;
+	}
+
 	@Override
 	public String toString() {
 		return name;
@@ -141,6 +151,7 @@ public class QuickSearch {
 		object.put("pageFrom", pageFrom);
 		object.put("pageTo", pageTo);
 		object.put("time", time);
+		object.put("subscribed", subscribed);
 		return object;
 	}
 
@@ -155,6 +166,7 @@ public class QuickSearch {
 		search.pageFrom = object.getIntValue("pageFrom");
 		search.pageTo = object.getIntValue("pageTo");
 		search.time = object.getLongValue("time");
+		search.subscribed = object.getBooleanValue("subscribed");
 		return search;
 	}
 

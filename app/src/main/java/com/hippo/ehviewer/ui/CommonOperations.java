@@ -139,12 +139,29 @@ public final class CommonOperations {
 
     // TODO Add context if activity and context are different style
     public static void startDownload(final MainActivity activity, final List<GalleryInfo> galleryInfos, boolean forceDefault) {
+        startDownload(activity, galleryInfos, forceDefault, false);
+    }
+
+    /**
+     * Restarts every gallery in the supplied order. Existing download entries are removed without
+     * touching their local files immediately before the new downloads are enqueued.
+     */
+    public static void restartDownload(final MainActivity activity,
+                                       final List<GalleryInfo> galleryInfos,
+                                       boolean forceDefault) {
+        startDownload(activity, galleryInfos, forceDefault, true);
+    }
+
+    private static void startDownload(final MainActivity activity,
+                                      final List<GalleryInfo> galleryInfos,
+                                      boolean forceDefault,
+                                      boolean restartExisting) {
         final DownloadManager dm = EhApplication.getDownloadManager(activity);
 
         LongList toStart = new LongList();
         List<GalleryInfo> toAdd = new ArrayList<>();
         for (GalleryInfo gi : galleryInfos) {
-            if (dm.containDownloadInfo(gi.gid)) {
+            if (dm.containDownloadInfo(gi.gid) && !restartExisting) {
                 toStart.add(gi.gid);
             } else {
                 toAdd.add(gi);
@@ -178,13 +195,7 @@ public final class CommonOperations {
 
         if (justStart) {
             // Got default label
-            for (GalleryInfo gi : toAdd) {
-                Intent intent = new Intent(activity, DownloadService.class);
-                intent.setAction(DownloadService.ACTION_START);
-                intent.putExtra(DownloadService.KEY_LABEL, label);
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                activity.startService(intent);
-            }
+            enqueueDownloads(activity, dm, toAdd, restartExisting, label);
             // Notify
             activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT);
         } else {
@@ -208,13 +219,7 @@ public final class CommonOperations {
                             }
                         }
                         // Start download
-                        for (GalleryInfo gi : toAdd) {
-                            Intent intent = new Intent(activity, DownloadService.class);
-                            intent.setAction(DownloadService.ACTION_START);
-                            intent.putExtra(DownloadService.KEY_LABEL, label1);
-                            intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
-                            activity.startService(intent);
-                        }
+                        enqueueDownloads(activity, dm, toAdd, restartExisting, label1);
                         // Save settings
                         if (builder.isChecked()) {
                             Settings.putHasDefaultDownloadLabel(true);
@@ -227,6 +232,29 @@ public final class CommonOperations {
                     }, activity.getString(R.string.remember_download_label), false)
                     .setTitle(R.string.download)
                     .show();
+        }
+    }
+
+    private static void enqueueDownloads(MainActivity activity, DownloadManager dm,
+                                         List<GalleryInfo> galleries, boolean restartExisting,
+                                         String label) {
+        if (restartExisting) {
+            LongList currentDownloads = new LongList();
+            for (GalleryInfo gallery : galleries) {
+                if (dm.containDownloadInfo(gallery.gid)) {
+                    currentDownloads.add(gallery.gid);
+                }
+            }
+            if (!currentDownloads.isEmpty()) {
+                dm.deleteRangeDownload(currentDownloads);
+            }
+        }
+        for (GalleryInfo gi : galleries) {
+            Intent intent = new Intent(activity, DownloadService.class);
+            intent.setAction(DownloadService.ACTION_START);
+            intent.putExtra(DownloadService.KEY_LABEL, label);
+            intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi);
+            activity.startService(intent);
         }
     }
 

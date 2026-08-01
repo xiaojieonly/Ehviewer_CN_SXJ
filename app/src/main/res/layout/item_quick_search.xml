@@ -41,6 +41,14 @@
                 android:padding="12dp"
                 app:srcCompat="@drawable/v_delete_x24"/>
 
+            <ImageView
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/bookmark_subscription"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                app:srcCompat="@drawable/ic_baseline_subscriptions_24"/>
+
             <TextView
                 android:id="@+id/label"
                 android:layout_width="0dp"

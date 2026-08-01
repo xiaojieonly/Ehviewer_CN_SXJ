@@ -174,6 +174,9 @@ public class EhDB {
                     Log.w("EhDB", "Failed to add ARCHIVE_URI column, might already exist", e);
                     Analytics.recordException(e);
                 }
+            case 7: // 7 to 8, add bookmark subscription state
+                db.execSQL("ALTER TABLE \"QUICK_SEARCH\" ADD COLUMN "
+                        + "\"SUBSCRIBED\" INTEGER NOT NULL DEFAULT 0");
         }
     }
 
@@ -725,6 +728,14 @@ public class EhDB {
     public static synchronized List<QuickSearch> getAllQuickSearch() {
         QuickSearchDao dao = sDaoSession.getQuickSearchDao();
         return dao.queryBuilder().orderAsc(QuickSearchDao.Properties.Time).list();
+    }
+
+    public static synchronized List<QuickSearch> getSubscribedQuickSearch() {
+        QuickSearchDao dao = sDaoSession.getQuickSearchDao();
+        return dao.queryBuilder()
+                .where(QuickSearchDao.Properties.Subscribed.eq(true))
+                .orderAsc(QuickSearchDao.Properties.Time)
+                .list();
     }
 
     public static synchronized void insertQuickSearch(QuickSearch quickSearch) {

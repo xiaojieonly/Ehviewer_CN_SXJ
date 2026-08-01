@@ -45,6 +45,10 @@
     <string name="pd_heart_outline" translatable="false">M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.03C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z</string>
     <string name="pd_heart_2" translatable="false">M12,12L12,12L12,12C12,12 12,12 12,12C12,12 12,12 12,12C12,12 12,12 12,12H12C12,12 12,12 12,12C12,12 12,12 12,12C12,12 12,12 12,12M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.03C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z</string>
     <string name="pd_arrow_left" translatable="false">M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z</string>
+    <string name="pd_arrow_right" translatable="false">M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z</string>
+    <string name="pd_screen_portrait" translatable="false">M17,1H7C5.9,1 5,1.9 5,3V21C5,22.1 5.9,23 7,23H17C18.1,23 19,22.1 19,21V3C19,1.9 18.1,1 17,1M17,19H7V5H17V19Z</string>
+    <string name="pd_screen_landscape" translatable="false">M21,5H3C1.9,5 1,5.9 1,7V17C1,18.1 1.9,19 3,19H21C22.1,19 23,18.1 23,17V7C23,5.9 22.1,5 21,5M19,17H5V7H19V17Z</string>
+    <string name="pd_content_save" translatable="false">M17,3H5C3.89,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V7L17,3M12,19C10.34,19 9,17.66 9,16C9,14.34 10.34,13 12,13C13.66,13 15,14.34 15,16C15,17.66 13.66,19 12,19M15,9H5V5H15V9Z</string>
     <string name="pd_reply" translatable="false">M10,9V5L3,12L10,19V14.9C15,14.9 18.5,16.5 21,20C20,15 17,10 10,9Z</string>
     <string name="pd_send" translatable="false">M2,21L23,12L2,3V10L17,12L2,14V21Z</string>
     <string name="pd_share" translatable="false">M21,11L14,4V8C7,9 4,14 3,19C5.5,15.5 9,13.9 14,13.9V18L21,11Z</string>

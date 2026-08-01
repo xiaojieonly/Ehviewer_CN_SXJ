@@ -77,6 +77,9 @@ public class GalleryListParser {
         public String lastHref;
         public String customErrorString;
         public boolean noWatchedTags;
+        public int rawResultCount;
+        public String rawTailPosted;
+        public long rawTailGid;
         public List<GalleryInfo> galleryInfoList = new ArrayList<>();
     }
 
@@ -228,6 +231,12 @@ public class GalleryListParser {
 //                throw new ParseException("No gallery", body);
             }
             result.galleryInfoList = list;
+            result.rawResultCount = list.size();
+            if (!list.isEmpty()) {
+                GalleryInfo tail = list.get(list.size() - 1);
+                result.rawTailPosted = tail.posted;
+                result.rawTailGid = tail.gid;
+            }
         } catch (Throwable e) {
             ExceptionUtils.throwIfFatal(e);
             e.printStackTrace();

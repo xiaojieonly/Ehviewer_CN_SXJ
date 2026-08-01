@@ -19,7 +19,6 @@ package com.hippo.ehviewer.ui.fragment;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
-import androidx.preference.PreferenceFragmentCompat;
 
 import com.hippo.ehviewer.R;
 

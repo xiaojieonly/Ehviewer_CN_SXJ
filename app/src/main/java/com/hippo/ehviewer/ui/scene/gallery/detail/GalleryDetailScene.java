@@ -20,14 +20,19 @@ package com.hippo.ehviewer.ui.scene.gallery.detail;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.DocumentsContract;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Gravity;
@@ -36,6 +41,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.ViewConfiguration;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -44,6 +51,7 @@ import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.webkit.MimeTypeMap;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -57,11 +65,14 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.transition.TransitionInflater;
 
 import com.hippo.android.resource.AttrResources;
+import com.hippo.app.CheckBoxDialogBuilder;
 import com.hippo.beerbelly.BeerBelly;
+import com.hippo.content.FileProvider;
 import com.hippo.drawable.RoundSideRectDrawable;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.Analytics;
 import com.hippo.ehviewer.AppConfig;
+import com.hippo.ehviewer.BuildConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
@@ -88,6 +99,7 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException;
 import com.hippo.ehviewer.client.parser.RateGalleryParser;
 import com.hippo.ehviewer.dao.DownloadInfo;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.spider.SpiderQueen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.ehviewer.ui.GalleryActivity;
@@ -111,6 +123,7 @@ import com.hippo.ehviewer.widget.GalleryRatingBar;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.IOUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
+import com.hippo.lib.yorozuya.LayoutUtils;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.ViewUtils;
 import com.hippo.reveal.ViewAnimationUtils;
@@ -120,6 +133,7 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.scene.TransitionHelper;
 import com.hippo.text.Html;
 import com.hippo.text.URLImageGetter;
+import com.hippo.unifile.UniFile;
 import com.hippo.util.AppHelper;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -143,6 +157,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -164,6 +179,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private static final int STATE_REFRESH = 1;
     private static final int STATE_REFRESH_HEADER = 2;
     private static final int STATE_FAILED = 3;
+
+    private static final int LOCAL_ACTION_DELETE = 0;
+    private static final int LOCAL_ACTION_OPEN_IMAGE = 1;
+    private static final int LOCAL_ACTION_COPY_PATH = 2;
 
     public final static String KEY_ACTION = "action";
     public static final String ACTION_GALLERY_INFO = "action_gallery_info";
@@ -254,6 +273,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     @Nullable
     private TextView mSimilar;
     @Nullable
+    private TextView mLocalDelete;
+    @Nullable
     private TextView mSearchCover;
     // Tags
     @Nullable
@@ -265,9 +286,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private LinearLayout mComments;
     @Nullable
     private TextView mCommentsText;
-    @Nullable
-    private TextView mMorePreviews;
     // Previews
+    @Nullable
+    private GalleryDetailScrollView mDetailScrollView;
+    @Nullable
+    private View mSwipePreviewIndicator;
+    private int mSwipePreviewIndicatorOffset;
+    private boolean mSwipePreviewIndicatorVisible;
     @Nullable
     private View mPreviews;
     @Nullable
@@ -522,7 +547,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         View view = inflater.inflate(R.layout.scene_gallery_detail, container, false);
 
         ViewGroup main = (ViewGroup) ViewUtils.$$(view, R.id.main);
-        View mainView = ViewUtils.$$(main, R.id.scroll_view);
+        mDetailScrollView = (GalleryDetailScrollView) ViewUtils.$$(main, R.id.scroll_view);
+        View mainView = mDetailScrollView;
         View progressView = ViewUtils.$$(main, R.id.progress_view);
         mTip = (TextView) ViewUtils.$$(main, R.id.tip);
         mViewTransition = new ViewTransition(mainView, progressView, mTip);
@@ -530,8 +556,33 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         assert context != null;
         AssertUtils.assertNotNull(context);
 
+        mSwipePreviewIndicator = ViewUtils.$$(main, R.id.swipe_preview_indicator);
+        GradientDrawable swipePreviewIndicatorBackground = new GradientDrawable();
+        swipePreviewIndicatorBackground.setColor(
+                AttrResources.getAttrColor(context, android.R.attr.textColorSecondary));
+        swipePreviewIndicatorBackground.setCornerRadius(LayoutUtils.dp2pix(context, 2));
+        mSwipePreviewIndicator.setBackground(swipePreviewIndicatorBackground);
+        mSwipePreviewIndicatorOffset = LayoutUtils.dp2pix(context, 28);
+        mSwipePreviewIndicator.setTranslationX(mSwipePreviewIndicatorOffset);
+        main.addOnLayoutChangeListener((v, left, top, right, bottom,
+                                        oldLeft, oldTop, oldRight, oldBottom) -> {
+            View indicator = mSwipePreviewIndicator;
+            int indicatorHeight = (bottom - top) / 2;
+            if (indicator != null && indicatorHeight > 0
+                    && indicator.getLayoutParams().height != indicatorHeight) {
+                ViewGroup.LayoutParams layoutParams = indicator.getLayoutParams();
+                layoutParams.height = indicatorHeight;
+                indicator.setLayoutParams(layoutParams);
+            }
+        });
+
         View actionsScrollView = ViewUtils.$$(view, R.id.actions_scroll_view);
+        int drawerGestureSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         setDrawerGestureBlocker(new DrawerLayout.GestureBlocker() {
+            private float mInitialMotionX;
+            private float mInitialMotionY;
+            private boolean mBlockForPreviewSwipe;
+
             private void transformPointToViewLocal(int[] point, View child) {
                 ViewParent viewParent = child.getParent();
 
@@ -550,13 +601,47 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
             @Override
             public boolean shouldBlockGesture(MotionEvent ev) {
+                int action = ev.getActionMasked();
+                if (action == MotionEvent.ACTION_DOWN) {
+                    mInitialMotionX = ev.getX();
+                    mInitialMotionY = ev.getY();
+                    mBlockForPreviewSwipe = false;
+                } else if ((action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_UP)
+                        && !mBlockForPreviewSwipe) {
+                    float distanceX = ev.getX() - mInitialMotionX;
+                    float distanceY = ev.getY() - mInitialMotionY;
+                    mBlockForPreviewSwipe = distanceX <= -drawerGestureSlop
+                            && Math.abs(distanceX) > Math.abs(distanceY);
+                }
+
                 int[] point = new int[]{(int) ev.getX(), (int) ev.getY()};
                 transformPointToViewLocal(point, actionsScrollView);
-                return !isDrawersVisible()
-                        && point[0] > 0 && point[0] < actionsScrollView.getWidth()
-                        && point[1] > 0 && point[1] < actionsScrollView.getHeight();
+                boolean blockForActions = point[0] > 0
+                        && point[0] < actionsScrollView.getWidth()
+                        && point[1] > 0
+                        && point[1] < actionsScrollView.getHeight();
+                boolean blockGesture = !isDrawersVisible()
+                        && (mBlockForPreviewSwipe || blockForActions);
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    mBlockForPreviewSwipe = false;
+                }
+                return blockGesture;
             }
         });
+        mDetailScrollView.setSwipeExclusionView(actionsScrollView);
+        mDetailScrollView.setOnSwipeLeftListener(
+                new GalleryDetailScrollView.OnSwipeLeftListener() {
+                    @Override
+                    public void onSwipeLeftReadyChanged(boolean ready) {
+                        setSwipePreviewIndicatorVisible(ready, false);
+                    }
+
+                    @Override
+                    public void onSwipeLeft() {
+                        setSwipePreviewIndicatorVisible(false, true);
+                        openGalleryPreviews(false, true);
+                    }
+                });
 
         Drawable drawable = DrawableManager.getVectorDrawable(context, R.drawable.big_sad_pandroid);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
@@ -616,6 +701,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRate = (TextView) ViewUtils.$$(mActions, R.id.rate);
         mArtist = (TextView) ViewUtils.$$(mActions, R.id.artist);
         mSimilar = (TextView) ViewUtils.$$(mActions, R.id.similar);
+        mLocalDelete = (TextView) ViewUtils.$$(mActions, R.id.local_delete);
         mSearchCover = (TextView) ViewUtils.$$(mActions, R.id.search_cover);
         Ripple.addRipple(mHeartGroup, isDarkTheme);
         Ripple.addRipple(mTorrent, isDarkTheme);
@@ -625,6 +711,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Ripple.addRipple(mRate, isDarkTheme);
         Ripple.addRipple(mArtist, isDarkTheme);
         Ripple.addRipple(mSimilar, isDarkTheme);
+        Ripple.addRipple(mLocalDelete, isDarkTheme);
         Ripple.addRipple(mSearchCover, isDarkTheme);
         mHeartGroup.setOnClickListener(this);
         mHeartGroup.setOnLongClickListener(this);
@@ -635,6 +722,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRate.setOnClickListener(this);
         mArtist.setOnClickListener(this);
         mSimilar.setOnClickListener(this);
+        mLocalDelete.setOnClickListener(this);
         mSearchCover.setOnClickListener(this);
         ensureActionDrawable(context);
 
@@ -654,10 +742,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         Ripple.addRipple(mComments, isDarkTheme);
         mComments.setOnClickListener(this);
-
-        mMorePreviews = (TextView) ViewUtils.$$(belowHeader, R.id.more_previews);
-        Ripple.addRipple(mMorePreviews, isDarkTheme);
-        mMorePreviews.setOnClickListener(this);
 
         mPreviews = ViewUtils.$$(belowHeader, R.id.previews);
         mGridLayout = (SimpleGridAutoSpanLayout) ViewUtils.$$(mPreviews, R.id.grid_layout);
@@ -716,6 +800,16 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         EhApplication.getDownloadManager(context).removeDownloadInfoListener(this);
 
         setDrawerGestureBlocker(null);
+        if (mDetailScrollView != null) {
+            mDetailScrollView.setOnSwipeLeftListener(null);
+            mDetailScrollView.setSwipeExclusionView(null);
+            mDetailScrollView = null;
+        }
+        if (mSwipePreviewIndicator != null) {
+            mSwipePreviewIndicator.animate().cancel();
+            mSwipePreviewIndicator = null;
+        }
+        mSwipePreviewIndicatorVisible = false;
 
         mTip = null;
         mViewTransition = null;
@@ -754,6 +848,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mRate = null;
         mArtist = null;
         mSimilar = null;
+        mLocalDelete = null;
         mSearchCover = null;
 
         mTags = null;
@@ -761,7 +856,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mComments = null;
         mCommentsText = null;
-        mMorePreviews = null;
 
         mPreviews = null;
         mGridLayout = null;
@@ -875,6 +969,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         Drawable similar = DrawableManager.getVectorDrawable(context, R.drawable.v_similar_primary_x48);
         if (mSimilar != null) {
             setActionDrawable(mSimilar, similar);
+        }
+        Drawable localDelete = DrawableManager.getVectorDrawable(context, R.drawable.v_delete_primary_x48);
+        if (mLocalDelete != null) {
+            setActionDrawable(mLocalDelete, localDelete);
         }
         Drawable searchCover = DrawableManager.getVectorDrawable(context, R.drawable.v_file_find_primary_x48);
         if (mSearchCover != null) {
@@ -1202,13 +1300,10 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private void bindPreviews(GalleryDetail gd) {
         LayoutInflater inflater = getLayoutInflater2();
         Resources resources = getResources2();
-        if (null == resources || null == mGridLayout || null == mPreviewText ||
-                null == mMorePreviews) {
+        if (null == resources || null == mGridLayout || null == mPreviewText) {
             return;
         }
 
-        mMorePreviews.setText(resources.getString(
-                R.string.more_previews_with_pages, gd.pages));
         mGridLayout.removeAllViews();
         PreviewSet previewSet = gd.previewSet;
 
@@ -1371,6 +1466,12 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                         request();
                     }
                     break;
+                case R.id.action_open_local_gallery_image:
+                    handleLocalGalleryAction(LOCAL_ACTION_OPEN_IMAGE);
+                    break;
+                case R.id.action_copy_local_gallery_path:
+                    handleLocalGalleryAction(LOCAL_ACTION_COPY_PATH);
+                    break;
             }
             return true;
         });
@@ -1484,7 +1585,45 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
+    private void setSwipePreviewIndicatorVisible(boolean visible, boolean completing) {
+        View indicator = mSwipePreviewIndicator;
+        if (indicator == null || mSwipePreviewIndicatorVisible == visible) {
+            return;
+        }
+
+        mSwipePreviewIndicatorVisible = visible;
+        indicator.animate().cancel();
+        if (visible) {
+            indicator.setVisibility(View.VISIBLE);
+            indicator.setAlpha(0f);
+            indicator.setTranslationX(mSwipePreviewIndicatorOffset);
+            indicator.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(160L)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        } else {
+            indicator.animate()
+                    .alpha(0f)
+                    .translationX(completing ? 0f : mSwipePreviewIndicatorOffset)
+                    .setDuration(completing ? 180L : 130L)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .withEndAction(() -> {
+                        if (!mSwipePreviewIndicatorVisible
+                                && indicator == mSwipePreviewIndicator) {
+                            indicator.setVisibility(View.INVISIBLE);
+                        }
+                    })
+                    .start();
+        }
+    }
+
     private void openGalleryPreviews(boolean jumpToNewContent) {
+        openGalleryPreviews(jumpToNewContent, false);
+    }
+
+    private void openGalleryPreviews(boolean jumpToNewContent, boolean swipeTransition) {
         if (mGalleryDetail == null) {
             return;
         }
@@ -1494,7 +1633,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         if (jumpToNewContent && mGalleryDetail.previewPages > 1) {
             args.putInt(GalleryPreviewsScene.KEY_INITIAL_PAGE, 1);
         }
-        startScene(new Announcer(GalleryPreviewsScene.class).setArgs(args));
+        Announcer announcer = new Announcer(GalleryPreviewsScene.class).setArgs(args);
+        if (swipeTransition) {
+            announcer.setTranHelper(new OpenGalleryPreviewsTransaction());
+        }
+        startScene(announcer);
     }
 
     @Override
@@ -1628,6 +1771,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             showArtistGalleryList();
         } else if (mSimilar == v) {
             showSimilarGalleryList();
+        } else if (mLocalDelete == v) {
+            handleLocalGalleryAction(LOCAL_ACTION_DELETE);
         } else if (mSearchCover == v) {
             showCoverGalleryList();
         } else if (mComments == v) {
@@ -1643,8 +1788,6 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
             startScene(new Announcer(GalleryCommentsScene.class)
                     .setArgs(args)
                     .setRequestCode(this, REQUEST_CODE_COMMENT_GALLERY));
-        } else if (mMorePreviews == v) {
-            openGalleryPreviews(false);
         } else if (mPreviews == v) {
             openGalleryPreviews(Settings.getGalleryPreviewImmediateJump());
         } else if (mTitle == v) {
@@ -1797,6 +1940,239 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         }
     }
 
+    private static class LocalGalleryFiles {
+        final GalleryInfo galleryInfo;
+        final UniFile directory;
+        final UniFile firstImage;
+
+        LocalGalleryFiles(GalleryInfo galleryInfo, UniFile directory, UniFile firstImage) {
+            this.galleryInfo = galleryInfo;
+            this.directory = directory;
+            this.firstImage = firstImage;
+        }
+    }
+
+    private boolean hasLocalDownloadState() {
+        return mDownloadState == DownloadInfo.STATE_FINISH
+                || mDownloadState == DownloadInfo.STATE_NONE;
+    }
+
+    private void updateLocalDeleteVisibility() {
+        if (mLocalDelete != null) {
+            mLocalDelete.setVisibility(hasLocalDownloadState() ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void handleLocalGalleryAction(int action) {
+        Context context = getEHContext();
+        GalleryInfo galleryInfo = getGalleryInfo();
+        if (context == null || galleryInfo == null) {
+            showNoLocalGalleryFiles();
+            return;
+        }
+        if (action == LOCAL_ACTION_DELETE && !hasLocalDownloadState()) {
+            showNoLocalGalleryFiles();
+            return;
+        }
+
+        if (executorService == null) {
+            executorService = EhApplication.getExecutorService(context);
+        }
+        executorService.submit(() -> {
+            LocalGalleryFiles localFiles = findLocalGalleryFiles(galleryInfo);
+            handler.post(() -> {
+                if (!isAdded() || mActions == null) {
+                    return;
+                }
+                if (localFiles == null) {
+                    showNoLocalGalleryFiles();
+                    return;
+                }
+                switch (action) {
+                    case LOCAL_ACTION_DELETE:
+                        showLocalDeleteDialog(localFiles);
+                        break;
+                    case LOCAL_ACTION_OPEN_IMAGE:
+                        openLocalGalleryImage(localFiles.firstImage);
+                        break;
+                    case LOCAL_ACTION_COPY_PATH:
+                        copyLocalGalleryPath(localFiles.directory);
+                        break;
+                }
+            });
+        });
+    }
+
+    @Nullable
+    private LocalGalleryFiles findLocalGalleryFiles(GalleryInfo galleryInfo) {
+        try {
+            UniFile directory = SpiderDen.getExistingGalleryDownloadDir(galleryInfo);
+            if (directory == null || !directory.exists() || !directory.isDirectory()) {
+                return null;
+            }
+            UniFile[] files = directory.listFiles();
+            if (files == null) {
+                return null;
+            }
+            UniFile firstImage = null;
+            String firstImageName = null;
+            for (UniFile file : files) {
+                if (!isImageFile(file)) {
+                    continue;
+                }
+                String name = file.getName();
+                if (firstImage == null || (name != null
+                        && (firstImageName == null || name.compareTo(firstImageName) < 0))) {
+                    firstImage = file;
+                    firstImageName = name;
+                }
+            }
+            return firstImage != null
+                    ? new LocalGalleryFiles(galleryInfo, directory, firstImage)
+                    : null;
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            return null;
+        }
+    }
+
+    private static boolean isImageFile(UniFile file) {
+        if (!file.isFile()) {
+            return false;
+        }
+        String name = file.getName();
+        if (name != null) {
+            String extension = MimeTypeMap.getFileExtensionFromUrl(name).toLowerCase(Locale.US);
+            if ("jpg".equals(extension) || "jpeg".equals(extension)
+                    || "png".equals(extension) || "gif".equals(extension)
+                    || "webp".equals(extension) || "bmp".equals(extension)
+                    || "avif".equals(extension)) {
+                return true;
+            }
+        }
+        String type = file.getType();
+        return type != null && type.startsWith("image/");
+    }
+
+    private void showNoLocalGalleryFiles() {
+        Context context = getEHContext();
+        if (context != null) {
+            Toast.makeText(context, R.string.no_local_gallery_files, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showLocalDeleteDialog(LocalGalleryFiles localFiles) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        CheckBoxDialogBuilder builder = new CheckBoxDialogBuilder(context,
+                getString(R.string.download_remove_dialog_message, localFiles.galleryInfo.title),
+                getString(R.string.download_remove_dialog_check_text), true);
+        builder.setTitle(R.string.download_remove_dialog_title)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    EhApplication.getDownloadManager(context)
+                            .deleteDownload(localFiles.galleryInfo.gid);
+
+                    boolean deleteFiles = builder.isChecked();
+                    Settings.putRemoveImageFiles(deleteFiles);
+                    if (deleteFiles) {
+                        EhDB.removeDownloadDirname(localFiles.galleryInfo.gid);
+                        if (executorService == null) {
+                            executorService = EhApplication.getExecutorService(context);
+                        }
+                        executorService.submit(localFiles.directory::delete);
+                    }
+                })
+                .show();
+    }
+
+    private void openLocalGalleryImage(UniFile image) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        try {
+            Uri uri = getShareableUri(context, image);
+            String type = image.getType();
+            if (TextUtils.isEmpty(type)) {
+                type = "image/*";
+            }
+            Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, type)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.setClipData(ClipData.newRawUri("gallery_image", uri));
+            startActivity(intent);
+        } catch (Throwable e) {
+            ExceptionUtils.throwIfFatal(e);
+            Toast.makeText(context, R.string.cannot_open_local_gallery,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void copyLocalGalleryPath(UniFile directory) {
+        Context context = getEHContext();
+        if (context == null) {
+            return;
+        }
+        String path = getLocalGalleryPath(context, directory.getUri());
+        if (TextUtils.isEmpty(path)) {
+            Toast.makeText(context, R.string.cannot_get_local_gallery_path,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ClipboardUtil.copyText(path);
+        Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+    }
+
+    private static Uri getShareableUri(Context context, UniFile file) {
+        Uri uri = file.getUri();
+        if ("file".equals(uri.getScheme())) {
+            return FileProvider.getUriForFile(context, BuildConfig.FILE_PROVIDER_AUTHORITY,
+                    new File(uri.getPath()));
+        }
+        return uri;
+    }
+
+    @Nullable
+    private static String getLocalGalleryPath(Context context, Uri uri) {
+        if ("file".equals(uri.getScheme())) {
+            return useSdcardAlias(uri.getPath());
+        }
+        if ("com.android.externalstorage.documents".equals(uri.getAuthority())
+                && DocumentsContract.isDocumentUri(context, uri)) {
+            try {
+                String documentId = DocumentsContract.getDocumentId(uri);
+                int colon = documentId.indexOf(':');
+                String volume = colon >= 0 ? documentId.substring(0, colon) : documentId;
+                String relative = colon >= 0 ? documentId.substring(colon + 1) : "";
+                String root = "primary".equalsIgnoreCase(volume)
+                        ? "/sdcard"
+                        : "/storage/" + volume;
+                return relative.isEmpty() ? root : root + "/" + relative;
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String useSdcardAlias(@Nullable String path) {
+        if (path == null) {
+            return null;
+        }
+        String externalPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        if (path.equals(externalPath)) {
+            return "/sdcard";
+        }
+        if (path.startsWith(externalPath + File.separator)) {
+            return "/sdcard" + path.substring(externalPath.length())
+                    .replace(File.separatorChar, '/');
+        }
+        return path.replace(File.separatorChar, '/');
+    }
+
     public void startUpdateDownload(String updateUrl) {
         if (mGalleryDetail == null || mGalleryDetail.newVersions == null) {
             return;
@@ -1877,6 +2253,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 //                mDownload.setText(R.string.new_version);
 //                break;
         }
+        updateLocalDeleteVisibility();
     }
 
     private void updateDownloadState() {
@@ -2026,6 +2403,29 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
                 return true;
             }
         }
+
+    private static class OpenGalleryPreviewsTransaction implements TransitionHelper {
+
+        @Override
+        public boolean onTransition(Context context, FragmentTransaction transaction,
+                                    Fragment exit, Fragment enter) {
+            if (!(enter instanceof GalleryPreviewsScene)) {
+                return false;
+            }
+
+            exit.setSharedElementEnterTransition(null);
+            exit.setSharedElementReturnTransition(null);
+            exit.setEnterTransition(null);
+            exit.setExitTransition(null);
+            enter.setSharedElementEnterTransition(null);
+            enter.setSharedElementReturnTransition(null);
+            enter.setEnterTransition(null);
+            enter.setExitTransition(null);
+            transaction.setCustomAnimations(R.anim.scene_gallery_preview_enter,
+                    R.anim.scene_gallery_preview_exit);
+            return true;
+        }
+    }
 
     private static class ModifyFavoritesListener extends EhCallback<GalleryDetailScene, Void> {
 

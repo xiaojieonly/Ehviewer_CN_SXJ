@@ -30,6 +30,7 @@ public class AutoGridLayoutManager extends GridLayoutManager {
     private int mColumnSize = -1;
     private boolean mColumnSizeChanged = true;
     private int mStrategy;
+    private int mMaxSpanCount = Integer.MAX_VALUE;
 
     private List<OnUpdateSpanCountListener> mListeners;
 
@@ -56,6 +57,17 @@ public class AutoGridLayoutManager extends GridLayoutManager {
             return;
         }
         mStrategy = strategy;
+        mColumnSizeChanged = true;
+    }
+
+    public void setMaxSpanCount(int maxSpanCount) {
+        if (maxSpanCount <= 0) {
+            throw new IllegalArgumentException("Max span count must be greater than 0");
+        }
+        if (maxSpanCount == mMaxSpanCount) {
+            return;
+        }
+        mMaxSpanCount = maxSpanCount;
         mColumnSizeChanged = true;
     }
 
@@ -94,6 +106,7 @@ public class AutoGridLayoutManager extends GridLayoutManager {
                     spanCount = getSpanCountForSuitableSize(totalSpace, mColumnSize);
                     break;
             }
+            spanCount = Math.min(spanCount, mMaxSpanCount);
             setSpanCount(spanCount);
             mColumnSizeChanged = false;
 

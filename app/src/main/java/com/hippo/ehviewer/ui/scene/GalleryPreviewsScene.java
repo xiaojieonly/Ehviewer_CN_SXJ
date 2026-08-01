@@ -26,6 +26,8 @@ import android.os.Bundle;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -70,6 +72,10 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     public static final String KEY_GALLERY_INFO = "gallery_info";
     public static final String KEY_INITIAL_PAGE = "initial_page";
     private final static String KEY_HAS_FIRST_REFRESH = "has_first_refresh";
+    private static final int COLUMN_WIDTH_UNSET = -1;
+    private static final int MAX_PREVIEW_COLUMNS = 8;
+    private static final int COMPACT_PREVIEW_COLUMNS = 6;
+    private static final float SCALE_DISTANCE_MULTIPLIER = 1.5f;
 
     /*---------------
      Whole life cycle
@@ -89,6 +95,17 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     private GalleryPreviewAdapter mAdapter;
     @Nullable
     private GalleryPreviewHelper mHelper;
+    @Nullable
+    private AutoGridLayoutManager mLayoutManager;
+    @Nullable
+    private ScaleGestureDetector mScaleGestureDetector;
+    @Nullable
+    private RecyclerView.OnItemTouchListener mScaleTouchListener;
+
+    private int mPreviewColumnWidth = COLUMN_WIDTH_UNSET;
+    private float mPreviewColumnWidthExact = COLUMN_WIDTH_UNSET;
+    private int mMaxPreviewColumnWidth;
+    private boolean mCompactPreviewGrid;
 
     private boolean mHasFirstRefresh = false;
 
@@ -149,18 +166,69 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         AssertUtils.assertNotNull(context);
         Resources resources = context.getResources();
 
+        mCompactPreviewGrid = false;
         mAdapter = new GalleryPreviewAdapter();
         mRecyclerView.setAdapter(mAdapter);
-        int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
-        AutoGridLayoutManager layoutManager = new AutoGridLayoutManager(context, columnWidth);
-        layoutManager.setStrategy(AutoGridLayoutManager.STRATEGY_SUITABLE_SIZE);
-        mRecyclerView.setLayoutManager(layoutManager);
+        mMaxPreviewColumnWidth = resources.getDimensionPixelOffset(
+                R.dimen.gallery_grid_column_width_large);
+        if (mPreviewColumnWidth == COLUMN_WIDTH_UNSET) {
+            mPreviewColumnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+            mPreviewColumnWidthExact = mPreviewColumnWidth;
+        }
+        mLayoutManager = new AutoGridLayoutManager(context, mPreviewColumnWidth);
+        mLayoutManager.setStrategy(AutoGridLayoutManager.STRATEGY_SUITABLE_SIZE);
+        mLayoutManager.setMaxSpanCount(MAX_PREVIEW_COLUMNS);
+        mLayoutManager.addOnUpdateSpanCountListener(spanCount -> {
+            EasyRecyclerView recyclerView = mRecyclerView;
+            if (recyclerView != null) {
+                recyclerView.post(() -> {
+                    if (mRecyclerView == recyclerView) {
+                        updateCompactPreviewGrid(spanCount >= COMPACT_PREVIEW_COLUMNS);
+                    }
+                });
+            }
+        });
+        mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setOnItemClickListener(this);
         int padding = LayoutUtils.dp2pix(context, 4);
-        MarginItemDecoration decoration = new MarginItemDecoration(padding, padding, padding, padding, padding);
+        MarginItemDecoration decoration = new MarginItemDecoration(
+                padding, padding, padding, padding, padding);
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
+
+        mScaleGestureDetector = new ScaleGestureDetector(context,
+                new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                    @Override
+                    public boolean onScaleBegin(ScaleGestureDetector detector) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onScale(ScaleGestureDetector detector) {
+                        return updatePreviewColumnWidth(detector.getScaleFactor());
+                    }
+                });
+        mScaleTouchListener = new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView recyclerView,
+                                                 @NonNull MotionEvent event) {
+                if (mScaleGestureDetector == null) {
+                    return false;
+                }
+                mScaleGestureDetector.onTouchEvent(event);
+                return mScaleGestureDetector.isInProgress();
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView recyclerView,
+                                     @NonNull MotionEvent event) {
+                if (mScaleGestureDetector != null) {
+                    mScaleGestureDetector.onTouchEvent(event);
+                }
+            }
+        };
+        mRecyclerView.addOnItemTouchListener(mScaleTouchListener);
 
         mHelper = new GalleryPreviewHelper();
         contentLayout.setHelper(mHelper);
@@ -190,10 +258,68 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         }
         if (null != mRecyclerView) {
             mRecyclerView.stopScroll();
+            if (mScaleTouchListener != null) {
+                mRecyclerView.removeOnItemTouchListener(mScaleTouchListener);
+            }
             mRecyclerView = null;
         }
 
+        mScaleTouchListener = null;
+        mScaleGestureDetector = null;
+        mLayoutManager = null;
         mAdapter = null;
+    }
+
+    private boolean updatePreviewColumnWidth(float scaleFactor) {
+        if (Float.isNaN(scaleFactor) || Float.isInfinite(scaleFactor) || scaleFactor <= 0f
+                || mLayoutManager == null
+                || mRecyclerView == null) {
+            return false;
+        }
+
+        float adjustedScaleFactor = 1f
+                + (scaleFactor - 1f) / SCALE_DISTANCE_MULTIPLIER;
+        int minPreviewColumnWidth = getMinPreviewColumnWidth();
+        mPreviewColumnWidthExact = Math.max(minPreviewColumnWidth,
+                Math.min(mMaxPreviewColumnWidth,
+                        mPreviewColumnWidthExact * adjustedScaleFactor));
+        int newColumnWidth = Math.round(mPreviewColumnWidthExact);
+        if (newColumnWidth != mPreviewColumnWidth) {
+            mPreviewColumnWidth = newColumnWidth;
+            mLayoutManager.setColumnSize(newColumnWidth);
+            mRecyclerView.requestLayout();
+        }
+        return true;
+    }
+
+    private int getMinPreviewColumnWidth() {
+        if (mRecyclerView == null) {
+            return 1;
+        }
+        int totalWidth = mRecyclerView.getWidth()
+                - mRecyclerView.getPaddingLeft() - mRecyclerView.getPaddingRight();
+        if (totalWidth <= 0) {
+            return 1;
+        }
+        int widthForEightColumns = (int) Math.ceil(
+                totalWidth / (double) MAX_PREVIEW_COLUMNS);
+        return Math.min(mMaxPreviewColumnWidth, Math.max(1, widthForEightColumns));
+    }
+
+    private void updateCompactPreviewGrid(boolean compact) {
+        if (mCompactPreviewGrid == compact || mRecyclerView == null) {
+            return;
+        }
+
+        mCompactPreviewGrid = compact;
+        for (int i = 0; i < mRecyclerView.getChildCount(); i++) {
+            View child = mRecyclerView.getChildAt(i);
+            TextView text = (TextView) child.findViewById(R.id.text);
+            if (text != null) {
+                text.setVisibility(compact ? View.GONE : View.VISIBLE);
+            }
+        }
+        mRecyclerView.requestLayout();
     }
 
     @Override
@@ -297,6 +423,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
                 if (preview != null) {
                     preview.load(holder.image);
                     holder.text.setText(Integer.toString(preview.getPosition() + 1));
+                    holder.text.setVisibility(mCompactPreviewGrid ? View.GONE : View.VISIBLE);
                 }
             }
         }

@@ -48,7 +48,8 @@ import java.util.regex.Pattern;
 
 public class ListUrlBuilder implements Cloneable, Parcelable {
 
-    @IntDef({MODE_NORMAL, MODE_UPLOADER, MODE_TAG,MODE_FILTER,MODE_WHATS_HOT, MODE_IMAGE_SEARCH, MODE_SUBSCRIPTION,MODE_TOP_LIST})
+    @IntDef({MODE_NORMAL, MODE_UPLOADER, MODE_TAG, MODE_FILTER, MODE_WHATS_HOT,
+            MODE_IMAGE_SEARCH, MODE_SUBSCRIPTION, MODE_TOP_LIST, MODE_BOOKMARK_SUBSCRIPTION})
     @Retention(RetentionPolicy.SOURCE)
     private @interface Mode {}
 
@@ -64,6 +65,7 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
     public static final int MODE_SUBSCRIPTION = 0x5;
     public static final int MODE_FILTER = 0x6;
     public static final int MODE_TOP_LIST = 0x7;
+    public static final int MODE_BOOKMARK_SUBSCRIPTION = 0x8;
 
     public static final int DEFAULT_ADVANCE = AdvanceSearchTable.SNAME | AdvanceSearchTable.STAGS;
     public static final int DEFAULT_MIN_RATING = 2;
@@ -669,6 +671,8 @@ public class ListUrlBuilder implements Cloneable, Parcelable {
                     return "127.0.0.1:8888";
                 }
                 return sb.toString();
+            case MODE_BOOKMARK_SUBSCRIPTION:
+                return null;
         }
     }
 

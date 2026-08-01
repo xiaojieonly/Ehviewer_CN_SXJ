@@ -32,6 +32,7 @@ public class QuickSearchDao extends AbstractDao<QuickSearch, Long> {
         public final static Property PageFrom = new Property(7, int.class, "pageFrom", false, "PAGE_FROM");
         public final static Property PageTo = new Property(8, int.class, "pageTo", false, "PAGE_TO");
         public final static Property Time = new Property(9, long.class, "time", false, "TIME");
+        public final static Property Subscribed = new Property(10, boolean.class, "subscribed", false, "SUBSCRIBED");
     };
 
 
@@ -56,7 +57,8 @@ public class QuickSearchDao extends AbstractDao<QuickSearch, Long> {
                 "\"MIN_RATING\" INTEGER NOT NULL ," + // 6: minRating
                 "\"PAGE_FROM\" INTEGER NOT NULL ," + // 7: pageFrom
                 "\"PAGE_TO\" INTEGER NOT NULL ," + // 8: pageTo
-                "\"TIME\" INTEGER NOT NULL );"); // 9: time
+                "\"TIME\" INTEGER NOT NULL ," + // 9: time
+                "\"SUBSCRIBED\" INTEGER NOT NULL );"); // 10: subscribed
     }
 
     /** Drops the underlying database table. */
@@ -90,6 +92,7 @@ public class QuickSearchDao extends AbstractDao<QuickSearch, Long> {
         stmt.bindLong(8, entity.getPageFrom());
         stmt.bindLong(9, entity.getPageTo());
         stmt.bindLong(10, entity.getTime());
+        stmt.bindLong(11, entity.getSubscribed() ? 1L: 0L);
     }
 
     @Override
@@ -117,6 +120,7 @@ public class QuickSearchDao extends AbstractDao<QuickSearch, Long> {
         stmt.bindLong(8, entity.getPageFrom());
         stmt.bindLong(9, entity.getPageTo());
         stmt.bindLong(10, entity.getTime());
+        stmt.bindLong(11, entity.getSubscribed() ? 1L: 0L);
     }
 
     @Override
@@ -136,7 +140,8 @@ public class QuickSearchDao extends AbstractDao<QuickSearch, Long> {
             cursor.getInt(offset + 6), // minRating
             cursor.getInt(offset + 7), // pageFrom
             cursor.getInt(offset + 8), // pageTo
-            cursor.getLong(offset + 9) // time
+            cursor.getLong(offset + 9), // time
+            cursor.getShort(offset + 10) != 0 // subscribed
         );
         return entity;
     }
@@ -153,6 +158,7 @@ public class QuickSearchDao extends AbstractDao<QuickSearch, Long> {
         entity.setPageFrom(cursor.getInt(offset + 7));
         entity.setPageTo(cursor.getInt(offset + 8));
         entity.setTime(cursor.getLong(offset + 9));
+        entity.setSubscribed(cursor.getShort(offset + 10) != 0);
      }
     
     @Override

@@ -21,7 +21,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
+    <com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -31,7 +31,7 @@
         <include
             layout="@layout/gallery_detail_content"/>
 
-    </ScrollView>
+    </com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScrollView>
 
     <com.hippo.widget.ProgressView
         android:id="@+id/progress_view"
@@ -48,5 +48,14 @@
         android:gravity="center_horizontal"
         android:drawablePadding="8dp"
         style="@style/TextAppearance.AppCompat.Medium"/>
+
+    <View
+        android:id="@+id/swipe_preview_indicator"
+        android:layout_width="4dp"
+        android:layout_height="0dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="12dp"
+        android:alpha="0"
+        android:visibility="invisible"/>
 
 </FrameLayout>
