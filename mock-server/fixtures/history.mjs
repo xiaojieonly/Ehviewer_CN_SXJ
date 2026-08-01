@@ -3,9 +3,9 @@
 import { galleries } from './galleries.mjs';
 
 const CATEGORY_NAMES = {
-  1: 'Doujinshi', 2: 'Manga', 4: 'Artist CG', 8: 'Western',
-  16: 'Non-H', 32: 'Image Set', 64: 'Cosplay', 128: 'Asian Porn',
-  256: 'Misc', 512: 'Game CG',
+  1: 'Misc', 2: 'Doujinshi', 4: 'Manga', 8: 'Artist CG',
+  16: 'Game CG', 32: 'Image Set', 64: 'Cosplay', 128: 'Asian Porn',
+  256: 'Non-H', 512: 'Western',
 };
 
 const now = Date.now();
@@ -31,7 +31,7 @@ export const quickSearches = [
     id: 1,
     name: 'Doujinshi EN',
     mode: 0,
-    category: 1,
+    category: 1023 & ~2,
     keyword: 'language:english',
     advanceSearch: 0,
     minRating: 3,
@@ -42,7 +42,7 @@ export const quickSearches = [
     id: 2,
     name: 'Full Color Manga',
     mode: 0,
-    category: 2,
+    category: 1023 & ~4,
     keyword: 'full color',
     advanceSearch: 0,
     minRating: 4,
@@ -53,7 +53,7 @@ export const quickSearches = [
     id: 3,
     name: 'Artist CG Sets',
     mode: 0,
-    category: 4 | 32,
+    category: 1023 & ~(8 | 32),
     keyword: null,
     advanceSearch: 0,
     minRating: 0,

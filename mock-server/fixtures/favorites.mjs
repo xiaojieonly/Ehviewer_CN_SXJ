@@ -3,9 +3,9 @@
 import { galleries } from './galleries.mjs';
 
 const CATEGORY_NAMES = {
-  1: 'Doujinshi', 2: 'Manga', 4: 'Artist CG', 8: 'Western',
-  16: 'Non-H', 32: 'Image Set', 64: 'Cosplay', 128: 'Asian Porn',
-  256: 'Misc', 512: 'Game CG',
+  1: 'Misc', 2: 'Doujinshi', 4: 'Manga', 8: 'Artist CG',
+  16: 'Game CG', 32: 'Image Set', 64: 'Cosplay', 128: 'Asian Porn',
+  256: 'Non-H', 512: 'Western',
 };
 
 function toFavoriteItem(g) {

@@ -21,9 +21,7 @@ router.delete('/gallery/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// POST /api/v1/cache/clear
-router.post('/clear', (req, res) => {
-  res.json({ success: true });
-});
-
+// NOTE: the stale POST /api/v1/cache/clear was removed — the real backend
+// only exposes POST /api/v1/image/cache/clear (see routes/image.mjs), which
+// the frontend AdminServer already calls.
 export default router;

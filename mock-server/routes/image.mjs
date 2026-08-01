@@ -30,6 +30,20 @@ router.get('/proxy', (req, res) => {
   res.send(svg);
 });
 
+// GET /api/v1/image/mock-thumb.svg — placeholder thumbnail served to
+// fixtures pointing at a local URL (must precede the :galleryId/:page catch-all)
+router.get('/mock-thumb.svg', (req, res) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="350" viewBox="0 0 250 350">
+  <rect width="250" height="350" fill="#607d8b" opacity="0.15"/>
+  <rect x="3" y="3" width="244" height="344" fill="none" stroke="#607d8b" stroke-width="2" rx="10"/>
+  <text x="125" y="168" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#607d8b" font-weight="bold">Mock Thumb</text>
+  <text x="125" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#607d8b" opacity="0.7">250 x 350 px</text>
+</svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(svg);
+});
+
 // GET /api/v1/image/cache/status
 router.get('/cache/status', (req, res) => {
   res.json({ cacheSize: 52428800 }); // 50MB
