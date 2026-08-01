@@ -130,7 +130,7 @@ function onInput(event: Event): void {
 .app-text-field__input:not(:placeholder-shown) + .app-text-field__label {
   top: 0;
   font-size: var(--field-label-size, 12px);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .app-text-field--error .app-text-field__label {

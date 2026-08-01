@@ -320,7 +320,7 @@ watch(
 }
 
 .app-select__option--selected {
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   font-weight: 700;
 }
 
