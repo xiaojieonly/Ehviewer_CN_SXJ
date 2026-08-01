@@ -1,7 +1,7 @@
 <!--
   AdminProxy.vue — 管理面板 · 代理（出站代理配置）.
 
-  控制 WebUI 服务器访问 E-Hentai 时的出站代理（搜索 / 图片 / 下载流量）。
+  控制 WebUI 服务器访问上游站点时的出站代理（搜索 / 图片 / 下载流量）。
   配置写入 server_config，通过运行时 ProxySelector 立即生效，无需重启；
   不影响客户端（浏览器 / App）访问 WebUI 本身。
 
@@ -23,7 +23,7 @@
       <section>
         <SectionHeader title="出站代理" />
         <PrefCard>
-          <PrefRow icon="send-dark" title="启用代理" summary="服务器访问 E-Hentai 时通过代理转发（搜索、图片、下载）">
+          <PrefRow icon="send-dark" title="启用代理" summary="服务器访问上游站点时通过代理转发（搜索、图片、下载）">
             <AppSwitch
               :model-value="form.enabled"
               aria-label="启用代理"
@@ -106,7 +106,7 @@
       </section>
 
       <p class="admin-proxy__note">
-        提示：代理仅作用于服务器访问 E-Hentai 的出站流量，保存后立即生效；本代理不影响浏览器或 App 访问 WebUI 服务器。
+        提示：代理仅作用于服务器访问上游站点的出站流量，保存后立即生效；本代理不影响浏览器或 App 访问 WebUI 服务器。
       </p>
     </div>
 

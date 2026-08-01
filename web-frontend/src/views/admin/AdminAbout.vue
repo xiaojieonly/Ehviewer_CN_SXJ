@@ -19,7 +19,7 @@
           <h3 class="about-view__name">AnotherViewer <span>WebUI</span></h3>
           <p class="about-view__version">版本 {{ appVersion }} · 伴侣客户端</p>
           <p class="about-view__note">
-            E-Hentai 浏览器的 Web 复刻——相同的设计语言、三套主题，
+            经典画廊浏览器的 Web 复刻——相同的设计语言、三套主题，
             可与本机服务器配对使用。
           </p>
         </PrefCard>
