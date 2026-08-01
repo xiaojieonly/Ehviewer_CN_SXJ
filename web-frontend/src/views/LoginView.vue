@@ -413,7 +413,7 @@ async function handleRegister(): Promise<void> {
   border: 1px solid var(--color-divider);
   border-radius: var(--card-radius);
   background: transparent;
-  color: var(--text-color-theme-primary);
+  color: var(--color-primary-text);
   font-size: clamp(13px, 14px, 16px);
   font-weight: 700;
   cursor: pointer;

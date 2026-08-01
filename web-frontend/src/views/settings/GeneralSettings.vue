@@ -337,7 +337,7 @@ onMounted(async () => {
   padding: 4px 12px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   font-size: clamp(11px, 12px, 14px);
   font-weight: 700;
   letter-spacing: 0.04em;
