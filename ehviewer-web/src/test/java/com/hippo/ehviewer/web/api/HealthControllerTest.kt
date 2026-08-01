@@ -123,4 +123,34 @@ class HealthControllerTest {
         assertTrue(body.uptime.isNotEmpty())
         assertTrue(body.uptimeMs > 0)
     }
+
+    @Test
+    fun `health component details values are strings`() {
+        val connection = mock(Connection::class.java)
+        val statement = mock(Statement::class.java)
+        val resultSet = mock(ResultSet::class.java)
+
+        `when`(dataSource.connection).thenReturn(connection)
+        `when`(connection.createStatement()).thenReturn(statement)
+        `when`(statement.executeQuery("SELECT 1")).thenReturn(resultSet)
+        `when`(resultSet.next()).thenReturn(true)
+
+        val response = controller.healthCheck()
+        val body = response.body!!
+
+        assertEquals(mapOf("type" to "sqlite"), body.components["database"]?.details)
+        val diskDetails = body.components["diskCache"]?.details
+        assertNotNull(diskDetails)
+        assertTrue(diskDetails!!.values.all { it is String })
+    }
+
+    @Test
+    fun `health component details normalize numeric values to strings`() {
+        `when`(dataSource.connection).thenThrow(RuntimeException("connection refused"))
+
+        val response = controller.healthCheck()
+        val body = response.body!!
+
+        assertEquals(mapOf("reason" to "connection refused"), body.components["database"]?.details)
+    }
 }

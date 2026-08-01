@@ -3,6 +3,7 @@ package com.hippo.ehviewer.web.api
 import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.dto.CacheStatsResponse
 import com.hippo.ehviewer.web.dto.DownloadItem
+import com.hippo.ehviewer.web.processing.ImageProcessingService
 import com.hippo.ehviewer.web.service.DownloadService
 import com.hippo.ehviewer.web.service.ImageCacheService
 import org.junit.jupiter.api.Assertions.*
@@ -14,6 +15,7 @@ class MetricsControllerTest {
 
     private lateinit var imageCacheService: ImageCacheService
     private lateinit var downloadService: DownloadService
+    private lateinit var processingService: ImageProcessingService
     private lateinit var config: EhCoreConfigProperties
     private lateinit var controller: MetricsController
 
@@ -31,16 +33,20 @@ class MetricsControllerTest {
     fun setUp() {
         imageCacheService = mock(ImageCacheService::class.java)
         downloadService = mock(DownloadService::class.java)
+        processingService = mock(ImageProcessingService::class.java)
         config = EhCoreConfigProperties()
         config.download.cachePath = "./data/cache"
         config.download.cacheSizeMb = 10240
-        controller = MetricsController(imageCacheService, downloadService, config)
+        controller = MetricsController(imageCacheService, downloadService, config, processingService)
 
         `when`(imageCacheService.getCacheStats()).thenReturn(defaultCacheStats)
+        `when`(imageCacheService.getDiskEntryCount()).thenReturn(8432L)
         `when`(downloadService.getActiveDownloadCount()).thenReturn(0)
         `when`(downloadService.getCompletedDownloadCount()).thenReturn(0L)
         `when`(downloadService.getFailedDownloadCount()).thenReturn(0L)
         `when`(downloadService.getActiveDownloads()).thenReturn(emptyList())
+        `when`(processingService.getQueueSize()).thenReturn(0)
+        `when`(processingService.getActiveTasks()).thenReturn(emptyList())
     }
 
     @Test
@@ -59,11 +65,30 @@ class MetricsControllerTest {
     }
 
     @Test
+    fun `metrics exposes flat contract fields with real values`() {
+        `when`(downloadService.getActiveDownloadCount()).thenReturn(3)
+        `when`(processingService.getQueueSize()).thenReturn(5)
+
+        val response = controller.getMetrics()
+
+        // Flat fields per openapi.yaml MetricsResponse (C5).
+        assertTrue(response.uptimeSeconds >= 0)
+        assertTrue(response.jvmMemoryUsedBytes > 0)
+        assertTrue(response.jvmMemoryMaxBytes > 0)
+        assertEquals(3, response.activeDownloads)
+        assertEquals(5, response.queuedProcessingTasks)
+        assertEquals(3221225472L, response.diskCacheUsedBytes)
+        assertEquals(10737418240L, response.diskCacheMaxBytes)
+        assertTrue(response.totalGalleriesServed >= 0)
+    }
+
+    @Test
     fun `metrics returns correct cache values`() {
         val response = controller.getMetrics()
 
         assertEquals(142, response.metrics["ehviewer.cache.memory.entries"]?.value)
         assertEquals(3221225472L, response.metrics["ehviewer.cache.disk.size.bytes"]?.value)
+        assertEquals(8432L, response.metrics["ehviewer.cache.disk.entries"]?.value)
         assertEquals(0.87, response.metrics["ehviewer.cache.hit.ratio"]?.value)
         assertEquals("gauge", response.metrics["ehviewer.cache.memory.entries"]?.type)
         assertEquals("gauge", response.metrics["ehviewer.cache.hit.ratio"]?.type)

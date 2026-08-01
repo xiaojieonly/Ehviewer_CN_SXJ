@@ -17,7 +17,11 @@ data class HealthResponse(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class HealthComponent(
     val status: String,
-    val details: Map<String, Any?>? = null
+    // NOTE: openapi.yaml documents `details` as a single string (compact
+    // JSON). The implementation intentionally keeps a structured map so
+    // docker/curl healthchecks stay human-readable; the contract owner
+    // should align openapi.yaml with the Map shape.
+    val details: Map<String, String>? = null
 )
 
 // ── Metrics ─────────────────────────────────────────────────────────

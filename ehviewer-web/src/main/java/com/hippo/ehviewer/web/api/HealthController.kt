@@ -124,7 +124,7 @@ class HealthController(
                     details = mapOf(
                         "reason" to "insufficient free space",
                         "freeSpace" to formatBytes(freeSpace),
-                        "freeSpaceBytes" to freeSpace,
+                        "freeSpaceBytes" to freeSpace.toString(),
                         "path" to cacheDir.absolutePath
                     )
                 )
@@ -133,7 +133,7 @@ class HealthController(
                 status = "UP",
                 details = mapOf(
                     "freeSpace" to formatBytes(freeSpace),
-                    "freeSpaceBytes" to freeSpace,
+                    "freeSpaceBytes" to freeSpace.toString(),
                     "path" to cacheDir.absolutePath
                 )
             )
@@ -150,8 +150,8 @@ class HealthController(
                 status = ehentaiLastStatus,
                 details = mapOf(
                     "lastCheck" to Instant.ofEpochMilli(ehentaiLastCheck).toString(),
-                    "responseTimeMs" to ehentaiLastResponseMs,
-                    "cached" to true
+                    "responseTimeMs" to ehentaiLastResponseMs.toString(),
+                    "cached" to "true"
                 )
             )
         }
@@ -177,7 +177,7 @@ class HealthController(
                     status = "UP",
                     details = mapOf(
                         "lastCheck" to Instant.ofEpochMilli(now).toString(),
-                        "responseTimeMs" to elapsed
+                        "responseTimeMs" to elapsed.toString()
                     )
                 )
             } else {
@@ -186,7 +186,7 @@ class HealthController(
                     status = "DOWN",
                     details = mapOf(
                         "lastCheck" to Instant.ofEpochMilli(now).toString(),
-                        "statusCode" to response.statusCode()
+                        "statusCode" to response.statusCode().toString()
                     )
                 )
             }

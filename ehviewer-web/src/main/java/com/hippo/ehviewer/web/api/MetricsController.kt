@@ -2,6 +2,7 @@ package com.hippo.ehviewer.web.api
 
 import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.dto.*
+import com.hippo.ehviewer.web.processing.ImageProcessingService
 import com.hippo.ehviewer.web.service.DownloadService
 import com.hippo.ehviewer.web.service.ImageCacheService
 import org.springframework.web.bind.annotation.GetMapping
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.lang.management.ManagementFactory
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.roundToLong
 
 @RestController
@@ -16,16 +18,28 @@ import kotlin.math.roundToLong
 class MetricsController(
     private val imageCacheService: ImageCacheService,
     private val downloadService: DownloadService,
-    private val config: EhCoreConfigProperties
+    private val config: EhCoreConfigProperties,
+    private val processingService: ImageProcessingService
 ) {
 
     companion object {
         private const val VERSION = "1.0.0-SNAPSHOT"
+        private val runtime = Runtime.getRuntime()
+        private val startedAtMillis = System.currentTimeMillis()
+
+        /** Total images served by the streaming endpoint (incremented by ImageProxyController). */
+        val imagesServed = AtomicLong(0)
     }
 
+    /**
+     * Flat metrics response per contracts/openapi.yaml, with real values
+     * (uptime, JVM memory, active downloads, processing queue, cache usage).
+     */
     @GetMapping
-    fun getMetrics(): MetricsResponse {
+    fun getMetrics(): MetricsV1Response {
         val cacheStats = imageCacheService.getCacheStats()
+        val now = System.currentTimeMillis()
+
         val metrics = mutableMapOf<String, MetricValue>()
 
         // Cache metrics
@@ -43,7 +57,7 @@ class MetricsController(
         )
         metrics["ehviewer.cache.disk.entries"] = MetricValue(
             type = "gauge",
-            value = 0 // not tracked separately
+            value = imageCacheService.getDiskEntryCount()
         )
         metrics["ehviewer.cache.hit.ratio"] = MetricValue(
             type = "gauge",
@@ -60,10 +74,10 @@ class MetricsController(
             value = downloadService.getCompletedDownloadCount()
         )
 
-        // Processing metrics (no processing service yet — report zeros)
+        // Processing metrics
         metrics["ehviewer.process.queue.size"] = MetricValue(
             type = "gauge",
-            value = 0
+            value = processingService.getQueueSize()
         )
         metrics["ehviewer.process.completed.total"] = MetricValue(
             type = "counter",
@@ -76,8 +90,17 @@ class MetricsController(
             value = 0
         )
 
-        return MetricsResponse(
-            timestamp = Instant.now().toString(),
+        val usedHeap = runtime.totalMemory() - runtime.freeMemory()
+        return MetricsV1Response(
+            timestamp = Instant.ofEpochMilli(now).toString(),
+            uptimeSeconds = (now - startedAtMillis) / 1000,
+            jvmMemoryUsedBytes = usedHeap,
+            jvmMemoryMaxBytes = runtime.maxMemory(),
+            activeDownloads = downloadService.getActiveDownloadCount(),
+            queuedProcessingTasks = processingService.getQueueSize(),
+            diskCacheUsedBytes = cacheStats.diskCacheSizeBytes,
+            diskCacheMaxBytes = cacheStats.diskCacheMaxBytes,
+            totalGalleriesServed = imagesServed.get(),
             metrics = metrics
         )
     }
@@ -126,9 +149,9 @@ class MetricsController(
                 }
             ),
             processing = DashboardProcessing(
-                queueSize = 0,
+                queueSize = processingService.getQueueSize(),
                 completedTotal = 0,
-                processorAvailable = false
+                processorAvailable = processingService.getActiveTasks().isNotEmpty()
             ),
             websocket = DashboardWebSocket(
                 activeConnections = 0
