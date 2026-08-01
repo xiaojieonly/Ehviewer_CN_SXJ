@@ -1,8 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [
+export const routes: RouteRecordRaw[] = [
     {
       path: '/login',
       name: 'Login',
@@ -76,7 +74,16 @@ const router = createRouter({
       name: 'SmbBackup',
       component: () => import('@/views/SmbBackupView.vue'),
     },
-  ],
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('@/views/NotFoundView.vue'),
+    },
+  ]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
 })
 
 router.beforeEach(async (to, _from, next) => {
