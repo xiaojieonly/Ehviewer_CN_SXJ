@@ -25,6 +25,12 @@ import androidx.annotation.Nullable;
 
 import java.util.UUID;
 
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 /**
  * Persists the WebUI server connection and sync state. Plays the same role as
  * {@link com.hippo.ehviewer.smb.SmbSettings}. The bearer token is encrypted via
@@ -41,6 +47,8 @@ public final class WebUiSettings {
     private static final String KEY_DEVICE_ID = "device_id";
     private static final String KEY_LAST_SYNC_TIMESTAMP = "last_sync_timestamp";
     private static final String KEY_REMOTE_READ = "remote_read_enabled";
+
+    private static final MediaType JSON_MEDIA = MediaType.parse("application/json; charset=utf-8");
 
     private final SharedPreferences preferences;
     private final WebUiCredentialStore credentialStore;
@@ -87,12 +95,46 @@ public final class WebUiSettings {
 
     public void clearConfig() {
         String deviceId = preferences.getString(KEY_DEVICE_ID, "");
+        WebUiConfig config = loadConfig();
         preferences.edit().clear().apply();
         if (!TextUtils.isEmpty(deviceId)) {
             // Keep a stable device identity across reconfiguration so the server
             // continues to recognise this device after it re-authenticates.
             preferences.edit().putString(KEY_DEVICE_ID, deviceId).apply();
         }
+        if (config != null) {
+            revokeServerToken(config);
+        }
+    }
+
+    /**
+     * Best-effort logout: revokes the token on the server so it cannot be
+     * replayed against the device's stored credentials. Fire-and-forget on a
+     * background thread; failures are ignored and the server tolerates an
+     * already-invalidated token. The config (and thus token) is captured before
+     * the prefs are cleared, so the request still carries the old token.
+     */
+    private static void revokeServerToken(@NonNull WebUiConfig config) {
+        String token = config.getToken();
+        if (TextUtils.isEmpty(token)) {
+            return;
+        }
+        Thread thread = new Thread(() -> {
+            try {
+                Request request = new Request.Builder()
+                        .url(config.baseUrl() + "/api/v1/auth/logout")
+                        .header("Authorization", "Bearer " + token)
+                        .post(RequestBody.create(JSON_MEDIA, ""))
+                        .build();
+                try (Response response = new OkHttpClient().newCall(request).execute()) {
+                    // Best effort; outcome intentionally ignored.
+                }
+            } catch (Exception ignored) {
+                // Fire-and-forget: never surface logout failures.
+            }
+        }, "webui-logout");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**

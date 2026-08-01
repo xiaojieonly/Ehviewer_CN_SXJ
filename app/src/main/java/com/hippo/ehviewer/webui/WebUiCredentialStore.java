@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -37,6 +36,12 @@ import javax.crypto.spec.GCMParameterSpec;
  * Encrypts the WebUI bearer token at rest using the AndroidKeyStore. Follows the
  * same AES/GCM approach as {@link com.hippo.ehviewer.smb.SmbCredentialStore} but
  * uses a distinct key alias so the two backends do not share key material.
+ *
+ * <p>All fallible work (KeyStore load, key generation) is deferred to a lazy,
+ * once-per-process, thread-safe init performed on first use. Any keystore
+ * failure degrades gracefully to "no token" instead of throwing, so this class
+ * is safe to construct on the UI thread even on FBE devices before first unlock
+ * (see audit: construction used to run KeyStore work on every settings refresh).
  */
 public final class WebUiCredentialStore {
 
@@ -46,14 +51,24 @@ public final class WebUiCredentialStore {
     private static final int GCM_TAG_LENGTH_BITS = 128;
     private static final int GCM_IV_LENGTH_BYTES = 12;
 
-    private final KeyStore keyStore;
-    private final SecureRandom random = new SecureRandom();
+    private KeyStore keyStore;
+    private boolean initialized = false;
 
     public WebUiCredentialStore(Context context) {
+        // No fallible work here: keystore access happens lazily on first use so
+        // construction can never throw or block the caller's thread.
+    }
+
+    /** Lazily loads the keystore and creates the key on first use. Never throws. */
+    private synchronized boolean ensureInitialized() {
+        if (initialized) {
+            return keyStore != null;
+        }
+        initialized = true;
         try {
-            keyStore = KeyStore.getInstance(KEYSTORE);
-            keyStore.load(null);
-            if (!keyStore.containsAlias(ALIAS)) {
+            KeyStore ks = KeyStore.getInstance(KEYSTORE);
+            ks.load(null);
+            if (!ks.containsAlias(ALIAS)) {
                 KeyGenerator generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, KEYSTORE);
                 generator.init(new KeyGenParameterSpec.Builder(ALIAS,
                         KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
@@ -63,9 +78,14 @@ public final class WebUiCredentialStore {
                         .build());
                 generator.generateKey();
             }
+            keyStore = ks;
         } catch (GeneralSecurityException | IOException e) {
-            throw new IllegalStateException(e);
+            // E.g. keystore locked before first unlock on FBE devices. Degrade to
+            // "no token" rather than crashing; retrying within the process is not
+            // attempted (once-per-process init).
+            keyStore = null;
         }
+        return keyStore != null;
     }
 
     public String save(String secret) {
@@ -74,7 +94,11 @@ public final class WebUiCredentialStore {
         }
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
+            SecretKey key = getSecretKey();
+            if (key == null) {
+                return "";
+            }
+            cipher.init(Cipher.ENCRYPT_MODE, key);
             byte[] iv = cipher.getIV();
             byte[] encrypted = cipher.doFinal(secret.getBytes(StandardCharsets.UTF_8));
             byte[] combined = new byte[iv.length + encrypted.length];
@@ -82,7 +106,7 @@ public final class WebUiCredentialStore {
             System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
             return Base64.encodeToString(combined, Base64.NO_WRAP);
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException(e);
+            return "";
         }
     }
 
@@ -100,14 +124,26 @@ public final class WebUiCredentialStore {
             System.arraycopy(combined, 0, iv, 0, GCM_IV_LENGTH_BYTES);
             System.arraycopy(combined, GCM_IV_LENGTH_BYTES, encrypted, 0, encrypted.length);
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
+            SecretKey key = getSecretKey();
+            if (key == null) {
+                return "";
+            }
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException | IllegalArgumentException e) {
             return "";
         }
     }
 
-    private SecretKey getSecretKey() throws GeneralSecurityException {
-        return (SecretKey) keyStore.getKey(ALIAS, null);
+    /** Returns {@code null} (instead of throwing) when the keystore is unusable. */
+    private SecretKey getSecretKey() {
+        if (!ensureInitialized()) {
+            return null;
+        }
+        try {
+            return (SecretKey) keyStore.getKey(ALIAS, null);
+        } catch (GeneralSecurityException e) {
+            return null;
+        }
     }
 }
