@@ -1,47 +1,54 @@
 <!--
-  TransferSettings.vue — 设置 · 传输（传输模块）.
+  TransferSettings.vue — 设置 · 传输（对齐管理面板的页面逻辑：页头 + 图标行
+  + 偏好分组卡片 + snackbar 反馈）.
 
   将本机偏好以 JSON 文件导出/导入，用于在 WebUI 实例之间迁移设置；
   与 Android 端的双向同步（服务器同步 → 同步配置/拉取配置）互补。
 -->
 <template>
   <div class="transfer-settings">
-    <section class="pref-group">
-      <h2 class="pref-group__title">配置传输</h2>
-      <div class="pref-card">
-        <div class="pref">
-          <AppIcon name="send-dark" class="pref__icon" />
-          <div class="pref__text">
-            <span class="pref__title">导出设置</span>
-            <span class="pref__summary">下载本机全部偏好设置（JSON 文件），可用于迁移到其他服务器</span>
+    <div class="transfer-settings__column">
+      <header class="transfer-settings__header">
+        <h1 class="transfer-settings__title">传输</h1>
+      </header>
+
+      <section class="pref-group">
+        <h2 class="pref-group__title">配置传输</h2>
+        <div class="pref-card">
+          <div class="pref">
+            <AppIcon name="send-dark" class="pref__icon" />
+            <div class="pref__text">
+              <span class="pref__title">导出设置</span>
+              <span class="pref__summary">下载本机全部偏好设置（JSON 文件），可用于迁移到其他服务器</span>
+            </div>
+            <button type="button" class="btn-primary" :disabled="exporting" @click="exportSettings">
+              {{ exporting ? '导出中…' : '导出' }}
+            </button>
           </div>
-          <button type="button" class="btn-primary" :disabled="exporting" @click="exportSettings">
-            {{ exporting ? '导出中…' : '导出' }}
-          </button>
-        </div>
-        <div class="pref-divider" />
-        <div class="pref">
-          <AppIcon name="folder-add-dark" class="pref__icon" />
-          <div class="pref__text">
-            <span class="pref__title">导入设置</span>
-            <span class="pref__summary">从导出的 JSON 文件恢复设置（覆盖本机当前偏好）</span>
+          <div class="pref-divider" />
+          <div class="pref">
+            <AppIcon name="folder-add-dark" class="pref__icon" />
+            <div class="pref__text">
+              <span class="pref__title">导入设置</span>
+              <span class="pref__summary">从导出的 JSON 文件恢复设置（覆盖本机当前偏好）</span>
+            </div>
+            <label class="btn-primary file-pick">
+              {{ importing ? '导入中…' : '选择文件' }}
+              <input
+                type="file"
+                accept="application/json,.json"
+                :disabled="importing"
+                data-testid="import-file"
+                @change="onFileSelected"
+              />
+            </label>
           </div>
-          <label class="btn-primary file-pick">
-            {{ importing ? '导入中…' : '选择文件' }}
-            <input
-              type="file"
-              accept="application/json,.json"
-              :disabled="importing"
-              data-testid="import-file"
-              @change="onFileSelected"
-            />
-          </label>
         </div>
-      </div>
-      <p class="transfer-settings__note">
-        提示：Android 端可在"设置 → 服务器同步"中通过"同步配置 / 拉取配置"与此服务器双向传输设置。
-      </p>
-    </section>
+        <p class="transfer-settings__note">
+          提示：Android 端可在"设置 → 服务器同步"中通过"同步配置 / 拉取配置"与此服务器双向传输设置。
+        </p>
+      </section>
+    </div>
 
     <!-- Snackbar. -->
     <Transition name="snack">
@@ -120,7 +127,93 @@ function messageOf(e: unknown): string {
 <style scoped>
 .transfer-settings {
   min-height: 100%;
-  padding: 16px var(--keyline-margin) var(--safe-area-bottom);
+  background: var(--color-bg);
+}
+
+.transfer-settings__column {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4px var(--keyline-margin) calc(56px + var(--safe-area-bottom));
+}
+
+/* ---------------------------------- header --------------------------------- */
+
+.transfer-settings__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 4px 4px;
+}
+
+.transfer-settings__title {
+  margin: 0;
+  font-size: clamp(17px, 20px, 24px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-color-primary);
+}
+
+/* ----------------------------- preference group --------------------------- */
+
+.pref-group__title {
+  margin: 22px 4px 8px;
+  font-size: clamp(12px, 14px, 16px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.pref-card {
+  background: var(--color-background-floating);
+  border-radius: var(--card-radius);
+  box-shadow:
+    0 var(--card-elevation) 4px var(--shadow-color),
+    0 0 1px var(--shadow-color);
+  overflow: hidden;
+}
+
+.pref-divider {
+  height: 1px;
+  margin: 0 var(--keyline-margin);
+  background: var(--color-divider);
+}
+
+/* ------------------------------ preference row ---------------------------- */
+
+.pref {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  min-height: 48px;
+  padding: 10px var(--keyline-margin);
+}
+
+.pref__icon {
+  flex: 0 0 24px;
+  color: var(--drawable-color-primary);
+}
+
+.pref__text {
+  flex: 1 1 160px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pref__title {
+  font-size: clamp(14px, 16px, 18px);
+  color: var(--text-color-primary);
+}
+
+.pref__summary {
+  font-size: clamp(11px, 12px, 14px);
+  color: var(--text-color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .transfer-settings__note {
@@ -133,14 +226,27 @@ function messageOf(e: unknown): string {
 
 .btn-primary {
   flex: 0 0 auto;
-  padding: 8px 16px;
+  padding: 9px 22px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--card-radius);
   background: var(--color-primary);
-  color: #fff;
-  font-size: var(--text-super-small);
-  font-weight: 600;
+  color: var(--color-white);
+  font-size: clamp(13px, 14px, 16px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
+  box-shadow: 0 1px 3px var(--shadow-color);
+  transition:
+    background-color 150ms var(--ease-decelerate-quart),
+    transform 120ms var(--ease-decelerate-quart);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
 }
 
 .btn-primary:disabled {
@@ -166,25 +272,36 @@ function messageOf(e: unknown): string {
 
 .snackbar {
   position: fixed;
-  bottom: calc(24px + var(--safe-area-bottom));
   left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: var(--text-color-primary);
-  color: var(--color-bg);
-  font-size: var(--text-super-small);
-  z-index: 100;
+  bottom: calc(24px + var(--safe-area-bottom));
+  translate: -50% 0;
+  z-index: 300;
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 12px 20px;
+  border-radius: var(--card-radius);
+  background: var(--gallery-slider-background);
+  color: var(--color-white);
+  font-size: clamp(13px, 14px, 16px);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .snack-enter-active,
 .snack-leave-active {
-  transition: opacity 200ms var(--ease-decelerate-quart), transform 200ms var(--ease-decelerate-quart);
+  transition:
+    opacity var(--duration-scene-opacity) var(--ease-decelerate-quart),
+    translate var(--duration-scene-translate) var(--ease-decelerate-quint);
 }
 
 .snack-enter-from,
 .snack-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(8px);
+  translate: -50% 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snack-enter-active,
+  .snack-leave-active {
+    transition: none;
+  }
 }
 </style>
