@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationProperties(prefix = "ehviewer")
 class EhCoreConfigProperties {
     var download: DownloadProperties = DownloadProperties()
+    var reader: ReaderProperties = ReaderProperties()
     var smb: SmbProperties = SmbProperties()
     var security: SecurityProperties = SecurityProperties()
 
@@ -19,6 +20,11 @@ class EhCoreConfigProperties {
         var downloadTimeout: Long = 60000
         var maxConcurrentGalleries: Int = 3
         var maxConcurrentImages: Int = 3
+    }
+
+    class ReaderProperties {
+        /** Number of pages to prefetch into the image cache after a cache-miss serve. */
+        var prefetchPages: Int = 3
     }
 
     class SmbProperties {

@@ -5,6 +5,7 @@ import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.web.service.EhSessionManager
 import com.hippo.ehviewer.web.service.GalleryLookupService
 import com.hippo.ehviewer.web.service.ImageCacheService
+import com.hippo.ehviewer.web.service.PrefetchService
 import com.hippo.network.StatusCodeException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -32,6 +33,7 @@ class ImageProxyController(
     private val imageCacheService: ImageCacheService,
     private val galleryLookupService: GalleryLookupService,
     private val sessionManager: EhSessionManager,
+    private val prefetchService: PrefetchService,
 ) {
     private val logger = LoggerFactory.getLogger(ImageProxyController::class.java)
 
@@ -117,7 +119,13 @@ class ImageProxyController(
             return rateLimited(galleryId, page)
         }
         try {
-            return fetchAndServe(galleryId, page, range)
+            val response = fetchAndServe(galleryId, page, range)
+            // Reader prefetch: warm the next pages in the background, only when
+            // this page was actually served (fire-and-forget, never blocks).
+            if (response.statusCode.is2xxSuccessful) {
+                prefetchService.prefetchAround(galleryId, page)
+            }
+            return response
         } finally {
             fetcher.release()
             galleryFetchers.remove(galleryId, fetcher)
