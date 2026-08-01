@@ -13,11 +13,11 @@ An E-Hentai Application for Android.
 点击前往下载：
 
 [//]: # (- [Appteka]&#40;https://appteka.store/app/acdr168648&#41;)
-- [百度云](https://pan.baidu.com/s/1rh-lvEc-QjiMtfPi6T1BKA) 提取码：7p6z
-- [夸克网盘](https://pan.quark.cn/s/0de32f69e12a) 提取码：SnVD
-- [蓝奏云](https://wwbfg.lanzouu.com/iWAFL3uefh8d)，电脑端可正常下载 提取码：3txx
+- [百度云](https://pan.baidu.com/s/1pJl_NzCt46YlLv494kUuKw) 提取码：9mej
+- [夸克网盘](https://pan.quark.cn/s/873901763b79) 提取码：ULkh
+- [蓝奏云](https://wwbfg.lanzouu.com/iqgrh3zxrdah)，电脑端可正常下载 提取码：73tu
 - [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
-- Torrent链接:magnet:?xt=urn:btih:ec1403341edaba853b0836d2d3c5976498572a3c&xt=urn:btmh:1220453fdf4272b27c81d88a4ddae25a64ca524a13e53f835430b4acacb2e7ae3bcb&dn=EhViewer-2.0.2.2.apk&xl=27747451
+- Torrent链接:magnet:?xt=urn:btih:7289464887abcd77f106c84f7ab395e5d6e74465&xt=urn:btmh:122013a4f6850078100eab8e49819aa9a34f29c1f88856089413cf2bf236453d4302&dn=EhViewer-2.0.2.3.apk&xl=27747455
 
 
 点击前往赏饭：
@@ -30,11 +30,27 @@ Telegram通知群: https://telegram.me/Ehviewer_xiaojieonly_channel
 
 
 # Changelog
+
+## 2026/08/01
+### 新版发布2.0.2.2
+
+- 修复页码显示延迟的问题
+- 添加重置阅读进度功能以更新UI
+- 更新 AboutFragment 以使用 setPreferencesFromResource，确保仅在满足条件时设置偏好项点击监听器
+- 修复drawable赋值逻辑以避免潜在的空指针异常
+- 增强图像解码错误处理，避免空值返回并记录警告
+- 添加获取可编辑评论的功能，更新相关解析器和UI逻辑
+
 ## 2026/07/01
 ### 新版发布2.0.2.2
 
 - 修复了浏览历史未正确保存的问题
 - 修复评论时输入框被键盘遮挡的问题
+- [百度云](https://pan.baidu.com/s/1rh-lvEc-QjiMtfPi6T1BKA) 提取码：7p6z
+- [夸克网盘](https://pan.quark.cn/s/0de32f69e12a) 提取码：SnVD
+- [蓝奏云](https://wwbfg.lanzouu.com/iWAFL3uefh8d)，电脑端可正常下载 提取码：3txx
+- [GitHub](https://github.com/xiaojieonly/Ehviewer_CN_SXJ/releases)
+- Torrent链接:magnet:?xt=urn:btih:ec1403341edaba853b0836d2d3c5976498572a3c&xt=urn:btmh:1220453fdf4272b27c81d88a4ddae25a64ca524a13e53f835430b4acacb2e7ae3bcb&dn=EhViewer-2.0.2.2.apk&xl=27747451
 
 
 ## 2026/07/01 
