@@ -3,8 +3,11 @@ info:
   title: EhViewer WebUI Backend API
   description: |
     REST API for the EhViewer WebUI backend (Spring Boot).
-    Covers existing controller endpoints and planned roadmap endpoints
-    (image streaming, cache management, processing pipeline, sync, health).
+
+    Authentication: all endpoints under /api/v1 require a bearer token
+    (Authorization: Bearer <token>) except the publicly permitted ones
+    (auth/register, auth/login, auth/status, auth/pair/complete, health,
+    metrics, metrics/dashboard) and non-API resources.
   version: 1.0.0
   contact:
     name: EhViewer WebUI Team
@@ -12,6 +15,9 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local development server
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: Auth
@@ -54,6 +60,7 @@ paths:
       tags: [Auth]
       operationId: register
       summary: Register a new user account
+      security: []
       requestBody:
         required: true
         content:
@@ -68,7 +75,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Registration failed (e.g. username taken)
+          description: Registration failed (e.g. username taken, validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '403':
+          description: Registration is disabled on this server
           content:
             application/json:
               schema:
@@ -79,6 +92,7 @@ paths:
       tags: [Auth]
       operationId: login
       summary: Authenticate and obtain a bearer token
+      security: []
       requestBody:
         required: true
         content:
@@ -104,6 +118,7 @@ paths:
       tags: [Auth]
       operationId: getAuthStatus
       summary: Check current authentication status
+      security: []
       parameters:
         - name: Authorization
           in: header
@@ -131,12 +146,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PairCodeResponse'
+        '401':
+          description: Authentication required
+
+  /api/v1/auth/pair/start:
+    post:
+      tags: [Auth]
+      operationId: generatePairCodeStart
+      summary: Alias for POST /pair (openapi client compatibility)
+      responses:
+        '200':
+          description: Pairing code generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairCodeResponse'
+        '401':
+          description: Authentication required
 
   /api/v1/auth/pair/complete:
     post:
       tags: [Auth]
       operationId: completePairing
       summary: Exchange a pairing code for a device-scoped bearer token
+      security: []
       requestBody:
         required: true
         content:
@@ -176,6 +209,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Authentication required (token missing or invalid)
 
   # ============================================================
   # Gallery
@@ -749,6 +784,10 @@ paths:
       tags: [Settings]
       operationId: testProxy
       summary: Test connectivity to E-Hentai through a proxy (saved settings when no body)
+      description: |
+        With no body the currently saved proxy settings are used; with a body
+        the given values are tested (all fields optional, merged over the
+        saved settings), so the admin UI can validate a form before saving it.
       requestBody:
         required: false
         content:
@@ -762,6 +801,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProxyTestResponse'
+
+  # ============================================================
+  # Preferences (per-user UI preferences)
+  # ============================================================
+  /api/v1/preferences:
+    get:
+      tags: [Settings]
+      operationId: getPreferences
+      summary: Get the authenticated user's UI preferences
+      responses:
+        '200':
+          description: Current preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferenceResponse'
+        '401':
+          description: Authentication required
+    put:
+      tags: [Settings]
+      operationId: updatePreferences
+      summary: Update the authenticated user's UI preferences (deep merge, all fields optional)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferenceUpdateRequest'
+      responses:
+        '200':
+          description: Merged preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferenceResponse'
+        '401':
+          description: Authentication required
 
   # ============================================================
   # Image (existing proxy + new streaming)
@@ -823,9 +899,9 @@ paths:
       description: |
         Returns the image for a specific page of a gallery. On cache miss, the server
         fetches the image via the core parser, caches it, and returns it.
-        Supports HTTP Range requests for partial content.
-        Optionally returns an AI-enhanced version if available.
-        The `w` parameter enables responsive image delivery at a requested width.
+        Supports HTTP Range requests for partial content (206) and unsatisfiable
+        ranges (416). When `enhanced=1` is set, the AI-enhanced variant is served
+        from the processing output directory if it exists (404 otherwise).
       parameters:
         - name: galleryId
           in: path
@@ -839,23 +915,25 @@ paths:
           required: true
           schema:
             type: integer
+            format: int32
           description: Page number (0-based)
         - name: w
           in: query
           required: false
           schema:
             type: integer
+            format: int32
           description: |
-            Requested image width in pixels for responsive delivery.
-            The server will resize the image to this width preserving aspect ratio.
-            If omitted, the original resolution is returned.
+            Accepted for client compatibility; currently ignored by the server
+            (the original resolution is always returned).
         - name: enhanced
           in: query
           required: false
           schema:
-            type: boolean
-            default: false
-          description: If true, return the AI-enhanced version (if processed); otherwise return original
+            type: integer
+            enum: [0, 1]
+            default: 0
+          description: If 1, return the AI-enhanced version (if processed); otherwise return original
         - name: Range
           in: header
           required: false
@@ -869,11 +947,15 @@ paths:
             Content-Type:
               schema:
                 type: string
-              description: MIME type of the image (image/jpeg, image/png, image/webp)
+              description: MIME type of the image (image/jpeg, image/png, image/webp, image/gif)
             Accept-Ranges:
               schema:
                 type: string
               description: "Always 'bytes'"
+            Cache-Control:
+              schema:
+                type: string
+              description: "max-age=86400"
           content:
             image/jpeg:
               schema:
@@ -884,6 +966,10 @@ paths:
                 type: string
                 format: binary
             image/webp:
+              schema:
+                type: string
+                format: binary
+            image/gif:
               schema:
                 type: string
                 format: binary
@@ -897,6 +983,14 @@ paths:
             Content-Type:
               schema:
                 type: string
+            Accept-Ranges:
+              schema:
+                type: string
+              description: "Always 'bytes'"
+            Cache-Control:
+              schema:
+                type: string
+              description: "max-age=86400"
           content:
             image/jpeg:
               schema:
@@ -910,13 +1004,38 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: E-Hentai session expired or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '404':
-          description: Gallery or page not found
+          description: Gallery or page not found (or enhanced variant not processed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageErrorResponse'
+        '416':
+          description: Range not satisfiable
+          headers:
+            Content-Range:
+              schema:
+                type: string
+              description: "bytes */<size>"
         '429':
           description: Rate limited (concurrent fetch limit for this gallery reached)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageErrorResponse'
 
   # ============================================================
-  # Cache (roadmap Phase 1)
+  # Cache
   # ============================================================
   /api/v1/cache/stats:
     get:
@@ -956,7 +1075,7 @@ paths:
           description: Gallery not found in cache
 
   # ============================================================
-  # Processing (roadmap Phase 1)
+  # Processing
   # ============================================================
   /api/v1/process/gallery/{id}:
     post:
@@ -1014,8 +1133,30 @@ paths:
         '404':
           description: Task not found
 
+  /api/v1/process/cancel/{taskId}:
+    post:
+      tags: [Processing]
+      operationId: cancelProcessing
+      summary: Request cancellation of an image processing task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID returned by triggerGalleryProcessing
+      responses:
+        '200':
+          description: Cancel request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Task not found
+
   # ============================================================
-  # Sync (roadmap Phase 2)
+  # Sync
   # ============================================================
   /api/v1/sync/push:
     post:
@@ -1023,9 +1164,12 @@ paths:
       operationId: syncPush
       summary: Push client changes to the server
       description: |
-        Receives a batch of changes from an Android client. Changes are merged
-        using entity-specific strategies (union merge for favorites/history,
-        last-write-wins for reading progress).
+        Receives a batch of client entities wrapped in a SyncEntityCollection
+        (favorites, history, downloads, bookmarks, filters, quick searches,
+        download labels, preferences). Entities are merged server-side using
+        per-entity strategies; tombstones are conveyed via `deleted` flags.
+        The returned serverTimestamp should be used as the base for the next
+        pull.
       requestBody:
         required: true
         content:
@@ -1048,8 +1192,9 @@ paths:
       operationId: syncPull
       summary: Pull server changes since a given timestamp
       description: |
-        Returns all server-side changes that occurred after the given timestamp.
-        The client should store the returned server timestamp for the next pull.
+        Returns all server-side changes that occurred after the given
+        timestamp, wrapped in a SyncEntityCollection. The client should store
+        the returned serverTimestamp for the next pull.
       parameters:
         - name: since
           in: query
@@ -1058,6 +1203,12 @@ paths:
             type: integer
             format: int64
           description: Unix timestamp (milliseconds) — return changes after this time
+        - name: deviceId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Client device ID (used to exclude the requesting device's own changes)
       responses:
         '200':
           description: Server changes
@@ -1072,14 +1223,16 @@ paths:
     get:
       tags: [Sync]
       operationId: getSyncStatus
-      summary: Get current sync status and connected devices
+      summary: Get current sync status, connected devices, and entity counts
       responses:
         '200':
           description: Sync status
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SyncStatus'
+                $ref: '#/components/schemas/SyncStatusResponse'
+        '401':
+          description: Invalid or missing API token
 
   /api/v1/sync/devices:
     get:
@@ -1094,7 +1247,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DeviceInfo'
+                  $ref: '#/components/schemas/DeviceInfoDto'
+        '401':
+          description: Invalid or missing API token
 
   /api/v1/sync/devices/{deviceId}:
     delete:
@@ -1113,10 +1268,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid or missing API token
+        '403':
+          description: Device not found or not owned by this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ============================================================
   # Archive
@@ -1146,6 +1306,13 @@ paths:
       tags: [Archive]
       operationId: downloadArchive
       summary: Start downloading a gallery archive
+      description: |
+        200 `{success:true, path:"<gid>/"}` on success (path is a relative hint;
+        absolute server paths are never exposed);
+        400 `{success:false, message}` when the archive URL host is not allowed
+        (SSRF guard);
+        502 `{success:false, message}` when the archiver flow failed (credits
+        required, upstream error).
       requestBody:
         required: true
         content:
@@ -1154,11 +1321,23 @@ paths:
               $ref: '#/components/schemas/ArchiveDownloadRequest'
       responses:
         '200':
-          description: Whether the download was initiated
+          description: Archive download initiated
           content:
             application/json:
               schema:
-                type: boolean
+                $ref: '#/components/schemas/ArchiveDownloadResponse'
+        '400':
+          description: Archive URL host not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchiveDownloadResponse'
+        '502':
+          description: Archive download failed (credits required or upstream error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchiveDownloadResponse'
 
   # ============================================================
   # Torrent
@@ -1188,20 +1367,40 @@ paths:
       tags: [Torrent]
       operationId: downloadTorrent
       summary: Download a torrent file by token
+      description: |
+        The `token` is a URL (typically an E-Hentai torrent page URL). Returns
+        the raw `.torrent` file bytes as an `application/x-bittorrent`
+        attachment (Content-Disposition `attachment; filename=<gid>.torrent`).
       parameters:
         - name: token
           in: query
           required: true
           schema:
             type: string
-          description: Torrent download token
+          description: Torrent download token (URL)
       responses:
         '200':
-          description: Whether the download was initiated
+          description: Torrent file bytes
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/x-bittorrent
+            Content-Disposition:
+              schema:
+                type: string
+              description: "attachment; filename=<gid>.torrent"
+          content:
+            application/x-bittorrent:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Torrent file unavailable (host not allowed, fetch failed, or no file)
           content:
             application/json:
               schema:
-                type: boolean
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ============================================================
   # SMB
@@ -1301,13 +1500,14 @@ paths:
                 $ref: '#/components/schemas/SmbSyncProgress'
 
   # ============================================================
-  # Health (roadmap Phase 1)
+  # Health
   # ============================================================
   /api/v1/health:
     get:
       tags: [Health]
       operationId: healthCheck
       summary: Server health check
+      security: []
       description: Returns overall server health including subsystem status.
       responses:
         '200':
@@ -1327,8 +1527,13 @@ paths:
     get:
       tags: [Health]
       operationId: getMetrics
-      summary: Get basic server metrics
-      description: Returns basic operational metrics (uptime, memory, active downloads, cache stats).
+      summary: Get flat server metrics
+      security: []
+      description: |
+        Returns operational metrics as flat fields (uptime, JVM memory, active
+        downloads, processing queue, cache usage). A legacy `metrics` map with
+        per-metric `MetricValue` entries is retained for backward
+        compatibility with existing consumers.
       responses:
         '200':
           description: Server metrics
@@ -1337,10 +1542,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/MetricsResponse'
 
+  /api/v1/metrics/dashboard:
+    get:
+      tags: [Health]
+      operationId: getDashboard
+      summary: Get a structured dashboard snapshot
+      security: []
+      responses:
+        '200':
+          description: Dashboard snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+
 # ==============================================================
 # Components
 # ==============================================================
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Bearer token issued by /api/v1/auth/login, /api/v1/auth/register, or /api/v1/auth/pair/complete"
   schemas:
     # ----------------------------------------------------------
     # Auth
@@ -1382,9 +1607,19 @@ components:
       properties:
         authenticated:
           type: boolean
+          description: Whether a local WebUI account token was supplied and is valid
         username:
           type: string
           nullable: true
+        authRequired:
+          type: boolean
+          description: Whether the server enforces authentication for API access
+        ehSessionValid:
+          type: boolean
+          description: Whether the E-Hentai session (cookie store) is valid
+        ehSessionExpired:
+          type: boolean
+          description: Whether the E-Hentai session has expired and needs re-authentication
 
     PairCodeResponse:
       type: object
@@ -1424,7 +1659,7 @@ components:
           type: string
           nullable: true
 
-    DeviceInfo:
+    DeviceInfoDto:
       type: object
       properties:
         deviceId:
@@ -1439,7 +1674,6 @@ components:
         lastSeen:
           type: integer
           format: int64
-
 
     # ----------------------------------------------------------
     # Gallery
@@ -1759,7 +1993,7 @@ components:
           type: integer
         state:
           type: integer
-          description: "Download state: 0=pending, 1=downloading, 2=paused, 3=done, 4=failed"
+          description: "Download state: 0=NONE/pending, 1=WAIT, 2=DOWNLOADING, 3=FINISHED, 4=FAILED"
         total:
           type: integer
         done:
@@ -1769,6 +2003,10 @@ components:
         downloadDir:
           type: string
           nullable: true
+        error:
+          type: string
+          nullable: true
+          description: Human-readable failure/cancel reason (null when the task has not failed)
 
     DownloadLabel:
       type: object
@@ -1981,36 +2219,49 @@ components:
           type: string
         password:
           type: string
+          description: Empty string unless a password has been set; the stored password is never returned
+        proxyPasswordSet:
+          type: boolean
+          description: Whether a proxy password is currently stored on the server
 
     # ----------------------------------------------------------
     # Proxy
     # ----------------------------------------------------------
     ProxyTestRequest:
       type: object
+      description: All fields optional; omitted fields fall back to the currently saved settings
       properties:
         enabled:
           type: boolean
+          nullable: true
         type:
           type: string
+          nullable: true
         host:
           type: string
+          nullable: true
         port:
           type: integer
+          nullable: true
         username:
           type: string
+          nullable: true
         password:
           type: string
+          nullable: true
 
     ProxyTestResponse:
       type: object
       properties:
         success:
           type: boolean
+          description: True when the proxy returned a successful (or sub-500) response
         latencyMs:
           type: integer
           format: int64
         error:
           type: string
+          description: Error message (empty string on success)
 
     # ----------------------------------------------------------
     # Image
@@ -2020,11 +2271,21 @@ components:
       properties:
         cacheSize:
           type: integer
+          description: Number of entries currently held in the in-memory image cache
+
+    ImageErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        galleryId:
+          type: integer
           format: int64
-          description: Current cache size in bytes
+        page:
+          type: integer
 
     # ----------------------------------------------------------
-    # Cache (roadmap)
+    # Cache
     # ----------------------------------------------------------
     CacheStats:
       type: object
@@ -2057,7 +2318,7 @@ components:
           description: Cache hit rate (0.0 - 1.0)
 
     # ----------------------------------------------------------
-    # Processing (roadmap)
+    # Processing
     # ----------------------------------------------------------
     ProcessingRequest:
       type: object
@@ -2129,165 +2390,487 @@ components:
           description: Error message if state is FAILED
 
     # ----------------------------------------------------------
-    # Sync (roadmap)
+    # Sync
     # ----------------------------------------------------------
     SyncPushRequest:
       type: object
+      required: [entities, deviceId, timestamp]
       properties:
-        clientTimestamp:
-          type: integer
-          format: int64
-          description: Client's current timestamp (ms) for conflict resolution
-        favorites:
-          type: array
-          items:
-            $ref: '#/components/schemas/SyncFavoriteEntry'
-          description: Favorite changes (union merge)
-        history:
-          type: array
-          items:
-            $ref: '#/components/schemas/SyncHistoryEntry'
-          description: History changes (last-write-wins)
-        downloads:
-          type: array
-          items:
-            $ref: '#/components/schemas/SyncDownloadEntry'
-          description: Download list changes (union merge + state sync)
-        readingProgress:
-          type: array
-          items:
-            $ref: '#/components/schemas/SyncReadingProgressEntry'
-          description: Reading progress changes (last-write-wins)
-        quickSearches:
-          type: array
-          items:
-            $ref: '#/components/schemas/QuickSearchDto'
-          description: Quick search presets (union merge)
-
-    SyncFavoriteEntry:
-      type: object
-      properties:
-        gid:
-          type: integer
-          format: int64
-        token:
+        entities:
+          $ref: '#/components/schemas/SyncEntityCollection'
+        deviceId:
           type: string
-        title:
-          type: string
-        category:
-          type: integer
-        time:
+          description: ID of the client device performing the push
+        timestamp:
           type: integer
           format: int64
-
-    SyncHistoryEntry:
-      type: object
-      properties:
-        gid:
-          type: integer
-          format: int64
-        token:
-          type: string
-        title:
-          type: string
-        time:
-          type: integer
-          format: int64
-        mode:
-          type: integer
-
-    SyncDownloadEntry:
-      type: object
-      properties:
-        gid:
-          type: integer
-          format: int64
-        token:
-          type: string
-        title:
-          type: string
-        state:
-          type: integer
-        label:
-          type: integer
-        time:
-          type: integer
-          format: int64
-
-    SyncReadingProgressEntry:
-      type: object
-      properties:
-        gid:
-          type: integer
-          format: int64
-        page:
-          type: integer
-          description: Last read page number
-        time:
-          type: integer
-          format: int64
-          description: Timestamp of last read (ms)
+          description: Client's current timestamp (ms epoch) for conflict resolution
 
     SyncPushResponse:
       type: object
+      required: [success, serverTimestamp]
       properties:
         success:
           type: boolean
         serverTimestamp:
           type: integer
           format: int64
-          description: Server timestamp after applying changes (use for next pull)
+          description: Server timestamp after applying changes (use as the base for the next pull)
         conflicts:
           type: integer
-          description: Number of conflicts resolved by last-write-wins
+          description: Number of conflicts resolved (last-write-wins)
 
     SyncPullResponse:
       type: object
+      required: [entities, serverTimestamp]
       properties:
+        entities:
+          $ref: '#/components/schemas/SyncEntityCollection'
         serverTimestamp:
           type: integer
           format: int64
-          description: Current server timestamp (use as 'since' for next pull)
+          description: Current server timestamp (use as 'since' for the next pull)
+
+    SyncEntityCollection:
+      type: object
+      properties:
         favorites:
           type: array
           items:
-            $ref: '#/components/schemas/SyncFavoriteEntry'
+            $ref: '#/components/schemas/SyncFavoriteDto'
         history:
           type: array
           items:
-            $ref: '#/components/schemas/SyncHistoryEntry'
+            $ref: '#/components/schemas/SyncHistoryDto'
         downloads:
           type: array
           items:
-            $ref: '#/components/schemas/SyncDownloadEntry'
-        readingProgress:
+            $ref: '#/components/schemas/SyncDownloadDto'
+        bookmarks:
           type: array
           items:
-            $ref: '#/components/schemas/SyncReadingProgressEntry'
+            $ref: '#/components/schemas/SyncBookmarkDto'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncFilterDto'
         quickSearches:
           type: array
           items:
-            $ref: '#/components/schemas/QuickSearchDto'
+            $ref: '#/components/schemas/SyncQuickSearchDto'
+        downloadLabels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncDownloadLabelDto'
+        preferences:
+          $ref: '#/components/schemas/SyncPreferencesDto'
 
-    SyncStatus:
+    SyncFavoriteDto:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        posted:
+          type: string
+          nullable: true
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        rated:
+          type: boolean
+        simpleLanguage:
+          type: string
+          nullable: true
+        simpleTags:
+          type: string
+          nullable: true
+          description: Space-separated tag string (not an array)
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
+        spanSize:
+          type: integer
+        spanIndex:
+          type: integer
+        spanGroupIndex:
+          type: integer
+        favoriteSlot:
+          type: integer
+        favoriteName:
+          type: string
+          nullable: true
+        pages:
+          type: integer
+        time:
+          type: integer
+          format: int64
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+          description: Tombstone flag — true means this entity was deleted on the originating device
+
+    SyncHistoryDto:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        posted:
+          type: string
+          nullable: true
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        rated:
+          type: boolean
+        simpleLanguage:
+          type: string
+          nullable: true
+        simpleTags:
+          type: string
+          nullable: true
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
+        spanSize:
+          type: integer
+        spanIndex:
+          type: integer
+        spanGroupIndex:
+          type: integer
+        favoriteSlot:
+          type: integer
+        favoriteName:
+          type: string
+          nullable: true
+        pages:
+          type: integer
+        mode:
+          type: integer
+        time:
+          type: integer
+          format: int64
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+
+    SyncDownloadDto:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        posted:
+          type: string
+          nullable: true
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        rated:
+          type: boolean
+        simpleLanguage:
+          type: string
+          nullable: true
+        simpleTags:
+          type: string
+          nullable: true
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
+        spanSize:
+          type: integer
+        spanIndex:
+          type: integer
+        spanGroupIndex:
+          type: integer
+        favoriteSlot:
+          type: integer
+        favoriteName:
+          type: string
+          nullable: true
+        pages:
+          type: integer
+        state:
+          type: integer
+          description: "Download state: 0=NONE/pending, 1=WAIT, 2=DOWNLOADING, 3=FINISHED, 4=FAILED"
+        legacy:
+          type: integer
+        time:
+          type: integer
+          format: int64
+        label:
+          type: string
+          nullable: true
+        total:
+          type: integer
+        finished:
+          type: integer
+        downloaded:
+          type: integer
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+
+    SyncBookmarkDto:
+      type: object
+      properties:
+        gid:
+          type: integer
+          format: int64
+        token:
+          type: string
+        title:
+          type: string
+          nullable: true
+        titleJpn:
+          type: string
+          nullable: true
+        thumb:
+          type: string
+          nullable: true
+        category:
+          type: integer
+        posted:
+          type: string
+          nullable: true
+        uploader:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          format: float
+        rated:
+          type: boolean
+        simpleLanguage:
+          type: string
+          nullable: true
+        simpleTags:
+          type: string
+          nullable: true
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
+        spanSize:
+          type: integer
+        spanIndex:
+          type: integer
+        spanGroupIndex:
+          type: integer
+        favoriteSlot:
+          type: integer
+        favoriteName:
+          type: string
+          nullable: true
+        pages:
+          type: integer
+        page:
+          type: integer
+          description: Bookmarked page (0-based)
+        time:
+          type: integer
+          format: int64
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+
+    SyncFilterDto:
+      type: object
+      properties:
+        mode:
+          type: integer
+        text:
+          type: string
+        enabled:
+          type: boolean
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+
+    SyncQuickSearchDto:
+      type: object
+      properties:
+        name:
+          type: string
+        mode:
+          type: integer
+        category:
+          type: integer
+        keyword:
+          type: string
+          nullable: true
+        advanceSearch:
+          type: integer
+        minRating:
+          type: integer
+        pageFrom:
+          type: integer
+        pageTo:
+          type: integer
+        time:
+          type: integer
+          format: int64
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+
+    SyncDownloadLabelDto:
+      type: object
+      properties:
+        label:
+          type: string
+        time:
+          type: integer
+          format: int64
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        deleted:
+          type: boolean
+
+    SyncPreferencesDto:
+      type: object
+      properties:
+        preferences:
+          type: string
+          default: "{}"
+          description: Full preferences payload as a JSON string
+        lastModified:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+
+    SyncStatusResponse:
       type: object
       properties:
         lastSyncTimestamp:
           type: integer
           format: int64
-          nullable: true
-          description: Timestamp of last successful sync (ms)
+          description: Timestamp of the last successful sync (ms epoch)
         connectedDevices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedDeviceDto'
+        entityCounts:
+          $ref: '#/components/schemas/EntityCountsDto'
+
+    ConnectedDeviceDto:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        deviceName:
+          type: string
+          nullable: true
+        platform:
+          type: string
+        lastSeen:
           type: integer
-          description: Number of currently connected client devices
-        syncInProgress:
-          type: boolean
-        totalFavorites:
+          format: int64
+
+    EntityCountsDto:
+      type: object
+      properties:
+        favorites:
           type: integer
-        totalHistory:
+          format: int64
+        history:
           type: integer
-        totalDownloads:
+          format: int64
+        downloads:
           type: integer
+          format: int64
+        bookmarks:
+          type: integer
+          format: int64
+        filters:
+          type: integer
+          format: int64
+        quickSearches:
+          type: integer
+          format: int64
+        downloadLabels:
+          type: integer
+          format: int64
 
     # ----------------------------------------------------------
     # Archive
@@ -2326,6 +2909,20 @@ components:
           format: int64
         url:
           type: string
+
+    ArchiveDownloadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+          description: Error message on failure (400/502)
+        path:
+          type: string
+          nullable: true
+          description: Relative download path hint (`<gid>/`) on success; absolute server paths are never exposed
 
     # ----------------------------------------------------------
     # Torrent
@@ -2452,7 +3049,7 @@ components:
       properties:
         state:
           type: string
-          description: "IDLE, RUNNING, CANCELLED, DONE, ERROR"
+          enum: [idle, syncing, completed, failed]
         totalFiles:
           type: integer
         syncedFiles:
@@ -2473,24 +3070,43 @@ components:
         status:
           type: string
           enum: [UP, DOWN, DEGRADED]
+          description: Overall status — DOWN when a required component (database, diskCache) is down
         components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/HealthComponent'
+          description: "Known components: database, diskCache, ehentaiApi"
+        version:
+          type: string
+        uptime:
+          type: string
+          description: Human-readable uptime (e.g. "2h 5m")
+        uptimeMs:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
 
     HealthComponent:
       type: object
       properties:
         status:
           type: string
-          enum: [UP, DOWN, DEGRADED]
+          enum: [UP, DOWN, DEGRADED, UNKNOWN]
         details:
-          type: string
+          type: object
+          additionalProperties:
+            type: string
           nullable: true
+          description: Structured key/value details (e.g. type, reason, freeSpace, path, responseTimeMs)
 
     MetricsResponse:
       type: object
       properties:
+        timestamp:
+          type: string
+          format: date-time
         uptimeSeconds:
           type: integer
           format: int64
@@ -2513,6 +3129,260 @@ components:
         totalGalleriesServed:
           type: integer
           format: int64
+        metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MetricValue'
+          description: Legacy per-metric map, retained for backward compatibility
+
+    MetricValue:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [gauge, counter, timer]
+        value:
+          nullable: true
+        count:
+          type: integer
+          format: int64
+          nullable: true
+        totalMs:
+          type: integer
+          format: int64
+          nullable: true
+        meanMs:
+          type: number
+          format: double
+          nullable: true
+        maxMs:
+          type: integer
+          format: int64
+          nullable: true
+
+    DashboardResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        summary:
+          $ref: '#/components/schemas/DashboardSummary'
+        cache:
+          $ref: '#/components/schemas/DashboardCache'
+        downloads:
+          $ref: '#/components/schemas/DashboardDownloads'
+        processing:
+          $ref: '#/components/schemas/DashboardProcessing'
+        websocket:
+          $ref: '#/components/schemas/DashboardWebSocket'
+
+    DashboardSummary:
+      type: object
+      properties:
+        status:
+          type: string
+        uptime:
+          type: string
+        version:
+          type: string
+
+    DashboardCache:
+      type: object
+      properties:
+        memoryEntries:
+          type: integer
+        memoryUsedBytes:
+          type: integer
+          format: int64
+        memoryMaxBytes:
+          type: integer
+          format: int64
+        memoryUsagePercent:
+          type: number
+          format: double
+        diskUsedBytes:
+          type: integer
+          format: int64
+        diskMaxBytes:
+          type: integer
+          format: int64
+        diskUsagePercent:
+          type: number
+          format: double
+        hitRatio:
+          type: number
+          format: double
+
+    DashboardDownloads:
+      type: object
+      properties:
+        active:
+          type: integer
+        completedTotal:
+          type: integer
+          format: int64
+        failedTotal:
+          type: integer
+          format: int64
+        activeTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardDownloadTask'
+
+    DashboardDownloadTask:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        galleryId:
+          type: integer
+          format: int64
+        galleryTitle:
+          type: string
+          nullable: true
+        state:
+          type: string
+          description: "pending, starting, downloading, completed, failed"
+        progress:
+          type: number
+          format: double
+        downloadedPages:
+          type: integer
+        totalPages:
+          type: integer
+
+    DashboardProcessing:
+      type: object
+      properties:
+        queueSize:
+          type: integer
+        completedTotal:
+          type: integer
+          format: int64
+        processorAvailable:
+          type: boolean
+
+    DashboardWebSocket:
+      type: object
+      properties:
+        activeConnections:
+          type: integer
+
+    # ----------------------------------------------------------
+    # Preferences (per-user UI preferences)
+    # ----------------------------------------------------------
+    PreferenceResponse:
+      type: object
+      properties:
+        general:
+          $ref: '#/components/schemas/GeneralPreferences'
+        reader:
+          $ref: '#/components/schemas/ReaderPreferences'
+        privacy:
+          $ref: '#/components/schemas/PrivacyPreferences'
+
+    PreferenceUpdateRequest:
+      type: object
+      description: All fields optional — deep-merged over the stored preferences
+      properties:
+        general:
+          $ref: '#/components/schemas/GeneralPreferences'
+        reader:
+          $ref: '#/components/schemas/ReaderPreferences'
+        privacy:
+          $ref: '#/components/schemas/PrivacyPreferences'
+
+    GeneralPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          default: light
+        themeAutoSwitch:
+          type: boolean
+          default: false
+        launchPage:
+          type: string
+          default: homepage
+        listMode:
+          type: string
+          default: list
+        showReadProgress:
+          type: boolean
+          default: true
+        detailSize:
+          type: string
+          default: long
+        thumbSize:
+          type: string
+          default: middle
+        historyInfoSize:
+          type: integer
+          default: 100
+        showJpnTitle:
+          type: boolean
+          default: false
+        showGalleryPages:
+          type: boolean
+          default: false
+        showTagTranslations:
+          type: boolean
+          default: true
+        showGalleryComment:
+          type: boolean
+          default: true
+        showGalleryRating:
+          type: boolean
+          default: true
+        showEhEvents:
+          type: boolean
+          default: true
+        showEhLimits:
+          type: boolean
+          default: true
+
+    ReaderPreferences:
+      type: object
+      properties:
+        readingDirection:
+          type: string
+          default: rtl
+        pageMode:
+          type: string
+          default: dual
+        firstPageCover:
+          type: boolean
+          default: true
+        pageScaling:
+          type: string
+          default: fit
+        startPosition:
+          type: string
+          default: top_right
+        autoPlayIntervalSec:
+          type: integer
+          default: 2
+        showProgress:
+          type: boolean
+          default: true
+        showPageInterval:
+          type: boolean
+          default: true
+        fullscreen:
+          type: boolean
+          default: true
+        brightness:
+          type: integer
+          default: 0
+
+    PrivacyPreferences:
+      type: object
+      properties:
+        enableAnalytics:
+          type: boolean
+          default: true
 
     # ----------------------------------------------------------
     # Common
@@ -2522,3 +3392,12 @@ components:
       properties:
         success:
           type: boolean
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+        message:
+          type: string
