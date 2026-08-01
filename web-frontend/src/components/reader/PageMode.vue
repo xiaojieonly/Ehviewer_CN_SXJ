@@ -272,6 +272,7 @@ const imgRef = ref<HTMLImageElement | null>(null)
 
 const loaded = ref(false)
 const error = ref(false)
+const hasLoaded = ref(false)
 const retryTick = ref(0)
 const panX = ref(0)
 const panY = ref(0)
@@ -339,15 +340,23 @@ watch(
   () => {
     loaded.value = false
     error.value = false
+    hasLoaded.value = false
   },
 )
 
 function onImageLoad() {
   loaded.value = true
+  hasLoaded.value = true
   clampPan()
 }
 
 function onImageError() {
+  if (hasLoaded.value) {
+    // websocket-protocol §3.3 step 5: a failing enhanced hot-swap must
+    // silently keep the original — the element retains the old bitmap.
+    console.debug('[PageMode] enhanced image failed to load, keeping original', props.page)
+    return
+  }
   error.value = true
 }
 

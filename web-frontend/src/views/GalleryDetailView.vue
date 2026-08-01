@@ -204,7 +204,7 @@
  * All colors resolve through `tokens.css` custom properties, so the three
  * Android themes (light / dark / black) work unchanged.
  */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { galleryApi } from '@/api/gallery'
 import { commentApi, type CommentItem } from '@/api/comment'
@@ -230,6 +230,8 @@ const router = useRouter()
 const gallery = ref<GalleryDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+/** Monotonic guard so stale responses (superseded navigation) are dropped. */
+let loadSeq = 0
 
 const comments = ref<CommentItem[]>([])
 const commentsLoading = ref(false)
@@ -293,30 +295,35 @@ const downloadLabel = computed(() => {
 
 /* ---------------------------------------------------------- loading --- */
 async function load() {
+  const seq = ++loadSeq
   loading.value = true
   error.value = null
   try {
     const detail = await galleryApi.getDetail(galleryId.value)
+    if (seq !== loadSeq) return
     gallery.value = detail
     isFavorited.value = (detail.favoriteSlot ?? -1) >= 0
   } catch (e) {
+    if (seq !== loadSeq) return
     gallery.value = null
     error.value = e instanceof Error ? e.message : 'Failed to load gallery detail'
   } finally {
-    loading.value = false
+    if (seq === loadSeq) loading.value = false
   }
   void loadComments()
 }
 
 async function loadComments() {
+  const seq = loadSeq
   commentsLoading.value = true
   try {
     const res = await commentApi.listComments(galleryId.value)
+    if (seq !== loadSeq) return
     comments.value = res.comments ?? []
   } catch (e) {
     console.error('Failed to load comments', e)
   } finally {
-    commentsLoading.value = false
+    if (seq === loadSeq) commentsLoading.value = false
   }
 }
 
@@ -449,7 +456,31 @@ function showToast(message: string) {
   }, 2200)
 }
 
-onMounted(load)
+/* ------------------------------------------------------------- route --- */
+/** Reset all per-gallery state before (re)loading a different gid. */
+function reset() {
+  gallery.value = null
+  loading.value = true
+  error.value = null
+  comments.value = []
+  commentsLoading.value = false
+  posting.value = false
+  votingId.value = null
+  isFavorited.value = false
+  favoritePending.value = false
+  downloadState.value = 'idle'
+}
+
+// Reload whenever the route's gallery id changes — the view is reused for
+// detail→detail navigation (uploader / tag links) without remounting.
+watch(
+  galleryId,
+  () => {
+    reset()
+    void load()
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
   if (toastTimer !== undefined) clearTimeout(toastTimer)

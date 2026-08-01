@@ -99,6 +99,8 @@ const totalPages = ref(0)
 const currentPage = ref(0)
 /** Zoom factor (page mode only); intentionally NOT persisted. */
 const zoom = ref(1)
+/** Monotonic guard so stale loads (superseded navigation) are dropped. */
+let loadSeq = 0
 
 const readerRef = ref<InstanceType<typeof ImageReader> | null>(null)
 
@@ -328,9 +330,11 @@ function subscribeEnhanced() {
 /* ------------------------------------------------------------------ */
 
 async function load() {
+  const seq = ++loadSeq
   loadState.value = 'loading'
   try {
     const detail = await galleryApi.getDetail(gid.value)
+    if (seq !== loadSeq) return
     const pages = Number(detail?.pages)
     if (!Number.isFinite(pages) || pages <= 0) {
       throw new Error('Gallery has no pages')
@@ -347,11 +351,57 @@ async function load() {
     document.title = title.value
     subscribeEnhanced()
   } catch (error) {
+    if (seq !== loadSeq) return
     console.error('Failed to load gallery', error)
     errorMessage.value = 'Failed to load gallery'
     loadState.value = 'error'
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Route param changes — the view is reused across navigations         */
+/* ------------------------------------------------------------------ */
+
+/** Reset all per-gallery state before (re)loading a different gid. */
+function resetReaderState() {
+  loadState.value = 'loading'
+  errorMessage.value = 'Failed to load gallery'
+  title.value = ''
+  totalPages.value = 0
+  currentPage.value = 0
+  zoom.value = 1
+  autoPlay.value = { enabled: false, intervalMs: AUTO_PLAY_INTERVALS_MS[1] ?? 3000 }
+  autoPlayProgress.value = 0
+  if (autoPlayTimer !== null) clearInterval(autoPlayTimer)
+  autoPlayTimer = null
+  if (routeSyncTimer !== null) clearTimeout(routeSyncTimer)
+  routeSyncTimer = null
+}
+
+// gid change → full reset + reload. The `useEnhancedImage` composable
+// unsubscribes / re-subscribes the WebSocket topic on gid change itself.
+watch(
+  gid,
+  () => {
+    resetReaderState()
+    void load()
+  },
+  { immediate: true },
+)
+
+// Same gallery, a different page param (deep-link / back-nav): jump to the
+// page without reloading the gallery. Echoes of our own route-sync replace
+// are skipped via the target === currentPage guard; page changes that arrive
+// mid-load are picked up by `load()` reading `route.params.page`.
+watch(
+  () => route.params.page,
+  (page) => {
+    if (loadState.value !== 'ready') return
+    const target = Number(page)
+    if (!Number.isFinite(target) || target === currentPage.value) return
+    currentPage.value = Math.min(Math.max(target, 0), Math.max(0, totalPages.value - 1))
+  },
+)
 
 /* ------------------------------------------------------------------ */
 /* Lifecycle                                                           */
@@ -364,7 +414,6 @@ onMounted(() => {
     landscapeQuery.addEventListener('change', onLandscapeChange)
   }
   applyStoredSettings()
-  load()
 })
 
 onBeforeUnmount(() => {

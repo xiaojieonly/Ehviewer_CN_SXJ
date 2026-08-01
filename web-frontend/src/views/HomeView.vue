@@ -132,6 +132,8 @@ const authStore = useAuthStore()
 const galleries = ref<GalleryInfo[]>([])
 const page = ref(0)
 const total = ref(0)
+const fetchedPages = ref(0)
+const noMoreData = ref(false)
 const contentState = ref<HomeContentState>('loading')
 const refreshing = ref(false)
 const loadingMore = ref(false)
@@ -154,14 +156,22 @@ async function loadPage(target: number, mode: 'replace' | 'append'): Promise<voi
     )
     if (seq !== requestSeq) return
     page.value = target
+    total.value = res.total
     if (mode === 'replace') {
       galleries.value = res.data
+      fetchedPages.value = 1
+      noMoreData.value = res.data.length === 0
     } else {
       // Dedupe by gid — bumped galleries can reappear across pages.
       const seen = new Set(galleries.value.map((g) => g.gid))
-      galleries.value = [...galleries.value, ...res.data.filter((g) => !seen.has(g.gid))]
+      const fresh = res.data.filter((g) => !seen.has(g.gid))
+      galleries.value = [...galleries.value, ...fresh]
+      if (res.data.length === 0 || fresh.length === 0) {
+        noMoreData.value = true
+      } else {
+        fetchedPages.value += 1
+      }
     }
-    total.value = res.total
     contentState.value = galleries.value.length > 0 ? 'content' : 'empty'
   } catch (error) {
     if (seq !== requestSeq) return
@@ -199,7 +209,8 @@ async function onRefresh(): Promise<void> {
 /** ContentLayout scrolled near the bottom — fetch and append the next page. */
 function onLoadMore(): void {
   if (contentState.value !== 'content' || refreshing.value || loadingMore.value) return
-  if (galleries.value.length >= total.value) return
+  if (noMoreData.value) return
+  if (fetchedPages.value * PAGE_SIZE >= total.value) return
   void loadPage(page.value + 1, 'append')
 }
 
