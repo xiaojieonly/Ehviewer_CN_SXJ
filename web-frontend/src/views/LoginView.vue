@@ -32,29 +32,20 @@
       </div>
 
       <form class="login-form" novalidate @submit.prevent="handleSubmit">
-        <label class="field">
-          <input
-            id="login-username"
-            v-model="username"
-            type="text"
-            placeholder=" "
-            autocomplete="username"
-            :disabled="loading"
-          />
-          <span class="field__label">Username</span>
-        </label>
+        <AppTextField
+          v-model="username"
+          label="Username"
+          :disabled="loading"
+          class="login-field"
+        />
 
-        <label class="field">
-          <input
-            id="login-password"
-            v-model="password"
-            type="password"
-            placeholder=" "
-            autocomplete="current-password"
-            :disabled="loading"
-          />
-          <span class="field__label">Password</span>
-        </label>
+        <AppTextField
+          v-model="password"
+          label="Password"
+          type="password"
+          :disabled="loading"
+          class="login-field"
+        />
 
         <Transition name="error">
           <p v-if="error" class="login-error" role="alert">
@@ -98,6 +89,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import { AppTextField } from '@/components/form'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -314,58 +306,8 @@ async function handleRegister(): Promise<void> {
   flex-direction: column;
 }
 
-/* Material outlined field: divider border, primary on focus, floating label. */
-.field {
-  position: relative;
-  display: block;
+.login-field {
   margin-bottom: 18px;
-}
-
-.field input {
-  width: 100%;
-  padding: 16px 14px 12px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: transparent;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-  caret-color: var(--color-accent);
-  outline: none;
-  transition:
-    border-color 150ms var(--ease-decelerate-quart),
-    box-shadow 150ms var(--ease-decelerate-quart);
-}
-
-.field input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px var(--color-primary);
-}
-
-.field input:disabled {
-  opacity: 0.6;
-}
-
-.field__label {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  translate: 0 -50%;
-  padding: 0 4px;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-secondary);
-  pointer-events: none;
-  transition:
-    top 150ms var(--ease-decelerate-quart),
-    font-size 150ms var(--ease-decelerate-quart),
-    color 150ms var(--ease-decelerate-quart);
-}
-
-.field input:focus + .field__label,
-.field input:not(:placeholder-shown) + .field__label {
-  top: 0;
-  font-size: clamp(10px, 12px, 13px);
-  color: var(--color-primary);
-  background: var(--color-background-floating);
 }
 
 /* ---------------------------------- error --------------------------------- */
