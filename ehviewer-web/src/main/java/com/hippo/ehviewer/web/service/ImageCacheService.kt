@@ -94,6 +94,24 @@ class ImageCacheService(
         putToDisk(pageDiskPath(galleryId, page, ext), data)
     }
 
+    /**
+     * Locate the cached page file on disk (any extension) so callers can serve
+     * it with the correct Content-Type. Returns null when not cached on disk.
+     */
+    fun findCachedPageFile(galleryId: Long, page: Int): File? = findPageFile(galleryId, page)
+
+    /**
+     * Locate an AI-enhanced page file under `{cachePath}/enhanced/{galleryId}/{page}.*`
+     * produced by the processing pipeline. Returns null when no enhanced
+     * version exists for the page.
+     */
+    fun getEnhancedImage(galleryId: Long, page: Int): File? {
+        val dir = File(cacheDir, "enhanced/$galleryId")
+        if (!dir.isDirectory) return null
+        return dir.listFiles()
+            ?.firstOrNull { it.isFile && it.nameWithoutExtension == page.toString() }
+    }
+
     // ── gallery management ─────────────────────────────────────
 
     /**
@@ -134,6 +152,9 @@ class ImageCacheService(
     }
 
     fun getCacheSize(): Int = memoryCache.asMap().size
+
+    /** Number of files currently stored on disk (scan-based, for metrics). */
+    fun getDiskEntryCount(): Long = collectFiles(cacheDir).size.toLong()
 
     // ── stats ──────────────────────────────────────────────────
 
