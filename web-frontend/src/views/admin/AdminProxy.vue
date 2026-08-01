@@ -20,94 +20,72 @@
         </Transition>
       </header>
 
-      <section class="pref-group">
-        <h2 class="pref-group__title">出站代理</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="send-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">启用代理</span>
-              <span class="pref__summary">服务器访问 E-Hentai 时通过代理转发（搜索、图片、下载）</span>
-            </div>
-            <button
-              type="button"
-              class="switch"
-              role="switch"
-              :aria-checked="form.enabled"
+      <section>
+        <SectionHeader title="出站代理" />
+        <PrefCard>
+          <PrefRow icon="send-dark" title="启用代理" summary="服务器访问 E-Hentai 时通过代理转发（搜索、图片、下载）">
+            <AppSwitch
+              :model-value="form.enabled"
               aria-label="启用代理"
               :disabled="loading"
-              @click="form.enabled = !form.enabled"
-            >
-              <span class="switch__thumb" />
-            </button>
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="settings-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">代理类型</span>
-              <span class="pref__summary">HTTP / HTTPS 代理或 SOCKS5 代理</span>
-            </div>
-            <select v-model="form.type" class="pref__select" :disabled="loading" aria-label="代理类型">
-              <option value="http">HTTP</option>
-              <option value="socks5">SOCKS5</option>
-            </select>
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="mobile-hand-left" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">服务器地址</span>
-              <span class="pref__summary">代理主机与端口</span>
-            </div>
-            <input
-              v-model="form.host"
-              class="pref__input"
-              type="text"
-              placeholder="127.0.0.1"
-              :disabled="loading"
-              aria-label="代理服务器地址"
-              @keyup.enter="test"
+              @update:model-value="(v) => (form.enabled = v)"
             />
-            <input
-              v-model.number="form.port"
-              class="pref__input pref__input--port"
-              type="number"
-              min="1"
-              max="65535"
-              placeholder="7890"
+          </PrefRow>
+          <PrefRow icon="settings-dark" title="代理类型" summary="HTTP / HTTPS 代理或 SOCKS5 代理">
+            <AppSelect
+              :model-value="form.type"
+              :options="PROXY_TYPE_OPTIONS"
               :disabled="loading"
-              aria-label="代理端口"
+              @update:model-value="(v) => (form.type = String(v))"
             />
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="sec-primary" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">认证（可选）</span>
-              <span class="pref__summary">代理需要用户名密码时填写</span>
+          </PrefRow>
+          <PrefRow icon="mobile-hand-left" title="服务器地址" summary="代理主机与端口">
+            <div class="proxy-fields">
+              <div class="proxy-fields__host">
+                <AppTextField
+                  :model-value="form.host"
+                  placeholder="127.0.0.1"
+                  :disabled="loading"
+                  aria-label="代理服务器地址"
+                  @update:model-value="(v) => (form.host = v)"
+                  @keydown.enter="test"
+                />
+              </div>
+              <div class="proxy-fields__port">
+                <AppTextField
+                  :model-value="form.port === 0 ? '' : String(form.port)"
+                  type="number"
+                  placeholder="7890"
+                  :disabled="loading"
+                  aria-label="代理端口"
+                  @update:model-value="onPortInput"
+                />
+              </div>
             </div>
-          </div>
-          <div class="pref">
-            <div class="pref__text">
-              <span class="pref__title">用户名</span>
+          </PrefRow>
+          <PrefRow icon="sec-primary" title="认证（可选）" summary="代理需要用户名密码时填写" />
+          <PrefRow title="用户名">
+            <div class="proxy-auth-field">
+              <AppTextField
+                :model-value="form.username"
+                :disabled="loading"
+                aria-label="代理用户名"
+                @update:model-value="(v) => (form.username = v)"
+              />
             </div>
-            <input v-model="form.username" class="pref__input" type="text" :disabled="loading" aria-label="代理用户名" />
-          </div>
-          <div class="pref">
-            <div class="pref__text">
-              <span class="pref__title">密码</span>
+          </PrefRow>
+          <PrefRow title="密码">
+            <div class="proxy-auth-field">
+              <AppTextField
+                :model-value="form.password"
+                type="password"
+                :disabled="loading"
+                aria-label="代理密码"
+                @update:model-value="(v) => (form.password = v)"
+              />
             </div>
-            <input
-              v-model="form.password"
-              class="pref__input"
-              type="password"
-              autocomplete="off"
-              :disabled="loading"
-              aria-label="代理密码"
-            />
-          </div>
-        </div>
+          </PrefRow>
+        </PrefCard>
         <div class="admin-proxy__actions">
           <button type="button" class="btn-secondary" :disabled="testing || loading" @click="test">
             {{ testing ? '测试中…' : '测试连接' }}
@@ -144,12 +122,18 @@ import { onMounted, reactive, ref } from 'vue'
 import { settingsApi, type ProxySettings } from '@/api/settings'
 import client from '@/api/client'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSelect, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 interface ProxyTestResult {
   success: boolean
   latencyMs: number
   error: string
 }
+
+const PROXY_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'http', label: 'HTTP' },
+  { value: 'socks5', label: 'SOCKS5' },
+]
 
 const form = reactive<ProxySettings>({
   enabled: false,
@@ -208,6 +192,10 @@ async function test() {
   } finally {
     testing.value = false
   }
+}
+
+function onPortInput(value: string): void {
+  form.port = Number(value) || 0
 }
 
 function messageOf(e: unknown): string {
@@ -282,21 +270,22 @@ onMounted(load)
   cursor: default;
 }
 
-.pref__select,
-.pref__input {
-  flex: 0 0 auto;
-  max-width: 180px;
-  padding: 6px 10px;
-  border: 1px solid var(--color-divider);
-  border-radius: 8px;
-  background: var(--color-surface);
-  color: var(--text-color-primary);
-  font-size: var(--text-super-small);
+.proxy-fields {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.pref__input--port {
-  max-width: 90px;
-  margin-left: 8px;
+.proxy-fields__host {
+  width: 150px;
+}
+
+.proxy-fields__port {
+  width: 92px;
+}
+
+.proxy-auth-field {
+  width: 180px;
 }
 
 .proxy-result {

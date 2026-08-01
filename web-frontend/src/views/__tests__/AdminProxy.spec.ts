@@ -3,6 +3,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminProxy from '../admin/AdminProxy.vue'
 import { settingsApi, type Settings } from '@/api/settings'
 import client from '@/api/client'
+import { AppSelect, AppSwitch, AppTextField, PrefRow } from '@/components/form'
 
 vi.mock('@/api/settings', () => ({
   settingsApi: { get: vi.fn(), update: vi.fn() },
@@ -57,20 +58,46 @@ describe('AdminProxy (出站代理配置)', () => {
     return wrapper
   }
 
+  it('renders the form with shared primitives and no native select (UX-02)', async () => {
+    const w = await mountView()
+    expect(w.find('select').exists()).toBe(false)
+    expect(w.findAllComponents(AppTextField).length).toBe(4)
+
+    const select = w.findComponent(AppSelect)
+    expect(select.exists()).toBe(true)
+    expect(select.props('options')).toEqual([
+      { value: 'http', label: 'HTTP' },
+      { value: 'socks5', label: 'SOCKS5' },
+    ])
+
+    expect(w.findComponent(AppSwitch).exists()).toBe(true)
+    const titles = w.findAllComponents(PrefRow).map((r) => r.props('title'))
+    expect(titles).toEqual(['启用代理', '代理类型', '服务器地址', '认证（可选）', '用户名', '密码'])
+  })
+
   it('loads the saved proxy settings into the form', async () => {
     vi.mocked(settingsApi.get).mockResolvedValue(
       settingsWithProxy({ enabled: true, type: 'socks5', host: '127.0.0.1', port: 1080 }),
     )
     const w = await mountView()
-    const input = w.findAll('.pref__input').find((i) => (i.element as HTMLInputElement).placeholder === '127.0.0.1')
-    expect((input!.element as HTMLInputElement).value).toBe('127.0.0.1')
-    expect((w.find('select').element as HTMLSelectElement).value).toBe('socks5')
+
+    const host = w.findAllComponents(AppTextField).find((f) => f.props('placeholder') === '127.0.0.1')!
+    expect((host.find('input').element as HTMLInputElement).value).toBe('127.0.0.1')
+
+    const select = w.findComponent(AppSelect)
+    expect(select.props('modelValue')).toBe('socks5')
+    expect(select.text()).toContain('SOCKS5')
+
+    expect(w.findComponent(AppSwitch).attributes('aria-checked')).toBe('true')
+
+    const port = w.findAllComponents(AppTextField).find((f) => f.props('placeholder') === '7890')!
+    expect((port.find('input').element as HTMLInputElement).value).toBe('1080')
   })
 
   it('saves the form values via settingsApi', async () => {
     const w = await mountView()
-    const host = w.findAll('.pref__input').find((i) => (i.element as HTMLInputElement).placeholder === '127.0.0.1')!
-    await host.setValue('proxy.example.com')
+    const host = w.findAllComponents(AppTextField).find((f) => f.props('placeholder') === '127.0.0.1')!
+    await host.find('input').setValue('proxy.example.com')
     const buttons = w.findAll('button')
     const save = buttons.find((b) => b.text() === '保存并应用')!
     await save.trigger('click')
