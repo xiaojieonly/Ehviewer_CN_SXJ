@@ -7,9 +7,6 @@
 
   NOTE: 后端 SettingsService 在收到 security 段时会同时写入两个字段，
   因此前端始终提交完整的 security 对象（而非单字段补丁）。
-
-  TODO(Wave 6): authApi 暂无 change-password 端点，修改密码表单按钮禁用，
-  待后端实现 POST /auth/change-password 后再接入。
 -->
 <template>
   <div class="admin-access">
@@ -60,16 +57,20 @@
         <SectionHeader title="修改密码" />
         <PrefCard>
           <div class="access-form">
-            <!-- TODO(Wave 6): 后端暂无 change-password 端点，接入 authApi 后启用 -->
-            <AppTextField v-model="password.old" label="旧密码" type="password" />
-            <AppTextField v-model="password.new" label="新密码" type="password" />
-            <AppTextField v-model="password.confirm" label="确认新密码" type="password" />
-            <button type="button" class="btn-primary" disabled title="后端暂未提供修改密码接口">
-              修改密码
+            <AppTextField v-model="password.old" label="旧密码" type="password" autocomplete="current-password" />
+            <AppTextField v-model="password.new" label="新密码" type="password" autocomplete="new-password" />
+            <AppTextField v-model="password.confirm" label="确认新密码" type="password" autocomplete="new-password" />
+            <button
+              type="button"
+              class="btn-primary"
+              :disabled="changingPassword"
+              :aria-busy="changingPassword"
+              @click="submitPasswordChange"
+            >
+              {{ changingPassword ? '修改中…' : '修改密码' }}
             </button>
           </div>
         </PrefCard>
-        <p class="access-form__note">后端暂未提供修改密码接口，敬请期待。</p>
       </section>
     </div>
 
@@ -84,6 +85,7 @@
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
+import { authApi } from '@/api/auth'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
@@ -103,6 +105,7 @@ const DEFAULT_SECURITY: SecuritySettings = {
 }
 
 const loading = ref(true)
+const changingPassword = ref(false)
 const security = reactive<SecuritySettings>({ ...DEFAULT_SECURITY })
 const password = reactive({ old: '', new: '', confirm: '' })
 
@@ -153,6 +156,36 @@ function onTimeoutChange(event: Event): void {
   const clamped = Math.min(2592000, Math.round(raw))
   if (clamped !== security.sessionTimeout) {
     void persistSecurity({ sessionTimeout: clamped })
+  }
+}
+
+/** 提交修改密码：客户端校验非空与两次输入一致，后端错误消息原样展示。 */
+async function submitPasswordChange(): Promise<void> {
+  if (!password.old || !password.new || !password.confirm) {
+    showSnack('请填写完整的密码信息')
+    return
+  }
+  if (password.new !== password.confirm) {
+    showSnack('两次输入的新密码不一致')
+    return
+  }
+  changingPassword.value = true
+  try {
+    const result = await authApi.changePassword(password.old, password.new)
+    if (result.success) {
+      password.old = ''
+      password.new = ''
+      password.confirm = ''
+      showSnack(result.message || '密码修改成功')
+    } else {
+      showSnack(result.message || '密码修改失败')
+    }
+  } catch (error) {
+    // 401 由 client 拦截器处理（跳转登录页）；其余错误走兜底提示。
+    console.error('[AdminAccess] failed to change password', error)
+    showSnack('无法修改密码，请稍后重试')
+  } finally {
+    changingPassword.value = false
   }
 }
 
@@ -284,12 +317,6 @@ onBeforeUnmount(() => {
 
 .access-form .btn-primary {
   align-self: flex-end;
-}
-
-.access-form__note {
-  margin: 10px 4px 14px;
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
 }
 
 /* --------------------------------- buttons -------------------------------- */

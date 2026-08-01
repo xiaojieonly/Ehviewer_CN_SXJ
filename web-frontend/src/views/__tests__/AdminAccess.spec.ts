@@ -2,10 +2,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminAccess from '../admin/AdminAccess.vue'
 import { settingsApi, type Settings } from '@/api/settings'
+import { authApi } from '@/api/auth'
 import { AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/settings', () => ({
   settingsApi: { get: vi.fn(), update: vi.fn() },
+}))
+
+vi.mock('@/api/auth', () => ({
+  authApi: { changePassword: vi.fn() },
 }))
 
 function settingsWithSecurity(overrides: Partial<Settings['security']> = {}): Settings {
@@ -32,6 +37,7 @@ describe('AdminAccess (访问控制)', () => {
   beforeEach(() => {
     vi.mocked(settingsApi.get).mockResolvedValue(settingsWithSecurity())
     vi.mocked(settingsApi.update).mockResolvedValue(true)
+    vi.mocked(authApi.changePassword).mockResolvedValue({ success: true, message: 'Password changed' })
   })
 
   afterEach(() => {
@@ -95,5 +101,71 @@ describe('AdminAccess (访问控制)', () => {
     expect(settingsApi.update).toHaveBeenCalledWith(
       expect.objectContaining({ security: expect.objectContaining({ sessionTimeout: 7200 }) }),
     )
+  })
+
+  async function fillPasswordForm(w: VueWrapper, oldPw: string, newPw: string) {
+    const [oldField, newField, confirmField] = w.findAllComponents(AppTextField)
+    await oldField.setValue(oldPw)
+    await newField.setValue(newPw)
+    await confirmField.setValue(newPw)
+  }
+
+  it('submits change-password, shows success and clears the fields', async () => {
+    const w = await mountView()
+    const btn = w.find('.access-form .btn-primary')
+    expect(btn.attributes('disabled')).toBeUndefined()
+
+    await fillPasswordForm(w, 'old-pass-1', 'new-pass-1')
+    await btn.trigger('click')
+    await flushPromises()
+
+    expect(authApi.changePassword).toHaveBeenCalledWith('old-pass-1', 'new-pass-1')
+    expect(w.text()).toContain('Password changed')
+    const fields = w.findAllComponents(AppTextField)
+    expect(fields.map((f) => f.props('modelValue'))).toEqual(['', '', ''])
+  })
+
+  it('shows the backend message when the request fails', async () => {
+    vi.mocked(authApi.changePassword).mockResolvedValue({
+      success: false,
+      message: 'Old password is incorrect',
+    })
+    const w = await mountView()
+
+    await fillPasswordForm(w, 'wrong-pass', 'new-pass-1')
+    await w.find('.access-form .btn-primary').trigger('click')
+    await flushPromises()
+
+    expect(authApi.changePassword).toHaveBeenCalledWith('wrong-pass', 'new-pass-1')
+    expect(w.text()).toContain('Old password is incorrect')
+    expect(w.findAllComponents(AppTextField).map((f) => f.props('modelValue'))).toEqual([
+      'wrong-pass',
+      'new-pass-1',
+      'new-pass-1',
+    ])
+  })
+
+  it('rejects empty fields client-side without calling the API', async () => {
+    const w = await mountView()
+
+    await w.find('.access-form .btn-primary').trigger('click')
+    await flushPromises()
+
+    expect(authApi.changePassword).not.toHaveBeenCalled()
+    expect(w.text()).toContain('请填写完整的密码信息')
+  })
+
+  it('rejects mismatched confirmation client-side without calling the API', async () => {
+    const w = await mountView()
+    const [oldField, newField, confirmField] = w.findAllComponents(AppTextField)
+    await oldField.setValue('old-pass-1')
+    await newField.setValue('new-pass-1')
+    await confirmField.setValue('different-pass')
+
+    await w.find('.access-form .btn-primary').trigger('click')
+    await flushPromises()
+
+    expect(authApi.changePassword).not.toHaveBeenCalled()
+    expect(w.text()).toContain('两次输入的新密码不一致')
   })
 })

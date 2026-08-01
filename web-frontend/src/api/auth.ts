@@ -19,6 +19,21 @@ export const authApi = {
     return data
   },
 
+  async changePassword(oldPassword: string, newPassword: string): Promise<AuthResponse> {
+    try {
+      const { data } = await client.post('/auth/change-password', { oldPassword, newPassword })
+      return data
+    } catch (error) {
+      // 401 is handled by the client interceptor (redirects to /login). The
+      // backend answers 400 with `{success: false, message}` for wrong old
+      // password / invalid length / auth disabled — surface that body instead
+      // of throwing so the view can show the exact message.
+      const body = (error as { response?: { data?: AuthResponse } }).response?.data
+      if (body) return body
+      throw error
+    }
+  },
+
   async status(): Promise<AuthStatusResult> {
     const { data } = await client.get('/auth/status')
     return data
