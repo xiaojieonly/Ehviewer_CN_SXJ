@@ -1191,7 +1191,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         PreviewSet previewSet = gd.previewSet;
 
 
-        int columnWidth = resources.getDimensionPixelOffset(Settings.getThumbSizeResId());
+        int columnWidth = Settings.getThumbSizePx(resources);
         mGridLayout.setColumnSize(columnWidth);
         mGridLayout.setStrategy(SimpleGridAutoSpanLayout.STRATEGY_SUITABLE_SIZE);
 
