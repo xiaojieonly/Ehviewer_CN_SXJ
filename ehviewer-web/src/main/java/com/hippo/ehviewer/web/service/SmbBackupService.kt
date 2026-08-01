@@ -39,7 +39,8 @@ class SmbBackupService(
     private val smbConfigRepository: SmbConfigRepository,
     private val eventPublisher: ApplicationEventPublisher,
     private val config: EhCoreConfigProperties,
-    private val downloadService: DownloadService
+    private val downloadService: DownloadService,
+    private val encryptionService: EncryptionService
 ) {
     private val logger = LoggerFactory.getLogger(SmbBackupService::class.java)
     private val isSyncing = AtomicBoolean(false)
@@ -67,7 +68,12 @@ class SmbBackupService(
         existing.loginMode = request.loginMode
         existing.username = request.username
         if (request.password != null) {
+            // Empty clears the password; already-encrypted values (e.g. from a
+            // previously saved config round-tripped by the client) are kept
+            // verbatim; anything else is encrypted at rest like the proxy password.
             existing.password = request.password
+                .takeIf { it.isEmpty() || it.startsWith(ENC_PREFIX) }
+                ?: ENC_PREFIX + encryptionService.encrypt(request.password, encryptionKey())
         }
         existing.enabled = request.enabled
 
@@ -154,7 +160,7 @@ class SmbBackupService(
                     connection.authenticate(
                         AuthenticationContext(
                             configEntity.username ?: "",
-                            configEntity.password?.toCharArray() ?: charArrayOf(),
+                            decryptPassword(configEntity)?.toCharArray() ?: charArrayOf(),
                             ""
                         )
                     )
@@ -259,9 +265,26 @@ class SmbBackupService(
         }
     }
 
+    /** Password for actual use (sync etc.): decrypted when stored encrypted,
+     *  legacy plaintext returned verbatim, null/empty kept as-is. */
+    private fun decryptPassword(entity: SmbConfigEntity): String? {
+        val stored = entity.password ?: return null
+        if (!stored.startsWith(ENC_PREFIX)) return stored
+        return runCatching { encryptionService.decrypt(stored.removePrefix(ENC_PREFIX), encryptionKey()) }
+            .getOrNull()
+    }
+
+    private fun encryptionKey(): String {
+        val file = File(config.security.encryptionKeyPath)
+        if (file.exists()) return file.readText().trim()
+        val key = encryptionService.generateToken()
+        file.parentFile?.mkdirs()
+        file.writeText(key)
+        return key
+    }
+
     /** True when the remote file exists with the same byte length as [localLength]. */
-    private fun remoteFileMatches(share: DiskShare, path: String, localLength: Long): Boolean {
-        return try {
+    private fun remoteFileMatches(share: DiskShare, path: String, localLength: Long): Boolean {        return try {
             if (!share.fileExists(path)) {
                 false
             } else {
@@ -292,5 +315,9 @@ class SmbBackupService(
         if (configEntity != null && configEntity.enabled && !isSyncing.get()) {
             startSync(false)
         }
+    }
+
+    companion object {
+        private const val ENC_PREFIX = "enc:v1:"
     }
 }
