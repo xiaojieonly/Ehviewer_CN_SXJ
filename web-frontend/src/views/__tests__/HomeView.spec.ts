@@ -18,12 +18,22 @@ vi.mock('@/api/gallery', () => ({
 function gallery(overrides: Partial<GalleryInfo> = {}): GalleryInfo {
   return {
     gid: 1,
+    token: 'abc123',
     title: 'Sample',
+    titleJpn: '',
     thumb: '',
     category: 2,
     posted: '2026-01-01',
-    pages: 10,
+    uploader: '',
     rating: 4,
+    rated: false,
+    simpleLanguage: '',
+    simpleTags: [],
+    thumbWidth: 0,
+    thumbHeight: 0,
+    pages: 10,
+    favoriteSlot: -1,
+    favoriteName: '',
     ...overrides,
   }
 }
