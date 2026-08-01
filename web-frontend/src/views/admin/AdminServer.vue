@@ -23,100 +23,66 @@
       </header>
 
       <!-- ═══ 缓存 ═══════════════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">缓存</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="folder-share-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">缓存路径</span>
-              <span class="pref__summary">服务器上缓存文件的存放目录</span>
+      <section>
+        <SectionHeader title="缓存" />
+        <PrefCard>
+          <PrefRow icon="folder-share-dark" title="缓存路径" summary="服务器上缓存文件的存放目录">
+            <div class="server__field">
+              <AppTextField
+                :model-value="pathDraft"
+                placeholder="/cache"
+                :disabled="!server"
+                aria-label="缓存路径"
+                @update:model-value="(v) => (pathDraft = v)"
+              />
             </div>
-            <input
-              v-model="pathDraft"
-              type="text"
-              class="server__input"
-              aria-label="缓存路径"
-              placeholder="/cache"
-              :disabled="!server"
-              @change="saveCachePath"
-            />
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="settings-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">缓存大小 (MB)</span>
-              <span class="pref__summary">为缓存预留的磁盘空间上限</span>
+          </PrefRow>
+          <PrefRow icon="settings-dark" title="缓存大小 (MB)" summary="为缓存预留的磁盘空间上限">
+            <div class="server__field server__field--number">
+              <AppTextField
+                :model-value="sizeDraft === null ? '' : String(sizeDraft)"
+                type="number"
+                :disabled="!server"
+                aria-label="缓存大小"
+                @update:model-value="(v) => (sizeDraft = v === '' ? null : Number(v))"
+              />
             </div>
-            <input
-              v-model.number="sizeDraft"
-              type="number"
-              min="1"
-              step="1"
-              class="server__input server__input--number"
-              aria-label="缓存大小"
-              :disabled="!server"
-              @change="saveCacheSize"
-            />
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="info-outline-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">缓存统计</span>
-              <span class="pref__summary">当前缓存占用与条目数</span>
-            </div>
+          </PrefRow>
+          <PrefRow icon="info-outline-dark" title="缓存统计" summary="当前缓存占用与条目数">
             <span class="server__badge" title="后端尚未提供缓存统计接口">TODO</span>
-          </div>
-          <div class="pref-divider" />
-          <button type="button" class="pref pref--action" @click="clearCache">
-            <AppIcon name="clear-all-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">清除缓存</span>
-              <span class="pref__summary">删除服务器上的全部缓存文件</span>
-            </div>
-            <span class="server__badge" title="后端尚未提供清除缓存接口">TODO</span>
-          </button>
-        </div>
+          </PrefRow>
+          <PrefRow icon="clear-all-dark" title="清除缓存" summary="删除服务器上的全部缓存文件">
+            <button type="button" class="server__action" aria-label="清除缓存" @click="clearCache">
+              <span class="server__badge" title="后端尚未提供清除缓存接口">TODO</span>
+            </button>
+          </PrefRow>
+        </PrefCard>
       </section>
 
       <!-- ═══ SMB 备份 ══════════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">SMB 备份</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="history-black" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">SMB 备份</span>
-              <span class="pref__summary">
-                {{ server?.smb.enabled ? '已开启，备份到 SMB 共享' : '已关闭' }}
-              </span>
-            </div>
-            <button
-              type="button"
-              class="switch"
-              role="switch"
-              :aria-checked="server?.smb.enabled ?? false"
+      <section>
+        <SectionHeader title="SMB 备份" />
+        <PrefCard>
+          <PrefRow
+            icon="history-black"
+            title="SMB 备份"
+            :summary="server?.smb.enabled ? '已开启，备份到 SMB 共享' : '已关闭'"
+          >
+            <AppSwitch
+              :model-value="server?.smb.enabled ?? false"
               aria-label="SMB 备份"
               :disabled="!server"
-              @click="toggleSmb"
-            >
-              <span class="switch__thumb" />
-            </button>
-          </div>
+              @update:model-value="toggleSmb"
+            />
+          </PrefRow>
           <template v-if="server?.smb.enabled">
-            <div class="pref-divider" />
-            <router-link to="/smb-backup" class="pref pref--link">
-              <AppIcon name="go-to-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">前往备份页面</span>
-                <span class="pref__summary">配置连接并手动触发同步</span>
-              </div>
-              <AppIcon name="go-to-dark" class="pref__chevron" size="20px" />
-            </router-link>
+            <PrefRow icon="go-to-dark" title="前往备份页面" summary="配置连接并手动触发同步">
+              <router-link to="/smb-backup" class="server__link" aria-label="前往备份页面">
+                <AppIcon name="go-to-dark" size="20px" />
+              </router-link>
+            </PrefRow>
           </template>
-        </div>
+        </PrefCard>
       </section>
     </div>
 
@@ -128,10 +94,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const server = ref<Settings | null>(null)
 const pathDraft = ref('')
@@ -150,9 +117,24 @@ function showSnack(message: string): void {
 
 /* ------------------------------- 缓存设置 -------------------------------- */
 
+let cachePathTimer: number | undefined
+let cacheSizeTimer: number | undefined
+
+/** AppTextField 只在输入时发裸值；在编辑停顿后提交（等价原 change 保存语义）。 */
+watch(pathDraft, () => {
+  if (cachePathTimer) window.clearTimeout(cachePathTimer)
+  cachePathTimer = window.setTimeout(saveCachePath, 500)
+})
+
+watch(sizeDraft, () => {
+  if (cacheSizeTimer) window.clearTimeout(cacheSizeTimer)
+  cacheSizeTimer = window.setTimeout(saveCacheSize, 500)
+})
+
 async function saveCachePath(): Promise<void> {
   if (!server.value) return
   const next = pathDraft.value.trim()
+  if (next === server.value.cache.path) return
   const previous = server.value.cache.path
   server.value.cache.path = next
   try {
@@ -169,6 +151,7 @@ async function saveCachePath(): Promise<void> {
 async function saveCacheSize(): Promise<void> {
   if (!server.value || sizeDraft.value === null) return
   const next = Math.max(1, Math.floor(sizeDraft.value))
+  if (next === server.value.cache.sizeMb) return
   const previous = server.value.cache.sizeMb
   sizeDraft.value = next
   server.value.cache.sizeMb = next
@@ -245,132 +228,14 @@ onMounted(async () => {
   color: var(--text-color-secondary);
 }
 
-/* ----------------------------- 偏好分组（同 settings 页） ----------------- */
+/* ------------------------------- 输入框 --------------------------------- */
 
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
+.server__field {
+  width: 220px;
 }
 
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-.pref {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-button.pref {
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  transition: background-color 120ms var(--ease-decelerate-quart);
-}
-
-button.pref:hover {
-  background: var(--color-surface);
-}
-
-button.pref:active {
-  background: var(--color-surface-activated);
-}
-
-.pref--link {
-  width: 100%;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 120ms var(--ease-decelerate-quart);
-}
-
-.pref--link:hover {
-  background: var(--color-surface);
-}
-
-.pref--link:active {
-  background: var(--color-surface-activated);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pref__chevron {
-  flex: 0 0 20px;
-  color: var(--drawable-color-secondary);
-}
-
-/* ---------------------------------- 输入框 --------------------------------- */
-
-.server__input {
-  flex: 0 1 220px;
-  min-width: 140px;
-  padding: 8px 10px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: transparent;
-  font-size: clamp(13px, 14px, 16px);
-  color: var(--text-color-primary);
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
-}
-
-.server__input:focus {
-  border-color: var(--color-primary);
-}
-
-.server__input:disabled {
-  opacity: 0.5;
-}
-
-.server__input--number {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+.server__field--number {
+  width: 140px;
 }
 
 /* -------------------------------- TODO 徽标 --------------------------------- */
@@ -386,46 +251,20 @@ button.pref:active {
   letter-spacing: 0.05em;
 }
 
-/* ---------------------------------- switch --------------------------------- */
-
-.switch {
-  position: relative;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 20px;
+.server__action {
+  padding: 0;
   border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
+  background: transparent;
   cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
 }
 
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
+.server__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
   border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
-}
-
-.switch:disabled {
-  opacity: 0.5;
-  cursor: default;
+  color: var(--drawable-color-secondary);
 }
 
 /* ---------------------------------- snackbar -------------------------------- */
