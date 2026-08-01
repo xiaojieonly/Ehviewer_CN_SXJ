@@ -12,9 +12,9 @@
         <h1 class="about-view__title">关于</h1>
       </header>
 
-      <section class="pref-group">
-        <h2 class="pref-group__title">AnotherViewer</h2>
-        <div class="pref-card about-view__hero">
+      <section>
+        <SectionHeader title="AnotherViewer" />
+        <PrefCard class="about-view__hero">
           <AppIcon name="sad-panda-primary" size="56px" class="about-view__logo" />
           <h3 class="about-view__name">AnotherViewer <span>WebUI</span></h3>
           <p class="about-view__version">版本 {{ appVersion }} · 伴侣客户端</p>
@@ -22,51 +22,33 @@
             E-Hentai 浏览器的 Web 复刻——相同的设计语言、三套主题，
             可与本机服务器配对使用。
           </p>
-        </div>
+        </PrefCard>
       </section>
 
-      <section class="pref-group">
-        <h2 class="pref-group__title">信息</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <div class="pref__text">
-              <span class="pref__title">许可证</span>
-              <span class="pref__summary">Apache License 2.0</span>
-            </div>
-          </div>
-          <div class="pref-divider" />
-          <a
-            :href="projectUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="pref pref--link"
-          >
-            <div class="pref__text">
-              <span class="pref__title">项目地址</span>
-              <span class="pref__summary">{{ projectUrl }}</span>
-            </div>
-            <AppIcon name="go-to-dark" class="pref__chevron" size="20px" />
-          </a>
-        </div>
+      <section>
+        <SectionHeader title="信息" />
+        <PrefCard>
+          <PrefRow title="许可证" summary="Apache License 2.0" />
+          <PrefRow title="项目地址" :summary="projectUrl">
+            <a
+              :href="projectUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="about-view__link"
+              aria-label="打开项目地址"
+            >
+              <AppIcon name="go-to-dark" size="20px" />
+            </a>
+          </PrefRow>
+        </PrefCard>
       </section>
 
-      <section class="pref-group">
-        <h2 class="pref-group__title">构建信息</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <div class="pref__text">
-              <span class="pref__title">技术栈</span>
-              <span class="pref__summary">Spring Boot 3.4 · Vue 3 · SQLite</span>
-            </div>
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <div class="pref__text">
-              <span class="pref__title">前端框架</span>
-              <span class="pref__summary">Vue 3 + TypeScript + Vite</span>
-            </div>
-          </div>
-        </div>
+      <section>
+        <SectionHeader title="构建信息" />
+        <PrefCard>
+          <PrefRow title="技术栈" summary="Spring Boot 3.4 · Vue 3 · SQLite" />
+          <PrefRow title="前端框架" summary="Vue 3 + TypeScript + Vite" />
+        </PrefCard>
       </section>
     </div>
   </div>
@@ -74,6 +56,7 @@
 
 <script setup lang="ts">
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /** 镜像 package.json 的 `version` 字段（tsconfig 未开启 resolveJsonModule）。 */
 const appVersion = '1.0.0'
@@ -110,78 +93,16 @@ const projectUrl = 'https://github.com/PegionFish/AnotherViewer'
   color: var(--text-color-primary);
 }
 
-/* ----------------------------- preference group --------------------------- */
+/* ---------------------------------- hero ----------------------------------- */
 
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-/* ------------------------------ preference row ---------------------------- */
-
-.pref {
-  display: flex;
+.about-view__link {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-a.pref {
-  text-decoration: none;
-}
-
-a.pref:hover {
-  background: var(--color-surface);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pref__chevron {
-  flex: 0 0 20px;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
   color: var(--drawable-color-secondary);
 }
-
-/* ---------------------------------- hero ----------------------------------- */
 
 .about-view__hero {
   display: flex;

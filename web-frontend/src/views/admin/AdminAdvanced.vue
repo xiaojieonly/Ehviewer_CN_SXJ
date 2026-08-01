@@ -20,86 +20,53 @@
       </header>
 
       <!-- ═══ 通用 ══════════════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">通用</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="settings-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">界面语言</span>
-              <span class="pref__summary">尚未接入 i18n，仅记录偏好</span>
-            </div>
-            <label class="select">
-              <span class="select__label">界面语言</span>
-              <select :value="ui.language" aria-label="界面语言" @change="onLanguageChange">
-                <option
-                  v-for="option in LANGUAGE_OPTIONS"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="bug-black" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">保存解析错误日志</span>
-              <span class="pref__summary">将页面解析失败记录到本地日志</span>
-            </div>
-            <button
-              type="button"
-              class="switch"
-              role="switch"
-              :aria-checked="ui.saveParseErrors"
+      <section>
+        <SectionHeader title="通用" />
+        <PrefCard>
+          <PrefRow icon="settings-dark" title="界面语言" summary="尚未接入 i18n，仅记录偏好">
+            <AppSelect
+              :model-value="ui.language"
+              :options="LANGUAGE_OPTIONS"
+              @update:model-value="onLanguageValue"
+            />
+          </PrefRow>
+          <PrefRow icon="bug-black" title="保存解析错误日志" summary="将页面解析失败记录到本地日志">
+            <AppSwitch
+              :model-value="ui.saveParseErrors"
               aria-label="保存解析错误日志"
-              @click="toggleParseErrors"
-            >
-              <span class="switch__thumb" />
-            </button>
-          </div>
-        </div>
+              @update:model-value="toggleParseErrors"
+            />
+          </PrefRow>
+        </PrefCard>
       </section>
 
       <!-- ═══ 数据 ══════════════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">数据</h2>
-        <div class="pref-card">
-          <button type="button" class="pref pref--action" @click="onExport">
-            <AppIcon name="file-find-primary" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">导出数据</span>
-              <span class="pref__summary">导出全部设置与本地数据</span>
-            </div>
-            <span class="advanced__badge" title="GET /api/v1/export 尚未实现">TODO</span>
-          </button>
-          <div class="pref-divider" />
-          <button type="button" class="pref pref--action" @click="pickImportFile">
-            <AppIcon name="folder-add-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">导入数据</span>
-              <span class="pref__summary">从导出文件恢复设置与数据</span>
-            </div>
-            <span class="advanced__badge" title="POST /api/v1/import 尚未实现">TODO</span>
-          </button>
-          <input
-            ref="importInput"
-            type="file"
-            accept=".json,application/json"
-            class="advanced__file"
-            @change="onImportFile"
-          />
-          <div class="pref-divider" />
-          <button type="button" class="pref pref--action" @click="confirmClearLocal">
-            <AppIcon name="clear-all-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">清除本地数据</span>
-              <span class="pref__summary">删除此浏览器中存储的全部本地数据</span>
-            </div>
-          </button>
-        </div>
+      <section>
+        <SectionHeader title="数据" />
+        <PrefCard>
+          <PrefRow icon="file-find-primary" title="导出数据" summary="导出全部设置与本地数据">
+            <button type="button" class="advanced__action" aria-label="导出数据" @click="onExport">
+              <span class="advanced__badge" title="GET /api/v1/export 尚未实现">TODO</span>
+            </button>
+          </PrefRow>
+          <PrefRow icon="folder-add-dark" title="导入数据" summary="从导出文件恢复设置与数据">
+            <button type="button" class="advanced__action" aria-label="导入数据" @click="pickImportFile">
+              <span class="advanced__badge" title="POST /api/v1/import 尚未实现">TODO</span>
+            </button>
+          </PrefRow>
+          <PrefRow icon="clear-all-dark" title="清除本地数据" summary="删除此浏览器中存储的全部本地数据">
+            <button type="button" class="advanced__action" aria-label="清除本地数据" @click="confirmClearLocal">
+              <AppIcon name="go-to-dark" size="20px" />
+            </button>
+          </PrefRow>
+        </PrefCard>
+        <input
+          ref="importInput"
+          type="file"
+          accept=".json,application/json"
+          class="advanced__file"
+          @change="onImportFile"
+        />
       </section>
     </div>
 
@@ -131,6 +98,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /* ------------------------------ local settings ---------------------------- */
 
@@ -144,7 +112,7 @@ const UI_STORAGE_KEY = 'ehviewer-admin-advanced-ui'
 /** 登录凭证——清除本地数据时保留，避免意外登出。 */
 const AUTH_KEYS = new Set(['token', 'username'])
 
-const LANGUAGE_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+const LANGUAGE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'zh-CN', label: '简体中文' },
   { value: 'zh-TW', label: '繁體中文' },
   { value: 'en-US', label: 'English' },
@@ -178,8 +146,8 @@ function persistUi(): void {
   }
 }
 
-function onLanguageChange(event: Event): void {
-  ui.language = (event.target as HTMLSelectElement).value
+function onLanguageValue(value: string | number): void {
+  ui.language = String(value)
   persistUi()
 }
 
@@ -276,85 +244,6 @@ function showSnack(message: string): void {
 
 /* ----------------------------- preference group --------------------------- */
 
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-/* ------------------------------ preference row ---------------------------- */
-
-.pref {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-button.pref {
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  transition: background-color 120ms var(--ease-decelerate-quart);
-}
-
-button.pref:hover {
-  background: var(--color-surface);
-}
-
-button.pref:active {
-  background: var(--color-surface-activated);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .advanced__badge {
   flex: 0 0 auto;
   padding: 3px 10px;
@@ -366,92 +255,16 @@ button.pref:active {
   letter-spacing: 0.08em;
 }
 
-.advanced__file {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-/* ---------------------------------- switch --------------------------------- */
-
-.switch {
-  position: relative;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
-}
-
-/* ---------------------------------- select --------------------------------- */
-
-.select {
-  position: relative;
+.advanced__action {
   display: inline-flex;
   align-items: center;
-}
-
-.select select {
-  appearance: none;
-  min-width: 120px;
-  padding: 8px 30px 8px 12px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: var(--color-background-floating);
-  color: var(--text-color-primary);
-  font-size: clamp(13px, 14px, 16px);
+  padding: 0;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
 }
 
-.select select:focus {
-  border-color: var(--color-primary);
-}
-
-.select::after {
-  content: '';
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid var(--drawable-color-secondary);
-  border-bottom: 2px solid var(--drawable-color-secondary);
-  translate: 0 -60%;
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.select__label {
+.advanced__file {
   position: absolute;
   width: 1px;
   height: 1px;
