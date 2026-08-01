@@ -95,4 +95,55 @@ describe('HomeView (首页)', () => {
     expect(wrapper.find('[data-testid="content-state-empty"]').exists()).toBe(false)
     expect(ctaButton('去搜索')).toBeUndefined()
   })
+
+  it('renders the full list when no viewport geometry is available (fallback)', async () => {
+    const items = Array.from({ length: 120 }, (_, i) =>
+      gallery({ gid: i + 1, title: `G${i + 1}` }),
+    )
+    await mountHome(items)
+
+    // Headless environments expose zero clientHeight — the virtual window
+    // stays off and every gallery is rendered, like before the feature.
+    expect(wrapper.findAll('.app-card')).toHaveLength(120)
+  })
+
+  it('virtualizes the grid: renders only the visible rows plus overscan', async () => {
+    // Grid math under test (list mode uses a fixed card-height estimate).
+    localStorage.setItem('ehviewer-webui:gallery-list-mode', 'grid')
+    const items = Array.from({ length: 200 }, (_, i) =>
+      gallery({ gid: i + 1, title: `G${i + 1}` }),
+    )
+    await mountHome(items)
+
+    const scroller = wrapper.find('.fast-scroller__container')
+    expect(scroller.exists()).toBe(true)
+    const el = scroller.element
+    // 500px wide / 120px min column → 4 columns; 600px viewport → 3.2 rows.
+    // scrollTop 1875px → row 10; window = rows 7..17 with 3 overscan rows.
+    Object.defineProperty(el, 'clientHeight', { value: 600, configurable: true })
+    Object.defineProperty(el, 'clientWidth', { value: 500, configurable: true })
+    Object.defineProperty(el, 'scrollTop', { value: 1875, configurable: true })
+    // Keep the load-more sentinel quiet (ContentLayout's scroller handler
+    // compares scrollTop + clientHeight against scrollHeight).
+    Object.defineProperty(el, 'scrollHeight', { value: 20000, configurable: true })
+
+    window.dispatchEvent(new Event('resize'))
+    await flushPromises()
+    el.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+
+    const cards = wrapper.findAll('.app-card')
+    // Rows 7..17 × 4 columns = 40 cards, far fewer than the 200 galleries.
+    expect(cards).toHaveLength(40)
+    // Window starts at item index 28 (gid 29); items far below stay unmounted.
+    expect(cards[0].text()).toContain('G29')
+    expect(wrapper.text()).not.toContain('G150')
+
+    // The spacers preserve the full 50-row scroll geometry around the window
+    // (7 rows above, 10 window rows, 33 rows below × 187.5px row height).
+    const spacers = wrapper.findAll('.home__virtual-spacer')
+    expect(spacers).toHaveLength(2)
+    expect(spacers[0].attributes('style')).toContain('1312.5px')
+    expect(spacers[1].attributes('style')).toContain('6187.5px')
+  })
 })

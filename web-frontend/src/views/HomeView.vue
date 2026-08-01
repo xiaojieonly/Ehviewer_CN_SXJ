@@ -58,7 +58,23 @@
           </button>
         </div>
       </template>
-      <GalleryGrid :items="galleries" :mode="viewMode" @select="openGallery" />
+      <!-- Virtualized gallery list: only the rows intersecting the viewport
+           (+ overscan) are mounted; the spacers above/below preserve the full
+           scroll height so the scrollbar and the load-more footer (rendered
+           after the slot by ContentLayout) keep working. -->
+      <div ref="virtualHostRef" class="home__virtual">
+        <div
+          class="home__virtual-spacer"
+          :style="{ height: `${topSpacerHeight}px` }"
+          aria-hidden="true"
+        />
+        <GalleryGrid :items="visibleGalleries" :mode="viewMode" @select="openGallery" />
+        <div
+          class="home__virtual-spacer"
+          :style="{ height: `${bottomSpacerHeight}px` }"
+          aria-hidden="true"
+        />
+      </div>
     </ContentLayout>
 
     <!-- FAB cluster: primary = back to top (Android `v_go_to`), secondaries =
@@ -94,7 +110,7 @@
  * The list/grid mode persists to localStorage (web equivalent of the Android
  * `Settings` list-mode preference).
  */
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { galleryApi } from '@/api/gallery'
 import { isOfflineError } from '@/api/client'
@@ -342,11 +358,190 @@ function onSecondaryFab(action: FabAction): void {
   }
 }
 
+/* ------------------------------ virtual scrolling ------------------------ */
+
+/**
+ * Lightweight windowing for the gallery list (the previous `useVirtualScroll`
+ * composable had no replacement after the audit): only the rows intersecting
+ * the scroller viewport (+ overscan) are handed to GalleryGrid, while two
+ * spacer divs above/below the grid preserve the full list height — scrollbar
+ * geometry, the FastScroller and ContentLayout's load-more footer (which
+ * reads `scrollHeight` and lives after the slot) all keep working untouched.
+ *
+ * Geometry mirrors the CSS sources:
+ * - grid columns = `floor((width + gap) / (minColumn + gap))` — the same
+ *   math as `.gallery-grid--grid`'s `auto-fill minmax(120px, 1fr)`, reading
+ *   `--column-width-grid-middle` / `--gallery-grid-interval` from computed
+ *   style so breakpoint overrides stay honored;
+ * - grid row height = column width × 1.5 (GalleryCard's default 2:3 tile);
+ * - list mode = measured first-card height, falling back to the 120px
+ *   2:3 thumb + paddings estimate.
+ *
+ * Rows are only estimated (tiles clamp to per-gallery aspect ratios), so an
+ * overscan buffer keeps the window generous; cards re-run their staggered
+ * entrance reveal when they mount (GalleryGrid owns the animation).
+ * Virtualization engages only with real viewport geometry — headless
+ * environments (no layout) fall back to rendering the whole list.
+ */
+const OVERSCAN_ROWS = 3
+/** `--column-width-grid-middle` (120px) fallback when styles are unavailable. */
+const GRID_MIN_COLUMN_WIDTH = 120
+/** `--gallery-grid-interval` (0dp) fallback when styles are unavailable. */
+const GRID_GAP = 0
+/** List-mode row estimate: 120px 2:3 thumb + body padding + card margins. */
+const LIST_ROW_HEIGHT = 136
+
+const virtualHostRef = ref<HTMLElement | null>(null)
+const scrollTop = ref(0)
+const containerHeight = ref(0)
+const containerWidth = ref(0)
+const columns = ref(1)
+const rowHeight = ref(LIST_ROW_HEIGHT)
+
+let scrollEl: HTMLElement | null = null
+let scrollHandler: (() => void) | null = null
+let onWindowResize: (() => void) | null = null
+let resizeObserver: ResizeObserver | null = null
+
+const totalRows = computed(() => Math.ceil(galleries.value.length / columns.value))
+
+/** Virtualization only engages once real viewport geometry is measurable. */
+const virtualized = computed(
+  () => containerHeight.value > 0 && rowHeight.value > 0 && columns.value > 0,
+)
+
+const startRow = computed(() => {
+  if (!virtualized.value) return 0
+  return Math.min(
+    Math.max(0, Math.floor(scrollTop.value / rowHeight.value) - OVERSCAN_ROWS),
+    totalRows.value,
+  )
+})
+
+const endRow = computed(() => {
+  if (!virtualized.value) return totalRows.value
+  return Math.min(
+    totalRows.value,
+    Math.ceil((scrollTop.value + containerHeight.value) / rowHeight.value) + OVERSCAN_ROWS,
+  )
+})
+
+/** Only the windowed slice of galleries is handed to GalleryGrid. */
+const visibleGalleries = computed(() => {
+  if (!virtualized.value) return galleries.value
+  return galleries.value.slice(startRow.value * columns.value, endRow.value * columns.value)
+})
+
+/** Spacer above the windowed grid — preserves the full-height scroll geometry. */
+const topSpacerHeight = computed(() => startRow.value * rowHeight.value)
+
+/** Spacer below the windowed grid (the load-more footer sits after it). */
+const bottomSpacerHeight = computed(() => (totalRows.value - endRow.value) * rowHeight.value)
+
+/**
+ * The scrollable ancestor of the slot host — ContentLayout's scroller
+ * (FastScroller's container or the plain scroll div). Detected via computed
+ * overflow, with the known container classes as a style-unaware fallback.
+ */
+function findScroller(el: HTMLElement | null): HTMLElement | null {
+  let node = el?.parentElement ?? null
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY
+    if (
+      /(auto|scroll|overlay)/.test(overflowY) ||
+      node.classList.contains('fast-scroller__container') ||
+      node.classList.contains('content-layout__plain-scroll')
+    ) {
+      return node
+    }
+    node = node.parentElement
+  }
+  return null
+}
+
+/** Re-derive viewport size, column count and row height from the live DOM. */
+function measure(): void {
+  const host = virtualHostRef.value
+  if (!host) return
+  const scroller = scrollEl ?? findScroller(host)
+  if (!scroller) {
+    containerHeight.value = 0
+    return
+  }
+  scrollEl = scroller
+  containerHeight.value = scroller.clientHeight
+  containerWidth.value = scroller.clientWidth
+  const style = getComputedStyle(host)
+  const minColumn = parseFloat(style.getPropertyValue('--column-width-grid-middle')) || GRID_MIN_COLUMN_WIDTH
+  const gap = parseFloat(style.getPropertyValue('--gallery-grid-interval')) || GRID_GAP
+  if (viewMode.value === 'list') {
+    columns.value = 1
+    const cardHeight = host.querySelector('.app-card')?.getBoundingClientRect().height ?? 0
+    rowHeight.value = cardHeight > 0 ? cardHeight : LIST_ROW_HEIGHT
+  } else {
+    columns.value = Math.max(1, Math.floor((containerWidth.value + gap) / (minColumn + gap)))
+    const columnWidth = (containerWidth.value - (columns.value - 1) * gap) / columns.value
+    rowHeight.value = columnWidth * 1.5
+  }
+}
+
+/** Attach scroll/resize listeners to the scroller (idempotent). */
+function attachVirtualScroll(): void {
+  detachVirtualScroll()
+  const host = virtualHostRef.value
+  if (!host) return
+  const scroller = findScroller(host)
+  if (!scroller) return
+  scrollEl = scroller
+  scrollHandler = () => {
+    scrollTop.value = scroller.scrollTop
+  }
+  scroller.addEventListener('scroll', scrollHandler, { passive: true })
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => measure())
+    resizeObserver.observe(scroller)
+  }
+  onWindowResize = () => measure()
+  window.addEventListener('resize', onWindowResize)
+  measure()
+}
+
+function detachVirtualScroll(): void {
+  if (scrollEl && scrollHandler) scrollEl.removeEventListener('scroll', scrollHandler)
+  if (onWindowResize) window.removeEventListener('resize', onWindowResize)
+  scrollEl = null
+  scrollHandler = null
+  onWindowResize = null
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  containerHeight.value = 0
+}
+
 /* --------------------------------- lifecycle ---------------------------- */
 
 onMounted(() => {
   void loadPage(0, 'replace')
 })
+
+/** (Re)attach once ContentLayout swaps in the scrolling content view. */
+watch(
+  contentState,
+  (state) => {
+    if (state === 'content') {
+      void nextTick(() => attachVirtualScroll())
+    } else {
+      detachVirtualScroll()
+    }
+  },
+  { immediate: true },
+)
+
+/** List/grid toggle changes the column math — re-measure. */
+watch(viewMode, () => {
+  void nextTick(() => measure())
+})
+
+onBeforeUnmount(detachVirtualScroll)
 </script>
 
 <style scoped>
