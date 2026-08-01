@@ -137,6 +137,9 @@ const refreshing = ref(false)
 const loadingMore = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 
+/** Monotonic request guard — stale responses (slot switches / refresh) drop. */
+let requestSeq = 0
+
 /** Maps a backend favorite row onto the `GalleryInfo` shape AppCard renders. */
 function toGalleryInfo(item: FavoriteItem): GalleryInfo {
   return {
@@ -161,9 +164,11 @@ function toGalleryInfo(item: FavoriteItem): GalleryInfo {
 }
 
 async function loadPage(page: number, append: boolean): Promise<void> {
+  const seq = ++requestSeq
   if (append) loadingMore.value = true
   try {
     const response = await favoriteApi.listFavorites(activeSlot.value, page)
+    if (seq !== requestSeq) return
     const mapped = response.favorites.map(toGalleryInfo)
     if (append) {
       const known = new Set(favorites.value.map((gallery) => gallery.gid))
@@ -175,10 +180,11 @@ async function loadPage(page: number, append: boolean): Promise<void> {
     totalPages.value = response.totalPages
     state.value = favorites.value.length === 0 ? 'empty' : 'content'
   } catch (error) {
+    if (seq !== requestSeq) return
     console.error('Failed to load favorites', error)
     if (!append && favorites.value.length === 0) state.value = 'error'
   } finally {
-    loadingMore.value = false
+    if (seq === requestSeq && append) loadingMore.value = false
   }
 }
 

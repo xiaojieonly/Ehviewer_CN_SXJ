@@ -223,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type {
   AdvanceSearchOptions,
@@ -322,6 +322,9 @@ const total = ref(0)
 const page = ref(0)
 const refreshing = ref(false)
 const loadingMore = ref(false)
+/** Monotonic request guard — stale responses (fast successive searches /
+    pull-to-refresh) are discarded. */
+let requestSeq = 0
 const viewMode = ref<'grid' | 'list'>(readStorage<'grid' | 'list'>(VIEW_MODE_KEY) ?? 'grid')
 
 // History + quick searches.
@@ -355,7 +358,8 @@ interface SuggestionEntry {
 
 const suggestionEntries = computed<SuggestionEntry[]>(() => {
   const q = query.value.trim().toLowerCase()
-  const matches = (text: string): boolean => !q || text.toLowerCase().includes(q)
+  const matches = (text: string | null | undefined): boolean =>
+    !q || (text ?? '').toLowerCase().includes(q)
   const fromHistory: SuggestionEntry[] = history.value
     .filter(matches)
     .map((text) => ({ suggestion: { text, hint: 'History' }, kind: 'history' }))
@@ -405,6 +409,7 @@ function categoryParam(): number | undefined {
 /* -------------------------------- search -------------------------------- */
 
 async function runSearch(target: number, append = false): Promise<void> {
+  const seq = ++requestSeq
   if (append) {
     if (loadingMore.value) return
     loadingMore.value = true
@@ -413,11 +418,19 @@ async function runSearch(target: number, append = false): Promise<void> {
   }
   try {
     const response = await galleryApi.search(composedKeyword(), categoryParam(), target, PAGE_SIZE)
-    galleries.value = append ? [...galleries.value, ...response.data] : response.data
+    if (seq !== requestSeq) return
+    if (append) {
+      // Dedupe by gid — bumped galleries can reappear across pages.
+      const seen = new Set(galleries.value.map((g) => g.gid))
+      galleries.value = [...galleries.value, ...response.data.filter((g) => !seen.has(g.gid))]
+    } else {
+      galleries.value = response.data
+    }
     total.value = response.total
     page.value = target
     contentState.value = galleries.value.length === 0 ? 'empty' : 'content'
   } catch (error) {
+    if (seq !== requestSeq) return
     console.error('[SearchView] search failed', error)
     if (append) {
       showSnack('Failed to load the next page')
@@ -425,14 +438,15 @@ async function runSearch(target: number, append = false): Promise<void> {
       contentState.value = 'error'
     }
   } finally {
+    if (seq !== requestSeq) return
     refreshing.value = false
     loadingMore.value = false
   }
 }
 
 /** Commit a search: record history, collapse the input, reload page 0. */
-function commitSearch(raw: string): void {
-  const q = raw.trim()
+function commitSearch(raw: string | null | undefined): void {
+  const q = (raw ?? '').trim()
   activeQuery.value = q
   if (q) addHistory(q)
   searchBarState.value = 'normal'
@@ -511,7 +525,7 @@ function addHistory(keyword: string): void {
 }
 
 function loadQuickSearch(preset: QuickSearch): void {
-  query.value = preset.keyword
+  query.value = preset.keyword ?? ''
   normalSearchMode.value = NUM_TO_MODE[preset.mode] ?? 'normal'
   selectedCategories.value = maskToSelected(preset.category)
   advanceOptions.value = {
@@ -640,6 +654,10 @@ onMounted(async () => {
     }
   }
   await runSearch(0)
+})
+
+onBeforeUnmount(() => {
+  if (snackTimer) window.clearTimeout(snackTimer)
 })
 </script>
 

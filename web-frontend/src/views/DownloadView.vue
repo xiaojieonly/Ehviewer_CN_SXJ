@@ -116,7 +116,7 @@
  * State model = `DownloadInfo.STATE_*`: 0 idle · 1 wait · 2 download ·
  * 3 finish · 4 failed (ehviewer-web mirrors the Android constants).
  */
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { StompSubscription } from '@stomp/stompjs'
 import { downloadApi } from '@/api/download'
 import type { DownloadItem, DownloadLabel } from '@/api/download'
@@ -156,13 +156,19 @@ const tabs = computed<LabelTab[]>(() => [
   ...labels.value.map((label) => ({ id: label.id, name: label.label })),
 ])
 
+/** Monotonic request guard — stale responses (fast label switches) drop. */
+let requestSeq = 0
+
 async function load(): Promise<void> {
+  const seq = ++requestSeq
   try {
     const result = await downloadApi.list(activeLabel.value ?? undefined)
+    if (seq !== requestSeq) return
     downloads.value = result.downloads
     labels.value = result.labels
     state.value = result.downloads.length === 0 ? 'empty' : 'content'
   } catch (error) {
+    if (seq !== requestSeq) return
     console.error('Failed to load downloads', error)
     if (downloads.value.length === 0) {
       state.value = 'error'
@@ -402,6 +408,10 @@ watch(
 onMounted(() => {
   connect()
   void load()
+})
+
+onUnmounted(() => {
+  clearTimeout(toastTimer)
 })
 </script>
 
