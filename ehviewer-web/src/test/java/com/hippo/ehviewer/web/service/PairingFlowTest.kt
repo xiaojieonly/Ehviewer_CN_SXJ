@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.any
+import com.hippo.ehviewer.web.any
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
@@ -148,6 +148,41 @@ class PairingFlowTest {
         )
         assertFalse(result.success)
         assertTrue(result.message.contains("invalid or expired"))
+    }
+
+    @Test
+    fun `expired pairing codes are pruned from the map`() {
+        val authService = newAuthService()
+        // TTL that has already elapsed at generation time (prune takes the
+        // current time as an injectable parameter).
+        val expired = authService.generatePairCode("default", ttlSeconds = -1)
+        assertEquals(1, authService.activePairCodeCount())
+
+        authService.pruneExpiredPairCodes()
+        assertEquals(0, authService.activePairCodeCount())
+
+        // A fresh code survives pruning and completes; the expired one is gone.
+        val live = authService.generatePairCode("default")
+        assertEquals(1, authService.activePairCodeCount())
+        assertTrue(
+            authService.completePairing(
+                PairCompleteRequest(live.code, "android-prune", "Pruned", "android")
+            ).success
+        )
+        assertFalse(
+            authService.completePairing(
+                PairCompleteRequest(expired.code, "android-prune", "Pruned", "android")
+            ).success
+        )
+    }
+
+    @Test
+    fun `generating a new code prunes expired ones first`() {
+        val authService = newAuthService()
+        authService.generatePairCode("default", ttlSeconds = -1)
+        // The next generation must have swept the expired code out.
+        authService.generatePairCode("default")
+        assertEquals(1, authService.activePairCodeCount())
     }
 
     @Test
