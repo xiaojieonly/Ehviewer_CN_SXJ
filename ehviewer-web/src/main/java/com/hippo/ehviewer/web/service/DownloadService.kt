@@ -531,7 +531,8 @@ class DownloadService(
         total = total,
         done = done,
         label = label,
-        downloadDir = downloadDir,
+        // The server's absolute download path is never exposed to clients.
+        downloadDir = null,
         error = error
     )
 

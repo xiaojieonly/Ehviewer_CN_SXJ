@@ -17,7 +17,9 @@ data class DownloadItem(
     val total: Int,
     val done: Int,
     val label: Int,
-    val downloadDir: String?,
+    // Always null in API responses — the server's absolute download path is
+    // never exposed to clients. Retained only for JSON shape stability.
+    val downloadDir: String? = null,
     // Exposes DownloadInfoEntity.error (human-readable failure/cancel reason).
     // Defaults to null so serialization is unchanged until DownloadService
     // maps the column into the DTO.

@@ -2,7 +2,10 @@ package com.hippo.ehviewer.web.api
 
 import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.service.GalleryService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -37,12 +40,30 @@ class GalleryController(private val galleryService: GalleryService) {
     @PostMapping("/history/{gid}")
     fun addToHistory(
         @PathVariable gid: Long,
-        @RequestBody body: Map<String, Any>
-    ): ResponseEntity<Map<String, Boolean>> {
-        val token = body["token"] as? String ?: ""
-        val title = body["title"] as? String
-        galleryService.addToHistory(gid, token, title)
+        @Valid @RequestBody body: AddHistoryRequest
+    ): ResponseEntity<Map<String, Any>> {
+        if (gid <= 0) {
+            return ResponseEntity.badRequest().body(
+                mapOf("success" to false, "message" to "gid must be a positive number")
+            )
+        }
+        galleryService.addToHistory(gid, body.token, body.title)
         return ResponseEntity.ok(mapOf("success" to true))
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleBodyValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, Any>> {
+        val message = ex.bindingResult.fieldErrors.joinToString("; ") {
+            it.defaultMessage ?: "invalid value for ${it.field}"
+        }
+        return ResponseEntity.badRequest().body(mapOf("success" to false, "message" to message))
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableBody(ex: HttpMessageNotReadableException): ResponseEntity<Map<String, Any>> {
+        return ResponseEntity.badRequest().body(
+            mapOf("success" to false, "message" to "Invalid request body")
+        )
     }
 
     @GetMapping("/favorites")
