@@ -3,6 +3,9 @@ import type { AuthResponse, AuthStatusResponse } from '@/types'
 
 export interface AuthStatusResult extends AuthStatusResponse {
   authRequired: boolean
+  /** E-Hentai session state from the unified cookie store (backend defaults false). */
+  ehSessionValid?: boolean
+  ehSessionExpired?: boolean
 }
 
 export const authApi = {

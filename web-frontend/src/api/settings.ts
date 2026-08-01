@@ -36,7 +36,10 @@ export interface ProxySettings {
   host: string
   port: number
   username: string
+  /** Backend echoes "" here — never the stored value; omit on PUT to keep the stored password. */
   password: string
+  /** True when a proxy password is stored server-side (GET only). */
+  proxyPasswordSet?: boolean
 }
 
 export interface Settings {

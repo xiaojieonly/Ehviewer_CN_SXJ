@@ -13,6 +13,8 @@ export interface DownloadItem {
   done: number
   label: number
   downloadDir: string | null
+  /** Failure/cancel reason; present only when the task is failed (state 4). */
+  error?: string | null
 }
 
 export interface DownloadLabel {

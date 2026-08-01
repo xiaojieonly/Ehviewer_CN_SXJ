@@ -75,29 +75,3 @@ export interface GalleryListResponse {
   total: number
 }
 
-export const CATEGORY_MAP: Record<number, string> = {
-  0: 'All',
-  1: 'Doujinshi',
-  2: 'Manga',
-  4: 'Artist CG',
-  8: 'Western',
-  16: 'Non-H',
-  32: 'Image Set',
-  64: 'Cosplay',
-  128: 'Asian Porn',
-  256: 'Misc',
-  512: 'Unknown',
-}
-
-export const CATEGORY_COLORS: Record<number, string> = {
-  1: '#e74c3c',
-  2: '#3498db',
-  4: '#2ecc71',
-  8: '#f39c12',
-  16: '#9b59b6',
-  32: '#1abc9c',
-  64: '#e67e22',
-  128: '#95a5a6',
-  256: '#7f8c8d',
-  512: '#bdc3c7',
-}
