@@ -37,7 +37,7 @@
         },
         "category": {
           "type": "integer",
-          "description": "Gallery category bitmask (Doujinshi=1, Manga=2, ArtistCG=4, GameCG=8, Western=16, Non-H=32, ImageSet=64, Cosplay=128, AsianPorn=256, Misc=512)"
+          "description": "Gallery category bitmask. Bit values MUST match com.hippo.ehviewer.client.EhConfig: MISC=1, DOUJINSHI=2, MANGA=4, ARTIST_CG=8, GAME_CG=16, IMAGE_SET=32, COSPLAY=64, ASIAN_PORN=128, NON_H=256, WESTERN=512"
         },
         "posted": {
           "type": ["string", "null"],
