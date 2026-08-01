@@ -1,5 +1,6 @@
 // Download task fixtures - various states
-// States: 0=pending, 1=downloading, 2=paused, 3=done, 4=failed
+// Android DownloadInfo.STATE_* semantics:
+// 0=NONE/idle(paused), 1=WAIT, 2=DOWNLOADING, 3=FINISHED, 4=FAILED
 
 import { galleries } from './galleries.mjs';
 
@@ -18,11 +19,12 @@ export const downloads = [
     titleJpn: galleries[0].titleJpn,
     thumb: galleries[0].thumb,
     category: galleries[0].category,
-    state: 1, // downloading
+    state: 2, // downloading
     total: galleries[0].pages,
     done: Math.floor(galleries[0].pages * 0.6),
     label: 1,
     downloadDir: '/downloads/doujinshi/2801001',
+    error: null,
   },
   {
     id: 1002,
@@ -32,11 +34,12 @@ export const downloads = [
     titleJpn: galleries[2].titleJpn,
     thumb: galleries[2].thumb,
     category: galleries[2].category,
-    state: 0, // pending/waiting
+    state: 1, // waiting (enqueued, not yet downloading)
     total: galleries[2].pages,
     done: 0,
     label: 1,
     downloadDir: '/downloads/doujinshi/2801003',
+    error: null,
   },
   {
     id: 1003,
@@ -46,11 +49,12 @@ export const downloads = [
     titleJpn: galleries[6].titleJpn,
     thumb: galleries[6].thumb,
     category: galleries[6].category,
-    state: 3, // completed
+    state: 3, // finished
     total: galleries[6].pages,
     done: galleries[6].pages,
     label: 3,
     downloadDir: '/downloads/artist_cg/2801007',
+    error: null,
   },
   {
     id: 1004,
@@ -65,6 +69,7 @@ export const downloads = [
     done: 12,
     label: 2,
     downloadDir: '/downloads/western/2801010',
+    error: 'Download failed',
   },
   {
     id: 1005,
@@ -74,11 +79,12 @@ export const downloads = [
     titleJpn: galleries[15].titleJpn,
     thumb: galleries[15].thumb,
     category: galleries[15].category,
-    state: 2, // paused
+    state: 0, // paused (idle)
     total: galleries[15].pages,
     done: 150,
     label: 3,
     downloadDir: '/downloads/image_set/2801016',
+    error: null,
   },
   {
     id: 1006,
@@ -88,11 +94,12 @@ export const downloads = [
     titleJpn: galleries[4].titleJpn,
     thumb: galleries[4].thumb,
     category: galleries[4].category,
-    state: 3, // completed
+    state: 3, // finished
     total: galleries[4].pages,
     done: galleries[4].pages,
     label: 0,
     downloadDir: '/downloads/manga/2801005',
+    error: null,
   },
 ];
 
