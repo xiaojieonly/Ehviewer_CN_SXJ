@@ -16,13 +16,18 @@
 
 package com.hippo.ehviewer.gallery;
 
+import android.graphics.BitmapFactory;
+import android.text.TextUtils;
+import android.util.SparseArray;
 import android.webkit.MimeTypeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.spider.SpiderDen;
+import com.hippo.ehviewer.spider.SpiderInfo;
 import com.hippo.ehviewer.webui.WebUiApiClient;
 import com.hippo.ehviewer.webui.WebUiConfig;
 import com.hippo.lib.image.Image;
@@ -37,6 +42,7 @@ import java.io.OutputStream;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 import okhttp3.Response;
 
@@ -58,7 +64,7 @@ public class WebUiGalleryProvider extends GalleryProvider2 {
     private final GalleryInfo mGalleryInfo;
     private final WebUiConfig mConfig;
     private final SpiderDen mSpiderDen;
-    private final ExecutorService mExecutor;
+    private volatile ExecutorService mExecutor;
 
     private volatile int mPages = STATE_WAIT;
     private volatile String mError;
@@ -74,7 +80,15 @@ public class WebUiGalleryProvider extends GalleryProvider2 {
     @Override
     public void start() {
         super.start();
-        mExecutor.execute(this::loadPages);
+        if (mExecutor.isShutdown()) {
+            // A previous stop() shut the pool down; restart must get a fresh one.
+            mExecutor = Executors.newFixedThreadPool(WORKER_THREADS);
+        }
+        try {
+            mExecutor.execute(this::loadPages);
+        } catch (RejectedExecutionException e) {
+            // Raced with stop(); the reader is already detached.
+        }
     }
 
     @Override
@@ -114,12 +128,16 @@ public class WebUiGalleryProvider extends GalleryProvider2 {
 
     @Override
     protected void onRequest(int index) {
-        fetchPage(index, false);
+        if (!mExecutor.isShutdown()) {
+            fetchPage(index, false);
+        }
     }
 
     @Override
     protected void onForceRequest(int index) {
-        fetchPage(index, true);
+        if (!mExecutor.isShutdown()) {
+            fetchPage(index, true);
+        }
     }
 
     @Override
@@ -129,49 +147,56 @@ public class WebUiGalleryProvider extends GalleryProvider2 {
     }
 
     private void fetchPage(int index, boolean force) {
-        mExecutor.execute(() -> {
-            if (!force) {
-                InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
-                if (pipe != null) {
-                    decodeAndNotify(index, pipe);
-                    return;
-                }
-            }
-
-            // Cache miss (or forced): pull from the server, cache, then decode.
-            try (Response response = WebUiApiClient.fetchImage(mConfig, mGalleryInfo.gid, index)) {
-                if (!response.isSuccessful()) {
-                    notifyPageFailed(index, "HTTP " + response.code());
-                    return;
-                }
-                String extension = extensionFromContentType(response.header("Content-Type"));
-                OutputStreamPipe out = mSpiderDen.openOutputStreamPipe(index, extension);
-                if (out == null) {
-                    notifyPageFailed(index, "Local cache unavailable");
-                    return;
-                }
-                try {
-                    out.obtain();
-                    OutputStream os = out.open();
-                    try {
-                        IOUtils.copy(response.body().byteStream(), os);
-                    } finally {
-                        out.close();
+        if (mExecutor.isShutdown()) {
+            return;
+        }
+        try {
+            mExecutor.execute(() -> {
+                if (!force) {
+                    InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
+                    if (pipe != null) {
+                        decodeAndNotify(index, pipe);
+                        return;
                     }
-                } finally {
-                    out.release();
                 }
 
-                InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
-                if (pipe != null) {
-                    decodeAndNotify(index, pipe);
-                } else {
-                    notifyPageFailed(index, "Cache write failed");
+                // Cache miss (or forced): pull from the server, cache, then decode.
+                try (Response response = WebUiApiClient.fetchImage(mConfig, mGalleryInfo.gid, index)) {
+                    if (!response.isSuccessful()) {
+                        notifyPageFailed(index, "HTTP " + response.code());
+                        return;
+                    }
+                    String extension = extensionFromContentType(response.header("Content-Type"));
+                    OutputStreamPipe out = mSpiderDen.openOutputStreamPipe(index, extension);
+                    if (out == null) {
+                        notifyPageFailed(index, "Local cache unavailable");
+                        return;
+                    }
+                    try {
+                        out.obtain();
+                        OutputStream os = out.open();
+                        try {
+                            IOUtils.copy(response.body().byteStream(), os);
+                        } finally {
+                            out.close();
+                        }
+                    } finally {
+                        out.release();
+                    }
+
+                    InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
+                    if (pipe != null) {
+                        decodeAndNotify(index, pipe);
+                    } else {
+                        notifyPageFailed(index, "Cache write failed");
+                    }
+                } catch (IOException e) {
+                    notifyPageFailed(index, e.getMessage() != null ? e.getMessage() : "Network error");
                 }
-            } catch (IOException e) {
-                notifyPageFailed(index, e.getMessage() != null ? e.getMessage() : "Network error");
-            }
-        });
+            });
+        } catch (RejectedExecutionException e) {
+            // stop() raced with this request; drop it, the reader is detached.
+        }
     }
 
     private void decodeAndNotify(int index, InputStreamPipe pipe) {
@@ -214,15 +239,122 @@ public class WebUiGalleryProvider extends GalleryProvider2 {
     }
 
     @Override
+    public int getStartPage() {
+        SpiderInfo spiderInfo = readSpiderInfo();
+        return spiderInfo != null ? spiderInfo.startPage : 0;
+    }
+
+    @Override
+    public void putStartPage(int page) {
+        SpiderInfo spiderInfo = readSpiderInfo();
+        if (spiderInfo == null) {
+            // No info yet; only create one once the page count is known, so
+            // the entry stays valid for SpiderInfo.read().
+            if (mPages <= 0) {
+                return;
+            }
+            spiderInfo = new SpiderInfo();
+            spiderInfo.gid = mGalleryInfo.gid;
+            spiderInfo.token = mGalleryInfo.token;
+            spiderInfo.pages = mPages;
+            spiderInfo.pTokenMap = new SparseArray<>(0);
+        }
+        spiderInfo.startPage = page;
+        writeSpiderInfo(spiderInfo);
+    }
+
+    @Nullable
+    private SpiderInfo readSpiderInfo() {
+        InputStreamPipe pipe = EhApplication.getSpiderInfoCache(EhApplication.getInstance())
+                .getInputStreamPipe(Long.toString(mGalleryInfo.gid));
+        if (pipe == null) {
+            return null;
+        }
+        try {
+            pipe.obtain();
+            SpiderInfo spiderInfo = SpiderInfo.read(pipe.open());
+            if (spiderInfo == null
+                    || spiderInfo.gid != mGalleryInfo.gid
+                    || !TextUtils.equals(spiderInfo.token, mGalleryInfo.token)) {
+                return null;
+            }
+            return spiderInfo;
+        } catch (IOException e) {
+            return null;
+        } finally {
+            pipe.close();
+            pipe.release();
+        }
+    }
+
+    private void writeSpiderInfo(@NonNull SpiderInfo spiderInfo) {
+        OutputStreamPipe pipe = EhApplication.getSpiderInfoCache(EhApplication.getInstance())
+                .getOutputStreamPipe(Long.toString(mGalleryInfo.gid));
+        try {
+            pipe.obtain();
+            spiderInfo.write(pipe.open());
+        } catch (IOException e) {
+            // Ignore
+        } finally {
+            pipe.close();
+            pipe.release();
+        }
+    }
+
+    @Override
     public boolean save(int index, @NonNull UniFile file) {
-        // Remote reading keeps pages in the SpiderDen cache only; saving to a
-        // picked location is out of scope for the remote provider.
-        return false;
+        InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
+        if (pipe == null) {
+            // Remote pages exist locally only after being read; nothing to save yet.
+            return false;
+        }
+        OutputStream os = null;
+        try {
+            pipe.obtain();
+            os = file.openOutputStream();
+            IOUtils.copy(pipe.open(), os);
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            pipe.close();
+            pipe.release();
+            IOUtils.closeQuietly(os);
+        }
     }
 
     @Nullable
     @Override
     public UniFile save(int index, @NonNull UniFile dir, @NonNull String filename) {
-        return null;
+        InputStreamPipe pipe = mSpiderDen.openInputStreamPipe(index);
+        if (pipe == null) {
+            return null;
+        }
+        OutputStream os = null;
+        try {
+            pipe.obtain();
+
+            // Get dst file
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(pipe.open(), null, options);
+            pipe.close();
+            String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(options.outMimeType);
+            UniFile dst = dir.subFile(null != extension ? filename + "." + extension : filename);
+            if (null == dst) {
+                return null;
+            }
+
+            // Copy
+            os = dst.openOutputStream();
+            IOUtils.copy(pipe.open(), os);
+            return dst;
+        } catch (IOException e) {
+            return null;
+        } finally {
+            pipe.close();
+            pipe.release();
+            IOUtils.closeQuietly(os);
+        }
     }
 }
