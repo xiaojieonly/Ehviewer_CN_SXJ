@@ -78,14 +78,37 @@ if [ -z "$JAR_FILE" ]; then
     exit 1
 fi
 
+PID_FILE="ehviewer-web.pid"
+LOG_FILE="ehviewer-web.log"
+
+if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+    echo "服务已在运行 (PID: $(cat "$PID_FILE"))，访问 http://localhost:8080"
+    exit 0
+fi
+
 echo "=== 启动 AnotherViewer Web ==="
 echo "Java: $JAVA_BIN (version $JAVA_VER)"
 echo "JAR:  $JAR_FILE"
 echo "端口: 8080"
 
-exec "$JAVA_BIN" -jar "$JAR_FILE" \
+nohup "$JAVA_BIN" -jar "$JAR_FILE" \
     --server.port=8080 \
     --ehviewer.download.path=./data/downloads \
     --ehviewer.download.cache-path=./data/cache \
     --ehviewer.download.worker-count=3 \
-    --ehviewer.cache.size-mb=10240
+    --ehviewer.cache.size-mb=10240 \
+    > "$LOG_FILE" 2>&1 &
+
+PID=$!
+echo "$PID" > "$PID_FILE"
+
+for _ in $(seq 1 30); do
+    if curl -s -o /dev/null http://localhost:8080/api/v1/auth/status; then
+        echo "服务已就绪: http://localhost:8080 (PID: $PID)"
+        exit 0
+    fi
+    sleep 1
+done
+
+echo "服务已后台启动 (PID: $PID)，日志: $LOG_FILE"
+echo "访问 http://localhost:8080 确认，或用 ./stop.sh 停止"
