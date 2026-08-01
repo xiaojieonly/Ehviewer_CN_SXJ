@@ -22,6 +22,13 @@
   overflow: hidden;
 }
 
+/* Every direct child must be a containing block for the divider ::after —
+   static children would otherwise anchor it to the initial containing block
+   (the viewport), drawing the 1px line at the bottom of the screen. */
+.pref-card > * {
+  position: relative;
+}
+
 .pref-card > :not(:last-child)::after {
   content: '';
   position: absolute;
