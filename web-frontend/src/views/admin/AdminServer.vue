@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -129,6 +129,11 @@ watch(pathDraft, () => {
 watch(sizeDraft, () => {
   if (cacheSizeTimer) window.clearTimeout(cacheSizeTimer)
   cacheSizeTimer = window.setTimeout(saveCacheSize, 500)
+})
+
+onBeforeUnmount(() => {
+  if (cachePathTimer) window.clearTimeout(cachePathTimer)
+  if (cacheSizeTimer) window.clearTimeout(cacheSizeTimer)
 })
 
 async function saveCachePath(): Promise<void> {

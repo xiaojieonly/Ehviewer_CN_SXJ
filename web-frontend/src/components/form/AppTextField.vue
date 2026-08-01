@@ -15,6 +15,7 @@
       :placeholder="placeholder || ' '"
       :disabled="disabled"
       :maxlength="maxlength"
+      :autocomplete="autocomplete"
       :aria-label="ariaLabel ?? label"
       @input="onInput"
       @focus="focused = true"
@@ -48,6 +49,8 @@ withDefaults(
     maxlength?: number
     /** Accessible name; falls back to `label`. */
     ariaLabel?: string
+    /** Browser autocomplete token (e.g. "username", "current-password"). */
+    autocomplete?: string
   }>(),
   {
     label: undefined,
@@ -58,6 +61,7 @@ withDefaults(
     disabled: false,
     maxlength: undefined,
     ariaLabel: undefined,
+    autocomplete: undefined,
   },
 )
 

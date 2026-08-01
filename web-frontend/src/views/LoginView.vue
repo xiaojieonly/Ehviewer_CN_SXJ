@@ -35,6 +35,7 @@
         <AppTextField
           v-model="username"
           label="Username"
+          autocomplete="username"
           :disabled="loading"
           class="login-field"
         />
@@ -43,6 +44,7 @@
           v-model="password"
           label="Password"
           type="password"
+          autocomplete="current-password"
           :disabled="loading"
           class="login-field"
         />

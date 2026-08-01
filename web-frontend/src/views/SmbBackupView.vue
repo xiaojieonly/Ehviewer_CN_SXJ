@@ -1330,7 +1330,7 @@ onUnmounted(() => {
 
 .sync-state--syncing {
   background: color-mix(in srgb, var(--color-accent) 16%, transparent);
-  color: var(--text-color-theme-accent);
+  color: var(--color-accent-text, var(--text-color-theme-accent));
 }
 
 .sync-state--completed {

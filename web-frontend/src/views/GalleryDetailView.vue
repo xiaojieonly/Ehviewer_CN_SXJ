@@ -771,7 +771,7 @@ onBeforeUnmount(() => {
 
 /* Android: download = textColorThemePrimary, read = textColorThemeAccent */
 .detail-actions__btn--read {
-  color: var(--text-color-theme-accent);
+  color: var(--color-accent-text, var(--text-color-theme-accent));
 }
 
 .detail-actions__btn--download {
@@ -855,7 +855,7 @@ onBeforeUnmount(() => {
   padding: var(--spacing) 0;
   text-align: center;
   font-size: clamp(13px, var(--text-small), 16px);
-  color: var(--text-color-theme-accent);
+  color: var(--color-accent-text, var(--text-color-theme-accent));
 }
 
 /* -------------------------------------------- ④ comments section --- */
@@ -870,7 +870,7 @@ onBeforeUnmount(() => {
   margin: 0 0 var(--spacing);
   text-align: center;
   font-size: clamp(13px, var(--text-small), 16px);
-  color: var(--text-color-theme-accent);
+  color: var(--color-accent-text, var(--text-color-theme-accent));
 }
 
 /* ------------------------------------------------------- toast --- */

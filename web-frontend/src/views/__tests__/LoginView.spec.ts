@@ -60,6 +60,13 @@ describe('LoginView', () => {
     expect(fields[1].props('type')).toBe('password')
   })
 
+  it('keeps browser autocomplete hints for password managers', () => {
+    wrapper = mount(LoginView)
+    const fields = wrapper.findAllComponents(AppTextField)
+    expect(fields[0].props('autocomplete')).toBe('username')
+    expect(fields[1].props('autocomplete')).toBe('current-password')
+  })
+
   it('binds the typed values back via v-model', async () => {
     wrapper = mount(LoginView)
     await typeField('Username', 'bob')
