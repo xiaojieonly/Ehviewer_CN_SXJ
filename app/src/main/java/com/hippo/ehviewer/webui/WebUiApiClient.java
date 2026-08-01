@@ -19,8 +19,7 @@ package com.hippo.ehviewer.webui;
 import androidx.annotation.NonNull;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.ParserConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,6 +50,14 @@ public final class WebUiApiClient {
     private static volatile OkHttpClient sClient;
 
     private WebUiApiClient() {}
+
+    static {
+        // Hard-disable fastjson autotype for good: every parse below goes against
+        // a known DTO shape, so @type would only serve gadget deserialization if a
+        // sync server (or MITM) ever sent a hostile payload. Safe mode (1.2.68+)
+        // makes @type permanently un-honorable even if autotype is re-enabled later.
+        ParserConfig.getGlobalInstance().setSafeMode(true);
+    }
 
     private static OkHttpClient client() {
         OkHttpClient client = sClient;
@@ -148,15 +155,16 @@ public final class WebUiApiClient {
      * server's index. Used by {@link com.hippo.ehviewer.gallery.WebUiGalleryProvider}
      * to size the reader before any image is fetched.
      *
-     * @return page count, or {@code -1} if the server payload has no {@code pages} field
+     * @return page count, or {@code -1} if the server payload has no {@code pages}
+     *         field or the count is not positive (callers treat {@code < 1} as an error)
      */
     public static int getGalleryPages(@NonNull WebUiConfig config, long gid) throws IOException {
         String json = get(config.baseUrl() + "/api/v1/gallery/" + gid, config.getToken());
-        JSONObject detail = JSON.parseObject(json);
+        GalleryDetail detail = JSON.parseObject(json, GalleryDetail.class);
         if (detail == null) {
             throw new IOException("Empty gallery detail response");
         }
-        return detail.getIntValue("pages");
+        return detail.pages > 0 ? detail.pages : -1;
     }
 
     /**
@@ -195,22 +203,11 @@ public final class WebUiApiClient {
     public static List<WebUiDownloadModels.DownloadListItem> listDownloads(@NonNull WebUiConfig config)
             throws IOException {
         String json = get(config.baseUrl() + "/api/v1/download/list", config.getToken());
-        JSONObject root = JSON.parseObject(json);
-        JSONArray downloads = root != null ? root.getJSONArray("downloads") : null;
-        List<WebUiDownloadModels.DownloadListItem> items = new ArrayList<>();
-        if (downloads == null) {
-            return items;
+        DownloadListResponse root = JSON.parseObject(json, DownloadListResponse.class);
+        if (root == null) {
+            return new ArrayList<>();
         }
-        for (int i = 0, n = downloads.size(); i < n; i++) {
-            JSONObject obj = downloads.getJSONObject(i);
-            WebUiDownloadModels.DownloadListItem item = new WebUiDownloadModels.DownloadListItem();
-            item.id = obj.getLongValue("id");
-            item.gid = obj.getLongValue("gid");
-            item.state = obj.getIntValue("state");
-            item.title = obj.getString("title");
-            items.add(item);
-        }
-        return items;
+        return root.downloads;
     }
 
     /** POST /api/v1/download/start/{id} — starts or resumes a server-side task. */
@@ -248,5 +245,15 @@ public final class WebUiApiClient {
             }
             return text;
         }
+    }
+
+    /** Wire shape of GET /api/v1/gallery/{gid} (GalleryDetailDto); client consumes only {@code pages}. */
+    private static final class GalleryDetail {
+        public int pages;
+    }
+
+    /** Wire shape of GET /api/v1/download/list (DownloadListResponse). */
+    private static final class DownloadListResponse {
+        public List<WebUiDownloadModels.DownloadListItem> downloads = new ArrayList<>();
     }
 }
