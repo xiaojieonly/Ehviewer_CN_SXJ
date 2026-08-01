@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.web.processing
 
+import com.hippo.ehviewer.web.service.GalleryLookupService
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
@@ -11,6 +12,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import javax.imageio.ImageIO
 
 /**
  * Queue scheduler for image processing tasks.
@@ -25,22 +27,35 @@ import java.util.concurrent.ConcurrentHashMap
 class ImageProcessingService(
     private val processors: List<ImageProcessor>,
     private val eventPublisher: ApplicationEventPublisher,
+    private val galleryLookup: GalleryLookupService? = null,
     @Value("\${ehviewer.processing.concurrency:1}") private val concurrency: Int,
-    @Value("\${ehviewer.cache.image-path:./data/cache}") private val cachePath: String
+    @Value("\${ehviewer.download.cache-path:./data/cache}") private val cachePath: String,
+    @Value("\${ehviewer.processing.task-ttl-ms:600000}") private val taskTtlMs: Long,
+    @Value("\${ehviewer.processing.max-tasks:100}") private val maxTasks: Int
 ) : DisposableBean {
     private val logger = LoggerFactory.getLogger(ImageProcessingService::class.java)
 
     private val tasks = ConcurrentHashMap<String, ProcessingTaskStatus>()
+    private val cancelRequests = ConcurrentHashMap.newKeySet<String>()
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO + CoroutineName("image-processing")
     )
     private val semaphore = kotlinx.coroutines.sync.Semaphore(concurrency)
 
     /**
+     * Resolve the real page count of a gallery from E-Hentai metadata so the
+     * whole gallery is processed, not a placeholder single page.
+     *
+     * @return number of pages (0-based range `0 until count`), or null when
+     * the gallery is unknown or the count cannot be fetched.
+     */
+    fun resolvePageCount(galleryId: Long): Int? = galleryLookup?.resolvePageCount(galleryId)
+
+    /**
      * Submit a gallery for image enhancement processing.
      *
      * @param galleryId the gallery to process
-     * @param pages range of page indices to process
+     * @param pages range of page indices to process (0-based)
      * @param options processing options (type, format, quality)
      * @return taskId for status polling
      * @throws IllegalStateException if no processor is available
@@ -52,6 +67,8 @@ class ImageProcessingService(
     ): String {
         val processor = selectProcessor(options.type)
             ?: throw IllegalStateException("No available processor for type ${options.type}")
+
+        evictFinishedIfNeeded()
 
         val taskId = "proc-${UUID.randomUUID().toString().take(8)}"
         val totalPages = pages.count()
@@ -96,6 +113,16 @@ class ImageProcessingService(
     }
 
     /**
+     * Request cancellation of a task. The running worker checks the flag
+     * between pages; the task finishes as FAILED with a "cancelled" error.
+     */
+    fun cancelTask(taskId: String): Boolean {
+        if (!tasks.containsKey(taskId)) return false
+        cancelRequests.add(taskId)
+        return true
+    }
+
+    /**
      * Query the current status of a processing task.
      *
      * @return task status, or null if taskId is unknown
@@ -133,8 +160,11 @@ class ImageProcessingService(
 
         var processed = 0
         var failed = 0
+        var firstFailedPage: Int? = null
 
         for (page in pages) {
+            if (taskId in cancelRequests) break
+
             updateStatus(taskId) { it.copy(currentPage = page) }
 
             try {
@@ -142,18 +172,24 @@ class ImageProcessingService(
                 if (inputPath == null || !Files.exists(inputPath)) {
                     logger.warn("Input image not found for gallery={} page={}, skipping", galleryId, page)
                     failed++
+                    if (firstFailedPage == null) firstFailedPage = page
                     updateStatus(taskId) {
                         it.copy(processedPages = processed, failedPages = failed)
                     }
                     continue
                 }
 
+                // Honor the configured outputPath: write the enhanced image to
+                // {cachePath}/enhanced/{galleryId}/{page}.{format} so the image
+                // endpoint can serve it via ?enhanced=1.
+                val resultPath = processor.process(inputPath, options)
                 val outputPath = outputDir.resolve("$page.${options.outputFormat}")
-                val startTimeMs = System.currentTimeMillis()
+                if (resultPath != outputPath) {
+                    Files.deleteIfExists(outputPath)
+                    Files.copy(resultPath, outputPath)
+                }
 
-                processor.process(inputPath, options)
-
-                val durationMs = System.currentTimeMillis() - startTimeMs
+                val durationMs = System.currentTimeMillis() - startTime
                 logger.debug(
                     "Image processed: taskId={}, galleryId={}, page={}, processor={}, durationMs={}",
                     taskId, galleryId, page, processor.id, durationMs
@@ -171,6 +207,18 @@ class ImageProcessingService(
                     totalPages = pages.count(),
                     currentPage = page
                 ))
+
+                eventPublisher.publishEvent(ProcessingEvent.EnhancedReady(
+                    taskId = taskId,
+                    galleryId = galleryId,
+                    page = page,
+                    enhancedUrl = "/api/v1/image/$galleryId/$page?enhanced=1",
+                    originalUrl = "/api/v1/image/$galleryId/$page",
+                    processingType = options.type,
+                    fileSize = runCatching { Files.size(outputPath) }.getOrDefault(0L),
+                    width = readImageWidth(outputPath),
+                    height = readImageHeight(outputPath)
+                ))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -179,6 +227,7 @@ class ImageProcessingService(
                     taskId, galleryId, page, e
                 )
                 failed++
+                if (firstFailedPage == null) firstFailedPage = page
                 updateStatus(taskId) {
                     it.copy(processedPages = processed, failedPages = failed)
                 }
@@ -186,7 +235,17 @@ class ImageProcessingService(
         }
 
         val elapsedMs = System.currentTimeMillis() - startTime
-        val finalState = if (failed == 0) TaskState.DONE else TaskState.DONE
+        val cancelled = taskId in cancelRequests
+        val finalState = when {
+            cancelled -> TaskState.FAILED
+            failed > 0 -> TaskState.FAILED
+            else -> TaskState.DONE
+        }
+        val error = when {
+            cancelled -> "Task cancelled"
+            failed > 0 -> "$failed of ${pages.count()} pages failed to process"
+            else -> null
+        }
 
         updateStatus(taskId) {
             it.copy(
@@ -194,20 +253,18 @@ class ImageProcessingService(
                 currentPage = -1,
                 completedAt = Instant.now(),
                 processedPages = processed,
-                failedPages = failed
+                failedPages = failed,
+                error = error
             )
         }
 
-        if (failed > 0 && processed == 0) {
-            updateStatus(taskId) {
-                it.copy(state = TaskState.FAILED, error = "All pages failed to process")
-            }
+        if (finalState == TaskState.FAILED) {
             eventPublisher.publishEvent(ProcessingEvent.Failed(
                 taskId = taskId,
                 galleryId = galleryId,
-                error = "All pages failed to process",
-                failedPage = pages.first,
-                processedBeforeFailure = 0
+                error = error ?: "Processing failed",
+                failedPage = firstFailedPage,
+                processedBeforeFailure = processed
             ))
         } else {
             eventPublisher.publishEvent(ProcessingEvent.Completed(
@@ -222,6 +279,27 @@ class ImageProcessingService(
             "Processing task finished: taskId={}, galleryId={}, state={}, processed={}, failed={}, elapsedMs={}",
             taskId, galleryId, tasks[taskId]?.state, processed, failed, elapsedMs
         )
+
+        scheduleCleanup(taskId)
+    }
+
+    /**
+     * Evict finished tasks once the map exceeds [maxTasks] (oldest first) and
+     * drop finished tasks after [taskTtlMs], keeping the map bounded.
+     */
+    private fun evictFinishedIfNeeded() {
+        if (tasks.size < maxTasks) return
+        val finished = tasks.values
+            .filter { it.state == TaskState.DONE || it.state == TaskState.FAILED }
+            .sortedBy { it.completedAt ?: Instant.EPOCH }
+        finished.take((tasks.size - maxTasks).coerceAtLeast(1)).forEach { tasks.remove(it.taskId) }
+    }
+
+    private fun scheduleCleanup(taskId: String) {
+        scope.launch {
+            delay(taskTtlMs)
+            tasks.remove(taskId)
+        }
     }
 
     private fun selectProcessor(type: ProcessingType): ImageProcessor? {
@@ -239,6 +317,30 @@ class ImageProcessingService(
             if (Files.exists(candidate)) return candidate
         }
         return null
+    }
+
+    private fun readImageWidth(path: Path): Int = readImageDimension(path).first
+
+    private fun readImageHeight(path: Path): Int = readImageDimension(path).second
+
+    /** Best-effort header-only dimension read; 0 when the format is unsupported (e.g. webp). */
+    private fun readImageDimension(path: Path): Pair<Int, Int> {
+        return try {
+            ImageIO.createImageInputStream(path.toFile()).use { stream ->
+                if (stream == null) return Pair(0, 0)
+                val readers = ImageIO.getImageReaders(stream)
+                if (!readers.hasNext()) return Pair(0, 0)
+                val reader = readers.next()
+                try {
+                    reader.setInput(stream)
+                    Pair(reader.getWidth(0), reader.getHeight(0))
+                } finally {
+                    reader.dispose()
+                }
+            }
+        } catch (e: Exception) {
+            Pair(0, 0)
+        }
     }
 
     private fun updateStatus(taskId: String, transform: (ProcessingTaskStatus) -> ProcessingTaskStatus) {
@@ -304,5 +406,22 @@ sealed class ProcessingEvent {
         val error: String,
         val failedPage: Int?,
         val processedBeforeFailure: Int
+    ) : ProcessingEvent()
+
+    /**
+     * A single page's enhanced version is ready on disk and can be served via
+     * `GET /api/v1/image/{galleryId}/{page}?enhanced=1`.
+     * See contracts/websocket-protocol.md §3.3 (image.enhanced.ready).
+     */
+    data class EnhancedReady(
+        val taskId: String,
+        val galleryId: Long,
+        val page: Int,
+        val enhancedUrl: String,
+        val originalUrl: String,
+        val processingType: ProcessingType,
+        val fileSize: Long,
+        val width: Int,
+        val height: Int
     ) : ProcessingEvent()
 }

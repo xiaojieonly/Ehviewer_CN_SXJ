@@ -28,8 +28,11 @@ class ImageProcessingServiceTest {
         service = ImageProcessingService(
             processors = listOf(noopProcessor),
             eventPublisher = testPublisher,
+            galleryLookup = null,
             concurrency = 1,
-            cachePath = tempDir.toString()
+            cachePath = tempDir.toString(),
+            taskTtlMs = 60000,
+            maxTasks = 100
         )
     }
 
@@ -100,6 +103,26 @@ class ImageProcessingServiceTest {
         assertEquals(0, status.failedPages)
         assertNotNull(status.startedAt)
         assertNotNull(status.completedAt)
+    }
+
+    @Test
+    fun `task transitions to FAILED when any page fails`() {
+        val galleryDir = tempDir.resolve("77777")
+        Files.createDirectories(galleryDir)
+        // Only page 0 exists — page 1 is missing, so the task must FAIL
+        // (not report DONE as the pre-fix copy-paste bug did).
+        Files.writeString(galleryDir.resolve("0.jpg"), "page0")
+
+        val taskId = service.submitGallery(77777, 0..1)
+
+        Thread.sleep(500)
+
+        val status = service.getTaskStatus(taskId)
+        assertNotNull(status)
+        assertEquals(TaskState.FAILED, status!!.state)
+        assertEquals(1, status.processedPages)
+        assertEquals(1, status.failedPages)
+        assertNotNull(status.error)
     }
 
     @Test

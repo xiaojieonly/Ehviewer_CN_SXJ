@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.*
  * REST controller for the image processing pipeline.
  *
  * Endpoints:
- * - POST /api/v1/process/gallery/{id} — trigger enhancement
+ * - POST /api/v1/process/gallery/{id} — trigger enhancement for all pages
  * - GET /api/v1/process/status/{taskId} — query progress
+ * - POST /api/v1/process/cancel/{taskId} — request cancellation
  *
- * See: contracts/openapi.yaml Processing tag
+ * See: contracts/openapi.yaml Processing tag, contracts/websocket-protocol.md §3.2
  */
 @RestController
 @RequestMapping("/api/v1/process")
@@ -36,8 +37,14 @@ class ProcessingController(
         )
 
         return try {
-            // TODO: resolve actual page count from gallery metadata; default to 1..1 for now
-            val pages = 0..0
+            // Resolve the real page count from E-Hentai gallery metadata so the
+            // whole gallery is processed, not a placeholder single page.
+            val count = processingService.resolvePageCount(id)
+                ?: return ResponseEntity.notFound().build()
+            if (count <= 0) {
+                return ResponseEntity.notFound().build()
+            }
+            val pages = 0 until count
             val taskId = processingService.submitGallery(id, pages, options)
             val status = processingService.getTaskStatus(taskId)!!
 
@@ -69,5 +76,14 @@ class ProcessingController(
             completedAt = status.completedAt,
             error = status.error
         ))
+    }
+
+    @PostMapping("/cancel/{taskId}")
+    fun cancelProcessing(@PathVariable taskId: String): ResponseEntity<Map<String, Boolean>> {
+        val cancelled = processingService.cancelTask(taskId)
+        if (!cancelled) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(mapOf("success" to true))
     }
 }

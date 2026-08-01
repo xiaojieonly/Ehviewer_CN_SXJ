@@ -25,6 +25,10 @@ ehviewer:
     download-timeout: 60000
     max-concurrent-galleries: 3
     max-concurrent-images: 3
+  processing:
+    concurrency: 1
+    task-ttl-ms: 600000
+    max-tasks: 100
   smb:
     enabled: false
   security:
