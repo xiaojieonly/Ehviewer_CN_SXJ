@@ -306,6 +306,7 @@
 
     <string name="stop_downloading">Stop downloading</string>
     <string name="delete_downloads">Delete downloads</string>
+    <string name="multi_select">Multi-select</string>
 
     <string name="quick_search">Quick search</string>
     <string name="quick_search_tip">Tap \"+\" to add Quick Search</string>

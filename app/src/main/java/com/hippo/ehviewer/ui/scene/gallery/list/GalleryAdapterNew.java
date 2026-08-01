@@ -206,12 +206,20 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
         return null;
     }
 
+    protected boolean isGallerySelected(@NonNull GalleryInfo galleryInfo) {
+        return false;
+    }
+
     @Override
     public void onBindViewHolder(GalleryAdapterNew.GalleryHolder holder, int position) {
         GalleryInfo gi = getDataAt(position);
         if (null == gi) {
+            holder.selectionOutline.setVisibility(View.GONE);
             return;
         }
+
+        holder.selectionOutline.setVisibility(
+                isGallerySelected(gi) ? View.VISIBLE : View.GONE);
 
         switch (mType) {
             default:
@@ -304,6 +312,7 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
         public final TextView simpleLanguage;
         public final ImageView favourite;
         public final ImageView downloaded;
+        public final View selectionOutline;
 
         public GalleryHolder(View itemView, final OnThumbItemClickListener onThumbItemClickListener, int mType) {
             super(itemView);
@@ -317,6 +326,7 @@ abstract class GalleryAdapterNew extends RecyclerView.Adapter<GalleryAdapterNew.
             simpleLanguage = itemView.findViewById(R.id.simple_language);
             favourite = itemView.findViewById(R.id.favourited);
             downloaded = itemView.findViewById(R.id.downloaded);
+            selectionOutline = itemView.findViewById(R.id.selection_outline);
             if (mType == 0) {
                 thumb.setOnClickListener(v -> {
                     if (onThumbItemClickListener != null) {

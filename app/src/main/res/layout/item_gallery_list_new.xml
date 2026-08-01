@@ -126,4 +126,13 @@
 
         </LinearLayout>
     </RelativeLayout>
+
+    <View
+        android:id="@+id/selection_outline"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/gallery_selection_outline"
+        android:clickable="false"
+        android:elevation="8dp"
+        android:visibility="gone" />
 </androidx.cardview.widget.CardView>

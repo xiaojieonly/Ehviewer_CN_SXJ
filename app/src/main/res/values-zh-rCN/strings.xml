@@ -219,6 +219,7 @@
 
     <string name="stop_downloading">停止下载</string>
     <string name="delete_downloads">删除下载</string>
+    <string name="multi_select">多选</string>
 
     <string name="quick_search">书签栏</string>
     <string name="quick_search_tip">点击“+”来添加书签</string>
