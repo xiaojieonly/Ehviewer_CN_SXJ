@@ -23,7 +23,7 @@ const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
  */
 export default defineConfig({
   testDir: __dirname,
-  testMatch: /visual\.spec\.ts/,
+  testMatch: /(visual|fixed-bounds)\.spec\.ts/,
   fullyParallel: false,
   workers: 1,
   retries: 0,
