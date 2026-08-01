@@ -16,7 +16,8 @@
   -->
 
 <network-security-config>
-    <base-config>
+    <!-- LAN deployment context: cleartext needed for user-entered LAN hosts (http://192.168.x.x) -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system"/>
             <certificates src="user"/>
@@ -25,5 +26,4 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">ehtracker.org</domain>
     </domain-config>
-<!--    <base-config cleartextTrafficPermitted="true"/>-->
 </network-security-config>

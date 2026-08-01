@@ -46,12 +46,6 @@
 
     <Preference
         android:key="webui_sync_preferences"
-        android:title="@string/settings_webui_sync_preferences"
-        android:summary="@string/settings_webui_sync_preferences_summary"
-        app:iconSpaceReserved="false" />
-
-    <Preference
-        android:key="webui_sync_preferences"
         android:summary="@string/settings_webui_sync_preferences_summary"
         android:title="@string/settings_webui_sync_preferences"
         app:allowDividerAbove="true"
