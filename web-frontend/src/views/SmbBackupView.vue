@@ -133,64 +133,59 @@
               <h2 class="smb-group__title">{{ formIsNew ? '添加连接' : '编辑连接' }}</h2>
               <div class="form-card">
                 <div class="form-grid">
-                  <label class="field field--span-8">
-                    <input v-model="form.host" type="text" placeholder=" " :disabled="saving" />
-                    <span class="field__label">服务器地址</span>
-                  </label>
-                  <label class="field field--span-4">
-                    <input
-                      v-model.number="form.port"
-                      type="number"
-                      min="1"
-                      max="65535"
-                      placeholder=" "
-                      :disabled="saving"
-                    />
-                    <span class="field__label">端口</span>
-                  </label>
-                  <label class="field field--span-6">
-                    <input v-model="form.share" type="text" placeholder=" " :disabled="saving" />
-                    <span class="field__label">共享文件夹</span>
-                  </label>
-                  <label class="field field--span-6">
-                    <input v-model="form.path" type="text" placeholder=" " :disabled="saving" />
-                    <span class="field__label">远程路径（可选）</span>
-                  </label>
-                  <label class="field field--span-6">
-                    <select v-model="form.loginMode" :disabled="saving">
-                      <option value="GUEST">访客</option>
-                      <option value="USER">用户名 / 密码</option>
-                    </select>
-                    <span class="field__label field__label--static">登录模式</span>
-                  </label>
-                  <label v-if="form.loginMode === 'USER'" class="field field--span-6">
-                    <input v-model="form.username" type="text" placeholder=" " :disabled="saving" />
-                    <span class="field__label">用户名</span>
-                  </label>
-                  <label v-if="form.loginMode === 'USER'" class="field field--span-12">
-                    <input
-                      v-model="form.password"
-                      type="password"
-                      placeholder=" "
-                      autocomplete="off"
-                      :disabled="saving"
-                    />
-                    <span class="field__label">密码（仅本次会话保存）</span>
-                  </label>
+                  <AppTextField
+                    v-model="form.host"
+                    label="服务器地址"
+                    class="field--span-8"
+                    :disabled="saving"
+                  />
+                  <AppTextField
+                    :model-value="String(form.port)"
+                    label="端口"
+                    type="number"
+                    class="field--span-4"
+                    :disabled="saving"
+                    @update:model-value="onPortInput"
+                  />
+                  <AppTextField
+                    v-model="form.share"
+                    label="共享文件夹"
+                    class="field--span-6"
+                    :disabled="saving"
+                  />
+                  <AppTextField
+                    v-model="form.path"
+                    label="远程路径（可选）"
+                    class="field--span-6"
+                    :disabled="saving"
+                  />
+                  <AppSelect
+                    :model-value="form.loginMode"
+                    :options="LOGIN_MODE_OPTIONS"
+                    class="field--span-6 login-mode-cell"
+                    :disabled="saving"
+                    @update:model-value="onLoginModeChange"
+                  />
+                  <AppTextField
+                    v-if="form.loginMode === 'USER'"
+                    v-model="form.username"
+                    label="用户名"
+                    class="field--span-6"
+                    :disabled="saving"
+                  />
+                  <AppTextField
+                    v-if="form.loginMode === 'USER'"
+                    v-model="form.password"
+                    label="密码（仅本次会话保存）"
+                    type="password"
+                    class="field--span-12"
+                    :disabled="saving"
+                  />
                 </div>
 
                 <div class="form-switch-row">
                   <span class="form-switch-label">启用 SMB 备份</span>
-                  <button
-                    type="button"
-                    class="switch"
-                    role="switch"
-                    :aria-checked="form.enabled"
-                    aria-label="启用 SMB 备份"
-                    @click="form.enabled = !form.enabled"
-                  >
-                    <span class="switch__thumb" />
-                  </button>
+                  <AppSwitch v-model="form.enabled" aria-label="启用 SMB 备份" />
                 </div>
 
                 <Transition name="banner">
@@ -349,6 +344,7 @@ import { useThemeStore } from '@/stores/theme'
 import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/NavigationDrawer.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import { AppSelect, AppSwitch, AppTextField } from '@/components/form'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -386,6 +382,11 @@ const NAV_ROUTES: Readonly<Record<string, string>> = {
   downloads: '/downloads',
   settings: '/settings',
 }
+
+const LOGIN_MODE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'GUEST', label: '访客' },
+  { value: 'USER', label: '用户名 / 密码' },
+]
 
 /* --------------------------------- state ---------------------------------- */
 
@@ -502,6 +503,17 @@ function beginEdit(conn: SmbConnectionEntry): void {
   formIsNew.value = false
   formTestResult.value = null
   form.value = { ...conn, password: '' }
+}
+
+function onPortInput(value: string): void {
+  if (!form.value) return
+  const parsed = Number(value)
+  form.value.port = Number.isNaN(parsed) ? 0 : parsed
+}
+
+function onLoginModeChange(value: string | number): void {
+  if (!form.value) return
+  form.value.loginMode = value === 'USER' ? 'USER' : 'GUEST'
 }
 
 /** 表单字段 → API 配置（单配置模型：激活连接即服务端配置）。 */
@@ -1089,69 +1101,9 @@ onUnmounted(() => {
   }
 }
 
-/* Material outlined 输入框：分隔线边框 → 聚焦主题色。 */
-.field {
-  position: relative;
-  display: block;
-}
-
-.field input,
-.field select {
+/* AppSelect 根节点在 grid 单元格内占满整列。 */
+.login-mode-cell {
   width: 100%;
-  padding: 15px 12px 9px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: transparent;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-  caret-color: var(--color-accent);
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
-}
-
-.field select {
-  appearance: none;
-  cursor: pointer;
-}
-
-.field input:focus,
-.field select:focus {
-  border-color: var(--color-primary);
-}
-
-.field input:disabled,
-.field select:disabled {
-  opacity: 0.6;
-}
-
-.field__label {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  translate: 0 -50%;
-  padding: 0 4px;
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-secondary);
-  pointer-events: none;
-  transition:
-    top 150ms var(--ease-decelerate-quart),
-    font-size 150ms var(--ease-decelerate-quart),
-    color 150ms var(--ease-decelerate-quart);
-}
-
-/* select 无法用 :placeholder-shown，标签常驻浮起。 */
-.field__label--static {
-  top: 0;
-  font-size: clamp(10px, 12px, 13px);
-  background: var(--color-background-floating);
-}
-
-.field input:focus + .field__label,
-.field input:not(:placeholder-shown) + .field__label {
-  top: 0;
-  font-size: clamp(10px, 12px, 13px);
-  color: var(--color-primary);
-  background: var(--color-background-floating);
 }
 
 .form-switch-row {
@@ -1164,40 +1116,6 @@ onUnmounted(() => {
 .form-switch-label {
   font-size: clamp(14px, 16px, 18px);
   color: var(--text-color-primary);
-}
-
-.switch {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
 }
 
 /* 测试结果横幅：成功绿 / 失败红（令牌色）。 */
