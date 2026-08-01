@@ -379,7 +379,7 @@
 
   /* Text colors (Material Light) */
   --text-color-primary: rgba(0, 0, 0, 0.87);    /* android textColorPrimary light */
-  --text-color-secondary: rgba(0, 0, 0, 0.54);  /* android textColorSecondary light */
+  --text-color-secondary: rgba(0, 0, 0, 0.6);  /* android textColorSecondary light; UX-09 .54→.6 (≈5.7:1 on white) */
 
   /* Drawable colors */
   --drawable-color-primary: rgba(0, 0, 0, 0.54);   /* primary_drawable_light #8a000000 */
@@ -390,6 +390,10 @@
   --text-color-theme-primary: #009688;           /* textColorThemePrimary = colorPrimary */
   --text-color-theme-primary2: #1d87e4;          /* textColorThemePrimary2 = loading_indicator_blue */
   --text-color-theme-accent: #e040fb;            /* textColorThemeAccent = colorAccent */
+
+  /* UX-09: AA (4.5:1) small-text teal. teal_700 on #f5f5f5 = 4.88:1, on #ffffff = 5.32:1.
+     Use for text < 18px; keep --color-primary (teal_500) for graphics / large text. */
+  --color-primary-text: #00796b;
 
   /* Content colors */
   --content-color-primary: #f5f5f5;              /* content_light = grey_100 */
@@ -492,6 +496,9 @@
   --text-color-theme-primary2: rgba(255, 255, 255, 0.7);
   --text-color-theme-accent: rgba(255, 255, 255, 0.7);
 
+  /* UX-09: AA (4.5:1) small-text teal. teal_300 on #3a3a3a = 4.66:1, on #323232 = 5.25:1. */
+  --color-primary-text: #4db6ac;
+
   /* Content colors */
   --content-color-primary: #3a3a3a;              /* content_dark = grey_825 */
   --content-color-theme-primary: #3a3a3a;        /* = contentColorPrimary */
@@ -583,6 +590,10 @@
   --text-color-theme-primary: rgba(255, 255, 255, 0.7); /* textColorSecondary */
   --text-color-theme-primary2: rgba(255, 255, 255, 0.7);
   --text-color-theme-accent: rgba(255, 255, 255, 0.7);
+
+  /* UX-09: AA (4.5:1) small-text teal. Same as dark theme; teal_300 on #000000 = 8.60:1,
+     on #191919 = 7.20:1. */
+  --color-primary-text: #4db6ac;
 
   /* Content colors */
   --content-color-primary: #191919;              /* content_black = grey_925 */
