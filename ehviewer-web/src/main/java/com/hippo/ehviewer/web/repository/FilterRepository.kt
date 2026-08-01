@@ -7,4 +7,6 @@ interface FilterRepository : JpaRepository<FilterEntity, Long> {
     fun findByText(text: String): FilterEntity?
     fun findByType(type: Int): List<FilterEntity>
     fun findByTypeAndEnabled(type: Int, enabled: Boolean): List<FilterEntity>
+    fun findAllByUsernameIsNull(): List<FilterEntity>
+    fun countByUsername(username: String): Long
 }

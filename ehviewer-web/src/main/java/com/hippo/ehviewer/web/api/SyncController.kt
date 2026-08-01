@@ -5,9 +5,9 @@ import com.hippo.ehviewer.web.dto.SyncPullResponse
 import com.hippo.ehviewer.web.dto.SyncPushRequest
 import com.hippo.ehviewer.web.dto.SyncPushResponse
 import com.hippo.ehviewer.web.dto.SyncStatusResponse
-import com.hippo.ehviewer.web.service.DeviceService
 import com.hippo.ehviewer.web.service.EhAuthService
 import com.hippo.ehviewer.web.service.SyncService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/sync")
 class SyncController(
     private val syncService: SyncService,
-    private val deviceService: DeviceService,
     private val authService: EhAuthService,
 ) {
 
@@ -38,18 +37,26 @@ class SyncController(
     }
 
     @GetMapping("/status")
-    fun status(): ResponseEntity<SyncStatusResponse> {
-        return ResponseEntity.ok(syncService.status())
+    fun status(authentication: Authentication): ResponseEntity<SyncStatusResponse> {
+        return ResponseEntity.ok(syncService.status(authentication.name))
     }
 
     @GetMapping("/devices")
-    fun devices(): ResponseEntity<List<DeviceInfoDto>> {
-        return ResponseEntity.ok(deviceService.list())
+    fun devices(authentication: Authentication): ResponseEntity<List<DeviceInfoDto>> {
+        return ResponseEntity.ok(syncService.listDevices(authentication.name))
     }
 
     @DeleteMapping("/devices/{deviceId}")
-    fun revokeDevice(@PathVariable deviceId: String): ResponseEntity<Map<String, Boolean>> {
-        authService.revokeDevice(deviceId)
-        return ResponseEntity.ok(mapOf("success" to true))
+    fun revokeDevice(
+        @PathVariable deviceId: String,
+        authentication: Authentication,
+    ): ResponseEntity<Map<String, Any>> {
+        val revoked = authService.revokeDevice(deviceId, authentication.name)
+        return if (revoked) {
+            ResponseEntity.ok(mapOf("success" to true))
+        } else {
+            ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(mapOf("success" to false, "message" to "Device not found or not owned by this user"))
+        }
     }
 }

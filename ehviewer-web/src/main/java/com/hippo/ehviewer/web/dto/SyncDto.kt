@@ -142,6 +142,14 @@ data class SyncQuickSearchDto(
     val deleted: Boolean = false,
 )
 
+data class SyncDownloadLabelDto(
+    val label: String,
+    val time: Long = 0,
+    val lastModified: Long = 0,
+    val deviceId: String = "",
+    val deleted: Boolean = false,
+)
+
 // --- Wrapper messages ---
 
 data class SyncPreferencesDto(
@@ -157,6 +165,7 @@ data class SyncEntityCollection(
     val bookmarks: List<SyncBookmarkDto> = emptyList(),
     val filters: List<SyncFilterDto> = emptyList(),
     val quickSearches: List<SyncQuickSearchDto> = emptyList(),
+    val downloadLabels: List<SyncDownloadLabelDto> = emptyList(),
     val preferences: SyncPreferencesDto? = null,   // 新增
 )
 
@@ -191,6 +200,7 @@ data class EntityCountsDto(
     val bookmarks: Long = 0,
     val filters: Long = 0,
     val quickSearches: Long = 0,
+    val downloadLabels: Long = 0,
 )
 
 data class SyncStatusResponse(

@@ -17,4 +17,13 @@ class FilterEntity {
 
     @Column(nullable = false)
     var enabled: Boolean = true
+
+    @Column(nullable = false)
+    var lastModified: Long = 0
+
+    @Column(nullable = false)
+    var deleted: Boolean = false
+
+    @Column(length = 256)
+    var username: String? = null
 }
