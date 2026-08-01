@@ -21,114 +21,46 @@
 
       <template v-else-if="reader">
         <!-- ═══ 翻页 ═══════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">翻页</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="mobile-hand-left" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">阅读方向</span>
-                <span class="pref__summary">{{ directionLabel }}</span>
-              </div>
-              <div class="segment" role="radiogroup" aria-label="阅读方向">
-                <button
-                  v-for="option in DIRECTION_OPTIONS"
-                  :key="option.value"
-                  type="button"
-                  class="segment__btn"
-                  role="radio"
-                  :aria-checked="reader.readingDirection === option.value"
-                  @click="updateReader({ readingDirection: option.value })"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="book-open-primary" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">翻页模式</span>
-                <span class="pref__summary">{{ pageModeLabel }}</span>
-              </div>
-              <label class="select">
-                <span class="select__label">翻页模式</span>
-                <select
-                  :value="reader.pageMode"
-                  aria-label="翻页模式"
-                  @change="onSelectChange($event, 'pageMode')"
-                >
-                  <option v-for="option in PAGE_MODE_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="info-outline-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">首页作为封面</span>
-                <span class="pref__summary">将第一页作为画廊封面使用</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="reader.firstPageCover"
+        <section>
+          <SectionHeader title="翻页" />
+          <PrefCard>
+            <PrefRow icon="mobile-hand-left" title="阅读方向" :summary="directionLabel">
+              <AppSegmented
+                :model-value="reader.readingDirection"
+                :options="DIRECTION_OPTIONS"
+                aria-label="阅读方向"
+                @update:model-value="(v) => updateReader({ readingDirection: v })"
+              />
+            </PrefRow>
+            <PrefRow icon="book-open-primary" title="翻页模式" :summary="pageModeLabel">
+              <AppSelect
+                :model-value="reader.pageMode"
+                :options="PAGE_MODE_OPTIONS"
+                @update:model-value="(v) => onSelectValueChange('pageMode', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="info-outline-dark" title="首页作为封面" summary="将第一页作为画廊封面使用">
+              <AppSwitch
+                :model-value="reader.firstPageCover"
                 aria-label="首页作为封面"
-                @click="toggleSwitch('firstPageCover')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="magnify-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">页面缩放</span>
-                <span class="pref__summary">{{ pageScalingLabel }}</span>
-              </div>
-              <label class="select">
-                <span class="select__label">页面缩放</span>
-                <select
-                  :value="reader.pageScaling"
-                  aria-label="页面缩放"
-                  @change="onSelectChange($event, 'pageScaling')"
-                >
-                  <option v-for="option in PAGE_SCALING_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="go-to-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">起始位置</span>
-                <span class="pref__summary">{{ startPositionLabel }}</span>
-              </div>
-              <label class="select">
-                <span class="select__label">起始位置</span>
-                <select
-                  :value="reader.startPosition"
-                  aria-label="起始位置"
-                  @change="onSelectChange($event, 'startPosition')"
-                >
-                  <option v-for="option in START_POSITION_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="play-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">自动播放间隔</span>
-                <span class="pref__summary">自动播放时每页停留秒数</span>
-              </div>
+                @update:model-value="() => toggleSwitch('firstPageCover')"
+              />
+            </PrefRow>
+            <PrefRow icon="magnify-dark" title="页面缩放" :summary="pageScalingLabel">
+              <AppSelect
+                :model-value="reader.pageScaling"
+                :options="PAGE_SCALING_OPTIONS"
+                @update:model-value="(v) => onSelectValueChange('pageScaling', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="go-to-dark" title="起始位置" :summary="startPositionLabel">
+              <AppSelect
+                :model-value="reader.startPosition"
+                :options="START_POSITION_OPTIONS"
+                @update:model-value="(v) => onSelectValueChange('startPosition', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="play-dark" title="自动播放间隔" summary="自动播放时每页停留秒数">
               <div class="stepper">
                 <button
                   type="button"
@@ -150,74 +82,36 @@
                   +
                 </button>
               </div>
-            </div>
-          </div>
+            </PrefRow>
+          </PrefCard>
         </section>
 
         <!-- ═══ 显示 ═══════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">显示</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="chart-accent" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示进度</span>
-                <span class="pref__summary">在阅读器中显示当前页码与进度</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="reader.showProgress"
+        <section>
+          <SectionHeader title="显示" />
+          <PrefCard>
+            <PrefRow icon="chart-accent" title="显示进度" summary="在阅读器中显示当前页码与进度">
+              <AppSwitch
+                :model-value="reader.showProgress"
                 aria-label="显示进度"
-                @click="toggleSwitch('showProgress')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="slider-bubble" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示页间隔</span>
-                <span class="pref__summary">在进度条上显示页与页之间的间隔</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="reader.showPageInterval"
+                @update:model-value="() => toggleSwitch('showProgress')"
+              />
+            </PrefRow>
+            <PrefRow icon="slider-bubble" title="显示页间隔" summary="在进度条上显示页与页之间的间隔">
+              <AppSwitch
+                :model-value="reader.showPageInterval"
                 aria-label="显示页间隔"
-                @click="toggleSwitch('showPageInterval')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="refresh-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">全屏阅读</span>
-                <span class="pref__summary">进入阅读器时自动隐藏界面全屏显示</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="reader.fullscreen"
+                @update:model-value="() => toggleSwitch('showPageInterval')"
+              />
+            </PrefRow>
+            <PrefRow icon="refresh-dark" title="全屏阅读" summary="进入阅读器时自动隐藏界面全屏显示">
+              <AppSwitch
+                :model-value="reader.fullscreen"
                 aria-label="全屏阅读"
-                @click="toggleSwitch('fullscreen')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="settings-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">亮度</span>
-                <span class="pref__summary">0 表示跟随系统亮度</span>
-              </div>
+                @update:model-value="() => toggleSwitch('fullscreen')"
+              />
+            </PrefRow>
+            <PrefRow icon="settings-dark" title="亮度" summary="0 表示跟随系统亮度">
               <div class="slider-wrap">
                 <input
                   type="range"
@@ -234,8 +128,8 @@
                   {{ reader.brightness === 0 ? '系统' : `${reader.brightness}%` }}
                 </span>
               </div>
-            </div>
-          </div>
+            </PrefRow>
+          </PrefCard>
         </section>
       </template>
     </div>
@@ -251,34 +145,36 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import type { ReaderPreferences } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
-import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSelect, AppSegmented, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const preferencesStore = usePreferencesStore()
 
 /* ------------------------------ option lists ----------------------------- */
 
-const DIRECTION_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+const DIRECTION_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'ltr', label: '左到右' },
   { value: 'rtl', label: '右到左' },
   { value: 'vertical', label: '纵向' },
 ]
 
-const PAGE_MODE_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+const PAGE_MODE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'auto', label: '自动' },
   { value: 'single', label: '单页' },
   { value: 'dual', label: '双页' },
   { value: 'scroll', label: '滚动' },
 ]
 
-const PAGE_SCALING_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+const PAGE_SCALING_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'fit', label: '适应' },
   { value: 'width', label: '宽度' },
   { value: 'height', label: '高度' },
   { value: 'original', label: '原始' },
 ]
 
-const START_POSITION_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+// UX-03: keep a label for the backend default snake_case value too.
+const START_POSITION_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'top-right', label: '右上' },
+  { value: 'top_right', label: '右上' },
   { value: 'top-left', label: '左上' },
   { value: 'bottom-right', label: '右下' },
   { value: 'bottom-left', label: '左下' },
@@ -286,6 +182,7 @@ const START_POSITION_OPTIONS: ReadonlyArray<{ value: string; label: string }> = 
 
 const START_POSITION_LABELS: Readonly<Record<string, string>> = {
   'top-right': '从右上角开始',
+  'top_right': '从右上角开始',
   'top-left': '从左上角开始',
   'bottom-right': '从右下角开始',
   'bottom-left': '从左下角开始',
@@ -324,8 +221,9 @@ function updateReader(patch: Partial<ReaderPreferences>): void {
   preferencesStore.updateReader(patch)
 }
 
-function onSelectChange(event: Event, key: keyof ReaderPreferences): void {
-  updateReader({ [key]: (event.target as HTMLSelectElement).value })
+/** 裸值版本（AppSelect 的 @update:model-value），替代原先从 Event 取值的 onSelectChange。 */
+function onSelectValueChange(key: keyof ReaderPreferences, value: string | number): void {
+  updateReader({ [key]: String(value) })
 }
 
 function toggleSwitch(key: 'firstPageCover' | 'showProgress' | 'showPageInterval' | 'fullscreen'): void {
@@ -440,189 +338,6 @@ onMounted(async () => {
 .saved-enter-from,
 .saved-leave-to {
   opacity: 0;
-}
-
-/* ----------------------------- preference group --------------------------- */
-
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-/* ------------------------------ preference row ---------------------------- */
-
-.pref {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ------------------------------ segment control --------------------------- */
-
-.segment {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--color-surface);
-}
-
-.segment__btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-color-secondary);
-  font-size: clamp(11px, 12px, 14px);
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background-color 150ms var(--ease-decelerate-quart),
-    color 150ms var(--ease-decelerate-quart);
-}
-
-.segment__btn:hover {
-  color: var(--text-color-primary);
-}
-
-.segment__btn[aria-checked='true'] {
-  background: var(--content-color-theme-primary);
-  color: var(--color-white);
-  font-weight: 700;
-  box-shadow: 0 1px 2px var(--shadow-color);
-}
-
-/* ---------------------------------- select -------------------------------- */
-
-.select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.select select {
-  appearance: none;
-  min-width: 120px;
-  padding: 8px 30px 8px 12px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: var(--color-background-floating);
-  color: var(--text-color-primary);
-  font-size: clamp(13px, 14px, 16px);
-  cursor: pointer;
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
-}
-
-.select select:focus {
-  border-color: var(--color-primary);
-}
-
-.select::after {
-  content: '';
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid var(--drawable-color-secondary);
-  border-bottom: 2px solid var(--drawable-color-secondary);
-  translate: 0 -60%;
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.select__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-/* ---------------------------------- switch -------------------------------- */
-
-.switch {
-  position: relative;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
 }
 
 /* ---------------------------------- stepper ------------------------------- */
