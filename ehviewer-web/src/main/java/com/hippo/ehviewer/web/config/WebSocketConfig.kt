@@ -7,6 +7,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
+import java.util.concurrent.atomic.AtomicInteger
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -15,6 +16,16 @@ class WebSocketConfig(
     @Value("\${EHVIEWER_WS_ORIGINS:*}")
     private val wsOrigins: String,
 ) : WebSocketMessageBrokerConfigurer {
+
+    companion object {
+        /**
+         * Number of STOMP sessions with an accepted CONNECT frame.
+         * Incremented by [WsAuthChannelInterceptor] on successful CONNECT,
+         * decremented on DISCONNECT; exposed via the metrics endpoint.
+         */
+        val activeConnections = AtomicInteger(0)
+    }
+
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
         registry.enableSimpleBroker("/topic")
         registry.setApplicationDestinationPrefixes("/app")

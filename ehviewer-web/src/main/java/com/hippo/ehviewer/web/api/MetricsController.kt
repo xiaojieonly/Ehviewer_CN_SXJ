@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.web.api
 
 import com.hippo.ehviewer.web.config.EhCoreConfigProperties
+import com.hippo.ehviewer.web.config.WebSocketConfig
 import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.processing.ImageProcessingService
 import com.hippo.ehviewer.web.service.DownloadService
@@ -49,7 +50,7 @@ class MetricsController(
         )
         metrics["ehviewer.cache.memory.size.bytes"] = MetricValue(
             type = "gauge",
-            value = cacheStats.memoryCacheEntries * 0L // approximate; Caffeine doesn't expose byte size directly
+            value = imageCacheService.getMemorySizeBytes()
         )
         metrics["ehviewer.cache.disk.size.bytes"] = MetricValue(
             type = "gauge",
@@ -81,13 +82,13 @@ class MetricsController(
         )
         metrics["ehviewer.process.completed.total"] = MetricValue(
             type = "counter",
-            value = 0L
+            value = processingService.getCompletedTaskCount()
         )
 
-        // WebSocket metrics (no session tracking yet — report zero)
+        // WebSocket connections with an accepted CONNECT frame
         metrics["ehviewer.ws.connections.active"] = MetricValue(
             type = "gauge",
-            value = 0
+            value = WebSocketConfig.activeConnections.get()
         )
 
         val usedHeap = runtime.totalMemory() - runtime.freeMemory()
@@ -124,7 +125,7 @@ class MetricsController(
             ),
             cache = DashboardCache(
                 memoryEntries = cacheStats.memoryCacheEntries,
-                memoryUsedBytes = 0, // Caffeine doesn't expose byte size
+                memoryUsedBytes = imageCacheService.getMemorySizeBytes(),
                 memoryMaxBytes = memoryMaxBytes,
                 memoryUsagePercent = 0.0,
                 diskUsedBytes = cacheStats.diskCacheSizeBytes,
@@ -150,11 +151,11 @@ class MetricsController(
             ),
             processing = DashboardProcessing(
                 queueSize = processingService.getQueueSize(),
-                completedTotal = 0,
+                completedTotal = processingService.getCompletedTaskCount(),
                 processorAvailable = processingService.getActiveTasks().isNotEmpty()
             ),
             websocket = DashboardWebSocket(
-                activeConnections = 0
+                activeConnections = WebSocketConfig.activeConnections.get()
             )
         )
     }

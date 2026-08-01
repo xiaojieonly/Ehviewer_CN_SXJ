@@ -41,11 +41,13 @@ class MetricsControllerTest {
 
         `when`(imageCacheService.getCacheStats()).thenReturn(defaultCacheStats)
         `when`(imageCacheService.getDiskEntryCount()).thenReturn(8432L)
+        `when`(imageCacheService.getMemorySizeBytes()).thenReturn(0L)
         `when`(downloadService.getActiveDownloadCount()).thenReturn(0)
         `when`(downloadService.getCompletedDownloadCount()).thenReturn(0L)
         `when`(downloadService.getFailedDownloadCount()).thenReturn(0L)
         `when`(downloadService.getActiveDownloads()).thenReturn(emptyList())
         `when`(processingService.getQueueSize()).thenReturn(0)
+        `when`(processingService.getCompletedTaskCount()).thenReturn(0L)
         `when`(processingService.getActiveTasks()).thenReturn(emptyList())
     }
 
@@ -105,6 +107,26 @@ class MetricsControllerTest {
         assertEquals(47L, response.metrics["ehviewer.download.completed.total"]?.value)
         assertEquals("gauge", response.metrics["ehviewer.download.active"]?.type)
         assertEquals("counter", response.metrics["ehviewer.download.completed.total"]?.type)
+    }
+
+    @Test
+    fun `metrics returns real values for memory size, completed processing and ws connections`() {
+        `when`(imageCacheService.getMemorySizeBytes()).thenReturn(5242880L)
+        `when`(processingService.getCompletedTaskCount()).thenReturn(17L)
+        com.hippo.ehviewer.web.config.WebSocketConfig.activeConnections.set(3)
+
+        try {
+            val response = controller.getMetrics()
+
+            assertEquals(5242880L, response.metrics["ehviewer.cache.memory.size.bytes"]?.value)
+            assertEquals("gauge", response.metrics["ehviewer.cache.memory.size.bytes"]?.type)
+            assertEquals(17L, response.metrics["ehviewer.process.completed.total"]?.value)
+            assertEquals("counter", response.metrics["ehviewer.process.completed.total"]?.type)
+            assertEquals(3, response.metrics["ehviewer.ws.connections.active"]?.value)
+            assertEquals("gauge", response.metrics["ehviewer.ws.connections.active"]?.type)
+        } finally {
+            com.hippo.ehviewer.web.config.WebSocketConfig.activeConnections.set(0)
+        }
     }
 
     @Test

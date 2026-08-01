@@ -12,6 +12,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 
 /**
@@ -37,6 +38,7 @@ class ImageProcessingService(
 
     private val tasks = ConcurrentHashMap<String, ProcessingTaskStatus>()
     private val cancelRequests = ConcurrentHashMap.newKeySet<String>()
+    private val completedTasks = AtomicLong(0)
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO + CoroutineName("image-processing")
     )
@@ -140,6 +142,9 @@ class ImageProcessingService(
      */
     fun getQueueSize(): Int =
         tasks.values.count { it.state == TaskState.PENDING || it.state == TaskState.PROCESSING }
+
+    /** Total number of tasks that finished in the DONE state (monotonic counter). */
+    fun getCompletedTaskCount(): Long = completedTasks.get()
 
     private suspend fun executeTask(
         taskId: String,
@@ -267,6 +272,7 @@ class ImageProcessingService(
                 processedBeforeFailure = processed
             ))
         } else {
+            completedTasks.incrementAndGet()
             eventPublisher.publishEvent(ProcessingEvent.Completed(
                 taskId = taskId,
                 galleryId = galleryId,

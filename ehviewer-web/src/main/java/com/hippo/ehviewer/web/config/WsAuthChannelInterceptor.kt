@@ -26,22 +26,34 @@ class WsAuthChannelInterceptor(
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor::class.java)
             ?: return message
-        if (accessor.command != StompCommand.CONNECT) return message
-        if (!serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)) return message
-
-        val token = accessor.getFirstNativeHeader("login")
-            ?: accessor.getFirstNativeHeader("Authorization")
-                ?.removePrefix("Bearer ")
-                ?.trim()
-            ?: ""
-        if (authService.validateToken(token) == null) {
-            val error = StompHeaderAccessor.create(StompCommand.ERROR)
-            error.message = "Authentication required"
-            error.setSessionId(accessor.sessionId)
-            val errorMessage = MessageBuilder.createMessage(ByteArray(0), error.messageHeaders)
-            channel.send(errorMessage)
-            return null
+        when (accessor.command) {
+            StompCommand.CONNECT -> {
+                val accepted = if (!serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)) {
+                    true
+                } else {
+                    val token = accessor.getFirstNativeHeader("login")
+                        ?: accessor.getFirstNativeHeader("Authorization")
+                            ?.removePrefix("Bearer ")
+                            ?.trim()
+                        ?: ""
+                    if (authService.validateToken(token) == null) {
+                        val error = StompHeaderAccessor.create(StompCommand.ERROR)
+                        error.message = "Authentication required"
+                        error.setSessionId(accessor.sessionId)
+                        val errorMessage = MessageBuilder.createMessage(ByteArray(0), error.messageHeaders)
+                        channel.send(errorMessage)
+                        return null
+                    }
+                    true
+                }
+                if (accepted) WebSocketConfig.activeConnections.incrementAndGet()
+                return message
+            }
+            StompCommand.DISCONNECT -> {
+                WebSocketConfig.activeConnections.updateAndGet { maxOf(0, it - 1) }
+                return message
+            }
+            else -> return message
         }
-        return message
     }
 }

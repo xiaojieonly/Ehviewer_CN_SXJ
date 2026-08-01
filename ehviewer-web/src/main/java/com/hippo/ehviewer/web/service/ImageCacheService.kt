@@ -2,6 +2,7 @@ package com.hippo.ehviewer.web.service
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.RemovalCause
 import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.dto.CacheStatsResponse
 import jakarta.annotation.PostConstruct
@@ -40,10 +41,16 @@ class ImageCacheService(
     private val memoryCache: Cache<String, ByteArray> = Caffeine.newBuilder()
         .maximumSize(maxMemoryEntries)
         .recordStats()
+        .removalListener<String, ByteArray> { _, value: ByteArray?, _: RemovalCause ->
+            if (value != null) memorySizeBytes.addAndGet(-value.size.toLong())
+        }
         .build()
 
     /** Running total of bytes on disk, seeded at startup by [init]. */
     private val diskSizeBytes = AtomicLong(0)
+
+    /** Running total of byte sizes of values currently held in the memory cache. */
+    private val memorySizeBytes = AtomicLong(0)
 
     // ── lifecycle ──────────────────────────────────────────────
 
@@ -156,6 +163,9 @@ class ImageCacheService(
     /** Number of files currently stored on disk (scan-based, for metrics). */
     fun getDiskEntryCount(): Long = collectFiles(cacheDir).size.toLong()
 
+    /** Total byte size of values currently held in the memory cache. */
+    fun getMemorySizeBytes(): Long = memorySizeBytes.get()
+
     // ── stats ──────────────────────────────────────────────────
 
     fun getCacheStats(): CacheStatsResponse {
@@ -176,11 +186,12 @@ class ImageCacheService(
     private fun getFromMemory(key: String): ByteArray? = memoryCache.getIfPresent(key)
 
     private fun promoteToMemory(key: String, data: ByteArray) {
-        memoryCache.put(key, data)
+        putToMemory(key, data)
     }
 
     private fun putToMemory(key: String, data: ByteArray) {
         memoryCache.put(key, data)
+        memorySizeBytes.addAndGet(data.size.toLong())
     }
 
     // ── disk helpers ───────────────────────────────────────────
