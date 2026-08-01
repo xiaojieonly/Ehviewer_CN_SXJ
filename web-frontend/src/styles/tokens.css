@@ -345,6 +345,18 @@
 
   /* Guide (colors.xml) */
   --guide-bg: rgba(0, 150, 136, 0.898); /* #e5009688 */
+
+  /* -----------------------------------------------------------------------
+     Form primitives (shared form components — MD3 alignment)
+     ----------------------------------------------------------------------- */
+  --field-height: 48px;                /* MD outlined field height */
+  --field-radius: 4px;                 /* MD outlined field corner radius */
+  --field-label-size: 12px;            /* floating label size */
+  --field-padding-h: 16px;             /* horizontal padding inside fields */
+  --switch-width: 52px;                /* MD3 switch track width */
+  --switch-height: 32px;               /* MD3 switch track height */
+  --switch-thumb-size: 24px;           /* MD3 switch thumb diameter */
+  --segment-radius: 8px;               /* segmented button corner radius */
 }
 
 /* ==========================================================================

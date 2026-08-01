@@ -40,6 +40,18 @@ const ROUTES: RouteEntry[] = [
   { path: '/downloads', slug: 'downloads' },
   { path: '/settings', slug: 'settings' },
   { path: '/login', slug: 'login' },
+  { path: '/settings/general', slug: 'settings-general' },
+  { path: '/settings/reader', slug: 'settings-reader' },
+  { path: '/settings/privacy', slug: 'settings-privacy' },
+  { path: '/settings/transfer', slug: 'settings-transfer' },
+  { path: '/admin/download', slug: 'admin-download' },
+  { path: '/admin/server', slug: 'admin-server' },
+  { path: '/admin/devices', slug: 'admin-devices' },
+  { path: '/admin/proxy', slug: 'admin-proxy' },
+  { path: '/admin/access', slug: 'admin-access' },
+  { path: '/admin/processing', slug: 'admin-processing' },
+  { path: '/admin/advanced', slug: 'admin-advanced' },
+  { path: '/admin/about', slug: 'admin-about' },
 ]
 
 /* -------------------------------------------------------------------------- */
