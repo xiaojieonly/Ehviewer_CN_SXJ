@@ -28,7 +28,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [['list']],
-  timeout: 90_000,
+  timeout: 600_000,
   outputDir: resolve(__dirname, 'test-results'),
   use: {
     baseURL: BASE_URL,

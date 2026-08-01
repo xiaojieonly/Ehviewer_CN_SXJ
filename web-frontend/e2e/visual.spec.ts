@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import fs from 'node:fs'
@@ -31,6 +31,10 @@ const VIEWPORTS: Viewport[] = [
   { id: 'ipad-1024x1366', width: 1024, height: 1366 },
   // Modern phone (CSS px, e.g. iPhone 12/13/14 logical size)
   { id: 'phone-390x844', width: 390, height: 844 },
+  // 4:3 landscape desktop-class tablet
+  { id: 'tablet-1024x768', width: 1024, height: 768 },
+  // Extremely narrow phone — hamburger collision + tab overflow checks
+  { id: 'narrow-320x568', width: 320, height: 568 },
 ]
 
 const ROUTES: RouteEntry[] = [
@@ -52,6 +56,7 @@ const ROUTES: RouteEntry[] = [
   { path: '/admin/processing', slug: 'admin-processing' },
   { path: '/admin/advanced', slug: 'admin-advanced' },
   { path: '/admin/about', slug: 'admin-about' },
+  { path: '/reader/12345', slug: 'reader' },
 ]
 
 /* -------------------------------------------------------------------------- */
@@ -149,4 +154,33 @@ test('capture visual screenshots for every route × theme × viewport', async ({
     `Captured ${captured} screenshots → ${OUT_DIR} ` +
       `(${ROUTES.length} routes × ${THEMES.length} themes × ${VIEWPORTS.length} viewports, mode=${IS_UPDATE ? 'update/baseline' : 'compare/actual'})`,
   )
+})
+
+// Review re-check: drawer open state on a narrow viewport — hamburger opens
+// the modal drawer and the scrim is rendered (DOM assertion, no pixel diff).
+test('drawer opens with scrim on narrow viewport', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 1,
+    reducedMotion: 'reduce',
+  })
+  await context.addInitScript(initScript, { theme: 'light', css: STABILIZE_CSS })
+  const page = await context.newPage()
+  await page.goto('/', { waitUntil: 'load' })
+  await page.waitForTimeout(400)
+
+  const hamburger = page.locator('.app-hamburger')
+  await expect(hamburger).toBeVisible()
+  await hamburger.click()
+  await page.waitForTimeout(300)
+
+  await expect(page.locator('.navigation-drawer.is-open')).toBeVisible()
+  await expect(page.locator('.navigation-drawer__scrim')).toBeVisible()
+
+  fs.mkdirSync(OUT_DIR, { recursive: true })
+  await page.screenshot({
+    path: resolve(OUT_DIR, 'drawer-open__light__phone-390x844.png'),
+    animations: 'disabled',
+  })
+  await context.close()
 })
