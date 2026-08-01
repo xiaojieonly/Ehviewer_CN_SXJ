@@ -233,7 +233,7 @@ onMounted(load)
   padding: 2px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  color: var(--color-primary);
+  color: var(--color-primary-text, var(--color-primary-dark));
   font-size: var(--text-super-small);
 }
 
@@ -261,7 +261,7 @@ onMounted(load)
 .btn-secondary {
   border: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
   background: transparent;
-  color: var(--color-primary);
+  color: var(--color-primary-text, var(--color-primary-dark));
 }
 
 .btn-primary:disabled,

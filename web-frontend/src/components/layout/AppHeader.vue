@@ -64,7 +64,7 @@ async function handleLogout() {
   font-size: 0.9rem;
 }
 .nav-link:hover {
-  color: var(--color-primary);
+  color: var(--color-primary-text, var(--color-primary-dark));
 }
 .user-info {
   color: var(--text-color-secondary);
