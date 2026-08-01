@@ -37,6 +37,27 @@
       @load-more="onLoadMore"
       @retry="onRefresh"
     >
+      <template #empty>
+        <AppIcon name="sad-panda-primary" size="64px" class="home__empty-icon" />
+        <p class="home__empty-text">还没有画廊数据&#10;去搜索或登录后开始浏览</p>
+        <div class="home__empty-actions">
+          <button
+            type="button"
+            class="home__empty-cta"
+            @click.stop="goSearch"
+          >
+            去搜索
+          </button>
+          <button
+            v-if="!authStore.isAuthenticated"
+            type="button"
+            class="home__empty-cta home__empty-cta--ghost"
+            @click.stop="goLogin"
+          >
+            登录
+          </button>
+        </div>
+      </template>
       <GalleryGrid :items="galleries" :mode="viewMode" @select="openGallery" />
     </ContentLayout>
 
@@ -77,10 +98,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { galleryApi } from '@/api/gallery'
 import { isOfflineError } from '@/api/client'
+import AppIcon from '@/components/atoms/AppIcon.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
 import GalleryGrid from '@/components/gallery/GalleryGrid.vue'
+import { useAuthStore } from '@/stores/auth'
 import type {
   ContentState,
   FabAction,
@@ -102,6 +125,7 @@ const PAGE_SIZE = 25
 const LIST_MODE_KEY = 'ehviewer-webui:gallery-list-mode'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 /* -------------------------------- list state ---------------------------- */
 
@@ -183,6 +207,18 @@ function openGallery(gallery: GalleryInfo): void {
   void router.push(`/gallery/${gallery.gid}`)
 }
 
+/* ------------------------- empty-state guided CTA ----------------------- */
+
+/** Empty state: guide to the search screen. */
+function goSearch(): void {
+  void router.push('/search')
+}
+
+/** Empty state: guide to login when the user isn't authenticated. */
+function goLogin(): void {
+  void router.push('/login')
+}
+
 /* ------------------------------ list/grid mode -------------------------- */
 
 function readStoredMode(): ListMode {
@@ -211,8 +247,8 @@ const appliedKeyword = ref('')
 const suggestions = ref<SearchSuggestion[]>([])
 let quickSearchesLoaded = false
 
-/** Title row shows the active keyword, falling back to the site name. */
-const searchTitle = computed(() => appliedKeyword.value || 'E-hentai')
+/** Title row shows the active keyword, falling back to a neutral label. */
+const searchTitle = computed(() => appliedKeyword.value || '搜索')
 
 function enterSearchMode(): void {
   searchState.value = suggestions.value.length > 0 ? 'search-list' : 'search'
@@ -337,5 +373,51 @@ onMounted(() => {
 .home__content {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* Empty-state guided CTA (UX-07): sadpanda + informative copy + actions.
+   Rendered inside ContentLayout's `empty` slot (its tip area is a full-area
+   retry button — the CTAs stop propagation so tapping them never retriggers
+   a refresh). */
+.home__empty-icon {
+  color: var(--color-primary);
+}
+
+.home__empty-text {
+  margin: 0;
+  font-size: var(--text-little-small);
+  color: var(--text-color-secondary);
+  white-space: pre-line;
+  text-align: center;
+}
+
+.home__empty-actions {
+  display: flex;
+  gap: var(--spacing);
+}
+
+.home__empty-cta {
+  padding: 8px 24px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition: background 150ms linear;
+}
+
+.home__empty-cta:active {
+  background: var(--color-primary-dark);
+}
+
+.home__empty-cta--ghost {
+  background: var(--color-background-floating);
+  color: var(--drawable-color-primary);
+  box-shadow: 0 1px 4px var(--shadow-color);
+}
+
+.home__empty-cta--ghost:active {
+  background: var(--color-surface-activated);
 }
 </style>
