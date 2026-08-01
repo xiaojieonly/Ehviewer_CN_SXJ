@@ -19,46 +19,46 @@
       </header>
 
       <!-- ═══ Pairing code ═══════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">配对码</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="mobile-hand-left" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">生成配对码</span>
-              <span class="pref__summary">在 Android 端"服务器同步 → 配对服务器"中输入地址与配对码即可连接，无需密码</span>
-            </div>
+      <section>
+        <SectionHeader title="配对码" />
+        <PrefCard>
+          <PrefRow
+            icon="mobile-hand-left"
+            title="生成配对码"
+            summary='在 Android 端"服务器同步 → 配对服务器"中输入地址与配对码即可连接，无需密码'
+          >
             <button type="button" class="btn-primary" :disabled="generating" @click="generate">
               {{ code ? '重新生成' : '生成配对码' }}
             </button>
-          </div>
-
-          <div v-if="code" class="pair-box" role="status">
-            <p class="pair-box__hint">配对码（10 分钟内有效，单次使用）：</p>
-            <div class="pair-box__row">
-              <code class="pair-box__code" data-testid="pair-code">{{ code }}</code>
-              <button type="button" class="btn-ghost" @click="copyCode">复制</button>
-            </div>
-            <p class="pair-box__expiry">
-              有效期至 {{ expiresText }}
-              <button
-                type="button"
-                class="pair-box__copy"
-                data-testid="copy-pair-code"
-                aria-label="复制配对码"
-                @click="copyCode"
-              >
-                复制配对码
-              </button>
-            </p>
-          </div>
-        </div>
+            <template #below>
+              <div v-if="code" class="pair-box" role="status">
+                <p class="pair-box__hint">配对码（10 分钟内有效，单次使用）：</p>
+                <div class="pair-box__row">
+                  <code class="pair-box__code" data-testid="pair-code">{{ code }}</code>
+                  <button type="button" class="btn-ghost" @click="copyCode">复制</button>
+                </div>
+                <p class="pair-box__expiry">
+                  有效期至 {{ expiresText }}
+                  <button
+                    type="button"
+                    class="pair-box__copy"
+                    data-testid="copy-pair-code"
+                    aria-label="复制配对码"
+                    @click="copyCode"
+                  >
+                    复制配对码
+                  </button>
+                </p>
+              </div>
+            </template>
+          </PrefRow>
+        </PrefCard>
       </section>
 
       <!-- ═══ Devices ════════════════════════════════════════════════════ -->
-      <section class="pref-group">
-        <h2 class="pref-group__title">已配对设备</h2>
-        <div class="pref-card">
+      <section>
+        <SectionHeader title="已配对设备" />
+        <PrefCard>
           <div v-if="devices.length === 0" class="devices-empty">暂无已配对设备</div>
           <div v-for="device in devices" :key="device.deviceId" class="device-row">
             <AppIcon name="mobile-hand-left" class="device-row__icon" size="20px" />
@@ -77,7 +77,7 @@
               撤销
             </button>
           </div>
-        </div>
+        </PrefCard>
       </section>
     </div>
 
@@ -92,6 +92,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { devicesApi, type DeviceInfo } from '@/api/devices'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const code = ref('')
 const expiresAt = ref(0)
@@ -259,14 +260,11 @@ onMounted(loadDevices)
 }
 
 .device-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 0;
-}
-
-.device-row + .device-row {
-  border-top: 1px solid var(--color-divider);
 }
 
 .device-row__icon {

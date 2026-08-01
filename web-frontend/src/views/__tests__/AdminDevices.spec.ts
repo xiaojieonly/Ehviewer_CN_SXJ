@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminDevices from '../admin/AdminDevices.vue'
 import { devicesApi } from '@/api/devices'
+import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/devices', () => ({
   devicesApi: {
@@ -41,6 +42,19 @@ describe('AdminDevices (配对模块)', () => {
     await flushPromises()
     return wrapper
   }
+
+  it('renders the shared primitives with icon as PrefRow prop (UX-02/UX-11)', async () => {
+    const w = await mountView()
+    const headers = w.findAllComponents(SectionHeader).map((h) => h.props('title'))
+    expect(headers).toEqual(['配对码', '已配对设备'])
+    expect(w.findAllComponents(PrefCard).length).toBe(2)
+
+    const row = w.findComponent(PrefRow)
+    expect(row.exists()).toBe(true)
+    expect(row.props('title')).toBe('生成配对码')
+    expect(row.props('icon')).toBe('mobile-hand-left')
+    expect(w.find('.pref__icon').exists()).toBe(false)
+  })
 
   it('renders the paired device list from the server', async () => {
     const w = await mountView()
