@@ -238,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch, type Ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref, watch, type Ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -250,21 +250,49 @@ const server = ref<Settings | null>(null)
 const savedFlash = ref(false)
 let savedTimer: number | undefined
 let saveTimer: number | undefined
+let pendingPayload: Settings | null = null
 
 /** Debounced PUT /settings — mirrors the settings page committing prefs on change. */
 function scheduleServerSave(): void {
+  if (!server.value) return
+  pendingPayload = server.value
   if (saveTimer) window.clearTimeout(saveTimer)
-  saveTimer = window.setTimeout(async () => {
-    if (!server.value) return
-    try {
-      await settingsApi.update(server.value)
-      flashSaved()
-    } catch (error) {
-      console.error('[AdminDownload] failed to persist settings', error)
-      showSnack('无法在服务器上保存设置')
-    }
+  saveTimer = window.setTimeout(() => {
+    saveTimer = undefined
+    const payload = pendingPayload
+    pendingPayload = null
+    if (payload) void saveSettings(payload)
   }, 600)
 }
+
+async function saveSettings(payload: Settings): Promise<void> {
+  try {
+    await settingsApi.update(payload)
+    flashSaved()
+  } catch (error) {
+    console.error('[AdminDownload] failed to persist settings', error)
+    showSnack('无法在服务器上保存设置')
+  }
+}
+
+/** Flush a pending debounced save so edits are not lost when navigating away. */
+function flushPendingSave(): void {
+  if (saveTimer) window.clearTimeout(saveTimer)
+  saveTimer = undefined
+  const payload = pendingPayload
+  pendingPayload = null
+  if (payload) {
+    settingsApi.update(payload).catch((error) => {
+      console.error('[AdminDownload] failed to persist settings on unmount', error)
+    })
+  }
+}
+
+onBeforeUnmount(() => {
+  flushPendingSave()
+  if (savedTimer) window.clearTimeout(savedTimer)
+  if (snackTimer) window.clearTimeout(snackTimer)
+})
 
 function flashSaved(): void {
   savedFlash.value = true

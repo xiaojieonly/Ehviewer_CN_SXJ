@@ -2,10 +2,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import AdminServer from '../admin/AdminServer.vue'
 import { settingsApi, type Settings } from '@/api/settings'
+import client from '@/api/client'
 import { AppSwitch, AppTextField, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/settings', () => ({
   settingsApi: { get: vi.fn(), update: vi.fn() },
+}))
+
+vi.mock('@/api/client', () => ({
+  default: { get: vi.fn(), post: vi.fn() },
 }))
 
 function fullSettings(): Settings {
@@ -32,6 +37,8 @@ describe('AdminServer (服务器)', () => {
   beforeEach(() => {
     vi.mocked(settingsApi.get).mockResolvedValue(fullSettings())
     vi.mocked(settingsApi.update).mockResolvedValue(true)
+    vi.mocked(client.get).mockResolvedValue({ data: { cacheSize: 5 } })
+    vi.mocked(client.post).mockResolvedValue({ data: {} })
   })
 
   afterEach(() => {
@@ -99,9 +106,34 @@ describe('AdminServer (服务器)', () => {
     expect(w.find('.server__link').exists()).toBe(true)
   })
 
-  it('shows a TODO snackbar for clearing the cache', async () => {
+  it('loads and renders the cache size on mount', async () => {
+    vi.mocked(client.get).mockResolvedValue({ data: { cacheSize: 42 } })
+    const w = await mountView()
+    expect(client.get).toHaveBeenCalledWith('/image/cache/status')
+    expect(w.text()).toContain('42 张')
+  })
+
+  it('renders an em dash when the cache status request fails', async () => {
+    vi.mocked(client.get).mockRejectedValue(new Error('offline'))
+    const w = await mountView()
+    expect(w.text()).toContain('—')
+  })
+
+  it('clears the cache, shows a success snackbar, and refreshes the cache size', async () => {
     const w = await mountView()
     await w.find('[aria-label="清除缓存"]').trigger('click')
-    expect(w.text()).toContain('TODO：后端尚未提供清除缓存接口')
+    await flushPromises()
+    expect(client.post).toHaveBeenCalledWith('/image/cache/clear')
+    expect(w.text()).toContain('缓存已清除')
+    expect(client.get).toHaveBeenCalledTimes(2)
+    expect(client.get).toHaveBeenCalledWith('/image/cache/status')
+  })
+
+  it('shows an error snackbar when clearing the cache fails', async () => {
+    vi.mocked(client.post).mockRejectedValue(new Error('boom'))
+    const w = await mountView()
+    await w.find('[aria-label="清除缓存"]').trigger('click')
+    await flushPromises()
+    expect(w.text()).toContain('无法清除缓存')
   })
 })

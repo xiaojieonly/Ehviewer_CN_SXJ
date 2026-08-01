@@ -8,7 +8,8 @@
     - 缓存路径 / 缓存大小 → settingsApi.update({ cache: { ... } })；
     - SMB 备份开关 → settingsApi.update({ smb: { enabled } })，
       开启后展示「前往备份页面」链接（/smb-backup）；
-    - 缓存统计 / 清除缓存：后端暂无对应接口，标注 TODO 并给出提示。
+    - 缓存统计 → GET /api/v1/image/cache/status（缓存条目数）；
+    - 清除缓存 → POST /api/v1/image/cache/clear，请求期间按钮置为加载态。
 
   缓存路径与缓存大小在编辑完成（change 事件）后保存，失败时回滚本地值。
 -->
@@ -49,11 +50,18 @@
             </div>
           </PrefRow>
           <PrefRow icon="info-outline-dark" title="缓存统计" summary="当前缓存占用与条目数">
-            <span class="server__badge" title="后端尚未提供缓存统计接口">TODO</span>
+            <span v-if="cacheSize !== null" class="server__badge">{{ cacheSize }} 张</span>
+            <span v-else class="server__badge">—</span>
           </PrefRow>
           <PrefRow icon="clear-all-dark" title="清除缓存" summary="删除服务器上的全部缓存文件">
-            <button type="button" class="server__action" aria-label="清除缓存" @click="clearCache">
-              <span class="server__badge" title="后端尚未提供清除缓存接口">TODO</span>
+            <button
+              type="button"
+              class="server__action"
+              aria-label="清除缓存"
+              :disabled="clearingCache"
+              @click="clearCache"
+            >
+              <span class="server__badge">{{ clearingCache ? '清除中…' : '清除' }}</span>
             </button>
           </PrefRow>
         </PrefCard>
@@ -97,12 +105,15 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
+import client from '@/api/client'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const server = ref<Settings | null>(null)
 const pathDraft = ref('')
 const sizeDraft = ref<number | null>(null)
+const clearingCache = ref(false)
+const cacheSize = ref<number | null>(null)
 
 const snack = ref('')
 let snackTimer: number | undefined
@@ -171,8 +182,29 @@ async function saveCacheSize(): Promise<void> {
   }
 }
 
-function clearCache(): void {
-  showSnack('TODO：后端尚未提供清除缓存接口')
+async function refreshCacheSize(): Promise<void> {
+  try {
+    const { data } = await client.get<{ cacheSize: number }>('/image/cache/status')
+    cacheSize.value = data.cacheSize
+  } catch (error) {
+    cacheSize.value = null
+    console.error('[AdminServer] failed to load cache stats', error)
+  }
+}
+
+async function clearCache(): Promise<void> {
+  if (clearingCache.value) return
+  clearingCache.value = true
+  try {
+    await client.post('/image/cache/clear')
+    showSnack('缓存已清除')
+    await refreshCacheSize()
+  } catch (error) {
+    console.error('[AdminServer] failed to clear cache', error)
+    showSnack('无法清除缓存')
+  } finally {
+    clearingCache.value = false
+  }
 }
 
 /* ------------------------------- SMB 备份 -------------------------------- */
@@ -202,6 +234,7 @@ onMounted(async () => {
     console.error('[AdminServer] failed to load settings', error)
     showSnack('无法加载服务器设置')
   }
+  void refreshCacheSize()
 })
 </script>
 
@@ -261,6 +294,11 @@ onMounted(async () => {
   border: none;
   background: transparent;
   cursor: pointer;
+}
+
+.server__action:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .server__link {

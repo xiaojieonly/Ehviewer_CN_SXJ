@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { devicesApi, type DeviceInfo } from '@/api/devices'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
@@ -99,6 +99,7 @@ const expiresAt = ref(0)
 const generating = ref(false)
 const devices = ref<DeviceInfo[]>([])
 const savedFlash = ref(false)
+let flashTimer: number | undefined
 const snack = ref('')
 
 const expiresText = computed(() =>
@@ -130,7 +131,8 @@ async function copyCode() {
 
 function flashSaved() {
   savedFlash.value = true
-  setTimeout(() => (savedFlash.value = false), 1500)
+  if (flashTimer) window.clearTimeout(flashTimer)
+  flashTimer = window.setTimeout(() => (savedFlash.value = false), 1500)
 }
 
 async function loadDevices() {
@@ -170,6 +172,10 @@ function messageOf(e: unknown): string {
 }
 
 onMounted(loadDevices)
+
+onBeforeUnmount(() => {
+  if (flashTimer) window.clearTimeout(flashTimer)
+})
 </script>
 
 <style scoped>

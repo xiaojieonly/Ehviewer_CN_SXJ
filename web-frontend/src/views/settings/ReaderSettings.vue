@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ReaderPreferences } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
 import { AppSelect, AppSegmented, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
@@ -280,6 +280,11 @@ watch(
 onMounted(async () => {
   await preferencesStore.load()
   if (preferencesStore.loadError) showSnack('无法加载设置')
+})
+
+onBeforeUnmount(() => {
+  if (savedTimer) window.clearTimeout(savedTimer)
+  if (snackTimer) window.clearTimeout(snackTimer)
 })
 </script>
 

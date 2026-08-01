@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -166,6 +166,11 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+})
+
+onBeforeUnmount(() => {
+  if (savedTimer) window.clearTimeout(savedTimer)
+  if (snackTimer) window.clearTimeout(snackTimer)
 })
 </script>
 

@@ -57,7 +57,7 @@
  * The scroll element is exposed (`containerRef`) so composites like
  * `ContentLayout` can attach pull-to-refresh / load-more listeners to it.
  */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from 'vue'
 import type { FastScrollerSlots } from '@/types/components'
 
 const props = withDefaults(
@@ -93,6 +93,7 @@ const scrollRatio = ref(0)
 
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 let resizeObserver: ResizeObserver | null = null
+let dragCleanup: (() => void) | null = null
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
@@ -163,8 +164,10 @@ function onThumbPointerDown(event: PointerEvent): void {
     dragging.value = false
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
+    dragCleanup = null
     flash()
   }
+  dragCleanup = onUp
   window.addEventListener('pointermove', onMove)
   window.addEventListener('pointerup', onUp)
 }
@@ -185,6 +188,11 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   resizeObserver = null
   window.removeEventListener('resize', updateThumb)
+})
+
+onUnmounted(() => {
+  dragCleanup?.()
+  dragCleanup = null
 })
 
 defineExpose({ containerRef, updateThumb })

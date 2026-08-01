@@ -79,6 +79,7 @@
               <AppTextField
                 :model-value="form.password"
                 type="password"
+                :placeholder="proxyPasswordSet && form.password === '' ? '已设置（留空保持不变）' : ''"
                 :disabled="loading"
                 aria-label="代理密码"
                 @update:model-value="(v) => (form.password = v)"
@@ -118,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { settingsApi, type ProxySettings } from '@/api/settings'
 import client from '@/api/client'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -148,19 +149,25 @@ const loading = ref(true)
 const saving = ref(false)
 const testing = ref(false)
 const savedFlash = ref(false)
+const proxyPasswordSet = ref(false)
 const testResult = ref<ProxyTestResult | null>(null)
 const snack = ref('')
+let savedFlashTimer: ReturnType<typeof setTimeout> | undefined
 
 function flashSaved() {
   savedFlash.value = true
-  setTimeout(() => (savedFlash.value = false), 1500)
+  clearTimeout(savedFlashTimer)
+  savedFlashTimer = setTimeout(() => (savedFlash.value = false), 1500)
 }
+
+onUnmounted(() => clearTimeout(savedFlashTimer))
 
 async function load() {
   loading.value = true
   try {
     const settings = await settingsApi.get()
     Object.assign(form, settings.proxy)
+    proxyPasswordSet.value = settings.proxy.proxyPasswordSet ?? false
   } catch (e) {
     snack.value = `加载失败：${messageOf(e)}`
   } finally {
@@ -172,7 +179,13 @@ async function save() {
   saving.value = true
   testResult.value = null
   try {
-    await settingsApi.update({ proxy: { ...form } })
+    const { password, ...proxy } = form
+    const payload = password ? { ...proxy, password } : proxy
+    await settingsApi.update({ proxy: payload as ProxySettings })
+    if (password) {
+      proxyPasswordSet.value = true
+      form.password = ''
+    }
     flashSaved()
     snack.value = '代理设置已保存并生效'
   } catch (e) {

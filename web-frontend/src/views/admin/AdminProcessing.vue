@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import type { Settings } from '@/api/settings'
 import { settingsApi } from '@/api/settings'
 import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
@@ -142,21 +142,47 @@ watch(
 /* -------------------------------- persistence ---------------------------- */
 
 let saveTimer: number | undefined
+let pendingPayload: { processing: ProcessingSettings } | null = null
 
 /** 始终提交完整的 processing 段——后端会一次性写入全部四个字段。 */
 function persistProcessing(): void {
+  pendingPayload = { processing: { ...processing } }
   if (saveTimer) window.clearTimeout(saveTimer)
-  saveTimer = window.setTimeout(async () => {
-    const snapshot = { ...processing }
-    try {
-      await settingsApi.update({ processing: snapshot } as Partial<Settings>)
-    } catch (error) {
-      console.error('[AdminProcessing] failed to persist processing settings', error)
-      Object.assign(processing, snapshot)
-      showSnack('无法在服务器上保存设置')
-    }
+  saveTimer = window.setTimeout(() => {
+    saveTimer = undefined
+    const payload = pendingPayload
+    pendingPayload = null
+    if (payload) void saveProcessing(payload)
   }, 600)
 }
+
+async function saveProcessing(payload: { processing: ProcessingSettings }): Promise<void> {
+  try {
+    await settingsApi.update(payload as Partial<Settings>)
+  } catch (error) {
+    console.error('[AdminProcessing] failed to persist processing settings', error)
+    Object.assign(processing, payload.processing)
+    showSnack('无法在服务器上保存设置')
+  }
+}
+
+/** 卸载前冲刷待提交的防抖保存，避免导航时丢失编辑。 */
+function flushPendingSave(): void {
+  if (saveTimer) window.clearTimeout(saveTimer)
+  saveTimer = undefined
+  const payload = pendingPayload
+  pendingPayload = null
+  if (payload) {
+    settingsApi.update(payload as Partial<Settings>).catch((error) => {
+      console.error('[AdminProcessing] failed to persist processing settings on unmount', error)
+    })
+  }
+}
+
+onBeforeUnmount(() => {
+  flushPendingSave()
+  if (snackTimer) window.clearTimeout(snackTimer)
+})
 
 function toggleEnabled(): void {
   processing.enabled = !processing.enabled

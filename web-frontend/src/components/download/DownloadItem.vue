@@ -99,6 +99,11 @@
           </button>
         </div>
       </div>
+
+      <!-- Failure reason (DownloadInfo.error), secondary text under the state -->
+      <p v-if="isFailed && errorText" class="download-item__error" :title="errorText">
+        {{ errorText }}
+      </p>
     </div>
   </article>
 </template>
@@ -160,6 +165,10 @@ const title = computed(() => props.item.title || props.item.titleJpn || 'Untitle
 const categoryKey = computed(() => CATEGORY_BY_BIT[props.item.category])
 
 const isDownloading = computed(() => props.item.state === STATE_DOWNLOAD)
+const isFailed = computed(() => props.item.state === STATE_FAILED)
+
+/** Failure reason from the backend; empty when the item has none. */
+const errorText = computed(() => props.item.error?.trim() || '')
 
 /** Downloading with an unknown page count → sliding indeterminate bar. */
 const indeterminate = computed(() => isDownloading.value && props.item.total <= 0)
@@ -473,6 +482,17 @@ const statsText = computed(() => {
   50% {
     opacity: 0.3;
   }
+}
+
+/* ----------------------------------------------------- failure reason --- */
+.download-item__error {
+  margin: 0;
+  font-size: var(--text-super-small); /* 12sp */
+  color: var(--text-color-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ----------------------------------------------------------- actions --- */
