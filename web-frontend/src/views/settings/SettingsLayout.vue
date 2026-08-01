@@ -10,6 +10,7 @@
   drawer they are forced to currentColor via :deep().
 -->
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 
@@ -21,13 +22,27 @@ const tabs = [
 ]
 
 const route = useRoute()
+const navEl = ref<HTMLElement | null>(null)
+
+// Keep the active tab in view when the narrow-viewport tab bar scrolls.
+watch(
+  () => route.path,
+  () => {
+    nextTick(() => {
+      navEl.value
+        ?.querySelector('.is-active')
+        ?.scrollIntoView({ inline: 'center', block: 'nearest' })
+    })
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div class="settings-layout">
     <aside class="settings-layout__sidebar">
       <h2 class="settings-layout__heading">设置</h2>
-      <nav class="settings-layout__nav">
+      <nav ref="navEl" class="settings-layout__nav">
         <router-link
           v-for="tab in tabs"
           :key="tab.path"
@@ -105,7 +120,7 @@ const route = useRoute()
 
 .settings-layout__link.is-active {
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  color: var(--text-color-theme-primary);
+  color: var(--color-primary-text, var(--color-primary-dark));
   font-weight: 700;
 }
 
@@ -151,6 +166,7 @@ const route = useRoute()
   }
 
   .settings-layout__nav {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -161,6 +177,18 @@ const route = useRoute()
     overflow-y: hidden;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
+  }
+
+  /* Right-edge fade hinting that the tab bar can scroll. */
+  .settings-layout__nav::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to right, transparent, var(--color-bg));
+    pointer-events: none;
   }
 
   .settings-layout__nav::-webkit-scrollbar {
