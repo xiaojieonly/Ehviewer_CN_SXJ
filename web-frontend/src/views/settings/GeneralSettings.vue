@@ -20,158 +20,71 @@
 
       <template v-else-if="prefs">
         <!-- ═══ 通用 ═══════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">通用</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="settings-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">外观</span>
-                <span class="pref__summary">当前：{{ themeLabel }}</span>
-              </div>
-              <div class="segment" role="radiogroup" aria-label="外观">
-                <button
-                  v-for="option in THEME_OPTIONS"
-                  :key="option.value"
-                  type="button"
-                  class="segment__btn"
-                  role="radio"
-                  :aria-checked="themeStore.currentTheme === option.value"
-                  @click="setTheme(option.value)"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="refresh-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">跟随系统主题</span>
-                <span class="pref__summary">根据系统深浅色自动切换主题</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.themeAutoSwitch"
+        <section>
+          <SectionHeader title="通用" />
+          <PrefCard>
+            <PrefRow icon="settings-dark" title="外观" :summary="`当前：${themeLabel}`">
+              <AppSegmented
+                :model-value="themeStore.currentTheme"
+                :options="THEME_OPTIONS"
+                aria-label="外观"
+                @update:model-value="(v) => setTheme(v as Theme)"
+              />
+            </PrefRow>
+            <PrefRow
+              icon="refresh-dark"
+              title="跟随系统主题"
+              summary="根据系统深浅色自动切换主题"
+            >
+              <AppSwitch
+                :model-value="prefs.general.themeAutoSwitch"
                 aria-label="跟随系统主题"
-                @click="toggleGeneral('themeAutoSwitch')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="homepage-black" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">启动页</span>
-                <span class="pref__summary">打开应用时显示的页面</span>
-              </div>
-              <label class="select">
-                <span class="select__label">启动页</span>
-                <select
-                  :value="prefs.general.launchPage"
-                  aria-label="启动页"
-                  @change="updateGeneral('launchPage', $event)"
-                >
-                  <option v-for="option in LAUNCH_PAGE_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="reorder" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">列表模式</span>
-                <span class="pref__summary">画廊列表的默认布局</span>
-              </div>
-              <label class="select">
-                <span class="select__label">列表模式</span>
-                <select
-                  :value="prefs.general.listMode"
-                  aria-label="列表模式"
-                  @change="updateGeneral('listMode', $event)"
-                >
-                  <option v-for="option in LIST_MODE_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="check-all-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示阅读进度</span>
-                <span class="pref__summary">在画廊卡片上显示阅读进度</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showReadProgress"
+                @update:model-value="() => toggleGeneral('themeAutoSwitch')"
+              />
+            </PrefRow>
+            <PrefRow icon="homepage-black" title="启动页" summary="打开应用时显示的页面">
+              <AppSelect
+                :model-value="prefs.general.launchPage"
+                :options="LAUNCH_PAGE_OPTIONS"
+                @update:model-value="(v) => updateGeneralValue('launchPage', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="reorder" title="列表模式" summary="画廊列表的默认布局">
+              <AppSelect
+                :model-value="prefs.general.listMode"
+                :options="LIST_MODE_OPTIONS"
+                @update:model-value="(v) => updateGeneralValue('listMode', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="check-all-dark" title="显示阅读进度" summary="在画廊卡片上显示阅读进度">
+              <AppSwitch
+                :model-value="prefs.general.showReadProgress"
                 aria-label="显示阅读进度"
-                @click="toggleGeneral('showReadProgress')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-          </div>
+                @update:model-value="() => toggleGeneral('showReadProgress')"
+              />
+            </PrefRow>
+          </PrefCard>
         </section>
 
         <!-- ═══ 布局 ═══════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">布局</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="go-to-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">详情栏宽度</span>
-                <span class="pref__summary">画廊详情栏的显示宽度</span>
-              </div>
-              <label class="select">
-                <span class="select__label">详情栏宽度</span>
-                <select
-                  :value="prefs.general.detailSize"
-                  aria-label="详情栏宽度"
-                  @change="updateGeneral('detailSize', $event)"
-                >
-                  <option v-for="option in DETAIL_SIZE_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="magnify-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">缩略图大小</span>
-                <span class="pref__summary">画廊缩略图展示尺寸</span>
-              </div>
-              <label class="select">
-                <span class="select__label">缩略图大小</span>
-                <select
-                  :value="prefs.general.thumbSize"
-                  aria-label="缩略图大小"
-                  @change="updateGeneral('thumbSize', $event)"
-                >
-                  <option v-for="option in THUMB_SIZE_OPTIONS" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="history-black" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">历史记录数</span>
-                <span class="pref__summary">保留的历史浏览记录条数</span>
-              </div>
+        <section>
+          <SectionHeader title="布局" />
+          <PrefCard>
+            <PrefRow icon="go-to-dark" title="详情栏宽度" summary="画廊详情栏的显示宽度">
+              <AppSelect
+                :model-value="prefs.general.detailSize"
+                :options="DETAIL_SIZE_OPTIONS"
+                @update:model-value="(v) => updateGeneralValue('detailSize', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="magnify-dark" title="缩略图大小" summary="画廊缩略图展示尺寸">
+              <AppSelect
+                :model-value="prefs.general.thumbSize"
+                :options="THUMB_SIZE_OPTIONS"
+                @update:model-value="(v) => updateGeneralValue('thumbSize', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="history-black" title="历史记录数" summary="保留的历史浏览记录条数">
               <label class="num-field">
                 <input
                   type="number"
@@ -182,140 +95,64 @@
                   @change="updateGeneral('historyInfoSize', $event)"
                 />
               </label>
-            </div>
-          </div>
+            </PrefRow>
+          </PrefCard>
         </section>
 
         <!-- ═══ 画廊 ══════════════════════════════════════════════════ -->
-        <section class="pref-group">
-          <h2 class="pref-group__title">画廊</h2>
-          <div class="pref-card">
-            <div class="pref">
-              <AppIcon name="book-open-primary" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示日文标题</span>
-                <span class="pref__summary">优先显示画廊的日文标题</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showJpnTitle"
+        <section>
+          <SectionHeader title="画廊" />
+          <PrefCard>
+            <PrefRow icon="book-open-primary" title="显示日文标题" summary="优先显示画廊的日文标题">
+              <AppSwitch
+                :model-value="prefs.general.showJpnTitle"
                 aria-label="显示日文标题"
-                @click="toggleGeneral('showJpnTitle')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="reorder" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示画廊页数</span>
-                <span class="pref__summary">在画廊信息中显示总页数</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showGalleryPages"
+                @update:model-value="() => toggleGeneral('showJpnTitle')"
+              />
+            </PrefRow>
+            <PrefRow icon="reorder" title="显示画廊页数" summary="在画廊信息中显示总页数">
+              <AppSwitch
+                :model-value="prefs.general.showGalleryPages"
                 aria-label="显示画廊页数"
-                @click="toggleGeneral('showGalleryPages')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="similar-primary" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示标签翻译</span>
-                <span class="pref__summary">将标签翻译为本地语言</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showTagTranslations"
+                @update:model-value="() => toggleGeneral('showGalleryPages')"
+              />
+            </PrefRow>
+            <PrefRow icon="similar-primary" title="显示标签翻译" summary="将标签翻译为本地语言">
+              <AppSwitch
+                :model-value="prefs.general.showTagTranslations"
                 aria-label="显示标签翻译"
-                @click="toggleGeneral('showTagTranslations')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="reply-dark" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示评论</span>
-                <span class="pref__summary">在画廊页面显示评论</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showGalleryComment"
+                @update:model-value="() => toggleGeneral('showTagTranslations')"
+              />
+            </PrefRow>
+            <PrefRow icon="reply-dark" title="显示评论" summary="在画廊页面显示评论">
+              <AppSwitch
+                :model-value="prefs.general.showGalleryComment"
                 aria-label="显示评论"
-                @click="toggleGeneral('showGalleryComment')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="star" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示评分</span>
-                <span class="pref__summary">在画廊信息中显示评分</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showGalleryRating"
+                @update:model-value="() => toggleGeneral('showGalleryComment')"
+              />
+            </PrefRow>
+            <PrefRow icon="star" title="显示评分" summary="在画廊信息中显示评分">
+              <AppSwitch
+                :model-value="prefs.general.showGalleryRating"
                 aria-label="显示评分"
-                @click="toggleGeneral('showGalleryRating')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="fire-black" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示 EH 事件</span>
-                <span class="pref__summary">显示 E-Hentai 站点事件横幅</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showEhEvents"
+                @update:model-value="() => toggleGeneral('showGalleryRating')"
+              />
+            </PrefRow>
+            <PrefRow icon="fire-black" title="显示 EH 事件" summary="显示 E-Hentai 站点事件横幅">
+              <AppSwitch
+                :model-value="prefs.general.showEhEvents"
                 aria-label="显示 EH 事件"
-                @click="toggleGeneral('showEhEvents')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-            <div class="pref-divider" />
-            <div class="pref">
-              <AppIcon name="chart-accent" class="pref__icon" />
-              <div class="pref__text">
-                <span class="pref__title">显示 EH 限额</span>
-                <span class="pref__summary">在顶部显示 E-Hentai 配额信息</span>
-              </div>
-              <button
-                type="button"
-                class="switch"
-                role="switch"
-                :aria-checked="prefs.general.showEhLimits"
+                @update:model-value="() => toggleGeneral('showEhEvents')"
+              />
+            </PrefRow>
+            <PrefRow icon="chart-accent" title="显示 EH 限额" summary="在顶部显示 E-Hentai 配额信息">
+              <AppSwitch
+                :model-value="prefs.general.showEhLimits"
                 aria-label="显示 EH 限额"
-                @click="toggleGeneral('showEhLimits')"
-              >
-                <span class="switch__thumb" />
-              </button>
-            </div>
-          </div>
+                @update:model-value="() => toggleGeneral('showEhLimits')"
+              />
+            </PrefRow>
+          </PrefCard>
         </section>
       </template>
     </div>
@@ -332,7 +169,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { GeneralPreferences } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useThemeStore, type Theme } from '@/stores/theme'
-import AppIcon from '@/components/atoms/AppIcon.vue'
+import { AppSelect, AppSegmented, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const preferencesStore = usePreferencesStore()
 const themeStore = useThemeStore()
@@ -341,29 +178,38 @@ const prefs = computed(() => preferencesStore.prefs)
 
 /* ------------------------------ option lists ----------------------------- */
 
-const THEME_OPTIONS: ReadonlyArray<{ value: Theme; label: string }> = [
+const THEME_OPTIONS: Array<{ value: Theme; label: string }> = [
   { value: 'light', label: '亮色' },
   { value: 'dark', label: '暗色' },
   { value: 'black', label: '纯黑' },
 ]
 
-const LAUNCH_PAGE_OPTIONS = [
+// UX-03: every storable launchPage value must resolve to a visible label —
+// web main routes (home/search/favorites/history/downloads) + legacy values
+// (subscription/hot) + backend defaults (homepage/whats_hot).
+const LAUNCH_PAGE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'home', label: '首页' },
+  { value: 'homepage', label: '首页' },
+  { value: 'search', label: '搜索' },
+  { value: 'favorites', label: '收藏' },
+  { value: 'history', label: '历史' },
+  { value: 'downloads', label: '下载' },
   { value: 'subscription', label: '订阅' },
   { value: 'hot', label: '热门' },
+  { value: 'whats_hot', label: '热门' },
 ]
 
-const LIST_MODE_OPTIONS = [
+const LIST_MODE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'list', label: '列表' },
   { value: 'grid', label: '网格' },
 ]
 
-const DETAIL_SIZE_OPTIONS = [
+const DETAIL_SIZE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'long', label: '长' },
   { value: 'short', label: '短' },
 ]
 
-const THUMB_SIZE_OPTIONS = [
+const THUMB_SIZE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'large', label: '大' },
   { value: 'middle', label: '中' },
   { value: 'small', label: '小' },
@@ -388,6 +234,12 @@ function updateGeneral(
   const raw = target.value
   const value = key === 'historyInfoSize' ? clampHistory(raw) : raw
   target.value = String(value)
+  preferencesStore.updateGeneral({ [key]: value })
+}
+
+/** 裸值版本（AppSelect 的 @update:model-value），clamp 逻辑与 updateGeneral 一致。 */
+function updateGeneralValue(key: keyof GeneralPreferences, raw: string | number): void {
+  const value = key === 'historyInfoSize' ? clampHistory(String(raw)) : raw
   preferencesStore.updateGeneral({ [key]: value })
 }
 
@@ -499,189 +351,6 @@ onMounted(async () => {
 .saved-enter-from,
 .saved-leave-to {
   opacity: 0;
-}
-
-/* ----------------------------- preference group --------------------------- */
-
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-/* ------------------------------ preference row ---------------------------- */
-
-.pref {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ------------------------------ segment control --------------------------- */
-
-.segment {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--color-surface);
-}
-
-.segment__btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-color-secondary);
-  font-size: clamp(11px, 12px, 14px);
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background-color 150ms var(--ease-decelerate-quart),
-    color 150ms var(--ease-decelerate-quart);
-}
-
-.segment__btn:hover {
-  color: var(--text-color-primary);
-}
-
-.segment__btn[aria-checked='true'] {
-  background: var(--content-color-theme-primary);
-  color: var(--color-white);
-  font-weight: 700;
-  box-shadow: 0 1px 2px var(--shadow-color);
-}
-
-/* ---------------------------------- switch --------------------------------- */
-
-.switch {
-  position: relative;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--widget-color);
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] {
-  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.switch__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-background-floating);
-  box-shadow: 0 1px 2px var(--shadow-color);
-  transition:
-    transform 200ms var(--ease-decelerate-quart),
-    background-color 200ms var(--ease-decelerate-quart);
-}
-
-.switch[aria-checked='true'] .switch__thumb {
-  transform: translateX(16px);
-  background: var(--color-accent);
-}
-
-/* ---------------------------------- select --------------------------------- */
-
-.select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.select select {
-  appearance: none;
-  min-width: 96px;
-  padding: 8px 30px 8px 12px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--card-radius);
-  background: var(--color-background-floating);
-  color: var(--text-color-primary);
-  font-size: clamp(13px, 14px, 16px);
-  cursor: pointer;
-  outline: none;
-  transition: border-color 150ms var(--ease-decelerate-quart);
-}
-
-.select select:focus {
-  border-color: var(--color-primary);
-}
-
-.select::after {
-  content: '';
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid var(--drawable-color-secondary);
-  border-bottom: 2px solid var(--drawable-color-secondary);
-  translate: 0 -60%;
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.select__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
 }
 
 /* ------------------------------- number input ----------------------------- */
