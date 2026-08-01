@@ -116,6 +116,15 @@ watch(
   transition: margin-left var(--duration-scene-translate) var(--ease-decelerate-quint);
 }
 
+/* Narrow viewports (<720px): reserve a fixed slot under the floating
+   hamburger (40px + 8px left edge + 8px gap, plus safe-area inset) so view
+   headers / controls never collide with it. */
+@media (max-width: 719px) {
+  .app-content {
+    padding-left: calc(48px + var(--safe-area-left));
+  }
+}
+
 /* Wide viewports: drawer panel is position:static (in-flow), so use flex
    to lay it out side-by-side with the content column.
    height:100vh ensures the drawer panel's height:100% resolves correctly. */
@@ -129,19 +138,22 @@ watch(
     flex: 1 1 auto;
     min-width: 0;
     overflow-y: auto;
+    padding-left: 0;
   }
 }
 
-/* Full-width content when chrome (drawer) is hidden (login / reader). */
+/* Full-width content when chrome (drawer) is hidden (login / reader): the
+   hamburger is hidden there, so the reserved slot must not apply. */
 .app-content--full {
   margin-left: 0 !important;
+  padding-left: 0 !important;
 }
 
 /* Floating hamburger — narrow viewports only (drawer is modal <720px). */
 .app-hamburger {
   position: fixed;
   top: calc(8px + var(--safe-area-top));
-  left: 8px;
+  left: calc(8px + var(--safe-area-left));
   z-index: 90;
   display: flex;
   align-items: center;
