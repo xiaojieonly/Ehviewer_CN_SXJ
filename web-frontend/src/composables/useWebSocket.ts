@@ -18,6 +18,15 @@
  * - **Token auth**: the bearer token is read from `localStorage` and sent in
  *   the STOMP `CONNECT` headers (`login` per contract §1.3, plus an
  *   `Authorization: Bearer …` header for clients/middleware that expect it).
+ * - **Auth-failure surfacing**: a STOMP `CONNECT` failure (bad or missing
+ *   token, server-rejected session) is exposed through {@link authError}, and
+ *   after {@link MAX_CONSECUTIVE_CONNECT_FAILURES} unanswered connect attempts
+ *   the loop gives up instead of retrying forever — callers can key a login
+ *   prompt off `authError` (contract §1.3 / §5.1).
+ * - **Tab-hidden pause**: reconnection is paused while the tab is hidden and
+ *   resumes on visibility change (contract §1.5.6).
+ * - **Stale-socket guards**: activation is idempotent and late frames from a
+ *   superseded session are ignored — at most one active socket at a time.
  * - **Auto re-subscribe**: every subscription is recorded in a registry and
  *   re-established automatically after a reconnect (contract §1.5 step 4).
  * - **Reactive state**: {@link connectionState} / {@link lastError} are shared
@@ -142,6 +151,12 @@ const INITIAL_RECONNECT_DELAY_MS = 1000
 const MAX_RECONNECT_DELAY_MS = 30000
 /** STOMP heartbeat interval, both directions (contract §1.4). */
 const HEARTBEAT_MS = 10000
+/**
+ * Cap on consecutive failed connect attempts (no CONNECTED frame received)
+ * before the manager gives up and surfaces an auth/connection error instead of
+ * retrying forever (contract §1.3 / §5.1).
+ */
+const MAX_CONSECUTIVE_CONNECT_FAILURES = 3
 
 /** Legacy all-downloads topic (bare DTO, contract §7.4). */
 export const TOPIC_DOWNLOAD_ALL = '/topic/download/all'
@@ -160,12 +175,31 @@ export const connectionState = ref<ConnectionState>('disconnected')
 /** Human-readable description of the last connection error, if any. */
 export const lastError = ref<string | null>(null)
 
+/**
+ * Reactive description of a failed STOMP `CONNECT` — a bad or missing token, or
+ * a server that rejected the session outright. Non-null only once the manager
+ * has given up retrying; cleared automatically on the next successful
+ * connection. Callers (e.g. an auth banner or login prompt) should react to
+ * this ref, not to {@link connectionState} alone, which also flips to
+ * `'error'` for unrecoverable STOMP errors mid-session.
+ */
+export const authError = ref<string | null>(null)
+
 /* ------------------------------------------------------------------ */
 /* Singleton internals                                                 */
 /* ------------------------------------------------------------------ */
 
 let client: Client | null = null
 let refCount = 0
+
+/** True once the first STOMP `CONNECTED` frame has been received. */
+let everConnected = false
+/** Consecutive failed connect attempts since the last successful one. */
+let consecutiveConnectFailures = 0
+/** True after the connect loop has been stopped (auth/connection failure). */
+let gaveUp = false
+/** True while reconnection is paused because the tab is hidden (§1.5.6). */
+let visibilityPaused = false
 
 /**
  * A registered subscription. The registry survives reconnects so every active
@@ -204,6 +238,71 @@ function buildConnectHeaders(): { [key: string]: string } {
     headers.Authorization = `Bearer ${token}`
   }
   return headers
+}
+
+/** True while the browser tab is hidden (contract §1.5.6). */
+function isTabHidden(): boolean {
+  return typeof document !== 'undefined' && document.visibilityState === 'hidden'
+}
+
+/**
+ * Activate the singleton client unless it is already active or reconnection is
+ * paused. Idempotent — concurrent callers cannot spawn a second socket.
+ */
+function activateIfNeeded(): void {
+  if (!client || visibilityPaused || client.active) return
+  connectionState.value = 'connecting'
+  client.activate()
+}
+
+/**
+ * Stop the connection loop for good (until the next explicit {@link connect}).
+ * Records the failure in {@link lastError} / {@link authError} and deactivates
+ * the client so the library's built-in retry timer is cancelled.
+ */
+function giveUp(reason: string): void {
+  gaveUp = true
+  everConnected = false
+  consecutiveConnectFailures = 0
+  connectionState.value = 'error'
+  lastError.value = reason
+  authError.value = reason
+  if (client?.active) void client.deactivate()
+}
+
+/**
+ * Count a failed connect attempt (socket closed / errored before the first
+ * STOMP `CONNECTED` frame). Gives up once the cap is reached.
+ */
+function recordConnectFailure(): void {
+  if (everConnected || gaveUp || visibilityPaused) return
+  consecutiveConnectFailures++
+  if (consecutiveConnectFailures >= MAX_CONSECUTIVE_CONNECT_FAILURES) {
+    giveUp(
+      `Connection failed ${MAX_CONSECUTIVE_CONNECT_FAILURES} times in a row — ` +
+        'check your API token and that the server is reachable.',
+    )
+  }
+}
+
+/**
+ * Pause (re)connection while the tab is hidden and resume it on visibility
+ * change (contract §1.5.6).
+ */
+function onVisibilityChange(): void {
+  if (isTabHidden()) {
+    visibilityPaused = true
+    connectionState.value = 'disconnected'
+    if (client?.active) void client.deactivate()
+    return
+  }
+  const wasPaused = visibilityPaused
+  visibilityPaused = false
+  if (wasPaused && refCount > 0) activateIfNeeded()
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', onVisibilityChange)
 }
 
 /**
@@ -278,18 +377,38 @@ function ensureClient(): Client {
     heartbeatOutgoing: HEARTBEAT_MS,
     connectHeaders: buildConnectHeaders(),
     onConnect: () => {
+      // Ignore a stale CONNECTED frame from a superseded session (e.g. the
+      // socket was deactivated mid-handshake and re-activated) — at most one
+      // active socket.
+      if (!client?.active) return
       connectionState.value = 'connected'
       lastError.value = null
+      authError.value = null
+      everConnected = true
+      consecutiveConnectFailures = 0
       resubscribeAll()
     },
     onDisconnect: () => {
       if (refCount === 0) connectionState.value = 'disconnected'
     },
     onStompError: (frame) => {
+      const message = frame.headers['message'] || frame.body || 'STOMP protocol error'
+      if (!everConnected) {
+        // The server rejected the CONNECT frame itself (bad/missing token,
+        // protocol mismatch, …) — retrying the same headers cannot help, so
+        // surface it immediately instead of looping (contract §1.3 / §5.1).
+        giveUp(message)
+        return
+      }
       connectionState.value = 'error'
-      lastError.value = frame.headers['message'] || frame.body || 'STOMP protocol error'
+      lastError.value = message
     },
     onWebSocketClose: () => {
+      if (gaveUp || visibilityPaused) return
+      if (!everConnected) {
+        recordConnectFailure()
+        if (gaveUp) return
+      }
       // Still wanted (refCount > 0) → the library is about to retry: connecting.
       // Otherwise this close is the result of an intentional disconnect.
       connectionState.value = refCount > 0 ? 'connecting' : 'disconnected'
@@ -315,10 +434,12 @@ export function connect(): void {
   const c = ensureClient()
   // Refresh auth headers on each (re)activation in case the token rotated.
   c.connectHeaders = buildConnectHeaders()
-  if (!c.active) {
-    connectionState.value = 'connecting'
-    c.activate()
-  }
+  // An explicit connect() is a retry: re-arm the loop even after a previous
+  // give-up (e.g. the user just supplied a new token). authError stays set
+  // until the connect actually succeeds, so the login prompt remains visible.
+  gaveUp = false
+  consecutiveConnectFailures = 0
+  activateIfNeeded()
 }
 
 /**
@@ -332,6 +453,12 @@ export function disconnect(): void {
     void client.deactivate()
     connectionState.value = 'disconnected'
     for (const entry of registry.values()) entry.live = null
+    // Fresh session on the next connect(): a later CONNECT failure must count
+    // from zero again. authError is deliberately kept — the login prompt stays
+    // up even while nothing is connected.
+    everConnected = false
+    consecutiveConnectFailures = 0
+    gaveUp = false
   }
 }
 
@@ -360,6 +487,12 @@ export function subscribeDownload(
   gid: number,
   callback: (progress: DownloadProgress) => void,
 ): StompSubscription | undefined {
+  // Do not register while the socket is down: the returned handle would be
+  // `undefined`, callers treat that as a no-op and never unsubscribe, and the
+  // orphaned registry entry would re-subscribe on every reconnect. Callers
+  // subscribe once the session is up (see DownloadView.vue); the entry then
+  // survives reconnects via resubscribeAll().
+  if (!client?.connected) return undefined
   const destination = topicDownloadOne(gid)
   const id = addSubscription(destination, makeJsonHandler(destination, callback))
   return registry.get(id)?.live ?? undefined
@@ -374,6 +507,9 @@ export function subscribeDownload(
 export function subscribeAll(
   callback: (progress: DownloadProgress) => void,
 ): StompSubscription | undefined {
+  // See subscribeDownload — never register a legacy subscription the caller
+  // may never clean up while the socket is disconnected.
+  if (!client?.connected) return undefined
   const id = addSubscription(TOPIC_DOWNLOAD_ALL, makeJsonHandler(TOPIC_DOWNLOAD_ALL, callback))
   return registry.get(id)?.live ?? undefined
 }
@@ -416,6 +552,11 @@ export interface UseWebSocketReturn {
   connectionState: Ref<ConnectionState>
   /** Shared reactive last-error message. */
   lastError: Ref<string | null>
+  /**
+   * Shared reactive connect/auth failure (non-null once the connection loop has
+   * given up; cleared on the next successful connect).
+   */
+  authError: Ref<string | null>
   /** Convenience boolean — `true` when {@link connectionState} is `connected`. */
   connected: ComputedRef<boolean>
   /** Acquire a reference to the shared connection (reference-counted). */
@@ -489,6 +630,7 @@ export function useWebSocket(): UseWebSocketReturn {
     gid: number,
     callback: (progress: DownloadProgress) => void,
   ): StompSubscription | undefined {
+    if (!client?.connected) return undefined
     const destination = topicDownloadOne(gid)
     const id = track(destination, makeJsonHandler(destination, callback))
     return registry.get(id)?.live ?? undefined
@@ -497,6 +639,7 @@ export function useWebSocket(): UseWebSocketReturn {
   function scopedSubscribeAll(
     callback: (progress: DownloadProgress) => void,
   ): StompSubscription | undefined {
+    if (!client?.connected) return undefined
     const id = track(TOPIC_DOWNLOAD_ALL, makeJsonHandler(TOPIC_DOWNLOAD_ALL, callback))
     return registry.get(id)?.live ?? undefined
   }
@@ -534,6 +677,7 @@ export function useWebSocket(): UseWebSocketReturn {
   return {
     connectionState,
     lastError,
+    authError,
     connected,
     connect,
     disconnect,
