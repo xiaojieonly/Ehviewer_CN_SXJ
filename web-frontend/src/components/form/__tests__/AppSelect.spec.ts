@@ -216,6 +216,36 @@ describe('AppSelect (dismissal)', () => {
   })
 })
 
+describe('AppSelect (real-browser click path)', () => {
+  it('does NOT close the menu on mousedown inside a teleported option', async () => {
+    // Regression: the listbox is teleported to <body>, so a mousedown on an
+    // option used to be treated as outside, closing the menu and detaching
+    // the <li> before the browser dispatches click — selection was lost.
+    const wrapper = mountSelect()
+    await wrapper.find('button.app-select__trigger').trigger('click')
+    const menuItem = document.body.querySelector('.app-select__option') as HTMLElement
+    expect(menuItem).toBeTruthy()
+
+    menuItem.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+    await wrapper.vm.$nextTick()
+    expect(menu()).not.toBeNull()
+
+    menuItem.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
+    menuItem.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    await wrapper.vm.$nextTick()
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    expect(menu()).toBeNull()
+  })
+
+  it('still closes the menu on mousedown outside both trigger and menu', async () => {
+    const wrapper = mountSelect()
+    await wrapper.find('button.app-select__trigger').trigger('click')
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    await wrapper.vm.$nextTick()
+    expect(menu()).toBeNull()
+  })
+})
+
 describe('AppSelect (disabled)', () => {
   it('does not open when disabled', async () => {
     const wrapper = mountSelect({ disabled: true })

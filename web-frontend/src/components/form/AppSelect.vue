@@ -207,7 +207,14 @@ function onTriggerKeydown(event: KeyboardEvent): void {
 }
 
 function onDocMousedown(event: MouseEvent): void {
-  if (open.value && isClickOutside(rootRef.value, event.target)) closeMenu()
+  if (!open.value) return
+  // The listbox is teleported to <body>, so a click on an option must NOT be
+  // treated as outside — closing here would detach the <li> before the click
+  // event fires and the selection would be lost (real-browser behavior:
+  // clicks never dispatch on removed elements).
+  const menuEl = menuRef.value
+  if (menuEl?.contains(event.target as Node)) return
+  if (isClickOutside(rootRef.value, event.target)) closeMenu()
 }
 
 function onViewportChange(): void {
