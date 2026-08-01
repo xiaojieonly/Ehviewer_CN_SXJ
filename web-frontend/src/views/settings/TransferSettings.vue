@@ -12,26 +12,23 @@
         <h1 class="transfer-settings__title">传输</h1>
       </header>
 
-      <section class="pref-group">
-        <h2 class="pref-group__title">配置传输</h2>
-        <div class="pref-card">
-          <div class="pref">
-            <AppIcon name="send-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">导出设置</span>
-              <span class="pref__summary">下载本机全部偏好设置（JSON 文件），可用于迁移到其他服务器</span>
-            </div>
+      <section>
+        <SectionHeader title="配置传输" />
+        <PrefCard>
+          <PrefRow
+            icon="send-dark"
+            title="导出设置"
+            summary="下载本机全部偏好设置（JSON 文件），可用于迁移到其他服务器"
+          >
             <button type="button" class="btn-primary" :disabled="exporting" @click="exportSettings">
               {{ exporting ? '导出中…' : '导出' }}
             </button>
-          </div>
-          <div class="pref-divider" />
-          <div class="pref">
-            <AppIcon name="folder-add-dark" class="pref__icon" />
-            <div class="pref__text">
-              <span class="pref__title">导入设置</span>
-              <span class="pref__summary">从导出的 JSON 文件恢复设置（覆盖本机当前偏好）</span>
-            </div>
+          </PrefRow>
+          <PrefRow
+            icon="folder-add-dark"
+            title="导入设置"
+            summary="从导出的 JSON 文件恢复设置（覆盖本机当前偏好）"
+          >
             <label class="btn-primary file-pick">
               {{ importing ? '导入中…' : '选择文件' }}
               <input
@@ -42,8 +39,8 @@
                 @change="onFileSelected"
               />
             </label>
-          </div>
-        </div>
+          </PrefRow>
+        </PrefCard>
         <p class="transfer-settings__note">
           提示：Android 端可在"设置 → 服务器同步"中通过"同步配置 / 拉取配置"与此服务器双向传输设置。
         </p>
@@ -60,7 +57,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { preferencesApi, type Preferences } from '@/api/preferences'
-import AppIcon from '@/components/atoms/AppIcon.vue'
+import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const exporting = ref(false)
 const importing = ref(false)
@@ -151,69 +148,6 @@ function messageOf(e: unknown): string {
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--text-color-primary);
-}
-
-/* ----------------------------- preference group --------------------------- */
-
-.pref-group__title {
-  margin: 22px 4px 8px;
-  font-size: clamp(12px, 14px, 16px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.pref-card {
-  background: var(--color-background-floating);
-  border-radius: var(--card-radius);
-  box-shadow:
-    0 var(--card-elevation) 4px var(--shadow-color),
-    0 0 1px var(--shadow-color);
-  overflow: hidden;
-}
-
-.pref-divider {
-  height: 1px;
-  margin: 0 var(--keyline-margin);
-  background: var(--color-divider);
-}
-
-/* ------------------------------ preference row ---------------------------- */
-
-.pref {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  min-height: 48px;
-  padding: 10px var(--keyline-margin);
-}
-
-.pref__icon {
-  flex: 0 0 24px;
-  color: var(--drawable-color-primary);
-}
-
-.pref__text {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.pref__title {
-  font-size: clamp(14px, 16px, 18px);
-  color: var(--text-color-primary);
-}
-
-.pref__summary {
-  font-size: clamp(11px, 12px, 14px);
-  color: var(--text-color-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .transfer-settings__note {

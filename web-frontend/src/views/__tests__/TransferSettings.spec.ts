@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import TransferSettings from '../settings/TransferSettings.vue'
 import { preferencesApi, type Preferences } from '@/api/preferences'
+import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 vi.mock('@/api/preferences', () => ({
   preferencesApi: { get: vi.fn(), update: vi.fn() },
@@ -59,6 +60,16 @@ describe('TransferSettings (传输模块)', () => {
     wrapper = mount(TransferSettings)
     return wrapper
   }
+
+  it('renders the shared form primitives (SectionHeader + PrefCard + PrefRow)', () => {
+    const w = mountView()
+    expect(w.findComponent(SectionHeader).text()).toContain('配置传输')
+    expect(w.findComponent(PrefCard).exists()).toBe(true)
+    const rows = w.findAllComponents(PrefRow)
+    expect(rows).toHaveLength(2)
+    expect(rows[0].props('title')).toBe('导出设置')
+    expect(rows[1].props('title')).toBe('导入设置')
+  })
 
   it('exports the preferences as a JSON file download', async () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
