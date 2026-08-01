@@ -1,9 +1,12 @@
 package com.hippo.ehviewer.web.service
 
+import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.dto.PairCompleteRequest
 import com.hippo.ehviewer.web.entity.SyncDeviceEntity
+import com.hippo.ehviewer.web.entity.TokenEntity
 import com.hippo.ehviewer.web.repository.AuthConfigRepository
 import com.hippo.ehviewer.web.repository.SyncDeviceRepository
+import com.hippo.ehviewer.web.repository.TokenRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.doAnswer
@@ -28,7 +32,10 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class PairingFlowTest {
 
-    private fun newAuthService(deviceRepo: SyncDeviceRepository = mockDeviceRepo()): EhAuthService {
+    private fun newAuthService(
+        deviceRepo: SyncDeviceRepository = mockDeviceRepo(),
+        requireAuth: Boolean = false,
+    ): EhAuthService {
         val authRepo = mock(AuthConfigRepository::class.java)
         `when`(authRepo.existsByUsername(anyString())).thenReturn(false)
         `when`(authRepo.findByUsername(anyString())).thenReturn(null)
@@ -37,9 +44,19 @@ class PairingFlowTest {
             EhSessionManager.SessionStatus(EhSessionManager.SessionState.SIGNED_OUT, false, false, 0L)
         )
         val serverConfig = mock(ServerConfigService::class.java)
-        `when`(serverConfig.getBoolean(anyString(), anyBoolean())).thenReturn(false)
-        val deviceService = DeviceService(deviceRepo)
-        return EhAuthService(authRepo, EncryptionService(), sessionManager, serverConfig, deviceService)
+        `when`(serverConfig.getBoolean(anyString(), anyBoolean())).thenAnswer { inv ->
+            inv.getArgument<String>(0) == ServerConfigService.KEY_REQUIRE_AUTH && requireAuth
+        }
+        `when`(serverConfig.getLong(anyString(), anyLong())).thenReturn(86400L)
+        return EhAuthService(
+            authRepo,
+            EncryptionService(),
+            sessionManager,
+            serverConfig,
+            mockTokenRepo(),
+            deviceRepo,
+            EhCoreConfigProperties(),
+        )
     }
 
     /** In-memory fake that behaves like the real repository (persists across calls). */
@@ -55,6 +72,28 @@ class PairingFlowTest {
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
         doAnswer { inv -> store.values.remove(inv.getArgument(0)) }.`when`(repo).delete(any(SyncDeviceEntity::class.java))
         return repo
+    }
+
+    /** In-memory fake token store, keyed by token hash. */
+    private fun mockTokenRepo(): TokenRepository {
+        val repo = mock(TokenRepository::class.java)
+        val store = ConcurrentHashMap<String, TokenEntity>()
+        `when`(repo.save(any(TokenEntity::class.java))).thenAnswer { inv ->
+            val entity = inv.getArgument<TokenEntity>(0)
+            store[entity.tokenHash] = entity
+            entity
+        }
+        `when`(repo.findByTokenHash(anyString())).thenAnswer { inv -> store[inv.getArgument(0)] }
+        `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        doAnswer { inv -> store.remove(inv.getArgument<String>(0)) }.`when`(repo).deleteByTokenHash(anyString())
+        doAnswer { inv -> store.values.remove(inv.getArgument(0)) }.`when`(repo).delete(any(TokenEntity::class.java))
+        return repo
+    }
+
+    @Test
+    fun `registration follows the auth mode`() {
+        assertFalse(newAuthService().isRegistrationAllowed())
+        assertTrue(newAuthService(requireAuth = true).isRegistrationAllowed())
     }
 
     @Test
@@ -80,6 +119,9 @@ class PairingFlowTest {
         assertEquals("default", completed.username)
         // The device token authenticates as the pairing user.
         assertEquals("default", authService.validateToken(completed.token))
+        // The device row stores only the token hash, never the raw token.
+        val storedHash = deviceRepo.findByDeviceId("android-test")!!.token
+        assertTrue(storedHash != null && storedHash != completed.token)
 
         // Single-use: the same code must not complete again.
         val second = authService.completePairing(
@@ -135,6 +177,16 @@ class PairingFlowTest {
 
         authService.revokeDevice("android-nopair")
         assertNull(deviceRepo.findByDeviceId("android-nopair"))
+    }
+
+    @Test
+    fun `revoking another user's device is refused`() {
+        val deviceRepo = mockDeviceRepo()
+        val authService = newAuthService(deviceRepo)
+        deviceRepo.save(SyncDeviceEntity().apply { deviceId = "android-other"; username = "alice" })
+
+        assertFalse(authService.revokeDevice("android-other", "bob"))
+        assertTrue(deviceRepo.findByDeviceId("android-other") != null)
     }
 
     @Test

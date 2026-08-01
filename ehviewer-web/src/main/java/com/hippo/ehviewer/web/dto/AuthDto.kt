@@ -1,15 +1,24 @@
 package com.hippo.ehviewer.web.dto
 
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 
 data class LoginRequest(
-    @field:NotBlank val username: String,
-    @field:NotBlank val password: String
+    @field:NotBlank
+    @field:Size(max = 64)
+    val username: String,
+    @field:NotBlank
+    @field:Size(max = 72)
+    val password: String
 )
 
 data class RegisterRequest(
-    @field:NotBlank val username: String,
-    @field:NotBlank val password: String
+    @field:NotBlank
+    @field:Size(max = 64)
+    val username: String,
+    @field:NotBlank
+    @field:Size(max = 72)
+    val password: String
 )
 
 data class AuthResponse(
