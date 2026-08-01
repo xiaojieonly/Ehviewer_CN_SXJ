@@ -138,14 +138,14 @@
                 @update:model-value="() => toggleGeneral('showGalleryRating')"
               />
             </PrefRow>
-            <PrefRow icon="fire-black" title="显示 EH 事件" summary="显示 E-Hentai 站点事件横幅">
+            <PrefRow icon="fire-black" title="显示 EH 事件" summary="显示站点事件横幅">
               <AppSwitch
                 :model-value="prefs.general.showEhEvents"
                 aria-label="显示 EH 事件"
                 @update:model-value="() => toggleGeneral('showEhEvents')"
               />
             </PrefRow>
-            <PrefRow icon="chart-accent" title="显示 EH 限额" summary="在顶部显示 E-Hentai 配额信息">
+            <PrefRow icon="chart-accent" title="显示 EH 限额" summary="在顶部显示站点配额信息">
               <AppSwitch
                 :model-value="prefs.general.showEhLimits"
                 aria-label="显示 EH 限额"
