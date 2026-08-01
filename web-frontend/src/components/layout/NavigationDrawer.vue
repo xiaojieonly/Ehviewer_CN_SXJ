@@ -31,7 +31,7 @@
               aria-hidden="true"
             >{{ avatarInitial }}</span>
           </div>
-          <span class="navigation-drawer__username">{{ username || 'E-Hentai' }}</span>
+          <span class="navigation-drawer__username">{{ username || 'AnotherViewer' }}</span>
         </div>
       </slot>
 
@@ -373,7 +373,7 @@ function onThemeToggle(): void {
 /* Single-checked group: the active row is tinted primary. */.navigation-drawer__item.is-active {
   background: rgba(0, 150, 136, 0.12);
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  color: var(--text-color-theme-primary);
+  color: var(--color-primary-text, var(--color-primary-dark));
 }
 
 .navigation-drawer__item.is-active .navigation-drawer__item-icon {

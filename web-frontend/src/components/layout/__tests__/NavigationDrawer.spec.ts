@@ -113,6 +113,16 @@ describe('NavigationDrawer', () => {
       expect(wrapper.find('img.navigation-drawer__avatar').exists()).toBe(false)
       expect(wrapper.find('.navigation-drawer__avatar--fallback').text()).toBe('B')
     })
+
+    it('shows the AnotherViewer brand name when no username is set', () => {
+      const wrapper = mount(NavigationDrawer, { props: { open: true } })
+      expect(wrapper.find('.navigation-drawer__username').text()).toBe('AnotherViewer')
+    })
+
+    it('no longer contains the legacy E-Hentai brand name', () => {
+      const wrapper = mount(NavigationDrawer, { props: { open: true } })
+      expect(wrapper.text()).not.toContain('E-Hentai')
+    })
   })
 
   describe('footer', () => {
