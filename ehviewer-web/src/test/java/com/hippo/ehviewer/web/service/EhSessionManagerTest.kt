@@ -4,6 +4,10 @@ import okhttp3.Cookie
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 
 class EhSessionManagerTest {
 
@@ -11,7 +15,10 @@ class EhSessionManagerTest {
 
     @BeforeEach
     fun setUp() {
-        manager = EhSessionManager()
+        val serverConfig = mock(ServerConfigService::class.java)
+        `when`(serverConfig.getBoolean(anyString(), anyBoolean())).thenReturn(false)
+        `when`(serverConfig.get(anyString(), anyString())).thenReturn("")
+        manager = EhSessionManager(WebProxyManager(serverConfig))
     }
 
     private fun identityCookie(name: String, expiresAt: Long): Cookie =

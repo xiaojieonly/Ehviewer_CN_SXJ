@@ -37,6 +37,14 @@ class SettingsService(
                 outputFormat = serverConfig.get("processing.output_format", "png"),
                 outputQuality = serverConfig.get("processing.output_quality", "90").toIntOrNull() ?: 90,
             ),
+            proxy = ProxySettings(
+                enabled = serverConfig.getBoolean(WebProxyManager.KEY_ENABLED, false),
+                type = serverConfig.get(WebProxyManager.KEY_TYPE, "http"),
+                host = serverConfig.get(WebProxyManager.KEY_HOST),
+                port = serverConfig.get(WebProxyManager.KEY_PORT, "0").toIntOrNull() ?: 0,
+                username = serverConfig.get(WebProxyManager.KEY_USERNAME),
+                password = serverConfig.get(WebProxyManager.KEY_PASSWORD),
+            ),
         )
     }
 
@@ -65,6 +73,14 @@ class SettingsService(
             serverConfig.set("processing.default_type", proc.defaultType)
             serverConfig.set("processing.output_format", proc.outputFormat)
             serverConfig.set("processing.output_quality", proc.outputQuality.toString())
+        }
+        request.proxy?.let { proxy ->
+            serverConfig.setBoolean(WebProxyManager.KEY_ENABLED, proxy.enabled)
+            serverConfig.set(WebProxyManager.KEY_TYPE, proxy.type)
+            serverConfig.set(WebProxyManager.KEY_HOST, proxy.host)
+            serverConfig.set(WebProxyManager.KEY_PORT, proxy.port.toString())
+            serverConfig.set(WebProxyManager.KEY_USERNAME, proxy.username)
+            serverConfig.set(WebProxyManager.KEY_PASSWORD, proxy.password)
         }
         return true
     }

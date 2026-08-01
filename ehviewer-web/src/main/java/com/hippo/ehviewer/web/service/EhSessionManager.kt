@@ -26,16 +26,22 @@ import java.util.concurrent.atomic.AtomicReference
  *  - periodically re-checking session health ([healthCheck]).
  */
 @Component
-class EhSessionManager {
+class EhSessionManager(private val proxyManager: WebProxyManager) {
 
     private val logger = LoggerFactory.getLogger(EhSessionManager::class.java)
 
     /** The single cookie store shared with ehviewer-core. */
     val cookieStore: EhCookieStore = EhCookieStore()
 
-    /** OkHttp client whose cookie jar is [cookieStore]; use for all E-Hentai traffic. */
+    /**
+     * OkHttp client whose cookie jar is [cookieStore]; use for all E-Hentai traffic.
+     * The proxy selector/authenticator are consulted per connection, so the admin
+     * proxy settings ([WebProxyManager]) take effect immediately without a rebuild.
+     */
     val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .cookieJar(cookieStore)
+        .proxySelector(proxyManager.selector())
+        .proxyAuthenticator(proxyManager.authenticator())
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
