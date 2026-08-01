@@ -85,7 +85,7 @@ function makeGallery(gid, category, title, titleJpn, opts = {}) {
         ? { namespace: parts[0], tag: parts.slice(1).join(':') }
         : { namespace: null, tag: t };
     }),
-    imageUrl: `https://ehgt.org/mock/${gid}/cover.jpg`,
+    imageUrl: `/api/v1/image/mock-thumb.svg`,
   };
 }
 

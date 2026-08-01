@@ -120,6 +120,29 @@ router.post('/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out', token: null, username: null });
 });
 
+// POST /api/v1/auth/change-password — verify old password, store the new one.
+// Mirrors the real backend contract exactly. Unauthenticated requests never
+// reach here when auth is required (server.mjs middleware 401s first).
+router.post('/change-password', (req, res) => {
+  if (!isAuthRequired()) {
+    return res.status(400).json({ success: false, message: 'Authentication is disabled on this server' });
+  }
+  const { oldPassword, newPassword } = req.body || {};
+  const user = usernameForToken(extractToken(req));
+  const entry = user ? users.get(user) : null;
+  if (!entry || entry.password !== oldPassword) {
+    return res.status(400).json({ success: false, message: 'Old password is incorrect' });
+  }
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+  }
+  if (newPassword.length > 72) {
+    return res.status(400).json({ success: false, message: 'New password must be at most 72 characters' });
+  }
+  entry.password = newPassword;
+  res.json({ success: true, message: 'Password changed' });
+});
+
 // POST /api/v1/auth/pair and /pair/start — generate a short-lived pairing code.
 // Mirrors the real backend: requires an authenticated session when auth is required.
 const generatePair = (req, res) => {
