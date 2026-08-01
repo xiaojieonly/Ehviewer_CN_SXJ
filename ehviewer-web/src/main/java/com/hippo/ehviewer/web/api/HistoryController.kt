@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.*
 class HistoryController(private val historyService: HistoryService) {
 
     @GetMapping("/list")
-    fun listHistory(): ResponseEntity<HistoryListResponse> {
-        return ResponseEntity.ok(historyService.listHistory())
+    fun listHistory(
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) pageSize: Int?
+    ): ResponseEntity<HistoryListResponse> {
+        return ResponseEntity.ok(historyService.listHistory(page, pageSize))
     }
 
     @DeleteMapping("/clear")
