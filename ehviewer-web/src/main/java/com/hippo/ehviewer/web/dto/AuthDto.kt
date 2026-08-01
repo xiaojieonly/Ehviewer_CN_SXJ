@@ -28,6 +28,15 @@ data class AuthResponse(
     val username: String? = null
 )
 
+data class ChangePasswordRequest(
+    @field:NotBlank(message = "Old password is required")
+    val oldPassword: String,
+    @field:NotBlank(message = "New password is required")
+    @field:Size(min = 6, message = "New password must be at least 6 characters")
+    @field:Size(max = 72, message = "New password must be at most 72 characters")
+    val newPassword: String,
+)
+
 data class AuthStatusResponse(
     val authenticated: Boolean,
     val username: String? = null,

@@ -5,7 +5,9 @@ import com.hippo.ehviewer.web.service.EhAuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.core.Authentication
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -29,6 +31,27 @@ class AuthController(
         val response = authService.login(request)
         return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
     }
+
+    @PostMapping("/change-password")
+    fun changePassword(
+        authentication: Authentication,
+        @Valid @RequestBody request: ChangePasswordRequest,
+    ): ResponseEntity<AuthResponse> {
+        val response = authService.changePassword(authentication.name, request)
+        return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
+    }
+
+    /** Bean-validation failures must keep the `{success, message}` contract shape. */
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<AuthResponse> {
+        val message = ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage ?: "Invalid request"
+        return ResponseEntity.badRequest().body(AuthResponse(false, message))
+    }
+
+    /** Missing/undeserializable fields (e.g. omitted request keys) keep the contract shape too. */
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableBody(): ResponseEntity<AuthResponse> =
+        ResponseEntity.badRequest().body(AuthResponse(false, "Old password and new password are required"))
 
     @GetMapping("/status")
     fun status(@RequestHeader("Authorization", required = false) authHeader: String?): ResponseEntity<AuthStatusResponse> {

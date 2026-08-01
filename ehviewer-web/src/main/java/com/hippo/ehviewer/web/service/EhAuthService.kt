@@ -3,6 +3,7 @@ package com.hippo.ehviewer.web.service
 import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.dto.AuthResponse
 import com.hippo.ehviewer.web.dto.AuthStatusResponse
+import com.hippo.ehviewer.web.dto.ChangePasswordRequest
 import com.hippo.ehviewer.web.dto.LoginRequest
 import com.hippo.ehviewer.web.dto.PairCodeResponse
 import com.hippo.ehviewer.web.dto.PairCompleteRequest
@@ -33,6 +34,9 @@ class EhAuthService(
     // tokenHash -> cached token metadata. Rebuilt from the DB at startup so
     // tokens survive restarts; every check also validates the TTL.
     private val tokenCache = ConcurrentHashMap<String, TokenCacheEntry>()
+    // Pairing codes are purely in-memory (single-use, 10-min TTL). Growth is
+    // bounded: every generate/complete prunes expired entries first, so the map
+    // holds at most the codes issued within one TTL window (a handful per user).
     private val pairCodes = ConcurrentHashMap<String, PairCodeEntry>()
 
     private class TokenCacheEntry(val username: String, val expiresAt: Long)
@@ -59,9 +63,11 @@ class EhAuthService(
         }
     }
 
-    /** Registration follows the auth mode: allowed whenever require_auth is on. */
-    fun isRegistrationAllowed(): Boolean =
+    fun isAuthEnabled(): Boolean =
         serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)
+
+    /** Registration follows the auth mode: allowed whenever require_auth is on. */
+    fun isRegistrationAllowed(): Boolean = isAuthEnabled()
 
     fun register(request: RegisterRequest): AuthResponse {
         if (!isRegistrationAllowed()) {
@@ -90,6 +96,35 @@ class EhAuthService(
         authRepository.save(entity)
         val token = issueToken(request.username)
         return AuthResponse(true, "Login successful", token, request.username)
+    }
+
+    /**
+     * Re-hashes the account password after verifying the caller knows the old
+     * one. Only the hash is updated: tokens issued to other sessions stay valid.
+     * With auth disabled the caller cannot be identified (the filter stamps a
+     * generic principal), so changing a password is refused outright.
+     */
+    fun changePassword(username: String, request: ChangePasswordRequest): AuthResponse {
+        if (!isAuthEnabled()) {
+            return AuthResponse(false, "Authentication is disabled on this server")
+        }
+        if (request.oldPassword.isBlank() || request.newPassword.isBlank()) {
+            return AuthResponse(false, "Old password and new password are required")
+        }
+        if (request.newPassword.length < 6) {
+            return AuthResponse(false, "New password must be at least 6 characters")
+        }
+        if (request.newPassword.length > 72) {
+            return AuthResponse(false, "New password must be at most 72 characters")
+        }
+        val entity = authRepository.findByUsername(username)
+            ?: return AuthResponse(false, "Account not found")
+        if (!encryptionService.verifyPassword(request.oldPassword, entity.passwordHash)) {
+            return AuthResponse(false, "Old password is incorrect")
+        }
+        entity.passwordHash = encryptionService.hashPassword(request.newPassword)
+        authRepository.save(entity)
+        return AuthResponse(true, "Password changed")
     }
 
     /**
@@ -163,8 +198,24 @@ class EhAuthService(
     // Device pairing
     // -------------------------------------------------------------------------
 
+    /**
+     * Removes pairing codes whose TTL has elapsed. Run at the start of every
+     * [generatePairCode]/[completePairing] instead of a scheduled task: a
+     * periodic sweep would only run on an idle server anyway, and pruning on
+     * access already bounds the map to the codes issued within one TTL window,
+     * which is small enough to keep the implementation simple. [now] is
+     * injectable so tests can drive the clock.
+     */
+    internal fun pruneExpiredPairCodes(now: Long = System.currentTimeMillis()) {
+        pairCodes.entries.removeIf { it.value.expiresAt < now }
+    }
+
+    /** Number of live pairing codes; exposed for tests. */
+    internal fun activePairCodeCount(): Int = pairCodes.size
+
     /** Generates a short-lived single-use pairing code for the given username. */
     fun generatePairCode(username: String, ttlSeconds: Long = PAIR_CODE_TTL_SECONDS): PairCodeResponse {
+        pruneExpiredPairCodes()
         val secureRandom = SecureRandom()
         val code = buildString(PAIR_CODE_LENGTH) {
             repeat(PAIR_CODE_LENGTH) {
@@ -181,6 +232,7 @@ class EhAuthService(
      * the user who generated the code.
      */
     fun completePairing(request: PairCompleteRequest): PairCompleteResponse {
+        pruneExpiredPairCodes()
         val entry = pairCodes.remove(request.code)
         if (entry == null || entry.expiresAt < System.currentTimeMillis()) {
             return PairCompleteResponse(false, "Pairing code is invalid or expired")
