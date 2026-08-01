@@ -41,3 +41,9 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Frontend coverage / test artifacts
+web-frontend/coverage/
+web-frontend/e2e/actual/
+web-frontend/e2e/diff/
+web-frontend/e2e/test-results/
