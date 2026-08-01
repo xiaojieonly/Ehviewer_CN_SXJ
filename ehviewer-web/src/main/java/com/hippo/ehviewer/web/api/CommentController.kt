@@ -5,6 +5,7 @@ import com.hippo.ehviewer.web.dto.CommentPostRequest
 import com.hippo.ehviewer.web.dto.CommentVoteRequest
 import com.hippo.ehviewer.web.service.CommentService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -17,8 +18,13 @@ class CommentController(private val commentService: CommentService) {
     }
 
     @PostMapping("/post")
-    fun postComment(@RequestBody request: CommentPostRequest): ResponseEntity<Map<String, Boolean>> {
-        val result = commentService.postComment(request.gid, "anonymous", request.comment)
+    fun postComment(
+        @RequestBody request: CommentPostRequest,
+        authentication: Authentication
+    ): ResponseEntity<Map<String, Boolean>> {
+        val uploader = authentication.name?.takeUnless { it.isBlank() || it == "anonymousUser" }
+            ?: "anonymous"
+        val result = commentService.postComment(request.gid, uploader, request.comment)
         return ResponseEntity.ok(mapOf("success" to result))
     }
 

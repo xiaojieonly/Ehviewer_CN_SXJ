@@ -1,39 +1,93 @@
 package com.hippo.ehviewer.web.service
 
+import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhUrl
+import com.hippo.ehviewer.client.data.GalleryInfo
+import com.hippo.ehviewer.client.data.ListUrlBuilder
 import com.hippo.ehviewer.web.dto.*
 import com.hippo.ehviewer.web.entity.GalleryInfoBase
 import com.hippo.ehviewer.web.entity.HistoryInfoEntity
 import com.hippo.ehviewer.web.entity.QuickSearchEntity
 import com.hippo.ehviewer.web.repository.*
+import com.hippo.network.UrlBuilder
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import java.net.URLEncoder
 
 @Service
 class GalleryService(
     private val historyRepository: HistoryInfoRepository,
     private val quickSearchRepository: QuickSearchRepository,
     private val galleryTagsRepository: GalleryTagsRepository,
-    private val localFavoriteInfoRepository: LocalFavoriteInfoRepository
+    private val localFavoriteInfoRepository: LocalFavoriteInfoRepository,
+    private val sessionManager: EhSessionManager
 ) {
+    private val logger = LoggerFactory.getLogger(GalleryService::class.java)
+    private val client get() = sessionManager.okHttpClient
+
+    /**
+     * Real E-Hentai search via the core list parser (EhEngine.getGalleryList).
+     * The history-based in-memory filter is kept only as a fallback for empty
+     * keywords, where there is nothing to search upstream for.
+     *
+     * `category` is the f_cats exclusion bitmask exactly as the frontend sends
+     * it (see web-frontend SearchView `categoryParam()`), so it is passed
+     * through untouched. `page` is 0-based, matching the EH page parameter.
+     */
     fun searchGallery(
         keyword: String?,
         category: Int?,
         page: Int,
         pageSize: Int
     ): GalleryListResponse {
-        val historyList = historyRepository.findAll()
-        val filtered = historyList.filter { info ->
-            (keyword.isNullOrBlank() || info.title?.contains(keyword, ignoreCase = true) == true
-                    || info.titleJpn?.contains(keyword, ignoreCase = true) == true)
-                    && (category == null || category == 0 || info.category == category)
+        if (keyword.isNullOrBlank()) {
+            return searchLocalHistory(keyword, category, page, pageSize)
         }
-        val total = filtered.size
-        val paged = filtered.drop(page * pageSize).take(pageSize)
+
+        return try {
+            val builder = UrlBuilder(EhUrl.getHost())
+            if (category != null && category != 0) {
+                builder.addQuery("f_cats", category)
+            }
+            builder.addQuery("f_search", URLEncoder.encode(keyword.trim(), "UTF-8"))
+            if (page > 0) {
+                builder.addQuery("page", page)
+            }
+
+            val result = EhEngine.getGalleryList(null, client, builder.build(), ListUrlBuilder.MODE_NORMAL)
+            val items = result.galleryInfoList.map { it.toDto() }
+            // EH lists 25 results per page; `result.pages` is the number of
+            // result pages when the pager was parseable.
+            val total = if (result.pages > 0) result.pages * 25 else items.size
+            GalleryListResponse(
+                success = true,
+                data = items,
+                total = total
+            )
+        } catch (e: Exception) {
+            logger.warn("E-Hentai search failed for keyword={}", keyword, e)
+            GalleryListResponse(success = false, data = emptyList(), total = 0)
+        }
+    }
+
+    /** Local history fallback (empty keyword): DB-paginated, newest first. */
+    private fun searchLocalHistory(keyword: String?, category: Int?, page: Int, pageSize: Int): GalleryListResponse {
+        val pageable = PageRequest.of(page.coerceAtLeast(0), pageSize.coerceAtLeast(1))
+        val result = when {
+            // Defensive: a non-blank keyword routed to the fallback is matched
+            // against local history (title/titleJpn LIKE) instead of a full scan.
+            !keyword.isNullOrBlank() ->
+                historyRepository.findByTitleContainingIgnoreCaseOrTitleJpnContainingIgnoreCaseOrderByTimeDesc(keyword.trim(), pageable)
+            category == null || category == 0 ->
+                historyRepository.findHistoryPaged(pageable)
+            else ->
+                historyRepository.findByCategoryOrderByTimeDesc(category, pageable)
+        }
         return GalleryListResponse(
             success = true,
-            data = paged.map { it.toDto() },
-            total = total
+            data = result.content.map { it.toDto() },
+            total = result.totalElements.toInt()
         )
     }
 
@@ -163,6 +217,27 @@ class GalleryService(
         rated = rated,
         simpleLanguage = simpleLanguage,
         simpleTags = simpleTags?.split(",")?.map { it.trim() } ?: emptyList(),
+        thumbWidth = thumbWidth,
+        thumbHeight = thumbHeight,
+        pages = pages,
+        favoriteSlot = favoriteSlot,
+        favoriteName = favoriteName
+    )
+
+    private fun GalleryInfo.toDto() = GalleryItemDto(
+        gid = gid,
+        token = token,
+        galleryUrl = EhUrl.getGalleryDetailUrl(gid, token),
+        title = title,
+        titleJpn = titleJpn,
+        thumb = thumb,
+        category = category,
+        posted = posted,
+        uploader = uploader,
+        rating = rating,
+        rated = rated,
+        simpleLanguage = simpleLanguage,
+        simpleTags = simpleTags?.map { it.trim() } ?: emptyList(),
         thumbWidth = thumbWidth,
         thumbHeight = thumbHeight,
         pages = pages,
