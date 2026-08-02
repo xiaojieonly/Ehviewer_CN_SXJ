@@ -108,6 +108,14 @@ public final class WebUiSyncModels {
         public boolean deleted;
     }
 
+    public static class SyncDownloadLabel {
+        public String label;
+        public long time;
+        public long lastModified;
+        public String deviceId = "";
+        public boolean deleted;
+    }
+
     /** syncEntityCollection — all entity arrays grouped by type. */
     public static class EntityCollection {
         public List<SyncFavorite> favorites = new ArrayList<>();
@@ -116,6 +124,7 @@ public final class WebUiSyncModels {
         public List<SyncBookmark> bookmarks = new ArrayList<>();
         public List<SyncFilter> filters = new ArrayList<>();
         public List<SyncQuickSearch> quickSearches = new ArrayList<>();
+        public List<SyncDownloadLabel> downloadLabels = new ArrayList<>();
     }
 
     /** POST /api/v1/sync/push body. */
