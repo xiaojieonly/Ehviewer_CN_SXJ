@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.xjs.ehviewer"
+        applicationId project.findProperty("applicationId") ?: "com.pf.anotherviewer"
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
