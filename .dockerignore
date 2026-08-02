@@ -7,7 +7,7 @@ build/
 .gitignore
 node_modules/
 web-frontend/dist/
-ehviewer-core/build/
-ehviewer-web/build/
+anotherviewer-core/build/
+anotherviewer-web/build/
 app/build/
 daogenerator/build/
