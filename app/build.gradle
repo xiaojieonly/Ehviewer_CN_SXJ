@@ -10,7 +10,7 @@ if (file('google-services.json').exists()) {
 
 android {
     namespace 'com.hippo.anotherviewer'
-    testNamespace 'com.hippo.anotherviewer.debug'
+    testNamespace 'com.hippo.anotherviewer'
     compileSdk 35
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '26.1.10909125'
@@ -60,14 +60,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.anotherviewer.fileprovider"'
             // Mock Gallery Site base URL (see mock-server/gallery.mjs). Empty = disabled.
-            buildConfigField 'String', 'MOCK_EH_BASE_URL', '""'
+            // Override at build time: -PmockEhBaseUrl=http://<host>:4100
+            buildConfigField 'String', 'MOCK_EH_BASE_URL', "\"${project.findProperty('mockEhBaseUrl') ?: ''}\""
         }
         debug {
             applicationIdSuffix ".debug"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.anotherviewer.debug.fileprovider"'
-            // Set to e.g. "http://10.0.2.2:8080/" (emulator) or "http://192.168.x.x:8080/" (device)
-            // to route all gallery.test / gallery.test / gallery.test traffic to the dummy server.
-            buildConfigField 'String', 'MOCK_EH_BASE_URL', '""'
+            // Set via -PmockEhBaseUrl=http://<host>:4100 to route all gallery.test traffic
+            // to the dummy gallery site server (see mock-server/gallery.mjs). Empty = disabled.
+            buildConfigField 'String', 'MOCK_EH_BASE_URL', "\"${project.findProperty('mockEhBaseUrl') ?: ''}\""
         }
     }
 
@@ -118,7 +119,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics:23.0.0'
 //    implementation 'com.google.firebase:firebase-analytics:21.5.1'
 
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.activity:activity:1.2.4"
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.biometric:biometric:1.2.0-alpha01'
@@ -139,7 +139,6 @@ dependencies {
     // https://mvnrepository.com/artifact/com.getkeepsafe.relinker/relinker
     implementation 'com.getkeepsafe.relinker:relinker:1.4.4'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
-    implementation 'com.github.ybq:Android-SpinKit:1.4.0'
     implementation 'com.alibaba:fastjson:1.2.83'
 
     implementation 'com.android.support:multidex:1.0.3'

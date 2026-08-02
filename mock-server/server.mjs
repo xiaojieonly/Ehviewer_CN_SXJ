@@ -20,7 +20,7 @@ import smbRoutes from './routes/smb.mjs';
 import healthRoutes from './routes/health.mjs';
 import proxyRoutes from './routes/proxy.mjs';
 import preferenceRoutes from './routes/preferences.mjs';
-import galleryRoutes from './gallery.mjs';
+import gallerySiteRoutes from './gallery.mjs';
 import { setupWebSocket } from './ws/progress.mjs';
 
 const app = express();
@@ -99,7 +99,7 @@ app.use('/api/v1', healthRoutes); // /health and /metrics
 
 // Gallery Site dummy server (mounted before the root info endpoint: its "/"
 // handler only claims requests carrying f_search)
-galleryRoutes(app);
+gallerySiteRoutes(app);
 
 // Root info endpoint
 app.get('/', (req, res) => {
