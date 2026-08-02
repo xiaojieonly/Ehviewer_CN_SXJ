@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.ParserConfig;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,7 @@ public final class WebUiApiClient {
                 if (client == null) {
                     client = new OkHttpClient.Builder()
                             .connectTimeout(10, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS)
+                            .readTimeout(120, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
                             .retryOnConnectionFailure(true)
                             .build();
@@ -237,6 +238,14 @@ public final class WebUiApiClient {
     }
 
     private static String execute(Request request) throws IOException {
+        try {
+            return executeInternal(request);
+        } catch (SocketTimeoutException e) {
+            throw new IOException("请求超时（服务器无响应）", e);
+        }
+    }
+
+    private static String executeInternal(Request request) throws IOException {
         try (Response response = client().newCall(request).execute()) {
             ResponseBody body = response.body();
             String text = body != null ? body.string() : "";
