@@ -61,6 +61,7 @@ export const routes: RouteRecordRaw[] = [
         { path: '', redirect: '/admin/download' },
         { path: 'download', name: 'AdminDownload', component: () => import('@/views/admin/AdminDownload.vue') },
         { path: 'server', name: 'AdminServer', component: () => import('@/views/admin/AdminServer.vue') },
+        { path: 'backup', name: 'AdminBackup', component: () => import('@/views/admin/AdminBackup.vue') },
         { path: 'devices', name: 'AdminDevices', component: () => import('@/views/admin/AdminDevices.vue') },
         { path: 'proxy', name: 'AdminProxy', component: () => import('@/views/admin/AdminProxy.vue') },
         { path: 'access', name: 'AdminAccess', component: () => import('@/views/admin/AdminAccess.vue') },

@@ -17,6 +17,7 @@ import AppIcon from '@/components/atoms/AppIcon.vue'
 const sections = [
   { path: '/admin/download', label: '下载', icon: 'download-dark' },
   { path: '/admin/server', label: '服务器', icon: 'settings-dark' },
+  { path: '/admin/backup', label: '备份', icon: 'download-box-dark' },
   { path: '/admin/devices', label: '设备', icon: 'mobile-hand-left' },
   { path: '/admin/proxy', label: '代理', icon: 'send-dark' },
   { path: '/admin/access', label: '访问', icon: 'sec-primary' },
