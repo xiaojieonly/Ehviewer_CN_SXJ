@@ -14,7 +14,7 @@ function generatePlaceholderSvg(galleryId, page, width, category) {
   <text x="${w / 2}" y="${h / 2 - 40}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.round(w / 12)}" fill="${color}" font-weight="bold">Gallery ${galleryId}</text>
   <text x="${w / 2}" y="${h / 2 + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.round(w / 8)}" fill="${color}">Page ${page}</text>
   <text x="${w / 2}" y="${h / 2 + 70}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.round(w / 20)}" fill="${color}" opacity="0.7">${w} x ${h} px</text>
-  <text x="${w / 2}" y="${h - 30}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.round(w / 25)}" fill="${color}" opacity="0.5">EhViewer Mock Server</text>
+  <text x="${w / 2}" y="${h - 30}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.round(w / 25)}" fill="${color}" opacity="0.5">AnotherViewer Mock Server</text>
 </svg>`;
 }
 

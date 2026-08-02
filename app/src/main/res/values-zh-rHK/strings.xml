@@ -22,7 +22,7 @@
     <string name="blacklist">黑名單</string>
     <string name="join_in_blacklist">加入黑名單</string>
     <string name="add_blacklist">新增封鎖用戶</string>
-    <string name="blacklist_tip">該封鎖系統會在 EHentai 網站評論系統的基礎上繼續封鎖留言。\n\n留言者封鎖項：排除該留言者上載的留言。這會增加畫廊的載入時間。</string>
+    <string name="blacklist_tip">該封鎖系統會在 Gallery 網站評論系統的基礎上繼續封鎖留言。\n\n留言者封鎖項：排除該留言者上載的留言。這會增加畫廊的載入時間。</string>
     <string name="blacklist_text">封鎖用戶</string>
     <string name="delete_blacklist">解封用戶“%s”？</string>
     <string name="blacklist_reason_text">封鎖原因</string>
@@ -37,7 +37,7 @@
     <string name="share_favorites_dialog_title">分享收藏</string>
     <string name="share_favorites_dialog_message">分享收藏 %s ？</string>
     <string name="add_favorites_dialog_message">新增收藏 %s ？</string>
-    <string name="settings_advanced_built_ex_hosts_title">内置exhentai hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">内置gallery hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">應用提供的主機到IP的映射\n可被自訂 hosts.txt 覆蓋</string>
     <string name="network_remind">檢測到開啟了 VPN，請注意您的網絡安全</string>
 
@@ -47,7 +47,7 @@
     <string name="app_name">AnotherViewer</string>
 
     <string name="site_e" translatable="false">e-hentai</string>
-    <string name="site_ex" translatable="false">exhentai</string>
+    <string name="site_ex" translatable="false">gallery</string>
 
     <!-- Theme -->
     <string name="theme_light">亮色主題</string>
@@ -173,7 +173,7 @@
     <string name="sign_in_failed_plain">這可能是因為網站更新或其他不明原因導致的錯誤。您可以在登入按鈕下方，選擇通過網頁登入；輸入 cookie 登入或略過登入。略過登入可能導致無法正常使用應用程式。如果你已經在 0.6.x 版登入過了，請優先嘗試選擇“通過 Cookie 登入”。</string>
     <string name="press_twice_exit">再按一次退出</string>
     <string name="content_layout_restore_tip">輕觸重試</string>
-    <string name="write_rationale">EhViewer 將申請裝置存儲空間訪問權限以便下載畫廊。您願意授權嗎？</string>
+    <string name="write_rationale">AnotherViewer 將申請裝置存儲空間訪問權限以便下載畫廊。您願意授權嗎？</string>
     <string name="you_rejected_me">好痛</string>
     <string name="analytics_explain">您同意讓開發者收集您的裝置資訊與使用情況嗎？這將對開發有很大幫助。&lt;br&gt;&lt;br&gt;數據統計服務由 Google Analytics for Firebase 提供，其隱私政策可在 &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt; 查看。&lt;br&gt;&lt;br&gt;若您同意參與數據統計，您的裝置資訊與應用程式使用情況將會被記錄，其包括但不限於：Android API 版本、裝置型號、語言所在地、本應用程式版本、會話時長、應用功能使用次數。開發者承諾以下資訊並不會被記錄：電話號碼、電郵地址、IMEI。&lt;br&gt;&lt;br&gt;在您同意參與數據統計之前，您的資訊不會被記錄。&lt;br&gt;&lt;br&gt;被記錄的數據會交由 Google Analytics for Firebase 分析，分析報告僅可被本應用程式開發者存取。</string>
     <string name="get_it">知道了</string>
@@ -184,7 +184,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">你想選擇哪個畫廊站點？</string>
-    <string name="select_scene_explain">e-hentai：對任何人開放\nexhentai：僅對登入用戶開放</string>
+    <string name="select_scene_explain">e-hentai：對任何人開放\ngallery：僅對登入用戶開放</string>
     <string name="no_select">請選擇一個站點</string>
 
     <!-- Update -->
@@ -194,13 +194,13 @@
     <string name="update_to">更新至</string>
     <string name="update_plain">版本：%1$s\n大小：%2$s\n\n%3$s</string>
     <string name="update_fail_info">點擊「是」跳轉至 Github 主頁</string>
-    <string name="update_to_date">您正在使用最新版本的 EhViewer。</string>
+    <string name="update_to_date">您正在使用最新版本的 AnotherViewer。</string>
     <string name="update_ignore">略過</string>
     <string name="no_updates_available">已是最新版本</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_exhentai">在 ExHentai 搜尋</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">在 E-Hentai 搜尋</string>
+    <string name="gallery_list_search_bar_hint_gallery">在 Gallery 搜尋</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">在 Gallery Site 搜尋</string>
     <string name="gallery_list_search_bar_open_gallery">開啟畫廊</string>
     <string name="gallery_list_empty_hit">甚麼都沒有找到</string>
     <string name="gallery_list_empty_hit_subscription">請至 設定->EH->我的標籤 訂閲標籤</string>
@@ -457,7 +457,7 @@
     <string name="download_search_gallery">搜尋畫廊</string>
     <string name="download_search_hint">輸入搜尋關鍵字</string>
     <string name="reset_reading_progress_message">重設所有已下載圖庫的閱讀進度？</string>
-    <string name="download_service_label">EhViewer 下載服務</string>
+    <string name="download_service_label">AnotherViewer 下載服務</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s，剩餘 %2$s</string>
     <string name="remember_download_label">記住下載標籤</string>
@@ -494,7 +494,7 @@
     <string name="add_filter">新增封鎖項目</string>
     <string name="show_definition">顯示定義</string>
     <string name="filter_text">封鎖項文字</string>
-    <string name="filter_tip">該封鎖系統會在 EHentai 網站封鎖系統的基礎上繼續封鎖畫廊。\n\n標題封鎖項：排除標題含有該關鍵字的畫廊。\n\n上傳者封鎖項：排除該上傳者上傳的畫廊。\n\n標籤封鎖項：排除包含該標籤的畫廊，這會使獲取畫廊列表花費更多時間。\n\n標籤組封鎖項：排除包含該標籤組的畫廊，這會使獲取畫廊列表花費更多時間。</string>
+    <string name="filter_tip">該封鎖系統會在 Gallery 網站封鎖系統的基礎上繼續封鎖畫廊。\n\n標題封鎖項：排除標題含有該關鍵字的畫廊。\n\n上傳者封鎖項：排除該上傳者上傳的畫廊。\n\n標籤封鎖項：排除包含該標籤的畫廊，這會使獲取畫廊列表花費更多時間。\n\n標籤組封鎖項：排除包含該標籤組的畫廊，這會使獲取畫廊列表花費更多時間。</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">設定圖形解鎖</string>
@@ -503,7 +503,7 @@
     <string name="enable_fingerprint">啟用指紋解鎖</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">EHentai 設定</string>
+    <string name="u_config">Gallery 設定</string>
     <string name="apply">應用</string>
     <string name="apply_tip">輕觸右上角的剔號來儲存設定</string>
 
@@ -551,10 +551,10 @@
     <string name="settings_eh_identity_cookies_signed">身份識別 Cookie 可用於登入該帳號。&lt;br&gt;&lt;b&gt;請注意數據安全&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">未登入</string>
     <string name="settings_eh_identity_cookies_copy">複製</string>
-    <string name="settings_u_config">EHentai 設定</string>
-    <string name="settings_u_config_summary">EHentai 網站上的設定</string>
+    <string name="settings_u_config">Gallery 設定</string>
+    <string name="settings_u_config_summary">Gallery 網站上的設定</string>
     <string name="settings_my_tags">我的標籤</string>
-    <string name="settings_my_tags_summary">EHentai 網站上的我的標籤</string>
+    <string name="settings_my_tags_summary">Gallery 網站上的我的標籤</string>
     <string name="settings_eh_theme">主題</string>
     <string name="settings_eh_theme_light">亮色</string>
     <string name="settings_eh_theme_dark">暗色</string>
@@ -587,13 +587,13 @@
     <string name="settings_eh_show_gallery_rating">顯示畫廊評分</string>
     <string name="settings_eh_show_eh_event">顯示 EH 活動</string>
     <string name="settings_eh_show_eh_limits">顯示 EH 配額</string>
-    <string name="settings_eh_show_jpn_title_summary">需同時在 EHentai 網站設定中啟用 Japanese Title</string>
+    <string name="settings_eh_show_jpn_title_summary">需同時在 Gallery 網站設定中啟用 Japanese Title</string>
     <string name="settings_eh_show_gallery_pages">顯示畫廊頁數</string>
     <string name="settings_eh_show_gallery_pages_summary">在畫廊列表中顯示頁數</string>
     <string name="settings_eh_show_tag_translations">顯示標籤翻譯</string>
     <string name="settings_eh_show_tag_translations_summary">以翻譯後的標籤代替原文標籤（需花費時間下載數據檔案）</string>
-    <string name="settings_eh_tag_translations_source">補充翻譯（由 EhTagTranslator 提供）</string>
-    <string name="settings_eh_tag_translations_source_url">https://github.com/Mapaler/EhTagTranslator/wiki</string>
+    <string name="settings_eh_tag_translations_source">補充翻譯（由 SiteTagTranslator 提供）</string>
+    <string name="settings_eh_tag_translations_source_url">https://github.com/Mapaler/SiteTagTranslator/wiki</string>
     <string name="settings_eh_filter">封鎖畫廊</string>
     <string name="settings_eh_filter_summary">根據標題、上傳者、標籤封鎖畫廊</string>
     <string name="settings_eh_cellular_network_warning">流動網絡警告</string>
@@ -638,7 +638,7 @@
     <string name="settings_download_download_location">下載路徑</string>
     <string name="settings_download_invalid_download_location">無效的下載路徑</string>
     <string name="settings_download_cant_get_download_location">無法獲取下載路徑</string>
-    <string name="settings_download_pick_dir_kk">在 KitKat 中您無法把數據寫入外置 SD 卡，除非您做了奇怪的事情。不過 &lt;SD card&gt;/Android/data/com.hippo.ehviewer 這個路徑比較特殊，是可以寫入的。</string>
+    <string name="settings_download_pick_dir_kk">在 KitKat 中您無法把數據寫入外置 SD 卡，除非您做了奇怪的事情。不過 &lt;SD card&gt;/Android/data/com.hippo.anotherviewer 這個路徑比較特殊，是可以寫入的。</string>
     <string name="settings_download_pick_dir_l">Lollipop 提供了新的寫入外置 SD 卡的 API。如果您想把下載路徑設定到外置 SD 卡上，輕觸“檔案”按鈕</string>
     <string name="settings_download_document">文件</string>
     <string name="settings_download_continue">繼續</string>
@@ -710,8 +710,8 @@
     <string name="settings_advanced_wifi_client_summary">從 Wi-Fi 熱點接收遷移數據</string>
 
     <string name="settings_about">關於</string>
-    <string name="settings_about_declaration" translatable="false">EhViewer</string>
-    <string name="settings_about_declaration_summary">EhViewer 與 E-Hentai.org 無任何聯繫</string>
+    <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
+    <string name="settings_about_declaration_summary">AnotherViewer 與 Gallery Site.org 無任何聯繫</string>
     <string name="settings_about_author">作者</string>
     <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
@@ -722,7 +722,7 @@
     <string name="settings_about_help">幫助</string>
     <string name="settings_about_issue_help">問題幫助</string>
     <string name="settings_about_license">授權</string>
-    <string name="settings_about_license_summary">EhViewer 的誕生全賴一眾開源專案</string>
+    <string name="settings_about_license_summary">AnotherViewer 的誕生全賴一眾開源專案</string>
     <string name="settings_about_donate">捐贈</string>
     <string name="settings_about_donate_message">你的捐贈不能為你帶來特權，但能幫助我繼續維護這個應用。</string>
     <string name="settings_about_donate_alipay">支付寶</string>
@@ -902,13 +902,13 @@
 
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">你確定要更換背景圖片嗎？</string>
-    <string name="change_background_message">更換背景圖片只會在此應用程式生效，無法與 E-hentai 或其他類似程式同步。</string>
+    <string name="change_background_message">更換背景圖片只會在此應用程式生效，無法與 Gallery Site 或其他類似程式同步。</string>
     <string name="change_avatar_title">你確定要更換你的頭像嗎？</string>
-    <string name="change_avatar_message">更換頭像只會在此應用程式生效，無法與 E-hentai 或其他類似程式同步。</string>
+    <string name="change_avatar_message">更換頭像只會在此應用程式生效，無法與 Gallery Site 或其他類似程式同步。</string>
     <string name="take_a_photograph">拍照</string>
     <string name="choose_from_the_album">在相簿中選擇</string>
-    <string name="request_camera_permission">EhViewer 需要取得相機權限才能拍照。你願意授權嗎？</string>
-    <string name="request_storage_permission">EhViewer 需要存取裝置相簿權限以取得圖片。您願意授權嗎？</string>
+    <string name="request_camera_permission">AnotherViewer 需要取得相機權限才能拍照。你願意授權嗎？</string>
+    <string name="request_storage_permission">AnotherViewer 需要存取裝置相簿權限以取得圖片。您願意授權嗎？</string>
 
     <!-- 下载通知   -->
     <string name="download_torrent_name">種子: %s</string>
@@ -1005,7 +1005,7 @@
     <string name="archiver_dialog_download_resample">下載重新採樣歸檔</string>
     <string name="archiver_dialog_size">預估大小：%s</string>
     <string name="dialog_archiver_title">歸檔下載器</string>
-    <string name="download_receiver_label">EhViewer 下載接收器</string>
+    <string name="download_receiver_label">AnotherViewer 下載接收器</string>
     <string name="decompressed_successfully">解壓縮成功！</string>
     <string name="decompression_failed">解壓縮失敗！</string>
     <string name="download_label_archiver">歸檔器</string>

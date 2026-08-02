@@ -32,7 +32,7 @@
     <string name="app_name">AnotherViewer</string>
 
     <string name="site_e" translatable="false">e-hentai</string>
-    <string name="site_ex" translatable="false">exhentai</string>
+    <string name="site_ex" translatable="false">gallery</string>
 
     <!-- Theme -->
     <string name="theme_light">Light Theme</string>
@@ -165,7 +165,7 @@
     <string name="sign_in_failed_plain">Perhaps it is a mistake due to website update or something wrong happened. You may try sign in via WebView or enter cookie or skip signing in under sign in button. But you may be a "Sad Panda" after skipping signing in. Try "Sign in via cookies" first if you had signed in on 0.6.x version.</string>
     <string name="press_twice_exit">Press twice to exit</string>
     <string name="content_layout_restore_tip">Tap to retry</string>
-    <string name="write_rationale">EhViewer will request WRITE_EXTERNAL_STORAGE permission for downloading gallery. Do you want to grant the permission?</string>
+    <string name="write_rationale">AnotherViewer will request WRITE_EXTERNAL_STORAGE permission for downloading gallery. Do you want to grant the permission?</string>
     <string name="you_rejected_me">It hurts</string>
     <string name="analytics_explain">Would you mind if the developer collected your device information and your usage? It will help the developer a lot.&lt;br&gt;&lt;br&gt;Data analysis service is provided by Google Analytics for Firebase. Its privacy policy can be found at &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt;.&lt;br&gt;&lt;br&gt;If you agree to join data analysis, your device information and your usage will be collected, including but not limited to Android API version, equipment model, language residence, the application version, conversion time, function times. The developer promise that these information will NOT be collected, including phone number, e-mail address, IMEI.&lt;br&gt;&lt;br&gt;Your information will not be collected until you agree to join data analysis.&lt;br&gt;&lt;br&gt;The collected information will be analyzed by Google Analytics for Firebase. The analysis report can only be viewed by the developer of this application.</string>
     <string name="get_it">Got it</string>
@@ -176,7 +176,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">Which gallery site do you want to visit?</string>
-    <string name="select_scene_explain">e-hentai: available for anyone\nexhentai: available for who has signed in</string>
+    <string name="select_scene_explain">e-hentai: available for anyone\ngallery: available for who has signed in</string>
     <string name="no_select">Please select one site</string>
 
     <!-- Update -->
@@ -184,12 +184,12 @@
     <string name="update_fail">Check for updates failed</string>
     <string name="update_plain">Version: %1$s\nSize: %2$s\n\n%3$s</string>
     <string name="update_fail_info">Click Yes to jump to Github homepage</string>
-    <string name="update_to_date">You are using the latest version of EhViewer.</string>
+    <string name="update_to_date">You are using the latest version of AnotherViewer.</string>
     <string name="update_ignore">Ignore</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">Search E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_gallery">Search Gallery</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Search Gallery Site</string>
     <string name="gallery_list_search_bar_open_gallery">Open the gallery</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">Subscribe to tags in Settings->EH->My tags</string>
@@ -402,7 +402,7 @@
     <string name="download_stop_all">Stop all</string>
     <string name="download_reset_reading_progress">Reset reading progress</string>
     <string name="reset_reading_progress_message">Reset the reading progress of all downloaded galleries?</string>
-    <string name="download_service_label">EhViewer Download Service</string>
+    <string name="download_service_label">AnotherViewer Download Service</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s left</string>
     <string name="remember_download_label">Remember download label</string>
@@ -437,7 +437,7 @@
     <string name="add_filter">Add blocker</string>
     <string name="show_definition">Show definition</string>
     <string name="filter_text">Blocker text</string>
-    <string name="filter_tip">This blocking system filters the result of EHentai website blocking system.\n\nTitle Blocker: exclude the gallery whose title contains the word.\n\nUploader Blocker: exclude the gallery which was uploaded by the uploader.\n\nTag Blocker: exclude the gallery which contain the tag, it takes more time to get gallery list.\n\nTag Namespace Blocker: exclude the gallery which contain the tag namespace, it takes more time to get gallery list.</string>
+    <string name="filter_tip">This blocking system filters the result of Gallery website blocking system.\n\nTitle Blocker: exclude the gallery whose title contains the word.\n\nUploader Blocker: exclude the gallery which was uploaded by the uploader.\n\nTag Blocker: exclude the gallery which contain the tag, it takes more time to get gallery list.\n\nTag Namespace Blocker: exclude the gallery which contain the tag namespace, it takes more time to get gallery list.</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">Set pattern protection</string>
@@ -446,7 +446,7 @@
     <string name="enable_fingerprint">Also allow fingerprint unlock</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">EHentai settings</string>
+    <string name="u_config">Gallery settings</string>
     <string name="apply">Apply</string>
     <string name="apply_tip">Tap the check mark to save the settings</string>
 
@@ -493,10 +493,10 @@
     <string name="settings_eh_identity_cookies_signed">Identity cookies can be used to sign in to this account.&lt;br&gt;&lt;b&gt;KEEP IT SAFE&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">Not signed in.</string>
     <string name="settings_eh_identity_cookies_copy">Copy</string>
-    <string name="settings_u_config">EHentai settings</string>
-    <string name="settings_u_config_summary">Settings on EHentai website</string>
+    <string name="settings_u_config">Gallery settings</string>
+    <string name="settings_u_config_summary">Settings on Gallery website</string>
     <string name="settings_my_tags">My tags</string>
-    <string name="settings_my_tags_summary">My tags on EHentai website</string>
+    <string name="settings_my_tags_summary">My tags on Gallery website</string>
     <string name="settings_eh_theme">Theme</string>
     <string name="settings_eh_theme_light">Light</string>
     <string name="settings_eh_theme_dark">Dark</string>
@@ -525,7 +525,7 @@
     <string name="settings_eh_excluded_tag_namespaces">Excluded tag namespaces</string>
     <string name="settings_eh_excluded_tag_namespaces_summary">Exclude certain namespaces from a default tag search</string>
     <string name="settings_eh_show_jpn_title">Show Japanese title</string>
-    <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on EHentai website</string>
+    <string name="settings_eh_show_jpn_title_summary">Require enabling Japanese Title in Settings on Gallery website</string>
     <string name="settings_eh_show_gallery_pages">Show gallery pages</string>
     <string name="settings_eh_show_gallery_pages_summary">Display the number of pages in the gallery list</string>
     <string name="settings_eh_show_tag_translations">Show tag translations</string>
@@ -574,7 +574,7 @@
     <string name="settings_download_download_location">Download location</string>
     <string name="settings_download_invalid_download_location">Invalid download location</string>
     <string name="settings_download_cant_get_download_location">Can\'t get download location</string>
-    <string name="settings_download_pick_dir_kk">On Android 4.4+, apps can\'t write any data on your external SD card, unless you root the system and apply a patch. But &lt;SD card&gt;/Android/data/com.hippo.ehviewer is an exception. It is writable for this app.</string>
+    <string name="settings_download_pick_dir_kk">On Android 4.4+, apps can\'t write any data on your external SD card, unless you root the system and apply a patch. But &lt;SD card&gt;/Android/data/com.hippo.anotherviewer is an exception. It is writable for this app.</string>
     <string name="settings_download_pick_dir_l">Android 5.0+ provides new API to write on external SD card. Tap the \"DOCUMENT\" if you want to set SD card as download location.</string>
     <string name="settings_download_document">Document</string>
     <string name="settings_download_smb">SMB</string>
@@ -686,8 +686,8 @@
     <string name="settings_advanced_import_data_successfully">Data imported successfully</string>
 
     <string name="settings_about">About</string>
-    <string name="settings_about_declaration" translatable="false">EhViewer</string>
-    <string name="settings_about_declaration_summary">EhViewer is not affiliated with E-Hentai.org in any way</string>
+    <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
+    <string name="settings_about_declaration_summary">AnotherViewer is not affiliated with Gallery Site.org in any way</string>
     <string name="settings_about_author">Author</string>
     <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
     <string name="settings_about_telegram">Telegram</string>
@@ -697,7 +697,7 @@
     <string name="settings_about_changelog">Changelog</string>
     <string name="settings_about_help">Help</string>
     <string name="settings_about_license">License</string>
-    <string name="settings_about_license_summary">EhViewer is made possible thanks to many open source projects</string>
+    <string name="settings_about_license_summary">AnotherViewer is made possible thanks to many open source projects</string>
     <string name="settings_about_donate">Donate</string>
     <string name="settings_about_donate_message">Your donation can not bring you any privileges. But it helps me maintain this app.</string>
     <string name="settings_about_donate_alipay">Alipay</string>
@@ -870,7 +870,7 @@
     <string name="archiver_dialog_download_resample">Download Resample Archive</string>
     <string name="archiver_dialog_size">Estimated Size:  %s</string>
     <string name="dialog_archiver_title">Archiver Downloader</string>
-    <string name="download_receiver_label">EhViewer Download Receiver</string>
+    <string name="download_receiver_label">AnotherViewer Download Receiver</string>
     <string name="decompressed_successfully">Decompressed successfully!</string>
     <string name="decompression_failed">Decompression failed!</string>
     <string name="download_label_archiver">Archiver</string>

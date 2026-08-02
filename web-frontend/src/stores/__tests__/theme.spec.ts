@@ -20,13 +20,13 @@ describe('theme store', () => {
     })
 
     it('restores theme from localStorage', () => {
-      localStorage.setItem('ehviewer-theme', 'black')
+      localStorage.setItem('anotherviewer-theme', 'black')
       const store = useThemeStore()
       expect(store.currentTheme).toBe('black')
     })
 
     it('ignores invalid localStorage values', () => {
-      localStorage.setItem('ehviewer-theme', 'neon')
+      localStorage.setItem('anotherviewer-theme', 'neon')
       const store = useThemeStore()
       expect(store.currentTheme).toBe('light')
     })
@@ -48,7 +48,7 @@ describe('theme store', () => {
     it('persists to localStorage', () => {
       const store = useThemeStore()
       store.setTheme('dark')
-      expect(localStorage.getItem('ehviewer-theme')).toBe('dark')
+      expect(localStorage.getItem('anotherviewer-theme')).toBe('dark')
     })
 
     it('updates meta theme-color', () => {
@@ -96,7 +96,7 @@ describe('theme store', () => {
     })
 
     it('reflects stored theme on creation', () => {
-      localStorage.setItem('ehviewer-theme', 'dark')
+      localStorage.setItem('anotherviewer-theme', 'dark')
       useThemeStore()
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
     })

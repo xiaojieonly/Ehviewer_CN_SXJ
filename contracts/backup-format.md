@@ -1,15 +1,15 @@
 # 备份格式契约（backup-format）
 
-> 依据 ADR-0002（备份分卷 = 独立 7z 分片序列）。本文件描述 `BackupService` 产物的固定格式，实现见 `ehviewer-web/.../service/BackupService.kt`。
+> 依据 ADR-0002（备份分卷 = 独立 7z 分片序列）。本文件描述 `BackupService` 产物的固定格式，实现见 `anotherviewer-web/.../service/BackupService.kt`。
 
 ## 产物结构
 
-备份落盘于 `<data-dir>/backups/`（`data-dir` 见 `--data-dir`/`EHVIEWER_DATA_DIR`，默认 `./data`）：
+备份落盘于 `<data-dir>/backups/`（`data-dir` 见 `--data-dir`/`ANOTHERVIEWER_DATA_DIR`，默认 `./data`）：
 
 ```
 backups/
 ├── manifest.json       # 清单（见下）
-├── slice-01.7z         # ehviewer.db（SQLite 一致性快照）+ config.json（ServerConfig KV）
+├── slice-01.7z         # anotherviewer.db（SQLite 一致性快照）+ config.json（ServerConfig KV）
 ├── slice-02.7z         # security.key（dataDir 下缺失则跳过）
 └── slice-NN.7z         # downloads/<子目录>、cache/<子目录>（仅 includeDownloads=true）
 ```
@@ -51,7 +51,7 @@ db 快照用 `VACUUM INTO '<绝对路径>'` 生成（sqlite-jdbc；目标强制�
 1. 解包上传的 zip → 校验 `manifest.json` 的 `formatVersion == 1` → 逐片 SHA-256 核对（不符抛异常拒绝，原数据不动）
 2. 解压分片到临时目录
 3. 替换（失败回滚已改名文件）：
-   - `ehviewer.db` → 旧文件改名 `.bak`（已存在追加时间戳）→ 写入新快照
+   - `anotherviewer.db` → 旧文件改名 `.bak`（已存在追加时间戳）→ 写入新快照
    - `security.key` → 同样 `.bak` + 替换（缺失则跳过）
    - `config.json` → **回写 `server_config` 表**（全量 upsert，幂等；不生成文件，db 是配置的唯一权威）
    - `downloads/`、`cache/`（includeDownloads 备份）→ 覆盖合并

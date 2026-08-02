@@ -52,7 +52,7 @@
                 android:layout_gravity="right|center_vertical"
                 android:padding="12dp"/>
 
-            <com.hippo.ehviewer.widget.SearchEditText
+            <com.hippo.anotherviewer.widget.SearchEditText
                 android:id="@+id/search_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:sqlite:${ANOTHERVIEWER_DATA_DIR:./data}/anotherviewer.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+anotherviewer:
+  data-dir: ${ANOTHERVIEWER_DATA_DIR:./data}
+  download:
+    path: ${anotherviewer.data-dir}/downloads
+    cache-path: ${anotherviewer.data-dir}/cache
+    cache-size-mb: 10240
+    worker-count: 3
+    download-delay: 0
+    download-timeout: 60000
+    max-concurrent-galleries: 3
+    max-concurrent-images: 3
+  reader:
+    prefetch-pages: 3
+  processing:
+    concurrency: 1
+    task-ttl-ms: 600000
+    max-tasks: 100
+  smb:
+    enabled: false
+  security:
+    session-timeout: 86400
+    encryption-key-path: ${anotherviewer.data-dir}/security.key

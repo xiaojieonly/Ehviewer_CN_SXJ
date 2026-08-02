@@ -18,7 +18,7 @@ function formatUptime(ms) {
 
 // GET /api/v1/health
 // Shape mirrors HealthController: top-level status/version/uptime/uptimeMs/
-// timestamp + components {database, diskCache, ehentaiApi} with Map details.
+// timestamp + components {database, diskCache, galleryApi} with Map details.
 // Defaults to 200; pass ?simulate=down to exercise the real 503 path.
 router.get('/health', (req, res) => {
   const uptimeMs = Date.now() - startTime;
@@ -32,10 +32,10 @@ router.get('/health', (req, res) => {
       details: {
         freeSpace: '495.0 GB',
         freeSpaceBytes: '531502202880',
-        path: '/tmp/ehviewer-cache',
+        path: '/tmp/anotherviewer-cache',
       },
     },
-    ehentaiApi: {
+    galleryApi: {
       status: 'UP',
       details: {
         lastCheck: new Date(Date.now() - 60000).toISOString(),
@@ -81,16 +81,16 @@ router.get('/metrics', (req, res) => {
     diskCacheMaxBytes: 5368709120,    // 5 GB
     totalGalleriesServed: 15234,
     metrics: {
-      'ehviewer.cache.memory.entries': { type: 'gauge', value: 256 },
-      'ehviewer.cache.memory.size.bytes': { type: 'gauge', value: 0 },
-      'ehviewer.cache.disk.size.bytes': { type: 'gauge', value: 1073741824 },
-      'ehviewer.cache.disk.entries': { type: 'gauge', value: 2048 },
-      'ehviewer.cache.hit.ratio': { type: 'gauge', value: 0.817 },
-      'ehviewer.download.active': { type: 'gauge', value: 2 },
-      'ehviewer.download.completed.total': { type: 'counter', value: 1240 },
-      'ehviewer.process.queue.size': { type: 'gauge', value: 1 },
-      'ehviewer.process.completed.total': { type: 'counter', value: 0 },
-      'ehviewer.ws.connections.active': { type: 'gauge', value: 0 },
+      'anotherviewer.cache.memory.entries': { type: 'gauge', value: 256 },
+      'anotherviewer.cache.memory.size.bytes': { type: 'gauge', value: 0 },
+      'anotherviewer.cache.disk.size.bytes': { type: 'gauge', value: 1073741824 },
+      'anotherviewer.cache.disk.entries': { type: 'gauge', value: 2048 },
+      'anotherviewer.cache.hit.ratio': { type: 'gauge', value: 0.817 },
+      'anotherviewer.download.active': { type: 'gauge', value: 2 },
+      'anotherviewer.download.completed.total': { type: 'counter', value: 1240 },
+      'anotherviewer.process.queue.size': { type: 'gauge', value: 1 },
+      'anotherviewer.process.completed.total': { type: 'counter', value: 0 },
+      'anotherviewer.ws.connections.active': { type: 'gauge', value: 0 },
     },
   });
 });

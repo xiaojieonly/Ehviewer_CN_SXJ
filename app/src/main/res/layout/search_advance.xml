@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<com.hippo.ehviewer.widget.AdvanceSearchTable
+<com.hippo.anotherviewer.widget.AdvanceSearchTable
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/search_advance_search_table"
     android:layout_width="match_parent"

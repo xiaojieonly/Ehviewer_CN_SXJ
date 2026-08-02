@@ -1,0 +1,311 @@
+package com.hippo.anotherviewer.web.api
+
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
+import com.hippo.anotherviewer.web.dto.AuthResponse
+import com.hippo.anotherviewer.web.dto.ChangePasswordRequest
+import com.hippo.anotherviewer.web.dto.LoginRequest
+import com.hippo.anotherviewer.web.entity.AuthConfigEntity
+import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
+import com.hippo.anotherviewer.web.entity.TokenEntity
+import com.hippo.anotherviewer.web.repository.AuthConfigRepository
+import com.hippo.anotherviewer.web.repository.SyncDeviceRepository
+import com.hippo.anotherviewer.web.repository.TokenRepository
+import com.hippo.anotherviewer.web.service.SiteAuthService
+import com.hippo.anotherviewer.web.service.SiteSessionManager
+import com.hippo.anotherviewer.web.service.EncryptionService
+import com.hippo.anotherviewer.web.service.ServerConfigService
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.mock
+import org.springframework.http.MediaType
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.RequestPostProcessor
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Contract tests for POST /api/v1/auth/change-password:
+ *
+ * HTTP layer (MockMvc + real bean validation) asserts the exact response
+ * shapes; service layer (in-memory repo fakes, real bcrypt) asserts the
+ * re-hash semantics: old password stops working, new one takes over, and
+ * existing sessions stay valid.
+ */
+class AuthControllerTest {
+
+    private val encryption = EncryptionService()
+
+    // ---------------------------------------------------------------------
+    // HTTP layer
+    // ---------------------------------------------------------------------
+
+    private fun principal(name: String): RequestPostProcessor = RequestPostProcessor { request ->
+        request.userPrincipal = UsernamePasswordAuthenticationToken(
+            name, null, listOf(SimpleGrantedAuthority("ROLE_USER"))
+        )
+        request
+    }
+
+    /**
+     * Stubs the service with real argument values: Kotlin's call-site null
+     * assertions reject Mockito's null-returning `any(Class)` matcher for
+     * non-null Kotlin parameters (NPE "any(...) must not be null").
+     */
+    private fun mockMvc(serviceResult: AuthResponse): MockMvc {
+        val authService = mock(SiteAuthService::class.java)
+        for (username in listOf("alice", "default")) {
+            for (oldPassword in listOf("old-pass", "wrong")) {
+                `when`(authService.changePassword(username, ChangePasswordRequest(oldPassword, "new-pass")))
+                    .thenReturn(serviceResult)
+            }
+        }
+        return MockMvcBuilders.standaloneSetup(AuthController(authService)).build()
+    }
+
+    @Test
+    fun `successful change returns 200 with the exact contract body`() {
+        val mvc = mockMvc(AuthResponse(true, "Password changed"))
+        mvc.perform(
+            post("/api/v1/auth/change-password")
+                .with(principal("alice"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"oldPassword":"old-pass","newPassword":"new-pass"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Password changed"))
+    }
+
+    @Test
+    fun `service failure returns 400 with the exact contract body`() {
+        val mvc = mockMvc(AuthResponse(false, "Old password is incorrect"))
+        mvc.perform(
+            post("/api/v1/auth/change-password")
+                .with(principal("alice"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"oldPassword":"wrong","newPassword":"new-pass"}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Old password is incorrect"))
+    }
+
+    @Test
+    fun `auth disabled returns 400`() {
+        val mvc = mockMvc(AuthResponse(false, "Authentication is disabled on this server"))
+        mvc.perform(
+            post("/api/v1/auth/change-password")
+                .with(principal("default"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"oldPassword":"old-pass","newPassword":"new-pass"}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Authentication is disabled on this server"))
+    }
+
+    @Test
+    fun `new password shorter than 6 characters is rejected by validation`() {
+        val mvc = mockMvc(AuthResponse(true, "Password changed"))
+        mvc.perform(
+            post("/api/v1/auth/change-password")
+                .with(principal("alice"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"oldPassword":"old-pass","newPassword":"short"}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("New password must be at least 6 characters"))
+    }
+
+    @Test
+    fun `new password longer than 72 characters is rejected by validation`() {
+        val mvc = mockMvc(AuthResponse(true, "Password changed"))
+        mvc.perform(
+            post("/api/v1/auth/change-password")
+                .with(principal("alice"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"oldPassword":"old-pass","newPassword":"${"a".repeat(73)}"}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("New password must be at most 72 characters"))
+    }
+
+    @Test
+    fun `missing fields are rejected by validation`() {
+        val mvc = mockMvc(AuthResponse(true, "Password changed"))
+        mvc.perform(
+            post("/api/v1/auth/change-password")
+                .with(principal("alice"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"newPassword":"new-pass"}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Old password and new password are required"))
+    }
+
+    // ---------------------------------------------------------------------
+    // Service layer
+    // ---------------------------------------------------------------------
+
+    /** In-memory fake that persists accounts across calls. */
+    private fun mockAuthRepo(vararg users: AuthConfigEntity): AuthConfigRepository {
+        val repo = mock(AuthConfigRepository::class.java)
+        val store = ConcurrentHashMap<String, AuthConfigEntity>()
+        users.forEach { store[it.username] = it }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store[inv.getArgument(0)] }
+        `when`(repo.existsByUsername(anyString())).thenAnswer { inv -> store.containsKey(inv.getArgument(0)) }
+        `when`(repo.save(any(AuthConfigEntity::class.java))).thenAnswer { inv ->
+            val entity = inv.getArgument<AuthConfigEntity>(0)
+            store[entity.username] = entity
+            entity
+        }
+        `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        return repo
+    }
+
+    /** In-memory fake token store, keyed by token hash. */
+    private fun mockTokenRepo(): TokenRepository {
+        val repo = mock(TokenRepository::class.java)
+        val store = ConcurrentHashMap<String, TokenEntity>()
+        `when`(repo.save(any(TokenEntity::class.java))).thenAnswer { inv ->
+            val entity = inv.getArgument<TokenEntity>(0)
+            store[entity.tokenHash] = entity
+            entity
+        }
+        `when`(repo.findByTokenHash(anyString())).thenAnswer { inv -> store[inv.getArgument(0)] }
+        `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        doAnswer { inv -> store.remove(inv.getArgument<String>(0)) }.`when`(repo).deleteByTokenHash(anyString())
+        doAnswer { inv -> store.values.remove(inv.getArgument(0)) }.`when`(repo).delete(any(TokenEntity::class.java))
+        return repo
+    }
+
+    private fun newAuthService(
+        authRepo: AuthConfigRepository = mockAuthRepo(),
+        requireAuth: Boolean = false,
+        tokenRepo: TokenRepository = mockTokenRepo(),
+    ): SiteAuthService {
+        val sessionManager = mock(SiteSessionManager::class.java)
+        `when`(sessionManager.getStatus()).thenReturn(
+            SiteSessionManager.SessionStatus(SiteSessionManager.SessionState.SIGNED_OUT, false, false, 0L)
+        )
+        val serverConfig = mock(ServerConfigService::class.java)
+        `when`(serverConfig.getBoolean(anyString(), anyBoolean())).thenAnswer { inv ->
+            inv.getArgument<String>(0) == ServerConfigService.KEY_REQUIRE_AUTH && requireAuth
+        }
+        `when`(serverConfig.getLong(anyString(), anyLong())).thenReturn(86400L)
+        return SiteAuthService(
+            authRepo,
+            encryption,
+            sessionManager,
+            serverConfig,
+            tokenRepo,
+            mock(SyncDeviceRepository::class.java),
+            SiteCoreConfigProperties(),
+        )
+    }
+
+    private fun account(username: String, password: String): AuthConfigEntity =
+        AuthConfigEntity().apply {
+            this.username = username
+            passwordHash = encryption.hashPassword(password)
+        }
+
+    @Test
+    fun `successful change rehashes so old password stops working and new one works`() {
+        val authRepo = mockAuthRepo(account("alice", "old-pass"))
+        val authService = newAuthService(authRepo, requireAuth = true)
+
+        val result = authService.changePassword("alice", ChangePasswordRequest("old-pass", "new-pass"))
+
+        assertTrue(result.success)
+        assertEquals("Password changed", result.message)
+        val storedHash = authRepo.findByUsername("alice")!!.passwordHash
+        assertFalse(encryption.verifyPassword("old-pass", storedHash))
+        assertTrue(encryption.verifyPassword("new-pass", storedHash))
+        assertTrue(authService.login(LoginRequest("alice", "new-pass")).success)
+        assertFalse(authService.login(LoginRequest("alice", "old-pass")).success)
+    }
+
+    @Test
+    fun `successful change keeps existing sessions valid`() {
+        val authRepo = mockAuthRepo(account("alice", "old-pass"))
+        val authService = newAuthService(authRepo, requireAuth = true)
+
+        val login = authService.login(LoginRequest("alice", "old-pass"))
+        val token = login.token!!
+        authService.changePassword("alice", ChangePasswordRequest("old-pass", "new-pass"))
+
+        assertEquals("alice", authService.validateToken(token))
+    }
+
+    @Test
+    fun `wrong old password is rejected`() {
+        val authService = newAuthService(mockAuthRepo(account("alice", "old-pass")), requireAuth = true)
+
+        val result = authService.changePassword("alice", ChangePasswordRequest("wrong-pass", "new-pass"))
+
+        assertFalse(result.success)
+        assertEquals("Old password is incorrect", result.message)
+    }
+
+    @Test
+    fun `short new password is rejected`() {
+        val authService = newAuthService(mockAuthRepo(account("alice", "old-pass")), requireAuth = true)
+
+        val result = authService.changePassword("alice", ChangePasswordRequest("old-pass", "five!"))
+        assertFalse(result.success)
+        assertEquals("New password must be at least 6 characters", result.message)
+    }
+
+    @Test
+    fun `overlong new password is rejected`() {
+        val authService = newAuthService(mockAuthRepo(account("alice", "old-pass")), requireAuth = true)
+
+        val result = authService.changePassword("alice", ChangePasswordRequest("old-pass", "a".repeat(73)))
+        assertFalse(result.success)
+        assertEquals("New password must be at most 72 characters", result.message)
+    }
+
+    @Test
+    fun `blank fields are rejected`() {
+        val authService = newAuthService(mockAuthRepo(account("alice", "old-pass")), requireAuth = true)
+
+        val result = authService.changePassword("alice", ChangePasswordRequest(" ", " "))
+        assertFalse(result.success)
+        assertEquals("Old password and new password are required", result.message)
+    }
+
+    @Test
+    fun `unknown account is rejected`() {
+        val authService = newAuthService(mockAuthRepo(), requireAuth = true)
+
+        val result = authService.changePassword("ghost", ChangePasswordRequest("old-pass", "new-pass"))
+        assertFalse(result.success)
+        assertEquals("Account not found", result.message)
+    }
+
+    @Test
+    fun `change is refused when auth is disabled`() {
+        val authService = newAuthService(mockAuthRepo(account("alice", "old-pass")), requireAuth = false)
+
+        val result = authService.changePassword("default", ChangePasswordRequest("old-pass", "new-pass"))
+        assertFalse(result.success)
+        assertEquals("Authentication is disabled on this server", result.message)
+    }
+}

@@ -21,7 +21,7 @@
     <string name="blacklist">Lista negra</string>
     <string name="join_in_blacklist">Añadir a lista negra</string>
     <string name="add_blacklist">Añadir usuario bloqueado</string>
-    <string name="blacklist_tip">Este sistema de bloqueo continuará bloqueando comentarios además del sistema de bloqueo de comentarios del sitio web EHentai.\n\nBloqueo de comentarista: Excluye los comentarios publicados por ese comentarista. Esto hará que cargar la lista de galerías tome más tiempo.</string>
+    <string name="blacklist_tip">Este sistema de bloqueo continuará bloqueando comentarios además del sistema de bloqueo de comentarios del sitio web Gallery.\n\nBloqueo de comentarista: Excluye los comentarios publicados por ese comentarista. Esto hará que cargar la lista de galerías tome más tiempo.</string>
     <string name="blacklist_text">Bloquear usuario</string>
     <string name="delete_blacklist">¿Desbloquear usuario \"%s\"?</string>
     <string name="blacklist_reason_text">Razón del bloqueo</string>
@@ -36,7 +36,7 @@
     <string name="share_favorites_dialog_title">Compartir favoritos</string>
     <string name="share_favorites_dialog_message">¿Compartir favoritos %s?</string>
     <string name="add_favorites_dialog_message">¿Añadir favoritos %s?</string>
-    <string name="settings_advanced_built_ex_hosts_title">hosts.txt integrado de exhentai</string>
+    <string name="settings_advanced_built_ex_hosts_title">hosts.txt integrado de gallery</string>
     <string name="settings_advanced_built_ex_hosts_summary">Mapeo de host a IP proporcionado por la aplicación\nPuede ser sobrescrito por hosts.txt personalizado</string>
     <string name="network_remind">Se ha detectado que el VPN está habilitado, por favor preste atención a la seguridad de la red</string>
     <string name="no_blicklist">Aquí está la lista negra</string>
@@ -132,7 +132,7 @@
     <string name="sign_in_failed_plain">Tal ves sea debido a un error de actualización de el sitio web o algo mal sucedió. Puedes intentar iniciar sesión vía WebView, ingresar una cookie o saltar el inicio de sesión presionando el botón de abajo.\nEs posible que te salga un \"Panda Triste\" después de saltar el inicio de sesión. Intente \"Ingresar vía cookies\" primero si ha iniciado sesión en la versión 0.6.x de HeViewer.</string>
     <string name="press_twice_exit">Presione una vez más para salir</string>
     <string name="content_layout_restore_tip">Pulsar para reintentar</string>
-    <string name="write_rationale">EhViewer solicitará el permiso WRITE_EXTERNAL_STORAGE para descargar galerías. ¿Desea conceder el permiso?</string>
+    <string name="write_rationale">AnotherViewer solicitará el permiso WRITE_EXTERNAL_STORAGE para descargar galerías. ¿Desea conceder el permiso?</string>
     <string name="you_rejected_me">Duele</string>
     <string name="analytics_explain">¿Le importaría si el desarrollador recopila información de su dispositivo y su uso? Ayudará mucho al desarrollador.&lt;br&gt;&lt;br&gt;El servicio de análisis de datos es proporcionado por Google Analytics for Firebase. Su política de privacidad se puede encontrar en &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt;.&lt;br&gt;&lt;br&gt;Si acepta unirse al análisis de datos, se recopilará información de su dispositivo y su uso, incluida pero no limitada a la versión de la API de Android, modelo del equipo, residencia de idioma, versión de la aplicación, tiempo de conversión, tiempos de función. El desarrollador promete que esta información NO se recopilará, incluido el número de teléfono, dirección de correo electrónico, IMEI.&lt;br&gt;&lt;br&gt;Su información no se recopilará hasta que acepte unirse al análisis de datos.&lt;br&gt;&lt;br&gt;La información recopilada será analizada por Google Analytics for Firebase. El informe de análisis solo puede ser visto por el desarrollador de esta aplicación.</string>
     <string name="get_it">Entendido</string>
@@ -143,7 +143,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">¿Qué galería deseas seleccionar?</string>
-    <string name="select_scene_explain">e-hentai: Disponible para cualquiera .\nexhentai: Solo para usuarios que han iniciado sesión</string>
+    <string name="select_scene_explain">e-hentai: Disponible para cualquiera .\ngallery: Solo para usuarios que han iniciado sesión</string>
     <string name="no_select">Por favor seleccione un sitio</string>
 
     <!-- Update -->
@@ -154,12 +154,12 @@
     <string name="no_updates_available">Ya es la última versión</string>
     <string name="update_plain">Versión: %1$s\nTamaño: %2$s\n\n%3$s</string>
     <string name="update_fail_info">Haga clic en Sí para ir a la página de inicio de Github</string>
-    <string name="update_to_date">Está usando la última versión de EhViewer.</string>
+    <string name="update_to_date">Está usando la última versión de AnotherViewer.</string>
     <string name="update_ignore">Ignorar</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_exhentai">Buscar ExHentai</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">Buscar E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_gallery">Buscar Gallery</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Buscar Gallery Site</string>
     <string name="gallery_list_search_bar_open_gallery">Abrir la galería</string>
     <string name="gallery_list_empty_hit">El mundo es grande y el panda está sentado solo</string>
     <string name="gallery_list_empty_hit_subscription">Suscríbase a etiquetas en Configuración->EH->Mis etiquetas</string>
@@ -407,7 +407,7 @@
     <string name="download_stop_all">Detener todo</string>
     <string name="download_search_gallery">Buscar galería</string>
     <string name="download_search_hint">Ingrese clave de búsqueda</string>
-    <string name="download_service_label">Servicio de descarga EhViewer</string>
+    <string name="download_service_label">Servicio de descarga AnotherViewer</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s restantes</string>
     <string name="remember_download_label">Recordar etiqueta de descarga</string>
@@ -444,7 +444,7 @@
     <string name="add_filter">Añadir bloqueador</string>
     <string name="show_definition">Mostrar definición</string>
     <string name="filter_text">Texto del bloqueador</string>
-    <string name="filter_tip">Este sistema de bloqueo filtra el resultado del sistema de bloqueo del sitio web EHentai.\n\nBloqueador de título: excluye la galería cuyo título contiene la palabra.\n\nBloqueador de uploader: excluye la galería que fue subida por el uploader.\n\nBloqueador de etiqueta: excluye la galería que contiene la etiqueta, toma más tiempo obtener la lista de galerías.\n\nBloqueador de espacio de nombres de etiqueta: excluye la galería que contiene el espacio de nombres de etiqueta, toma más tiempo obtener la lista de galerías.</string>
+    <string name="filter_tip">Este sistema de bloqueo filtra el resultado del sistema de bloqueo del sitio web Gallery.\n\nBloqueador de título: excluye la galería cuyo título contiene la palabra.\n\nBloqueador de uploader: excluye la galería que fue subida por el uploader.\n\nBloqueador de etiqueta: excluye la galería que contiene la etiqueta, toma más tiempo obtener la lista de galerías.\n\nBloqueador de espacio de nombres de etiqueta: excluye la galería que contiene el espacio de nombres de etiqueta, toma más tiempo obtener la lista de galerías.</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">Establecer protección por patrón</string>
@@ -474,10 +474,10 @@
     <string name="settings_eh_identity_cookies_signed">Las cookies de identidad se pueden usar para iniciar sesión en esta cuenta.&lt;br&gt;&lt;b&gt;MANTÉNGALAS SEGURAS&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">No ha iniciado sesión.</string>
     <string name="settings_eh_identity_cookies_copy">Copiar</string>
-    <string name="settings_u_config">Configuración de EHentai</string>
-    <string name="settings_u_config_summary">Configurar en la página de EHentai</string>
+    <string name="settings_u_config">Configuración de Gallery</string>
+    <string name="settings_u_config_summary">Configurar en la página de Gallery</string>
     <string name="settings_my_tags">Mis etiquetas</string>
-    <string name="settings_my_tags_summary">Ver página de etiquetas en EHentai</string>
+    <string name="settings_my_tags_summary">Ver página de etiquetas en Gallery</string>
     <string name="settings_eh_launch_page">Página al iniciar aplicación</string>
     <string name="settings_eh_gallery_site">Seleccionar galería</string>
     <string name="settings_eh_list_mode">Modo lista</string>
@@ -505,7 +505,7 @@
     <string name="settings_eh_show_gallery_rating">Mostrar valoración de galería</string>
     <string name="settings_eh_show_eh_event">Mostrar eventos EH</string>
     <string name="settings_eh_show_eh_limits">Mostrar límites EH</string>
-    <string name="settings_eh_show_jpn_title_summary">Requiere habilitar Título en japonés en Configuración en el sitio web EHentai</string>
+    <string name="settings_eh_show_jpn_title_summary">Requiere habilitar Título en japonés en Configuración en el sitio web Gallery</string>
     <string name="settings_eh_show_gallery_pages">Mostrar número de páginas de la galería</string>
     <string name="settings_eh_show_gallery_pages_summary">Mostrar el número de páginas en la lista de galerías</string>
     <string name="settings_eh_show_tag_translations">Mostrar traducciones de etiquetas</string>
@@ -556,7 +556,7 @@
     <string name="settings_download_download_location">Ruta de descargas</string>
     <string name="settings_download_invalid_download_location">Ruta de descarga invalida</string>
     <string name="settings_download_cant_get_download_location">No se puede obtener ruta de descargas</string>
-    <string name="settings_download_pick_dir_kk">No puedes escribir ningún tipo de datos en tu memoria SD externa en Android 4.4+ a no ser que la hayas hackeado. Pero &lt;SD card&gt;/Android/data/com.hippo.ehviewer es especial, puedes escribir en ello.</string>
+    <string name="settings_download_pick_dir_kk">No puedes escribir ningún tipo de datos en tu memoria SD externa en Android 4.4+ a no ser que la hayas hackeado. Pero &lt;SD card&gt;/Android/data/com.hippo.anotherviewer es especial, puedes escribir en ello.</string>
     <string name="settings_download_pick_dir_l">Anroid 5.0+ proporciona una nueva API para escribir en una tarjeta SD externa. Haga clic en el botón \"DOCUMENT\" si desea establecer la ruta de descarga en una tarjeta SD.</string>
     <string name="settings_download_document">Document</string>
     <string name="settings_download_continue">Continuar</string>
@@ -628,8 +628,8 @@
     <string name="settings_advanced_wifi_client_summary">Recibir datos de migración desde puntos de acceso Wi-Fi</string>
 
     <string name="settings_about">Acerca de</string>
-    <string name="settings_about_declaration" translatable="false">EhViewer</string>
-    <string name="settings_about_declaration_summary">EhViewer no está afiliado con E-Hentai.org de ninguna manera</string>
+    <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
+    <string name="settings_about_declaration_summary">AnotherViewer no está afiliado con Gallery Site.org de ninguna manera</string>
     <string name="settings_about_author">Autor</string>
     <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
@@ -640,7 +640,7 @@
     <string name="settings_about_help">Ayuda</string>
     <string name="settings_about_issue_help">Ayuda con problemas</string>
     <string name="settings_about_license">Licencia</string>
-    <string name="settings_about_license_summary">EhViewer es posible gracias a varios proyectos de código abierto</string>
+    <string name="settings_about_license_summary">AnotherViewer es posible gracias a varios proyectos de código abierto</string>
     <string name="settings_about_donate">Donar</string>
     <string name="settings_about_donate_message">Su donación no puede traerle ningún privilegio. Pero me ayuda a mantener esta aplicación.</string>
     <string name="settings_about_donate_alipay">Alipay</string>
@@ -789,7 +789,7 @@
     <string name="settings_privacy_secure_summary">Prevenir que se tomen capturas de pantalla del contenido de la aplicación o que se muestre en la lista de \"Aplicaciones recientes\".</string>
     <string name="download_service">Servicio de descarga</string>
     <string name="favorite_name">Favorito</string>
-    <string name="u_config">Ajustes EHentai</string>
+    <string name="u_config">Ajustes Gallery</string>
     <string name="apply">Aplicar</string>
     <string name="apply_tip">Toca la marca de verificación para guardar los cambios</string>
     <string name="hosts">hosts.txt personalizado </string>
@@ -831,13 +831,13 @@
     <string name="yesterday_top_list">Lista principal de ayer</string>
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">¿Está seguro de que desea cambiar el fondo?</string>
-    <string name="change_background_message">La modificación del fondo está limitada a este software y no se puede sincronizar con E-hentai u otro software similar.</string>
+    <string name="change_background_message">La modificación del fondo está limitada a este software y no se puede sincronizar con Gallery Site u otro software similar.</string>
     <string name="change_avatar_title">¿Está seguro de que desea cambiar su avatar?</string>
-    <string name="change_avatar_message">La modificación del avatar está limitada a este software y no se puede sincronizar con E-hentai u otro software similar.</string>
+    <string name="change_avatar_message">La modificación del avatar está limitada a este software y no se puede sincronizar con Gallery Site u otro software similar.</string>
     <string name="take_a_photograph">Tomar una fotografía</string>
     <string name="choose_from_the_album">Elegir del álbum</string>
-    <string name="request_camera_permission">EhViewer solicitará acceso a la cámara del dispositivo para tomar fotografías. ¿Le gustaría autorizar?</string>
-    <string name="request_storage_permission">EhViewer solicitará acceso al álbum de fotos del dispositivo para obtener imágenes. ¿Le gustaría autorizar?</string>
+    <string name="request_camera_permission">AnotherViewer solicitará acceso a la cámara del dispositivo para tomar fotografías. ¿Le gustaría autorizar?</string>
+    <string name="request_storage_permission">AnotherViewer solicitará acceso al álbum de fotos del dispositivo para obtener imágenes. ¿Le gustaría autorizar?</string>
     <!-- 下载通知   -->
     <string name="download_torrent_name">torrent: %s</string>
     <string name="download_torrent_state">estado: </string>
@@ -865,7 +865,7 @@
     <string name="archiver_dialog_download_resample">Descargar archivo remuestreado</string>
     <string name="archiver_dialog_size">Tamaño estimado:  %s</string>
     <string name="dialog_archiver_title">Descargador de Archiver</string>
-    <string name="download_receiver_label">Receptor de descarga EhViewer</string>
+    <string name="download_receiver_label">Receptor de descarga AnotherViewer</string>
     <string name="decompressed_successfully">¡Descomprimido exitosamente!</string>
     <string name="decompression_failed">¡Error al descomprimir!</string>
     <string name="download_label_archiver">Archiver</string>

@@ -10,7 +10,7 @@
 
 #define TAG "ImageDecoder_wrapper"
 
-#include "ehviewer.h"
+#include "anotherviewer.h"
 
 #define IMAGE_TILE_MAX_SIZE (512 * 512)
 

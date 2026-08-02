@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <com.hippo.ehviewer.widget.SearchBar
+    <com.hippo.anotherviewer.widget.SearchBar
         android:id="@+id/download_search_bar"
         style="@style/CardView.Normal"
         android:layout_width="match_parent"

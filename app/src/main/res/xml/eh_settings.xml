@@ -17,13 +17,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.hippo.ehviewer.preference.SignOutPreference
+    <com.hippo.anotherviewer.preference.SignOutPreference
         android:key="sign_out"
         android:summary="@string/settings_eh_sign_out_summary"
         android:title="@string/settings_eh_sign_out"
         app:allowDividerAbove="true" />
 
-    <com.hippo.ehviewer.preference.IdentityCookiePreference
+    <com.hippo.anotherviewer.preference.IdentityCookiePreference
         android:key="identity_cookie"
         android:summary="@string/settings_eh_identity_cookies_summary"
         android:title="@string/settings_eh_identity_cookies"
@@ -44,18 +44,18 @@
         app:entries="@array/gallery_site_entries"
         app:entryValues="@array/gallery_site_entry_values" />
 
-    <com.hippo.ehviewer.preference.SignInRequiredActivityPreference
+    <com.hippo.anotherviewer.preference.SignInRequiredActivityPreference
         android:key="u_config"
         android:summary="@string/settings_u_config_summary"
         android:title="@string/settings_u_config"
-        app:activity="com.hippo.ehviewer.ui.UConfigActivity"
+        app:activity="com.hippo.anotherviewer.ui.UConfigActivity"
         app:allowDividerAbove="true" />
 
-    <com.hippo.ehviewer.preference.SignInRequiredActivityPreference
+    <com.hippo.anotherviewer.preference.SignInRequiredActivityPreference
         android:key="my_tags"
         android:summary="@string/settings_my_tags_summary"
         android:title="@string/settings_my_tags"
-        app:activity="com.hippo.ehviewer.ui.MyTagsActivity"
+        app:activity="com.hippo.anotherviewer.ui.MyTagsActivity"
         app:allowDividerAbove="true" />
 
     <com.hippo.preference.ListPreference
@@ -175,7 +175,7 @@
         android:key="filter"
         android:summary="@string/settings_eh_filter_summary"
         android:title="@string/settings_eh_filter"
-        app:activity="com.hippo.ehviewer.ui.FilterActivity"
+        app:activity="com.hippo.anotherviewer.ui.FilterActivity"
         app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
@@ -192,7 +192,7 @@
         android:key="blickList"
         android:summary="@string/settings_eh_blacklist_summary"
         android:title="@string/settings_eh_blacklist"
-        app:activity="com.hippo.ehviewer.ui.BlackListActivity"
+        app:activity="com.hippo.anotherviewer.ui.BlackListActivity"
         app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference

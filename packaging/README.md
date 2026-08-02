@@ -22,22 +22,22 @@ zip 是发布的主力形式：跨平台（Linux/macOS）、解压即用、无�
 | zip 发布包（scripts/package.sh） | deb/rpm 包（packaging/ospackage.gradle） | 抽象 |
 | --- | --- | --- |
 | `lib/app.jar` | 安装到 `/opt/anotherviewer/lib/app.jar` | 同一 app.jar 可执行 fat jar |
-| `data/`（解压目录内） | `/var/lib/anotherviewer` | 同一 `--data-dir` 参数（Spring `ehviewer.data-dir`） |
+| `data/`（解压目录内） | `/var/lib/anotherviewer` | 同一 `--data-dir` 参数（Spring `anotherviewer.data-dir`） |
 | `bin/start.sh`（脚本内推导） | `anotherviewer.service`（systemd unit） | 同一启动语义：`java -jar ... --data-dir=...` |
 
-数据目录固定结构在两处声明一致：`ehviewer.db` / `security.key` / `downloads/` / `cache/` /
+数据目录固定结构在两处声明一致：`anotherviewer.db` / `security.key` / `downloads/` / `cache/` /
 `backups/`（zip 内 `data/README.md` 与 unit 文件均依赖该结构）。
 
 ## 激活 ospackage
 
 默认不激活，不影响现有构建。需要产出 deb/rpm 时：
 
-1. 在 `ehviewer-web/build.gradle.kts` 的 plugins 块加入 nebula.ospackage
+1. 在 `anotherviewer-web/build.gradle.kts` 的 plugins 块加入 nebula.ospackage
    （Groovy 脚本经 `apply(from = rootProject.file("packaging/ospackage.gradle"))` 接入）；
 2. 构建 jar 后执行：
 
    ```bash
-   ./gradlew :ehviewer-web:bootJar :ehviewer-web:buildDeb :ehviewer-web:buildRpm
+   ./gradlew :anotherviewer-web:bootJar :anotherviewer-web:buildDeb :anotherviewer-web:buildRpm
    ```
 
 3. 按目标发行版调整 `packaging/ospackage.gradle` 中的依赖声明

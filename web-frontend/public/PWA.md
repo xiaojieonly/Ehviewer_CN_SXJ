@@ -14,7 +14,7 @@
 
 ## 2. 缓存策略（sw.js）
 
-所有缓存以 `CACHE_NAME`（当前 `ehviewer-v1`）为前缀。**发版需要作废旧缓存时，bump 该常量**（如 `ehviewer-v2`），activate 阶段会自动删除所有旧前缀缓存。
+所有缓存以 `CACHE_NAME`（当前 `anotherviewer-v1`）为前缀。**发版需要作废旧缓存时，bump 该常量**（如 `anotherviewer-v2`），activate 阶段会自动删除所有旧前缀缓存。
 
 | 请求类型 | 策略 | 缓存名 | 说明 |
 | --- | --- | --- | --- |
@@ -64,7 +64,7 @@
 
 - [ ] 在线浏览若干画廊（列表 + 详情 + 阅读若干页图片）
 - [ ] DevTools → Application → Service Workers：确认 sw.js 状态 activated & running
-- [ ] DevTools → Application → Cache Storage：确认 `ehviewer-v1-shell` / `-api` / `-images` 均有内容
+- [ ] DevTools → Application → Cache Storage：确认 `anotherviewer-v1-shell` / `-api` / `-images` 均有内容
 - [ ] 开启飞行模式（或 DevTools 勾选 Offline）
 - [ ] 重新打开应用 → 首页/已访问路由可加载（shell 回退）
 - [ ] 进入之前浏览过的画廊详情 → 元数据可显示（API 缓存回退，需在 30 分钟 TTL 内；超时则返回 503 JSON）

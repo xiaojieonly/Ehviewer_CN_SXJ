@@ -17,13 +17,13 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.graphics.drawable.toDrawable
-import com.hippo.ehviewer.EhApplication
+import com.hippo.anotherviewer.SiteApplication
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
 import androidx.core.graphics.createBitmap
-import com.hippo.ehviewer.Analytics
+import com.hippo.anotherviewer.Analytics
 
 
 class Image private constructor(
@@ -77,7 +77,7 @@ class Image private constructor(
                             }
                             val bitmap = BitmapFactory.decodeStream(source, null, option)
                             mObtainedDrawable =
-                                bitmap?.toDrawable(EhApplication.getInstance().resources)
+                                bitmap?.toDrawable(SiteApplication.getInstance().resources)
                         } else {
                             mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
                         }
@@ -94,7 +94,7 @@ class Image private constructor(
                     }
                     val bitmap = BitmapFactory.decodeStream(source, null, option)
                     mObtainedDrawable =
-                        BitmapDrawable(EhApplication.getInstance().resources, bitmap)
+                        BitmapDrawable(SiteApplication.getInstance().resources, bitmap)
                 } else {
                     mObtainedDrawable = BitmapDrawable.createFromStream(source, null)
                 }
@@ -233,7 +233,7 @@ class Image private constructor(
         var screenHeight: Int = 0
 
         @JvmStatic
-        fun initialize(ehApplication: EhApplication) {
+        fun initialize(ehApplication: SiteApplication) {
             screenWidth = ehApplication.resources.displayMetrics.widthPixels
             screenHeight = ehApplication.resources.displayMetrics.heightPixels
         }

@@ -23,7 +23,7 @@
     android:layout_margin="2dp"
     style="@style/CardView.Normal">
 
-    <com.hippo.ehviewer.widget.TileThumbNew
+    <com.hippo.anotherviewer.widget.TileThumbNew
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/thumb_new"
         android:layout_width="match_parent"

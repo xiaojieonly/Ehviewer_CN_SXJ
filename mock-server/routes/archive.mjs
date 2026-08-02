@@ -10,7 +10,7 @@ router.get('/list/:gid', (req, res) => {
     archives: [
       {
         gid,
-        url: `https://ehgt.org/archive/${gid}/original.zip`,
+        url: `https://gallery.test/archive/${gid}/original.zip`,
         name: 'Original Archive',
         size: '125.4 MB',
         price: 'Free',
@@ -18,7 +18,7 @@ router.get('/list/:gid', (req, res) => {
       },
       {
         gid,
-        url: `https://ehgt.org/archive/${gid}/resample.zip`,
+        url: `https://gallery.test/archive/${gid}/resample.zip`,
         name: 'Resample Archive',
         size: '48.2 MB',
         price: 'Free',

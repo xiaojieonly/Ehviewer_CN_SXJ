@@ -1,0 +1,62 @@
+package com.hippo.anotherviewer.web.api
+
+import com.hippo.anotherviewer.web.dto.*
+import com.hippo.anotherviewer.web.service.DownloadService
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
+
+@RestController
+@RequestMapping("/api/v1/download")
+class DownloadController(private val downloadService: DownloadService) {
+
+    @GetMapping("/list")
+    fun listDownloads(@RequestParam(required = false) label: Int?): ResponseEntity<DownloadListResponse> {
+        return ResponseEntity.ok(downloadService.listDownloads(label))
+    }
+
+    @GetMapping("/info/{id}")
+    fun getDownloadInfo(@PathVariable id: Long): ResponseEntity<DownloadItem?> {
+        return ResponseEntity.ok(downloadService.getDownloadInfo(id))
+    }
+
+    @PostMapping("/add")
+    fun addDownload(@RequestBody request: DownloadAddRequest): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.addDownload(request))
+    }
+
+    @PostMapping("/start/{id}")
+    fun startDownload(@PathVariable id: Long): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.startDownload(id))
+    }
+
+    @PostMapping("/start-all")
+    fun startAllDownloads(): ResponseEntity<Boolean> {
+        downloadService.startAllDownloads()
+        return ResponseEntity.ok(true)
+    }
+
+    @PostMapping("/pause/{id}")
+    fun pauseDownload(@PathVariable id: Long): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.pauseDownload(id))
+    }
+
+    @PostMapping("/cancel/{id}")
+    fun cancelDownload(@PathVariable id: Long): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.cancelDownload(id))
+    }
+
+    @DeleteMapping("/delete/{id}")
+    fun deleteDownload(@PathVariable id: Long): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.deleteDownload(id))
+    }
+
+    @PostMapping("/label")
+    fun createLabel(@RequestBody request: DownloadLabelRequest): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.createLabel(request.label))
+    }
+
+    @DeleteMapping("/label/{id}")
+    fun deleteLabel(@PathVariable id: Long): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(downloadService.deleteLabel(id))
+    }
+}

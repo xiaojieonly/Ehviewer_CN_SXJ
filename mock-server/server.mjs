@@ -1,4 +1,4 @@
-// EhViewer Mock Server - Main Entry Point
+// AnotherViewer Mock Server - Main Entry Point
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
@@ -20,7 +20,7 @@ import smbRoutes from './routes/smb.mjs';
 import healthRoutes from './routes/health.mjs';
 import proxyRoutes from './routes/proxy.mjs';
 import preferenceRoutes from './routes/preferences.mjs';
-import ehentaiRoutes from './ehentai.mjs';
+import galleryRoutes from './gallery.mjs';
 import { setupWebSocket } from './ws/progress.mjs';
 
 const app = express();
@@ -97,16 +97,16 @@ app.use('/api/v1/torrent', torrentRoutes);
 app.use('/api/v1/smb', smbRoutes);
 app.use('/api/v1', healthRoutes); // /health and /metrics
 
-// E-Hentai dummy server (mounted before the root info endpoint: its "/"
+// Gallery Site dummy server (mounted before the root info endpoint: its "/"
 // handler only claims requests carrying f_search)
-ehentaiRoutes(app);
+galleryRoutes(app);
 
 // Root info endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'EhViewer Mock Server',
+    name: 'AnotherViewer Mock Server',
     version: '1.0.0',
-    description: 'Mock backend for EhViewer WebUI frontend development',
+    description: 'Mock backend for AnotherViewer WebUI frontend development',
     endpoints: {
       auth: '/api/v1/auth/{register,login,status,logout}',
       gallery: '/api/v1/gallery/{search,:gid,history,favorites,quick-search}',
@@ -151,7 +151,7 @@ setupWebSocket(server);
 server.listen(PORT, () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════╗');
-  console.log('║       EhViewer Mock Server v1.0.0           ║');
+  console.log('║       AnotherViewer Mock Server v1.0.0           ║');
   console.log('╠══════════════════════════════════════════════╣');
   console.log(`║  HTTP:      http://localhost:${PORT}           ║`);
   console.log(`║  WebSocket: ws://localhost:${PORT}/ws          ║`);

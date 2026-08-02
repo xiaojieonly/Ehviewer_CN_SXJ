@@ -103,7 +103,7 @@ describe('AdminDownload (下载设置)', () => {
     expect(sw.attributes('aria-checked')).toBe('true')
     await sw.trigger('click')
     expect(sw.attributes('aria-checked')).toBe('false')
-    const raw = localStorage.getItem('ehviewer-admin-download-ui')
+    const raw = localStorage.getItem('anotherviewer-admin-download-ui')
     expect(JSON.parse(raw!).autoStart).toBe(false)
   })
 

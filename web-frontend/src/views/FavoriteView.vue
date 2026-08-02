@@ -9,7 +9,7 @@
 
     <!-- Favorite folder filter — Android FavoritesScene's folder spinner,
          reimagined as a scrollable chip strip (Favorites 0 … Favorites 9,
-         the EhConfig.DEFAULT_FAV_CAT_NAMES) -->
+         the SiteConfig.DEFAULT_FAV_CAT_NAMES) -->
     <nav class="slot-bar" aria-label="Favorite folders">
       <button
         v-for="(name, slot) in SLOT_NAMES"
@@ -77,7 +77,7 @@
  * Android scene which always shows exactly one folder; each row carries a
  * heart badge with the folder number it belongs to.
  *
- * Backend note: `FavoriteItem.category` is the stringified `EhConfig` bit
+ * Backend note: `FavoriteItem.category` is the stringified `SiteConfig` bit
  * (FavoriteService maps `entity.category.toString()`), so rows are converted
  * to `GalleryInfo` (numeric bit) before being handed to `GalleryCard`.
  */
@@ -100,10 +100,10 @@ import AppIcon from '@/components/atoms/AppIcon.vue'
 /** View states matching ContentLayout's internal ViewTransition. */
 type ViewState = 'loading' | 'content' | 'empty' | 'error'
 
-/** Android `EhConfig.DEFAULT_FAV_CAT_NAMES` — "Favorites 0" … "Favorites 9". */
+/** Android `SiteConfig.DEFAULT_FAV_CAT_NAMES` — "Favorites 0" … "Favorites 9". */
 const SLOT_NAMES: readonly string[] = Array.from({ length: 10 }, (_, i) => `Favorites ${i}`)
 
-/** Unknown category fallback — Android `EhUtils.UNKNOWN` bit. */
+/** Unknown category fallback — Android `SiteUtils.UNKNOWN` bit. */
 const CATEGORY_UNKNOWN_BIT = 0x400
 
 /* ---------------------------------------------- category string → bit --- */
@@ -115,7 +115,7 @@ for (const key of CATEGORY_ORDER) {
 }
 
 /**
- * Normalizes a backend category string to its `EhConfig` bit value.
+ * Normalizes a backend category string to its `SiteConfig` bit value.
  * Accepts stringified bits ("2"), labels ("Artist CG") and keys ("artist_cg").
  */
 function categoryBit(raw: string): number {

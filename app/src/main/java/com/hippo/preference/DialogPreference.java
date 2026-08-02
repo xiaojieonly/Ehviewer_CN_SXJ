@@ -37,7 +37,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 
 /**
  * A base class for {@link Preference} objects that are

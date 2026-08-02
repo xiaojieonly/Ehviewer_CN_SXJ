@@ -134,11 +134,11 @@ type ListMode = 'list' | 'grid'
 /** ContentLayout's view states (frozen `ContentState` + its `error` extra). */
 type HomeContentState = ContentState | 'error'
 
-/** EhViewer's default gallery page size. */
+/** AnotherViewer's default gallery page size. */
 const PAGE_SIZE = 25
 
 /** localStorage key for the persisted list mode. */
-const LIST_MODE_KEY = 'ehviewer-webui:gallery-list-mode'
+const LIST_MODE_KEY = 'anotherviewer-webui:gallery-list-mode'
 
 const router = useRouter()
 const authStore = useAuthStore()

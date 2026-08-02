@@ -1,5 +1,5 @@
 # ===========================================================================
-# EhViewer Web — Caddy reverse proxy with automatic HTTPS
+# AnotherViewer Web — Caddy reverse proxy with automatic HTTPS
 #
 # Caddy automatically obtains and renews Let's Encrypt certificates.
 # Install: https://caddyserver.com/docs/install
@@ -8,12 +8,12 @@
 #   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
 #   sudo systemctl reload caddy
 #
-# Replace "ehviewer.example.com" with your actual domain.
+# Replace "anotherviewer.example.com" with your actual domain.
 # For LAN-only access without HTTPS, use the HTTP-only block below.
 # ===========================================================================
 
 # --- HTTPS (recommended for PWA — Service Worker requires secure context) ---
-ehviewer.example.com {
+anotherviewer.example.com {
     reverse_proxy localhost:8080
 
     # WebSocket support (STOMP over SockJS)
@@ -46,7 +46,7 @@ ehviewer.example.com {
 
     # Access log
     log {
-        output file /var/log/caddy/ehviewer-access.log
+        output file /var/log/caddy/anotherviewer-access.log
         format json
     }
 }

@@ -14,8 +14,8 @@ export interface GeneralPreferences {
   showTagTranslations: boolean
   showGalleryComment: boolean
   showGalleryRating: boolean
-  showEhEvents: boolean
-  showEhLimits: boolean
+  showSiteEvents: boolean
+  showSiteLimits: boolean
 }
 
 export interface ReaderPreferences {

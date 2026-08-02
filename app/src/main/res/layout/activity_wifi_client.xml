@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context="com.hippo.ehviewer.ui.wifi.WiFiClientActivity">
+    tools:context="com.hippo.anotherviewer.ui.wifi.WiFiClientActivity">
 
     <TextView
         android:id="@+id/status_init"

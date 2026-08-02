@@ -1,5 +1,5 @@
 #!/bin/bash
-# dev-stop.sh — Stop any running EhViewer Web dev processes
+# dev-stop.sh — Stop any running AnotherViewer Web dev processes
 #
 # Usage: ./scripts/dev-stop.sh
 #
@@ -75,8 +75,8 @@ fi
 # 2. Fallback: search for orphaned processes by pattern
 # ---------------------------------------------------------------------------
 
-# Backend: java -jar ehviewer-web-*.jar
-BACKEND_PIDS=$(pgrep -f 'java.*ehviewer-web-.*\.jar' 2>/dev/null || true)
+# Backend: java -jar anotherviewer-web-*.jar
+BACKEND_PIDS=$(pgrep -f 'java.*anotherviewer-web-.*\.jar' 2>/dev/null || true)
 if [[ -n "$BACKEND_PIDS" ]]; then
     for pid in $BACKEND_PIDS; do
         kill_pid "$pid" "backend (orphan)"

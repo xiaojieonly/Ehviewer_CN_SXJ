@@ -3,7 +3,7 @@ package com.hippo.util;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.hippo.ehviewer.dao.DownloadInfo;
+import com.hippo.anotherviewer.dao.DownloadInfo;
 
 public class DataUtils {
     public static <T> T copy(Parcelable input){

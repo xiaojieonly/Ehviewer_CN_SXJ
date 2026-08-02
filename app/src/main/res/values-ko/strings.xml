@@ -21,7 +21,7 @@
     <string name="blacklist">차단 목록</string>
     <string name="join_in_blacklist">차단 목록에 추가</string>
     <string name="add_blacklist">사용자 차단 추가</string>
-    <string name="blacklist_tip">이 차단 시스템은 EHentai 웹사이트 댓글 시스템을 기반으로 댓글을 계속 차단합니다.\n\n댓글 작성자 차단 항목: 해당 댓글 작성자가 업로드한 댓글을 제외합니다. 이로 인해 갤러리 목록을 불러오는 데 더 많은 시간이 걸립니다.</string>
+    <string name="blacklist_tip">이 차단 시스템은 Gallery 웹사이트 댓글 시스템을 기반으로 댓글을 계속 차단합니다.\n\n댓글 작성자 차단 항목: 해당 댓글 작성자가 업로드한 댓글을 제외합니다. 이로 인해 갤러리 목록을 불러오는 데 더 많은 시간이 걸립니다.</string>
     <string name="blacklist_text">사용자 차단</string>
     <string name="delete_blacklist">사용자 \"%s\" 차단을 해제하시겠습니까?</string>
     <string name="blacklist_reason_text">차단 사유</string>
@@ -37,7 +37,7 @@
     <string name="share_favorites_dialog_title">즐겨찾기 공유</string>
     <string name="share_favorites_dialog_message">즐겨찾기 %s을(를) 공유하시겠습니까?</string>
     <string name="add_favorites_dialog_message">즐겨찾기에 %s을(를) 추가하시겠습니까?</string>
-    <string name="settings_advanced_built_ex_hosts_title">내장 exhentai hosts.txt</string>
+    <string name="settings_advanced_built_ex_hosts_title">내장 gallery hosts.txt</string>
     <string name="settings_advanced_built_ex_hosts_summary">앱에서 제공하는 호스트-IP 매핑\n사용자 지정 hosts.txt로 덮어쓸 수 있음</string>
     <string name="network_remind">VPN이 활성화된 것으로 감지되었습니다. 네트워크 보안에 주의하세요</string>
 
@@ -153,7 +153,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">어느 갤러리 사이트를 사용하시겠습니까?</string>
-    <string name="select_scene_explain">e-hentai: 모든 사람들이 사용할 수 있음\nexhentai: 로그인한 사람만 사용할 수 있음</string>
+    <string name="select_scene_explain">e-hentai: 모든 사람들이 사용할 수 있음\ngallery: 로그인한 사람만 사용할 수 있음</string>
     <string name="no_select">두 사이트 중 하나를 선택하세요.</string>
 
     <!-- Update -->
@@ -163,13 +163,13 @@
     <string name="update_to">업데이트</string>
     <string name="update_plain">버전: %1$s\n파일 크기: %2$s\n\n%3$s</string>
     <string name="update_fail_info">예를 클릭하여 Github 홈페이지로 이동</string>
-    <string name="update_to_date">최신 버전의 EhViewer를 사용 중입니다.</string>
+    <string name="update_to_date">최신 버전의 AnotherViewer를 사용 중입니다.</string>
     <string name="update_ignore">무시</string>
     <string name="no_updates_available">최신 버전입니다</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_exhentai">ExHentai 검색</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai 검색</string>
+    <string name="gallery_list_search_bar_hint_gallery">Gallery 검색</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Gallery Site 검색</string>
     <string name="gallery_list_search_bar_open_gallery">갤러리 열기</string>
     <string name="gallery_list_empty_hit">The World is Big and the panda sit alone</string>
     <string name="gallery_list_empty_hit_subscription">설정->EH->마이태그 구독태그까지 부탁드립니다.</string>
@@ -424,7 +424,7 @@
     <string name="download_search_gallery">갤러리 검색</string>
     <string name="download_search_hint">키워드 입력</string>
     <string name="reset_reading_progress_message">다운로드한 모든 갤러리의 독서 진행도를 초기화하시겠습니까?</string>
-    <string name="download_service_label">EhViewer 다운로드 서비스</string>
+    <string name="download_service_label">AnotherViewer 다운로드 서비스</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s 남음</string>
     <string name="remember_download_label">다운로드 레이블 기억</string>
@@ -461,7 +461,7 @@
     <string name="add_filter">차단 항목 추가</string>
     <string name="show_definition">정의 표시</string>
     <string name="filter_text">차단 항목 텍스트</string>
-    <string name="filter_tip">본 차단 시스템은 EHentai 웹 사이트 차단 시스템을 기반으로 갤러리를 계속 차단합니다. \n\n 제목 차단 항목: 키워드를 포함하는 갤러리를 제외합니다. \n\n 게시자 차단 항목: 게시자가 업로드한 갤러리를 제외합니다. \n\n 태그 차단 항목: 태그를 포함하는 갤러리를 제외합니다. \n\n 태그 그룹 차단 항목: 태그 그룹을 포함하는 갤러리를 제외합니다. 갤러리 목록을 가져오는 데 더 많은 시간이 걸립니다.</string>
+    <string name="filter_tip">본 차단 시스템은 Gallery 웹 사이트 차단 시스템을 기반으로 갤러리를 계속 차단합니다. \n\n 제목 차단 항목: 키워드를 포함하는 갤러리를 제외합니다. \n\n 게시자 차단 항목: 게시자가 업로드한 갤러리를 제외합니다. \n\n 태그 차단 항목: 태그를 포함하는 갤러리를 제외합니다. \n\n 태그 그룹 차단 항목: 태그 그룹을 포함하는 갤러리를 제외합니다. 갤러리 목록을 가져오는 데 더 많은 시간이 걸립니다.</string>
 
     <!-- Set Security -->
     <string name="set_pattern_protection">패턴 보호 사용</string>
@@ -470,7 +470,7 @@
     <string name="enable_fingerprint">지문으로 잠금 해제 허용</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">E-Hentai 설정</string>
+    <string name="u_config">Gallery Site 설정</string>
     <string name="apply">적용</string>
     <string name="apply_tip">설정을 저장하려면 체크 표시를 누르세요.</string>
 
@@ -518,10 +518,10 @@
     <string name="settings_eh_identity_cookies_signed">식별용 쿠키를 사용하여 이 계정으로 로그인할 수 있습니다.&lt;br&gt;&lt;b&gt;안전하게 보관하세요.&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">로그인 상태가 아닙니다.</string>
     <string name="settings_eh_identity_cookies_copy">복사</string>
-    <string name="settings_u_config">E-Hentai 설정</string>
-    <string name="settings_u_config_summary">E-Hentai 사이트의 설정 페이지를 엽니다.</string>
+    <string name="settings_u_config">Gallery Site 설정</string>
+    <string name="settings_u_config_summary">Gallery Site 사이트의 설정 페이지를 엽니다.</string>
     <string name="settings_my_tags">내 태그</string>
-    <string name="settings_my_tags_summary">EHentai 사이트에 있는 내 태그</string>
+    <string name="settings_my_tags_summary">Gallery 사이트에 있는 내 태그</string>
     <string name="settings_eh_theme">테마</string>
     <string name="settings_eh_theme_light">밝은 테마</string>
     <string name="settings_eh_theme_dark">어두운 테마</string>
@@ -554,7 +554,7 @@
     <string name="settings_eh_show_gallery_rating">갤러리 평점 표시</string>
     <string name="settings_eh_show_eh_event">EH 이벤트 표시</string>
     <string name="settings_eh_show_eh_limits">EH 제한 표시</string>
-    <string name="settings_eh_show_jpn_title_summary">EHentai 웹 사이트 설정에서 Japanese Title을 사용하도록 설정해야 함</string>
+    <string name="settings_eh_show_jpn_title_summary">Gallery 웹 사이트 설정에서 Japanese Title을 사용하도록 설정해야 함</string>
     <string name="settings_eh_show_gallery_pages">갤러리 페이지 수 표시</string>
     <string name="settings_eh_show_gallery_pages_summary">갤러리 목록에 해당 갤러리의 페이지 수를 표시합니다</string>
     <string name="settings_eh_show_tag_translations">번역된 태그 표시</string>
@@ -685,8 +685,8 @@
     <string name="wifi_download_dir_file_failed">파일 체크섬 검증 실패, 폐기됨</string>
 
     <string name="settings_about">앱 정보</string>
-    <string name="settings_about_declaration" translatable="false">EhViewer</string>
-    <string name="settings_about_declaration_summary">EhViewer는 E-Hentai.org 사이트와 아무런 관계가 없습니다.</string>
+    <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
+    <string name="settings_about_declaration_summary">AnotherViewer는 Gallery Site.org 사이트와 아무런 관계가 없습니다.</string>
     <string name="settings_about_author">개발자</string>
     <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
@@ -697,7 +697,7 @@
     <string name="settings_about_help">도움말</string>
     <string name="settings_about_issue_help">문제 도움말</string>
     <string name="settings_about_license">라이선스</string>
-    <string name="settings_about_license_summary">EhViewer는 많은 오픈 소스 프로젝트 덕분에 만들 수 있었습니다.</string>
+    <string name="settings_about_license_summary">AnotherViewer는 많은 오픈 소스 프로젝트 덕분에 만들 수 있었습니다.</string>
     <string name="settings_about_donate">후원</string>
     <string name="settings_about_donate_message">후원은 특권을 가져다주지 않습니다. 하지만 이 앱을 유지하는 데 도움이 됩니다.</string>
     <string name="settings_about_donate_alipay">알리페이</string>
@@ -871,8 +871,8 @@
     <string name="change_avatar_message">프로필 수정은 본 소프트웨어에 한하며 E 스테이션 또는 기타 유사한 소프트웨어에 동기화할 수 없습니다.</string>
     <string name="take_a_photograph">사진 찍기</string>
     <string name="choose_from_the_album">갤러리로부터 선택</string>
-    <string name="request_camera_permission">EhViewer 사진을 찍을 수 있도록 카메라 접근 권한을 부여하시겠습니까?</string>
-    <string name="request_storage_permission">EhViewer 이미지를 선택할 수 있도록 갤러리 접근 권한을 부여하시겠습니까?</string>
+    <string name="request_camera_permission">AnotherViewer 사진을 찍을 수 있도록 카메라 접근 권한을 부여하시겠습니까?</string>
+    <string name="request_storage_permission">AnotherViewer 이미지를 선택할 수 있도록 갤러리 접근 권한을 부여하시겠습니까?</string>
 
     <!--  ??服?  -->
     <string name="subscription_watched">구독 중</string>
@@ -917,7 +917,7 @@
     <string name="archiver_dialog_download_resample">리샘플 아카이브 다운로드</string>
     <string name="archiver_dialog_size">예상 크기:  %s</string>
     <string name="dialog_archiver_title">아카이버 다운로더</string>
-    <string name="download_receiver_label">EhViewer 다운로드 수신기</string>
+    <string name="download_receiver_label">AnotherViewer 다운로드 수신기</string>
     <string name="decompressed_successfully">압축 해제 성공!</string>
     <string name="decompression_failed">압축 해제 실패!</string>
     <string name="download_label_archiver">아카이버</string>

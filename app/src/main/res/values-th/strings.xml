@@ -21,7 +21,7 @@
     <string name="blacklist">รายชื่อดำ</string>
     <string name="join_in_blacklist">เพิ่มเข้าในรายชื่อดำ</string>
     <string name="add_blacklist">เพิ่มผู้ใช้ที่ต้องการบล็อก</string>
-    <string name="blacklist_tip">ระบบบล็อกนี้จะบล็อกความคิดเห็นต่อจากระบบบล็อกความคิดเห็นของเว็บไซต์ EHentai\n\nบล็อกผู้แสดงความคิดเห็น: แยกความคิดเห็นที่ผู้ใช้คนนั้นอัพโหลดออกไป ซึ่งจะทำให้การโหลดรายการแกลเลอรี่ใช้เวลามากขึ้น</string>
+    <string name="blacklist_tip">ระบบบล็อกนี้จะบล็อกความคิดเห็นต่อจากระบบบล็อกความคิดเห็นของเว็บไซต์ Gallery\n\nบล็อกผู้แสดงความคิดเห็น: แยกความคิดเห็นที่ผู้ใช้คนนั้นอัพโหลดออกไป ซึ่งจะทำให้การโหลดรายการแกลเลอรี่ใช้เวลามากขึ้น</string>
     <string name="blacklist_text">บล็อกผู้ใช้</string>
     <string name="delete_blacklist">ยกเลิกการบล็อกผู้ใช้ \"%s\" หรือไม่?</string>
     <string name="blacklist_reason_text">เหตุผลในการบล็อก</string>
@@ -37,7 +37,7 @@
     <string name="share_favorites_dialog_title">แชร์รายการโปรด</string>
     <string name="share_favorites_dialog_message">แชร์รายการโปรด %s หรือไม่?</string>
     <string name="add_favorites_dialog_message">เพิ่มรายการโปรด %s หรือไม่?</string>
-    <string name="settings_advanced_built_ex_hosts_title">hosts.txt ของ exhentai ที่มีอยู่แล้ว</string>
+    <string name="settings_advanced_built_ex_hosts_title">hosts.txt ของ gallery ที่มีอยู่แล้ว</string>
     <string name="settings_advanced_built_ex_hosts_summary">การแมปโฮสต์ไปยัง IP ที่แอปให้มา\nสามารถถูกแทนที่ด้วย hosts.txt ที่ปรับแต่งเอง</string>
     <string name="network_remind">ตรวจพบว่าเปิดใช้งาน VPN แล้ว โปรดระวังความปลอดภัยเครือข่ายของคุณ</string>
     <string name="no_blicklist">นี่คือรายชื่อดำ</string>
@@ -141,7 +141,7 @@
     <string name="sign_in_failed_plain">บางทีนี้เป็นข้อผิดพลาดเนื่องจากเว็บไซต์มีการอัพเดตหรือมีบางอย่างเกิดขึ้น คุณจะต้องลองวิธีลงชื่อเข้าใช้ผ่านมุมมองเว็บไซต์ หรือวิธีแบบคุกกี๊ หรือกดปุ่มข้ามไปก่อน แต่คุณอาจจะเจอ "แพนด้าผู้เดียวดาย" ได้หลังจากข้ามการลงชื่อเข้าใช้ อันดับแรกลอง "ลงชื่อเข้าใช้ผ่านคุกกี้" ถ้าคุณเคยเข้าสู่ระบบแล้วในเวอร์ชั่น 0.6.x</string>
     <string name="press_twice_exit">กดสองครั้งเพื่อออก</string>
     <string name="content_layout_restore_tip">แตะเพื่อลองอีกครั้ง</string>
-    <string name="write_rationale">EhViewer จะขอสิทธิ์การเขียนข้อมูลพื้นที่จัดเก็บภายนอก (WRITE_EXTERNAL_STORAGE) เพื่อการดาวน์โหลดแกลเลอรี่ คุณจะอนุญาตหรือไม่?</string>
+    <string name="write_rationale">AnotherViewer จะขอสิทธิ์การเขียนข้อมูลพื้นที่จัดเก็บภายนอก (WRITE_EXTERNAL_STORAGE) เพื่อการดาวน์โหลดแกลเลอรี่ คุณจะอนุญาตหรือไม่?</string>
     <string name="you_rejected_me">เอื้อออออ เจ็บจัง</string>
     <string name="analytics_explain">จะว่าอะไรไหมถ้านักพัฒนาจะขออนุญาตรวบรวมข้อมูลอุปกรณ์และประวัติการใช้งานแอปนี้ของคุณ? มันจะช่วยนักพัฒนาอย่างมากเลยนะ&lt;br&gt;&lt;br&gt;บริการวิเคราะห์ข้อมูลที่เราใช้นั้นเป็นบริการของ Google Analytics สำหรับ Firebase ในส่วนของนโยบายความเป็นส่วนตัวเราใช้ตามที่อยู่ในลิงค์ &lt;a href=&quot;https://www.google.com/policies/privacy/&quot;&gt;https://www.google.com/policies/privacy/&lt;/a&gt;&lt;br&gt;&lt;br&gt;ถ้าคุณยินยอมการส่งข้อมูลวิเคราะห์นี้ ทั้งข้อมูลอุปกรณ์และประวัติการใช้งานแอปนี้ของคุณจะถูกจัดเก็บ รวมไปถึงแต่ไม่จำกัดเพียงแค่เวอร์ชั่น API ของ Android, แบบจำลองอุปกรณ์, ภาษาของผู้ใช้, เวอร์ชั่นของแอปพลิเคชั่น, เวลาในการใช้งาน, และจำนวนฟังก์ชั่นที่ใช้ นักพัฒนาขอให้คำมั่นสัญญาว่าเราจะไม่เก็บข้อมูลส่วนตัวของผู้ใช้ไม่ว่าจะเบอร์มือถือ, อีเมล, และหมายเลข IMEI&lt;br&gt;&lt;br&gt;ข้อมูลของคุณจะไม่ถูกจัดเก็บจนกว่าจะกดปุ่ม \'ยินยอม\' ให้จัดเก็บเพื่อนำมาวิเคราะห์ข้อมูล&lt;br&gt;&lt;br&gt;การจัดเก็บข้อมูลจะถูกวิเคราะห์โดยบริการ Google Analytics สำหรับ Firebase รายงานการวิเคราะห์ข้อมูลจะสามารถดูได้เพียงนักพัฒนาของแอปนี้เพียงคนเดียวเท่านั้น</string>
     <string name="get_it">เข้าใจแล้ว ไม่ต้องแสดงอีก</string>
@@ -152,7 +152,7 @@
 
     <!-- Select scene -->
     <string name="select_scene">เว็บแกลเลอรี่ไหนที่คุณอยากเข้าชม?</string>
-    <string name="select_scene_explain">e-hentai: เขตแดนที่ทุกๆคนสามารถเข้าถึงได้\nexhentai: เขตแดนอันแสนศักศิทธิ์สำหรับคนที่ลงชื่อเข้าใช้ระบบแล้วเท่านั้นที่จะเข้าไปได้</string>
+    <string name="select_scene_explain">e-hentai: เขตแดนที่ทุกๆคนสามารถเข้าถึงได้\ngallery: เขตแดนอันแสนศักศิทธิ์สำหรับคนที่ลงชื่อเข้าใช้ระบบแล้วเท่านั้นที่จะเข้าไปได้</string>
     <string name="no_select">โปรดเลือกหนึ่งเว็บไซต์</string>
 
     <!-- Update -->
@@ -162,13 +162,13 @@
     <string name="update_to">อัพเดตเป็น</string>
     <string name="update_plain">เวอร์ชั่น: %1$s\nขนาดไฟล์: %2$s\n\n%3$s</string>
     <string name="update_fail_info">คลิกใช่เพื่อไปยังหน้าแรกของ Github</string>
-    <string name="update_to_date">คุณกำลังใช้เวอร์ชั่นล่าสุดของ EhViewer.</string>
+    <string name="update_to_date">คุณกำลังใช้เวอร์ชั่นล่าสุดของ AnotherViewer.</string>
     <string name="update_ignore">ข้ามไป</string>
     <string name="no_updates_available">มันเป็นเวอร์ชั่นล่าสุด</string>
 
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_exhentai">ค้นหาใน ExHentai</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน E-Hentai</string>
+    <string name="gallery_list_search_bar_hint_gallery">ค้นหาใน Gallery</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">ค้นหาใน Gallery Site</string>
     <string name="gallery_list_search_bar_open_gallery">เปิดแกลเลอรี่</string>
     <string name="gallery_list_empty_hit">โลกนั้นนะมันกว้างงงงงใหญ่ไพรศาล และแพนด้านั่งโดดเดี่ยวเดียวดายในโลกกลมๆ</string>
     <string name="gallery_list_empty_hit_subscription">สมัครสมาชิกแท็กในการตั้งค่า->EH->แท็กของฉัน</string>
@@ -416,7 +416,7 @@
     <string name="download_stop_all">หยุดทั้งหมด</string>
     <string name="download_reset_reading_progress">รีเซ็ตตำแหน่งที่อ่าน</string>
     <string name="reset_reading_progress_message">รีเซ็ตตำแหน่งที่อ่านค้างไว้ทั้งหมดในแกลเลอรี่ที่โหลดไว้ทั้งหมดหรือไม่?</string>
-    <string name="download_service_label">บริการดาวน์โหลดของ EhViewer</string>
+    <string name="download_service_label">บริการดาวน์โหลดของ AnotherViewer</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, เหลือ %2$s</string>
     <string name="remember_download_label">จดจำป้ายชื่อดาวน์โหลด</string>
@@ -455,7 +455,7 @@
     <string name="add_filter">เพิ่มตัวบล็อก</string>
     <string name="show_definition">แสดงความหมาย</string>
     <string name="filter_text">ข้อความตัวบล็อก</string>
-    <string name="filter_tip">ระบบบล็อกนี้จะกรองผลลัพธ์ของระบบบล็อกของเว็บไซต์ EHentai\n\nบล็อกชื่อเรื่อง: แยกแกลเลอรี่ที่มีชื่อเรื่องประกอบด้วยคำนั้น\n\nบล็อกผู้อัพโหลด: แยกแกลเลอรี่ที่ถูกอัพโหลดโดยผู้อัพโหลดนั้น\n\nบล็อกแท็ก: แยกแกลเลอรี่ที่มีแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่\n\nบล็อกเนมสเปซแท็ก: แยกแกลเลอรี่ที่มีเนมสเปซแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่</string>
+    <string name="filter_tip">ระบบบล็อกนี้จะกรองผลลัพธ์ของระบบบล็อกของเว็บไซต์ Gallery\n\nบล็อกชื่อเรื่อง: แยกแกลเลอรี่ที่มีชื่อเรื่องประกอบด้วยคำนั้น\n\nบล็อกผู้อัพโหลด: แยกแกลเลอรี่ที่ถูกอัพโหลดโดยผู้อัพโหลดนั้น\n\nบล็อกแท็ก: แยกแกลเลอรี่ที่มีแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่\n\nบล็อกเนมสเปซแท็ก: แยกแกลเลอรี่ที่มีเนมสเปซแท็กนั้น ซึ่งจะใช้เวลามากขึ้นในการรับรายการแกลเลอรี่</string>
     <string name="filter_the_uploader">บล็อกผู้อัพโหลด \"%s\" หรือไม่?</string>
     <string name="filter_the_tag">บล็อกแท็ก \"%s\" หรือไม่?</string>
     <string name="filter_added">เพิ่มตัวบล็อกแล้ว</string>
@@ -468,7 +468,7 @@
     <string name="enable_fingerprint">อนุญาตใช้สแกนลายนิ้วมือเพื่อปลดล็อกเช่นกัน</string>
 
     <!-- UConfig Activity -->
-    <string name="u_config">การตั้งค่า EHentai</string>
+    <string name="u_config">การตั้งค่า Gallery</string>
     <string name="apply">ยืนยัน</string>
     <string name="apply_tip">แตะเครื่องหมายถูกเพื่อบันทึกการตั้งค่าแล้ว</string>
 
@@ -508,10 +508,10 @@
     <string name="settings_eh_identity_cookies_tourist">ยังไม่ลงชื่อเข้าสู่ระบบ</string>
     <string name="settings_eh_identity_cookies_copy">คัดลอก</string>
     <string name="settings_eh_sign_out_restart">กำลังรีสตาร์ทอัตโนมัติให้คุณ กรุณารอสักครู่</string>
-    <string name="settings_u_config">การตั้งค่า EHentai</string>
-    <string name="settings_u_config_summary">การตั้งค่าบนเว็บไซต์ EHentai</string>
+    <string name="settings_u_config">การตั้งค่า Gallery</string>
+    <string name="settings_u_config_summary">การตั้งค่าบนเว็บไซต์ Gallery</string>
     <string name="settings_my_tags">แท็กของฉัน</string>
-    <string name="settings_my_tags_summary">แท็กของฉันบนเว็บไซต์ EHentai</string>
+    <string name="settings_my_tags_summary">แท็กของฉันบนเว็บไซต์ Gallery</string>
     <string name="settings_eh_theme">ธีม</string>
     <string name="settings_eh_theme_light">สว่าง</string>
     <string name="settings_eh_theme_dark">มืด</string>
@@ -544,7 +544,7 @@
     <string name="settings_eh_show_gallery_comment">แสดงความคิดเห็นแกลเลอรี่</string>
     <string name="settings_eh_show_eh_event">แสดงกิจกรรม EH</string>
     <string name="settings_eh_show_eh_limits">แสดงขีดจำกัด EH</string>
-    <string name="settings_eh_show_jpn_title_summary">ต้องเปิดใช้งานชื่อเรื่องญี่ปุ่นในการตั้งค่าบนเว็บไซต์ EHentai</string>
+    <string name="settings_eh_show_jpn_title_summary">ต้องเปิดใช้งานชื่อเรื่องญี่ปุ่นในการตั้งค่าบนเว็บไซต์ Gallery</string>
     <string name="settings_eh_show_gallery_pages">แสดงจำนวนหน้าของแกลเลอรี่</string>
     <string name="settings_eh_show_gallery_pages_summary">แสดงจำนวนหน้าที่มีอยู่ในแต่ละแกลเลอรี่</string>
     <string name="settings_eh_show_tag_translations">แสดงแท็กการแปลภาษา</string>
@@ -592,7 +592,7 @@
     <string name="settings_download_download_location">ตำแหน่งแหล่งดาวน์โหลด</string>
     <string name="settings_download_invalid_download_location">ตำแหน่งแหล่งดาวน์โหลดไม่ถูกต้อง</string>
     <string name="settings_download_cant_get_download_location">ไม่สามารถเข้าถึงแหล่งดาวน์โหลดได้</string>
-    <string name="settings_download_pick_dir_kk">บน Android เวอร์ชั่น 4.4 (หรือ KitKat) เป็นต้นไป แอพจะไม่สามารถเขียนข้อมูลใดๆก็ตามบนพื้นที่จัดเก็บภายนอกอย่างการ์ด SD ได้ เว้นแต่ว่าคุณจะรูทระบบและเพิ่มแพชต์เข้าไป แต่ &lt;การ์ด SD&gt;/Android/data/com.hippo.ehviewer นั้นเป็นข้อยกเว้น สามารถให้เขียนได้สำหรับแอพนี้</string>
+    <string name="settings_download_pick_dir_kk">บน Android เวอร์ชั่น 4.4 (หรือ KitKat) เป็นต้นไป แอพจะไม่สามารถเขียนข้อมูลใดๆก็ตามบนพื้นที่จัดเก็บภายนอกอย่างการ์ด SD ได้ เว้นแต่ว่าคุณจะรูทระบบและเพิ่มแพชต์เข้าไป แต่ &lt;การ์ด SD&gt;/Android/data/com.hippo.anotherviewer นั้นเป็นข้อยกเว้น สามารถให้เขียนได้สำหรับแอพนี้</string>
     <string name="settings_download_pick_dir_l">บน Android เวอร์ชั่น 5.0 (หรือ Lolipop) เป็นต้นไป ได้ใช้ API ตัวใหม่เพื่อเขียนข้อมูลบนพื้นที่จัดเก็บภายนอกอย่างการ์ด SD ได้ แตะที่ \"เอกสาร\" ถ้าคุณอยากตั้งให้การ์ด SD เป็นแหล่งดาวน์โหลด</string>
     <string name="settings_download_document">เอกสาร</string>
     <string name="settings_download_continue">ดำเนินการต่อ</string>
@@ -664,8 +664,8 @@
     <string name="settings_advanced_wifi_client_summary">รับข้อมูลการย้ายจาก Wi-Fi Hotspot</string>
 
     <string name="settings_about">เกี่ยวกับ</string>
-    <string name="settings_about_declaration" translatable="false">EhViewer</string>
-    <string name="settings_about_declaration_summary">EhViewer ไม่มีความแตกต่างจากตัวเว็บ E-Hentai.org แต่อย่างใด</string>
+    <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
+    <string name="settings_about_declaration_summary">AnotherViewer ไม่มีความแตกต่างจากตัวเว็บ Gallery Site.org แต่อย่างใด</string>
     <string name="settings_about_author">นักพัฒนา</string>
     <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
     <string name="settings_about_telegram">Telegram</string>
@@ -674,7 +674,7 @@
     <string name="settings_about_changelog">บันทึกการเปลี่ยนแปลง</string>
     <string name="settings_about_help">ช่วยเหลือ</string>
     <string name="settings_about_license">ใบอนุญาต</string>
-    <string name="settings_about_license_summary">EhViewer ต้องขอขอบคุณโครงการโอเพ่นซอร์สหลายๆโครงการเป็นอย่างสูง</string>
+    <string name="settings_about_license_summary">AnotherViewer ต้องขอขอบคุณโครงการโอเพ่นซอร์สหลายๆโครงการเป็นอย่างสูง</string>
     <string name="settings_about_donate">บริจาค</string>
     <string name="settings_about_donate_message">เงินบริจาคของคุณจะไม่ได้บริการพิเศษ แต่จะทำให้แอปพัฒนาไปได้ไกลมากขึ้น</string>
     <string name="settings_about_donate_alipay">Alipay</string>
@@ -844,7 +844,7 @@
     <string name="archiver_dialog_download_resample">ดาวน์โหลดไฟล์บีบอัดที่ปรับขนาดแล้ว</string>
     <string name="archiver_dialog_size">ขนาดโดยประมาณ:  %s</string>
     <string name="dialog_archiver_title">Archiver Downloader</string>
-    <string name="download_receiver_label">EhViewer Download Receiver</string>
+    <string name="download_receiver_label">AnotherViewer Download Receiver</string>
     <string name="decompressed_successfully">ขยายไฟล์สำเร็จแล้ว!</string>
     <string name="decompression_failed">การขยายไฟล์ล้มเหลว!</string>
     <string name="download_label_archiver">Archiver</string>
@@ -891,13 +891,13 @@
 
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนพื้นหลัง?</string>
-    <string name="change_background_message">การแก้ไขพื้นหลังจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง E-hentai หรือซอฟต์แวร์ที่คล้ายกันได้</string>
+    <string name="change_background_message">การแก้ไขพื้นหลังจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง Gallery Site หรือซอฟต์แวร์ที่คล้ายกันได้</string>
     <string name="change_avatar_title">คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนอวตาร?</string>
-    <string name="change_avatar_message">การแก้ไขอวตารจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง E-hentai หรือซอฟต์แวร์ที่คล้ายกันได้</string>
+    <string name="change_avatar_message">การแก้ไขอวตารจำกัดเฉพาะซอฟต์แวร์นี้เท่านั้น และไม่สามารถซิงค์ไปยัง Gallery Site หรือซอฟต์แวร์ที่คล้ายกันได้</string>
     <string name="take_a_photograph">ถ่ายภาพ</string>
     <string name="choose_from_the_album">เลือกจากอัลบั้ม</string>
-    <string name="request_camera_permission">EhViewer จะขอสิทธิ์เข้าถึงกล้องของอุปกรณ์เพื่อถ่ายภาพ คุณต้องการอนุญาตหรือไม่?</string>
-    <string name="request_storage_permission">EhViewer จะขอสิทธิ์เข้าถึงอัลบั้มภาพของอุปกรณ์เพื่อรับภาพ คุณต้องการอนุญาตหรือไม่?</string>
+    <string name="request_camera_permission">AnotherViewer จะขอสิทธิ์เข้าถึงกล้องของอุปกรณ์เพื่อถ่ายภาพ คุณต้องการอนุญาตหรือไม่?</string>
+    <string name="request_storage_permission">AnotherViewer จะขอสิทธิ์เข้าถึงอัลบั้มภาพของอุปกรณ์เพื่อรับภาพ คุณต้องการอนุญาตหรือไม่?</string>
 
     <!-- 下载通知   -->
     <string name="download_torrent_name">torrent: %s</string>

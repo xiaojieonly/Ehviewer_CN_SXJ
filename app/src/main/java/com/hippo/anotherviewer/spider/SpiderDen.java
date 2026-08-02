@@ -1,0 +1,519 @@
+/*
+ * Copyright 2016 Hippo Seven
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hippo.anotherviewer.spider;
+
+import android.content.Context;
+import android.graphics.BitmapFactory;
+import android.os.Looper;
+import android.webkit.MimeTypeMap;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.hippo.beerbelly.SimpleDiskCache;
+import com.hippo.anotherviewer.SiteDB;
+import com.hippo.anotherviewer.Settings;
+import com.hippo.anotherviewer.client.SiteCacheKeyFactory;
+import com.hippo.anotherviewer.client.SiteUtils;
+import com.hippo.anotherviewer.client.data.GalleryInfo;
+import com.hippo.anotherviewer.gallery.GalleryProvider2;
+import com.hippo.io.UniFileInputStreamPipe;
+import com.hippo.io.UniFileOutputStreamPipe;
+import com.hippo.streampipe.InputStreamPipe;
+import com.hippo.streampipe.OutputStreamPipe;
+import com.hippo.unifile.FilenameFilter;
+import com.hippo.unifile.UniFile;
+import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.MathUtils;
+import com.hippo.lib.yorozuya.Utilities;
+import com.hippo.anotherviewer.smb.SmbCacheSettings;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Locale;
+
+public final class SpiderDen {
+
+    @NonNull
+    private final GalleryInfo mGalleryInfo;
+    private final Object mDownloadDirLock = new Object();
+    @Nullable
+    private UniFile mDownloadDir;
+    private volatile int mMode = SpiderQueen.MODE_READ;
+
+
+    private long mGid;
+
+    @Nullable
+    private static SimpleDiskCache sCache;
+
+    public static void initialize(Context context) {
+        sCache = new SimpleDiskCache(new File(context.getCacheDir(), "image"),
+                MathUtils.clamp(Settings.getReadCacheSize(), 40, 640) * 1024 * 1024);
+    }
+
+    public static class StartWithFilenameFilter implements FilenameFilter {
+
+        private final String mPrefix;
+
+        public StartWithFilenameFilter(String prefix) {
+            mPrefix = prefix;
+        }
+
+        @Override
+        public boolean accept(UniFile dir, String filename) {
+            return filename.startsWith(mPrefix);
+        }
+    }
+
+    @Nullable
+    private static String findDownloadDirname(GalleryInfo galleryInfo, UniFile parentDir) {
+        String dirname = SiteDB.getDownloadDirname(galleryInfo.gid);
+        if (null != dirname) {
+            // Some dirname may be invalid in some version
+            dirname = FileUtils.sanitizeFilename(dirname);
+            SiteDB.putDownloadDirname(galleryInfo.gid, dirname);
+            return dirname;
+        }
+
+        // Directory listing is slow on SAF and must not run on the main thread.
+        if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
+            return null;
+        }
+
+        try {
+            UniFile[] files = parentDir.listFiles(new StartWithFilenameFilter(galleryInfo.gid + "-"));
+            if (null != files) {
+                // Get max-length-name dir
+                int maxLength = -1;
+                for (UniFile file : files) {
+                    if (file.isDirectory()) {
+                        String name = file.getName();
+                        int length = name.length();
+                        if (length > maxLength) {
+                            maxLength = length;
+                            dirname = name;
+                        }
+                    }
+                }
+                if (null != dirname) {
+                    SiteDB.putDownloadDirname(galleryInfo.gid, dirname);
+                }
+            }
+        } catch (Exception e) {
+            // Failed to list files, maybe storage is unavailable or permission lost
+            android.util.Log.w("SpiderDen", "Failed to list files in download directory", e);
+        }
+        return dirname;
+    }
+
+    /**
+     * Returns the gallery download folder if it already exists or is known in DB.
+     * Never creates a new folder. Safe to call from the UI thread when deleting downloads.
+     */
+    @Nullable
+    public static UniFile getExistingGalleryDownloadDir(GalleryInfo galleryInfo) {
+        UniFile dir = Settings.getDownloadLocation();
+        if (dir == null) {
+            return null;
+        }
+        String dirname = findDownloadDirname(galleryInfo, dir);
+        return dirname != null ? dir.subFile(dirname) : null;
+    }
+
+    public static UniFile getGalleryDownloadDir(GalleryInfo galleryInfo) {
+        UniFile dir = Settings.getDownloadLocation();
+        if (dir != null) {
+            if (dir.getUri() != null && "smb".equals(dir.getUri().getScheme())) {
+                File smbCacheDir = SmbCacheSettings.getSmbCacheDir(
+                    com.hippo.anotherviewer.SiteApplication.getInstance());
+                String dirname = FileUtils.sanitizeFilename(
+                    galleryInfo.gid + "-" + SiteUtils.getSuitableTitle(galleryInfo));
+                File galleryDir = new File(smbCacheDir, dirname);
+                if (!galleryDir.exists()) {
+                    galleryDir.mkdirs();
+                }
+                return UniFile.fromFile(galleryDir);
+            }
+            String dirname = findDownloadDirname(galleryInfo, dir);
+
+            // Create it
+            if (null == dirname) {
+                dirname = FileUtils.sanitizeFilename(galleryInfo.gid + "-" + SiteUtils.getSuitableTitle(galleryInfo));
+                SiteDB.putDownloadDirname(galleryInfo.gid, dirname);
+            }
+
+            return dir.subFile(dirname);
+        } else {
+            return null;
+        }
+    }
+
+    public SpiderDen(GalleryInfo galleryInfo) {
+        mGalleryInfo = galleryInfo;
+        mGid = galleryInfo.gid;
+    }
+
+    /**
+     * Resolves {@link #mDownloadDir}. Must be called with {@link #mDownloadDirLock} held.
+     * On the main thread, skips SAF directory listing when the DB has no folder name yet
+     * (that listing runs on a worker via {@link #prepareDownloadStorage()}).
+     */
+    @Nullable
+    private UniFile resolveDownloadDirLocked() {
+        if (mDownloadDir != null) {
+            return mDownloadDir;
+        }
+        if (Looper.getMainLooper().getThread() == Thread.currentThread()
+                && SiteDB.getDownloadDirname(mGalleryInfo.gid) == null) {
+            return null;
+        }
+        mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+//        if (mDownloadDir!=null){
+//            mDownloadDir.ensureDir();
+//        }
+        return mDownloadDir;
+    }
+
+    /**
+     * Ensures the gallery download folder exists. Call from downloader worker threads only.
+     */
+    public boolean prepareDownloadStorage() {
+        if (mMode != SpiderQueen.MODE_DOWNLOAD) {
+            return true;
+        }
+        synchronized (mDownloadDirLock) {
+            if (mDownloadDir == null) {
+                mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+            }
+            return mDownloadDir != null && mDownloadDir.ensureDir();
+        }
+    }
+
+    public void setMGid(long mGid) {
+        this.mGid = mGid;
+    }
+
+    public void setMode(@SpiderQueen.Mode int mode) {
+        mMode = mode;
+    }
+
+    public boolean isDownloadMode() {
+        return mMode == SpiderQueen.MODE_DOWNLOAD;
+    }
+
+    private boolean shouldSyncDownloadWhileReading() {
+        return mMode == SpiderQueen.MODE_READ && Settings.getSyncDownloadWhileReading();
+    }
+
+    public boolean shouldWriteToDownloadDir() {
+        return isDownloadMode() || shouldSyncDownloadWhileReading();
+    }
+
+    private boolean ensureDownloadDirExists() {
+        synchronized (mDownloadDirLock) {
+            if (mDownloadDir == null) {
+                mDownloadDir = getGalleryDownloadDir(mGalleryInfo);
+            }
+            return mDownloadDir != null && mDownloadDir.ensureDir();
+        }
+    }
+
+    public boolean isReady() {
+        switch (mMode) {
+            case SpiderQueen.MODE_READ:
+                return sCache != null;
+            case SpiderQueen.MODE_DOWNLOAD:
+                synchronized (mDownloadDirLock) {
+                    return mDownloadDir != null && mDownloadDir.isDirectory();
+                }
+            default:
+                return false;
+        }
+    }
+
+    @Nullable
+    public UniFile getDownloadDir() {
+        UniFile dir;
+        synchronized (mDownloadDirLock) {
+            dir = resolveDownloadDirLocked();
+        }
+        return dir != null && dir.isDirectory() ? dir : null;
+    }
+
+    @Nullable
+    public UniFile getDownloadDirName() {
+        synchronized (mDownloadDirLock) {
+            return resolveDownloadDirLocked();
+        }
+    }
+
+    private boolean containInCache(int index) {
+        if (sCache == null) {
+            return false;
+        }
+
+        String key = SiteCacheKeyFactory.getImageKey(mGid, index);
+        return sCache.contain(key);
+    }
+
+    /**
+     * @param extension with dot
+     */
+    public static String generateImageFilename(int index, String extension) {
+        return String.format(Locale.US, "%08d%s", index + 1, extension);
+    }
+
+    @Nullable
+    public static UniFile findImageFile(UniFile dir, int index) {
+        for (String extension : GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS) {
+            String filename = generateImageFilename(index, extension);
+            UniFile file = dir.findFile(filename);
+            if (file != null) {
+                return file;
+            }
+        }
+        return null;
+    }
+
+    private boolean containInDownloadDir(int index) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return false;
+        }
+
+        // Find image file in download dir
+        return findImageFile(dir, index) != null;
+    }
+
+    /**
+     * @param extension with dot
+     */
+    private String fixExtension(String extension) {
+        if (Utilities.contain(GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS, extension)) {
+            return extension;
+        } else {
+            return GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS[0];
+        }
+    }
+
+    private boolean copyFromCacheToDownloadDir(int index) {
+        if (sCache == null) {
+            return false;
+        }
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return false;
+        }
+        // Find image file in cache
+        String key = SiteCacheKeyFactory.getImageKey(mGid, index);
+        InputStreamPipe pipe = sCache.getInputStreamPipe(key);
+        if (pipe == null) {
+            return false;
+        }
+
+        OutputStream os = null;
+        try {
+            // Get extension
+            String extension;
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            pipe.obtain();
+            BitmapFactory.decodeStream(pipe.open(), null, options);
+            pipe.close();
+            extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(options.outMimeType);
+            if (extension != null) {
+                extension = '.' + extension;
+            } else {
+                return false;
+            }
+            // Fix extension
+            extension = fixExtension(extension);
+            // Copy from cache to download dir
+            UniFile file = dir.createFile(generateImageFilename(index, extension));
+            if (file == null) {
+                return false;
+            }
+            os = file.openOutputStream();
+            IOUtils.copy(pipe.open(), os);
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            IOUtils.closeQuietly(os);
+            pipe.close();
+            pipe.release();
+        }
+    }
+
+    public boolean contain(int index) {
+        if (mMode == SpiderQueen.MODE_READ) {
+            return containInCache(index) || containInDownloadDir(index);
+        } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
+            return containInDownloadDir(index) || copyFromCacheToDownloadDir(index);
+        } else {
+            return false;
+        }
+    }
+
+    private boolean removeFromCache(int index) {
+        if (sCache == null) {
+            return false;
+        }
+
+        String key = SiteCacheKeyFactory.getImageKey(mGid, index);
+        return sCache.remove(key);
+    }
+
+    private boolean removeFromDownloadDir(int index) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return false;
+        }
+
+        boolean result = false;
+        for (int i = 0, n = GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS.length; i < n; i++) {
+            String filename = generateImageFilename(index, GalleryProvider2.SUPPORT_IMAGE_EXTENSIONS[i]);
+            UniFile file = dir.subFile(filename);
+            if (file != null) {
+                result |= file.delete();
+            }
+        }
+        return result;
+    }
+
+    public boolean remove(int index) {
+        boolean result = removeFromCache(index);
+        result |= removeFromDownloadDir(index);
+        return result;
+    }
+
+    @Nullable
+    private OutputStreamPipe openCacheOutputStreamPipe(int index) {
+        if (sCache == null) {
+            return null;
+        }
+
+        String key = SiteCacheKeyFactory.getImageKey(mGid, index);
+        return sCache.getOutputStreamPipe(key);
+    }
+
+    /**
+     * @param extension without dot
+     */
+    @Nullable
+    private OutputStreamPipe openDownloadOutputStreamPipe(int index, @Nullable String extension) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return null;
+        }
+        if (extension==null||!extension.contains(".")){
+            extension = fixExtension('.' + extension);
+        }else {
+            extension = fixExtension(extension);
+        }
+
+        UniFile file = dir.createFile(generateImageFilename(index, extension));
+        if (file != null) {
+            return new UniFileOutputStreamPipe(file);
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
+    public OutputStreamPipe openOutputStreamPipe(int index, @Nullable String extension) {
+        if (mMode == SpiderQueen.MODE_READ) {
+            if (shouldSyncDownloadWhileReading() && ensureDownloadDirExists()) {
+                OutputStreamPipe pipe = openDownloadOutputStreamPipe(index, extension);
+                if (pipe != null) {
+                    return pipe;
+                }
+            }
+            return openCacheOutputStreamPipe(index);
+        } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
+            return openDownloadOutputStreamPipe(index, extension);
+        } else {
+            return null;
+        }
+    }
+
+
+    @Nullable
+    private InputStreamPipe openCacheInputStreamPipe(int index) {
+        if (sCache == null) {
+            return null;
+        }
+
+        String key = SiteCacheKeyFactory.getImageKey(mGid, index);
+        return sCache.getInputStreamPipe(key);
+    }
+
+    @Nullable
+    public InputStreamPipe openDownloadInputStreamPipe(int index) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return null;
+        }
+
+        for (int i = 0; i < 2; i++) {
+            UniFile file = findImageFile(dir, index);
+            if (file != null) {
+                return new UniFileInputStreamPipe(file);
+            } else if (!copyFromCacheToDownloadDir(index)) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private InputStreamPipe openDownloadInputStreamPipeReadOnly(int index) {
+        UniFile dir = getDownloadDir();
+        if (dir == null) {
+            return null;
+        }
+        UniFile file = findImageFile(dir, index);
+        return file != null ? new UniFileInputStreamPipe(file) : null;
+    }
+
+    @Nullable
+    public InputStreamPipe openInputStreamPipe(int index) {
+        if (mMode == SpiderQueen.MODE_READ) {
+            if (shouldSyncDownloadWhileReading()) {
+                InputStreamPipe pipe = openDownloadInputStreamPipe(index);
+                if (pipe == null) {
+                    pipe = openCacheInputStreamPipe(index);
+                }
+                return pipe;
+            }
+            InputStreamPipe pipe = openCacheInputStreamPipe(index);
+            if (pipe == null) {
+                // Read mode must not trigger cache-to-download copy.
+                pipe = openDownloadInputStreamPipeReadOnly(index);
+            }
+            return pipe;
+        } else if (mMode == SpiderQueen.MODE_DOWNLOAD) {
+            return openDownloadInputStreamPipe(index);
+        } else {
+            return null;
+        }
+    }
+}

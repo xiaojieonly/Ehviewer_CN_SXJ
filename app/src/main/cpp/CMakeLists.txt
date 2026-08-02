@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.18.1)
 
 #project(root)
-project("ehviewer")
+project("anotherviewer")
 
 add_subdirectory(jni)
 
@@ -18,7 +18,7 @@ add_subdirectory(jni)
 
 add_library( # Sets the name of the library.
 #        root
-        "ehviewer"
+        "anotherviewer"
         # Sets the library as a shared library.
         SHARED
         gifutils.c
@@ -30,7 +30,7 @@ add_library( # Sets the name of the library.
 
 # Ensure generated binary aligns segments for 16KB page size devices.
 target_link_options(
-        ehviewer
+        anotherviewer
         PRIVATE
         -Wl,-z,max-page-size=16384)
 
@@ -57,7 +57,7 @@ find_library(
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-        ehviewer
+        anotherviewer
 
         # Links the target library to the log library
         # included in the NDK.

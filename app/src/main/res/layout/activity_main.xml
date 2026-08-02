@@ -19,18 +19,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hippo.ehviewer.widget.EhDrawerLayout
+    <com.hippo.anotherviewer.widget.SiteDrawerLayout
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
-        <com.hippo.ehviewer.widget.EhStageLayout
+        <com.hippo.anotherviewer.widget.SiteStageLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <com.hippo.ehviewer.widget.EhNavigationView
+        <com.hippo.anotherviewer.widget.SiteNavigationView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="left"
@@ -70,7 +70,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <com.hippo.ehviewer.widget.LimitsCountView
+                        <com.hippo.anotherviewer.widget.LimitsCountView
                             android:id="@+id/limits_count_view"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -90,9 +90,9 @@
                     </LinearLayout>
                 </FrameLayout>
             </FrameLayout>
-        </com.hippo.ehviewer.widget.EhNavigationView>
+        </com.hippo.anotherviewer.widget.SiteNavigationView>
 
-        <com.hippo.ehviewer.widget.EhDrawerView
+        <com.hippo.anotherviewer.widget.SiteDrawerView
             android:id="@+id/right_drawer"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -101,5 +101,5 @@
             android:clickable="true"
             android:maxWidth="@dimen/drawer_max_width" />
 
-    </com.hippo.ehviewer.widget.EhDrawerLayout>
+    </com.hippo.anotherviewer.widget.SiteDrawerLayout>
 </com.hippo.widget.SafeCoordinatorLayout>

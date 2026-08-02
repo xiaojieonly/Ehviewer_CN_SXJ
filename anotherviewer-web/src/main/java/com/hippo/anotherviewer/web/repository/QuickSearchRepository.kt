@@ -1,0 +1,11 @@
+package com.hippo.anotherviewer.web.repository
+
+import com.hippo.anotherviewer.web.entity.QuickSearchEntity
+import org.springframework.data.jpa.repository.JpaRepository
+
+interface QuickSearchRepository : JpaRepository<QuickSearchEntity, Long> {
+    fun findByName(name: String): QuickSearchEntity?
+    fun findAllByOrderById(): List<QuickSearchEntity>
+    fun findAllByUsernameIsNull(): List<QuickSearchEntity>
+    fun countByUsername(username: String): Long
+}

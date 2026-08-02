@@ -20,7 +20,7 @@
  *
  * Background comes from the category color tokens (`--color-cat-*`, exact
  * Material values from `colors.xml` / roadmap §色彩系统); label defaults to
- * `CATEGORY_LABELS` (Android `EhUtils.getCategory` strings). White 12px text,
+ * `CATEGORY_LABELS` (Android `SiteUtils.getCategory` strings). White 12px text,
  * 2px corner radius — the restrained-M2 tag look, not a pill.
  */
 import { computed } from 'vue'

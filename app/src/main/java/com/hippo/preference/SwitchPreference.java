@@ -28,7 +28,7 @@ import android.widget.Checkable;
 import android.widget.CompoundButton;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.SwitchCompat;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 

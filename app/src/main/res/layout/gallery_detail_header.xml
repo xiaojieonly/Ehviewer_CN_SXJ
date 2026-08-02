@@ -128,7 +128,7 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <com.hippo.ehviewer.widget.ArchiverDownloadProgress
+            <com.hippo.anotherviewer.widget.ArchiverDownloadProgress
                 android:id="@+id/archiver_download_progress"
                 android:visibility="gone"
                 android:layout_width="match_parent"

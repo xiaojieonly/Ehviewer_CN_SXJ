@@ -33,7 +33,7 @@ import android.view.animation.LinearInterpolator;
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.animation.PathInterpolatorCompat;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import com.hippo.lib.yorozuya.ViewUtils;
 import java.util.ArrayList;
 

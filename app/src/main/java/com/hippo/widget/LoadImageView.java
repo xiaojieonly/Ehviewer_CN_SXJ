@@ -39,15 +39,15 @@ import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.DataContainer;
 import com.hippo.conaco.Unikery;
 import com.hippo.drawable.PreciselyClipDrawable;
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.EhDB;
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.client.EhCacheKeyFactory;
-import com.hippo.ehviewer.client.EhClient;
-import com.hippo.ehviewer.client.EhRequest;
-import com.hippo.ehviewer.client.EhUrl;
-import com.hippo.ehviewer.client.data.GalleryDetail;
-import com.hippo.ehviewer.dao.DownloadInfo;
+import com.hippo.anotherviewer.SiteApplication;
+import com.hippo.anotherviewer.SiteDB;
+import com.hippo.anotherviewer.R;
+import com.hippo.anotherviewer.client.SiteCacheKeyFactory;
+import com.hippo.anotherviewer.client.SiteClient;
+import com.hippo.anotherviewer.client.SiteRequest;
+import com.hippo.anotherviewer.client.SiteUrl;
+import com.hippo.anotherviewer.client.data.GalleryDetail;
+import com.hippo.anotherviewer.dao.DownloadInfo;
 import com.hippo.lib.image.Image;
 //import com.hippo.lib.image.ImageBitmap;
 //import com.hippo.lib.image.ImageDrawable;
@@ -103,7 +103,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         a.recycle();
         setFocusable(false);
         if (!isInEditMode()) {
-            mConaco = EhApplication.getConaco(context);
+            mConaco = SiteApplication.getConaco(context);
         }
 //        setScaleType(ScaleType.FIT_CENTER);
     }
@@ -358,18 +358,18 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         } else {
             if (secondTry && downloadInfo != null) {
                 Context context = this.getContext();
-                if (EhApplication.getInstance().containGlobalStuff(mRequestId)) {
+                if (SiteApplication.getInstance().containGlobalStuff(mRequestId)) {
                     // request exist
                     return;
                 }
-                String detailUrl = EhUrl.getGalleryDetailUrl(downloadInfo.gid, downloadInfo.token);
+                String detailUrl = SiteUrl.getGalleryDetailUrl(downloadInfo.gid, downloadInfo.token);
                 GalleryDetailCallback callback = new GalleryDetailCallback(context);
-                mRequestId = ((EhApplication) context.getApplicationContext()).putGlobalStuff(callback);
-                EhRequest request = new EhRequest()
-                        .setMethod(EhClient.METHOD_GET_GALLERY_DETAIL)
+                mRequestId = ((SiteApplication) context.getApplicationContext()).putGlobalStuff(callback);
+                SiteRequest request = new SiteRequest()
+                        .setMethod(SiteClient.METHOD_GET_GALLERY_DETAIL)
                         .setArgs(detailUrl)
                         .setCallback(callback);
-                EhApplication.getEhClient(context).execute(request);
+                SiteApplication.getSiteClient(context).execute(request);
             }
             // Can't retry, so release
             mKey = null;
@@ -438,13 +438,13 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     private @interface RetryType {
     }
 
-    private class GalleryDetailCallback implements EhClient.Callback<GalleryDetail> {
+    private class GalleryDetailCallback implements SiteClient.Callback<GalleryDetail> {
         private final Context context;
-        private final EhApplication ehApplication;
+        private final SiteApplication ehApplication;
 
         private GalleryDetailCallback(Context context) {
             this.context = context;
-            this.ehApplication = (EhApplication) context.getApplicationContext();
+            this.ehApplication = (SiteApplication) context.getApplicationContext();
         }
 
         @Override
@@ -455,11 +455,11 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
                 return;
             }
             // Put gallery detail to cache
-            EhApplication.getGalleryDetailCache(context).put(result.gid, result);
+            SiteApplication.getGalleryDetailCache(context).put(result.gid, result);
             if (downloadInfo.gid == result.gid && !downloadInfo.thumb.equals(result.thumb)) {
                 downloadInfo.updateInfo(result);
-                EhDB.putDownloadInfo(downloadInfo);
-                load(EhCacheKeyFactory.getThumbKey(downloadInfo.gid), downloadInfo.thumb, true);
+                SiteDB.putDownloadInfo(downloadInfo);
+                load(SiteCacheKeyFactory.getThumbKey(downloadInfo.gid), downloadInfo.thumb, true);
             }
         }
 

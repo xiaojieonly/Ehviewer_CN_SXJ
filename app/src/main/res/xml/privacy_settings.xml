@@ -5,7 +5,7 @@
     <com.hippo.preference.ActivityPreference
         android:key="pattern_protection"
         android:title="@string/settings_privacy_pattern_protection_title"
-        app:activity="com.hippo.ehviewer.ui.SetSecurityActivity"
+        app:activity="com.hippo.anotherviewer.ui.SetSecurityActivity"
         app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference

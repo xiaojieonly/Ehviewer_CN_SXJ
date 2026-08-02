@@ -13,7 +13,7 @@
 
 - **Encoding**: JSON Lines (one JSON object per line, `\n` delimited)
 - **Library**: `logstash-logback-encoder` (net.logstash.logback:logstash-logback-encoder:8.0+)
-- **Fallback**: When JSON is disabled (`ehviewer.logging.json-enabled=false`), use standard Logback pattern console output for local development readability.
+- **Fallback**: When JSON is disabled (`anotherviewer.logging.json-enabled=false`), use standard Logback pattern console output for local development readability.
 
 ### 1.2 Base Fields (every log entry)
 
@@ -21,11 +21,11 @@
 |-------|------|-------------|---------|
 | `@timestamp` | string (ISO-8601) | Event time, UTC | `"2026-07-28T14:32:01.123Z"` |
 | `level` | string | Log level | `"INFO"` |
-| `logger` | string | Logger name (class FQN) | `"com.hippo.ehviewer.web.service.ImageStreamingService"` |
+| `logger` | string | Logger name (class FQN) | `"com.hippo.anotherviewer.web.service.ImageStreamingService"` |
 | `message` | string | Human-readable message | `"Image cache hit"` |
 | `traceId` | string \| null | Request correlation ID (from MDC) | `"a1b2c3d4e5f6"` |
 | `thread` | string | Thread name | `"http-nio-8080-exec-3"` |
-| `app` | string | Application identifier | `"ehviewer-web"` |
+| `app` | string | Application identifier | `"anotherviewer-web"` |
 
 **traceId propagation**:
 - Generated per HTTP request via a servlet filter (UUID-based, 12-char hex prefix).
@@ -45,7 +45,7 @@ Emitted on every image cache lookup. Level: **TRACE**.
 {
   "@timestamp": "2026-07-28T14:32:01.123Z",
   "level": "TRACE",
-  "logger": "com.hippo.ehviewer.web.cache.ImageCacheService",
+  "logger": "com.hippo.anotherviewer.web.cache.ImageCacheService",
   "message": "Image cache hit",
   "traceId": "a1b2c3d4e5f6",
   "event": "image.cache.hit",
@@ -83,13 +83,13 @@ Emitted when an image is fetched from the remote source. Level: **DEBUG** (succe
 {
   "@timestamp": "2026-07-28T14:32:02.456Z",
   "level": "DEBUG",
-  "logger": "com.hippo.ehviewer.web.service.ImageStreamingService",
+  "logger": "com.hippo.anotherviewer.web.service.ImageStreamingService",
   "message": "Image downloaded",
   "traceId": "a1b2c3d4e5f6",
   "event": "image.download",
   "galleryId": 123456,
   "page": 3,
-  "url": "https://ehgt.org/...",
+  "url": "https://gallery.test/...",
   "durationMs": 340,
   "sizeBytes": 245760,
   "status": "success"
@@ -114,7 +114,7 @@ Emitted per image processing task step. Level: **DEBUG** (start/complete), **ERR
 {
   "@timestamp": "2026-07-28T14:33:00.789Z",
   "level": "DEBUG",
-  "logger": "com.hippo.ehviewer.web.process.ImageProcessingService",
+  "logger": "com.hippo.anotherviewer.web.process.ImageProcessingService",
   "message": "Image processed",
   "traceId": "b2c3d4e5f6a1",
   "event": "image.process",
@@ -145,7 +145,7 @@ Emitted on download task lifecycle transitions. Level: **INFO** (lifecycle), **W
 {
   "@timestamp": "2026-07-28T14:35:00.000Z",
   "level": "INFO",
-  "logger": "com.hippo.ehviewer.web.service.DownloadService",
+  "logger": "com.hippo.anotherviewer.web.service.DownloadService",
   "message": "Download task state changed",
   "traceId": "c3d4e5f6a1b2",
   "event": "download.task",
@@ -176,7 +176,7 @@ Emitted per sync push/pull operation. Level: **INFO** (success), **ERROR** (fail
 {
   "@timestamp": "2026-07-28T15:00:00.000Z",
   "level": "INFO",
-  "logger": "com.hippo.ehviewer.web.sync.SyncService",
+  "logger": "com.hippo.anotherviewer.web.sync.SyncService",
   "message": "Sync pull completed",
   "traceId": "d4e5f6a1b2c3",
   "event": "sync.operation",
@@ -217,18 +217,18 @@ The JSON encoder is activated via a Spring profile or property:
 
 ```xml
 <!-- logback-spring.xml (schematic) -->
-<springProperty name="jsonEnabled" source="ehviewer.logging.json-enabled" defaultValue="true"/>
+<springProperty name="jsonEnabled" source="anotherviewer.logging.json-enabled" defaultValue="true"/>
 
 <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
   <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <!-- enabled when jsonEnabled=true -->
     <includeMdcKeyName>traceId</includeMdcKeyName>
-    <customFields>{"app":"ehviewer-web"}</customFields>
+    <customFields>{"app":"anotherviewer-web"}</customFields>
   </encoder>
 </appender>
 ```
 
-When `ehviewer.logging.json-enabled=false`, switch to a pattern encoder:
+When `anotherviewer.logging.json-enabled=false`, switch to a pattern encoder:
 ```
 %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
 ```
@@ -257,7 +257,7 @@ GET /api/health
       "status": "UP",
       "details": {
         "type": "sqlite",
-        "path": "/opt/ehviewer/data/ehviewer.db"
+        "path": "/opt/anotherviewer/data/anotherviewer.db"
       }
     },
     "diskCache": {
@@ -267,10 +267,10 @@ GET /api/health
         "freeSpaceBytes": 45634027520,
         "cacheUsedBytes": 3221225472,
         "cacheMaxBytes": 10737418240,
-        "path": "/opt/ehviewer/cache"
+        "path": "/opt/anotherviewer/cache"
       }
     },
-    "ehentaiApi": {
+    "galleryApi": {
       "status": "UP",
       "details": {
         "lastCheck": "2026-07-28T14:30:00Z",
@@ -298,11 +298,11 @@ GET /api/health
 | Overall Status | Condition |
 |----------------|-----------|
 | `UP` | All required components UP (database, diskCache) |
-| `DEGRADED` | Required components UP but optional components DOWN (e.g., waifu2x not configured, ehentaiApi unreachable) |
+| `DEGRADED` | Required components UP but optional components DOWN (e.g., waifu2x not configured, galleryApi unreachable) |
 | `DOWN` | Any required component DOWN (database inaccessible, disk cache path unwritable) |
 
 **Required components**: `database`, `diskCache`
-**Optional components**: `ehentaiApi`, `waifu2x`
+**Optional components**: `galleryApi`, `waifu2x`
 
 ### 2.4 Component Health Checks
 
@@ -310,12 +310,12 @@ GET /api/health
 |-----------|-------------|--------------|----------------|
 | `database` | Execute `SELECT 1` on SQLite | Query succeeds within 5s | Query fails or times out |
 | `diskCache` | Check directory exists + writable + free space | Writable AND freeSpace > 100MB | Not writable OR freeSpace < 100MB |
-| `ehentaiApi` | HTTP HEAD to `https://e-hentai.org` (cached, max every 60s) | Response 2xx/3xx within 10s | Timeout or connection refused |
+| `galleryApi` | HTTP HEAD to `https://gallery.test` (cached, max every 60s) | Response 2xx/3xx within 10s | Timeout or connection refused |
 | `waifu2x` | HTTP GET to configured URL `/health` (if configured) | Response 200 within 5s | Not configured, or unreachable |
 
 ### 2.5 Caching
 
-Health checks are cached for **30 seconds** to avoid excessive probing. The `ehentaiApi` check is additionally rate-limited to once per 60 seconds.
+Health checks are cached for **30 seconds** to avoid excessive probing. The `galleryApi` check is additionally rate-limited to once per 60 seconds.
 
 ---
 
@@ -337,13 +337,13 @@ GET /api/metrics
 {
   "timestamp": "2026-07-28T14:32:01Z",
   "metrics": {
-    "ehviewer.cache.memory.entries": { "type": "gauge", "value": 142 },
-    "ehviewer.cache.memory.size.bytes": { "type": "gauge", "value": 157286400 },
-    "ehviewer.cache.disk.size.bytes": { "type": "gauge", "value": 3221225472 },
-    "ehviewer.cache.disk.entries": { "type": "gauge", "value": 8432 },
-    "ehviewer.cache.hit.ratio": { "type": "gauge", "value": 0.87 },
-    "ehviewer.image.download.total": { "type": "counter", "value": 1523 },
-    "ehviewer.image.download.duration.ms": {
+    "anotherviewer.cache.memory.entries": { "type": "gauge", "value": 142 },
+    "anotherviewer.cache.memory.size.bytes": { "type": "gauge", "value": 157286400 },
+    "anotherviewer.cache.disk.size.bytes": { "type": "gauge", "value": 3221225472 },
+    "anotherviewer.cache.disk.entries": { "type": "gauge", "value": 8432 },
+    "anotherviewer.cache.hit.ratio": { "type": "gauge", "value": 0.87 },
+    "anotherviewer.image.download.total": { "type": "counter", "value": 1523 },
+    "anotherviewer.image.download.duration.ms": {
       "type": "timer",
       "count": 1523,
       "totalMs": 487360,
@@ -353,12 +353,12 @@ GET /api/metrics
       "p95Ms": 890,
       "p99Ms": 2100
     },
-    "ehviewer.image.prefetch.hit.ratio": { "type": "gauge", "value": 0.73 },
-    "ehviewer.download.active": { "type": "gauge", "value": 2 },
-    "ehviewer.download.completed.total": { "type": "counter", "value": 47 },
-    "ehviewer.process.queue.size": { "type": "gauge", "value": 5 },
-    "ehviewer.process.completed.total": { "type": "counter", "value": 312 },
-    "ehviewer.process.duration.ms": {
+    "anotherviewer.image.prefetch.hit.ratio": { "type": "gauge", "value": 0.73 },
+    "anotherviewer.download.active": { "type": "gauge", "value": 2 },
+    "anotherviewer.download.completed.total": { "type": "counter", "value": 47 },
+    "anotherviewer.process.queue.size": { "type": "gauge", "value": 5 },
+    "anotherviewer.process.completed.total": { "type": "counter", "value": 312 },
+    "anotherviewer.process.duration.ms": {
       "type": "timer",
       "count": 312,
       "totalMs": 1310400,
@@ -368,9 +368,9 @@ GET /api/metrics
       "p95Ms": 8500,
       "p99Ms": 11000
     },
-    "ehviewer.sync.push.total": { "type": "counter", "value": 23 },
-    "ehviewer.sync.pull.total": { "type": "counter", "value": 45 },
-    "ehviewer.ws.connections.active": { "type": "gauge", "value": 3 }
+    "anotherviewer.sync.push.total": { "type": "counter", "value": 23 },
+    "anotherviewer.sync.pull.total": { "type": "counter", "value": 45 },
+    "anotherviewer.ws.connections.active": { "type": "gauge", "value": 3 }
   }
 }
 ```
@@ -379,22 +379,22 @@ GET /api/metrics
 
 | Metric Name | Type | Unit | Description | Source |
 |-------------|------|------|-------------|--------|
-| `ehviewer.cache.memory.entries` | gauge | count | Current entries in Caffeine memory cache | `ImageCacheService` |
-| `ehviewer.cache.memory.size.bytes` | gauge | bytes | Estimated memory cache size | `ImageCacheService` |
-| `ehviewer.cache.disk.size.bytes` | gauge | bytes | Total disk cache directory size | `ImageCacheService` (periodic scan) |
-| `ehviewer.cache.disk.entries` | gauge | count | Number of files in disk cache | `ImageCacheService` (periodic scan) |
-| `ehviewer.cache.hit.ratio` | gauge | 0–1 | Overall cache hit ratio (memory + disk hits / total lookups), rolling 5-min window | `ImageCacheService` |
-| `ehviewer.image.download.total` | counter | count | Total image downloads attempted | `ImageStreamingService` |
-| `ehviewer.image.download.duration.ms` | timer | ms | Download duration distribution | `ImageStreamingService` |
-| `ehviewer.image.prefetch.hit.ratio` | gauge | 0–1 | **预读命中率**: prefetched pages that were subsequently requested before eviction / total prefetch operations, rolling 5-min window | `PrefetchService` |
-| `ehviewer.download.active` | gauge | count | Currently active download tasks | `DownloadService` |
-| `ehviewer.download.completed.total` | counter | count | Total download tasks completed successfully | `DownloadService` |
-| `ehviewer.process.queue.size` | gauge | count | Pending + in-progress processing tasks | `ImageProcessingService` |
-| `ehviewer.process.completed.total` | counter | count | Total processing tasks completed | `ImageProcessingService` |
-| `ehviewer.process.duration.ms` | timer | ms | Processing duration distribution | `ImageProcessingService` |
-| `ehviewer.sync.push.total` | counter | count | Total sync push operations | `SyncService` |
-| `ehviewer.sync.pull.total` | counter | count | Total sync pull operations | `SyncService` |
-| `ehviewer.ws.connections.active` | gauge | count | Active WebSocket connections | `WebSocketHandler` |
+| `anotherviewer.cache.memory.entries` | gauge | count | Current entries in Caffeine memory cache | `ImageCacheService` |
+| `anotherviewer.cache.memory.size.bytes` | gauge | bytes | Estimated memory cache size | `ImageCacheService` |
+| `anotherviewer.cache.disk.size.bytes` | gauge | bytes | Total disk cache directory size | `ImageCacheService` (periodic scan) |
+| `anotherviewer.cache.disk.entries` | gauge | count | Number of files in disk cache | `ImageCacheService` (periodic scan) |
+| `anotherviewer.cache.hit.ratio` | gauge | 0–1 | Overall cache hit ratio (memory + disk hits / total lookups), rolling 5-min window | `ImageCacheService` |
+| `anotherviewer.image.download.total` | counter | count | Total image downloads attempted | `ImageStreamingService` |
+| `anotherviewer.image.download.duration.ms` | timer | ms | Download duration distribution | `ImageStreamingService` |
+| `anotherviewer.image.prefetch.hit.ratio` | gauge | 0–1 | **预读命中率**: prefetched pages that were subsequently requested before eviction / total prefetch operations, rolling 5-min window | `PrefetchService` |
+| `anotherviewer.download.active` | gauge | count | Currently active download tasks | `DownloadService` |
+| `anotherviewer.download.completed.total` | counter | count | Total download tasks completed successfully | `DownloadService` |
+| `anotherviewer.process.queue.size` | gauge | count | Pending + in-progress processing tasks | `ImageProcessingService` |
+| `anotherviewer.process.completed.total` | counter | count | Total processing tasks completed | `ImageProcessingService` |
+| `anotherviewer.process.duration.ms` | timer | ms | Processing duration distribution | `ImageProcessingService` |
+| `anotherviewer.sync.push.total` | counter | count | Total sync push operations | `SyncService` |
+| `anotherviewer.sync.pull.total` | counter | count | Total sync pull operations | `SyncService` |
+| `anotherviewer.ws.connections.active` | gauge | count | Active WebSocket connections | `WebSocketHandler` |
 
 ### 3.4 Prefetch Hit Ratio (Critical Performance Metric)
 
@@ -409,14 +409,14 @@ Where:
 - `prefetchTotal`: number of pages prefetched in the window
 - `prefetchHits`: number of those prefetched pages that were subsequently served from cache (memory or disk) when the reader requested them
 
-**Purpose**: Validates that the prefetch strategy (Phase 1.2, `ehviewer.reader.prefetch-pages`) is effective. A ratio < 0.5 suggests over-prefetching (wasting bandwidth) or under-prefetching (reader outpaces prefetch). Target: ≥ 0.7 under normal reading speed.
+**Purpose**: Validates that the prefetch strategy (Phase 1.2, `anotherviewer.reader.prefetch-pages`) is effective. A ratio < 0.5 suggests over-prefetching (wasting bandwidth) or under-prefetching (reader outpaces prefetch). Target: ≥ 0.7 under normal reading speed.
 
 **Tags**: The underlying Micrometer counter supports tags for breakdown:
 - `galleryId` (optional, high-cardinality — disabled by default, enable via config)
 
 ### 3.5 Timer/Histogram Details
 
-Timer metrics (`ehviewer.image.download.duration.ms`, `ehviewer.process.duration.ms`) expose:
+Timer metrics (`anotherviewer.image.download.duration.ms`, `anotherviewer.process.duration.ms`) expose:
 
 | Field | Description |
 |-------|-------------|
@@ -542,17 +542,17 @@ GET /api/metrics/dashboard
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `ehviewer.logging.json-enabled` | boolean | `true` | Enable JSON structured logging. Set `false` for human-readable console output during local development. |
-| `ehviewer.logging.level.root` | string | `INFO` | Root logger level |
-| `ehviewer.logging.level.web` | string | `INFO` | `com.hippo.ehviewer.web` package level |
-| `ehviewer.logging.level.cache` | string | `TRACE` | Cache lookup logging (`ImageCacheService`). Set to `DEBUG` to suppress per-lookup TRACE in production. |
-| `ehviewer.logging.level.download` | string | `DEBUG` | Download operation logging |
-| `ehviewer.logging.level.process` | string | `DEBUG` | Image processing logging |
-| `ehviewer.logging.level.sync` | string | `INFO` | Sync operation logging |
+| `anotherviewer.logging.json-enabled` | boolean | `true` | Enable JSON structured logging. Set `false` for human-readable console output during local development. |
+| `anotherviewer.logging.level.root` | string | `INFO` | Root logger level |
+| `anotherviewer.logging.level.web` | string | `INFO` | `com.hippo.anotherviewer.web` package level |
+| `anotherviewer.logging.level.cache` | string | `TRACE` | Cache lookup logging (`ImageCacheService`). Set to `DEBUG` to suppress per-lookup TRACE in production. |
+| `anotherviewer.logging.level.download` | string | `DEBUG` | Download operation logging |
+| `anotherviewer.logging.level.process` | string | `DEBUG` | Image processing logging |
+| `anotherviewer.logging.level.sync` | string | `INFO` | Sync operation logging |
 
 These map to Logback logger levels:
 ```yaml
-ehviewer:
+anotherviewer:
   logging:
     json-enabled: true
     level:
@@ -568,14 +568,14 @@ ehviewer:
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `ehviewer.metrics.enabled` | boolean | `true` | Enable metrics collection and endpoints |
-| `ehviewer.metrics.endpoint` | string | `/api/metrics` | Base path for metrics endpoints |
-| `ehviewer.metrics.dashboard.enabled` | boolean | `true` | Enable `/api/metrics/dashboard` endpoint |
-| `ehviewer.metrics.prefetch.high-cardinality` | boolean | `false` | Enable per-gallery prefetch hit ratio tags (high cardinality, for debugging only) |
-| `ehviewer.metrics.cache.disk-scan-interval` | duration | `60s` | How often to rescan disk cache size/entries (expensive I/O) |
+| `anotherviewer.metrics.enabled` | boolean | `true` | Enable metrics collection and endpoints |
+| `anotherviewer.metrics.endpoint` | string | `/api/metrics` | Base path for metrics endpoints |
+| `anotherviewer.metrics.dashboard.enabled` | boolean | `true` | Enable `/api/metrics/dashboard` endpoint |
+| `anotherviewer.metrics.prefetch.high-cardinality` | boolean | `false` | Enable per-gallery prefetch hit ratio tags (high cardinality, for debugging only) |
+| `anotherviewer.metrics.cache.disk-scan-interval` | duration | `60s` | How often to rescan disk cache size/entries (expensive I/O) |
 
 ```yaml
-ehviewer:
+anotherviewer:
   metrics:
     enabled: true
     endpoint: /api/metrics
@@ -591,9 +591,9 @@ ehviewer:
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `ehviewer.health.cache-ttl` | duration | `30s` | Cache duration for health check results |
-| `ehviewer.health.ehentai-check-interval` | duration | `60s` | Minimum interval between E-Hentai connectivity checks |
-| `ehviewer.health.disk-min-free` | string | `100MB` | Minimum free disk space before diskCache reports DOWN |
+| `anotherviewer.health.cache-ttl` | duration | `30s` | Cache duration for health check results |
+| `anotherviewer.health.gallery-check-interval` | duration | `60s` | Minimum interval between Gallery Site connectivity checks |
+| `anotherviewer.health.disk-min-free` | string | `100MB` | Minimum free disk space before diskCache reports DOWN |
 
 ---
 
@@ -617,10 +617,10 @@ implementation("io.micrometer:micrometer-core")  // via actuator BOM
 @Component
 class ObservabilityMeters(registry: MeterRegistry) {
     // Gauges bound to service state
-    val cacheMemoryEntries = registry.gauge("ehviewer.cache.memory.entries", AtomicInteger(0))
-    val prefetchHits = registry.counter("ehviewer.image.prefetch.hits")
-    val prefetchTotal = registry.counter("ehviewer.image.prefetch.total")
-    val downloadTimer = Timer.builder("ehviewer.image.download.duration.ms")
+    val cacheMemoryEntries = registry.gauge("anotherviewer.cache.memory.entries", AtomicInteger(0))
+    val prefetchHits = registry.counter("anotherviewer.image.prefetch.hits")
+    val prefetchTotal = registry.counter("anotherviewer.image.prefetch.total")
+    val downloadTimer = Timer.builder("anotherviewer.image.download.duration.ms")
         .publishPercentiles(0.5, 0.95, 0.99)
         .register(registry)
     // ...
@@ -644,7 +644,7 @@ class TraceIdFilter : OncePerRequestFilter() {
 
 ### 6.4 Relationship to Spring Actuator
 
-The custom `/api/health` and `/api/metrics` endpoints are **in addition to** Spring Actuator's `/actuator/health` and `/actuator/metrics`. Actuator endpoints remain available for infrastructure tooling (Prometheus scrape, Kubernetes probes) but the `/api/*` endpoints provide the EhViewer-specific schema defined here.
+The custom `/api/health` and `/api/metrics` endpoints are **in addition to** Spring Actuator's `/actuator/health` and `/actuator/metrics`. Actuator endpoints remain available for infrastructure tooling (Prometheus scrape, Kubernetes probes) but the `/api/*` endpoints provide the AnotherViewer-specific schema defined here.
 
 Actuator configuration:
 ```yaml
@@ -669,7 +669,7 @@ management:
 | traceId consistent | Single request's logs share one traceId across async boundaries |
 | Health endpoint correct | `curl /api/health` returns schema-conformant JSON; stop DB → returns 503 + DOWN |
 | Metrics endpoint correct | `curl /api/metrics` returns all 16 metrics with correct types |
-| Prefetch hit ratio works | Read 10 pages with prefetch K=3; assert `ehviewer.image.prefetch.hit.ratio` > 0 |
+| Prefetch hit ratio works | Read 10 pages with prefetch K=3; assert `anotherviewer.image.prefetch.hit.ratio` > 0 |
 | Dashboard endpoint | `curl /api/metrics/dashboard` returns pre-aggregated summary |
 | Performance gate | Prefetch hit ratio ≥ 0.7 under normal reading speed (I4 validation) |
 

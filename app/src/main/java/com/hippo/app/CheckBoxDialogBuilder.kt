@@ -21,7 +21,7 @@ import android.view.LayoutInflater
 import android.widget.CheckBox
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import com.hippo.ehviewer.R
+import com.hippo.anotherviewer.R
 
 class CheckBoxDialogBuilder @SuppressLint("InflateParams") constructor(
     context: Context?,

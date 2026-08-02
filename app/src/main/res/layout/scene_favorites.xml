@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.hippo.ehviewer.widget.SearchBar
+    <com.hippo.anotherviewer.widget.SearchBar
         android:id="@+id/search_bar"
         style="@style/CardView.Normal"
         android:layout_width="match_parent"

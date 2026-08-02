@@ -1,5 +1,5 @@
 // 备用：发行版打包配置（nebula.ospackage）。激活后按 packaging/README.md 说明接入，
-// 执行 ./gradlew :ehviewer-web:buildDeb buildRpm 产出 .deb/.rpm。默认不激活，不影响现有构建。
+// 执行 ./gradlew :anotherviewer-web:buildDeb buildRpm 产出 .deb/.rpm。默认不激活，不影响现有构建。
 //
 // 注意：deb/rpm 不捆绑 JRE，要求系统提供 Java 21（requires 'openjdk-21-jre-headless'）。
 // 数据目录保持 --data-dir 抽象：安装为 /var/lib/anotherviewer，与 zip 包内 data/ 同一语义。
@@ -17,7 +17,7 @@ ospackage {
     // 安装路径 /opt/anotherviewer ↔ zip 内 lib/（同一 app.jar）
     installDir '/opt/anotherviewer'
 
-    from("${project(':ehviewer-web').buildDir}/libs/ehviewer-web-${project.version}.jar") {
+    from("${project(':anotherviewer-web').buildDir}/libs/anotherviewer-web-${project.version}.jar") {
         into 'lib'
         rename { 'app.jar' }
         fileMode 0644

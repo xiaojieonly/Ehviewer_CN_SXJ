@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: EhViewer WebUI Backend API
+  title: AnotherViewer WebUI Backend API
   description: |
-    REST API for the EhViewer WebUI backend (Spring Boot).
+    REST API for the AnotherViewer WebUI backend (Spring Boot).
 
     Authentication: all endpoints under /api/v1 require a bearer token
     (Authorization: Bearer <token>) except the publicly permitted ones
@@ -10,7 +10,7 @@ info:
     metrics, metrics/dashboard) and non-API resources.
   version: 1.0.0
   contact:
-    name: EhViewer WebUI Team
+    name: AnotherViewer WebUI Team
 
 servers:
   - url: http://localhost:8080
@@ -25,7 +25,7 @@ tags:
   - name: Gallery
     description: Gallery search, detail, history, favorites, quick search
   - name: Favorite
-    description: Remote favorites management (E-Hentai server-side)
+    description: Remote favorites management (Gallery Site server-side)
   - name: History
     description: Local browsing history
   - name: Download
@@ -421,7 +421,7 @@ paths:
                 $ref: '#/components/schemas/SuccessResponse'
 
   # ============================================================
-  # Favorite (remote E-Hentai favorites)
+  # Favorite (remote Gallery Site favorites)
   # ============================================================
   /api/v1/favorite/list:
     get:
@@ -810,7 +810,7 @@ paths:
     post:
       tags: [Settings]
       operationId: testProxy
-      summary: Test connectivity to E-Hentai through a proxy (saved settings when no body)
+      summary: Test connectivity to Gallery Site through a proxy (saved settings when no body)
       description: |
         With no body the currently saved proxy settings are used; with a body
         the given values are tested (all fields optional, merged over the
@@ -1036,7 +1036,7 @@ paths:
                 type: string
                 format: binary
         '401':
-          description: E-Hentai session expired or invalid
+          description: Gallery Site session expired or invalid
           content:
             application/json:
               schema:
@@ -1395,7 +1395,7 @@ paths:
       operationId: downloadTorrent
       summary: Download a torrent file by token
       description: |
-        The `token` is a URL (typically an E-Hentai torrent page URL). Returns
+        The `token` is a URL (typically an Gallery Site torrent page URL). Returns
         the raw `.torrent` file bytes as an `application/x-bittorrent`
         attachment (Content-Disposition `attachment; filename=<gid>.torrent`).
       parameters:
@@ -1656,10 +1656,10 @@ components:
           description: Whether the server enforces authentication for API access
         ehSessionValid:
           type: boolean
-          description: Whether the E-Hentai session (cookie store) is valid
+          description: Whether the Gallery Site session (cookie store) is valid
         ehSessionExpired:
           type: boolean
-          description: Whether the E-Hentai session has expired and needs re-authentication
+          description: Whether the Gallery Site session has expired and needs re-authentication
 
     PairCodeResponse:
       type: object
@@ -3115,7 +3115,7 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/HealthComponent'
-          description: "Known components: database, diskCache, ehentaiApi"
+          description: "Known components: database, diskCache, galleryApi"
         version:
           type: string
         uptime:
@@ -3376,10 +3376,10 @@ components:
         showGalleryRating:
           type: boolean
           default: true
-        showEhEvents:
+        showSiteEvents:
           type: boolean
           default: true
-        showEhLimits:
+        showSiteLimits:
           type: boolean
           default: true
 

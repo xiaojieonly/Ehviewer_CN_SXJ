@@ -3,11 +3,11 @@
 
 set -e
 
-echo "=== 构建 ehviewer-core ==="
-./gradlew :ehviewer-core:build -x test
+echo "=== 构建 anotherviewer-core ==="
+./gradlew :anotherviewer-core:build -x test
 
-echo "=== 构建 ehviewer-web ==="
-./gradlew :ehviewer-web:bootJar
+echo "=== 构建 anotherviewer-web ==="
+./gradlew :anotherviewer-web:bootJar
 
 echo "=== 构建前端 ==="
 cd web-frontend
@@ -16,4 +16,4 @@ npm run build
 cd ..
 
 echo "=== 构建完成 ==="
-echo "JAR 文件: ehviewer-web/build/libs/ehviewer-web-*.jar"
+echo "JAR 文件: anotherviewer-web/build/libs/anotherviewer-web-*.jar"

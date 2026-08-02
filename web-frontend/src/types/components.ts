@@ -1,5 +1,5 @@
 /**
- * Vue 3 component prop contracts — WebUI pixel-level replication of EhViewer
+ * Vue 3 component prop contracts — WebUI pixel-level replication of AnotherViewer
  * Android custom controls.
  *
  * FROZEN CONTRACT (Wave 0, task CA4). Component authors (F2–F7, S1–S7) implement
@@ -40,7 +40,7 @@ export type AppTheme = 'light' | 'dark' | 'black'
  * The 10 gallery categories, as string keys.
  *
  * NOTE: `GalleryInfo.category` (see `./index.ts`) is a NUMBER carrying the
- * Android `EhConfig` bit value (see {@link CATEGORY_BIT_VALUES}); components
+ * Android `SiteConfig` bit value (see {@link CATEGORY_BIT_VALUES}); components
  * render via this string union. Convert with {@link CATEGORY_BY_BIT}.
  */
 export type GalleryCategory =
@@ -72,7 +72,7 @@ export const CATEGORY_ORDER: readonly GalleryCategory[] = [
   'misc',
 ] as const
 
-/** Human-readable labels (Android `EhUtils.getCategory(int)` strings). */
+/** Human-readable labels (Android `SiteUtils.getCategory(int)` strings). */
 export const CATEGORY_LABELS: Readonly<Record<GalleryCategory, string>> = {
   doujinshi: 'Doujinshi',
   manga: 'Manga',
@@ -107,13 +107,13 @@ export const CATEGORY_COLOR_MAP: Readonly<Record<GalleryCategory, string>> = {
 }
 
 /**
- * Authoritative category bit values from Android `EhConfig.java`.
+ * Authoritative category bit values from Android `SiteConfig.java`.
  * Used BOTH as the numeric `GalleryInfo.category` value produced by the
  * parser AND as the search-filter exclusion bitmask bits.
  *
  * ⚠ The legacy `CATEGORY_MAP` in `./index.ts` uses a different (shifted)
  * numbering — do not rely on it; this table matches the Android source:
- * MISC=0x1 … WESTERN=0x200, UNKNOWN=0x400 (`EhUtils.UNKNOWN`).
+ * MISC=0x1 … WESTERN=0x200, UNKNOWN=0x400 (`SiteUtils.UNKNOWN`).
  */
 export const CATEGORY_BIT_VALUES: Readonly<Record<GalleryCategory, number>> = {
   misc: 0x1,
@@ -729,7 +729,7 @@ export interface SearchLayoutEmits {
  * ⚠ Android semantics are INVERTED: a CHECKED block means the category is
  * EXCLUDED (`getCategory()` sets the bit when NOT checked). This web contract
  * uses POSITIVE semantics instead — `selected` lists the categories INCLUDED
- * in the search. Implementers convert to the EhConfig exclusion bitmask with
+ * in the search. Implementers convert to the SiteConfig exclusion bitmask with
  * {@link CATEGORY_BIT_VALUES} (bit set = excluded) when building queries.
  *
  * Android long-press behavior (`onLongClick`): every OTHER block is set to

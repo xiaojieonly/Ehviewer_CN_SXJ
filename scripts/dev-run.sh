@@ -1,5 +1,5 @@
 #!/bin/bash
-# dev-run.sh — One-command development environment for EhViewer Web
+# dev-run.sh — One-command development environment for AnotherViewer Web
 #
 # Usage: ./scripts/dev-run.sh [options]
 #   --backend-only    Only start backend
@@ -56,7 +56,7 @@ FRONTEND_PID=""
 # ---------------------------------------------------------------------------
 usage() {
     cat <<'EOF'
-dev-run.sh — One-command development environment for EhViewer Web
+dev-run.sh — One-command development environment for AnotherViewer Web
 
 Usage: ./scripts/dev-run.sh [options]
 
@@ -172,7 +172,7 @@ build_frontend() {
     npm install
     npm run build
 
-    info "Frontend build complete → ehviewer-web/src/main/resources/static/"
+    info "Frontend build complete → anotherviewer-web/src/main/resources/static/"
     cd "${PROJECT_ROOT}"
 }
 
@@ -180,7 +180,7 @@ build_frontend() {
 # 3. Backend build
 # ---------------------------------------------------------------------------
 build_backend() {
-    step "Building backend (gradlew :ehviewer-web:bootJar -x test)..."
+    step "Building backend (gradlew :anotherviewer-web:bootJar -x test)..."
     cd "${PROJECT_ROOT}"
 
     if [[ ! -x "./gradlew" ]]; then
@@ -188,7 +188,7 @@ build_backend() {
         exit 1
     fi
 
-    ./gradlew :ehviewer-web:bootJar -x test
+    ./gradlew :anotherviewer-web:bootJar -x test
 
     info "Backend build complete."
 }
@@ -197,11 +197,11 @@ build_backend() {
 # 4. Locate the built JAR
 # ---------------------------------------------------------------------------
 find_jar() {
-    local jar_dir="${PROJECT_ROOT}/ehviewer-web/build/libs"
+    local jar_dir="${PROJECT_ROOT}/anotherviewer-web/build/libs"
     local jar
 
-    # Find the bootJar artifact (ehviewer-web-<version>.jar, not -plain.jar)
-    jar=$(find "${jar_dir}" -maxdepth 1 -name 'ehviewer-web-*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1)
+    # Find the bootJar artifact (anotherviewer-web-<version>.jar, not -plain.jar)
+    jar=$(find "${jar_dir}" -maxdepth 1 -name 'anotherviewer-web-*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1)
 
     if [[ -z "$jar" ]]; then
         error "No JAR found in ${jar_dir}. Run without --skip-build first."
@@ -251,14 +251,14 @@ start_backend() {
 
     step "Starting backend: $(basename "$jar") on port ${PORT}"
 
-    # Use EHVIEWER_DATA_DIR env var for SQLite DB path (see application.yml)
+    # Use ANOTHERVIEWER_DATA_DIR env var for SQLite DB path (see application.yml)
     # Use command-line args for download/cache/security paths
-    EHVIEWER_DATA_DIR="${DATA_DIR}/db" \
+    ANOTHERVIEWER_DATA_DIR="${DATA_DIR}/db" \
     java -jar "$jar" \
         --server.port="${PORT}" \
-        --ehviewer.download.path="${DATA_DIR}/downloads" \
-        --ehviewer.download.cache-path="${DATA_DIR}/cache" \
-        --ehviewer.security.encryption-key-path="${DATA_DIR}/db/security.key" \
+        --anotherviewer.download.path="${DATA_DIR}/downloads" \
+        --anotherviewer.download.cache-path="${DATA_DIR}/cache" \
+        --anotherviewer.security.encryption-key-path="${DATA_DIR}/db/security.key" \
         &
     BACKEND_PID=$!
 
@@ -299,7 +299,7 @@ start_frontend_dev() {
 # ---------------------------------------------------------------------------
 main() {
     echo ""
-    info "EhViewer Web — Development Environment"
+    info "AnotherViewer Web — Development Environment"
     info "Project root: ${PROJECT_ROOT}"
     echo ""
 

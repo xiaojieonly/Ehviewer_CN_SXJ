@@ -23,7 +23,7 @@ import android.content.pm.PackageManager;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 
-import com.hippo.ehviewer.callBack.PermissionCallBack;
+import com.hippo.anotherviewer.callBack.PermissionCallBack;
 
 public class PermissionRequester {
 

@@ -1,6 +1,6 @@
 # AnotherViewer
 
-Android 漫画查看器（fork 自 ehviewer）与其 WebUI 伴侣服务器组成的自托管系统：App 与 WebUI 之间双向同步用户数据，WebUI 负责下载、阅读代理、备份与迁移。
+Android 漫画查看器（fork 自 anotherviewer）与其 WebUI 伴侣服务器组成的自托管系统：App 与 WebUI 之间双向同步用户数据，WebUI 负责下载、阅读代理、备份与迁移。
 
 ## Language
 
@@ -32,7 +32,7 @@ _Avoid_: 墓碑、删除标记
 ### 部署（Deployment）
 
 **data-dir**:
-WebUI 服务器唯一的权威数据目录（`--data-dir` 参数或 `EHVIEWER_DATA_DIR`），固定派生 ehviewer.db、security.key、downloads/、cache/、backups/ 的默认位置。
+WebUI 服务器唯一的权威数据目录（`--data-dir` 参数或 `ANOTHERVIEWER_DATA_DIR`），固定派生 anotherviewer.db、security.key、downloads/、cache/、backups/ 的默认位置。
 _Avoid_: 数据文件夹、工作目录
 
 **备份（backup）**:
@@ -43,11 +43,11 @@ _Avoid_: 导出、快照
 备份包在新机器还原，或直接拷贝 data-dir；因结构固定，目标路径可以不同。下载文件随备份可选迁移（includeDownloads）或随目录拷贝；同设备包名迁移时经同步迁移元数据、重新授权 SAF 目录即复用原文件。
 
 **legacy 包**:
-`-PapplicationId=com.xjs.ehviewer` 构建的旧包名 APK，用于覆盖安装旧版本保留数据、经同步把数据推上服务器完成包名迁移。
+`-PapplicationId=com.xjs.anotherviewer` 构建的旧包名 APK，用于覆盖安装旧版本保留数据、经同步把数据推上服务器完成包名迁移。
 _Avoid_: 旧版、兼容包
 
 ### 应用标识（App Identity）
 
 **applicationId**:
-App 的应用标识 `com.pf.anotherviewer`（debug 后缀 `.debug`）；仅此标识随包名迁移变更，源码 namespace `com.hippo.ehviewer` 原样保留。
+App 的应用标识 `com.pf.anotherviewer`（debug 后缀 `.debug`）；仅此标识随包名迁移变更，源码 namespace `com.hippo.anotherviewer` 原样保留。
 _Avoid_: 包名（歧义，可与源码包名混淆）

@@ -31,7 +31,7 @@
         android:required="false" />
 
     <application
-        android:name=".EhApplication"
+        android:name=".SiteApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_scheme"
         android:hardwareAccelerated="true"
@@ -100,10 +100,10 @@
 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data android:host="exhentai.org" />
-                <data android:host="e-hentai.org" />
-                <data android:host="g.e-hentai.org" />
-                <data android:host="lofi.e-hentai.org" />
+                <data android:host="gallery.test" />
+                <data android:host="gallery.test" />
+                <data android:host="g.gallery.test" />
+                <data android:host="lofi.gallery.test" />
             </intent-filter>
             <intent-filter android:label="@string/keyword_search">
                 <action android:name="android.intent.action.SEND" />

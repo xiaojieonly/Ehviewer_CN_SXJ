@@ -74,7 +74,7 @@ const OUT_DIR = resolve(__dirname, IS_UPDATE ? 'baseline' : 'actual')
 /**
  * Injected before any app script runs. Two jobs:
  *  1. Pin the theme by writing the same localStorage key the theme store reads
- *     on init (`ehviewer-theme`, see src/stores/theme.ts). This is more robust
+ *     on init (`anotherviewer-theme`, see src/stores/theme.ts). This is more robust
  *     than poking `data-theme` directly because the store applies it and keeps
  *     the <meta theme-color> in sync.
  *  2. Set a dummy auth token so the router guard (src/router/index.ts) lets the
@@ -94,7 +94,7 @@ const STABILIZE_CSS =
  */
 function initScript({ theme, css }: { theme: string; css: string }) {
   try {
-    window.localStorage.setItem('ehviewer-theme', theme)
+    window.localStorage.setItem('anotherviewer-theme', theme)
     window.localStorage.setItem('token', 'e2e-visual-regression-token')
   } catch {
     /* storage may be unavailable; non-fatal */

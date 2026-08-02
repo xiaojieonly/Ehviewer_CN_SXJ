@@ -99,14 +99,14 @@
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
-    <com.hippo.ehviewer.preference.RestoreDownloadPreference
+    <com.hippo.anotherviewer.preference.RestoreDownloadPreference
         android:key="restore_download_items"
         android:summary="@string/settings_download_restore_download_items_summary"
         android:title="@string/settings_download_restore_download_items"
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
-    <com.hippo.ehviewer.preference.CleanRedundancyPreference
+    <com.hippo.anotherviewer.preference.CleanRedundancyPreference
         android:key="clean_redundancy"
         android:summary="@string/settings_download_clean_redundancy_summary"
         android:title="@string/settings_download_clean_redundancy"

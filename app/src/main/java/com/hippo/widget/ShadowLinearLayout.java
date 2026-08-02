@@ -25,7 +25,7 @@ import android.util.AttributeSet;
 import android.view.ViewOutlineProvider;
 import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import com.hippo.lib.yorozuya.LayoutUtils;
 
 public class ShadowLinearLayout extends LinearLayout {

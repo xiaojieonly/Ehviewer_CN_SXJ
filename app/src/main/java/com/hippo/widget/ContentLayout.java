@@ -38,10 +38,10 @@ import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.FastScroller;
 import com.hippo.easyrecyclerview.HandlerDrawable;
 import com.hippo.easyrecyclerview.LayoutManagerUtils;
-import com.hippo.ehviewer.EhApplication;
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.client.parser.FavoritesParser;
-import com.hippo.ehviewer.client.parser.GalleryListParser;
+import com.hippo.anotherviewer.SiteApplication;
+import com.hippo.anotherviewer.R;
+import com.hippo.anotherviewer.client.parser.FavoritesParser;
+import com.hippo.anotherviewer.client.parser.GalleryListParser;
 import com.hippo.refreshlayout.RefreshLayout;
 import com.hippo.util.DrawableManager;
 import com.hippo.util.ExceptionUtils;
@@ -1026,7 +1026,7 @@ public class ContentLayout extends FrameLayout {
             bundle.putString(KEY_TIP, mTipView.getText().toString());
 
             // TODO It's a bad design
-            EhApplication app = (EhApplication) getContext().getApplicationContext();
+            SiteApplication app = (SiteApplication) getContext().getApplicationContext();
             if (mSavedDataId != IntIdGenerator.INVALID_ID) {
                 app.removeGlobalStuff(mSavedDataId);
                 mSavedDataId = IntIdGenerator.INVALID_ID;
@@ -1055,7 +1055,7 @@ public class ContentLayout extends FrameLayout {
 
                 mSavedDataId = bundle.getInt(KEY_DATA);
                 ArrayList<E> newData = null;
-                EhApplication app = (EhApplication) getContext().getApplicationContext();
+                SiteApplication app = (SiteApplication) getContext().getApplicationContext();
                 if (mSavedDataId != IntIdGenerator.INVALID_ID) {
                     newData = (ArrayList<E>) app.removeGlobalStuff(mSavedDataId);
                     mSavedDataId = IntIdGenerator.INVALID_ID;

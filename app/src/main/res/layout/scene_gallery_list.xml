@@ -27,12 +27,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.hippo.ehviewer.widget.SearchLayout
+    <com.hippo.anotherviewer.widget.SearchLayout
         android:id="@+id/search_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.hippo.ehviewer.widget.SearchBar
+    <com.hippo.anotherviewer.widget.SearchBar
         android:id="@+id/search_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

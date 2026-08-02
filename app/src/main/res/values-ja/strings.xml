@@ -20,7 +20,7 @@
     <string name="blacklist">ブラックリスト</string>
     <string name="join_in_blacklist">ブラックリストに参加する</string>
     <string name="add_blacklist">ブロックされたユーザーを追加する</string>
-    <string name="blacklist_tip">このブロックシステムは、E-Hentai ウェブサイトのコメントシステムに基づいてコメントをブロックし続けます。\n\nレビューアーのブロック項目: このレビューアーによってアップロードされたコメントを除外します。これにより、ギャラリーリストの読み込みに時間がかかる場合があります。</string>
+    <string name="blacklist_tip">このブロックシステムは、Gallery Site ウェブサイトのコメントシステムに基づいてコメントをブロックし続けます。\n\nレビューアーのブロック項目: このレビューアーによってアップロードされたコメントを除外します。これにより、ギャラリーリストの読み込みに時間がかかる場合があります。</string>
     <string name="blacklist_text">ユーザーをブロックする</string>
     <string name="delete_blacklist">ユーザー「%s」のブロックを解除しますか？</string>
     <string name="blacklist_reason_text">ブロックの理由</string>
@@ -117,7 +117,7 @@
     <string name="gallery_gl_fallback_message">このデバイスでは現在EGLを初期化できません。戻ってしばらくしてから再試行してください。</string>
     <string name="gallery_gl_fallback_action_close">戻る</string>
     <string name="gallery_gl_fallback_toast">GLレンダリングに失敗したため、安全な代替ページに切り替えました</string>
-    <string name="kokomade_tip">設定 -&gt; Eh -&gt; ギャラリーサイト -&gt; E-Hentai</string>
+    <string name="kokomade_tip">設定 -&gt; Eh -&gt; ギャラリーサイト -&gt; Gallery Site</string>
     <string name="app_waring">このアプリの内容はインターネットから取得したものです。その内容の一部は使用者のお体や心理に傷つける恐れがあります。それでも続行しますか？</string>
     <string name="error_username_cannot_empty">ユーザー名を入力してください。</string>
     <string name="error_password_cannot_empty">パスワードを入力してください。</string>
@@ -127,7 +127,7 @@
     <string name="sign_in_failed_plain">このエラーの原因は、ウェブサイトがメンテンス中か、または不明なエラーが発生したことである可能性があります。ログインボタンの下でウェブでログインするか、 Cookie を入力してログインするか、またはログインをスキップしてみてください。ログインをスキップすると「Sad Panda」エラーが発生することがあります。0.6.x バージョンでログインした場合、Cookie でログインすることをおすすめします。</string>
     <string name="press_twice_exit">もう一度押して終了します。</string>
     <string name="content_layout_restore_tip">タップをしてもう一度試す</string>
-    <string name="write_rationale">EhViewer はギャラリーをダウンロードするために WRITE_EXTERNAL_STORAGE のアクセス権限の許可が必要です。</string>
+    <string name="write_rationale">AnotherViewer はギャラリーをダウンロードするために WRITE_EXTERNAL_STORAGE のアクセス権限の許可が必要です。</string>
     <string name="you_rejected_me">痛い</string>
     <string name="analytics_explain">ご使用のデバイスの情報やこのアプリの利用情報を収集するように同意しますか？収集情報はアプリ向上のために使用されます。&lt;br&gt;&lt;br&gt;データ分析サービスは Google Analytics for Firebase によって提供されます。 &lt;a href=\"https://www.google.com/policies/privacy/\"&gt;https://www.google.com/policies/privacy/&lt;/a&gt;にプライバシーポリシーをご覧ください。&lt;br&gt;&lt;br&gt;アプリ利用情報収集に参加すると、Android API バージョン、デバイスモデル、言語、地域、アプリバージョンや、セッション時間などの情報は収集されます。開発者は、電話番号、電子メールアドレス、IMEI 情報などを記録しないことを保証します。&lt;br&gt;&lt;br&gt;同意しない限り、データは収集されません。&lt;br&gt;&lt;br&gt;送信されたデータは Google Analytics for Firebase で分析され、分析レポートにはこのアプリ開発者しかアクセスできません。</string>
     <string name="get_it">了解</string>
@@ -136,7 +136,7 @@
     <string name="help_route">設定-&gt;このアプリについて-&gt;ヘルプ</string>
     <!-- Select scene -->
     <string name="select_scene">ギャラリーサイトを選択してください</string>
-    <string name="select_scene_explain">E-Hentai: 誰でも閲覧可能です\nExHentai: ログインしないとアクセスできません</string>
+    <string name="select_scene_explain">Gallery Site: 誰でも閲覧可能です\nGallery: ログインしないとアクセスできません</string>
     <string name="no_select">サイトを選択してください</string>
     <!-- Update -->
     <string name="new_version">新しいバージョン</string>
@@ -146,11 +146,11 @@
     <string name="no_updates_available">最新のバージョンです</string>
     <string name="update_plain">バージョン: %1$s\nサイズ: %2$s\n\n%3$s</string>
     <string name="update_fail_info">「はい」をタップで GitHub のページに移動します</string>
-    <string name="update_to_date">EhViewer は既に最新のバージョンです。</string>
+    <string name="update_to_date">AnotherViewer は既に最新のバージョンです。</string>
     <string name="update_ignore">無視</string>
     <!-- Gallery List -->
-    <string name="gallery_list_search_bar_hint_exhentai">ExHentai を検索</string>
-    <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai を検索</string>
+    <string name="gallery_list_search_bar_hint_gallery">Gallery を検索</string>
+    <string name="gallery_list_search_bar_hint_e_hentai">Gallery Site を検索</string>
     <string name="gallery_list_search_bar_open_gallery">ギャラリーを開く</string>
     <string name="gallery_list_empty_hit">何も見つかりませんでした。</string>
     <string name="gallery_list_empty_hit_subscription">リストは空です。設定-&gt;EH-&gt;マイタグにてタグを購読することができます。</string>
@@ -388,7 +388,7 @@
     <string name="download_search_gallery">ギャラリーを検索</string>
     <string name="download_search_hint">検索キーを入力</string>
     <string name="reset_reading_progress_message">すべてのダウンロード済みのギャラリーの閲覧進捗をリセットしますか？</string>
-    <string name="download_service_label">EhViewer ダウンロードサービス</string>
+    <string name="download_service_label">AnotherViewer ダウンロードサービス</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s、残り %2$s</string>
     <string name="remember_download_label">ダウンロードラベルを記憶する</string>
@@ -422,14 +422,14 @@
     <string name="add_filter">ブロックアイテムを追加</string>
     <string name="show_definition">ヘルプを表示</string>
     <string name="filter_text">ブロックテキスト</string>
-    <string name="filter_tip">ブロックアイテムに対応するものはE-Hentaiのギャラリーリストから除外します。\n\nタイトルをブロック: ブロックテキストを含むギャラリーを除外します。\n\nアップローダブロック: そのアップローダのギャラリーを除外します。\n\nタグをブロック: そのタグを含むギャラリーを除外します。ギャラリーリストをロードするのにもっと時間がかかる事があります。\n\nタグ名前空間をブロック: そのタグ名前空間を含むギャラリーを除外します。ギャラリーリストをロードするのにもっと時間がかかる事があります。</string>
+    <string name="filter_tip">ブロックアイテムに対応するものはGallery Siteのギャラリーリストから除外します。\n\nタイトルをブロック: ブロックテキストを含むギャラリーを除外します。\n\nアップローダブロック: そのアップローダのギャラリーを除外します。\n\nタグをブロック: そのタグを含むギャラリーを除外します。ギャラリーリストをロードするのにもっと時間がかかる事があります。\n\nタグ名前空間をブロック: そのタグ名前空間を含むギャラリーを除外します。ギャラリーリストをロードするのにもっと時間がかかる事があります。</string>
     <!-- Set Security -->
     <string name="set_pattern_protection">パターン保護を設定</string>
     <string name="set_pattern_protection_tip">パターンを描いてパターン保護を設定します。\n空白のまま続行してパターン保護をクリアします。</string>
     <string name="set">設定</string>
     <string name="enable_fingerprint">指紋でロックを解除</string>
     <!-- UConfig Activity -->
-    <string name="u_config">E-Hentaiの設定</string>
+    <string name="u_config">Gallery Siteの設定</string>
     <string name="apply">適用</string>
     <string name="apply_tip">右上隅のチェックマークをタップして設定を保存します。</string>
     <!-- My Tags Activity -->
@@ -473,10 +473,10 @@
     <string name="settings_eh_identity_cookies_signed">下記の情報を持つ誰でもこのアカウントにログインできますので&lt;br&gt;&lt;b&gt;絶対に他人に渡さないように！&lt;/b&gt;&lt;br&gt;&lt;br&gt;%s</string>
     <string name="settings_eh_identity_cookies_tourist">まだログインしていません</string>
     <string name="settings_eh_identity_cookies_copy">コピー</string>
-    <string name="settings_u_config">E-Hentai の設定</string>
-    <string name="settings_u_config_summary">E-Hentai サイト上の設定をします</string>
+    <string name="settings_u_config">Gallery Site の設定</string>
+    <string name="settings_u_config_summary">Gallery Site サイト上の設定をします</string>
     <string name="settings_my_tags">マイタグ</string>
-    <string name="settings_my_tags_summary">E-Hentai のウェブサイトでタグを管理します</string>
+    <string name="settings_my_tags_summary">Gallery Site のウェブサイトでタグを管理します</string>
     <string name="settings_eh_theme">テーマ</string>
     <string name="settings_eh_theme_light">ライト</string>
     <string name="settings_eh_theme_dark">ダーク</string>
@@ -508,7 +508,7 @@
     <string name="settings_eh_show_gallery_comment">ギャラリーコメントを表示する</string>
     <string name="settings_eh_show_eh_event">EH のイベントを表示する</string>
     <string name="settings_eh_show_eh_limits">EH のリミットを表示する</string>
-    <string name="settings_eh_show_jpn_title_summary">E-Hentai ウェブサイトの設定で日本語タイトルを有効化する必要があります</string>
+    <string name="settings_eh_show_jpn_title_summary">Gallery Site ウェブサイトの設定で日本語タイトルを有効化する必要があります</string>
     <string name="settings_eh_show_gallery_pages">ギャラリーページ数を表示する</string>
     <string name="settings_eh_show_gallery_pages_summary">リストにギャラリーのページの数量を表示します</string>
     <string name="settings_eh_show_tag_translations">中国語のタグ翻訳を表示する</string>
@@ -557,7 +557,7 @@
     <string name="settings_download_download_location">ダウンロードパス</string>
     <string name="settings_download_invalid_download_location">無効なダウンロードパス</string>
     <string name="settings_download_cant_get_download_location">ダウンロードパスを取得できません</string>
-    <string name="settings_download_pick_dir_kk">デバイスを root 化してパッチを適用しないと、Android 4.4 以降では外部ストレージへ書き込めません。しかし「/Android/data/com.hippo.ehviewer」は例外で書き込み可能です。</string>
+    <string name="settings_download_pick_dir_kk">デバイスを root 化してパッチを適用しないと、Android 4.4 以降では外部ストレージへ書き込めません。しかし「/Android/data/com.hippo.anotherviewer」は例外で書き込み可能です。</string>
     <string name="settings_download_pick_dir_l">Lollipop は外部ストレージに書き込むための新しい API を提供しました。ダウンロードパスを外部ストレージに設定するには、「ドキュメント」をタップしてください。</string>
     <string name="settings_download_document">ドキュメント</string>
     <string name="settings_download_continue">続行</string>
@@ -627,8 +627,8 @@
     <string name="settings_advanced_wifi_client">Wi-Fi で移行をするデータを受信</string>
     <string name="settings_advanced_wifi_client_summary">Wi-Fi ホットスポット経由で移行をするデータを受信します</string>
     <string name="settings_about">このアプリについて</string>
-    <string name="settings_about_declaration" translatable="false">EhViewer</string>
-    <string name="settings_about_declaration_summary">EhViewer は E-Hentai.org と一切の関係がございません。</string>
+    <string name="settings_about_declaration" translatable="false">AnotherViewer</string>
+    <string name="settings_about_declaration_summary">AnotherViewer は Gallery Site.org と一切の関係がございません。</string>
     <string name="settings_about_author">開発者</string>
     <string name="settings_about_author_summary" translatable="false">SXJ_LonelyDog &lt;xiaojieonly$foxmail.com&gt;</string>
     <string name="settings_about_telegram" translatable="false">Telegram</string>
@@ -639,7 +639,7 @@
     <string name="settings_about_help">ヘルプ</string>
     <string name="settings_about_issue_help">問題解決のヘルプ</string>
     <string name="settings_about_license">オープンソースライセンス</string>
-    <string name="settings_about_license_summary">いろんなオープンソースプロジェクトなしで、EhViewerが生まれることはありません</string>
+    <string name="settings_about_license_summary">いろんなオープンソースプロジェクトなしで、AnotherViewerが生まれることはありません</string>
     <string name="settings_about_donate">寄付</string>
     <string name="settings_about_donate_message">寄付していただいても追加の機能を解禁したりはありませんが、このアプリの開発を支援できます</string>
     <string name="settings_about_donate_alipay">AliPay</string>
@@ -784,13 +784,13 @@
     <string name="yesterday_top_list">昨日のトップリスト</string>
     <!--  侧滑栏头像和背景修改  -->
     <string name="change_background_title">背景を変更してもよろしいですか？</string>
-    <string name="change_background_message">背景の変更はこのアプリに限定されており、E-hentai や他の同様のアプリに同期することはできません。</string>
+    <string name="change_background_message">背景の変更はこのアプリに限定されており、Gallery Site や他の同様のアプリに同期することはできません。</string>
     <string name="change_avatar_title">アバターを変更してもよろしいですか？</string>
-    <string name="change_avatar_message">アバターの変更はこのアプリに限定されており、E-hentai や他の同様のアプリに同期することはできません。</string>
+    <string name="change_avatar_message">アバターの変更はこのアプリに限定されており、Gallery Site や他の同様のアプリに同期することはできません。</string>
     <string name="take_a_photograph">写真を撮る</string>
     <string name="choose_from_the_album">アルバムから選択</string>
-    <string name="request_camera_permission">EhViewer は写真を撮影するためにカメラのアクセスを要求します。許可しますか？</string>
-    <string name="request_storage_permission">EhViewer は写真を取得するためにデバイスのフォトアルバムへのアクセスを要求します。許可しますか？</string>
+    <string name="request_camera_permission">AnotherViewer は写真を撮影するためにカメラのアクセスを要求します。許可しますか？</string>
+    <string name="request_storage_permission">AnotherViewer は写真を取得するためにデバイスのフォトアルバムへのアクセスを要求します。許可しますか？</string>
     <!-- 下载通知   -->
     <string name="download_torrent_name">Torrent: %s</string>
     <string name="download_torrent_state">ステータス:</string>
@@ -879,7 +879,7 @@
     <string name="archiver_dialog_download_resample">リサンプルアーカイブをダウンロード</string>
     <string name="archiver_dialog_size">推定サイズ: %s</string>
     <string name="dialog_archiver_title">アーカイブダウンローダー</string>
-    <string name="download_receiver_label">EhViewer ダウンロードレシーバー</string>
+    <string name="download_receiver_label">AnotherViewer ダウンロードレシーバー</string>
     <string name="decompressed_successfully">正常に展開されました！</string>
     <string name="decompression_failed">展開に失敗しました！</string>
     <string name="download_label_archiver">アーカイブ</string>

@@ -17,46 +17,46 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sad_panda_primary_x24"
         android:title="@string/settings_eh"
 
-        app:fragment="com.hippo.ehviewer.ui.fragment.EhFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.SiteFragment" />
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_book_open_primary_x24"
         android:title="@string/settings_read"
         app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.ReadFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.ReadFragment" />
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_download_primary_x24"
         android:title="@string/settings_download"
         app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.DownloadFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.DownloadFragment" />
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_cloud_sync_primary_x24"
         android:title="@string/settings_webui"
         app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.WebUiSyncFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.WebUiSyncFragment" />
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_sec_primary_x24"
         android:title="@string/settings_privacy"
         app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.PrivacyFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.PrivacyFragment" />
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_adb_primary_x24"
         android:title="@string/settings_advanced"
         app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.AdvancedFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.AdvancedFragment" />
 
-    <com.hippo.ehviewer.ui.fragment.BasePreference
+    <com.hippo.anotherviewer.ui.fragment.BasePreference
         android:icon="@drawable/v_info_primary_x24"
         android:title="@string/settings_about"
         app:allowDividerAbove="true"
-        app:fragment="com.hippo.ehviewer.ui.fragment.AboutFragment" />
+        app:fragment="com.hippo.anotherviewer.ui.fragment.AboutFragment" />
 
 </PreferenceScreen>

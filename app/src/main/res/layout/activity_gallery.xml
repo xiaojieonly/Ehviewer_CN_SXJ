@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.hippo.ehviewer.widget.GalleryHeader
+    <com.hippo.anotherviewer.widget.GalleryHeader
         android:id="@+id/gallery_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
             android:textColor="?android:attr/textColorSecondary"
             tools:ignore="RtlHardcoded" />
 
-        <com.hippo.ehviewer.widget.StrokeTextView
+        <com.hippo.anotherviewer.widget.StrokeTextView
             android:id="@+id/progress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -64,7 +64,7 @@
             app:warningColor="@color/red_500"
             tools:ignore="RtlHardcoded" />
 
-    </com.hippo.ehviewer.widget.GalleryHeader>
+    </com.hippo.anotherviewer.widget.GalleryHeader>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -84,7 +84,7 @@
             android:layout_gravity="end"
             android:src="@drawable/ic_start_play_24" />
 
-        <com.hippo.ehviewer.widget.SeekBarPanel
+        <com.hippo.anotherviewer.widget.SeekBarPanel
             android:id="@+id/seek_bar_panel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -106,7 +106,7 @@
                 android:layout_height="48dp"
                 android:layout_weight="1">
 
-                <com.hippo.ehviewer.widget.ReversibleSeekBar
+                <com.hippo.anotherviewer.widget.ReversibleSeekBar
                     android:id="@+id/seek_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -121,7 +121,7 @@
                 android:layout_gravity="center_vertical"
                 android:gravity="center_horizontal" />
 
-        </com.hippo.ehviewer.widget.SeekBarPanel>
+        </com.hippo.anotherviewer.widget.SeekBarPanel>
     </LinearLayout>
 
     <com.hippo.widget.ColorView

@@ -250,7 +250,7 @@ let toastTimer: ReturnType<typeof setTimeout> | undefined
 /* ---------------------------------------------------------- derived --- */
 const galleryId = computed(() => Number(props.gid))
 
-/** Numeric `EhConfig` category bit → `GalleryCategory` key. */
+/** Numeric `SiteConfig` category bit → `GalleryCategory` key. */
 const categoryKey = computed(() =>
   gallery.value ? CATEGORY_BY_BIT[gallery.value.category] : undefined,
 )

@@ -67,24 +67,24 @@ public class CookieRepositoryTest {
   public void testPersistent() {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
+    HttpUrl urlEh = HttpUrl.parse("http://www.anotherviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
         .name("user")
         .value("1234567890")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/")
         .build();
     Cookie cookieEh2 = new Cookie.Builder()
         .name("level")
         .value("999")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 100000)
         .build();
     Cookie cookieEh3 = new Cookie.Builder()
         .name("speed")
         .value("10")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 100000)
         .build();
@@ -104,15 +104,15 @@ public class CookieRepositoryTest {
 
     Map<String, CookieSet> map = Reflect.on(repository).field("map").get();
     assertEquals(3, map.size());
-    equals(map.get("ehviewer.com"), Collections.singletonList(cookieEh1));
-    equals(map.get("www.ehviewer.com"), Arrays.asList(cookieEh2, cookieEh3));
+    equals(map.get("anotherviewer.com"), Collections.singletonList(cookieEh1));
+    equals(map.get("www.anotherviewer.com"), Arrays.asList(cookieEh2, cookieEh3));
     equals(map.get("nimingban.com"), Collections.singletonList(cookieNMB));
     repository.close();
 
     repository = new CookieRepository(app, "cookie.db");
     map = Reflect.on(repository).field("map").get();
     assertEquals(2, map.size());
-    equals(map.get("www.ehviewer.com"), Arrays.asList(cookieEh2, cookieEh3));
+    equals(map.get("www.anotherviewer.com"), Arrays.asList(cookieEh2, cookieEh3));
     equals(map.get("nimingban.com"), Collections.singletonList(cookieNMB));
     repository.close();
   }
@@ -121,18 +121,18 @@ public class CookieRepositoryTest {
   public void testUpdate() {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
+    HttpUrl urlEh = HttpUrl.parse("http://www.anotherviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
         .name("level")
         .value("999")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 100000)
         .build();
     Cookie cookieEh2 = new Cookie.Builder()
         .name("level")
         .value("0")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 100000)
         .build();
@@ -142,13 +142,13 @@ public class CookieRepositoryTest {
     repository.saveFromResponse(urlEh, Collections.singletonList(cookieEh2));
     Map<String, CookieSet> map = Reflect.on(repository).field("map").get();
     assertEquals(1, map.size());
-    equals(map.get("www.ehviewer.com"), Collections.singletonList(cookieEh2));
+    equals(map.get("www.anotherviewer.com"), Collections.singletonList(cookieEh2));
     repository.close();
 
     repository = new CookieRepository(app, "cookie.db");
     map = Reflect.on(repository).field("map").get();
     assertEquals(1, map.size());
-    equals(map.get("www.ehviewer.com"), Collections.singletonList(cookieEh2));
+    equals(map.get("www.anotherviewer.com"), Collections.singletonList(cookieEh2));
     repository.close();
   }
 
@@ -156,18 +156,18 @@ public class CookieRepositoryTest {
   public void testRemoveByExpired() {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
+    HttpUrl urlEh = HttpUrl.parse("http://www.anotherviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
         .name("level")
         .value("999")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 100000)
         .build();
     Cookie cookieEh2 = new Cookie.Builder()
         .name("level")
         .value("0")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() - 100000)
         .build();
@@ -177,7 +177,7 @@ public class CookieRepositoryTest {
     repository.saveFromResponse(urlEh, Collections.singletonList(cookieEh2));
     Map<String, CookieSet> map = Reflect.on(repository).field("map").get();
     assertEquals(1, map.size());
-    equals(map.get("www.ehviewer.com"), Collections.<Cookie>emptyList());
+    equals(map.get("www.anotherviewer.com"), Collections.<Cookie>emptyList());
     repository.close();
 
     repository = new CookieRepository(app, "cookie.db");
@@ -190,18 +190,18 @@ public class CookieRepositoryTest {
   public void testRemoveByNonPersistent() {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
+    HttpUrl urlEh = HttpUrl.parse("http://www.anotherviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
         .name("level")
         .value("999")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 100000)
         .build();
     Cookie cookieEh2 = new Cookie.Builder()
         .name("level")
         .value("0")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .build();
 
@@ -210,7 +210,7 @@ public class CookieRepositoryTest {
     repository.saveFromResponse(urlEh, Collections.singletonList(cookieEh2));
     Map<String, CookieSet> map = Reflect.on(repository).field("map").get();
     assertEquals(1, map.size());
-    equals(map.get("www.ehviewer.com"), Collections.singletonList(cookieEh2));
+    equals(map.get("www.anotherviewer.com"), Collections.singletonList(cookieEh2));
     repository.close();
 
 
@@ -224,25 +224,25 @@ public class CookieRepositoryTest {
   public void testGet() throws InterruptedException {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl urlEh1 = HttpUrl.parse("http://www.ehviewer.com/");
-    HttpUrl urlEh2 = HttpUrl.parse("http://ehviewer.com/");
+    HttpUrl urlEh1 = HttpUrl.parse("http://www.anotherviewer.com/");
+    HttpUrl urlEh2 = HttpUrl.parse("http://anotherviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
         .name("user")
         .value("1234567890")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 3000)
         .build();
     Cookie cookieEh2 = new Cookie.Builder()
         .name("level")
         .value("999")
-        .domain("www.ehviewer.com")
+        .domain("www.anotherviewer.com")
         .path("/")
         .build();
     Cookie cookieEh3 = new Cookie.Builder()
         .name("speed")
         .value("10")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/")
         .build();
 
@@ -268,11 +268,11 @@ public class CookieRepositoryTest {
   public void testClear() {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl url = HttpUrl.parse("http://www.ehviewer.com/");
+    HttpUrl url = HttpUrl.parse("http://www.anotherviewer.com/");
     Cookie cookie = new Cookie.Builder()
         .name("user")
         .value("1234567890")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/")
         .expiresAt(System.currentTimeMillis() + 3000)
         .build();
@@ -281,7 +281,7 @@ public class CookieRepositoryTest {
     repository.saveFromResponse(url, Collections.singletonList(cookie));
     Map<String, CookieSet> map = Reflect.on(repository).field("map").get();
     assertEquals(1, map.size());
-    equals(map.get("ehviewer.com"), Collections.singletonList(cookie));
+    equals(map.get("anotherviewer.com"), Collections.singletonList(cookie));
     repository.clear();
     map = Reflect.on(repository).field("map").get();
     assertEquals(0, map.size());
@@ -297,29 +297,29 @@ public class CookieRepositoryTest {
   public void testSort() {
     Context app = RuntimeEnvironment.application;
 
-    HttpUrl url = HttpUrl.parse("http://www.ehviewer.com/long/long/long/");
+    HttpUrl url = HttpUrl.parse("http://www.anotherviewer.com/long/long/long/");
     Cookie cookie1 = new Cookie.Builder()
         .name("user")
         .value("1234567890")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/")
         .build();
     Cookie cookie2 = new Cookie.Builder()
         .name("supersuperme")
         .value("99999")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/long/")
         .build();
     Cookie cookie3 = new Cookie.Builder()
         .name("a")
         .value("b")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/long/long/long/")
         .build();
     Cookie cookie4 = new Cookie.Builder()
         .name("speed")
         .value("100")
-        .domain("ehviewer.com")
+        .domain("anotherviewer.com")
         .path("/long/long/")
         .build();
 

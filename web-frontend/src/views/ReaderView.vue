@@ -108,7 +108,7 @@ const readerRef = ref<InstanceType<typeof ImageReader> | null>(null)
 /* Persisted reader preferences                                        */
 /* ------------------------------------------------------------------ */
 
-const SETTINGS_STORAGE_KEY = 'ehviewer-web.reader-settings'
+const SETTINGS_STORAGE_KEY = 'anotherviewer-web.reader-settings'
 
 interface PersistedReaderSettings {
   direction: ReadingDirection

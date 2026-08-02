@@ -19,17 +19,17 @@
 
     <string-array name="tag_translation_metadata" tools:ignore="InconsistentArrays">
 <!--        <item>tag-translations-zh-rCN.sha1</item>-->
-<!--        <item>https://github.com/seven332/EhViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN.sha1</item>-->
+<!--        <item>https://github.com/seven332/AnotherViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN.sha1</item>-->
 <!--        <item>tag-translations-zh-rCN</item>-->
-<!--        <item>https://github.com/seven332/EhViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN</item>-->
+<!--        <item>https://github.com/seven332/AnotherViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN</item>-->
 <!--        <item>tag-translations-zh-rCN.sha1</item>-->
-<!--        <item>https://github.com/Mapaler/EhViewer/tree/tag-translations/tag-translations/tag-translations-zh-rCN.sha1</item>-->
+<!--        <item>https://github.com/Mapaler/AnotherViewer/tree/tag-translations/tag-translations/tag-translations-zh-rCN.sha1</item>-->
 <!--        <item>tag-translations-zh-rCN</item>-->
-<!--        <item>https://github.com/Mapaler/EhViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN</item>-->
+<!--        <item>https://github.com/Mapaler/AnotherViewer/raw/tag-translations/tag-translations/tag-translations-zh-rCN</item>-->
         <item>tag-translations-zh-rCN.sha1</item>
-        <item>https://raw.githubusercontent.com/xiaojieonly/EhTagTranslation/main/tag-translations/tag-translations-zh-rCN.json.sha1</item>
+        <item>https://raw.githubusercontent.com/xiaojieonly/SiteTagTranslation/main/tag-translations/tag-translations-zh-rCN.json.sha1</item>
         <item>tag-translations-zh-rCN</item>
-        <item>https://raw.githubusercontent.com/xiaojieonly/EhTagTranslation/main/tag-translations/tag-translations-zh-rCN.json</item>
+        <item>https://raw.githubusercontent.com/xiaojieonly/SiteTagTranslation/main/tag-translations/tag-translations-zh-rCN.json</item>
 
     </string-array>
 

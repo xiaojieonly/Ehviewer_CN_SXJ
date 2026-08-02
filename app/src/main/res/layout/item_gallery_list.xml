@@ -24,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.hippo.ehviewer.widget.FixedThumb
+        <com.hippo.anotherviewer.widget.FixedThumb
             android:id="@+id/thumb"
             android:layout_width="@dimen/gallery_list_thumb_width"
             android:layout_height="@dimen/gallery_list_thumb_height"
@@ -67,7 +67,7 @@
             android:textAllCaps="true"
             android:textColor="@android:color/white" />
 
-        <com.hippo.ehviewer.widget.SimpleRatingView
+        <com.hippo.anotherviewer.widget.SimpleRatingView
             android:id="@+id/rating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

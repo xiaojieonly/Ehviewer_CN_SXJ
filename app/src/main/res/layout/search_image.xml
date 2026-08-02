@@ -15,7 +15,7 @@
   ~ limitations under the License.
   -->
 
-<com.hippo.ehviewer.widget.ImageSearchLayout
+<com.hippo.anotherviewer.widget.ImageSearchLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/search_image"
     android:layout_width="match_parent"

@@ -1,0 +1,55 @@
+# ===========================================================================
+# AnotherViewer Web — systemd service unit
+#
+# Install:
+#   sudo cp deploy/anotherviewer-web.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now anotherviewer-web
+#
+# Logs:
+#   journalctl -u anotherviewer-web -f
+# ===========================================================================
+
+[Unit]
+Description=AnotherViewer Web Server
+Documentation=https://github.com/SXJ-Li/Anotherviewer_CN_SXJ
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=anotherviewer
+Group=anotherviewer
+
+# JAR location — adjust to your deployment path
+ExecStart=/usr/bin/java \
+    -Xms256m -Xmx1024m \
+    -XX:+UseG1GC \
+    -jar /opt/anotherviewer/anotherviewer-web.jar \
+    --server.port=8080 \
+    --anotherviewer.download.path=/opt/anotherviewer/data/downloads \
+    --anotherviewer.download.cache-path=/opt/anotherviewer/data/cache \
+    --anotherviewer.security.encryption-key-path=/opt/anotherviewer/data/security.key
+
+WorkingDirectory=/opt/anotherviewer
+Environment=ANOTHERVIEWER_DATA_DIR=/opt/anotherviewer/data/db
+Environment=JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=143
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/anotherviewer/data
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

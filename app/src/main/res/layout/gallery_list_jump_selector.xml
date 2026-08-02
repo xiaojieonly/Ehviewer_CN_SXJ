@@ -20,7 +20,7 @@
         style="@style/GotoMessageStyle"
         android:padding="@dimen/title_text_top_padding"
         />
-    <com.hippo.ehviewer.widget.MyRadioGroup
+    <com.hippo.anotherviewer.widget.MyRadioGroup
         android:id="@+id/jump_date_picker_group"
         android:padding="@dimen/title_text_top_padding"
         android:layout_width="match_parent"
@@ -75,7 +75,7 @@
             android:text="@string/gallery_list_date_jump_2y"
             />
 
-    </com.hippo.ehviewer.widget.MyRadioGroup>
+    </com.hippo.anotherviewer.widget.MyRadioGroup>
 
     <DatePicker
         android:id="@+id/date_picker_view"

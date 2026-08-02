@@ -9,7 +9,7 @@ let smbConfig = {
   host: '192.168.1.100',
   port: 445,
   share: 'backups',
-  path: 'ehviewer',
+  path: 'anotherviewer',
   loginMode: 'GUEST',
   username: null,
   enabled: false,

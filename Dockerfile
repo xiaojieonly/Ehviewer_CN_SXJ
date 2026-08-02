@@ -7,7 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y fonts-noto-cjk && rm -rf /var/lib/apt/lists/*
 
 # 复制构建产物
-COPY ehviewer-web/build/libs/ehviewer-web-*.jar app.jar
+COPY anotherviewer-web/build/libs/anotherviewer-web-*.jar app.jar
 
 # 数据和缓存目录
 VOLUME ["/app/data", "/app/cache", "/app/downloads"]

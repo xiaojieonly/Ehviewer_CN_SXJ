@@ -28,8 +28,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.ui.EhActivity;
+import com.hippo.anotherviewer.R;
+import com.hippo.anotherviewer.ui.SiteActivity;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.IntIdGenerator;
 
@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class StageActivity extends EhActivity {
+public abstract class StageActivity extends SiteActivity {
 
     private static final String TAG = StageActivity.class.getSimpleName();
 

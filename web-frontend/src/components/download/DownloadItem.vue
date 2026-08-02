@@ -161,7 +161,7 @@ const emit = defineEmits<{
 
 const title = computed(() => props.item.title || props.item.titleJpn || 'Untitled')
 
-/** Numeric `EhConfig` category bit → chip key (undefined renders no chip). */
+/** Numeric `SiteConfig` category bit → chip key (undefined renders no chip). */
 const categoryKey = computed(() => CATEGORY_BY_BIT[props.item.category])
 
 const isDownloading = computed(() => props.item.state === STATE_DOWNLOAD)

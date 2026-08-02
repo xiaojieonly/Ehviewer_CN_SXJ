@@ -1,7 +1,7 @@
 // Simulated download/processing progress via STOMP over SockJS
 //
 // Download messages mirror the REAL backend exactly (see
-// ehviewer-web/.../websocket/DownloadProgressHandler.kt): the bare
+// anotherviewer-web/.../websocket/DownloadProgressHandler.kt): the bare
 // DownloadProgress DTO {gid, state, downloaded, total, speed, label} is
 // published on BOTH /topic/download/{gid} AND /topic/download/all.
 //
@@ -120,7 +120,7 @@ export function setupWebSocket(server) {
           conn.write(stompFrame('CONNECTED', {
             version: '1.2',
             'heart-beat': '10000,10000',
-            server: 'ehviewer-mock/1.0',
+            server: 'anotherviewer-mock/1.0',
           }));
           break;
         }

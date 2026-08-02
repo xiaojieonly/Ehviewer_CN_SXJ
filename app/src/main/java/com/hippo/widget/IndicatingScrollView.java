@@ -25,7 +25,7 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.widget.ScrollView;
 import androidx.annotation.NonNull;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 
 public class IndicatingScrollView extends ScrollView {
 

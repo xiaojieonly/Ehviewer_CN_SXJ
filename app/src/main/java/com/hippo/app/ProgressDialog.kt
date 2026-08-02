@@ -31,7 +31,7 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import com.hippo.ehviewer.R
+import com.hippo.anotherviewer.R
 import java.text.NumberFormat
 
 /**

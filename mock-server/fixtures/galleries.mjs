@@ -1,5 +1,5 @@
 // Gallery fixture data - 24 items covering all 10 categories
-// Category bit values match Android EhConfig: 1=Misc, 2=Doujinshi, 4=Manga, 8=Artist CG, 16=Game CG, 32=Image Set, 64=Cosplay, 128=Asian Porn, 256=Non-H, 512=Western
+// Category bit values match Android SiteConfig: 1=Misc, 2=Doujinshi, 4=Manga, 8=Artist CG, 16=Game CG, 32=Image Set, 64=Cosplay, 128=Asian Porn, 256=Non-H, 512=Western
 
 const CATEGORIES = {
   1: 'Misc',

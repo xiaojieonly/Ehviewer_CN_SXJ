@@ -25,7 +25,7 @@ import android.widget.TextView
 import android.widget.TextView.OnEditorActionListener
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.textfield.TextInputLayout
-import com.hippo.ehviewer.R
+import com.hippo.anotherviewer.R
 
 class EditTextDialogBuilder @SuppressLint("InflateParams") constructor(
     context: Context?,

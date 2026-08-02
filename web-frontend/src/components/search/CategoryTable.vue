@@ -10,7 +10,7 @@
   SEMANTICS (frozen contract, task CA4): POSITIVE — `selected` lists the
   categories INCLUDED in the search. This deliberately inverts the Android
   widget, where a CHECKED block meant the category was EXCLUDED
-  (`getCategory()` sets the EhConfig exclusion bit when NOT checked).
+  (`getCategory()` sets the SiteConfig exclusion bit when NOT checked).
   Scenes convert to the exclusion bitmask via `CATEGORY_BIT_VALUES`.
 
   Interaction:

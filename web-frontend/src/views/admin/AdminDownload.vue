@@ -5,7 +5,7 @@
     - download.path / workerCount / downloadDelay / downloadTimeout
     - download.maxConcurrentGalleries / maxConcurrentImages
 
-  设备本地设置（localStorage `ehviewer-admin-download-ui`，仅本设备生效）:
+  设备本地设置（localStorage `anotherviewer-admin-download-ui`，仅本设备生效）:
     - 预加载图片数、下载列表分页、排序方向、自动开始下载
 
   维护操作（清理冗余文件 / 清理无效下载）: downloadApi 暂未提供对应批量清理
@@ -361,7 +361,7 @@ interface LocalSettings {
   autoStart: boolean
 }
 
-const LOCAL_SETTINGS_KEY = 'ehviewer-admin-download-ui'
+const LOCAL_SETTINGS_KEY = 'anotherviewer-admin-download-ui'
 
 const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
   preloadImages: 2,

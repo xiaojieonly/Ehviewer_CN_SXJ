@@ -23,11 +23,11 @@ README.txt
 
 ### 数据目录（data-dir）
 
-服务器唯一的权威数据目录，由 `--data-dir` 参数或 `EHVIEWER_DATA_DIR` 环境变量指定（默认 `./data`）。固定结构：
+服务器唯一的权威数据目录，由 `--data-dir` 参数或 `ANOTHERVIEWER_DATA_DIR` 环境变量指定（默认 `./data`）。固定结构：
 
 ```
 <data-dir>/
-├── ehviewer.db        # SQLite（同步实体、用户配置 server_config 等全部数据）
+├── anotherviewer.db        # SQLite（同步实体、用户配置 server_config 等全部数据）
 ├── security.key       # token/密码加密密钥
 ├── downloads/         # 下载内容默认位置（可用管理界面改到其他路径，持久化）
 ├── cache/             # 图片缓存
@@ -42,7 +42,7 @@ README.txt
 unzip anotherviewer-<version>-*.zip -d ~/anotherviewer
 cd ~/anotherviewer
 ./bin/start.sh                 # 默认 data-dir = ./data
-./bin/start.sh --data-dir=/srv/ehviewer   # 自定义数据目录（docker 挂载卷的等价物）
+./bin/start.sh --data-dir=/srv/anotherviewer   # 自定义数据目录（docker 挂载卷的等价物）
 ./bin/stop.sh
 ```
 
@@ -91,10 +91,10 @@ Docker Compose 会将以下目录挂载到宿主机：
 ```yaml
 # docker-compose.yml
 services:
-  ehviewer:
+  anotherviewer:
     environment:
-      - EHVIEWER_SERVER_PORT=9090
-      - EHVIEWER_CACHE_SIZE_MB=20480
+      - ANOTHERVIEWER_SERVER_PORT=9090
+      - ANOTHERVIEWER_CACHE_SIZE_MB=20480
 ```
 
 ## 裸机部署
@@ -124,12 +124,12 @@ cd AnotherViewer
 
 4. 后台运行（可选）
 ```bash
-nohup ./start.sh > ehviewer.log 2>&1 &
+nohup ./start.sh > anotherviewer.log 2>&1 &
 ```
 
 ### systemd 服务（可选）
 
-创建 `/etc/systemd/system/ehviewer.service`:
+创建 `/etc/systemd/system/anotherviewer.service`:
 
 ```ini
 [Unit]
@@ -139,8 +139,8 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/opt/ehviewer-web
-ExecStart=/usr/bin/java -jar ehviewer-web/build/libs/ehviewer-web-*.jar
+WorkingDirectory=/opt/anotherviewer-web
+ExecStart=/usr/bin/java -jar anotherviewer-web/build/libs/anotherviewer-web-*.jar
 Restart=always
 RestartSec=10
 
@@ -151,8 +151,8 @@ WantedBy=multi-user.target
 启用服务：
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable ehviewer
-sudo systemctl start ehviewer
+sudo systemctl enable anotherviewer
+sudo systemctl start anotherviewer
 ```
 
 ## 网络存储接入
@@ -161,20 +161,20 @@ sudo systemctl start ehviewer
 
 ```bash
 # /etc/fstab
-//192.168.6.141/media  /data/ehviewer/downloads  cifs  credentials=/etc/smb-cred,uid=1000,gid=1000,iocharset=utf8  0  0
+//192.168.6.141/media  /data/anotherviewer/downloads  cifs  credentials=/etc/smb-cred,uid=1000,gid=1000,iocharset=utf8  0  0
 ```
 
 ### NFS
 
 ```bash
 # /etc/fstab
-192.168.6.141:/volume1/media  /data/ehviewer/downloads  nfs  defaults,soft,timeo=10,retrans=3  0  0
+192.168.6.141:/volume1/media  /data/anotherviewer/downloads  nfs  defaults,soft,timeo=10,retrans=3  0  0
 ```
 
 ### rclone (云存储)
 
 ```bash
-rclone mount cloud:/data /data/ehviewer/downloads --vfs-cache-mode full --vfs-cache-max-size 1G
+rclone mount cloud:/data /data/anotherviewer/downloads --vfs-cache-mode full --vfs-cache-max-size 1G
 ```
 
 ## 故障排查
@@ -193,7 +193,7 @@ kill -9 <PID>
 
 ```bash
 # 删除数据库重新创建
-rm data/ehviewer.db
+rm data/anotherviewer.db
 # 重启服务
 ```
 
@@ -214,4 +214,4 @@ chown -R www-data:www-data data cache downloads
   1. 备份（元数据，≤50MB）→ 新机器 WebUI 还原
   2. 含下载内容的大备份（GB 级）→ 手动解包分片/直接拷贝 data-dir（**WebUI 上传限 50MB**，面向元数据）
   3. 直接拷贝整个 data-dir（结构固定，目标路径可以不同）
-- **App 包名迁移（com.xjs.ehviewer → com.pf.anotherviewer）**：旧包名 app 覆盖安装 legacy 包（`-PapplicationId=com.xjs.ehviewer`）→ 手动同步推数据到服务器 → 新包名 app 配对拉全量；下载文件留在原存储位置，新包名 app 重新授权 SAF 目录即复用
+- **App 包名迁移（com.xjs.anotherviewer → com.pf.anotherviewer）**：旧包名 app 覆盖安装 legacy 包（`-PapplicationId=com.xjs.anotherviewer`）→ 手动同步推数据到服务器 → 新包名 app 配对拉全量；下载文件留在原存储位置，新包名 app 重新授权 SAF 目录即复用

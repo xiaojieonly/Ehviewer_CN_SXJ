@@ -114,7 +114,7 @@
  * the ETA estimate.
  *
  * State model = `DownloadInfo.STATE_*`: 0 idle · 1 wait · 2 download ·
- * 3 finish · 4 failed (ehviewer-web mirrors the Android constants).
+ * 3 finish · 4 failed (anotherviewer-web mirrors the Android constants).
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { StompSubscription } from '@stomp/stompjs'

@@ -19,7 +19,7 @@ package com.hippo.util;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;

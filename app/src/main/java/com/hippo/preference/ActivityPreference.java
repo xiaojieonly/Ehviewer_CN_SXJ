@@ -23,7 +23,7 @@ import androidx.preference.Preference;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.Toast;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import com.hippo.util.ExceptionUtils;
 
 public class ActivityPreference extends Preference {

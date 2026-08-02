@@ -4,7 +4,7 @@ import { ref, watch } from 'vue'
 export type Theme = 'light' | 'dark' | 'black'
 
 const THEMES: Theme[] = ['light', 'dark', 'black']
-const STORAGE_KEY = 'ehviewer-theme'
+const STORAGE_KEY = 'anotherviewer-theme'
 
 /** Meta theme-color values per theme (matches --color-toolbar in tokens.css) */
 const META_THEME_COLORS: Record<Theme, string> = {

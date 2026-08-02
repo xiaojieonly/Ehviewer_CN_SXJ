@@ -5,7 +5,7 @@
 #   lib/app.jar    服务主体（可执行 fat jar）
 #   bin/start.sh   启动脚本（脚本所在目录推导，默认 data-dir = 解压目录 data/）
 #   bin/stop.sh    停止脚本
-#   data/          预建数据目录模板（ehviewer.db/security.key/downloads/cache/backups）
+#   data/          预建数据目录模板（anotherviewer.db/security.key/downloads/cache/backups）
 #   README.txt     安装说明
 #
 # 用法:
@@ -23,10 +23,10 @@ usage() {
     cat <<'EOF'
 用法: package.sh [-v <version>] [-o <outdir>] [--no-data] [--jar <path>]
 
-  -v <version>   版本号（缺省：gradle.properties → ehviewer-web/build.gradle.kts → jar 文件名）
+  -v <version>   版本号（缺省：gradle.properties → anotherviewer-web/build.gradle.kts → jar 文件名）
   -o <outdir>    输出目录（默认 ./dist）
   --no-data      不预建 data/ 模板
-  --jar <path>   指定 jar 路径（默认 ehviewer-web/build/libs/*.jar，排除 -plain.jar）
+  --jar <path>   指定 jar 路径（默认 anotherviewer-web/build/libs/*.jar，排除 -plain.jar）
   -h, --help     显示帮助
 EOF
 }
@@ -68,23 +68,23 @@ if [ -z "$VERSION" ]; then
     VERSION=$(grep -E '^version[[:space:]]*=' "$REPO_ROOT/gradle.properties" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '[:space:]' || true)
 fi
 if [ -z "$VERSION" ]; then
-    VERSION=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "$REPO_ROOT/ehviewer-web/build.gradle.kts" 2>/dev/null | head -1 || true)
+    VERSION=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "$REPO_ROOT/anotherviewer-web/build.gradle.kts" 2>/dev/null | head -1 || true)
 fi
 
 # ---------------------------------------------------------------------------
 # JAR 查找
 # ---------------------------------------------------------------------------
 if [ -z "$JAR_PATH" ]; then
-    JAR_PATH=$(find "$REPO_ROOT/ehviewer-web/build/libs" -maxdepth 1 -name '*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1 || true)
+    JAR_PATH=$(find "$REPO_ROOT/anotherviewer-web/build/libs" -maxdepth 1 -name '*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1 || true)
 fi
 if [ -z "$JAR_PATH" ] || [ ! -f "$JAR_PATH" ]; then
-    echo "错误: 未找到可执行 jar，请先构建: ./gradlew :ehviewer-web:bootJar" >&2
+    echo "错误: 未找到可执行 jar，请先构建: ./gradlew :anotherviewer-web:bootJar" >&2
     exit 1
 fi
 JAR_PATH="$(cd "$(dirname "$JAR_PATH")" && pwd)/$(basename "$JAR_PATH")"
 
 if [ -z "$VERSION" ]; then
-    VERSION=$(basename "$JAR_PATH" | sed -E 's/^ehviewer-web-(.+)\.jar$/\1/')
+    VERSION=$(basename "$JAR_PATH" | sed -E 's/^anotherviewer-web-(.+)\.jar$/\1/')
 fi
 
 # ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ AnotherViewer Web $VERSION ($OS/$ARCH)
 --data-dir 语义
 默认数据目录为解压目录下的 data/；启动脚本支持覆盖，例如：
   bin/start.sh --data-dir /var/lib/anotherviewer
-数据目录固定结构：ehviewer.db / security.key / downloads/ / cache/ / backups/。
+数据目录固定结构：anotherviewer.db / security.key / downloads/ / cache/ / backups/。
 
 systemd（可选，仅 Linux）
 仓库 packaging/systemd/anotherviewer.service.tpl 提供了 systemd unit 模板，
@@ -285,7 +285,7 @@ if [ "$BUILD_DATA" -eq 1 ]; then
 
 本目录是 AnotherViewer Web 的权威数据目录，固定结构如下：
 
-- ehviewer.db     SQLite 主数据库（用户数据、收藏、历史、下载记录）
+- anotherviewer.db     SQLite 主数据库（用户数据、收藏、历史、下载记录）
 - security.key    WebUI 配对/设备认证密钥
 - downloads/      下载文件
 - cache/          下载缓存

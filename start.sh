@@ -71,15 +71,15 @@ fi
 # ---------------------------------------------------------------------------
 # 查找可执行 JAR（排除 -plain.jar）
 # ---------------------------------------------------------------------------
-JAR_FILE=$(find ehviewer-web/build/libs -name "ehviewer-web-*.jar" ! -name "*-plain.jar" | head -1)
+JAR_FILE=$(find anotherviewer-web/build/libs -name "anotherviewer-web-*.jar" ! -name "*-plain.jar" | head -1)
 
 if [ -z "$JAR_FILE" ]; then
     echo "错误: 未找到 JAR 文件，请先运行 ./build.sh"
     exit 1
 fi
 
-PID_FILE="ehviewer-web.pid"
-LOG_FILE="ehviewer-web.log"
+PID_FILE="anotherviewer-web.pid"
+LOG_FILE="anotherviewer-web.log"
 
 if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
     echo "服务已在运行 (PID: $(cat "$PID_FILE"))，访问 http://localhost:8080"
@@ -93,10 +93,10 @@ echo "端口: 8080"
 
 nohup "$JAVA_BIN" -jar "$JAR_FILE" \
     --server.port=8080 \
-    --ehviewer.download.path=./data/downloads \
-    --ehviewer.download.cache-path=./data/cache \
-    --ehviewer.download.worker-count=3 \
-    --ehviewer.cache.size-mb=10240 \
+    --anotherviewer.download.path=./data/downloads \
+    --anotherviewer.download.cache-path=./data/cache \
+    --anotherviewer.download.worker-count=3 \
+    --anotherviewer.cache.size-mb=10240 \
     > "$LOG_FILE" 2>&1 &
 
 PID=$!

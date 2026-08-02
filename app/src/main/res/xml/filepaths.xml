@@ -21,21 +21,21 @@
         path="" />
     <files-path
         name="files"
-        path="EhViewer/files" />
+        path="AnotherViewer/files" />
 
     <cache-path
         name="cache"
-        path="EhViewer/cache" />
+        path="AnotherViewer/cache" />
 
     <external-path
         name="temp"
-        path="EhViewer/temp" />
+        path="AnotherViewer/temp" />
 
     <external-files-path
         name="external_file_path"
-        path="EhViewer/temp/files" />
+        path="AnotherViewer/temp/files" />
 
     <external-cache-path
         name="external_cache_path"
-        path="EhViewer/temp/cache" />
+        path="AnotherViewer/temp/cache" />
 </path>

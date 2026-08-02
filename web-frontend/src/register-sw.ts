@@ -96,7 +96,7 @@ export function clearImageCache(timeoutMs = 5000): Promise<void> {
 /**
  * Cache statistics reported by the SW (sw.js `collectCacheStats`).
  * Entry counts are keyed by the SW's versioned cache names
- * (e.g. `ehviewer-v1-shell`), so iterate entries rather than relying on
+ * (e.g. `anotherviewer-v1-shell`), so iterate entries rather than relying on
  * fixed keys.
  */
 export interface CacheStats {

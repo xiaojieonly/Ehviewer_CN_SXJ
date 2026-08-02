@@ -1,8 +1,8 @@
 # AnotherViewer
 
-一个 E-Hentai Android 平台的浏览器，基于 [EhViewer](https://github.com/seven332/EhViewer) 及其衍生项目。
+一个 E-Hentai Android 平台的浏览器，基于 [AnotherViewer](https://github.com/seven332/AnotherViewer) 及其衍生项目。
 
-An E-Hentai Application for Android, based on [EhViewer](https://github.com/seven332/EhViewer) and its derivatives.
+An E-Hentai Application for Android, based on [AnotherViewer](https://github.com/seven332/AnotherViewer) and its derivatives.
 
 本仓库同时包含 **Android 客户端**与**本地 Web App（局域网服务器）**，两者可以协同工作：收藏/历史同步、远程阅读、委托下载。
 
@@ -79,15 +79,15 @@ open http://localhost:8080
 
 ## Acknowledgments
 
-本项目是 [EhViewer](https://github.com/seven332/EhViewer) 的 Fork 的 Fork：EhViewer → [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ) → AnotherViewer。
+本项目是 [AnotherViewer](https://github.com/seven332/AnotherViewer) 的 Fork 的 Fork：AnotherViewer → [Anotherviewer_CN_SXJ](https://github.com/xiaojieonly/Anotherviewer_CN_SXJ) → AnotherViewer。
 
-- 感谢 EhViewer 奠基人 [Hippo/seven332](https://github.com/seven332)
-- 感谢 [xiaojieonly](https://github.com/xiaojieonly) 维护的 [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ) 中文分支，本项目基于其代码继续开发
+- 感谢 AnotherViewer 奠基人 [Hippo/seven332](https://github.com/seven332)
+- 感谢 [xiaojieonly](https://github.com/xiaojieonly) 维护的 [Anotherviewer_CN_SXJ](https://github.com/xiaojieonly/Anotherviewer_CN_SXJ) 中文分支，本项目基于其代码继续开发
 
-This project is a fork of a fork of [EhViewer](https://github.com/seven332/EhViewer): EhViewer → [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ) → AnotherViewer.
+This project is a fork of a fork of [AnotherViewer](https://github.com/seven332/AnotherViewer): AnotherViewer → [Anotherviewer_CN_SXJ](https://github.com/xiaojieonly/Anotherviewer_CN_SXJ) → AnotherViewer.
 
-- Thanks to [Hippo/seven332](https://github.com/seven332), the founder of EhViewer
-- Thanks to [xiaojieonly](https://github.com/xiaojieonly) for maintaining [Ehviewer_CN_SXJ](https://github.com/xiaojieonly/Ehviewer_CN_SXJ), the Chinese fork this project is based on
+- Thanks to [Hippo/seven332](https://github.com/seven332), the founder of AnotherViewer
+- Thanks to [xiaojieonly](https://github.com/xiaojieonly) for maintaining [Anotherviewer_CN_SXJ](https://github.com/xiaojieonly/Anotherviewer_CN_SXJ), the Chinese fork this project is based on
 
 本项目受到了诸多开源项目的帮助
 This project has received help from many open source projects

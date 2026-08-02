@@ -156,7 +156,7 @@ const TAP_SUPPRESS_WINDOW_MS = 400
 /**
  * Tap-zone + swipe navigation shared by the paged reader modes:
  * - left ⅓ = prev, right ⅓ = next, center = toggle chrome (mirrored in RTL,
- *   like Tachiyomi/EhViewer RTL pagers);
+ *   like Tachiyomi/AnotherViewer RTL pagers);
  * - swipe left = next / swipe right = prev in LTR, reversed in RTL (the next
  *   page slides in from the left, so the finger sweeps right);
  * - single taps are delayed by the double-tap window so double-tap zoom never

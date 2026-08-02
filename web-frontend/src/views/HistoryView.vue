@@ -93,7 +93,7 @@
  * The history endpoint returns the full list in one shot (no paging), so
  * `load-more` is intentionally not wired.
  *
- * Backend note: `HistoryItem.category` is the stringified `EhConfig` bit
+ * Backend note: `HistoryItem.category` is the stringified `SiteConfig` bit
  * (HistoryService maps `entity.category.toString()`), so rows are converted
  * to `GalleryInfo` (numeric bit) before being handed to `GalleryCard`.
  */
@@ -116,7 +116,7 @@ import AppIcon from '@/components/atoms/AppIcon.vue'
 /** View states matching ContentLayout's internal ViewTransition. */
 type ViewState = 'loading' | 'content' | 'empty' | 'error'
 
-/** Unknown category fallback — Android `EhUtils.UNKNOWN` bit. */
+/** Unknown category fallback — Android `SiteUtils.UNKNOWN` bit. */
 const CATEGORY_UNKNOWN_BIT = 0x400
 
 /* ---------------------------------------------- category string → bit --- */
@@ -128,7 +128,7 @@ for (const key of CATEGORY_ORDER) {
 }
 
 /**
- * Normalizes a backend category string to its `EhConfig` bit value.
+ * Normalizes a backend category string to its `SiteConfig` bit value.
  * Accepts stringified bits ("2"), labels ("Artist CG") and keys ("artist_cg").
  */
 function categoryBit(raw: string): number {

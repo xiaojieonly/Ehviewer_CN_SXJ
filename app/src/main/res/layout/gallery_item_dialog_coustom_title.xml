@@ -30,7 +30,7 @@
         android:paddingLeft="?attr/listPreferredItemPaddingLeft"
         android:paddingRight="?attr/listPreferredItemPaddingRight">
 
-        <com.hippo.ehviewer.widget.FixedThumbNew
+        <com.hippo.anotherviewer.widget.FixedThumbNew
             android:id="@+id/dialog_thumb"
             android:layout_width="@dimen/gallery_list_thumb_width"
             android:layout_height="@dimen/gallery_list_thumb_height"

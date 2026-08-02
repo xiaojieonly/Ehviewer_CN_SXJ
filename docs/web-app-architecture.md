@@ -36,17 +36,17 @@
 ### 2.1 Gradle 多模块布局
 
 ```
-Ehviewer_CN_SXJ/
-├── ehviewer-core/                    # 核心业务库 (纯 Java, 无 Android 依赖)
+Anotherviewer_CN_SXJ/
+├── anotherviewer-core/                    # 核心业务库 (纯 Java, 无 Android 依赖)
 │   ├── build.gradle.kts
-│   └── src/main/java/com/hippo/ehviewer/
+│   └── src/main/java/com/hippo/anotherviewer/
 │       ├── client/
-│       │   ├── EhEngine.java         # API 请求引擎 (直接移植, ~1429 行)
-│       │   ├── EhUrl.java            # URL 构建 (直接移植, ~320 行)
-│       │   ├── EhConfig.java         # 用户配置
-│       │   ├── EhFilter.java         # 画廊过滤
-│       │   ├── EhRequestBuilder.java # HTTP 请求构建
-│       │   ├── EhCacheKeyFactory.java
+│       │   ├── SiteEngine.java         # API 请求引擎 (直接移植, ~1429 行)
+│       │   ├── SiteUrl.java            # URL 构建 (直接移植, ~320 行)
+│       │   ├── SiteConfig.java         # 用户配置
+│       │   ├── SiteFilter.java         # 画廊过滤
+│       │   ├── SiteRequestBuilder.java # HTTP 请求构建
+│       │   ├── SiteCacheKeyFactory.java
 │       │   ├── parser/               # 22 个 HTML 解析器 (直接移植)
 │       │   │   ├── GalleryListParser.java
 │       │   │   ├── GalleryDetailParser.java
@@ -57,7 +57,7 @@ Ehviewer_CN_SXJ/
 │       │   │   ├── ArchiveParser.java
 │       │   │   ├── TorrentParser.java
 │       │   │   ├── TopListParser.java
-│       │   │   ├── EhHomeParser.java
+│       │   │   ├── SiteHomeParser.java
 │       │   │   ├── ProfileParser.java
 │       │   │   ├── RateGalleryParser.java
 │       │   │   ├── VoteCommentParser.java
@@ -68,7 +68,7 @@ Ehviewer_CN_SXJ/
 │       │   │   ├── GalleryPageUrlParser.java
 │       │   │   ├── MyTagLitParser.java
 │       │   │   ├── ForumsParser.java
-│       │   │   ├── EhEventParse.java
+│       │   │   ├── SiteEventParse.java
 │       │   │   └── ParserUtils.java
 │       │   ├── data/                 # 23 个数据模型 (直接移植, 纯 POJO)
 │       │   │   ├── GalleryInfo.java
@@ -96,11 +96,11 @@ Ehviewer_CN_SXJ/
 │           ├── SmbConfig.java        # SMB 配置
 │           └── SmbSettings.java      # SMB 设置
 │
-├── ehviewer-web/                     # Spring Boot Web 应用
+├── anotherviewer-web/                     # Spring Boot Web 应用
 │   ├── build.gradle.kts
 │   └── src/main/
-│       ├── java/com/hippo/ehviewer/web/
-│       │   ├── EhWebApplication.kt
+│       ├── java/com/hippo/anotherviewer/web/
+│       │   ├── SiteWebApplication.kt
 │       │   ├── config/
 │       │   │   ├── WebConfig.kt          # CORS, 静态资源
 │       │   │   ├── SecurityConfig.kt     # Session 认证
@@ -120,7 +120,7 @@ Ehviewer_CN_SXJ/
 │       │   │   ├── TagController.kt
 │       │   │   └── TorrentController.kt
 │       │   ├── service/                  # 业务逻辑层
-│       │   │   ├── EhAuthService.kt
+│       │   │   ├── SiteAuthService.kt
 │       │   │   ├── GalleryService.kt
 │       │   │   ├── ImageProxyService.kt
 │       │   │   ├── DownloadService.kt
@@ -191,24 +191,24 @@ Ehviewer_CN_SXJ/
 │           └── useInfiniteScroll.ts
 │
 ├── app/                                   # 原有 Android App (保留)
-│   └── build.gradle                       # 改为依赖 ehviewer-core
+│   └── build.gradle                       # 改为依赖 anotherviewer-core
 │
-└── settings.gradle                        # include ehviewer-core, ehviewer-web
+└── settings.gradle                        # include anotherviewer-core, anotherviewer-web
 ```
 
 ---
 
 ## 3. 核心模块详细设计
 
-### 3.1 ehviewer-core -- 代码复用策略
+### 3.1 anotherviewer-core -- 代码复用策略
 
 #### 可直接移植 (仅需替换 Android 依赖)
 
 | 模块 | 原始依赖 | 替换方案 | 工作量 |
 |------|----------|----------|--------|
 | 22 个 HTML Parser | `android.text.TextUtils` | `java.lang.String` 方法 | 极小 |
-| EhEngine (1429行) | `android.text.TextUtils` | 同上 | 极小 |
-| EhUrl (320行) | 无 Android 依赖 | 无需修改 | 无 |
+| SiteEngine (1429行) | `android.text.TextUtils` | 同上 | 极小 |
+| SiteUrl (320行) | 无 Android 依赖 | 无需修改 | 无 |
 | 23 个 Data Model | 无 Android 依赖 | 无需修改 | 无 |
 | SmbConnection (593行) | 无 Android 依赖 (smbj 是纯 Java) | 无需修改 | 无 |
 | SpiderInfo | 无 Android 依赖 | 无需修改 | 无 |
@@ -219,8 +219,8 @@ Ehviewer_CN_SXJ/
 |------|---------------|----------|
 | SpiderQueen (1832行) | Context, AsyncTask, Process, BitmapFactory, UniFile | Spring @Async + java.io.File |
 | SpiderDen (458行) | UniFile, SimpleDiskCache, BitmapFactory | java.io.File + 自定义磁盘 LRU 缓存 |
-| EhCookieStore | SharedPreferences | Spring Session / 内存 Map |
-| EhFilter | Context (字符串资源) | 硬编码或 YAML 配置 |
+| SiteCookieStore | SharedPreferences | Spring Session / 内存 Map |
+| SiteFilter | Context (字符串资源) | 硬编码或 YAML 配置 |
 
 ### 3.2 下载缓存系统
 
@@ -228,7 +228,7 @@ Ehviewer_CN_SXJ/
 
 ```
 +-----------------------------------------------------+
-|                    ehviewer-web                       |
+|                    anotherviewer-web                       |
 |                                                       |
 |  +-------------+    +--------------+    +----------+ |
 |  |  Download    |--->|  SpiderQueen  |--->| SpiderDen| |
@@ -245,7 +245,7 @@ Ehviewer_CN_SXJ/
                               +----------------v----------------+
                               |         Linux 文件系统           |
                               |                                  |
-                              |  /data/ehviewer/downloads/       |
+                              |  /data/anotherviewer/downloads/       |
                               |  +-- {gid1}-{title1}/            |
                               |  |   +-- 00000001.jpg            |
                               |  |   +-- 00000002.jpg            |
@@ -316,7 +316,7 @@ DownloadManager
 ### 3.3 图片流式代理
 
 ```
-浏览器                    Spring Boot                  E-Hentai
+浏览器                    Spring Boot                  Gallery Site
   |                          |                            |
   |  GET /api/v1/gallery/    |                            |
   |  image/{gid}/{page}      |                            |
@@ -339,14 +339,14 @@ DownloadManager
 - **流式转发**: 不缓冲完整图片, 降低内存占用
 - **Range 支持**: 前端可断点续传, 大图友好
 - **缓存头**: `Cache-Control: max-age=86400` 减少重复请求
-- **Session 透传**: 服务端携带用户 Cookie 访问 E-Hentai
+- **Session 透传**: 服务端携带用户 Cookie 访问 Gallery Site
 - **错误处理**: 509 限速自动暂停并通知前端
 
 ### 3.4 SMB 备份系统
 
 ```
 +---------------------------------------------+
-|              ehviewer-web                     |
+|              anotherviewer-web                     |
 |                                               |
 |  +--------------+    +---------------------+ |
 |  | SmbController |--->| SmbBackupService    | |
@@ -355,7 +355,7 @@ DownloadManager
 |                                |               |
 |                       +--------v-----------+  |
 |                       |  SmbConnection      |  |
-|                       |  (ehviewer-core)    |  |
+|                       |  (anotherviewer-core)    |  |
 |                       +--------+-----------+  |
 |                                |               |
 +--------------------------------|---------------+
@@ -494,7 +494,7 @@ GET    /api/v1/tag/database          # 标签数据库
 | download_dirname | DownloadDirnameEntity | 下载目录名映射 |
 | smb_config | SmbConfigEntity | SMB 服务器配置 |
 
-数据库文件: `data/ehviewer.mv.db` (H2) 或 `data/ehviewer.db` (SQLite)
+数据库文件: `data/anotherviewer.mv.db` (H2) 或 `data/anotherviewer.db` (SQLite)
 
 ---
 
@@ -509,12 +509,12 @@ Web App 运行在 Linux 服务器上, Java File I/O 对挂载点透明读写。
 
 ```yaml
 # application.yml
-ehviewer:
+anotherviewer:
   download:
     # 下载路径 (可以是本地目录或已挂载的网络存储)
-    path: /data/ehviewer/downloads
+    path: /data/anotherviewer/downloads
     # 缓存路径 (建议本地 SSD, 加速读取)
-    cache-path: /data/ehviewer/cache
+    cache-path: /data/anotherviewer/cache
     cache-size-mb: 512
     # 并发下载线程数
     worker-count: 3
@@ -530,7 +530,7 @@ ehviewer:
 
 ```bash
 # /etc/fstab
-//192.168.6.141/media  /data/ehviewer/downloads  cifs  credentials=/etc/smb-cred,uid=1000,gid=1000,iocharset=utf8  0  0
+//192.168.6.141/media  /data/anotherviewer/downloads  cifs  credentials=/etc/smb-cred,uid=1000,gid=1000,iocharset=utf8  0  0
 
 # /etc/smb-cred
 username=admin
@@ -542,25 +542,25 @@ domain=WORKGROUP
 
 ```bash
 # /etc/fstab
-192.168.6.141:/volume1/media  /data/ehviewer/downloads  nfs  defaults,soft,timeo=10,retrans=3  0  0
+192.168.6.141:/volume1/media  /data/anotherviewer/downloads  nfs  defaults,soft,timeo=10,retrans=3  0  0
 ```
 
 #### WebDAV
 
 ```bash
-mount.davfs https://server/dav /data/ehviewer/downloads
+mount.davfs https://server/dav /data/anotherviewer/downloads
 ```
 
 #### rclone (支持 Google Drive, OneDrive, S3, 等)
 
 ```bash
-rclone mount cloud:/data /data/ehviewer/downloads --vfs-cache-mode full --vfs-cache-max-size 1G
+rclone mount cloud:/data /data/anotherviewer/downloads --vfs-cache-mode full --vfs-cache-max-size 1G
 ```
 
 #### mergerfs (合并多个挂载点)
 
 ```bash
-mergerfs /mnt/disk1:/mnt/disk2 /data/ehviewer/downloads -o category=eplus,fsname=mergerfs
+mergerfs /mnt/disk1:/mnt/disk2 /data/anotherviewer/downloads -o category=eplus,fsname=mergerfs
 ```
 
 #### autofs (按需自动挂载)
@@ -575,10 +575,10 @@ media -fstype=cifs,credentials=/etc/smb-cred ://192.168.6.141/media
 ```
 服务器 (Linux)
 +-- 本地 SSD
-|   +-- /data/ehviewer/cache/          # 图片缓存 (高速读写)
-|   +-- /data/ehviewer/data/           # 数据库文件
+|   +-- /data/anotherviewer/cache/          # 图片缓存 (高速读写)
+|   +-- /data/anotherviewer/data/           # 数据库文件
 +-- 网络存储挂载点
-|   +-- /data/ehviewer/downloads/      # 挂载 NAS (CIFS/NFS)
+|   +-- /data/anotherviewer/downloads/      # 挂载 NAS (CIFS/NFS)
 +-- Spring Boot 应用
     +-- 端口 8080 (可配置)
 ```
@@ -597,7 +597,7 @@ media -fstype=cifs,credentials=/etc/smb-cred ://192.168.6.141/media
 /downloads             -- 下载管理 (队列, 进度, 标签筛选)
 /favorites             -- 收藏管理 (分类收藏夹)
 /history               -- 浏览历史
-/settings              -- 设置 (E-Hentai, SMB, 代理, 缓存)
+/settings              -- 设置 (Gallery Site, SMB, 代理, 缓存)
 /smb-backup            -- SMB 备份管理 (配置, 同步, 进度)
 ```
 
@@ -615,8 +615,8 @@ media -fstype=cifs,credentials=/etc/smb-cred ://192.168.6.141/media
 
 ### Phase 1: 项目骨架 + 核心 API (1-2 周)
 
-- 创建 Gradle 多模块项目结构 (ehviewer-core, ehviewer-web, web-frontend)
-- 从现有代码抽取 ehviewer-core (移除 Android 依赖, 替换 TextUtils)
+- 创建 Gradle 多模块项目结构 (anotherviewer-core, anotherviewer-web, web-frontend)
+- 从现有代码抽取 anotherviewer-core (移除 Android 依赖, 替换 TextUtils)
 - Spring Boot 基础配置 (Security, Session, CORS, WebSocket)
 - 数据库 JPA Entity 定义 + 迁移脚本
 - 实现认证 API (Cookie 登录)
@@ -644,7 +644,7 @@ media -fstype=cifs,credentials=/etc/smb-cred ://192.168.6.141/media
 
 ### Phase 4: SMB 备份 (1 周)
 
-- 移植 SmbConnection 到 ehviewer-core
+- 移植 SmbConnection 到 anotherviewer-core
 - Spring Service 封装 (配置管理, 连接测试, 同步执行)
 - Spring @Scheduled 定时任务支持
 - 实现 SMB API + WebSocket 进度推送
@@ -682,7 +682,7 @@ media -fstype=cifs,credentials=/etc/smb-cred ://192.168.6.141/media
 | 风险 | 影响 | 缓解措施 |
 |------|------|----------|
 | Parser 在 Web 环境解析失败 | 核心功能不可用 | 逐个 Parser 编写测试用例, 对比 Android 输出 |
-| E-Hentai 509 限速 | 下载中断 | SpiderQueen 已有 509 检测, 自动暂停重试 |
+| Gallery Site 509 限速 | 下载中断 | SpiderQueen 已有 509 检测, 自动暂停重试 |
 | 网络存储延迟高 | 下载速度受限 | 缓存层使用本地 SSD, 下载完成后批量同步 |
 | 图片代理内存压力 | 服务器 OOM | 流式转发, 不缓冲完整图片; 限制并发连接数 |
 | 浏览器兼容性 | 部分功能不可用 | 阅读器使用 Canvas/WebGL 降级方案 |

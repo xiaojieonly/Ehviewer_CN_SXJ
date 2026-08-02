@@ -16,7 +16,7 @@
 - 波次并行（dispatching-parallel-agents）：同波次任务文件互不重叠，契约由本表锁定
 
 ```
-Wave 1（5 并行）: T1 EhDB ∥ T2 包名 ∥ T3 SyncServiceTest ∥ T4 SyncControllerTest ∥ T5 mock 核对
+Wave 1（5 并行）: T1 SiteDB ∥ T2 包名 ∥ T3 SyncServiceTest ∥ T4 SyncControllerTest ∥ T5 mock 核对
 Wave 2（3 并行）: T6 WebUiSyncEngine ∥ T7 Fragment UI ∥ T10 data-dir+持久化
 Wave 3（2 并行）: T11 Backup 后端 ∥ T13 packaging 骨架
 Wave 4（2 并行）: T12 AdminBackup.vue（依赖 T11 契约）∥ T14 版本号
@@ -24,7 +24,7 @@ Wave 5（串行）  : T15 deployment.md → T9 构建+平板两轮验证
 ```
 
 **契约锁定**（跨任务接口，以本表为准）：
-- T1 产出 EhDB 签名 → T6 消费
+- T1 产出 SiteDB 签名 → T6 消费
 - T6 的 `Result` 新字段 → T7 消费
 - T10 的 `DataDirResolver` → T11 消费
 - T11 的 REST 契约 → T12 消费
@@ -43,20 +43,20 @@ Wave 5（串行）  : T15 deployment.md → T9 构建+平板两轮验证
 ## T16: WebUiApiClient 超时 + 错误信息（新增，小任务）
 
 **Files:**
-- Modify: `app/src/main/java/com/hippo/ehviewer/webui/WebUiApiClient.java:70`（readTimeout 30s→120s）
-- Modify: `app/src/main/java/com/hippo/ehviewer/webui/WebUiSyncEngine.java`（push 失败错误信息区分类型）
+- Modify: `app/src/main/java/com/hippo/anotherviewer/webui/WebUiApiClient.java:70`（readTimeout 30s→120s）
+- Modify: `app/src/main/java/com/hippo/anotherviewer/webui/WebUiSyncEngine.java`（push 失败错误信息区分类型）
 
 - [ ] **Step 1**: readTimeout `30, TimeUnit.SECONDS` → `120, TimeUnit.SECONDS`
 - [ ] **Step 2**: `WebUiSyncEngine` push/pull 的 IOException 文案区分：`SocketTimeoutException`→"同步超时"、HTTP 非 2xx→"服务器拒绝 (HTTP xxx)"（保持现有 throws IOException 结构，只优化 message）
 - [ ] **Step 3**: 编译 + commit：`git commit -m "fix(app): sync timeout budget + distinct error messages"`
 
-## T1: EhDB 辅助方法（bookmark 封装 + filter 复合 key 查删）
+## T1: SiteDB 辅助方法（bookmark 封装 + filter 复合 key 查删）
 
 **Files:**
-- Modify: `app/src/main/java/com/hippo/ehviewer/EhDB.java`（新增 ~60 行，位于 Filter 方法区 line 972-987 附近）
-- Verify: `app/src/main/java/com/hippo/ehviewer/dao/BookmarkInfo.java`（确认 gid 为唯一键，`BookmarksBao` 用法参照现有 `DownloadDao` 调用）
+- Modify: `app/src/main/java/com/hippo/anotherviewer/SiteDB.java`（新增 ~60 行，位于 Filter 方法区 line 972-987 附近）
+- Verify: `app/src/main/java/com/hippo/anotherviewer/dao/BookmarkInfo.java`（确认 gid 为唯一键，`BookmarksBao` 用法参照现有 `DownloadDao` 调用）
 
-- [ ] **Step 1: 新增 import**（`com.hippo.ehviewer.dao.BookmarkInfo`）
+- [ ] **Step 1: 新增 import**（`com.hippo.anotherviewer.dao.BookmarkInfo`）
 - [ ] **Step 2: 实现 5 个方法**（签名锁定，T6 依赖）
 
 ```java
@@ -81,7 +81,7 @@ public static synchronized void deleteFilterByKey(int mode, String text) {
 ```
 
 - [ ] **Step 3: 编译验证**：`./gradlew :app:compileDebugJavaWithJavac` 期望 BUILD SUCCESSFUL
-- [ ] **Step 4: Commit**：`git commit -m "feat(app): EhDB bookmark & filter key helpers for sync"`
+- [ ] **Step 4: Commit**：`git commit -m "feat(app): SiteDB bookmark & filter key helpers for sync"`
 
 > ⚠️ 若 `FilterDao.Properties` 字段名不同（Mode/Text），以 GreenDAO 生成类为准调整；`BookmarksBao` 若主键非 gid 需改用 `queryBuilder().where(...).unique()` + delete 模式。T6 使用的方法签名以上为契约。
 
@@ -89,7 +89,7 @@ public static synchronized void deleteFilterByKey(int mode, String text) {
 
 **Files:**
 - Modify: `app/build.gradle:29`（applicationId）
-- Verify: `google-services.json`（不存在则跳过）、`fastlane/`、`.github/workflows/fastlane.yml`、`README.md`、`FAQ.md` 中 `com.xjs.ehviewer` 引用
+- Verify: `google-services.json`（不存在则跳过）、`fastlane/`、`.github/workflows/fastlane.yml`、`README.md`、`FAQ.md` 中 `com.xjs.anotherviewer` 引用
 
 - [ ] **Step 1: applicationId 参数化**
 
@@ -100,21 +100,21 @@ defaultConfig {
 }
 ```
 
-- [ ] **Step 2: 全仓 grep** `com.xjs.ehviewer` / `com.pf.anotherviewer`，确认仅有 build.gradle 一处；外部配置（fastlane/CI 签名路径）如引用包名则同步更新或记录（不阻塞）
+- [ ] **Step 2: 全仓 grep** `com.xjs.anotherviewer` / `com.pf.anotherviewer`，确认仅有 build.gradle 一处；外部配置（fastlane/CI 签名路径）如引用包名则同步更新或记录（不阻塞）
 - [ ] **Step 3: 两种构建验证**
 ```bash
 ./gradlew :app:assembleDebug                       # 产物 applicationId = com.pf.anotherviewer.debug
-./gradlew :app:assembleDebug -PapplicationId=com.xjs.ehviewer   # legacy 产物 = com.xjs.ehviewer.debug
+./gradlew :app:assembleDebug -PapplicationId=com.xjs.anotherviewer   # legacy 产物 = com.xjs.anotherviewer.debug
 ```
 用 `aapt dump badging` 验证两个 APK 的 package 名
 - [ ] **Step 4: Commit**：`git commit -m "chore(app): parameterize applicationId for pf rebrand + legacy builds"`
 
-> ⚠️ 不动 namespace `com.hippo.ehviewer`、不动 `FILE_PROVIDER_AUTHORITY` buildConfigField（manifest 已 `${applicationId}.fileprovider` 动态）。
+> ⚠️ 不动 namespace `com.hippo.anotherviewer`、不动 `FILE_PROVIDER_AUTHORITY` buildConfigField（manifest 已 `${applicationId}.fileprovider` 动态）。
 
 ## T3: SyncServiceTest.kt（7 实体 merge 单测）
 
 **Files:**
-- Create: `ehviewer-web/src/test/java/com/hippo/ehviewer/web/service/SyncServiceTest.kt`
+- Create: `anotherviewer-web/src/test/java/com/hippo/anotherviewer/web/service/SyncServiceTest.kt`
 - Reference: `PairingFlowTest.kt`、`TestMatchers.kt`（Mockito matcher 风格）、`contracts/sync-conflict-rules.md`
 
 - [ ] **Step 1: 写失败测试**（Mockito mock 7 个 repository + preferenceService，经 `SyncService.push()` 测 merge）：
@@ -124,7 +124,7 @@ defaultConfig {
   - mergeQuickSearch / mergeDownloadLabel：按 name/label key、tombstone、LWW
   - per-user 隔离：A 用户的 push 不覆盖 B 用户行（`ownedBy` 逻辑）
   - adoptNullOwnership：legacy null-username 行被首个 push 用户认领
-- [ ] **Step 2: 运行确认失败**：`./gradlew :ehviewer-web:test --tests "com.hippo.ehviewer.web.service.SyncServiceTest"` 期望 FAIL（类不存在）
+- [ ] **Step 2: 运行确认失败**：`./gradlew :anotherviewer-web:test --tests "com.hippo.anotherviewer.web.service.SyncServiceTest"` 期望 FAIL（类不存在）
 - [ ] **Step 3: 实现**：按 SyncService.kt 行为写断言（merge 逻辑已是服务器既有实现，测试锁定契约防回归）
 - [ ] **Step 4: 运行确认通过**（全绿）
 - [ ] **Step 5: Commit**：`git commit -m "test(web-be): SyncService merge tests for all 7 entities"`
@@ -132,7 +132,7 @@ defaultConfig {
 ## T4: SyncControllerTest.kt（push/pull 集成）
 
 **Files:**
-- Create: `ehviewer-web/src/test/java/com/hippo/ehviewer/web/api/SyncControllerTest.kt`
+- Create: `anotherviewer-web/src/test/java/com/hippo/anotherviewer/web/api/SyncControllerTest.kt`
 - Reference: `AuthControllerTest.kt`（MockMvc 基建）
 
 - [ ] **Step 1: 写测试**：push 7 实体 → pull `since=0` 全量往返；`since` 增量过滤（推送后 `since=serverTimestamp` 第二次 pull 为空）；`deviceId` 更新 lastSeen；未认证 401（`SecurityConfig` 语义）
@@ -151,8 +151,8 @@ defaultConfig {
 ## T6: WebUiSyncEngine 扩展（核心，全 7 实体）
 
 **Files:**
-- Modify: `app/src/main/java/com/hippo/ehviewer/webui/WebUiSyncEngine.java`
-- 依赖: T1 的 EhDB 签名（契约见 T1）
+- Modify: `app/src/main/java/com/hippo/anotherviewer/webui/WebUiSyncEngine.java`
+- 依赖: T1 的 SiteDB 签名（契约见 T1）
 
 - [ ] **Step 1: 新增常量与 Result 字段**
 
@@ -198,7 +198,7 @@ public int pushedDownloadLabels, pulledDownloadLabels;
 ## T7: Fragment toast + strings.xml 更新
 
 **Files:**
-- Modify: `app/src/main/java/com/hippo/ehviewer/ui/fragment/WebUiSyncFragment.java:590-597`
+- Modify: `app/src/main/java/com/hippo/anotherviewer/ui/fragment/WebUiSyncFragment.java:590-597`
 - Modify: `app/src/main/res/values/strings.xml`（`settings_webui_sync_done`）
 
 - [ ] **Step 1: 更新 toast 文案**（新增下载/过滤计数，保持可读）：
@@ -214,29 +214,29 @@ fragment.getString(R.string.settings_webui_sync_done,
 ## T10: data-dir 统一 + 下载路径持久化
 
 **Files:**
-- Modify: `ehviewer-web/src/main/resources/application.yml`
-- Modify: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/config/EhCoreConfigProperties.kt`
-- Modify: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/service/SettingsService.kt`
-- Modify: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/processing/ImageProcessingService.kt:33`
+- Modify: `anotherviewer-web/src/main/resources/application.yml`
+- Modify: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/config/SiteCoreConfigProperties.kt`
+- Modify: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/service/SettingsService.kt`
+- Modify: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/processing/ImageProcessingService.kt:33`
 - Reference: `ServerConfigService`（KV 持久化 API）
 
-- [ ] **Step 1: application.yml 统一占位符**：`${EHVIEWER_DATA_DIR:./data}` 派生 db URL / `ehviewer.download.path` / `cache-path` / `encryption-key-path`
-- [ ] **Step 2: EhCoreConfigProperties**：新增 `var dataDir: String = "./data"`；download.path/cachePath/encryptionKeyPath 默认改为 `$dataDir/...` 派生（`@PostConstruct` 或初始化块：未被显式覆盖时）
-- [ ] **Step 3: 持久化**：`ServerConfigService` 新增 KEY `download.path`/`cache.path`；`SettingsService.updateSettings` 写入；启动合并（`EhCoreConfigProperties` 初始化时 ServerConfig 值优先于默认派生值）
-- [ ] **Step 4: ImageProcessingService** 改用 `EhCoreConfigProperties.cachePath`（注入 bean 替代 `@Value`）
-- [ ] **Step 5: 测试**：现有 SettingsController 相关测试全绿；`./gradlew :ehviewer-web:test`
+- [ ] **Step 1: application.yml 统一占位符**：`${ANOTHERVIEWER_DATA_DIR:./data}` 派生 db URL / `anotherviewer.download.path` / `cache-path` / `encryption-key-path`
+- [ ] **Step 2: SiteCoreConfigProperties**：新增 `var dataDir: String = "./data"`；download.path/cachePath/encryptionKeyPath 默认改为 `$dataDir/...` 派生（`@PostConstruct` 或初始化块：未被显式覆盖时）
+- [ ] **Step 3: 持久化**：`ServerConfigService` 新增 KEY `download.path`/`cache.path`；`SettingsService.updateSettings` 写入；启动合并（`SiteCoreConfigProperties` 初始化时 ServerConfig 值优先于默认派生值）
+- [ ] **Step 4: ImageProcessingService** 改用 `SiteCoreConfigProperties.cachePath`（注入 bean 替代 `@Value`）
+- [ ] **Step 5: 测试**：现有 SettingsController 相关测试全绿；`./gradlew :anotherviewer-web:test`
 - [ ] **Step 6: Commit**：`git commit -m "feat(web-be): unify data-dir resolution + persist download paths"`
 
 ## T11: BackupService + BackupController
 
 **Files:**
-- Create: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/service/BackupService.kt`
-- Create: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/service/BackupEncryptor.kt`（可插拔接口）
-- Create: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/service/NoopBackupEncryptor.kt`（默认实现）
-- Create: `ehviewer-web/src/main/java/com/hippo/ehviewer/web/api/BackupController.kt`
-- Create: `ehviewer-web/src/test/java/com/hippo/ehviewer/web/service/BackupServiceTest.kt`
-- Modify: `ehviewer-web/build.gradle`（+`org.apache.commons:commons-compress` 7z）
-- 依赖: T10（`EhCoreConfigProperties.dataDir` 派生 `backups/` 落点）
+- Create: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/service/BackupService.kt`
+- Create: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/service/BackupEncryptor.kt`（可插拔接口）
+- Create: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/service/NoopBackupEncryptor.kt`（默认实现）
+- Create: `anotherviewer-web/src/main/java/com/hippo/anotherviewer/web/api/BackupController.kt`
+- Create: `anotherviewer-web/src/test/java/com/hippo/anotherviewer/web/service/BackupServiceTest.kt`
+- Modify: `anotherviewer-web/build.gradle`（+`org.apache.commons:commons-compress` 7z）
+- 依赖: T10（`SiteCoreConfigProperties.dataDir` 派生 `backups/` 落点）
 
 - [ ] **Step 1: 接口设计**
 ```kotlin
@@ -264,7 +264,7 @@ interface BackupEncryptor {
 
 - [ ] **Step 1: package.sh**：读取 `gradle.properties` 版本 → 组装 zip（`lib/app.jar`、`bin/start.sh`、`bin/stop.sh`、`data/` 模板含 README 目录说明、`README.txt` 安装说明）；验证 jar 存在
 - [ ] **Step 2: systemd 模板**：`ExecStart=/usr/bin/java -jar /opt/anotherviewer/lib/app.jar --data-dir=/var/lib/anotherviewer`（体现 `--data-dir` 语义 = zip 内 `data/` 的同一抽象）
-- [ ] **Step 3: ospackage.gradle 骨架**：配置结构就位（osPackage { ... }），顶部注释"备用：激活后 `./gradlew :ehviewer-web:buildDeb buildRpm`"，依赖 systemd 模板
+- [ ] **Step 3: ospackage.gradle 骨架**：配置结构就位（osPackage { ... }），顶部注释"备用：激活后 `./gradlew :anotherviewer-web:buildDeb buildRpm`"，依赖 systemd 模板
 - [ ] **Step 4: 冒烟**：`bash scripts/package.sh -v 1.1.0 -o /tmp/release` 产出 zip；`unzip -l` 校验结构
 - [ ] **Step 5: Commit**：`git commit -m "feat(scripts): zip release packaging + distro-package preadaptation"`
 
@@ -272,7 +272,7 @@ interface BackupEncryptor {
 
 **Files:**
 - Modify: `gradle.properties`（+`webVersion`）
-- Modify: `ehviewer-web/build.gradle`（jar version ← `webVersion`）
+- Modify: `anotherviewer-web/build.gradle`（jar version ← `webVersion`）
 - Modify: `web-frontend/package.json`、`AdminAbout.vue:62`（构建注入或与发布脚本同步说明）
 - Verify: `docs/deployment.md`、`FAQ.md`
 
@@ -309,8 +309,8 @@ interface BackupEncryptor {
 
 **前置:** T2/T6/T7/T16 完成、后端 bootJar（T10/T11 不阻塞）
 
-- [ ] **Step 1**: `./gradlew :app:assembleDebug -PapplicationId=com.xjs.ehviewer` → legacy APK；`adb install -r` 覆盖平板（保数据）
-- [ ] **Step 2**: 后端 `java -jar ehviewer-web/build/libs/*.jar --server.port=8081` 启动；`adb reverse tcp:8081 tcp:8081`
+- [ ] **Step 1**: `./gradlew :app:assembleDebug -PapplicationId=com.xjs.anotherviewer` → legacy APK；`adb install -r` 覆盖平板（保数据）
+- [ ] **Step 2**: 后端 `java -jar anotherviewer-web/build/libs/*.jar --server.port=8081` 启动；`adb reverse tcp:8081 tcp:8081`
 - [ ] **Step 3**: 后端生成配对码（admin API）→ 平板 WebUiSyncFragment 配 `http://127.0.0.1:8081` + 码 → **手动点立即同步** → 服务器 SQLite 断言：downloads=8999 / filters=388 / history=100 / 其余 0
 - [ ] **Step 4**: `./gradlew :app:assembleDebug`（新包名）→ `adb install`（并存）→ 配对 → since=0 拉全量 → 平板 `eh.db` run-as 断言计数一致
 - [ ] **Step 5**: **新包名 app 重新授权 SAF 目录** `/storage/4A21-0000/Eh/`（image_path 设置）→ 下载记录与文件对上
@@ -324,7 +324,7 @@ interface BackupEncryptor {
 | 关卡 | 命令 | 预期 |
 |---|---|---|
 | app 编译 | `./gradlew :app:compileDebugJavaWithJavac` | SUCCESSFUL |
-| 后端测试 | `./gradlew :ehviewer-web:test` | 全绿（含新增 3 个测试类） |
+| 后端测试 | `./gradlew :anotherviewer-web:test` | 全绿（含新增 3 个测试类） |
 | 前端 | `npm run build` + e2e | 通过 |
 | 打包 | `bash scripts/package.sh -v 1.1.0` | zip 结构正确 |
 | 平板 | 两轮验证 | 8999/388/100 双向往返一致 |

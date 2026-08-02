@@ -1,0 +1,302 @@
+/*
+ * Copyright 2016 Hippo Seven
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hippo.anotherviewer.gallery;
+
+import android.graphics.BitmapFactory;
+import android.os.Process;
+import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.hippo.anotherviewer.GetText;
+import com.hippo.anotherviewer.R;
+import com.hippo.lib.glgallery.GalleryPageView;
+import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.Image1;
+import com.hippo.unifile.FilenameFilter;
+import com.hippo.unifile.UniFile;
+import com.hippo.util.NaturalComparator;
+import com.hippo.lib.yorozuya.FileUtils;
+import com.hippo.lib.yorozuya.IOUtils;
+import com.hippo.lib.yorozuya.StringUtils;
+import com.hippo.lib.yorozuya.thread.PriorityThread;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Stack;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class DirGalleryProvider extends GalleryProvider2 implements Runnable {
+
+    private static final String TAG = DirGalleryProvider.class.getSimpleName();
+    private static final AtomicInteger sIdGenerator = new AtomicInteger();
+
+    private final UniFile mDir;
+    private final Stack<Integer> mRequests = new Stack<>();
+    private final AtomicInteger mDecodingIndex = new AtomicInteger(GalleryPageView.INVALID_INDEX);
+    private final AtomicReference<UniFile[]> mFileList = new AtomicReference<>();
+    private volatile float[] mRatios;
+    @Nullable
+    private Thread mBgThread;
+    private volatile int mSize = STATE_WAIT;
+    private String mError;
+
+    public DirGalleryProvider(@NonNull UniFile dir) {
+        mDir = dir;
+    }
+
+    @Override
+    public void start() {
+        super.start();
+
+        mBgThread = new PriorityThread(this, TAG + '-' + sIdGenerator.incrementAndGet(),
+                Process.THREAD_PRIORITY_BACKGROUND);
+        mBgThread.start();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+
+        if (mBgThread != null) {
+            mBgThread.interrupt();
+            mBgThread = null;
+        }
+    }
+
+    @Override
+    public int size() {
+        return mSize;
+    }
+
+    @Override
+    protected void onRequest(int index) {
+        synchronized (mRequests) {
+            if (!mRequests.contains(index) && index != mDecodingIndex.get()) {
+                mRequests.add(index);
+                mRequests.notify();
+            }
+        }
+        notifyPageWait(index);
+    }
+
+    @Override
+    protected void onForceRequest(int index) {
+        onRequest(index);
+    }
+
+    @Override
+    public void onCancelRequest(int index) {
+        synchronized (mRequests) {
+            mRequests.remove(Integer.valueOf(index));
+        }
+    }
+
+    @Override
+    public String getError() {
+        return mError;
+    }
+
+    @NonNull
+    @Override
+    public String getImageFilename(int index) {
+        // TODO
+        return Integer.toString(index);
+    }
+
+    @Override
+    public float getPageRatio(int index) {
+        float[] ratios = mRatios;
+        if (ratios != null && index >= 0 && index < ratios.length) {
+            return ratios[index];
+        }
+        return 0.7f;
+    }
+
+    private void scanRatios(UniFile[] files) {
+        float[] ratios = new float[files.length];
+        Arrays.fill(ratios, 0.7f);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        for (int i = 0; i < files.length; i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+            InputStream is = null;
+            try {
+                is = files[i].openInputStream();
+                options.outWidth = 0;
+                options.outHeight = 0;
+                BitmapFactory.decodeStream(is, null, options);
+                if (options.outWidth > 0 && options.outHeight > 0) {
+                    ratios[i] = (float) options.outWidth / options.outHeight;
+                }
+            } catch (Exception e) {
+                // Keep default ratio
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
+        }
+        mRatios = ratios;
+    }
+
+    @Override
+    public boolean save(int index, @NonNull UniFile file) {
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return false;
+        }
+
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = fileList[index].openInputStream();
+            os = file.openOutputStream();
+            IOUtils.copy(is, os);
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(os);
+        }
+    }
+
+    @Nullable
+    @Override
+    public UniFile save(int index, @NonNull UniFile dir, @NonNull String filename) {
+        UniFile[] fileList = mFileList.get();
+        if (null == fileList || index < 0 || index >= fileList.length) {
+            return null;
+        }
+
+        UniFile src = fileList[index];
+        String extension = FileUtils.getExtensionFromFilename(src.getName());
+        UniFile dst = dir.subFile(null != extension ? filename + "." + extension : filename);
+        if (null == dst) {
+            return null;
+        }
+
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = src.openInputStream();
+            os = dst.openOutputStream();
+            IOUtils.copy(is, os);
+            return dst;
+        } catch (IOException e) {
+            return null;
+        } finally {
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(os);
+        }
+    }
+
+    @Override
+    public void run() {
+        // It may take a long time, so run it in new thread
+        UniFile[] files = mDir.listFiles(imageFilter);
+
+        if (files == null) {
+            mSize = STATE_ERROR;
+            mError = GetText.getString(R.string.error_not_folder_path);
+
+            // Notify to to show error
+            notifyDataChanged();
+
+            Log.i(TAG, "ImageDecoder end with error");
+            return;
+        }
+
+        // Sort it
+        Arrays.sort(files, naturalComparator);
+
+        // Put file list
+        mFileList.lazySet(files);
+
+        // Pre-scan image dimensions for dual-page pairing
+        scanRatios(files);
+
+        // Set state normal and notify
+        mSize = files.length;
+        notifyDataChanged();
+
+        while (!Thread.currentThread().isInterrupted()) {
+            int index;
+            synchronized (mRequests) {
+                if (mRequests.isEmpty()) {
+                    try {
+                        mRequests.wait();
+                    } catch (InterruptedException e) {
+                        // Interrupted
+                        break;
+                    }
+                    continue;
+                }
+                index = mRequests.pop();
+                mDecodingIndex.lazySet(index);
+            }
+
+            // Check index valid
+            if (index < 0 || index >= files.length) {
+                mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+                notifyPageFailed(index, GetText.getString(R.string.error_out_of_range));
+                continue;
+            }
+
+            InputStream is = null;
+            try {
+                is = files[index].openInputStream();
+//                Image image = Image.decode(is, true);
+                Image image = Image.decode((FileInputStream) is, false);
+//                Image1 image1 = Image1.decode((FileInputStream) is, false);
+                mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+                if (image != null) {
+                    notifyPageSucceed(index, image);
+                } else {
+                    notifyPageFailed(index, GetText.getString(R.string.error_decoding_failed));
+                }
+            } catch (IOException e) {
+                mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+                notifyPageFailed(index, GetText.getString(R.string.error_reading_failed));
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
+            mDecodingIndex.lazySet(GalleryPageView.INVALID_INDEX);
+        }
+
+        // Clear file list
+        mFileList.lazySet(null);
+
+        Log.i(TAG, "ImageDecoder end");
+    }
+
+    private static FilenameFilter imageFilter =
+        (dir, name) -> StringUtils.endsWith(name.toLowerCase(), SUPPORT_IMAGE_EXTENSIONS);
+
+    private static Comparator<UniFile> naturalComparator = new Comparator<UniFile>() {
+        private NaturalComparator comparator = new NaturalComparator();
+        @Override
+        public int compare(UniFile o1, UniFile o2) {
+            return comparator.compare(o1.getName(), o2.getName());
+        }
+    };
+}

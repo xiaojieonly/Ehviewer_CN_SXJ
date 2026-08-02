@@ -5,7 +5,7 @@ import java.io.FileDescriptor
 object Native {
     @JvmStatic
     fun initialize() {
-        System.loadLibrary("ehviewer")
+        System.loadLibrary("anotherviewer")
     }
 
     @JvmStatic

@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ehviewer.local/schemas/sync/index.json",
-  "title": "EhViewer Android-Server Sync Protocol Schemas",
-  "description": "JSON Schema definitions for all sync entities and wrapper messages in the EhViewer Android-Server sync protocol. Draft 2020-12.",
+  "$id": "https://anotherviewer.local/schemas/sync/index.json",
+  "title": "AnotherViewer Android-Server Sync Protocol Schemas",
+  "description": "JSON Schema definitions for all sync entities and wrapper messages in the AnotherViewer Android-Server sync protocol. Draft 2020-12.",
   "$defs": {
     "galleryInfoBase": {
-      "$id": "https://ehviewer.local/schemas/sync/gallery-info-base.json",
+      "$id": "https://anotherviewer.local/schemas/sync/gallery-info-base.json",
       "title": "GalleryInfoBase",
-      "description": "Shared gallery metadata fields inherited by favorites, history, downloads, and bookmarks. Mirrors com.hippo.ehviewer.web.entity.GalleryInfoBase / com.hippo.ehviewer.client.data.GalleryInfo.",
+      "description": "Shared gallery metadata fields inherited by favorites, history, downloads, and bookmarks. Mirrors com.hippo.anotherviewer.web.entity.GalleryInfoBase / com.hippo.anotherviewer.client.data.GalleryInfo.",
       "type": "object",
       "properties": {
         "gid": {
@@ -37,7 +37,7 @@
         },
         "category": {
           "type": "integer",
-          "description": "Gallery category bitmask. Bit values MUST match com.hippo.ehviewer.client.EhConfig: MISC=1, DOUJINSHI=2, MANGA=4, ARTIST_CG=8, GAME_CG=16, IMAGE_SET=32, COSPLAY=64, ASIAN_PORN=128, NON_H=256, WESTERN=512"
+          "description": "Gallery category bitmask. Bit values MUST match com.hippo.anotherviewer.client.SiteConfig: MISC=1, DOUJINSHI=2, MANGA=4, ARTIST_CG=8, GAME_CG=16, IMAGE_SET=32, COSPLAY=64, ASIAN_PORN=128, NON_H=256, WESTERN=512"
         },
         "posted": {
           "type": ["string", "null"],
@@ -113,7 +113,7 @@
       "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages"]
     },
     "syncMetadata": {
-      "$id": "https://ehviewer.local/schemas/sync/sync-metadata.json",
+      "$id": "https://anotherviewer.local/schemas/sync/sync-metadata.json",
       "title": "SyncMetadata",
       "description": "Common sync metadata fields present on every sync entity for conflict resolution and soft-delete support.",
       "type": "object",
@@ -138,9 +138,9 @@
       "required": ["lastModified", "deviceId"]
     },
     "syncFavorite": {
-      "$id": "https://ehviewer.local/schemas/sync/favorite.json",
+      "$id": "https://anotherviewer.local/schemas/sync/favorite.json",
       "title": "SyncFavorite",
-      "description": "A local favorite entry. Mirrors com.hippo.ehviewer.dao.LocalFavoriteInfo. Merge strategy: union merge (do not delete remote entries).",
+      "description": "A local favorite entry. Mirrors com.hippo.anotherviewer.dao.LocalFavoriteInfo. Merge strategy: union merge (do not delete remote entries).",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/galleryInfoBase" },
@@ -156,9 +156,9 @@
       "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "time", "lastModified", "deviceId"]
     },
     "syncHistory": {
-      "$id": "https://ehviewer.local/schemas/sync/history.json",
+      "$id": "https://anotherviewer.local/schemas/sync/history.json",
       "title": "SyncHistory",
-      "description": "A browsing history entry. Mirrors com.hippo.ehviewer.dao.HistoryInfo. Merge strategy: last-write-wins by timestamp.",
+      "description": "A browsing history entry. Mirrors com.hippo.anotherviewer.dao.HistoryInfo. Merge strategy: last-write-wins by timestamp.",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/galleryInfoBase" },
@@ -178,9 +178,9 @@
       "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "time", "lastModified", "deviceId"]
     },
     "syncDownload": {
-      "$id": "https://ehviewer.local/schemas/sync/download.json",
+      "$id": "https://anotherviewer.local/schemas/sync/download.json",
       "title": "SyncDownload",
-      "description": "A download task entry. Mirrors com.hippo.ehviewer.dao.DownloadInfo. Merge strategy: union merge + status sync.",
+      "description": "A download task entry. Mirrors com.hippo.anotherviewer.dao.DownloadInfo. Merge strategy: union merge + status sync.",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/galleryInfoBase" },
@@ -235,9 +235,9 @@
       "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "state", "legacy", "time", "total", "lastModified", "deviceId"]
     },
     "syncBookmark": {
-      "$id": "https://ehviewer.local/schemas/sync/bookmark.json",
+      "$id": "https://anotherviewer.local/schemas/sync/bookmark.json",
       "title": "SyncBookmark",
-      "description": "Reading progress bookmark (page position). Mirrors com.hippo.ehviewer.dao.BookmarkInfo. Merge strategy: last-write-wins by timestamp.",
+      "description": "Reading progress bookmark (page position). Mirrors com.hippo.anotherviewer.dao.BookmarkInfo. Merge strategy: last-write-wins by timestamp.",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/galleryInfoBase" },
@@ -258,9 +258,9 @@
       "required": ["gid", "token", "category", "rating", "rated", "thumbWidth", "thumbHeight", "spanSize", "spanIndex", "spanGroupIndex", "favoriteSlot", "pages", "page", "time", "lastModified", "deviceId"]
     },
     "syncFilter": {
-      "$id": "https://ehviewer.local/schemas/sync/filter.json",
+      "$id": "https://anotherviewer.local/schemas/sync/filter.json",
       "title": "SyncFilter",
-      "description": "A content filter rule. Mirrors com.hippo.ehviewer.dao.Filter. Merge strategy: union merge. Idempotency key: (mode, text).",
+      "description": "A content filter rule. Mirrors com.hippo.anotherviewer.dao.Filter. Merge strategy: union merge. Idempotency key: (mode, text).",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/syncMetadata" }
@@ -284,9 +284,9 @@
       "required": ["mode", "text", "enabled", "lastModified", "deviceId"]
     },
     "syncQuickSearch": {
-      "$id": "https://ehviewer.local/schemas/sync/quick-search.json",
+      "$id": "https://anotherviewer.local/schemas/sync/quick-search.json",
       "title": "SyncQuickSearch",
-      "description": "A saved quick search preset. Mirrors com.hippo.ehviewer.dao.QuickSearch. Merge strategy: union merge. Idempotency key: name.",
+      "description": "A saved quick search preset. Mirrors com.hippo.anotherviewer.dao.QuickSearch. Merge strategy: union merge. Idempotency key: name.",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/syncMetadata" }
@@ -339,9 +339,9 @@
       "required": ["name", "mode", "category", "advanceSearch", "minRating", "pageFrom", "pageTo", "lastModified", "deviceId"]
     },
     "syncDownloadLabel": {
-      "$id": "https://ehviewer.local/schemas/sync/download-label.json",
+      "$id": "https://anotherviewer.local/schemas/sync/download-label.json",
       "title": "SyncDownloadLabel",
-      "description": "A download label/category for organizing downloads. Mirrors com.hippo.ehviewer.dao.DownloadLabel. Merge strategy: union merge. Idempotency key: label.",
+      "description": "A download label/category for organizing downloads. Mirrors com.hippo.anotherviewer.dao.DownloadLabel. Merge strategy: union merge. Idempotency key: label.",
       "type": "object",
       "allOf": [
         { "$ref": "#/$defs/syncMetadata" }
@@ -361,7 +361,7 @@
       "required": ["label", "time", "lastModified", "deviceId"]
     },
     "syncEntityCollection": {
-      "$id": "https://ehviewer.local/schemas/sync/entity-collection.json",
+      "$id": "https://anotherviewer.local/schemas/sync/entity-collection.json",
       "title": "SyncEntityCollection",
       "description": "A collection of all sync entity arrays, used inside push/pull messages.",
       "type": "object",
@@ -405,7 +405,7 @@
       "additionalProperties": false
     },
     "syncPushRequest": {
-      "$id": "https://ehviewer.local/schemas/sync/push-request.json",
+      "$id": "https://anotherviewer.local/schemas/sync/push-request.json",
       "title": "SyncPushRequest",
       "description": "Client-to-server push request. Sent to POST /api/sync/push. Contains all locally-modified entities since last sync.",
       "type": "object",
@@ -430,7 +430,7 @@
       "additionalProperties": false
     },
     "syncPullResponse": {
-      "$id": "https://ehviewer.local/schemas/sync/pull-response.json",
+      "$id": "https://anotherviewer.local/schemas/sync/pull-response.json",
       "title": "SyncPullResponse",
       "description": "Server-to-client pull response. Returned by GET /api/sync/pull?since={timestamp}. Contains all server-side changes since the given timestamp.",
       "type": "object",
@@ -449,7 +449,7 @@
       "additionalProperties": false
     },
     "connectedDevice": {
-      "$id": "https://ehviewer.local/schemas/sync/connected-device.json",
+      "$id": "https://anotherviewer.local/schemas/sync/connected-device.json",
       "title": "ConnectedDevice",
       "description": "Metadata about a device that has synced with the server.",
       "type": "object",
@@ -479,7 +479,7 @@
       "required": ["deviceId", "platform", "lastSeen"]
     },
     "entityCounts": {
-      "$id": "https://ehviewer.local/schemas/sync/entity-counts.json",
+      "$id": "https://anotherviewer.local/schemas/sync/entity-counts.json",
       "title": "EntityCounts",
       "description": "Per-entity-type counts of records stored on the server.",
       "type": "object",
@@ -495,7 +495,7 @@
       "required": ["favorites", "history", "downloads", "bookmarks", "filters", "quickSearches", "downloadLabels"]
     },
     "syncStatusResponse": {
-      "$id": "https://ehviewer.local/schemas/sync/status-response.json",
+      "$id": "https://anotherviewer.local/schemas/sync/status-response.json",
       "title": "SyncStatusResponse",
       "description": "Server sync status. Returned by GET /api/sync/status.",
       "type": "object",

@@ -21,7 +21,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <com.hippo.ehviewer.widget.FixedThumb
+    <com.hippo.anotherviewer.widget.FixedThumb
         xmlns:auto="http://schemas.android.com/apk/res-auto"
         android:id="@+id/image"
         android:layout_width="match_parent"

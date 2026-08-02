@@ -23,7 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

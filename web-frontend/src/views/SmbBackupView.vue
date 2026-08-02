@@ -1,5 +1,5 @@
 <!--
-  SmbBackupView.vue — SMB 备份屏幕（S6 重做），基于 EhViewer 设计系统。
+  SmbBackupView.vue — SMB 备份屏幕（S6 重做），基于 AnotherViewer 设计系统。
 
   结构：
     - 连接列表：每张卡片带状态指示点（最近一次测试结果 / 启用状态），
@@ -11,7 +11,7 @@
       （ProgressSpinner 定量环 + 进度条 + 文件数 + 速度）。
 
   持久化：
-    - 连接清单保存在 localStorage（ehviewer-smb-connections）。出于安全
+    - 连接清单保存在 localStorage（anotherviewer-smb-connections）。出于安全
       考虑密码不落盘，仅在会话内保留；
     - 激活连接通过 PUT /smb/config 同步到服务端（单配置模型）；
     - 同步期间每秒轮询 GET /smb/progress。
@@ -372,8 +372,8 @@ type ConnStatus = 'ok' | 'fail' | 'off' | 'unknown'
 
 /* ------------------------------- constants -------------------------------- */
 
-const CONNECTIONS_KEY = 'ehviewer-smb-connections'
-const ACTIVE_KEY = 'ehviewer-smb-active'
+const CONNECTIONS_KEY = 'anotherviewer-smb-connections'
+const ACTIVE_KEY = 'anotherviewer-smb-active'
 
 const NAV_ROUTES: Readonly<Record<string, string>> = {
   homepage: '/',

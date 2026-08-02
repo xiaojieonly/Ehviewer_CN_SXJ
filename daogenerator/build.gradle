@@ -17,7 +17,7 @@
 apply plugin: 'java'
 
 task executeDaoGenerator(type:JavaExec) {
-    mainClass.set('com.hippo.ehviewer.daogenerator.Main')
+    mainClass.set('com.hippo.anotherviewer.daogenerator.Main')
     classpath = sourceSets.main.runtimeClasspath
 }
 

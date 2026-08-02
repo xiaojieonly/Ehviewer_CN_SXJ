@@ -109,7 +109,7 @@ describe('HomeView (首页)', () => {
 
   it('virtualizes the grid: renders only the visible rows plus overscan', async () => {
     // Grid math under test (list mode uses a fixed card-height estimate).
-    localStorage.setItem('ehviewer-webui:gallery-list-mode', 'grid')
+    localStorage.setItem('anotherviewer-webui:gallery-list-mode', 'grid')
     const items = Array.from({ length: 200 }, (_, i) =>
       gallery({ gid: i + 1, title: `G${i + 1}` }),
     )

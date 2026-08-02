@@ -29,7 +29,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.hippo.database.MSQLiteBuilder;
-import com.hippo.ehviewer.Settings;
+import com.hippo.anotherviewer.Settings;
 import com.hippo.util.SqlUtils;
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,5 +1,5 @@
 <!--
-  LoginView.vue — sign-in screen (S6 rework) on the EhViewer design system.
+  LoginView.vue — sign-in screen (S6 rework) on the AnotherViewer design system.
 
   A centered card on the themed window background, opened by the app's
   signature mark: the ten-category color spectrum strip (the Android app's
@@ -22,7 +22,7 @@
     <div class="login-glow login-glow--accent" aria-hidden="true" />
 
     <main class="login-card">
-      <!-- The ten gallery category colors — EhViewer's signature strip. -->
+      <!-- The ten gallery category colors — AnotherViewer's signature strip. -->
       <div class="login-card__spectrum" aria-hidden="true" />
 
       <div class="login-brand">

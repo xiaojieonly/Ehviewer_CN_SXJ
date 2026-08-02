@@ -23,7 +23,7 @@ jobs:
 
   - task: AndroidSigning@2
     inputs:
-      apkFiles: 'build/Ehviewer.apk'
+      apkFiles: 'build/Anotherviewer.apk'
       jarsign: true
       jarsignerKeystoreFile: 'text.key'
       jarsignerKeystorePassword: '123456'
@@ -39,7 +39,7 @@ jobs:
   # macOS-15 (macos-latest) image ships JDK 21 (default) + Android SDK with
   # platform android-35 / build-tools 35.0.0 (matches app/build.gradle compileSdk 35).
   # The root build.gradle applies AGP (apply false) and :app applies it, so Gradle
-  # configures :app even for :ehviewer-web:bootJar and needs ANDROID_HOME present —
+  # configures :app even for :anotherviewer-web:bootJar and needs ANDROID_HOME present —
   # it is, preinstalled on the image, so no AndroidSDK@1 step is required.
   - task: JavaToolInstaller@0
     inputs:
@@ -77,12 +77,12 @@ jobs:
       gradleWrapperFile: 'gradlew'
       gradleOptions: '-Xmx3072m'
       publishJUnitResults: false
-      tasks: ':ehviewer-web:bootJar'
+      tasks: ':anotherviewer-web:bootJar'
     displayName: Gradle bootJar (web backend)
 
   - task: PublishBuildArtifact@1
     inputs:
-      pathToPublish: 'ehviewer-web/build/libs/'
+      pathToPublish: 'anotherviewer-web/build/libs/'
       artifactName: 'web-backend'
       artifactType: 'container'
     displayName: Publish web-backend artifact

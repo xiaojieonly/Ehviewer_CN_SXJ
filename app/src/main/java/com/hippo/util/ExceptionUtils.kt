@@ -15,9 +15,9 @@
  */
 package com.hippo.util
 
-import com.hippo.ehviewer.GetText
-import com.hippo.ehviewer.R
-import com.hippo.ehviewer.client.exception.EhException
+import com.hippo.anotherviewer.GetText
+import com.hippo.anotherviewer.R
+import com.hippo.anotherviewer.client.exception.SiteException
 import com.hippo.network.StatusCodeException
 import org.apache.http.conn.ConnectTimeoutException
 import java.net.MalformedURLException
@@ -52,7 +52,7 @@ object ExceptionUtils {
             return GetText.getString(R.string.error_redirection)
         } else if (e is ProtocolException || e is SocketException || e is SSLException) {
             return GetText.getString(R.string.error_socket)
-        } else if (e is EhException) {
+        } else if (e is SiteException) {
             return "" + e.message
         } else {
             if (e.localizedMessage == null) {

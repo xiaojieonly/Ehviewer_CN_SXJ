@@ -10,8 +10,8 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.net.toUri
-import com.hippo.ehviewer.Analytics
-import com.hippo.ehviewer.client.EhConfig
+import com.hippo.anotherviewer.Analytics
+import com.hippo.anotherviewer.client.SiteConfig
 import com.hippo.lib.yorozuya.IOUtils
 import com.hippo.unifile.UniFile
 import java.io.File
@@ -130,7 +130,7 @@ class FileUtils {
 //                    Uri uri = Uri.parse(path);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val uri =
-                    ("content://com.android.externalstorage.documents/document/primary%3ADownload/" + EhConfig.TORRENT_PATH).toUri()
+                    ("content://com.android.externalstorage.documents/document/primary%3ADownload/" + SiteConfig.TORRENT_PATH).toUri()
                 intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 intent.addCategory(Intent.CATEGORY_OPENABLE)
                 intent.setType("*/*")

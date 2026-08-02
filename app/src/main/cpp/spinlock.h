@@ -1,5 +1,5 @@
-#ifndef EHVIEWER_SPINLOCK_H
-#define EHVIEWER_SPINLOCK_H
+#ifndef ANOTHERVIEWER_SPINLOCK_H
+#define ANOTHERVIEWER_SPINLOCK_H
 
 #include <stddef.h>
 #include <stdatomic.h>
@@ -41,4 +41,4 @@ static inline void unlock_mcs(mcs_lock *m, mcs_lock_t *me) {
     me->next->spin = 1;
 }
 
-#endif //EHVIEWER_SPINLOCK_H
+#endif //ANOTHERVIEWER_SPINLOCK_H

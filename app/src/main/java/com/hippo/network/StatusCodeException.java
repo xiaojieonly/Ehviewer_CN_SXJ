@@ -20,7 +20,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.util.SparseArray;
 
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 
 public class StatusCodeException extends Exception {
 

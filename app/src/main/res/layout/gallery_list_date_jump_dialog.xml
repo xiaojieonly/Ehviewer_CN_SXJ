@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.hippo.ehviewer.widget.JumpDateSelector
+    <com.hippo.anotherviewer.widget.JumpDateSelector
         android:id="@+id/gallery_list_jump_date"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

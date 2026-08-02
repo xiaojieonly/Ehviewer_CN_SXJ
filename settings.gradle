@@ -14,7 +14,7 @@ dependencyResolutionManagement {
         maven { url "https://jitpack.io" }
     }
 }
-rootProject.name = "ehviewer"
+rootProject.name = "anotherviewer"
 include ':app', ':daogenerator'
-include ':ehviewer-core'
-include ':ehviewer-web'
+include ':anotherviewer-core'
+include ':anotherviewer-web'

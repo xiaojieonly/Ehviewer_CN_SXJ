@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<!--linkpackage com.hippo.ehviewer.ui.fragment.AboutFragment-->
+<!--linkpackage com.hippo.anotherviewer.ui.fragment.AboutFragment-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

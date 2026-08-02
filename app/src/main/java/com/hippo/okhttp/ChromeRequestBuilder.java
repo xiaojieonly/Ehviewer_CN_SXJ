@@ -16,7 +16,7 @@
 
 package com.hippo.okhttp;
 
-import com.hippo.ehviewer.Settings;
+import com.hippo.anotherviewer.Settings;
 
 import okhttp3.Request;
 
@@ -32,7 +32,7 @@ public class ChromeRequestBuilder extends Request.Builder {
 
     private static final String CHROME_ACCEPT_LANGUAGE =
             "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7";
-//    private static final String SOURCE_APP = "Ehviewer";
+//    private static final String SOURCE_APP = "Anotherviewer";
 
     private static final String CHROME_SEC_FETCH_DEST = "empty";
     private static final String CHROME_SEC_FETCH_MODE = "cors";

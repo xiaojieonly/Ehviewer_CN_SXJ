@@ -21,8 +21,8 @@ import android.content.res.TypedArray;
 import androidx.preference.Preference;
 import android.util.AttributeSet;
 
-import com.hippo.ehviewer.R;
-import com.hippo.ehviewer.UrlOpener;
+import com.hippo.anotherviewer.R;
+import com.hippo.anotherviewer.UrlOpener;
 
 public class UrlPreference extends Preference {
 

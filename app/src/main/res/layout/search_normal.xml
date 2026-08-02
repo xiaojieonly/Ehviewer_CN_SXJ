@@ -23,7 +23,7 @@
     android:orientation="vertical">
 
     <!-- 1. 顶部的分类色块表 -->
-    <com.hippo.ehviewer.widget.CategoryTable
+    <com.hippo.anotherviewer.widget.CategoryTable
         android:id="@+id/search_category_table"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

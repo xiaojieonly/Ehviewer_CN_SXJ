@@ -17,13 +17,13 @@
  *     growth.
  *   - Navigations: NetworkFirst, falling back to the cached app shell.
  *
- * Cache versioning: bump CACHE_NAME (e.g. 'ehviewer-v2') to invalidate
+ * Cache versioning: bump CACHE_NAME (e.g. 'anotherviewer-v2') to invalidate
  * every sub-cache on the next activate.
  * ========================================================================== */
 
 'use strict'
 
-const CACHE_NAME = 'ehviewer-v1'
+const CACHE_NAME = 'anotherviewer-v1'
 
 const SHELL_CACHE = `${CACHE_NAME}-shell`
 const API_CACHE = `${CACHE_NAME}-api`
@@ -88,7 +88,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith('ehviewer-') && !CURRENT_CACHES.has(key))
+            .filter((key) => key.startsWith('anotherviewer-') && !CURRENT_CACHES.has(key))
             .map((key) => caches.delete(key))
         )
       )

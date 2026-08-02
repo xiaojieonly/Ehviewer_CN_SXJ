@@ -4,12 +4,12 @@
   复用 AdminLayout 内容区与 settings 页的偏好分组 / 对话框样式：
 
     - 界面语言：项目当前无 i18n 机制，仅将偏好写入 localStorage
-      （`ehviewer-admin-advanced-ui`），文案后续接入 i18n 时再消费；
+      （`anotherviewer-admin-advanced-ui`），文案后续接入 i18n 时再消费；
     - 保存解析错误日志：同样落在 localStorage（settingsApi / 后端
       serverConfig 均无对应字段）；
     - 导出 / 导入数据：后端 `GET /api/v1/export`、`POST /api/v1/import`
       尚未实现，按钮仅给出 TODO 提示；
-    - 清除本地数据：confirm 后删除全部 `ehviewer-` 前缀的 localStorage
+    - 清除本地数据：confirm 后删除全部 `anotherviewer-` 前缀的 localStorage
       条目（保留 token / username，避免意外登出）。
 -->
 <template>
@@ -107,7 +107,7 @@ interface AdvancedUi {
   saveParseErrors: boolean
 }
 
-const UI_STORAGE_KEY = 'ehviewer-admin-advanced-ui'
+const UI_STORAGE_KEY = 'anotherviewer-admin-advanced-ui'
 
 /** 登录凭证——清除本地数据时保留，避免意外登出。 */
 const AUTH_KEYS = new Set(['token', 'username'])
@@ -191,7 +191,7 @@ function clearLocalData(): void {
   let cleared = 0
   for (let i = localStorage.length - 1; i >= 0; i--) {
     const key = localStorage.key(i)
-    if (key?.startsWith('ehviewer-') && !AUTH_KEYS.has(key)) {
+    if (key?.startsWith('anotherviewer-') && !AUTH_KEYS.has(key)) {
       localStorage.removeItem(key)
       cleared++
     }

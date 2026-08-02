@@ -183,7 +183,7 @@ Android's `FixedThumb` / `TileThumb` widgets enforce aspect ratio clamping:
 
 ```xml
 <!-- item_gallery_list.xml -->
-<com.hippo.ehviewer.widget.FixedThumb
+<com.hippo.anotherviewer.widget.FixedThumb
     app:minAspect="0.333"
     app:maxAspect="1.333" />
 ```

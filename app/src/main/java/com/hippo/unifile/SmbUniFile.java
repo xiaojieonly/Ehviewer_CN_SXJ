@@ -24,10 +24,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.hippo.ehviewer.smb.SmbConfig;
-import com.hippo.ehviewer.smb.SmbConnection;
-import com.hippo.ehviewer.smb.SmbConnection.SmbEntry;
-import com.hippo.ehviewer.smb.SmbSettings;
+import com.hippo.anotherviewer.smb.SmbConfig;
+import com.hippo.anotherviewer.smb.SmbConnection;
+import com.hippo.anotherviewer.smb.SmbConnection.SmbEntry;
+import com.hippo.anotherviewer.smb.SmbSettings;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

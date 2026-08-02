@@ -17,16 +17,16 @@
 
   Query composition mirrors Android `formatListUrlBuilder`:
     - categories use POSITIVE semantics here and are converted to the
-      EhConfig EXCLUSION bitmask (CATEGORY_BIT_VALUES) for the API;
+      SiteConfig EXCLUSION bitmask (CATEGORY_BIT_VALUES) for the API;
     - uploader / tag keyword modes prefix the keyword (`uploader:` / `tag:`),
-      the canonical EhViewer URL syntax;
+      the canonical AnotherViewer URL syntax;
     - advanced options (bitmask / min rating / page range) round-trip through
       quick-search presets — the current REST endpoint does not accept them.
 
   Persistence (client-side):
-    ehviewer-search-history   — recent keyword searches (max 20);
-    ehviewer-quick-searches   — user presets (seeded from GET /gallery/quick-search);
-    ehviewer-search-view-mode — results layout ('grid' | 'list').
+    anotherviewer-search-history   — recent keyword searches (max 20);
+    anotherviewer-quick-searches   — user presets (seeded from GET /gallery/quick-search);
+    anotherviewer-search-view-mode — results layout ('grid' | 'list').
 -->
 <template>
   <div class="search-scene">
@@ -256,9 +256,9 @@ const themeStore = useThemeStore()
 /* ------------------------------- constants ------------------------------ */
 
 const PAGE_SIZE = 25
-const HISTORY_KEY = 'ehviewer-search-history'
-const QUICK_SEARCH_KEY = 'ehviewer-quick-searches'
-const VIEW_MODE_KEY = 'ehviewer-search-view-mode'
+const HISTORY_KEY = 'anotherviewer-search-history'
+const QUICK_SEARCH_KEY = 'anotherviewer-quick-searches'
+const VIEW_MODE_KEY = 'anotherviewer-search-view-mode'
 const MAX_HISTORY = 20
 
 /** QuickSearch.mode numbering (Android `QuickSearch` / ListUrlBuilder modes). */
@@ -379,7 +379,7 @@ const suggestions = computed<SearchSuggestion[]>(() =>
 
 /* --------------------------- query composition -------------------------- */
 
-/** Positive `selected` → Android EhConfig exclusion bitmask (bit = excluded). */
+/** Positive `selected` → Android SiteConfig exclusion bitmask (bit = excluded). */
 function exclusionMask(selected: GalleryCategory[]): number {
   return CATEGORY_ORDER.reduce(
     (mask, category) => (selected.includes(category) ? mask : mask | CATEGORY_BIT_VALUES[category]),

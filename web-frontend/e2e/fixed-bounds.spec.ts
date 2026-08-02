@@ -58,7 +58,7 @@ const STABILIZE_CSS =
 
 function initScript({ theme, css }: { theme: string; css: string }) {
   try {
-    window.localStorage.setItem('ehviewer-theme', theme)
+    window.localStorage.setItem('anotherviewer-theme', theme)
     window.localStorage.setItem('token', 'e2e-fixed-bounds-token')
   } catch {
     /* storage may be unavailable; non-fatal */

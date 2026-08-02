@@ -29,7 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.hippo.android.resource.AttrResources;
 import com.hippo.easyrecyclerview.EasyRecyclerView;
 import com.hippo.easyrecyclerview.LinearDividerItemDecoration;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import com.hippo.ripple.Ripple;
 import com.hippo.lib.yorozuya.LayoutUtils;
 import java.io.File;

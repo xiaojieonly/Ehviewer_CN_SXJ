@@ -24,7 +24,7 @@ import android.view.View;
 import androidx.appcompat.widget.AppCompatImageView;
 
 import com.google.android.material.imageview.ShapeableImageView;
-import com.hippo.ehviewer.R;
+import com.hippo.anotherviewer.R;
 import com.hippo.lib.yorozuya.MathUtils;
 
 public class FixedAspectImageView extends ShapeableImageView {

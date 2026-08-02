@@ -9,8 +9,8 @@ if (file('google-services.json').exists()) {
 }
 
 android {
-    namespace 'com.hippo.ehviewer'
-    testNamespace 'com.hippo.ehviewer.debug'
+    namespace 'com.hippo.anotherviewer'
+    testNamespace 'com.hippo.anotherviewer.debug'
     compileSdk 35
 //    buildToolsVersion "30.0.3"
 //    ndkVersion '26.1.10909125'
@@ -58,15 +58,15 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
-            // Mock E-Hentai base URL (see mock-server/ehentai.mjs). Empty = disabled.
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.anotherviewer.fileprovider"'
+            // Mock Gallery Site base URL (see mock-server/gallery.mjs). Empty = disabled.
             buildConfigField 'String', 'MOCK_EH_BASE_URL', '""'
         }
         debug {
             applicationIdSuffix ".debug"
-            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
+            buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.anotherviewer.debug.fileprovider"'
             // Set to e.g. "http://10.0.2.2:8080/" (emulator) or "http://192.168.x.x:8080/" (device)
-            // to route all exhentai.org / e-hentai.org / ehgt.org traffic to the dummy server.
+            // to route all gallery.test / gallery.test / gallery.test traffic to the dummy server.
             buildConfigField 'String', 'MOCK_EH_BASE_URL', '""'
         }
     }

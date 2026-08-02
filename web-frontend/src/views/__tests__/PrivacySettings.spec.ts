@@ -26,8 +26,8 @@ function defaultPrefs(): Preferences {
       showTagTranslations: true,
       showGalleryComment: true,
       showGalleryRating: true,
-      showEhEvents: true,
-      showEhLimits: true,
+      showSiteEvents: true,
+      showSiteLimits: true,
     },
     reader: {
       readingDirection: 'rtl',

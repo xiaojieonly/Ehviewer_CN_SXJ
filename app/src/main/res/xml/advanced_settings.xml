@@ -35,7 +35,7 @@
         android:title="@string/settings_advanced_dump_logcat"
         app:allowDividerAbove="true" />
 
-    <com.hippo.ehviewer.preference.ClearDownloadPathCachePreference
+    <com.hippo.anotherviewer.preference.ClearDownloadPathCachePreference
         android:key="clear_download_path_cache"
         android:summary="@string/settings_advanced_clear_download_path_cache_summary"
         android:title="@string/settings_advanced_clear_download_path_cache"
@@ -65,7 +65,7 @@
         app:entries="@array/app_language_entries"
         app:entryValues="@array/app_language_entry_values" />
 
-    <com.hippo.ehviewer.preference.ProxyPreference
+    <com.hippo.anotherviewer.preference.ProxyPreference
         android:key="proxy"
         android:title="@string/settings_advanced_proxy"
         app:allowDividerAbove="true" />
@@ -86,7 +86,7 @@
         android:key="custom_hosts"
         android:summary="@string/settings_advanced_custom_hosts_summary"
         android:title="@string/settings_advanced_custom_hosts_title"
-        app:activity="com.hippo.ehviewer.ui.HostsActivity"
+        app:activity="com.hippo.anotherviewer.ui.HostsActivity"
         app:allowDividerAbove="true" />
 
     <com.hippo.preference.SwitchPreference
@@ -107,7 +107,7 @@
     <!--        android:summary="@string/settings_advanced_url_replace_summary"-->
     <!--        android:title="@string/settings_advanced_url_replace_title" />-->
 
-    <com.hippo.ehviewer.preference.ExportDataPreference
+    <com.hippo.anotherviewer.preference.ExportDataPreference
         android:key="export_data"
         android:summary="@string/settings_advanced_export_data_summary"
         android:title="@string/settings_advanced_export_data"

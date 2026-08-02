@@ -85,7 +85,7 @@
  *   32×24dp `CategoryTriangle` top-right, language badge (10sp white bold),
  *   title below (2-line clamp).
  *
- * The numeric `gallery.category` is an `EhConfig` bit value; it is converted
+ * The numeric `gallery.category` is an `SiteConfig` bit value; it is converted
  * to a `GalleryCategory` via `CATEGORY_BY_BIT` before driving the chip /
  * triangle (unknown bits render neither).
  */

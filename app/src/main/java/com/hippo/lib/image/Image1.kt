@@ -266,7 +266,7 @@ class Image1 private constructor(
         @JvmStatic
         fun initialize(context: Context?) {
             ReLinker.loadLibrary(context, "image")
-            //        System.loadLibrary("ehviewer");
+            //        System.loadLibrary("anotherviewer");
         }
         @JvmStatic
         private external fun nativeDecode(`is`: InputStream?, partially: Boolean): Image1?

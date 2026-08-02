@@ -3,7 +3,7 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import AdminAdvanced from '../admin/AdminAdvanced.vue'
 import { AppSelect, AppSwitch, PrefRow, SectionHeader } from '@/components/form'
 
-const UI_KEY = 'ehviewer-admin-advanced-ui'
+const UI_KEY = 'anotherviewer-admin-advanced-ui'
 
 describe('AdminAdvanced (高级)', () => {
   let wrapper: VueWrapper
@@ -70,8 +70,8 @@ describe('AdminAdvanced (高级)', () => {
   it('clears local data after confirmation, keeping auth keys', async () => {
     localStorage.setItem('token', 'keep-me')
     localStorage.setItem('username', 'bob')
-    localStorage.setItem('ehviewer-search-history', 'x')
-    localStorage.setItem('ehviewer-admin-download-ui', '{}')
+    localStorage.setItem('anotherviewer-search-history', 'x')
+    localStorage.setItem('anotherviewer-admin-download-ui', '{}')
     vi.spyOn(window, 'confirm')
 
     wrapper = mount(AdminAdvanced)
@@ -82,8 +82,8 @@ describe('AdminAdvanced (高级)', () => {
     await clear.trigger('click')
     expect(localStorage.getItem('token')).toBe('keep-me')
     expect(localStorage.getItem('username')).toBe('bob')
-    expect(localStorage.getItem('ehviewer-search-history')).toBeNull()
-    expect(localStorage.getItem('ehviewer-admin-download-ui')).toBeNull()
+    expect(localStorage.getItem('anotherviewer-search-history')).toBeNull()
+    expect(localStorage.getItem('anotherviewer-admin-download-ui')).toBeNull()
     expect(wrapper.text()).toContain('已清除 2 项本地数据')
   })
 })
