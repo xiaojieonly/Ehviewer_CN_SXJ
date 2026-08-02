@@ -52,14 +52,17 @@ class SyncService(
         val now = System.currentTimeMillis()
         if (deviceId.isNotEmpty()) updateDevice(deviceId, now, username)
         val prefEntity = preferenceRepository.findByUsername(username)
+        // since=0 是全量拉取：lastModified=0 的合法记录（如 time=0 的旧下载记录）
+        // 必须一并返回，否则 0 > 0 恒假，这些记录永远无法到达新设备。
+        fun include(lastModified: Long): Boolean = since == 0L || lastModified > since
         val entities = SyncEntityCollection(
-            favorites = favoriteRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncFavoriteDto() },
-            history = historyRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncHistoryDto() },
-            downloads = downloadRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncDownloadDto() },
-            bookmarks = bookmarkRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncBookmarkDto() },
-            filters = filterRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncFilterDto() },
-            quickSearches = quickSearchRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncQuickSearchDto() },
-            downloadLabels = downloadLabelRepository.findAll().filter { it.username == username && it.lastModified > since }.map { it.toSyncDownloadLabelDto() },
+            favorites = favoriteRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncFavoriteDto() },
+            history = historyRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncHistoryDto() },
+            downloads = downloadRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncDownloadDto() },
+            bookmarks = bookmarkRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncBookmarkDto() },
+            filters = filterRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncFilterDto() },
+            quickSearches = quickSearchRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncQuickSearchDto() },
+            downloadLabels = downloadLabelRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncDownloadLabelDto() },
             preferences = SyncPreferencesDto(
                 preferences = preferenceService.getRaw(username),
                 lastModified = prefEntity?.updatedAt ?: 0,

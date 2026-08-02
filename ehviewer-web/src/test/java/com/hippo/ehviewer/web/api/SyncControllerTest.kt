@@ -326,6 +326,21 @@ class SyncControllerTest {
     }
 
     @Test
+    fun `pull since zero returns records with zero lastModified`() {
+        val service = newSyncService()
+        // 手工构造 lastModified=0 的下载记录（如 time=0 的旧记录），经 push 入库。
+        val req = pushRequest("android-t2b")
+        val zero = req.entities.downloads.map { it.copy(lastModified = 0L) }
+        service.push(req.copy(entities = req.entities.copy(downloads = zero)), "alice")
+
+        val e = service.pull(0, "alice").entities
+        assertEquals(1, e.downloads.size)
+        assertEquals(0L, e.downloads[0].lastModified)
+        // since>0 时这些记录不再返回（增量语义不受影响）。
+        assertTrue(service.pull(1, "alice").entities.downloads.isEmpty())
+    }
+
+    @Test
     fun `push registers the device and status tracks it with lastSeen`() {
         val service = newSyncService()
         val pushed = service.push(pushRequest("android-t3"), "alice")
