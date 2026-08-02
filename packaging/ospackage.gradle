@@ -1,0 +1,41 @@
+// 备用：发行版打包配置（nebula.ospackage）。激活后按 packaging/README.md 说明接入，
+// 执行 ./gradlew :ehviewer-web:buildDeb buildRpm 产出 .deb/.rpm。默认不激活，不影响现有构建。
+//
+// 注意：deb/rpm 不捆绑 JRE，要求系统提供 Java 21（requires 'openjdk-21-jre-headless'）。
+// 数据目录保持 --data-dir 抽象：安装为 /var/lib/anotherviewer，与 zip 包内 data/ 同一语义。
+
+apply plugin: 'nebula.ospackage'
+
+def avVersion = project.hasProperty('releaseVersion') ? project.property('releaseVersion') : project.version
+
+ospackage {
+    packageName = 'anotherviewer'
+    version = avVersion
+    arch = 'amd64'
+    os = 'LINUX'
+
+    // 安装路径 /opt/anotherviewer ↔ zip 内 lib/（同一 app.jar）
+    installDir '/opt/anotherviewer'
+
+    from("${project(':ehviewer-web').buildDir}/libs/ehviewer-web-${project.version}.jar") {
+        into 'lib'
+        rename { 'app.jar' }
+        fileMode 0644
+    }
+
+    // 数据路径 /var/lib/anotherviewer ↔ zip 内 data/（同一 --data-dir 抽象）
+    directory('/var/lib/anotherviewer', 0755)
+
+    // systemd unit：模板安装为 /lib/systemd/system/anotherviewer.service
+    from(project.file('packaging/systemd/anotherviewer.service.tpl')) {
+        into '/lib/systemd/system/'
+        rename { 'anotherviewer.service' }
+        fileMode 0644
+    }
+
+    // 依赖系统 Java 21（发行版 JRE 包名因发行版而异，deb/rpm 分别映射）
+    requires('openjdk-21-jre-headless')
+
+    preInstall('useradd --system --home /opt/anotherviewer --shell /usr/sbin/nologin anotherviewer || true')
+    postInstall('systemctl daemon-reload || true')
+}
