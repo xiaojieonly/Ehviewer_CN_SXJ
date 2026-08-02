@@ -37,6 +37,7 @@ import com.hippo.ehviewer.client.data.GalleryInfo;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
 import com.hippo.ehviewer.dao.BlackList;
 import com.hippo.ehviewer.dao.BlackListDao;
+import com.hippo.ehviewer.dao.BookmarkInfo;
 import com.hippo.ehviewer.dao.DaoMaster;
 import com.hippo.ehviewer.dao.DaoSession;
 import com.hippo.ehviewer.dao.DownloadDirname;
@@ -46,6 +47,7 @@ import com.hippo.ehviewer.dao.DownloadLabel;
 import com.hippo.ehviewer.dao.DownloadLabelDao;
 import com.hippo.ehviewer.dao.DownloadsDao;
 import com.hippo.ehviewer.dao.Filter;
+import com.hippo.ehviewer.dao.FilterDao;
 import com.hippo.ehviewer.dao.GalleryTags;
 import com.hippo.ehviewer.dao.GalleryTagsDao;
 import com.hippo.ehviewer.dao.HistoryDao;
@@ -985,6 +987,36 @@ public class EhDB {
     public static synchronized void triggerFilter(Filter filter) {
         filter.setEnable(!filter.enable);
         sDaoSession.getFilterDao().update(filter);
+    }
+
+    // --- WebUI sync helpers: bookmarks & filter composite-key access (additive) ---
+
+    /** Materialized snapshot of all bookmark records for building a sync push. */
+    public static synchronized List<BookmarkInfo> getAllBookmark() {
+        return sDaoSession.getBookmarksBao().queryBuilder().list();
+    }
+
+    /** Insert or replace a bookmark record (gid is the primary key). */
+    public static synchronized void putBookmark(BookmarkInfo bookmark) {
+        sDaoSession.getBookmarksBao().insertOrReplace(bookmark);
+    }
+
+    /** Hard-delete a bookmark record by gid. */
+    public static synchronized void removeBookmarkByGid(long gid) {
+        sDaoSession.getBookmarksBao().deleteByKey(gid);
+    }
+
+    /** Finds the filter identified by its composite (mode, text) key, or {@code null} when absent. */
+    public static synchronized Filter findFilterByKey(int mode, String text) {
+        return sDaoSession.getFilterDao().queryBuilder()
+                .where(FilterDao.Properties.Mode.eq(mode), FilterDao.Properties.Text.eq(text))
+                .unique();
+    }
+
+    /** Deletes the filter identified by (mode, text), if present. */
+    public static synchronized void deleteFilterByKey(int mode, String text) {
+        Filter f = findFilterByKey(mode, text);
+        if (f != null) sDaoSession.getFilterDao().delete(f);
     }
 
     private static <T> boolean copyDao(AbstractDao<T, ?> from, AbstractDao<T, ?> to) {
