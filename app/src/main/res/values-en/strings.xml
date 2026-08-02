@@ -927,7 +927,7 @@
     <string name="settings_webui_invalid_config">Invalid server configuration</string>
     <string name="settings_webui_connect_failed">Connection failed: %s</string>
     <string name="settings_webui_syncing">Syncing…</string>
-    <string name="settings_webui_sync_done">Sync complete: uploaded %1$d favorites / %2$d history, pulled %3$d favorites / %4$d history</string>
+    <string name="settings_webui_sync_done">Sync complete: favorites pushed %1$d / pulled %2$d, downloads pushed %3$d / pulled %4$d, filters pushed %5$d / pulled %6$d</string>
     <string name="settings_webui_sync_failed">Sync failed: %s</string>
     <string name="settings_webui_remote_read">Remote reading</string>
     <string name="settings_webui_remote_read_summary">When connected, stream pages from the server instead of EH; read pages stay in the local cache</string>

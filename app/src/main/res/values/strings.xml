@@ -1148,7 +1148,7 @@
     <string name="settings_webui_invalid_config">服务器配置无效</string>
     <string name="settings_webui_connect_failed">连接失败：%s</string>
     <string name="settings_webui_syncing">正在同步…</string>
-    <string name="settings_webui_sync_done">同步完成：上传收藏 %1$d / 历史 %2$d，拉取收藏 %3$d / 历史 %4$d</string>
+    <string name="settings_webui_sync_done">同步完成：收藏 %1$d↑/%2$d↓、下载 %3$d↑/%4$d↓、过滤 %5$d↑/%6$d↓</string>
     <string name="settings_webui_sync_failed">同步失败：%s</string>
     <string name="settings_webui_remote_read">远程阅读</string>
     <string name="settings_webui_remote_read_summary">连接服务器时，从服务器流式加载图片（而非直连 EH）；已读页面保留在本地缓存</string>
