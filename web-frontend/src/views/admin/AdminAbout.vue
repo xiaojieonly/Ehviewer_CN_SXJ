@@ -1,8 +1,8 @@
 <!--
   AdminAbout.vue — 管理面板「关于」页（Wave 6）.
 
-  展示应用品牌信息：名称与版本（与 package.json 的 `version` 保持一致，
-  项目 tsconfig 未开启 resolveJsonModule，故以常量镜像）、许可证、
+  展示应用品牌信息：名称与版本（版本构建期由 vite `define` 注入，
+  单一来源为根目录 `gradle.properties` 的 `webVersion`）、许可证、
   项目地址与构建信息（技术栈）。
 -->
 <template>
@@ -58,8 +58,8 @@
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
-/** 镜像 package.json 的 `version` 字段（tsconfig 未开启 resolveJsonModule）。 */
-const appVersion = '1.0.0'
+/** 构建期由 vite define 注入（WEB_VERSION 环境变量，见 vite.config.ts）。 */
+const appVersion = __APP_VERSION__
 
 const projectUrl = 'https://github.com/PegionFish/AnotherViewer'
 </script>

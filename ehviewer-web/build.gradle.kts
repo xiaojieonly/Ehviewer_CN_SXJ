@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.hippo.ehviewer"
-version = "1.0.0-SNAPSHOT"
+version = (project.findProperty("webVersion") as String?) ?: "1.0.0-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
