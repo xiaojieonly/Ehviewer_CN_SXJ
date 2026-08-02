@@ -9,6 +9,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.0",
+    "gifenc": "^1.0.3",
+    "jpeg-js": "^0.4.4",
     "sockjs": "^0.3.24",
     "stompjs": "^2.3.3"
   }

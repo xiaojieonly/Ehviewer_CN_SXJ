@@ -105,6 +105,8 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         Map<Long, SpiderInfo> getSpiderInfoMap();
         DownloadManager getDownloadManager();
         EasyRecyclerView getRecyclerView();
+        int getVisibleCount();
+        List<DownloadInfo> getOlderVersions(long rootGid);
     }
 
     public DownloadAdapter(DownloadsScene scene, DownloadAdapterCallback callback) {
@@ -228,6 +230,15 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             }
             bindForState(holder, info);
 
+            // 版本角标：该画廊存在被折叠的历史版本时显示，点击弹出历史版本列表
+            List<DownloadInfo> olders = mCallback.getOlderVersions(info.gid);
+            if (olders != null && !olders.isEmpty()) {
+                holder.versionBadge.setVisibility(View.VISIBLE);
+                holder.versionBadge.setText(mScene.getString(R.string.version_badge, olders.size()));
+            } else {
+                holder.versionBadge.setVisibility(View.GONE);
+            }
+
             // Update transition name
             ViewCompat.setTransitionName(holder.thumb, TransitionNameFactory.getThumbTransitionName(info.gid));
         } catch (Exception e) {
@@ -237,15 +248,11 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
     @Override
     public int getItemCount() {
-        List<DownloadInfo> list = mCallback.getList();
-        if (list == null) {
-            return 0;
+        int visibleCount = mCallback.getVisibleCount();
+        if (visibleCount < mCallback.getPaginationSize() || !mCallback.isCanPagination()) {
+            return visibleCount;
         }
-        int listSize = list.size();
-        if (listSize < mCallback.getPaginationSize() || !mCallback.isCanPagination()) {
-            return listSize;
-        }
-        int count = listSize - mCallback.getPageSize() * (mCallback.getIndexPage() - 1);
+        int count = visibleCount - mCallback.getPageSize() * (mCallback.getIndexPage() - 1);
         return Math.min(count, mCallback.getPageSize());
     }
 
@@ -661,6 +668,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
         public final SimpleRatingView rating;
         public final TextView category;
         public final TextView readProgress;
+        public final TextView versionBadge;
         public final View start;
         public final View stop;
         public final TextView state;
@@ -677,6 +685,7 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             rating = itemView.findViewById(R.id.rating);
             category = itemView.findViewById(R.id.category);
             readProgress = itemView.findViewById(R.id.read_progress);
+            versionBadge = itemView.findViewById(R.id.version_badge);
             start = itemView.findViewById(R.id.start);
             stop = itemView.findViewById(R.id.stop);
             state = itemView.findViewById(R.id.state);
@@ -688,10 +697,83 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
             thumb.setOnClickListener(this);
             start.setOnClickListener(this);
             stop.setOnClickListener(this);
+            versionBadge.setOnClickListener(v -> showVersionDialog());
 
             boolean isDarkTheme = !AttrResources.getAttrBoolean(mScene.getEHContext(), androidx.appcompat.R.attr.isLightTheme);
             Ripple.addRipple(start, isDarkTheme);
             Ripple.addRipple(stop, isDarkTheme);
+        }
+
+        private void showVersionDialog() {
+            Context context = mScene.getEHContext();
+            EasyRecyclerView recyclerView = mCallback.getRecyclerView();
+            if (context == null || recyclerView == null || recyclerView.isInCustomChoice()) {
+                return;
+            }
+            List<DownloadInfo> list = mCallback.getList();
+            if (list == null) {
+                return;
+            }
+            int index = recyclerView.getChildAdapterPosition(itemView);
+            if (index < 0 || index >= list.size()) {
+                return;
+            }
+            DownloadInfo rootInfo = list.get(mScene.positionInList(index));
+            List<DownloadInfo> olders = mCallback.getOlderVersions(rootInfo.gid);
+            if (olders == null || olders.isEmpty()) {
+                return;
+            }
+            String[] titles = new String[olders.size()];
+            for (int i = 0; i < olders.size(); i++) {
+                titles[i] = EhUtils.getSuitableTitle(olders.get(i));
+            }
+            new AlertDialog.Builder(context)
+                    .setTitle(R.string.version_old_versions)
+                    .setItems(titles, (dialog, which) -> showVersionActions(olders.get(which)))
+                    .show();
+        }
+
+        private void showVersionActions(DownloadInfo older) {
+            Context context = mScene.getEHContext();
+            if (context == null) {
+                return;
+            }
+            new AlertDialog.Builder(context)
+                    .setTitle(EhUtils.getSuitableTitle(older))
+                    .setItems(new CharSequence[]{
+                            mScene.getString(R.string.read),
+                            mScene.getString(R.string.version_action_detail),
+                            mScene.getString(R.string.delete)
+                    }, (dialog, which) -> {
+                        switch (which) {
+                            case 0: // 阅读
+                                mScene.openDownloadedGallery(older);
+                                break;
+                            case 1: // 详情
+                                Bundle args = new Bundle();
+                                args.putString(GalleryDetailScene.KEY_ACTION, GalleryDetailScene.ACTION_DOWNLOAD_GALLERY_INFO);
+                                args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, older);
+                                Announcer announcer = new Announcer(GalleryDetailScene.class).setArgs(args);
+                                mScene.startScene(announcer);
+                                break;
+                            case 2: // 删除
+                                DownloadManager downloadManager = mCallback.getDownloadManager();
+                                if (downloadManager == null) {
+                                    break;
+                                }
+                                new AlertDialog.Builder(context)
+                                        .setTitle(R.string.download_remove_dialog_title)
+                                        .setMessage(mScene.getString(R.string.download_remove_dialog_message,
+                                                EhUtils.getSuitableTitle(older)))
+                                        .setPositiveButton(android.R.string.ok, (dialog1, which1) ->
+                                                downloadManager.deleteDownload(older.gid))
+                                        .show();
+                                break;
+                            default:
+                                break;
+                        }
+                    })
+                    .show();
         }
 
         @Override

@@ -67,6 +67,7 @@ import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.UrlOpener;
+import com.hippo.ehviewer.VersionChainStore;
 import com.hippo.ehviewer.client.EhCacheKeyFactory;
 import com.hippo.ehviewer.client.EhClient;
 import com.hippo.ehviewer.client.EhFilter;
@@ -1934,6 +1935,15 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     protected void onGetGalleryDetailSuccess(GalleryDetail result) {
         mGalleryDetail = result;
         updateDownloadState();
+        // Record version-chain edges from the #gnd new-version list so the
+        // downloads scene can collapse older versions of the same gallery.
+        if (mContext != null && result.newVersions != null) {
+            String[] versionUrls = new String[result.newVersions.length];
+            for (int i = 0; i < result.newVersions.length; i++) {
+                versionUrls[i] = result.newVersions[i].versionUrl;
+            }
+            VersionChainStore.recordEdges(mContext, result.gid, versionUrls);
+        }
         if (mDownloadState != DownloadInfo.STATE_INVALID) {
             if (mDownloadInfo != null && !mDownloadInfo.thumb.equals(result.thumb) && mDownloadInfo.gid == result.gid) {
                 useNetWorkLoadThumb = true;

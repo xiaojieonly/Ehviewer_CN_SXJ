@@ -52,6 +52,18 @@
                 android:layout_toRightOf="@id/thumb"/>
 
             <TextView
+                android:id="@+id/version_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignTop="@id/title"
+                android:layout_marginRight="8dp"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:textSize="@dimen/text_super_small"
+                android:textColor="?attr/textColorThemeAccent"/>
+
+            <TextView
                 android:id="@+id/uploader"
                 style="@style/CardMessage"
                 android:layout_width="wrap_content"

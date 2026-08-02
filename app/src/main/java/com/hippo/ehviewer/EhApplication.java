@@ -97,7 +97,10 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.Cache;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.Response;
 
 public class EhApplication extends RecordingApplication {
@@ -378,6 +381,60 @@ public class EhApplication extends RecordingApplication {
         return application.mEhProxySelector;
     }
 
+    /**
+     * Debug-only: rewrites requests for the real E-Hentai hosts to the dummy
+     * server (mock-server/ehentai.mjs) when BuildConfig.MOCK_EH_BASE_URL is set.
+     * Hosts rewritten: exhentai.org, e-hentai.org, lofi.e-hentai.org, ehgt.org.
+     * Referer/Origin headers are rewritten the same way.
+     */
+    private static Interceptor createMockEhInterceptor() {
+        final String mockBase = BuildConfig.MOCK_EH_BASE_URL;
+        if (mockBase.isEmpty()) {
+            return chain -> chain.proceed(chain.request());
+        }
+        final HttpUrl base = HttpUrl.parse(mockBase);
+        if (base == null) {
+            return chain -> chain.proceed(chain.request());
+        }
+        return chain -> {
+            Request request = chain.request();
+            HttpUrl url = request.url();
+            if (!isMockEhHost(url.host())) {
+                return chain.proceed(request);
+            }
+            HttpUrl newUrl = url.newBuilder()
+                    .scheme(base.scheme())
+                    .host(base.host())
+                    .port(base.port())
+                    .build();
+            Request.Builder builder = request.newBuilder().url(newUrl);
+            String referer = request.header("Referer");
+            if (referer != null && isMockEhHost(HttpUrl.parse(referer) != null ? HttpUrl.parse(referer).host() : "")) {
+                builder.header("Referer", rewriteMockEhUrl(referer, base));
+            }
+            String origin = request.header("Origin");
+            if (origin != null && isMockEhHost(HttpUrl.parse(origin) != null ? HttpUrl.parse(origin).host() : "")) {
+                builder.header("Origin", rewriteMockEhUrl(origin, base));
+            }
+            return chain.proceed(builder.build());
+        };
+    }
+
+    private static boolean isMockEhHost(@NonNull String host) {
+        return host.equals("exhentai.org") || host.equals("e-hentai.org")
+                || host.equals("lofi.e-hentai.org") || host.equals("ehgt.org")
+                || host.endsWith(".exhentai.org") || host.endsWith(".e-hentai.org")
+                || host.endsWith(".ehgt.org");
+    }
+
+    private static String rewriteMockEhUrl(@NonNull String url, @NonNull HttpUrl base) {
+        HttpUrl parsed = HttpUrl.parse(url);
+        if (parsed == null || !isMockEhHost(parsed.host())) {
+            return url;
+        }
+        return parsed.newBuilder().scheme(base.scheme()).host(base.host()).port(base.port()).build().toString();
+    }
+
     @NonNull
     public static OkHttpClient getOkHttpClient(@NonNull Context context) {
         EhApplication application = ((EhApplication) context.getApplicationContext());
@@ -406,6 +463,7 @@ public class EhApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
 //                    .dispatcher(dispatcher)
+                    .addInterceptor(createMockEhInterceptor())
                     .dns(new EhHosts(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
@@ -490,6 +548,7 @@ public class EhApplication extends RecordingApplication {
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
+                    .addInterceptor(createMockEhInterceptor())
                     .dns(new EhHosts(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {

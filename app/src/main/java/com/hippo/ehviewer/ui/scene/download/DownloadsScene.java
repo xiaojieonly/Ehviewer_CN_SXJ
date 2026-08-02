@@ -83,6 +83,7 @@ import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.EhDB;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
+import com.hippo.ehviewer.VersionChainStore;
 import com.hippo.ehviewer.callBack.DownloadSearchCallback;
 import com.hippo.ehviewer.client.EhConfig;
 import com.hippo.ehviewer.client.EhUtils;
@@ -166,6 +167,12 @@ public class DownloadsScene extends ToolbarScene
     private List<DownloadInfo> mList;
     @Nullable
     private List<DownloadInfo> mBackList;
+
+    // 版本折叠：mVisibleToFull[i] = 第一层第 i 项在全列表中的下标；
+    // mFullToVisible[j] = 全列表第 j 项在第一层中的下标，被折叠为 -1。
+    private VersionChainStore.Collapse mCollapse = new VersionChainStore.Collapse();
+    private int[] mVisibleToFull = new int[0];
+    private int[] mFullToVisible = new int[0];
 
     /*---------------
      List pagination
@@ -340,6 +347,8 @@ public class DownloadsScene extends ToolbarScene
             }
         }
 
+        rebuildVersionCollapse();
+
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
@@ -351,17 +360,93 @@ public class DownloadsScene extends ToolbarScene
         queryUnreadSpiderInfo();
     }
 
+    /**
+     * 根据当前 mList 重建版本折叠映射：同一画廊的不同版本只保留最新版在第一层，
+     * 其余版本经行上的「历史版本」角标进入弹层。在 mList 内容变化时调用。
+     */
+    private void rebuildVersionCollapse() {
+        Context context = getEHContext();
+        mCollapse = context != null && mList != null
+                ? VersionChainStore.buildCollapse(context, mList)
+                : new VersionChainStore.Collapse();
+        int n = mList == null ? 0 : mList.size();
+        mFullToVisible = new int[n];
+        java.util.Arrays.fill(mFullToVisible, -1);
+        List<Integer> visible = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            if (!mCollapse.hiddenGids.contains(mList.get(i).gid)) {
+                mFullToVisible[i] = visible.size();
+                visible.add(i);
+            }
+        }
+        mVisibleToFull = new int[visible.size()];
+        for (int i = 0; i < visible.size(); i++) {
+            mVisibleToFull[i] = visible.get(i);
+        }
+    }
+
+    /** 全列表下标 -> 第一层下标；被折叠返回 -1。 */
+    private int visibleIndexFromFull(int fullIndex) {
+        if (mFullToVisible == null || fullIndex < 0 || fullIndex >= mFullToVisible.length) {
+            return -1;
+        }
+        return mFullToVisible[fullIndex];
+    }
+
+    public void openDownloadedGallery(@NonNull DownloadInfo info) {
+        Activity activity = getActivity2();
+        if (null == activity) {
+            return;
+        }
+        Intent intent = new Intent(activity, GalleryActivity.class);
+        // Check if this is an imported archive
+        if (info.archiveUri != null && info.archiveUri.startsWith("content://")) {
+            // This is an imported archive, ensure URI permission is available
+            Uri archiveUri = Uri.parse(info.archiveUri);
+            try {
+                // Test if we can access the URI
+                try (InputStream testStream = getEHContext().getContentResolver().openInputStream(archiveUri)) {
+                    if (testStream == null) {
+                        Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+            } catch (SecurityException e) {
+                // Try to restore permission
+                try {
+                    getEHContext().getContentResolver().takePersistableUriPermission(archiveUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ex) {
+                    Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
+                    Analytics.recordException(ex);
+                    return;
+                }
+            } catch (Exception e) {
+                Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.setData(archiveUri);
+        } else {
+            // This is a normal download, use ACTION_EH
+            intent.setAction(GalleryActivity.ACTION_EH);
+            intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, info);
+        }
+        galleryActivityLauncher.launch(intent);
+    }
+
     private void updatePaginationIndicator() {
         if (mPaginationIndicator == null || mList == null) {
             return;
         }
-        if (mList.size() < paginationSize || !canPagination) {
+        int visibleCount = getVisibleCount();
+        if (visibleCount < paginationSize || !canPagination) {
             mPaginationIndicator.setVisibility(View.GONE);
             return;
         }
         mPaginationIndicator.setVisibility(View.VISIBLE);
         needInitPageSize = true;
-        mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
+        mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, visibleCount, indexPage);
 //        mPaginationIndicator.setTotalCount();
         mPaginationIndicator.setListener(myPageChangeListener);
 
@@ -588,7 +673,6 @@ public class DownloadsScene extends ToolbarScene
 
         if (mInitPosition >= 0 && indexPage != 1) {
             initPage(mInitPosition);
-            mRecyclerView.scrollToPosition(listIndexInPage(mInitPosition));
             mInitPosition = -1;
         }
 
@@ -974,42 +1058,7 @@ public class DownloadsScene extends ToolbarScene
             }
 
             DownloadInfo downloadInfo = list.get(positionInList(position));
-            Intent intent = new Intent(activity, GalleryActivity.class);
-            // Check if this is an imported archive
-            if (downloadInfo.archiveUri != null && downloadInfo.archiveUri.startsWith("content://")) {
-                // This is an imported archive, ensure URI permission is available
-                Uri archiveUri = Uri.parse(downloadInfo.archiveUri);
-                try {
-                    // Test if we can access the URI
-                    try (InputStream testStream = getEHContext().getContentResolver().openInputStream(archiveUri)) {
-                        if (testStream == null) {
-                            Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
-                            return true;
-                        }
-                    }
-                } catch (SecurityException e) {
-                    // Try to restore permission
-                    try {
-                        getEHContext().getContentResolver().takePersistableUriPermission(archiveUri,
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    } catch (Exception ex) {
-                        Toast.makeText(getEHContext(), R.string.archive_permission_lost, Toast.LENGTH_LONG).show();
-                        Analytics.recordException(ex);
-                        return true;
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(getEHContext(), R.string.archive_not_accessible, Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                intent.setAction(Intent.ACTION_VIEW);
-                intent.setData(archiveUri);
-            } else {
-                // This is a normal download, use ACTION_EH
-                intent.setAction(GalleryActivity.ACTION_EH);
-                intent.putExtra(GalleryActivity.KEY_GALLERY_INFO, downloadInfo);
-            }
-//            startActivity(intent);
-            galleryActivityLauncher.launch(intent);
+            openDownloadedGallery(downloadInfo);
             return true;
         }
     }
@@ -1212,8 +1261,9 @@ public class DownloadsScene extends ToolbarScene
         if (mList != list) {
             return;
         }
+        rebuildVersionCollapse();
         if (mAdapter != null) {
-            mAdapter.notifyItemInserted(position);
+            mAdapter.notifyDataSetChanged();
         }
         if (downloadLabelDraw != null) {
             downloadLabelDraw.updateDownloadLabels();
@@ -1232,7 +1282,10 @@ public class DownloadsScene extends ToolbarScene
         int index = mList.indexOf(newInfo);
         if (index >= 0 && mAdapter != null) {
 //            mSpiderInfoMap.put(info.gid,getSpiderInfo(info));
-            mAdapter.notifyItemChanged(listIndexInPage(index));
+            int pageIndex = listIndexInPage(index);
+            if (pageIndex >= 0) {
+                mAdapter.notifyItemChanged(pageIndex);
+            }
         }
         List<DownloadInfo> infos = new ArrayList<>();
         infos.add(newInfo);
@@ -1247,13 +1300,17 @@ public class DownloadsScene extends ToolbarScene
         }
         int index = mList.indexOf(info);
         if (index >= 0 && mAdapter != null) {
-            mAdapter.notifyItemChanged(listIndexInPage(index));
+            int pageIndex = listIndexInPage(index);
+            if (pageIndex >= 0) {
+                mAdapter.notifyItemChanged(pageIndex);
+            }
         }
     }
 
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onUpdateAll() {
+        rebuildVersionCollapse();
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
@@ -1262,6 +1319,7 @@ public class DownloadsScene extends ToolbarScene
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onReload() {
+        rebuildVersionCollapse();
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
@@ -1291,8 +1349,9 @@ public class DownloadsScene extends ToolbarScene
         if (mList != list) {
             return;
         }
+        rebuildVersionCollapse();
         if (mAdapter != null) {
-            mAdapter.notifyItemRemoved(listIndexInPage(position));
+            mAdapter.notifyDataSetChanged();
         }
         updateView();
     }
@@ -1330,18 +1389,36 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public int positionInList(int position) {
+        int visibleIndex = position;
         if (mList != null && mList.size() > paginationSize && canPagination) {
-            return position + pageSize * (indexPage - 1);
+            visibleIndex = position + pageSize * (indexPage - 1);
         }
-        return position;
+        if (mVisibleToFull == null || visibleIndex < 0 || visibleIndex >= mVisibleToFull.length) {
+            return position;
+        }
+        return mVisibleToFull[visibleIndex];
     }
 
     @Override
     public int listIndexInPage(int position) {
-        if (mList != null && mList.size() > paginationSize && canPagination) {
-            return position % pageSize;
+        int visibleIndex = visibleIndexFromFull(position);
+        if (visibleIndex < 0) {
+            return -1;
         }
-        return position;
+        if (mList != null && mList.size() > paginationSize && canPagination) {
+            return visibleIndex % pageSize;
+        }
+        return visibleIndex;
+    }
+
+    @Override
+    public int getVisibleCount() {
+        return mVisibleToFull == null ? 0 : mVisibleToFull.length;
+    }
+
+    @Override
+    public List<DownloadInfo> getOlderVersions(long rootGid) {
+        return mCollapse.rootToOlders.get(rootGid);
     }
 
     @Override
@@ -1467,6 +1544,7 @@ public class DownloadsScene extends ToolbarScene
         if (!isAdded()) {
             return;
         }
+        rebuildVersionCollapse();
         mOriginalAdapter = new DownloadAdapter(this, this);
         mOriginalAdapter.setHasStableIds(true);
         // 避免重复创建包装适配器，直接使用原始适配器
@@ -1639,14 +1717,18 @@ public class DownloadsScene extends ToolbarScene
 
     @SuppressLint("NotifyDataSetChanged")
     private void initPage(int position) {
+        int visibleIndex = visibleIndexFromFull(position);
+        if (visibleIndex < 0) {
+            visibleIndex = 0;
+        }
         if (mList != null && mList.size() > paginationSize && canPagination) {
-            indexPage = position / pageSize + 1;
+            indexPage = visibleIndex / pageSize + 1;
         }
         doNotScroll = true;
         if (mPaginationIndicator != null) {
             mPaginationIndicator.skip2Pos(indexPage);
         }
-        mRecyclerView.scrollToPosition(listIndexInPage(position));
+        mRecyclerView.scrollToPosition(visibleIndex % pageSize);
     }
 
 

@@ -1078,6 +1078,9 @@
     <string name="gallery_update_dialog_message">Overwrite old gallery: Only the downloaded version will be kept, the old version will be deleted.\nDownload as new gallery: The downloaded gallery will exist as a new gallery, and both the new gallery and the old gallery will be saved.</string>
     <string name="gallery_update_download_as_new">Download as new</string>
     <string name="gallery_update_override_old">Overwrite old</string>
+    <string name="version_old_versions">Historical versions</string>
+    <string name="version_badge">Historical versions %1$d</string>
+    <string name="version_action_detail">View details</string>
     <string name="loading_db_file">Data Loading …</string>
     <string name="settings_eh_history_size">Number of historical records</string>
     <string name="history_info_unlimited">Unlimited</string>

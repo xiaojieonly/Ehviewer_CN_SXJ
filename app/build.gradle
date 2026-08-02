@@ -59,10 +59,15 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.fileprovider"'
+            // Mock E-Hentai base URL (see mock-server/ehentai.mjs). Empty = disabled.
+            buildConfigField 'String', 'MOCK_EH_BASE_URL', '""'
         }
         debug {
             applicationIdSuffix ".debug"
             buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', '"com.hippo.ehviewer.debug.fileprovider"'
+            // Set to e.g. "http://10.0.2.2:8080/" (emulator) or "http://192.168.x.x:8080/" (device)
+            // to route all exhentai.org / e-hentai.org / ehgt.org traffic to the dummy server.
+            buildConfigField 'String', 'MOCK_EH_BASE_URL', '""'
         }
     }
 
