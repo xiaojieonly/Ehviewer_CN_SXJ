@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.web.processing
 
+import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import com.hippo.ehviewer.web.service.GalleryLookupService
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
@@ -29,8 +30,8 @@ class ImageProcessingService(
     private val processors: List<ImageProcessor>,
     private val eventPublisher: ApplicationEventPublisher,
     private val galleryLookup: GalleryLookupService? = null,
+    private val config: EhCoreConfigProperties,
     @Value("\${ehviewer.processing.concurrency:1}") private val concurrency: Int,
-    @Value("\${ehviewer.download.cache-path:./data/cache}") private val cachePath: String,
     @Value("\${ehviewer.processing.task-ttl-ms:600000}") private val taskTtlMs: Long,
     @Value("\${ehviewer.processing.max-tasks:100}") private val maxTasks: Int
 ) : DisposableBean {
@@ -160,7 +161,7 @@ class ImageProcessingService(
             it.copy(state = TaskState.PROCESSING, startedAt = Instant.now())
         }
 
-        val outputDir = Path.of(cachePath, "enhanced", galleryId.toString())
+        val outputDir = Path.of(config.download.cachePath, "enhanced", galleryId.toString())
         Files.createDirectories(outputDir)
 
         var processed = 0
@@ -314,7 +315,7 @@ class ImageProcessingService(
 
     private fun resolveInputImage(galleryId: Long, page: Int): Path? {
         // Look for cached original image in standard cache locations
-        val cacheDir = Path.of(cachePath, galleryId.toString())
+        val cacheDir = Path.of(config.download.cachePath, galleryId.toString())
         if (!Files.isDirectory(cacheDir)) return null
 
         // Try common extensions

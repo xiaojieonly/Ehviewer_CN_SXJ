@@ -71,6 +71,8 @@ class ServerConfigService(
     companion object {
         const val KEY_REQUIRE_AUTH = "security.require_auth"
         const val KEY_SESSION_TIMEOUT = "security.session_timeout"
+        const val KEY_DOWNLOAD_PATH = "download.path"
+        const val KEY_CACHE_PATH = "cache.path"
         const val ENV_REQUIRE_AUTH = "EHVIEWER_REQUIRE_AUTH"
         private const val ENC_PREFIX = "enc:v1:"
 

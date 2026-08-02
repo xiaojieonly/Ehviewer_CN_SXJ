@@ -51,7 +51,10 @@ class SettingsService(
 
     fun updateSettings(request: SettingsUpdateRequest): Boolean {
         request.download?.let { dl ->
-            config.download.path = dl.path
+            if (dl.path.isNotBlank()) {
+                config.download.path = dl.path
+                serverConfig.set(ServerConfigService.KEY_DOWNLOAD_PATH, dl.path)
+            }
             config.download.workerCount = dl.workerCount
             config.download.downloadDelay = dl.downloadDelay
             config.download.downloadTimeout = dl.downloadTimeout
@@ -59,7 +62,10 @@ class SettingsService(
             config.download.maxConcurrentImages = dl.maxConcurrentImages
         }
         request.cache?.let { cache ->
-            config.download.cachePath = cache.path
+            if (cache.path.isNotBlank()) {
+                config.download.cachePath = cache.path
+                serverConfig.set(ServerConfigService.KEY_CACHE_PATH, cache.path)
+            }
             config.download.cacheSizeMb = cache.sizeMb
         }
         request.smb?.let { smb ->

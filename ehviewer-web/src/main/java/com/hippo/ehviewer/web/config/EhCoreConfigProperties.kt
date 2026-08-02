@@ -6,14 +6,17 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "ehviewer")
 class EhCoreConfigProperties {
+    /** Base directory for all runtime data (db, downloads, cache, security key). */
+    var dataDir: String = "./data"
     var download: DownloadProperties = DownloadProperties()
     var reader: ReaderProperties = ReaderProperties()
     var smb: SmbProperties = SmbProperties()
     var security: SecurityProperties = SecurityProperties()
 
     class DownloadProperties {
-        var path: String = "./data/downloads"
-        var cachePath: String = "./data/cache"
+        // Paths are bound from application.yml via `${ehviewer.data-dir}/...`
+        var path: String = ""
+        var cachePath: String = ""
         var cacheSizeMb: Long = 10240
         var workerCount: Int = 3
         var downloadDelay: Int = 0
@@ -33,6 +36,6 @@ class EhCoreConfigProperties {
 
     class SecurityProperties {
         var sessionTimeout: Long = 86400
-        var encryptionKeyPath: String = "./data/security.key"
+        var encryptionKeyPath: String = ""
     }
 }

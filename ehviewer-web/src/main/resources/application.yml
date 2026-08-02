@@ -16,9 +16,10 @@ spring:
       max-request-size: 50MB
 
 ehviewer:
+  data-dir: ${EHVIEWER_DATA_DIR:./data}
   download:
-    path: ./data/downloads
-    cache-path: ./data/cache
+    path: ${ehviewer.data-dir}/downloads
+    cache-path: ${ehviewer.data-dir}/cache
     cache-size-mb: 10240
     worker-count: 3
     download-delay: 0
@@ -35,4 +36,4 @@ ehviewer:
     enabled: false
   security:
     session-timeout: 86400
-    encryption-key-path: ./data/security.key
+    encryption-key-path: ${ehviewer.data-dir}/security.key

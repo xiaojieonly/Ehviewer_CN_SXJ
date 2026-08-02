@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.web.processing
 
+import com.hippo.ehviewer.web.config.EhCoreConfigProperties
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -29,8 +30,8 @@ class ImageProcessingServiceTest {
             processors = listOf(noopProcessor),
             eventPublisher = testPublisher,
             galleryLookup = null,
+            config = EhCoreConfigProperties().apply { download.cachePath = tempDir.toString() },
             concurrency = 1,
-            cachePath = tempDir.toString(),
             taskTtlMs = 60000,
             maxTasks = 100
         )
