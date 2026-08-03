@@ -325,7 +325,9 @@ export default function galleryRoutes(app) {
         posted: String(Math.floor(new Date(g.posted).getTime() / 1000) || 0),
         rating: String(g.rating),
         tags: (g.tags ?? []).flatMap(([ns, tags]) => tags.map((t) => `${ns}:${t}`)),
-        filecount: g.pages,
+        // EH api.php wire format: numeric fields travel as strings (the core
+        // GalleryApiParser reads them via getString).
+        filecount: String(g.pages),
       }));
     res.json({ gmetadata });
   });
