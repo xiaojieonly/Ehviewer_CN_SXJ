@@ -7,6 +7,7 @@ import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.network.StatusCodeException
+import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -24,7 +25,9 @@ import java.util.concurrent.Semaphore
  * - `GET /api/v1/image/{galleryId}/{page}` — stream a gallery page image
  *   (0-based page, on-demand fetch + cache, Range/206, optional enhanced
  *   variant). See contracts/openapi.yaml `streamGalleryImage`.
- * - `GET /api/v1/image/proxy` — legacy URL-keyed cache lookup (kept intact).
+ * - `GET /api/v1/image/proxy` — URL-keyed cache lookup; W3 R4-13 added
+ *   fetch-on-miss for whitelisted Gallery Site URLs (backfill + content-type
+ *   pass-through, unreachable site keeps the 404 envelope).
  * - `GET /api/v1/image/cache/status`, `POST /api/v1/image/cache/clear`.
  */
 @RestController
@@ -64,7 +67,43 @@ class ImageProxyController(
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE)
                 .body(cached)
         }
-        return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found in cache")
+
+        // W3 R4-13 fetch-on-miss (acceptance addition for the Tier-2 thumbnail
+        // rewrite, merged in a4 #13): a cache miss for a Gallery Site URL is
+        // fetched through the shared session client (cookies/proxy inherited),
+        // backfilled into the cache and served with the site's content-type.
+        // Non-whitelisted hosts are never fetched (legacy 404 stands), and an
+        // unreachable/erroring site surfaces the legacy 404 envelope (E2E-6:
+        // errors are passed through, never papered over with fake content).
+        val target = HttpUrl.parse(url)
+        if (target == null || !SiteProxyController.isGallerySiteHost(target.host())) {
+            return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found in cache")
+        }
+
+        return try {
+            val request = SiteRequestBuilder(target.toString(), SiteUrl.getReferer()).build()
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return errorEnvelope(
+                        HttpStatus.NOT_FOUND,
+                        "NOT_FOUND",
+                        "site did not serve the image (HTTP ${response.code()})"
+                    )
+                }
+                val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: MediaType.IMAGE_JPEG_VALUE
+                val bytes = response.body()?.bytes()
+                if (bytes == null || bytes.isEmpty()) {
+                    return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "site returned an empty image body")
+                }
+                imageCacheService.cacheImage(url, bytes)
+                ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .body(bytes)
+            }
+        } catch (e: Exception) {
+            logger.warn("Image proxy fetch-on-miss failed for url={}", url, e)
+            errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "gallery site unreachable")
+        }
     }
 
     @GetMapping("/cache/status")
