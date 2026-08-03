@@ -30,7 +30,7 @@
           <div class="detail-header__thumb">
             <img
               v-if="gallery.thumb"
-              :src="gallery.thumb"
+              :src="coverSrc"
               :alt="`Cover of ${gallery.title}`"
               width="128"
               height="192"
@@ -212,6 +212,7 @@ import { favoriteApi } from '@/api/favorite'
 import { downloadApi } from '@/api/download'
 import { CATEGORY_BY_BIT } from '@/types/components'
 import type { GalleryDetail } from '@/types'
+import { rewriteSiteAssetUrl } from '@/utils/siteAsset'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
@@ -249,6 +250,15 @@ let toastTimer: ReturnType<typeof setTimeout> | undefined
 
 /* ---------------------------------------------------------- derived --- */
 const galleryId = computed(() => Number(props.gid))
+
+/**
+ * R4-9: the cover `thumb` may point at the unresolvable Gallery Site host
+ * (`gallery.test` family); rewrite those through the server's same-origin
+ * image proxy so the cover actually loads. Non-site URLs pass through.
+ */
+const coverSrc = computed(() =>
+  gallery.value ? rewriteSiteAssetUrl(gallery.value.thumb) : '',
+)
 
 /** Numeric `SiteConfig` category bit → `GalleryCategory` key. */
 const categoryKey = computed(() =>

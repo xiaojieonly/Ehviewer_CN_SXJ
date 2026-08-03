@@ -413,3 +413,46 @@ describe('parseFavoriteSlotNames (pure helper)', () => {
     expect(DEFAULT_FAVORITE_SLOT_NAMES[9]).toBe('Favorites 9')
   })
 })
+
+describe('GalleryCard (R4-9 site thumbnail proxy rewrite)', () => {
+  it('rewrites site-host thumbnails through the image proxy (list mode)', () => {
+    const wrapper = mount(GalleryCard, {
+      props: {
+        gallery: makeGallery({ thumb: 'https://gallery.test/t/123/cover.jpg' }),
+        mode: 'list',
+      },
+    })
+    expect(wrapper.find('.gallery-card__thumb img').attributes('src')).toBe(
+      '/api/v1/image/proxy?url=' + encodeURIComponent('https://gallery.test/t/123/cover.jpg'),
+    )
+  })
+
+  it('rewrites site-host thumbnails in grid mode too', () => {
+    const wrapper = mount(GalleryCard, {
+      props: {
+        gallery: makeGallery({ thumb: 'https://t.gallery.test/t/9001/1.jpg' }),
+        mode: 'grid',
+      },
+    })
+    expect(wrapper.find('.gallery-card__tile img').attributes('src')).toBe(
+      '/api/v1/image/proxy?url=' + encodeURIComponent('https://t.gallery.test/t/9001/1.jpg'),
+    )
+  })
+
+  it('keeps non-site thumbnail URLs untouched', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ thumb: 'https://example.com/thumb.jpg' }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__thumb img').attributes('src')).toBe(
+      'https://example.com/thumb.jpg',
+    )
+  })
+
+  it('keeps the placeholder for an empty site-host-less thumb', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ thumb: '' }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__thumb img').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__thumb-placeholder').exists()).toBe(true)
+  })
+})

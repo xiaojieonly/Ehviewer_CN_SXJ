@@ -10,7 +10,7 @@
           ref="imgRef"
           class="gallery-card__img"
           :class="{ 'is-loaded': imgLoaded }"
-          :src="gallery.thumb"
+          :src="thumbSrc"
           :alt="displayTitle"
           loading="lazy"
           decoding="async"
@@ -53,7 +53,7 @@
           ref="imgRef"
           class="gallery-card__img"
           :class="{ 'is-loaded': imgLoaded }"
-          :src="gallery.thumb"
+          :src="thumbSrc"
           :alt="displayTitle"
           loading="lazy"
           decoding="async"
@@ -152,6 +152,7 @@ import {
 } from '@/types/components'
 import { usePreferencesStore } from '@/stores/preferences'
 import type { GeneralPreferences } from '@/api/preferences'
+import { rewriteSiteAssetUrl } from '@/utils/siteAsset'
 import AppCard from '@/components/atoms/AppCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
@@ -229,6 +230,13 @@ const thumbFailed = ref(false)
 /** A usable thumbnail source; null/empty renders the placeholder, and a
     failed load swaps to it too. */
 const hasThumb = computed(() => Boolean(props.gallery.thumb) && !thumbFailed.value)
+
+/**
+ * R4-9: the raw `thumb` may point at the unresolvable Gallery Site host
+ * (`gallery.test` family); rewrite those through the server's same-origin
+ * image proxy so the thumbnail actually loads. Non-site URLs pass through.
+ */
+const thumbSrc = computed(() => rewriteSiteAssetUrl(props.gallery.thumb))
 
 function onImgLoad(): void {
   imgLoaded.value = true
