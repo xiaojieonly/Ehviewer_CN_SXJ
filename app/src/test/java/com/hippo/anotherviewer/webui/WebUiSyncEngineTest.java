@@ -236,8 +236,10 @@ public class WebUiSyncEngineTest {
         assertEquals(2, del.pushedFavorites); // live fav 1 + tombstone for fav 2
         assertEquals(1, del.pushedHistory);   // hard-delete tombstone
 
-        // Server: soft tombstone kept for favorite 2, history 3 hard-deleted.
-        assertTrue(server.favorites.get(2L).deleted);
+        // Server: union merge keeps the live favorite (a soft delete never
+        // overwrites a live record, contract §3.1/§3.8-B); history 3 is
+        // hard-deleted and its tombstone retained.
+        assertFalse(server.favorites.get(2L).deleted);
         assertTrue(server.history.get(3L).deleted);
 
         // Pending was delivered and cleared; snapshot now reflects current keys.
@@ -288,7 +290,10 @@ public class WebUiSyncEngineTest {
         server.rejectPushes = false;
         WebUiSyncEngine.Result retry = engineA.syncInternal(config, "devA", 1);
         assertEquals(2, retry.pushedFavorites); // live fav 1 + tombstone for fav 2
-        assertTrue(server.favorites.get(2L).deleted);
+        // Union merge: the server retains the live record (soft tombstone does
+        // not overwrite live, contract §3.1); the pending bookkeeping above is
+        // what guarantees the tombstone rides along on every retry.
+        assertFalse(server.favorites.get(2L).deleted);
         assertEquals("1", storeA.prefs.get(config.baseUrl() + ".snapshot.favorites"));
     }
 

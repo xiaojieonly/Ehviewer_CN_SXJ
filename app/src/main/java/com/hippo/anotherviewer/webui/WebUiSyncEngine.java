@@ -93,6 +93,65 @@ public final class WebUiSyncEngine {
     private static final String KEY_SEPARATOR = "|";
     private static final int PUSH_BATCH_SIZE = 500;
 
+    /**
+     * Conflict arbitration strategy (contract v2 §1.4 / ADR-0003 D1).
+     * {@code lww} is the v1 fallback (legacy servers, unknown values).
+     */
+    public enum ConflictStrategy {
+        DEVICE_PRIORITY, LWW, WEB_PRIORITY;
+
+        static ConflictStrategy parse(String value) {
+            if ("device_priority".equals(value)) return DEVICE_PRIORITY;
+            if ("web_priority".equals(value)) return WEB_PRIORITY;
+            return LWW;
+        }
+
+        /** Platform that wins cross-platform same-key conflicts; null for LWW. */
+        String priorityPlatform() {
+            if (this == DEVICE_PRIORITY) return "android";
+            if (this == WEB_PRIORITY) return "web";
+            return null;
+        }
+    }
+
+    /** deviceId format {@code {platform}-{uuid}} (contract §7). */
+    static String platformOf(String deviceId) {
+        if (deviceId == null) return "";
+        int sep = deviceId.indexOf('-');
+        return sep > 0 ? deviceId.substring(0, sep) : deviceId;
+    }
+
+    /**
+     * Supplies the device's SyncPolicy for the push phase (ADR-0003 D2: the
+     * android push is authoritative). Production wires a WebUiSettings-backed
+     * source; tests and the unwired default use the contract defaults.
+     */
+    public interface PolicySource {
+        WebUiSyncModels.SyncPolicy policy();
+    }
+
+    private static volatile PolicySource sPolicySource = () -> new WebUiSyncModels.SyncPolicy();
+
+    public static void setPolicySource(PolicySource source) {
+        sPolicySource = source != null ? source : () -> new WebUiSyncModels.SyncPolicy();
+    }
+
+    /**
+     * Contract v2 §3.8: a soft-entity tombstone is honored locally unless the
+     * deleting device is non-priority while this (live, retaining) device is
+     * the priority platform — in that case the local copy survives and is
+     * re-pushed alive next cycle so the server resurrects it. Tombstone
+     * entities (history/bookmark) always propagate and bypass this guard.
+     */
+    static boolean honorSoftTombstone(ConflictStrategy strategy, String tombstoneDeviceId,
+            String localDeviceId, boolean localAlive) {
+        String priority = strategy.priorityPlatform();
+        if (priority == null) return true;
+        if (priority.equals(platformOf(tombstoneDeviceId))) return true;
+        if (localAlive && priority.equals(platformOf(localDeviceId))) return false;
+        return true;
+    }
+
     private static volatile WebUiSyncEngine sInstance;
 
     private final WebUiSyncStore mStore;
@@ -233,14 +292,20 @@ public final class WebUiSyncEngine {
         // 2. Pull server changes since the high-water mark.
         WebUiSyncModels.PullResponse pull = mTransport.pull(config, since);
 
+        // Contract v2 §6.2: strategy rides on the pull; legacy servers (no
+        // policy) fall back to lww without error (compat matrix §4.2).
+        ConflictStrategy strategy = pull.policy != null
+                ? ConflictStrategy.parse(pull.policy.conflictStrategy)
+                : ConflictStrategy.LWW;
+
         // 3. Apply pulled changes locally.
-        applyFavorites(pull.entities.favorites, result, snapshotFavorites);
+        applyFavorites(pull.entities.favorites, result, snapshotFavorites, strategy, deviceId);
         applyHistory(pull.entities.history, result, snapshotHistory);
-        applyDownloads(pull.entities.downloads, result, snapshotDownloads);
+        applyDownloads(pull.entities.downloads, result, snapshotDownloads, strategy, deviceId);
         applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks);
-        applyFilters(pull.entities.filters, result, snapshotFilters);
-        applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches);
-        applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels);
+        applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId);
+        applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId);
+        applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId);
 
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES, snapshotFavorites);
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY, snapshotHistory);
@@ -282,6 +347,8 @@ public final class WebUiSyncEngine {
             WebUiSyncModels.PushRequest request = new WebUiSyncModels.PushRequest();
             request.deviceId = deviceId;
             request.timestamp = now;
+            // D2: the android push carries the device policy (authoritative).
+            request.policy = sPolicySource.policy();
 
             if (i == 0) {
                 fillFavorites(request.entities, deviceId, now, pendingFavorites);
@@ -503,9 +570,16 @@ public final class WebUiSyncEngine {
      * (last-write-wins on lastModified, local add time is preserved).
      */
     private void applyFavorites(List<WebUiSyncModels.SyncFavorite> favorites,
-            Result result, Set<Long> snapshotFavorites) {
+            Result result, Set<Long> snapshotFavorites,
+            ConflictStrategy strategy, String localDeviceId) {
         for (WebUiSyncModels.SyncFavorite fav : favorites) {
             if (fav.deleted) {
+                // §3.8: a non-priority deletion does not remove the priority
+                // platform's live copy — skip and let the next push resurrect.
+                if (!honorSoftTombstone(strategy, fav.deviceId, localDeviceId,
+                        mStore.loadLocalFavorite(fav.gid) != null)) {
+                    continue;
+                }
                 // Tombstone: this device has deleted the favorite (or another
                 // device did) — honor it locally and never re-add it.
                 mStore.removeLocalFavorites(fav.gid);
@@ -555,15 +629,21 @@ public final class WebUiSyncEngine {
      * {@code putDownloadInfo} (the server already resolved union/LWW conflicts).
      */
     private void applyDownloads(List<WebUiSyncModels.SyncDownload> downloads,
-            Result result, Set<Long> snapshotDownloads) {
+            Result result, Set<Long> snapshotDownloads,
+            ConflictStrategy strategy, String localDeviceId) {
         Map<Long, DownloadInfo> locals = new HashMap<>();
         for (DownloadInfo info : mStore.getAllDownloadInfo()) {
             locals.put(info.gid, info);
         }
         for (WebUiSyncModels.SyncDownload dto : downloads) {
             if (dto.deleted) {
+                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
+                        locals.containsKey(dto.gid))) {
+                    continue;
+                }
                 // Soft tombstone delivered: the server no longer tracks it.
                 mStore.removeDownloadInfo(dto.gid);
+                locals.remove(dto.gid);
                 snapshotDownloads.remove(dto.gid);
                 result.pulledDownloads++;
                 continue;
@@ -624,17 +704,21 @@ public final class WebUiSyncEngine {
      * as-is to the existing (mode, text) row, or the row is created.
      */
     private void applyFilters(List<WebUiSyncModels.SyncFilter> filters,
-            Result result, Set<String> snapshotFilters) {
+            Result result, Set<String> snapshotFilters,
+            ConflictStrategy strategy, String localDeviceId) {
         for (WebUiSyncModels.SyncFilter dto : filters) {
             String key = filterKey(dto.mode, dto.text);
+            Filter existing = mStore.findFilterByKey(dto.mode, dto.text);
             if (dto.deleted) {
+                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId, existing != null)) {
+                    continue;
+                }
                 // Soft tombstone: remove the local row without re-adding it.
                 mStore.deleteFilterByKey(dto.mode, dto.text);
                 snapshotFilters.remove(key);
                 result.pulledFilters++;
                 continue;
             }
-            Filter existing = mStore.findFilterByKey(dto.mode, dto.text);
             if (existing == null) {
                 Filter filter = new Filter();
                 filter.mode = dto.mode;
@@ -677,13 +761,18 @@ public final class WebUiSyncEngine {
      * (keeping the local row id).
      */
     private void applyQuickSearches(List<WebUiSyncModels.SyncQuickSearch> searches,
-            Result result, Set<String> snapshotQuickSearches) {
+            Result result, Set<String> snapshotQuickSearches,
+            ConflictStrategy strategy, String localDeviceId) {
         Map<String, QuickSearch> locals = new HashMap<>();
         for (QuickSearch qs : mStore.getAllQuickSearch()) {
             locals.put(qs.name, qs);
         }
         for (WebUiSyncModels.SyncQuickSearch dto : searches) {
             if (dto.deleted) {
+                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
+                        locals.containsKey(dto.name))) {
+                    continue;
+                }
                 QuickSearch existing = locals.remove(dto.name);
                 if (existing != null) {
                     mStore.deleteQuickSearch(existing);
@@ -713,13 +802,18 @@ public final class WebUiSyncEngine {
      * the server's time or updated in place.
      */
     private void applyDownloadLabels(List<WebUiSyncModels.SyncDownloadLabel> labels,
-            Result result, Set<String> snapshotDownloadLabels) {
+            Result result, Set<String> snapshotDownloadLabels,
+            ConflictStrategy strategy, String localDeviceId) {
         Map<String, DownloadLabel> locals = new HashMap<>();
         for (DownloadLabel dl : mStore.getAllDownloadLabelList()) {
             locals.put(dl.getLabel(), dl);
         }
         for (WebUiSyncModels.SyncDownloadLabel dto : labels) {
             if (dto.deleted) {
+                if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
+                        locals.containsKey(dto.label))) {
+                    continue;
+                }
                 DownloadLabel existing = locals.remove(dto.label);
                 if (existing != null) {
                     mStore.removeDownloadLabel(existing);

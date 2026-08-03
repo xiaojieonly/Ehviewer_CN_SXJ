@@ -70,6 +70,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     public long serverTimestamp = 0;
     /** Set to {@code true} to make push fail with success=false. */
     public boolean rejectPushes = false;
+    /** When non-null, pull responses carry this policy (contract v2 §8). */
+    public WebUiSyncModels.SyncPolicy policy = null;
+    /** Records the policy carried by the most recent push (D2 assertions). */
+    public WebUiSyncModels.SyncPolicy lastPushPolicy = null;
 
     public final Map<Long, Record> favorites = new LinkedHashMap<>();
     public final Map<Long, Record> history = new LinkedHashMap<>();
@@ -88,6 +92,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
             response.success = false;
             return response;
         }
+        lastPushPolicy = request.policy;
         // Strictly monotonic server clock (independent of the pushed wall-clock
         // timestamp) so a record's serverModified is always greater than any
         // watermark a device previously pulled with.
@@ -120,16 +125,58 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     }
 
     /**
-     * Union-merge entities: a live record always wins over a tombstone for the
-     * same key; a tombstone is stored only when no live record exists or the
-     * tombstone is newer than the live record.
+     * Union-merge entities, strategy-aware (mirrors server v2 §3.8): under B a
+     * live record always wins over a tombstone (resurrection); under A/C the
+     * priority platform's intent wins (priority deletion propagates, priority
+     * live resurrects), and when neither side is priority the explicit
+     * deletion propagates. Same-platform conflicts fall back to lastModified.
      */
+    private WebUiSyncEngine.ConflictStrategy serverStrategy() {
+        return policy != null
+                ? WebUiSyncEngine.ConflictStrategy.parse(policy.conflictStrategy)
+                : WebUiSyncEngine.ConflictStrategy.LWW;
+    }
+
+    private static String platformOfDto(Object dto) {
+        if (dto instanceof WebUiSyncModels.GalleryBase) return WebUiSyncEngine.platformOf(((WebUiSyncModels.GalleryBase) dto).deviceId);
+        if (dto instanceof WebUiSyncModels.SyncFilter) return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncFilter) dto).deviceId);
+        if (dto instanceof WebUiSyncModels.SyncQuickSearch) return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncQuickSearch) dto).deviceId);
+        return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncDownloadLabel) dto).deviceId);
+    }
+
+    private boolean deletionWinsOverLive(Object tombDto, Record liveRecord) {
+        WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
+        String priority = strategy.priorityPlatform();
+        if (priority == null) return false;
+        String tombPlatform = platformOfDto(tombDto);
+        String livePlatform = platformOfDto(liveRecord.dto);
+        if (priority.equals(tombPlatform)) return true;
+        if (priority.equals(livePlatform)) return false;
+        return true;
+    }
+
+    private boolean liveWinsOverTombstone(Object liveDto, Record tombRecord) {
+        WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
+        String priority = strategy.priorityPlatform();
+        if (priority == null) return true;
+        String livePlatform = platformOfDto(liveDto);
+        String tombPlatform = platformOfDto(tombRecord.dto);
+        if (priority.equals(tombPlatform)) return false;
+        if (priority.equals(livePlatform)) return true;
+        return true;
+    }
+
     private void mergeUnion(Map<Long, Record> map, long key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
-            if (existing == null || existing.deleted || lastModified >= existing.dtoLastModified()) {
+            if (existing == null || existing.deleted) {
+                map.put(key, new Record(serverTimestamp, true, dto));
+            } else if (deletionWinsOverLive(dto, existing) && lastModified >= existing.dtoLastModified()) {
                 map.put(key, new Record(serverTimestamp, true, dto));
             }
+            return;
+        }
+        if (existing != null && existing.deleted && !liveWinsOverTombstone(dto, existing)) {
             return;
         }
         map.put(key, new Record(serverTimestamp, false, dto));
@@ -138,9 +185,14 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     private void mergeUnion(Map<String, Record> map, String key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
-            if (existing == null || existing.deleted || lastModified >= existing.dtoLastModified()) {
+            if (existing == null || existing.deleted) {
+                map.put(key, new Record(serverTimestamp, true, dto));
+            } else if (deletionWinsOverLive(dto, existing) && lastModified >= existing.dtoLastModified()) {
                 map.put(key, new Record(serverTimestamp, true, dto));
             }
+            return;
+        }
+        if (existing != null && existing.deleted && !liveWinsOverTombstone(dto, existing)) {
             return;
         }
         map.put(key, new Record(serverTimestamp, false, dto));
@@ -176,6 +228,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         fillQuickSearchPull(response.entities.quickSearches, quickSearches, since);
         fillDownloadLabelPull(response.entities.downloadLabels, downloadLabels, since);
         response.serverTimestamp = serverTimestamp;
+        response.policy = policy;
         return response;
     }
 
