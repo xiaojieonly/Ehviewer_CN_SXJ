@@ -3,13 +3,15 @@ import { Router } from 'express';
 
 const router = Router();
 
-// Defaults mirror PreferenceDto.kt (PreferenceResponse)
+// Defaults mirror PreferenceDto.kt (PreferenceResponse) — key set, order and
+// default values must stay 1:1 with the DTO (Wave-1 P3 mock sync, task #8).
 const DEFAULT_PREFERENCES = {
   general: {
     theme: 'light',
     themeAutoSwitch: false,
     launchPage: 'homepage',
-    listMode: 'list',
+    // grid|list — Wave-1 B-1: shared GalleryList default layout (grid)
+    listMode: 'grid',
     showReadProgress: true,
     detailSize: 'long',
     thumbSize: 'middle',
@@ -21,6 +23,15 @@ const DEFAULT_PREFERENCES = {
     showGalleryRating: true,
     showSiteEvents: true,
     showSiteLimits: true,
+    // ---- Wave-1 B group (1b browsing consistency) ----
+    showUploader: false,
+    showPostedTime: false,
+    // clamp -2..9 (WebUI clamps on input; server-side guard in the DTO)
+    defaultFavoriteSlot: 0,
+    // '|'-separated 10 favorite slot names; empty items fall back on the consumer side
+    favoriteSlotNames: '',
+    // recent-search retention count, 0 = disabled
+    recentSearchMax: 10,
   },
   reader: {
     readingDirection: 'rtl',
@@ -33,6 +44,19 @@ const DEFAULT_PREFERENCES = {
     showPageInterval: true,
     fullscreen: true,
     brightness: 0,
+    // ---- Wave-1 A group (1c reader deepening) ----
+    // black|gray|white
+    backgroundColor: 'black',
+    // threeZone|edgeOnly|disabled
+    tapZoneScheme: 'threeZone',
+    keyboardPaging: true,
+    zoomStep: 1.5,
+    maxZoom: 5,
+    dualPageGap: 8,
+    splitWidePages: false,
+    preloadCount: 2,
+    // slide|fade|none
+    pageTransition: 'slide',
   },
   privacy: {
     enableAnalytics: true,
