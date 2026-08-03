@@ -8,7 +8,7 @@ info:
     (Authorization: Bearer <token>) except the publicly permitted ones
     (auth/register, auth/login, auth/status, auth/pair/complete, health,
     metrics, metrics/dashboard) and non-API resources.
-  version: 1.0.0
+  version: 1.1.0
   contact:
     name: AnotherViewer WebUI Team
 
@@ -1923,7 +1923,8 @@ components:
         thumb:
           type: string
         category:
-          type: string
+          type: integer
+          description: Gallery category bitmask
         rating:
           type: number
           format: float
@@ -1984,7 +1985,8 @@ components:
         thumb:
           type: string
         category:
-          type: string
+          type: integer
+          description: Gallery category bitmask
         rating:
           type: number
           format: float
@@ -2707,6 +2709,7 @@ components:
           type: integer
         downloaded:
           type: integer
+          description: "Session-scoped page counter on the sending device (not bytes); NOT a sync field — never persisted or merged server-side, wire value is informational only"
         lastModified:
           type: integer
           format: int64

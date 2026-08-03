@@ -9,6 +9,30 @@ plugins {
 group = "com.hippo.anotherviewer"
 version = (project.findProperty("webVersion") as String?) ?: "1.0.0-SNAPSHOT"
 
+// Generate version.properties from the webVersion project property
+// (gradle.properties, overridable via -PwebVersion=<ver>), so runtime
+// endpoints (health/metrics) report the same version as the built jar
+// instead of a hardcoded constant. The generated file is added to main
+// resources below and therefore lands on the runtime + test classpath.
+val generateVersionProperties by tasks.registering {
+    val versionValue = (project.findProperty("webVersion") as String?) ?: "0.0.0"
+    val outputDir = layout.buildDirectory.dir("generated/resources/main")
+    inputs.property("anotherviewer.version", versionValue)
+    outputs.dir(outputDir)
+    doLast {
+        val dir = outputDir.get().asFile
+        dir.mkdirs()
+        File(dir, "version.properties").writeText("anotherviewer.version=$versionValue\n")
+    }
+}
+
+sourceSets["main"].resources.srcDir(
+    generateVersionProperties.map { layout.buildDirectory.dir("generated/resources/main") }
+)
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(generateVersionProperties)
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_21
 }

@@ -131,7 +131,7 @@
         },
         "deleted": {
           "type": "boolean",
-          "description": "Soft-delete flag. true = entity has been deleted on the source device. Union-merge entities use this instead of removing the record.",
+          "description": "Soft-delete (tombstone) flag. true = the entity has been deleted on the source device. The server retains a tombstone row (deleted=true, lastModified bumped) for every entity type — including LWW entities like history and bookmarks — so deletions propagate to other devices via incremental pull. A row is never hard-deleted without first pushing a tombstone.",
           "default": false
         }
       },
@@ -400,6 +400,29 @@
           "type": "array",
           "items": { "$ref": "#/$defs/syncDownloadLabel" },
           "description": "Download label categories"
+        },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "preferences": {
+              "type": "string",
+              "description": "Full preferences payload as a JSON string",
+              "default": "{}"
+            },
+            "lastModified": {
+              "type": "integer",
+              "description": "Epoch milliseconds of the last preferences update",
+              "minimum": 0
+            },
+            "deviceId": {
+              "type": "string",
+              "description": "Device that last updated the preferences",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "required": ["preferences"],
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

@@ -64,7 +64,17 @@ function mergeFavorite(existing, incoming) {
 }
 
 function mergeHistory(existing, incoming) {
-  if (incoming.deleted) { if (existing !== undefined) store.history.delete(incoming.gid); return false; }
+  if (incoming.deleted) {
+    // Soft delete: keep the row as a tombstone (deleted=true + lastModified
+    // bump) so since>0 incremental pulls can propagate the deletion (N-1).
+    if (existing !== undefined) {
+      existing.deleted = true;
+      existing.lastModified = Math.max(existing.lastModified, incoming.lastModified);
+    } else {
+      store.history.set(incoming.gid, { ...incoming });
+    }
+    return false;
+  }
   if (existing === undefined) { store.history.set(incoming.gid, { ...incoming }); return false; }
   if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) { Object.assign(existing, incoming); return true; }
   if (existing.lastModified > incoming.lastModified + SKEW_TOLERANCE) return false;
@@ -81,7 +91,17 @@ function mergeDownload(existing, incoming) {
 }
 
 function mergeBookmark(existing, incoming) {
-  if (incoming.deleted) { if (existing !== undefined) store.bookmarks.delete(incoming.gid); return false; }
+  if (incoming.deleted) {
+    // Soft delete: keep the row as a tombstone (deleted=true + lastModified
+    // bump) so since>0 incremental pulls can propagate the deletion (N-1).
+    if (existing !== undefined) {
+      existing.deleted = true;
+      existing.lastModified = Math.max(existing.lastModified, incoming.lastModified);
+    } else {
+      store.bookmarks.set(incoming.gid, { ...incoming });
+    }
+    return false;
+  }
   if (existing === undefined) { store.bookmarks.set(incoming.gid, { ...incoming }); return false; }
   if (incoming.lastModified > existing.lastModified + SKEW_TOLERANCE) { Object.assign(existing, incoming); return true; }
   if (existing.lastModified > incoming.lastModified + SKEW_TOLERANCE) return false;
@@ -152,7 +172,9 @@ router.get('/pull', (req, res) => {
   const now = Date.now();
   if (deviceId) updateDevice(deviceId, now);
 
-  const filterBy = (m) => [...m.values()].filter((v) => v.lastModified > since);
+  // Aligns with backend SyncService.pull include(): since=0 is a full pull and
+  // must return lastModified=0 records (0 > 0 is always false otherwise).
+  const filterBy = (m) => [...m.values()].filter((v) => since === 0 || v.lastModified > since);
   res.json({
     entities: {
       favorites: filterBy(store.favorites),
