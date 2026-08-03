@@ -44,14 +44,81 @@ data class SmbSettings(
 )
 
 data class SettingsUpdateRequest(
-    @field:Valid val download: DownloadSettings?,
-    @field:Valid val cache: CacheSettings?,
-    @field:Valid val smb: SmbSettings?,
-    @field:Valid val security: SecuritySettings? = null,
-    @field:Valid val processing: ProcessingSettings? = null,
-    @field:Valid val proxy: ProxySettings? = null,
+    // All sections optional; every field is nullable with a default so partial
+    // PUT bodies deserialize and only explicitly-present fields are applied
+    // (deep-merge over stored values, per contracts/openapi.yaml "partial update
+    // supported"). A missing/null field keeps the stored value.
+    @field:Valid val download: DownloadSettingsUpdate? = null,
+    @field:Valid val cache: CacheSettingsUpdate? = null,
+    @field:Valid val smb: SmbSettingsUpdate? = null,
+    @field:Valid val security: SecuritySettingsUpdate? = null,
+    @field:Valid val processing: ProcessingSettingsUpdate? = null,
+    @field:Valid val proxy: ProxySettingsUpdate? = null,
 )
 
+/** PUT /settings download section — nullable fields are applied only when present. */
+data class DownloadSettingsUpdate(
+    val path: String? = null,
+    // Bounds mirror the admin UI stepper (AdminDownload.vue clamps 1..10).
+    @field:Min(1, message = "workerCount must be between 1 and 10")
+    @field:Max(10, message = "workerCount must be between 1 and 10")
+    val workerCount: Int? = null,
+    @field:Min(0, message = "downloadDelay must be non-negative")
+    val downloadDelay: Int? = null,
+    @field:Min(0, message = "downloadTimeout must be non-negative")
+    val downloadTimeout: Long? = null,
+    // Bounds mirror the admin UI stepper (AdminDownload.vue clamps 1..20).
+    @field:Min(1, message = "maxConcurrentGalleries must be between 1 and 20")
+    @field:Max(20, message = "maxConcurrentGalleries must be between 1 and 20")
+    val maxConcurrentGalleries: Int? = null,
+    @field:Min(1, message = "maxConcurrentImages must be between 1 and 20")
+    @field:Max(20, message = "maxConcurrentImages must be between 1 and 20")
+    val maxConcurrentImages: Int? = null,
+)
+
+data class CacheSettingsUpdate(
+    val path: String? = null,
+    @field:Min(1, message = "sizeMb must be positive")
+    val sizeMb: Long? = null,
+)
+
+data class SmbSettingsUpdate(
+    val enabled: Boolean? = null,
+)
+
+data class SecuritySettingsUpdate(
+    val requireAuth: Boolean? = null,
+    @field:Min(0, message = "sessionTimeout must be non-negative")
+    val sessionTimeout: Long? = null,
+)
+
+data class ProcessingSettingsUpdate(
+    val enabled: Boolean? = null,
+    @field:Size(max = 32, message = "defaultType must be at most 32 characters")
+    val defaultType: String? = null,
+    @field:Size(max = 16, message = "outputFormat must be at most 16 characters")
+    val outputFormat: String? = null,
+    @field:Min(1, message = "outputQuality must be between 1 and 100")
+    @field:Max(100, message = "outputQuality must be between 1 and 100")
+    val outputQuality: Int? = null,
+)
+
+data class ProxySettingsUpdate(
+    val enabled: Boolean? = null,
+    @field:Size(max = 32, message = "type must be at most 32 characters")
+    val type: String? = null,
+    @field:Size(max = 255, message = "host must be at most 255 characters")
+    val host: String? = null,
+    @field:Min(0, message = "port must be between 0 and 65535")
+    @field:Max(65535, message = "port must be between 0 and 65535")
+    val port: Int? = null,
+    @field:Size(max = 255, message = "username must be at most 255 characters")
+    val username: String? = null,
+    @field:Size(max = 255, message = "password must be at most 255 characters")
+    val password: String? = null,
+)
+
+/** GET /settings response sections (non-nullable; server always reports full values). */
 data class SecuritySettings(
     val requireAuth: Boolean = false,
     @field:Min(0, message = "sessionTimeout must be non-negative")

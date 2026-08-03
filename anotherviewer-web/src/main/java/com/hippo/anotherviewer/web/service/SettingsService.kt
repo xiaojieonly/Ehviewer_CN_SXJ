@@ -51,42 +51,42 @@ class SettingsService(
 
     fun updateSettings(request: SettingsUpdateRequest): Boolean {
         request.download?.let { dl ->
-            if (dl.path.isNotBlank()) {
-                config.download.path = dl.path
-                serverConfig.set(ServerConfigService.KEY_DOWNLOAD_PATH, dl.path)
+            dl.path?.takeIf { it.isNotBlank() }?.let {
+                config.download.path = it
+                serverConfig.set(ServerConfigService.KEY_DOWNLOAD_PATH, it)
             }
-            config.download.workerCount = dl.workerCount
-            config.download.downloadDelay = dl.downloadDelay
-            config.download.downloadTimeout = dl.downloadTimeout
-            config.download.maxConcurrentGalleries = dl.maxConcurrentGalleries
-            config.download.maxConcurrentImages = dl.maxConcurrentImages
+            dl.workerCount?.let { config.download.workerCount = it }
+            dl.downloadDelay?.let { config.download.downloadDelay = it }
+            dl.downloadTimeout?.let { config.download.downloadTimeout = it }
+            dl.maxConcurrentGalleries?.let { config.download.maxConcurrentGalleries = it }
+            dl.maxConcurrentImages?.let { config.download.maxConcurrentImages = it }
         }
         request.cache?.let { cache ->
-            if (cache.path.isNotBlank()) {
-                config.download.cachePath = cache.path
-                serverConfig.set(ServerConfigService.KEY_CACHE_PATH, cache.path)
+            cache.path?.takeIf { it.isNotBlank() }?.let {
+                config.download.cachePath = it
+                serverConfig.set(ServerConfigService.KEY_CACHE_PATH, it)
             }
-            config.download.cacheSizeMb = cache.sizeMb
+            cache.sizeMb?.let { config.download.cacheSizeMb = it }
         }
         request.smb?.let { smb ->
-            config.smb.enabled = smb.enabled
+            smb.enabled?.let { config.smb.enabled = it }
         }
         request.security?.let { sec ->
-            serverConfig.setBoolean(ServerConfigService.KEY_REQUIRE_AUTH, sec.requireAuth)
-            serverConfig.set(ServerConfigService.KEY_SESSION_TIMEOUT, sec.sessionTimeout.toString())
+            sec.requireAuth?.let { serverConfig.setBoolean(ServerConfigService.KEY_REQUIRE_AUTH, it) }
+            sec.sessionTimeout?.let { serverConfig.set(ServerConfigService.KEY_SESSION_TIMEOUT, it.toString()) }
         }
         request.processing?.let { proc ->
-            serverConfig.setBoolean("processing.enabled", proc.enabled)
-            serverConfig.set("processing.default_type", proc.defaultType)
-            serverConfig.set("processing.output_format", proc.outputFormat)
-            serverConfig.set("processing.output_quality", proc.outputQuality.toString())
+            proc.enabled?.let { serverConfig.setBoolean("processing.enabled", it) }
+            proc.defaultType?.let { serverConfig.set("processing.default_type", it) }
+            proc.outputFormat?.let { serverConfig.set("processing.output_format", it) }
+            proc.outputQuality?.let { serverConfig.set("processing.output_quality", it.toString()) }
         }
         request.proxy?.let { proxy ->
-            serverConfig.setBoolean(WebProxyManager.KEY_ENABLED, proxy.enabled)
-            serverConfig.set(WebProxyManager.KEY_TYPE, proxy.type)
-            serverConfig.set(WebProxyManager.KEY_HOST, proxy.host)
-            serverConfig.set(WebProxyManager.KEY_PORT, proxy.port.toString())
-            serverConfig.set(WebProxyManager.KEY_USERNAME, proxy.username)
+            proxy.enabled?.let { serverConfig.setBoolean(WebProxyManager.KEY_ENABLED, it) }
+            proxy.type?.let { serverConfig.set(WebProxyManager.KEY_TYPE, it) }
+            proxy.host?.let { serverConfig.set(WebProxyManager.KEY_HOST, it) }
+            proxy.port?.let { serverConfig.set(WebProxyManager.KEY_PORT, it.toString()) }
+            proxy.username?.let { serverConfig.set(WebProxyManager.KEY_USERNAME, it) }
             // An empty/absent password means "keep the stored one" — the GET
             // endpoint never echoes it back, so the UI cannot resend it.
             if (!proxy.password.isNullOrEmpty()) {

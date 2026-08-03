@@ -157,7 +157,7 @@ class AuthControllerTest {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.message").value("Old password and new password are required"))
+            .andExpect(jsonPath("$.message").value("Malformed request body: required fields are missing or invalid"))
     }
 
     // ---------------------------------------------------------------------

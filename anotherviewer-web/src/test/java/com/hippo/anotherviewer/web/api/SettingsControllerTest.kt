@@ -67,4 +67,32 @@ class SettingsControllerTest {
             .andExpect(jsonPath("$.error.message").value("port must be between 0 and 65535"))
         verify(settingsService, never()).updateSettings(any())
     }
+
+    @Test
+    fun `update accepts a single-field partial section`() {
+        `when`(settingsService.updateSettings(any())).thenReturn(true)
+
+        mockMvc.perform(
+            put("/api/v1/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"download":{"workerCount":7}}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(true))
+        verify(settingsService).updateSettings(any())
+    }
+
+    @Test
+    fun `update accepts a partial security section without flipping unspecified fields`() {
+        `when`(settingsService.updateSettings(any())).thenReturn(true)
+
+        mockMvc.perform(
+            put("/api/v1/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"security":{"sessionTimeout":90000}}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").value(true))
+        verify(settingsService).updateSettings(any())
+    }
 }

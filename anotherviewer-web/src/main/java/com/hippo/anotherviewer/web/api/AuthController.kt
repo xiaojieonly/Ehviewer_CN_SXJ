@@ -65,10 +65,10 @@ class AuthController(
         return ResponseEntity.badRequest().body(AuthResponse(false, message))
     }
 
-    /** Missing/undeserializable fields (e.g. omitted request keys) keep the contract shape too. */
+    /** Missing/undeserializable fields (e.g. omitted required keys) keep the contract shape too. */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleUnreadableBody(): ResponseEntity<AuthResponse> =
-        ResponseEntity.badRequest().body(AuthResponse(false, "Old password and new password are required"))
+        ResponseEntity.badRequest().body(AuthResponse(false, "Malformed request body: required fields are missing or invalid"))
 
     @GetMapping("/status")
     fun status(@RequestHeader("Authorization", required = false) authHeader: String?): ResponseEntity<AuthStatusResponse> {
