@@ -41,7 +41,7 @@ class GalleryControllerTest {
 
         assertEquals(200, response.statusCode.value())
         assertEquals(mapOf("success" to true), response.body)
-        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery")
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 0)
     }
 
     @Test
@@ -49,7 +49,15 @@ class GalleryControllerTest {
         val response = controller.addToHistory(123L, AddHistoryRequest("a1b2c3d4e5"))
 
         assertEquals(200, response.statusCode.value())
-        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", null)
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", null, 0)
+    }
+
+    @Test
+    fun `addToHistory forwards reading mode (R4-4)`() {
+        val response = controller.addToHistory(123L, AddHistoryRequest("a1b2c3d4e5", "Some Gallery", mode = 5))
+
+        assertEquals(200, response.statusCode.value())
+        verify(galleryService).addToHistory(123L, "a1b2c3d4e5", "Some Gallery", 5)
     }
 
     @Test
@@ -60,7 +68,7 @@ class GalleryControllerTest {
         val body = response.body as com.hippo.anotherviewer.web.config.ApiErrorEnvelope
         assertEquals("VALIDATION_ERROR", body.error.code)
         assertTrue(body.error.traceId.isNotBlank())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
     }
 
     @Test
@@ -75,7 +83,7 @@ class GalleryControllerTest {
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.message").isNotEmpty)
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
     }
 
     @Test
@@ -90,7 +98,7 @@ class GalleryControllerTest {
             .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
             .andExpect(jsonPath("$.error.message").value("Malformed request body"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
     }
 
     @Test
@@ -103,7 +111,7 @@ class GalleryControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
     }
 
     @Test
@@ -116,7 +124,7 @@ class GalleryControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
     }
 
     @Test
@@ -130,7 +138,7 @@ class GalleryControllerTest {
             .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
             .andExpect(jsonPath("$.error.message").value("Malformed request body"))
             .andExpect(jsonPath("$.error.traceId").exists())
-        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any())
+        verify(galleryService, never()).addToHistory(anyLong(), anyString(), any(), anyInt())
     }
 
     // ---------------------------------------------------------------------

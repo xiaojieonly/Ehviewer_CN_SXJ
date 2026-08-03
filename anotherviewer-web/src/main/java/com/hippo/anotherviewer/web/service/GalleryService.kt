@@ -250,16 +250,19 @@ class GalleryService(
         }
     }
 
-    fun addToHistory(gid: Long, token: String, title: String?) {
+    fun addToHistory(gid: Long, token: String, title: String?, mode: Int) {
         val existing = historyRepository.findByGid(gid)
         if (existing != null) {
             existing.time = System.currentTimeMillis()
+            // R4-4: mode 透传写入 history 行（缺省 0 即回退默认值，与实体列默认一致）。
+            existing.mode = mode
             historyRepository.save(existing)
         } else {
             val entity = HistoryInfoEntity().apply {
                 this.gid = gid
                 this.token = token
                 this.title = title
+                this.mode = mode
                 this.time = System.currentTimeMillis()
             }
             historyRepository.save(entity)

@@ -17,6 +17,22 @@
         <h1 class="backup__title">备份与还原</h1>
       </header>
 
+      <!-- R4-2: 还原待重启持久警示横幅（restorePending=true 时显示） -->
+      <div v-if="restorePending" class="backup__restart-banner" role="alert">
+        <div class="backup__restart-text">
+          <strong class="backup__restart-zh">还原已完成，重启服务后生效</strong>
+          <span class="backup__restart-en">Restore complete — restart the server to apply</span>
+        </div>
+        <button
+          type="button"
+          class="backup__restart-copy"
+          aria-label="复制重启命令"
+          @click="copyRestartCommand"
+        >
+          {{ restartCopied ? '已复制 Copied' : '复制重启命令 Copy restart command' }}
+        </button>
+      </div>
+
       <!-- ═══ 导出 ═══════════════════════════════════════════════════════ -->
       <section>
         <SectionHeader title="导出" />
@@ -98,13 +114,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import axios from 'axios'
 import { backupApi } from '@/api/backup'
 import { AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 /** WebUI 还原面向元数据备份；含下载内容的大备份请手动解包/拷贝 data-dir。 */
 const MAX_RESTORE_BYTES = 50 * 1024 * 1024
+
+/** R4-2: 重启命令（与仓库根 start.sh/stop.sh 对应），供横幅一键复制。 */
+const RESTART_COMMAND = './stop.sh && ./start.sh'
 
 const includeDownloads = ref(false)
 const exporting = ref(false)
@@ -113,6 +132,11 @@ const selectedFile = ref<File | null>(null)
 const confirmWord = ref('')
 const restoring = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+/** R4-2: 还原待重启运行态；挂载时读取 /backup/state，还原本地成功后也置 true。 */
+const restorePending = ref(false)
+const restartCopied = ref(false)
+let restartCopiedTimer: number | undefined
 
 const snack = ref('')
 let snackTimer: number | undefined
@@ -127,6 +151,32 @@ function showSnack(message: string, duration = 2600): void {
   snackTimer = window.setTimeout(() => {
     snack.value = ''
   }, duration)
+}
+
+/* ------------------------- R4-2 还原待重启横幅 ------------------------- */
+
+/** 挂载时读取 restore 运行态；失败（如旧服务器无该端点）则静默不显示横幅。 */
+onMounted(async () => {
+  try {
+    const state = await backupApi.getBackupState()
+    restorePending.value = state.restorePending
+  } catch (error) {
+    console.error('[AdminBackup] failed to read backup state', error)
+  }
+})
+
+async function copyRestartCommand(): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(RESTART_COMMAND)
+    restartCopied.value = true
+    if (restartCopiedTimer) window.clearTimeout(restartCopiedTimer)
+    restartCopiedTimer = window.setTimeout(() => {
+      restartCopied.value = false
+    }, 2000)
+  } catch (error) {
+    console.error('[AdminBackup] failed to copy restart command', error)
+    showSnack('复制失败，请手动执行：' + RESTART_COMMAND, 7000)
+  }
 }
 
 /* --------------------------------- 导出 --------------------------------- */
@@ -185,6 +235,8 @@ async function handleRestore(): Promise<void> {
     const result = await backupApi.restoreBackup(file)
     if (result.success) {
       showSnack(result.message || '还原成功，需重启服务器生效', 7000)
+      // R4-2: 还原本地成功后立即显示待重启横幅（服务端 state 亦已置 true）。
+      restorePending.value = true
       selectedFile.value = null
       confirmWord.value = ''
       if (fileInput.value) fileInput.value.value = ''
@@ -214,6 +266,7 @@ function formatBytes(bytes: number): string {
 
 onBeforeUnmount(() => {
   if (snackTimer) window.clearTimeout(snackTimer)
+  if (restartCopiedTimer) window.clearTimeout(restartCopiedTimer)
 })
 </script>
 
@@ -238,6 +291,50 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--text-color-primary);
+}
+
+/* ------------------------- R4-2 待重启警示横幅 ------------------------- */
+
+.backup__restart-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px var(--keyline-margin) 4px;
+  padding: 14px 18px;
+  border-radius: var(--card-radius);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #f5a623) 60%, transparent);
+  background: color-mix(in srgb, var(--color-warning, #f5a623) 14%, transparent);
+}
+
+.backup__restart-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.backup__restart-zh {
+  font-size: clamp(13px, 14px, 16px);
+  font-weight: 700;
+  color: var(--text-color-primary);
+}
+
+.backup__restart-en {
+  font-size: var(--text-super-small);
+  color: var(--text-color-secondary);
+}
+
+.backup__restart-copy {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-warning, #f5a623) 60%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color-primary);
+  font-size: var(--text-super-small);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* ------------------------------- 导出按钮 --------------------------------- */

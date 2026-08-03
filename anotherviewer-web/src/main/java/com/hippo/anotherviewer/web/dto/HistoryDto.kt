@@ -26,6 +26,6 @@ data class AddHistoryRequest(
     val token: String,
     @field:Size(max = 256)
     val title: String? = null,
-    /** 阅读模式, 前端可选; 透传接线在 GalleryService (本次 M-13 不含) */
+    /** 阅读模式, 前端可选; R4-4 起经 GalleryService.addToHistory 透传写入 history 行 mode 列。 */
     val mode: Int = 0
 )

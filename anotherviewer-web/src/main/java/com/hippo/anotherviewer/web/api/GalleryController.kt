@@ -85,7 +85,7 @@ class GalleryController(private val galleryService: GalleryService) {
         if (gid <= 0) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "gid must be a positive number")
         }
-        galleryService.addToHistory(gid, body.token, body.title)
+        galleryService.addToHistory(gid, body.token, body.title, body.mode)
         return ResponseEntity.ok(mapOf("success" to true))
     }
 

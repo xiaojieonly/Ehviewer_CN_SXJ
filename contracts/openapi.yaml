@@ -1582,6 +1582,21 @@ paths:
         '401':
           description: Invalid or missing API token
 
+  /api/v1/backup/state:
+    get:
+      tags: [Backup]
+      operationId: getBackupState
+      summary: Restore runtime-awareness state (R4-2); restorePending=true means a restore succeeded and a server restart is required to take effect
+      responses:
+        '200':
+          description: Current backup/restore runtime state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupStateResponse'
+        '401':
+          description: Invalid or missing API token
+
   # ============================================================
   # Archive
   # ============================================================
@@ -2803,6 +2818,14 @@ components:
           type: string
           nullable: true
           description: Human-readable result note (e.g. 还原成功，重启后生效)
+
+    BackupStateResponse:
+      type: object
+      required: [restorePending]
+      properties:
+        restorePending:
+          type: boolean
+          description: true = a restore succeeded and a server restart is required to take effect (R4-2); false otherwise (fresh instance / after restart)
 
     SyncEntityCollection:
       type: object

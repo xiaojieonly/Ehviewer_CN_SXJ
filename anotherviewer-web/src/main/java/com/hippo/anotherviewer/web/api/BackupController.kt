@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.hippo.anotherviewer.web.dto.BackupManifest
 import com.hippo.anotherviewer.web.dto.BackupResult
 import com.hippo.anotherviewer.web.service.BackupService
+import com.hippo.anotherviewer.web.service.BackupStateHolder
 import com.hippo.anotherviewer.web.service.isSafeArchiveEntryName
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -29,6 +30,11 @@ data class BackupRestoreResponse(
     val message: String? = null,
 )
 
+/** R4-2: restore 运行态感知响应（GET /api/v1/backup/state）。 */
+data class BackupStateResponse(
+    val restorePending: Boolean,
+)
+
 /**
  * 备份/还原接口，鉴权与其余 /api 一致（Bearer token，见 SecurityConfig）。
  * 导出产物同时落盘 `<dataDir>/backups/`（分片可独立拷走异地备份），
@@ -39,10 +45,21 @@ data class BackupRestoreResponse(
  */
 @RestController
 @RequestMapping("/api/v1/backup")
-class BackupController(private val backupService: BackupService) {
+class BackupController(
+    private val backupService: BackupService,
+    private val backupState: BackupStateHolder,
+) {
     private val logger = LoggerFactory.getLogger(BackupController::class.java)
     private val mapper = jacksonObjectMapper()
     private val stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+
+    /**
+     * R4-2: 运行态感知。restorePending=true 表示"已成功还原但尚未重启"，
+     * 前端据此显示持久警示横幅。health 语义不受影响（不改动 /health）。
+     */
+    @GetMapping("/state")
+    fun state(): ResponseEntity<BackupStateResponse> =
+        ResponseEntity.ok(BackupStateResponse(restorePending = backupState.restorePending))
 
     /** 生成备份并流式返回 `anotherviewer-backup-<yyyyMMdd-HHmmss>.zip`（分片 + manifest）。 */
     @GetMapping("/export")
@@ -73,6 +90,8 @@ class BackupController(private val backupService: BackupService) {
             val manifest: BackupManifest = mapper.readValue<BackupManifest>(manifestFile.toFile())
             val slices = manifest.slices.associate { it.name to tmp.resolve(it.name) }
             backupService.restore(manifest, slices)
+            // R4-2: 还原成功后置运行态标志，前端横幅提示"重启后生效"；重启后 bean 复位为 false。
+            backupState.restorePending = true
             return ResponseEntity.ok(BackupRestoreResponse(true, "还原成功，重启后生效"))
         } catch (e: Exception) {
             logger.warn("备份还原失败: {}", e.message)
