@@ -892,6 +892,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProxyTestResponse'
 
+  /api/v1/site/proxy:
+    get:
+      tags: [Gallery]
+      operationId: proxySite
+      summary: Transparent Gallery Site proxy for App Tier-2 browsing (W3 R4-13)
+      description: |
+        Fetches `url` through the server's shared site session (cookies/proxy
+        inherited) and passes status, content-type and body straight through.
+        The host must be gallery.test or *.gallery.test — anything else is
+        rejected, so the endpoint is not an open proxy. An unreachable site
+        surfaces 502 (E2E-6: errors are passed through, never fabricated).
+        App Tier-2 routing rewrites site-family requests here (ADR-0003 D3).
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Absolute Gallery Site URL to fetch (host-whitelisted)
+      responses:
+        '200':
+          description: Site response passed through (content-type and body preserved)
+          content:
+            text/html:
+              schema:
+                type: string
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: url missing/malformed or host outside the Gallery Site whitelist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Gallery Site unreachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ============================================================
   # Preferences (per-user UI preferences)
   # ============================================================

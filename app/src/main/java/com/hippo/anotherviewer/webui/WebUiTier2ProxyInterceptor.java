@@ -26,20 +26,20 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * Tier-2 browsing proxy (ADR-0003 D3, MASTER §4.1): when {@code clientTier >= 2}
- * and a WebUI server is paired, Gallery Site requests are routed through the
- * paired server — scheme/host/port rewritten to the server's
- * {@link WebUiConfig#baseUrl()}, path and query preserved, Referer/Origin
- * headers pointing at site hosts rewritten the same way. This mirrors the
- * debug-only {@code MOCK_EH_BASE_URL} interceptor in
- * {@link com.hippo.anotherviewer.SiteApplication}, per D3's "reuse the
- * MOCK_EH_BASE_URL interceptor pattern" directive.
+ * Tier-2 browsing proxy (ADR-0003 D3, MASTER §4.1; W3 R4-13): when
+ * {@code clientTier >= 2} and a WebUI server is paired, Gallery Site requests
+ * are routed through the server's transparent site proxy — rewritten to
+ * {@code {paired}/api/v1/site/proxy?url=<encoded original URL>}, which the
+ * server fetches with its shared site session and passes back verbatim.
+ * Referer/Origin headers pointing at site hosts are rewritten the same way,
+ * so from the app's point of view every site resource comes from the server.
  *
  * <p>Everything else passes through untouched: Tier-0/1 traffic (Tier-1
- * behavior is unchanged by contract), non-site hosts, and Tier-2/3 without a
- * configured server — browsing then degrades to direct instead of breaking.
- * The decision is read per request, so a tier or pairing change takes effect
- * immediately without rebuilding the client.
+ * behavior is unchanged by contract), non-site hosts — including the paired
+ * server's own structured API ({@code /api/v1/*}) requests — and Tier-2/3
+ * without a configured server, where browsing degrades to direct instead of
+ * breaking. The decision is read per request, so a tier or pairing change
+ * takes effect immediately without rebuilding the client.
  */
 public final class WebUiTier2ProxyInterceptor implements Interceptor {
 
@@ -79,30 +79,30 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
             return chain.proceed(request);
         }
 
-        HttpUrl newUrl = request.url().newBuilder()
-                .scheme(base.scheme())
-                .host(base.host())
-                .port(base.port())
-                .build();
-        Request.Builder builder = request.newBuilder().url(newUrl);
+        HttpUrl proxied = proxyUrl(base, request.url());
+        Request.Builder builder = request.newBuilder().url(proxied);
         String referer = request.header("Referer");
         HttpUrl refererUrl = referer != null ? HttpUrl.parse(referer) : null;
         if (refererUrl != null && isGallerySiteHost(refererUrl.host())) {
-            builder.header("Referer", rewriteSiteUrl(refererUrl, base));
+            builder.header("Referer", proxyUrl(base, refererUrl).toString());
         }
         String origin = request.header("Origin");
         HttpUrl originUrl = origin != null ? HttpUrl.parse(origin) : null;
         if (originUrl != null && isGallerySiteHost(originUrl.host())) {
-            builder.header("Origin", rewriteSiteUrl(originUrl, base));
+            builder.header("Origin", proxyUrl(base, originUrl).toString());
         }
         return chain.proceed(builder.build());
     }
 
-    private static String rewriteSiteUrl(@NonNull HttpUrl url, @NonNull HttpUrl base) {
-        return url.newBuilder()
-                .scheme(base.scheme())
-                .host(base.host())
-                .port(base.port())
-                .build().toString();
+    /**
+     * {@code {base}/api/v1/site/proxy?url=<percent-encoded site url>} — the
+     * W3 R4-13 transparent proxy endpoint on the paired WebUI server. The
+     * original URL (path and query intact) travels as the {@code url} param.
+     */
+    private static HttpUrl proxyUrl(@NonNull HttpUrl base, @NonNull HttpUrl siteUrl) {
+        return base.newBuilder()
+                .addPathSegments("api/v1/site/proxy")
+                .addQueryParameter("url", siteUrl.toString())
+                .build();
     }
 }
