@@ -233,6 +233,90 @@ class SyncControllerTest {
     }
 
     @Test
+    fun `push parses the v2 policy field and forwards it to the service`() {
+        `when`(syncService.push(any(SyncPushRequest::class.java), anyString()))
+            .thenReturn(SyncPushResponse(success = true, serverTimestamp = 1L, conflicts = 0))
+
+        mockMvc.perform(
+            post("/api/v1/sync/push")
+                .header("Authorization", "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"entities":{},"deviceId":"android-http","timestamp":0,""" +
+                        """"policy":{"conflictStrategy":"lww","clientTier":2,"autoSyncIntervalSec":60}}"""
+                )
+        )
+            .andExpect(status().isOk)
+
+        verify(syncService).push(
+            argThatK<SyncPushRequest> {
+                it.policy == SyncPolicyDto(ConflictStrategy.LWW, clientTier = 2, autoSyncIntervalSec = 60)
+            },
+            argThatK { it == "alice" },
+        )
+    }
+
+    @Test
+    fun `push without policy (legacy client) parses cleanly and succeeds`() {
+        `when`(syncService.push(any(SyncPushRequest::class.java), anyString()))
+            .thenReturn(SyncPushResponse(success = true, serverTimestamp = 1L, conflicts = 0))
+
+        mockMvc.perform(
+            post("/api/v1/sync/push")
+                .header("Authorization", "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"entities":{},"deviceId":"android-http","timestamp":0}""")
+        )
+            .andExpect(status().isOk)
+
+        verify(syncService).push(
+            argThatK<SyncPushRequest> { it.policy == null && it.deviceId == "android-http" },
+            argThatK { it == "alice" },
+        )
+    }
+
+    @Test
+    fun `android push with invalid policy values is a 400 validation error (D2 = PUT semantics)`() {
+        `when`(syncService.push(any(SyncPushRequest::class.java), anyString()))
+            .thenThrow(IllegalArgumentException("clientTier must be one of 0..3"))
+
+        mockMvc.perform(
+            post("/api/v1/sync/push")
+                .header("Authorization", "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"entities":{},"deviceId":"android-http","timestamp":0,""" +
+                        """"policy":{"conflictStrategy":"device_priority","clientTier":9,"autoSyncIntervalSec":60}}"""
+                )
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.message").value("clientTier must be one of 0..3"))
+    }
+
+    @Test
+    fun `pull returns the current policy in the response`() {
+        `when`(syncService.pull(anyLong(), anyString(), anyString())).thenReturn(
+            SyncPullResponse(
+                entities = SyncEntityCollection(),
+                serverTimestamp = 6789L,
+                policy = SyncPolicyDto(ConflictStrategy.WEB_PRIORITY, clientTier = 2, autoSyncIntervalSec = 30),
+            )
+        )
+
+        mockMvc.perform(
+            get("/api/v1/sync/pull")
+                .header("Authorization", "Bearer valid-token")
+                .param("since", "1000")
+                .param("deviceId", "android-http")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.policy.conflictStrategy").value("web_priority"))
+            .andExpect(jsonPath("$.policy.clientTier").value(2))
+            .andExpect(jsonPath("$.policy.autoSyncIntervalSec").value(30))
+    }
+
+    @Test
     fun `push without bearer token is rejected with 401 per SecurityConfig`() {
         mockMvc.perform(
             post("/api/v1/sync/push")
