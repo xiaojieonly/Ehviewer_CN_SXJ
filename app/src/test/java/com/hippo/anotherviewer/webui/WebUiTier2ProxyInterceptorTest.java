@@ -43,10 +43,12 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * Routing oracle for the Tier-2 browsing proxy (ADR-0003 D3, MASTER §4.1
- * acceptance ⑤ "Tier-2 走服务器"): site-host requests are rewritten to the
- * paired server only when {@code clientTier >= 2} AND a server is configured;
- * Tier-0/1 traffic and every non-site host pass through byte-identical.
+ * Routing oracle for the Tier-2 browsing proxy (ADR-0003 D3, W3 R4-13):
+ * site-host requests are rewritten to the paired server's transparent proxy
+ * ({@code {paired}/api/v1/site/proxy?url=<encoded original>}) only when
+ * {@code clientTier >= 2} AND a server is configured; Tier-0/1 traffic,
+ * non-site hosts (including the server's own {@code /api/v1/*} structured
+ * API) and unpaired Tier-2 pass through byte-identical.
  */
 @Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -190,12 +192,28 @@ public class WebUiTier2ProxyInterceptorTest {
         assertSame(request, proceed(request));
     }
 
+    @Test
+    public void testStructuredApiRequestsAreNeverRewritten() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+
+        // The app's own calls to the paired server (sync / reader structured
+        // API) must not be wrapped into the site proxy.
+        for (String url : new String[]{
+                "http://192.168.1.10:8080/api/v1/sync/push",
+                "http://192.168.1.10:8080/api/v1/image/1001/0",
+                "http://192.168.1.10:8080/api/v1/site/proxy?url=anything"}) {
+            Request request = new Request.Builder().url(url).build();
+            assertSame(url, request, proceed(request));
+        }
+    }
+
     // ------------------------------------------------------------------
-    // Tier-2 rewriting
+    // Tier-2 rewriting → server transparent proxy (W3 R4-13)
     // ------------------------------------------------------------------
 
     @Test
-    public void testTierTwoRewritesSiteHostToPairedServer() throws Exception {
+    public void testTierTwoRoutesThroughServerSiteProxy() throws Exception {
         settings.saveConfig(SERVER);
         settings.setClientTier(2);
 
@@ -203,13 +221,37 @@ public class WebUiTier2ProxyInterceptorTest {
                 .url("https://gallery.test/g/1001/aaa/?p=1")
                 .build());
 
-        assertEquals("path and query survive the rewrite",
-                "http://192.168.1.10:8080/g/1001/aaa/?p=1",
-                proceeded.url().toString());
+        assertEquals("http", proceeded.url().scheme());
+        assertEquals("192.168.1.10", proceeded.url().host());
+        assertEquals(8080, proceeded.url().port());
+        assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
+        assertEquals("the original URL travels as the url param, path/query intact",
+                "https://gallery.test/g/1001/aaa/?p=1",
+                proceeded.url().queryParameter("url"));
     }
 
     @Test
-    public void testTierTwoRewritesSubdomainHosts() throws Exception {
+    public void testUrlParamEncodingSurvivesReservedCharacters() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+
+        // '&' and '=' in the original query must not leak into the proxy
+        // request's own query structure: exactly one param, round-trip intact.
+        String original = "https://gallery.test/?f_search=a+b&f_cats=2&advsearch=1";
+        Request proceeded = proceed(new Request.Builder().url(original).build());
+
+        assertEquals(1, proceeded.url().querySize());
+        assertEquals(original, proceeded.url().queryParameter("url"));
+        assertTrue(proceeded.url().toString().startsWith(
+                "http://192.168.1.10:8080/api/v1/site/proxy?url="));
+        assertFalse("raw '&' inside the value must stay percent-encoded",
+                proceeded.url().toString().substring(
+                        "http://192.168.1.10:8080/api/v1/site/proxy?url=".length())
+                        .contains("&"));
+    }
+
+    @Test
+    public void testSubdomainHostsRouteThroughTheProxyToo() throws Exception {
         settings.saveConfig(SERVER);
         settings.setClientTier(2);
 
@@ -217,7 +259,9 @@ public class WebUiTier2ProxyInterceptorTest {
                 .url("https://lofi.gallery.test/index.php")
                 .build());
 
-        assertEquals("http://192.168.1.10:8080/index.php", proceeded.url().toString());
+        assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
+        assertEquals("https://lofi.gallery.test/index.php",
+                proceeded.url().queryParameter("url"));
     }
 
     @Test
@@ -229,11 +273,12 @@ public class WebUiTier2ProxyInterceptorTest {
                 .url("https://gallery.test/api.php")
                 .build());
 
-        assertEquals("http://192.168.1.10:8080/api.php", proceeded.url().toString());
+        assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
+        assertEquals("https://gallery.test/api.php", proceeded.url().queryParameter("url"));
     }
 
     @Test
-    public void testRewriteFollowsConfiguredProtocolAndPort() throws Exception {
+    public void testProxyTargetFollowsConfiguredProtocolAndPort() throws Exception {
         settings.saveConfig(new WebUiConfig("https", "10.0.0.5", 8443, "", ""));
         settings.setClientTier(2);
 
@@ -241,15 +286,18 @@ public class WebUiTier2ProxyInterceptorTest {
                 .url("http://gallery.test/tag/alpha")
                 .build());
 
-        assertEquals("https://10.0.0.5:8443/tag/alpha", proceeded.url().toString());
+        assertEquals("https", proceeded.url().scheme());
+        assertEquals("10.0.0.5", proceeded.url().host());
+        assertEquals(8443, proceeded.url().port());
+        assertEquals("http://gallery.test/tag/alpha", proceeded.url().queryParameter("url"));
     }
 
     // ------------------------------------------------------------------
-    // Referer / Origin header rewriting (mirrors the mock interceptor)
+    // Referer / Origin header semantics (site values wrapped the same way)
     // ------------------------------------------------------------------
 
     @Test
-    public void testSiteRefererAndOriginAreRewritten() throws Exception {
+    public void testSiteRefererAndOriginAreRewrittenToProxyForm() throws Exception {
         settings.saveConfig(SERVER);
         settings.setClientTier(2);
 
@@ -259,10 +307,19 @@ public class WebUiTier2ProxyInterceptorTest {
                 .header("Origin", "https://upld.gallery.test")
                 .build());
 
-        assertEquals("http://192.168.1.10:8080/?f_search=alpha",
-                proceeded.header("Referer"));
-        // HttpUrl normalization keeps the root path, hence the trailing slash.
-        assertEquals("http://192.168.1.10:8080/", proceeded.header("Origin"));
+        // Structural (encoding-agnostic) assertions: the rewritten headers are
+        // proxy URLs whose url param round-trips to the original site value.
+        okhttp3.HttpUrl referer = okhttp3.HttpUrl.parse(proceeded.header("Referer"));
+        assertEquals("http", referer.scheme());
+        assertEquals("192.168.1.10", referer.host());
+        assertEquals(8080, referer.port());
+        assertEquals("/api/v1/site/proxy", referer.encodedPath());
+        assertEquals("https://gallery.test/?f_search=alpha", referer.queryParameter("url"));
+
+        okhttp3.HttpUrl origin = okhttp3.HttpUrl.parse(proceeded.header("Origin"));
+        assertEquals("192.168.1.10", origin.host());
+        assertEquals("/api/v1/site/proxy", origin.encodedPath());
+        assertEquals("https://upld.gallery.test/", origin.queryParameter("url"));
     }
 
     @Test
@@ -307,7 +364,8 @@ public class WebUiTier2ProxyInterceptorTest {
         // Flip to Tier-2 without touching the interceptor or the client.
         settings.setClientTier(2);
         Request routed = proceed(new Request.Builder().url("https://gallery.test/").build());
-        assertEquals("http://192.168.1.10:8080/", routed.url().toString());
+        assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
+        assertEquals("https://gallery.test/", routed.url().queryParameter("url"));
     }
 
     @Test

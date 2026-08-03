@@ -34,6 +34,17 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class SiteProxyControllerTest {
 
+    /** Builds a canned upstream response (helper shared by all fake sites). */
+    private fun canned(request: Request, code: Int, contentType: String, body: String): Response =
+        Response.Builder()
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .code(code)
+            .message("OK")
+            .header("Content-Type", contentType)
+            .body(ResponseBody.create(MediaType.parse(contentType), body))
+            .build()
+
     /** Records the upstream request and answers with a canned response or exception. */
     private class FakeSite(
         private val responder: (Request) -> Response
@@ -47,16 +58,6 @@ class SiteProxyControllerTest {
             lastRequest.set(chain.request())
             return responder(chain.request())
         }
-
-        fun canned(request: Request, code: Int, contentType: String, body: String): Response =
-            Response.Builder()
-                .request(request)
-                .protocol(Protocol.HTTP_1_1)
-                .code(code)
-                .message("OK")
-                .header("Content-Type", contentType)
-                .body(ResponseBody.create(MediaType.parse(contentType), body))
-                .build()
     }
 
     private lateinit var sessionManager: SiteSessionManager
@@ -110,9 +111,11 @@ class SiteProxyControllerTest {
         site = FakeSite { canned(it, 200, "text/html", "") }
         setUpClient(site)
 
+        // GlobalExceptionHandler maps a missing @RequestParam to the BAD_REQUEST
+        // code (VALIDATION_ERROR is reserved for bean/constraint validation).
         mockMvc.perform(get("/api/v1/site/proxy"))
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
     }
 
     @Test
