@@ -61,14 +61,16 @@
       <!-- Virtualized gallery list: only the rows intersecting the viewport
            (+ overscan) are mounted; the spacers above/below preserve the full
            scroll height so the scrollbar and the load-more footer (rendered
-           after the slot by ContentLayout) keep working. -->
+           after the slot by ContentLayout) keep working. GalleryList (B-1)
+           renders the grid/list form from `prefs.general.listMode` and owns
+           the view-mode toggle. -->
       <div ref="virtualHostRef" class="home__virtual">
         <div
           class="home__virtual-spacer"
           :style="{ height: `${topSpacerHeight}px` }"
           aria-hidden="true"
         />
-        <GalleryGrid :items="visibleGalleries" :mode="viewMode" @select="openGallery" />
+        <GalleryList :items="visibleGalleries" @select="openGallery" />
         <div
           class="home__virtual-spacer"
           :style="{ height: `${bottomSpacerHeight}px` }"
@@ -77,8 +79,9 @@
       </div>
     </ContentLayout>
 
-    <!-- FAB cluster: primary = back to top (Android `v_go_to`), secondaries =
-         list/grid toggle + refresh. Starts collapsed like the Android scene. -->
+    <!-- FAB cluster: primary = back to top (Android `v_go_to`), secondary =
+         refresh (the list/grid toggle moved into GalleryList's toolbar, B-1).
+         Starts collapsed like the Android scene. -->
     <FabLayout
       v-model:expanded="fabExpanded"
       primary-icon="go-to-dark"
@@ -103,12 +106,15 @@
  * - `ContentLayout` — ViewTransition states (loading / content / empty /
  *                   error), pull-to-refresh header (v-model:refreshing),
  *                   `load-more` footer paging, sadpanda tip retry.
- * - `GalleryGrid` — list/grid rendering; column count is width-derived, never
- *                   hardcoded (contracts/responsive-strategy.md §4).
- * - `FabLayout`   — primary go-to-top + secondary mode-toggle / refresh.
+ * - `GalleryList` — shared grid/list renderer (B-1): consumes
+ *                   `prefs.general.listMode` and owns the view-mode toggle;
+ *                   grid column count is width-derived, never hardcoded
+ *                   (contracts/responsive-strategy.md §4).
+ * - `FabLayout`   — primary go-to-top + secondary refresh.
  *
- * The list/grid mode persists to localStorage (web equivalent of the Android
- * `Settings` list-mode preference).
+ * The list/grid mode lives in server preferences (`general.listMode`). The
+ * legacy localStorage persistence is migrated once on first load (B-1): the
+ * stored value is written into preferences and the key then removed.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -118,8 +124,9 @@ import AppIcon from '@/components/atoms/AppIcon.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
-import GalleryGrid from '@/components/gallery/GalleryGrid.vue'
+import GalleryList, { resolveListMode } from '@/components/gallery/GalleryList.vue'
 import { useAuthStore } from '@/stores/auth'
+import { usePreferencesStore } from '@/stores/preferences'
 import type {
   ContentState,
   FabAction,
@@ -128,20 +135,21 @@ import type {
   SearchSuggestion,
 } from '@/types/components'
 
-/** Layout modes of the gallery list (Android `Settings` list mode). */
-type ListMode = 'list' | 'grid'
-
 /** ContentLayout's view states (frozen `ContentState` + its `error` extra). */
 type HomeContentState = ContentState | 'error'
 
 /** AnotherViewer's default gallery page size. */
 const PAGE_SIZE = 25
 
-/** localStorage key for the persisted list mode. */
+/**
+ * Legacy localStorage key of the pre-preferences list mode. Read once during
+ * the B-1 migration, written into `general.listMode`, then removed.
+ */
 const LIST_MODE_KEY = 'anotherviewer-webui:gallery-list-mode'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const preferencesStore = usePreferencesStore()
 
 /* -------------------------------- list state ---------------------------- */
 
@@ -248,23 +256,36 @@ function goLogin(): void {
 
 /* ------------------------------ list/grid mode -------------------------- */
 
-function readStoredMode(): ListMode {
+/**
+ * Active layout — same source GalleryList consumes: `prefs.general.listMode`,
+ * falling back to grid while the preferences are absent (B-1 defensive read).
+ * HomeView needs it for the virtual-window column/row math below.
+ */
+const viewMode = computed(() => resolveListMode(preferencesStore.prefs?.general?.listMode))
+
+/** One-shot guard for the legacy localStorage → preferences migration. */
+let legacyModeMigrated = false
+
+/**
+ * B-1 migration: the pre-preferences list mode lived in localStorage. Once
+ * preferences are available the stored value is written into
+ * `general.listMode` (debounced PUT /preferences) and the key removed —
+ * exactly once, so server-side values win afterwards.
+ */
+function migrateLegacyListMode(): void {
+  if (legacyModeMigrated || !preferencesStore.prefs) return
+  legacyModeMigrated = true
   try {
-    return localStorage.getItem(LIST_MODE_KEY) === 'grid' ? 'grid' : 'list'
+    const legacy = localStorage.getItem(LIST_MODE_KEY)
+    if (legacy === null) return
+    preferencesStore.updateGeneral({ listMode: legacy === 'grid' ? 'grid' : 'list' })
+    localStorage.removeItem(LIST_MODE_KEY)
   } catch {
-    return 'list'
+    /* Storage unavailable — nothing to migrate. */
   }
 }
 
-const viewMode = ref<ListMode>(readStoredMode())
-
-watch(viewMode, (mode) => {
-  try {
-    localStorage.setItem(LIST_MODE_KEY, mode)
-  } catch {
-    /* Storage unavailable (e.g. private mode) — mode simply won't persist. */
-  }
-})
+watch(() => preferencesStore.prefs, migrateLegacyListMode, { immediate: true })
 
 /* --------------------------------- search ------------------------------- */
 
@@ -334,14 +355,11 @@ function onDismissSuggestion(suggestion: SearchSuggestion): void {
 /** Cluster starts collapsed, like the Android scene (tap primary to open). */
 const fabExpanded = ref(false)
 
-const fabActions = computed<FabAction[]>(() => [
-  {
-    id: 'toggle-mode',
-    icon: viewMode.value === 'list' ? 'top-lists' : 'reorder',
-    label: viewMode.value === 'list' ? '切换到网格视图' : '切换到列表视图',
-  },
-  { id: 'refresh', icon: 'refresh-dark', label: '刷新列表' },
-])
+/**
+ * The list/grid toggle moved into GalleryList's sticky toolbar (B-1) — the
+ * cluster keeps refresh only.
+ */
+const fabActions: FabAction[] = [{ id: 'refresh', icon: 'refresh-dark', label: '刷新列表' }]
 
 function onPrimaryFab(): void {
   contentLayoutRef.value?.scrollToTop()
@@ -351,9 +369,7 @@ function onSecondaryFab(action: FabAction): void {
   // Android collapses the cluster after a secondary action (the backdrop
   // would otherwise keep the freshly re-laid-out list dimmed).
   fabExpanded.value = false
-  if (action.id === 'toggle-mode') {
-    viewMode.value = viewMode.value === 'list' ? 'grid' : 'list'
-  } else if (action.id === 'refresh') {
+  if (action.id === 'refresh') {
     void onRefresh()
   }
 }
@@ -363,31 +379,34 @@ function onSecondaryFab(action: FabAction): void {
 /**
  * Lightweight windowing for the gallery list (the previous `useVirtualScroll`
  * composable had no replacement after the audit): only the rows intersecting
- * the scroller viewport (+ overscan) are handed to GalleryGrid, while two
- * spacer divs above/below the grid preserve the full list height — scrollbar
+ * the scroller viewport (+ overscan) are handed to GalleryList, while two
+ * spacer divs above/below the list preserve the full list height — scrollbar
  * geometry, the FastScroller and ContentLayout's load-more footer (which
  * reads `scrollHeight` and lives after the slot) all keep working untouched.
  *
  * Geometry mirrors the CSS sources:
  * - grid columns = `floor((width + gap) / (minColumn + gap))` — the same
- *   math as `.gallery-grid--grid`'s `auto-fill minmax(120px, 1fr)`, reading
+ *   math as GalleryGrid's `auto-fill minmax(120px, 1fr)`, reading
  *   `--column-width-grid-middle` / `--gallery-grid-interval` from computed
  *   style so breakpoint overrides stay honored;
  * - grid row height = column width × 1.5 (GalleryCard's default 2:3 tile);
- * - list mode = measured first-card height, falling back to the 120px
- *   2:3 thumb + paddings estimate.
+ * - list mode = `floor(width / min(width, 480px))` auto-columns (GalleryList
+ *   rows, `--column-width-list-long`) × measured first-card height, falling
+ *   back to the 120px 2:3 thumb + paddings estimate.
  *
  * Rows are only estimated (tiles clamp to per-gallery aspect ratios), so an
  * overscan buffer keeps the window generous; cards re-run their staggered
- * entrance reveal when they mount (GalleryGrid owns the animation).
- * Virtualization engages only with real viewport geometry — headless
- * environments (no layout) fall back to rendering the whole list.
+ * entrance reveal when they mount (GalleryGrid/GalleryList own the
+ * animation). Virtualization engages only with real viewport geometry —
+ * headless environments (no layout) fall back to rendering the whole list.
  */
 const OVERSCAN_ROWS = 3
 /** `--column-width-grid-middle` (120px) fallback when styles are unavailable. */
 const GRID_MIN_COLUMN_WIDTH = 120
 /** `--gallery-grid-interval` (0dp) fallback when styles are unavailable. */
 const GRID_GAP = 0
+/** `--column-width-list-long` (480px) fallback when styles are unavailable. */
+const LIST_MIN_COLUMN_WIDTH = 480
 /** List-mode row estimate: 120px 2:3 thumb + body padding + card margins. */
 const LIST_ROW_HEIGHT = 136
 
@@ -472,13 +491,18 @@ function measure(): void {
   containerHeight.value = scroller.clientHeight
   containerWidth.value = scroller.clientWidth
   const style = getComputedStyle(host)
-  const minColumn = parseFloat(style.getPropertyValue('--column-width-grid-middle')) || GRID_MIN_COLUMN_WIDTH
-  const gap = parseFloat(style.getPropertyValue('--gallery-grid-interval')) || GRID_GAP
   if (viewMode.value === 'list') {
-    columns.value = 1
+    // Rows auto-fill at `min(100%, --column-width-list-long)` tracks — the
+    // same math as GalleryList's `.gallery-list__rows`.
+    const listColumnWidth =
+      parseFloat(style.getPropertyValue('--column-width-list-long')) || LIST_MIN_COLUMN_WIDTH
+    const track = Math.min(containerWidth.value, listColumnWidth)
+    columns.value = Math.max(1, Math.floor(containerWidth.value / Math.max(1, track)))
     const cardHeight = host.querySelector('.app-card')?.getBoundingClientRect().height ?? 0
     rowHeight.value = cardHeight > 0 ? cardHeight : LIST_ROW_HEIGHT
   } else {
+    const minColumn = parseFloat(style.getPropertyValue('--column-width-grid-middle')) || GRID_MIN_COLUMN_WIDTH
+    const gap = parseFloat(style.getPropertyValue('--gallery-grid-interval')) || GRID_GAP
     columns.value = Math.max(1, Math.floor((containerWidth.value + gap) / (minColumn + gap)))
     const columnWidth = (containerWidth.value - (columns.value - 1) * gap) / columns.value
     rowHeight.value = columnWidth * 1.5
@@ -520,6 +544,13 @@ function detachVirtualScroll(): void {
 /* --------------------------------- lifecycle ---------------------------- */
 
 onMounted(() => {
+  // Preferences feed the GalleryList mode and the legacy-mode migration.
+  // GalleryList would load them on its own mount, but that only happens once
+  // the first page lands (ContentLayout renders its slot in the content
+  // state) — kick the load here so the migration runs as early as possible.
+  if (!preferencesStore.prefs && !preferencesStore.loading) {
+    void preferencesStore.load()
+  }
   void loadPage(0, 'replace')
 })
 
@@ -579,6 +610,13 @@ onBeforeUnmount(detachVirtualScroll)
 .home__content {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* GalleryList's sticky toggle toolbar clears the floating SearchBar through
+   `--gallery-list-clear-top` (its grid/rows no longer carry the clearance
+   themselves). */
+.home__virtual {
+  --gallery-list-clear-top: var(--gallery-padding-top-search-bar);
 }
 
 /* Empty-state guided CTA (UX-07): sadpanda + informative copy + actions.

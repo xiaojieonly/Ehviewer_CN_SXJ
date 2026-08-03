@@ -3,6 +3,9 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import HomeView from '../HomeView.vue'
 import { galleryApi } from '@/api/gallery'
+import { preferencesApi } from '@/api/preferences'
+import { usePreferencesStore } from '@/stores/preferences'
+import type { Preferences } from '@/api/preferences'
 import type { GalleryInfo } from '@/types'
 
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
@@ -14,6 +17,18 @@ vi.mock('vue-router', () => ({
 vi.mock('@/api/gallery', () => ({
   galleryApi: { search: vi.fn(), getQuickSearches: vi.fn() },
 }))
+
+vi.mock('@/api/preferences', () => ({
+  preferencesApi: { get: vi.fn(), update: vi.fn() },
+}))
+
+/** Legacy localStorage key of the pre-preferences list mode (B-1 migration). */
+const LIST_MODE_KEY = 'anotherviewer-webui:gallery-list-mode'
+
+/** Minimal Preferences fixture — schema keys optional (parallel-work keys). */
+function makePrefs(general: Record<string, unknown>): Preferences {
+  return { general } as unknown as Preferences
+}
 
 function gallery(overrides: Partial<GalleryInfo> = {}): GalleryInfo {
   return {
@@ -46,6 +61,10 @@ describe('HomeView (首页)', () => {
     localStorage.clear()
     pushMock.mockClear()
     vi.mocked(galleryApi.getQuickSearches).mockResolvedValue({ success: true, data: [] })
+    // Default: preferences resolve with the grid layout (the pre-migration
+    // tests below can override per case).
+    vi.mocked(preferencesApi.get).mockResolvedValue(makePrefs({ listMode: 'grid' }))
+    vi.mocked(preferencesApi.update).mockResolvedValue(makePrefs({}))
   })
 
   afterEach(() => {
@@ -109,7 +128,8 @@ describe('HomeView (首页)', () => {
 
   it('virtualizes the grid: renders only the visible rows plus overscan', async () => {
     // Grid math under test (list mode uses a fixed card-height estimate).
-    localStorage.setItem('anotherviewer-webui:gallery-list-mode', 'grid')
+    // Grid mode now comes from preferences, not localStorage (B-1).
+    vi.mocked(preferencesApi.get).mockResolvedValue(makePrefs({ listMode: 'grid' }))
     const items = Array.from({ length: 200 }, (_, i) =>
       gallery({ gid: i + 1, title: `G${i + 1}` }),
     )
@@ -145,5 +165,90 @@ describe('HomeView (首页)', () => {
     expect(spacers).toHaveLength(2)
     expect(spacers[0].attributes('style')).toContain('1312.5px')
     expect(spacers[1].attributes('style')).toContain('6187.5px')
+  })
+})
+
+describe('HomeView (B-1 localStorage → preferences listMode migration)', () => {
+  let wrapper: VueWrapper
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    pushMock.mockClear()
+    vi.mocked(galleryApi.getQuickSearches).mockResolvedValue({ success: true, data: [] })
+    vi.mocked(galleryApi.search).mockResolvedValue({ success: true, data: [gallery()], total: 1 })
+    vi.mocked(preferencesApi.update).mockResolvedValue(makePrefs({}))
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  async function mountHomeWithPrefs(general: Record<string, unknown>) {
+    vi.mocked(preferencesApi.get).mockResolvedValue(makePrefs(general))
+    wrapper = mount(HomeView)
+    await flushPromises()
+    return wrapper
+  }
+
+  it('writes the legacy grid value into preferences and clears localStorage', async () => {
+    vi.useFakeTimers()
+    localStorage.setItem(LIST_MODE_KEY, 'grid')
+    await mountHomeWithPrefs({ listMode: 'list' }) // server value differs
+
+    // Migration applied the legacy value to the store…
+    expect(usePreferencesStore().prefs?.general.listMode).toBe('grid')
+    // …cleared the legacy key…
+    expect(localStorage.getItem(LIST_MODE_KEY)).toBeNull()
+    // …and persists it through the preferences API (debounced PUT).
+    await vi.advanceTimersByTimeAsync(600)
+    expect(preferencesApi.update).toHaveBeenCalledTimes(1)
+    expect(preferencesApi.update).toHaveBeenCalledWith({
+      general: expect.objectContaining({ listMode: 'grid' }),
+    })
+  })
+
+  it('migrates the legacy list value too', async () => {
+    vi.useFakeTimers()
+    localStorage.setItem(LIST_MODE_KEY, 'list')
+    await mountHomeWithPrefs({ listMode: 'grid' })
+
+    expect(usePreferencesStore().prefs?.general.listMode).toBe('list')
+    expect(localStorage.getItem(LIST_MODE_KEY)).toBeNull()
+  })
+
+  it('normalizes an unrecognized legacy value to list', async () => {
+    vi.useFakeTimers()
+    localStorage.setItem(LIST_MODE_KEY, 'table')
+    await mountHomeWithPrefs({ listMode: 'grid' })
+
+    // Legacy semantics: anything that is not exactly "grid" was list mode.
+    expect(usePreferencesStore().prefs?.general.listMode).toBe('list')
+    expect(localStorage.getItem(LIST_MODE_KEY)).toBeNull()
+  })
+
+  it('leaves preferences untouched when no legacy value is stored', async () => {
+    vi.useFakeTimers()
+    await mountHomeWithPrefs({ listMode: 'list' })
+
+    expect(usePreferencesStore().prefs?.general.listMode).toBe('list')
+    await vi.advanceTimersByTimeAsync(600)
+    expect(preferencesApi.update).not.toHaveBeenCalled()
+  })
+
+  it('migrates exactly once', async () => {
+    vi.useFakeTimers()
+    localStorage.setItem(LIST_MODE_KEY, 'grid')
+    await mountHomeWithPrefs({ listMode: 'list' })
+    await vi.advanceTimersByTimeAsync(600)
+
+    // The key is gone; a later preferences change is not re-migrated.
+    const store = usePreferencesStore()
+    store.updateGeneral({ listMode: 'list' })
+    await vi.advanceTimersByTimeAsync(600)
+    expect(store.prefs?.general.listMode).toBe('list')
+    expect(localStorage.getItem(LIST_MODE_KEY)).toBeNull()
   })
 })
