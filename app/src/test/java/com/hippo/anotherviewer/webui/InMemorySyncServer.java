@@ -187,16 +187,12 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     }
 
     /**
-     * LIVE vs LIVE (mirror of the SyncService same-state branch): A/C
-     * cross-platform → the priority platform wins unconditionally (§1.4);
-     * B / same-platform → LWW fallback (§1.4 tie-break). The fake omits the
-     * server's skew tolerance; tests use clearly distinct timestamps. On an
-     * exact lastModified tie the incoming record REPLACES the existing one —
-     * that rewrite bumps serverModified, which is what makes v1 union
-     * resurrection observable to other devices through incremental pulls
-     * (contract §3.1 "删端下轮被复活" convergence).
+     * §3.8 double-alive (both records alive, same key): under A/C a
+     * cross-platform conflict is won unconditionally by the priority platform
+     * (timestamp does not arbitrate); same-platform and B-strategy conflicts
+     * fall back to last-write-wins on lastModified.
      */
-    private boolean incomingLiveWinsOverLive(Object incomingDto, Record existing) {
+    private boolean aliveIncomingWinsOverLive(Object incomingDto, long incomingLastModified, Record existing) {
         WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
         String priority = strategy.priorityPlatform();
         String incomingPlatform = platformOfDto(incomingDto);
@@ -204,22 +200,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (priority != null && !incomingPlatform.equals(existingPlatform)) {
             return priority.equals(incomingPlatform);
         }
-        return lastModifiedOf(incomingDto) >= existing.dtoLastModified();
+        return incomingLastModified >= existing.dtoLastModified();
     }
 
-    /** TOMB vs TOMB (mirror of the same-state branch): A/C cross-platform → priority wins; else LWW (tie → incoming). */
-    private boolean incomingTombWinsOverTomb(Object incomingDto, Record existing) {
-        WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
-        String priority = strategy.priorityPlatform();
-        String incomingPlatform = platformOfDto(incomingDto);
-        String existingPlatform = platformOfDto(existing.dto);
-        if (priority != null && !incomingPlatform.equals(existingPlatform)) {
-            return priority.equals(incomingPlatform);
-        }
-        return lastModifiedOf(incomingDto) >= existing.dtoLastModified();
-    }
-
-    private void mergeUnion(Map<Long, Record> map, long key, Object dto, boolean deleted) {
+    private void mergeUnion(Map<Long, Record> map, long key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
             if (existing == null) {
@@ -243,6 +227,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         } else if (incomingLiveWinsOverLive(dto, existing)) {
             map.put(key, new Record(serverTimestamp, false, dto));
         }
+        if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
+            return; // double-alive: the stored alive record wins (§3.8)
+        }
+        map.put(key, new Record(serverTimestamp, false, dto));
     }
 
     private void mergeUnion(Map<String, Record> map, String key, Object dto, boolean deleted) {
@@ -269,6 +257,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         } else if (incomingLiveWinsOverLive(dto, existing)) {
             map.put(key, new Record(serverTimestamp, false, dto));
         }
+        if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
+            return; // double-alive: the stored alive record wins (§3.8)
+        }
+        map.put(key, new Record(serverTimestamp, false, dto));
     }
 
     /**
@@ -295,6 +287,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         } else if (incomingLiveWinsOverLive(dto, existing)) {
             map.put(key, new Record(serverTimestamp, false, dto));
         }
+        if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
+            return; // double-alive: the stored alive record wins (§3.8)
+        }
+        map.put(key, new Record(serverTimestamp, false, dto));
     }
 
     @NonNull

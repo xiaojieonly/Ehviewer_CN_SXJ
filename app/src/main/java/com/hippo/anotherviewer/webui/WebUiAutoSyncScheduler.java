@@ -41,8 +41,31 @@ import java.util.concurrent.ExecutorService;
  */
 public final class WebUiAutoSyncScheduler {
 
+    /**
+     * Testability seam (D4): the settings the scheduler reads/writes. The
+     * production implementation wraps {@link WebUiSettings}; unit tests inject
+     * a fake to drive the trigger logic without Android SharedPreferences.
+     */
+    interface SettingsSource {
+        WebUiConfig loadConfig();
+        String deviceId();
+        long lastSyncTimestamp(String serverKey);
+        void setLastSyncTimestamp(String serverKey, long timestamp);
+        int autoSyncIntervalSec();
+    }
+
+    /**
+     * Testability seam (D4): runs one sync cycle. Production delegates to
+     * {@link WebUiSyncEngine#sync}; unit tests inject a fake to assert the
+     * trigger passes the stored watermark and persists the new one.
+     */
+    interface SyncRunner {
+        WebUiSyncEngine.Result run(WebUiConfig config, String deviceId, long since) throws IOException;
+    }
+
     private final Context appContext;
-    private final WebUiSettings settings;
+    private final SettingsSource settings;
+    private final SyncRunner runner;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "webui-auto-sync");
@@ -55,7 +78,18 @@ public final class WebUiAutoSyncScheduler {
 
     public WebUiAutoSyncScheduler(@NonNull Context context) {
         appContext = context.getApplicationContext();
-        settings = new WebUiSettings(appContext);
+        settings = wrap(new WebUiSettings(appContext));
+        runner = WebUiSyncEngine::sync;
+    }
+
+    private static SettingsSource wrap(@NonNull final WebUiSettings s) {
+        return new SettingsSource() {
+            @Override public WebUiConfig loadConfig() { return s.loadConfig(); }
+            @Override public String deviceId() { return s.deviceId(); }
+            @Override public long lastSyncTimestamp(String serverKey) { return s.lastSyncTimestamp(serverKey); }
+            @Override public void setLastSyncTimestamp(String serverKey, long timestamp) { s.setLastSyncTimestamp(serverKey, timestamp); }
+            @Override public int autoSyncIntervalSec() { return s.autoSyncIntervalSec(); }
+        };
     }
 
     /** Periodic leg delay; {@code -1} when the interval disables it (0 = network-change only). */
@@ -121,18 +155,29 @@ public final class WebUiAutoSyncScheduler {
 
     /** Runs one sync cycle if a server is configured; failures are swallowed. */
     public void trigger(@NonNull String reason) {
-        executor.submit(() -> {
-            WebUiConfig config = settings.loadConfig();
-            if (config == null) return;
-            String deviceId = settings.deviceId();
-            String serverKey = config.baseUrl();
-            long since = settings.lastSyncTimestamp(serverKey);
-            try {
-                WebUiSyncEngine.Result result = WebUiSyncEngine.sync(config, deviceId, since);
-                settings.setLastSyncTimestamp(serverKey, result.serverTimestamp);
-            } catch (IOException ignored) {
-                // Server unreachable: retry on the next trigger.
-            }
-        });
+        executor.submit(() -> runTriggerOnce(settings, runner));
+    }
+
+    /**
+     * Synchronous trigger core, extracted for testability (D4). Runs one sync
+     * cycle when a server is configured, seeding {@code since} from the stored
+     * per-server watermark and persisting the returned server timestamp; a
+     * failed sync leaves the watermark untouched so the next trigger retries.
+     *
+     * @return {@code true} if a sync cycle ran successfully, {@code false} if
+     *         skipped (no server configured) or the sync threw.
+     */
+    static boolean runTriggerOnce(@NonNull SettingsSource settings, @NonNull SyncRunner runner) {
+        WebUiConfig config = settings.loadConfig();
+        if (config == null) return false;
+        String serverKey = config.baseUrl();
+        try {
+            WebUiSyncEngine.Result result = runner.run(config, settings.deviceId(), settings.lastSyncTimestamp(serverKey));
+            settings.setLastSyncTimestamp(serverKey, result.serverTimestamp);
+            return true;
+        } catch (IOException ignored) {
+            // Server unreachable: retry on the next trigger.
+            return false;
+        }
     }
 }
