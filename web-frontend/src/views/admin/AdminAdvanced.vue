@@ -40,6 +40,37 @@
         </PrefCard>
       </section>
 
+      <!-- ═══ 同步策略（Wave-2 / ADR-0003）═══════════════════════════════ -->
+      <section>
+        <SectionHeader title="同步策略" />
+        <PrefCard>
+          <PrefRow
+            icon="settings-dark"
+            title="冲突仲裁策略"
+            summary="App 为权威：WebUI 的修改将被下次 App 同步覆盖（D2）"
+          >
+            <AppSelect
+              :model-value="policy?.conflictStrategy ?? 'device_priority'"
+              :options="STRATEGY_OPTIONS"
+              aria-label="冲突仲裁策略"
+              @update:model-value="onStrategyChange"
+            />
+          </PrefRow>
+          <PrefRow
+            icon="refresh-dark"
+            title="自动同步间隔（秒）"
+            summary="App 进入本网络后的周期同步间隔；0=仅网络变化时同步"
+          >
+            <AppSelect
+              :model-value="policy?.autoSyncIntervalSec ?? 900"
+              :options="INTERVAL_OPTIONS"
+              aria-label="自动同步间隔"
+              @update:model-value="onIntervalChange"
+            />
+          </PrefRow>
+        </PrefCard>
+      </section>
+
       <!-- ═══ 数据 ══════════════════════════════════════════════════════ -->
       <section>
         <SectionHeader title="数据" />
@@ -96,9 +127,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import { AppSelect, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
+import { syncApi, type SyncPolicy } from '@/api/sync'
 
 /* ------------------------------ local settings ---------------------------- */
 
@@ -154,6 +186,62 @@ function onLanguageValue(value: string | number): void {
 function toggleParseErrors(): void {
   ui.saveParseErrors = !ui.saveParseErrors
   persistUi()
+}
+
+/* ------------------------- sync policy (ADR-0003) ------------------------- */
+
+const STRATEGY_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'device_priority', label: 'Android 优先（默认）' },
+  { value: 'lww', label: '最后写入胜出' },
+  { value: 'web_priority', label: 'WebUI 优先' },
+]
+
+const INTERVAL_OPTIONS: Array<{ value: number; label: string }> = [
+  { value: 0, label: '仅网络变化时' },
+  { value: 300, label: '5 分钟' },
+  { value: 900, label: '15 分钟（默认）' },
+  { value: 1800, label: '30 分钟' },
+  { value: 3600, label: '1 小时' },
+]
+
+const policy = ref<SyncPolicy | null>(null)
+
+onMounted(() => {
+  syncApi
+    .getPolicy()
+    .then((p) => {
+      policy.value = p
+    })
+    .catch(() => {
+      // Legacy/unreachable server — the panel keeps contract defaults.
+    })
+})
+
+async function persistPolicy(next: SyncPolicy): Promise<void> {
+  try {
+    policy.value = await syncApi.updatePolicy(next)
+    showSnack('同步策略已保存')
+  } catch {
+    showSnack('同步策略保存失败')
+  }
+}
+
+function onStrategyChange(value: string | number): void {
+  const current = policy.value ?? {
+    conflictStrategy: 'device_priority' as const,
+    clientTier: 1 as const,
+    autoSyncIntervalSec: 900,
+  }
+  void persistPolicy({ ...current, conflictStrategy: String(value) as SyncPolicy['conflictStrategy'] })
+}
+
+function onIntervalChange(value: string | number): void {
+  const current = policy.value ?? {
+    conflictStrategy: 'device_priority' as const,
+    clientTier: 1 as const,
+    autoSyncIntervalSec: 900,
+  }
+  void persistPolicy({ ...current, autoSyncIntervalSec: Number(value) })
 }
 
 /* --------------------------------- data ops ------------------------------- */
