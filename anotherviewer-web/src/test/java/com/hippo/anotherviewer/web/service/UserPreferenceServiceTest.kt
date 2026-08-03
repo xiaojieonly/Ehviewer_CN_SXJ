@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.dto.GeneralPreferences
 import com.hippo.anotherviewer.web.dto.PreferenceResponse
 import com.hippo.anotherviewer.web.dto.PreferenceUpdateRequest
+import com.hippo.anotherviewer.web.dto.ReaderPreferences
 import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -81,6 +82,85 @@ class UserPreferenceServiceTest {
 
         // 写入的内容仍然可读
         assertEquals("dark", service.get("alice").general.theme)
+    }
+
+    // ---- Wave-1 新键（1b/1c）: 缺省填充 + 分节深合并不变 ----
+
+    @Test
+    fun `legacy json without wave-1 keys reads back with the new defaults`() {
+        service.replace(
+            "alice",
+            """{"general":{"theme":"dark"},"reader":{"brightness":30}}""",
+            "android-1",
+            System.currentTimeMillis() + 60_000,
+        )
+
+        val resp = service.get("alice")
+        assertEquals("grid", resp.general.listMode)
+        assertEquals(0, resp.general.defaultFavoriteSlot)
+        assertEquals(10, resp.general.recentSearchMax)
+        assertEquals("black", resp.reader.backgroundColor)
+        assertEquals(1.5, resp.reader.zoomStep)
+        assertEquals("slide", resp.reader.pageTransition)
+        assertEquals(30, resp.reader.brightness)
+    }
+
+    @Test
+    fun `wave-1 keys survive a round trip through update`() {
+        val merged = service.update(
+            "alice",
+            PreferenceUpdateRequest(
+                general = GeneralPreferences(defaultFavoriteSlot = -2, favoriteSlotNames = "a|b"),
+                reader = ReaderPreferences(zoomStep = 2.5, splitWidePages = true, pageTransition = "fade"),
+            ),
+            "webui",
+        )
+        assertEquals(-2, merged.general.defaultFavoriteSlot)
+        assertEquals("a|b", merged.general.favoriteSlotNames)
+        assertEquals(2.5, merged.reader.zoomStep)
+        assertEquals(true, merged.reader.splitWidePages)
+        assertEquals("fade", merged.reader.pageTransition)
+
+        val reloaded = service.get("alice")
+        assertEquals(-2, reloaded.general.defaultFavoriteSlot)
+        assertEquals(2.5, reloaded.reader.zoomStep)
+        assertEquals("fade", reloaded.reader.pageTransition)
+    }
+
+    @Test
+    fun `section-level merge keeps untouched reader section with wave-1 keys`() {
+        service.update(
+            "alice",
+            PreferenceUpdateRequest(reader = ReaderPreferences(preloadCount = 6, maxZoom = 9.0)),
+            "webui",
+        )
+
+        // 只更新 general 节，reader 节（含新键）原样保留
+        val merged = service.update(
+            "alice",
+            PreferenceUpdateRequest(general = GeneralPreferences(showUploader = true)),
+            "webui",
+        )
+        assertEquals(true, merged.general.showUploader)
+        assertEquals(6, merged.reader.preloadCount)
+        assertEquals(9.0, merged.reader.maxZoom)
+    }
+
+    @Test
+    fun `unknown keys next to wave-1 keys do not break reads`() {
+        service.replace(
+            "alice",
+            """{"general":{"listMode":"list","futureKey":1},"reader":{"pageTransition":"fade","unknown":2}}""",
+            "android-1",
+            System.currentTimeMillis() + 60_000,
+        )
+
+        val resp = service.get("alice")
+        assertEquals("list", resp.general.listMode)
+        assertEquals("fade", resp.reader.pageTransition)
+        // 其余新键缺省填充
+        assertEquals(10, resp.general.recentSearchMax)
+        assertEquals(8, resp.reader.dualPageGap)
     }
 
     @Test

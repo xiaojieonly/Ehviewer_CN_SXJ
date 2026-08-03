@@ -1,6 +1,9 @@
 package com.hippo.anotherviewer.web.dto
 
 import jakarta.validation.Valid
+import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.Size
 
 /** GET /api/v1/preferences 响应 */
@@ -16,8 +19,9 @@ data class GeneralPreferences(
     val themeAutoSwitch: Boolean = false,
     @field:Size(max = 64, message = "launchPage must be at most 64 characters")
     val launchPage: String = "homepage",
+    // grid|list —— Wave-1 B-1: 共享 GalleryList 消费的默认布局（默认 grid）
     @field:Size(max = 64, message = "listMode must be at most 64 characters")
-    val listMode: String = "list",
+    val listMode: String = "grid",
     val showReadProgress: Boolean = true,
     @field:Size(max = 64, message = "detailSize must be at most 64 characters")
     val detailSize: String = "long",
@@ -31,6 +35,19 @@ data class GeneralPreferences(
     val showGalleryRating: Boolean = true,
     val showSiteEvents: Boolean = true,
     val showSiteLimits: Boolean = true,
+    // ---- Wave-1 B 组（1b 浏览一致性） ----
+    val showUploader: Boolean = false,
+    val showPostedTime: Boolean = false,
+    // clamp -2..9（WebUI 输入侧做 clamp，此处为服务端守卫）
+    @field:Min(-2, message = "defaultFavoriteSlot must be between -2 and 9")
+    @field:Max(9, message = "defaultFavoriteSlot must be between -2 and 9")
+    val defaultFavoriteSlot: Int = 0,
+    // `|` 分隔的 10 个收藏槽名，空项回退默认（回退逻辑在消费侧）
+    @field:Size(max = 255, message = "favoriteSlotNames must be at most 255 characters")
+    val favoriteSlotNames: String = "",
+    // 最近搜索保留条数，0 = 关闭
+    @field:Min(0, message = "recentSearchMax must be non-negative")
+    val recentSearchMax: Int = 10,
 )
 
 data class ReaderPreferences(
@@ -48,6 +65,26 @@ data class ReaderPreferences(
     val showPageInterval: Boolean = true,
     val fullscreen: Boolean = true,
     val brightness: Int = 0,
+    // ---- Wave-1 A 组（1c 阅读器深化，入 reader 节可同步） ----
+    // black|gray|white
+    @field:Size(max = 64, message = "backgroundColor must be at most 64 characters")
+    val backgroundColor: String = "black",
+    // threeZone|edgeOnly|disabled
+    @field:Size(max = 64, message = "tapZoneScheme must be at most 64 characters")
+    val tapZoneScheme: String = "threeZone",
+    val keyboardPaging: Boolean = true,
+    @field:DecimalMin(value = "1.0", inclusive = false, message = "zoomStep must be greater than 1")
+    val zoomStep: Double = 1.5,
+    @field:DecimalMin(value = "1.0", message = "maxZoom must be at least 1")
+    val maxZoom: Double = 5.0,
+    @field:Min(0, message = "dualPageGap must be non-negative")
+    val dualPageGap: Int = 8,
+    val splitWidePages: Boolean = false,
+    @field:Min(0, message = "preloadCount must be non-negative")
+    val preloadCount: Int = 2,
+    // slide|fade|none
+    @field:Size(max = 64, message = "pageTransition must be at most 64 characters")
+    val pageTransition: String = "slide",
 )
 
 data class PrivacyPreferences(
