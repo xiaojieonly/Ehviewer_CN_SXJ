@@ -19,10 +19,12 @@ describe('AdminAdvanced (高级)', () => {
 
   it('renders shared primitives and no native select', async () => {
     wrapper = mount(AdminAdvanced)
-    expect(wrapper.findAllComponents(SectionHeader).map((h) => h.props('title'))).toEqual(['通用', '数据'])
+    expect(wrapper.findAllComponents(SectionHeader).map((h) => h.props('title'))).toEqual(['通用', '同步策略', '数据'])
     expect(wrapper.findAllComponents(PrefRow).map((r) => r.props('title'))).toEqual([
       '界面语言',
       '保存解析错误日志',
+      '冲突仲裁策略',
+      '自动同步间隔（秒）',
       '导出数据',
       '导入数据',
       '清除本地数据',
