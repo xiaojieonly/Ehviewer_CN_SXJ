@@ -50,6 +50,8 @@ import com.hippo.anotherviewer.client.parser.GalleryPageApiParser;
 import com.hippo.anotherviewer.client.parser.GalleryPageParser;
 import com.hippo.anotherviewer.client.parser.GalleryPageUrlParser;
 import com.hippo.anotherviewer.gallery.GalleryProvider2;
+import com.hippo.anotherviewer.webui.WebUiSettings;
+import com.hippo.anotherviewer.webui.WebUiTier2ProxyInterceptor;
 import com.hippo.lib.glgallery.GalleryPageView;
 import com.hippo.lib.glgallery.GalleryProvider;
 import com.hippo.lib.image.Image;
@@ -122,6 +124,8 @@ public final class SpiderQueen implements Runnable {
     @NonNull
     private final OkHttpClient mHttpImageClient;
     @NonNull
+    private final WebUiSettings mWebUiSettings;
+    @NonNull
     private final SimpleDiskCache mSpiderInfoCache;
     @NonNull
     private final GalleryInfo mGalleryInfo;
@@ -172,6 +176,7 @@ public final class SpiderQueen implements Runnable {
     private SpiderQueen(SiteApplication application, @NonNull GalleryInfo galleryInfo) {
         mHttpClient = SiteApplication.getOkHttpClient(application);
         mHttpImageClient = SiteApplication.getImageOkHttpClient(application);
+        mWebUiSettings = new WebUiSettings(application);
         mSpiderInfoCache = SiteApplication.getSpiderInfoCache(application);
         mGalleryInfo = galleryInfo;
         mSpiderDen = new SpiderDen(mGalleryInfo);
@@ -1411,7 +1416,10 @@ public final class SpiderQueen implements Runnable {
                     // mock 调试模式（BuildConfig.MOCK_EH_BASE_URL 非空）下拦截器会把
                     // gallery.test 改写为本地 mock 地址，URL 必然不同——此时跳过校验
                     //（仅 debug 构建生效，release 该字段恒为空，安全语义不变）。
+                    // Tier-2 浏览代理（ADR-0003 D3）激活时同理：拦截器把站点主机改写
+                    // 为已配对 WebUI 服务器，属受信改写，同样豁免。
                     if (BuildConfig.MOCK_EH_BASE_URL.isEmpty() &&
+                            !WebUiTier2ProxyInterceptor.isRoutingActive(mWebUiSettings) &&
                             !targetImageUrl.equals(responseUrl)) {
                         error = "链接疑似被劫持\nThe link is suspected to be hijacked";
                         response.close();
