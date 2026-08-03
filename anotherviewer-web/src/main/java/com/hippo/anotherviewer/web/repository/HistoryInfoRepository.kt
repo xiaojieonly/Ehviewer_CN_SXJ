@@ -15,9 +15,13 @@ interface HistoryInfoRepository : JpaRepository<HistoryInfoEntity, Long> {
     fun countByUsername(username: String): Long
     @Transactional
     fun deleteByGid(gid: Long)
+    /** H-3: 同步增量拉取按 (username, lastModified) 走索引查询，避免全表扫描后内存过滤。 */
+    fun findByUsernameAndLastModifiedGreaterThan(username: String, lastModified: Long): List<HistoryInfoEntity>
+    /** H-3: 全量拉取 (since=0) —— 必须返回 lastModified=0 的合法记录，故不过滤 lastModified。 */
+    fun findByUsername(username: String): List<HistoryInfoEntity>
 
-    /** DB-paginated local history, newest first (empty-keyword fallback). */
-    @Query("select h from HistoryInfoEntity h order by h.time desc")
+    /** DB-paginated local history, newest first (empty-keyword fallback). 墓碑行不列进 REST 列表。 */
+    @Query("select h from HistoryInfoEntity h where h.deleted = false order by h.time desc")
     fun findHistoryPaged(pageable: Pageable): Page<HistoryInfoEntity>
 
     /** DB-paginated local history filtered by category, newest first. */

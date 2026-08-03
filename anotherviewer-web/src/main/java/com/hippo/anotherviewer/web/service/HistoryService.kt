@@ -17,7 +17,9 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
      */
     fun listHistory(page: Int? = null, pageSize: Int? = null): HistoryListResponse {
         return if (page == null && pageSize == null) {
-            val entities = historyRepository.findAllByOrderByTimeDesc()
+            // 墓碑行（deleted=true 的同步删除记录）不列进 REST 列表；分页路径由
+            // findHistoryPaged 的 JPQL（where h.deleted = false）兜底。
+            val entities = historyRepository.findAllByOrderByTimeDesc().filter { !it.deleted }
             HistoryListResponse(history = entities.map { it.toItem() }, total = entities.size)
         } else {
             val pageable = PageRequest.of(page?.coerceAtLeast(0) ?: 0, (pageSize ?: DEFAULT_PAGE_SIZE).coerceIn(1, MAX_PAGE_SIZE))
@@ -27,10 +29,11 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
     }
 
     fun addHistory(gid: Long, token: String, title: String?, titleJpn: String?,
-                   thumb: String?, category: Int, rating: Float) {
+                   thumb: String?, category: Int, rating: Float, mode: Int = 0) {
         val existing = historyRepository.findByGid(gid)
         if (existing != null) {
             existing.time = System.currentTimeMillis()
+            existing.mode = mode
             historyRepository.save(existing)
         } else {
             val entity = HistoryInfoEntity().apply {
@@ -41,6 +44,7 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
                 this.thumb = thumb
                 this.category = category
                 this.rating = rating
+                this.mode = mode
                 this.time = System.currentTimeMillis()
             }
             historyRepository.save(entity)
@@ -57,9 +61,9 @@ class HistoryService(private val historyRepository: HistoryInfoRepository) {
         title = title ?: "",
         titleJpn = titleJpn ?: "",
         thumb = thumb ?: "",
-        category = category.toString(),
+        category = category,
         rating = rating,
-        mode = 0,
+        mode = mode,
         time = time
     )
 

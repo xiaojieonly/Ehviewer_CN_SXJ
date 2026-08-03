@@ -21,6 +21,7 @@ import com.hippo.anotherviewer.web.entity.HistoryInfoEntity
 import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.entity.QuickSearchEntity
 import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
+import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadInfoRepository
 import com.hippo.anotherviewer.web.repository.DownloadLabelRepository
@@ -55,7 +56,10 @@ import java.util.concurrent.ConcurrentHashMap
  *  - Favorites / Downloads / Filters / QuickSearches / DownloadLabels: union
  *    merge with soft-delete tombstones (a tombstone never kills a live row;
  *    a live push resurrects a tombstone).
- *  - History / Bookmarks: LWW with hard delete.
+ *  - History / Bookmarks: LWW with server-side tombstone rows — a
+ *    `deleted: true` push marks the stored row deleted and bumps
+ *    `lastModified` (or stores the tombstone if none exists), so incremental
+ *    pulls (`since > 0`) propagate deletions; a newer live push resurrects.
  *  - Within-skew tie-breakers: history keeps the later view time, bookmarks
  *    the higher page, filters enabled=true.
  *  - Entities are scoped per user; legacy null-username rows are claimed by
@@ -89,8 +93,8 @@ class SyncServiceTest {
         quickSearchRepo = fakeQuickSearchRepo()
         downloadLabelRepo = fakeDownloadLabelRepo()
         deviceRepo = fakeDeviceRepo()
-        preferenceRepo = mock(UserPreferenceRepository::class.java)
-        preferenceService = mock(UserPreferenceService::class.java)
+        preferenceRepo = fakePreferenceRepo()
+        preferenceService = UserPreferenceService(preferenceRepo)
         service = SyncService(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo, preferenceService,
@@ -110,6 +114,10 @@ class SyncServiceTest {
         `when`(repo.findByGid(anyLong())).thenAnswer { inv -> store[inv.getArgument<Long>(0)] }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
         doAnswer { inv ->
             store.entries.removeIf { it.value === inv.getArgument<LocalFavoriteInfoEntity>(0) }
         }.`when`(repo).delete(any(LocalFavoriteInfoEntity::class.java))
@@ -127,6 +135,10 @@ class SyncServiceTest {
         `when`(repo.findByGid(anyLong())).thenAnswer { inv -> store[inv.getArgument<Long>(0)] }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
         doAnswer { inv ->
             store.entries.removeIf { it.value === inv.getArgument<HistoryInfoEntity>(0) }
         }.`when`(repo).delete(any(HistoryInfoEntity::class.java))
@@ -144,6 +156,10 @@ class SyncServiceTest {
         `when`(repo.findByGid(anyLong())).thenAnswer { inv -> store[inv.getArgument<Long>(0)] }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
         doAnswer { inv ->
             store.entries.removeIf { it.value === inv.getArgument<DownloadInfoEntity>(0) }
         }.`when`(repo).delete(any(DownloadInfoEntity::class.java))
@@ -161,6 +177,10 @@ class SyncServiceTest {
         `when`(repo.findByGid(anyLong())).thenAnswer { inv -> store[inv.getArgument<Long>(0)] }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
         doAnswer { inv ->
             store.entries.removeIf { it.value === inv.getArgument<BookmarkInfoEntity>(0) }
         }.`when`(repo).delete(any(BookmarkInfoEntity::class.java))
@@ -177,6 +197,10 @@ class SyncServiceTest {
         }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
         doAnswer { inv ->
             store.entries.removeIf { it.value === inv.getArgument<FilterEntity>(0) }
         }.`when`(repo).delete(any(FilterEntity::class.java))
@@ -194,20 +218,42 @@ class SyncServiceTest {
         `when`(repo.findByName(anyString())).thenAnswer { inv -> store[inv.getArgument<String>(0)] }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
         return repo
     }
 
     private fun fakeDownloadLabelRepo(): DownloadLabelRepository {
         val repo = mock(DownloadLabelRepository::class.java)
         val store = ConcurrentHashMap<String, DownloadLabelEntity>()
+        val idCounter = java.util.concurrent.atomic.AtomicLong(1)
         `when`(repo.save(any(DownloadLabelEntity::class.java))).thenAnswer { inv ->
             val e = inv.getArgument<DownloadLabelEntity>(0)
+            if (e.id == 0L) e.id = idCounter.getAndIncrement()
             store[e.label] = e
             e
         }
         `when`(repo.findByLabel(anyString())).thenAnswer { inv -> store[inv.getArgument<String>(0)] }
         `when`(repo.findAll()).thenAnswer { store.values.toList() }
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store.values.filter { it.username == inv.getArgument<String>(0) } }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) && it.lastModified > inv.getArgument<Long>(1) }
+        }
+        return repo
+    }
+
+    private fun fakePreferenceRepo(): UserPreferenceRepository {
+        val repo = mock(UserPreferenceRepository::class.java)
+        val store = ConcurrentHashMap<String, UserPreferenceEntity>()
+        `when`(repo.save(any(UserPreferenceEntity::class.java))).thenAnswer { inv ->
+            val e = inv.getArgument<UserPreferenceEntity>(0)
+            store[e.username] = e
+            e
+        }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv -> store[inv.getArgument<String>(0)] }
         return repo
     }
 
@@ -232,8 +278,8 @@ class SyncServiceTest {
     private fun hist(gid: Long, time: Long = 0, lastModified: Long = 1_000, deleted: Boolean = false, title: String = "Hist $gid") =
         SyncHistoryDto(gid = gid, token = "tok$gid", title = title, time = time, lastModified = lastModified, deleted = deleted)
 
-    private fun dl(gid: Long, lastModified: Long = 1_000, deleted: Boolean = false, state: Int = 0, finished: Int = 0, title: String = "Dl $gid") =
-        SyncDownloadDto(gid = gid, token = "tok$gid", title = title, state = state, finished = finished, lastModified = lastModified, deleted = deleted)
+    private fun dl(gid: Long, lastModified: Long = 1_000, deleted: Boolean = false, state: Int = 0, finished: Int = 0, label: String? = null, title: String = "Dl $gid") =
+        SyncDownloadDto(gid = gid, token = "tok$gid", title = title, state = state, finished = finished, label = label, lastModified = lastModified, deleted = deleted)
 
     private fun bm(gid: Long, page: Int = 0, lastModified: Long = 1_000, deleted: Boolean = false) =
         SyncBookmarkDto(gid = gid, token = "tok$gid", page = page, lastModified = lastModified, deleted = deleted)
@@ -339,7 +385,7 @@ class SyncServiceTest {
     ): SyncPushResponse {
         clearInvocations(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
-            quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo, preferenceService,
+            quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo,
         )
         return service.push(
             SyncPushRequest(
@@ -486,13 +532,34 @@ class SyncServiceTest {
     // ==================== mergeBookmark ====================
 
     @Test
-    fun `bookmark hard delete removes the local row`() {
+    fun `bookmark delete keeps a tombstone row and bumps lastModified`() {
         seedBookmark(gid = 7, lastModified = 1_000, page = 10)
         val response = push("A", bookmarks = listOf(bm(7, page = 10, lastModified = 2_000, deleted = true)))
 
-        assertNull(bookmarkRepo.findByGid(7))
-        verify(bookmarkRepo).delete(any(BookmarkInfoEntity::class.java))
+        val stored = bookmarkRepo.findByGid(7)!!
+        assertTrue(stored.deleted)
+        assertEquals(2_000L, stored.lastModified)
+        verify(bookmarkRepo, never()).delete(any(BookmarkInfoEntity::class.java))
         assertEquals(0, response.conflicts)
+    }
+
+    @Test
+    fun `bookmark delete of an unknown gid stores a tombstone`() {
+        push("A", bookmarks = listOf(bm(12, page = 3, lastModified = 2_000, deleted = true)))
+
+        val stored = bookmarkRepo.findByGid(12)!!
+        assertTrue(stored.deleted)
+        assertEquals(2_000L, stored.lastModified)
+    }
+
+    @Test
+    fun `bookmark tombstone reaches an incremental pull after the bump`() {
+        seedBookmark(gid = 11, lastModified = 1_000, page = 10)
+        push("A", bookmarks = listOf(bm(11, page = 10, lastModified = 2_000, deleted = true)))
+
+        val pulled = service.pull(1_500, "A", "android-test").entities.bookmarks
+        assertEquals(listOf(11L), pulled.map { it.gid })
+        assertTrue(pulled[0].deleted)
     }
 
     @Test
@@ -659,22 +726,70 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `history hard delete removes the local row`() {
+    fun `history delete keeps a tombstone row and bumps lastModified`() {
         seedHistory(gid = 50, lastModified = 1_000)
         val response = push("A", history = listOf(hist(50, lastModified = 2_000, deleted = true)))
 
-        assertNull(historyRepo.findByGid(50))
-        verify(historyRepo).delete(any(HistoryInfoEntity::class.java))
+        val stored = historyRepo.findByGid(50)!!
+        assertTrue(stored.deleted)
+        assertEquals(2_000L, stored.lastModified)
+        verify(historyRepo, never()).delete(any(HistoryInfoEntity::class.java))
         assertEquals(0, response.conflicts)
     }
 
     @Test
-    fun `history hard delete of an unknown gid is a no-op`() {
+    fun `history delete of an unknown gid stores a tombstone`() {
         push("A", history = listOf(hist(54, lastModified = 2_000, deleted = true)))
 
-        assertNull(historyRepo.findByGid(54))
-        verify(historyRepo, never()).save(any(HistoryInfoEntity::class.java))
+        val stored = historyRepo.findByGid(54)!!
+        assertTrue(stored.deleted)
+        assertEquals(2_000L, stored.lastModified)
+        assertEquals("A", stored.username)
+    }
+
+    @Test
+    fun `re-pushing the same history tombstone stays idempotent`() {
+        seedHistory(gid = 59, lastModified = 1_000)
+        push("A", history = listOf(hist(59, lastModified = 2_000, deleted = true)))
+        push("A", history = listOf(hist(59, lastModified = 2_000, deleted = true)))
+
+        val stored = historyRepo.findByGid(59)!!
+        assertTrue(stored.deleted)
+        assertEquals(2_000L, stored.lastModified)
         verify(historyRepo, never()).delete(any(HistoryInfoEntity::class.java))
+    }
+
+    @Test
+    fun `history tombstone reaches an incremental pull after the bump`() {
+        seedHistory(gid = 55, lastModified = 1_000)
+        push("A", history = listOf(hist(55, lastModified = 2_000, deleted = true)))
+
+        val pulled = service.pull(1_500, "A", "android-test").entities.history
+        assertEquals(listOf(55L), pulled.map { it.gid })
+        assertTrue(pulled[0].deleted)
+        assertEquals(2_000L, pulled[0].lastModified)
+    }
+
+    @Test
+    fun `full pull returns history tombstones with deleted flag`() {
+        seedHistory(gid = 56, lastModified = 1_000)
+        push("A", history = listOf(hist(56, lastModified = 2_000, deleted = true)))
+
+        val pulled = service.pull(0, "A", "android-test").entities.history
+        assertEquals(listOf(56L), pulled.map { it.gid })
+        assertTrue(pulled.single().deleted)
+    }
+
+    @Test
+    fun `full pull includes records with lastModified zero`() {
+        seedHistory(gid = 57, lastModified = 0)
+        seedHistory(gid = 58, lastModified = 5)
+
+        val all = service.pull(0, "A", "android-test").entities.history
+        assertEquals(setOf(57L, 58L), all.map { it.gid }.toSet())
+
+        val incremental = service.pull(1, "A", "android-test").entities.history
+        assertEquals(listOf(58L), incremental.map { it.gid })
     }
 
     @Test
@@ -785,10 +900,121 @@ class SyncServiceTest {
     }
 
     @Test
-    fun `push forwards preferences to the preference service`() {
+    fun `push preferences round-trips lastModified through pull (E2E-8)`() {
         val json = """{"general":{"lang":"zh"}}"""
-        push("A", deviceId = "android-pref", preferences = SyncPreferencesDto(preferences = json, deviceId = "android-pref"))
+        val lastModified = 12_345L
+        push("A", deviceId = "android-pref", preferences = SyncPreferencesDto(preferences = json, lastModified = lastModified, deviceId = "android-pref"))
 
-        verify(preferenceService).replace("A", json, "android-pref")
+        val pulled = service.pull(0, "A", "android-test").entities.preferences!!
+        // E2E-8: 服务器保留客户端 lastModified，不回环重打戳
+        assertEquals(lastModified, pulled.lastModified)
+        assertTrue(pulled.preferences.contains("\"lang\":\"zh\""))
+    }
+
+    // ==================== H-3: pull 走派生查询，不再全表扫描 ====================
+
+    @Test
+    fun `incremental pull queries by username and lastModified and never full-scans`() {
+        seedFavorite(gid = 60, lastModified = 1_000)
+        seedFavorite(gid = 61, lastModified = 5_000)
+        seedFavorite(gid = 62, lastModified = 9_000)
+        clearInvocations(favoriteRepo)
+
+        val pulled = service.pull(3_000, "A", "android-test").entities.favorites
+
+        assertEquals(setOf(61L, 62L), pulled.map { it.gid }.toSet())
+        verify(favoriteRepo).findByUsernameAndLastModifiedGreaterThan("A", 3_000L)
+        verify(favoriteRepo, never()).findByUsername("A")
+        verify(favoriteRepo, never()).findAll()
+    }
+
+    @Test
+    fun `incremental pull filters per user in the query`() {
+        seedFavorite(gid = 65, lastModified = 5_000, username = "B")
+        clearInvocations(favoriteRepo)
+
+        val pulled = service.pull(1_000, "A", "android-test").entities.favorites
+
+        assertTrue(pulled.isEmpty())
+        verify(favoriteRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_000L)
+    }
+
+    @Test
+    fun `full pull queries by username and includes zero-lastModified rows (since=0)`() {
+        seedFavorite(gid = 63, lastModified = 0)
+        seedFavorite(gid = 64, lastModified = 5)
+        clearInvocations(favoriteRepo)
+
+        val pulled = service.pull(0, "A", "android-test").entities.favorites
+
+        assertEquals(setOf(63L, 64L), pulled.map { it.gid }.toSet())
+        verify(favoriteRepo).findByUsername("A")
+        verify(favoriteRepo, never()).findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())
+        verify(favoriteRepo, never()).findAll()
+    }
+
+    @Test
+    fun `incremental pull runs the derived query on every entity type`() {
+        seedHistory(gid = 70, lastModified = 2_000)
+        seedDownload(gid = 71, lastModified = 2_000)
+        seedBookmark(gid = 72, lastModified = 2_000)
+        seedFilter(mode = 1, text = "x", lastModified = 2_000)
+        seedQuickSearch("p", lastModified = 2_000)
+        seedLabel("L", lastModified = 2_000)
+        clearInvocations(
+            historyRepo, downloadRepo, bookmarkRepo, filterRepo, quickSearchRepo, downloadLabelRepo,
+        )
+
+        service.pull(1_500, "A", "android-test")
+
+        verify(historyRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+        verify(downloadRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+        verify(bookmarkRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+        verify(filterRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+        verify(quickSearchRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+        verify(downloadLabelRepo).findByUsernameAndLastModifiedGreaterThan("A", 1_500L)
+    }
+
+    // ==================== M-14: download label name <-> id 映射 ====================
+
+    @Test
+    fun `download label name maps to the label id on push and back on pull (M-14)`() {
+        // 服务端已有标签行（如上一轮 sync 建好的 MyLabel=id7）
+        DownloadLabelEntity().apply {
+            id = 7
+            label = "MyLabel"
+            time = 111
+            lastModified = 1_000
+            username = "A"
+        }.let { downloadLabelRepo.save(it) }
+        clearInvocations(downloadRepo, downloadLabelRepo)
+
+        push("A", downloads = listOf(dl(70, lastModified = 2_000, label = "MyLabel")))
+
+        // push 落库为标签 id
+        assertEquals(7, downloadRepo.findByGid(70)!!.label)
+        // pull 回环为标签名字符串
+        assertEquals("MyLabel", service.pull(0, "A", "android-test").entities.downloads.single().label)
+    }
+
+    @Test
+    fun `download with unknown label name auto-creates the label row (M-14)`() {
+        push("A", downloads = listOf(dl(71, lastModified = 2_000, label = "NewLabel")))
+
+        val captor = ArgumentCaptor.forClass(DownloadLabelEntity::class.java)
+        verify(downloadLabelRepo).save(captureK(captor))
+        val created = captor.value
+        assertEquals("NewLabel", created.label)
+        assertEquals(2_000L, created.lastModified)
+        // 下载行引用新建标签的 id（与 DownloadService 的 id 约定一致）
+        assertEquals(created.id.toInt(), downloadRepo.findByGid(71)!!.label)
+    }
+
+    @Test
+    fun `download without a label stays label zero and pulls back null (M-14)`() {
+        push("A", downloads = listOf(dl(72, lastModified = 2_000)))
+
+        assertEquals(0, downloadRepo.findByGid(72)!!.label)
+        assertNull(service.pull(0, "A", "android-test").entities.downloads.single().label)
     }
 }

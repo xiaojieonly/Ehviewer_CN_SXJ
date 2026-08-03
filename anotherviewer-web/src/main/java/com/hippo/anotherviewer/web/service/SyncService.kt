@@ -37,8 +37,8 @@ class SyncService(
         conflicts += e.downloadLabels.sumOf { if (mergeDownloadLabel(it, username)) 1 else 0 }
 
         e.preferences?.let { pref ->
-            // last-write-wins: 只有推送方更新时才覆盖
-            preferenceService.replace(username, pref.preferences, pref.deviceId)
+            // last-write-wins: 仅当推送方 lastModified 明显新于存量 updatedAt 时覆盖（含时钟偏差容忍）
+            preferenceService.replace(username, pref.preferences, pref.deviceId, pref.lastModified)
         }
 
         val now = System.currentTimeMillis()
@@ -52,17 +52,28 @@ class SyncService(
         val now = System.currentTimeMillis()
         if (deviceId.isNotEmpty()) updateDevice(deviceId, now, username)
         val prefEntity = preferenceRepository.findByUsername(username)
-        // since=0 是全量拉取：lastModified=0 的合法记录（如 time=0 的旧下载记录）
-        // 必须一并返回，否则 0 > 0 恒假，这些记录永远无法到达新设备。
-        fun include(lastModified: Long): Boolean = since == 0L || lastModified > since
+        // H-3: 增量拉取走 (username, lastModified) 派生查询，不再 findAll 全表扫描后内存过滤。
+        // since == 0 是全量拉取：lastModified=0 的合法记录（如 time=0 的旧下载记录）必须一并
+        // 返回，故用 findByUsername（不过滤 lastModified），不得回归 H-3 的 since=0 边界。
+        fun <T> select(full: (String) -> List<T>, delta: (String, Long) -> List<T>): List<T> =
+            if (since == 0L) full(username) else delta(username, since)
+        val favorites = select(favoriteRepository::findByUsername, favoriteRepository::findByUsernameAndLastModifiedGreaterThan)
+        val history = select(historyRepository::findByUsername, historyRepository::findByUsernameAndLastModifiedGreaterThan)
+        val downloads = select(downloadRepository::findByUsername, downloadRepository::findByUsernameAndLastModifiedGreaterThan)
+        val bookmarks = select(bookmarkRepository::findByUsername, bookmarkRepository::findByUsernameAndLastModifiedGreaterThan)
+        val filters = select(filterRepository::findByUsername, filterRepository::findByUsernameAndLastModifiedGreaterThan)
+        val quickSearches = select(quickSearchRepository::findByUsername, quickSearchRepository::findByUsernameAndLastModifiedGreaterThan)
+        val downloadLabels = select(downloadLabelRepository::findByUsername, downloadLabelRepository::findByUsernameAndLastModifiedGreaterThan)
+        // M-14: wire 上的 label 是标签名，落库是 download_label.id；一次拉取只解析一次 id→名字映射。
+        val labelNames = downloadLabels.mapNotNull { l -> if (l.id == 0L) null else l.id.toInt() to l.label }.toMap()
         val entities = SyncEntityCollection(
-            favorites = favoriteRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncFavoriteDto() },
-            history = historyRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncHistoryDto() },
-            downloads = downloadRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncDownloadDto() },
-            bookmarks = bookmarkRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncBookmarkDto() },
-            filters = filterRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncFilterDto() },
-            quickSearches = quickSearchRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncQuickSearchDto() },
-            downloadLabels = downloadLabelRepository.findAll().filter { it.username == username && include(it.lastModified) }.map { it.toSyncDownloadLabelDto() },
+            favorites = favorites.map { it.toSyncFavoriteDto() },
+            history = history.map { it.toSyncHistoryDto() },
+            downloads = downloads.map { it.toSyncDownloadDto(labelNames) },
+            bookmarks = bookmarks.map { it.toSyncBookmarkDto() },
+            filters = filters.map { it.toSyncFilterDto() },
+            quickSearches = quickSearches.map { it.toSyncQuickSearchDto() },
+            downloadLabels = downloadLabels.map { it.toSyncDownloadLabelDto() },
             preferences = SyncPreferencesDto(
                 preferences = preferenceService.getRaw(username),
                 lastModified = prefEntity?.updatedAt ?: 0,
@@ -173,12 +184,20 @@ class SyncService(
         return false
     }
 
-    /** History: last-write-wins with hard delete. */
+    /** History: last-write-wins；删除保留墓碑行（deleted=true + lastModified bump），增量 pull 才能传播删除。 */
     private fun mergeHistory(incoming: SyncHistoryDto, username: String): Boolean {
         val raw = historyRepository.findByGid(incoming.gid)
         val existing = ownedBy(raw, username) { it.username }
         if (incoming.deleted) {
-            if (existing != null) historyRepository.delete(existing)
+            // 软删: 不真删行，bump lastModified 使 since>0 的增量 pull 能取到墓碑
+            if (existing != null) {
+                existing.deleted = true
+                existing.lastModified = maxOf(existing.lastModified, incoming.lastModified)
+                historyRepository.save(existing)
+            } else if (raw == null) {
+                // 未知 gid 也存墓碑，删除同样能传播到其他设备
+                historyRepository.save(incoming.toHistoryEntity(username))
+            }
             return false
         }
         if (existing == null) {
@@ -223,12 +242,20 @@ class SyncService(
         return false
     }
 
-    /** Bookmarks: last-write-wins with hard delete. */
+    /** Bookmarks: last-write-wins；删除保留墓碑行（deleted=true + lastModified bump），增量 pull 才能传播删除。 */
     private fun mergeBookmark(incoming: SyncBookmarkDto, username: String): Boolean {
         val raw = bookmarkRepository.findByGid(incoming.gid)
         val existing = ownedBy(raw, username) { it.username }
         if (incoming.deleted) {
-            if (existing != null) bookmarkRepository.delete(existing)
+            // 软删: 不真删行，bump lastModified 使 since>0 的增量 pull 能取到墓碑
+            if (existing != null) {
+                existing.deleted = true
+                existing.lastModified = maxOf(existing.lastModified, incoming.lastModified)
+                bookmarkRepository.save(existing)
+            } else if (raw == null) {
+                // 未知 gid 也存墓碑，删除同样能传播到其他设备
+                bookmarkRepository.save(incoming.toBookmarkEntity(username))
+            }
             return false
         }
         if (existing == null) {
@@ -411,8 +438,10 @@ class SyncService(
         entity.favoriteSlot = dto.favoriteSlot
         entity.favoriteName = dto.favoriteName
         entity.pages = dto.pages
+        entity.mode = dto.mode
         entity.time = dto.time
         entity.lastModified = dto.lastModified
+        entity.deleted = dto.deleted
     }
 
     private fun SyncDownloadDto.toDownloadEntity(username: String) = DownloadInfoEntity().apply {
@@ -448,6 +477,23 @@ class SyncService(
         entity.time = dto.time
         entity.lastModified = dto.lastModified
         entity.deleted = dto.deleted
+        entity.label = resolveLabelId(dto.label, dto.lastModified)
+    }
+
+    /**
+     * M-14: wire 上的 label 是标签名字符串，落库是 download_label.id（与 DownloadService 的
+     * 约定一致，`DownloadAddRequest.label` 也是 id）。映射不到时按 DownloadService.createLabel
+     * 的约定补建标签行（全局标签、不设 username，等 adoptNullOwnership 认领），绝不写 0 丢标签。
+     */
+    private fun resolveLabelId(labelName: String?, lastModified: Long): Int {
+        if (labelName.isNullOrEmpty()) return 0
+        downloadLabelRepository.findByLabel(labelName)?.let { return it.id.toInt() }
+        val created = downloadLabelRepository.save(DownloadLabelEntity().apply {
+            label = labelName
+            time = System.currentTimeMillis()
+            this.lastModified = lastModified
+        })
+        return created.id.toInt()
     }
 
     private fun SyncBookmarkDto.toBookmarkEntity(username: String) = BookmarkInfoEntity().apply {
@@ -479,6 +525,7 @@ class SyncService(
         entity.time = dto.time
         entity.note = dto.page.toString()
         entity.lastModified = dto.lastModified
+        entity.deleted = dto.deleted
     }
 
     private fun SyncFilterDto.toFilterEntity(username: String) = FilterEntity().apply {
@@ -545,10 +592,11 @@ class SyncService(
         simpleTags = simpleTags, thumbWidth = thumbWidth, thumbHeight = thumbHeight,
         spanSize = spanSize, spanIndex = spanIndex, spanGroupIndex = spanGroupIndex,
         favoriteSlot = favoriteSlot, favoriteName = favoriteName, pages = pages,
-        time = time, lastModified = lastModified, deviceId = "server",
+        mode = mode, time = time, lastModified = lastModified, deviceId = "server",
+        deleted = deleted,
     )
 
-    private fun DownloadInfoEntity.toSyncDownloadDto() = SyncDownloadDto(
+    private fun DownloadInfoEntity.toSyncDownloadDto(labelNames: Map<Int, String>) = SyncDownloadDto(
         gid = gid, token = token, title = title, titleJpn = titleJpn,
         thumb = thumb, category = category, posted = posted, uploader = uploader,
         rating = rating, rated = rated, simpleLanguage = simpleLanguage,
@@ -556,7 +604,7 @@ class SyncService(
         spanSize = spanSize, spanIndex = spanIndex, spanGroupIndex = spanGroupIndex,
         favoriteSlot = favoriteSlot, favoriteName = favoriteName, pages = pages,
         state = state, legacy = legacy, total = total, finished = done,
-        time = time, lastModified = lastModified, deviceId = "server",
+        label = labelNames[label], time = time, lastModified = lastModified, deviceId = "server",
         deleted = deleted,
     )
 
@@ -568,6 +616,7 @@ class SyncService(
         spanSize = spanSize, spanIndex = spanIndex, spanGroupIndex = spanGroupIndex,
         favoriteSlot = favoriteSlot, favoriteName = favoriteName, pages = pages,
         page = note?.toIntOrNull() ?: 0, time = time, lastModified = lastModified, deviceId = "server",
+        deleted = deleted,
     )
 
     private fun FilterEntity.toSyncFilterDto() = SyncFilterDto(

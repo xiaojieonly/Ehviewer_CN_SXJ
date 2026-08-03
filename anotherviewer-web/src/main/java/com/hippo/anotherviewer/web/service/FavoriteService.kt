@@ -27,7 +27,7 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
                 title = entity.title ?: "",
                 titleJpn = entity.titleJpn ?: "",
                 thumb = entity.thumb ?: "",
-                category = entity.category.toString(),
+                category = entity.category,
                 rating = entity.rating,
                 uploader = entity.uploader,
                 posted = entity.posted
@@ -36,17 +36,37 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
         return FavoriteListResponse(items, totalPages, startPage)
     }
 
-    fun addFavorite(gid: Long, token: String, title: String?, category: Int): Boolean {
+    /**
+     * Android favoriteSlot contract (see `GalleryListParser.parseFavoriteSlot`):
+     * -2 = not favorited, -1 = default folder, 0-9 = custom slots.
+     * Values outside this range are never written by this service.
+     */
+    private companion object {
+        const val SLOT_NOT_FAVORITED = -2
+        const val SLOT_DEFAULT_FOLDER = -1
+        const val SLOT_MAX = 9
+    }
+
+    fun addFavorite(
+        gid: Long,
+        token: String,
+        title: String?,
+        category: Int,
+        slot: Int = SLOT_DEFAULT_FOLDER
+    ): Boolean {
         val existing = favoriteRepository.findByGid(gid)
         if (existing != null) return false
         val entity = LocalFavoriteInfoEntity().apply {
             this.gid = gid
             this.token = token
             this.title = title
+            // category is a site bitmask (up to 512); it is written to its own
+            // column only and must never leak into favoriteSlot.
             this.category = category
-            // Android dstCat semantics: -1 = default folder, 0-9 = custom slots.
-            // Stored so the list endpoint can filter by slot.
-            this.favoriteSlot = category
+            // Clamp so a bitmask-style value can never be persisted as a slot;
+            // an out-of-range slot would break listFavorites' slot filter.
+            // Legacy rows with favoriteSlot=512 (pre-N-5) are not migrated here.
+            this.favoriteSlot = slot.coerceIn(SLOT_NOT_FAVORITED, SLOT_MAX)
             this.time = System.currentTimeMillis()
         }
         favoriteRepository.save(entity)
