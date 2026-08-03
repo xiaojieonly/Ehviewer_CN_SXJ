@@ -32,7 +32,7 @@ public class SiteDaoGenerator {
     private static final String OUT_DIR = "app/src/main/java";
     private static final String DELETE_DIR = OUT_DIR+"/com/hippo/anotherviewer/dao";
 
-    private static final int VERSION = 6;
+    private static final int VERSION = 8;
 
     private static final String DOWNLOAD_INFO_PATH = OUT_DIR+"/com/hippo/anotherviewer/dao/DownloadInfo.java";
     private static final String HISTORY_INFO_PATH = OUT_DIR+"/com/hippo/anotherviewer/dao/HistoryInfo.java";
@@ -271,7 +271,7 @@ public class SiteDaoGenerator {
     private static void addBookmarks(Schema schema) {
         Entity entity = schema.addEntity("BookmarkInfo");
         entity.setTableName("BOOKMARKS");
-        entity.setClassNameDao("BookmarksBao");
+        entity.setClassNameDao("BookmarksDao");
         entity.setSuperclass("GalleryInfo");
         // GalleryInfo data
         entity.addLongProperty("gid").primaryKey().notNull();

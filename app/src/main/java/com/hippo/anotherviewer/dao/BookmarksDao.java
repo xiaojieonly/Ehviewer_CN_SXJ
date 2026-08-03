@@ -13,7 +13,7 @@ import org.greenrobot.greendao.database.DatabaseStatement;
 /** 
  * DAO for table "BOOKMARKS".
 */
-public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
+public class BookmarksDao extends AbstractDao<BookmarkInfo, Long> {
 
     public static final String TABLENAME = "BOOKMARKS";
 
@@ -34,14 +34,24 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
         public final static Property SimpleLanguage = new Property(9, String.class, "simpleLanguage", false, "SIMPLE_LANGUAGE");
         public final static Property Page = new Property(10, int.class, "page", false, "PAGE");
         public final static Property Time = new Property(11, long.class, "time", false, "TIME");
+        public final static Property Rated = new Property(12, boolean.class, "rated", false, "RATED");
+        public final static Property SimpleTags = new Property(13, String.class, "simpleTags", false, "SIMPLE_TAGS");
+        public final static Property Pages = new Property(14, int.class, "pages", false, "PAGES");
+        public final static Property ThumbWidth = new Property(15, int.class, "thumbWidth", false, "THUMB_WIDTH");
+        public final static Property ThumbHeight = new Property(16, int.class, "thumbHeight", false, "THUMB_HEIGHT");
+        public final static Property SpanSize = new Property(17, int.class, "spanSize", false, "SPAN_SIZE");
+        public final static Property SpanIndex = new Property(18, int.class, "spanIndex", false, "SPAN_INDEX");
+        public final static Property SpanGroupIndex = new Property(19, int.class, "spanGroupIndex", false, "SPAN_GROUP_INDEX");
+        public final static Property FavoriteSlot = new Property(20, int.class, "favoriteSlot", false, "FAVORITE_SLOT");
+        public final static Property FavoriteName = new Property(21, String.class, "favoriteName", false, "FAVORITE_NAME");
     };
 
 
-    public BookmarksBao(DaoConfig config) {
+    public BookmarksDao(DaoConfig config) {
         super(config);
     }
     
-    public BookmarksBao(DaoConfig config, DaoSession daoSession) {
+    public BookmarksDao(DaoConfig config, DaoSession daoSession) {
         super(config, daoSession);
     }
 
@@ -60,7 +70,17 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
                 "\"RATING\" REAL NOT NULL ," + // 8: rating
                 "\"SIMPLE_LANGUAGE\" TEXT," + // 9: simpleLanguage
                 "\"PAGE\" INTEGER NOT NULL ," + // 10: page
-                "\"TIME\" INTEGER NOT NULL );"); // 11: time
+                "\"TIME\" INTEGER NOT NULL ," + // 11: time
+                "\"RATED\" INTEGER NOT NULL ," + // 12: rated
+                "\"SIMPLE_TAGS\" TEXT," + // 13: simpleTags
+                "\"PAGES\" INTEGER NOT NULL ," + // 14: pages
+                "\"THUMB_WIDTH\" INTEGER NOT NULL ," + // 15: thumbWidth
+                "\"THUMB_HEIGHT\" INTEGER NOT NULL ," + // 16: thumbHeight
+                "\"SPAN_SIZE\" INTEGER NOT NULL ," + // 17: spanSize
+                "\"SPAN_INDEX\" INTEGER NOT NULL ," + // 18: spanIndex
+                "\"SPAN_GROUP_INDEX\" INTEGER NOT NULL ," + // 19: spanGroupIndex
+                "\"FAVORITE_SLOT\" INTEGER NOT NULL ," + // 20: favoriteSlot
+                "\"FAVORITE_NAME\" TEXT);"); // 21: favoriteName
     }
 
     /** Drops the underlying database table. */
@@ -112,6 +132,24 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
         }
         stmt.bindLong(11, entity.getPage());
         stmt.bindLong(12, entity.getTime());
+        stmt.bindLong(13, entity.getRated() ? 1L : 0L);
+
+        String simpleTags = joinTags(entity.getSimpleTags());
+        if (simpleTags != null) {
+            stmt.bindString(14, simpleTags);
+        }
+        stmt.bindLong(15, entity.getPages());
+        stmt.bindLong(16, entity.getThumbWidth());
+        stmt.bindLong(17, entity.getThumbHeight());
+        stmt.bindLong(18, entity.getSpanSize());
+        stmt.bindLong(19, entity.getSpanIndex());
+        stmt.bindLong(20, entity.getSpanGroupIndex());
+        stmt.bindLong(21, entity.getFavoriteSlot());
+
+        String favoriteName = entity.getFavoriteName();
+        if (favoriteName != null) {
+            stmt.bindString(22, favoriteName);
+        }
     }
 
     @Override
@@ -157,6 +195,24 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
         }
         stmt.bindLong(11, entity.getPage());
         stmt.bindLong(12, entity.getTime());
+        stmt.bindLong(13, entity.getRated() ? 1L : 0L);
+
+        String simpleTags = joinTags(entity.getSimpleTags());
+        if (simpleTags != null) {
+            stmt.bindString(14, simpleTags);
+        }
+        stmt.bindLong(15, entity.getPages());
+        stmt.bindLong(16, entity.getThumbWidth());
+        stmt.bindLong(17, entity.getThumbHeight());
+        stmt.bindLong(18, entity.getSpanSize());
+        stmt.bindLong(19, entity.getSpanIndex());
+        stmt.bindLong(20, entity.getSpanGroupIndex());
+        stmt.bindLong(21, entity.getFavoriteSlot());
+
+        String favoriteName = entity.getFavoriteName();
+        if (favoriteName != null) {
+            stmt.bindString(22, favoriteName);
+        }
     }
 
     @Override
@@ -178,7 +234,17 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
             cursor.getFloat(offset + 8), // rating
             cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9), // simpleLanguage
             cursor.getInt(offset + 10), // page
-            cursor.getLong(offset + 11) // time
+            cursor.getLong(offset + 11), // time
+            cursor.getShort(offset + 12) != 0, // rated
+            splitTags(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13)), // simpleTags
+            cursor.getInt(offset + 14), // pages
+            cursor.getInt(offset + 15), // thumbWidth
+            cursor.getInt(offset + 16), // thumbHeight
+            cursor.getInt(offset + 17), // spanSize
+            cursor.getInt(offset + 18), // spanIndex
+            cursor.getInt(offset + 19), // spanGroupIndex
+            cursor.getInt(offset + 20), // favoriteSlot
+            cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21) // favoriteName
         );
         return entity;
     }
@@ -197,6 +263,16 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
         entity.setSimpleLanguage(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
         entity.setPage(cursor.getInt(offset + 10));
         entity.setTime(cursor.getLong(offset + 11));
+        entity.setRated(cursor.getShort(offset + 12) != 0);
+        entity.setSimpleTags(splitTags(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13)));
+        entity.setPages(cursor.getInt(offset + 14));
+        entity.setThumbWidth(cursor.getInt(offset + 15));
+        entity.setThumbHeight(cursor.getInt(offset + 16));
+        entity.setSpanSize(cursor.getInt(offset + 17));
+        entity.setSpanIndex(cursor.getInt(offset + 18));
+        entity.setSpanGroupIndex(cursor.getInt(offset + 19));
+        entity.setFavoriteSlot(cursor.getInt(offset + 20));
+        entity.setFavoriteName(cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21));
      }
     
     @Override
@@ -217,6 +293,35 @@ public class BookmarksBao extends AbstractDao<BookmarkInfo, Long> {
     @Override
     protected final boolean isEntityUpdateable() {
         return true;
+    }
+
+    /**
+     * Joins a tag array into the semicolon-separated wire/db format
+     * (mirrors WebUiSyncEngine.joinTags); {@code null} when empty.
+     */
+    private static String joinTags(String[] tags) {
+        if (tags == null || tags.length == 0) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String tag : tags) {
+            if (sb.length() > 0) {
+                sb.append(';');
+            }
+            sb.append(tag);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Splits the semicolon-separated SIMPLE_TAGS column back into a tag array
+     * (mirrors WebUiSyncEngine.splitTags); {@code null} when empty.
+     */
+    private static String[] splitTags(String tags) {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        return tags.split(";");
     }
     
 }

@@ -23,7 +23,6 @@ import static com.hippo.anotherviewer.ui.fragment.AdvancedFragment.LOADING_STATU
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.os.Handler;
@@ -108,7 +107,22 @@ public class SiteDB {
         }
     }
 
-    private static void upgradeDB(SQLiteDatabase db, int oldVersion) {
+    /**
+     * Adds a column to a table, tolerating the column already existing
+     * (e.g. a partially applied previous migration or a re-run). Matches the
+     * style of the v6→v7 ARCHIVE_URI migration.
+     */
+    private static void addColumn(SQLiteDatabase db, String table, String column, String definition) {
+        try {
+            db.execSQL("ALTER TABLE \"" + table + "\" ADD COLUMN \"" + column + "\" " + definition);
+        } catch (Exception e) {
+            // Column might already exist, ignore the error
+            Log.w("SiteDB", "Failed to add " + column + " column to " + table + ", might already exist", e);
+            Analytics.recordException(e);
+        }
+    }
+
+    static void upgradeDB(SQLiteDatabase db, int oldVersion) {
         switch (oldVersion) {
 //            case 1: // 1 to 2, add FILTER
 //                FilterDao.createTable(db, true);
@@ -176,6 +190,56 @@ public class SiteDB {
                     Log.w("SiteDB", "Failed to add ARCHIVE_URI column, might already exist", e);
                     Analytics.recordException(e);
                 }
+            case 7: // 7 to 8, add sync metadata + gallery detail columns to the four gallery tables
+                // DOWNLOADS (14 new columns; NOT NULL columns need a DEFAULT so
+                // ALTER TABLE succeeds on tables that already contain rows)
+                addColumn(db, "DOWNLOADS", "FINISHED", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "TOTAL", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "FILE_SIZE", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "LAST_MODIFIED", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "RATED", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "SIMPLE_TAGS", "TEXT");
+                addColumn(db, "DOWNLOADS", "PAGES", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "THUMB_WIDTH", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "THUMB_HEIGHT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "SPAN_SIZE", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "SPAN_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "SPAN_GROUP_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "FAVORITE_SLOT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "DOWNLOADS", "FAVORITE_NAME", "TEXT");
+                // HISTORY
+                addColumn(db, "HISTORY", "RATED", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "SIMPLE_TAGS", "TEXT");
+                addColumn(db, "HISTORY", "PAGES", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "THUMB_WIDTH", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "THUMB_HEIGHT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "SPAN_SIZE", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "SPAN_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "SPAN_GROUP_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "FAVORITE_SLOT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "HISTORY", "FAVORITE_NAME", "TEXT");
+                // LOCAL_FAVORITES
+                addColumn(db, "LOCAL_FAVORITES", "RATED", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "SIMPLE_TAGS", "TEXT");
+                addColumn(db, "LOCAL_FAVORITES", "PAGES", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "THUMB_WIDTH", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "THUMB_HEIGHT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "SPAN_SIZE", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "SPAN_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "SPAN_GROUP_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "FAVORITE_SLOT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "LOCAL_FAVORITES", "FAVORITE_NAME", "TEXT");
+                // BOOKMARKS
+                addColumn(db, "BOOKMARKS", "RATED", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "SIMPLE_TAGS", "TEXT");
+                addColumn(db, "BOOKMARKS", "PAGES", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "THUMB_WIDTH", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "THUMB_HEIGHT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "SPAN_SIZE", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "SPAN_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "SPAN_GROUP_INDEX", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "FAVORITE_SLOT", "INTEGER NOT NULL DEFAULT 0");
+                addColumn(db, "BOOKMARKS", "FAVORITE_NAME", "TEXT");
         }
     }
 
@@ -416,25 +480,14 @@ public class SiteDB {
 
     public static synchronized List<DownloadInfo> getAllDownloadInfo() {
         DownloadsDao dao = sDaoSession.getDownloadsDao();
-        List<DownloadInfo> list = new ArrayList<>();
-        try{
-            list = dao.queryBuilder().orderDesc(DownloadsDao.Properties.Time).list();
-        } catch (SQLiteException ignore) {
-            try {
-                sDaoSession.getDatabase().execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVE_URI\" TEXT");
-            } catch (Exception e) {
-                // Column might already exist, ignore the error
-                Log.w("SiteDB", "Failed to add ARCHIVE_URI column, might already exist", e);
-                Analytics.recordException(e);
-            }
-        }
-        // Fix state
-        for (DownloadInfo info : list) {
-            if (info.state == DownloadInfo.STATE_WAIT || info.state == DownloadInfo.STATE_DOWNLOAD) {
-                info.state = DownloadInfo.STATE_NONE;
-            }
-        }
-        return list;
+        // No ARCHIVE_URI fallback ALTER here anymore: since schema v8 the column
+        // always exists (v8 createTable includes it, and upgradeDB case 7 adds
+        // it to any older DB before this is reachable). The raw ALTER used to
+        // live in a SQLiteException catch around this query.
+        // The WAIT/DOWNLOAD states are returned as-is (no "Fix state" pass):
+        // DownloadManager owns state transitions, and the WebUI sync engine
+        // needs the real states to propagate them (B3).
+        return dao.queryBuilder().orderDesc(DownloadsDao.Properties.Time).list();
     }
 
     public static synchronized void moveDownloadInfo(List<DownloadInfo> infos, int fromPosition, int toPosition){
@@ -993,17 +1046,17 @@ public class SiteDB {
 
     /** Materialized snapshot of all bookmark records for building a sync push. */
     public static synchronized List<BookmarkInfo> getAllBookmark() {
-        return sDaoSession.getBookmarksBao().queryBuilder().list();
+        return sDaoSession.getBookmarksDao().queryBuilder().list();
     }
 
     /** Insert or replace a bookmark record (gid is the primary key). */
     public static synchronized void putBookmark(BookmarkInfo bookmark) {
-        sDaoSession.getBookmarksBao().insertOrReplace(bookmark);
+        sDaoSession.getBookmarksDao().insertOrReplace(bookmark);
     }
 
     /** Hard-delete a bookmark record by gid. */
     public static synchronized void removeBookmarkByGid(long gid) {
-        sDaoSession.getBookmarksBao().deleteByKey(gid);
+        sDaoSession.getBookmarksDao().deleteByKey(gid);
     }
 
     /** Finds the filter identified by its composite (mode, text) key, or {@code null} when absent. */
@@ -1033,7 +1086,10 @@ public class SiteDB {
     public static synchronized boolean exportDB(Context context, File file) {
         final String ehExportName = "eh.export.db";
 
-        // Ensure source database has ARCHIVE_URI column
+        // Ensure source database has ARCHIVE_URI column. Since schema v8 the
+        // column is always present (created by the v8 createTable or added by
+        // upgradeDB case 7), so this is a harmless defensive no-op that would
+        // only matter for a database that predates v7 and skipped the upgrade.
         try {
             sDaoSession.getDatabase().execSQL("ALTER TABLE \"DOWNLOADS\" ADD COLUMN \"ARCHIVE_URI\" TEXT");
         } catch (Exception e) {
@@ -1063,7 +1119,7 @@ public class SiteDB {
                     return false;
                 if (!copyDao(sDaoSession.getLocalFavoritesDao(), exportSession.getLocalFavoritesDao()))
                     return false;
-                if (!copyDao(sDaoSession.getBookmarksBao(), exportSession.getBookmarksBao()))
+                if (!copyDao(sDaoSession.getBookmarksDao(), exportSession.getBookmarksDao()))
                     return false;
                 if (!copyDao(sDaoSession.getFilterDao(), exportSession.getFilterDao()))
                     return false;

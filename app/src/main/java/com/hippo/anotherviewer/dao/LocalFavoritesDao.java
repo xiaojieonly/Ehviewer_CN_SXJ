@@ -33,6 +33,16 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
         public final static Property Rating = new Property(8, float.class, "rating", false, "RATING");
         public final static Property SimpleLanguage = new Property(9, String.class, "simpleLanguage", false, "SIMPLE_LANGUAGE");
         public final static Property Time = new Property(10, long.class, "time", false, "TIME");
+        public final static Property Rated = new Property(11, boolean.class, "rated", false, "RATED");
+        public final static Property SimpleTags = new Property(12, String.class, "simpleTags", false, "SIMPLE_TAGS");
+        public final static Property Pages = new Property(13, int.class, "pages", false, "PAGES");
+        public final static Property ThumbWidth = new Property(14, int.class, "thumbWidth", false, "THUMB_WIDTH");
+        public final static Property ThumbHeight = new Property(15, int.class, "thumbHeight", false, "THUMB_HEIGHT");
+        public final static Property SpanSize = new Property(16, int.class, "spanSize", false, "SPAN_SIZE");
+        public final static Property SpanIndex = new Property(17, int.class, "spanIndex", false, "SPAN_INDEX");
+        public final static Property SpanGroupIndex = new Property(18, int.class, "spanGroupIndex", false, "SPAN_GROUP_INDEX");
+        public final static Property FavoriteSlot = new Property(19, int.class, "favoriteSlot", false, "FAVORITE_SLOT");
+        public final static Property FavoriteName = new Property(20, String.class, "favoriteName", false, "FAVORITE_NAME");
     };
 
 
@@ -58,7 +68,17 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
                 "\"UPLOADER\" TEXT," + // 7: uploader
                 "\"RATING\" REAL NOT NULL ," + // 8: rating
                 "\"SIMPLE_LANGUAGE\" TEXT," + // 9: simpleLanguage
-                "\"TIME\" INTEGER NOT NULL );"); // 10: time
+                "\"TIME\" INTEGER NOT NULL ," + // 10: time
+                "\"RATED\" INTEGER NOT NULL ," + // 11: rated
+                "\"SIMPLE_TAGS\" TEXT," + // 12: simpleTags
+                "\"PAGES\" INTEGER NOT NULL ," + // 13: pages
+                "\"THUMB_WIDTH\" INTEGER NOT NULL ," + // 14: thumbWidth
+                "\"THUMB_HEIGHT\" INTEGER NOT NULL ," + // 15: thumbHeight
+                "\"SPAN_SIZE\" INTEGER NOT NULL ," + // 16: spanSize
+                "\"SPAN_INDEX\" INTEGER NOT NULL ," + // 17: spanIndex
+                "\"SPAN_GROUP_INDEX\" INTEGER NOT NULL ," + // 18: spanGroupIndex
+                "\"FAVORITE_SLOT\" INTEGER NOT NULL ," + // 19: favoriteSlot
+                "\"FAVORITE_NAME\" TEXT);"); // 20: favoriteName
     }
 
     /** Drops the underlying database table. */
@@ -109,6 +129,24 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
             stmt.bindString(10, simpleLanguage);
         }
         stmt.bindLong(11, entity.getTime());
+        stmt.bindLong(12, entity.getRated() ? 1L : 0L);
+
+        String simpleTags = joinTags(entity.getSimpleTags());
+        if (simpleTags != null) {
+            stmt.bindString(13, simpleTags);
+        }
+        stmt.bindLong(14, entity.getPages());
+        stmt.bindLong(15, entity.getThumbWidth());
+        stmt.bindLong(16, entity.getThumbHeight());
+        stmt.bindLong(17, entity.getSpanSize());
+        stmt.bindLong(18, entity.getSpanIndex());
+        stmt.bindLong(19, entity.getSpanGroupIndex());
+        stmt.bindLong(20, entity.getFavoriteSlot());
+
+        String favoriteName = entity.getFavoriteName();
+        if (favoriteName != null) {
+            stmt.bindString(21, favoriteName);
+        }
     }
 
     @Override
@@ -153,6 +191,24 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
             stmt.bindString(10, simpleLanguage);
         }
         stmt.bindLong(11, entity.getTime());
+        stmt.bindLong(12, entity.getRated() ? 1L : 0L);
+
+        String simpleTags = joinTags(entity.getSimpleTags());
+        if (simpleTags != null) {
+            stmt.bindString(13, simpleTags);
+        }
+        stmt.bindLong(14, entity.getPages());
+        stmt.bindLong(15, entity.getThumbWidth());
+        stmt.bindLong(16, entity.getThumbHeight());
+        stmt.bindLong(17, entity.getSpanSize());
+        stmt.bindLong(18, entity.getSpanIndex());
+        stmt.bindLong(19, entity.getSpanGroupIndex());
+        stmt.bindLong(20, entity.getFavoriteSlot());
+
+        String favoriteName = entity.getFavoriteName();
+        if (favoriteName != null) {
+            stmt.bindString(21, favoriteName);
+        }
     }
 
     @Override
@@ -173,7 +229,17 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
             cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7), // uploader
             cursor.getFloat(offset + 8), // rating
             cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9), // simpleLanguage
-            cursor.getLong(offset + 10) // time
+            cursor.getLong(offset + 10), // time
+            cursor.getShort(offset + 11) != 0, // rated
+            splitTags(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12)), // simpleTags
+            cursor.getInt(offset + 13), // pages
+            cursor.getInt(offset + 14), // thumbWidth
+            cursor.getInt(offset + 15), // thumbHeight
+            cursor.getInt(offset + 16), // spanSize
+            cursor.getInt(offset + 17), // spanIndex
+            cursor.getInt(offset + 18), // spanGroupIndex
+            cursor.getInt(offset + 19), // favoriteSlot
+            cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20) // favoriteName
         );
         return entity;
     }
@@ -191,6 +257,16 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
         entity.setRating(cursor.getFloat(offset + 8));
         entity.setSimpleLanguage(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
         entity.setTime(cursor.getLong(offset + 10));
+        entity.setRated(cursor.getShort(offset + 11) != 0);
+        entity.setSimpleTags(splitTags(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12)));
+        entity.setPages(cursor.getInt(offset + 13));
+        entity.setThumbWidth(cursor.getInt(offset + 14));
+        entity.setThumbHeight(cursor.getInt(offset + 15));
+        entity.setSpanSize(cursor.getInt(offset + 16));
+        entity.setSpanIndex(cursor.getInt(offset + 17));
+        entity.setSpanGroupIndex(cursor.getInt(offset + 18));
+        entity.setFavoriteSlot(cursor.getInt(offset + 19));
+        entity.setFavoriteName(cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20));
      }
     
     @Override
@@ -211,6 +287,35 @@ public class LocalFavoritesDao extends AbstractDao<LocalFavoriteInfo, Long> {
     @Override
     protected final boolean isEntityUpdateable() {
         return true;
+    }
+
+    /**
+     * Joins a tag array into the semicolon-separated wire/db format
+     * (mirrors WebUiSyncEngine.joinTags); {@code null} when empty.
+     */
+    private static String joinTags(String[] tags) {
+        if (tags == null || tags.length == 0) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String tag : tags) {
+            if (sb.length() > 0) {
+                sb.append(';');
+            }
+            sb.append(tag);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Splits the semicolon-separated SIMPLE_TAGS column back into a tag array
+     * (mirrors WebUiSyncEngine.splitTags); {@code null} when empty.
+     */
+    private static String[] splitTags(String tags) {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        return tags.split(";");
     }
     
 }

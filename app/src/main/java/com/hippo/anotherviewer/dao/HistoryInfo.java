@@ -36,7 +36,9 @@ public class HistoryInfo extends GalleryInfo {
 
 	@Generated
 	public HistoryInfo(long gid, String token, String title, String titleJpn, String thumb, int category, String posted,
-			String uploader, float rating, String simpleLanguage, int mode, long time) {
+			String uploader, float rating, String simpleLanguage, int mode, long time, boolean rated,
+			String[] simpleTags, int pages, int thumbWidth, int thumbHeight, int spanSize, int spanIndex,
+			int spanGroupIndex, int favoriteSlot, String favoriteName) {
 		this.gid = gid;
 		this.token = token;
 		this.title = title;
@@ -49,6 +51,16 @@ public class HistoryInfo extends GalleryInfo {
 		this.simpleLanguage = simpleLanguage;
 		this.mode = mode;
 		this.time = time;
+		this.rated = rated;
+		this.simpleTags = simpleTags;
+		this.pages = pages;
+		this.thumbWidth = thumbWidth;
+		this.thumbHeight = thumbHeight;
+		this.spanSize = spanSize;
+		this.spanIndex = spanIndex;
+		this.spanGroupIndex = spanGroupIndex;
+		this.favoriteSlot = favoriteSlot;
+		this.favoriteName = favoriteName;
 	}
 
 	public long getGid() {
@@ -145,6 +157,86 @@ public class HistoryInfo extends GalleryInfo {
 
 	public void setTime(long time) {
 		this.time = time;
+	}
+
+	public boolean getRated() {
+		return rated;
+	}
+
+	public void setRated(boolean rated) {
+		this.rated = rated;
+	}
+
+	public String[] getSimpleTags() {
+		return simpleTags;
+	}
+
+	public void setSimpleTags(String[] simpleTags) {
+		this.simpleTags = simpleTags;
+	}
+
+	public int getPages() {
+		return pages;
+	}
+
+	public void setPages(int pages) {
+		this.pages = pages;
+	}
+
+	public int getThumbWidth() {
+		return thumbWidth;
+	}
+
+	public void setThumbWidth(int thumbWidth) {
+		this.thumbWidth = thumbWidth;
+	}
+
+	public int getThumbHeight() {
+		return thumbHeight;
+	}
+
+	public void setThumbHeight(int thumbHeight) {
+		this.thumbHeight = thumbHeight;
+	}
+
+	public int getSpanSize() {
+		return spanSize;
+	}
+
+	public void setSpanSize(int spanSize) {
+		this.spanSize = spanSize;
+	}
+
+	public int getSpanIndex() {
+		return spanIndex;
+	}
+
+	public void setSpanIndex(int spanIndex) {
+		this.spanIndex = spanIndex;
+	}
+
+	public int getSpanGroupIndex() {
+		return spanGroupIndex;
+	}
+
+	public void setSpanGroupIndex(int spanGroupIndex) {
+		this.spanGroupIndex = spanGroupIndex;
+	}
+
+	public int getFavoriteSlot() {
+		return favoriteSlot;
+	}
+
+	public void setFavoriteSlot(int favoriteSlot) {
+		this.favoriteSlot = favoriteSlot;
+	}
+
+	public String getFavoriteName() {
+		return favoriteName;
+	}
+
+	public void setFavoriteName(String favoriteName) {
+		this.favoriteName = favoriteName;
 	}
 
 	@Override

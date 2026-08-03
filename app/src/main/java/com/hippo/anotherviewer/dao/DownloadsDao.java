@@ -48,7 +48,21 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
                 "\"LEGACY\" INTEGER NOT NULL ," + // 11: legacy
                 "\"TIME\" INTEGER NOT NULL ," + // 12: time
                 "\"LABEL\" TEXT," + // 13: label
-                "\"ARCHIVE_URI\" TEXT);"); // 14: archiveUri
+                "\"ARCHIVE_URI\" TEXT," + // 14: archiveUri
+                "\"FINISHED\" INTEGER NOT NULL ," + // 15: finished
+                "\"TOTAL\" INTEGER NOT NULL ," + // 16: total
+                "\"FILE_SIZE\" INTEGER NOT NULL ," + // 17: fileSize
+                "\"LAST_MODIFIED\" INTEGER NOT NULL ," + // 18: lastModified
+                "\"RATED\" INTEGER NOT NULL ," + // 19: rated
+                "\"SIMPLE_TAGS\" TEXT," + // 20: simpleTags
+                "\"PAGES\" INTEGER NOT NULL ," + // 21: pages
+                "\"THUMB_WIDTH\" INTEGER NOT NULL ," + // 22: thumbWidth
+                "\"THUMB_HEIGHT\" INTEGER NOT NULL ," + // 23: thumbHeight
+                "\"SPAN_SIZE\" INTEGER NOT NULL ," + // 24: spanSize
+                "\"SPAN_INDEX\" INTEGER NOT NULL ," + // 25: spanIndex
+                "\"SPAN_GROUP_INDEX\" INTEGER NOT NULL ," + // 26: spanGroupIndex
+                "\"FAVORITE_SLOT\" INTEGER NOT NULL ," + // 27: favoriteSlot
+                "\"FAVORITE_NAME\" TEXT);"); // 28: favoriteName
     }
 
     /**
@@ -113,6 +127,28 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         if (archiveUri != null) {
             stmt.bindString(15, archiveUri);
         }
+        stmt.bindLong(16, entity.getFinished());
+        stmt.bindLong(17, entity.getTotal());
+        stmt.bindLong(18, entity.getFileSize());
+        stmt.bindLong(19, entity.getLastModified());
+        stmt.bindLong(20, entity.getRated() ? 1L : 0L);
+
+        String simpleTags = joinTags(entity.getSimpleTags());
+        if (simpleTags != null) {
+            stmt.bindString(21, simpleTags);
+        }
+        stmt.bindLong(22, entity.getPages());
+        stmt.bindLong(23, entity.getThumbWidth());
+        stmt.bindLong(24, entity.getThumbHeight());
+        stmt.bindLong(25, entity.getSpanSize());
+        stmt.bindLong(26, entity.getSpanIndex());
+        stmt.bindLong(27, entity.getSpanGroupIndex());
+        stmt.bindLong(28, entity.getFavoriteSlot());
+
+        String favoriteName = entity.getFavoriteName();
+        if (favoriteName != null) {
+            stmt.bindString(29, favoriteName);
+        }
     }
 
     @Override
@@ -169,6 +205,28 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         if (archiveUri != null) {
             stmt.bindString(15, archiveUri);
         }
+        stmt.bindLong(16, entity.getFinished());
+        stmt.bindLong(17, entity.getTotal());
+        stmt.bindLong(18, entity.getFileSize());
+        stmt.bindLong(19, entity.getLastModified());
+        stmt.bindLong(20, entity.getRated() ? 1L : 0L);
+
+        String simpleTags = joinTags(entity.getSimpleTags());
+        if (simpleTags != null) {
+            stmt.bindString(21, simpleTags);
+        }
+        stmt.bindLong(22, entity.getPages());
+        stmt.bindLong(23, entity.getThumbWidth());
+        stmt.bindLong(24, entity.getThumbHeight());
+        stmt.bindLong(25, entity.getSpanSize());
+        stmt.bindLong(26, entity.getSpanIndex());
+        stmt.bindLong(27, entity.getSpanGroupIndex());
+        stmt.bindLong(28, entity.getFavoriteSlot());
+
+        String favoriteName = entity.getFavoriteName();
+        if (favoriteName != null) {
+            stmt.bindString(29, favoriteName);
+        }
     }
 
     @Override
@@ -188,7 +246,21 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
             cursor.getInt(offset + 11), // legacy
             cursor.getLong(offset + 12), // time
             cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13), // label
-            cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14) // archiveUri
+            cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14), // archiveUri
+            cursor.getInt(offset + 15), // finished
+            cursor.getInt(offset + 16), // total
+            cursor.getLong(offset + 17), // fileSize
+            cursor.getLong(offset + 18), // lastModified
+            cursor.getShort(offset + 19) != 0, // rated
+            splitTags(cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20)), // simpleTags
+            cursor.getInt(offset + 21), // pages
+            cursor.getInt(offset + 22), // thumbWidth
+            cursor.getInt(offset + 23), // thumbHeight
+            cursor.getInt(offset + 24), // spanSize
+            cursor.getInt(offset + 25), // spanIndex
+            cursor.getInt(offset + 26), // spanGroupIndex
+            cursor.getInt(offset + 27), // favoriteSlot
+            cursor.isNull(offset + 28) ? null : cursor.getString(offset + 28) // favoriteName
         );
         return entity;
     }
@@ -218,6 +290,20 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         public final static Property Time = new Property(12, long.class, "time", false, "TIME");
         public final static Property Label = new Property(13, String.class, "label", false, "LABEL");
         public final static Property ArchiveUri = new Property(14, String.class, "archiveUri", false, "ARCHIVE_URI");
+        public final static Property Finished = new Property(15, int.class, "finished", false, "FINISHED");
+        public final static Property Total = new Property(16, int.class, "total", false, "TOTAL");
+        public final static Property FileSize = new Property(17, long.class, "fileSize", false, "FILE_SIZE");
+        public final static Property LastModified = new Property(18, long.class, "lastModified", false, "LAST_MODIFIED");
+        public final static Property Rated = new Property(19, boolean.class, "rated", false, "RATED");
+        public final static Property SimpleTags = new Property(20, String.class, "simpleTags", false, "SIMPLE_TAGS");
+        public final static Property Pages = new Property(21, int.class, "pages", false, "PAGES");
+        public final static Property ThumbWidth = new Property(22, int.class, "thumbWidth", false, "THUMB_WIDTH");
+        public final static Property ThumbHeight = new Property(23, int.class, "thumbHeight", false, "THUMB_HEIGHT");
+        public final static Property SpanSize = new Property(24, int.class, "spanSize", false, "SPAN_SIZE");
+        public final static Property SpanIndex = new Property(25, int.class, "spanIndex", false, "SPAN_INDEX");
+        public final static Property SpanGroupIndex = new Property(26, int.class, "spanGroupIndex", false, "SPAN_GROUP_INDEX");
+        public final static Property FavoriteSlot = new Property(27, int.class, "favoriteSlot", false, "FAVORITE_SLOT");
+        public final static Property FavoriteName = new Property(28, String.class, "favoriteName", false, "FAVORITE_NAME");
     }
      
     @Override
@@ -237,6 +323,20 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
         entity.setTime(cursor.getLong(offset + 12));
         entity.setLabel(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
         entity.setArchiveUri(cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14));
+        entity.setFinished(cursor.getInt(offset + 15));
+        entity.setTotal(cursor.getInt(offset + 16));
+        entity.setFileSize(cursor.getLong(offset + 17));
+        entity.setLastModified(cursor.getLong(offset + 18));
+        entity.setRated(cursor.getShort(offset + 19) != 0);
+        entity.setSimpleTags(splitTags(cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20)));
+        entity.setPages(cursor.getInt(offset + 21));
+        entity.setThumbWidth(cursor.getInt(offset + 22));
+        entity.setThumbHeight(cursor.getInt(offset + 23));
+        entity.setSpanSize(cursor.getInt(offset + 24));
+        entity.setSpanIndex(cursor.getInt(offset + 25));
+        entity.setSpanGroupIndex(cursor.getInt(offset + 26));
+        entity.setFavoriteSlot(cursor.getInt(offset + 27));
+        entity.setFavoriteName(cursor.isNull(offset + 28) ? null : cursor.getString(offset + 28));
      }
     
     @Override
@@ -257,6 +357,35 @@ public class DownloadsDao extends AbstractDao<DownloadInfo, Long> {
     @Override
     protected final boolean isEntityUpdateable() {
         return true;
+    }
+
+    /**
+     * Joins a tag array into the semicolon-separated wire/db format
+     * (mirrors WebUiSyncEngine.joinTags); {@code null} when empty.
+     */
+    private static String joinTags(String[] tags) {
+        if (tags == null || tags.length == 0) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String tag : tags) {
+            if (sb.length() > 0) {
+                sb.append(';');
+            }
+            sb.append(tag);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Splits the semicolon-separated SIMPLE_TAGS column back into a tag array
+     * (mirrors WebUiSyncEngine.splitTags); {@code null} when empty.
+     */
+    private static String[] splitTags(String tags) {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        return tags.split(";");
     }
     
 }

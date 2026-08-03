@@ -167,8 +167,19 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         mDownloadInfoListeners = new ArrayList<>();
     }
 
-    public void replaceInfo(DownloadInfo newInfo, DownloadInfo oldInfo) {
+    /**
+     * Persists a download info change, stamping {@code lastModified} so the
+     * WebUI sync engine can resolve last-write-wins conflicts. Called for every
+     * state transition and progress/completion update, never by the sync pull
+     * path (SiteDB.putDownloadInfo itself does not stamp, so UI refreshes or
+     * pulled records don't bump the timestamp).
+     */
+    private void saveDownloadInfo(DownloadInfo info) {
+        info.lastModified = System.currentTimeMillis();
+        SiteDB.putDownloadInfo(info);
+    }
 
+    public void replaceInfo(DownloadInfo newInfo, DownloadInfo oldInfo) {
         for (int i = 0; i < mAllInfoList.size(); i++) {
             if (oldInfo.gid == mAllInfoList.get(i).gid) {
                 mAllInfoList.set(i, newInfo);
@@ -335,7 +346,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             info.downloaded = 0;
             info.legacy = -1;
             // Update in DB
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
             // Start speed count
             mSpeedReminder.start();
             // Notify start downloading
@@ -375,7 +386,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 // Add to wait list
                 mWaitList.add(info);
                 // Update in DB
-                SiteDB.putDownloadInfo(info);
+                saveDownloadInfo(info);
                 // Notify state update
                 List<DownloadInfo> list = getInfoListForLabel(info.label);
                 if (list != null) {
@@ -409,7 +420,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             mWaitList.add(info);
 
             // Save to
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
 
             // Notify
             for (DownloadInfoListener l : mDownloadInfoListeners) {
@@ -444,7 +455,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // Add to wait list
                     mWaitList.add(info);
                     // Update in DB
-                    SiteDB.putDownloadInfo(info);
+                    saveDownloadInfo(info);
                 }
             }
         } else {
@@ -465,7 +476,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // Add to wait list
                     mWaitList.add(info);
                     // Update in DB
-                    SiteDB.putDownloadInfo(info);
+                    saveDownloadInfo(info);
                 }
             }
         }
@@ -496,7 +507,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // Add to wait list
                     waitList.add(info);
                     // Update in DB
-                    SiteDB.putDownloadInfo(info);
+                    saveDownloadInfo(info);
                 }
             }
         } else {
@@ -508,7 +519,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // Add to wait list
                     waitList.addFirst(info);
                     // Update in DB
-                    SiteDB.putDownloadInfo(info);
+                    saveDownloadInfo(info);
                 }
             }
         }
@@ -557,7 +568,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             mAllInfoMap.put(info.gid, info);
 
             // Save to
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
         }
 
         // Sort all download list
@@ -612,7 +623,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         mAllInfoMap.put(galleryInfo.gid, info);
 
         // Save to
-        SiteDB.putDownloadInfo(info);
+        saveDownloadInfo(info);
 
         // Notify
         for (DownloadInfoListener l : mDownloadInfoListeners) {
@@ -647,7 +658,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         list.addFirst(info);
 
         // Save to
-        SiteDB.putDownloadInfo(info);
+        saveDownloadInfo(info);
         mAllInfoMap.put(galleryInfo.gid, info);
     }
 
@@ -699,7 +710,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadInfo info : mWaitList) {
             info.state = DownloadInfo.STATE_NONE;
             // Update in DB
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
         }
         mWaitList.clear();
 
@@ -836,7 +847,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                 // Update state
                 info.state = DownloadInfo.STATE_NONE;
                 // Update in DB
-                SiteDB.putDownloadInfo(info);
+                saveDownloadInfo(info);
                 return info;
             }
         }
@@ -864,7 +875,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         // Update state
         info.state = DownloadInfo.STATE_NONE;
         // Update in DB
-        SiteDB.putDownloadInfo(info);
+        saveDownloadInfo(info);
         // Listener
         if (mDownloadListener != null) {
             mDownloadListener.onCancel(info);
@@ -896,7 +907,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                     // Update state
                     info.state = DownloadInfo.STATE_NONE;
                     // Update in DB
-                    SiteDB.putDownloadInfo(info);
+                    saveDownloadInfo(info);
                 }
             }
         }
@@ -934,7 +945,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
             Collections.sort(dstList, DATE_DESC_COMPARATOR);
 
             // Save to DB
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
         }
 
         for (DownloadInfoListener l : mDownloadInfoListeners) {
@@ -999,7 +1010,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadInfo info : list) {
             info.label = to;
             // Update in DB
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
         }
         // Put list back with new label
         mMap.put(to, list);
@@ -1035,7 +1046,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
         for (DownloadInfo info : list) {
             info.label = null;
             // Update in DB
-            SiteDB.putDownloadInfo(info);
+            saveDownloadInfo(info);
             mDefaultInfoList.add(info);
         }
 
@@ -1297,7 +1308,7 @@ public class DownloadManager implements SpiderQueen.OnSpiderListener {
                         info.state = DownloadInfo.STATE_FAILED;
                     }
                     // Update in DB
-                    SiteDB.putDownloadInfo(info);
+                    saveDownloadInfo(info);
                     // Notify
                     if (mDownloadListener != null) {
                         mDownloadListener.onFinish(info);

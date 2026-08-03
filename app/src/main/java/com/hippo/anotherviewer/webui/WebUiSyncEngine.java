@@ -16,14 +16,10 @@
 
 package com.hippo.anotherviewer.webui;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.hippo.anotherviewer.SiteApplication;
-import com.hippo.anotherviewer.SiteDB;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
 import com.hippo.anotherviewer.dao.BookmarkInfo;
 import com.hippo.anotherviewer.dao.DownloadInfo;
@@ -49,7 +45,7 @@ import java.util.Set;
  * soft delete), quick searches (union merge, soft delete) and download labels
  * (union merge, soft delete). Implements the push → pull → apply cycle from
  * sync-conflict-rules.md §6, reusing the existing GreenDAO storage via
- * {@link SiteDB}.
+ * SiteDB (behind the {@link WebUiSyncStore} seam).
  *
  * <p>Deletion propagation: local removals are detected by diffing the current
  * local key sets against the keys pushed in the last successful sync (persisted
@@ -68,10 +64,18 @@ import java.util.Set;
  * Every batch must be accepted for the sync to proceed.
  *
  * <p>All methods are synchronous and must run off the main thread.
+ *
+ * <p>The engine talks to two seams so the full cycle is JVM-testable:
+ * {@link WebUiSyncStore} for data (production: {@link SiteDbWebUiSyncStore}
+ * wrapping SiteDB + SharedPreferences; tests: an in-memory Map store) and
+ * {@link WebUiSyncTransport} for the network (production:
+ * {@link WebUiApiSyncTransport} wrapping WebUiApiClient; tests: an in-memory
+ * fake server). The static {@link #sync} facade keeps the production call
+ * sites unchanged; the instance entry point {@link #syncInternal} is what the
+ * tests drive.
  */
 public final class WebUiSyncEngine {
 
-    private static final String PREFS = "webui_sync_state";
     private static final String SUFFIX_SNAPSHOT_FAVORITES = ".snapshot.favorites";
     private static final String SUFFIX_SNAPSHOT_HISTORY = ".snapshot.history";
     private static final String SUFFIX_PENDING_FAVORITES = ".pending.favorites";
@@ -86,11 +90,40 @@ public final class WebUiSyncEngine {
     private static final String SUFFIX_PENDING_QUICK_SEARCHES = ".pending.quickSearches";
     private static final String SUFFIX_SNAPSHOT_DOWNLOAD_LABELS = ".snapshot.downloadLabels";
     private static final String SUFFIX_PENDING_DOWNLOAD_LABELS = ".pending.downloadLabels";
-    private static final String SEPARATOR = ",";
     private static final String KEY_SEPARATOR = "|";
     private static final int PUSH_BATCH_SIZE = 500;
 
-    private WebUiSyncEngine() {}
+    private static volatile WebUiSyncEngine sInstance;
+
+    private final WebUiSyncStore mStore;
+    private final WebUiSyncTransport mTransport;
+
+    private WebUiSyncEngine() {
+        this(new SiteDbWebUiSyncStore(), new WebUiApiSyncTransport());
+    }
+
+    /**
+     * Test-facing constructor: supplies the data and network seams directly so
+     * a sync cycle can run without Android or the real server.
+     */
+    WebUiSyncEngine(WebUiSyncStore store, WebUiSyncTransport transport) {
+        mStore = store;
+        mTransport = transport;
+    }
+
+    private static WebUiSyncEngine instance() {
+        WebUiSyncEngine engine = sInstance;
+        if (engine == null) {
+            synchronized (WebUiSyncEngine.class) {
+                engine = sInstance;
+                if (engine == null) {
+                    engine = new WebUiSyncEngine();
+                    sInstance = engine;
+                }
+            }
+        }
+        return engine;
+    }
 
     public static final class Result {
         public int pushedFavorites;
@@ -110,6 +143,15 @@ public final class WebUiSyncEngine {
      */
     @NonNull
     public static Result sync(@NonNull WebUiConfig config, @NonNull String deviceId, long since) throws IOException {
+        return instance().syncInternal(config, deviceId, since);
+    }
+
+    /**
+     * Instance sync entry point: the static facade delegates here. Tests drive
+     * this directly against an in-memory store/transport.
+     */
+    @NonNull
+    Result syncInternal(@NonNull WebUiConfig config, @NonNull String deviceId, long since) throws IOException {
         Result result = new Result();
         String serverKey = config.baseUrl();
 
@@ -117,21 +159,21 @@ public final class WebUiSyncEngine {
         // not yet delivered. Diffed against the current local keys to find keys
         // removed locally since the last push; keys re-added locally (present in
         // both the pending set and the local set) are dropped automatically.
-        Set<Long> snapshotFavorites = loadKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES);
-        Set<Long> snapshotHistory = loadKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY);
-        Set<Long> snapshotDownloads = loadKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOADS);
-        Set<Long> snapshotBookmarks = loadKeySet(serverKey, SUFFIX_SNAPSHOT_BOOKMARKS);
-        Set<String> snapshotFilters = loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_FILTERS);
-        Set<String> snapshotQuickSearches = loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES);
-        Set<String> snapshotDownloadLabels = loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS);
+        Set<Long> snapshotFavorites = mStore.loadKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES);
+        Set<Long> snapshotHistory = mStore.loadKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY);
+        Set<Long> snapshotDownloads = mStore.loadKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOADS);
+        Set<Long> snapshotBookmarks = mStore.loadKeySet(serverKey, SUFFIX_SNAPSHOT_BOOKMARKS);
+        Set<String> snapshotFilters = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_FILTERS);
+        Set<String> snapshotQuickSearches = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES);
+        Set<String> snapshotDownloadLabels = mStore.loadStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS);
 
-        Set<Long> pendingFavorites = loadKeySet(serverKey, SUFFIX_PENDING_FAVORITES);
-        Set<Long> pendingHistory = loadKeySet(serverKey, SUFFIX_PENDING_HISTORY);
-        Set<Long> pendingDownloads = loadKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS);
-        Set<Long> pendingBookmarks = loadKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS);
-        Set<String> pendingFilters = loadStringKeySet(serverKey, SUFFIX_PENDING_FILTERS);
-        Set<String> pendingQuickSearches = loadStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES);
-        Set<String> pendingDownloadLabels = loadStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS);
+        Set<Long> pendingFavorites = mStore.loadKeySet(serverKey, SUFFIX_PENDING_FAVORITES);
+        Set<Long> pendingHistory = mStore.loadKeySet(serverKey, SUFFIX_PENDING_HISTORY);
+        Set<Long> pendingDownloads = mStore.loadKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS);
+        Set<Long> pendingBookmarks = mStore.loadKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS);
+        Set<String> pendingFilters = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_FILTERS);
+        Set<String> pendingQuickSearches = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES);
+        Set<String> pendingDownloadLabels = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS);
 
         Set<Long> currentFavorites = collectFavoriteKeys();
         Set<Long> currentHistory = collectHistoryKeys();
@@ -157,7 +199,7 @@ public final class WebUiSyncEngine {
                 pendingFavorites, pendingHistory, pendingDownloads, pendingBookmarks,
                 pendingFilters, pendingQuickSearches, pendingDownloadLabels);
         for (WebUiSyncModels.PushRequest push : requests) {
-            WebUiSyncModels.PushResponse pushResponse = WebUiApiClient.push(config, push);
+            WebUiSyncModels.PushResponse pushResponse = mTransport.push(config, push);
             if (!pushResponse.success) {
                 throw new IOException("Server rejected push");
             }
@@ -183,7 +225,7 @@ public final class WebUiSyncEngine {
         snapshotDownloadLabels = currentDownloadLabels;
 
         // 2. Pull server changes since the high-water mark.
-        WebUiSyncModels.PullResponse pull = WebUiApiClient.pull(config, since);
+        WebUiSyncModels.PullResponse pull = mTransport.pull(config, since);
 
         // 3. Apply pulled changes locally.
         applyFavorites(pull.entities.favorites, result, snapshotFavorites);
@@ -194,31 +236,31 @@ public final class WebUiSyncEngine {
         applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches);
         applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels);
 
-        saveKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES, snapshotFavorites);
-        saveKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY, snapshotHistory);
-        saveKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOADS, snapshotDownloads);
-        saveKeySet(serverKey, SUFFIX_SNAPSHOT_BOOKMARKS, snapshotBookmarks);
-        saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_FILTERS, snapshotFilters);
-        saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES, snapshotQuickSearches);
-        saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS, snapshotDownloadLabels);
-        saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, Collections.emptySet());
-        saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, Collections.emptySet());
-        saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, Collections.emptySet());
-        saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, Collections.emptySet());
-        saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, Collections.emptySet());
-        saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, Collections.emptySet());
-        saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, Collections.emptySet());
+        mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES, snapshotFavorites);
+        mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY, snapshotHistory);
+        mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOADS, snapshotDownloads);
+        mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_BOOKMARKS, snapshotBookmarks);
+        mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_FILTERS, snapshotFilters);
+        mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_QUICK_SEARCHES, snapshotQuickSearches);
+        mStore.saveStringKeySet(serverKey, SUFFIX_SNAPSHOT_DOWNLOAD_LABELS, snapshotDownloadLabels);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, Collections.emptySet());
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, Collections.emptySet());
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, Collections.emptySet());
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, Collections.emptySet());
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, Collections.emptySet());
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, Collections.emptySet());
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, Collections.emptySet());
 
         result.serverTimestamp = pull.serverTimestamp;
         return result;
     }
 
-    private static List<WebUiSyncModels.PushRequest> buildPushRequests(String deviceId,
+    private List<WebUiSyncModels.PushRequest> buildPushRequests(String deviceId,
             Set<Long> pendingFavorites, Set<Long> pendingHistory,
             Set<Long> pendingDownloads, Set<Long> pendingBookmarks,
             Set<String> pendingFilters, Set<String> pendingQuickSearches,
             Set<String> pendingDownloadLabels) {
-        List<DownloadInfo> downloads = SiteDB.getAllDownloadInfo();
+        List<DownloadInfo> downloads = mStore.getAllDownloadInfo();
         List<Long> downloadTombstones = new ArrayList<>(pendingDownloads);
         long now = System.currentTimeMillis();
 
@@ -266,9 +308,9 @@ public final class WebUiSyncEngine {
         return requests;
     }
 
-    private static void fillFavorites(WebUiSyncModels.EntityCollection entities,
+    private void fillFavorites(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<Long> pendingFavorites) {
-        for (GalleryInfo gi : SiteDB.getAllLocalFavorites()) {
+        for (GalleryInfo gi : mStore.getAllLocalFavorites()) {
             WebUiSyncModels.SyncFavorite fav = new WebUiSyncModels.SyncFavorite();
             copyGalleryToDto(gi, fav);
             long time = gi instanceof LocalFavoriteInfo ? ((LocalFavoriteInfo) gi).time : now;
@@ -290,9 +332,9 @@ public final class WebUiSyncEngine {
         }
     }
 
-    private static void fillHistory(WebUiSyncModels.EntityCollection entities,
+    private void fillHistory(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<Long> pendingHistory) {
-        for (HistoryInfo hi : SiteDB.getAllHistoryForSync()) {
+        for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
             WebUiSyncModels.SyncHistory hist = new WebUiSyncModels.SyncHistory();
             copyGalleryToDto(hi, hist);
             hist.mode = hi.mode;
@@ -314,7 +356,7 @@ public final class WebUiSyncEngine {
         }
     }
 
-    private static void fillDownload(WebUiSyncModels.EntityCollection entities,
+    private void fillDownload(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, DownloadInfo info) {
         WebUiSyncModels.SyncDownload dto = new WebUiSyncModels.SyncDownload();
         copyGalleryToDto(info, dto);
@@ -325,15 +367,17 @@ public final class WebUiSyncEngine {
         dto.total = info.total;
         dto.finished = info.finished;
         dto.downloaded = info.downloaded;
-        dto.lastModified = info.time;
+        // B2: lastModified is stamped by DownloadManager on every state change;
+        // fall back to the record's time for pre-v8 data where the column is 0.
+        dto.lastModified = info.lastModified > 0 ? info.lastModified : info.time;
         dto.deviceId = deviceId;
         dto.deleted = false;
         entities.downloads.add(dto);
     }
 
-    private static void fillBookmarks(WebUiSyncModels.EntityCollection entities,
+    private void fillBookmarks(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<Long> pendingBookmarks) {
-        for (BookmarkInfo bi : SiteDB.getAllBookmark()) {
+        for (BookmarkInfo bi : mStore.getAllBookmark()) {
             WebUiSyncModels.SyncBookmark dto = new WebUiSyncModels.SyncBookmark();
             copyGalleryToDto(bi, dto);
             dto.page = bi.page;
@@ -355,9 +399,9 @@ public final class WebUiSyncEngine {
         }
     }
 
-    private static void fillFilters(WebUiSyncModels.EntityCollection entities,
+    private void fillFilters(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<String> pendingFilters) {
-        for (Filter f : SiteDB.getAllFilter()) {
+        for (Filter f : mStore.getAllFilter()) {
             WebUiSyncModels.SyncFilter dto = new WebUiSyncModels.SyncFilter();
             dto.mode = f.mode;
             dto.text = f.text;
@@ -386,9 +430,9 @@ public final class WebUiSyncEngine {
         }
     }
 
-    private static void fillQuickSearches(WebUiSyncModels.EntityCollection entities,
+    private void fillQuickSearches(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<String> pendingQuickSearches) {
-        for (QuickSearch qs : SiteDB.getAllQuickSearch()) {
+        for (QuickSearch qs : mStore.getAllQuickSearch()) {
             WebUiSyncModels.SyncQuickSearch dto = new WebUiSyncModels.SyncQuickSearch();
             dto.name = qs.name;
             dto.mode = qs.mode;
@@ -415,9 +459,9 @@ public final class WebUiSyncEngine {
         }
     }
 
-    private static void fillDownloadLabels(WebUiSyncModels.EntityCollection entities,
+    private void fillDownloadLabels(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<String> pendingDownloadLabels) {
-        for (DownloadLabel dl : SiteDB.getAllDownloadLabelList()) {
+        for (DownloadLabel dl : mStore.getAllDownloadLabelList()) {
             WebUiSyncModels.SyncDownloadLabel dto = new WebUiSyncModels.SyncDownloadLabel();
             dto.label = dl.getLabel();
             dto.time = dl.getTime();
@@ -443,40 +487,40 @@ public final class WebUiSyncEngine {
      * favorites get their metadata refreshed when the server copy is newer
      * (last-write-wins on lastModified, local add time is preserved).
      */
-    private static void applyFavorites(List<WebUiSyncModels.SyncFavorite> favorites,
+    private void applyFavorites(List<WebUiSyncModels.SyncFavorite> favorites,
             Result result, Set<Long> snapshotFavorites) {
         for (WebUiSyncModels.SyncFavorite fav : favorites) {
             if (fav.deleted) {
                 // Tombstone: this device has deleted the favorite (or another
                 // device did) — honor it locally and never re-add it.
-                SiteDB.removeLocalFavorites(fav.gid);
+                mStore.removeLocalFavorites(fav.gid);
                 snapshotFavorites.remove(fav.gid);
                 result.pulledFavorites++;
                 continue;
             }
-            LocalFavoriteInfo local = SiteDB.loadLocalFavorite(fav.gid);
+            LocalFavoriteInfo local = mStore.loadLocalFavorite(fav.gid);
             if (local == null) {
                 LocalFavoriteInfo info = new LocalFavoriteInfo();
                 copyDtoToGallery(fav, info);
                 info.time = fav.time;
-                SiteDB.putLocalFavorite(info);
+                mStore.putLocalFavorite(info);
                 result.pulledFavorites++;
             } else if (fav.lastModified > local.time) {
                 // Server copy is newer — refresh metadata (the local favorite's
                 // push lastModified is its add time, so time is the comparison).
                 copyDtoToGallery(fav, local);
-                SiteDB.updateLocalFavorite(local);
+                mStore.updateLocalFavorite(local);
                 result.pulledFavorites++;
             }
         }
     }
 
     /** History uses last-write-wins with hard-delete. */
-    private static void applyHistory(List<WebUiSyncModels.SyncHistory> history,
+    private void applyHistory(List<WebUiSyncModels.SyncHistory> history,
             Result result, Set<Long> snapshotHistory) {
         for (WebUiSyncModels.SyncHistory hist : history) {
             if (hist.deleted) {
-                SiteDB.removeHistoryByKey(hist.gid);
+                mStore.removeHistoryByKey(hist.gid);
                 snapshotHistory.remove(hist.gid);
                 result.pulledHistory++;
                 continue;
@@ -485,7 +529,7 @@ public final class WebUiSyncEngine {
             copyDtoToGallery(hist, info);
             info.mode = hist.mode;
             info.time = hist.time;
-            SiteDB.applySyncedHistory(info);
+            mStore.applySyncedHistory(info);
             result.pulledHistory++;
         }
     }
@@ -495,16 +539,16 @@ public final class WebUiSyncEngine {
      * the local record, alive records overwrite every synced field via
      * {@code putDownloadInfo} (the server already resolved union/LWW conflicts).
      */
-    private static void applyDownloads(List<WebUiSyncModels.SyncDownload> downloads,
+    private void applyDownloads(List<WebUiSyncModels.SyncDownload> downloads,
             Result result, Set<Long> snapshotDownloads) {
         Map<Long, DownloadInfo> locals = new HashMap<>();
-        for (DownloadInfo info : SiteDB.getAllDownloadInfo()) {
+        for (DownloadInfo info : mStore.getAllDownloadInfo()) {
             locals.put(info.gid, info);
         }
         for (WebUiSyncModels.SyncDownload dto : downloads) {
             if (dto.deleted) {
                 // Soft tombstone delivered: the server no longer tracks it.
-                SiteDB.removeDownloadInfo(dto.gid);
+                mStore.removeDownloadInfo(dto.gid);
                 snapshotDownloads.remove(dto.gid);
                 result.pulledDownloads++;
                 continue;
@@ -516,7 +560,7 @@ public final class WebUiSyncEngine {
                 // Keep the local archive URI (not part of the wire model).
                 info.archiveUri = existing.archiveUri;
             }
-            SiteDB.putDownloadInfo(info);
+            mStore.putDownloadInfo(info);
             locals.put(dto.gid, info);
             snapshotDownloads.add(dto.gid);
             result.pulledDownloads++;
@@ -524,16 +568,16 @@ public final class WebUiSyncEngine {
     }
 
     /** Bookmarks use last-write-wins on lastModified (local time) with hard-delete. */
-    private static void applyBookmarks(List<WebUiSyncModels.SyncBookmark> bookmarks,
+    private void applyBookmarks(List<WebUiSyncModels.SyncBookmark> bookmarks,
             Result result, Set<Long> snapshotBookmarks) {
         Map<Long, BookmarkInfo> locals = new HashMap<>();
-        for (BookmarkInfo bi : SiteDB.getAllBookmark()) {
+        for (BookmarkInfo bi : mStore.getAllBookmark()) {
             locals.put(bi.gid, bi);
         }
         for (WebUiSyncModels.SyncBookmark dto : bookmarks) {
             if (dto.deleted) {
                 // Hard-delete tombstone: clearing a reading position propagates.
-                SiteDB.removeBookmarkByGid(dto.gid);
+                mStore.removeBookmarkByGid(dto.gid);
                 snapshotBookmarks.remove(dto.gid);
                 result.pulledBookmarks++;
                 continue;
@@ -544,7 +588,7 @@ public final class WebUiSyncEngine {
                 copyDtoToGallery(dto, info);
                 info.page = dto.page;
                 info.time = dto.time;
-                SiteDB.putBookmark(info);
+                mStore.putBookmark(info);
                 locals.put(dto.gid, info);
                 snapshotBookmarks.add(dto.gid);
                 result.pulledBookmarks++;
@@ -552,7 +596,7 @@ public final class WebUiSyncEngine {
                 copyDtoToGallery(dto, local);
                 local.page = dto.page;
                 local.time = dto.time;
-                SiteDB.putBookmark(local);
+                mStore.putBookmark(local);
                 snapshotBookmarks.add(dto.gid);
                 result.pulledBookmarks++;
             }
@@ -564,24 +608,24 @@ public final class WebUiSyncEngine {
      * timestamp, so no LWW comparison is possible): the enable flag is applied
      * as-is to the existing (mode, text) row, or the row is created.
      */
-    private static void applyFilters(List<WebUiSyncModels.SyncFilter> filters,
+    private void applyFilters(List<WebUiSyncModels.SyncFilter> filters,
             Result result, Set<String> snapshotFilters) {
         for (WebUiSyncModels.SyncFilter dto : filters) {
             String key = filterKey(dto.mode, dto.text);
             if (dto.deleted) {
                 // Soft tombstone: remove the local row without re-adding it.
-                SiteDB.deleteFilterByKey(dto.mode, dto.text);
+                mStore.deleteFilterByKey(dto.mode, dto.text);
                 snapshotFilters.remove(key);
                 result.pulledFilters++;
                 continue;
             }
-            Filter existing = SiteDB.findFilterByKey(dto.mode, dto.text);
+            Filter existing = mStore.findFilterByKey(dto.mode, dto.text);
             if (existing == null) {
                 Filter filter = new Filter();
                 filter.mode = dto.mode;
                 filter.text = dto.text;
                 filter.enable = dto.enabled;
-                SiteDB.addFilter(filter);
+                mStore.addFilter(filter);
             } else {
                 setFilterEnabled(existing, dto.enabled);
             }
@@ -597,18 +641,18 @@ public final class WebUiSyncEngine {
      * re-inserting the row when the server enables it, since toggling null
      * would throw.
      */
-    private static void setFilterEnabled(Filter filter, boolean enabled) {
+    private void setFilterEnabled(Filter filter, boolean enabled) {
         if (filter.enable == null) {
             if (enabled) {
-                SiteDB.deleteFilterByKey(filter.mode, filter.text);
+                mStore.deleteFilterByKey(filter.mode, filter.text);
                 Filter replacement = new Filter();
                 replacement.mode = filter.mode;
                 replacement.text = filter.text;
                 replacement.enable = true;
-                SiteDB.addFilter(replacement);
+                mStore.addFilter(replacement);
             }
         } else if (filter.enable != enabled) {
-            SiteDB.triggerFilter(filter);
+            mStore.triggerFilter(filter);
         }
     }
 
@@ -617,17 +661,17 @@ public final class WebUiSyncEngine {
      * tombstones remove the local row, alive records are inserted or updated
      * (keeping the local row id).
      */
-    private static void applyQuickSearches(List<WebUiSyncModels.SyncQuickSearch> searches,
+    private void applyQuickSearches(List<WebUiSyncModels.SyncQuickSearch> searches,
             Result result, Set<String> snapshotQuickSearches) {
         Map<String, QuickSearch> locals = new HashMap<>();
-        for (QuickSearch qs : SiteDB.getAllQuickSearch()) {
+        for (QuickSearch qs : mStore.getAllQuickSearch()) {
             locals.put(qs.name, qs);
         }
         for (WebUiSyncModels.SyncQuickSearch dto : searches) {
             if (dto.deleted) {
                 QuickSearch existing = locals.remove(dto.name);
                 if (existing != null) {
-                    SiteDB.deleteQuickSearch(existing);
+                    mStore.deleteQuickSearch(existing);
                 }
                 snapshotQuickSearches.remove(dto.name);
                 result.pulledQuickSearches++;
@@ -637,11 +681,11 @@ public final class WebUiSyncEngine {
             if (local == null) {
                 QuickSearch qs = new QuickSearch();
                 copyDtoToQuickSearch(dto, qs);
-                SiteDB.insertQuickSearch(qs);
+                mStore.insertQuickSearch(qs);
                 locals.put(dto.name, qs);
             } else {
                 copyDtoToQuickSearch(dto, local);
-                SiteDB.updateQuickSearch(local);
+                mStore.updateQuickSearch(local);
             }
             snapshotQuickSearches.add(dto.name);
             result.pulledQuickSearches++;
@@ -653,17 +697,17 @@ public final class WebUiSyncEngine {
      * deleted tombstones remove the local row, alive records are inserted with
      * the server's time or updated in place.
      */
-    private static void applyDownloadLabels(List<WebUiSyncModels.SyncDownloadLabel> labels,
+    private void applyDownloadLabels(List<WebUiSyncModels.SyncDownloadLabel> labels,
             Result result, Set<String> snapshotDownloadLabels) {
         Map<String, DownloadLabel> locals = new HashMap<>();
-        for (DownloadLabel dl : SiteDB.getAllDownloadLabelList()) {
+        for (DownloadLabel dl : mStore.getAllDownloadLabelList()) {
             locals.put(dl.getLabel(), dl);
         }
         for (WebUiSyncModels.SyncDownloadLabel dto : labels) {
             if (dto.deleted) {
                 DownloadLabel existing = locals.remove(dto.label);
                 if (existing != null) {
-                    SiteDB.removeDownloadLabel(existing);
+                    mStore.removeDownloadLabel(existing);
                 }
                 snapshotDownloadLabels.remove(dto.label);
                 result.pulledDownloadLabels++;
@@ -674,12 +718,12 @@ public final class WebUiSyncEngine {
                 DownloadLabel dl = new DownloadLabel();
                 dl.setLabel(dto.label);
                 dl.setTime(dto.time);
-                SiteDB.addDownloadLabel(dl);
+                mStore.addDownloadLabel(dl);
                 locals.put(dto.label, dl);
             } else {
                 local.setLabel(dto.label);
                 local.setTime(dto.time);
-                SiteDB.updateDownloadLabel(local);
+                mStore.updateDownloadLabel(local);
             }
             snapshotDownloadLabels.add(dto.label);
             result.pulledDownloadLabels++;
@@ -691,130 +735,74 @@ public final class WebUiSyncEngine {
      * deletions to propagate. Keys present locally again (re-added) are dropped
      * so the next push resurrects them instead of re-deleting them.
      */
-    private static <T> Set<T> detectDeletions(Set<T> snapshot, Set<T> pending, Set<T> current) {
+    private <T> Set<T> detectDeletions(Set<T> snapshot, Set<T> pending, Set<T> current) {
         Set<T> deletions = new LinkedHashSet<>(snapshot);
         deletions.addAll(pending);
         deletions.removeAll(current);
         return deletions;
     }
 
-    private static Set<Long> collectFavoriteKeys() {
+    private Set<Long> collectFavoriteKeys() {
         Set<Long> keys = new LinkedHashSet<>();
-        for (GalleryInfo gi : SiteDB.getAllLocalFavorites()) {
+        for (GalleryInfo gi : mStore.getAllLocalFavorites()) {
             keys.add(gi.gid);
         }
         return keys;
     }
 
-    private static Set<Long> collectHistoryKeys() {
+    private Set<Long> collectHistoryKeys() {
         Set<Long> keys = new LinkedHashSet<>();
-        for (HistoryInfo hi : SiteDB.getAllHistoryForSync()) {
+        for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
             keys.add(hi.gid);
         }
         return keys;
     }
 
-    private static Set<Long> collectDownloadKeys() {
+    private Set<Long> collectDownloadKeys() {
         Set<Long> keys = new LinkedHashSet<>();
-        for (DownloadInfo info : SiteDB.getAllDownloadInfo()) {
+        for (DownloadInfo info : mStore.getAllDownloadInfo()) {
             keys.add(info.gid);
         }
         return keys;
     }
 
-    private static Set<Long> collectBookmarkKeys() {
+    private Set<Long> collectBookmarkKeys() {
         Set<Long> keys = new LinkedHashSet<>();
-        for (BookmarkInfo bi : SiteDB.getAllBookmark()) {
+        for (BookmarkInfo bi : mStore.getAllBookmark()) {
             keys.add(bi.gid);
         }
         return keys;
     }
 
-    private static Set<String> collectFilterKeys() {
+    private Set<String> collectFilterKeys() {
         Set<String> keys = new LinkedHashSet<>();
-        for (Filter f : SiteDB.getAllFilter()) {
+        for (Filter f : mStore.getAllFilter()) {
             keys.add(filterKey(f.mode, f.text));
         }
         return keys;
     }
 
-    private static Set<String> collectQuickSearchKeys() {
+    private Set<String> collectQuickSearchKeys() {
         Set<String> keys = new LinkedHashSet<>();
-        for (QuickSearch qs : SiteDB.getAllQuickSearch()) {
+        for (QuickSearch qs : mStore.getAllQuickSearch()) {
             keys.add(qs.name);
         }
         return keys;
     }
 
-    private static Set<String> collectDownloadLabelKeys() {
+    private Set<String> collectDownloadLabelKeys() {
         Set<String> keys = new LinkedHashSet<>();
-        for (DownloadLabel dl : SiteDB.getAllDownloadLabelList()) {
+        for (DownloadLabel dl : mStore.getAllDownloadLabelList()) {
             keys.add(dl.getLabel());
         }
         return keys;
     }
 
-    private static String filterKey(int mode, String text) {
+    private String filterKey(int mode, String text) {
         return mode + KEY_SEPARATOR + (text == null ? "" : text);
     }
 
-    private static SharedPreferences prefs() {
-        return SiteApplication.getInstance().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-    }
-
-    private static Set<Long> loadKeySet(String serverKey, String suffix) {
-        Set<Long> keys = new LinkedHashSet<>();
-        String raw = prefs().getString(serverKey + suffix, "");
-        if (TextUtils.isEmpty(raw)) {
-            return keys;
-        }
-        for (String part : raw.split(SEPARATOR)) {
-            try {
-                keys.add(Long.parseLong(part));
-            } catch (NumberFormatException ignored) {
-                // Skip malformed entries; the set is rebuilt on every save.
-            }
-        }
-        return keys;
-    }
-
-    private static void saveKeySet(String serverKey, String suffix, Set<Long> keys) {
-        StringBuilder sb = new StringBuilder();
-        for (Long key : keys) {
-            if (sb.length() > 0) {
-                sb.append(SEPARATOR);
-            }
-            sb.append(key);
-        }
-        prefs().edit().putString(serverKey + suffix, sb.toString()).apply();
-    }
-
-    private static Set<String> loadStringKeySet(String serverKey, String suffix) {
-        Set<String> keys = new LinkedHashSet<>();
-        String raw = prefs().getString(serverKey + suffix, "");
-        if (TextUtils.isEmpty(raw)) {
-            return keys;
-        }
-        for (String part : raw.split(SEPARATOR)) {
-            if (!part.isEmpty()) {
-                keys.add(part);
-            }
-        }
-        return keys;
-    }
-
-    private static void saveStringKeySet(String serverKey, String suffix, Set<String> keys) {
-        StringBuilder sb = new StringBuilder();
-        for (String key : keys) {
-            if (sb.length() > 0) {
-                sb.append(SEPARATOR);
-            }
-            sb.append(key);
-        }
-        prefs().edit().putString(serverKey + suffix, sb.toString()).apply();
-    }
-
-    private static void copyGalleryToDto(GalleryInfo gi, WebUiSyncModels.GalleryBase dto) {
+    private void copyGalleryToDto(GalleryInfo gi, WebUiSyncModels.GalleryBase dto) {
         dto.gid = gi.gid;
         dto.token = gi.token;
         dto.title = gi.title;
@@ -837,7 +825,7 @@ public final class WebUiSyncEngine {
         dto.pages = gi.pages;
     }
 
-    private static void copyDtoToGallery(WebUiSyncModels.GalleryBase dto, GalleryInfo gi) {
+    private void copyDtoToGallery(WebUiSyncModels.GalleryBase dto, GalleryInfo gi) {
         gi.gid = dto.gid;
         gi.token = dto.token;
         gi.title = dto.title;
@@ -860,7 +848,7 @@ public final class WebUiSyncEngine {
         gi.pages = dto.pages;
     }
 
-    private static void copyDtoToDownload(WebUiSyncModels.SyncDownload dto, DownloadInfo info) {
+    private void copyDtoToDownload(WebUiSyncModels.SyncDownload dto, DownloadInfo info) {
         copyDtoToGallery(dto, info);
         info.state = dto.state;
         info.legacy = dto.legacy;
@@ -871,7 +859,7 @@ public final class WebUiSyncEngine {
         info.downloaded = dto.downloaded;
     }
 
-    private static void copyDtoToQuickSearch(WebUiSyncModels.SyncQuickSearch dto, QuickSearch qs) {
+    private void copyDtoToQuickSearch(WebUiSyncModels.SyncQuickSearch dto, QuickSearch qs) {
         qs.name = dto.name;
         qs.mode = dto.mode;
         qs.category = dto.category;
@@ -883,14 +871,14 @@ public final class WebUiSyncEngine {
         qs.time = dto.time;
     }
 
-    private static String joinTags(String[] tags) {
+    private String joinTags(String[] tags) {
         if (tags == null || tags.length == 0) {
             return null;
         }
         return TextUtils.join(";", tags);
     }
 
-    private static String[] splitTags(String tags) {
+    private String[] splitTags(String tags) {
         if (TextUtils.isEmpty(tags)) {
             return null;
         }

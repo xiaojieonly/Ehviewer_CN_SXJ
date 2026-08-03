@@ -19,6 +19,10 @@ public class DownloadInfo extends GalleryInfo {
 	public long time;
 	public String label;
 	public String archiveUri; // URI for imported archive files
+	public int finished;
+	public int total;
+	public long fileSize = -1; // 文件夹总大小（字节），-1表示未计算
+	public long lastModified; // 同步用最后修改时间（DownloadManager 打戳）
 	public static final Creator<DownloadInfo> CREATOR = new Creator<DownloadInfo>() {
 		@Override
 		public DownloadInfo createFromParcel(Parcel source) {
@@ -40,10 +44,7 @@ public class DownloadInfo extends GalleryInfo {
 	public static final int GOTO_NEW = 6;
 	public long speed;
 	public long remaining;
-	public int finished;
 	public int downloaded;
-	public int total;
-	public long fileSize = -1; // 文件夹总大小（字节），-1表示未计算
 
 
 	@Generated
@@ -57,7 +58,9 @@ public class DownloadInfo extends GalleryInfo {
 	@Generated
 	public DownloadInfo(long gid, String token, String title, String titleJpn, String thumb, int category,
 			String posted, String uploader, float rating, String simpleLanguage, int state, int legacy, long time,
-			String label, String archiveUri) {
+			String label, String archiveUri, int finished, int total, long fileSize, long lastModified,
+			boolean rated, String[] simpleTags, int pages, int thumbWidth, int thumbHeight, int spanSize,
+			int spanIndex, int spanGroupIndex, int favoriteSlot, String favoriteName) {
 		this.gid = gid;
 		this.token = token;
 		this.title = title;
@@ -73,6 +76,20 @@ public class DownloadInfo extends GalleryInfo {
 		this.time = time;
 		this.label = label;
 		this.archiveUri = archiveUri;
+		this.finished = finished;
+		this.total = total;
+		this.fileSize = fileSize;
+		this.lastModified = lastModified;
+		this.rated = rated;
+		this.simpleTags = simpleTags;
+		this.pages = pages;
+		this.thumbWidth = thumbWidth;
+		this.thumbHeight = thumbHeight;
+		this.spanSize = spanSize;
+		this.spanIndex = spanIndex;
+		this.spanGroupIndex = spanGroupIndex;
+		this.favoriteSlot = favoriteSlot;
+		this.favoriteName = favoriteName;
 	}
 
 	public long getGid() {
@@ -193,6 +210,118 @@ public class DownloadInfo extends GalleryInfo {
 
 	public void setArchiveUri(String archiveUri) {
 		this.archiveUri = archiveUri;
+	}
+
+	public int getFinished() {
+		return finished;
+	}
+
+	public void setFinished(int finished) {
+		this.finished = finished;
+	}
+
+	public int getTotal() {
+		return total;
+	}
+
+	public void setTotal(int total) {
+		this.total = total;
+	}
+
+	public long getFileSize() {
+		return fileSize;
+	}
+
+	public void setFileSize(long fileSize) {
+		this.fileSize = fileSize;
+	}
+
+	public long getLastModified() {
+		return lastModified;
+	}
+
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
+
+	public boolean getRated() {
+		return rated;
+	}
+
+	public void setRated(boolean rated) {
+		this.rated = rated;
+	}
+
+	public String[] getSimpleTags() {
+		return simpleTags;
+	}
+
+	public void setSimpleTags(String[] simpleTags) {
+		this.simpleTags = simpleTags;
+	}
+
+	public int getPages() {
+		return pages;
+	}
+
+	public void setPages(int pages) {
+		this.pages = pages;
+	}
+
+	public int getThumbWidth() {
+		return thumbWidth;
+	}
+
+	public void setThumbWidth(int thumbWidth) {
+		this.thumbWidth = thumbWidth;
+	}
+
+	public int getThumbHeight() {
+		return thumbHeight;
+	}
+
+	public void setThumbHeight(int thumbHeight) {
+		this.thumbHeight = thumbHeight;
+	}
+
+	public int getSpanSize() {
+		return spanSize;
+	}
+
+	public void setSpanSize(int spanSize) {
+		this.spanSize = spanSize;
+	}
+
+	public int getSpanIndex() {
+		return spanIndex;
+	}
+
+	public void setSpanIndex(int spanIndex) {
+		this.spanIndex = spanIndex;
+	}
+
+	public int getSpanGroupIndex() {
+		return spanGroupIndex;
+	}
+
+	public void setSpanGroupIndex(int spanGroupIndex) {
+		this.spanGroupIndex = spanGroupIndex;
+	}
+
+	public int getFavoriteSlot() {
+		return favoriteSlot;
+	}
+
+	public void setFavoriteSlot(int favoriteSlot) {
+		this.favoriteSlot = favoriteSlot;
+	}
+
+	public String getFavoriteName() {
+		return favoriteName;
+	}
+
+	public void setFavoriteName(String favoriteName) {
+		this.favoriteName = favoriteName;
 	}
 
 	@Override
