@@ -5,10 +5,16 @@ export interface BackupRestoreResult {
   message?: string
 }
 
+/** R4-2: restore 运行态感知（GET /backup/state）。 */
+export interface BackupState {
+  restorePending: boolean
+}
+
 /**
  * 备份/还原 API（T11 BackupController）：
  *   GET  /api/v1/backup/export?includeDownloads=<bool> → application/zip 流
  *   POST /api/v1/backup/restore → multipart 字段 file → { success, message }
+ *   GET  /api/v1/backup/state → { restorePending }（R4-2 重启横幅）
  *
  * 导出需要压缩分片、上传也可能较大，两处均禁用 axios 默认 30s 超时。
  */
@@ -32,6 +38,12 @@ export const backupApi = {
       headers: { 'Content-Type': undefined },
       timeout: 0,
     })
+    return data
+  },
+
+  /** R4-2: 读取 restore 运行态（是否"已还原待重启"），供管理页横幅展示。 */
+  async getBackupState(): Promise<BackupState> {
+    const { data } = await client.get<BackupState>('/backup/state')
     return data
   },
 }
