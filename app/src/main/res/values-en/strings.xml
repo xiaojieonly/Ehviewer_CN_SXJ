@@ -942,6 +942,7 @@
     <string name="settings_webui_tier_1">Tier-1 sync + streaming (default)</string>
     <string name="settings_webui_tier_2">Tier-2 browsing proxied via server</string>
     <string name="settings_webui_tier_3">Tier-3 download hosting (deferred)</string>
+    <string name="settings_webui_tier_3_deferred_note">Tier-3 download hosting is deferred to a later wave; browsing currently behaves as Tier-2</string>
     <string name="settings_webui_auto_sync_interval">Auto-sync interval (seconds)</string>
     <string name="settings_webui_auto_sync_interval_summary">Periodic sync while on a paired network; 0 = sync on network change only</string>
     <string name="settings_webui_sync_preferences">Sync settings</string>

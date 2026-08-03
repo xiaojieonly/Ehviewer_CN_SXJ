@@ -131,23 +131,25 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             });
         }
 
-        // Remote reading toggle (roadmap §2.4). Persisted via WebUiSettings
-        // (custom prefs file, like the credential store) rather than the
-        // default preference store, so keep it non-persistent here.
+        // Wave-2 advanced sync panel (ADR-0003 D1/D3/D4). Everything below —
+        // including the roadmap §2.4 remote reading toggle — persists through
+        // one WebUiSettings instance (custom prefs file, like the credential
+        // store), so the preferences themselves stay non-persistent.
+        WebUiSettings policySettings = new WebUiSettings(requireContext());
+
+        // Remote reading toggle (roadmap §2.4). Tier-2 implies remote reading
+        // (WebUiSettings.remoteReadEnabled), so while tier >= 2 the switch
+        // shows the forced-on state and is disabled to avoid the impression
+        // that unchecking it could take effect.
         SwitchPreferenceCompat remoteRead = findPreference(KEY_REMOTE_READ);
         if (remoteRead != null) {
-            WebUiSettings settings = new WebUiSettings(requireContext());
-            remoteRead.setChecked(settings.remoteReadEnabled());
             remoteRead.setPersistent(false);
             remoteRead.setOnPreferenceChangeListener((pref, newValue) -> {
-                settings.setRemoteReadEnabled(Boolean.TRUE.equals(newValue));
+                policySettings.setRemoteReadEnabled(Boolean.TRUE.equals(newValue));
                 return true;
             });
+            updateRemoteReadForTier(remoteRead, policySettings);
         }
-
-        // Wave-2 advanced sync panel (ADR-0003 D1/D3/D4). Persisted via
-        // WebUiSettings (custom prefs file), so non-persistent here.
-        WebUiSettings policySettings = new WebUiSettings(requireContext());
         ListPreference strategy = findPreference(KEY_CONFLICT_STRATEGY);
         if (strategy != null) {
             strategy.setEntries(new CharSequence[]{
@@ -181,8 +183,20 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             tier.setOnPreferenceChangeListener((pref, newValue) -> {
                 policySettings.setClientTier(Integer.parseInt((String) newValue));
                 tier.setValue((String) newValue);
+                updateTierSummary(tier);
+                if (remoteRead != null) {
+                    updateRemoteReadForTier(remoteRead, policySettings);
+                }
+                if ("3".equals(newValue)) {
+                    // Tier-3 (download hosting) is deferred to its own wave;
+                    // picking it routes browsing like Tier-2 and nothing more.
+                    Toast.makeText(requireContext(),
+                            R.string.settings_webui_tier_3_deferred_note,
+                            Toast.LENGTH_LONG).show();
+                }
                 return true;
             });
+            updateTierSummary(tier);
         }
         EditTextPreference interval = findPreference(KEY_AUTO_SYNC_INTERVAL);
         if (interval != null) {
@@ -193,6 +207,9 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                     int seconds = Integer.parseInt(((String) newValue).trim());
                     if (seconds < 0) return false;
                     policySettings.setAutoSyncIntervalSec(seconds);
+                    // Keep the stored text in step with the persisted value so
+                    // the dialog never reopens on a stale number.
+                    interval.setText(String.valueOf(seconds));
                     return true;
                 } catch (NumberFormatException e) {
                     return false;
@@ -209,6 +226,33 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         int index = strategy.findIndexOfValue(strategy.getValue());
         CharSequence label = index >= 0 ? strategy.getEntries()[index] : "";
         strategy.setSummary(label + " — " + getString(R.string.settings_webui_strategy_d2_hint));
+    }
+
+    /**
+     * Selected tier label plus the standing description, mirroring the
+     * strategy row. Tier-3 carries the deferred-wave note (the ListPreference
+     * dialog cannot grey out a single entry, so the label's "（押后）" marker,
+     * this summary and a pick-time toast carry the disclosure instead).
+     */
+    private void updateTierSummary(ListPreference tier) {
+        int index = tier.findIndexOfValue(tier.getValue());
+        CharSequence label = index >= 0 ? tier.getEntries()[index] : "";
+        String summary = label + " — " + getString(R.string.settings_webui_client_tier_summary);
+        if ("3".equals(tier.getValue())) {
+            summary += " · " + getString(R.string.settings_webui_tier_3_deferred_note);
+        }
+        tier.setSummary(summary);
+    }
+
+    /**
+     * Tier-2 implies remote reading, so at tier >= 2 the switch reflects the
+     * forced-on effective state and is disabled; below tier 2 it is editable
+     * and shows the stored value.
+     */
+    private void updateRemoteReadForTier(SwitchPreferenceCompat remoteRead, WebUiSettings settings) {
+        boolean forcedByTier = settings.clientTier() >= 2;
+        remoteRead.setChecked(settings.remoteReadEnabled());
+        remoteRead.setEnabled(!forcedByTier);
     }
 
     @Override

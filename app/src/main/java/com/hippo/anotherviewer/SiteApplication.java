@@ -474,6 +474,12 @@ public class SiteApplication extends RecordingApplication {
 //                    .hostnameVerifier((hostname, session) -> true)
 //                    .dispatcher(dispatcher)
                     .addInterceptor(createMockSiteInterceptor())
+                    // Wave-2 (ADR-0003 D3): Tier-2 routes Gallery Site browsing
+                    // through the paired WebUI server. Registered after the mock
+                    // interceptor so debug-mode rewrites win; in production the
+                    // mock is a pass-through and this applies per request.
+                    .addInterceptor(new com.hippo.anotherviewer.webui.WebUiTier2ProxyInterceptor(
+                            new com.hippo.anotherviewer.webui.WebUiSettings(application)))
                     .dns(new SiteHosts(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
@@ -559,6 +565,12 @@ public class SiteApplication extends RecordingApplication {
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
                     .addInterceptor(createMockSiteInterceptor())
+                    // Wave-2 (ADR-0003 D3): Tier-2 routes Gallery Site browsing
+                    // through the paired WebUI server. Registered after the mock
+                    // interceptor so debug-mode rewrites win; in production the
+                    // mock is a pass-through and this applies per request.
+                    .addInterceptor(new com.hippo.anotherviewer.webui.WebUiTier2ProxyInterceptor(
+                            new com.hippo.anotherviewer.webui.WebUiSettings(application)))
                     .dns(new SiteHosts(application))
                     .addNetworkInterceptor(sprocket -> {
                         try {
