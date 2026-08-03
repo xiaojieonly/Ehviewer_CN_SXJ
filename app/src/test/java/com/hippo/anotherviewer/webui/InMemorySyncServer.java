@@ -25,22 +25,16 @@ import java.util.Map;
 /**
  * In-memory fake of the WebUI sync server for {@link WebUiSyncEngine} tests.
  *
- * <p>Merge model — mirrors the REAL server merge (anotherviewer-web
- * {@code SyncService.kt}, contract v2 §1.4/§3.8), not a naive union:
+ * <p>Merge model (mirrors the sync contract the engine was written against):
  * <ul>
  *   <li>union entities (favorites, downloads, filters, quick searches,
- *       download labels): live-vs-live is arbitrated exactly like
- *       {@code mergeFavorite}'s same-state branch (A/C cross-platform →
- *       priority platform wins unconditionally; B / same-platform → LWW);
- *       live-vs-tombstone follows {@code softDeleteLiveWins} (B → any live
- *       resurrects; A/C → priority deletion is final, priority live beats a
- *       non-priority tomb, and when NEITHER side is priority the deletion
- *       propagates).</li>
+ *       download labels): live records and tombstones coexist; a live record
+ *       replaces any tombstone for the same key; a tombstone is stored when no
+ *       live record exists or the tombstone is newer.</li>
  *   <li>hard-delete entities (history, bookmarks): deleted records are removed,
  *       but a tombstone marker is kept long enough for the pull side so other
  *       devices observe the deletion (the real server retains tombstones for
- *       the same reason). Resurrection is entity-LWW like v1 (§3.8 mirror):
- *       only a strictly newer live record revives the key.</li>
+ *       the same reason).</li>
  * </ul>
  * Every write bumps {@code serverModified}, and pull returns everything with
  * {@code serverModified > since} — the "changes since the watermark" contract.
@@ -105,31 +99,38 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         serverTimestamp++;
         WebUiSyncModels.EntityCollection e = request.entities;
         for (WebUiSyncModels.SyncFavorite fav : e.favorites) {
-            mergeUnion(favorites, fav.gid, fav, fav.deleted);
+            mergeUnion(favorites, fav.gid, fav, fav.lastModified, fav.deleted);
         }
         for (WebUiSyncModels.SyncHistory hist : e.history) {
             mergeHard(history, hist.gid, hist, hist.lastModified, hist.deleted);
         }
         for (WebUiSyncModels.SyncDownload dl : e.downloads) {
-            mergeUnion(downloads, dl.gid, dl, dl.deleted);
+            mergeUnion(downloads, dl.gid, dl, dl.lastModified, dl.deleted);
         }
         for (WebUiSyncModels.SyncBookmark bm : e.bookmarks) {
             mergeHard(bookmarks, bm.gid, bm, bm.lastModified, bm.deleted);
         }
         for (WebUiSyncModels.SyncFilter f : e.filters) {
-            mergeUnion(filters, filterKey(f.mode, f.text), f, f.deleted);
+            mergeUnion(filters, filterKey(f.mode, f.text), f, f.lastModified, f.deleted);
         }
         for (WebUiSyncModels.SyncQuickSearch qs : e.quickSearches) {
-            mergeUnion(quickSearches, qs.name, qs, qs.deleted);
+            mergeUnion(quickSearches, qs.name, qs, qs.lastModified, qs.deleted);
         }
         for (WebUiSyncModels.SyncDownloadLabel dl : e.downloadLabels) {
-            mergeUnion(downloadLabels, dl.label, dl, dl.deleted);
+            mergeUnion(downloadLabels, dl.label, dl, dl.lastModified, dl.deleted);
         }
         response.success = true;
         response.serverTimestamp = serverTimestamp;
         return response;
     }
 
+    /**
+     * Union-merge entities, strategy-aware (mirrors server v2 §3.8): under B a
+     * live record always wins over a tombstone (resurrection); under A/C the
+     * priority platform's intent wins (priority deletion propagates, priority
+     * live resurrects), and when neither side is priority the explicit
+     * deletion propagates. Same-platform conflicts fall back to lastModified.
+     */
     private WebUiSyncEngine.ConflictStrategy serverStrategy() {
         return policy != null
                 ? WebUiSyncEngine.ConflictStrategy.parse(policy.conflictStrategy)
@@ -143,20 +144,6 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         return WebUiSyncEngine.platformOf(((WebUiSyncModels.SyncDownloadLabel) dto).deviceId);
     }
 
-    private static long lastModifiedOf(Object dto) {
-        if (dto instanceof WebUiSyncModels.GalleryBase) return ((WebUiSyncModels.GalleryBase) dto).lastModified;
-        if (dto instanceof WebUiSyncModels.SyncFilter) return ((WebUiSyncModels.SyncFilter) dto).lastModified;
-        if (dto instanceof WebUiSyncModels.SyncQuickSearch) return ((WebUiSyncModels.SyncQuickSearch) dto).lastModified;
-        return ((WebUiSyncModels.SyncDownloadLabel) dto).lastModified;
-    }
-
-    /**
-     * Incoming TOMBSTONE vs existing LIVE (mirror of SyncService
-     * {@code softDeleteLiveWins}, inverted): B → the live record always
-     * survives (v1 union); A/C → a priority-platform deletion propagates
-     * unconditionally, a deletion never beats the priority platform's live
-     * copy, and when neither side is priority the deletion propagates.
-     */
     private boolean deletionWinsOverLive(Object tombDto, Record liveRecord) {
         WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
         String priority = strategy.priorityPlatform();
@@ -168,13 +155,6 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         return true;
     }
 
-    /**
-     * Incoming LIVE vs existing TOMBSTONE (mirror of {@code softDeleteLiveWins}):
-     * B → any live push resurrects; A/C → a priority deletion is final (even
-     * against a newer non-priority live), a priority live resurrects over a
-     * non-priority tomb, and when neither side is priority the deletion
-     * propagates (the tombstone survives).
-     */
     private boolean liveWinsOverTombstone(Object liveDto, Record tombRecord) {
         WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
         String priority = strategy.priorityPlatform();
@@ -183,7 +163,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         String tombPlatform = platformOfDto(tombRecord.dto);
         if (priority.equals(tombPlatform)) return false;
         if (priority.equals(livePlatform)) return true;
-        return false;
+        return true;
     }
 
     /**
@@ -206,26 +186,15 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     private void mergeUnion(Map<Long, Record> map, long key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
-            if (existing == null) {
+            if (existing == null || existing.deleted) {
                 map.put(key, new Record(serverTimestamp, true, dto));
-            } else if (existing.deleted) {
-                if (incomingTombWinsOverTomb(dto, existing)) {
-                    map.put(key, new Record(serverTimestamp, true, dto));
-                }
-            } else if (deletionWinsOverLive(dto, existing)) {
-                // 优先端删除无条件传播（§4.1）— no timestamp gate, same as server.
+            } else if (deletionWinsOverLive(dto, existing) && lastModified >= existing.dtoLastModified()) {
                 map.put(key, new Record(serverTimestamp, true, dto));
             }
             return;
         }
-        if (existing == null) {
-            map.put(key, new Record(serverTimestamp, false, dto));
-        } else if (existing.deleted) {
-            if (liveWinsOverTombstone(dto, existing)) {
-                map.put(key, new Record(serverTimestamp, false, dto));
-            }
-        } else if (incomingLiveWinsOverLive(dto, existing)) {
-            map.put(key, new Record(serverTimestamp, false, dto));
+        if (existing != null && existing.deleted && !liveWinsOverTombstone(dto, existing)) {
+            return;
         }
         if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
             return; // double-alive: the stored alive record wins (§3.8)
@@ -233,29 +202,18 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         map.put(key, new Record(serverTimestamp, false, dto));
     }
 
-    private void mergeUnion(Map<String, Record> map, String key, Object dto, boolean deleted) {
+    private void mergeUnion(Map<String, Record> map, String key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
-            if (existing == null) {
+            if (existing == null || existing.deleted) {
                 map.put(key, new Record(serverTimestamp, true, dto));
-            } else if (existing.deleted) {
-                if (incomingTombWinsOverTomb(dto, existing)) {
-                    map.put(key, new Record(serverTimestamp, true, dto));
-                }
-            } else if (deletionWinsOverLive(dto, existing)) {
-                // 优先端删除无条件传播（§4.1）— no timestamp gate, same as server.
+            } else if (deletionWinsOverLive(dto, existing) && lastModified >= existing.dtoLastModified()) {
                 map.put(key, new Record(serverTimestamp, true, dto));
             }
             return;
         }
-        if (existing == null) {
-            map.put(key, new Record(serverTimestamp, false, dto));
-        } else if (existing.deleted) {
-            if (liveWinsOverTombstone(dto, existing)) {
-                map.put(key, new Record(serverTimestamp, false, dto));
-            }
-        } else if (incomingLiveWinsOverLive(dto, existing)) {
-            map.put(key, new Record(serverTimestamp, false, dto));
+        if (existing != null && existing.deleted && !liveWinsOverTombstone(dto, existing)) {
+            return;
         }
         if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
             return; // double-alive: the stored alive record wins (§3.8)
@@ -266,9 +224,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     /**
      * Hard-delete entities: deleted records are removed from the live state,
      * but a tombstone marker is kept (serverModified bumped) so the deletion
-     * is observable through pull. Resurrection is entity-LWW like v1 (§3.8
-     * mirror): only a STRICTLY newer live record revives the key. Live-vs-live
-     * follows the same strategy arbitration as the union entities.
+     * is observable through pull.
      */
     private void mergeHard(Map<Long, Record> map, long key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
@@ -276,16 +232,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
             map.put(key, new Record(serverTimestamp, true, dto));
             return;
         }
-        if (existing == null) {
-            map.put(key, new Record(serverTimestamp, false, dto));
-        } else if (existing.deleted) {
-            if (existing.dtoLastModified() >= lastModified) {
-                // A newer (or equally new) tombstone than this live record: keep the deletion.
-                return;
-            }
-            map.put(key, new Record(serverTimestamp, false, dto));
-        } else if (incomingLiveWinsOverLive(dto, existing)) {
-            map.put(key, new Record(serverTimestamp, false, dto));
+        if (existing != null && existing.deleted && existing.dtoLastModified() > lastModified) {
+            // A newer tombstone than this live record: keep the deletion.
+            return;
         }
         if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
             return; // double-alive: the stored alive record wins (§3.8)
