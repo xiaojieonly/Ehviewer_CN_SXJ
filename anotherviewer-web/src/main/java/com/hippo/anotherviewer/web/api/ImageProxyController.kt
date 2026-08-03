@@ -64,7 +64,37 @@ class ImageProxyController(
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE)
                 .body(cached)
         }
-        return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found in cache")
+        // W3 R4-9: fetch-on-miss for site assets (thumbnails/covers) so the
+        // WebUI renders them under CSP img-src 'self'. Allowlist mirrors the
+        // site proxy; misses for foreign hosts stay rejected.
+        val host = runCatching { java.net.URI(url).host }.getOrNull()
+            ?: return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Unparsable url")
+        if (!(host == "gallery.test" || host.endsWith(".gallery.test"))) {
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Host not allowlisted")
+        }
+        return try {
+            okHttpClient.newCall(okhttp3.Request.Builder().url(url).build()).execute().use { resp ->
+                if (!resp.isSuccessful) {
+                    return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Site asset unavailable")
+                }
+                val bytes = resp.body()?.bytes()
+                    ?: return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Empty site asset")
+                imageCacheService.cacheImage(url, bytes)
+                val contentType = resp.header("Content-Type") ?: mimeForUrl(url)
+                ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .header(HttpHeaders.CACHE_CONTROL, CACHE_MAX_AGE)
+                    .body(bytes)
+            }
+        } catch (e: Exception) {
+            logger.warn("site asset fetch-on-miss failed for {}: {}", url, e.message)
+            errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Site asset unavailable")
+        }
+    }
+
+    private fun mimeForUrl(url: String): String {
+        val ext = url.substringAfterLast('.', "").substringBefore('?').lowercase()
+        return IMAGE_MIME_BY_EXT[ext] ?: MediaType.IMAGE_JPEG_VALUE
     }
 
     @GetMapping("/cache/status")
