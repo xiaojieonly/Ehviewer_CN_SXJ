@@ -171,7 +171,7 @@ class GalleryService(
     fun getGalleryDetail(gid: Long): GalleryDetailDto? {
         val history = historyRepository.findByGid(gid) ?: return null
         val tags = galleryTagsRepository.findByGid(gid)
-        return GalleryDetailDto(
+        val dto = GalleryDetailDto(
             gid = history.gid,
             token = history.token,
             galleryUrl = SiteUrl.getGalleryDetailUrl(history.gid, history.token),
@@ -193,6 +193,30 @@ class GalleryService(
             tags = tags.map { TagDto(it.tagNamespace, it.tag) },
             imageUrl = history.thumb
         )
+        if (dto.pages > 0) return dto
+        // History rows seeded via REST carry no page count; fetch the site
+        // detail so the WebUI reader can open. E2E-6 semantics preserved: an
+        // unreachable site keeps the (pageless) history-based dto.
+        return try {
+            val detail = SiteEngine.getGalleryDetail(
+                null, client, SiteUrl.getGalleryDetailUrl(history.gid, history.token)
+            )
+            dto.copy(
+                title = dto.title ?: detail.title,
+                titleJpn = dto.titleJpn ?: detail.titleJpn,
+                thumb = dto.thumb ?: detail.thumb,
+                category = if (dto.category != 0) dto.category else detail.category,
+                posted = dto.posted ?: detail.posted,
+                uploader = dto.uploader ?: detail.uploader,
+                rating = if (dto.rating != 0f) dto.rating else detail.rating,
+                simpleTags = dto.simpleTags.ifEmpty { detail.simpleTags?.toList() ?: emptyList() },
+                pages = detail.pages,
+                imageUrl = dto.imageUrl ?: detail.thumb,
+            )
+        } catch (e: Exception) {
+            logger.warn("Site detail fallback failed for gid={}: {}", gid, e.message)
+            dto
+        }
     }
 
     fun addToHistory(gid: Long, token: String, title: String?) {

@@ -12,6 +12,7 @@
         :left-icon="null"
         right-icon="magnify-dark"
         :suggestions="suggestions"
+        filter-visible
         :filter-panel-open="filterPanelOpen"
         :filter-active="activeFilterChips.length > 0"
         :filter-chips="activeFilterChips"
@@ -651,6 +652,12 @@ onBeforeUnmount(detachVirtualScroll)
 }
 
 .home__searchbar :deep(.search-bar) {
+  pointer-events: auto;
+}
+
+/* The anchored FilterPanel popover must also receive input (the floating
+   bar container is pointer-events: none so the margin passes scrolls). */
+.home__searchbar :deep(.filter-panel) {
   pointer-events: auto;
 }
 
