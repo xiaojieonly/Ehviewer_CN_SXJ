@@ -2055,6 +2055,17 @@ components:
           type: integer
         pageTo:
           type: integer
+        sort:
+          type: integer
+          enum: [0, 1, 2, 3]
+          default: 0
+          description: >-
+            Sort order persisted with the preset (W3 R4-11; same semantics as
+            GET /api/v1/gallery/search `sort`): 0 = default order,
+            1 = posted time desc, 2 = rating desc, 3 = title asc. Applied
+            when the preset is loaded. Absent on legacy rows (reads as 0).
+            REST-only: SyncQuickSearchDto (app schema) intentionally has no
+            sort — presets keep it when stored via REST, the app ignores it.
 
     # ----------------------------------------------------------
     # Favorite

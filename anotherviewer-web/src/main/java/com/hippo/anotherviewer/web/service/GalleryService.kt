@@ -269,7 +269,8 @@ class GalleryService(
                     advanceSearch = it.advanceSearch,
                     minRating = it.minRating,
                     pageFrom = it.pageFrom,
-                    pageTo = it.pageTo
+                    pageTo = it.pageTo,
+                    sort = it.sort
                 )
             }
         )
@@ -285,6 +286,7 @@ class GalleryService(
             minRating = dto.minRating
             pageFrom = dto.pageFrom
             pageTo = dto.pageTo
+            sort = dto.sort
         }
         val saved = quickSearchRepository.save(entity)
         return QuickSearchDto(
@@ -296,7 +298,8 @@ class GalleryService(
             advanceSearch = saved.advanceSearch,
             minRating = saved.minRating,
             pageFrom = saved.pageFrom,
-            pageTo = saved.pageTo
+            pageTo = saved.pageTo,
+            sort = saved.sort
         )
     }
 

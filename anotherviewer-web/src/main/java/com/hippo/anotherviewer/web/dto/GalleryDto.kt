@@ -74,8 +74,10 @@ data class QuickSearchDto(
     val category: Int,
     @field:Size(max = 512, message = "keyword must be at most 512 characters")
     val keyword: String?,
-    @field:Min(0, message = "advanceSearch must be 0 or 1")
-    @field:Max(1, message = "advanceSearch must be 0 or 1")
+    // Full AdvanceSearchTable bitmask (SNAME..SFT = 0x1..0x400, W3 R4-10:
+    // the high bits are backend-supported, so presets may carry them).
+    @field:Min(0, message = "advanceSearch must be within the AdvanceSearchTable bitmask (0..2047)")
+    @field:Max(2047, message = "advanceSearch must be within the AdvanceSearchTable bitmask (0..2047)")
     val advanceSearch: Int,
     @field:Min(0, message = "minRating must be between 0 and 5")
     @field:Max(5, message = "minRating must be between 0 and 5")
@@ -83,5 +85,10 @@ data class QuickSearchDto(
     @field:Min(0, message = "pageFrom must be non-negative")
     val pageFrom: Int,
     @field:Min(0, message = "pageTo must be non-negative")
-    val pageTo: Int
+    val pageTo: Int,
+    // W3 R4-11 (contracts/openapi.yaml QuickSearchDto.sort): the sort order
+    // persisted with the preset; same semantics as GET /gallery/search `sort`.
+    @field:Min(0, message = "sort must be between 0 and 3")
+    @field:Max(3, message = "sort must be between 0 and 3")
+    val sort: Int = 0
 )

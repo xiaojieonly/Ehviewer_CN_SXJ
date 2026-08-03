@@ -277,4 +277,61 @@ class GalleryControllerTest {
             .andExpect(status().isOk)
         verify(galleryService).createQuickSearch(any())
     }
+
+    // W3 R4-10: presets carry the full AdvanceSearchTable bitmask (the old
+    // 0..1 validation rejected every scope/higher-bit combination).
+    @Test
+    fun `createQuickSearch accepts the full advanceSearch bitmask`() {
+        mockMvc.perform(
+            post("/api/v1/gallery/quick-search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"id":0,"name":"wide","mode":0,"category":0,"advanceSearch":2047,"minRating":0,"pageFrom":0,"pageTo":0}""")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService).createQuickSearch(any())
+    }
+
+    @Test
+    fun `createQuickSearch rejects advanceSearch beyond the bitmask with 400 envelope`() {
+        mockMvc.perform(
+            post("/api/v1/gallery/quick-search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"id":0,"name":"wide","mode":0,"category":0,"advanceSearch":2048,"minRating":0,"pageFrom":0,"pageTo":0}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+        verify(galleryService, never()).createQuickSearch(any())
+    }
+
+    // W3 R4-11: presets persist the sort order (contracts QuickSearchDto.sort).
+    @Test
+    fun `createQuickSearch accepts sort 0 to 3 and defaults absent sort`() {
+        for (sort in 0..3) {
+            mockMvc.perform(
+                post("/api/v1/gallery/quick-search")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"id":0,"name":"sorted","mode":0,"category":0,"advanceSearch":0,"minRating":0,"pageFrom":0,"pageTo":0,"sort":$sort}""")
+            )
+                .andExpect(status().isOk)
+        }
+        mockMvc.perform(
+            post("/api/v1/gallery/quick-search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"id":0,"name":"legacy","mode":0,"category":0,"advanceSearch":0,"minRating":0,"pageFrom":0,"pageTo":0}""")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService, times(5)).createQuickSearch(any())
+    }
+
+    @Test
+    fun `createQuickSearch rejects out-of-range sort with 400 envelope`() {
+        mockMvc.perform(
+            post("/api/v1/gallery/quick-search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"id":0,"name":"sorted","mode":0,"category":0,"advanceSearch":0,"minRating":0,"pageFrom":0,"pageTo":0,"sort":4}""")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+        verify(galleryService, never()).createQuickSearch(any())
+    }
 }
