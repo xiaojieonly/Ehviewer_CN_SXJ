@@ -20,7 +20,15 @@
 
 import express from 'express';
 
-import { EXH_BASE, GALLERIES, findGallery } from './gallery-fixtures.mjs';
+import {
+  EXH_BASE,
+  GALLERIES,
+  findGallery,
+  FAVORITE_FOLDERS,
+  FAVORITES,
+  allFavoriteGids,
+  favoriteCount,
+} from './gallery-fixtures.mjs';
 import { makeImage } from './gallery-images.mjs';
 
 // --------------------------------------------------------------- html
@@ -92,15 +100,63 @@ function imagePageHtml(g, page) {
     `</body></html>`;
 }
 
+// One gallery row — shaped for GalleryListParser.parseGalleryInfo
+// (table.itg > tr with .glthumb img / .glname a[href=/g/gid/token/] /
+// .glhide). Shared by the home/search list and the favorites page.
+function rowHtml(g) {
+  return (
+    `<tr class="gtr"><td><div class="glthumb"><img src="${EXH_BASE}/t/${g.gid}/cover.jpg" style="max-width:100px;max-height:100px"/></div></td>` +
+    `<td><div class="glname"><a href="${EXH_BASE}/g/${g.gid}/${g.token}/">${g.title}</a></div>` +
+    `<div class="glhide">${g.pages} pages</div></td></tr>`
+  );
+}
+
 function listHtml(galleries = GALLERIES) {
-  const rows = galleries.map(
-    (g) =>
-      `<tr class="gtr"><td><div class="glthumb"><img src="${EXH_BASE}/t/${g.gid}/cover.jpg" style="max-width:100px;max-height:100px"/></div></td>` +
-      `<td><div class="glname"><a href="${EXH_BASE}/g/${g.gid}/${g.token}/">${g.title}</a></div>` +
-      `<div class="glhide">${g.pages} pages</div></td></tr>`,
-  ).join('');
+  const rows = galleries.map(rowHtml).join('');
   return `<!DOCTYPE html><html><head><title>Mock Gallery Site</title></head><body>` +
     `<table class="itg">${rows}</table></body></html>`;
+}
+
+// Cloud favorites page — shaped for FavoritesParser (+ the GalleryListParser
+// MODE_NORMAL it delegates to). DOM contract (FavoritesParser.java):
+//   - .ido wrapper holding EXACTLY 11 .fp elements: the first 10 are the
+//     favorite folders (child(0)=count, child(2)=name), the 11th is the
+//     "all" row carrying class "fp fps";
+//   - optional .searchnav <select> whose selected option -> favOrder;
+//   - gallery list parsed by GalleryListParser: .itg rows (rowHtml) plus a
+//     single-page .ptt bar; an EMPTY folder must instead contain the literal
+//     "No hits found</p>" marker (no .ptt/.searchnav), which the parser maps
+//     to pages=0 + empty list rather than throwing "No gallery".
+function favoritesHtml(galleries) {
+  const folderRows = FAVORITE_FOLDERS.map(
+    (name, i) => `<div class="fp"><div>${favoriteCount(i)}</div><div></div><div>${name}</div></div>`,
+  ).join('');
+  const allCount = allFavoriteGids().length;
+  const fpBar =
+    `<div class="ido">${folderRows}` +
+    `<div class="fp fps"><div>${allCount}</div><div></div><div>All</div></div></div>`;
+
+  if (galleries.length === 0) {
+    return `<!DOCTYPE html><html><head><title>Favorites</title></head><body>` +
+      fpBar +
+      `<div class="itg"><p>No hits found</p></div></body></html>`;
+  }
+
+  const rows = galleries.map(rowHtml).join('');
+  const searchnav =
+    `<div class="searchnav"><select name="sort">` +
+    `<option value="f" selected="selected">Favorited Time</option>` +
+    `<option value="p">Posted Time</option></select></div>`;
+  const ptt =
+    `<table class="ptt" style="margin:2px auto 0px"><tr>` +
+    `<td class="ptdd">&lt;</td><td class="ptds">1</td><td class="ptdd">&gt;</td>` +
+    `</tr></table>`;
+  return `<!DOCTYPE html><html><head><title>Favorites</title></head><body>` +
+    fpBar +
+    searchnav +
+    `<table class="itg">${rows}</table>` +
+    ptt +
+    `</body></html>`;
 }
 
 // ------------------------------------------- list query oracle (search v1.1)
@@ -237,6 +293,21 @@ export default function galleryRoutes(app) {
   // with no params it returns the full fixture list in default order.
   router.get('/', (req, res) => {
     res.type('html').send(listHtml(applyListQuery(GALLERIES, req.query)));
+  });
+
+  // Cloud favorites (R4-8) — shaped for FavoritesParser. `favcat` selects a
+  // folder ("0".."9"); anything else (absent / "all") returns every favorited
+  // gallery. The 10-slot folder bar and favOrder <select> are always present,
+  // so catArray / countArray / favOrder parse regardless of the folder. An
+  // empty folder returns the "No hits found" shape (pages=0, empty list).
+  router.get('/favorites.php', (req, res) => {
+    const favcat = req.query.favcat;
+    const gids =
+      favcat != null && /^\d$/.test(String(favcat))
+        ? FAVORITES[Number(favcat)] ?? []
+        : allFavoriteGids();
+    const galleries = gids.map(findGallery).filter(Boolean);
+    res.type('html').send(favoritesHtml(galleries));
   });
 
   // Gallery detail page — shaped for GalleryDetailParser.

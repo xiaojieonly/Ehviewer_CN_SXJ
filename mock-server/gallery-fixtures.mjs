@@ -196,3 +196,29 @@ export const GALLERIES = [
 export function findGallery(gid) {
   return GALLERIES.find((g) => g.gid === Number(gid));
 }
+
+// --------------------------------------------------------------- favorites
+// Cloud-favorites fixtures for the Gallery Site `favorites.php` page (R4-8).
+// FAVORITES maps a favorite-folder index (0..9) to the gids it contains. The
+// shape is deliberately mixed: two folders with a single gallery, one folder
+// with two galleries, and the rest empty — so the parser's 10-slot folder
+// bar, the multi-row list, and the empty-folder ("No hits found") path are
+// all exercised.
+
+export const FAVORITE_FOLDERS = Array.from({ length: 10 }, (_, i) => `Favorites ${i}`);
+
+export const FAVORITES = {
+  0: [1003, 2002],
+  1: [2001],
+  2: [3002],
+};
+
+/** All favorited gids in deterministic folder order (0 -> 9). */
+export function allFavoriteGids() {
+  return FAVORITE_FOLDERS.flatMap((_, i) => FAVORITES[i] ?? []);
+}
+
+/** Count of galleries in a favorite folder. */
+export function favoriteCount(i) {
+  return (FAVORITES[i] ?? []).length;
+}
