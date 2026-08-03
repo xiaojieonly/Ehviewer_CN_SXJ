@@ -34,6 +34,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.hippo.anotherviewer.R;
@@ -61,6 +63,9 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     private static final String KEY_STATUS = "webui_status";
     private static final String KEY_SYNC_NOW = "webui_sync_now";
     private static final String KEY_REMOTE_READ = "webui_remote_read";
+    private static final String KEY_CONFLICT_STRATEGY = "webui_conflict_strategy";
+    private static final String KEY_CLIENT_TIER = "webui_client_tier";
+    private static final String KEY_AUTO_SYNC_INTERVAL = "webui_auto_sync_interval";
     private static final String KEY_PAIR = "webui_pair";
     private static final String KEY_SYNC_PREFERENCES = "webui_sync_preferences";
     private static final String KEY_PULL_PREFERENCES = "webui_pull_preferences";
@@ -140,8 +145,70 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             });
         }
 
+        // Wave-2 advanced sync panel (ADR-0003 D1/D3/D4). Persisted via
+        // WebUiSettings (custom prefs file), so non-persistent here.
+        WebUiSettings policySettings = new WebUiSettings(requireContext());
+        ListPreference strategy = findPreference(KEY_CONFLICT_STRATEGY);
+        if (strategy != null) {
+            strategy.setEntries(new CharSequence[]{
+                    getString(R.string.settings_webui_strategy_device_priority),
+                    getString(R.string.settings_webui_strategy_lww),
+                    getString(R.string.settings_webui_strategy_web_priority)});
+            strategy.setEntryValues(new CharSequence[]{
+                    WebUiSettings.STRATEGY_DEVICE_PRIORITY,
+                    WebUiSettings.STRATEGY_LWW,
+                    WebUiSettings.STRATEGY_WEB_PRIORITY});
+            strategy.setValue(policySettings.conflictStrategy());
+            strategy.setPersistent(false);
+            strategy.setOnPreferenceChangeListener((pref, newValue) -> {
+                policySettings.setConflictStrategy((String) newValue);
+                strategy.setValue((String) newValue);
+                updateStrategySummary(strategy);
+                return true;
+            });
+            updateStrategySummary(strategy);
+        }
+        ListPreference tier = findPreference(KEY_CLIENT_TIER);
+        if (tier != null) {
+            tier.setEntries(new CharSequence[]{
+                    getString(R.string.settings_webui_tier_0),
+                    getString(R.string.settings_webui_tier_1),
+                    getString(R.string.settings_webui_tier_2),
+                    getString(R.string.settings_webui_tier_3)});
+            tier.setEntryValues(new CharSequence[]{"0", "1", "2", "3"});
+            tier.setValue(String.valueOf(policySettings.clientTier()));
+            tier.setPersistent(false);
+            tier.setOnPreferenceChangeListener((pref, newValue) -> {
+                policySettings.setClientTier(Integer.parseInt((String) newValue));
+                tier.setValue((String) newValue);
+                return true;
+            });
+        }
+        EditTextPreference interval = findPreference(KEY_AUTO_SYNC_INTERVAL);
+        if (interval != null) {
+            interval.setText(String.valueOf(policySettings.autoSyncIntervalSec()));
+            interval.setPersistent(false);
+            interval.setOnPreferenceChangeListener((pref, newValue) -> {
+                try {
+                    int seconds = Integer.parseInt(((String) newValue).trim());
+                    if (seconds < 0) return false;
+                    policySettings.setAutoSyncIntervalSec(seconds);
+                    return true;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            });
+        }
+
         updateConfigureSummary();
         updateLastSyncSummary();
+    }
+
+    /** D2 disclosure: the strategy is App-authoritative; WebUI edits get overwritten. */
+    private void updateStrategySummary(ListPreference strategy) {
+        int index = strategy.findIndexOfValue(strategy.getValue());
+        CharSequence label = index >= 0 ? strategy.getEntries()[index] : "";
+        strategy.setSummary(label + " — " + getString(R.string.settings_webui_strategy_d2_hint));
     }
 
     @Override

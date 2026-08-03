@@ -931,6 +931,19 @@
     <string name="settings_webui_sync_failed">Sync failed: %s</string>
     <string name="settings_webui_remote_read">Remote reading</string>
     <string name="settings_webui_remote_read_summary">When connected, stream pages from the server instead of EH; read pages stay in the local cache</string>
+    <string name="settings_webui_conflict_strategy">Sync conflict strategy</string>
+    <string name="settings_webui_strategy_device_priority">Android priority (default)</string>
+    <string name="settings_webui_strategy_lww">Last write wins</string>
+    <string name="settings_webui_strategy_web_priority">WebUI priority</string>
+    <string name="settings_webui_strategy_d2_hint">App-authoritative; WebUI changes are overwritten by the next App sync</string>
+    <string name="settings_webui_client_tier">Client mode</string>
+    <string name="settings_webui_client_tier_summary">Behavior tier when the App joins the WebUI network</string>
+    <string name="settings_webui_tier_0">Tier-0 independent (no server)</string>
+    <string name="settings_webui_tier_1">Tier-1 sync + streaming (default)</string>
+    <string name="settings_webui_tier_2">Tier-2 browsing proxied via server</string>
+    <string name="settings_webui_tier_3">Tier-3 download hosting (deferred)</string>
+    <string name="settings_webui_auto_sync_interval">Auto-sync interval (seconds)</string>
+    <string name="settings_webui_auto_sync_interval_summary">Periodic sync while on a paired network; 0 = sync on network change only</string>
     <string name="settings_webui_sync_preferences">Sync settings</string>
     <string name="settings_webui_sync_preferences_summary">Upload local settings to the WebUI server</string>
     <string name="settings_webui_pull_preferences">Pull settings</string>

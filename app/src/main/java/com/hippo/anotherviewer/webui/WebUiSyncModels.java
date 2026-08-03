@@ -127,11 +127,20 @@ public final class WebUiSyncModels {
         public List<SyncDownloadLabel> downloadLabels = new ArrayList<>();
     }
 
+    /** syncPolicy (sync-schemas.json syncPolicy, ADR-0003 / contract v2 §8). */
+    public static class SyncPolicy {
+        public String conflictStrategy = "device_priority";
+        public int clientTier = 1;
+        public int autoSyncIntervalSec = 900;
+    }
+
     /** POST /api/v1/sync/push body. */
     public static class PushRequest {
         public EntityCollection entities = new EntityCollection();
         public String deviceId = "";
         public long timestamp;
+        /** Optional (v2). Authoritative when this device is android-platform (D2). */
+        public SyncPolicy policy;
     }
 
     public static class PushResponse {
@@ -144,6 +153,8 @@ public final class WebUiSyncModels {
     public static class PullResponse {
         public EntityCollection entities = new EntityCollection();
         public long serverTimestamp;
+        /** Optional (v2). Absent on legacy servers → client falls back to lww. */
+        public SyncPolicy policy;
     }
 
     /** GET /api/v1/sync/status response. */

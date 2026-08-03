@@ -64,4 +64,22 @@
         app:allowDividerAbove="true"
         app:iconSpaceReserved="false" />
 
+    <ListPreference
+        android:key="webui_conflict_strategy"
+        android:title="@string/settings_webui_conflict_strategy"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false" />
+
+    <ListPreference
+        android:key="webui_client_tier"
+        android:summary="@string/settings_webui_client_tier_summary"
+        android:title="@string/settings_webui_client_tier"
+        app:iconSpaceReserved="false" />
+
+    <EditTextPreference
+        android:key="webui_auto_sync_interval"
+        android:summary="@string/settings_webui_auto_sync_interval_summary"
+        android:title="@string/settings_webui_auto_sync_interval"
+        app:iconSpaceReserved="false" />
+
 </PreferenceScreen>

@@ -188,6 +188,19 @@ public class SiteApplication extends RecordingApplication {
         SiteDB.initialize(this);
         SiteEngine.initialize();
         BitmapUtils.initialize(this);
+
+        // Wave-2 (ADR-0003): D2 policy source + D4 network-aware auto-sync.
+        final com.hippo.anotherviewer.webui.WebUiSettings webUiSettings =
+                new com.hippo.anotherviewer.webui.WebUiSettings(this);
+        com.hippo.anotherviewer.webui.WebUiSyncEngine.setPolicySource(() -> {
+            com.hippo.anotherviewer.webui.WebUiSyncModels.SyncPolicy policy =
+                    new com.hippo.anotherviewer.webui.WebUiSyncModels.SyncPolicy();
+            policy.conflictStrategy = webUiSettings.conflictStrategy();
+            policy.clientTier = webUiSettings.clientTier();
+            policy.autoSyncIntervalSec = webUiSettings.autoSyncIntervalSec();
+            return policy;
+        });
+        new com.hippo.anotherviewer.webui.WebUiAutoSyncScheduler(this).start();
 //        Image1.initialize(this);
         Image.initialize(this);
         if (!"robolectric".equals(Build.FINGERPRINT)) {
