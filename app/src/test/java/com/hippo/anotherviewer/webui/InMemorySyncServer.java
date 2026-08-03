@@ -166,6 +166,23 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         return true;
     }
 
+    /**
+     * §3.8 double-alive (both records alive, same key): under A/C a
+     * cross-platform conflict is won unconditionally by the priority platform
+     * (timestamp does not arbitrate); same-platform and B-strategy conflicts
+     * fall back to last-write-wins on lastModified.
+     */
+    private boolean aliveIncomingWinsOverLive(Object incomingDto, long incomingLastModified, Record existing) {
+        WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
+        String priority = strategy.priorityPlatform();
+        String incomingPlatform = platformOfDto(incomingDto);
+        String existingPlatform = platformOfDto(existing.dto);
+        if (priority != null && !incomingPlatform.equals(existingPlatform)) {
+            return priority.equals(incomingPlatform);
+        }
+        return incomingLastModified >= existing.dtoLastModified();
+    }
+
     private void mergeUnion(Map<Long, Record> map, long key, Object dto, long lastModified, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
@@ -178,6 +195,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         }
         if (existing != null && existing.deleted && !liveWinsOverTombstone(dto, existing)) {
             return;
+        }
+        if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
+            return; // double-alive: the stored alive record wins (§3.8)
         }
         map.put(key, new Record(serverTimestamp, false, dto));
     }
@@ -194,6 +214,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         }
         if (existing != null && existing.deleted && !liveWinsOverTombstone(dto, existing)) {
             return;
+        }
+        if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
+            return; // double-alive: the stored alive record wins (§3.8)
         }
         map.put(key, new Record(serverTimestamp, false, dto));
     }
@@ -212,6 +235,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (existing != null && existing.deleted && existing.dtoLastModified() > lastModified) {
             // A newer tombstone than this live record: keep the deletion.
             return;
+        }
+        if (existing != null && !existing.deleted && !aliveIncomingWinsOverLive(dto, lastModified, existing)) {
+            return; // double-alive: the stored alive record wins (§3.8)
         }
         map.put(key, new Record(serverTimestamp, false, dto));
     }
