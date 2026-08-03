@@ -67,6 +67,44 @@ export const SCOPE_ITEMS: ReadonlyArray<{
   { key: 'searchTorrents', bit: ADVANCE_SEARCH_BITS.STORR, label: 'Torrent filenames' },
 ]
 
+/** Filter-state key union of the scope + higher switches (chip ids, payload packing). */
+export type AdvanceSwitchKey =
+  | (typeof SCOPE_ITEMS)[number]['key']
+  | (typeof ADVANCED_ITEMS)[number]['key']
+
+/**
+ * W3 R4-10: the higher `AdvanceSearchTable` bits, backendized as their own
+ * REST params (openapi GET /gallery/search) so the single FilterPanel
+ * surface can express the full Android advanced option set.
+ */
+export const ADVANCED_ITEMS: ReadonlyArray<{
+  key:
+    | 'searchTorrentsOnly'
+    | 'searchLowPowerTags'
+    | 'searchDownvotedTags'
+    | 'searchExpunged'
+    | 'disableLanguageFilter'
+    | 'disableUploaderFilter'
+    | 'disableTagFilter'
+  bit: number
+  label: string
+}> = [
+  { key: 'searchTorrentsOnly', bit: ADVANCE_SEARCH_BITS.STO, label: 'Only with torrents' },
+  { key: 'searchLowPowerTags', bit: ADVANCE_SEARCH_BITS.SDT1, label: 'Low-power tags' },
+  { key: 'searchDownvotedTags', bit: ADVANCE_SEARCH_BITS.SDT2, label: 'Downvoted tags' },
+  { key: 'searchExpunged', bit: ADVANCE_SEARCH_BITS.SH, label: 'Include expunged' },
+  { key: 'disableLanguageFilter', bit: ADVANCE_SEARCH_BITS.SFL, label: 'No language filter' },
+  { key: 'disableUploaderFilter', bit: ADVANCE_SEARCH_BITS.SFU, label: 'No uploader filter' },
+  { key: 'disableTagFilter', bit: ADVANCE_SEARCH_BITS.SFT, label: 'No tag filter' },
+]
+
+/** All advance switches (scope + higher) — preset bitmask packing order. */
+export const ALL_ADVANCE_ITEMS = [...SCOPE_ITEMS, ...ADVANCED_ITEMS] as ReadonlyArray<{
+  key: AdvanceSwitchKey
+  bit: number
+  label: string
+}>
+
 /** True when any filter field diverges from the no-filter default. */
 export function isFilterActive(filters: SearchFilters): boolean {
   return filterChips(filters).length > 0
@@ -106,6 +144,11 @@ export function filterChips(filters: SearchFilters): FilterChip[] {
       chips.push({ id: scope.key, label: `Scope: ${scope.label}` })
     }
   }
+  for (const advanced of ADVANCED_ITEMS) {
+    if (filters[advanced.key]) {
+      chips.push({ id: advanced.key, label: `Adv: ${advanced.label}` })
+    }
+  }
 
   return chips
 }
@@ -143,6 +186,13 @@ export function removeFilterChip(filters: SearchFilters, chipId: string): Search
     case 'searchTags':
     case 'searchDesc':
     case 'searchTorrents':
+    case 'searchTorrentsOnly':
+    case 'searchLowPowerTags':
+    case 'searchDownvotedTags':
+    case 'searchExpunged':
+    case 'disableLanguageFilter':
+    case 'disableUploaderFilter':
+    case 'disableTagFilter':
       next[chipId] = undefined
       break
     default:
@@ -167,8 +217,10 @@ export function filtersToQuickSearchPayload(
     mode: context.mode,
     category: filters.category ?? 0,
     keyword: context.keyword,
-    advanceSearch: SCOPE_ITEMS.reduce(
-      (mask, scope) => (filters[scope.key] ? mask | scope.bit : mask),
+    // W3 R4-10: presets carry the full 11-bit mask — the server validation
+    // accepts 0..2047 and every bit is backend-supported now.
+    advanceSearch: ALL_ADVANCE_ITEMS.reduce(
+      (mask, item) => (filters[item.key] ? mask | item.bit : mask),
       0,
     ),
     minRating: filters.minRating ?? 0,
@@ -187,15 +239,21 @@ export function filtersToQuickSearchPayload(
  * rows) reads back as "default order" (absent).
  */
 export function quickSearchToFilters(preset: QuickSearch): SearchFilters {
+  // All 11 advance switches are emitted explicitly (false when the bit is
+  // clear) so a round-trip stays deterministic (W3 R4-10 full mask).
+  const switches = ALL_ADVANCE_ITEMS.reduce(
+    (acc, item) => {
+      acc[item.key] = (preset.advanceSearch & item.bit) !== 0
+      return acc
+    },
+    {} as Record<AdvanceSwitchKey, boolean>,
+  )
   return {
     category: preset.category ? preset.category : undefined,
     minRating: preset.minRating ? preset.minRating : undefined,
     pageMin: preset.pageFrom ? preset.pageFrom : undefined,
     pageMax: preset.pageTo ? preset.pageTo : undefined,
-    searchName: (preset.advanceSearch & ADVANCE_SEARCH_BITS.SNAME) !== 0,
-    searchTags: (preset.advanceSearch & ADVANCE_SEARCH_BITS.STAGS) !== 0,
-    searchDesc: (preset.advanceSearch & ADVANCE_SEARCH_BITS.SDESC) !== 0,
-    searchTorrents: (preset.advanceSearch & ADVANCE_SEARCH_BITS.STORR) !== 0,
+    ...switches,
     // 0 / absent / out-of-range (legacy or hand-edited storage) all read as
     // "default order"; only the three contract orders pass through.
     sort: preset.sort === 1 || preset.sort === 2 || preset.sort === 3

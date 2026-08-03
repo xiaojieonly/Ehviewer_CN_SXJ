@@ -41,6 +41,25 @@
       </header>
 
       <div class="filter-panel__body">
+        <!-- Keyword mode — absorbed from the legacy SearchLayout surface
+             (W3 R4-10 single filter surface). -->
+        <div class="filter-panel__section">
+          <span class="filter-panel__label">Keyword mode</span>
+          <div class="filter-panel__modes" role="radiogroup" aria-label="Keyword search mode">
+            <button
+              v-for="option in MODE_OPTIONS"
+              :key="option.value"
+              type="button"
+              class="filter-panel__mode"
+              role="radio"
+              :aria-checked="keywordMode === option.value"
+              @click="emit('update:keywordMode', option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+
         <!-- Category chips — bitmask with SiteConfig exclusion semantics. -->
         <div class="filter-panel__section">
           <span class="filter-panel__label">Categories</span>
@@ -124,7 +143,25 @@
             <AppSwitch
               :model-value="filters[scope.key] ?? false"
               :aria-label="`Search ${scope.label}`"
-              @update:model-value="setScope(scope.key, $event)"
+              @update:model-value="setSwitch(scope.key, $event)"
+            />
+          </div>
+        </div>
+
+        <!-- Advanced options — the higher AdvanceSearchTable bits, backendized
+             in W3 R4-10 (f_sto/f_sdt1/f_sdt2/f_sh/f_sfl/f_sfu/f_sft). -->
+        <div class="filter-panel__section">
+          <span class="filter-panel__label">Advanced options</span>
+          <div
+            v-for="advanced in ADVANCED_ITEMS"
+            :key="advanced.key"
+            class="filter-panel__switch-row"
+          >
+            <span class="filter-panel__switch-label">{{ advanced.label }}</span>
+            <AppSwitch
+              :model-value="filters[advanced.key] ?? false"
+              :aria-label="advanced.label"
+              @update:model-value="setSwitch(advanced.key, $event)"
             />
           </div>
         </div>
@@ -148,7 +185,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { SearchFilters, SearchSortOrder } from '@/api/gallery'
-import type { GalleryCategory } from '@/types/components'
+import type { GalleryCategory, NormalSearchMode } from '@/types/components'
 import {
   CATEGORY_BIT_VALUES,
   CATEGORY_COLOR_MAP,
@@ -159,18 +196,30 @@ import { isClickOutside } from '@/composables/useDropdownPosition'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import AppSelect from '@/components/form/AppSelect.vue'
 import AppSwitch from '@/components/form/AppSwitch.vue'
-import { MIN_RATING_OPTIONS, SCOPE_ITEMS, SORT_OPTIONS } from './searchFilters'
+import type { AdvanceSwitchKey } from './searchFilters'
+import { ADVANCED_ITEMS, MIN_RATING_OPTIONS, SCOPE_ITEMS, SORT_OPTIONS } from './searchFilters'
 
-const props = defineProps<{
-  /** Current filter state. v-model:filters. */
-  filters: SearchFilters
-  /** Panel visibility. v-model:open. @default false */
-  open?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    /** Current filter state. v-model:filters. */
+    filters: SearchFilters
+    /** Panel visibility. v-model:open. @default false */
+    open?: boolean
+    /**
+     * Keyword search mode — W3 R4-10: absorbed from the legacy SearchLayout
+     * surface so the FilterPanel is the single filter surface.
+     * v-model:keywordMode. @default 'normal'
+     */
+    keywordMode?: NormalSearchMode
+  }>(),
+  { open: false, keywordMode: 'normal' },
+)
 
 const emit = defineEmits<{
   (e: 'update:filters', filters: SearchFilters): void
   (e: 'update:open', open: boolean): void
+  /** v-model:keywordMode — keyword mode radio changed (W3 R4-10). */
+  (e: 'update:keywordMode', mode: NormalSearchMode): void
   /** Primary Search action — scene re-runs the query with current state. */
   (e: 'search'): void
   /** Scene should open its save-preset dialog (QuickSearchDto schema). */
@@ -181,6 +230,14 @@ const panelRef = ref<HTMLElement | null>(null)
 
 const sortOptions = SORT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
 const ratingOptions = MIN_RATING_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
+
+/** Keyword modes (Android `search_normal.xml` RadioGridGroup labels). */
+const MODE_OPTIONS: ReadonlyArray<{ value: NormalSearchMode; label: string }> = [
+  { value: 'normal', label: 'Search' },
+  { value: 'subscription', label: 'Subscription' },
+  { value: 'uploader', label: 'Uploader' },
+  { value: 'tag', label: 'Tag' },
+]
 
 const mask = computed<number>(() => props.filters.category ?? 0)
 
@@ -219,7 +276,8 @@ function setPageBound(field: 'pageMin' | 'pageMax', event: Event): void {
   emit('update:filters', next)
 }
 
-function setScope(key: (typeof SCOPE_ITEMS)[number]['key'], value: boolean): void {
+/** Scope + advanced (W3 R4-10) switches share one setter. */
+function setSwitch(key: AdvanceSwitchKey, value: boolean): void {
   emit('update:filters', { ...props.filters, [key]: value || undefined })
 }
 
@@ -368,6 +426,39 @@ onBeforeUnmount(() => {
 .filter-panel__chip.is-included {
   font-weight: 700;
   box-shadow: 0 1px 2px var(--shadow-color);
+}
+
+/* --- Keyword mode radio group (absorbed from SearchLayout, W3 R4-10) ---- */
+
+.filter-panel__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-panel__mode {
+  padding: 5px 14px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color-secondary);
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease-decelerate-quart),
+    border-color 150ms var(--ease-decelerate-quart),
+    color 150ms var(--ease-decelerate-quart);
+}
+
+.filter-panel__mode:hover {
+  background: var(--color-surface);
+}
+
+.filter-panel__mode[aria-checked='true'] {
+  background: var(--content-color-theme-primary);
+  border-color: var(--content-color-theme-primary);
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* --- Sort / rating selects + page inputs ---------------------------------- */

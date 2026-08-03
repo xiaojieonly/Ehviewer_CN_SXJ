@@ -7,12 +7,15 @@
     SearchBar        — floating bar with the normal → search → search-list
                        state machine; suggestions = search history +
                        quick-search presets (long-press deletes history);
-    SearchLayout     — expandable filter panel (embeds CategoryTable,
-                       keyword-mode radio group, AdvanceSearchTable replica);
+    FilterPanel      — the SINGLE filter surface (W3 R4-10 convergence):
+                       keyword mode + categories + sort + page bounds +
+                       min rating + scope + advanced options; the legacy
+                       SearchLayout panel is retired (component retained in
+                       the repo as the frozen Android replica, unused here);
     ContentLayout    — results with pull-to-refresh + infinite paging;
     GalleryCard      — gallery card in list/grid mode (auto-column grid per
                        contracts/responsive-strategy.md §4);
-    FabLayout        — primary FAB opens the filter panel, secondary FABs
+    FabLayout        — primary FAB opens the FilterPanel, secondary FABs
                        manage quick searches and toggle list/grid.
 
   Query composition mirrors Android `formatListUrlBuilder`:
@@ -23,14 +26,19 @@
     - Wave-1 1a (task A5): sort / pageMin / pageMax / minRating / the four
       search-scope flags travel as the `filters` argument of
       `galleryApi.search` (extended backend params) and round-trip through
-      QuickSearchDto via `searchFilters.ts`.
+      QuickSearchDto via `searchFilters.ts`;
+    - W3 R4-10: the higher AdvanceSearchTable bits are backendized too
+      (searchTorrentsOnly / searchLowPowerTags / searchDownvotedTags /
+      searchExpunged / disableLanguageFilter / disableUploaderFilter /
+      disableTagFilter), so presets and searches carry the full 11-bit mask.
 
   Wave-1 1a additives (task A5):
-    FilterPanel   — anchored PC popover (SearchBar filter button / `f` key)
-                    for categories / sort / page bounds / min rating / scope;
+    FilterPanel   — anchored PC popover (SearchBar filter button / `f` key);
     chip row      — active filters under the SearchBar (per-chip × + Clear);
-    quick search  — save POSTs the QuickSearchDto payload, with a
-                    device-local fallback when the server is unreachable;
+    quick search  — save POSTs the QuickSearchDto payload (sort included,
+                    W3 R4-11), with a device-local fallback when the server
+                    is unreachable; delete calls DELETE /quick-search/{id}
+                    (W3 R4-12) with an offline local-removal fallback;
     shortcuts     — `/` focuses search, `f` toggles the filter panel
                     (suppressed while typing in editable elements).
 
@@ -84,30 +92,18 @@
           @clear-filter-chips="onClearFilters"
         />
 
-        <!-- PC filter popover (categories / sort / pages / rating / scope). -->
+        <!-- PC filter popover — the SINGLE filter surface (W3 R4-10):
+             keyword mode + categories + sort + pages + rating + scope +
+             advanced options. The legacy SearchLayout panel is retired. -->
         <FilterPanel
           v-model:open="filterPanelOpen"
+          v-model:keyword-mode="normalSearchMode"
           :filters="activeFilters"
           @update:filters="applyFilters"
           @search="onFilterPanelSearch"
           @save-quick-search="openSaveDialog"
         />
       </div>
-
-      <!-- Expandable filter panel (CategoryTable + modes + advanced). -->
-      <SearchLayout
-        v-model:mode="searchMode"
-        v-model:enable-advance="enableAdvance"
-        v-model:selected-categories="selectedCategories"
-        v-model:normal-search-mode="normalSearchMode"
-        v-model:advance-options="advanceOptions"
-        v-model:expanded="panelExpanded"
-        :keyword="query"
-        @change-mode="toggleSearchMode"
-        @select-image="showSnack('Image search is not available on this server yet')"
-        @open-tag-selector="showSnack('Tag selector is not available yet')"
-        @search="onPanelSearch"
-      />
 
       <!-- Results meta bar: total + page + list/grid toggle. -->
       <div v-if="contentState === 'content'" class="results-bar">
@@ -269,10 +265,9 @@ import type {
   NavItem,
   NormalSearchMode,
   SearchBarState,
-  SearchMode,
   SearchSuggestion,
 } from '@/types/components'
-import { ADVANCE_SEARCH_BITS, CATEGORY_ORDER } from '@/types/components'
+import { CATEGORY_ORDER } from '@/types/components'
 import type { QuickSearch } from '@/types'
 import { galleryApi } from '@/api/gallery'
 import type { SearchFilters, SearchSortOrder } from '@/api/gallery'
@@ -282,7 +277,6 @@ import { useThemeStore } from '@/stores/theme'
 import { usePreferencesStore } from '@/stores/preferences'
 import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/NavigationDrawer.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
-import SearchLayout from '@/components/search/SearchLayout.vue'
 import FilterPanel from '@/components/search/FilterPanel.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import GalleryCard from '@/components/gallery/GalleryCard.vue'
@@ -290,6 +284,7 @@ import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import type { FilterChip } from '@/components/search/searchFilters'
 import {
+  ALL_ADVANCE_ITEMS,
   filterChips,
   filtersToQuickSearchPayload,
   includedToMask,
@@ -356,10 +351,8 @@ const query = ref('')
 /** Keyword of the last committed search (drives the query sent to the API). */
 const activeQuery = ref('')
 
-// SearchLayout filter state (all v-model'd).
-const searchMode = ref<SearchMode>('normal')
-const panelExpanded = ref(true)
-const enableAdvance = ref(false)
+// Canonical filter state (W3 R4-10: the FilterPanel is the single filter
+// surface; the legacy SearchLayout panel is retired).
 const selectedCategories = ref<GalleryCategory[]>([...CATEGORY_ORDER])
 const normalSearchMode = ref<NormalSearchMode>('normal')
 const advanceOptions = ref<AdvanceSearchOptions>({
@@ -370,48 +363,45 @@ const advanceOptions = ref<AdvanceSearchOptions>({
 })
 
 /* --- Wave-1 1a (task A5): PC filter panel state -------------------------
-   Canonical state stays in selectedCategories / advanceOptions / sortOrder
-   (shared with the legacy SearchLayout panel); `activeFilters` is the
-   derived SearchFilters object sent to the API and rendered as chips. */
+   Canonical state stays in selectedCategories / advanceOptions / sortOrder;
+   `activeFilters` is the derived SearchFilters object sent to the API and
+   rendered as chips. W3 R4-10: the full 11-bit AdvanceSearchTable mask is
+   backendized, so every bit round-trips through `activeFilters`. */
 const sortOrder = ref<SearchSortOrder>(0)
 const filterPanelOpen = ref(false)
 
 const activeFilters = computed<SearchFilters>(() => {
   const advance = advanceOptions.value
-  return {
+  const filters: SearchFilters = {
     category: categoryParam(),
     sort: sortOrder.value === 0 ? undefined : sortOrder.value,
     pageMin: advance.pageFrom > 0 ? advance.pageFrom : undefined,
     pageMax: advance.pageTo > 0 ? advance.pageTo : undefined,
     minRating: advance.minRating > 0 ? advance.minRating : undefined,
-    searchName: (advance.advanceSearch & ADVANCE_SEARCH_BITS.SNAME) !== 0,
-    searchTags: (advance.advanceSearch & ADVANCE_SEARCH_BITS.STAGS) !== 0,
-    searchDesc: (advance.advanceSearch & ADVANCE_SEARCH_BITS.SDESC) !== 0,
-    searchTorrents: (advance.advanceSearch & ADVANCE_SEARCH_BITS.STORR) !== 0,
   }
+  // All 11 advance switches are emitted explicitly (false when the bit is
+  // clear) so chips / payloads / tests see a deterministic shape.
+  for (const item of ALL_ADVANCE_ITEMS) {
+    filters[item.key] = (advance.advanceSearch & item.bit) !== 0
+  }
+  return filters
 })
 
 const activeFilterChips = computed<FilterChip[]>(() => filterChips(activeFilters.value))
 
 /**
- * Write a FilterPanel / chip-row edit back into the canonical refs. The four
- * scope booleans map onto the low AdvanceSearchTable bits; higher legacy bits
- * (STO/SDT1/…) set via the SearchLayout panel are preserved.
+ * Write a FilterPanel / chip-row edit back into the canonical refs. All 11
+ * advance switches (scope + W3 R4-10 higher bits) map onto the
+ * AdvanceSearchTable bitmask carried by `advanceOptions.advanceSearch`.
  */
 function applyFilters(next: SearchFilters): void {
   selectedCategories.value = maskToIncluded(next.category ?? 0)
-  const SCOPE_MASK =
-    ADVANCE_SEARCH_BITS.SNAME |
-    ADVANCE_SEARCH_BITS.STAGS |
-    ADVANCE_SEARCH_BITS.SDESC |
-    ADVANCE_SEARCH_BITS.STORR
-  const scopeBits =
-    (next.searchName ? ADVANCE_SEARCH_BITS.SNAME : 0) |
-    (next.searchTags ? ADVANCE_SEARCH_BITS.STAGS : 0) |
-    (next.searchDesc ? ADVANCE_SEARCH_BITS.SDESC : 0) |
-    (next.searchTorrents ? ADVANCE_SEARCH_BITS.STORR : 0)
+  const advanceBits = ALL_ADVANCE_ITEMS.reduce(
+    (mask, item) => (next[item.key] ? mask | item.bit : mask),
+    0,
+  )
   advanceOptions.value = {
-    advanceSearch: (advanceOptions.value.advanceSearch & ~SCOPE_MASK) | scopeBits,
+    advanceSearch: advanceBits,
     minRating: next.minRating ?? 0,
     pageFrom: next.pageMin ?? 0,
     pageTo: next.pageMax ?? 0,
@@ -592,15 +582,10 @@ function commitSearch(raw: string | null | undefined): void {
   if (q) addHistory(q)
   searchBarState.value = 'normal'
   searchTitle.value = q || 'Search'
-  panelExpanded.value = false
+  filterPanelOpen.value = false
   fabExpanded.value = false
   contentRef.value?.scrollToTop()
   void runSearch(0)
-}
-
-function onPanelSearch(keyword: string, options: AdvanceSearchOptions): void {
-  advanceOptions.value = { ...options }
-  commitSearch(keyword)
 }
 
 function onRefresh(): void {
@@ -682,8 +667,6 @@ function loadQuickSearch(preset: QuickSearch): void {
   // legacy rows / pre-W3 device presets read absent → default order.
   const sort = Math.floor(preset.sort ?? 0)
   sortOrder.value = (sort >= 0 && sort <= 3 ? sort : 0) as SearchSortOrder
-  enableAdvance.value =
-    preset.advanceSearch !== 0 || preset.minRating > 0 || preset.pageFrom > 0 || preset.pageTo > 0
   dialog.value = 'none'
   commitSearch(preset.keyword)
 }
@@ -751,8 +734,9 @@ function modeLabel(mode: number): string {
 /* ---------------------------------- FAB ---------------------------------- */
 
 function onFabPrimary(): void {
-  // Android: the primary FAB surfaces the search options.
-  panelExpanded.value = true
+  // W3 R4-10: the primary FAB opens the FilterPanel — the single filter
+  // surface (the legacy SearchLayout panel is retired).
+  filterPanelOpen.value = true
   contentRef.value?.scrollToTop()
 }
 
@@ -770,10 +754,6 @@ function onFabSecondary(action: FabAction): void {
 function setViewMode(mode: 'grid' | 'list'): void {
   viewMode.value = mode
   writeStorage(VIEW_MODE_KEY, mode)
-}
-
-function toggleSearchMode(): void {
-  searchMode.value = searchMode.value === 'normal' ? 'image' : 'normal'
 }
 
 /* ------------------- PC keyboard shortcuts (Wave-1 1a) ------------------- */

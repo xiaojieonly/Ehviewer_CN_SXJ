@@ -121,6 +121,44 @@ describe('galleryApi.search — Wave-1 1a filter params (task A5, additive)', ()
     expect(searchQuery().get('category')).toBe('512')
   })
 
+  it('appends the W3 R4-10 higher advance bits when set (and only then)', async () => {
+    await galleryApi.search('x', undefined, 0, 20, {
+      searchTorrentsOnly: true,
+      searchLowPowerTags: true,
+      searchDownvotedTags: true,
+      searchExpunged: true,
+      disableLanguageFilter: true,
+      disableUploaderFilter: true,
+      disableTagFilter: true,
+    })
+    const q = searchQuery()
+    for (const key of [
+      'searchTorrentsOnly',
+      'searchLowPowerTags',
+      'searchDownvotedTags',
+      'searchExpunged',
+      'disableLanguageFilter',
+      'disableUploaderFilter',
+      'disableTagFilter',
+    ]) {
+      expect(q.get(key)).toBe('true')
+    }
+
+    await galleryApi.search('x', undefined, 0, 20, {})
+    const empty = searchQuery(1)
+    for (const key of [
+      'searchTorrentsOnly',
+      'searchLowPowerTags',
+      'searchDownvotedTags',
+      'searchExpunged',
+      'disableLanguageFilter',
+      'disableUploaderFilter',
+      'disableTagFilter',
+    ]) {
+      expect(empty.get(key)).toBeNull()
+    }
+  })
+
   it('sends each sort order 1..3 verbatim', async () => {
     for (const sort of [1, 2, 3] as const) {
       await galleryApi.search(undefined, undefined, 0, 20, { sort })

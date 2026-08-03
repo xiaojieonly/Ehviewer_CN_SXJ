@@ -159,9 +159,10 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
       })
     })
 
-    it('shares state with the legacy SearchLayout panel (scope bits survive)', async () => {
+    it('round-trips scope bits through the canonical advance mask', async () => {
       await mountView()
-      // Scope flags map onto the AdvanceSearchTable low bits.
+      // Scope flags map onto the AdvanceSearchTable low bits and survive the
+      // applyFilters → activeFilters round-trip.
       setFilters({ searchName: true, searchTorrents: true })
       wrapper.findComponent(FilterPanel).vm.$emit('search')
       await flushPromises()
@@ -223,6 +224,49 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
       wrapper.findComponent(SearchBar).vm.$emit('click-filter')
       await flushPromises()
       expect(wrapper.findComponent(FilterPanel).props('open')).toBe(false)
+    })
+  })
+
+  describe('W3 R4-10 — single filter surface convergence', () => {
+    it('retires the legacy SearchLayout panel (FilterPanel is the only surface)', async () => {
+      await mountView()
+      expect(wrapper.find('.search-layout').exists()).toBe(false)
+      expect(wrapper.findComponent(FilterPanel).exists()).toBe(true)
+    })
+
+    it('primary FAB opens the FilterPanel', async () => {
+      await mountView()
+      wrapper.findComponent(FabLayout).vm.$emit('click-primary')
+      await flushPromises()
+      expect(wrapper.findComponent(FilterPanel).props('open')).toBe(true)
+    })
+
+    it('higher advance bits flow from the panel into the search call', async () => {
+      await mountView()
+      wrapper.findComponent(FilterPanel).vm.$emit('update:filters', {
+        searchTorrentsOnly: true,
+        searchExpunged: true,
+        disableTagFilter: true,
+      })
+      wrapper.findComponent(FilterPanel).vm.$emit('search')
+      await flushPromises()
+
+      const calls = vi.mocked(galleryApi.search).mock.calls
+      const filters = calls[calls.length - 1][4] as Record<string, unknown> | undefined
+      expect(filters?.searchTorrentsOnly).toBe(true)
+      expect(filters?.searchExpunged).toBe(true)
+      expect(filters?.disableTagFilter).toBe(true)
+      expect(filters?.searchName).toBe(false)
+    })
+
+    it('keyword mode from the panel drives the composed keyword (tag:/uploader:)', async () => {
+      await mountView()
+      wrapper.findComponent(FilterPanel).vm.$emit('update:keywordMode', 'tag')
+      wrapper.findComponent(SearchBar).vm.$emit('search', 'naruto')
+      await flushPromises()
+
+      const calls = vi.mocked(galleryApi.search).mock.calls
+      expect(calls[calls.length - 1][0]).toBe('tag:naruto')
     })
   })
 

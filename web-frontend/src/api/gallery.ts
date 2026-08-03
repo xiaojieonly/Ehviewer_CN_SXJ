@@ -54,6 +54,20 @@ export interface SearchFilters {
   searchDesc?: boolean
   /** Advanced scope: match torrent filenames (`f_storr`). */
   searchTorrents?: boolean
+  /** W3 R4-10 higher option: only show galleries with torrents (`f_sto`). */
+  searchTorrentsOnly?: boolean
+  /** W3 R4-10 higher option: also match low-power tags (`f_sdt1`). */
+  searchLowPowerTags?: boolean
+  /** W3 R4-10 higher option: also match downvoted tags (`f_sdt2`). */
+  searchDownvotedTags?: boolean
+  /** W3 R4-10 higher option: include expunged galleries (`f_sh`). */
+  searchExpunged?: boolean
+  /** W3 R4-10 higher option: disable the default language filter (`f_sfl`). */
+  disableLanguageFilter?: boolean
+  /** W3 R4-10 higher option: disable the default uploader filter (`f_sfu`). */
+  disableUploaderFilter?: boolean
+  /** W3 R4-10 higher option: disable the default tag filter (`f_sft`). */
+  disableTagFilter?: boolean
 }
 
 /** Append the extended filter params — only values diverging from defaults. */
@@ -66,6 +80,14 @@ function appendFilterParams(params: URLSearchParams, filters: SearchFilters): vo
   if (filters.searchTags) params.set('searchTags', 'true')
   if (filters.searchDesc) params.set('searchDesc', 'true')
   if (filters.searchTorrents) params.set('searchTorrents', 'true')
+  // W3 R4-10 higher AdvanceSearchTable bits (backendized).
+  if (filters.searchTorrentsOnly) params.set('searchTorrentsOnly', 'true')
+  if (filters.searchLowPowerTags) params.set('searchLowPowerTags', 'true')
+  if (filters.searchDownvotedTags) params.set('searchDownvotedTags', 'true')
+  if (filters.searchExpunged) params.set('searchExpunged', 'true')
+  if (filters.disableLanguageFilter) params.set('disableLanguageFilter', 'true')
+  if (filters.disableUploaderFilter) params.set('disableUploaderFilter', 'true')
+  if (filters.disableTagFilter) params.set('disableTagFilter', 'true')
 }
 
 export const galleryApi = {
