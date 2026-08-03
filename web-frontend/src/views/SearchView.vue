@@ -20,11 +20,24 @@
       SiteConfig EXCLUSION bitmask (CATEGORY_BIT_VALUES) for the API;
     - uploader / tag keyword modes prefix the keyword (`uploader:` / `tag:`),
       the canonical AnotherViewer URL syntax;
-    - advanced options (bitmask / min rating / page range) round-trip through
-      quick-search presets — the current REST endpoint does not accept them.
+    - Wave-1 1a (task A5): sort / pageMin / pageMax / minRating / the four
+      search-scope flags travel as the `filters` argument of
+      `galleryApi.search` (extended backend params) and round-trip through
+      QuickSearchDto via `searchFilters.ts`.
+
+  Wave-1 1a additives (task A5):
+    FilterPanel   — anchored PC popover (SearchBar filter button / `f` key)
+                    for categories / sort / page bounds / min rating / scope;
+    chip row      — active filters under the SearchBar (per-chip × + Clear);
+    quick search  — save POSTs the QuickSearchDto payload, with a
+                    device-local fallback when the server is unreachable;
+    shortcuts     — `/` focuses search, `f` toggles the filter panel
+                    (suppressed while typing in editable elements).
 
   Persistence (client-side):
-    anotherviewer-search-history   — recent keyword searches (max 20);
+    anotherviewer-search-history   — recent keyword searches (capped by
+                                     prefs.general.recentSearchMax, default 10,
+                                     0 disables recording);
     anotherviewer-quick-searches   — user presets (seeded from GET /gallery/quick-search);
     anotherviewer-search-view-mode — results layout ('grid' | 'list').
 -->
@@ -41,25 +54,45 @@
     />
 
     <div class="search-scene__main">
-      <!-- Floating search bar — Android `widget_search_bar.xml` replica. -->
-      <SearchBar
-        :state="searchBarState"
-        :title="searchTitle"
-        :query="query"
-        hint="Search galleries"
-        left-icon="reorder"
-        right-icon="magnify-dark"
-        :suggestions="suggestions"
-        @update:state="searchBarState = $event"
-        @update:query="onQueryInput"
-        @search="commitSearch"
-        @click-menu="drawerOpen = true"
-        @click-action="commitSearch(query)"
-        @click-title="openSearch"
-        @select-suggestion="onSelectSuggestion"
-        @dismiss-suggestion="onDismissSuggestion"
-        @back="closeSearch"
-      />
+      <!-- Floating search bar + anchored FilterPanel popover (Wave-1 1a).
+           The wrapper is the popover's positioning anchor. -->
+      <div class="search-scene__filter-anchor">
+        <SearchBar
+          ref="searchBarRef"
+          :state="searchBarState"
+          :title="searchTitle"
+          :query="query"
+          hint="Search galleries"
+          left-icon="reorder"
+          right-icon="magnify-dark"
+          :suggestions="suggestions"
+          filter-visible
+          :filter-panel-open="filterPanelOpen"
+          :filter-active="activeFilterChips.length > 0"
+          :filter-chips="activeFilterChips"
+          @update:state="searchBarState = $event"
+          @update:query="onQueryInput"
+          @search="commitSearch"
+          @click-menu="drawerOpen = true"
+          @click-action="commitSearch(query)"
+          @click-title="openSearch"
+          @select-suggestion="onSelectSuggestion"
+          @dismiss-suggestion="onDismissSuggestion"
+          @back="closeSearch"
+          @click-filter="filterPanelOpen = !filterPanelOpen"
+          @remove-filter-chip="onRemoveFilterChip"
+          @clear-filter-chips="onClearFilters"
+        />
+
+        <!-- PC filter popover (categories / sort / pages / rating / scope). -->
+        <FilterPanel
+          v-model:open="filterPanelOpen"
+          :filters="activeFilters"
+          @update:filters="applyFilters"
+          @search="onFilterPanelSearch"
+          @save-quick-search="openSaveDialog"
+        />
+      </div>
 
       <!-- Expandable filter panel (CategoryTable + modes + advanced). -->
       <SearchLayout
@@ -196,7 +229,9 @@
           <p class="dialog__summary">
             {{ query.trim() || '(no keyword)' }} · {{ modeLabel(MODE_TO_NUM[normalSearchMode]) }}
             · {{ selectedCategories.length }}/10 categories
-            <template v-if="enableAdvance"> · advanced</template>
+            <template v-if="activeFilterChips.length">
+              · {{ activeFilterChips.map((chip) => chip.label).join(' · ') }}
+            </template>
           </p>
           <label class="field">
             <input
@@ -224,7 +259,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type {
   AdvanceSearchOptions,
@@ -237,22 +272,35 @@ import type {
   SearchMode,
   SearchSuggestion,
 } from '@/types/components'
-import { CATEGORY_BIT_VALUES, CATEGORY_ORDER } from '@/types/components'
+import { ADVANCE_SEARCH_BITS, CATEGORY_ORDER } from '@/types/components'
 import type { QuickSearch } from '@/types'
 import { galleryApi } from '@/api/gallery'
+import type { SearchFilters, SearchSortOrder } from '@/api/gallery'
+import type { GeneralPreferences } from '@/api/preferences'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { usePreferencesStore } from '@/stores/preferences'
 import NavigationDrawer, { DEFAULT_NAV_ITEMS } from '@/components/layout/NavigationDrawer.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
 import SearchLayout from '@/components/search/SearchLayout.vue'
+import FilterPanel from '@/components/search/FilterPanel.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import GalleryCard from '@/components/gallery/GalleryCard.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import type { FilterChip } from '@/components/search/searchFilters'
+import {
+  filterChips,
+  filtersToQuickSearchPayload,
+  includedToMask,
+  maskToIncluded,
+  removeFilterChip,
+} from '@/components/search/searchFilters'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
+const preferencesStore = usePreferencesStore()
 
 /* ------------------------------- constants ------------------------------ */
 
@@ -260,7 +308,12 @@ const PAGE_SIZE = 25
 const HISTORY_KEY = 'anotherviewer-search-history'
 const QUICK_SEARCH_KEY = 'anotherviewer-quick-searches'
 const VIEW_MODE_KEY = 'anotherviewer-search-view-mode'
-const MAX_HISTORY = 20
+/**
+ * Recent-search cap — `prefs.general.recentSearchMax` (Wave-1 1b key, added
+ * by A3). The preferences schema may not carry it yet, so it is read with
+ * optional chaining: absent/invalid → 10, 0 → feature off (MASTER §3.2 B-5).
+ */
+const RECENT_SEARCH_DEFAULT_MAX = 10
 
 /** QuickSearch.mode numbering (Android `QuickSearch` / ListUrlBuilder modes). */
 const MODE_TO_NUM: Readonly<Record<NormalSearchMode, number>> = {
@@ -296,6 +349,7 @@ const NAV_ROUTES: Readonly<Record<string, string>> = {
 const drawerOpen = ref(false)
 
 // SearchBar state machine (Android SearchBar.STATE_*).
+const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 const searchBarState = ref<SearchBarState>('normal')
 const searchTitle = ref('Search')
 const query = ref('')
@@ -314,6 +368,74 @@ const advanceOptions = ref<AdvanceSearchOptions>({
   pageFrom: 0,
   pageTo: 0,
 })
+
+/* --- Wave-1 1a (task A5): PC filter panel state -------------------------
+   Canonical state stays in selectedCategories / advanceOptions / sortOrder
+   (shared with the legacy SearchLayout panel); `activeFilters` is the
+   derived SearchFilters object sent to the API and rendered as chips. */
+const sortOrder = ref<SearchSortOrder>(0)
+const filterPanelOpen = ref(false)
+
+const activeFilters = computed<SearchFilters>(() => {
+  const advance = advanceOptions.value
+  return {
+    category: categoryParam(),
+    sort: sortOrder.value === 0 ? undefined : sortOrder.value,
+    pageMin: advance.pageFrom > 0 ? advance.pageFrom : undefined,
+    pageMax: advance.pageTo > 0 ? advance.pageTo : undefined,
+    minRating: advance.minRating > 0 ? advance.minRating : undefined,
+    searchName: (advance.advanceSearch & ADVANCE_SEARCH_BITS.SNAME) !== 0,
+    searchTags: (advance.advanceSearch & ADVANCE_SEARCH_BITS.STAGS) !== 0,
+    searchDesc: (advance.advanceSearch & ADVANCE_SEARCH_BITS.SDESC) !== 0,
+    searchTorrents: (advance.advanceSearch & ADVANCE_SEARCH_BITS.STORR) !== 0,
+  }
+})
+
+const activeFilterChips = computed<FilterChip[]>(() => filterChips(activeFilters.value))
+
+/**
+ * Write a FilterPanel / chip-row edit back into the canonical refs. The four
+ * scope booleans map onto the low AdvanceSearchTable bits; higher legacy bits
+ * (STO/SDT1/…) set via the SearchLayout panel are preserved.
+ */
+function applyFilters(next: SearchFilters): void {
+  selectedCategories.value = maskToIncluded(next.category ?? 0)
+  const SCOPE_MASK =
+    ADVANCE_SEARCH_BITS.SNAME |
+    ADVANCE_SEARCH_BITS.STAGS |
+    ADVANCE_SEARCH_BITS.SDESC |
+    ADVANCE_SEARCH_BITS.STORR
+  const scopeBits =
+    (next.searchName ? ADVANCE_SEARCH_BITS.SNAME : 0) |
+    (next.searchTags ? ADVANCE_SEARCH_BITS.STAGS : 0) |
+    (next.searchDesc ? ADVANCE_SEARCH_BITS.SDESC : 0) |
+    (next.searchTorrents ? ADVANCE_SEARCH_BITS.STORR : 0)
+  advanceOptions.value = {
+    advanceSearch: (advanceOptions.value.advanceSearch & ~SCOPE_MASK) | scopeBits,
+    minRating: next.minRating ?? 0,
+    pageFrom: next.pageMin ?? 0,
+    pageTo: next.pageMax ?? 0,
+  }
+  sortOrder.value = next.sort ?? 0
+}
+
+/** Chip × — drop that one filter and re-run the search. */
+function onRemoveFilterChip(chipId: string): void {
+  applyFilters(removeFilterChip(activeFilters.value, chipId))
+  void runSearch(0)
+}
+
+/** Chip-row Clear — reset every filter and re-run the search. */
+function onClearFilters(): void {
+  applyFilters({})
+  void runSearch(0)
+}
+
+/** FilterPanel primary action — commit with the SearchBar's current text. */
+function onFilterPanelSearch(): void {
+  filterPanelOpen.value = false
+  commitSearch(query.value)
+}
 
 // Results.
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
@@ -351,6 +473,20 @@ const fabActions = computed<FabAction[]>(() => [
 
 /* ------------------------------ suggestions ----------------------------- */
 
+/**
+ * Recent-search cap from `prefs.general.recentSearchMax` — optional-chained
+ * because the key ships with Wave-1 1b (A3) and older servers omit it:
+ * absent/invalid → 10, 0 → recent searches disabled (MASTER §3.2 B-5).
+ */
+const recentSearchMax = computed<number>(() => {
+  const general = preferencesStore.prefs?.general as
+    | (GeneralPreferences & { recentSearchMax?: unknown })
+    | undefined
+  const raw = general?.recentSearchMax
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return RECENT_SEARCH_DEFAULT_MAX
+  return Math.max(0, Math.floor(raw))
+})
+
 interface SuggestionEntry {
   suggestion: SearchSuggestion
   kind: 'history' | 'quick'
@@ -361,7 +497,8 @@ const suggestionEntries = computed<SuggestionEntry[]>(() => {
   const q = query.value.trim().toLowerCase()
   const matches = (text: string | null | undefined): boolean =>
     !q || (text ?? '').toLowerCase().includes(q)
-  const fromHistory: SuggestionEntry[] = history.value
+  const cap = recentSearchMax.value
+  const fromHistory: SuggestionEntry[] = (cap > 0 ? history.value.slice(0, cap) : [])
     .filter(matches)
     .map((text) => ({ suggestion: { text, hint: 'History' }, kind: 'history' }))
   const fromQuick: SuggestionEntry[] = quickSearches.value
@@ -382,15 +519,12 @@ const suggestions = computed<SearchSuggestion[]>(() =>
 
 /** Positive `selected` → Android SiteConfig exclusion bitmask (bit = excluded). */
 function exclusionMask(selected: GalleryCategory[]): number {
-  return CATEGORY_ORDER.reduce(
-    (mask, category) => (selected.includes(category) ? mask : mask | CATEGORY_BIT_VALUES[category]),
-    0,
-  )
+  return includedToMask(selected)
 }
 
 /** Exclusion bitmask → positive selection (used when loading a preset). */
 function maskToSelected(mask: number): GalleryCategory[] {
-  return CATEGORY_ORDER.filter((category) => (mask & CATEGORY_BIT_VALUES[category]) === 0)
+  return maskToIncluded(mask)
 }
 
 /** Android `formatListUrlBuilder` keyword part (uploader:/tag: prefixes). */
@@ -418,7 +552,13 @@ async function runSearch(target: number, append = false): Promise<void> {
     contentState.value = 'loading'
   }
   try {
-    const response = await galleryApi.search(composedKeyword(), categoryParam(), target, PAGE_SIZE)
+    const response = await galleryApi.search(
+      composedKeyword(),
+      categoryParam(),
+      target,
+      PAGE_SIZE,
+      activeFilters.value,
+    )
     if (seq !== requestSeq) return
     if (append) {
       // Dedupe by gid — bumped galleries can reappear across pages.
@@ -520,8 +660,11 @@ function onDismissSuggestion(_suggestion: SearchSuggestion, index: number): void
 
 /* ------------------------------ history/presets -------------------------- */
 
+/** Device-local recent searches; capped by `prefs.general.recentSearchMax` (0 = off). */
 function addHistory(keyword: string): void {
-  history.value = [keyword, ...history.value.filter((item) => item !== keyword)].slice(0, MAX_HISTORY)
+  const cap = recentSearchMax.value
+  if (cap <= 0) return
+  history.value = [keyword, ...history.value.filter((item) => item !== keyword)].slice(0, cap)
   writeStorage(HISTORY_KEY, history.value)
 }
 
@@ -535,6 +678,9 @@ function loadQuickSearch(preset: QuickSearch): void {
     pageFrom: preset.pageFrom,
     pageTo: preset.pageTo,
   }
+  // QuickSearchDto cannot represent sort — loading a preset resets to the
+  // default order so presets reproduce deterministically.
+  sortOrder.value = 0
   enableAdvance.value =
     preset.advanceSearch !== 0 || preset.minRating > 0 || preset.pageFrom > 0 || preset.pageTo > 0
   dialog.value = 'none'
@@ -546,27 +692,37 @@ function openSaveDialog(): void {
   dialog.value = 'save'
 }
 
-function saveQuickSearch(): void {
+/**
+ * Save the current filter state as a quick-search preset — the payload is
+ * built in the exact QuickSearchDto schema and POSTed to
+ * `/api/v1/gallery/quick-search` (Wave-1 1a, task A5). When the server is
+ * unreachable the preset degrades to device-local storage so the single-user
+ * LAN app keeps working offline.
+ */
+async function saveQuickSearch(): Promise<void> {
   const name = presetName.value.trim()
   if (!name) {
     showSnack('Give the preset a name first')
     return
   }
-  const preset: QuickSearch = {
-    id: Date.now(),
+  const payload = filtersToQuickSearchPayload(activeFilters.value, {
     name,
-    mode: MODE_TO_NUM[normalSearchMode.value],
-    category: exclusionMask(selectedCategories.value),
     keyword: query.value.trim(),
-    advanceSearch: advanceOptions.value.advanceSearch,
-    minRating: advanceOptions.value.minRating,
-    pageFrom: advanceOptions.value.pageFrom,
-    pageTo: advanceOptions.value.pageTo,
+    mode: MODE_TO_NUM[normalSearchMode.value],
+  })
+  try {
+    const created = await galleryApi.createQuickSearch(payload)
+    quickSearches.value = [...quickSearches.value, created]
+    writeStorage(QUICK_SEARCH_KEY, quickSearches.value)
+    showSnack(`Saved “${name}”`)
+  } catch (error) {
+    console.error('[SearchView] quick-search POST failed, saving locally', error)
+    const localPreset: QuickSearch = { id: Date.now(), ...payload }
+    quickSearches.value = [...quickSearches.value, localPreset]
+    writeStorage(QUICK_SEARCH_KEY, quickSearches.value)
+    showSnack(`Saved “${name}” on this device (server unreachable)`)
   }
-  quickSearches.value = [...quickSearches.value, preset]
-  writeStorage(QUICK_SEARCH_KEY, quickSearches.value)
   dialog.value = 'none'
-  showSnack(`Saved “${name}”`)
 }
 
 function deleteQuickSearch(id: number): void {
@@ -606,6 +762,36 @@ function toggleSearchMode(): void {
   searchMode.value = searchMode.value === 'normal' ? 'image' : 'normal'
 }
 
+/* ------------------- PC keyboard shortcuts (Wave-1 1a) ------------------- */
+
+/** True when the event target takes typing — shortcuts must not fire there. */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
+
+/** `/` focuses the search box, `f` toggles the filter panel. */
+function onGlobalKeydown(event: KeyboardEvent): void {
+  if (event.ctrlKey || event.metaKey || event.altKey) return
+  if (isEditableTarget(event.target)) return
+  if (event.key === '/') {
+    event.preventDefault()
+    focusSearch()
+  } else if (event.key === 'f' || event.key === 'F') {
+    event.preventDefault()
+    filterPanelOpen.value = !filterPanelOpen.value
+  }
+}
+
+/** Enter the search state (if needed) and focus the edit text. */
+function focusSearch(): void {
+  if (searchBarState.value === 'normal') {
+    searchBarState.value = 'search-list'
+  }
+  void nextTick(() => searchBarRef.value?.focusInput())
+}
+
 /* --------------------------------- chrome -------------------------------- */
 
 function onNavSelect(item: NavItem): void {
@@ -642,6 +828,12 @@ function writeStorage(key: string, value: unknown): void {
 /* --------------------------------- boot ---------------------------------- */
 
 onMounted(async () => {
+  window.addEventListener('keydown', onGlobalKeydown)
+  // Recent-search cap lives in preferences (loaded lazily; best effort here —
+  // the store reports its own errors and the cap defaults to 10 until ready).
+  if (!preferencesStore.prefs) {
+    void preferencesStore.load()
+  }
   // Seed presets from the server the first time (Android QuickSearch table).
   if (quickSearches.value.length === 0) {
     try {
@@ -658,6 +850,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
   if (snackTimer) window.clearTimeout(snackTimer)
 })
 </script>
@@ -689,6 +882,11 @@ onBeforeUnmount(() => {
 .search-scene__content {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* Positioning anchor for the FilterPanel popover (Wave-1 1a). */
+.search-scene__filter-anchor {
+  position: relative;
 }
 
 /* ------------------------------ results bar ----------------------------- */
