@@ -135,6 +135,9 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import { usePreferencesStore } from '@/stores/preferences'
+
+const preferencesStore = usePreferencesStore()
 import ReaderStatusBar from './ReaderStatusBar.vue'
 import SeekBarPanel from './SeekBarPanel.vue'
 import ReaderToolbar from './ReaderToolbar.vue'
@@ -293,8 +296,9 @@ watch(
   [() => props.currentPage, perPageCssWidth, () => props.enhancedUrls?.size],
   () => {
     const page = props.currentPage
-    preloadPage(page + 1)
-    preloadPage(page + 2)
+    // Wave-1 1c: preloadCount (0 = off); prev page always primed for back-nav.
+    const ahead = preferencesStore.prefs?.reader.preloadCount ?? 2
+    for (let i = 1; i <= ahead; i++) preloadPage(page + i)
     preloadPage(page - 1)
   },
   { immediate: true },

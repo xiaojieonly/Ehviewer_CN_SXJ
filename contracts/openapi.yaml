@@ -3557,7 +3557,27 @@ components:
           default: homepage
         listMode:
           type: string
-          default: list
+          enum: [grid, list]
+          default: grid
+        showUploader:
+          type: boolean
+          default: false
+        showPostedTime:
+          type: boolean
+          default: false
+        defaultFavoriteSlot:
+          type: integer
+          minimum: -2
+          maximum: 9
+          default: 0
+        favoriteSlotNames:
+          type: string
+          description: Ten pipe-separated slot names; empty items fall back to defaults
+          default: ""
+        recentSearchMax:
+          type: integer
+          minimum: 0
+          default: 10
         showReadProgress:
           type: boolean
           default: true
@@ -3625,6 +3645,40 @@ components:
         brightness:
           type: integer
           default: 0
+        backgroundColor:
+          type: string
+          enum: [black, gray, white]
+          default: black
+        tapZoneScheme:
+          type: string
+          enum: [threeZone, edgeOnly, disabled]
+          default: threeZone
+        keyboardPaging:
+          type: boolean
+          default: true
+        zoomStep:
+          type: number
+          exclusiveMinimum: 1
+          default: 1.5
+        maxZoom:
+          type: number
+          minimum: 1
+          default: 5
+        dualPageGap:
+          type: integer
+          minimum: 0
+          default: 8
+        splitWidePages:
+          type: boolean
+          default: false
+        preloadCount:
+          type: integer
+          minimum: 0
+          default: 2
+        pageTransition:
+          type: string
+          enum: [slide, fade, none]
+          default: slide
 
     PrivacyPreferences:
       type: object

@@ -1,5 +1,5 @@
 <template>
-  <div class="reader-view">
+  <div class="reader-view" :style="readerRootStyle">
     <div v-if="loadState === 'loading'" class="reader-view__center">
       <ProgressSpinner size="large" />
       <p class="reader-view__hint">Loading gallery…</p>
@@ -70,6 +70,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { galleryApi } from '@/api/gallery'
 import { useKeyboardNav } from '@/composables/useKeyboardNav'
 import { useEnhancedImage } from '@/composables/useEnhancedImage'
+import { usePreferencesStore } from '@/stores/preferences'
+import { DEFAULT_READER_PREFERENCES } from '@/api/preferences'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
 import ImageReader from '@/components/reader/ImageReader.vue'
 import {
@@ -88,6 +90,7 @@ import type {
 
 const route = useRoute()
 const router = useRouter()
+const preferencesStore = usePreferencesStore()
 
 const gid = computed(() => Number(route.params.gid))
 
@@ -99,6 +102,26 @@ const totalPages = ref(0)
 const currentPage = ref(0)
 /** Zoom factor (page mode only); intentionally NOT persisted. */
 const zoom = ref(1)
+
+/* Wave-1 1c: reader preference consumption (defaults when prefs unloaded). */
+const readerPrefs = computed(() => preferencesStore.prefs?.reader ?? DEFAULT_READER_PREFERENCES)
+
+const READER_BACKGROUNDS: Record<string, string> = {
+  black: '#080808',
+  gray: '#1c1c1e',
+  white: '#f7f7f5',
+}
+
+const readerRootStyle = computed(() => ({
+  background: READER_BACKGROUNDS[readerPrefs.value.backgroundColor] ?? READER_BACKGROUNDS.black,
+  '--reader-dual-gap': `${readerPrefs.value.dualPageGap}px`,
+  '--reader-page-transition':
+    readerPrefs.value.pageTransition === 'none'
+      ? 'none'
+      : readerPrefs.value.pageTransition === 'fade'
+        ? 'opacity 200ms var(--ease-decelerate-quart)'
+        : 'opacity 200ms var(--ease-decelerate-quart), transform 200ms var(--ease-decelerate-quart)',
+}))
 /** Monotonic guard so stale loads (superseded navigation) are dropped. */
 let loadSeq = 0
 
@@ -239,11 +262,12 @@ useKeyboardNav({
     readerRef.value?.toggleChrome()
   },
   onZoomIn: () => {
-    zoom.value = Math.min(3, Math.round((zoom.value + 0.25) * 100) / 100)
+    zoom.value = Math.min(readerPrefs.value.maxZoom, Math.round((zoom.value + readerPrefs.value.zoomStep) * 100) / 100)
   },
   onZoomOut: () => {
-    zoom.value = Math.max(0.5, Math.round((zoom.value - 0.25) * 100) / 100)
+    zoom.value = Math.max(0.5, Math.round((zoom.value - readerPrefs.value.zoomStep) * 100) / 100)
   },
+  pagingEnabled: () => readerPrefs.value.keyboardPaging,
 })
 
 /* ------------------------------------------------------------------ */

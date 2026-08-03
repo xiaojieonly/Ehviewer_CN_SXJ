@@ -151,16 +151,18 @@ describe('T-1 staggered detail sections', () => {
 
 describe('T-1 sweep: no `both`/forwards fill anywhere in views', () => {
   const views = [
-    'FavoriteView.vue',
-    'HistoryView.vue',
-    'DownloadView.vue',
-    'GalleryDetailView.vue',
-    'LoginView.vue',
+    'views/FavoriteView.vue',
+    'views/HistoryView.vue',
+    'views/DownloadView.vue',
+    'views/GalleryDetailView.vue',
+    'views/LoginView.vue',
+    // B-1: the shared list component owns the row entrance now.
+    'components/gallery/GalleryList.vue',
   ]
 
   for (const view of views) {
     it(`${view} has no fill-mode both in its styles`, () => {
-      const css = stripComments(viewSource(view))
+      const css = stripComments(readSource(view))
       expect(css).not.toMatch(/animation-fill-mode:\s*both/)
       expect(css).not.toMatch(/animation:\s*[^;]*\bboth\b/)
     })

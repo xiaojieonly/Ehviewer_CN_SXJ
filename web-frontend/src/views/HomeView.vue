@@ -12,6 +12,9 @@
         :left-icon="null"
         right-icon="magnify-dark"
         :suggestions="suggestions"
+        :filter-panel-open="filterPanelOpen"
+        :filter-active="activeFilterChips.length > 0"
+        :filter-chips="activeFilterChips"
         @update:query="keyword = $event"
         @search="applySearch"
         @click-title="enterSearchMode"
@@ -19,6 +22,17 @@
         @back="leaveSearchMode"
         @select-suggestion="onSelectSuggestion"
         @dismiss-suggestion="onDismissSuggestion"
+        @click-filter="filterPanelOpen = !filterPanelOpen"
+        @remove-filter-chip="onRemoveFilterChip"
+        @clear-filter-chips="onClearFilters"
+      />
+      <!-- Wave-1 1a: anchored PC filter popover, coexists with the viewMode
+           toggle (P2 stitching). -->
+      <FilterPanel
+        v-model:open="filterPanelOpen"
+        :filters="activeFilters"
+        @update:filters="applyFilters"
+        @search="onFilterPanelSearch"
       />
     </div>
 
@@ -124,7 +138,15 @@ import AppIcon from '@/components/atoms/AppIcon.vue'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
+import FilterPanel from '@/components/search/FilterPanel.vue'
 import GalleryList, { resolveListMode } from '@/components/gallery/GalleryList.vue'
+import type { SearchFilters } from '@/api/gallery'
+import {
+  filterChips,
+  isFilterActive,
+  removeFilterChip,
+  type FilterChip,
+} from '@/components/search/searchFilters'
 import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
 import type {
@@ -177,6 +199,7 @@ async function loadPage(target: number, mode: 'replace' | 'append'): Promise<voi
       undefined,
       target,
       PAGE_SIZE,
+      isFilterActive(activeFilters.value) ? activeFilters.value : undefined,
     )
     if (seq !== requestSeq) return
     page.value = target
@@ -292,6 +315,30 @@ watch(() => preferencesStore.prefs, migrateLegacyListMode, { immediate: true })
 const searchState = ref<SearchBarState>('normal')
 const keyword = ref('')
 const appliedKeyword = ref('')
+
+/* ------------------------- Wave-1 1a search filters ---------------------- */
+
+const filterPanelOpen = ref(false)
+const activeFilters = ref<SearchFilters>({})
+const activeFilterChips = computed<FilterChip[]>(() => filterChips(activeFilters.value))
+
+function applyFilters(next: SearchFilters): void {
+  activeFilters.value = next
+  void applySearch(keyword.value)
+}
+
+function onRemoveFilterChip(chipId: string): void {
+  applyFilters(removeFilterChip(activeFilters.value, chipId))
+}
+
+function onClearFilters(): void {
+  applyFilters({})
+}
+
+function onFilterPanelSearch(): void {
+  filterPanelOpen.value = false
+  void applySearch(keyword.value)
+}
 const suggestions = ref<SearchSuggestion[]>([])
 let quickSearchesLoaded = false
 

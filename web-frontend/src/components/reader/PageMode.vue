@@ -143,6 +143,8 @@ export interface ReaderGestureOptions {
   onToggleChrome: () => void
   /** Double-tap action (zoom cycle); omit when the mode has no zoom. */
   onDoubleTap?: () => void
+  /** Wave-1 1c tap-zone scheme provider (threeZone / edgeOnly / disabled). */
+  tapZoneScheme?: () => string
 }
 
 export interface ReaderGestures {
@@ -207,9 +209,16 @@ export function useReaderGestures(options: ReaderGestureOptions): ReaderGestures
     const width = el.clientWidth
     tapTimer = setTimeout(() => {
       tapTimer = null
-      if (x < width / 3) {
+      // Wave-1 1c: tap-zone scheme (threeZone / edgeOnly / disabled).
+      const scheme = options.tapZoneScheme ? options.tapZoneScheme() : 'threeZone'
+      if (scheme === 'disabled') {
+        options.onToggleChrome()
+        return
+      }
+      const edge = scheme === 'edgeOnly' ? 0.15 : 1 / 3
+      if (x < width * edge) {
         ;(options.isRtl() ? options.onNext : options.onPrev)()
-      } else if (x > (2 * width) / 3) {
+      } else if (x > width * (1 - edge)) {
         ;(options.isRtl() ? options.onPrev : options.onNext)()
       } else {
         options.onToggleChrome()
@@ -238,6 +247,7 @@ export function useReaderGestures(options: ReaderGestureOptions): ReaderGestures
 // would be a duplicate identifier (and a self-import would be a cycle).
 import { computed, reactive, ref, watch } from 'vue'
 import ProgressSpinner from '@/components/atoms/ProgressSpinner.vue'
+import { usePreferencesStore } from '@/stores/preferences'
 
 interface PageModeProps {
   gid: number
@@ -257,6 +267,8 @@ interface PageModeEmits {
   (e: 'toggle-chrome'): void
   (e: 'update:zoom', zoom: number): void
 }
+
+const preferencesStore = usePreferencesStore()
 
 const props = withDefaults(defineProps<PageModeProps>(), {
   enhancedUrls: undefined,
@@ -433,6 +445,7 @@ const gestures: ReaderGestures = useReaderGestures({
   onNext: () => emit('next'),
   onToggleChrome: () => emit('toggle-chrome'),
   onDoubleTap: cycleZoom,
+  tapZoneScheme: () => preferencesStore.prefs?.reader.tapZoneScheme ?? 'threeZone',
 })
 
 // --- Pinch-to-zoom (two-finger touch) ---------------------------------
@@ -563,9 +576,12 @@ function onPointerUp(event: PointerEvent) {
   max-height: calc(100dvh - var(--seekbar-panel-height));
   object-fit: contain;
   opacity: 0;
-  transition:
+  /* Wave-1 1c: pageTransition pref (slide/fade/none) via root CSS var. */
+  transition: var(
+    --reader-page-transition,
     transform var(--duration-scene-opacity) var(--ease-decelerate-quart),
-    opacity var(--duration-scene-opacity) var(--ease-decelerate-quart);
+    opacity var(--duration-scene-opacity) var(--ease-decelerate-quart)
+  );
   will-change: transform;
 }
 
