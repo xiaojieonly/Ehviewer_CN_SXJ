@@ -1155,6 +1155,19 @@
     <string name="settings_webui_sync_failed">同步失败：%s</string>
     <string name="settings_webui_remote_read">远程阅读</string>
     <string name="settings_webui_remote_read_summary">连接服务器时，从服务器流式加载图片（而非直连 EH）；已读页面保留在本地缓存</string>
+    <string name="settings_webui_conflict_strategy">同步冲突策略</string>
+    <string name="settings_webui_strategy_device_priority">Android 优先（默认）</string>
+    <string name="settings_webui_strategy_lww">最后写入胜出</string>
+    <string name="settings_webui_strategy_web_priority">WebUI 优先</string>
+    <string name="settings_webui_strategy_d2_hint">策略以 App 为准；WebUI 的修改将被下次 App 同步覆盖</string>
+    <string name="settings_webui_client_tier">客户端模式</string>
+    <string name="settings_webui_client_tier_summary">App 进入 WebUI 网络时的行为档位</string>
+    <string name="settings_webui_tier_0">Tier-0 独立（不连服务器）</string>
+    <string name="settings_webui_tier_1">Tier-1 同步+流式（默认）</string>
+    <string name="settings_webui_tier_2">Tier-2 浏览代理（经服务器）</string>
+    <string name="settings_webui_tier_3">Tier-3 下载托管（押后）</string>
+    <string name="settings_webui_auto_sync_interval">自动同步间隔（秒）</string>
+    <string name="settings_webui_auto_sync_interval_summary">进入已配对网络后的周期同步间隔；0=仅网络变化时同步</string>
     <string name="settings_webui_sync_preferences">同步配置</string>
     <string name="settings_webui_sync_preferences_summary">将本机设置上传到 WebUI 服务器</string>
     <string name="settings_webui_pull_preferences">拉取配置</string>

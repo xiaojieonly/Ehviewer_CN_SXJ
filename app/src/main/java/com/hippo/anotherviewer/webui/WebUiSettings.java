@@ -194,14 +194,59 @@ public final class WebUiSettings {
 
     /**
      * Whether GalleryActivity should read galleries from the WebUI server
-     * instead of EH directly when a server is configured (roadmap 2.4).
-     * Off by default; pages still stream through the local SpiderDen cache.
+     * instead of EH directly (roadmap 2.4). Off by default; pages still stream
+     * through the local SpiderDen cache. Tier-2 (browsing proxied via server,
+     * ADR-0003 D3) implies it regardless of the manual switch.
      */
     public boolean remoteReadEnabled() {
-        return preferences.getBoolean(KEY_REMOTE_READ, false);
+        return preferences.getBoolean(KEY_REMOTE_READ, false) || clientTier() >= 2;
     }
 
     public void setRemoteReadEnabled(boolean enabled) {
         preferences.edit().putBoolean(KEY_REMOTE_READ, enabled).apply();
+    }
+
+    // ----- Wave-2 sync policy (ADR-0003 / contract v2 §8) -----
+
+    private static final String KEY_CONFLICT_STRATEGY = "conflict_strategy";
+    private static final String KEY_CLIENT_TIER = "client_tier";
+    private static final String KEY_AUTO_SYNC_INTERVAL_SEC = "auto_sync_interval_sec";
+
+    public static final String STRATEGY_DEVICE_PRIORITY = "device_priority";
+    public static final String STRATEGY_LWW = "lww";
+    public static final String STRATEGY_WEB_PRIORITY = "web_priority";
+
+    /** Conflict strategy (D1); invalid stored values fall back to the default. */
+    @NonNull
+    public String conflictStrategy() {
+        String value = preferences.getString(KEY_CONFLICT_STRATEGY, STRATEGY_DEVICE_PRIORITY);
+        if (STRATEGY_LWW.equals(value) || STRATEGY_WEB_PRIORITY.equals(value)) return value;
+        return STRATEGY_DEVICE_PRIORITY;
+    }
+
+    public void setConflictStrategy(@NonNull String strategy) {
+        String value = STRATEGY_DEVICE_PRIORITY;
+        if (STRATEGY_LWW.equals(strategy) || STRATEGY_WEB_PRIORITY.equals(strategy)) value = strategy;
+        preferences.edit().putString(KEY_CONFLICT_STRATEGY, value).apply();
+    }
+
+    /** Client behavior tier (D3), 0..3; out-of-range stored values fall back to 1. */
+    public int clientTier() {
+        int tier = preferences.getInt(KEY_CLIENT_TIER, 1);
+        return tier >= 0 && tier <= 3 ? tier : 1;
+    }
+
+    public void setClientTier(int tier) {
+        preferences.edit().putInt(KEY_CLIENT_TIER, Math.max(0, Math.min(3, tier))).apply();
+    }
+
+    /** Auto-sync interval seconds (D4); 0 = network-change only; negative clamps to 0. */
+    public int autoSyncIntervalSec() {
+        int value = preferences.getInt(KEY_AUTO_SYNC_INTERVAL_SEC, 900);
+        return value >= 0 ? value : 900;
+    }
+
+    public void setAutoSyncIntervalSec(int seconds) {
+        preferences.edit().putInt(KEY_AUTO_SYNC_INTERVAL_SEC, Math.max(0, seconds)).apply();
     }
 }

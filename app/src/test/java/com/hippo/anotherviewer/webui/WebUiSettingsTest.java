@@ -99,4 +99,43 @@ public class WebUiSettingsTest {
         assertEquals(0L, settings.lastSyncTimestamp(serverA.baseUrl()));
         assertEquals(0L, settings.lastSyncTimestamp(serverB.baseUrl()));
     }
+
+    @Test
+    public void testPolicyDefaultsAndRoundTrip() {
+        assertEquals("device_priority", settings.conflictStrategy());
+        assertEquals(1, settings.clientTier());
+        assertEquals(900, settings.autoSyncIntervalSec());
+
+        settings.setConflictStrategy("web_priority");
+        settings.setClientTier(2);
+        settings.setAutoSyncIntervalSec(0);
+
+        assertEquals("web_priority", settings.conflictStrategy());
+        assertEquals(2, settings.clientTier());
+        assertEquals(0, settings.autoSyncIntervalSec());
+    }
+
+    @Test
+    public void testPolicyInvalidValuesFallBack() {
+        settings.setConflictStrategy("bogus");
+        assertEquals("device_priority", settings.conflictStrategy());
+
+        settings.setClientTier(7);
+        assertEquals(3, settings.clientTier());
+        settings.setClientTier(-2);
+        assertEquals(0, settings.clientTier());
+
+        settings.setAutoSyncIntervalSec(-5);
+        assertEquals(0, settings.autoSyncIntervalSec());
+    }
+
+    @Test
+    public void testTierTwoImpliesRemoteRead() {
+        settings.setRemoteReadEnabled(false);
+        settings.setClientTier(1);
+        assertEquals(false, settings.remoteReadEnabled());
+
+        settings.setClientTier(2);
+        assertEquals(true, settings.remoteReadEnabled());
+    }
 }
