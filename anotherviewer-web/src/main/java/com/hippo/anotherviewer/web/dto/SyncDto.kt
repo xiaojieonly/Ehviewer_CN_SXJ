@@ -1,5 +1,43 @@
 package com.hippo.anotherviewer.web.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
+// --- SyncPolicy (contract v2 §8, ADR-0003 D1/D3/D4) ---
+
+/**
+ * Conflict arbitration strategy (contracts/sync-conflict-rules.md v2 §1.4).
+ * Wire values are frozen by sync-schemas.json#syncPolicy / openapi.yaml.
+ */
+enum class ConflictStrategy(val wire: String) {
+    /** A: 同键跨平台冲突无条件 android 胜（默认）。 */
+    @JsonProperty("device_priority")
+    DEVICE_PRIORITY("device_priority"),
+
+    /** B: v1.0 完整语义（LWW ±5000ms skew + 实体 tie-break），回退兜底。 */
+    @JsonProperty("lww")
+    LWW("lww"),
+
+    /** C: 同键跨平台冲突无条件 web 胜。 */
+    @JsonProperty("web_priority")
+    WEB_PRIORITY("web_priority"),
+    ;
+
+    companion object {
+        fun fromWire(value: String?): ConflictStrategy? = entries.firstOrNull { it.wire == value }
+    }
+}
+
+/**
+ * Server-held sync policy (sync-schemas.json#/$defs/syncPolicy).
+ * clientTier: 0=独立 / 1=同步+流式（默认） / 2=浏览代理 / 3=下载托管（押后）。
+ * autoSyncIntervalSec: 网络感知自动同步间隔；0=仅网络变化触发。
+ */
+data class SyncPolicyDto(
+    val conflictStrategy: ConflictStrategy = ConflictStrategy.DEVICE_PRIORITY,
+    val clientTier: Int = 1,
+    val autoSyncIntervalSec: Int = 900,
+)
+
 // --- Sync entity DTOs (per sync-schemas.json) ---
 
 data class SyncFavoriteDto(
@@ -173,6 +211,11 @@ data class SyncPushRequest(
     val entities: SyncEntityCollection,
     val deviceId: String,
     val timestamp: Long,
+    /**
+     * Optional (v2). android 平台 push 携带时为权威覆盖（ADR-0003 D2，等价 PUT /sync/policy）；
+     * web 端 push 携带时服务端忽略该字段（契约 §8）。旧客户端不带此字段 → 不受影响。
+     */
+    val policy: SyncPolicyDto? = null,
 )
 
 data class SyncPushResponse(
@@ -184,6 +227,11 @@ data class SyncPushResponse(
 data class SyncPullResponse(
     val entities: SyncEntityCollection,
     val serverTimestamp: Long,
+    /**
+     * Optional (v2). 当前服务器同步策略；客户端按 policy.conflictStrategy 执行本地 merge
+     * （契约 §6.2）。旧服务器无此字段 → 客户端回退 lww 不报错；旧客户端忽略未知字段。
+     */
+    val policy: SyncPolicyDto? = null,
 )
 
 data class ConnectedDeviceDto(

@@ -76,11 +76,23 @@ class ServerConfigService(
         const val ENV_REQUIRE_AUTH = "ANOTHERVIEWER_REQUIRE_AUTH"
         private const val ENC_PREFIX = "enc:v1:"
 
+        // SyncPolicy 持久化（契约 v2 §8，ADR-0003）：跨重启保存，/api/v1/sync/policy 读写。
+        const val KEY_SYNC_CONFLICT_STRATEGY = "sync.conflict_strategy"
+        const val KEY_SYNC_CLIENT_TIER = "sync.client_tier"
+        const val KEY_SYNC_AUTO_SYNC_INTERVAL_SEC = "sync.auto_sync_interval_sec"
+
+        // Sync 行级来源（last-writer deviceId）命名空间前缀；具体键由 SyncService 生成。
+        const val KEY_PREFIX_SYNC_PROVENANCE = "sync.prov."
+
         val defaults = mapOf(
             // LAN personal deployment: auth is off by default; the operator
             // opts in via ANOTHERVIEWER_REQUIRE_AUTH or a DB value.
             KEY_REQUIRE_AUTH to "false",
             KEY_SESSION_TIMEOUT to "86400",
+            // 策略缺省 = 契约 §7 常量（STRATEGY_DEFAULT / CLIENT_TIER_DEFAULT / AUTO_SYNC_INTERVAL_SEC_DEFAULT）
+            KEY_SYNC_CONFLICT_STRATEGY to "device_priority",
+            KEY_SYNC_CLIENT_TIER to "1",
+            KEY_SYNC_AUTO_SYNC_INTERVAL_SEC to "900",
         )
     }
 }

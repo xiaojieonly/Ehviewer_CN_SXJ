@@ -2,6 +2,8 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.captureK
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
+import com.hippo.anotherviewer.web.dto.ConflictStrategy
 import com.hippo.anotherviewer.web.dto.SyncBookmarkDto
 import com.hippo.anotherviewer.web.dto.SyncDownloadDto
 import com.hippo.anotherviewer.web.dto.SyncDownloadLabelDto
@@ -9,6 +11,7 @@ import com.hippo.anotherviewer.web.dto.SyncEntityCollection
 import com.hippo.anotherviewer.web.dto.SyncFavoriteDto
 import com.hippo.anotherviewer.web.dto.SyncFilterDto
 import com.hippo.anotherviewer.web.dto.SyncHistoryDto
+import com.hippo.anotherviewer.web.dto.SyncPolicyDto
 import com.hippo.anotherviewer.web.dto.SyncPreferencesDto
 import com.hippo.anotherviewer.web.dto.SyncPushRequest
 import com.hippo.anotherviewer.web.dto.SyncPushResponse
@@ -20,6 +23,7 @@ import com.hippo.anotherviewer.web.entity.FilterEntity
 import com.hippo.anotherviewer.web.entity.HistoryInfoEntity
 import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.entity.QuickSearchEntity
+import com.hippo.anotherviewer.web.entity.ServerConfigEntity
 import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
 import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
@@ -29,6 +33,7 @@ import com.hippo.anotherviewer.web.repository.FilterRepository
 import com.hippo.anotherviewer.web.repository.HistoryInfoRepository
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
 import com.hippo.anotherviewer.web.repository.QuickSearchRepository
+import com.hippo.anotherviewer.web.repository.ServerConfigRepository
 import com.hippo.anotherviewer.web.repository.SyncDeviceRepository
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -46,6 +51,7 @@ import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -68,6 +74,10 @@ import java.util.concurrent.ConcurrentHashMap
  * All repositories are in-memory fakes keyed by the natural idempotency key
  * (gid / (mode,text) / name / label / deviceId), so assertions read back the
  * persisted state through the mocked repository interface.
+ *
+ * v2 注：契约 v2 缺省策略为 device_priority（A）；本套件断言的是 v1.0 语义，
+ * 即策略 B（lww）路径，故 setUp 显式把策略钉为 lww——v1 完整回退兜底（契约 §1.4）。
+ * A/C 与 policy 端点的行为矩阵见 SyncStrategyMatrixTest。
  */
 class SyncServiceTest {
 
@@ -98,7 +108,28 @@ class SyncServiceTest {
         service = SyncService(
             favoriteRepo, historyRepo, downloadRepo, bookmarkRepo, filterRepo,
             quickSearchRepo, downloadLabelRepo, deviceRepo, preferenceRepo, preferenceService,
+            fakeServerConfig(),
         )
+        // v1 回归套件钉在策略 B（lww）= v1.0 完整语义（契约 §1.4 回退兜底）。
+        service.updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW))
+    }
+
+    /** Real [ServerConfigService] over an in-memory [ServerConfigRepository] fake. */
+    private fun fakeServerConfig(): ServerConfigService {
+        val repo = mock(ServerConfigRepository::class.java)
+        val store = ConcurrentHashMap<String, ServerConfigEntity>()
+        `when`(repo.findById(anyString())).thenAnswer { inv ->
+            Optional.ofNullable(store[inv.getArgument<String>(0)])
+        }
+        `when`(repo.save(any(ServerConfigEntity::class.java))).thenAnswer { inv ->
+            val e = inv.getArgument<ServerConfigEntity>(0)
+            store[e.key] = e
+            e
+        }
+        `when`(repo.existsById(anyString())).thenAnswer { inv ->
+            store.containsKey(inv.getArgument<String>(0))
+        }
+        return ServerConfigService(repo, EncryptionService(), SiteCoreConfigProperties())
     }
 
     // ---- In-memory repository fakes ----

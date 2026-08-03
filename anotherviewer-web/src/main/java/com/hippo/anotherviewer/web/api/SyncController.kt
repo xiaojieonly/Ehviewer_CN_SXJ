@@ -23,8 +23,14 @@ class SyncController(
     fun push(
         @RequestBody request: SyncPushRequest,
         authentication: Authentication,
-    ): ResponseEntity<SyncPushResponse> {
-        return ResponseEntity.ok(syncService.push(request, authentication.name))
+    ): ResponseEntity<*> {
+        // android push 携带的 policy 是权威覆盖（D2），其值非法时等价 PUT 校验失败 → 400，
+        // 整个 push 不落库（事务回滚）；旧客户端不带 policy 不受影响。
+        return try {
+            ResponseEntity.ok(syncService.push(request, authentication.name))
+        } catch (ex: IllegalArgumentException) {
+            errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", ex.message ?: "Invalid sync policy")
+        }
     }
 
     @GetMapping("/pull")

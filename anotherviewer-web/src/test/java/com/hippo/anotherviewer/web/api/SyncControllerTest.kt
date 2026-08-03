@@ -4,6 +4,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.hippo.anotherviewer.web.any
 import com.hippo.anotherviewer.web.argThatK
 import com.hippo.anotherviewer.web.config.SecurityConfig
+import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
+import com.hippo.anotherviewer.web.dto.ConflictStrategy
 import com.hippo.anotherviewer.web.dto.ConnectedDeviceDto
 import com.hippo.anotherviewer.web.dto.DeviceInfoDto
 import com.hippo.anotherviewer.web.dto.EntityCountsDto
@@ -14,6 +16,7 @@ import com.hippo.anotherviewer.web.dto.SyncEntityCollection
 import com.hippo.anotherviewer.web.dto.SyncFavoriteDto
 import com.hippo.anotherviewer.web.dto.SyncFilterDto
 import com.hippo.anotherviewer.web.dto.SyncHistoryDto
+import com.hippo.anotherviewer.web.dto.SyncPolicyDto
 import com.hippo.anotherviewer.web.dto.SyncPullResponse
 import com.hippo.anotherviewer.web.dto.SyncPushRequest
 import com.hippo.anotherviewer.web.dto.SyncPushResponse
@@ -26,6 +29,7 @@ import com.hippo.anotherviewer.web.entity.FilterEntity
 import com.hippo.anotherviewer.web.entity.HistoryInfoEntity
 import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.entity.QuickSearchEntity
+import com.hippo.anotherviewer.web.entity.ServerConfigEntity
 import com.hippo.anotherviewer.web.entity.SyncDeviceEntity
 import com.hippo.anotherviewer.web.entity.UserPreferenceEntity
 import com.hippo.anotherviewer.web.repository.BookmarkInfoRepository
@@ -35,8 +39,10 @@ import com.hippo.anotherviewer.web.repository.FilterRepository
 import com.hippo.anotherviewer.web.repository.HistoryInfoRepository
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
 import com.hippo.anotherviewer.web.repository.QuickSearchRepository
+import com.hippo.anotherviewer.web.repository.ServerConfigRepository
 import com.hippo.anotherviewer.web.repository.SyncDeviceRepository
 import com.hippo.anotherviewer.web.repository.UserPreferenceRepository
+import com.hippo.anotherviewer.web.service.EncryptionService
 import com.hippo.anotherviewer.web.service.SiteAuthService
 import com.hippo.anotherviewer.web.service.ServerConfigService
 import com.hippo.anotherviewer.web.service.SyncService
@@ -424,7 +430,7 @@ class SyncControllerTest {
 
     private fun newSyncService(deviceRepo: SyncDeviceRepository = deviceRepo()): SyncService {
         val preferenceRepo = preferenceRepo()
-        return SyncService(
+        val service = SyncService(
             favoriteRepo(),
             historyRepo(),
             downloadRepo(),
@@ -435,7 +441,28 @@ class SyncControllerTest {
             deviceRepo,
             preferenceRepo,
             UserPreferenceService(preferenceRepo),
+            newServerConfigService(),
         )
+        // v1 回环套件钉在策略 B（lww）= v1.0 完整语义；v2 策略行为见 SyncStrategyMatrixTest。
+        return service.apply { updatePolicy(SyncPolicyDto(conflictStrategy = ConflictStrategy.LWW)) }
+    }
+
+    /** Real [ServerConfigService] over an in-memory repository fake (policy/provenance KV). */
+    private fun newServerConfigService(): ServerConfigService {
+        val repo = mock(ServerConfigRepository::class.java)
+        val store = ConcurrentHashMap<String, ServerConfigEntity>()
+        `when`(repo.findById(anyString())).thenAnswer { inv ->
+            java.util.Optional.ofNullable(store[inv.getArgument<String>(0)])
+        }
+        `when`(repo.save(any(ServerConfigEntity::class.java))).thenAnswer { inv ->
+            val e = inv.getArgument<ServerConfigEntity>(0)
+            store[e.key] = e
+            e
+        }
+        `when`(repo.existsById(anyString())).thenAnswer { inv ->
+            store.containsKey(inv.getArgument<String>(0))
+        }
+        return ServerConfigService(repo, EncryptionService(), SiteCoreConfigProperties())
     }
 
     /** In-memory fake that behaves like the real repository (persists across calls). */
