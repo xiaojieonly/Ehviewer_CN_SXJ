@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-08-02T18:13:13.432Z",
+  "seedPool": [
+    "cover_002.jpg",
+    "s1_001.jpg",
+    "s1_002.jpg",
+    "s1_003.jpg",
+    "s1_004.jpg",
+    "s2_001.jpg",
+    "s2_002.jpg",
+    "s2_003.jpg"
+  ],
+  "seedCount": 8,
+  "galleries": [
+    {
+      "gid": 1001,
+      "pages": 5
+    },
+    {
+      "gid": 1002,
+      "pages": 6
+    },
+    {
+      "gid": 1003,
+      "pages": 7
+    },
+    {
+      "gid": 2001,
+      "pages": 4
+    },
+    {
+      "gid": 2002,
+      "pages": 8
+    },
+    {
+      "gid": 3001,
+      "pages": 3
+    },
+    {
+      "gid": 3002,
+      "pages": 4
+    }
+  ],
+  "counts": {
+    "fullImages": 37,
+    "thumbs": 44
+  },
+  "provenance": {
+    "tool": "bailian-cli (bl image generate)",
+    "model": "qwen-image-2.0",
+    "size": "3:4",
+    "watermark": false,
+    "promptExtend": false,
+    "prompt": "abstract colorful vertical page, flat color blocks and geometric shapes, diagonal gradient stripes, NO text NO letters NO words, vibrant palette",
+    "note": "Content is irrelevant; seeds are reused round-robin across all galleries/pages. Seeds stored as JPEG so per-path .jpg matches the bytes."
+  }
+}

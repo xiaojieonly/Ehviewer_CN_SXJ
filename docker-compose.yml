@@ -7,6 +7,9 @@ services:
     ports:
       - "8080:8080"
     volumes:
+      # 容器内以 UID 1000（appuser）运行（M-12，见 Dockerfile）；启动时会自动
+      # chown 这三个挂载目录。若宿主机目录权限导致写入失败，先执行
+      #   sudo chown -R 1000:1000 data cache downloads
       - ./data:/app/data
       - ./cache:/app/cache
       - ./downloads:/app/downloads
