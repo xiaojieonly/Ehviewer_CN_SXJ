@@ -1,5 +1,6 @@
 package com.hippo.anotherviewer.web.api
 
+import com.hippo.anotherviewer.web.config.ApiErrorEnvelope
 import com.hippo.anotherviewer.web.service.TorrentService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -47,15 +48,17 @@ class TorrentControllerTest {
     }
 
     @Test
-    fun `download returns 404 json when torrent file is unavailable`() {
+    fun `download returns 404 uniform envelope when torrent file is unavailable`() {
         `when`(torrentService.fetchTorrentFile("https://ehtracker.org/download/missing.torrent?gid=1"))
             .thenReturn(null)
 
         val response = controller.downloadTorrent("https://ehtracker.org/download/missing.torrent?gid=1")
 
         assertEquals(404, response.statusCode.value())
-        val body = response.body as TorrentDownloadErrorResponse
-        assertFalse(body.success)
-        assertTrue(body.message.isNotEmpty())
+        val body = response.body as ApiErrorEnvelope
+        assertEquals(404, body.error.status)
+        assertEquals("NOT_FOUND", body.error.code)
+        assertTrue(body.error.message.isNotEmpty())
+        assertTrue(body.error.traceId.isNotBlank())
     }
 }

@@ -1,5 +1,6 @@
 package com.hippo.anotherviewer.web.api
 
+import com.hippo.anotherviewer.web.config.ApiErrorEnvelope
 import com.hippo.anotherviewer.web.dto.ArchiveDownloadRequest
 import com.hippo.anotherviewer.web.service.ArchiveService
 import org.junit.jupiter.api.Assertions.*
@@ -26,44 +27,48 @@ class ArchiveControllerTest {
         val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://gallery.test/archiver.php?gid=123"))
 
         assertEquals(200, response.statusCode.value())
-        val body = response.body!!
+        val body = response.body as ArchiveDownloadResponse
         assertTrue(body.success)
         assertNull(body.message)
         assertEquals("123/", body.path)
     }
 
     @Test
-    fun `download returns 502 json when the archiver flow fails`() {
+    fun `download returns 502 uniform envelope when the archiver flow fails`() {
         `when`(archiveService.downloadArchive(123L, "https://gallery.test/archiver.php?gid=123"))
             .thenReturn(false)
 
         val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://gallery.test/archiver.php?gid=123"))
 
         assertEquals(502, response.statusCode.value())
-        val body = response.body!!
-        assertFalse(body.success)
-        assertTrue(!body.message.isNullOrEmpty())
-        assertNull(body.path)
+        val body = response.body as ApiErrorEnvelope
+        assertEquals(502, body.error.status)
+        assertEquals("ARCHIVE_DOWNLOAD_FAILED", body.error.code)
+        assertTrue(body.error.message.isNotEmpty())
+        assertTrue(body.error.traceId.isNotBlank())
     }
 
     @Test
-    fun `download rejects disallowed hosts with 400 without calling the service`() {
+    fun `download rejects disallowed hosts with 400 uniform envelope without calling the service`() {
         val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "http://evil.example/archive.zip"))
 
         assertEquals(400, response.statusCode.value())
-        val body = response.body!!
-        assertFalse(body.success)
-        assertTrue(!body.message.isNullOrEmpty())
+        val body = response.body as ApiErrorEnvelope
+        assertEquals(400, body.error.status)
+        assertEquals("INVALID_ARCHIVE_URL", body.error.code)
+        assertTrue(body.error.message.isNotEmpty())
+        assertTrue(body.error.traceId.isNotBlank())
         verify(archiveService, never()).downloadArchive(anyLong(), anyString())
     }
 
     @Test
-    fun `download rejects malformed urls with 400`() {
+    fun `download rejects malformed urls with 400 uniform envelope`() {
         val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "not a url"))
 
         assertEquals(400, response.statusCode.value())
-        assertFalse(response.body!!.success)
-        assertTrue(!response.body!!.message.isNullOrEmpty())
+        val body = response.body as ApiErrorEnvelope
+        assertEquals("INVALID_ARCHIVE_URL", body.error.code)
+        assertTrue(body.error.traceId.isNotBlank())
         verify(archiveService, never()).downloadArchive(anyLong(), anyString())
     }
 
@@ -72,8 +77,9 @@ class ArchiveControllerTest {
         val response = controller.downloadArchive(ArchiveDownloadRequest(123L, "https://gallery.test.evil.example/archive.zip"))
 
         assertEquals(400, response.statusCode.value())
-        assertFalse(response.body!!.success)
-        assertTrue(!response.body!!.message.isNullOrEmpty())
+        val body = response.body as ApiErrorEnvelope
+        assertEquals("INVALID_ARCHIVE_URL", body.error.code)
+        assertTrue(body.error.traceId.isNotBlank())
         verify(archiveService, never()).downloadArchive(anyLong(), anyString())
     }
 }

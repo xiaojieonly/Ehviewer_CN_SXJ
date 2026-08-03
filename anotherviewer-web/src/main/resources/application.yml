@@ -37,3 +37,6 @@ anotherviewer:
   security:
     session-timeout: 86400
     encryption-key-path: ${anotherviewer.data-dir}/security.key
+    login-max-failures: 5
+    login-lockout-ms: 60000
+    login-rate-limit-enabled: true

@@ -1,5 +1,9 @@
 package com.hippo.anotherviewer.web.dto
 
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.Size
+
 data class SmbConfigResponse(
     val id: Long,
     val host: String,
@@ -12,23 +16,39 @@ data class SmbConfigResponse(
 )
 
 data class SmbConfigUpdateRequest(
+    @field:Size(max = 255, message = "host must be at most 255 characters")
     val host: String,
+    @field:Min(1, message = "port must be between 1 and 65535")
+    @field:Max(65535, message = "port must be between 1 and 65535")
     val port: Int = 445,
+    @field:Size(max = 255, message = "share must be at most 255 characters")
     val share: String,
+    @field:Size(max = 1024, message = "path must be at most 1024 characters")
     val path: String? = null,
+    @field:Size(max = 16, message = "loginMode must be at most 16 characters")
     val loginMode: String = "GUEST",
+    @field:Size(max = 255, message = "username must be at most 255 characters")
     val username: String? = null,
+    @field:Size(max = 255, message = "password must be at most 255 characters")
     val password: String? = null,
     val enabled: Boolean = false
 )
 
 data class SmbTestConnectionRequest(
+    @field:Size(max = 255, message = "host must be at most 255 characters")
     val host: String,
+    @field:Min(1, message = "port must be between 1 and 65535")
+    @field:Max(65535, message = "port must be between 1 and 65535")
     val port: Int = 445,
+    @field:Size(max = 255, message = "share must be at most 255 characters")
     val share: String,
+    @field:Size(max = 1024, message = "path must be at most 1024 characters")
     val path: String? = null,
+    @field:Size(max = 16, message = "loginMode must be at most 16 characters")
     val loginMode: String = "GUEST",
+    @field:Size(max = 255, message = "username must be at most 255 characters")
     val username: String? = null,
+    @field:Size(max = 255, message = "password must be at most 255 characters")
     val password: String? = null
 )
 

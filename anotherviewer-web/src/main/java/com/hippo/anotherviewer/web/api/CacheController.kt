@@ -3,6 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.dto.CacheStatsResponse
 import com.hippo.anotherviewer.web.dto.SuccessResponse
 import com.hippo.anotherviewer.web.service.ImageCacheService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -16,12 +17,12 @@ class CacheController(private val imageCacheService: ImageCacheService) {
     }
 
     @DeleteMapping("/gallery/{id}")
-    fun clearGalleryCache(@PathVariable id: Long): ResponseEntity<SuccessResponse> {
+    fun clearGalleryCache(@PathVariable id: Long): ResponseEntity<*> {
         val removed = imageCacheService.clearGalleryCache(id)
         return if (removed) {
             ResponseEntity.ok(SuccessResponse(success = true))
         } else {
-            ResponseEntity.notFound().build()
+            errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Gallery cache not found")
         }
     }
 }

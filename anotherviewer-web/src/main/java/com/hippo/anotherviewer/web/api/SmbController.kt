@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.SmbBackupService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -15,17 +16,17 @@ class SmbController(private val smbBackupService: SmbBackupService) {
     }
 
     @PutMapping("/config")
-    fun updateConfig(@RequestBody request: SmbConfigUpdateRequest): ResponseEntity<Boolean> {
+    fun updateConfig(@Valid @RequestBody request: SmbConfigUpdateRequest): ResponseEntity<Boolean> {
         return ResponseEntity.ok(smbBackupService.updateConfig(request))
     }
 
     @PostMapping("/test-connection")
-    fun testConnection(@RequestBody request: SmbTestConnectionRequest): ResponseEntity<SmbTestConnectionResponse> {
+    fun testConnection(@Valid @RequestBody request: SmbTestConnectionRequest): ResponseEntity<SmbTestConnectionResponse> {
         return ResponseEntity.ok(smbBackupService.testConnection(request))
     }
 
     @PostMapping("/sync")
-    fun startSync(@RequestBody request: SmbSyncRequest = SmbSyncRequest()): ResponseEntity<Boolean> {
+    fun startSync(@Valid @RequestBody request: SmbSyncRequest = SmbSyncRequest()): ResponseEntity<Boolean> {
         return ResponseEntity.ok(smbBackupService.startSync(request.aggressive))
     }
 

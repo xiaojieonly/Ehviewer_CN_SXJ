@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.DownloadService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -20,7 +21,7 @@ class DownloadController(private val downloadService: DownloadService) {
     }
 
     @PostMapping("/add")
-    fun addDownload(@RequestBody request: DownloadAddRequest): ResponseEntity<Boolean> {
+    fun addDownload(@Valid @RequestBody request: DownloadAddRequest): ResponseEntity<Boolean> {
         return ResponseEntity.ok(downloadService.addDownload(request))
     }
 
@@ -51,7 +52,7 @@ class DownloadController(private val downloadService: DownloadService) {
     }
 
     @PostMapping("/label")
-    fun createLabel(@RequestBody request: DownloadLabelRequest): ResponseEntity<Boolean> {
+    fun createLabel(@Valid @RequestBody request: DownloadLabelRequest): ResponseEntity<Boolean> {
         return ResponseEntity.ok(downloadService.createLabel(request.label))
     }
 

@@ -2,14 +2,16 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.ArchiveService
+import jakarta.validation.Valid
 import okhttp3.HttpUrl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 /**
- * Result of an archive download attempt. [path] is a relative hint only
+ * Result of a successful archive download. [path] is a relative hint only
  * (`<gid>/`) — absolute server paths are never exposed to clients.
+ * Failures use the uniform error envelope (M-6), not this class.
  */
 data class ArchiveDownloadResponse(
     val success: Boolean,
@@ -29,18 +31,16 @@ class ArchiveController(private val archiveService: ArchiveService) {
 
     /**
      * 200 `{success:true, path:"<gid>/"}` on success;
-     * 400 `{success:false, message}` when the archive URL host is not allowed
+     * 400 uniform envelope when the archive URL host is not allowed
      * (SSRF guard, mirrors ArchiveService);
-     * 502 `{success:false, message}` when the archiver flow failed (credits
+     * 502 uniform envelope when the archiver flow failed (credits
      * required, upstream error).
      */
     @PostMapping("/download")
-    fun downloadArchive(@RequestBody request: ArchiveDownloadRequest): ResponseEntity<ArchiveDownloadResponse> {
+    fun downloadArchive(@Valid @RequestBody request: ArchiveDownloadRequest): ResponseEntity<*> {
         val parsed = HttpUrl.parse(request.url)
         if (parsed == null || !isAllowedArchiveHost(parsed.host())) {
-            return ResponseEntity.badRequest().body(
-                ArchiveDownloadResponse(success = false, message = "Archive URL host not allowed")
-            )
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "INVALID_ARCHIVE_URL", "Archive URL host not allowed")
         }
         val ok = archiveService.downloadArchive(request.gid, request.url)
         return if (ok) {
@@ -48,8 +48,10 @@ class ArchiveController(private val archiveService: ArchiveService) {
                 ArchiveDownloadResponse(success = true, path = "${request.gid}/")
             )
         } else {
-            ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
-                ArchiveDownloadResponse(success = false, message = "Archive download failed (credits required or upstream error)")
+            errorEnvelope(
+                HttpStatus.BAD_GATEWAY,
+                "ARCHIVE_DOWNLOAD_FAILED",
+                "Archive download failed (credits required or upstream error)"
             )
         }
     }
@@ -60,6 +62,6 @@ class ArchiveController(private val archiveService: ArchiveService) {
      */
     private fun isAllowedArchiveHost(host: String): Boolean {
         val normalized = host.lowercase().removePrefix("www.")
-        return normalized == "gallery.test" || normalized == "gallery.test"
+        return normalized == "gallery.test"
     }
 }

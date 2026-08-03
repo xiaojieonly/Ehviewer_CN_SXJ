@@ -9,11 +9,6 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
-data class TorrentDownloadErrorResponse(
-    val success: Boolean,
-    val message: String
-)
-
 @RestController
 @RequestMapping("/api/v1/torrent")
 class TorrentController(private val torrentService: TorrentService) {
@@ -27,15 +22,13 @@ class TorrentController(private val torrentService: TorrentService) {
     /**
      * Streams the `.torrent` file bytes for a torrent URL/token as an
      * `application/x-bittorrent` attachment (Content-Disposition
-     * `filename=<gid>.torrent`). Returns 404 JSON when the file is
-     * unavailable (host not allowed, fetch failed, no file).
+     * `filename=<gid>.torrent`). Returns the uniform error envelope with 404
+     * when the file is unavailable (host not allowed, fetch failed, no file).
      */
     @GetMapping("/download")
     fun downloadTorrent(@RequestParam token: String): ResponseEntity<*> {
         val bytes = torrentService.fetchTorrentFile(token)
-            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                TorrentDownloadErrorResponse(success = false, message = "Torrent file unavailable")
-            )
+            ?: return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Torrent file unavailable")
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("application/x-bittorrent"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${torrentFileName(token)}\"")

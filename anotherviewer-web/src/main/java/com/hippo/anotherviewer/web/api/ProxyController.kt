@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.web.dto.ProxySettings
 import com.hippo.anotherviewer.web.dto.ProxyTestRequest
 import com.hippo.anotherviewer.web.dto.ProxyTestResponse
 import com.hippo.anotherviewer.web.service.WebProxyManager
+import jakarta.validation.Valid
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,7 +27,7 @@ class ProxyController(private val proxyManager: WebProxyManager) {
      * admin UI can validate a form before saving it.
      */
     @PostMapping("/test")
-    fun test(@RequestBody(required = false) request: ProxyTestRequest?): ResponseEntity<ProxyTestResponse> {
+    fun test(@Valid @RequestBody(required = false) request: ProxyTestRequest?): ResponseEntity<ProxyTestResponse> {
         val s = mergeWithSaved(request)
         val proxy = toProxy(s)
         val client = OkHttpClient.Builder()

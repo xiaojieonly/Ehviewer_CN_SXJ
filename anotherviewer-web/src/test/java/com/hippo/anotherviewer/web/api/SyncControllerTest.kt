@@ -296,8 +296,10 @@ class SyncControllerTest {
         assertEquals("quick-search-1", e.quickSearches[0].name)
         assertEquals("sakura", e.quickSearches[0].keyword)
 
-        assertEquals(1, e.downloadLabels.size)
-        assertEquals("Label One", e.downloadLabels[0].label)
+        // M-14: push 的 download 携带 label "DL-Label-A" 时服务端自动补建该标签行，
+        // pull 的 adoptNullOwnership 认领后随全量拉取一并返回（Label One + DL-Label-A）。
+        assertEquals(2, e.downloadLabels.size)
+        assertEquals(setOf("Label One", "DL-Label-A"), e.downloadLabels.map { it.label }.toSet())
 
         // Another user's pull must not leak alice's rows.
         val other = service.pull(0L, "bob").entities
@@ -451,6 +453,15 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        // H-3: pull 现在走派生查询（全量/增量），stub 两个新方法。
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
+        }
         return repo
     }
 
@@ -469,6 +480,14 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
+        }
         return repo
     }
 
@@ -485,6 +504,14 @@ class SyncControllerTest {
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
+        }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
         }
         return repo
     }
@@ -504,6 +531,14 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
+        }
         return repo
     }
 
@@ -519,6 +554,14 @@ class SyncControllerTest {
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
+        }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
         }
         return repo
     }
@@ -537,6 +580,14 @@ class SyncControllerTest {
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
         }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
+        }
         return repo
     }
 
@@ -553,6 +604,14 @@ class SyncControllerTest {
         `when`(repo.findAllByUsernameIsNull()).thenAnswer { store.values.filter { it.username == null } }
         `when`(repo.countByUsername(anyString())).thenAnswer { inv ->
             store.values.count { it.username == inv.getArgument<String>(0) }.toLong()
+        }
+        `when`(repo.findByUsername(anyString())).thenAnswer { inv ->
+            store.values.filter { it.username == inv.getArgument<String>(0) }
+        }
+        `when`(repo.findByUsernameAndLastModifiedGreaterThan(anyString(), anyLong())).thenAnswer { inv ->
+            val u = inv.getArgument<String>(0)
+            val lm = inv.getArgument<Long>(1)
+            store.values.filter { it.username == u && it.lastModified > lm }
         }
         return repo
     }

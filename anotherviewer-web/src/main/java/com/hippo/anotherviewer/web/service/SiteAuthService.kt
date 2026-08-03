@@ -148,7 +148,7 @@ class SiteAuthService(
         // can detect an expired Gallery Site login and prompt for re-login.
         val ehStatus = sessionManager.getStatus()
         val username = validateToken(token)
-        val authRequired = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)
+        val authRequired = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)
         return AuthStatusResponse(
             authenticated = username != null,
             username = username,

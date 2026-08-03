@@ -13,6 +13,7 @@ import com.hippo.anotherviewer.web.repository.TokenRepository
 import com.hippo.anotherviewer.web.service.SiteAuthService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
 import com.hippo.anotherviewer.web.service.EncryptionService
+import com.hippo.anotherviewer.web.service.LoginRateLimiter
 import com.hippo.anotherviewer.web.service.ServerConfigService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -38,7 +39,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Contract tests for POST /api/v1/auth/change-password:
+ * Contract tests for POST /api/v1/auth/change-password and login rate limiting:
  *
  * HTTP layer (MockMvc + real bean validation) asserts the exact response
  * shapes; service layer (in-memory repo fakes, real bcrypt) asserts the
@@ -73,7 +74,7 @@ class AuthControllerTest {
                     .thenReturn(serviceResult)
             }
         }
-        return MockMvcBuilders.standaloneSetup(AuthController(authService)).build()
+        return MockMvcBuilders.standaloneSetup(AuthController(authService, LoginRateLimiter(5, 60000, false))).build()
     }
 
     @Test
@@ -157,6 +158,94 @@ class AuthControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.message").value("Old password and new password are required"))
+    }
+
+    // ---------------------------------------------------------------------
+    // Login rate limiting
+    // ---------------------------------------------------------------------
+
+    private fun loginPost(ip: String = "127.0.0.1") = post("/api/v1/auth/login")
+        .with { request ->
+            request.remoteAddr = ip
+            request
+        }
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""{"username":"alice","password":"wrong-pass"}""")
+
+    private fun loginMvc(
+        rateLimiter: LoginRateLimiter = LoginRateLimiter(5, 60000, true),
+    ): MockMvc {
+        val authService = mock(SiteAuthService::class.java)
+        `when`(authService.login(LoginRequest("alice", "wrong-pass")))
+            .thenReturn(AuthResponse(false, "Invalid username or password"))
+        return MockMvcBuilders.standaloneSetup(AuthController(authService, rateLimiter)).build()
+    }
+
+    @Test
+    fun `login locks after 5 consecutive failures and rejects the 6th with 429`() {
+        val mvc = loginMvc()
+        repeat(5) {
+            mvc.perform(loginPost()).andExpect(status().isBadRequest)
+        }
+        mvc.perform(loginPost())
+            .andExpect(status().isTooManyRequests)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Too many login attempts. Try again later."))
+    }
+
+    @Test
+    fun `login rate limit is bypassed when disabled`() {
+        val mvc = loginMvc(rateLimiter = LoginRateLimiter(5, 60000, false))
+        repeat(6) {
+            mvc.perform(loginPost()).andExpect(status().isBadRequest)
+        }
+    }
+
+    @Test
+    fun `lockout is per IP`() {
+        val mvc = loginMvc()
+        repeat(5) {
+            mvc.perform(loginPost("1.1.1.1")).andExpect(status().isBadRequest)
+        }
+        mvc.perform(loginPost("1.1.1.1")).andExpect(status().isTooManyRequests)
+        mvc.perform(loginPost("2.2.2.2")).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `successful login resets the failure counter`() {
+        val authService = mock(SiteAuthService::class.java)
+        `when`(authService.login(LoginRequest("alice", "wrong-pass")))
+            .thenReturn(AuthResponse(false, "Invalid username or password"))
+        `when`(authService.login(LoginRequest("alice", "right-pass")))
+            .thenReturn(AuthResponse(true, "Logged in", token = "tok"))
+        val mvc = MockMvcBuilders.standaloneSetup(AuthController(authService, LoginRateLimiter(5, 60000, true))).build()
+
+        repeat(4) {
+            mvc.perform(loginPost()).andExpect(status().isBadRequest)
+        }
+        mvc.perform(
+            post("/api/v1/auth/login")
+                .with { request ->
+                    request.remoteAddr = "127.0.0.1"
+                    request
+                }
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"username":"alice","password":"right-pass"}""")
+        ).andExpect(status().isOk)
+        repeat(5) {
+            mvc.perform(loginPost()).andExpect(status().isBadRequest)
+        }
+    }
+
+    @Test
+    fun `lockout expires after the configured window`() {
+        val mvc = loginMvc(rateLimiter = LoginRateLimiter(5, 100, true))
+        repeat(5) {
+            mvc.perform(loginPost()).andExpect(status().isBadRequest)
+        }
+        mvc.perform(loginPost()).andExpect(status().isTooManyRequests)
+        Thread.sleep(150)
+        mvc.perform(loginPost()).andExpect(status().isBadRequest)
     }
 
     // ---------------------------------------------------------------------

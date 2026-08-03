@@ -14,7 +14,7 @@ data class HistoryItem(
     val title: String,
     val titleJpn: String,
     val thumb: String,
-    val category: String,
+    val category: Int,
     val rating: Float,
     val mode: Int,
     val time: Long
@@ -25,5 +25,7 @@ data class AddHistoryRequest(
     @field:Size(max = 64)
     val token: String,
     @field:Size(max = 256)
-    val title: String? = null
+    val title: String? = null,
+    /** 阅读模式, 前端可选; 透传接线在 GalleryService (本次 M-13 不含) */
+    val mode: Int = 0
 )

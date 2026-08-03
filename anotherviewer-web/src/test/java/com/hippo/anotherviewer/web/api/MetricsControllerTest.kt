@@ -29,6 +29,16 @@ class MetricsControllerTest {
         hitRate = 0.87
     )
 
+    /** Mirrors the controller's own loader: read version.properties from the classpath. */
+    private fun versionFromResource(): String {
+        val stream = MetricsControllerTest::class.java.getResourceAsStream("/version.properties")
+            ?: return "1.0.0-SNAPSHOT"
+        return stream.use {
+            java.util.Properties().apply { load(it) }.getProperty("anotherviewer.version")
+                ?: "1.0.0-SNAPSHOT"
+        }
+    }
+
     @BeforeEach
     fun setUp() {
         imageCacheService = mock(ImageCacheService::class.java)
@@ -150,7 +160,7 @@ class MetricsControllerTest {
 
         // Summary
         assertEquals("UP", response.summary.status)
-        assertEquals("1.0.0-SNAPSHOT", response.summary.version)
+        assertEquals(versionFromResource(), response.summary.version)
         assertTrue(response.summary.uptime.isNotEmpty())
 
         // Cache

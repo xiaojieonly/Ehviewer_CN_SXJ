@@ -18,6 +18,16 @@ class HealthControllerTest {
     private lateinit var config: SiteCoreConfigProperties
     private lateinit var controller: HealthController
 
+    /** Mirrors the controller's own loader: read version.properties from the classpath. */
+    private fun versionFromResource(): String {
+        val stream = HealthControllerTest::class.java.getResourceAsStream("/version.properties")
+            ?: return "1.0.0-SNAPSHOT"
+        return stream.use {
+            java.util.Properties().apply { load(it) }.getProperty("anotherviewer.version")
+                ?: "1.0.0-SNAPSHOT"
+        }
+    }
+
     @TempDir
     lateinit var tempDir: File
 
@@ -119,7 +129,7 @@ class HealthControllerTest {
         val response = controller.healthCheck()
         val body = response.body!!
 
-        assertEquals("1.0.0-SNAPSHOT", body.version)
+        assertEquals(versionFromResource(), body.version)
         assertTrue(body.uptime.isNotEmpty())
         assertTrue(body.uptimeMs > 0)
     }

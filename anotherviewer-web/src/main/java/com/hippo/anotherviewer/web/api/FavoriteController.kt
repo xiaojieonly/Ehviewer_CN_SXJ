@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.web.dto.FavoriteAddRequest
 import com.hippo.anotherviewer.web.dto.FavoriteListResponse
 import com.hippo.anotherviewer.web.dto.FavoriteRemoveRequest
 import com.hippo.anotherviewer.web.service.FavoriteService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -20,13 +21,13 @@ class FavoriteController(private val favoriteService: FavoriteService) {
     }
 
     @PostMapping("/add")
-    fun addFavorite(@RequestBody request: FavoriteAddRequest): ResponseEntity<Map<String, Boolean>> {
-        val result = favoriteService.addFavorite(request.gid, request.token, null, request.category)
+    fun addFavorite(@Valid @RequestBody request: FavoriteAddRequest): ResponseEntity<Map<String, Boolean>> {
+        val result = favoriteService.addFavorite(request.gid, request.token, null, request.category, request.slot)
         return ResponseEntity.ok(mapOf("success" to result))
     }
 
     @DeleteMapping("/remove")
-    fun removeFavorite(@RequestBody request: FavoriteRemoveRequest): ResponseEntity<Map<String, Boolean>> {
+    fun removeFavorite(@Valid @RequestBody request: FavoriteRemoveRequest): ResponseEntity<Map<String, Boolean>> {
         val result = favoriteService.removeFavorite(request.gid)
         return ResponseEntity.ok(mapOf("success" to result))
     }

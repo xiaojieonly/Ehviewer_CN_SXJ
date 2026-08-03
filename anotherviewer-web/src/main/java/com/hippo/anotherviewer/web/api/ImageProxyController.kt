@@ -57,14 +57,14 @@ class ImageProxyController(
     // ── legacy endpoints (kept intact) ───────────────────────────
 
     @GetMapping("/proxy")
-    fun proxyImage(@RequestParam url: String): ResponseEntity<ByteArray> {
+    fun proxyImage(@RequestParam url: String): ResponseEntity<*> {
         val cached = imageCacheService.getCachedImage(url)
         if (cached != null) {
             return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE)
                 .body(cached)
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+        return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found in cache")
     }
 
     @GetMapping("/cache/status")
@@ -212,7 +212,7 @@ class ImageProxyController(
             serveBytes(file.readBytes(), mime, range)
         } catch (e: Exception) {
             logger.warn("Failed to read cached image {}", file, e)
-            ResponseEntity.status(HttpStatus.NOT_FOUND).build<Any>()
+            errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found")
         }
     }
 
@@ -283,22 +283,14 @@ class ImageProxyController(
     }
 
     private fun notFound(galleryId: Long, page: Int): ResponseEntity<*> {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(mapOf(
-                "error" to "gallery or page not found",
-                "galleryId" to galleryId,
-                "page" to page
-            ))
+        return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "gallery or page not found")
     }
 
     private fun rateLimited(galleryId: Long, page: Int): ResponseEntity<*> {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(mapOf(
-                "error" to "rate limited: too many concurrent fetches for this gallery",
-                "galleryId" to galleryId,
-                "page" to page
-            ))
+        return errorEnvelope(
+            HttpStatus.TOO_MANY_REQUESTS,
+            "RATE_LIMITED",
+            "rate limited: too many concurrent fetches for this gallery"
+        )
     }
 }

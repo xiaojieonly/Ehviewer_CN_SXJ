@@ -46,7 +46,7 @@ class WsAuthChannelInterceptorTest {
 
     @Test
     fun `accepted CONNECT increments active connections`() {
-        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)).thenReturn(true)
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(true)
         `when`(authService.validateToken("valid-token")).thenReturn("user")
 
         val result = interceptor.preSend(frame(StompCommand.CONNECT, "login" to "valid-token"), channel)
@@ -57,7 +57,7 @@ class WsAuthChannelInterceptorTest {
 
     @Test
     fun `rejected CONNECT does not increment active connections`() {
-        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)).thenReturn(true)
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(true)
         `when`(authService.validateToken("bad-token")).thenReturn(null)
 
         val result = interceptor.preSend(frame(StompCommand.CONNECT, "login" to "bad-token"), channel)
@@ -68,7 +68,7 @@ class WsAuthChannelInterceptorTest {
 
     @Test
     fun `CONNECT with auth disabled increments active connections`() {
-        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)).thenReturn(false)
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(false)
 
         val result = interceptor.preSend(frame(StompCommand.CONNECT), channel)
 
@@ -78,7 +78,7 @@ class WsAuthChannelInterceptorTest {
 
     @Test
     fun `DISCONNECT decrements active connections`() {
-        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)).thenReturn(true)
+        `when`(serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)).thenReturn(true)
         `when`(authService.validateToken("valid-token")).thenReturn("user")
 
         interceptor.preSend(frame(StompCommand.CONNECT, "login" to "valid-token"), channel)

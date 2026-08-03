@@ -28,7 +28,7 @@ class WsAuthChannelInterceptor(
             ?: return message
         when (accessor.command) {
             StompCommand.CONNECT -> {
-                val accepted = if (!serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true)) {
+                val accepted = if (!serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false)) {
                     true
                 } else {
                     val token = accessor.getFirstNativeHeader("login")

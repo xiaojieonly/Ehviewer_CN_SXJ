@@ -1,7 +1,9 @@
 package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
+import com.hippo.anotherviewer.web.service.LoginRateLimiter
 import com.hippo.anotherviewer.web.service.SiteAuthService
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/auth")
 class AuthController(
     private val authService: SiteAuthService,
+    private val loginRateLimiter: LoginRateLimiter,
 ) {
 
     @PostMapping("/register")
@@ -27,9 +30,23 @@ class AuthController(
     }
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
+    fun login(
+        httpRequest: HttpServletRequest,
+        @Valid @RequestBody request: LoginRequest,
+    ): ResponseEntity<AuthResponse> {
+        val ip = httpRequest.remoteAddr ?: UNKNOWN_IP
+        if (loginRateLimiter.isLocked(request.username, ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(AuthResponse(false, LOCKED_MESSAGE))
+        }
         val response = authService.login(request)
-        return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
+        return if (response.success) {
+            loginRateLimiter.recordSuccess(request.username, ip)
+            ResponseEntity.ok(response)
+        } else {
+            loginRateLimiter.recordFailure(request.username, ip)
+            ResponseEntity.badRequest().body(response)
+        }
     }
 
     @PostMapping("/change-password")
@@ -80,5 +97,10 @@ class AuthController(
     fun completePairing(@Valid @RequestBody request: PairCompleteRequest): ResponseEntity<PairCompleteResponse> {
         val response = authService.completePairing(request)
         return if (response.success) ResponseEntity.ok(response) else ResponseEntity.badRequest().body(response)
+    }
+
+    companion object {
+        private const val UNKNOWN_IP = "unknown"
+        private const val LOCKED_MESSAGE = "Too many login attempts. Try again later."
     }
 }

@@ -24,7 +24,20 @@ class MetricsController(
 ) {
 
     companion object {
-        private const val VERSION = "1.0.0-SNAPSHOT"
+        // Loaded from /version.properties, which the generateVersionProperties
+        // Gradle task writes from the webVersion project property
+        // (gradle.properties: webVersion=1.1.0, override via -PwebVersion=),
+        // so the reported version always matches the built jar. The fallback
+        // string only appears in dev/IDE runs where processResources hasn't
+        // produced the resource (e.g. direct unit-test runs in an IDE).
+        private val VERSION: String = run {
+            val stream = MetricsController::class.java.getResourceAsStream("/version.properties")
+                ?: return@run "1.0.0-SNAPSHOT"
+            stream.use { input ->
+                java.util.Properties().apply { load(input) }.getProperty("anotherviewer.version")
+                    ?: "1.0.0-SNAPSHOT"
+            }
+        }
         private val runtime = Runtime.getRuntime()
         private val startedAtMillis = System.currentTimeMillis()
 

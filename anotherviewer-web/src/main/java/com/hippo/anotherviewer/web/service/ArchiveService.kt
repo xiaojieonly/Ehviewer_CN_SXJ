@@ -135,6 +135,6 @@ class ArchiveService(
 
     private fun isAllowedArchiveHost(host: String): Boolean {
         val normalized = host.lowercase().removePrefix("www.")
-        return normalized == "gallery.test" || normalized == "gallery.test"
+        return normalized == "gallery.test"
     }
 }

@@ -3,9 +3,8 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.GalleryService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.http.converter.HttpMessageNotReadableException
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -19,13 +18,18 @@ class GalleryController(private val galleryService: GalleryService) {
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int
     ): ResponseEntity<GalleryListResponse> {
-        return ResponseEntity.ok(galleryService.searchGallery(keyword, category, page, pageSize))
+        // M-5: pageSize is clamped (not rejected) so an oversized value can
+        // never be forwarded to the upstream gallery search; `page` is
+        // 0-based per contract, so only the lower bound applies.
+        val clampedPage = page.coerceAtLeast(0)
+        val clampedPageSize = pageSize.coerceIn(1, MAX_PAGE_SIZE)
+        return ResponseEntity.ok(galleryService.searchGallery(keyword, category, clampedPage, clampedPageSize))
     }
 
     @GetMapping("/{gid}")
     fun getDetail(@PathVariable gid: Long): ResponseEntity<*> {
         val detail = galleryService.getGalleryDetail(gid)
-            ?: return ResponseEntity.notFound().build<Any>()
+            ?: return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Gallery not found")
         return ResponseEntity.ok(detail)
     }
 
@@ -34,36 +38,22 @@ class GalleryController(private val galleryService: GalleryService) {
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int
     ): ResponseEntity<GalleryListResponse> {
-        return ResponseEntity.ok(galleryService.getHistory(page, pageSize))
+        // Same M-5 clamping as /search.
+        val clampedPage = page.coerceAtLeast(0)
+        val clampedPageSize = pageSize.coerceIn(1, MAX_PAGE_SIZE)
+        return ResponseEntity.ok(galleryService.getHistory(clampedPage, clampedPageSize))
     }
 
     @PostMapping("/history/{gid}")
     fun addToHistory(
         @PathVariable gid: Long,
         @Valid @RequestBody body: AddHistoryRequest
-    ): ResponseEntity<Map<String, Any>> {
+    ): ResponseEntity<*> {
         if (gid <= 0) {
-            return ResponseEntity.badRequest().body(
-                mapOf("success" to false, "message" to "gid must be a positive number")
-            )
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "gid must be a positive number")
         }
         galleryService.addToHistory(gid, body.token, body.title)
         return ResponseEntity.ok(mapOf("success" to true))
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleBodyValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, Any>> {
-        val message = ex.bindingResult.fieldErrors.joinToString("; ") {
-            it.defaultMessage ?: "invalid value for ${it.field}"
-        }
-        return ResponseEntity.badRequest().body(mapOf("success" to false, "message" to message))
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleUnreadableBody(ex: HttpMessageNotReadableException): ResponseEntity<Map<String, Any>> {
-        return ResponseEntity.badRequest().body(
-            mapOf("success" to false, "message" to "Invalid request body")
-        )
     }
 
     @GetMapping("/favorites")
@@ -77,7 +67,7 @@ class GalleryController(private val galleryService: GalleryService) {
     }
 
     @PostMapping("/quick-search")
-    fun createQuickSearch(@RequestBody dto: QuickSearchDto): ResponseEntity<QuickSearchDto> {
+    fun createQuickSearch(@Valid @RequestBody dto: QuickSearchDto): ResponseEntity<QuickSearchDto> {
         return ResponseEntity.ok(galleryService.createQuickSearch(dto))
     }
 
@@ -85,5 +75,10 @@ class GalleryController(private val galleryService: GalleryService) {
     fun deleteQuickSearch(@PathVariable id: Long): ResponseEntity<Map<String, Boolean>> {
         galleryService.deleteQuickSearch(id)
         return ResponseEntity.ok(mapOf("success" to true))
+    }
+
+    companion object {
+        /** Upper bound for pageSize on paginated endpoints (M-5 clamp). */
+        const val MAX_PAGE_SIZE = 200
     }
 }

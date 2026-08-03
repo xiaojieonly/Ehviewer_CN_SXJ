@@ -33,6 +33,9 @@ data class BackupRestoreResponse(
  * 备份/还原接口，鉴权与其余 /api 一致（Bearer token，见 SecurityConfig）。
  * 导出产物同时落盘 `<dataDir>/backups/`（分片可独立拷走异地备份），
  * 浏览器下载时再套一层 zip 包装。
+ *
+ * 还原失败（空文件/缺 manifest/解包还原异常）返回统一错误 envelope（M-6），
+ * 成功仍为 `{success,message}`。
  */
 @RestController
 @RequestMapping("/api/v1/backup")
@@ -56,16 +59,16 @@ class BackupController(private val backupService: BackupService) {
 
     /** 上传备份 zip → 解包 → 逐片 SHA-256 校验（失败拒绝）→ 还原。成功后需重启生效。 */
     @PostMapping("/restore")
-    fun restore(@RequestParam("file") file: MultipartFile): ResponseEntity<BackupRestoreResponse> {
+    fun restore(@RequestParam("file") file: MultipartFile): ResponseEntity<*> {
         if (file.isEmpty) {
-            return ResponseEntity.badRequest().body(BackupRestoreResponse(false, "上传的备份文件为空"))
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "RESTORE_FAILED", "上传的备份文件为空")
         }
         val tmp = Files.createTempDirectory("backup-upload-")
         try {
             unzip(file.inputStream, tmp)
             val manifestFile = tmp.resolve("manifest.json")
             if (!Files.isRegularFile(manifestFile)) {
-                return ResponseEntity.badRequest().body(BackupRestoreResponse(false, "备份包缺少 manifest.json"))
+                return errorEnvelope(HttpStatus.BAD_REQUEST, "RESTORE_FAILED", "备份包缺少 manifest.json")
             }
             val manifest: BackupManifest = mapper.readValue<BackupManifest>(manifestFile.toFile())
             val slices = manifest.slices.associate { it.name to tmp.resolve(it.name) }
@@ -73,8 +76,7 @@ class BackupController(private val backupService: BackupService) {
             return ResponseEntity.ok(BackupRestoreResponse(true, "还原成功，重启后生效"))
         } catch (e: Exception) {
             logger.warn("备份还原失败: {}", e.message)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(BackupRestoreResponse(false, e.message ?: "还原失败"))
+            return errorEnvelope(HttpStatus.BAD_REQUEST, "RESTORE_FAILED", e.message ?: "还原失败")
         } finally {
             runCatching { tmp.toFile().deleteRecursively() }
         }

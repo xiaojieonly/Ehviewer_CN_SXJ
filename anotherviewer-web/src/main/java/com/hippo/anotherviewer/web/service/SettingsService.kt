@@ -28,7 +28,7 @@ class SettingsService(
                 enabled = config.smb.enabled
             ),
             security = SecuritySettings(
-                requireAuth = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, true),
+                requireAuth = serverConfig.getBoolean(ServerConfigService.KEY_REQUIRE_AUTH, false),
                 sessionTimeout = serverConfig.getLong(ServerConfigService.KEY_SESSION_TIMEOUT, 86400),
             ),
             processing = ProcessingSettings(

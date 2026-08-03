@@ -16,6 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.time.Instant
+import java.util.Properties
 import javax.sql.DataSource
 
 @RestController
@@ -42,7 +43,21 @@ class HealthController(
     companion object {
         private const val GALLERY_CHECK_INTERVAL_MS = 60_000L
         private const val DISK_MIN_FREE_BYTES = 100L * 1024 * 1024 // 100 MB
-        private const val VERSION = "1.0.0-SNAPSHOT"
+
+        // Loaded from /version.properties, which the generateVersionProperties
+        // Gradle task writes from the webVersion project property
+        // (gradle.properties: webVersion=1.1.0, override via -PwebVersion=),
+        // so the reported version always matches the built jar. The fallback
+        // string only appears in dev/IDE runs where processResources hasn't
+        // produced the resource (e.g. direct unit-test runs in an IDE).
+        private val VERSION: String = run {
+            val stream = HealthController::class.java.getResourceAsStream("/version.properties")
+                ?: return@run "1.0.0-SNAPSHOT"
+            stream.use { input ->
+                Properties().apply { load(input) }.getProperty("anotherviewer.version")
+                    ?: "1.0.0-SNAPSHOT"
+            }
+        }
     }
 
     @GetMapping

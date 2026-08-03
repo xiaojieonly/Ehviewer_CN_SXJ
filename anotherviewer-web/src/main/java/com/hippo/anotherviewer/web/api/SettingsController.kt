@@ -2,6 +2,7 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.SettingsService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -15,7 +16,7 @@ class SettingsController(private val settingsService: SettingsService) {
     }
 
     @PutMapping
-    fun updateSettings(@RequestBody request: SettingsUpdateRequest): ResponseEntity<Boolean> {
+    fun updateSettings(@Valid @RequestBody request: SettingsUpdateRequest): ResponseEntity<Boolean> {
         return ResponseEntity.ok(settingsService.updateSettings(request))
     }
 }

@@ -4,6 +4,7 @@ import com.hippo.anotherviewer.web.dto.CommentListResponse
 import com.hippo.anotherviewer.web.dto.CommentPostRequest
 import com.hippo.anotherviewer.web.dto.CommentVoteRequest
 import com.hippo.anotherviewer.web.service.CommentService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -19,7 +20,7 @@ class CommentController(private val commentService: CommentService) {
 
     @PostMapping("/post")
     fun postComment(
-        @RequestBody request: CommentPostRequest,
+        @Valid @RequestBody request: CommentPostRequest,
         authentication: Authentication
     ): ResponseEntity<Map<String, Boolean>> {
         val uploader = authentication.name?.takeUnless { it.isBlank() || it == "anonymousUser" }
@@ -29,7 +30,7 @@ class CommentController(private val commentService: CommentService) {
     }
 
     @PostMapping("/vote")
-    fun voteComment(@RequestBody request: CommentVoteRequest): ResponseEntity<Map<String, Boolean>> {
+    fun voteComment(@Valid @RequestBody request: CommentVoteRequest): ResponseEntity<Map<String, Boolean>> {
         val result = commentService.voteComment(request.gid, request.commentId, request.vote)
         return ResponseEntity.ok(mapOf("success" to result))
     }
