@@ -121,7 +121,8 @@ class UpdateDialog(private val activity: Activity) {
         downloadUrl: String,
         version: String
     ) {
-        val uri = GITHUB_README_URL.toUri()
+        // 下载/安装已被禁用：跳转到 GitHub Releases 页面，让用户自行获取新版本
+        val uri = GITHUB_RELEASE_URL.toUri()
         val intent = Intent(Intent.ACTION_VIEW, uri)
         activity.startActivity(intent)
         dialog?.dismiss()

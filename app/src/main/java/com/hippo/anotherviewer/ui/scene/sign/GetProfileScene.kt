@@ -224,6 +224,15 @@ class GetProfileScene : SolidScene() {
             }
         }
 
+        @Suppress("deprecation")
+        override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+            val httpUrl = HttpUrl.parse(url) ?: return true
+            val host = httpUrl.host()
+            return !(host == SiteUrl.DOMAIN_E ||
+                host == SiteUrl.DOMAIN_FORUMS ||
+                host.endsWith("." + SiteUrl.DOMAIN_E))
+        }
+
         override fun onPageFinished(view: WebView, url: String) {
             ehContext ?: return
             HttpUrl.parse(url) ?: return
@@ -527,6 +536,15 @@ class GetProfileScene : SolidScene() {
     }
 
     private inner class ProfileWebViewClient : WebViewClient() {
+
+        @Suppress("deprecation")
+        override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+            val httpUrl = HttpUrl.parse(url) ?: return true
+            val host = httpUrl.host()
+            return !(host == SiteUrl.DOMAIN_E ||
+                host == SiteUrl.DOMAIN_FORUMS ||
+                host.endsWith("." + SiteUrl.DOMAIN_E))
+        }
 
         override fun onPageFinished(view: WebView, url: String) {
 //            val context: Context =  ehContext ?: return

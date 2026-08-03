@@ -1417,7 +1417,7 @@ public class Settings {
 
     public static final String KEY_CLOSE_AUTO_UPDATES = "close_auto_updates";
 
-    private static boolean IS_CLOSE_AUTO_UPDATES = false;
+    private static boolean IS_CLOSE_AUTO_UPDATES = true;
 
     public static boolean getCloseAutoUpdate() {
         return getBoolean(KEY_CLOSE_AUTO_UPDATES, IS_CLOSE_AUTO_UPDATES);
