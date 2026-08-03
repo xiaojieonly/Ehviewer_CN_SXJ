@@ -73,6 +73,15 @@ public class ListUrlBuilder implements Cloneable {
     private int mPageFrom = -1;
     private int mPageTo = -1;
 
+    /**
+     * Sort order, contract values 0..3 (contracts/openapi.yaml,
+     * GET /api/v1/gallery/search `sort`): 0/absent = default order,
+     * 1 = posted time desc, 2 = rating desc, 3 = title asc.
+     * Emitted as the site parameter {@code f_order}; 0 keeps the URL
+     * unchanged (default behavior).
+     */
+    private int mOrder = 0;
+
     private String mImagePath;
     private boolean mUseSimilarityScan;
     private boolean mOnlySearchCovers;
@@ -90,6 +99,7 @@ public class ListUrlBuilder implements Cloneable {
         mMinRating = -1;
         mPageFrom = -1;
         mPageTo = -1;
+        mOrder = 0;
         mImagePath = null;
         mUseSimilarityScan = false;
         mOnlySearchCovers = false;
@@ -174,7 +184,18 @@ public class ListUrlBuilder implements Cloneable {
         mPageTo = pageTo;
     }
 
-    
+    /**
+     * Sort order per contract (0 = default, 1 = posted time desc,
+     * 2 = rating desc, 3 = title asc). Out-of-range values fall back to 0.
+     */
+    public int getOrder() {
+        return mOrder;
+    }
+
+    public void setOrder(int order) {
+        mOrder = (order < 0 || order > 3) ? 0 : order;
+    }
+
     public String getImagePath() {
         return mImagePath;
     }
@@ -221,6 +242,7 @@ public class ListUrlBuilder implements Cloneable {
         mMinRating = lub.mMinRating;
         mPageFrom = lub.mPageFrom;
         mPageTo = lub.mPageTo;
+        mOrder = lub.mOrder;
         mImagePath = lub.mImagePath;
         mUseSimilarityScan = lub.mUseSimilarityScan;
         mOnlySearchCovers = lub.mOnlySearchCovers;
@@ -235,6 +257,8 @@ public class ListUrlBuilder implements Cloneable {
         mMinRating = q.minRating;
         mPageFrom = q.pageFrom;
         mPageTo = q.pageTo;
+        // QuickSearch has no order column; fall back to default order.
+        mOrder = 0;
         mImagePath = null;
         mUseSimilarityScan = false;
         mOnlySearchCovers = false;
@@ -249,6 +273,7 @@ public class ListUrlBuilder implements Cloneable {
         mMinRating = -1;
         mPageFrom = -1;
         mPageTo = -1;
+        mOrder = 0;
         mImagePath = null;
         mUseSimilarityScan = false;
         mOnlySearchCovers = false;
@@ -263,6 +288,7 @@ public class ListUrlBuilder implements Cloneable {
         mMinRating = -1;
         mPageFrom = -1;
         mPageTo = -1;
+        mOrder = 0;
         mImagePath = null;
         mUseSimilarityScan = false;
         mOnlySearchCovers = false;
@@ -339,6 +365,7 @@ public class ListUrlBuilder implements Cloneable {
         boolean enablePage = false;
         int pageFrom = -1;
         int pageTo = -1;
+        int order = 0;
         for (String str : querys) {
             int index = str.indexOf('=');
             if (index < 0) {
@@ -487,11 +514,15 @@ public class ListUrlBuilder implements Cloneable {
                 case "f_spt":
                     pageTo = NumberUtils.parseIntSafely(value, -1);
                     break;
+                case "f_order":
+                    order = NumberUtils.parseIntSafely(value, 0);
+                    break;
             }
         }
 
         mCategory = category;
         mKeyword = keyword;
+        mOrder = (order < 0 || order > 3) ? 0 : order;
         if (enableAdvanceSearch) {
             mAdvanceSearch = advanceSearch;
             if (enableMinRating) {
@@ -572,6 +603,10 @@ public class ListUrlBuilder implements Cloneable {
                 if (mPageIndex != 0) {
                     ub.addQuery("page", mPageIndex);
                 }
+                // Sort order (contract `sort` 1..3; 0 = default order, omitted)
+                if (mOrder != 0) {
+                    ub.addQuery("f_order", mOrder);
+                }
                 // Advance search
                 if (mAdvanceSearch != -1) {
                     ub.addQuery("advsearch", "1");
@@ -591,11 +626,16 @@ public class ListUrlBuilder implements Cloneable {
                         ub.addQuery("f_sr", "on");
                         ub.addQuery("f_srdd", mMinRating);
                     }
-                    // Pages
+                    // Pages — the absent bound is not emitted at all
+                    // (contract: "缺的一边不发").
                     if (mPageFrom != -1 || mPageTo != -1) {
                         ub.addQuery("f_sp", "on");
-                        ub.addQuery("f_spf", mPageFrom != -1 ? Integer.toString(mPageFrom) : "");
-                        ub.addQuery("f_spt", mPageTo != -1 ? Integer.toString(mPageTo) : "");
+                        if (mPageFrom != -1) {
+                            ub.addQuery("f_spf", mPageFrom);
+                        }
+                        if (mPageTo != -1) {
+                            ub.addQuery("f_spt", mPageTo);
+                        }
                     }
                 }
                 return ub.build();
