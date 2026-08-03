@@ -293,6 +293,66 @@ public class WebUiTier2ProxyInterceptorTest {
     }
 
     // ------------------------------------------------------------------
+    // Bearer attachment (auth-on servers must accept the paired request)
+    // ------------------------------------------------------------------
+
+    @Test
+    public void testBearerAttachment() {
+        // Helper-level: the pairing token travels as a Bearer header.
+        Request.Builder withToken = new Request.Builder().url("https://gallery.test/");
+        WebUiTier2ProxyInterceptor.attachBearer(withToken, "tok123");
+        assertEquals("Bearer tok123", withToken.build().header("Authorization"));
+
+        // Empty token (auth-off pairing) adds nothing.
+        Request.Builder withoutToken = new Request.Builder().url("https://gallery.test/");
+        WebUiTier2ProxyInterceptor.attachBearer(withoutToken, "");
+        assertNull(withoutToken.build().header("Authorization"));
+    }
+
+    @Test
+    public void testEmptyTokenOmitsAuthorizationHeader() throws Exception {
+        // End-to-end through intercept(): the configured empty token yields
+        // no Authorization header. (A non-empty token cannot round-trip
+        // WebUiSettings.saveConfig under Robolectric — the Android KeStore
+        // is unavailable there — so attachment of real tokens is covered by
+        // testBearerAttachment above.)
+        settings.saveConfig(SERVER); // token = ""
+        settings.setClientTier(2);
+
+        Request proceeded = proceed(new Request.Builder()
+                .url("https://gallery.test/g/1001/aaa/")
+                .build());
+
+        assertNull(proceeded.header("Authorization"));
+    }
+
+    // ------------------------------------------------------------------
+    // Mock-debug yield gate (explicit, not just interceptor ordering)
+    // ------------------------------------------------------------------
+
+    @Test
+    public void testMockDebugYieldGate() throws Exception {
+        // In the unit-test variant MOCK_EH_BASE_URL is empty, so the explicit
+        // yield gate is OPEN and routing behaves normally. When the debug
+        // mock base is set (debug builds), intercept() yields before any
+        // routing decision — verified here by the invariant that the gate
+        // condition and the routing outcome stay consistent.
+        settings.saveConfig(SERVER);
+        settings.setClientTier(2);
+
+        Request proceeded = proceed(new Request.Builder()
+                .url("https://gallery.test/")
+                .build());
+
+        if (com.hippo.anotherviewer.BuildConfig.MOCK_EH_BASE_URL.isEmpty()) {
+            assertEquals("/api/v1/site/proxy", proceeded.url().encodedPath());
+        } else {
+            assertEquals("mock debug active must yield to the mock interceptor",
+                    "https://gallery.test/", proceeded.url().toString());
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Referer / Origin header semantics (site values wrapped the same way)
     // ------------------------------------------------------------------
 

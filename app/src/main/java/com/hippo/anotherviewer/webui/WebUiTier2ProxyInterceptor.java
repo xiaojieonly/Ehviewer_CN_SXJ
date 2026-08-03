@@ -18,6 +18,8 @@ package com.hippo.anotherviewer.webui;
 
 import androidx.annotation.NonNull;
 
+import com.hippo.anotherviewer.BuildConfig;
+
 import java.io.IOException;
 
 import okhttp3.HttpUrl;
@@ -31,8 +33,10 @@ import okhttp3.Response;
  * are routed through the server's transparent site proxy — rewritten to
  * {@code {paired}/api/v1/site/proxy?url=<encoded original URL>}, which the
  * server fetches with its shared site session and passes back verbatim.
- * Referer/Origin headers pointing at site hosts are rewritten the same way,
- * so from the app's point of view every site resource comes from the server.
+ * The paired request carries {@code Authorization: Bearer <pairing token>}
+ * so auth-on servers accept it. Referer/Origin headers pointing at site
+ * hosts are rewritten the same way, so from the app's point of view every
+ * site resource comes from the server.
  *
  * <p>Everything else passes through untouched: Tier-0/1 traffic (Tier-1
  * behavior is unchanged by contract), non-site hosts — including the paired
@@ -59,6 +63,15 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
         return settings.clientTier() >= 2 && settings.isConfigured();
     }
 
+    /**
+     * W3 R4-13 explicit yield gate: while MOCK_EH_BASE_URL debug mode is on,
+     * the mock interceptor owns the site rewrite and Tier-2 routing yields
+     * deterministically here — not merely by interceptor ordering.
+     */
+    private static boolean isMockDebugActive() {
+        return !BuildConfig.MOCK_EH_BASE_URL.isEmpty();
+    }
+
     /** Same host predicate as the mock-site interceptor in SiteApplication. */
     private static boolean isGallerySiteHost(@NonNull String host) {
         return host.equals("gallery.test") || host.endsWith(".gallery.test");
@@ -67,7 +80,9 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
     @Override
     public Response intercept(@NonNull Chain chain) throws IOException {
         Request request = chain.request();
-        if (!isGallerySiteHost(request.url().host()) || settings.clientTier() < 2) {
+        if (isMockDebugActive()
+                || !isGallerySiteHost(request.url().host())
+                || settings.clientTier() < 2) {
             return chain.proceed(request);
         }
         WebUiConfig config = settings.loadConfig();
@@ -81,6 +96,7 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
 
         HttpUrl proxied = proxyUrl(base, request.url());
         Request.Builder builder = request.newBuilder().url(proxied);
+        attachBearer(builder, config.getToken());
         String referer = request.header("Referer");
         HttpUrl refererUrl = referer != null ? HttpUrl.parse(referer) : null;
         if (refererUrl != null && isGallerySiteHost(refererUrl.host())) {
@@ -104,5 +120,15 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
                 .addPathSegments("api/v1/site/proxy")
                 .addQueryParameter("url", siteUrl.toString())
                 .build();
+    }
+
+    /**
+     * Visible for testing: attaches the pairing token as a Bearer header so
+     * auth-on servers accept the proxied request; empty token adds nothing.
+     */
+    static void attachBearer(@NonNull Request.Builder builder, @NonNull String token) {
+        if (!token.isEmpty()) {
+            builder.header("Authorization", "Bearer " + token);
+        }
     }
 }
