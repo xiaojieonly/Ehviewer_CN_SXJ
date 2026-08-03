@@ -150,4 +150,83 @@ describe('SearchBar', () => {
     expect(wrapper.find('.search-bar').exists()).toBe(true)
     expect(wrapper.find('.search-bar__card').exists()).toBe(true)
   })
+
+  describe('Wave-1 1a additives — filter button (task A5)', () => {
+    it('hides the filter button in normal state and when filterVisible is false', () => {
+      const normal = mount(SearchBar, { props: { state: 'normal', filterVisible: true } })
+      expect(normal.find('.search-bar__filter').exists()).toBe(false)
+
+      const hidden = mount(SearchBar, { props: { state: 'search', filterVisible: false } })
+      expect(hidden.find('.search-bar__filter').exists()).toBe(false)
+    })
+
+    it('shows the filter button in search states when filterVisible', async () => {
+      const wrapper = mount(SearchBar, { props: { state: 'search', filterVisible: true } })
+      const button = wrapper.find('.search-bar__filter')
+      expect(button.exists()).toBe(true)
+      await button.trigger('click')
+      expect(wrapper.emitted('click-filter')).toHaveLength(1)
+    })
+
+    it('mirrors filterPanelOpen via aria-pressed and marks filterActive with a dot', () => {
+      const closed = mount(SearchBar, {
+        props: { state: 'search', filterVisible: true, filterPanelOpen: false, filterActive: true },
+      })
+      expect(closed.find('.search-bar__filter').attributes('aria-pressed')).toBe('false')
+      expect(closed.find('.search-bar__filter-dot').exists()).toBe(true)
+
+      const open = mount(SearchBar, {
+        props: { state: 'search', filterVisible: true, filterPanelOpen: true, filterActive: false },
+      })
+      expect(open.find('.search-bar__filter').attributes('aria-pressed')).toBe('true')
+      expect(open.find('.search-bar__filter-dot').exists()).toBe(false)
+    })
+  })
+
+  describe('Wave-1 1a additives — active filter chip row (task A5)', () => {
+    const CHIPS = [
+      { id: 'sort', label: 'Sort: Rating — highest first' },
+      { id: 'category:4', label: 'Excl. Manga' },
+      { id: 'minRating', label: 'Rating ≥ 4★' },
+    ]
+
+    it('renders no chip row without chips, one chip per entry otherwise', () => {
+      const empty = mount(SearchBar, { props: { state: 'normal' } })
+      expect(empty.find('.search-bar__chips').exists()).toBe(false)
+
+      const wrapper = mount(SearchBar, { props: { state: 'normal', filterChips: CHIPS } })
+      expect(wrapper.findAll('.search-bar__chip')).toHaveLength(3)
+      expect(wrapper.findAll('.search-bar__chip-label').map((c) => c.text())).toEqual([
+        'Sort: Rating — highest first',
+        'Excl. Manga',
+        'Rating ≥ 4★',
+      ])
+    })
+
+    it('chip × emits remove-filter-chip with that chip id only', async () => {
+      const wrapper = mount(SearchBar, { props: { state: 'search', filterChips: CHIPS } })
+      const removes = wrapper.findAll('.search-bar__chip-remove')
+      await removes[1].trigger('click')
+      expect(wrapper.emitted('remove-filter-chip')).toHaveLength(1)
+      expect(wrapper.emitted('remove-filter-chip')?.[0]).toEqual(['category:4'])
+    })
+
+    it('Clear emits clear-filter-chips', async () => {
+      const wrapper = mount(SearchBar, { props: { state: 'search', filterChips: CHIPS } })
+      await wrapper.find('.search-bar__chips-clear').trigger('click')
+      expect(wrapper.emitted('clear-filter-chips')).toHaveLength(1)
+    })
+  })
+
+  describe('Wave-1 1a additives — focusInput (task A5)', () => {
+    it('exposes focusInput() which focuses the edit text in search state', async () => {
+      // focus() only works on attached elements — mount into the document.
+      const wrapper = mount(SearchBar, { props: { state: 'search' }, attachTo: document.body })
+      const input = wrapper.find('input')
+      expect(document.activeElement).not.toBe(input.element)
+      ;(wrapper.vm as unknown as { focusInput(): void }).focusInput()
+      expect(document.activeElement).toBe(input.element)
+      wrapper.unmount()
+    })
+  })
 })

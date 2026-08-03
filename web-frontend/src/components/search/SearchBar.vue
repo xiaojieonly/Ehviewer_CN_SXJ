@@ -17,6 +17,17 @@
 
   F6 additive (per search-component task spec): a clear (✕) button inside the
   edit row when the query is non-empty.
+
+  Wave-1 1a additives (task A5, PC search filters — the frozen contract in
+  `@/types/components.ts` is untouched, extras are declared inline below):
+  - a filter toggle button in the edit row (`filterVisible`, emits
+    `click-filter`; pressed state mirrors `filterPanelOpen`, an accent dot
+    marks `filterActive`);
+  - an active-filter chip row under the card body (`filterChips`) — each
+    chip removes itself via `remove-filter-chip`, the "Clear" action emits
+    `clear-filter-chips`;
+  - `focusInput()` exposed so the scene's `/` shortcut can re-focus the
+    edit text even when the state machine did not transition.
 -->
 <template>
   <div class="search-bar" :class="`search-bar--${state}`">
@@ -70,6 +81,23 @@
           </button>
         </div>
 
+        <!-- Filter toggle (Wave-1 1a additive) — search states only. -->
+        <button
+          v-if="filterVisible && state !== 'normal'"
+          type="button"
+          class="search-bar__icon search-bar__filter"
+          :class="{ 'is-active': filterPanelOpen }"
+          :aria-pressed="filterPanelOpen"
+          aria-label="Toggle search filters"
+          title="Toggle search filters (f)"
+          @click="emit('click-filter')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 5h18v2.2l-7 6.3V19l-4 2v-7.5L3 7.2z" />
+          </svg>
+          <span v-if="filterActive" class="search-bar__filter-dot" aria-hidden="true" />
+        </button>
+
         <!-- Right (action) icon. -->
         <button
           v-if="rightIcon"
@@ -108,6 +136,24 @@
           </li>
         </ul>
       </div>
+
+      <!-- Active filter chips (Wave-1 1a additive) — per-chip × + clear. -->
+      <div v-if="chips.length > 0" class="search-bar__chips">
+        <span v-for="chip in chips" :key="chip.id" class="search-bar__chip">
+          <span class="search-bar__chip-label">{{ chip.label }}</span>
+          <button
+            type="button"
+            class="search-bar__chip-remove"
+            :aria-label="`Remove filter: ${chip.label}`"
+            @click="emit('remove-filter-chip', chip.id)"
+          >
+            <AppIcon name="close-dark" size="12px" />
+          </button>
+        </span>
+        <button type="button" class="search-bar__chips-clear" @click="emit('clear-filter-chips')">
+          Clear
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -116,21 +162,55 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { SearchBarEmits, SearchBarProps } from '@/types/components'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import type { FilterChip } from './searchFilters'
 
-const props = withDefaults(defineProps<SearchBarProps>(), {
-  state: 'normal',
-  title: '',
-  query: '',
-  hint: 'Search',
-  leftIcon: 'reorder',
-  rightIcon: 'magnify-dark',
-  allowEmptySearch: true,
-  suggestions: () => [],
-})
+/**
+ * Contract props plus the Wave-1 1a additives — see the component header
+ * comment. The frozen `SearchBarProps` contract stays untouched.
+ */
+const props = withDefaults(
+  defineProps<
+    SearchBarProps & {
+      /** Show the filter toggle button while in a search state. @default false */
+      filterVisible?: boolean
+      /** Pressed state of the filter button (panel currently open). @default false */
+      filterPanelOpen?: boolean
+      /** Show the accent dot — at least one filter is active. @default false */
+      filterActive?: boolean
+      /** Active filters rendered as the chip row under the card. @default [] */
+      filterChips?: FilterChip[]
+    }
+  >(),
+  {
+    state: 'normal',
+    title: '',
+    query: '',
+    hint: 'Search',
+    leftIcon: 'reorder',
+    rightIcon: 'magnify-dark',
+    allowEmptySearch: true,
+    suggestions: () => [],
+    filterVisible: false,
+    filterPanelOpen: false,
+    filterActive: false,
+    filterChips: () => [],
+  },
+)
 
-const emit = defineEmits<SearchBarEmits>()
+const emit = defineEmits<
+  SearchBarEmits & {
+    /** Filter toggle button tapped (Wave-1 1a additive). */
+    (e: 'click-filter'): void
+    /** Chip × tapped — remove that one filter (Wave-1 1a additive). */
+    (e: 'remove-filter-chip', chipId: string): void
+    /** Chip-row "Clear" tapped — reset every filter (Wave-1 1a additive). */
+    (e: 'clear-filter-chips'): void
+  }
+>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
+
+const chips = computed<FilterChip[]>(() => props.filterChips ?? [])
 
 const listOpen = computed<boolean>(
   () => props.state === 'search-list' && props.suggestions.length > 0,
@@ -176,6 +256,13 @@ watch(
     })
   },
 )
+
+/** Wave-1 1a additive — the scene's `/` shortcut re-focuses the edit text. */
+function focusInput(): void {
+  inputRef.value?.focus()
+}
+
+defineExpose({ focusInput })
 </script>
 
 <style scoped>
@@ -361,5 +448,99 @@ watch(
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* --- Wave-1 1a additives (task A5): filter button + active chip row ------ */
+
+.search-bar__filter {
+  position: relative;
+}
+
+.search-bar__filter svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.search-bar__filter.is-active {
+  background: var(--color-surface-activated);
+  color: var(--text-color-theme-primary);
+}
+
+.search-bar__filter-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+
+.search-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.search-bar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--text-color-primary);
+  font-size: var(--text-small);
+}
+
+.search-bar__chip-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-bar__chip-remove {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--drawable-color-secondary);
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease-decelerate-quart),
+    color 120ms var(--ease-decelerate-quart);
+}
+
+.search-bar__chip-remove:hover {
+  background: var(--color-surface-activated);
+  color: var(--drawable-color-primary);
+}
+
+.search-bar__chips-clear {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color-theme-primary);
+  font-size: var(--text-small);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-decelerate-quart);
+}
+
+.search-bar__chips-clear:hover {
+  background: var(--color-surface);
 }
 </style>

@@ -1,0 +1,508 @@
+<!--
+  FilterPanel.vue — Wave-1 1a (task A5): the PC-oriented search filter
+  surface for `GET /gallery/search`'s extended params (contracts/openapi.yaml
+  searchGallery). Renders as an anchored popover card below the SearchBar
+  (parent provides a `position: relative` anchor), toggled by the SearchBar
+  filter button and the `f` shortcut.
+
+  Sections:
+    Category   — 10 toggle chips over the SiteConfig exclusion bitmask
+                 (chip lit = category INCLUDED; toggling flips its bit);
+    Sort       — 0 default / 1 posted desc / 2 rating desc / 3 title asc;
+    Pages      — pageMin / pageMax numeric bounds;
+    Min rating — 0 = disabled, 2–5;
+    Scope      — searchName / searchTags / searchDesc / searchTorrents.
+
+  The component is fully controlled (`v-model:filters` / `v-model:open`);
+  the scene owns the canonical state and derives query params from it.
+  `sort` has no QuickSearchDto representation — the save action therefore
+  persists every field except sort (see searchFilters.ts).
+-->
+<template>
+  <Transition name="filter-panel">
+    <section
+      v-if="open"
+      ref="panelRef"
+      class="filter-panel"
+      role="dialog"
+      aria-label="Search filters"
+      @keydown.esc="emit('update:open', false)"
+    >
+      <header class="filter-panel__header">
+        <span class="filter-panel__heading">Filters</span>
+        <button
+          type="button"
+          class="filter-panel__close"
+          aria-label="Close filters"
+          @click="emit('update:open', false)"
+        >
+          <AppIcon name="close-dark" size="18px" />
+        </button>
+      </header>
+
+      <div class="filter-panel__body">
+        <!-- Category chips — bitmask with SiteConfig exclusion semantics. -->
+        <div class="filter-panel__section">
+          <span class="filter-panel__label">Categories</span>
+          <div class="filter-panel__chips" role="group" aria-label="Included categories">
+            <button
+              v-for="category in CATEGORY_ORDER"
+              :key="category"
+              type="button"
+              class="filter-panel__chip"
+              :class="{ 'is-included': isIncluded(category) }"
+              :style="chipStyle(category)"
+              :aria-pressed="isIncluded(category)"
+              @click="toggleCategory(category)"
+            >
+              {{ CATEGORY_LABELS[category] }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Sort order. -->
+        <div class="filter-panel__row">
+          <span class="filter-panel__label">Sort by</span>
+          <AppSelect
+            class="filter-panel__select"
+            :model-value="filters.sort ?? 0"
+            :options="sortOptions"
+            aria-label="Sort order"
+            @update:model-value="setSort"
+          />
+        </div>
+
+        <!-- Page-count bounds. -->
+        <div class="filter-panel__row">
+          <span class="filter-panel__label">Pages</span>
+          <div class="filter-panel__pages">
+            <input
+              type="number"
+              class="filter-panel__page-input"
+              min="0"
+              inputmode="numeric"
+              placeholder="Min"
+              aria-label="Minimum page count"
+              :value="filters.pageMin ?? ''"
+              @input="setPageBound('pageMin', $event)"
+            />
+            <span class="filter-panel__page-sep">to</span>
+            <input
+              type="number"
+              class="filter-panel__page-input"
+              min="0"
+              inputmode="numeric"
+              placeholder="Max"
+              aria-label="Maximum page count"
+              :value="filters.pageMax ?? ''"
+              @input="setPageBound('pageMax', $event)"
+            />
+          </div>
+        </div>
+
+        <!-- Minimum rating (0 = disabled). -->
+        <div class="filter-panel__row">
+          <span class="filter-panel__label">Minimum rating</span>
+          <AppSelect
+            class="filter-panel__select"
+            :model-value="filters.minRating ?? 0"
+            :options="ratingOptions"
+            aria-label="Minimum rating"
+            @update:model-value="setMinRating"
+          />
+        </div>
+
+        <!-- Search scope switches. -->
+        <div class="filter-panel__section">
+          <span class="filter-panel__label">Search scope</span>
+          <div
+            v-for="scope in SCOPE_ITEMS"
+            :key="scope.key"
+            class="filter-panel__switch-row"
+          >
+            <span class="filter-panel__switch-label">{{ scope.label }}</span>
+            <AppSwitch
+              :model-value="filters[scope.key] ?? false"
+              :aria-label="`Search ${scope.label}`"
+              @update:model-value="setScope(scope.key, $event)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <footer class="filter-panel__footer">
+        <button type="button" class="filter-panel__btn-text" @click="reset">
+          Reset
+        </button>
+        <button type="button" class="filter-panel__btn-text" @click="emit('save-quick-search')">
+          Save as quick search
+        </button>
+        <button type="button" class="filter-panel__btn-primary" @click="emit('search')">
+          Search
+        </button>
+      </footer>
+    </section>
+  </Transition>
+</template>
+
+<script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import type { SearchFilters, SearchSortOrder } from '@/api/gallery'
+import type { GalleryCategory } from '@/types/components'
+import {
+  CATEGORY_BIT_VALUES,
+  CATEGORY_COLOR_MAP,
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+} from '@/types/components'
+import { isClickOutside } from '@/composables/useDropdownPosition'
+import AppIcon from '@/components/atoms/AppIcon.vue'
+import AppSelect from '@/components/form/AppSelect.vue'
+import AppSwitch from '@/components/form/AppSwitch.vue'
+import { MIN_RATING_OPTIONS, SCOPE_ITEMS, SORT_OPTIONS } from './searchFilters'
+
+const props = defineProps<{
+  /** Current filter state. v-model:filters. */
+  filters: SearchFilters
+  /** Panel visibility. v-model:open. @default false */
+  open?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:filters', filters: SearchFilters): void
+  (e: 'update:open', open: boolean): void
+  /** Primary Search action — scene re-runs the query with current state. */
+  (e: 'search'): void
+  /** Scene should open its save-preset dialog (QuickSearchDto schema). */
+  (e: 'save-quick-search'): void
+}>()
+
+const panelRef = ref<HTMLElement | null>(null)
+
+const sortOptions = SORT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
+const ratingOptions = MIN_RATING_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
+
+const mask = computed<number>(() => props.filters.category ?? 0)
+
+function isIncluded(category: GalleryCategory): boolean {
+  return (mask.value & CATEGORY_BIT_VALUES[category]) === 0
+}
+
+/** Included chips carry their category color; excluded chips read dimmed. */
+function chipStyle(category: GalleryCategory): Record<string, string> {
+  const color = CATEGORY_COLOR_MAP[category]
+  return isIncluded(category)
+    ? { background: color, borderColor: color, color: '#ffffff' }
+    : {}
+}
+
+function toggleCategory(category: GalleryCategory): void {
+  const bit = CATEGORY_BIT_VALUES[category]
+  const nextMask = mask.value ^ bit
+  emit('update:filters', { ...props.filters, category: nextMask === 0 ? undefined : nextMask })
+}
+
+function setSort(value: string | number): void {
+  const sort = (Number(value) || 0) as SearchSortOrder
+  emit('update:filters', { ...props.filters, sort: sort === 0 ? undefined : sort })
+}
+
+function setMinRating(value: string | number): void {
+  const rating = Number(value) || 0
+  emit('update:filters', { ...props.filters, minRating: rating > 0 ? rating : undefined })
+}
+
+function setPageBound(field: 'pageMin' | 'pageMax', event: Event): void {
+  const parsed = parseInt((event.target as HTMLInputElement).value, 10)
+  const next: SearchFilters = { ...props.filters }
+  next[field] = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+  emit('update:filters', next)
+}
+
+function setScope(key: (typeof SCOPE_ITEMS)[number]['key'], value: boolean): void {
+  emit('update:filters', { ...props.filters, [key]: value || undefined })
+}
+
+function reset(): void {
+  emit('update:filters', {})
+}
+
+/* Click outside the anchored popover closes it (PC affordance). */
+function onDocumentMousedown(event: MouseEvent): void {
+  if (props.open && isClickOutside(panelRef.value, event.target)) {
+    emit('update:open', false)
+  }
+}
+
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      // Defer so the opening click itself is not treated as "outside".
+      requestAnimationFrame(() => document.addEventListener('mousedown', onDocumentMousedown))
+    } else {
+      document.removeEventListener('mousedown', onDocumentMousedown)
+    }
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocumentMousedown)
+})
+</script>
+
+<style scoped>
+.filter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 120;
+  width: min(400px, calc(100vw - 2 * var(--gallery-search-bar-margin-h)));
+  max-height: min(72dvh, 640px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--card-radius);
+  background: var(--color-background-floating);
+  box-shadow:
+    0 calc(var(--card-elevation) * 3) 12px var(--shadow-color),
+    0 0 1px var(--shadow-color);
+  overflow: hidden;
+}
+
+.filter-panel__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px 16px;
+}
+
+.filter-panel__heading {
+  font-size: var(--text-super-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
+}
+
+.filter-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--drawable-color-secondary);
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-decelerate-quart);
+}
+
+.filter-panel__close:hover {
+  background: var(--color-surface);
+}
+
+.filter-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 16px 8px;
+}
+
+.filter-panel__section {
+  margin-top: 10px;
+}
+
+.filter-panel__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.filter-panel__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--text-super-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
+}
+
+.filter-panel__row .filter-panel__label {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* --- Category chips ------------------------------------------------------- */
+
+.filter-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-panel__chip {
+  padding: 5px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color-secondary);
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease-decelerate-quart),
+    border-color 150ms var(--ease-decelerate-quart),
+    color 150ms var(--ease-decelerate-quart),
+    opacity 150ms var(--ease-decelerate-quart);
+}
+
+.filter-panel__chip:hover {
+  opacity: 0.9;
+}
+
+.filter-panel__chip.is-included {
+  font-weight: 700;
+  box-shadow: 0 1px 2px var(--shadow-color);
+}
+
+/* --- Sort / rating selects + page inputs ---------------------------------- */
+
+.filter-panel__select {
+  flex: 1 1 auto;
+  max-width: 240px;
+}
+
+.filter-panel__pages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-panel__page-input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius);
+  background: transparent;
+  color: var(--text-color-primary);
+  font-size: var(--text-small);
+  outline: none;
+  transition: border-color 150ms var(--ease-decelerate-quart);
+}
+
+.filter-panel__page-input:focus {
+  border-color: var(--color-primary);
+}
+
+.filter-panel__page-sep {
+  font-size: var(--text-small);
+  color: var(--text-color-secondary);
+}
+
+/* --- Scope switches -------------------------------------------------------- */
+
+.filter-panel__switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.filter-panel__switch-row + .filter-panel__switch-row {
+  border-top: 1px solid var(--color-divider);
+}
+
+.filter-panel__switch-label {
+  font-size: var(--text-small);
+  color: var(--text-color-primary);
+}
+
+/* Compact switch sizing via the atom's CSS variables (40×24 track, 16px
+   thumb keeps the 20px on-state travel inside the track). */
+.filter-panel__switch-row :deep(.app-switch) {
+  --switch-width: 40px;
+  --switch-height: 24px;
+  --switch-thumb-size: 16px;
+}
+
+/* --- Footer ---------------------------------------------------------------- */
+
+.filter-panel__footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.filter-panel__btn-text {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: transparent;
+  color: var(--text-color-theme-primary);
+  font-size: var(--text-small);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-decelerate-quart);
+}
+
+.filter-panel__btn-text:hover {
+  background: var(--color-surface);
+}
+
+.filter-panel__btn-primary {
+  margin-left: auto;
+  padding: 8px 24px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: var(--content-color-theme-primary);
+  color: #ffffff;
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 1px 3px var(--shadow-color);
+  transition:
+    filter 150ms var(--ease-decelerate-quart),
+    transform 120ms var(--ease-decelerate-quart);
+}
+
+.filter-panel__btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.filter-panel__btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* --- Enter/leave ------------------------------------------------------------ */
+
+.filter-panel-enter-active,
+.filter-panel-leave-active {
+  transition:
+    opacity 200ms var(--ease-decelerate-quart),
+    transform 200ms var(--ease-decelerate-quart);
+  transform-origin: top right;
+}
+
+.filter-panel-enter-from,
+.filter-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-panel-enter-active,
+  .filter-panel-leave-active {
+    transition: none;
+  }
+}
+</style>
