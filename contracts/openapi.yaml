@@ -48,6 +48,8 @@ tags:
     description: Gallery torrent download
   - name: SMB
     description: SMB network backup and sync
+  - name: Backup
+    description: Local backup export/restore (zip of slices + manifest.json)
   - name: Health
     description: Health check and metrics
 
@@ -260,6 +262,67 @@ paths:
           schema:
             type: integer
           description: Category bitmask filter
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3]
+            default: 0
+          description: >-
+            Sort order (v1.1+): 0/absent = default order, 1 = posted time desc,
+            2 = rating desc, 3 = title asc. Passed through to the site URL as
+            f_order; mock-server implements this table as the test oracle.
+        - name: pageMin
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+          description: Minimum page count (site params f_sp=on&f_spf=N); absent = no bound
+        - name: pageMax
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+          description: Maximum page count (site params f_sp=on&f_spt=N); absent = no bound
+        - name: minRating
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5
+          description: Minimum rating threshold (site params f_sr=on&f_srdd=N); 0/absent = disabled
+        - name: searchName
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced search scope (advsearch=1&f_sname=on): match gallery name"
+        - name: searchTags
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced search scope (advsearch=1&f_stags=on): match tags"
+        - name: searchDesc
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced search scope (advsearch=1&f_sdesc=on): match description"
+        - name: searchTorrents
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced search scope (advsearch=1&f_storr=on): match torrent filenames"
         - name: page
           in: query
           required: false
@@ -1304,6 +1367,106 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/sync/policy:
+    get:
+      tags: [Sync]
+      operationId: getSyncPolicy
+      summary: Get the current sync policy (ADR-0003, sync-conflict-rules v2 §8)
+      responses:
+        '200':
+          description: Current policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPolicy'
+        '401':
+          description: Invalid or missing API token
+    put:
+      tags: [Sync]
+      operationId: updateSyncPolicy
+      summary: Update the sync policy (WebUI may change; the next android push carrying policy overrides it, D2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPolicy'
+      responses:
+        '200':
+          description: Persisted policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPolicy'
+        '400':
+          description: Validation error (unknown strategy / out-of-range tier or interval)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or missing API token
+
+  # ============================================================
+  # Backup (local zip export/restore, R4-5)
+  # ============================================================
+  /api/v1/backup/export:
+    get:
+      tags: [Backup]
+      operationId: exportBackup
+      summary: Export a backup zip (slices + manifest.json), also persisted under <dataDir>/backups/
+      parameters:
+        - name: includeDownloads
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include the downloads slice in the backup
+      responses:
+        '200':
+          description: Backup zip stream (anotherviewer-backup-<yyyyMMdd-HHmmss>.zip)
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Invalid or missing API token
+
+  /api/v1/backup/restore:
+    post:
+      tags: [Backup]
+      operationId: restoreBackup
+      summary: Upload a backup zip and restore (per-slice SHA-256 verified); a server restart is required for the restored data to take effect (R4-2)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Backup zip produced by /backup/export
+      responses:
+        '200':
+          description: Restore succeeded (restart to take effect)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupRestoreResponse'
+        '400':
+          description: Restore failed (empty file / missing manifest.json / bad slice checksum / path traversal)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or missing API token
 
   # ============================================================
   # Archive
@@ -2447,6 +2610,10 @@ components:
           type: integer
           format: int64
           description: Client's current timestamp (ms epoch) for conflict resolution
+        policy:
+          allOf:
+            - $ref: '#/components/schemas/SyncPolicy'
+          description: Optional (v2). Authoritative when the pushing device is android-platform (ADR-0003 D2); web-originated pushes must not carry it.
 
     SyncPushResponse:
       type: object
@@ -2472,6 +2639,45 @@ components:
           type: integer
           format: int64
           description: Current server timestamp (use as 'since' for the next pull)
+        policy:
+          allOf:
+            - $ref: '#/components/schemas/SyncPolicy'
+          description: Optional (v2). Current server sync policy; absent on legacy servers → client falls back to lww without error.
+
+    SyncPolicy:
+      type: object
+      required: [conflictStrategy, clientTier, autoSyncIntervalSec]
+      properties:
+        conflictStrategy:
+          type: string
+          enum: [device_priority, lww, web_priority]
+          default: device_priority
+          description: >-
+            Conflict arbitration strategy (sync-conflict-rules v2 §1.4):
+            device_priority = android wins cross-platform same-key conflicts;
+            lww = v1 last-write-wins + skew tie-break (full fallback);
+            web_priority = web wins.
+        clientTier:
+          type: integer
+          enum: [0, 1, 2, 3]
+          default: 1
+          description: "Client behavior tier (D3): 0 independent, 1 sync+streaming, 2 browsing proxied via server, 3 download hosting (deferred)"
+        autoSyncIntervalSec:
+          type: integer
+          minimum: 0
+          default: 900
+          description: Network-aware auto-sync interval (D4); 0 = trigger on network change only
+
+    BackupRestoreResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+          description: Human-readable result note (e.g. 还原成功，重启后生效)
 
     SyncEntityCollection:
       type: object

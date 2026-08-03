@@ -360,6 +360,34 @@
       },
       "required": ["label", "time", "lastModified", "deviceId"]
     },
+    "syncPolicy": {
+      "$id": "https://anotherviewer.local/schemas/sync/policy.json",
+      "title": "SyncPolicy",
+      "description": "Server-held sync policy (ADR-0003, sync-conflict-rules v2 §8). conflictStrategy arbitrates same-key conflicts; clientTier declares the pushing device's behavior tier; autoSyncIntervalSec drives network-aware auto-sync. A push carrying this field from an android-platform device is authoritative and overrides server-stored policy (D2).",
+      "type": "object",
+      "properties": {
+        "conflictStrategy": {
+          "type": "string",
+          "enum": ["device_priority", "lww", "web_priority"],
+          "default": "device_priority",
+          "description": "device_priority (A): android wins cross-platform same-key conflicts unconditionally; lww (B): v1 last-write-wins + skew tie-break (full fallback); web_priority (C): web wins."
+        },
+        "clientTier": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3],
+          "default": 1,
+          "description": "Client behavior tier (D3): 0=independent, 1=sync+streaming (default), 2=browsing proxied via server, 3=download hosting (deferred)."
+        },
+        "autoSyncIntervalSec": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 900,
+          "description": "Network-aware auto-sync interval in seconds (D4); 0 = trigger on network change only."
+        }
+      },
+      "required": ["conflictStrategy", "clientTier", "autoSyncIntervalSec"],
+      "additionalProperties": false
+    },
     "syncEntityCollection": {
       "$id": "https://anotherviewer.local/schemas/sync/entity-collection.json",
       "title": "SyncEntityCollection",
@@ -447,6 +475,10 @@
           "type": "integer",
           "description": "Epoch milliseconds when this push was initiated by the client",
           "minimum": 0
+        },
+        "policy": {
+          "$ref": "#/$defs/syncPolicy",
+          "description": "Optional (v2). When the pushing device is android-platform this field is authoritative: the server persists it as if via PUT /api/v1/sync/policy (ADR-0003 D2). Web-originated pushes MUST NOT carry it."
         }
       },
       "required": ["entities", "deviceId", "timestamp"],
@@ -466,6 +498,10 @@
           "type": "integer",
           "description": "Epoch milliseconds of the server's current time. Client uses this as the 'since' value for the next pull.",
           "minimum": 0
+        },
+        "policy": {
+          "$ref": "#/$defs/syncPolicy",
+          "description": "Optional (v2). Current server sync policy; clients merge pulled entities under policy.conflictStrategy. Absent on legacy servers → client falls back to 'lww' without error."
         }
       },
       "required": ["entities", "serverTimestamp"],
