@@ -947,11 +947,15 @@ onBeforeUnmount(() => {
 }
 
 .detail-header__hero {
-  animation: rise var(--duration-scene-translate) var(--ease-decelerate-quint) both;
+  opacity: 1;
+  animation: rise var(--duration-scene-translate) var(--ease-decelerate-quint);
 }
 
 .gallery-detail__body > section {
-  animation: rise var(--duration-scene-translate) var(--ease-decelerate-quint) both;
+  /* `backwards` (not `both`): natural state opacity 1, never stuck invisible
+     when WebKit fails to run the staggered entrance (T-1 regression). */
+  opacity: 1;
+  animation: rise var(--duration-scene-translate) var(--ease-decelerate-quint) backwards;
 }
 
 .gallery-detail__body > section:nth-child(1) {

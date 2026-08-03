@@ -33,6 +33,7 @@
     <NavigationDrawer
       v-model:open="drawerOpen"
       :items="DEFAULT_NAV_ITEMS"
+      :active-item-id="'homepage'"
       :username="authStore.username ?? undefined"
       :theme="themeStore.currentTheme"
       @select="onNavSelect"

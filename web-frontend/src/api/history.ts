@@ -6,7 +6,7 @@ export interface HistoryItem {
   title: string
   titleJpn: string
   thumb: string
-  category: string
+  category: number
   rating: number
   mode: number
   time: number

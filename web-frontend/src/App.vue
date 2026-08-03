@@ -50,8 +50,13 @@ const drawerOpen = ref(false)
 /** Use the canonical 8-item list from NavigationDrawer (single source of truth). */
 const navItems = DEFAULT_NAV_ITEMS
 
-/** Routes that should hide the hamburger (login has its own layout, reader is fullscreen). */
-const CHROME_HIDDEN_ROUTES = new Set(['Login', 'Reader'])
+/**
+ * Routes that should hide the app chrome (login has its own layout, reader
+ * is fullscreen, and the search / SMB backup scenes render their OWN
+ * NavigationDrawer + hamburger — showing the shell drawer alongside would
+ * produce the duplicated "double sidebar" quirk).
+ */
+const CHROME_HIDDEN_ROUTES = new Set(['Login', 'Reader', 'Search', 'SmbBackup'])
 
 const showChrome = computed(() => !CHROME_HIDDEN_ROUTES.has(route.name as string))
 const showHamburger = computed(() => showChrome.value)

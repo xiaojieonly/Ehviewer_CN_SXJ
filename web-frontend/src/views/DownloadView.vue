@@ -507,13 +507,20 @@ onUnmounted(() => {
 }
 
 .download-list__item {
-  animation: item-in 240ms var(--ease-decelerate-quart) both;
+  /* `backwards` (not `both`): natural state opacity 1, never stuck invisible
+     when WebKit fails to run the staggered entrance (T-1 regression). */
+  opacity: 1;
+  animation: item-in 240ms var(--ease-decelerate-quart) backwards;
 }
 
 @keyframes item-in {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -527,7 +534,8 @@ onUnmounted(() => {
   justify-content: center;
   padding: var(--keyline-margin);
   background: var(--black-overlay);
-  animation: scrim-in 160ms linear both;
+  opacity: 1;
+  animation: scrim-in 160ms linear;
 }
 
 @keyframes scrim-in {
@@ -543,7 +551,8 @@ onUnmounted(() => {
   background: var(--color-background-floating);
   border-radius: var(--card-radius);
   box-shadow: 0 6px 24px var(--shadow-color);
-  animation: dialog-in 200ms var(--ease-decelerate-quart) both;
+  opacity: 1;
+  animation: dialog-in 200ms var(--ease-decelerate-quart);
 }
 
 @keyframes dialog-in {
@@ -638,7 +647,8 @@ onUnmounted(() => {
   border-radius: var(--card-radius);
   font-size: var(--text-small);
   box-shadow: 0 3px 10px var(--shadow-color);
-  animation: toast-in 220ms var(--ease-decelerate-quint) both;
+  opacity: 1;
+  animation: toast-in 220ms var(--ease-decelerate-quint);
 }
 
 @keyframes toast-in {

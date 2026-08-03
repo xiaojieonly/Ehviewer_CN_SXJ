@@ -128,10 +128,12 @@ for (const key of CATEGORY_ORDER) {
 }
 
 /**
- * Normalizes a backend category string to its `SiteConfig` bit value.
- * Accepts stringified bits ("2"), labels ("Artist CG") and keys ("artist_cg").
+ * Normalizes a backend category value to its `SiteConfig` bit value.
+ * Accepts integer bits (2), stringified bits ("2"), labels ("Artist CG") and
+ * keys ("artist_cg").
  */
-function categoryBit(raw: string): number {
+function categoryBit(raw: number | string): number {
+  if (typeof raw === 'number') return raw
   const trimmed = raw.trim()
   if (trimmed !== '' && !Number.isNaN(Number(trimmed))) return Number(trimmed)
   return NAME_TO_BIT.get(trimmed.toLowerCase()) ?? CATEGORY_UNKNOWN_BIT
@@ -319,13 +321,20 @@ onMounted(() => {
 
 .gallery-list__row {
   position: relative;
-  animation: item-in 240ms var(--ease-decelerate-quart) both;
+  /* `backwards` (not `both`): natural state opacity 1, never stuck invisible
+     when WebKit fails to run the staggered entrance (T-1 regression). */
+  opacity: 1;
+  animation: item-in 240ms var(--ease-decelerate-quart) backwards;
 }
 
 @keyframes item-in {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -354,7 +363,8 @@ onMounted(() => {
   justify-content: center;
   padding: var(--keyline-margin);
   background: var(--black-overlay);
-  animation: scrim-in 160ms linear both;
+  opacity: 1;
+  animation: scrim-in 160ms linear;
 }
 
 @keyframes scrim-in {
@@ -370,7 +380,8 @@ onMounted(() => {
   background: var(--color-background-floating);
   border-radius: var(--card-radius);
   box-shadow: 0 6px 24px var(--shadow-color);
-  animation: dialog-in 200ms var(--ease-decelerate-quart) both;
+  opacity: 1;
+  animation: dialog-in 200ms var(--ease-decelerate-quart);
 }
 
 @keyframes dialog-in {

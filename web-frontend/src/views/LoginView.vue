@@ -227,7 +227,8 @@ async function handleRegister(): Promise<void> {
   box-shadow:
     0 6px 24px var(--shadow-color),
     0 0 1px var(--shadow-color);
-  animation: card-in var(--duration-scene-translate) var(--ease-decelerate-quint) both;
+  opacity: 1;
+  animation: card-in var(--duration-scene-translate) var(--ease-decelerate-quint);
 }
 
 @keyframes card-in {

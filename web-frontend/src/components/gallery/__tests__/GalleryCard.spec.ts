@@ -190,3 +190,54 @@ describe('GalleryCard (surface + category + events)', () => {
     expect(wrapper.find('.gallery-card__img').classes()).toContain('is-loaded')
   })
 })
+
+describe('GalleryCard (missing / failed thumbnail, E2E-9 + E2E-3)', () => {
+  it('renders title, pages, rating and chip with thumb null (list mode)', () => {
+    const gallery = makeGallery({ thumb: '' })
+    const wrapper = mount(GalleryCard, { props: { gallery, mode: 'list' } })
+    expect(wrapper.find('.gallery-card__title').text()).toBe(gallery.title)
+    expect(wrapper.find('.gallery-card__pages').text()).toBe('24P')
+    expect(wrapper.findComponent(RatingStars).exists()).toBe(true)
+    expect(wrapper.findComponent(CategoryChip).exists()).toBe(true)
+  })
+
+  it('renders an icon placeholder without alt text when thumb is null', () => {
+    for (const thumb of ['', null as unknown as string]) {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery({ thumb }), mode: 'list' },
+      })
+      expect(wrapper.find('.gallery-card__thumb img').exists()).toBe(false)
+      const placeholder = wrapper.find('.gallery-card__thumb-placeholder')
+      expect(placeholder.exists()).toBe(true)
+      expect(placeholder.text()).toBe('')
+      expect(placeholder.find('svg').exists()).toBe(true)
+    }
+  })
+
+  it('keeps the card visible after the thumbnail fails to load', async () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    const img = wrapper.find('.gallery-card__img')
+    await img.trigger('error')
+    expect(wrapper.find('.gallery-card__img').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__thumb-placeholder').exists()).toBe(true)
+    expect(wrapper.find('.gallery-card__title').text()).toBe(
+      '(C99) Test Gallery Title [English]',
+    )
+    expect(wrapper.find('.gallery-card__pages').text()).toBe('24P')
+  })
+
+  it('renders the grid tile placeholder when thumb is null', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ thumb: '' }), mode: 'grid' },
+    })
+    expect(wrapper.find('.gallery-card__tile img').exists()).toBe(false)
+    const placeholder = wrapper.find('.gallery-card__tile-placeholder')
+    expect(placeholder.exists()).toBe(true)
+    expect(placeholder.text()).toBe('')
+    expect(wrapper.find('.gallery-card__grid-title').text()).toBe(
+      '(C99) Test Gallery Title [English]',
+    )
+  })
+})

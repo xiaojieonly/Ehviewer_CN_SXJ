@@ -6,7 +6,7 @@ export interface FavoriteItem {
   title: string
   titleJpn: string
   thumb: string
-  category: string
+  category: number
   rating: number
   uploader: string | null
   posted: string | null

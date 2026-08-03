@@ -6,6 +6,7 @@
     <template v-if="mode === 'list'">
       <div class="gallery-card__thumb">
         <img
+          v-if="hasThumb"
           ref="imgRef"
           class="gallery-card__img"
           :class="{ 'is-loaded': imgLoaded }"
@@ -14,7 +15,11 @@
           loading="lazy"
           decoding="async"
           @load="onImgLoad"
+          @error="onImgError"
         />
+        <div v-else class="gallery-card__thumb-placeholder" aria-hidden="true">
+          <AppIcon name="download-primary" size="28px" />
+        </div>
       </div>
       <div class="gallery-card__body">
         <h3 class="gallery-card__title">{{ gallery.title }}</h3>
@@ -39,6 +44,7 @@
     <template v-else>
       <div class="gallery-card__tile" :style="{ aspectRatio: tileAspect }">
         <img
+          v-if="hasThumb"
           ref="imgRef"
           class="gallery-card__img"
           :class="{ 'is-loaded': imgLoaded }"
@@ -47,7 +53,11 @@
           loading="lazy"
           decoding="async"
           @load="onImgLoad"
+          @error="onImgError"
         />
+        <div v-else class="gallery-card__tile-placeholder" aria-hidden="true">
+          <AppIcon name="download-primary" size="28px" />
+        </div>
         <CategoryTriangle
           v-if="categoryKey"
           class="gallery-card__triangle"
@@ -97,6 +107,7 @@ import {
   type GalleryCardSlots,
 } from '@/types/components'
 import AppCard from '@/components/atoms/AppCard.vue'
+import AppIcon from '@/components/atoms/AppIcon.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
@@ -127,12 +138,26 @@ const tileAspect = computed<string>(() => {
 })
 
 /* Thumbnail fade-in: hidden until decoded; `complete` check covers images
-   that finished loading from cache before the listener attached. */
+   that finished loading from cache before the listener attached. The card
+   itself never depends on the thumbnail — a missing (`thumb` null/empty) or
+   failed image falls back to the placeholder, and the title/progress/actions
+   render regardless (E2E-9: cards stay visible without a thumbnail). */
 const imgRef = ref<HTMLImageElement | null>(null)
 const imgLoaded = ref(false)
+const thumbFailed = ref(false)
+
+/** A usable thumbnail source; null/empty renders the placeholder, and a
+    failed load swaps to it too. */
+const hasThumb = computed(() => Boolean(props.gallery.thumb) && !thumbFailed.value)
 
 function onImgLoad(): void {
   imgLoaded.value = true
+}
+
+function onImgError(): void {
+  // Swapped to the placeholder — the broken-image box must never leak the
+  // `alt` (= title) text into the card (E2E-3).
+  thumbFailed.value = true
 }
 
 onMounted(() => {
@@ -185,6 +210,27 @@ onMounted(() => {
 
 .gallery-card__img.is-loaded {
   opacity: 1;
+}
+
+/* Shared placeholder fallback (list + grid): plain surface, icon only —
+   deliberately no alt/title text so missing thumbnails never leak the
+   gallery title into the grey box (E2E-3). */
+.gallery-card__thumb-placeholder,
+.gallery-card__tile-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--drawable-color-secondary);
+}
+
+.gallery-card__thumb-placeholder {
+  width: var(--thumb-list-width);
+  height: var(--thumb-list-height);
+}
+
+.gallery-card__tile-placeholder {
+  position: absolute;
+  inset: 0;
 }
 
 .app-card:hover .gallery-card__img {

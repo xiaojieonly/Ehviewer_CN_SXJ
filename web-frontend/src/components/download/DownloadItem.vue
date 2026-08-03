@@ -6,7 +6,13 @@
   >
     <!-- FixedThumb replica: 80×120dp, CENTER_CROP (item_download.xml) -->
     <div class="download-item__thumb">
-      <img v-if="item.thumb" :src="item.thumb" :alt="title" loading="lazy" />
+      <img
+        v-if="hasThumb"
+        :src="item.thumb ?? undefined"
+        :alt="title"
+        loading="lazy"
+        @error="onThumbError"
+      />
       <div v-else class="download-item__thumb-placeholder" aria-hidden="true">
         <AppIcon name="download-primary" size="28px" />
       </div>
@@ -125,7 +131,7 @@
  * currently always emits `speed = 0`, so the view derives it from progress
  * deltas). ETA = remaining pages / speed.
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { DownloadItem } from '@/api/download'
 import { CATEGORY_BY_BIT } from '@/types/components'
 import AppIcon from '@/components/atoms/AppIcon.vue'
@@ -160,6 +166,18 @@ const emit = defineEmits<{
 }>()
 
 const title = computed(() => props.item.title || props.item.titleJpn || 'Untitled')
+
+/** Thumbnail failure/absence flag — swaps the row to the icon placeholder so
+    a broken `<img>` never leaks its `alt` (the title) into the grey box and
+    the card stays clean with no thumbnail (E2E-9 / E2E-3). */
+const thumbFailed = ref(false)
+
+/** A usable thumb source; null/empty renders the placeholder outright. */
+const hasThumb = computed(() => Boolean(props.item.thumb) && !thumbFailed.value)
+
+function onThumbError(): void {
+  thumbFailed.value = true
+}
 
 /** Numeric `SiteConfig` category bit → chip key (undefined renders no chip). */
 const categoryKey = computed(() => CATEGORY_BY_BIT[props.item.category])
