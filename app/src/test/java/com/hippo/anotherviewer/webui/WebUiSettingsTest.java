@@ -138,4 +138,25 @@ public class WebUiSettingsTest {
         settings.setClientTier(2);
         assertEquals(true, settings.remoteReadEnabled());
     }
+
+    @Test
+    public void testTierThreeAlsoImpliesRemoteRead() {
+        settings.setRemoteReadEnabled(false);
+        settings.setClientTier(3);
+        assertEquals(true, settings.remoteReadEnabled());
+    }
+
+    @Test
+    public void testClearConfigRestoresPolicyDefaults() {
+        settings.setConflictStrategy("web_priority");
+        settings.setClientTier(2);
+        settings.setAutoSyncIntervalSec(60);
+        settings.saveConfig(serverA);
+
+        settings.clearConfig();
+
+        assertEquals("device_priority", settings.conflictStrategy());
+        assertEquals(1, settings.clientTier());
+        assertEquals(900, settings.autoSyncIntervalSec());
+    }
 }
