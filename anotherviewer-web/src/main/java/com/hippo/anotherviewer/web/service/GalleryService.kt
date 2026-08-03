@@ -44,6 +44,12 @@ class GalleryService(
      *  - [minRating]   1..5 -> `f_sr=on&f_srdd=N` (0 = disabled)
      *  - [searchName]/[searchTags]/[searchDesc]/[searchTorrents]
      *                  -> `advsearch=1` + `f_sname/f_stags/f_sdesc/f_storr=on`
+     *  - W3 R4-10 higher AdvanceSearchTable bits (backendized so the WebUI's
+     *    single filter surface can express the full Android option set):
+     *    [searchTorrentsOnly] -> `f_sto=on`, [searchLowPowerTags] -> `f_sdt1=on`,
+     *    [searchDownvotedTags] -> `f_sdt2=on`, [searchExpunged] -> `f_sh=on`,
+     *    [disableLanguageFilter] -> `f_sfl=on`, [disableUploaderFilter] -> `f_sfu=on`,
+     *    [disableTagFilter] -> `f_sft=on`
      *
      * E2E-6 failure semantics preserved: an unreachable site surfaces
      * `success=false` with empty data — never fabricated fallback results.
@@ -60,7 +66,14 @@ class GalleryService(
         searchName: Boolean = false,
         searchTags: Boolean = false,
         searchDesc: Boolean = false,
-        searchTorrents: Boolean = false
+        searchTorrents: Boolean = false,
+        searchTorrentsOnly: Boolean = false,
+        searchLowPowerTags: Boolean = false,
+        searchDownvotedTags: Boolean = false,
+        searchExpunged: Boolean = false,
+        disableLanguageFilter: Boolean = false,
+        disableUploaderFilter: Boolean = false,
+        disableTagFilter: Boolean = false
     ): GalleryListResponse {
         if (keyword.isNullOrBlank()) {
             return searchLocalHistory(keyword, category, page, pageSize)
@@ -69,7 +82,10 @@ class GalleryService(
         return try {
             val url = buildSearchUrl(
                 keyword, category, page, sort, pageMin, pageMax, minRating,
-                searchName, searchTags, searchDesc, searchTorrents
+                searchName, searchTags, searchDesc, searchTorrents,
+                searchTorrentsOnly, searchLowPowerTags, searchDownvotedTags,
+                searchExpunged, disableLanguageFilter, disableUploaderFilter,
+                disableTagFilter
             )
             val result = SiteEngine.getGalleryList(null, client, url, ListUrlBuilder.MODE_NORMAL)
             val items = result.galleryInfoList.map { it.toDto() }
@@ -115,7 +131,14 @@ class GalleryService(
         searchName: Boolean,
         searchTags: Boolean,
         searchDesc: Boolean,
-        searchTorrents: Boolean
+        searchTorrents: Boolean,
+        searchTorrentsOnly: Boolean = false,
+        searchLowPowerTags: Boolean = false,
+        searchDownvotedTags: Boolean = false,
+        searchExpunged: Boolean = false,
+        disableLanguageFilter: Boolean = false,
+        disableUploaderFilter: Boolean = false,
+        disableTagFilter: Boolean = false
     ): String {
         val builder = ListUrlBuilder()
         builder.mode = ListUrlBuilder.MODE_NORMAL
@@ -133,6 +156,14 @@ class GalleryService(
         if (searchTags) advance = advance or AdvanceSearchTable.STAGS
         if (searchDesc) advance = advance or AdvanceSearchTable.SDESC
         if (searchTorrents) advance = advance or AdvanceSearchTable.STORR
+        // W3 R4-10: higher AdvanceSearchTable bits (backendized).
+        if (searchTorrentsOnly) advance = advance or AdvanceSearchTable.STO
+        if (searchLowPowerTags) advance = advance or AdvanceSearchTable.SDT1
+        if (searchDownvotedTags) advance = advance or AdvanceSearchTable.SDT2
+        if (searchExpunged) advance = advance or AdvanceSearchTable.SH
+        if (disableLanguageFilter) advance = advance or AdvanceSearchTable.SFL
+        if (disableUploaderFilter) advance = advance or AdvanceSearchTable.SFU
+        if (disableTagFilter) advance = advance or AdvanceSearchTable.SFT
         if (advance != 0 || minRating > 0 || pageMin != null || pageMax != null) {
             builder.advanceSearch = advance
             if (minRating > 0) {

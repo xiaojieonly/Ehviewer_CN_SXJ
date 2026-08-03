@@ -55,10 +55,20 @@ class GallerySearchUrlTest {
         searchName: Boolean = false,
         searchTags: Boolean = false,
         searchDesc: Boolean = false,
-        searchTorrents: Boolean = false
+        searchTorrents: Boolean = false,
+        searchTorrentsOnly: Boolean = false,
+        searchLowPowerTags: Boolean = false,
+        searchDownvotedTags: Boolean = false,
+        searchExpunged: Boolean = false,
+        disableLanguageFilter: Boolean = false,
+        disableUploaderFilter: Boolean = false,
+        disableTagFilter: Boolean = false
     ): String = service().buildSearchUrl(
         keyword, category, page, sort, pageMin, pageMax, minRating,
-        searchName, searchTags, searchDesc, searchTorrents
+        searchName, searchTags, searchDesc, searchTorrents,
+        searchTorrentsOnly, searchLowPowerTags, searchDownvotedTags,
+        searchExpunged, disableLanguageFilter, disableUploaderFilter,
+        disableTagFilter
     )
 
     // ------------------------------------------------------------------
@@ -299,5 +309,49 @@ class GallerySearchUrlTest {
 
         assertTrue(response.success, "local fallback answers without a site round-trip")
         org.mockito.Mockito.verify(historyRepository).findHistoryPaged(any())
+    }
+
+    // ------------------------------------------------------------------
+    // W3 R4-10: higher AdvanceSearchTable bits (backendized)
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `each higher advance bit maps to its site flag under advsearch`() {
+        val cases = listOf(
+            url(searchTorrentsOnly = true) to "f_sto=on",
+            url(searchLowPowerTags = true) to "f_sdt1=on",
+            url(searchDownvotedTags = true) to "f_sdt2=on",
+            url(searchExpunged = true) to "f_sh=on",
+            url(disableLanguageFilter = true) to "f_sfl=on",
+            url(disableUploaderFilter = true) to "f_sfu=on",
+            url(disableTagFilter = true) to "f_sft=on"
+        )
+        for ((built, flag) in cases) {
+            assertTrue(built.contains("advsearch=1"), "$flag needs the advsearch carrier: $built")
+            assertTrue(built.contains(flag), "missing $flag in $built")
+        }
+    }
+
+    @Test
+    fun `higher bits stay absent when not requested`() {
+        val built = url(searchName = true)
+        for (flag in listOf("f_sto", "f_sdt1", "f_sdt2", "f_sh", "f_sfl", "f_sfu", "f_sft")) {
+            assertFalse(built.contains(flag), "unexpected $flag in $built")
+        }
+    }
+
+    @Test
+    fun `scope and higher bits combine into one advsearch block`() {
+        val built = url(
+            searchName = true, searchTags = true,
+            searchTorrentsOnly = true, searchExpunged = true,
+            disableTagFilter = true
+        )
+        assertTrue(built.contains("f_sname=on"))
+        assertTrue(built.contains("f_stags=on"))
+        assertTrue(built.contains("f_sto=on"))
+        assertTrue(built.contains("f_sh=on"))
+        assertTrue(built.contains("f_sft=on"))
+        assertEquals(1, Regex("advsearch=1").findAll(built).count(), "single advsearch carrier")
     }
 }

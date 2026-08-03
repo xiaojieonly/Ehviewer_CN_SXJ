@@ -323,6 +323,57 @@ paths:
             type: boolean
             default: false
           description: "Advanced search scope (advsearch=1&f_storr=on): match torrent filenames"
+        # W3 R4-10 — higher AdvanceSearchTable bits (backendized so the WebUI
+        # single filter surface can express the full Android option set).
+        - name: searchTorrentsOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sto=on): only show galleries with torrents"
+        - name: searchLowPowerTags
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sdt1=on): also match low-power tags"
+        - name: searchDownvotedTags
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sdt2=on): also match downvoted tags"
+        - name: searchExpunged
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sh=on): include expunged galleries"
+        - name: disableLanguageFilter
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sfl=on): disable the default language filter"
+        - name: disableUploaderFilter
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sfu=on): disable the default uploader filter"
+        - name: disableTagFilter
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Advanced option (advsearch=1&f_sft=on): disable the default tag filter"
         - name: page
           in: query
           required: false
