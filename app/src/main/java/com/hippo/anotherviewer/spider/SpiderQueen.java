@@ -33,6 +33,7 @@ import androidx.annotation.UiThread;
 
 import com.hippo.beerbelly.SimpleDiskCache;
 import com.hippo.anotherviewer.Analytics;
+import com.hippo.anotherviewer.BuildConfig;
 import com.hippo.anotherviewer.SiteApplication;
 import com.hippo.anotherviewer.GetText;
 import com.hippo.anotherviewer.R;
@@ -1406,8 +1407,12 @@ public final class SpiderQueen implements Runnable {
                     } else if (response.cacheResponse() != null) {
                         responseUrl = response.cacheResponse().request().url().toString();
                     }
-                    // 反劫持校验
-                    if (!targetImageUrl.equals(responseUrl)) {
+                    // 反劫持校验：图片字节来源 URL 必须与站点 API 返回的 URL 一致。
+                    // mock 调试模式（BuildConfig.MOCK_EH_BASE_URL 非空）下拦截器会把
+                    // gallery.test 改写为本地 mock 地址，URL 必然不同——此时跳过校验
+                    //（仅 debug 构建生效，release 该字段恒为空，安全语义不变）。
+                    if (BuildConfig.MOCK_EH_BASE_URL.isEmpty() &&
+                            !targetImageUrl.equals(responseUrl)) {
                         error = "链接疑似被劫持\nThe link is suspected to be hijacked";
                         response.close();
                         forceHtml = true;

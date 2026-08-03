@@ -40,11 +40,18 @@ function detailHtml(g) {
     );
   }
 
+  // Pagination row — GalleryDetailParser.parsePreviewPages reads the page count
+  // from .ptt (last page number before the "next" arrow).
+  const pttCells = Array.from({ length: g.pages }, (_, i) => i + 1)
+    .map((p) => `<td class="ptds"><a href="#" onclick="return false">${p}</a></td>`)
+    .join('');
+  const ptt = `<table class="ptt" style="margin:2px auto 0px"><tr><td class="ptdd">&lt;</td>${pttCells}<td onclick="return false">&gt;</td></tr></table>`;
+
   const tagRows = g.tags
     .map(
       ([ns, tags]) =>
-        `<tr><td class="gtl">${ns}:</td><td class="gtc">${tags
-          .map((t) => `<div class="gt"><a>${t}</a></div>`)
+        `<tr><td class="tc">${ns}:</td><td>${tags
+          .map((t) => `<div class="gt"><a href="#">${t}</a></div>`)
           .join('')}</td></tr>`,
     )
     .join('');
@@ -67,8 +74,10 @@ function detailHtml(g) {
     `<div id="rating_count">${g.ratingCount}</div>` +
     `<div id="rating_label">Average: ${g.rating.toFixed(2)}</div>` +
     `<div id="gdf">Add to Favorites</div>` +
-    `<div id="gdt">${previews.join('')}</div></div>` +
-    `<table id="taglist"><tr><td><div><table>${tagRows}</table></div></td></tr></table>` +
+    `<div id="gdt">${previews.join('')}</div>` +
+    ptt +
+    `</div>` +
+    `<div id="taglist"><table>${tagRows}</table></div>` +
     comments +
     `<script>var gid = ${g.gid}; var token = "${g.token}"; var apiuid = -1; var apikey = "0000000000000000";</script>` +
     `</body></html>`;
@@ -98,6 +107,12 @@ function listHtml() {
 
 export default function galleryRoutes(app) {
   const router = express.Router();
+
+  // Gallery home / search — shaped for GalleryListParser (table.itg/gtr/
+  // glthumb/glname). Also handles ?f_search=... queries: same list page.
+  router.get('/', (req, res) => {
+    res.type('html').send(listHtml());
+  });
 
   // Gallery detail page — shaped for GalleryDetailParser.
   router.get('/g/:gid/:token', (req, res) => {
@@ -161,7 +176,42 @@ export default function galleryRoutes(app) {
 
   // Favorites popup + API stub — not needed for the core test loop.
   router.get('/gallerypopups.php', (req, res) => res.send(''));
-  router.post('/api.php', (req, res) => res.json({}));
+  // Gallery Site API (api.php): two methods used by the app.
+  //  - method=gdata: fill list items with metadata (GalleryApiParser)
+  //  - method=showpage: reader page image URL (GalleryPageApiParser: i3/i6)
+  router.post('/api.php', (req, res) => {
+    const body = req.body ?? {};
+    if (body.method === 'showpage') {
+      const gid = Number(body.gid);
+      const page = Number(body.page) || 1;
+      const image = `${EXH_BASE}/image/${gid}/${page}.jpg`;
+      res.json({
+        i3: `<img src="${image}" style="width:800px">`,
+        i6: `<a href="#" onclick="prompt('Copy the URL below.', '${image}fullimg/view')">Original</a>`,
+        i7: null,
+      });
+      return;
+    }
+    // default: gdata
+    const gidlist = Array.isArray(body.gidlist) ? body.gidlist : [];
+    const gmetadata = gidlist
+      .map(([gid]) => findGallery(String(gid)))
+      .filter(Boolean)
+      .map((g) => ({
+        gid: g.gid,
+        token: g.token,
+        title: g.title,
+        title_jpn: g.titleJpn ?? '',
+        category: g.category,
+        thumb: `${EXH_BASE}/t/${g.gid}/cover.jpg`,
+        uploader: g.uploader,
+        posted: String(Math.floor(new Date(g.posted).getTime() / 1000) || 0),
+        rating: String(g.rating),
+        tags: (g.tags ?? []).flatMap(([ns, tags]) => tags.map((t) => `${ns}:${t}`)),
+        filecount: g.pages,
+      }));
+    res.json({ gmetadata });
+  });
 
   app.use(router);
 }

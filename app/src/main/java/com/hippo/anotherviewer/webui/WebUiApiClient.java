@@ -130,8 +130,9 @@ public final class WebUiApiClient {
     @NonNull
     public static WebUiSyncModels.PushResponse push(@NonNull WebUiConfig config,
             @NonNull WebUiSyncModels.PushRequest request) throws IOException {
-        String json = postJson(config.baseUrl() + "/api/v1/sync/push", config.getToken(), JSON.toJSONString(request));
-        WebUiSyncModels.PushResponse response = JSON.parseObject(json, WebUiSyncModels.PushResponse.class);
+        String json = JSON.toJSONString(request);
+        String resp = postJson(config.baseUrl() + "/api/v1/sync/push", config.getToken(), json);
+        WebUiSyncModels.PushResponse response = JSON.parseObject(resp, WebUiSyncModels.PushResponse.class);
         if (response == null) {
             throw new IOException("Empty push response");
         }

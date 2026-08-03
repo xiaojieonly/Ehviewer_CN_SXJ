@@ -171,6 +171,12 @@ public final class WebUiSyncEngine {
         Set<Long> pendingHistory = mStore.loadKeySet(serverKey, SUFFIX_PENDING_HISTORY);
         Set<Long> pendingDownloads = mStore.loadKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS);
         Set<Long> pendingBookmarks = mStore.loadKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS);
+        // 持久化的待删/待推集合也可能混入 gid<=0 的损坏 key（早期版本写入），
+        // 与 current 集合一样剔除，避免 push 携带空 token 记录被服务器 400 拒收。
+        pendingFavorites.removeIf(k -> k <= 0L);
+        pendingHistory.removeIf(k -> k <= 0L);
+        pendingDownloads.removeIf(k -> k <= 0L);
+        pendingBookmarks.removeIf(k -> k <= 0L);
         Set<String> pendingFilters = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_FILTERS);
         Set<String> pendingQuickSearches = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES);
         Set<String> pendingDownloadLabels = mStore.loadStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS);
@@ -311,6 +317,9 @@ public final class WebUiSyncEngine {
     private void fillFavorites(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<Long> pendingFavorites) {
         for (GalleryInfo gi : mStore.getAllLocalFavorites()) {
+            if (gi.gid <= 0L) {
+                continue;
+            }
             WebUiSyncModels.SyncFavorite fav = new WebUiSyncModels.SyncFavorite();
             copyGalleryToDto(gi, fav);
             long time = gi instanceof LocalFavoriteInfo ? ((LocalFavoriteInfo) gi).time : now;
@@ -335,6 +344,9 @@ public final class WebUiSyncEngine {
     private void fillHistory(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<Long> pendingHistory) {
         for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
+            if (hi.gid <= 0L) {
+                continue;
+            }
             WebUiSyncModels.SyncHistory hist = new WebUiSyncModels.SyncHistory();
             copyGalleryToDto(hi, hist);
             hist.mode = hi.mode;
@@ -378,6 +390,9 @@ public final class WebUiSyncEngine {
     private void fillBookmarks(WebUiSyncModels.EntityCollection entities,
             String deviceId, long now, Set<Long> pendingBookmarks) {
         for (BookmarkInfo bi : mStore.getAllBookmark()) {
+            if (bi.gid <= 0L) {
+                continue;
+            }
             WebUiSyncModels.SyncBookmark dto = new WebUiSyncModels.SyncBookmark();
             copyGalleryToDto(bi, dto);
             dto.page = bi.page;
@@ -747,6 +762,7 @@ public final class WebUiSyncEngine {
         for (GalleryInfo gi : mStore.getAllLocalFavorites()) {
             keys.add(gi.gid);
         }
+        keys.removeIf(k -> k <= 0L);
         return keys;
     }
 
@@ -755,6 +771,9 @@ public final class WebUiSyncEngine {
         for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
             keys.add(hi.gid);
         }
+        // 剔除 gid<=0 的本地损坏记录（如早期空 token 详情页写入的历史）：它们无法
+        // 被服务器接受（token 为空会使 push 400 拒收），必须排除在同步之外。
+        keys.removeIf(k -> k <= 0L);
         return keys;
     }
 
@@ -763,6 +782,7 @@ public final class WebUiSyncEngine {
         for (DownloadInfo info : mStore.getAllDownloadInfo()) {
             keys.add(info.gid);
         }
+        keys.removeIf(k -> k <= 0L);
         return keys;
     }
 
@@ -771,6 +791,7 @@ public final class WebUiSyncEngine {
         for (BookmarkInfo bi : mStore.getAllBookmark()) {
             keys.add(bi.gid);
         }
+        keys.removeIf(k -> k <= 0L);
         return keys;
     }
 

@@ -11,7 +11,7 @@ export const EXH_BASE = 'https://gallery.test';
 export const GALLERIES = [
   {
     gid: 1001,
-    token: 'aaaa',
+    token: 'aaa1111111',
     title: 'Test Gallery Alpha',
     titleJpn: '',
     uploader: 'mock_user',
@@ -26,7 +26,7 @@ export const GALLERIES = [
     newVersions: [
       {
         name: 'Test Gallery Alpha (v2)',
-        url: `${EXH_BASE}/g/1002/bbbb/`,
+        url: `${EXH_BASE}/g/1002/bbb2222222/`,
         time: '2024-02-01 08:00',
       },
     ],
@@ -38,7 +38,7 @@ export const GALLERIES = [
   },
   {
     gid: 1002,
-    token: 'bbbb',
+    token: 'bbb2222222',
     title: 'Test Gallery Alpha (v2)',
     titleJpn: '',
     uploader: 'mock_user',
@@ -53,7 +53,7 @@ export const GALLERIES = [
     newVersions: [
       {
         name: 'Test Gallery Alpha (v3)',
-        url: `${EXH_BASE}/g/1003/cccc/`,
+        url: `${EXH_BASE}/g/1003/ccc3333333/`,
         time: '2024-03-01 10:30',
       },
     ],
@@ -65,7 +65,7 @@ export const GALLERIES = [
   },
   {
     gid: 1003,
-    token: 'cccc',
+    token: 'ccc3333333',
     title: 'Test Gallery Alpha (v3)',
     titleJpn: '',
     uploader: 'mock_user',
@@ -86,7 +86,7 @@ export const GALLERIES = [
   },
   {
     gid: 2001,
-    token: 'dddd',
+    token: 'ddd4444444',
     title: 'Standalone Gallery One',
     titleJpn: '',
     uploader: 'different_user',
@@ -106,7 +106,7 @@ export const GALLERIES = [
   },
   {
     gid: 2002,
-    token: 'eeee',
+    token: 'eee5555555',
     title: 'Standalone Gallery Two',
     titleJpn: '',
     uploader: 'different_user',
@@ -127,7 +127,7 @@ export const GALLERIES = [
   },
   {
     gid: 3001,
-    token: 'ffff',
+    token: 'fff6666666',
     title: 'Simple Update',
     titleJpn: '',
     uploader: 'mock_user',
@@ -142,7 +142,7 @@ export const GALLERIES = [
     newVersions: [
       {
         name: 'Simple Update (revised)',
-        url: `${EXH_BASE}/g/3002/ab1c/`,
+        url: `${EXH_BASE}/g/3002/abc7777777/`,
         time: '2024-06-20 16:45',
       },
     ],
@@ -153,7 +153,7 @@ export const GALLERIES = [
   },
   {
     gid: 3002,
-    token: 'ab1c',
+    token: 'abc7777777',
     title: 'Simple Update (revised)',
     titleJpn: '',
     uploader: 'mock_user',

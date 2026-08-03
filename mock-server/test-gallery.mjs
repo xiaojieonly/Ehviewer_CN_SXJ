@@ -68,8 +68,8 @@ function walkVersions(startGid) {
 
 // ---------------------------------------------------------------- detail pages
 
-test('GET /g/1001/aaaa/ returns detail page (gid script, title, Length, #gnd, v2 link)', async () => {
-  const res = await fetch(`${baseUrl}/g/1001/aaaa/`);
+test('GET /g/1001/aaa1111111/ returns detail page (gid script, title, Length, #gnd, v2 link)', async () => {
+  const res = await fetch(`${baseUrl}/g/1001/aaa1111111/`);
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type'), /^text\/html/);
   const body = await res.text();
@@ -78,18 +78,18 @@ test('GET /g/1001/aaaa/ returns detail page (gid script, title, Length, #gnd, v2
   assert.ok(body.includes('Length:'), 'info table Length row');
   assert.ok(body.includes('5 pages'), 'page count');
   assert.ok(body.includes('id="gnd"'), 'new-version list');
-  assert.ok(body.includes('/g/1002/bbbb/'), 'link to v2 gallery');
+  assert.ok(body.includes('/g/1002/bbb2222222/'), 'link to v2 gallery');
 });
 
-test('GET /g/1002/bbbb/ chains to /g/1003/cccc/', async () => {
-  const res = await fetch(`${baseUrl}/g/1002/bbbb/`);
+test('GET /g/1002/bbb2222222/ chains to /g/1003/ccc3333333/', async () => {
+  const res = await fetch(`${baseUrl}/g/1002/bbb2222222/`);
   assert.equal(res.status, 200);
   const body = await res.text();
-  assert.ok(body.includes('/g/1003/cccc/'), 'link to v3 gallery');
+  assert.ok(body.includes('/g/1003/ccc3333333/'), 'link to v3 gallery');
 });
 
-test('GET /g/1003/cccc/ has no href links inside div#gnd', async () => {
-  const res = await fetch(`${baseUrl}/g/1003/cccc/`);
+test('GET /g/1003/ccc3333333/ has no href links inside div#gnd', async () => {
+  const res = await fetch(`${baseUrl}/g/1003/ccc3333333/`);
   assert.equal(res.status, 200);
   const body = await res.text();
   const m = body.match(/<div id="gnd">([\s\S]*?)<\/div>/);
@@ -99,8 +99,8 @@ test('GET /g/1003/cccc/ has no href links inside div#gnd', async () => {
 
 // ---------------------------------------------------------------- image page
 
-test('GET /s/aaaa/1001-1 returns image page with <img> and showkey', async () => {
-  const res = await fetch(`${baseUrl}/s/aaaa/1001-1`);
+test('GET /s/aaa1111111/1001-1 returns image page with <img> and showkey', async () => {
+  const res = await fetch(`${baseUrl}/s/aaa1111111/1001-1`);
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type'), /^text\/html/);
   const body = await res.text();

@@ -4,7 +4,7 @@ package com.hippo.anotherviewer.web.dto
 
 data class SyncFavoriteDto(
     val gid: Long,
-    val token: String,
+    val token: String? = null,
     val title: String? = null,
     val titleJpn: String? = null,
     val thumb: String? = null,
@@ -31,7 +31,7 @@ data class SyncFavoriteDto(
 
 data class SyncHistoryDto(
     val gid: Long,
-    val token: String,
+    val token: String? = null,
     val title: String? = null,
     val titleJpn: String? = null,
     val thumb: String? = null,
@@ -59,7 +59,7 @@ data class SyncHistoryDto(
 
 data class SyncDownloadDto(
     val gid: Long,
-    val token: String,
+    val token: String? = null,
     val title: String? = null,
     val titleJpn: String? = null,
     val thumb: String? = null,
@@ -92,7 +92,7 @@ data class SyncDownloadDto(
 
 data class SyncBookmarkDto(
     val gid: Long,
-    val token: String,
+    val token: String? = null,
     val title: String? = null,
     val titleJpn: String? = null,
     val thumb: String? = null,

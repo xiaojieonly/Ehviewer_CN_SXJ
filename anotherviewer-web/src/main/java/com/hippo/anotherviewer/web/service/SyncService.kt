@@ -388,7 +388,7 @@ class SyncService(
 
     private fun applyFavoriteFields(entity: LocalFavoriteInfoEntity, dto: SyncFavoriteDto) {
         entity.gid = dto.gid
-        entity.token = dto.token
+        entity.token = dto.token ?: ""
         entity.title = dto.title
         entity.titleJpn = dto.titleJpn
         entity.thumb = dto.thumb
@@ -419,7 +419,7 @@ class SyncService(
 
     private fun applyHistoryFields(entity: HistoryInfoEntity, dto: SyncHistoryDto) {
         entity.gid = dto.gid
-        entity.token = dto.token
+        entity.token = dto.token ?: ""
         entity.title = dto.title
         entity.titleJpn = dto.titleJpn
         entity.thumb = dto.thumb
@@ -451,7 +451,7 @@ class SyncService(
 
     private fun applyDownloadFields(entity: DownloadInfoEntity, dto: SyncDownloadDto) {
         entity.gid = dto.gid
-        entity.token = dto.token
+        entity.token = dto.token ?: ""
         entity.title = dto.title
         entity.titleJpn = dto.titleJpn
         entity.thumb = dto.thumb
@@ -503,7 +503,7 @@ class SyncService(
 
     private fun applyBookmarkFields(entity: BookmarkInfoEntity, dto: SyncBookmarkDto) {
         entity.gid = dto.gid
-        entity.token = dto.token
+        entity.token = dto.token ?: ""
         entity.title = dto.title
         entity.titleJpn = dto.titleJpn
         entity.thumb = dto.thumb
