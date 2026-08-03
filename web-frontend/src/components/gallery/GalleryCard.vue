@@ -11,7 +11,7 @@
           class="gallery-card__img"
           :class="{ 'is-loaded': imgLoaded }"
           :src="gallery.thumb"
-          :alt="gallery.title"
+          :alt="displayTitle"
           loading="lazy"
           decoding="async"
           @load="onImgLoad"
@@ -22,11 +22,16 @@
         </div>
       </div>
       <div class="gallery-card__body">
-        <h3 class="gallery-card__title">{{ gallery.title }}</h3>
+        <h3 class="gallery-card__title">{{ displayTitle }}</h3>
         <p v-if="gallery.titleJpn" class="gallery-card__title-jpn">{{ gallery.titleJpn }}</p>
+        <!-- Info switches (B-2): uploader / posted render only when the
+             corresponding `general.show*` preference is on (default off). -->
+        <p v-if="showUploader && gallery.uploader" class="gallery-card__uploader">
+          {{ gallery.uploader }}
+        </p>
         <div class="gallery-card__rating-row">
           <RatingStars :rating="gallery.rating" />
-          <span v-if="gallery.posted" class="gallery-card__posted">{{ gallery.posted }}</span>
+          <span v-if="showPostedTime && gallery.posted" class="gallery-card__posted">{{ gallery.posted }}</span>
         </div>
         <div class="gallery-card__meta-row">
           <CategoryChip v-if="categoryKey" :category="categoryKey" />
@@ -49,7 +54,7 @@
           class="gallery-card__img"
           :class="{ 'is-loaded': imgLoaded }"
           :src="gallery.thumb"
-          :alt="gallery.title"
+          :alt="displayTitle"
           loading="lazy"
           decoding="async"
           @load="onImgLoad"
@@ -68,10 +73,36 @@
         </span>
         <slot name="overlay" />
       </div>
-      <h3 class="gallery-card__grid-title">{{ gallery.title }}</h3>
+      <h3 class="gallery-card__grid-title">{{ displayTitle }}</h3>
     </template>
   </AppCard>
 </template>
+
+<script lang="ts">
+/**
+ * Android `SiteConfig.DEFAULT_FAV_CAT_NAMES` — the built-in favorite folder
+ * names, "Favorites 0" … "Favorites 9" (same defaults FavoriteView's folder
+ * strip has always used).
+ */
+export const DEFAULT_FAVORITE_SLOT_NAMES: readonly string[] = Array.from(
+  { length: 10 },
+  (_, i) => `Favorites ${i}`,
+)
+
+/**
+ * B-4: parses `general.favoriteSlotNames` — a `|`-separated list of up to 10
+ * folder names. Missing/empty entries fall back to
+ * {@link DEFAULT_FAVORITE_SLOT_NAMES} slot by slot (`A||C` → `A`, `Favorites 1`,
+ * `C`, `Favorites 3` …). Non-string input yields the full default list.
+ */
+export function parseFavoriteSlotNames(raw: unknown): string[] {
+  const parts = typeof raw === 'string' ? raw.split('|') : []
+  return Array.from({ length: 10 }, (_, i) => {
+    const name = parts[i]?.trim()
+    return name ? name : DEFAULT_FAVORITE_SLOT_NAMES[i]
+  })
+}
+</script>
 
 <script setup lang="ts">
 /**
@@ -98,6 +129,19 @@
  * The numeric `gallery.category` is an `SiteConfig` bit value; it is converted
  * to a `GalleryCategory` via `CATEGORY_BY_BIT` before driving the chip /
  * triangle (unknown bits render neither).
+ *
+ * Preference-driven display (Wave-1 B group):
+ * - B-2 `general.showUploader` / `general.showPostedTime` gate the uploader /
+ *   posted rows (both default OFF — missing key, unloaded prefs and unknown
+ *   values all hide the field).
+ * - R4-6 an empty title renders as `#<gid>` instead of a blank heading.
+ * - B-4 `favoriteSlotNames` derives the 10 favorite folder names from
+ *   `general.favoriteSlotNames` (`|`-separated), empty slots falling back to
+ *   {@link DEFAULT_FAVORITE_SLOT_NAMES}.
+ *
+ * The preference keys are read defensively (optional chaining + defaults):
+ * they are being added to the preferences schema by a parallel work stream,
+ * so the card must behave identically whether or not they exist yet.
  */
 import { computed, onMounted, ref } from 'vue'
 import {
@@ -106,15 +150,51 @@ import {
   type GalleryCardProps,
   type GalleryCardSlots,
 } from '@/types/components'
+import { usePreferencesStore } from '@/stores/preferences'
+import type { GeneralPreferences } from '@/api/preferences'
 import AppCard from '@/components/atoms/AppCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
 
+/**
+ * General-preference keys consumed by the card but added by the parallel
+ * settings-schema stream (PreferenceDto +5 keys). Kept optional so this
+ * compiles and runs whether or not the typed DTO carries them yet.
+ */
+interface GeneralPrefsExtras {
+  showUploader?: boolean
+  showPostedTime?: boolean
+  favoriteSlotNames?: string
+}
+
 const props = defineProps<GalleryCardProps>()
 const emit = defineEmits<GalleryCardEmits>()
 defineSlots<GalleryCardSlots>()
+
+const preferencesStore = usePreferencesStore()
+
+const generalPrefs = computed<(GeneralPreferences & GeneralPrefsExtras) | undefined>(
+  () => preferencesStore.prefs?.general,
+)
+
+/** B-2 info switches — strictly `true` shows the field; anything else hides it. */
+const showUploader = computed(() => generalPrefs.value?.showUploader === true)
+const showPostedTime = computed(() => generalPrefs.value?.showPostedTime === true)
+
+/** R4-6: galleries without a title render as `#<gid>`. */
+const displayTitle = computed(() => {
+  const title = props.gallery.title
+  return title && title.trim().length > 0 ? title : `#${props.gallery.gid}`
+})
+
+/** B-4: the 10 favorite folder names, empty slots on their defaults. */
+const favoriteSlotNames = computed(() =>
+  parseFavoriteSlotNames(generalPrefs.value?.favoriteSlotNames),
+)
+
+defineExpose({ favoriteSlotNames })
 
 /**
  * Mirror of `--thumb-min-aspect` / `--thumb-max-aspect` (FixedThumb attrs) —
@@ -269,6 +349,18 @@ onMounted(() => {
   margin: 0;
   font-size: clamp(11px, var(--text-super-small), 14px); /* 12sp ideal */
   line-height: 1.35;
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Uploader row (B-2 `general.showUploader`) — roadmap §卡片规范: 14sp
+   secondary, single line. */
+.gallery-card__uploader {
+  margin: 0;
+  font-size: clamp(12px, var(--text-small), 14px); /* 14sp ideal */
+  line-height: 1.3;
   color: var(--text-color-secondary);
   white-space: nowrap;
   overflow: hidden;

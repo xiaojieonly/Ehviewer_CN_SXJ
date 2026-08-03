@@ -1,10 +1,16 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import GalleryCard from '../GalleryCard.vue'
+import { createPinia, setActivePinia } from 'pinia'
+import GalleryCard, {
+  DEFAULT_FAVORITE_SLOT_NAMES,
+  parseFavoriteSlotNames,
+} from '../GalleryCard.vue'
 import AppCard from '@/components/atoms/AppCard.vue'
 import RatingStars from '@/components/atoms/RatingStars.vue'
 import CategoryChip from '@/components/atoms/CategoryChip.vue'
 import CategoryTriangle from '@/components/atoms/CategoryTriangle.vue'
+import { usePreferencesStore } from '@/stores/preferences'
+import type { Preferences } from '@/api/preferences'
 import type { GalleryInfo } from '@/types/components'
 
 /** Build a GalleryInfo fixture; `overrides` patches individual fields. */
@@ -31,8 +37,22 @@ function makeGallery(overrides: Partial<GalleryInfo> = {}): GalleryInfo {
   }
 }
 
+/**
+ * Seeds the preferences store with a partial `general` section (the card must
+ * tolerate a store without the parallel-work schema keys, so everything here
+ * is optional).
+ */
+function seedPrefs(general: Record<string, unknown>): void {
+  const store = usePreferencesStore()
+  store.prefs = { general } as unknown as Preferences
+}
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
+
 describe('GalleryCard (list mode)', () => {
-  it('renders title, japanese title, rating, chip, pages, tags and posted', () => {
+  it('renders title, japanese title, rating, chip, pages and tags', () => {
     const gallery = makeGallery()
     const wrapper = mount(GalleryCard, { props: { gallery, mode: 'list' } })
 
@@ -43,7 +63,6 @@ describe('GalleryCard (list mode)', () => {
     expect(wrapper.find('.category-chip').text()).toBe('Doujinshi')
     expect(wrapper.find('.gallery-card__pages').text()).toBe('24P')
     expect(wrapper.find('.gallery-card__tag').text()).toBe('tag1')
-    expect(wrapper.find('.gallery-card__posted').text()).toBe('2024-01-01 12:00')
   })
 
   it('renders the thumbnail at the fixed 80×120 size', () => {
@@ -239,5 +258,158 @@ describe('GalleryCard (missing / failed thumbnail, E2E-9 + E2E-3)', () => {
     expect(wrapper.find('.gallery-card__grid-title').text()).toBe(
       '(C99) Test Gallery Title [English]',
     )
+  })
+})
+
+describe('GalleryCard (B-2 info switches: uploader / posted)', () => {
+  it('hides uploader and posted by default (prefs unloaded)', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__uploader').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__posted').exists()).toBe(false)
+  })
+
+  it('hides uploader and posted when the prefs keys are missing', () => {
+    seedPrefs({ listMode: 'list' }) // general section without the show* keys
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__uploader').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__posted').exists()).toBe(false)
+  })
+
+  it('shows the uploader row only when general.showUploader is true', () => {
+    seedPrefs({ showUploader: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ uploader: 'uploader123' }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__uploader').text()).toBe('uploader123')
+  })
+
+  it('omits the uploader row when the gallery has no uploader', () => {
+    seedPrefs({ showUploader: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ uploader: '' }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__uploader').exists()).toBe(false)
+  })
+
+  it('shows the posted stamp only when general.showPostedTime is true', () => {
+    seedPrefs({ showPostedTime: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ posted: '2024-01-01 12:00' }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__posted').text()).toBe('2024-01-01 12:00')
+  })
+
+  it('keeps posted hidden while showing uploader when only showUploader is on', () => {
+    seedPrefs({ showUploader: true, showPostedTime: false })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__uploader').exists()).toBe(true)
+    expect(wrapper.find('.gallery-card__posted').exists()).toBe(false)
+  })
+
+  it('does not render uploader in grid mode', () => {
+    seedPrefs({ showUploader: true, showPostedTime: true })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'grid' },
+    })
+    expect(wrapper.find('.gallery-card__uploader').exists()).toBe(false)
+    expect(wrapper.find('.gallery-card__posted').exists()).toBe(false)
+  })
+})
+
+describe('GalleryCard (R4-6 empty title → #gid fallback)', () => {
+  it.each([[''], ['   ']])(
+    'renders the #gid fallback in list mode when the title is %j',
+    (title) => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery({ title, gid: 987654 }), mode: 'list' },
+      })
+      expect(wrapper.find('.gallery-card__title').text()).toBe('#987654')
+    },
+  )
+
+  it('renders #gid in grid mode when the title is empty', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ title: '', gid: 4242 }), mode: 'grid' },
+    })
+    expect(wrapper.find('.gallery-card__grid-title').text()).toBe('#4242')
+  })
+
+  it('uses #gid for the thumbnail alt text when the title is empty', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ title: '', gid: 777 }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__thumb img').attributes('alt')).toBe('#777')
+  })
+
+  it('keeps a non-empty title untouched', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery({ title: 'Real Title', gid: 1 }), mode: 'list' },
+    })
+    expect(wrapper.find('.gallery-card__title').text()).toBe('Real Title')
+  })
+})
+
+describe('GalleryCard (B-4 favoriteSlotNames)', () => {
+  it('exposes the 10 default names when prefs are unloaded', () => {
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    const names = (wrapper.vm as unknown as { favoriteSlotNames: string[] }).favoriteSlotNames
+    expect(names).toEqual([...DEFAULT_FAVORITE_SLOT_NAMES])
+    expect(names).toHaveLength(10)
+  })
+
+  it('splits general.favoriteSlotNames on | and falls back per empty slot', () => {
+    seedPrefs({ favoriteSlotNames: 'Manga||Doujin|  ' })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    const names = (wrapper.vm as unknown as { favoriteSlotNames: string[] }).favoriteSlotNames
+    expect(names).toEqual([
+      'Manga',
+      'Favorites 1', // empty entry → default
+      'Doujin',
+      'Favorites 3', // whitespace-only entry → default
+      'Favorites 4',
+      'Favorites 5',
+      'Favorites 6',
+      'Favorites 7',
+      'Favorites 8',
+      'Favorites 9',
+    ])
+  })
+
+  it('takes at most 10 names', () => {
+    seedPrefs({ favoriteSlotNames: Array.from({ length: 14 }, (_, i) => `S${i}`).join('|') })
+    const wrapper = mount(GalleryCard, {
+      props: { gallery: makeGallery(), mode: 'list' },
+    })
+    const names = (wrapper.vm as unknown as { favoriteSlotNames: string[] }).favoriteSlotNames
+    expect(names).toHaveLength(10)
+    expect(names[9]).toBe('S9')
+  })
+})
+
+describe('parseFavoriteSlotNames (pure helper)', () => {
+  it('returns all defaults for non-string input', () => {
+    expect(parseFavoriteSlotNames(undefined)).toEqual([...DEFAULT_FAVORITE_SLOT_NAMES])
+    expect(parseFavoriteSlotNames(null)).toEqual([...DEFAULT_FAVORITE_SLOT_NAMES])
+    expect(parseFavoriteSlotNames(42)).toEqual([...DEFAULT_FAVORITE_SLOT_NAMES])
+  })
+
+  it('returns all defaults for an empty string', () => {
+    expect(parseFavoriteSlotNames('')).toEqual([...DEFAULT_FAVORITE_SLOT_NAMES])
+  })
+
+  it('keeps the FavoriteView default naming for unfilled slots', () => {
+    // FavoriteView has always used "Favorites 0" … "Favorites 9".
+    expect(DEFAULT_FAVORITE_SLOT_NAMES[0]).toBe('Favorites 0')
+    expect(DEFAULT_FAVORITE_SLOT_NAMES[9]).toBe('Favorites 9')
   })
 })
