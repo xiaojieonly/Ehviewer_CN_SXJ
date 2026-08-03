@@ -92,8 +92,8 @@ function imagePageHtml(g, page) {
     `</body></html>`;
 }
 
-function listHtml() {
-  const rows = GALLERIES.map(
+function listHtml(galleries = GALLERIES) {
+  const rows = galleries.map(
     (g) =>
       `<tr class="gtr"><td><div class="glthumb"><img src="${EXH_BASE}/t/${g.gid}/cover.jpg" style="max-width:100px;max-height:100px"/></div></td>` +
       `<td><div class="glname"><a href="${EXH_BASE}/g/${g.gid}/${g.token}/">${g.title}</a></div>` +
@@ -103,15 +103,140 @@ function listHtml() {
     `<table class="itg">${rows}</table></body></html>`;
 }
 
+// ------------------------------------------- list query oracle (search v1.1)
+
+// Category bit values mirror the Android core SiteConfig: the site's f_cats
+// param is an EXCLUSION bitmask — a gallery is dropped when its category bit
+// is set in f_cats.
+const CATEGORY_BITS = {
+  Misc: 0x1,
+  Doujinshi: 0x2,
+  Manga: 0x4,
+  'Artist CG': 0x8,
+  'Game CG': 0x10,
+  'Image Set': 0x20,
+  Cosplay: 0x40,
+  'Asian Porn': 0x80,
+  'Non-H': 0x100,
+  Western: 0x200,
+};
+
+function flatTags(g) {
+  return (g.tags ?? []).flatMap(([, tags]) => tags).map((t) => String(t).toLowerCase());
+}
+
+function matchesScopes(g, keyword, scopes) {
+  const kw = keyword.toLowerCase();
+  return scopes.some((scope) => {
+    switch (scope) {
+      case 'name':
+        return (
+          (g.title ?? '').toLowerCase().includes(kw) ||
+          (g.titleJpn ?? '').toLowerCase().includes(kw)
+        );
+      case 'tags':
+        return flatTags(g).some((t) => t.includes(kw));
+      case 'desc':
+        return (g.description ?? '').toLowerCase().includes(kw);
+      case 'torr':
+        return (g.torrents ?? []).some((t) => t.toLowerCase().includes(kw));
+      default:
+        return false;
+    }
+  });
+}
+
+// Sort oracle for f_order (contract: contracts/openapi.yaml `sort`):
+// 0/absent = default fixture order, 1 = posted time desc, 2 = rating desc,
+// 3 = title asc. Unknown values behave like 0.
+function sortRows(rows, order) {
+  const posted = (g) => new Date(String(g.posted).replace(' ', 'T')).getTime();
+  if (order === 1) {
+    rows.sort((a, b) => posted(b) - posted(a));
+  } else if (order === 2) {
+    rows.sort((a, b) => b.rating - a.rating);
+  } else if (order === 3) {
+    // locale-free code-unit compare so the oracle is deterministic
+    rows.sort((a, b) => (a.title < b.title ? -1 : a.title > b.title ? 1 : 0));
+  }
+  return rows;
+}
+
+// Applies the Gallery Site list query params to the fixtures. Recognized
+// (all optional; absent = no filtering / default order):
+//   f_search                          keyword, matched per scope below
+//   advsearch=1                       advanced-search carrier; required for
+//                                     f_sr* / f_sp* on the real site too
+//   f_sname/f_stags/f_sdesc/f_storr   keyword scope flags (union = OR).
+//                                     Without advsearch — or with advsearch
+//                                     but no scope flag — the site default
+//                                     scope name+tags applies (core
+//                                     DEFAULT_ADVANCE).
+//   f_cats                            exclusion category bitmask
+//   f_sr=on & f_srdd=N                keep rating >= N
+//   f_sp=on & f_spf / f_spt           keep page count within [spf, spt];
+//                                     either bound may be absent
+//   f_order                           sort oracle (see sortRows)
+//   page                              pagination is not modeled — the mock
+//                                     list is a single page
+export function applyListQuery(galleries, q) {
+  let rows = [...galleries];
+
+  if (q.f_cats != null && q.f_cats !== '') {
+    const excluded = Number(q.f_cats) || 0;
+    rows = rows.filter((g) => {
+      const bit = CATEGORY_BITS[g.category] ?? 0;
+      return (excluded & bit) === 0;
+    });
+  }
+
+  const keyword = q.f_search != null ? String(q.f_search).trim() : '';
+  if (keyword) {
+    let scopes;
+    if (q.advsearch === '1') {
+      scopes = [];
+      if (q.f_sname === 'on') scopes.push('name');
+      if (q.f_stags === 'on') scopes.push('tags');
+      if (q.f_sdesc === 'on') scopes.push('desc');
+      if (q.f_storr === 'on') scopes.push('torr');
+      if (scopes.length === 0) scopes = ['name', 'tags'];
+    } else {
+      scopes = ['name', 'tags'];
+    }
+    rows = rows.filter((g) => matchesScopes(g, keyword, scopes));
+  }
+
+  if (q.f_sr === 'on' && q.f_srdd != null && q.f_srdd !== '') {
+    const min = Number(q.f_srdd);
+    if (!Number.isNaN(min)) {
+      rows = rows.filter((g) => g.rating >= min);
+    }
+  }
+
+  if (q.f_sp === 'on') {
+    const from = q.f_spf != null && q.f_spf !== '' ? Number(q.f_spf) : null;
+    const to = q.f_spt != null && q.f_spt !== '' ? Number(q.f_spt) : null;
+    rows = rows.filter(
+      (g) =>
+        (from == null || Number.isNaN(from) || g.pages >= from) &&
+        (to == null || Number.isNaN(to) || g.pages <= to),
+    );
+  }
+
+  return sortRows(rows, Number(q.f_order) || 0);
+}
+
 // -------------------------------------------------------------- routes
 
 export default function galleryRoutes(app) {
   const router = express.Router();
 
   // Gallery home / search — shaped for GalleryListParser (table.itg/gtr/
-  // glthumb/glname). Also handles ?f_search=... queries: same list page.
+  // glthumb/glname). Applies the site list query params (f_search scopes,
+  // f_cats, f_order, f_spf/f_spt, f_sr/f_srdd, advsearch) via applyListQuery;
+  // with no params it returns the full fixture list in default order.
   router.get('/', (req, res) => {
-    res.type('html').send(listHtml());
+    res.type('html').send(listHtml(applyListQuery(GALLERIES, req.query)));
   });
 
   // Gallery detail page — shaped for GalleryDetailParser.
@@ -164,14 +289,6 @@ export default function galleryRoutes(app) {
       return res.status(404).send('not found');
     }
     res.type('image/png').send(makeImage(g.gid, 1, 'png', g.pages));
-  });
-
-  // Search list page — best-effort shape for GalleryListParser.
-  router.get('/', (req, res, next) => {
-    if (req.query.f_search == null) {
-      return next();
-    }
-    res.type('html').send(listHtml());
   });
 
   // Favorites popup + API stub — not needed for the core test loop.

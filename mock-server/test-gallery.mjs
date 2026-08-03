@@ -171,6 +171,131 @@ test('GET /?f_search=alpha returns list page containing gallery title', async ()
   assert.ok(body.includes('Test Gallery Alpha'), 'gallery title in list');
 });
 
+// --------------------------- list query oracle (search v1.1 extended params)
+//
+// The mock site implements the frozen contract semantics of the site URL
+// params (contracts/openapi.yaml GET /api/v1/gallery/search) so backend and
+// E2E runs can verify filtering/sorting against a known oracle.
+
+/** Extracts gallery gids from a list page in row order. */
+async function gidsFor(query) {
+  const res = await fetch(`${baseUrl}/${query}`);
+  assert.equal(res.status, 200);
+  const body = await res.text();
+  return [...body.matchAll(/\/g\/(\d+)\//g)].map((m) => Number(m[1]));
+}
+
+test('list oracle: no params returns every fixture in default order', async () => {
+  assert.deepEqual(await gidsFor(''), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
+});
+
+test('list oracle: f_cats is an exclusion bitmask (f_cats=2 drops Doujinshi)', async () => {
+  assert.deepEqual(await gidsFor('?f_cats=2'), [2001, 2002]);
+});
+
+test('list oracle: f_cats excludes multiple categories by bit union', async () => {
+  // 0x2 (Doujinshi) | 0x4 (Manga) -> only the Western gallery survives
+  assert.deepEqual(await gidsFor('?f_cats=6'), [2002]);
+});
+
+test('list oracle: f_order=1 sorts by posted time desc', async () => {
+  assert.deepEqual(await gidsFor('?f_order=1'), [3002, 3001, 2002, 2001, 1003, 1002, 1001]);
+});
+
+test('list oracle: f_order=2 sorts by rating desc', async () => {
+  assert.deepEqual(await gidsFor('?f_order=2'), [1003, 1002, 1001, 3002, 3001, 2001, 2002]);
+});
+
+test('list oracle: f_order=3 sorts by title asc', async () => {
+  assert.deepEqual(await gidsFor('?f_order=3'), [3001, 3002, 2001, 2002, 1001, 1002, 1003]);
+});
+
+test('list oracle: f_order=0 keeps the default order', async () => {
+  assert.deepEqual(await gidsFor('?f_order=0'), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
+});
+
+test('list oracle: f_sp=on&f_spf=N keeps galleries with at least N pages', async () => {
+  assert.deepEqual(await gidsFor('?f_sp=on&f_spf=5'), [1001, 1002, 1003, 2002]);
+});
+
+test('list oracle: f_sp=on&f_spt=N keeps galleries with at most N pages', async () => {
+  assert.deepEqual(await gidsFor('?f_sp=on&f_spt=4'), [2001, 3001, 3002]);
+});
+
+test('list oracle: f_sp with both bounds keeps the inclusive range', async () => {
+  assert.deepEqual(await gidsFor('?f_sp=on&f_spf=4&f_spt=6'), [1001, 1002, 2001, 3002]);
+});
+
+test('list oracle: f_sp=on without bounds filters nothing', async () => {
+  assert.deepEqual(await gidsFor('?f_sp=on'), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
+});
+
+test('list oracle: f_sr=on&f_srdd=N keeps rating >= N (inclusive)', async () => {
+  assert.deepEqual(await gidsFor('?f_sr=on&f_srdd=4.5'), [1001, 1002, 1003]);
+});
+
+test('list oracle: f_sr without f_srdd filters nothing', async () => {
+  assert.deepEqual(await gidsFor('?f_sr=on'), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
+});
+
+test('list oracle: f_srdd without f_sr=on filters nothing', async () => {
+  assert.deepEqual(await gidsFor('?f_srdd=5'), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
+});
+
+test('list oracle: advsearch f_sname=on matches the gallery name only', async () => {
+  // "revised" appears in the 3002 title only (not in any description)
+  assert.deepEqual(await gidsFor('?advsearch=1&f_sname=on&f_search=revised'), [3002]);
+});
+
+test('list oracle: advsearch f_stags=on matches tags only', async () => {
+  // "ponytail" is a tag of 2001 only
+  assert.deepEqual(await gidsFor('?advsearch=1&f_stags=on&f_search=ponytail'), [2001]);
+});
+
+test('list oracle: advsearch f_sdesc=on matches descriptions only', async () => {
+  // "commissioned" appears in the 2002 description only (its tag is the
+  // shorter "commission", which must not match)
+  assert.deepEqual(await gidsFor('?advsearch=1&f_sdesc=on&f_search=commissioned'), [2002]);
+});
+
+test('list oracle: advsearch f_storr=on matches torrent filenames only', async () => {
+  // "alpha_final_archive" is a torrent filename of 1003 only
+  assert.deepEqual(await gidsFor('?advsearch=1&f_storr=on&f_search=alpha_final_archive'), [1003]);
+});
+
+test('list oracle: a single scope does not leak into other scopes', async () => {
+  // "commissioned" exists only in a description, so name scope finds nothing
+  assert.deepEqual(await gidsFor('?advsearch=1&f_sname=on&f_search=commissioned'), []);
+});
+
+test('list oracle: multiple scope flags OR together', async () => {
+  // name hits 3002 ("revised" in title), tags hits 2001 ("ponytail")
+  assert.deepEqual(
+    await gidsFor('?advsearch=1&f_sname=on&f_stags=on&f_search=e'),
+    await gidsFor('?advsearch=1&f_sname=on&f_stags=on&f_search=E'),
+    'keyword match is case-insensitive'
+  );
+  assert.deepEqual(await gidsFor('?advsearch=1&f_sname=on&f_stags=on&f_search=ponytail'), [2001]);
+});
+
+test('list oracle: f_search without advsearch uses default name+tags scope', async () => {
+  assert.deepEqual(await gidsFor('?f_search=ponytail'), [2001]);
+  assert.deepEqual(await gidsFor('?f_search=revised'), [3002]);
+});
+
+test('list oracle: advsearch=1 with no scope flag falls back to default scope', async () => {
+  assert.deepEqual(await gidsFor('?advsearch=1&f_search=revised'), [3002]);
+});
+
+test('list oracle: combined f_cats + f_sr + f_order', async () => {
+  // drop Doujinshi, rating >= 4, posted desc -> only 2001 survives
+  assert.deepEqual(await gidsFor('?f_cats=2&f_sr=on&f_srdd=4&f_order=1'), [2001]);
+});
+
+test('list oracle: keyword + page-count bound combine', async () => {
+  assert.deepEqual(await gidsFor('?f_search=alpha&f_sp=on&f_spt=6'), [1001, 1002]);
+});
+
 // ---------------------------------------------------------------- 404
 
 test('GET /g/9999/zzzz/ returns 404', async () => {
