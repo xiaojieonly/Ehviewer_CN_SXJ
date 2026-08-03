@@ -96,6 +96,9 @@ public final class WebUiSettings {
     public void clearConfig() {
         String deviceId = preferences.getString(KEY_DEVICE_ID, "");
         WebUiConfig config = loadConfig();
+        // The full clear wipes the per-server scoped high-water marks and key
+        // sets along with the connection, so a fresh config starts from a full
+        // sync rather than a stale incremental one.
         preferences.edit().clear().apply();
         if (!TextUtils.isEmpty(deviceId)) {
             // Keep a stable device identity across reconfiguration so the server
@@ -151,13 +154,42 @@ public final class WebUiSettings {
         return id;
     }
 
-    /** High-water mark used as the {@code since} value for the next pull. */
+    /**
+     * High-water mark used as the {@code since} value for the next pull,
+     * scoped per server ({@code serverKey}, i.e. {@link WebUiConfig#baseUrl()}).
+     * A missing scoped entry — including data written under the legacy
+     * unscoped key — reads back as 0 so the first sync against that server is
+     * a full pull, never a stale incremental one.
+     */
+    public long lastSyncTimestamp(@NonNull String serverKey) {
+        return preferences.getLong(scopedKey(serverKey), 0L);
+    }
+
+    public void setLastSyncTimestamp(@NonNull String serverKey, long timestamp) {
+        preferences.edit().putLong(scopedKey(serverKey), timestamp).apply();
+    }
+
+    /**
+     * Legacy unscoped high-water mark, kept for callers that predate
+     * per-server scoping (the preferences pull). New code must use the
+     * {@code serverKey} overloads.
+     */
     public long lastSyncTimestamp() {
         return preferences.getLong(KEY_LAST_SYNC_TIMESTAMP, 0L);
     }
 
     public void setLastSyncTimestamp(long timestamp) {
         preferences.edit().putLong(KEY_LAST_SYNC_TIMESTAMP, timestamp).apply();
+    }
+
+    /**
+     * Scoped preference key, composed like the engine's per-server key sets
+     * (see {@code SiteDbWebUiSyncStore}): {@code serverKey + suffix}. The
+     * legacy unscoped {@link #KEY_LAST_SYNC_TIMESTAMP} key stays untouched, so
+     * old data is never mistaken for this server's high-water mark.
+     */
+    private static String scopedKey(@NonNull String serverKey) {
+        return serverKey + "." + KEY_LAST_SYNC_TIMESTAMP;
     }
 
     /**

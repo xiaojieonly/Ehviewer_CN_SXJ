@@ -81,16 +81,26 @@ public final class WebUiConfig {
      * Validates user-supplied host/port values, returning an error message or
      * {@code null} when acceptable. Applies the same normalization as the
      * constructor, so values accepted here produce a usable {@link #baseUrl()}.
-     * The sync fragment does not call this yet; wire it into the configure and
-     * pair dialog save handlers to surface the message before connecting.
+     * Wired into the configure and pair dialog save handlers to surface the
+     * message before any connection attempt is made.
      */
     @Nullable
     public static String validate(@NonNull String host, int port) {
-        if (normalizeHost(host).isEmpty()) {
-            return "Host must not be empty";
+        String normalized = normalizeHost(host);
+        if (normalized.isEmpty()) {
+            return "主机地址不能为空";
+        }
+        for (int i = 0; i < normalized.length(); i++) {
+            char c = normalized.charAt(i);
+            boolean allowed = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                    || (c >= '0' && c <= '9') || c == '.' || c == '-'
+                    || c == '_' || c == ':' || c == '[' || c == ']';
+            if (!allowed) {
+                return "主机地址包含非法字符";
+            }
         }
         if (port < 1 || port > MAX_PORT) {
-            return "Port must be between 1 and " + MAX_PORT;
+            return "端口必须在 1 到 " + MAX_PORT + " 之间";
         }
         return null;
     }

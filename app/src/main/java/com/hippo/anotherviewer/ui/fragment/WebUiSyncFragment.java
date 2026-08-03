@@ -165,7 +165,9 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
 
     private void updateLastSyncSummary() {
         if (mSyncNow == null) return;
-        long last = new WebUiSettings(requireContext()).lastSyncTimestamp();
+        WebUiSettings settings = new WebUiSettings(requireContext());
+        WebUiConfig config = settings.loadConfig();
+        long last = config != null ? settings.lastSyncTimestamp(config.baseUrl()) : 0L;
         if (last <= 0) {
             mSyncNow.setSummary(R.string.settings_webui_sync_now_summary);
         } else {
@@ -201,8 +203,13 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         EditText port = addField(layout, R.string.settings_webui_port,
                 existing != null ? String.valueOf(existing.getPort()) : String.valueOf(WebUiConfig.DEFAULT_PORT));
         port.setInputType(InputType.TYPE_CLASS_NUMBER);
-        EditText username = addField(layout, R.string.settings_webui_username,
-                existing != null ? existing.getUsername() : "");
+        String savedUsername = existing != null ? existing.getUsername() : "";
+        // The server stamps a "default" principal when auth is off; never
+        // prefill it, it only sends the login flow down a dead end.
+        if ("default".equals(savedUsername)) {
+            savedUsername = "";
+        }
+        EditText username = addField(layout, R.string.settings_webui_username, savedUsername);
         EditText password = addField(layout, R.string.settings_webui_password, "");
         password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 
@@ -215,15 +222,16 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String hostValue = host.getText().toString().trim();
             String portValue = port.getText().toString().trim();
-            if (hostValue.isEmpty()) {
-                Toast.makeText(requireActivity(), R.string.settings_webui_invalid_config, Toast.LENGTH_SHORT).show();
-                return;
-            }
             int portNumber;
             try {
                 portNumber = portValue.isEmpty() ? WebUiConfig.DEFAULT_PORT : Integer.parseInt(portValue);
             } catch (NumberFormatException e) {
                 Toast.makeText(requireActivity(), R.string.settings_webui_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String validation = WebUiConfig.validate(hostValue, portNumber);
+            if (validation != null) {
+                Toast.makeText(requireActivity(), validation, Toast.LENGTH_SHORT).show();
                 return;
             }
             String protocolValue = protocol.getSelectedItemPosition() == 1 ? "https" : "http";
@@ -288,7 +296,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             String hostValue = host.getText().toString().trim();
             String portValue = port.getText().toString().trim();
             String codeValue = code.getText().toString().trim();
-            if (hostValue.isEmpty() || codeValue.length() < 4) {
+            if (codeValue.length() < 4) {
                 Toast.makeText(requireActivity(), R.string.settings_webui_invalid_config, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -297,6 +305,11 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 portNumber = portValue.isEmpty() ? WebUiConfig.DEFAULT_PORT : Integer.parseInt(portValue);
             } catch (NumberFormatException e) {
                 Toast.makeText(requireActivity(), R.string.settings_webui_invalid_config, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String validation = WebUiConfig.validate(hostValue, portNumber);
+            if (validation != null) {
+                Toast.makeText(requireActivity(), validation, Toast.LENGTH_SHORT).show();
                 return;
             }
             String protocolValue = protocol.getSelectedItemPosition() == 1 ? "https" : "http";
@@ -332,7 +345,7 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
         }
         mSyncInProgress = true;
         if (mSyncNow != null) mSyncNow.setEnabled(false);
-        new SyncTask(this).execute(config, settings.deviceId(), settings.lastSyncTimestamp());
+        new SyncTask(this).execute(config, settings.deviceId(), settings.lastSyncTimestamp(config.baseUrl()));
     }
 
     private void syncPreferences() {
@@ -359,7 +372,11 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
     // Background tasks
     // ---------------------------------------------------------------------------------------------
 
-    /** Logs in, verifies sync access, then persists the connection. */
+    /**
+     * Connects and persists the configuration. Skips login entirely when the
+     * server permits anonymous access (auth-off), saving the config after the
+     * reachability probe alone; otherwise logs in and verifies sync access.
+     */
     private static final class ConnectTask {
         private final WeakReference<WebUiSyncFragment> fragmentRef;
         private final AlertDialog dialog;
@@ -394,18 +411,34 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             executor.execute(() -> {
                 String token = null;
                 Throwable error = null;
+                boolean loginNeeded = true;
                 try {
-                    WebUiConfig probe = new WebUiConfig(protocol, host, port, username, "");
-                    WebUiSyncModels.AuthResponse auth = WebUiApiClient.login(probe, username, password);
-                    if (!auth.success || TextUtils.isEmpty(auth.token)) {
-                        throw new java.io.IOException(TextUtils.isEmpty(auth.message)
-                                ? "Login failed" : auth.message);
+                    // Anonymous reachability probe: when the server runs with
+                    // auth off it permits every /api/v1/** call, so a
+                    // tokenless status() both proves the server is reachable
+                    // and that no login is required. When auth is on the same
+                    // call is rejected with 401 and we fall through to login.
+                    WebUiApiClient.status(new WebUiConfig(protocol, host, port, "", ""));
+                    loginNeeded = false;
+                } catch (Throwable ignored) {
+                    // Unreachable anonymously: the server requires auth, or the
+                    // network failed. Try the login flow either way; the failure
+                    // toast covers both cases.
+                }
+                if (loginNeeded) {
+                    try {
+                        WebUiConfig probe = new WebUiConfig(protocol, host, port, username, "");
+                        WebUiSyncModels.AuthResponse auth = WebUiApiClient.login(probe, username, password);
+                        if (!auth.success || TextUtils.isEmpty(auth.token)) {
+                            throw new java.io.IOException(TextUtils.isEmpty(auth.message)
+                                    ? "Login failed" : auth.message);
+                        }
+                        token = auth.token;
+                        // Verify the token actually grants sync access.
+                        WebUiApiClient.status(new WebUiConfig(protocol, host, port, username, token));
+                    } catch (Throwable e) {
+                        error = e;
                     }
-                    token = auth.token;
-                    // Verify the token actually grants sync access.
-                    WebUiApiClient.status(new WebUiConfig(protocol, host, port, username, token));
-                } catch (Throwable e) {
-                    error = e;
                 }
                 final String savedToken = token;
                 final Throwable finalError = error;
@@ -426,8 +459,11 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 fragment.updateConfigureSummary();
                 Toast.makeText(fragment.requireActivity(), R.string.settings_webui_connected, Toast.LENGTH_LONG).show();
             } else {
+                // Login-specific hint: on an auth-off server the login endpoint
+                // rejects every account, so point the user at pairing instead.
                 Toast.makeText(fragment.requireActivity(),
-                        fragment.getString(R.string.settings_webui_connect_failed, messageOf(error)),
+                        fragment.getString(R.string.settings_webui_connect_failed,
+                                messageOf(error) + "；如服务器未开启认证，请改用『配对』或检查账号"),
                         Toast.LENGTH_LONG).show();
             }
         }
@@ -574,11 +610,11 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
                 }
                 final WebUiSyncEngine.Result finalResult = result;
                 final Throwable finalError = error;
-                handler.post(() -> onPostExecute(finalResult, finalError));
+                handler.post(() -> onPostExecute(finalResult, finalError, config));
             });
         }
 
-        private void onPostExecute(WebUiSyncEngine.Result result, Throwable error) {
+        private void onPostExecute(WebUiSyncEngine.Result result, Throwable error, WebUiConfig config) {
             if (progress != null) {
                 try { progress.dismiss(); } catch (Exception ignored) {}
             }
@@ -588,7 +624,8 @@ public class WebUiSyncFragment extends PreferenceFragmentCompat {
             if (fragment.mSyncNow != null) fragment.mSyncNow.setEnabled(true);
             if (!fragment.isAdded()) return;
             if (error == null && result != null) {
-                new WebUiSettings(fragment.requireContext()).setLastSyncTimestamp(result.serverTimestamp);
+                new WebUiSettings(fragment.requireContext())
+                        .setLastSyncTimestamp(config.baseUrl(), result.serverTimestamp);
                 fragment.updateLastSyncSummary();
                 Toast.makeText(fragment.requireActivity(),
                         fragment.getString(R.string.settings_webui_sync_done,
