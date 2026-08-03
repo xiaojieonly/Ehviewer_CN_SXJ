@@ -27,7 +27,7 @@ public class TorrentParser {
 
     private static final Pattern PATTERN_TORRENT_BLOCK = Pattern.compile("<form\\b[^>]*>.*?</form>", Pattern.DOTALL);
     private static final Pattern PATTERN_POSTED = Pattern.compile("<span[^>]*>\\s*Posted:\\s*</span>\\s*<span>([^<]+)</span>", Pattern.DOTALL);
-    private static final Pattern PATTERN_TORRENT = Pattern.compile("<td colspan=\"5\">\\s*&nbsp;\\s*<a href=\"([^\"]+)\"[^<]*>([^<]+)</a></td>", Pattern.DOTALL);
+    private static final Pattern PATTERN_TORRENT = Pattern.compile("<td\\s+colspan=\"5\">\\s*&nbsp;\\s*<a\\s+href=\"([^\"]+)\"[^<]*>([^<]+)</a></td>", Pattern.DOTALL);
 
     public static TorrentInfo[] parse(String body) {
         List<TorrentInfo> torrentList = new ArrayList<>();
