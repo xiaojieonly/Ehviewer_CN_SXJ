@@ -4,6 +4,9 @@
 
   选项值与枚举对齐 `src/components/reader/PageMode.vue`
   （READING_DIRECTION_LTR/RTL/VERTICAL、auto/single/dual/scroll）。
+  Wave-1 A 组（1c）新增「交互/双页/性能」三组：backgroundColor、
+  tapZoneScheme、keyboardPaging、pageTransition、zoomStep、maxZoom、
+  dualPageGap、splitWidePages、preloadCount（ReaderView 消费接线见 P2）。
   所有变更通过 preferencesStore.updateReader 合并到 reader 偏好并由 store
   防抖持久化；保存成功后页头闪现「已保存」。
 -->
@@ -131,6 +134,114 @@
             </PrefRow>
           </PrefCard>
         </section>
+
+        <!-- ═══ 交互（Wave-1 A 组） ══════════════════════════════════ -->
+        <section>
+          <SectionHeader title="交互" />
+          <PrefCard>
+            <PrefRow icon="settings-black" title="背景颜色" summary="阅读器画布的背景色">
+              <AppSelect
+                :model-value="reader.backgroundColor"
+                :options="BACKGROUND_OPTIONS"
+                @update:model-value="(v) => onSelectValueChange('backgroundColor', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="mobile-hand-left" title="点击区域" summary="点按屏幕翻页的区域方案">
+              <AppSelect
+                :model-value="reader.tapZoneScheme"
+                :options="TAP_ZONE_OPTIONS"
+                @update:model-value="(v) => onSelectValueChange('tapZoneScheme', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="go-to-dark" title="键盘翻页" summary="使用方向键 / PageUp / PageDown 翻页">
+              <AppSwitch
+                :model-value="reader.keyboardPaging"
+                aria-label="键盘翻页"
+                @update:model-value="() => toggleSwitch('keyboardPaging')"
+              />
+            </PrefRow>
+            <PrefRow icon="play-dark" title="翻页过渡" summary="翻页时页面切换的动画效果">
+              <AppSelect
+                :model-value="reader.pageTransition"
+                :options="PAGE_TRANSITION_OPTIONS"
+                @update:model-value="(v) => onSelectValueChange('pageTransition', v)"
+              />
+            </PrefRow>
+            <PrefRow icon="magnify-dark" title="缩放步进" summary="每次缩放的倍数，需大于 1">
+              <label class="num-field">
+                <input
+                  type="number"
+                  min="1.1"
+                  max="10"
+                  step="0.1"
+                  :value="reader.zoomStep"
+                  aria-label="缩放步进"
+                  @change="onReaderNumberChange('zoomStep', $event)"
+                />
+              </label>
+            </PrefRow>
+            <PrefRow icon="magnify" title="最大缩放" summary="允许的最大缩放倍数">
+              <label class="num-field">
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  step="0.5"
+                  :value="reader.maxZoom"
+                  aria-label="最大缩放"
+                  @change="onReaderNumberChange('maxZoom', $event)"
+                />
+              </label>
+            </PrefRow>
+          </PrefCard>
+        </section>
+
+        <!-- ═══ 双页（Wave-1 A 组） ══════════════════════════════════ -->
+        <section>
+          <SectionHeader title="双页" />
+          <PrefCard>
+            <PrefRow icon="reorder" title="双页间距" summary="双页模式下两页之间的间隔（像素）">
+              <label class="num-field">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  :value="reader.dualPageGap"
+                  aria-label="双页间距"
+                  @change="onReaderNumberChange('dualPageGap', $event)"
+                />
+              </label>
+            </PrefRow>
+            <PrefRow icon="book-open" title="拆分宽页" summary="将宽幅页面拆分为两页显示">
+              <AppSwitch
+                :model-value="reader.splitWidePages"
+                aria-label="拆分宽页"
+                @update:model-value="() => toggleSwitch('splitWidePages')"
+              />
+            </PrefRow>
+          </PrefCard>
+        </section>
+
+        <!-- ═══ 性能（Wave-1 A 组） ══════════════════════════════════ -->
+        <section>
+          <SectionHeader title="性能" />
+          <PrefCard>
+            <PrefRow icon="download-dark" title="预加载页数" summary="提前加载当前页之后的页数，0 表示关闭">
+              <label class="num-field">
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="1"
+                  :value="reader.preloadCount"
+                  aria-label="预加载页数"
+                  @change="onReaderNumberChange('preloadCount', $event)"
+                />
+              </label>
+            </PrefRow>
+          </PrefCard>
+        </section>
       </template>
     </div>
 
@@ -180,6 +291,36 @@ const START_POSITION_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'bottom-left', label: '左下' },
 ]
 
+/* --------------------------- Wave-1 A 组选项 ---------------------------- */
+
+const BACKGROUND_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'black', label: '黑色' },
+  { value: 'gray', label: '灰色' },
+  { value: 'white', label: '白色' },
+]
+
+const TAP_ZONE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'threeZone', label: '三分区' },
+  { value: 'edgeOnly', label: '仅边缘' },
+  { value: 'disabled', label: '禁用' },
+]
+
+const PAGE_TRANSITION_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'slide', label: '滑动' },
+  { value: 'fade', label: '淡入淡出' },
+  { value: 'none', label: '无' },
+]
+
+/** 数字键的 clamp 范围（与后端 @field 校验一致，输入侧先 clamp） */
+const READER_NUMBER_BOUNDS: Partial<
+  Record<keyof ReaderPreferences, { min: number; max: number; fallback: number; decimals?: number }>
+> = {
+  zoomStep: { min: 1.1, max: 10, fallback: 1.5, decimals: 1 },
+  maxZoom: { min: 1, max: 50, fallback: 5, decimals: 1 },
+  dualPageGap: { min: 0, max: 100, fallback: 8 },
+  preloadCount: { min: 0, max: 20, fallback: 2 },
+}
+
 const START_POSITION_LABELS: Readonly<Record<string, string>> = {
   'top-right': '从右上角开始',
   'top_right': '从右上角开始',
@@ -226,10 +367,30 @@ function onSelectValueChange(key: keyof ReaderPreferences, value: string | numbe
   updateReader({ [key]: String(value) })
 }
 
-function toggleSwitch(key: 'firstPageCover' | 'showProgress' | 'showPageInterval' | 'fullscreen'): void {
+function toggleSwitch(
+  key:
+    | 'firstPageCover'
+    | 'showProgress'
+    | 'showPageInterval'
+    | 'fullscreen'
+    | 'keyboardPaging'
+    | 'splitWidePages',
+): void {
   const current = reader.value?.[key]
   if (typeof current !== 'boolean') return
   updateReader({ [key]: !current })
+}
+
+/** 数字输入 @change：按 READER_NUMBER_BOUNDS clamp 后写回。 */
+function onReaderNumberChange(key: keyof ReaderPreferences, event: Event): void {
+  const bounds = READER_NUMBER_BOUNDS[key]
+  if (!bounds) return
+  const target = event.target as HTMLInputElement
+  const parsed = Number.parseFloat(target.value)
+  const clamped = Number.isNaN(parsed) ? bounds.fallback : Math.min(bounds.max, Math.max(bounds.min, parsed))
+  const value = bounds.decimals ? Number(clamped.toFixed(bounds.decimals)) : Math.round(clamped)
+  target.value = String(value)
+  updateReader({ [key]: value })
 }
 
 function bumpInterval(delta: number): void {
@@ -477,6 +638,25 @@ onBeforeUnmount(() => {
   font-size: clamp(12px, 13px, 14px);
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* ------------------------------- number input ----------------------------- */
+
+.num-field input {
+  width: 92px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--card-radius);
+  background: transparent;
+  font-size: clamp(13px, 14px, 16px);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-color-primary);
+  outline: none;
+  transition: border-color 150ms var(--ease-decelerate-quart);
+}
+
+.num-field input:focus {
+  border-color: var(--color-primary);
 }
 
 /* --------------------------------- snackbar -------------------------------- */
