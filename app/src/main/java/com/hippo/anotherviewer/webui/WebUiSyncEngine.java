@@ -152,6 +152,26 @@ public final class WebUiSyncEngine {
         return true;
     }
 
+    /**
+     * Contract v2 §3.8 double-alive arbitration for a pulled alive record that
+     * collides with a locally-alive record. Cross-platform same-key conflicts
+     * are won unconditionally by the priority platform under A/C — the winner
+     * is applied even when its {@code lastModified} is older than the local
+     * copy (timestamp does not arbitrate, §1.4). Same-platform conflicts and
+     * the B strategy fall back to last-write-wins via {@code incomingNewer}.
+     * Without this guard the client's plain LWW would keep a newer local copy
+     * and diverge from the server's authoritative priority winner.
+     */
+    static boolean aliveRecordWins(ConflictStrategy strategy, String incomingDeviceId,
+            String localDeviceId, boolean incomingNewer) {
+        String priority = strategy.priorityPlatform();
+        if (priority == null) return incomingNewer;
+        String incomingPlatform = platformOf(incomingDeviceId);
+        String localPlatform = platformOf(localDeviceId);
+        if (incomingPlatform.equals(localPlatform)) return incomingNewer;
+        return priority.equals(incomingPlatform);
+    }
+
     private static volatile WebUiSyncEngine sInstance;
 
     private final WebUiSyncStore mStore;
@@ -302,7 +322,7 @@ public final class WebUiSyncEngine {
         applyFavorites(pull.entities.favorites, result, snapshotFavorites, strategy, deviceId);
         applyHistory(pull.entities.history, result, snapshotHistory);
         applyDownloads(pull.entities.downloads, result, snapshotDownloads, strategy, deviceId);
-        applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks);
+        applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks, strategy, deviceId);
         applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId);
         applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId);
         applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId);
@@ -594,9 +614,11 @@ public final class WebUiSyncEngine {
                 info.time = fav.time;
                 mStore.putLocalFavorite(info);
                 result.pulledFavorites++;
-            } else if (fav.lastModified > local.time) {
-                // Server copy is newer — refresh metadata (the local favorite's
-                // push lastModified is its add time, so time is the comparison).
+            } else if (aliveRecordWins(strategy, fav.deviceId, localDeviceId, fav.lastModified > local.time)) {
+                // §3.8 double-alive: the priority platform's record wins
+                // unconditionally under A/C; otherwise last-write-wins (the
+                // local favorite's push lastModified is its add time, so time
+                // is the LWW comparison).
                 copyDtoToGallery(fav, local);
                 mStore.updateLocalFavorite(local);
                 result.pulledFavorites++;
@@ -662,9 +684,14 @@ public final class WebUiSyncEngine {
         }
     }
 
-    /** Bookmarks use last-write-wins on lastModified (local time) with hard-delete. */
+    /**
+     * Bookmarks hard-delete (tombstones always propagate, §3.8) and arbitrate
+     * double-alive by §3.8: priority platform wins unconditionally under A/C,
+     * else last-write-wins on lastModified (local time).
+     */
     private void applyBookmarks(List<WebUiSyncModels.SyncBookmark> bookmarks,
-            Result result, Set<Long> snapshotBookmarks) {
+            Result result, Set<Long> snapshotBookmarks,
+            ConflictStrategy strategy, String localDeviceId) {
         Map<Long, BookmarkInfo> locals = new HashMap<>();
         for (BookmarkInfo bi : mStore.getAllBookmark()) {
             locals.put(bi.gid, bi);
@@ -687,7 +714,9 @@ public final class WebUiSyncEngine {
                 locals.put(dto.gid, info);
                 snapshotBookmarks.add(dto.gid);
                 result.pulledBookmarks++;
-            } else if (dto.lastModified > local.time) {
+            } else if (aliveRecordWins(strategy, dto.deviceId, localDeviceId, dto.lastModified > local.time)) {
+                // §3.8 double-alive: priority platform wins unconditionally
+                // under A/C; otherwise last-write-wins on lastModified.
                 copyDtoToGallery(dto, local);
                 local.page = dto.page;
                 local.time = dto.time;
