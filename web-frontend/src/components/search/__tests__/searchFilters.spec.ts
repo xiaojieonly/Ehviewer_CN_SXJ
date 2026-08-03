@@ -109,7 +109,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       mode: 0,
     })
     expect(Object.keys(payload).sort()).toEqual(
-      ['advanceSearch', 'category', 'keyword', 'minRating', 'mode', 'name', 'pageFrom', 'pageTo'].sort(),
+      ['advanceSearch', 'category', 'keyword', 'minRating', 'mode', 'name', 'pageFrom', 'pageTo', 'sort'].sort(),
     )
     expect(payload).toEqual({
       name: 'Strict search',
@@ -124,6 +124,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       minRating: 4,
       pageFrom: 5,
       pageTo: 50,
+      sort: 2, // W3 R4-11: sort round-trips through presets now
     })
   })
 
@@ -138,10 +139,11 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       minRating: 0,
       pageFrom: 0,
       pageTo: 0,
+      sort: 0,
     })
   })
 
-  it('round-trips filter state through the DTO (sort is not representable)', () => {
+  it('round-trips filter state through the DTO (sort included, W3 R4-11)', () => {
     const payload = filtersToQuickSearchPayload(FULL_FILTERS, {
       name: 'x',
       keyword: 'k',
@@ -157,6 +159,15 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       searchTags: true,
       searchDesc: true,
       searchTorrents: true,
+      // W3 R4-10: the higher bits round-trip too (all clear in FULL_FILTERS).
+      searchTorrentsOnly: false,
+      searchLowPowerTags: false,
+      searchDownvotedTags: false,
+      searchExpunged: false,
+      disableLanguageFilter: false,
+      disableUploaderFilter: false,
+      disableTagFilter: false,
+      sort: 2,
     })
   })
 
@@ -181,6 +192,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
     expect(filters.searchTags).toBe(false)
     expect(filters.searchDesc).toBe(false)
     expect(filters.searchTorrents).toBe(false)
+    expect(filters.sort).toBeUndefined() // absent sort (legacy row) = default order
     expect(isFilterActive(filters)).toBe(false)
   })
 
@@ -201,6 +213,84 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
     expect(filters.searchName).toBe(false)
     expect(filters.searchDesc).toBe(false)
     expect(filters.searchTorrents).toBe(false)
+  })
+})
+
+describe('W3 R4-10 — higher AdvanceSearchTable bits (backendized)', () => {
+  const HIGH_FILTERS = {
+    searchTorrentsOnly: true,
+    searchLowPowerTags: true,
+    searchDownvotedTags: true,
+    searchExpunged: true,
+    disableLanguageFilter: true,
+    disableUploaderFilter: true,
+    disableTagFilter: true,
+  } as const
+
+  const HIGH_MASK =
+    ADVANCE_SEARCH_BITS.STO |
+    ADVANCE_SEARCH_BITS.SDT1 |
+    ADVANCE_SEARCH_BITS.SDT2 |
+    ADVANCE_SEARCH_BITS.SH |
+    ADVANCE_SEARCH_BITS.SFL |
+    ADVANCE_SEARCH_BITS.SFU |
+    ADVANCE_SEARCH_BITS.SFT
+
+  it('each active higher bit yields one "Adv:" chip', () => {
+    const chips = filterChips({ ...HIGH_FILTERS })
+    expect(chips).toHaveLength(7)
+    expect(chips.every((chip) => chip.label.startsWith('Adv: '))).toBe(true)
+    expect(chips.map((chip) => chip.id).sort()).toEqual(
+      [
+        'disableLanguageFilter',
+        'disableTagFilter',
+        'disableUploaderFilter',
+        'searchDownvotedTags',
+        'searchExpunged',
+        'searchLowPowerTags',
+        'searchTorrentsOnly',
+      ].sort(),
+    )
+  })
+
+  it('chip × clears exactly one higher bit', () => {
+    const next = removeFilterChip({ ...HIGH_FILTERS }, 'searchExpunged')
+    expect(next.searchExpunged).toBeUndefined()
+    expect(next.searchTorrentsOnly).toBe(true)
+    expect(next.disableTagFilter).toBe(true)
+    expect(filterChips(next)).toHaveLength(6)
+  })
+
+  it('payload packs the full 11-bit mask (scope + higher)', () => {
+    const payload = filtersToQuickSearchPayload(
+      { searchName: true, ...HIGH_FILTERS },
+      { name: 'wide', keyword: '', mode: 0 },
+    )
+    expect(payload.advanceSearch).toBe(ADVANCE_SEARCH_BITS.SNAME | HIGH_MASK)
+    expect(payload.advanceSearch).toBeLessThanOrEqual(2047) // server-accepted range
+  })
+
+  it('round-trips higher bits through a preset', () => {
+    const preset = {
+      id: 5,
+      name: 'high',
+      mode: 0,
+      category: 0,
+      keyword: '',
+      advanceSearch: HIGH_MASK,
+      minRating: 0,
+      pageFrom: 0,
+      pageTo: 0,
+    }
+    const filters = quickSearchToFilters(preset)
+    expect(filters.searchTorrentsOnly).toBe(true)
+    expect(filters.searchLowPowerTags).toBe(true)
+    expect(filters.searchDownvotedTags).toBe(true)
+    expect(filters.searchExpunged).toBe(true)
+    expect(filters.disableLanguageFilter).toBe(true)
+    expect(filters.disableUploaderFilter).toBe(true)
+    expect(filters.disableTagFilter).toBe(true)
+    expect(filters.searchName).toBe(false)
   })
 })
 

@@ -4,9 +4,12 @@ import FilterPanel from '../FilterPanel.vue'
 import AppSelect from '@/components/form/AppSelect.vue'
 import AppSwitch from '@/components/form/AppSwitch.vue'
 import type { SearchFilters } from '@/api/gallery'
+import type { NormalSearchMode } from '@/types/components'
 import { CATEGORY_BIT_VALUES, CATEGORY_ORDER } from '@/types/components'
 
-function mountPanel(props: Partial<{ filters: SearchFilters; open: boolean }> = {}) {
+function mountPanel(
+  props: Partial<{ filters: SearchFilters; open: boolean; keywordMode: NormalSearchMode }> = {},
+) {
   return mount(FilterPanel, {
     props: { filters: {}, open: true, ...props },
   })
@@ -158,11 +161,15 @@ describe('FilterPanel', () => {
   })
 
   describe('search scope switches', () => {
+    // 11 switches total: the first 4 are the keyword scopes, the last 7 the
+    // W3 R4-10 advanced options.
     it('renders the four scope switches bound to the filter state', () => {
       const wrapper = mountPanel({ filters: { searchTags: true } })
       const switches = wrapper.findAllComponents(AppSwitch)
-      expect(switches).toHaveLength(4)
-      expect(switches.map((s) => s.props('modelValue'))).toEqual([false, true, false, false])
+      expect(switches).toHaveLength(11)
+      expect(switches.slice(0, 4).map((s) => s.props('modelValue'))).toEqual([
+        false, true, false, false,
+      ])
     })
 
     it('emits the toggled scope flag (true keeps, false clears)', async () => {
@@ -173,6 +180,45 @@ describe('FilterPanel', () => {
       const events = wrapper.emitted('update:filters') ?? []
       expect((events[0][0] as SearchFilters).searchName).toBe(true)
       expect((events[1][0] as SearchFilters).searchTorrents).toBeUndefined()
+    })
+  })
+
+  describe('keyword mode (absorbed from SearchLayout, W3 R4-10)', () => {
+    it('renders the four modes with the current one checked', () => {
+      const wrapper = mountPanel({ keywordMode: 'uploader' })
+      const radios = wrapper.findAll('.filter-panel__mode')
+      expect(radios.map((r) => r.text())).toEqual(['Search', 'Subscription', 'Uploader', 'Tag'])
+      expect(radios.map((r) => r.attributes('aria-checked'))).toEqual([
+        'false', 'false', 'true', 'false',
+      ])
+    })
+
+    it('emits update:keywordMode on selection', async () => {
+      const wrapper = mountPanel()
+      await wrapper.findAll('.filter-panel__mode')[3].trigger('click')
+      expect(wrapper.emitted('update:keywordMode')?.[0]).toEqual(['tag'])
+    })
+  })
+
+  describe('advanced options (W3 R4-10 higher bits)', () => {
+    it('renders the seven advanced switches bound to the filter state', () => {
+      const wrapper = mountPanel({ filters: { searchExpunged: true } })
+      const advanced = wrapper.findAllComponents(AppSwitch).slice(4)
+      expect(advanced).toHaveLength(7)
+      // Order: torrentsOnly, lowPower, downvoted, expunged, sfl, sfu, sft.
+      expect(advanced.map((s) => s.props('modelValue'))).toEqual([
+        false, false, false, true, false, false, false,
+      ])
+    })
+
+    it('emits the toggled advanced flag', async () => {
+      const wrapper = mountPanel()
+      const advanced = wrapper.findAllComponents(AppSwitch).slice(4)
+      advanced[0].vm.$emit('update:modelValue', true)
+      advanced[6].vm.$emit('update:modelValue', true)
+      const events = wrapper.emitted('update:filters') ?? []
+      expect((events[0][0] as SearchFilters).searchTorrentsOnly).toBe(true)
+      expect((events[1][0] as SearchFilters).disableTagFilter).toBe(true)
     })
   })
 

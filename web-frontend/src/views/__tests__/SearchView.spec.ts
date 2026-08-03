@@ -10,6 +10,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import SearchView from '../SearchView.vue'
 import SearchBar from '@/components/search/SearchBar.vue'
 import FilterPanel from '@/components/search/FilterPanel.vue'
+import FabLayout from '@/components/atoms/FabLayout.vue'
 import { galleryApi } from '@/api/gallery'
 import { preferencesApi } from '@/api/preferences'
 import type { SearchFilters } from '@/api/gallery'
@@ -29,6 +30,7 @@ vi.mock('@/api/gallery', () => ({
     search: vi.fn(),
     getQuickSearches: vi.fn(),
     createQuickSearch: vi.fn(),
+    deleteQuickSearch: vi.fn(),
   },
 }))
 
@@ -157,9 +159,10 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
       })
     })
 
-    it('shares state with the legacy SearchLayout panel (scope bits survive)', async () => {
+    it('round-trips scope bits through the canonical advance mask', async () => {
       await mountView()
-      // Scope flags map onto the AdvanceSearchTable low bits.
+      // Scope flags map onto the AdvanceSearchTable low bits and survive the
+      // applyFilters → activeFilters round-trip.
       setFilters({ searchName: true, searchTorrents: true })
       wrapper.findComponent(FilterPanel).vm.$emit('search')
       await flushPromises()
@@ -224,6 +227,49 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
     })
   })
 
+  describe('W3 R4-10 — single filter surface convergence', () => {
+    it('retires the legacy SearchLayout panel (FilterPanel is the only surface)', async () => {
+      await mountView()
+      expect(wrapper.find('.search-layout').exists()).toBe(false)
+      expect(wrapper.findComponent(FilterPanel).exists()).toBe(true)
+    })
+
+    it('primary FAB opens the FilterPanel', async () => {
+      await mountView()
+      wrapper.findComponent(FabLayout).vm.$emit('click-primary')
+      await flushPromises()
+      expect(wrapper.findComponent(FilterPanel).props('open')).toBe(true)
+    })
+
+    it('higher advance bits flow from the panel into the search call', async () => {
+      await mountView()
+      wrapper.findComponent(FilterPanel).vm.$emit('update:filters', {
+        searchTorrentsOnly: true,
+        searchExpunged: true,
+        disableTagFilter: true,
+      })
+      wrapper.findComponent(FilterPanel).vm.$emit('search')
+      await flushPromises()
+
+      const calls = vi.mocked(galleryApi.search).mock.calls
+      const filters = calls[calls.length - 1][4] as Record<string, unknown> | undefined
+      expect(filters?.searchTorrentsOnly).toBe(true)
+      expect(filters?.searchExpunged).toBe(true)
+      expect(filters?.disableTagFilter).toBe(true)
+      expect(filters?.searchName).toBe(false)
+    })
+
+    it('keyword mode from the panel drives the composed keyword (tag:/uploader:)', async () => {
+      await mountView()
+      wrapper.findComponent(FilterPanel).vm.$emit('update:keywordMode', 'tag')
+      wrapper.findComponent(SearchBar).vm.$emit('search', 'naruto')
+      await flushPromises()
+
+      const calls = vi.mocked(galleryApi.search).mock.calls
+      expect(calls[calls.length - 1][0]).toBe('tag:naruto')
+    })
+  })
+
   describe('save as quick search (QuickSearchDto schema)', () => {
     async function openSaveDialog() {
       wrapper.findComponent(FilterPanel).vm.$emit('save-quick-search')
@@ -249,7 +295,64 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
         minRating: 4,
         pageFrom: 5,
         pageTo: 50,
+        sort: 3, // W3 R4-11: sort persists with the preset
       })
+    })
+
+    it('loading a preset restores its persisted sort (W3 R4-11)', async () => {
+      const preset = {
+        id: 51,
+        name: 'sorted preset',
+        mode: 0,
+        category: 0,
+        keyword: 'sorted kw',
+        advanceSearch: 0,
+        minRating: 0,
+        pageFrom: 0,
+        pageTo: 0,
+        sort: 2,
+      }
+      localStorage.setItem('anotherviewer-quick-searches', JSON.stringify([preset]))
+      await mountView()
+
+      // The preset surfaces as a suggestion; selecting it loads the preset.
+      const bar = wrapper.findComponent(SearchBar)
+      const suggestions = bar.props('suggestions') as Array<{ text: string }>
+      const index = suggestions.findIndex((s) => s.text === 'sorted kw')
+      expect(index).toBeGreaterThanOrEqual(0)
+      bar.vm.$emit('select-suggestion', suggestions[index], index)
+      await flushPromises()
+
+      const calls = vi.mocked(galleryApi.search).mock.calls
+      const filters = calls[calls.length - 1][4] as Record<string, unknown> | undefined
+      expect(filters?.sort).toBe(2)
+    })
+
+    it('loading a legacy preset without sort keeps the default order', async () => {
+      const legacy = {
+        id: 52,
+        name: 'legacy preset',
+        mode: 0,
+        category: 0,
+        keyword: 'legacy kw',
+        advanceSearch: 0,
+        minRating: 3,
+        pageFrom: 0,
+        pageTo: 0,
+      }
+      localStorage.setItem('anotherviewer-quick-searches', JSON.stringify([legacy]))
+      await mountView()
+
+      const bar = wrapper.findComponent(SearchBar)
+      const suggestions = bar.props('suggestions') as Array<{ text: string }>
+      const index = suggestions.findIndex((s) => s.text === 'legacy kw')
+      bar.vm.$emit('select-suggestion', suggestions[index], index)
+      await flushPromises()
+
+      const calls = vi.mocked(galleryApi.search).mock.calls
+      const filters = calls[calls.length - 1][4] as Record<string, unknown> | undefined
+      expect(filters?.sort).toBeUndefined()
+      expect(filters?.minRating).toBe(3)
     })
 
     it('falls back to a device-local preset when the POST fails', async () => {
@@ -266,6 +369,57 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
       expect(stored).toHaveLength(1)
       expect(stored[0].name).toBe('Offline preset')
       expect(typeof stored[0].id).toBe('number')
+    })
+  })
+
+  describe('delete quick search — server call (W3 R4-12)', () => {
+    const PRESET = {
+      id: 61,
+      name: 'to delete',
+      mode: 0,
+      category: 0,
+      keyword: 'del kw',
+      advanceSearch: 0,
+      minRating: 0,
+      pageFrom: 0,
+      pageTo: 0,
+    }
+
+    async function openManageDialog() {
+      wrapper.findComponent(FabLayout).vm.$emit(
+        'click-secondary',
+        { id: 'manage-quick', icon: 'book-open', label: 'Quick searches' },
+        0,
+      )
+      await flushPromises()
+    }
+
+    it('sends DELETE to the server and removes the preset locally', async () => {
+      vi.mocked(galleryApi.deleteQuickSearch).mockResolvedValue({ success: true })
+      localStorage.setItem('anotherviewer-quick-searches', JSON.stringify([PRESET]))
+      await mountView()
+      await openManageDialog()
+
+      await wrapper.find('.qs-item__delete').trigger('click')
+      await flushPromises()
+
+      expect(galleryApi.deleteQuickSearch).toHaveBeenCalledWith(61)
+      expect(JSON.parse(localStorage.getItem('anotherviewer-quick-searches') ?? '[]')).toEqual([])
+      expect(wrapper.findAll('.qs-item')).toHaveLength(0)
+    })
+
+    it('keeps the local removal and warns when the server is unreachable', async () => {
+      vi.mocked(galleryApi.deleteQuickSearch).mockRejectedValue(new Error('offline'))
+      localStorage.setItem('anotherviewer-quick-searches', JSON.stringify([PRESET]))
+      await mountView()
+      await openManageDialog()
+
+      await wrapper.find('.qs-item__delete').trigger('click')
+      await flushPromises()
+
+      expect(galleryApi.deleteQuickSearch).toHaveBeenCalledWith(61)
+      expect(JSON.parse(localStorage.getItem('anotherviewer-quick-searches') ?? '[]')).toEqual([])
+      expect(wrapper.find('.snackbar').text()).toContain('on this device only')
     })
   })
 

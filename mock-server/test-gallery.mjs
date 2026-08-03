@@ -238,6 +238,26 @@ test('list oracle: f_sr without f_srdd filters nothing', async () => {
   assert.deepEqual(await gidsFor('?f_sr=on'), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
 });
 
+// W3 R4-10: higher AdvanceSearchTable bits reach the site oracle.
+test('list oracle: f_sto=on keeps only galleries with torrents', async () => {
+  // Fixtures 1003 and 2002 are the only rows with torrent entries.
+  assert.deepEqual(await gidsFor('?f_sto=on'), [1003, 2002]);
+});
+
+test('list oracle: f_sto combines with other filters (intersection)', async () => {
+  // Torrent-bearing rows ∩ rating >= 4.5 → only 1003 (2002 rates lower).
+  assert.deepEqual(await gidsFor('?f_sto=on&f_sr=on&f_srdd=4.5'), [1003]);
+});
+
+test('list oracle: remaining higher bits are accepted no-ops (no 400, full list)', async () => {
+  // f_sdt1/f_sdt2/f_sh/f_sfl/f_sfu/f_sft have no fixture-backed oracle and
+  // must simply be accepted (Tier-2 passthrough URLs never 400).
+  const res = await fetch(
+    `${baseUrl}/?f_search=alpha&advsearch=1&f_sdt1=on&f_sdt2=on&f_sh=on&f_sfl=on&f_sfu=on&f_sft=on`,
+  );
+  assert.equal(res.status, 200);
+});
+
 test('list oracle: f_srdd without f_sr=on filters nothing', async () => {
   assert.deepEqual(await gidsFor('?f_srdd=5'), [1001, 1002, 1003, 2001, 2002, 3001, 3002]);
 });

@@ -232,6 +232,14 @@ function sortRows(rows, order) {
 //   f_sr=on & f_srdd=N                keep rating >= N
 //   f_sp=on & f_spf / f_spt           keep page count within [spf, spt];
 //                                     either bound may be absent
+//   f_sto=on                          keep only galleries with torrents
+//                                     (W3 R4-10 higher-bit oracle)
+//   f_sdt1 / f_sdt2 / f_sh /          W3 R4-10 higher bits — RECOGNIZED but
+//   f_sfl / f_sfu / f_sft             no-ops here: fixtures carry no
+//                                     low-power/downvoted-tag, expunged or
+//                                     default language/uploader/tag filters
+//                                     to model. The mock accepts them so
+//                                     Tier-2 passthrough URLs never 400.
 //   f_order                           sort oracle (see sortRows)
 //   page                              pagination is not modeled — the mock
 //                                     list is a single page
@@ -277,6 +285,12 @@ export function applyListQuery(galleries, q) {
         (from == null || Number.isNaN(from) || g.pages >= from) &&
         (to == null || Number.isNaN(to) || g.pages <= to),
     );
+  }
+
+  // W3 R4-10: f_sto — only galleries with torrents. The other higher bits
+  // (f_sdt1/f_sdt2/f_sh/f_sfl/f_sfu/f_sft) are accepted no-ops (see header).
+  if (q.f_sto === 'on') {
+    rows = rows.filter((g) => Array.isArray(g.torrents) && g.torrents.length > 0);
   }
 
   return sortRows(rows, Number(q.f_order) || 0);

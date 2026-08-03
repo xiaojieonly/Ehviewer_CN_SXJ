@@ -23,6 +23,14 @@ class GalleryController(private val galleryService: GalleryService) {
         @RequestParam(required = false) searchTags: Boolean?,
         @RequestParam(required = false) searchDesc: Boolean?,
         @RequestParam(required = false) searchTorrents: Boolean?,
+        // W3 R4-10: higher AdvanceSearchTable bits (backendized).
+        @RequestParam(required = false) searchTorrentsOnly: Boolean?,
+        @RequestParam(required = false) searchLowPowerTags: Boolean?,
+        @RequestParam(required = false) searchDownvotedTags: Boolean?,
+        @RequestParam(required = false) searchExpunged: Boolean?,
+        @RequestParam(required = false) disableLanguageFilter: Boolean?,
+        @RequestParam(required = false) disableUploaderFilter: Boolean?,
+        @RequestParam(required = false) disableTagFilter: Boolean?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int
     ): ResponseEntity<GalleryListResponse> {
@@ -42,7 +50,11 @@ class GalleryController(private val galleryService: GalleryService) {
                 keyword, category, clampedPage, clampedPageSize,
                 clampedSort, clampedPageMin, clampedPageMax, clampedMinRating,
                 searchName ?: false, searchTags ?: false,
-                searchDesc ?: false, searchTorrents ?: false
+                searchDesc ?: false, searchTorrents ?: false,
+                searchTorrentsOnly ?: false, searchLowPowerTags ?: false,
+                searchDownvotedTags ?: false, searchExpunged ?: false,
+                disableLanguageFilter ?: false, disableUploaderFilter ?: false,
+                disableTagFilter ?: false
             )
         )
     }

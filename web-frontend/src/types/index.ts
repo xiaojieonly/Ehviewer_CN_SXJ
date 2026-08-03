@@ -55,6 +55,13 @@ export interface QuickSearch {
   minRating: number
   pageFrom: number
   pageTo: number
+  /**
+   * Sort order persisted with the preset (W3 R4-11, contracts
+   * QuickSearchDto.sort): 0 default / 1 posted desc / 2 rating desc /
+   * 3 title asc. Optional — absent on legacy server rows and on device-local
+   * presets saved before W3 (reads as 0).
+   */
+  sort?: number
 }
 
 export interface AuthResponse {

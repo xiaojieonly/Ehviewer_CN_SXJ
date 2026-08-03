@@ -33,6 +33,10 @@ class QuickSearchEntity {
     @Column(nullable = false)
     var pageTo: Int = 0
 
+    /** Sort order persisted with the preset (W3 R4-11); ddl-auto: update 自动补列, 旧行默认 0 */
+    @Column(nullable = false)
+    var sort: Int = 0
+
     @Column(nullable = false)
     var time: Long = 0
 
