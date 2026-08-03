@@ -1,36 +1,42 @@
 <template>
-  <div class="gallery-grid" :class="`gallery-grid--${mode}`">
-    <GalleryCard
-      v-for="(gallery, index) in items"
-      :key="gallery.gid"
-      :gallery="gallery"
-      :mode="mode"
-      :style="enterStyle(index)"
-      @click="emit('select', gallery)"
-    />
+  <div class="gallery-grid">
+    <div v-for="(gallery, index) in items" :key="gallery.gid" class="gallery-grid__cell">
+      <GalleryCard
+        :gallery="gallery"
+        mode="grid"
+        :style="enterStyle(index)"
+        @click="emit('select', gallery)"
+      />
+      <!-- Per-cell addon (e.g. a status badge) positioned over the tile;
+           GalleryList threads its `item-extra` slot through here. -->
+      <slot name="cell-extra" :gallery="gallery" :index="index" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 /**
- * GalleryGrid — the gallery list content in both layout modes (S1).
+ * GalleryGrid — the grid-form renderer of the gallery list (S1), consumed by
+ * the shared `GalleryList` (B-1). List-form rows live in `GalleryList`
+ * itself; this component only renders the tile grid.
  *
- * - `grid`: masonry-style auto-column layout, the web equivalent of
- *   `AutoStaggeredGridLayoutManager` (STRATEGY_MIN_SIZE): the column count is
- *   NEVER hardcoded — CSS Grid `auto-fill` derives it as
- *   `floor(availableWidth / columnWidth)` with the column width taken from
- *   `--column-width-grid-middle` (120px, `gallery_grid_column_width_middle`),
- *   per `contracts/responsive-strategy.md` §4.
- * - `list`: single column of horizontal cards.
+ * Masonry-style auto-column layout, the web equivalent of
+ * `AutoStaggeredGridLayoutManager` (STRATEGY_MIN_SIZE): the column count is
+ * NEVER hardcoded — CSS Grid `auto-fill` derives it as
+ * `floor(availableWidth / columnWidth)` with the column width taken from
+ * `--column-width-grid-middle` (120px, `gallery_grid_column_width_middle`),
+ * per `contracts/responsive-strategy.md` §4.
  *
  * Spacing comes straight from the Android dimens tokens
- * (`--gallery-grid-*` / `--gallery-list-*`, stepped at the sw600dp
- * breakpoint); the top padding clears the floating SearchBar
- * (`--gallery-padding-top-search-bar`) and the bottom padding clears the FAB
- * cluster (`--gallery-padding-bottom-fab`).
+ * (`--gallery-grid-*`, stepped at the sw600dp breakpoint). The bottom padding
+ * clears the FAB cluster (`--gallery-padding-bottom-fab`). The floating-bar
+ * top clearance (HomeView's SearchBar) is carried by GalleryList's sticky
+ * toggle toolbar (`--gallery-list-clear-top`), so the grid itself starts with
+ * only the standard `--gallery-grid-margin-v`.
  *
  * Each card receives a staggered `--enter-delay` custom property for the
- * reveal animation (capped so late pages don't wait).
+ * reveal animation (capped so late pages don't wait). Every card sits in a
+ * `position: relative` cell so the optional `cell-extra` slot can badge it.
  */
 import type { CSSProperties } from 'vue'
 import type { GalleryInfo } from '@/types/components'
@@ -39,8 +45,6 @@ import GalleryCard from './GalleryCard.vue'
 defineProps<{
   /** Galleries to render. */
   items: GalleryInfo[]
-  /** Layout mode, kept in sync with the host screen's toggle. */
-  mode: 'list' | 'grid'
 }>()
 
 const emit = defineEmits<{
@@ -55,28 +59,22 @@ function enterStyle(index: number): CSSProperties {
 </script>
 
 <style scoped>
-/* Grid mode — AutoStaggeredGridLayoutManager equivalent:
+/* AutoStaggeredGridLayoutManager equivalent:
    columns = floor(availableWidth / 120px). `min(…, 100%)` keeps a single
    column from overflowing containers narrower than the column width. */
-.gallery-grid--grid {
+.gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(var(--column-width-grid-middle), 100%), 1fr));
   gap: var(--gallery-grid-interval);
   align-items: start;
   padding:
-    calc(var(--gallery-padding-top-search-bar) + var(--gallery-grid-margin-v))
+    var(--gallery-grid-margin-v)
     var(--gallery-grid-margin-h)
     var(--gallery-padding-bottom-fab);
 }
 
-/* List mode — single column of horizontal cards. */
-.gallery-grid--list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gallery-list-interval);
-  padding:
-    calc(var(--gallery-padding-top-search-bar) + var(--gallery-list-margin-v))
-    var(--gallery-list-margin-h)
-    var(--gallery-padding-bottom-fab);
+/* Badge anchor for the `cell-extra` slot. */
+.gallery-grid__cell {
+  position: relative;
 }
 </style>
