@@ -273,7 +273,7 @@ public class SiteApplication extends RecordingApplication {
         CommonOperations.ensureNoMediaFile(UniFile.fromFile(AppConfig.getExternalTempDir()));
     }
 
-    public SiteCookieStore getmSiteCookieStore() {
+    public SiteCookieStore getSiteCookieStore() {
         return mSiteCookieStore;
     }
 
@@ -421,10 +421,7 @@ public class SiteApplication extends RecordingApplication {
     }
 
     private static boolean isMockSiteHost(@NonNull String host) {
-        return host.equals("gallery.test") || host.equals("gallery.test")
-                || host.equals("lofi.gallery.test") || host.equals("gallery.test")
-                || host.endsWith(".gallery.test") || host.endsWith(".gallery.test")
-                || host.endsWith(".gallery.test");
+        return host.equals("gallery.test") || host.endsWith(".gallery.test");
     }
 
     private static String rewriteMockSiteUrl(@NonNull String url, @NonNull HttpUrl base) {

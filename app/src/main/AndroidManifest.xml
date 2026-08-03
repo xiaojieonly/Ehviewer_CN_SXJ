@@ -15,7 +15,7 @@
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" /> <!-- Android 14+ 前台服务类型 -->
-    <uses-permission android:name="android.permission.CAMERA" /> <!-- 用于获取wifi状态 -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- 用于拍照设置头像/背景（UserImageChange） -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- 使用系统自带下载器 -->
     <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" /> <!-- 自动安装apk -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -45,9 +45,9 @@
         tools:ignore="UnusedAttribute">
         <activity
             android:name=".ui.TagSelectorActivity"
+            android:exported="false"
             android:label="标签选择"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
-            xmlns:tools="http://schemas.android.com/tools"
             tools:replace="android:theme" />
         <!-- tools:targetApi="n"> -->
         <uses-library
@@ -92,7 +92,7 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
 
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -100,7 +100,6 @@
 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data android:host="gallery.test" />
                 <data android:host="gallery.test" />
                 <data android:host="g.gallery.test" />
                 <data android:host="lofi.gallery.test" />
@@ -181,77 +180,92 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:theme="@style/AppTheme.Settings" />
         <activity
             android:name=".ui.SmbBackupProgressActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/settings_download_smb_backup_syncing"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.ExcludedLanguagesActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/excluded_languages"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.DirPickerActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/dir_picker"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.LicenseActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/license"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.FilterActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/filter"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.BlackListActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/blacklist"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.SetSecurityActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/set_pattern_protection"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.UConfigActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/u_config"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.MyTagsActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/my_tags"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.HostsActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/hosts"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".shortcuts.ShortcutsActivity"
             android:excludeFromRecents="true"
+            android:exported="false"
             android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
             android:name=".ui.wifi.WiFiServerActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/wifi_server"
             android:theme="@style/AppTheme.Toolbar" />
         <activity
             android:name=".ui.wifi.WiFiClientActivity"
             android:configChanges="screenSize|uiMode"
+            android:exported="false"
             android:label="@string/wifi_client"
             android:theme="@style/AppTheme.Toolbar" />
 
         <service
             android:name=".download.DownloadService"
+            android:exported="false"
             android:foregroundServiceType="dataSync"
             android:label="@string/download_service_label" />
         <service

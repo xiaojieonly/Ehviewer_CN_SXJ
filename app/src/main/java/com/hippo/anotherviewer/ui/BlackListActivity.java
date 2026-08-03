@@ -110,7 +110,7 @@ public class BlackListActivity extends ToolbarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.activity_blick_list, menu);
+        getMenuInflater().inflate(R.menu.activity_black_list, menu);
         return true;
     }
 
