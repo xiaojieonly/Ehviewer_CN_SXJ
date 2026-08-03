@@ -8,11 +8,13 @@
     </div>
 
     <!-- Favorite folder filter — Android FavoritesScene's folder spinner,
-         reimagined as a scrollable chip strip (Favorites 0 … Favorites 9,
-         the SiteConfig.DEFAULT_FAV_CAT_NAMES) -->
+         reimagined as a scrollable chip strip. Names come from
+         `prefs.general.favoriteSlotNames` (B-4, `|`-separated), empty slots
+         on the SiteConfig.DEFAULT_FAV_CAT_NAMES defaults ("Favorites 0" …
+         "Favorites 9"). -->
     <nav class="slot-bar" aria-label="Favorite folders">
       <button
-        v-for="(name, slot) in SLOT_NAMES"
+        v-for="(name, slot) in slotNames"
         :key="slot"
         type="button"
         class="slot-bar__chip"
@@ -36,22 +38,17 @@
       @retry="onRetry"
       @load-more="onLoadMore"
     >
-      <ul class="gallery-list">
-        <li
-          v-for="(gallery, index) in favorites"
-          :key="gallery.gid"
-          class="gallery-list__row"
-          :style="{ animationDelay: `${Math.min(index * 24, 240)}ms` }"
-        >
-          <!-- Same horizontal card as the gallery list (GalleryCard, list mode) -->
-          <GalleryCard :gallery="gallery" mode="list" @click="openGallery" />
-          <!-- Favorite slot indicator (folder 0–9) -->
-          <span class="slot-badge" :title="`In ${SLOT_NAMES[activeSlot]}`">
+      <!-- Shared gallery list (B-1): renders the grid/list form from
+           prefs.general.listMode (R4-1 — no hardcoded layout anymore). The
+           favorite-slot badge rides along in both forms via item-extra. -->
+      <GalleryList :items="favorites" @select="openGallery">
+        <template #item-extra>
+          <span class="slot-badge" :title="`In ${slotNames[activeSlot]}`">
             <AppIcon name="heart" size="12px" />
             {{ activeSlot }}
           </span>
-        </li>
-      </ul>
+        </template>
+      </GalleryList>
     </ContentLayout>
 
     <!-- FabLayout replica: refresh + back-to-top mini FABs
@@ -69,9 +66,10 @@
 /**
  * FavoriteView — web replica of Android `FavoritesScene`:
  * ContentLayout (pull-to-refresh + infinite paging + empty tip) filled with
- * the standard gallery list card (80×120 thumb, title, uploader, rating,
- * category chip), a favorite-folder filter strip (slots 0–9), and the
- * scene's FabLayout cluster (refresh / go-to-top).
+ * the shared `GalleryList` (B-1 — grid/list form follows
+ * `prefs.general.listMode`), a favorite-folder filter strip (slots 0–9,
+ * names from `prefs.general.favoriteSlotNames`, B-4), and the scene's
+ * FabLayout cluster (refresh / go-to-top).
  *
  * The API is slot-scoped (`/favorite/list?slot=N&page=M`), mirroring the
  * Android scene which always shows exactly one folder; each row carries a
@@ -79,9 +77,9 @@
  *
  * Backend note: `FavoriteItem.category` is the stringified `SiteConfig` bit
  * (FavoriteService maps `entity.category.toString()`), so rows are converted
- * to `GalleryInfo` (numeric bit) before being handed to `GalleryCard`.
+ * to `GalleryInfo` (numeric bit) before being handed to the list.
  */
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { favoriteApi } from '@/api/favorite'
 import type { FavoriteItem } from '@/api/favorite'
@@ -94,14 +92,29 @@ import {
 } from '@/types/components'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
-import GalleryCard from '@/components/gallery/GalleryCard.vue'
+import GalleryList from '@/components/gallery/GalleryList.vue'
+import { parseFavoriteSlotNames } from '@/components/gallery/GalleryCard.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
+import { usePreferencesStore } from '@/stores/preferences'
 
 /** View states matching ContentLayout's internal ViewTransition. */
 type ViewState = 'loading' | 'content' | 'empty' | 'error'
 
-/** Android `SiteConfig.DEFAULT_FAV_CAT_NAMES` — "Favorites 0" … "Favorites 9". */
-const SLOT_NAMES: readonly string[] = Array.from({ length: 10 }, (_, i) => `Favorites ${i}`)
+const preferencesStore = usePreferencesStore()
+
+/**
+ * B-4: the 10 folder names from `general.favoriteSlotNames` (`|`-separated),
+ * empty slots on the `SiteConfig.DEFAULT_FAV_CAT_NAMES` defaults. Read
+ * defensively — the key is added by a parallel settings-schema stream, so
+ * unloaded prefs or a missing key simply yield the defaults the strip has
+ * always shown.
+ */
+const slotNames = computed(() =>
+  parseFavoriteSlotNames(
+    (preferencesStore.prefs?.general as { favoriteSlotNames?: string } | undefined)
+      ?.favoriteSlotNames,
+  ),
+)
 
 /** Unknown category fallback — Android `SiteUtils.UNKNOWN` bit. */
 const CATEGORY_UNKNOWN_BIT = 0x400
@@ -142,12 +155,13 @@ const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 /** Monotonic request guard — stale responses (slot switches / refresh) drop. */
 let requestSeq = 0
 
-/** Maps a backend favorite row onto the `GalleryInfo` shape GalleryCard renders. */
+/** Maps a backend favorite row onto the `GalleryInfo` shape the list renders. */
 function toGalleryInfo(item: FavoriteItem): GalleryInfo {
   return {
     gid: item.gid,
     token: item.token,
-    title: item.title || item.titleJpn || 'Untitled',
+    // R4-6: title-less galleries surface as `#<gid>`, not "Untitled".
+    title: item.title || item.titleJpn || `#${item.gid}`,
     titleJpn: item.titleJpn,
     thumb: item.thumb,
     category: categoryBit(item.category),
@@ -161,7 +175,7 @@ function toGalleryInfo(item: FavoriteItem): GalleryInfo {
     thumbHeight: 0,
     pages: 0,
     favoriteSlot: activeSlot.value,
-    favoriteName: SLOT_NAMES[activeSlot.value] ?? '',
+    favoriteName: slotNames.value[activeSlot.value] ?? '',
   }
 }
 
@@ -243,6 +257,12 @@ function onFabAction(action: FabAction): void {
 }
 
 onMounted(() => {
+  // Folder names (B-4) come from preferences. GalleryList loads them when it
+  // mounts, but the chip strip renders before the content state does — kick
+  // the load here so custom names appear as early as possible.
+  if (!preferencesStore.prefs && !preferencesStore.loading) {
+    void preferencesStore.load()
+  }
   void loadPage(1, false)
 })
 </script>
@@ -347,33 +367,8 @@ onMounted(() => {
 }
 
 /* -------------------------------------------------------------- list ---- */
-.gallery-list {
-  list-style: none;
-  margin: 0;
-  padding: var(--gallery-list-margin-v) var(--gallery-list-margin-h)
-    var(--gallery-padding-bottom-fab);
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--column-width-list-long)), 1fr));
-}
-
-.gallery-list__row {
-  position: relative;
-  /* `backwards` (not `both`): natural state opacity 1, never stuck invisible
-     when WebKit fails to run the staggered entrance (T-1 regression). */
-  opacity: 1;
-  animation: item-in 240ms var(--ease-decelerate-quart) backwards;
-}
-
-@keyframes item-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Row layout, entrance animation and stagger live in GalleryList (B-1);
+   only the favorites-specific slot badge is styled here. */
 
 /* Favorite slot indicator — heart + folder number, accent background. */
 .slot-badge {
@@ -392,11 +387,5 @@ onMounted(() => {
   line-height: 1.4;
   box-shadow: 0 1px 3px var(--shadow-color);
   pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gallery-list__row {
-    animation: none;
-  }
 }
 </style>

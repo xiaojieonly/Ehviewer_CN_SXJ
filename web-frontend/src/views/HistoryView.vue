@@ -17,25 +17,21 @@
       @refresh="onRefresh"
       @retry="onRetry"
     >
-      <ul class="gallery-list">
-        <li
-          v-for="(entry, index) in entries"
-          :key="entry.gallery.gid"
-          class="gallery-list__row"
-          :style="{ animationDelay: `${Math.min(index * 24, 240)}ms` }"
-        >
-          <!-- Same horizontal card as the gallery list (GalleryCard, list mode) -->
-          <GalleryCard :gallery="entry.gallery" mode="list" @click="openGallery" />
-          <!-- Last-viewed timestamp -->
+      <!-- Shared gallery list (B-1): renders the grid/list form from
+           prefs.general.listMode (R4-1 — no hardcoded layout anymore). The
+           last-viewed badge rides along in both forms via item-extra. -->
+      <GalleryList :items="galleries" @select="openGallery">
+        <template #item-extra="{ index }">
           <span
+            v-if="entries[index]"
             class="time-badge"
-            :title="`Last viewed ${new Date(entry.time).toLocaleString()}`"
+            :title="`Last viewed ${new Date(entries[index].time).toLocaleString()}`"
           >
             <AppIcon name="history-black" size="14px" />
-            {{ formatViewTime(entry.time) }}
+            {{ formatViewTime(entries[index].time) }}
           </span>
-        </li>
-      </ul>
+        </template>
+      </GalleryList>
     </ContentLayout>
 
     <!-- FabLayout replica: clear-history + back-to-top mini FABs -->
@@ -86,8 +82,9 @@
 /**
  * HistoryView — web replica of Android `HistoryScene`:
  * ContentLayout (pull-to-refresh + empty tip + fast scroller) filled with
- * the standard gallery list card, each row stamped with the last-viewed
- * time (`item_history.xml` shows the same horizontal card layout), plus a
+ * the shared `GalleryList` (B-1 — grid/list form follows
+ * `prefs.general.listMode`), each row stamped with the last-viewed time
+ * (`item_history.xml` shows the same horizontal card layout), plus a
  * FabLayout with clear-all (confirmed via dialog) and go-to-top.
  *
  * The history endpoint returns the full list in one shot (no paging), so
@@ -95,9 +92,9 @@
  *
  * Backend note: `HistoryItem.category` is the stringified `SiteConfig` bit
  * (HistoryService maps `entity.category.toString()`), so rows are converted
- * to `GalleryInfo` (numeric bit) before being handed to `GalleryCard`.
+ * to `GalleryInfo` (numeric bit) before being handed to the list.
  */
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { historyApi } from '@/api/history'
 import type { HistoryItem } from '@/api/history'
@@ -110,7 +107,7 @@ import {
 } from '@/types/components'
 import ContentLayout from '@/components/layout/ContentLayout.vue'
 import FabLayout from '@/components/atoms/FabLayout.vue'
-import GalleryCard from '@/components/gallery/GalleryCard.vue'
+import GalleryList from '@/components/gallery/GalleryList.vue'
 import AppIcon from '@/components/atoms/AppIcon.vue'
 
 /** View states matching ContentLayout's internal ViewTransition. */
@@ -154,12 +151,16 @@ const state = ref<ViewState>('loading')
 const refreshing = ref(false)
 const contentRef = ref<InstanceType<typeof ContentLayout> | null>(null)
 
-/** Maps a backend history row onto the `GalleryInfo` shape GalleryCard renders. */
+/** Gallery payloads for the shared GalleryList (parallel to `entries`). */
+const galleries = computed(() => entries.value.map((entry) => entry.gallery))
+
+/** Maps a backend history row onto the `GalleryInfo` shape the list renders. */
 function toGalleryInfo(item: HistoryItem): GalleryInfo {
   return {
     gid: item.gid,
     token: item.token,
-    title: item.title || item.titleJpn || 'Untitled',
+    // R4-6: title-less galleries surface as `#<gid>`, not "Untitled".
+    title: item.title || item.titleJpn || `#${item.gid}`,
     titleJpn: item.titleJpn,
     thumb: item.thumb,
     category: categoryBit(item.category),
@@ -310,33 +311,8 @@ onMounted(() => {
 }
 
 /* -------------------------------------------------------------- list ---- */
-.gallery-list {
-  list-style: none;
-  margin: 0;
-  padding: var(--gallery-list-margin-v) var(--gallery-list-margin-h)
-    var(--gallery-padding-bottom-fab);
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--column-width-list-long)), 1fr));
-}
-
-.gallery-list__row {
-  position: relative;
-  /* `backwards` (not `both`): natural state opacity 1, never stuck invisible
-     when WebKit fails to run the staggered entrance (T-1 regression). */
-  opacity: 1;
-  animation: item-in 240ms var(--ease-decelerate-quart) backwards;
-}
-
-@keyframes item-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Row layout, entrance animation and stagger live in GalleryList (B-1);
+   only the history-specific last-viewed badge is styled here. */
 
 /* Last-viewed timestamp — clock glyph + compact date/time, secondary ink. */
 .time-badge {
@@ -445,7 +421,6 @@ onMounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gallery-list__row,
   .dialog-scrim,
   .dialog {
     animation: none;

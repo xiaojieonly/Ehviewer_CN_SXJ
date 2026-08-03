@@ -17,15 +17,18 @@
  * and opacity — verified by probe), and the rows carry no inline opacity
  * (the entrance lives in CSS). So we pin the CSS source itself instead of
  * rendered computed styles.
+ *
+ * B-1 note: the Favorites/History list rows moved into the shared
+ * `GalleryList.vue` component — the row assertions follow them there.
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const viewsDir = resolve(__dirname, '../../views')
+const srcDir = resolve(__dirname, '../..')
 
-function viewSource(name: string): string {
-  return readFileSync(resolve(viewsDir, name), 'utf8')
+function readSource(relPath: string): string {
+  return readFileSync(resolve(srcDir, relPath), 'utf8')
 }
 
 /** CSS without comment blocks (prose must not trip keyword scans). */
@@ -72,20 +75,20 @@ const LIST_ROWS: Array<{
   selector: string
   shorthand: string
 }> = [
-  { view: 'FavoriteView.vue', selector: 'gallery-list__row', shorthand: 'animation: item-in 240ms var(--ease-decelerate-quart) backwards' },
-  { view: 'HistoryView.vue', selector: 'gallery-list__row', shorthand: 'animation: item-in 240ms var(--ease-decelerate-quart) backwards' },
-  { view: 'DownloadView.vue', selector: 'download-list__item', shorthand: 'animation: item-in 240ms var(--ease-decelerate-quart) backwards' },
+  // B-1: Favorites/History rows render through the shared GalleryList now.
+  { view: 'components/gallery/GalleryList.vue', selector: 'gallery-list__row', shorthand: 'animation: item-in 240ms var(--ease-decelerate-quart) backwards' },
+  { view: 'views/DownloadView.vue', selector: 'download-list__item', shorthand: 'animation: item-in 240ms var(--ease-decelerate-quart) backwards' },
 ]
 
 describe('T-1 list entrance rows (Safari blank-list regression)', () => {
   for (const row of LIST_ROWS) {
-    const source = viewSource(row.view)
-    const block = ruleBlock(source, row.selector)
+    const src = readSource(row.view)
+    const block = ruleBlock(src, row.selector)
 
     it(`${row.view} keeps the 240ms entrance animation with a fade from opacity 0`, () => {
-      expect(source).toMatch(/@keyframes item-in/)
+      expect(src).toMatch(/@keyframes item-in/)
       expect(block).toMatch(/animation:\s*item-in\s+240ms/)
-      expect(source).toMatch(/from\s*\{\s*opacity:\s*0/)
+      expect(src).toMatch(/from\s*\{\s*opacity:\s*0/)
     })
 
     it(`${row.view} uses fill backwards (not both) + natural-state opacity 1`, () => {
@@ -96,24 +99,24 @@ describe('T-1 list entrance rows (Safari blank-list regression)', () => {
     })
 
     it(`${row.view} still staggers rows via inline animationDelay`, () => {
-      expect(source).toMatch(/animationDelay/)
+      expect(src).toMatch(/animationDelay/)
     })
   }
 })
 
 describe('T-1 no-delay entrance overlays (scrim/dialog/toast/card/hero)', () => {
   const overlays: Array<{ view: string; selector: string; shorthand: string }> = [
-    { view: 'HistoryView.vue', selector: 'dialog-scrim', shorthand: 'animation: scrim-in 160ms linear' },
-    { view: 'HistoryView.vue', selector: 'dialog', shorthand: 'animation: dialog-in 200ms var(--ease-decelerate-quart)' },
-    { view: 'DownloadView.vue', selector: 'dialog-scrim', shorthand: 'animation: scrim-in 160ms linear' },
-    { view: 'DownloadView.vue', selector: 'dialog', shorthand: 'animation: dialog-in 200ms var(--ease-decelerate-quart)' },
-    { view: 'DownloadView.vue', selector: 'toast', shorthand: 'animation: toast-in 220ms var(--ease-decelerate-quint)' },
-    { view: 'LoginView.vue', selector: 'login-card', shorthand: 'animation: card-in var(--duration-scene-translate) var(--ease-decelerate-quint)' },
-    { view: 'GalleryDetailView.vue', selector: 'detail-header__hero', shorthand: 'animation: rise var(--duration-scene-translate) var(--ease-decelerate-quint)' },
+    { view: 'views/HistoryView.vue', selector: 'dialog-scrim', shorthand: 'animation: scrim-in 160ms linear' },
+    { view: 'views/HistoryView.vue', selector: 'dialog', shorthand: 'animation: dialog-in 200ms var(--ease-decelerate-quart)' },
+    { view: 'views/DownloadView.vue', selector: 'dialog-scrim', shorthand: 'animation: scrim-in 160ms linear' },
+    { view: 'views/DownloadView.vue', selector: 'dialog', shorthand: 'animation: dialog-in 200ms var(--ease-decelerate-quart)' },
+    { view: 'views/DownloadView.vue', selector: 'toast', shorthand: 'animation: toast-in 220ms var(--ease-decelerate-quint)' },
+    { view: 'views/LoginView.vue', selector: 'login-card', shorthand: 'animation: card-in var(--duration-scene-translate) var(--ease-decelerate-quint)' },
+    { view: 'views/GalleryDetailView.vue', selector: 'detail-header__hero', shorthand: 'animation: rise var(--duration-scene-translate) var(--ease-decelerate-quint)' },
   ]
 
   for (const overlay of overlays) {
-    const block = ruleBlock(viewSource(overlay.view), overlay.selector)
+    const block = ruleBlock(readSource(overlay.view), overlay.selector)
 
     it(`${overlay.view} .${overlay.selector} keeps its entrance animation`, () => {
       expect(collapse(block)).toContain(overlay.shorthand)
@@ -127,7 +130,7 @@ describe('T-1 no-delay entrance overlays (scrim/dialog/toast/card/hero)', () => 
 })
 
 describe('T-1 staggered detail sections', () => {
-  const block = ruleBlock(viewSource('GalleryDetailView.vue'), 'gallery-detail__body > section')
+  const block = ruleBlock(readSource('views/GalleryDetailView.vue'), 'gallery-detail__body > section')
 
   it('uses fill backwards (not both) with natural-state opacity 1', () => {
     expect(collapse(block)).toContain(
@@ -139,9 +142,9 @@ describe('T-1 staggered detail sections', () => {
   })
 
   it('keeps the 60/130/200ms stagger delays', () => {
-    const source = viewSource('GalleryDetailView.vue')
+    const src = readSource('views/GalleryDetailView.vue')
     for (const delay of ['60ms', '130ms', '200ms']) {
-      expect(source).toMatch(`animation-delay: ${delay}`)
+      expect(src).toMatch(`animation-delay: ${delay}`)
     }
   })
 })
