@@ -15,15 +15,36 @@ class GalleryController(private val galleryService: GalleryService) {
     fun search(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) category: Int?,
+        @RequestParam(required = false) sort: Int?,
+        @RequestParam(required = false) pageMin: Int?,
+        @RequestParam(required = false) pageMax: Int?,
+        @RequestParam(required = false) minRating: Int?,
+        @RequestParam(required = false) searchName: Boolean?,
+        @RequestParam(required = false) searchTags: Boolean?,
+        @RequestParam(required = false) searchDesc: Boolean?,
+        @RequestParam(required = false) searchTorrents: Boolean?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int
     ): ResponseEntity<GalleryListResponse> {
         // M-5: pageSize is clamped (not rejected) so an oversized value can
         // never be forwarded to the upstream gallery search; `page` is
-        // 0-based per contract, so only the lower bound applies.
+        // 0-based per contract, so only the lower bound applies. The extended
+        // params follow the same clamp-don't-reject policy against their
+        // contract ranges (openapi GET /api/v1/gallery/search).
         val clampedPage = page.coerceAtLeast(0)
         val clampedPageSize = pageSize.coerceIn(1, MAX_PAGE_SIZE)
-        return ResponseEntity.ok(galleryService.searchGallery(keyword, category, clampedPage, clampedPageSize))
+        val clampedSort = sort?.takeIf { it in SORT_RANGE } ?: 0
+        val clampedPageMin = pageMin?.coerceAtLeast(0)
+        val clampedPageMax = pageMax?.coerceAtLeast(0)
+        val clampedMinRating = (minRating ?: 0).coerceIn(0, 5)
+        return ResponseEntity.ok(
+            galleryService.searchGallery(
+                keyword, category, clampedPage, clampedPageSize,
+                clampedSort, clampedPageMin, clampedPageMax, clampedMinRating,
+                searchName ?: false, searchTags ?: false,
+                searchDesc ?: false, searchTorrents ?: false
+            )
+        )
     }
 
     @GetMapping("/{gid}")
@@ -80,5 +101,8 @@ class GalleryController(private val galleryService: GalleryService) {
     companion object {
         /** Upper bound for pageSize on paginated endpoints (M-5 clamp). */
         const val MAX_PAGE_SIZE = 200
+
+        /** Contract values for the `sort` param (openapi enum 0..3). */
+        val SORT_RANGE = 0..3
     }
 }

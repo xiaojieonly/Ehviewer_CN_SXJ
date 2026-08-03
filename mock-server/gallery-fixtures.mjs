@@ -5,6 +5,12 @@
 //     1001 and 1002 must collapse under it in the downloads scene)
 //   - 3001 -> 3002         : single-level update (the common two-version case)
 //   - 2001 / 2002          : standalone galleries without any version relation
+//
+// `description` and `torrents` feed the advanced-search scope oracle
+// (f_sdesc / f_storr in gallery.mjs). Their keywords are chosen so each
+// scope has a marker that appears in that scope ONLY:
+//   desc -> "commissioned" (2002), torr -> "alpha_final_archive" (1003),
+//   tags -> "ponytail" (2001), name -> "revised" (3002 title).
 
 export const EXH_BASE = 'https://gallery.test';
 
@@ -35,6 +41,8 @@ export const GALLERIES = [
       ['language', ['english']],
       ['parody', ['original']],
     ],
+    description: 'First revision of the alpha test series.',
+    torrents: [],
   },
   {
     gid: 1002,
@@ -62,6 +70,8 @@ export const GALLERIES = [
       ['language', ['english']],
       ['parody', ['original']],
     ],
+    description: 'Second pass with cleaned-up line art.',
+    torrents: [],
   },
   {
     gid: 1003,
@@ -83,6 +93,8 @@ export const GALLERIES = [
       ['language', ['english']],
       ['parody', ['original']],
     ],
+    description: 'Final pass of the alpha test series.',
+    torrents: ['alpha_final_archive.torrent'],
   },
   {
     gid: 2001,
@@ -103,6 +115,8 @@ export const GALLERIES = [
       ['language', ['japanese']],
       ['female', ['ponytail']],
     ],
+    description: 'A standalone Japanese sample.',
+    torrents: [],
   },
   {
     gid: 2002,
@@ -124,6 +138,8 @@ export const GALLERIES = [
       ['group', ['commission']],
       ['male', ['business_suit']],
     ],
+    description: 'Commissioned French business suit set.',
+    torrents: ['business_suit_set.torrent'],
   },
   {
     gid: 3001,
@@ -150,6 +166,8 @@ export const GALLERIES = [
       ['artist', ['mock_artist']],
       ['language', ['english']],
     ],
+    description: 'Simple update sample gallery.',
+    torrents: [],
   },
   {
     gid: 3002,
@@ -170,6 +188,8 @@ export const GALLERIES = [
       ['artist', ['mock_artist']],
       ['language', ['english']],
     ],
+    description: 'Follow-up to the simple update sample gallery.',
+    torrents: [],
   },
 ];
 

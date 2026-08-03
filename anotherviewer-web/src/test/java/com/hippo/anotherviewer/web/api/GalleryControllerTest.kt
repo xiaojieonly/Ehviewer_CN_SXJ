@@ -141,28 +141,72 @@ class GalleryControllerTest {
     fun `search clamps oversized pageSize to 200`() {
         mockMvc.perform(get("/api/v1/gallery/search").param("pageSize", "999"))
             .andExpect(status().isOk)
-        verify(galleryService).searchGallery(null, null, 0, 200)
+        verify(galleryService).searchGallery(null, null, 0, 200, 0, null, null, 0, false, false, false, false)
     }
 
     @Test
     fun `search clamps negative pageSize up to 1`() {
         mockMvc.perform(get("/api/v1/gallery/search").param("pageSize", "0").param("page", "-3"))
             .andExpect(status().isOk)
-        verify(galleryService).searchGallery(null, null, 0, 1)
+        verify(galleryService).searchGallery(null, null, 0, 1, 0, null, null, 0, false, false, false, false)
     }
 
     @Test
     fun `search clamps negative page up to 0`() {
         mockMvc.perform(get("/api/v1/gallery/search").param("page", "-5"))
             .andExpect(status().isOk)
-        verify(galleryService).searchGallery(null, null, 0, 20)
+        verify(galleryService).searchGallery(null, null, 0, 20, 0, null, null, 0, false, false, false, false)
     }
 
     @Test
     fun `search passes in-range values through untouched`() {
         mockMvc.perform(get("/api/v1/gallery/search").param("page", "2").param("pageSize", "40"))
             .andExpect(status().isOk)
-        verify(galleryService).searchGallery(null, null, 2, 40)
+        verify(galleryService).searchGallery(null, null, 2, 40, 0, null, null, 0, false, false, false, false)
+    }
+
+    // ---------------------------------------------------------------------
+    // Extended search params (openapi GET /api/v1/gallery/search v1.1)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `search passes extended params through to the service`() {
+        mockMvc.perform(
+            get("/api/v1/gallery/search")
+                .param("keyword", "alpha")
+                .param("category", "2")
+                .param("sort", "2")
+                .param("pageMin", "5")
+                .param("pageMax", "9")
+                .param("minRating", "3")
+                .param("searchName", "true")
+                .param("searchTags", "true")
+                .param("searchDesc", "false")
+                .param("searchTorrents", "true")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService).searchGallery("alpha", 2, 0, 20, 2, 5, 9, 3, true, true, false, true)
+    }
+
+    @Test
+    fun `search treats absent extended params as contract defaults`() {
+        mockMvc.perform(get("/api/v1/gallery/search").param("keyword", "alpha"))
+            .andExpect(status().isOk)
+        verify(galleryService).searchGallery("alpha", null, 0, 20, 0, null, null, 0, false, false, false, false)
+    }
+
+    @Test
+    fun `search clamps out-of-contract extended params instead of rejecting`() {
+        mockMvc.perform(
+            get("/api/v1/gallery/search")
+                .param("keyword", "alpha")
+                .param("sort", "7")
+                .param("pageMin", "-2")
+                .param("pageMax", "-1")
+                .param("minRating", "9")
+        )
+            .andExpect(status().isOk)
+        verify(galleryService).searchGallery("alpha", null, 0, 20, 0, 0, 0, 5, false, false, false, false)
     }
 
     @Test
