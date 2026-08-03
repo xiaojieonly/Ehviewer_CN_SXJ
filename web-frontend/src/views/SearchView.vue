@@ -678,9 +678,10 @@ function loadQuickSearch(preset: QuickSearch): void {
     pageFrom: preset.pageFrom,
     pageTo: preset.pageTo,
   }
-  // QuickSearchDto cannot represent sort — loading a preset resets to the
-  // default order so presets reproduce deterministically.
-  sortOrder.value = 0
+  // W3 R4-11: presets persist the sort order (contracts QuickSearchDto.sort);
+  // legacy rows / pre-W3 device presets read absent → default order.
+  const sort = Math.floor(preset.sort ?? 0)
+  sortOrder.value = (sort >= 0 && sort <= 3 ? sort : 0) as SearchSortOrder
   enableAdvance.value =
     preset.advanceSearch !== 0 || preset.minRating > 0 || preset.pageFrom > 0 || preset.pageTo > 0
   dialog.value = 'none'
@@ -725,9 +726,22 @@ async function saveQuickSearch(): Promise<void> {
   dialog.value = 'none'
 }
 
-function deleteQuickSearch(id: number): void {
+/**
+ * Delete a quick-search preset — W3 R4-12: the deletion is sent to the
+ * server (`DELETE /gallery/quick-search/{id}`) and applied locally. When the
+ * server is unreachable the preset is still removed on this device (the
+ * offline-first LAN semantics mirror the save fallback); a locally-only
+ * deletion of a server preset can reappear if the list is reseeded later.
+ */
+async function deleteQuickSearch(id: number): Promise<void> {
   quickSearches.value = quickSearches.value.filter((preset) => preset.id !== id)
   writeStorage(QUICK_SEARCH_KEY, quickSearches.value)
+  try {
+    await galleryApi.deleteQuickSearch(id)
+  } catch (error) {
+    console.error('[SearchView] quick-search DELETE failed (removed locally)', error)
+    showSnack('Server unreachable — preset removed on this device only')
+  }
 }
 
 function modeLabel(mode: number): string {

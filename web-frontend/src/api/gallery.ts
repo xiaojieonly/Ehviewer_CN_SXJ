@@ -124,4 +124,14 @@ export const galleryApi = {
     const { data } = await client.post('/gallery/quick-search', preset)
     return data
   },
+
+  /**
+   * Delete a quick-search preset — `DELETE /api/v1/gallery/quick-search/{id}`
+   * (contracts/openapi.yaml `deleteQuickSearch`). W3 R4-12: the endpoint
+   * existed since Wave-1 but the frontend never called it.
+   */
+  async deleteQuickSearch(id: number): Promise<{ success: boolean }> {
+    const { data } = await client.delete(`/gallery/quick-search/${id}`)
+    return data
+  },
 }

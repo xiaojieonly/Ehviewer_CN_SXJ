@@ -156,8 +156,7 @@ export function removeFilterChip(filters: SearchFilters, chipId: string): Search
  * Same schema as the openapi `QuickSearchDto`, so the result can be posted to
  * `POST /gallery/quick-search` unchanged.
  *
- * NOTE: `sort` has no `QuickSearchDto` field and is therefore NOT persisted
- * in presets — the DTO schema is authoritative (reported as A5 doubt #1).
+ * W3 R4-11: `sort` is part of the DTO now and round-trips through presets.
  */
 export function filtersToQuickSearchPayload(
   filters: SearchFilters,
@@ -175,6 +174,7 @@ export function filtersToQuickSearchPayload(
     minRating: filters.minRating ?? 0,
     pageFrom: filters.pageMin ?? 0,
     pageTo: filters.pageMax ?? 0,
+    sort: filters.sort ?? 0,
   }
 }
 
@@ -183,7 +183,8 @@ export function filtersToQuickSearchPayload(
  * {@link filtersToQuickSearchPayload}). The DTO `keyword`/`mode` belong to
  * the search box / keyword mode, not the filter state, so they are not
  * restored here. Scope booleans are emitted explicitly (false when the bit
- * is clear) so a round-trip is deterministic.
+ * is clear) so a round-trip is deterministic. `sort` 0 / absent (legacy
+ * rows) reads back as "default order" (absent).
  */
 export function quickSearchToFilters(preset: QuickSearch): SearchFilters {
   return {
@@ -195,6 +196,11 @@ export function quickSearchToFilters(preset: QuickSearch): SearchFilters {
     searchTags: (preset.advanceSearch & ADVANCE_SEARCH_BITS.STAGS) !== 0,
     searchDesc: (preset.advanceSearch & ADVANCE_SEARCH_BITS.SDESC) !== 0,
     searchTorrents: (preset.advanceSearch & ADVANCE_SEARCH_BITS.STORR) !== 0,
+    // 0 / absent / out-of-range (legacy or hand-edited storage) all read as
+    // "default order"; only the three contract orders pass through.
+    sort: preset.sort === 1 || preset.sort === 2 || preset.sort === 3
+      ? preset.sort
+      : undefined,
   }
 }
 

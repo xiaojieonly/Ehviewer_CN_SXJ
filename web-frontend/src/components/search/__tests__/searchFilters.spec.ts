@@ -109,7 +109,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       mode: 0,
     })
     expect(Object.keys(payload).sort()).toEqual(
-      ['advanceSearch', 'category', 'keyword', 'minRating', 'mode', 'name', 'pageFrom', 'pageTo'].sort(),
+      ['advanceSearch', 'category', 'keyword', 'minRating', 'mode', 'name', 'pageFrom', 'pageTo', 'sort'].sort(),
     )
     expect(payload).toEqual({
       name: 'Strict search',
@@ -124,6 +124,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       minRating: 4,
       pageFrom: 5,
       pageTo: 50,
+      sort: 2, // W3 R4-11: sort round-trips through presets now
     })
   })
 
@@ -138,10 +139,11 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       minRating: 0,
       pageFrom: 0,
       pageTo: 0,
+      sort: 0,
     })
   })
 
-  it('round-trips filter state through the DTO (sort is not representable)', () => {
+  it('round-trips filter state through the DTO (sort included, W3 R4-11)', () => {
     const payload = filtersToQuickSearchPayload(FULL_FILTERS, {
       name: 'x',
       keyword: 'k',
@@ -157,6 +159,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
       searchTags: true,
       searchDesc: true,
       searchTorrents: true,
+      sort: 2,
     })
   })
 
@@ -181,6 +184,7 @@ describe('quick-search schema consistency (QuickSearchDto round-trip)', () => {
     expect(filters.searchTags).toBe(false)
     expect(filters.searchDesc).toBe(false)
     expect(filters.searchTorrents).toBe(false)
+    expect(filters.sort).toBeUndefined() // absent sort (legacy row) = default order
     expect(isFilterActive(filters)).toBe(false)
   })
 

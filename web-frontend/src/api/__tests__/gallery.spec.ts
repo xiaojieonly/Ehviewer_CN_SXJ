@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { GalleryListResponse, QuickSearch } from '@/types'
 
 vi.mock('@/api/client', () => ({
-  default: { get: vi.fn(), post: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }))
 
 import client from '@/api/client'
@@ -11,6 +11,7 @@ import type { SearchFilters } from '@/api/gallery'
 
 const mockedGet = vi.mocked(client.get)
 const mockedPost = vi.mocked(client.post)
+const mockedDelete = vi.mocked(client.delete)
 
 function okResponse(data: GalleryListResponse): { data: GalleryListResponse } {
   return { data }
@@ -127,6 +128,18 @@ describe('galleryApi.search — Wave-1 1a filter params (task A5, additive)', ()
     expect(searchQuery(0).get('sort')).toBe('1')
     expect(searchQuery(1).get('sort')).toBe('2')
     expect(searchQuery(2).get('sort')).toBe('3')
+  })
+})
+
+describe('galleryApi.deleteQuickSearch (DELETE /gallery/quick-search/{id}, W3 R4-12)', () => {
+  beforeEach(() => {
+    mockedDelete.mockReset()
+  })
+
+  it('deletes the given preset id and returns the server envelope', async () => {
+    mockedDelete.mockResolvedValue({ data: { success: true } })
+    await expect(galleryApi.deleteQuickSearch(42)).resolves.toEqual({ success: true })
+    expect(mockedDelete).toHaveBeenCalledWith('/gallery/quick-search/42')
   })
 })
 
