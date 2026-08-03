@@ -143,10 +143,10 @@ public class WiFiClientActivity extends AppCompatActivity {
                 connectThread.start();
             } catch (IOException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> textState.setText("通信连接失败"));
+                runOnUiThread(() -> textState.setText(getString(R.string.wifi_connect_failed)));
                 try {
                     Thread.sleep(2000);
-                    runOnUiThread(() -> textState.setText("尝试重新链接"));
+                    runOnUiThread(() -> textState.setText(getString(R.string.wifi_retry_connect)));
                     connectSocket();
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();

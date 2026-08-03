@@ -1324,7 +1324,7 @@ public final class GalleryListScene extends BaseScene
         textView.setText(SiteUtils.getSuitableTitle(gi));
         textView.setOnClickListener(l -> {
             AppHelper.copyPlainText(SiteUtils.getSuitableTitle(gi), getEHContext());
-            Toast toast = Toast.makeText(getEHContext(), "标题文本已复制", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(getEHContext(), getString(R.string.copy_title_done), Toast.LENGTH_SHORT);
             toast.setGravity(Gravity.CENTER, 0, 0);
             toast.show();
         });
@@ -1936,16 +1936,6 @@ public final class GalleryListScene extends BaseScene
             if (Activity.RESULT_OK == resultCode && null != mSearchLayout && null != data) {
                 mSearchLayout.setImageUri(data.getData());
             }
-        } else if (requestCode == 1001 && resultCode == Activity.RESULT_OK && data != null) {
-            // Handle legacy request codes or fallback scenarios
-            // 处理传统的 Activity 返回结果
-            String tags = data.getStringExtra("selected_tags");
-            if (!TextUtils.isEmpty(tags) && mSearchBar != null) {
-                // Sync UI and trigger application logic
-                // 同步 UI 状态并应用搜索
-                mSearchBar.setText(tags);
-                onApplySearch(tags);
-            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -1965,7 +1955,6 @@ public final class GalleryListScene extends BaseScene
             }
 
             mHelper.setEmptyString(emptyString);
-//            mHelper.onGetPageData(taskId, result.pages, result.nextPage, result.galleryInfoList);
             mHelper.onGetPageData(taskId, result, result.galleryInfoList);
         }
     }

@@ -165,7 +165,7 @@ public final class SubscriptionsScene extends ToolbarScene {
     private void bindSecond() {
         progressView.setVisibility(View.GONE);
         if (mRecyclerView == null){
-            Toast.makeText(context,"描述文件未找到？？？重启试试~",Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.description_file_not_found), Toast.LENGTH_LONG).show();
             return;
         }
         mRecyclerView.setVisibility(View.VISIBLE);
