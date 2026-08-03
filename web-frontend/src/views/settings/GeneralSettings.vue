@@ -49,6 +49,20 @@
                 @update:model-value="(v) => updateGeneralValue('launchPage', v)"
               />
             </PrefRow>
+            <PrefRow icon="check-all-dark" title="显示阅读进度" summary="在画廊卡片上显示阅读进度">
+              <AppSwitch
+                :model-value="prefs.general.showReadProgress"
+                aria-label="显示阅读进度"
+                @update:model-value="() => toggleGeneral('showReadProgress')"
+              />
+            </PrefRow>
+          </PrefCard>
+        </section>
+
+        <!-- ═══ 浏览（Wave-1 B 组） ═══════════════════════════════════ -->
+        <section>
+          <SectionHeader title="浏览" />
+          <PrefCard>
             <PrefRow icon="reorder" title="列表模式" summary="画廊列表的默认布局">
               <AppSelect
                 :model-value="prefs.general.listMode"
@@ -56,12 +70,55 @@
                 @update:model-value="(v) => updateGeneralValue('listMode', v)"
               />
             </PrefRow>
-            <PrefRow icon="check-all-dark" title="显示阅读进度" summary="在画廊卡片上显示阅读进度">
+            <PrefRow icon="share-primary" title="显示上传者" summary="在画廊卡片上显示上传者">
               <AppSwitch
-                :model-value="prefs.general.showReadProgress"
-                aria-label="显示阅读进度"
-                @update:model-value="() => toggleGeneral('showReadProgress')"
+                :model-value="prefs.general.showUploader"
+                aria-label="显示上传者"
+                @update:model-value="() => toggleGeneral('showUploader')"
               />
+            </PrefRow>
+            <PrefRow icon="history-black" title="显示发布时间" summary="在画廊卡片上显示发布时间">
+              <AppSwitch
+                :model-value="prefs.general.showPostedTime"
+                aria-label="显示发布时间"
+                @update:model-value="() => toggleGeneral('showPostedTime')"
+              />
+            </PrefRow>
+            <PrefRow icon="heart-primary" title="默认收藏槽" summary="收藏时默认使用的槽位，-2 到 9">
+              <label class="num-field">
+                <input
+                  type="number"
+                  min="-2"
+                  max="9"
+                  :value="prefs.general.defaultFavoriteSlot"
+                  aria-label="默认收藏槽"
+                  @change="updateGeneral('defaultFavoriteSlot', $event)"
+                />
+              </label>
+            </PrefRow>
+            <PrefRow icon="magnify-dark" title="最近搜索条数" summary="保留的最近搜索记录条数，0 表示关闭">
+              <label class="num-field">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  :value="prefs.general.recentSearchMax"
+                  aria-label="最近搜索条数"
+                  @change="updateGeneral('recentSearchMax', $event)"
+                />
+              </label>
+            </PrefRow>
+            <PrefRow icon="pencil-dark" title="收藏槽名称" summary="以 | 分隔 10 个槽位名，空项回退默认名称">
+              <template #below>
+                <AppTextField
+                  class="general-settings__slot-names"
+                  :model-value="prefs.general.favoriteSlotNames"
+                  aria-label="收藏槽名称"
+                  placeholder="例如：主用|备用"
+                  :maxlength="255"
+                  @update:model-value="(v) => updateGeneralValue('favoriteSlotNames', v)"
+                />
+              </template>
             </PrefRow>
           </PrefCard>
         </section>
@@ -169,7 +226,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { GeneralPreferences } from '@/api/preferences'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useThemeStore, type Theme } from '@/stores/theme'
-import { AppSelect, AppSegmented, AppSwitch, PrefCard, PrefRow, SectionHeader } from '@/components/form'
+import { AppSelect, AppSegmented, AppSwitch, AppTextField, PrefCard, PrefRow, SectionHeader } from '@/components/form'
 
 const preferencesStore = usePreferencesStore()
 const themeStore = useThemeStore()
@@ -200,8 +257,8 @@ const LAUNCH_PAGE_OPTIONS: Array<{ value: string; label: string }> = [
 ]
 
 const LIST_MODE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'list', label: '列表' },
   { value: 'grid', label: '网格' },
+  { value: 'list', label: '列表' },
 ]
 
 const DETAIL_SIZE_OPTIONS: Array<{ value: string; label: string }> = [
@@ -231,15 +288,14 @@ function updateGeneral(
   event: Event,
 ): void {
   const target = event.target as HTMLInputElement | HTMLSelectElement
-  const raw = target.value
-  const value = key === 'historyInfoSize' ? clampHistory(raw) : raw
+  const value = normalizeValue(key, target.value)
   target.value = String(value)
   preferencesStore.updateGeneral({ [key]: value })
 }
 
-/** 裸值版本（AppSelect 的 @update:model-value），clamp 逻辑与 updateGeneral 一致。 */
+/** 裸值版本（AppSelect / AppTextField 的 @update:model-value），clamp 逻辑与 updateGeneral 一致。 */
 function updateGeneralValue(key: keyof GeneralPreferences, raw: string | number): void {
-  const value = key === 'historyInfoSize' ? clampHistory(String(raw)) : raw
+  const value = normalizeValue(key, String(raw))
   preferencesStore.updateGeneral({ [key]: value })
 }
 
@@ -248,10 +304,24 @@ function toggleGeneral(key: keyof GeneralPreferences): void {
   preferencesStore.updateGeneral({ [key]: !prefs.value.general[key] })
 }
 
-function clampHistory(raw: string): number {
+/** 数字键按各自范围 clamp，其余键原样透传。 */
+function normalizeValue(key: keyof GeneralPreferences, raw: string): string | number {
+  switch (key) {
+    case 'historyInfoSize':
+      return clampInt(raw, 1, 100, 10)
+    case 'defaultFavoriteSlot':
+      return clampInt(raw, -2, 9, 0)
+    case 'recentSearchMax':
+      return clampInt(raw, 0, 100, 10)
+    default:
+      return raw
+  }
+}
+
+function clampInt(raw: string, min: number, max: number, fallback: number): number {
   const parsed = Number.parseInt(raw, 10)
-  if (Number.isNaN(parsed)) return 10
-  return Math.min(100, Math.max(1, parsed))
+  if (Number.isNaN(parsed)) return fallback
+  return Math.min(max, Math.max(min, parsed))
 }
 
 /* ------------------------------- save feedback ---------------------------- */
@@ -375,6 +445,11 @@ onBeforeUnmount(() => {
 
 .num-field input:focus {
   border-color: var(--color-primary);
+}
+
+/* 收藏槽名称输入占满 PrefRow 的 below 槽 */
+.general-settings__slot-names {
+  margin-top: 4px;
 }
 
 /* --------------------------------- snackbar -------------------------------- */
