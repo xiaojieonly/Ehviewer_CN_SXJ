@@ -983,7 +983,15 @@ paths:
     get:
       tags: [Image]
       operationId: proxyImage
-      summary: Proxy and cache an image by its original URL
+      summary: Proxy and cache an image by its original URL (W3 R4-13 fetch-on-miss)
+      description: |
+        URL-keyed cache lookup. On a miss for a Gallery Site URL
+        (gallery.test / *.gallery.test) the image is fetched through the
+        server's shared site session (cookies/proxy inherited), backfilled
+        into the cache and served with the site's content-type. Non-site
+        hosts are never fetched; an unreachable or erroring site keeps the
+        404 error envelope (E2E-6: errors pass through, never fabricated).
+        Backs the Tier-2 thumbnail rewrite (W3 #13).
       parameters:
         - name: url
           in: query
@@ -993,14 +1001,22 @@ paths:
           description: Original image URL to proxy
       responses:
         '200':
-          description: Image binary data
+          description: Image binary data (cache hit, or fetch-on-miss with the site content-type)
           content:
             image/jpeg:
               schema:
                 type: string
                 format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
         '404':
-          description: Image not found in cache
+          description: Not in cache and not fetchable (non-whitelisted host, site unreachable, or site error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/image/cache/status:
     get:
