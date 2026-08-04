@@ -274,8 +274,14 @@ Web equivalent — triggered by viewport aspect ratio, NOT device type:
 
 | Viewport | Behavior | Android equivalent |
 |----------|----------|-------------------|
-| < 600px | Modal overlay (hamburger toggle, scrim backdrop) | DrawerLayout overlay on phones |
-| ≥ 600px | Persistent (always visible, content shifts) | DrawerLayout locked open on tablets |
+| < 720px | Modal overlay (hamburger toggle, scrim backdrop) | DrawerLayout overlay on phones |
+| ≥ 720px | Persistent (always visible, content shifts) | DrawerLayout locked open on tablets |
+
+> **Adjudication note (2026-08-04, W4 R4-F1)**: the shipped implementation has always switched
+> modal/persistent at 720px (App.vue / NavigationDrawer.vue); the original 600px in this section
+> never matched shipped reality. Leader adjudicated to amend the contract to the shipped baseline
+> (moving the implementation would violate the mobile "regression-only, do not break" red line).
+> The 600px spacing breakpoint (§2.2 / §3) is a separate concern and is NOT affected.
 
 ### Implementation
 
@@ -295,7 +301,7 @@ Web equivalent — triggered by viewport aspect ratio, NOT device type:
   transform: translateX(0);
 }
 
-@media (min-width: 600px) {
+@media (min-width: 720px) {
   .drawer {
     transform: translateX(0);  /* Always visible */
     position: sticky;
@@ -399,7 +405,7 @@ FLUID (scales with viewport):
 ├── Spacing/margins → step at 600px breakpoint (sw600dp values)
 ├── Grid column count → auto-fill from column-width
 ├── Thumbnail container width → fills grid column
-├── Drawer mode → modal (<600px) / persistent (≥600px)
+├── Drawer mode → modal (<720px) / persistent (≥720px)
 ├── Reader layout → single (portrait) / dual (landscape)
 └── Image resolution → srcset + ?w={width} per container
 ```
