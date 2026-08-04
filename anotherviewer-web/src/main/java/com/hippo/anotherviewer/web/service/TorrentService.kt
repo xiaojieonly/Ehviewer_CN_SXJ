@@ -4,7 +4,7 @@ import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.client.parser.TorrentParser
 import com.hippo.anotherviewer.web.dto.TorrentItem
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -34,7 +34,7 @@ class TorrentService(
             val url = SiteUrl.getHost() + "gallerytorrents.php?gid=$gid&t=$token"
             val request = SiteRequestBuilder(url, SiteUrl.getGalleryDetailUrl(gid, token)).build()
             val body = client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) null else response.body()?.string()
+                if (!response.isSuccessful) null else response.body?.string()
             } ?: return emptyList()
 
             val torrents = TorrentParser.parse(body)
@@ -60,15 +60,15 @@ class TorrentService(
      * restricted to known Gallery Site torrent hosts (SSRF guard).
      */
     fun fetchTorrentFile(token: String): ByteArray? {
-        val url = HttpUrl.parse(token) ?: return null
-        if (!isAllowedTorrentHost(url.host())) {
-            logger.warn("Blocked torrent download from disallowed host: {}", url.host())
+        val url = token.toHttpUrlOrNull() ?: return null
+        if (!isAllowedTorrentHost(url.host)) {
+            logger.warn("Blocked torrent download from disallowed host: {}", url.host)
             return null
         }
         return try {
             val request = okhttp3.Request.Builder().url(url).build()
             client.newCall(request).execute().use { response ->
-                if (response.isSuccessful) response.body()?.bytes() else null
+                if (response.isSuccessful) response.body?.bytes() else null
             }
         } catch (e: Exception) {
             logger.warn("Failed to download torrent file from {}", token, e)

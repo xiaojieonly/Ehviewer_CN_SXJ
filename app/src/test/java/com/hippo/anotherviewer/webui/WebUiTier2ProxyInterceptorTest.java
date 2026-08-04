@@ -91,7 +91,7 @@ public class WebUiTier2ProxyInterceptorTest {
                     .protocol(Protocol.HTTP_1_1)
                     .code(200)
                     .message("OK")
-                    .body(ResponseBody.create(MediaType.parse("text/html"), new byte[0]))
+                    .body(ResponseBody.create(new byte[0], MediaType.get("text/html")))
                     .build();
         }
 

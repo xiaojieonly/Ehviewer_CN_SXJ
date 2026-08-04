@@ -4,7 +4,7 @@ import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import com.hippo.anotherviewer.web.dto.ArchiveItem
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.File
@@ -74,9 +74,9 @@ class ArchiveService(
      * @return true when the archive file was saved to the download directory
      */
     fun downloadArchive(gid: Long, url: String): Boolean {
-        val parsedUrl = HttpUrl.parse(url) ?: return false
-        if (!isAllowedArchiveHost(parsedUrl.host())) {
-            logger.warn("Blocked archive download from disallowed host: {}", parsedUrl.host())
+        val parsedUrl = url.toHttpUrlOrNull() ?: return false
+        if (!isAllowedArchiveHost(parsedUrl.host)) {
+            logger.warn("Blocked archive download from disallowed host: {}", parsedUrl.host)
             return false
         }
         val token = galleryLookup.findToken(gid) ?: return false
@@ -97,8 +97,8 @@ class ArchiveService(
             val formUrl = archiver.originalUrl
                 ?: archiver.resampleUrl
                 ?: return false
-            val form = HttpUrl.parse(formUrl) ?: return false
-            if (!isAllowedArchiveHost(form.host())) return false
+            val form = formUrl.toHttpUrlOrNull() ?: return false
+            if (!isAllowedArchiveHost(form.host)) return false
             val dltype = form.queryParameter("dltype")
             val dlcheck = form.queryParameter("dlcheck")
             if (dltype.isNullOrEmpty() || dlcheck.isNullOrEmpty()) {
@@ -118,10 +118,10 @@ class ArchiveService(
             val request = com.hippo.anotherviewer.client.SiteRequestBuilder(downloadUrl, referer).build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    logger.warn("Archive download HTTP {} for gid={}", response.code(), gid)
+                    logger.warn("Archive download HTTP {} for gid={}", response.code, gid)
                     return false
                 }
-                response.body()?.byteStream()?.use { input ->
+                response.body?.byteStream()?.use { input ->
                     target.outputStream().use { output -> input.copyTo(output) }
                 }
             }

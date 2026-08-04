@@ -238,7 +238,7 @@ class UpdateDialog(private val activity: Activity) {
                 if (!response.isSuccessful) {
                     return false
                 }
-                val body = response.body() ?: return false
+                val body = response.body ?: return false
 
                 body.byteStream().use { `is` ->
                     FileOutputStream(file).use { os ->

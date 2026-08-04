@@ -48,7 +48,7 @@ public final class WebUiSettings {
     private static final String KEY_LAST_SYNC_TIMESTAMP = "last_sync_timestamp";
     private static final String KEY_REMOTE_READ = "remote_read_enabled";
 
-    private static final MediaType JSON_MEDIA = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType JSON_MEDIA = MediaType.get("application/json; charset=utf-8");
 
     private final SharedPreferences preferences;
     private final WebUiCredentialStore credentialStore;
@@ -127,7 +127,7 @@ public final class WebUiSettings {
                 Request request = new Request.Builder()
                         .url(config.baseUrl() + "/api/v1/auth/logout")
                         .header("Authorization", "Bearer " + token)
-                        .post(RequestBody.create(JSON_MEDIA, ""))
+                        .post(RequestBody.create("", JSON_MEDIA))
                         .build();
                 try (Response response = new OkHttpClient().newCall(request).execute()) {
                     // Best effort; outcome intentionally ignored.

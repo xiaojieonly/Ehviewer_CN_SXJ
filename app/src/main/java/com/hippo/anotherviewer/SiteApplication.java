@@ -405,6 +405,8 @@ public class SiteApplication extends RecordingApplication {
         if (mockBase.isEmpty()) {
             return chain -> chain.proceed(chain.request());
         }
+        // OkHttp 4.x: parse() stays (deprecated) as the only null-safe Java factory —
+        // HttpUrl.get would throw on malformed input where this code degrades to null.
         final HttpUrl base = HttpUrl.parse(mockBase);
         if (base == null) {
             return chain -> chain.proceed(chain.request());

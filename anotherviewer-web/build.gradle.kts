@@ -39,7 +39,7 @@ java {
 
 dependencies {
     implementation(project(":anotherviewer-core"))
-    implementation("com.squareup.okhttp3:okhttp:3.14.7")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-websocket")

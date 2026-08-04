@@ -2,7 +2,7 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.client.SiteConfig
 import com.hippo.anotherviewer.client.SiteRequestBuilder
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -40,13 +40,13 @@ class SiteCallPatternConsistencyTest {
 
     @Test
     fun `post requests keep the browser fingerprint and body`() {
-        val body = RequestBody.create(null, "x=1")
+        val body = "x=1".toRequestBody(null)
         val request = SiteRequestBuilder("https://gallery.test/api.php", "https://gallery.test/")
             .post(body)
             .build()
 
         assertEquals("gallery.test", request.header("Host"))
-        assertEquals("POST", request.method())
+        assertEquals("POST", request.method)
     }
 
     @Test

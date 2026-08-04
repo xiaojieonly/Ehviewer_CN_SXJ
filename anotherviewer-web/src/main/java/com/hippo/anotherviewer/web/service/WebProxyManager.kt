@@ -79,18 +79,18 @@ class WebProxyManager(private val serverConfig: ServerConfigService) {
         val s = settings()
         if (s.username.isBlank()) return@Authenticator null
         // Only ever answer proxy (407) challenges, and never for a different proxy.
-        if (response.code() != 407) return@Authenticator null
-        if (route != null && route.proxy() != null && !route.proxy().equals(proxy)) {
+        if (response.code != 407) return@Authenticator null
+        if (route != null && route.proxy != null && !route.proxy.equals(proxy)) {
             return@Authenticator null
         }
         val challenge = response.challenges().firstOrNull() ?: return@Authenticator null
-        response.request().newBuilder()
+        response.request.newBuilder()
             .header("Proxy-Authorization", proxyCredentials(challenge, s.username, s.password))
             .build()
     }
 
     private fun proxyCredentials(challenge: Challenge, username: String, password: String): String {
-        return when (challenge.scheme().lowercase()) {
+        return when (challenge.scheme.lowercase()) {
             "basic" -> Credentials.basic(username, password)
             else -> "Basic " + Base64.getEncoder().encodeToString(
                 ("$username:$password").toByteArray(Charsets.UTF_8)

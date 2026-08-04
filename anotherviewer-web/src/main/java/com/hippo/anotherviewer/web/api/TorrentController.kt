@@ -2,7 +2,7 @@ package com.hippo.anotherviewer.web.api
 
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.TorrentService
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -40,9 +40,9 @@ class TorrentController(private val torrentService: TorrentService) {
      * query parameter, falls back to the first all-digit path segment.
      */
     private fun torrentFileName(token: String): String {
-        val url = HttpUrl.parse(token)
+        val url = token.toHttpUrlOrNull()
         val gid = url?.queryParameter("gid")?.trim()
-            ?: url?.pathSegments()?.firstOrNull { it.isNotEmpty() && it.all(Char::isDigit) }
+            ?: url?.pathSegments?.firstOrNull { it.isNotEmpty() && it.all(Char::isDigit) }
         return if (gid != null && gid.isNotEmpty()) "$gid.torrent" else "torrent.torrent"
     }
 }

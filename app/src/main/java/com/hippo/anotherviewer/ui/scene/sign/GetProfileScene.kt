@@ -31,11 +31,12 @@ import com.hippo.util.AppHelper
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import okhttp3.FormBody
-import okhttp3.HttpUrl
-import okhttp3.MediaType
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONException
 import java.io.IOException
@@ -190,9 +191,9 @@ class GetProfileScene : SolidScene() {
             // 方案三和方案七：改进异常处理和重定向处理
             try {
                 val response = okHttpClient!!.newCall(okRequest).execute()
-                
+
                 // 处理重定向响应（3xx状态码）
-                val statusCode = response.code()
+                val statusCode = response.code
                 if (statusCode in 300..399) {
                     val redirectUrl = response.header("Location")
                     if (redirectUrl != null) {
@@ -202,7 +203,7 @@ class GetProfileScene : SolidScene() {
                     }
                 }
                 
-                if (response.body() == null) {
+                if (response.body == null) {
                     response.close()
                     throw IOException("请求结果为空")
                 }
@@ -226,8 +227,8 @@ class GetProfileScene : SolidScene() {
 
         @Suppress("deprecation")
         override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-            val httpUrl = HttpUrl.parse(url) ?: return true
-            val host = httpUrl.host()
+            val httpUrl = url.toHttpUrlOrNull() ?: return true
+            val host = httpUrl.host
             return !(host == SiteUrl.DOMAIN_E ||
                 host == SiteUrl.DOMAIN_FORUMS ||
                 host.endsWith("." + SiteUrl.DOMAIN_E))
@@ -235,7 +236,7 @@ class GetProfileScene : SolidScene() {
 
         override fun onPageFinished(view: WebView, url: String) {
             ehContext ?: return
-            HttpUrl.parse(url) ?: return
+            url.toHttpUrlOrNull() ?: return
             val manager = CookieManager.getInstance()
             manager.getCookie(SiteUrl.HOST_E)
             readPageContent()
@@ -307,31 +308,19 @@ class GetProfileScene : SolidScene() {
                         contentType.contains("application/json") -> {
                             // JSON 数据
                             // 注意：实际请求体内容需要通过库的 API 获取
-                            RequestBody.create(
-                                MediaType.parse("application/json; charset=utf-8"),
-                                "{}"
-                            )
+                            "{}".toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
                         }
                         contentType.contains("application/xml") || contentType.contains("text/xml") -> {
                             // XML 数据
-                            RequestBody.create(
-                                MediaType.parse("application/xml; charset=utf-8"),
-                                ""
-                            )
+                            "".toRequestBody("application/xml; charset=utf-8".toMediaTypeOrNull())
                         }
                         contentType.contains("text/plain") -> {
                             // 纯文本
-                            RequestBody.create(
-                                MediaType.parse("text/plain; charset=utf-8"),
-                                ""
-                            )
+                            "".toRequestBody("text/plain; charset=utf-8".toMediaTypeOrNull())
                         }
                         contentType.isNotEmpty() && method != "GET" -> {
                             // 其他类型的请求体
-                            RequestBody.create(
-                                MediaType.parse(contentType),
-                                ByteArray(0)
-                            )
+                            ByteArray(0).toRequestBody(contentType.toMediaTypeOrNull())
                         }
                         else -> null
                     }
@@ -350,7 +339,7 @@ class GetProfileScene : SolidScene() {
                 val bodyString = getBodyMethod.invoke(request) as? String
                 if (!bodyString.isNullOrEmpty()) {
                     val contentType = request.headers["Content-Type"] ?: "application/octet-stream"
-                    RequestBody.create(MediaType.parse(contentType), bodyString)
+                    bodyString.toRequestBody(contentType.toMediaTypeOrNull())
                 } else {
                     null
                 }
@@ -439,19 +428,19 @@ class GetProfileScene : SolidScene() {
                 .toTypedArray()[0]
 
             // Get the response code and message
-            val statusCode = okHttpResponse.code()
-            val reasonPhraseRaw = okHttpResponse.message()
+            val statusCode = okHttpResponse.code
+            val reasonPhraseRaw = okHttpResponse.message
             val reasonPhrase =
                 if (reasonPhraseRaw.isNullOrEmpty()) defaultReasonPhrase(statusCode) else reasonPhraseRaw
 
             // Get headers as a Map
             val responseHeaders: MutableMap<String, String?> = HashMap()
-            for (headerName in okHttpResponse.headers().names()) {
+            for (headerName in okHttpResponse.headers.names()) {
                 responseHeaders[headerName] = okHttpResponse.header(headerName)
             }
 
             // Create the WebResourceResponse
-            if (okHttpResponse.body() == null) {
+            if (okHttpResponse.body == null) {
                 return WebResourceResponse(
                     mimeType,
                     encoding,
@@ -467,7 +456,7 @@ class GetProfileScene : SolidScene() {
                 statusCode,
                 reasonPhrase,
                 responseHeaders,
-                okHttpResponse.body()!!.byteStream()
+                okHttpResponse.body!!.byteStream()
             )
         }
 
@@ -539,8 +528,8 @@ class GetProfileScene : SolidScene() {
 
         @Suppress("deprecation")
         override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-            val httpUrl = HttpUrl.parse(url) ?: return true
-            val host = httpUrl.host()
+            val httpUrl = url.toHttpUrlOrNull() ?: return true
+            val host = httpUrl.host
             return !(host == SiteUrl.DOMAIN_E ||
                 host == SiteUrl.DOMAIN_FORUMS ||
                 host.endsWith("." + SiteUrl.DOMAIN_E))

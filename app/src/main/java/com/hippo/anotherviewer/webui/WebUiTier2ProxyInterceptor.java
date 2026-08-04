@@ -89,6 +89,9 @@ public final class WebUiTier2ProxyInterceptor implements Interceptor {
         if (config == null) {
             return chain.proceed(request);
         }
+        // OkHttp 4.x: parse() is deprecated but remains the only null-safe Java
+        // factory (HttpUrl.get throws on malformed input); null checks below rely
+        // on that to degrade Tier-2 routing to direct instead of breaking.
         HttpUrl base = HttpUrl.parse(config.baseUrl());
         if (base == null) {
             return chain.proceed(request);

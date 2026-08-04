@@ -167,9 +167,11 @@ dependencies {
 
 //    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
 //    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:5.0.0-alpha.11'
-    // 还是旧版稳定好用
-    implementation 'com.squareup.okhttp3:okhttp:3.14.9'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:3.14.9'
+    // H-2（W4）：3.14.9 → 4.12.0 稳定线升级；okio 随 okhttp 4.x 传递升级至 3.x，
+    // app 直接用到 okio（SiteTagDatabase/AppUpdater），这里显式声明与 okhttp 4.12.0 对齐。
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0'
+    implementation 'com.squareup.okio:okio:3.6.0'
     implementation 'com.github.xiaojieonly:Android-Request-Inspector-WebView:70403bb'
 
     implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'

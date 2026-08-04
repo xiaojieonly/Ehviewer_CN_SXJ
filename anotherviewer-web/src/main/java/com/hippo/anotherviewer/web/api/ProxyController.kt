@@ -34,7 +34,7 @@ class ProxyController(private val proxyManager: WebProxyManager) {
             .proxy(proxy ?: Proxy.NO_PROXY)
             .proxyAuthenticator { _, response ->
                 if (s.username.isBlank()) return@proxyAuthenticator null
-                response.request().newBuilder()
+                response.request.newBuilder()
                     .header("Proxy-Authorization", Credentials.basic(s.username, s.password))
                     .build()
             }
@@ -44,9 +44,9 @@ class ProxyController(private val proxyManager: WebProxyManager) {
         val start = System.currentTimeMillis()
         return try {
             client.newCall(Request.Builder().url("https://gallery.test/").get().build()).execute().use { response ->
-                val ok = response.isSuccessful || response.code() < 500
+                val ok = response.isSuccessful || response.code < 500
                 ResponseEntity.ok(
-                    ProxyTestResponse(ok, System.currentTimeMillis() - start, if (ok) "" else "HTTP ${response.code()}")
+                    ProxyTestResponse(ok, System.currentTimeMillis() - start, if (ok) "" else "HTTP ${response.code}")
                 )
             }
         } catch (e: Exception) {

@@ -21,6 +21,7 @@ import androidx.appcompat.app.AlertDialog
 import com.hippo.lib.yorozuya.AssertUtils
 import okhttp3.Cookie
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 
 class WebViewSignInScene : SolidScene() {
@@ -117,8 +118,8 @@ class WebViewSignInScene : SolidScene() {
 
         @Suppress("deprecation")
         override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-            val httpUrl = HttpUrl.parse(url) ?: return true
-            val host = httpUrl.host()
+            val httpUrl = url.toHttpUrlOrNull() ?: return true
+            val host = httpUrl.host
             return !(host == SiteUrl.DOMAIN_E ||
                 host == SiteUrl.DOMAIN_FORUMS ||
                 host.endsWith("." + SiteUrl.DOMAIN_E))
@@ -126,16 +127,16 @@ class WebViewSignInScene : SolidScene() {
 
         override fun onPageFinished(view: WebView, url: String) {
             val context: Context =  ehContext ?: return
-            val httpUrl = HttpUrl.parse(url) ?: return
+            val httpUrl = url.toHttpUrlOrNull() ?: return
 
             val cookieString = CookieManager.getInstance().getCookie(SiteUrl.HOST_E)
             val cookies = parseCookies(httpUrl, cookieString)
             var getId = false
             var getHash = false
             for (cookie in cookies) {
-                if (SiteCookieStore.KEY_IPD_MEMBER_ID == cookie.name()) {
+                if (SiteCookieStore.KEY_IPD_MEMBER_ID == cookie.name) {
                     getId = true
-                } else if (SiteCookieStore.KEY_IPD_PASS_HASH == cookie.name()) {
+                } else if (SiteCookieStore.KEY_IPD_PASS_HASH == cookie.name) {
                     getHash = true
                 }
                 addCookie(context, SiteUrl.DOMAIN_EX, cookie)
