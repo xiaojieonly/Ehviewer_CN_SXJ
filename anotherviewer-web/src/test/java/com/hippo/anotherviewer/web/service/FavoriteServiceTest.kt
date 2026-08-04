@@ -6,6 +6,7 @@ import com.hippo.anotherviewer.web.entity.LocalFavoriteInfoEntity
 import com.hippo.anotherviewer.web.repository.LocalFavoriteInfoRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -119,6 +120,41 @@ class FavoriteServiceTest {
         val response = service.listFavorites(-1, 1, 20)
 
         assertEquals(3, response.favorites.size)
+    }
+
+    @Test
+    fun `listFavorites hides tombstone rows deleted by sync`() {
+        val live = favEntity(1, 0)
+        val tombstone = favEntity(2, 3).apply { deleted = true }
+        `when`(repository.findAllByOrderByTimeDesc()).thenReturn(listOf(live, tombstone))
+
+        val response = service.listFavorites(0, 1, 20)
+
+        assertEquals(listOf(1L), response.favorites.map { it.gid })
+        assertEquals(1, response.favorites.size)
+    }
+
+    @Test
+    fun `listFavorites tombstones do not count into pagination`() {
+        val live = favEntity(1, 0)
+        val tombstone = favEntity(2, 3).apply { deleted = true }
+        `when`(repository.findAllByOrderByTimeDesc()).thenReturn(listOf(live, tombstone))
+
+        val response = service.listFavorites(3, 1, 20)
+
+        assertTrue(response.favorites.isEmpty())
+        assertEquals(0, response.totalPages)
+    }
+
+    @Test
+    fun `listFavorites with only tombstones returns an empty list`() {
+        val tombstone = favEntity(2, 3).apply { deleted = true }
+        `when`(repository.findAllByOrderByTimeDesc()).thenReturn(listOf(tombstone))
+
+        val response = service.listFavorites(0, 1, 20)
+
+        assertTrue(response.favorites.isEmpty())
+        assertEquals(0, response.totalPages)
     }
 
     private fun favEntity(gid: Long, slot: Int): LocalFavoriteInfoEntity {
