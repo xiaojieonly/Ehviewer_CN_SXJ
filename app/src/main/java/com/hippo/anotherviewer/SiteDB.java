@@ -658,6 +658,22 @@ public class SiteDB {
         return result;
     }
 
+    /**
+     * Cheap row count for UI labels (R4-7): the local favorites count without
+     * materializing every row. The DB is the source of truth; the Settings
+     * fav_local cache lags whenever favorites change outside the favorites
+     * scene (e.g. WebUI sync adoption).
+     */
+    public static synchronized int countLocalFavorites() {
+        Cursor cursor = sDaoSession.getDatabase()
+                .rawQuery("SELECT COUNT(*) FROM " + LocalFavoritesDao.TABLENAME, null);
+        try {
+            return cursor.moveToFirst() ? cursor.getInt(0) : 0;
+        } finally {
+            cursor.close();
+        }
+    }
+
     public static synchronized List<GalleryInfo> searchLocalFavorites(String query) {
         query = SqlUtils.sqlEscapeString("%" + query + "%");
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();

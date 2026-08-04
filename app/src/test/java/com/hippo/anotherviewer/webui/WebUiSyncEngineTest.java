@@ -828,4 +828,87 @@ public class WebUiSyncEngineTest {
         assertEquals(0, bThird.pushedHistory);
         assertTrue(server.history.get(11L).deleted);
     }
+
+    // ==================== W5: write-through pending (R4-15 audit §2.1 hardening) ====================
+    // Detected pending tombstones are persisted at detection time — before the
+    // push — not only by the end-of-cycle save block. A process death between
+    // detection and save (in particular after the push was acked) therefore
+    // cannot lose the deletion: the next cycle re-delivers the tombstone from
+    // the durable pending sets alone, without depending on the persisted
+    // snapshot still containing the key.
+
+    /**
+     * Unit-level kill-window simulation: the cycle detects the tombstone,
+     * pushes it (acked), then "dies" before the save block (pull throws).
+     * The pending set must already have been durable at push time, survive
+     * the kill, and drive the tombstone re-delivery on the recovery cycle —
+     * while ack-before-clear (pending only cleared after a FULLY successful
+     * cycle) and the B9 ledger semantics stay intact.
+     */
+    @Test
+    public void w5_writeThroughPending_survivesKillAfterPushAck() throws IOException {
+        server.policy = policy("device_priority");
+        String android = "android-00000000-0000-0000-0000-000000000001";
+
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.putLocalFavorite(favorite(2, 2000, "fav 2"));
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, android, 0);
+        assertEquals("1,2", storeA.prefs.get(config.baseUrl() + ".snapshot.favorites"));
+        assertEquals("", storeA.prefs.get(config.baseUrl() + ".pending.favorites"));
+
+        // The user deletes favorite 2 between cycles.
+        storeA.removeLocalFavorites(2);
+
+        // Kill-window transport: records what the store has persisted AT PUSH
+        // TIME, accepts the push (the tombstone is acked by the real fake
+        // server), then simulates process death before the save block by
+        // throwing from pull.
+        final String[] pendingAtPushTime = new String[1];
+        WebUiSyncTransport killingTransport = new WebUiSyncTransport() {
+            @Override
+            public WebUiSyncModels.PushResponse push(WebUiConfig cfg,
+                    WebUiSyncModels.PushRequest request) throws IOException {
+                pendingAtPushTime[0] = storeA.prefs.get(cfg.baseUrl() + ".pending.favorites");
+                return server.push(cfg, request);
+            }
+
+            @Override
+            public WebUiSyncModels.PullResponse pull(WebUiConfig cfg, long since)
+                    throws IOException {
+                throw new IOException("simulated process death after push ack");
+            }
+        };
+        WebUiSyncEngine killingEngine = new WebUiSyncEngine(storeA, killingTransport);
+        try {
+            killingEngine.syncInternal(config, android, first.serverTimestamp);
+            fail("Expected IOException from the simulated kill");
+        } catch (IOException expected) {
+            // Expected: the cycle died after the push ack, before the save block.
+        }
+
+        // The tombstone was durable BEFORE the push went out...
+        assertEquals("write-through persisted the pending tombstone before the push",
+                "2", pendingAtPushTime[0]);
+        // ...and survives the kill: pending stays, snapshot untouched (the
+        // aborted cycle's save block never ran — zero persistence).
+        assertEquals("2", storeA.prefs.get(config.baseUrl() + ".pending.favorites"));
+        assertEquals("1,2", storeA.prefs.get(config.baseUrl() + ".snapshot.favorites"));
+
+        // Recovery on the healthy transport: the durable pending set drives
+        // the tombstone re-delivery; B9 keeps unchanged fav 1 at home.
+        WebUiSyncEngine.Result recovery =
+                engineA.syncInternal(config, android, first.serverTimestamp);
+        assertEquals(1, recovery.pushedFavorites); // the tombstone for fav 2 only
+        assertTrue("tombstone delivered, priority deletion wins on the server",
+                server.favorites.get(2L).deleted);
+        // Only the fully successful cycle clears pending and advances the snapshot.
+        assertEquals("", storeA.prefs.get(config.baseUrl() + ".pending.favorites"));
+        assertEquals("1", storeA.prefs.get(config.baseUrl() + ".snapshot.favorites"));
+
+        // Converged: nothing more to push, deletion stays.
+        WebUiSyncEngine.Result steady =
+                engineA.syncInternal(config, android, recovery.serverTimestamp);
+        assertEquals(0, steady.pushedFavorites);
+        assertTrue(server.favorites.get(2L).deleted);
+    }
 }

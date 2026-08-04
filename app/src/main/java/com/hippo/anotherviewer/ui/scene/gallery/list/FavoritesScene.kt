@@ -195,7 +195,13 @@ class FavoritesScene : BaseScene(), EasyRecyclerView.OnItemClickListener,
         mClient = SiteApplication.getSiteClient(context)
         mFavCatArray = Settings.getFavCat()
         mFavCountArray = Settings.getFavCount()
-        mFavLocalCount = Settings.getFavLocalCount()
+        // R4-7: initialize from the DB truth, not the Settings fav_local cache.
+        // The cache is only refreshed when this scene loads the local list, so
+        // it goes stale whenever local favorites change elsewhere (e.g. WebUI
+        // sync adoption) — the local drawer row first rendered the stale 0 and
+        // jumped to N once the list loaded. The load-completion refresh in
+        // onGetFavoritesLocal keeps the label in sync afterwards as before.
+        mFavLocalCount = SiteDB.countLocalFavorites()
         mFavCountSum = Settings.getFavCloudCount()
 
         if (savedInstanceState == null) {

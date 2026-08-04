@@ -52,7 +52,11 @@ import java.util.Set;
  * local key sets against the snapshot of the last successful sync — the local
  * key sets re-collected at its save point, so keys adopted from a pull or
  * added mid-cycle are included (persisted per server URL in SharedPreferences).
- * Removed keys are pushed as
+ * Detected pending deletions are written through to the store at detection
+ * time, before the push (W5, R4-15 audit §2.1): a process death between
+ * detection and the end-of-cycle save cannot lose them — the next cycle
+ * re-delivers the tombstones from the durable pending sets even if the
+ * persisted snapshot no longer covers the keys. Removed keys are pushed as
  * {@code deleted: true} tombstones — soft for favorites, downloads, filters,
  * quick searches and download labels (the server keeps the record alive so
  * other devices can resurrect it, per union semantics) and hard for history and
@@ -304,6 +308,25 @@ public final class WebUiSyncEngine {
         pendingFilters = detectDeletions(snapshotFilters, pendingFilters, currentFilters);
         pendingQuickSearches = detectDeletions(snapshotQuickSearches, pendingQuickSearches, currentQuickSearches);
         pendingDownloadLabels = detectDeletions(snapshotDownloadLabels, pendingDownloadLabels, currentDownloadLabels);
+
+        // W5 write-through (R4-15 audit §2.1 hardening): persist the detected
+        // pending tombstones NOW — at detection time, before the push — not
+        // only via the end-of-cycle save block. If the process dies anywhere
+        // between detection and save (in particular the ack-after/save-before
+        // window), the tombstones are already durable and the next cycle
+        // re-delivers them from the pending sets alone, without depending on
+        // the persisted snapshot still containing the keys. The
+        // ack-before-clear main order is unchanged: pending is only CLEARED
+        // in the save block after every push batch was acked, and the B9
+        // ledgers are untouched here; a failed cycle simply leaves the
+        // written-through tombstones in place for the retry.
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_FAVORITES, pendingFavorites);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_HISTORY, pendingHistory);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_DOWNLOADS, pendingDownloads);
+        mStore.saveKeySet(serverKey, SUFFIX_PENDING_BOOKMARKS, pendingBookmarks);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, pendingFilters);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, pendingQuickSearches);
+        mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, pendingDownloadLabels);
 
         // B9: the push ledgers (key -> lastModified last delivered/adopted).
         // A null (corrupt/unreadable) ledger normalizes to empty, which marks
