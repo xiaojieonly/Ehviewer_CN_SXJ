@@ -674,53 +674,6 @@ export interface AdvanceSearchOptions {
 }
 
 /**
- * Props for `SearchLayout.vue` — replicates `SearchLayout.java`: the
- * expandable filter panel shown under the SearchBar, composed of titled
- * sections — Normal (CategoryTable + search-mode radio group + "enable
- * advanced" switch), Advanced (`AdvanceSearchTable`, inserted/removed by the
- * switch), Image search, and the action row (image-search toggle +
- * tag-selector entrance).
- *
- * All state is v-model'd so the search screen can compose the final query
- * (web equivalent of `formatListUrlBuilder`).
- */
-export interface SearchLayoutProps {
-  /** Top-level mode. v-model:mode. @default 'normal' */
-  mode?: SearchMode
-  /** Advanced section expanded (Android `mEnableAdvance`). v-model:enableAdvance. @default false */
-  enableAdvance?: boolean
-  /**
-   * Categories INCLUDED in the search — positive semantics for the embedded
-   * `CategoryTable`. v-model:selectedCategories. @default all categories
-   */
-  selectedCategories?: GalleryCategory[]
-  /** Keyword search mode radio group. v-model:normalSearchMode. @default 'normal' */
-  normalSearchMode?: NormalSearchMode
-  /** Advanced options (used when `enableAdvance`). v-model:advanceOptions. */
-  advanceOptions?: AdvanceSearchOptions
-}
-
-/** Emits for `SearchLayout.vue` — mirrors Android `SearchLayout.Helper`. */
-export interface SearchLayoutEmits {
-  /** v-model:mode. */
-  (e: 'update:mode', mode: SearchMode): void
-  /** v-model:enableAdvance. */
-  (e: 'update:enableAdvance', enabled: boolean): void
-  /** v-model:selectedCategories. */
-  (e: 'update:selectedCategories', selected: GalleryCategory[]): void
-  /** v-model:normalSearchMode. */
-  (e: 'update:normalSearchMode', mode: NormalSearchMode): void
-  /** v-model:advanceOptions. */
-  (e: 'update:advanceOptions', options: AdvanceSearchOptions): void
-  /** Mode toggled via the action row (Android `toggleSearchMode` → Helper.onChangeSearchMode). */
-  (e: 'change-mode'): void
-  /** "Select image" tapped in image mode (Android Helper.onSelectImage). */
-  (e: 'select-image'): void
-  /** Tag-selector entrance tapped (Android Helper.onOpenTagSelector). */
-  (e: 'open-tag-selector'): void
-}
-
-/**
  * Props for `CategoryTable.vue` — replicates `CategoryTable.java`:
  * 10 `CheckTextView` blocks in 2 columns × 5 rows
  * (`category_table_item_height` 40dp, item margin 4dp), each colored by

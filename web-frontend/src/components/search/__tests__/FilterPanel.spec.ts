@@ -183,7 +183,7 @@ describe('FilterPanel', () => {
     })
   })
 
-  describe('keyword mode (absorbed from SearchLayout, W3 R4-10)', () => {
+  describe('keyword mode (legacy surface absorbed, W3 R4-10)', () => {
     it('renders the four modes with the current one checked', () => {
       const wrapper = mountPanel({ keywordMode: 'uploader' })
       const radios = wrapper.findAll('.filter-panel__mode')

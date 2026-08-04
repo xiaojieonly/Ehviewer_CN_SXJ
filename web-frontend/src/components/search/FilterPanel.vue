@@ -41,7 +41,7 @@
       </header>
 
       <div class="filter-panel__body">
-        <!-- Keyword mode — absorbed from the legacy SearchLayout surface
+        <!-- Keyword mode — absorbed from the legacy search surface
              (W3 R4-10 single filter surface). -->
         <div class="filter-panel__section">
           <span class="filter-panel__label">Keyword mode</span>
@@ -206,7 +206,7 @@ const props = withDefaults(
     /** Panel visibility. v-model:open. @default false */
     open?: boolean
     /**
-     * Keyword search mode — W3 R4-10: absorbed from the legacy SearchLayout
+     * Keyword search mode — W3 R4-10: absorbed from the legacy search
      * surface so the FilterPanel is the single filter surface.
      * v-model:keywordMode. @default 'normal'
      */
@@ -428,7 +428,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 1px 2px var(--shadow-color);
 }
 
-/* --- Keyword mode radio group (absorbed from SearchLayout, W3 R4-10) ---- */
+/* --- Keyword mode radio group (legacy surface absorbed, W3 R4-10) ------- */
 
 .filter-panel__modes {
   display: flex;
