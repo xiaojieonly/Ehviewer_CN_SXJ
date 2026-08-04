@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M3 emphasized accelerate:退出类动画 -->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:controlX1="0.3"
+    android:controlY1="0.0"
+    android:controlX2="0.8"
+    android:controlY2="0.15" />

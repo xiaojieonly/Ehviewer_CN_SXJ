@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Activity 关闭:当前 Activity 向右 25% 滑出并淡出(M3 back) -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+    <alpha
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:duration="150" />
+    <translate
+        android:fromXDelta="0"
+        android:toXDelta="25%"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:duration="300" />
+</set>

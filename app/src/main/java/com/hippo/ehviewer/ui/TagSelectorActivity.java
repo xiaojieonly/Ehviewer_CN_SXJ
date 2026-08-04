@@ -21,12 +21,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+import androidx.core.view.WindowCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.flexbox.FlexboxLayout;
 
+import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 import com.hippo.ehviewer.client.EhTagDatabase;
@@ -62,6 +64,11 @@ public class TagSelectorActivity extends EhActivity {
             case Settings.THEME_BLACK:
                 return R.style.AppTheme_Black_NoActionBar;
         }
+    }
+
+    @Override
+    protected boolean isEdgeToEdgeEnabled() {
+        return false;
     }
 
     private RecyclerView recyclerView;
@@ -102,6 +109,11 @@ public class TagSelectorActivity extends EhActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_selector);
+
+        // 状态栏区域随 toolbar 主题色着色(亮色主题为彩色 toolbar,状态栏图标用白色)
+        getWindow().setStatusBarColor(AttrResources.getAttrColor(this, R.attr.toolbarColor));
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
 
         // Check locale first, this affects how we display tag names.
         // 先检查语言，这决定了后面是显示中文还是英文

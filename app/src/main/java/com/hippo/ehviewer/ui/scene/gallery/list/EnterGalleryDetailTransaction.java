@@ -52,6 +52,8 @@ public class EnterGalleryDetailTransaction implements TransitionHelper {
             enter.setEnterTransition(
                     TransitionInflater.from(context).inflateTransition(R.transition.trans_fade));
             transaction.addSharedElement(mThumb, transitionName);
+            // 等详情页缩略图就绪再播进入转场,否则转场找不到目标 view,观感像没有动画
+            ((GalleryDetailScene) enter).setPostponeSharedElement(true);
         }
         return true;
     }

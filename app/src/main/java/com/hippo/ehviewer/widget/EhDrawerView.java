@@ -22,10 +22,12 @@ import android.util.AttributeSet;
 import com.hippo.drawerlayout.DrawerLayoutChild;
 import com.hippo.widget.DrawerView;
 
+/**
+ * 右侧抽屉:全高布局(背景延伸进状态栏/系统导航栏区域,沉浸式),
+ * 内容由内部 padding 避让系统栏;库按 DrawerLayoutChild 的
+ * additional*Margin 避让会破坏沉浸感,故全部返回 0
+ */
 public class EhDrawerView extends DrawerView implements DrawerLayoutChild {
-
-    private int mWindowPaddingTop;
-    private int mWindowPaddingBottom;
 
     public EhDrawerView(Context context) {
         super(context);
@@ -41,16 +43,17 @@ public class EhDrawerView extends DrawerView implements DrawerLayoutChild {
 
     @Override
     public void onGetWindowPadding(int top, int bottom) {
-        mWindowPaddingTop = top;
-        mWindowPaddingBottom = bottom;
+        if (getPaddingTop() != top || getPaddingBottom() != bottom) {
+            setPadding(getPaddingLeft(), top, getPaddingRight(), bottom);
+        }
     }
 
     @Override
     public int getAdditionalTopMargin() {
-        return mWindowPaddingTop;
+        return 0;
     }
 
     public int getAdditionalBottomMargin() {
-        return mWindowPaddingBottom;
+        return 0;
     }
 }

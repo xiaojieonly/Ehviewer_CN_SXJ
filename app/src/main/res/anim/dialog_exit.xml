@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M3 对话框退出:淡出 + 轻微缩小 -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+    <alpha
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:duration="150" />
+    <scale
+        android:fromXScale="1.0"
+        android:toXScale="0.9"
+        android:fromYScale="1.0"
+        android:toYScale="0.9"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:interpolator="@anim/interpolator_emphasized_accelerate"
+        android:duration="150" />
+</set>

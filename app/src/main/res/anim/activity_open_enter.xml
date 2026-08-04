@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Activity 打开:新 Activity 从右侧 25% 滑入并淡入(M3 forward) -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0"
+        android:interpolator="@anim/interpolator_emphasized_decelerate"
+        android:duration="150" />
+    <translate
+        android:fromXDelta="25%"
+        android:toXDelta="0"
+        android:interpolator="@anim/interpolator_emphasized_decelerate"
+        android:duration="300" />
+</set>

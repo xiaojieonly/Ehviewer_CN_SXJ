@@ -185,6 +185,11 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     private TextView mTip;
     @Nullable
     private ViewTransition mViewTransition;
+    @Nullable
+    private View mScrollView;
+    /** 由 EnterGalleryDetailTransaction 在 commit 前设置:进入转场等缩略图就绪再播 */
+    private boolean mPostponeSharedElement;
+    private boolean mEnterTransitionStarted;
     // Header
     @Nullable
     private View mHeader;
@@ -433,6 +438,13 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (mPostponeSharedElement) {
+            // 共享元素进入转场:等缩略图就绪再播
+            postponeEnterTransition();
+            // 兜底:加载异常时强制开播,避免白屏卡死
+            SimpleHandler.getInstance().postDelayed(this::startEnterTransitionSafely, 300);
+        }
+
         if (savedInstanceState == null) {
             onInit();
         } else {
@@ -468,6 +480,21 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
     private void onInit() {
         handleArgs(getArguments());
+    }
+
+    /**
+     * 由转场 helper(EnterGalleryDetailTransaction)在 fragment commit 前调用,
+     * 标记本次进入需要等缩略图就绪再播共享元素转场
+     */
+    public void setPostponeSharedElement(boolean postpone) {
+        mPostponeSharedElement = postpone;
+    }
+
+    private void startEnterTransitionSafely() {
+        if (mPostponeSharedElement && !mEnterTransitionStarted) {
+            mEnterTransitionStarted = true;
+            startPostponedEnterTransition();
+        }
     }
 
     private void onRestore(Bundle savedInstanceState) {
@@ -520,6 +547,9 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         View progressView = ViewUtils.$$(main, R.id.progress_view);
         mTip = (TextView) ViewUtils.$$(main, R.id.tip);
         mViewTransition = new ViewTransition(mainView, progressView, mTip);
+        // 沉浸式:滚动区内容穿透到系统导航条下方,底部让位由 onApplyWindowInsets 设 padding
+        mScrollView = mainView;
+        ((ViewGroup) mScrollView).setClipToPadding(false);
 
         assert context != null;
         AssertUtils.assertNotNull(context);
@@ -564,6 +594,8 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         mHeader = ViewUtils.$$(belowHeader, R.id.header);
         mColorBg = ViewUtils.$$(mHeader, R.id.color_bg);
         mThumb = (LoadImageView) ViewUtils.$$(mHeader, R.id.thumb);
+        // 缩略图就绪(或失败)后开播共享元素进入转场
+        mThumb.setOnImageSetListener(success -> startEnterTransitionSafely());
         mTitle = (TextView) ViewUtils.$$(mHeader, R.id.title);
         mUploader = (TextView) ViewUtils.$$(mHeader, R.id.uploader);
         mCategory = (TextView) ViewUtils.$$(mHeader, R.id.category);
@@ -685,6 +717,41 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
         super.onViewCreated(view, savedInstanceState);
     }
 
+    /**
+     * 详情页隐藏底部导航栏;返回上一场景时框架重建其 view 并自动恢复显示
+     */
+    @Override
+    public boolean needShowBottomNav() {
+        return false;
+    }
+
+    /**
+     * 状态栏区域随详情页顶部 header 颜色着色(light=主题绿,dark/black=深灰/黑),
+     * 避免窗口底色状态栏与彩色 header 之间的视觉断裂
+     */
+    @Nullable
+    @Override
+    public Integer getStatusBarScrimColor() {
+        return AttrResources.getAttrColor(getEHContext(), R.attr.galleryDetailHeaderBackgroundColor);
+    }
+
+    @Override
+    public boolean needFitNavigationBar() {
+        return false;
+    }
+
+    /**
+     * 沉浸式:滚动区底部留出系统导航栏让位(本场景底部导航栏已隐藏),
+     * 顶部由舞台容器统一避让
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        if (mScrollView != null && mScrollView.getPaddingBottom() != bottomOccupied) {
+            mScrollView.setPadding(mScrollView.getPaddingLeft(), mScrollView.getPaddingTop(),
+                    mScrollView.getPaddingRight(), bottomOccupied);
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -706,6 +773,7 @@ public class GalleryDetailScene extends BaseScene implements View.OnClickListene
 
         mTip = null;
         mViewTransition = null;
+        mScrollView = null;
 
         mHeader = null;
         mColorBg = null;

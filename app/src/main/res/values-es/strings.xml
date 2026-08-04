@@ -46,6 +46,7 @@
     <!-- Category -->
 
     <string name="homepage">Página de inicio</string>
+    <string name="personal">Perfil</string>
     <string name="subscription">Suscripción</string>
     <string name="whats_hot">Destacado</string>
     <string name="top_lists">Listas Principales</string>

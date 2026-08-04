@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底部 tab 切换(fade through)进入:先待旧页淡出,再淡入并轻微放大归位 -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0"
+        android:interpolator="@anim/interpolator_emphasized_decelerate"
+        android:startOffset="100"
+        android:fillEnabled="true"
+        android:fillBefore="false"
+        android:fillAfter="true"
+        android:duration="200" />
+    <scale
+        android:fromXScale="0.95"
+        android:toXScale="1.0"
+        android:fromYScale="0.95"
+        android:toYScale="1.0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:interpolator="@anim/interpolator_emphasized_decelerate"
+        android:fillEnabled="true"
+        android:fillBefore="true"
+        android:fillAfter="true"
+        android:duration="300" />
+</set>

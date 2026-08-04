@@ -24,7 +24,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp">
+            android:layout_height="56dp">
 
             <ImageView
                 android:id="@+id/search_menu"
@@ -76,18 +76,13 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <View
-                android:id="@+id/list_header"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?attr/dividerColor"/>
-
+            <!-- M3 列表:无通栏分隔线 -->
             <ListView
                 android:id="@+id/search_bar_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:divider="?attr/dividerColor"
-                android:dividerHeight="1dp"/>
+                android:divider="@null"
+                android:dividerHeight="0dp"/>
 
         </LinearLayout>
     </LinearLayout>

@@ -84,6 +84,8 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
     @Nullable
     private EasyRecyclerView mRecyclerView;
     @Nullable
+    private ContentLayout mContentLayout;
+    @Nullable
     private GalleryPreviewAdapter mAdapter;
     @Nullable
     private GalleryPreviewHelper mHelper;
@@ -140,6 +142,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         ContentLayout contentLayout = (ContentLayout) inflater.inflate(
                 R.layout.scene_gallery_previews, container, false);
         contentLayout.hideFastScroll();
+        mContentLayout = contentLayout;
         mRecyclerView = contentLayout.getRecyclerView();
 
         Context context = getEHContext();
@@ -171,6 +174,18 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
         return contentLayout;
     }
 
+    /**
+     * 沉浸式避让:列表底部让出底部导航占位(基于 ContentLayout 记录的原始 padding,幂等);
+     * toolbar 由父类处理
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        if (null != mContentLayout) {
+            mContentLayout.setFitPaddingBottom(bottomOccupied);
+        }
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -185,6 +200,7 @@ public class GalleryPreviewsScene extends ToolbarScene implements EasyRecyclerVi
             mRecyclerView = null;
         }
 
+        mContentLayout = null;
         mAdapter = null;
     }
 

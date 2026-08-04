@@ -105,10 +105,12 @@ import com.hippo.ehviewer.ui.scene.EhCallback;
 import com.hippo.ehviewer.ui.scene.ProgressScene;
 import com.hippo.ehviewer.ui.scene.gallery.detail.GalleryDetailScene;
 import com.hippo.ehviewer.util.TagTranslationUtil;
+import com.hippo.ehviewer.widget.BottomNavHider;
 import com.hippo.ehviewer.widget.GalleryInfoContentHelper;
 import com.hippo.ehviewer.widget.JumpDateSelector;
 import com.hippo.ehviewer.widget.SearchBar;
 import com.hippo.ehviewer.widget.SearchLayout;
+import com.hippo.ehviewer.widget.SegmentedControl;
 import com.hippo.lib.yorozuya.AnimationUtils;
 import com.hippo.lib.yorozuya.AssertUtils;
 import com.hippo.lib.yorozuya.MathUtils;
@@ -281,6 +283,32 @@ public final class GalleryListScene extends BaseScene
     @State
     private int mState = STATE_NORMAL;
 
+    // iOS 分段控件(主页/订阅/热门)及其占位
+    @Nullable
+    private SegmentedControl mModeSegmented;
+    @Nullable
+    private RefreshLayout mRefreshLayout;
+    private int mListBasePaddingTop = -1;
+    private int mSegmentedSpace = 0;
+
+    // 沉浸式避让基准值(onCreateView2 时记录,onApplyWindowInsets 按基准重算,保证幂等)
+    @Nullable
+    private View mSearchBarContainer;
+    @Nullable
+    private FabLayout mSearchFabLayout;
+    @Nullable
+    private FastScroller mFastScroller;
+    private int mPaddingTopSB = 0;
+    private int mPaddingBottomFab = 0;
+    private int mListBasePaddingBottom = 0;
+    private int mFastScrollerBasePaddingTop = 0;
+    private int mSearchLayoutBasePaddingTop = 0;
+    private int mSearchLayoutBasePaddingBottom = 0;
+    private int mFabBasePaddingBottom = 0;
+    // 场景顶到屏幕顶端(needFitStatusBar=false),顶部避让由本场景按状态栏 inset 自行处理
+    private int mStatusBarInset = 0;
+    private int mSearchBarContainerBaseMarginTop = 0;
+
     // Double click back exit
     private long mPressBackTime = 0;
 
@@ -296,6 +324,12 @@ public final class GalleryListScene extends BaseScene
     private DownloadManager.DownloadInfoListener mDownloadInfoListener;
     private FavouriteStatusRouter mFavouriteStatusRouter;
     private FavouriteStatusRouter.Listener mFavouriteStatusRouterListener;
+
+    // 最外层 tab 场景,显示底部导航栏
+    @Override
+    public boolean needShowBottomNav() {
+        return true;
+    }
 
     @Override
     public int getNavCheckedItem() {
@@ -624,6 +658,134 @@ public final class GalleryListScene extends BaseScene
         }
         setNavCheckedItem(checkedItemId);
         mNavCheckedId = checkedItemId;
+
+        updateModeSegmented();
+    }
+
+    /**
+     * 分段控件切换列表模式(主页/订阅/热门)
+     */
+    private void switchListMode(int mode) {
+        if (null == mUrlBuilder) {
+            return;
+        }
+        mUrlBuilder.reset();
+        mUrlBuilder.setMode(mode);
+        onUpdateUrlBuilder();
+        if (null != mHelper) {
+            mHelper.refresh();
+        }
+        setState(STATE_NORMAL);
+        if (null != mSearchBarMover) {
+            mSearchBarMover.showSearchBar();
+        }
+    }
+
+    /**
+     * 仅在普通态且为纯净的主页/订阅/热门模式时显示分段控件,并同步选中项与列表顶部占位
+     */
+    private void updateModeSegmented() {
+        if (null == mModeSegmented || null == mUrlBuilder) {
+            return;
+        }
+        boolean pure = EhUtils.NONE == mUrlBuilder.getCategory()
+                && TextUtils.isEmpty(mUrlBuilder.getKeyword())
+                && mUrlBuilder.getAdvanceSearch() == -1
+                && mUrlBuilder.getMinRating() == -1
+                && mUrlBuilder.getPageFrom() == -1
+                && mUrlBuilder.getPageTo() == -1;
+        int index = -1;
+        if (pure) {
+            switch (mUrlBuilder.getMode()) {
+                case ListUrlBuilder.MODE_NORMAL:
+                    index = 0;
+                    break;
+                case ListUrlBuilder.MODE_SUBSCRIPTION:
+                    index = 1;
+                    break;
+                case ListUrlBuilder.MODE_WHATS_HOT:
+                    index = 2;
+                    break;
+                default:
+                    break;
+            }
+        }
+        boolean visible = index >= 0 && mState == STATE_NORMAL;
+        mModeSegmented.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (index >= 0) {
+            mModeSegmented.setSelectedIndex(index, false);
+        }
+        adjustListTopPadding(visible);
+    }
+
+    private void adjustListTopPadding(boolean segmentedVisible) {
+        if (null == mRecyclerView || mListBasePaddingTop < 0) {
+            return;
+        }
+        int extra = segmentedVisible ? mSegmentedSpace : 0;
+        mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mListBasePaddingTop + mStatusBarInset + extra,
+                mRecyclerView.getPaddingRight(), mRecyclerView.getPaddingBottom());
+        if (null != mRefreshLayout) {
+            mRefreshLayout.setHeaderTranslationY(mPaddingTopSB + mStatusBarInset + extra);
+        }
+    }
+
+    /**
+     * 场景顶到屏幕顶端:列表内容沉浸式滚入状态栏区域(状态栏完全透明,内容直接透出),
+     * 顶部避让由本场景按状态栏 inset 自行处理(见 onApplyWindowInsets)
+     */
+    @Override
+    public boolean needFitStatusBar() {
+        return false;
+    }
+
+    @Override
+    public boolean needFitNavigationBar() {
+        return false;
+    }
+
+    /**
+     * 顶部避让:搜索栏容器外边距、列表/搜索页/快速滚动条顶部 padding 均在基准值上
+     * 叠加状态栏 inset(静止时布局与舞台统一避让完全一致,滚动时列表内容可穿入
+     * 状态栏区域);底部避让:列表、搜索页与 FAB 底部让出底部导航占位。
+     * 全部按基准值重算,可重复调用(幂等)
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        mStatusBarInset = statusBarInset;
+        if (null != mSearchBarContainer) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) mSearchBarContainer.getLayoutParams();
+            int topMargin = mSearchBarContainerBaseMarginTop + statusBarInset;
+            if (lp.topMargin != topMargin) {
+                lp.topMargin = topMargin;
+                mSearchBarContainer.setLayoutParams(lp);
+            }
+        }
+        if (null != mRecyclerView && mListBasePaddingTop >= 0) {
+            adjustListTopPadding(null != mModeSegmented && mModeSegmented.getVisibility() == View.VISIBLE);
+            mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerView.getPaddingTop(),
+                    mRecyclerView.getPaddingRight(), mListBasePaddingBottom + bottomOccupied);
+        }
+        if (null != mFastScroller) {
+            mFastScroller.setPadding(mFastScroller.getPaddingLeft(),
+                    mFastScrollerBasePaddingTop + mPaddingTopSB + statusBarInset,
+                    mFastScroller.getPaddingRight(), mFastScroller.getPaddingBottom());
+        }
+        if (null != mSearchLayout) {
+            mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(),
+                    mSearchLayoutBasePaddingTop + mPaddingTopSB + statusBarInset,
+                    mSearchLayout.getPaddingRight(),
+                    mSearchLayoutBasePaddingBottom + mPaddingBottomFab + bottomOccupied);
+        }
+        int fabPaddingBottom = mFabBasePaddingBottom + bottomOccupied;
+        if (null != mFabLayout) {
+            mFabLayout.setPadding(mFabLayout.getPaddingLeft(), mFabLayout.getPaddingTop(),
+                    mFabLayout.getPaddingRight(), fabPaddingBottom);
+        }
+        if (null != mSearchFabLayout) {
+            mSearchFabLayout.setPadding(mSearchFabLayout.getPaddingLeft(), mSearchFabLayout.getPaddingTop(),
+                    mSearchFabLayout.getPaddingRight(), fabPaddingBottom);
+        }
     }
 
     @NonNull
@@ -645,18 +807,28 @@ public final class GalleryListScene extends BaseScene
         mRecyclerView = contentLayout.getRecyclerView();
         FastScroller fastScroller = contentLayout.getFastScroller();
         RefreshLayout refreshLayout = contentLayout.getRefreshLayout();
+        mRefreshLayout = refreshLayout;
         mSearchLayout = (SearchLayout) ViewUtils.$$(mainLayout, R.id.search_layout);
         mSearchBar = (SearchBar) ViewUtils.$$(mainLayout, R.id.search_bar);
+        mSearchBarContainer = ViewUtils.$$(mainLayout, R.id.search_bar_container);
+        // 搜索栏容器顶部外边距基准值(XML 值),状态栏 inset 在 onApplyWindowInsets 中叠加
+        mSearchBarContainerBaseMarginTop =
+                ((ViewGroup.MarginLayoutParams) mSearchBarContainer.getLayoutParams()).topMargin;
+        mModeSegmented = (SegmentedControl) ViewUtils.$$(mainLayout, R.id.mode_segmented);
         mFabLayout = (FabLayout) ViewUtils.$$(mainLayout, R.id.fab_layout);
         mFloatingActionButton = (FloatingActionButton) ViewUtils.$$(mFabLayout, R.id.tag_filter);
 
         onFilter(filterOpen, filterTagList.size());
 
         mSearchFab = ViewUtils.$$(mainLayout, R.id.search_fab);
+        mSearchFabLayout = (FabLayout) mSearchFab.getParent();
 
         int paddingTopSB = resources.getDimensionPixelOffset(R.dimen.gallery_padding_top_search_bar);
         int paddingBottomFab = resources.getDimensionPixelOffset(R.dimen.gallery_padding_bottom_fab);
+        mSegmentedSpace = resources.getDimensionPixelOffset(R.dimen.gallery_segmented_space);
 
+        mPaddingTopSB = paddingTopSB;
+        mPaddingBottomFab = paddingBottomFab;
 
         mViewTransition = new ViewTransition(contentLayout, mSearchLayout);
 
@@ -667,6 +839,24 @@ public final class GalleryListScene extends BaseScene
         mAdapter = new GalleryListAdapter(inflater, resources,
                 mRecyclerView, Settings.getListMode());
 
+        // Adapter 构造时已为搜索栏加入顶部 padding,记录下来作为分段控件显隐的基准
+        mListBasePaddingTop = mRecyclerView.getPaddingTop();
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
+        mFabBasePaddingBottom = mFabLayout.getPaddingBottom();
+
+        mModeSegmented.setSegments(R.string.homepage, R.string.subscription, R.string.whats_hot);
+        mModeSegmented.setOnSegmentSelectedListener(index -> {
+            int mode;
+            if (index == 1) {
+                mode = ListUrlBuilder.MODE_SUBSCRIPTION;
+            } else if (index == 2) {
+                mode = ListUrlBuilder.MODE_WHATS_HOT;
+            } else {
+                mode = ListUrlBuilder.MODE_NORMAL;
+            }
+            switchListMode(mode);
+        });
+
         mAdapter.setThumbItemClickListener(this::onThumbItemClick);
         mRecyclerView.setSelector(Ripple.generateRippleDrawable(context, !AttrResources.getAttrBoolean(context, androidx.appcompat.R.attr.isLightTheme), new ColorDrawable(Color.TRANSPARENT)));
         mRecyclerView.setDrawSelectorOnTop(true);
@@ -676,7 +866,9 @@ public final class GalleryListScene extends BaseScene
         assert mOnScrollListener != null;
         mRecyclerView.addOnScrollListener(mOnScrollListener);
 //        mRecyclerView.setOnGenericMotionListener(this::onGenericMotion);
-        fastScroller.setPadding(fastScroller.getPaddingLeft(), fastScroller.getPaddingTop() + paddingTopSB,
+        mFastScroller = fastScroller;
+        mFastScrollerBasePaddingTop = fastScroller.getPaddingTop();
+        fastScroller.setPadding(fastScroller.getPaddingLeft(), mFastScrollerBasePaddingTop + paddingTopSB,
                 fastScroller.getPaddingRight(), fastScroller.getPaddingBottom());
 
         refreshLayout.setHeaderTranslationY(paddingTopSB);
@@ -691,8 +883,10 @@ public final class GalleryListScene extends BaseScene
         setSearchBarSuggestionProvider(mSearchBar);
 
         mSearchLayout.setHelper(this);
-        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayout.getPaddingTop() + paddingTopSB,
-                mSearchLayout.getPaddingRight(), mSearchLayout.getPaddingBottom() + paddingBottomFab);
+        mSearchLayoutBasePaddingTop = mSearchLayout.getPaddingTop();
+        mSearchLayoutBasePaddingBottom = mSearchLayout.getPaddingBottom();
+        mSearchLayout.setPadding(mSearchLayout.getPaddingLeft(), mSearchLayoutBasePaddingTop + paddingTopSB,
+                mSearchLayout.getPaddingRight(), mSearchLayoutBasePaddingBottom + paddingBottomFab);
 
         mFabLayout.setAutoCancel(true);
         mFabLayout.setExpanded(false);
@@ -701,12 +895,14 @@ public final class GalleryListScene extends BaseScene
         mFabLayout.setOnExpandListener(this);
         addAboveSnackView(mFabLayout);
 
-        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
+        mActionFabDrawable = new AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.fabIconColor));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
 
         mSearchFab.setOnClickListener(this);
 
-        mSearchBarMover = new SearchBarMover(this, mSearchBar, mRecyclerView, mSearchLayout);
+        mSearchBarMover = new SearchBarMover(this, mSearchBarContainer, mRecyclerView, mSearchLayout);
+        // 列表滚动联动底部导航栏:下滚隐藏/上滑显示,IDLE 吸附
+        new BottomNavHider(getActivity2(), mRecyclerView);
 
         // Update list url builder
         onUpdateUrlBuilder();
@@ -943,6 +1139,12 @@ public final class GalleryListScene extends BaseScene
         mAdapter = null;
         mSearchLayout = null;
         mSearchBar = null;
+        mSearchBarContainer = null;
+        mSearchFabLayout = null;
+        mFastScroller = null;
+        mModeSegmented = null;
+        mRefreshLayout = null;
+        mListBasePaddingTop = -1;
         mSearchFab = null;
         mViewTransition = null;
         mLeftDrawable = null;
@@ -1548,11 +1750,9 @@ public final class GalleryListScene extends BaseScene
         }
 
         if (expanded) {
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
             mActionFabDrawable.setDelete(ANIMATE_TIME);
         } else {
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
             mActionFabDrawable.setAdd(ANIMATE_TIME);
         }
@@ -1734,6 +1934,12 @@ public final class GalleryListScene extends BaseScene
                     break;
             }
         }
+
+        // 左侧导航抽屉已移除:普通态隐藏搜索栏左图标,搜索态显示返回箭头
+        mSearchBar.setLeftIconVisibility(mState == STATE_NORMAL ? View.GONE : View.VISIBLE);
+
+        // 分段控件只在普通态显示
+        updateModeSegmented();
     }
 
     @Override
@@ -1750,9 +1956,7 @@ public final class GalleryListScene extends BaseScene
             return;
         }
 
-        if (mSearchBar.getState() == SearchBar.STATE_NORMAL) {
-            toggleDrawer(Gravity.LEFT);
-        } else {
+        if (mSearchBar.getState() != SearchBar.STATE_NORMAL) {
             setState(STATE_NORMAL);
         }
     }
@@ -1861,10 +2065,8 @@ public final class GalleryListScene extends BaseScene
         }
 
         if (newState == STATE_NORMAL || newState == STATE_SIMPLE_SEARCH) {
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
         } else {
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
         }
     }

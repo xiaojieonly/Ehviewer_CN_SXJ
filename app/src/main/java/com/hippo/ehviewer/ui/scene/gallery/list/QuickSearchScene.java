@@ -68,6 +68,9 @@ public final class QuickSearchScene extends ToolbarScene {
     @Nullable
     private RecyclerView.Adapter mAdapter;
 
+    // 沉浸式避让基准(onCreateView3 记录,onApplyWindowInsets 按基准重算,幂等)
+    private int mListBasePaddingBottom = 0;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +93,9 @@ public final class QuickSearchScene extends ToolbarScene {
         mRecyclerView = (EasyRecyclerView) ViewUtils.$$(view, R.id.recycler_view);
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
+
+        // 沉浸式避让基准
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
 
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
@@ -122,6 +128,15 @@ public final class QuickSearchScene extends ToolbarScene {
         updateView();
 
         return view;
+    }
+
+    /**
+     * 沉浸式避让:列表底部让出底部导航占位;toolbar 由父类处理
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        applyBottomOccupiedPadding(mRecyclerView, mListBasePaddingBottom, bottomOccupied);
     }
 
     @Override

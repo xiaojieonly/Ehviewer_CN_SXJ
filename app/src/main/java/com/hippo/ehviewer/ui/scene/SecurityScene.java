@@ -66,7 +66,7 @@ public class SecurityScene extends SolidScene implements
     private int mRetryTimes;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 

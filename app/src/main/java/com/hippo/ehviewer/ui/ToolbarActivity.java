@@ -17,12 +17,15 @@
 package com.hippo.ehviewer.ui;
 
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.WindowCompat;
+import com.hippo.android.resource.AttrResources;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
 
@@ -39,6 +42,15 @@ public abstract class ToolbarActivity extends EhActivity {
             case Settings.THEME_BLACK:
                 return R.style.AppTheme_Toolbar_Black;
         }
+    }
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // 状态栏区域随 toolbar 主题色着色(亮色主题为彩色 toolbar,状态栏图标用白色)
+        getWindow().setStatusBarColor(AttrResources.getAttrColor(this, R.attr.toolbarColor));
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
     }
 
     @Override
@@ -60,6 +72,11 @@ public abstract class ToolbarActivity extends EhActivity {
         super.setContentView(R.layout.activity_toolbar);
         ((ViewGroup) findViewById(R.id.content_panel)).addView(view, params);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+    }
+
+    @Override
+    protected boolean isEdgeToEdgeEnabled() {
+        return false;
     }
 
     public void setNavigationIcon(@DrawableRes int resId) {

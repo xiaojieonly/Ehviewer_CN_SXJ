@@ -82,6 +82,20 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
     private int mRequestId = IntIdGenerator.INVALID_ID;
 
+    @Nullable
+    private OnImageSetListener mOnImageSetListener;
+
+    /**
+     * 图片加载完成(成功或失败)回调,用于共享元素转场等需要等图片就绪的场景
+     */
+    public interface OnImageSetListener {
+        void onImageSet(boolean success);
+    }
+
+    public void setOnImageSetListener(@Nullable OnImageSetListener listener) {
+        mOnImageSetListener = listener;
+    }
+
     public LoadImageView(Context context) {
         super(context);
         init(context, null, 0);
@@ -335,6 +349,10 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             setImageDrawable(drawable);
         }
 
+        if (mOnImageSetListener != null) {
+            mOnImageSetListener.onImageSet(true);
+        }
+
         return true;
     }
 
@@ -351,6 +369,9 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         onPreSetImageDrawable(drawable, true);
         setImageDrawable(drawable);
+        if (mOnImageSetListener != null) {
+            mOnImageSetListener.onImageSet(false);
+        }
         if (mRetryType == RETRY_TYPE_CLICK) {
             setOnClickListener(this);
         } else if (mRetryType == RETRY_TYPE_LONG_CLICK) {

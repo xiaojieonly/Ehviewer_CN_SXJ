@@ -46,6 +46,7 @@
 
     <string name="app_name">EhViewer</string>
     <string name="homepage">Startseite</string>
+    <string name="personal">Profil</string>
     <string name="subscription">Gefolgte Etiketten</string>
     <string name="whats_hot">Top-Listen</string>
     <string name="top_lists">Bestenliste</string>
@@ -53,8 +54,6 @@
     <string name="history">Verlauf</string>
     <string name="downloads">Downloads</string>
     <string name="settings">Einstellungen</string>
-    <string name="stub" translatable="false">Stub</string>
-    <string name="news">Neuigkeiten</string>
 
     <string name="username">Benutzername</string>
     <string name="password">Kennwort</string>

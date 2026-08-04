@@ -27,6 +27,17 @@
         <attr name="dividerColor" format="color" />
         <attr name="toolbarColor" format="color" />
 
+        <attr name="glassFillColor" format="color" />
+        <attr name="glassStrokeColor" format="color" />
+        <!--   M3 底部导航栏:容器色(不透明)与选中药丸指示器色     -->
+        <attr name="navBarContainerColor" format="color" />
+        <attr name="navBarIndicatorColor" format="color" />
+        <!--   M3 FAB:容器与图标色(primaryContainer/onPrimaryContainer 风格)     -->
+        <attr name="fabContainerColor" format="color" />
+        <attr name="fabIconColor" format="color" />
+        <!--   M3 搜索栏容器色(surfaceContainerHigh 风格,与窗口底色形成 tonal 层次)     -->
+        <attr name="searchBarContainerColor" format="color" />
+
         <attr name="textColorThemePrimary" format="color" />
         <attr name="textColorThemePrimary2" format="color" />
         <attr name="textColorThemeAccent" format="color" />

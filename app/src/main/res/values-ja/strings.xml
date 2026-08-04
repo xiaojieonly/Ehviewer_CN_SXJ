@@ -48,13 +48,13 @@
     <string name="theme_black">ブラックテーマ</string>
     <!-- Category -->
     <string name="homepage">ホームページ</string>
+    <string name="personal">プロフィール</string>
     <string name="subscription">タグの購読</string>
     <string name="whats_hot">人気</string>
     <string name="top_lists">トップリスト</string>
     <string name="favourite">お気に入り</string>
     <string name="history">閲覧履歴</string>
     <string name="downloads">ダウンロード</string>
-    <string name="news">ニュース</string>
     <string name="settings">設定</string>
     <string name="username">ユーザー名</string>
     <string name="password">パスワード</string>

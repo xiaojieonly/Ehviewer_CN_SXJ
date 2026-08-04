@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M3 标准底部导航栏菜单;id 沿用旧抽屉/自绘导航栏,保证 MainActivity 与 UiFlowTest 不变 -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_homepage"
+        android:icon="@drawable/v_homepage_black_x24"
+        android:title="@string/homepage" />
+
+    <item
+        android:id="@+id/nav_favourite"
+        android:icon="@drawable/v_heart_black_x24"
+        android:title="@string/favourite" />
+
+    <item
+        android:id="@+id/nav_history"
+        android:icon="@drawable/v_history_black_x24"
+        android:title="@string/history" />
+
+    <item
+        android:id="@+id/nav_downloads"
+        android:icon="@drawable/v_download_black_x24"
+        android:title="@string/downloads" />
+
+    <item
+        android:id="@+id/nav_more"
+        android:icon="@drawable/v_person_black_x24"
+        android:title="@string/personal" />
+
+</menu>

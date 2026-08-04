@@ -49,7 +49,7 @@ class GetProfileScene : SolidScene() {
         private const val TAG = "GetProfileScene"
     }
 
-    override fun needShowLeftDrawer(): Boolean {
+    override fun needShowBottomNav(): Boolean {
         return false
     }
 
@@ -80,7 +80,16 @@ class GetProfileScene : SolidScene() {
 
             mWebView!!.loadUrl(EhUrl.URL_FORUMS)
 
-            mWebView
+            // 沉浸式:包一层容器,由 BaseScene 默认根 padding 避让系统栏
+            // (WebView 不适合直接加 padding)
+            FrameLayout(context).apply {
+                addView(
+                    mWebView, FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+            }
         } catch (t: Throwable) {
             Log.e(TAG, "WebView/CookieManager init failed", t)
             val root = FrameLayout(context!!)

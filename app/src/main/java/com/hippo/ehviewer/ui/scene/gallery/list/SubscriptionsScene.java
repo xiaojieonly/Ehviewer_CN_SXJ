@@ -74,6 +74,9 @@ public final class SubscriptionsScene extends ToolbarScene {
     @Nullable
     private ViewTransition mViewTransition;
 
+    // 沉浸式避让基准(onCreateView3 记录,onApplyWindowInsets 按基准重算,幂等)
+    private int mListBasePaddingBottom = 0;
+
     private EhTagDatabase ehTags;
 
     private Context context;
@@ -109,6 +112,9 @@ public final class SubscriptionsScene extends ToolbarScene {
         TextView tip = (TextView) ViewUtils.$$(view, R.id.tip);
         mViewTransition = new ViewTransition(mRecyclerView, tip);
 
+        // 沉浸式避让基准
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
+
         Context context = getEHContext();
         AssertUtils.assertNotNull(context);
 
@@ -136,6 +142,15 @@ public final class SubscriptionsScene extends ToolbarScene {
         updateView();
 
         return view;
+    }
+
+    /**
+     * 沉浸式避让:列表底部让出底部导航占位;toolbar 由父类处理
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        applyBottomOccupiedPadding(mRecyclerView, mListBasePaddingBottom, bottomOccupied);
     }
 
     @Override

@@ -90,7 +90,7 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
     private int mRequestId = IntIdGenerator.INVALID_ID;
 
     @Override
-    public boolean needShowLeftDrawer() {
+    public boolean needShowBottomNav() {
         return false;
     }
 
@@ -381,7 +381,6 @@ public final class SignInScene extends SolidScene implements EditText.OnEditorAc
 
     public void onGetProfileEnd() {
         mSigningIn = false;
-        updateAvatar();
         redirectTo();
     }
 

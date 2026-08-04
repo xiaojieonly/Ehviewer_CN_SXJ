@@ -85,7 +85,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
     private SearchEditText mEditText;
     private ListView mListView;
     private View mListContainer;
-    private View mListHeader;
 
     private ViewTransition mViewTransition;
 
@@ -132,8 +131,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
         mEditText = (SearchEditText) ViewUtils.$$(this, R.id.search_edit_text);
         mListContainer = ViewUtils.$$(this, R.id.list_container);
         mListView = (ListView) ViewUtils.$$(mListContainer, R.id.search_bar_list);
-        mListHeader = ViewUtils.$$(mListContainer, R.id.list_header);
-
         mViewTransition = new ViewTransition(mTitleTextView, mEditText);
 
         mTitleTextView.setOnClickListener(this);
@@ -155,14 +152,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
             mSuggestionList.get(position).onLongClick();
             return true;
         });
-    }
-
-    private void addListHeader() {
-        mListHeader.setVisibility(VISIBLE);
-    }
-
-    private void removeListHeader() {
-        mListHeader.setVisibility(GONE);
     }
 
     private void updateSuggestions() {
@@ -223,11 +212,6 @@ public class SearchBar extends CardView implements View.OnClickListener,
             }
         }
 
-        if (mSuggestionList.size() == 0) {
-            removeListHeader();
-        } else {
-            addListHeader();
-        }
         mSuggestionAdapter.notifyDataSetChanged();
 
         if (scrollToTop) {
@@ -315,6 +299,19 @@ public class SearchBar extends CardView implements View.OnClickListener,
 
     public void setLeftIconVisibility(int visibility) {
         mMenuButton.setVisibility(visibility);
+        // 左侧汉堡菜单已随抽屉移除:图标隐藏时回收其 48dp 占位,只留 16dp 边距
+        float density = getResources().getDisplayMetrics().density;
+        int leftMargin = (int) ((visibility == View.VISIBLE ? 48 : 16) * density + 0.5f);
+        MarginLayoutParams titleLp = (MarginLayoutParams) mTitleTextView.getLayoutParams();
+        if (titleLp.leftMargin != leftMargin) {
+            titleLp.leftMargin = leftMargin;
+            mTitleTextView.setLayoutParams(titleLp);
+        }
+        MarginLayoutParams editLp = (MarginLayoutParams) mEditText.getLayoutParams();
+        if (editLp.leftMargin != leftMargin) {
+            editLp.leftMargin = leftMargin;
+            mEditText.setLayoutParams(editLp);
+        }
     }
 
     public void setRightIconVisibility(int visibility) {

@@ -64,6 +64,13 @@
     <dimen name="gallery_padding_top_search_bar">64dp</dimen>
     <dimen name="gallery_padding_bottom_fab">80dp</dimen>
 
+    <!-- 分段控件(SegmentedControl)高度,见 scene_gallery_list.xml -->
+    <dimen name="gallery_segmented_height">32dp</dimen>
+    <!-- 分段控件顶部间距 -->
+    <dimen name="gallery_segmented_margin_top">8dp</dimen>
+    <!-- 分段控件显示时列表顶部的占位 = 控件高度(32dp) + 顶部间距(8dp) -->
+    <dimen name="gallery_segmented_space">40dp</dimen>
+
     <dimen name="gallery_list_column_width_long">480dp</dimen>
     <dimen name="gallery_list_column_width_short">320dp</dimen>
 
@@ -120,7 +127,6 @@
 
     <dimen name="corner_fab_margin">16dp</dimen>
     <dimen name="corner_fab_margin_download_bottom">70dp</dimen>
-    <dimen name="corner_fab_margin_download_right">3dp</dimen>
 
     <dimen name="gallery_detail_thumb_width">128dp</dimen>
     <dimen name="gallery_detail_thumb_height">192dp</dimen>

@@ -51,13 +51,13 @@
     <string name="theme_black">검정색 테마</string>
 
     <string name="homepage">홈</string>
+    <string name="personal">프로필</string>
     <string name="subscription">구독</string>
     <string name="whats_hot">인기 갤러리</string>
     <string name="top_lists">상위 목록</string>
     <string name="favourite">즐겨찾기</string>
     <string name="history">방문 기록</string>
     <string name="downloads">다운로드</string>
-    <string name="news">뉴스</string>
     <string name="settings">설정</string>
 
     <string name="username">사용자 이름</string>

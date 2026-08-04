@@ -30,24 +30,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.os.PersistableBundle;
 import android.text.TextUtils;
 import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 //补一下，不然编译不通过
 import android.os.Build;
@@ -58,24 +49,32 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.hippo.android.resource.AttrResources;
 import com.hippo.drawerlayout.DrawerLayout;
 import com.hippo.ehviewer.AppConfig;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.ehviewer.Settings;
-import com.hippo.ehviewer.callBack.ImageChangeCallBack;
 import com.hippo.ehviewer.client.EhCookieStore;
 import com.hippo.ehviewer.client.EhTagDatabase;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.EhUrlOpener;
 import com.hippo.ehviewer.client.EhUtils;
 import com.hippo.ehviewer.client.data.ListUrlBuilder;
+import com.hippo.ehviewer.download.DownloadService;
+import com.hippo.ehviewer.shortcuts.ShortcutsActivity;
 import com.hippo.ehviewer.ui.main.UserImageChange;
 import com.hippo.ehviewer.ui.scene.AnalyticsScene;
 import com.hippo.ehviewer.ui.scene.BaseScene;
+import com.hippo.ehviewer.ui.scene.ToolbarScene;
+import com.hippo.ehviewer.ui.scene.more.MoreScene;
 import com.hippo.ehviewer.ui.scene.sign.CookieSignInScene;
 import com.hippo.ehviewer.ui.scene.download.DownloadLabelsScene;
 import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
@@ -99,8 +98,9 @@ import com.hippo.ehviewer.ui.scene.WarningScene;
 import com.hippo.ehviewer.ui.scene.sign.WebViewSignInScene;
 import com.hippo.ehviewer.ui.splash.SplashActivity;
 import com.hippo.ehviewer.updater.AppUpdater;
+import com.hippo.ehviewer.widget.BottomNavBar;
 import com.hippo.ehviewer.widget.EhDrawerLayout;
-import com.hippo.ehviewer.widget.LimitsCountView;
+import com.hippo.ehviewer.widget.MainContentLayout;
 import com.hippo.io.UniFileInputStreamPipe;
 import com.hippo.network.Network;
 import com.hippo.scene.Announcer;
@@ -108,11 +108,9 @@ import com.hippo.scene.SceneFragment;
 import com.hippo.scene.StageActivity;
 import com.hippo.unifile.UniFile;
 import com.hippo.util.BitmapUtils;
-import com.hippo.util.GifHandler;
 import com.hippo.util.PermissionRequester;
 import com.hippo.widget.AvatarImageView;
 import com.hippo.lib.yorozuya.IOUtils;
-import com.hippo.lib.yorozuya.ResourcesUtils;
 import com.hippo.lib.yorozuya.SimpleHandler;
 import com.hippo.lib.yorozuya.ViewUtils;
 
@@ -120,21 +118,26 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
-public final class MainActivity extends StageActivity
-        implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack, DrawerLayout.DrawerListener {
+public final class MainActivity extends StageActivity {
 
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
 
-    private static final int REQUEST_CODE_SETTINGS = 0;
+    public static final int REQUEST_CODE_SETTINGS = 0;
 
     private static final String KEY_NAV_CHECKED_ITEM = "nav_checked_item";
 //    private static final String KEY_CLIP_TEXT_HASH_CODE = "clip_text_hash_code";
+
+    // 桌面长按图标快捷方式 intent action(显式 intent 直达本 Activity,action 只需进程内唯一)
+    private static final String ACTION_SHORTCUT_WHATS_HOT = "ehviewer.action.SHORTCUT_WHATS_HOT";
+    private static final String ACTION_SHORTCUT_FAVORITES = "ehviewer.action.SHORTCUT_FAVORITES";
+    private static final String ACTION_SHORTCUT_DOWNLOADS = "ehviewer.action.SHORTCUT_DOWNLOADS";
 
     /*---------------
      Whole life cycle
@@ -142,34 +145,25 @@ public final class MainActivity extends StageActivity
     @Nullable
     private EhDrawerLayout mDrawerLayout;
     @Nullable
-    private NavigationView mNavView;
+    private BottomNavBar mBottomNav;
+    @Nullable
+    private MainContentLayout mMainContentLayout;
     @Nullable
     private FrameLayout mRightDrawer;
-    @Nullable
-    private AvatarImageView mAvatar;
-    @Nullable
-    private ImageView mHeaderBackground;
-    @Nullable
-    private TextView mDisplayName;
-    @Nullable
-    private LimitsCountView limitsCountView;
-    @Nullable
-    UserImageChange userImageChange;
 
     private int mNavCheckedItem = 0;
 
-    GifHandler gifHandler;
+    /** 右侧抽屉是否打开;打开时状态栏样式随主题底色(抽屉背景覆盖状态栏区域) */
+    private boolean mRightDrawerOpen = false;
 
-    Bitmap backgroundBit;
+    /** 工具栏主题色,工具栏场景置顶时状态栏区域随之着色 */
+    private int mToolbarColor = Color.TRANSPARENT;
 
-    Handler handlerB = new Handler(Looper.getMainLooper()) {
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            int mNextFrame = gifHandler.updateFrame(backgroundBit);
-            handlerB.sendEmptyMessageDelayed(1, mNextFrame);
-            mHeaderBackground.setImageBitmap(backgroundBit);
-        }
-    };
+    /** 个人页头像/背景更换流程持有者,结果在 onActivityResult 中路由回去 */
+    @Nullable
+    private UserImageChange mUserImageChange;
+    @Nullable
+    private AvatarImageView mUserImageAvatar;
 
     static {
         registerLaunchMode(SecurityScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
@@ -193,6 +187,7 @@ public final class MainActivity extends StageActivity
         registerLaunchMode(FavoritesScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
         registerLaunchMode(HistoryScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TOP);
         registerLaunchMode(ProgressScene.class, SceneFragment.LAUNCH_MODE_STANDARD);
+        registerLaunchMode(MoreScene.class, SceneFragment.LAUNCH_MODE_SINGLE_TASK);
     }
 
     @Override
@@ -315,6 +310,20 @@ public final class MainActivity extends StageActivity
                 startScene(processAnnouncer(announcer));
                 return true;
             }
+        } else if (ACTION_SHORTCUT_WHATS_HOT.equals(action)) {
+            // 桌面快捷方式:热门
+            Bundle args = new Bundle();
+            args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
+            startScene(processAnnouncer(new Announcer(GalleryListScene.class).setArgs(args)));
+            return true;
+        } else if (ACTION_SHORTCUT_FAVORITES.equals(action)) {
+            // 桌面快捷方式:收藏
+            startScene(processAnnouncer(new Announcer(FavoritesScene.class)));
+            return true;
+        } else if (ACTION_SHORTCUT_DOWNLOADS.equals(action)) {
+            // 桌面快捷方式:下载
+            startScene(processAnnouncer(new Announcer(DownloadsScene.class)));
+            return true;
         } else if (Intent.ACTION_SEND.equals(action)) {
             String type = intent.getType();
             if ("text/plain".equals(type)) {
@@ -391,48 +400,45 @@ public final class MainActivity extends StageActivity
         setContentView(R.layout.activity_main);
 
         mDrawerLayout = (EhDrawerLayout) ViewUtils.$$(this, R.id.draw_view);
-        mDrawerLayout.setDrawerListener(this);
-        mNavView = (NavigationView) ViewUtils.$$(this, R.id.nav_view);
+        mBottomNav = (BottomNavBar) ViewUtils.$$(this, R.id.bottom_nav);
+        mMainContentLayout = (MainContentLayout) ViewUtils.$$(this, R.id.main_content);
         mRightDrawer = (FrameLayout) ViewUtils.$$(this, R.id.right_drawer);
-        View headerLayout = mNavView.getHeaderView(0);
-        mAvatar = (AvatarImageView) ViewUtils.$$(headerLayout, R.id.avatar);
-        mAvatar.setOnClickListener(l -> onAvatarChange());
-        mHeaderBackground = (ImageView) ViewUtils.$$(headerLayout, R.id.header_background);
-        mHeaderBackground.setOnClickListener(l -> onBackgroundChange());
-        initUserImage();
-        updateProfile();
-        mDisplayName = (TextView) ViewUtils.$$(headerLayout, R.id.display_name);
-        TextView mChangeTheme = (TextView) ViewUtils.$$(this, R.id.change_theme);
 
-        limitsCountView = (LimitsCountView) ViewUtils.$$(this, R.id.limits_count_view);
+        // 左侧导航抽屉已移除,锁定左边缘手势;右侧筛选抽屉保留
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
 
-        mDrawerLayout.setStatusBarColor(ResourcesUtils.getAttrColor(this, androidx.appcompat.R.attr.colorPrimaryDark));
-//        mDrawerLayout.setStatusBarColor(0);
+        // 右侧抽屉打开时其背景覆盖状态栏区域,状态栏样式随主题底色(见 updateStatusBarStyle)
+        mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float percent) {
+            }
 
-        if (mNavView != null) {
-//            if (Settings.isLogin()){
-//                MenuItem newsItem = mNavView.getMenu().findItem(R.id.nav_eh_news);
-//                newsItem.setVisible(true);
-//            }
-            mNavView.setNavigationItemSelectedListener(this);
-        }
-        if (Settings.getTheme() == 0) {
-            mChangeTheme.setTextColor(getColor(R.color.theme_change_light));
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                mRightDrawerOpen = true;
+                updateStatusBarStyle();
+            }
 
-            mChangeTheme.setBackgroundColor(getColor(R.color.white));
-        } else if (Settings.getTheme() == 1) {
-            mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
-            mChangeTheme.setBackgroundColor(getColor(R.color.grey_850));
-        } else {
-            mChangeTheme.setTextColor(getColor(R.color.theme_change_other));
-            mChangeTheme.setBackgroundColor(getColor(R.color.black));
-        }
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                mRightDrawerOpen = false;
+                updateStatusBarStyle();
+            }
 
-        mChangeTheme.setText(getThemeText());
-        mChangeTheme.setOnClickListener(v -> {
-            Settings.putTheme(getNextTheme());
-            ((EhApplication) getApplication()).recreate();
+            @Override
+            public void onDrawerStateChanged(View drawerView, int newState) {
+            }
         });
+
+        mBottomNav.setOnTabSelectedListener(this::onBottomNavTabSelected);
+
+        // 沉浸式 window 设置已由 EhActivity.applyEdgeToEdge() 统一完成;
+        // 状态栏图标明暗与区域着色由 updateStatusBarStyle() 按栈顶场景运行时控制
+        // drawerlayout 库默认在系统导航栏区域画黑色矩形,必须显式设透明,否则导航条区域发黑
+        mDrawerLayout.setNavigationBarColor(Color.TRANSPARENT);
+        mToolbarColor = AttrResources.getAttrColor(this, R.attr.toolbarColor);
+        updateStatusBarStyle();
+        updateAppShortcuts();
 
         if (savedInstanceState == null) {
             onInit();
@@ -451,64 +457,6 @@ public final class MainActivity extends StageActivity
         super.onStart();
         if (!Settings.getCloseAutoUpdate()){
             AppUpdater.update(this,false);
-        }
-    }
-
-    private void initUserImage() {
-        File headerBackgroundFile = Settings.getUserImageFile(Settings.USER_BACKGROUND_IMAGE);
-        initBackgroundImageData(headerBackgroundFile);
-    }
-
-    private void initBackgroundImageData(File file) {
-        if (file != null) {
-            String name = file.getName();
-            String[] ns = name.split("\\.");
-            if (ns[1].equals("gif") || ns[1].equals("GIF")) {
-                gifHandler = new GifHandler(file.getAbsolutePath());
-                int width = gifHandler.getWidth();
-                int height = gifHandler.getHeight();
-                backgroundBit = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                int nextFrame = gifHandler.updateFrame(backgroundBit);
-                handlerB.sendEmptyMessageDelayed(1, nextFrame);
-            } else {
-                backgroundBit = BitmapFactory.decodeFile(file.getPath());
-                assert mHeaderBackground != null;
-                mHeaderBackground.setImageBitmap(backgroundBit);
-            }
-        }
-    }
-
-    @Override
-    public void backgroundSourceChange(File file) {
-        initBackgroundImageData(file);
-    }
-
-    private String getThemeText() {
-        int resId;
-        switch (Settings.getTheme()) {
-            default:
-            case Settings.THEME_LIGHT:
-                resId = R.string.theme_light;
-                break;
-            case Settings.THEME_DARK:
-                resId = R.string.theme_dark;
-                break;
-            case Settings.THEME_BLACK:
-                resId = R.string.theme_black;
-                break;
-        }
-        return getString(resId);
-    }
-
-    private int getNextTheme() {
-        switch (Settings.getTheme()) {
-            default:
-            case Settings.THEME_LIGHT:
-                return Settings.THEME_DARK;
-            case Settings.THEME_DARK:
-                return Settings.THEME_BLACK;
-            case Settings.THEME_BLACK:
-                return Settings.THEME_LIGHT;
         }
     }
 
@@ -614,10 +562,11 @@ public final class MainActivity extends StageActivity
         super.onDestroy();
 
         mDrawerLayout = null;
-        mNavView = null;
+        mBottomNav = null;
+        mMainContentLayout = null;
         mRightDrawer = null;
-        mAvatar = null;
-        mDisplayName = null;
+        mUserImageChange = null;
+        mUserImageAvatar = null;
     }
 
     @Override
@@ -633,7 +582,81 @@ public final class MainActivity extends StageActivity
     protected void onTransactScene() {
         super.onTransactScene();
 
+        updateStatusBarStyle();
         checkClipboardUrl();
+    }
+
+    /**
+     * 按栈顶场景适配状态栏区域:工具栏场景(下载/历史等)在 app bar 未完全收起时
+     * 随 toolbar 主题色着色;顶部有固定彩色区域的场景(如画廊详情页)按其
+     * getStatusBarScrimColor 着色;着色时状态栏图标用白色。其余场景状态栏
+     * 完全透明(内容可直接滚动到状态栏下方透出),图标明暗随主题。
+     * app bar 收起/展开时由场景经 SearchBarMover 回调主动触发刷新;
+     * 右侧抽屉打开时抽屉背景覆盖状态栏区域,状态栏强制按主题底色处理
+     */
+    public void updateStatusBarStyle() {
+        SceneFragment topScene = getTopScene();
+        Integer scrimColor = null;
+        if (topScene instanceof ToolbarScene
+                && !((ToolbarScene) topScene).isAppBarFullyHidden()) {
+            scrimColor = mToolbarColor;
+        } else if (topScene instanceof BaseScene) {
+            scrimColor = ((BaseScene) topScene).getStatusBarScrimColor();
+        }
+        if (mRightDrawerOpen) {
+            scrimColor = null;
+        }
+        if (mDrawerLayout != null) {
+            mDrawerLayout.setStatusBarColor(scrimColor != null ? scrimColor : Color.TRANSPARENT);
+        }
+        WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.setAppearanceLightStatusBars(
+                scrimColor == null && Settings.getTheme() == Settings.THEME_LIGHT);
+    }
+
+    /**
+     * 桌面长按图标快捷方式:热门/收藏/下载。
+     * 动态注册并随每次启动刷新——不受静态 shortcuts meta-data 挂载位置
+     * (LAUNCHER 在 SplashActivity)与 applicationId 变体(release/debug 不同)影响;
+     * 点击后经 handleIntent 路由到目标场景
+     */
+    private void updateAppShortcuts() {
+        List<ShortcutInfoCompat> shortcuts = new ArrayList<>();
+        shortcuts.add(new ShortcutInfoCompat.Builder(this, "whats_hot")
+                .setShortLabel(getString(R.string.whats_hot))
+                .setLongLabel(getString(R.string.whats_hot))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.ic_shortcut_whats_hot))
+                .setIntent(new Intent(this, MainActivity.class).setAction(ACTION_SHORTCUT_WHATS_HOT))
+                .build());
+        shortcuts.add(new ShortcutInfoCompat.Builder(this, "favorites")
+                .setShortLabel(getString(R.string.favourite))
+                .setLongLabel(getString(R.string.favourite))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.ic_shortcut_favorites))
+                .setIntent(new Intent(this, MainActivity.class).setAction(ACTION_SHORTCUT_FAVORITES))
+                .build());
+        shortcuts.add(new ShortcutInfoCompat.Builder(this, "downloads")
+                .setShortLabel(getString(R.string.downloads))
+                .setLongLabel(getString(R.string.downloads))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.ic_shortcut_downloads))
+                .setIntent(new Intent(this, MainActivity.class).setAction(ACTION_SHORTCUT_DOWNLOADS))
+                .build());
+        // 下载快捷操作:全部开始/全部停止(迁移自旧静态 shortcuts,action 契约见 ShortcutsActivity)
+        shortcuts.add(new ShortcutInfoCompat.Builder(this, "start_all")
+                .setShortLabel(getString(R.string.download_start_all))
+                .setLongLabel(getString(R.string.download_start_all))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.ic_shortcut_start))
+                .setIntent(new Intent(this, ShortcutsActivity.class)
+                        .setAction(DownloadService.ACTION_START_ALL))
+                .build());
+        shortcuts.add(new ShortcutInfoCompat.Builder(this, "stop_all")
+                .setShortLabel(getString(R.string.download_stop_all))
+                .setLongLabel(getString(R.string.download_stop_all))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.ic_shortcut_stop))
+                .setIntent(new Intent(this, ShortcutsActivity.class)
+                        .setAction(DownloadService.ACTION_STOP_ALL))
+                .build());
+        ShortcutManagerCompat.setDynamicShortcuts(this, shortcuts);
     }
 
     private void checkClipboardUrl() {
@@ -673,6 +696,9 @@ public final class MainActivity extends StageActivity
             Announcer announcer = createAnnouncerFromClipboardUrl(text);
             if (announcer != null && mDrawerLayout != null) {
                 Snackbar snackbar = Snackbar.make(mDrawerLayout, R.string.clipboard_gallery_url_snack_message, Snackbar.LENGTH_INDEFINITE);
+                if (mBottomNav != null && mBottomNav.getVisibility() == View.VISIBLE) {
+                    snackbar.setAnchorView(mBottomNav);
+                }
                 snackbar.setAction(R.string.clipboard_gallery_url_snack_action, v -> startScene(announcer));
                 snackbar.show();
             }
@@ -722,34 +748,6 @@ public final class MainActivity extends StageActivity
         }
     }
 
-    public void updateProfile() {
-        if (null != mAvatar) {
-            String avatarUrl = Settings.getAvatar();
-            if (TextUtils.isEmpty(avatarUrl)) {
-                File userAvatarFile = Settings.getUserImageFile(Settings.USER_AVATAR_IMAGE);
-                if (userAvatarFile != null) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(userAvatarFile.getPath());
-                    Drawable drawable = new BitmapDrawable(mAvatar.getResources(), bitmap);
-                    mAvatar.load(drawable);
-                } else {
-                    mAvatar.load(R.drawable.default_avatar);
-                }
-            } else {
-                mAvatar.load(avatarUrl, avatarUrl);
-            }
-        }
-
-        if (null != mDisplayName) {
-            String displayName = Settings.getDisplayName();
-            if (TextUtils.isEmpty(displayName)) {
-                displayName = getString(R.string.default_display_name);
-            }
-            Toast.makeText(this, displayName, Toast.LENGTH_LONG).show();
-            mDisplayName.setText(displayName);
-        }
-
-    }
-
     public void addAboveSnackView(View view) {
         if (mDrawerLayout != null) {
             mDrawerLayout.addAboveSnackView(view);
@@ -760,39 +758,6 @@ public final class MainActivity extends StageActivity
         if (mDrawerLayout != null) {
             mDrawerLayout.removeAboveSnackView(view);
         }
-    }
-
-    /**
-     * 更换壁纸
-     */
-    public void onBackgroundChange() {
-        if (userImageChange != null) {
-            userImageChange = null;
-        }
-        userImageChange = new UserImageChange(MainActivity.this,
-                UserImageChange.CHANGE_BACKGROUND,
-                getLayoutInflater(),
-                LayoutInflater.from(MainActivity.this),
-                this
-        );
-        userImageChange.showImageChangeDialog();
-    }
-
-    /**
-     * 更换头像
-     */
-    public void onAvatarChange() {
-        if (userImageChange != null) {
-            userImageChange = null;
-        }
-        userImageChange = new UserImageChange(MainActivity.this,
-                UserImageChange.CHANGE_AVATAR,
-                getLayoutInflater(),
-                LayoutInflater.from(MainActivity.this),
-                this
-        );
-
-        userImageChange.showImageChangeDialog();
     }
 
     public void setDrawerLockMode(int lockMode, int edgeGravity) {
@@ -813,16 +778,6 @@ public final class MainActivity extends StageActivity
         }
     }
 
-    public void toggleDrawer(int drawerGravity) {
-        if (mDrawerLayout != null) {
-            if (mDrawerLayout.isDrawerOpen(drawerGravity)) {
-                mDrawerLayout.closeDrawer(drawerGravity);
-            } else {
-                mDrawerLayout.openDrawer(drawerGravity);
-            }
-        }
-    }
-
     public void setDrawerGestureBlocker(DrawerLayout.GestureBlocker gestureBlocker) {
         if (mDrawerLayout != null) {
             mDrawerLayout.setGestureBlocker(gestureBlocker);
@@ -839,13 +794,95 @@ public final class MainActivity extends StageActivity
 
     public void setNavCheckedItem(@IdRes int resId) {
         mNavCheckedItem = resId;
-        if (mNavView != null) {
-            if (resId == 0) {
-                mNavView.setCheckedItem(R.id.nav_stub);
-            } else {
-                mNavView.setCheckedItem(resId);
-            }
+        if (mBottomNav != null) {
+            mBottomNav.setSelectedId(mapToBottomTab(resId));
         }
+    }
+
+    /**
+     * 按当前场景显隐底部导航栏(登录引导等流程场景隐藏)
+     */
+    public void setBottomNavVisible(boolean visible) {
+        if (mMainContentLayout != null) {
+            mMainContentLayout.setBottomNavVisible(visible);
+        }
+    }
+
+    /**
+     * 是否由舞台统一避让状态栏;悬浮 app bar 场景(下载/历史)传 false,
+     * 场景顶到屏幕顶端,app bar 自行延伸进状态栏区域
+     */
+    public void setStageFitsStatusBar(boolean fits) {
+        if (mMainContentLayout != null) {
+            mMainContentLayout.setStageFitsStatusBar(fits);
+        }
+    }
+
+    /**
+     * 内容列表滚动联动:跟手位移底部导航栏(下滚隐藏/上滚显示)
+     */
+    public void onContentListScrolled(int dy) {
+        if (mMainContentLayout != null) {
+            mMainContentLayout.offsetBottomNav(dy);
+        }
+    }
+
+    /**
+     * 列表滚动停止时,底部导航栏吸附到全显或全隐
+     */
+    public void settleBottomNav() {
+        if (mMainContentLayout != null) {
+            mMainContentLayout.settleBottomNav();
+        }
+    }
+
+    /**
+     * 状态栏高度(px),沉浸式下场景自行避让顶部
+     */
+    public int getWindowInsetTop() {
+        return mMainContentLayout != null ? mMainContentLayout.getWindowInsetTop() : 0;
+    }
+
+    /**
+     * 系统导航栏 inset(px)
+     */
+    public int getWindowInsetBottom() {
+        return mMainContentLayout != null ? mMainContentLayout.getWindowInsetBottom() : 0;
+    }
+
+    /**
+     * 场景内容底部需要避让的高度:系统导航栏 inset + 底部导航栏(可见时)占位
+     */
+    public int getBottomOccupiedHeight() {
+        return mMainContentLayout != null ? mMainContentLayout.getBottomOccupiedHeight() : 0;
+    }
+
+    public void addOnInsetsChangedListener(MainContentLayout.OnInsetsChangedListener listener) {
+        if (mMainContentLayout != null) {
+            mMainContentLayout.addOnInsetsChangedListener(listener);
+        }
+    }
+
+    public void removeOnInsetsChangedListener(MainContentLayout.OnInsetsChangedListener listener) {
+        if (mMainContentLayout != null) {
+            mMainContentLayout.removeOnInsetsChangedListener(listener);
+        }
+    }
+
+    /**
+     * 旧抽屉菜单 id 映射到底部 tab;订阅/热门/榜单归并到主页 tab,0 或其他 id 不映射
+     */
+    @IdRes
+    private int mapToBottomTab(@IdRes int resId) {
+        if (resId == R.id.nav_homepage || resId == R.id.nav_subscription
+                || resId == R.id.nav_whats_hot || resId == R.id.nav_top_lists) {
+            return R.id.nav_homepage;
+        }
+        if (resId == R.id.nav_favourite || resId == R.id.nav_downloads
+                || resId == R.id.nav_history || resId == R.id.nav_more) {
+            return resId;
+        }
+        return 0;
     }
 
     public void showTip(@StringRes int id, int length) {
@@ -857,8 +894,12 @@ public final class MainActivity extends StageActivity
      */
     public void showTip(CharSequence message, int length) {
         if (null != mDrawerLayout) {
-            Snackbar.make(mDrawerLayout, message,
-                    length == BaseScene.LENGTH_LONG ? 5000 : 3000).show();
+            Snackbar snackbar = Snackbar.make(mDrawerLayout, message,
+                    length == BaseScene.LENGTH_LONG ? 5000 : 3000);
+            if (null != mBottomNav && mBottomNav.getVisibility() == View.VISIBLE) {
+                snackbar.setAnchorView(mBottomNav);
+            }
+            snackbar.show();
         } else {
             Toast.makeText(this, message,
                     length == BaseScene.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
@@ -868,74 +909,42 @@ public final class MainActivity extends StageActivity
     @SuppressLint("RtlHardcoded")
     @Override
     public void onBackPressed() {
-        if (mDrawerLayout != null && (mDrawerLayout.isDrawerOpen(Gravity.LEFT) ||
-                mDrawerLayout.isDrawerOpen(Gravity.RIGHT))) {
+        if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(Gravity.RIGHT)) {
             mDrawerLayout.closeDrawers();
         } else {
             super.onBackPressed();
         }
     }
 
-    @SuppressLint({"NonConstantResourceId", "RtlHardcoded"})
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Don't select twice
-        if (item.isChecked()) {
-            return false;
+    @SuppressLint("NonConstantResourceId")
+    private void onBottomNavTabSelected(@IdRes int tabId) {
+        // 不重复切换当前 tab
+        if (tabId == mNavCheckedItem) {
+            return;
         }
 
-        int id = item.getItemId();
-
-        switch (item.getItemId()) {
-            case R.id.nav_homepage:
-                Bundle nav_homepage = new Bundle();
-                nav_homepage.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
-                startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_homepage));
+        switch (tabId) {
+            case R.id.nav_homepage: {
+                Bundle args = new Bundle();
+                args.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_HOMEPAGE);
+                startSceneFirstly(new Announcer(GalleryListScene.class).setArgs(args));
                 break;
-            case R.id.nav_subscription:
-                Bundle nav_subscription = new Bundle();
-                nav_subscription.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_SUBSCRIPTION);
-                startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_subscription));
-                break;
-            case R.id.nav_whats_hot:
-                Bundle nav_whats_hot = new Bundle();
-                nav_whats_hot.putString(GalleryListScene.KEY_ACTION, GalleryListScene.ACTION_WHATS_HOT);
-                startSceneFirstly(new Announcer(GalleryListScene.class)
-                        .setArgs(nav_whats_hot));
-                break;
-            case R.id.nav_top_lists:
-                Bundle nav_top_lists = new Bundle();
-                nav_top_lists.putString(EhTopListScene.KEY_ACTION, EhTopListScene.ACTION_TOP_LIST);
-                startSceneFirstly(new Announcer(EhTopListScene.class)
-                        .setArgs(nav_top_lists));
-                break;
+            }
             case R.id.nav_favourite:
-                startScene(new Announcer(FavoritesScene.class));
+                startSceneFirstly(new Announcer(FavoritesScene.class));
                 break;
             case R.id.nav_history:
-                startScene(new Announcer(HistoryScene.class));
+                startSceneFirstly(new Announcer(HistoryScene.class));
                 break;
             case R.id.nav_downloads:
-                startScene(new Announcer(DownloadsScene.class));
+                startSceneFirstly(new Announcer(DownloadsScene.class));
                 break;
-            case R.id.nav_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivityForResult(intent, REQUEST_CODE_SETTINGS);
+            case R.id.nav_more:
+                startSceneFirstly(new Announcer(MoreScene.class));
                 break;
             default:
-                throw new IllegalStateException("Unexpected value: " + item.getItemId());
+                break;
         }
-
-        if (id != R.id.nav_stub && mDrawerLayout != null) {
-            mDrawerLayout.closeDrawers();
-        }
-
-        if (limitsCountView != null) {
-            limitsCountView.hide();
-        }
-        return true;
     }
 
     @Override
@@ -946,35 +955,29 @@ public final class MainActivity extends StageActivity
             }
             return;
         }
-        if (resultCode == RESULT_OK)
-            if ((requestCode == UserImageChange.TAKE_CAMERA || requestCode == UserImageChange.PICK_PHOTO) && userImageChange != null) {
-                userImageChange.saveImageForResult(requestCode, resultCode, data, mAvatar);
-                return;
-            }
+        // 个人页头像/背景更换:拍照或相册选择结果路由回 UserImageChange
+        if (resultCode == RESULT_OK
+                && (requestCode == UserImageChange.TAKE_CAMERA || requestCode == UserImageChange.PICK_PHOTO)
+                && mUserImageChange != null) {
+            mUserImageChange.saveImageForResult(requestCode, resultCode, data, mUserImageAvatar);
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    @Override
-    public void onDrawerSlide(View drawerView, float percent) {
-
+    /**
+     * 个人页注册头像/背景更换流程;avatarView 用于相册/拍照结果直接刷新头像
+     */
+    public void registerUserImageChange(@NonNull UserImageChange userImageChange,
+                                        @Nullable AvatarImageView avatarView) {
+        mUserImageChange = userImageChange;
+        mUserImageAvatar = avatarView;
     }
 
-    @Override
-    public void onDrawerOpened(View drawerView) {
-        if (limitsCountView != null) {
-            limitsCountView.onLoadData(drawerView, true);
+    public void unregisterUserImageChange(@NonNull UserImageChange userImageChange) {
+        if (mUserImageChange == userImageChange) {
+            mUserImageChange = null;
+            mUserImageAvatar = null;
         }
-    }
-
-    @Override
-    public void onDrawerClosed(View drawerView) {
-        if (limitsCountView != null) {
-            limitsCountView.hide();
-        }
-    }
-
-    @Override
-    public void onDrawerStateChanged(View drawerView, int newState) {
-
     }
 }

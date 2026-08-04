@@ -52,6 +52,7 @@
     <string name="misc" translatable="false">MISC</string>
 
     <string name="homepage">Homepage</string>
+    <string name="personal">Profile</string>
     <string name="subscription">Subscription</string>
     <string name="whats_hot">What\'s hot</string>
     <string name="top_list">Top Lists</string>
@@ -59,7 +60,6 @@
     <string name="history">History</string>
     <string name="downloads">Downloads</string>
     <string name="settings">Settings</string>
-    <string name="stub" translatable="false">Stub</string>
 
     <string name="username">Username</string>
     <string name="password">Password</string>

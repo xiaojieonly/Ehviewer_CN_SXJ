@@ -210,6 +210,22 @@ public class DownloadsScene extends ToolbarScene
     private SearchBar mSearchBar;
     @Nullable
     private PaginationIndicator mPaginationIndicator;
+    /** app bar 随列表滚动抬升收起(与搜索对话框用的 mSearchBarMover 相互独立) */
+    @Nullable
+    private SearchBarMover mAppBarMover;
+    @Nullable
+    private FastScroller mFastScroller;
+
+    // 沉浸式避让基准(onCreateView3 记录,onApplyWindowInsets 按基准重算,幂等)
+    private int mListBasePaddingTop = 0;
+    private int mListBasePaddingBottom = 0;
+    private int mFastScrollerBasePaddingTop = 0;
+    private int mIndicatorBaseMarginBottom = 0;
+    // FAB 动态位置:分页指示器显示时抬到其上方,隐藏时贴底部
+    private int mBottomOccupied = 0;
+    private int mIndicatorHeight = 0;
+    private int mFabMargin = 0;
+    private int mFabGap = 0;
 
     private DownloadLabelDraw downloadLabelDraw;
     @Nullable
@@ -241,6 +257,12 @@ public class DownloadsScene extends ToolbarScene
             new ActivityResultContracts.StartActivityForResult(),
             this::handleSelectedFile
     );
+
+    // 最外层 tab 场景,显示底部导航栏
+    @Override
+    public boolean needShowBottomNav() {
+        return true;
+    }
 
     @Override
     public int getNavCheckedItem() {
@@ -357,9 +379,11 @@ public class DownloadsScene extends ToolbarScene
         }
         if (mList.size() < paginationSize || !canPagination) {
             mPaginationIndicator.setVisibility(View.GONE);
+            updateFabPadding();
             return;
         }
         mPaginationIndicator.setVisibility(View.VISIBLE);
+        updateFabPadding();
         needInitPageSize = true;
         mPaginationIndicator.initPaginationIndicator(pageSize, perPageCountChoices, mList.size(), indexPage);
 //        mPaginationIndicator.setTotalCount();
@@ -576,6 +600,17 @@ public class DownloadsScene extends ToolbarScene
         mRecyclerView.addItemDecoration(decoration);
         decoration.applyPaddings(mRecyclerView);
 
+        // 沉浸式避让基准
+        mListBasePaddingTop = mRecyclerView.getPaddingTop();
+        mListBasePaddingBottom = mRecyclerView.getPaddingBottom();
+        mFastScroller = fastScroller;
+        mFastScrollerBasePaddingTop = fastScroller.getPaddingTop();
+        mIndicatorBaseMarginBottom =
+                ((ViewGroup.MarginLayoutParams) mPaginationIndicator.getLayoutParams()).bottomMargin;
+        mIndicatorHeight = mPaginationIndicator.getLayoutParams().height;
+        mFabMargin = resources.getDimensionPixelOffset(R.dimen.corner_fab_margin);
+        mFabGap = (int) (8 * resources.getDisplayMetrics().density + 0.5f);
+
         // 将拖拽管理器附加到RecyclerView
         if (mDragDropManager != null) {
             try {
@@ -603,7 +638,7 @@ public class DownloadsScene extends ToolbarScene
         mFabLayout.setAutoCancel(false);
         mFabLayout.setOnClickFabListener(this);
         mFabLayout.setOnExpandListener(this);
-        mActionFabDrawable = new AddDeleteDrawable(context, resources.getColor(R.color.primary_drawable_dark, null));
+        mActionFabDrawable = new AddDeleteDrawable(context, AttrResources.getAttrColor(context, R.attr.fabIconColor));
         mFabLayout.getPrimaryFab().setImageDrawable(mActionFabDrawable);
         FloatingActionButton fab = mFabLayout.getSecondaryFabAt(6);
         if (DRAG_ENABLE) {
@@ -618,6 +653,46 @@ public class DownloadsScene extends ToolbarScene
         guide();
         updatePaginationIndicator();
         return view;
+    }
+
+    /**
+     * 沉浸式避让:列表/分页指示器底部让出底部导航占位;toolbar 由父类处理。
+     * 按基准值重算,可重复调用(幂等)
+     */
+    @Override
+    public void onApplyWindowInsets(int statusBarInset, int bottomOccupied) {
+        super.onApplyWindowInsets(statusBarInset, bottomOccupied);
+        mBottomOccupied = bottomOccupied;
+        if (null != mRecyclerView) {
+            mRecyclerView.setPadding(mRecyclerView.getPaddingLeft(), mRecyclerView.getPaddingTop(),
+                    mRecyclerView.getPaddingRight(), mListBasePaddingBottom + bottomOccupied);
+        }
+        if (null != mPaginationIndicator) {
+            ViewGroup.MarginLayoutParams lp =
+                    (ViewGroup.MarginLayoutParams) mPaginationIndicator.getLayoutParams();
+            int bottomMargin = mIndicatorBaseMarginBottom + bottomOccupied;
+            if (lp.bottomMargin != bottomMargin) {
+                lp.bottomMargin = bottomMargin;
+                mPaginationIndicator.setLayoutParams(lp);
+            }
+        }
+        updateFabPadding();
+    }
+
+    /**
+     * 分页指示器显示时,「+」号 FAB 抬到指示器上方;隐藏时贴在底部导航胶囊上方 16dp
+     */
+    private void updateFabPadding() {
+        if (null == mFabLayout) {
+            return;
+        }
+        boolean indicatorVisible = mPaginationIndicator != null
+                && mPaginationIndicator.getVisibility() == View.VISIBLE;
+        int bottom = mBottomOccupied + (indicatorVisible ? mIndicatorHeight + mFabGap : mFabMargin);
+        if (mFabLayout.getPaddingBottom() != bottom) {
+            mFabLayout.setPadding(mFabLayout.getPaddingLeft(), mFabLayout.getPaddingTop(),
+                    mFabLayout.getPaddingRight(), bottom);
+        }
     }
 
     private void guide() {
@@ -707,13 +782,31 @@ public class DownloadsScene extends ToolbarScene
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         updateTitle();
-        setNavigationIcon(R.drawable.v_arrow_left_dark_x24);
+        // 作为底部导航 tab 根场景,不再显示返回箭头
+
+        if (mRecyclerView != null) {
+            mAppBarMover = attachOverlayAppBar(this, mRecyclerView, mFastScroller,
+                    mListBasePaddingTop, mFastScrollerBasePaddingTop);
+        }
+    }
+
+    /**
+     * app bar 悬浮于列表之上,随滚动抬升收起;收起后列表沉浸式顶到状态栏下沿
+     */
+    @Override
+    protected boolean useOverlayAppBar() {
+        return true;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
 
+        if (null != mAppBarMover) {
+            mAppBarMover.cancelAnimation();
+            mAppBarMover = null;
+        }
+        mFastScroller = null;
         if (null != mShowcaseView) {
             ViewUtils.removeFromParent(mShowcaseView);
             mShowcaseView = null;
@@ -738,7 +831,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public void onNavigationClick(View view) {
-        onBackPressed();
+        // 底部导航 tab 根场景,无上级可退
     }
 
     @Override
@@ -1037,11 +1130,9 @@ public class DownloadsScene extends ToolbarScene
         }
 
         if (expanded) {
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
             mActionFabDrawable.setDelete(ANIMATE_TIME);
         } else {
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
             mActionFabDrawable.setAdd(ANIMATE_TIME);
         }
@@ -1491,7 +1582,7 @@ public class DownloadsScene extends ToolbarScene
 
     @Override
     public boolean isValidView(RecyclerView recyclerView) {
-        return false;
+        return recyclerView == mRecyclerView;
     }
 
     @Nullable
@@ -1981,7 +2072,6 @@ public class DownloadsScene extends ToolbarScene
                 mFabLayout.setExpanded(true);
             }
             // Lock drawer
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
 
 //            // 进入选择模式时，thumb保持可见（拖拽功能已直接附加到thumb上）
@@ -1997,7 +2087,6 @@ public class DownloadsScene extends ToolbarScene
                 mFabLayout.setExpanded(false);
             }
             // Unlock drawer
-            setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.LEFT);
             setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Gravity.RIGHT);
 
 //            // 退出选择模式时，thumb保持可见（拖拽功能已直接附加到thumb上）

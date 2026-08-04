@@ -410,8 +410,8 @@ public abstract class StageActivity extends EhActivity {
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
 
-        // Set default animation
-        transaction.setCustomAnimations(R.anim.scene_open_enter, R.anim.scene_open_exit);
+        // 底部 tab 根场景切换:M3 fade through(与二级页 push 的 shared axis X 区分)
+        transaction.setCustomAnimations(R.anim.scene_firstly_enter, R.anim.scene_firstly_exit);
 
         String findSceneTag = null;
         for (int i = 0, n = mSceneTagList.size(); i < n; i++) {
@@ -567,6 +567,8 @@ public abstract class StageActivity extends EhActivity {
         Fragment fragment = fragmentManager.findFragmentByTag(tag);
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
+        // 硬刷新加短淡入过渡(M3 fade)
+        transaction.setCustomAnimations(android.R.anim.fade_in, 0);
         transaction.detach(fragment);
         transaction.attach(fragment);
         transaction.commitAllowingStateLoss();
@@ -614,6 +616,20 @@ public abstract class StageActivity extends EhActivity {
             return null;
         }
         return fragment.getClass();
+    }
+
+    @Nullable
+    public SceneFragment getTopScene() {
+        int index = mSceneTagList.size() - 1;
+        if (index < 0) {
+            return null;
+        }
+        String tag = mSceneTagList.get(index);
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag(tag);
+        if (fragment instanceof SceneFragment) {
+            return (SceneFragment) fragment;
+        }
+        return null;
     }
 
     @Override
