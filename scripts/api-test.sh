@@ -109,9 +109,22 @@ curl -s -m 15 -X POST "$BASE/api/v1/sync/push" -H 'content-type: application/jso
 PULL2=$(curl -s -m 15 "$BASE/api/v1/sync/pull?since=1755000000019")
 jcheck "增量 pull 传播墓碑 deleted=true (N-1)" "$PULL2" "entities.history.0.deleted" "True"
 # H-3 since=0 边界: lastModified=0 记录
+# （leader 裁决：契约不承诺 pull 顺序——@Index 后 SQLite 行序可变，下标断言作废；
+#  改集合断言：history 集合包含 gid=5001 且其 lastModified=0/deleted=false，
+#  且包含 gid=2001。H-3 原意保留：since=0 全量拉取必须含 lm=0 记录。）
 curl -s -m 15 -X POST "$BASE/api/v1/sync/push" -H 'content-type: application/json' -d '{"deviceId":"api-test-1","timestamp":1755000000030,"entities":{"history":[{"gid":5001,"token":"z","title":"Zero","category":0,"mode":0,"time":0,"lastModified":0,"deviceId":"api-test-1"}]}}' > /dev/null
 PULL3=$(curl -s -m 15 "$BASE/api/v1/sync/pull?since=0")
-jcheck "since=0 返回 lastModified=0 记录 (H-3)" "$PULL3" "entities.history.1.gid" "5001"
+echo "$PULL3" | python3 -c "
+import json, sys
+try:
+    h = json.load(sys.stdin)['entities']['history']
+except Exception:
+    sys.exit(1)
+zero = [r for r in h if r.get('gid') == 5001]
+ok = bool(zero) and zero[0].get('lastModified') == 0 and not zero[0].get('deleted')
+ok = ok and any(r.get('gid') == 2001 for r in h)
+sys.exit(0 if ok else 1)
+" && { PASS=$((PASS+1)); echo "  ✓ since=0 返回 lastModified=0 记录 (H-3)"; } || { FAIL=$((FAIL+1)); FAILED_NAMES+=("since=0 返回 lastModified=0 记录 (H-3)"); echo "  ✗ since=0 H-3 集合断言失败: $(echo "$PULL3" | head -c 300)"; }
 
 section "收藏/历史 REST (E2E-4/N-5)"
 ck "POST /favorite/add 200" 200 -X POST "$BASE/api/v1/favorite/add" -H 'content-type: application/json' -d '{"gid":6001,"token":"t6","title":"Slot Test","category":512,"slot":99}'

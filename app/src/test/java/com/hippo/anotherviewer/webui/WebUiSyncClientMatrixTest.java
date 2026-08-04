@@ -591,10 +591,18 @@ public class WebUiSyncClientMatrixTest {
                             localAlive(kind, base));
                 } else {
                     assertTrue(ctx + ": local live copy survives", localAlive(kind, base));
+                    InMemorySyncServer.Record record = serverRecord(kind, base);
+                    assertNotNull(ctx, record);
                     if ("device_priority".equals(strategy)) {
-                        InMemorySyncServer.Record record = serverRecord(kind, base);
-                        assertNotNull(ctx, record);
                         assertFalse(ctx + ": priority live push resurrects server-side", record.deleted);
+                    } else {
+                        // B branch server-side assertion: the client's live re-push
+                        // (this matrix drives a full since=0 push) resurrects the union
+                        // record server-side. F6（2026-08-04）：该复活是全量推送时代
+                        // 的重推回显机制，非设计承诺——B9 增量下 lww soft 删除粘性为
+                        // 预期，复活须经保留端显式 re-add/重戳。
+                        assertFalse(ctx + ": union live re-push resurrects server-side (B)",
+                                record.deleted);
                     }
                 }
             }
