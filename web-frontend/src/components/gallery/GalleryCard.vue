@@ -73,7 +73,19 @@
         </span>
         <slot name="overlay" />
       </div>
-      <h3 class="gallery-card__grid-title">{{ displayTitle }}</h3>
+      <!-- F-UX1: the grid meta area is a FLOWING two-line region — title
+           line plus an optional `grid-sub` line (e.g. History's last-viewed
+           stamp). The sub line is a normal-flow sibling of the title, so a
+           present sub line stretches the card instead of being absolutely
+           positioned over the title. Cards without a sub line keep the
+           classic single-line meta (padding lives on the wrapper either
+           way). -->
+      <div class="gallery-card__grid-meta">
+        <h3 class="gallery-card__grid-title">{{ displayTitle }}</h3>
+        <div v-if="hasGridSub" class="gallery-card__grid-sub">
+          <GridSubLine />
+        </div>
+      </div>
     </template>
   </AppCard>
 </template>
@@ -124,7 +136,10 @@ export function parseFavoriteSlotNames(raw: unknown): string[] {
  * - `grid`: tile filling the column width with `TileThumb`-style aspect
  *   clamping (`--thumb-min-aspect`…`--thumb-max-aspect`, default 2:3),
  *   32×24dp `CategoryTriangle` top-right, language badge (10sp white bold),
- *   title below (2-line clamp).
+ *   title below (2-line clamp). The meta area below the tile is a flowing
+ *   region: title line plus an optional `grid-sub` line that stretches the
+ *   card when present (F-UX1 — History's last-viewed stamp; never an
+ *   absolutely positioned overlay over the title).
  *
  * The numeric `gallery.category` is an `SiteConfig` bit value; it is converted
  * to a `GalleryCategory` via `CATEGORY_BY_BIT` before driving the chip /
@@ -143,7 +158,7 @@ export function parseFavoriteSlotNames(raw: unknown): string[] {
  * they are being added to the preferences schema by a parallel work stream,
  * so the card must behave identically whether or not they exist yet.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, useSlots } from 'vue'
 import {
   CATEGORY_BY_BIT,
   type GalleryCardEmits,
@@ -173,6 +188,23 @@ interface GeneralPrefsExtras {
 const props = defineProps<GalleryCardProps>()
 const emit = defineEmits<GalleryCardEmits>()
 defineSlots<GalleryCardSlots>()
+
+/**
+ * F-UX1: presence + rendering of the optional `grid-sub` meta line. The slot
+ * extends the card beyond the frozen `GalleryCardSlots` contract, so it is
+ * resolved dynamically (the contract file stays untouched) instead of through
+ * a `<slot name="grid-sub">` element, which would be type-checked against the
+ * frozen interface. Consumers thread it via `GalleryGrid`'s `cell-sub` slot.
+ */
+const slots = useSlots()
+const gridSubSlot = computed(() => (slots as Record<string, unknown>)['grid-sub'])
+const hasGridSub = computed(() => Boolean(gridSubSlot.value))
+
+/** Inline functional component emitting the `grid-sub` slot content. */
+function GridSubLine() {
+  const slot = gridSubSlot.value
+  return typeof slot === 'function' ? (slot as (props: Record<string, unknown>) => unknown)({}) : null
+}
 
 const preferencesStore = usePreferencesStore()
 
@@ -441,9 +473,20 @@ onMounted(() => {
   text-shadow: 0 1px 2px var(--black-overlay);
 }
 
+/* F-UX1: the grid meta area is a flowing column — the title line plus the
+   optional `grid-sub` line stack in normal flow (no absolute overlap). The
+   padding the title always carried now lives on the wrapper, so a meta area
+   without a sub line renders exactly as before. */
+.gallery-card__grid-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 6px 6px;
+}
+
 .gallery-card__grid-title {
   margin: 0;
-  padding: 4px 6px 6px;
   font-size: clamp(11px, var(--text-super-small), 14px); /* 12sp ideal */
   font-weight: 400;
   line-height: 1.3;
@@ -453,6 +496,16 @@ onMounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 150ms var(--ease-decelerate-quart);
+}
+
+/* Secondary meta line (History's last-viewed stamp) — 11sp secondary ink,
+   single line, stretching the card when present (F-UX1). */
+.gallery-card__grid-sub {
+  display: flex;
+  min-width: 0;
+  color: var(--text-color-secondary);
+  font-size: clamp(10px, calc(var(--text-super-small) - 1px), 12px);
+  line-height: 1.4;
 }
 
 .app-card:hover .gallery-card__grid-title {

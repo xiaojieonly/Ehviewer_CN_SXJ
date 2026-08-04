@@ -6,7 +6,15 @@
         mode="grid"
         :style="enterStyle(index)"
         @click="emit('select', gallery)"
-      />
+      >
+        <!-- F-UX1: optional in-card meta sub line (History's last-viewed
+             stamp), flowing below the title. Threaded only when the list
+             consumer supplies `cell-sub`, so cards without a sub line keep
+             the classic single-line meta. -->
+        <template v-if="$slots['cell-sub']" #grid-sub>
+          <slot name="cell-sub" :gallery="gallery" :index="index" />
+        </template>
+      </GalleryCard>
       <!-- Per-cell addon (e.g. a status badge) positioned over the tile;
            GalleryList threads its `item-extra` slot through here. -->
       <slot name="cell-extra" :gallery="gallery" :index="index" />

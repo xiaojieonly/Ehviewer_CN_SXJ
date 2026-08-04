@@ -144,6 +144,47 @@ describe('GalleryCard (grid mode)', () => {
     })
     expect(wrapper.find('.gallery-card__tile').attributes('style')).toContain('aspect-ratio: 2 / 3')
   })
+
+  describe('grid meta region (F-UX1 flowing title + sub line)', () => {
+    it('wraps the title in the flowing meta region', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      const meta = wrapper.find('.gallery-card__grid-meta')
+      expect(meta.exists()).toBe(true)
+      expect(meta.find('.gallery-card__grid-title').exists()).toBe(true)
+    })
+
+    it('renders no sub line when the grid-sub slot is absent (home-style cards)', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+      })
+      expect(wrapper.find('.gallery-card__grid-sub').exists()).toBe(false)
+    })
+
+    it('renders the grid-sub slot as a flowing sibling of the title', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'grid' },
+        slots: { 'grid-sub': '<span class="sub-marker">Today 14:32</span>' },
+      })
+      const meta = wrapper.find('.gallery-card__grid-meta')
+      const title = meta.find('.gallery-card__grid-title')
+      const sub = meta.find('.gallery-card__grid-sub')
+      expect(sub.exists()).toBe(true)
+      expect(sub.text()).toBe('Today 14:32')
+      // Two lines are normal-flow siblings inside the meta region — no
+      // absolute positioning can overlap them.
+      expect(title.element.nextElementSibling).toBe(sub.element)
+      expect(sub.element.parentElement).toBe(meta.element)
+    })
+
+    it('does not render the grid meta region in list mode', () => {
+      const wrapper = mount(GalleryCard, {
+        props: { gallery: makeGallery(), mode: 'list' },
+      })
+      expect(wrapper.find('.gallery-card__grid-meta').exists()).toBe(false)
+    })
+  })
 })
 
 describe('GalleryCard (surface + category + events)', () => {
