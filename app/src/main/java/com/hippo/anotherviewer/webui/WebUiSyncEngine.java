@@ -49,8 +49,10 @@ import java.util.Set;
  * SiteDB (behind the {@link WebUiSyncStore} seam).
  *
  * <p>Deletion propagation: local removals are detected by diffing the current
- * local key sets against the keys pushed in the last successful sync (persisted
- * per server URL in SharedPreferences). Removed keys are pushed as
+ * local key sets against the snapshot of the last successful sync — the local
+ * key sets re-collected at its save point, so keys adopted from a pull or
+ * added mid-cycle are included (persisted per server URL in SharedPreferences).
+ * Removed keys are pushed as
  * {@code deleted: true} tombstones — soft for favorites, downloads, filters,
  * quick searches and download labels (the server keeps the record alive so
  * other devices can resurrect it, per union semantics) and hard for history and
@@ -373,15 +375,8 @@ public final class WebUiSyncEngine {
             ledgerDownloads.remove(Long.toString(gid));
         }
 
-        // The snapshot is finalized after the pull so keys removed locally by
-        // incoming server tombstones are not re-emitted next cycle.
-        snapshotFavorites = currentFavorites;
-        snapshotHistory = currentHistory;
-        snapshotDownloads = currentDownloads;
-        snapshotBookmarks = currentBookmarks;
-        snapshotFilters = currentFilters;
-        snapshotQuickSearches = currentQuickSearches;
-        snapshotDownloadLabels = currentDownloadLabels;
+        // The snapshot is finalized at save time (re-collected from the local
+        // store after apply), not here — see the save block below (R4-15 W1/W2).
 
         // 2. Pull server changes since the high-water mark.
         WebUiSyncModels.PullResponse pull = mTransport.pull(config, since);
@@ -402,6 +397,30 @@ public final class WebUiSyncEngine {
         applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId);
         applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId);
         applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId);
+
+        // R4-15 W1/W2: the snapshot is finalized HERE — re-collected from the
+        // local store at save time, after apply — instead of reusing the
+        // pre-pull current sets. The persisted snapshot must equal the local
+        // truth at the moment it is saved:
+        // - applyFavorites/applyHistory adopt pulled keys into the local store
+        //   without ever adding them to the snapshot (the W1 gap): once the
+        //   saved snapshot lacked such a key, a later local deletion of it
+        //   never entered detectDeletions, so its tombstone was never
+        //   generated and the server row stayed alive forever;
+        // - records added or removed mid-cycle are captured too (W2: once
+        //   this save lands, the ack-before-save kill window no longer leaves
+        //   adopted/new keys out of the persisted baseline).
+        // Keys removed by honored server tombstones are gone from the local
+        // store and therefore naturally absent — they are not re-emitted next
+        // cycle. The snapshot add/remove bookkeeping inside apply is retained
+        // as harmless no-ops against this recollection.
+        snapshotFavorites = collectFavoriteKeys();
+        snapshotHistory = collectHistoryKeys();
+        snapshotDownloads = collectDownloadKeys();
+        snapshotBookmarks = collectBookmarkKeys();
+        snapshotFilters = collectFilterKeys();
+        snapshotQuickSearches = collectQuickSearchKeys();
+        snapshotDownloadLabels = collectDownloadLabelKeys();
 
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_FAVORITES, snapshotFavorites);
         mStore.saveKeySet(serverKey, SUFFIX_SNAPSHOT_HISTORY, snapshotHistory);
