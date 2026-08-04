@@ -46,7 +46,9 @@ import org.robolectric.annotation.Config;
  * snapshot/pending bookkeeping, failed-push retry, the B2 lastModified wire
  * value, and the B9 incremental push (new/changed/tombstone selection,
  * unchanged suppression, corrupt-ledger full-push fallback, re-add after
- * delete, pull-apply ledger adoption and §3.8 resurrection).
+ * delete, pull-apply ledger adoption and §3.8 resurrection), and the R4-15
+ * W1 regression (a favorite/history adopted from a pull and then deleted
+ * locally must still emit its tombstone).
  */
 @Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -208,14 +210,17 @@ public class WebUiSyncEngineTest {
         assertEquals(1, storeB.quickSearches.size());
         assertEquals(1, storeB.downloadLabels.size());
 
-        // Snapshot persisted on A (keys pushed). Note: applyFavorites and
-        // applyHistory do not add pulled keys to their snapshots (existing
-        // engine semantics, out of scope this wave), so only the push side
-        // (A) and the download snapshot (which applyDownloads fills) are
-        // asserted here.
+        // Snapshots persisted on both devices. R4-15 W1 (fixed): the snapshot
+        // is re-collected from the local store at save time, so the keys B
+        // adopted from the pull — favorites 1,2 and history 3, which the old
+        // applyFavorites/applyHistory never added to their snapshots — are in
+        // B's persisted snapshot too. A later local deletion of a pulled
+        // record is therefore visible to detectDeletions (see the w1_* tests).
         assertEquals("1,2", storeA.prefs.get(config.baseUrl() + ".snapshot.favorites"));
         assertEquals("3", storeA.prefs.get(config.baseUrl() + ".snapshot.history"));
         assertEquals("4", storeA.prefs.get(config.baseUrl() + ".snapshot.downloads"));
+        assertEquals("1,2", storeB.prefs.get(config.baseUrl() + ".snapshot.favorites"));
+        assertEquals("3", storeB.prefs.get(config.baseUrl() + ".snapshot.history"));
         assertEquals("4", storeB.prefs.get(config.baseUrl() + ".snapshot.downloads"));
     }
 
@@ -733,5 +738,89 @@ public class WebUiSyncEngineTest {
         assertNull("server 2 untouched until its own cycle", otherServer.favorites.get(9L));
         otherEngine.syncInternal(otherConfig, "devA", otherSecond.serverTimestamp);
         assertNotNull("server 2 picks it up on its own cycle", otherServer.favorites.get(9L));
+    }
+
+    // ==================== R4-15 W1: deletion visibility of pulled records ====================
+    // The persisted snapshot is re-collected from the local store at save
+    // time (after apply). Keys adopted from a pull are therefore in it even
+    // though applyFavorites/applyHistory never added them — deleting such a
+    // key locally afterwards is visible to detectDeletions and its tombstone
+    // reaches the server. Before the fix the key fell out of every detection
+    // set after the adopting cycle: the tombstone was never generated and the
+    // server row stayed alive forever.
+
+    /**
+     * W1 favorites: device B adopts favorite K from the server, deletes it
+     * locally before its next cycle; the tombstone must be generated and win
+     * on the server (device_priority: the priority platform's deletion is
+     * final — SyncService softDeleteLiveWins, tombPlatform == priority).
+     */
+    @Test
+    public void w1_pulledFavoriteAdoptedThenDeleted_tombstoneReachesServer() throws IOException {
+        server.policy = policy("device_priority");
+        String androidA = "android-00000000-0000-0000-0000-000000000001";
+        String androidB = "android-00000000-0000-0000-0000-000000000002";
+
+        // Device A seeds favorite K=7 on the server.
+        storeA.putLocalFavorite(favorite(7, 1000, "fav 7"));
+        engineA.syncInternal(config, androidA, 0);
+        assertFalse(server.favorites.get(7L).deleted);
+
+        // Device B (fresh watermark) pulls and adopts K. W1: K must land in
+        // B's persisted snapshot even though applyFavorites never adds it.
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, androidB, 0);
+        assertEquals(1, bFirst.pulledFavorites);
+        assertNotNull(storeB.loadLocalFavorite(7));
+        assertEquals("7", storeB.prefs.get(config.baseUrl() + ".snapshot.favorites"));
+
+        // The user deletes K locally (long-press delete writes no pending).
+        storeB.removeLocalFavorites(7);
+
+        // Next cycle: detectDeletions sees K through the snapshot -> tombstone.
+        WebUiSyncEngine.Result bSecond =
+                engineB.syncInternal(config, androidB, bFirst.serverTimestamp);
+        assertEquals(1, bSecond.pushedFavorites); // the tombstone for K only
+        assertTrue("pulled-then-deleted favorite tombstone reaches the server",
+                server.favorites.get(7L).deleted);
+
+        // Converged: the deletion is not re-pushed forever and stays final.
+        WebUiSyncEngine.Result bThird =
+                engineB.syncInternal(config, androidB, bSecond.serverTimestamp);
+        assertEquals(0, bThird.pushedFavorites);
+        assertTrue(server.favorites.get(7L).deleted);
+    }
+
+    /** W1 history (same shape, hard-delete entity): the tombstone must reach the server. */
+    @Test
+    public void w1_pulledHistoryAdoptedThenDeleted_tombstoneReachesServer() throws IOException {
+        String androidA = "android-00000000-0000-0000-0000-000000000001";
+        String androidB = "android-00000000-0000-0000-0000-000000000002";
+
+        // Device A seeds history K=11 on the server.
+        storeA.applySyncedHistory(history(11, 1000));
+        engineA.syncInternal(config, androidA, 0);
+        assertFalse(server.history.get(11L).deleted);
+
+        // Device B pulls and adopts K; the persisted snapshot must contain it.
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, androidB, 0);
+        assertEquals(1, bFirst.pulledHistory);
+        assertNotNull(storeB.history.get(11L));
+        assertEquals("11", storeB.prefs.get(config.baseUrl() + ".snapshot.history"));
+
+        // B clears the history row locally before its next cycle.
+        storeB.removeHistoryByKey(11);
+
+        WebUiSyncEngine.Result bSecond =
+                engineB.syncInternal(config, androidB, bFirst.serverTimestamp);
+        assertEquals(1, bSecond.pushedHistory); // hard-delete tombstone for K
+        assertTrue("pulled-then-deleted history tombstone reaches the server",
+                server.history.get(11L).deleted);
+        assertEquals(0, storeB.history.size());
+
+        // Converged: no repeated tombstone traffic, deletion stays.
+        WebUiSyncEngine.Result bThird =
+                engineB.syncInternal(config, androidB, bSecond.serverTimestamp);
+        assertEquals(0, bThird.pushedHistory);
+        assertTrue(server.history.get(11L).deleted);
     }
 }
