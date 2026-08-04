@@ -38,10 +38,16 @@ import javax.crypto.spec.GCMParameterSpec;
  * uses a distinct key alias so the two backends do not share key material.
  *
  * <p>All fallible work (KeyStore load, key generation) is deferred to a lazy,
- * once-per-process, thread-safe init performed on first use. Any keystore
- * failure degrades gracefully to "no token" instead of throwing, so this class
- * is safe to construct on the UI thread even on FBE devices before first unlock
+ * thread-safe init performed on first use. Any keystore failure degrades
+ * gracefully to "no token" instead of throwing, so this class is safe to
+ * construct on the UI thread even on FBE devices before first unlock
  * (see audit: construction used to run KeyStore work on every settings refresh).
+ *
+ * <p>Init success latches for the instance's lifetime; failure does not
+ * (R4-16): the Tier-2 interceptor's credential store is constructed once,
+ * together with the singleton OkHttp client, so a transient keystore outage
+ * at that early moment (e.g. FBE before first unlock) must not degrade Bearer
+ * attachment until a cold restart — later requests retry the init instead.
  */
 public final class WebUiCredentialStore {
 
@@ -52,19 +58,21 @@ public final class WebUiCredentialStore {
     private static final int GCM_IV_LENGTH_BYTES = 12;
 
     private KeyStore keyStore;
-    private boolean initialized = false;
 
     public WebUiCredentialStore(Context context) {
         // No fallible work here: keystore access happens lazily on first use so
         // construction can never throw or block the caller's thread.
     }
 
-    /** Lazily loads the keystore and creates the key on first use. Never throws. */
+    /**
+     * Lazily loads the keystore and creates the key on first use. Never throws.
+     * Success latches; failure does not — the next call retries, so a transient
+     * early outage is not pinned for the whole process lifetime (R4-16).
+     */
     private synchronized boolean ensureInitialized() {
-        if (initialized) {
-            return keyStore != null;
+        if (keyStore != null) {
+            return true;
         }
-        initialized = true;
         try {
             KeyStore ks = KeyStore.getInstance(KEYSTORE);
             ks.load(null);
@@ -80,9 +88,9 @@ public final class WebUiCredentialStore {
             }
             keyStore = ks;
         } catch (GeneralSecurityException | IOException e) {
-            // E.g. keystore locked before first unlock on FBE devices. Degrade to
-            // "no token" rather than crashing; retrying within the process is not
-            // attempted (once-per-process init).
+            // E.g. keystore locked before first unlock on FBE devices. Degrade
+            // to "no token" rather than crashing; the next call retries instead
+            // of latching the failure until a cold restart (R4-16).
             keyStore = null;
         }
         return keyStore != null;

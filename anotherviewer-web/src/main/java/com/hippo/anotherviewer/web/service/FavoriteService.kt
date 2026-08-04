@@ -15,7 +15,10 @@ class FavoriteService(private val favoriteRepository: LocalFavoriteInfoRepositor
      */
     fun listFavorites(slot: Int, page: Int, pageSize: Int = 20): FavoriteListResponse {
         val startPage = page.coerceAtLeast(1)
-        val all = favoriteRepository.findAllByOrderByTimeDesc()
+        // 墓碑行（deleted=true 的同步删除记录）不列进 REST 列表，对齐 HistoryService：
+        // 增量同步需要墓碑行落库（SyncService.mergeFavorite），但 /favorite/list
+        // 只呈现存活收藏；total/分页也只按存活行计（R4-17）。
+        val all = favoriteRepository.findAllByOrderByTimeDesc().filter { !it.deleted }
         val filtered = if (slot <= 0) all else all.filter { it.favoriteSlot == slot }
         val total = filtered.size
         val totalPages = (total + pageSize - 1) / pageSize
