@@ -23,7 +23,10 @@ import org.mockito.Mockito.verify
  *    it is independent from the folder slot.
  *  - The optional `slot` argument follows the Android contract (-2 = not
  *    favorited, -1 = default folder, 0-9 = custom slots) and is clamped.
- *  - `listFavorites` keeps `slot <= 0` returning all rows.
+ *  - `listFavorites` tab semantics follow the Android FavoritesScene (F-UX5):
+ *    slot 0 = default folder (favoriteSlot in -1, 0), slot N>0 = exactly N,
+ *    slot < 0 keeps the legacy "all rows" total mapping.
+ *  - Response items carry the row's real favoriteSlot for the ♥ badge.
  */
 class FavoriteServiceTest {
 
@@ -92,14 +95,28 @@ class FavoriteServiceTest {
     }
 
     @Test
-    fun `listFavorites with slot 0 returns all slots`() {
+    fun `listFavorites with slot 0 returns only the default folder (-1 and 0)`() {
+        // F-UX5: tab 0 对齐 app FavoritesScene 首签——默认夹（-1）与显式
+        // Favorites 0（0）同列，自定义夹（5）不再混入。
         `when`(repository.findAllByOrderByTimeDesc())
             .thenReturn(listOf(favEntity(1, 0), favEntity(2, -1), favEntity(3, 5)))
 
         val response = service.listFavorites(0, 1, 20)
 
-        assertEquals(listOf(1L, 2L, 3L), response.favorites.map { it.gid })
-        assertEquals(3, response.favorites.size)
+        assertEquals(listOf(1L, 2L), response.favorites.map { it.gid })
+        assertEquals(2, response.favorites.size)
+    }
+
+    @Test
+    fun `listFavorites items carry the row's real favoriteSlot`() {
+        // F-UX5: ♥ 徽章数据源——条目随行携带真实 slot，前端不再退回页签号。
+        `when`(repository.findAllByOrderByTimeDesc())
+            .thenReturn(listOf(favEntity(1, 0), favEntity(2, -1), favEntity(3, 5)))
+
+        val response = service.listFavorites(0, 1, 20)
+
+        assertEquals(listOf(0, -1), response.favorites.map { it.favoriteSlot })
+        assertEquals(5, service.listFavorites(5, 1, 20).favorites.single().favoriteSlot)
     }
 
     @Test

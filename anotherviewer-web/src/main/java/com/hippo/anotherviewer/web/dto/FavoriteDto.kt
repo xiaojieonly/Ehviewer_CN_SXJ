@@ -18,7 +18,11 @@ data class FavoriteItem(
     val category: Int,
     val rating: Float,
     val uploader: String?,
-    val posted: String?
+    val posted: String?,
+    // F-UX5: 条目真实收藏槽位（Android 契约：-2 未收藏 / -1 默认夹 / 0-9 自定义夹）。
+    // 列表响应附加字段（openapi FavoriteItem 未限制 additionalProperties），
+    // 供收藏页 ♥ 徽章渲染真值；旧客户端忽略该字段不受影响。
+    val favoriteSlot: Int = -2
 )
 
 data class FavoriteAddRequest(

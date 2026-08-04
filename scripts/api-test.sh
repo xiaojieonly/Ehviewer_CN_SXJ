@@ -168,10 +168,13 @@ sys.exit(0 if ok else 1)
 
 section "收藏/历史 REST (E2E-4/N-5)"
 ck "POST /favorite/add 200" 200 -X POST "$BASE/api/v1/favorite/add" -H 'content-type: application/json' -d '{"gid":6001,"token":"t6","title":"Slot Test","category":512,"slot":99}'
-FAV=$(curl -s -m 15 "$BASE/api/v1/favorite/list")
+# （F-UX5 同族：tab0 语义对齐 app——slot=0 只返回默认夹（favoriteSlot∈{-1,0}），
+#  种子行 favoriteSlot=9（及 sync 推的 slot=2）不再列于 tab0，原无参 tab0 查询
+#  断言不到种子行。E2E-4 原意=category Int 回显、N-5 原意=slot clamp，二者均
+#  改查已播种的 slot=9 行，集合断言语义不变。）
+FAV=$(curl -s -m 15 "$BASE/api/v1/favorite/list?slot=9")
 jcheck "favorite/list category Int (E2E-4)" "$FAV" "favorites.0.category" "512"
-SLOT=$(curl -s -m 15 "$BASE/api/v1/favorite/list?slot=9")
-jcheck "slot=99 clamp 到 9 (N-5)" "$SLOT" "favorites.0.gid" "6001"
+jcheck "slot=99 clamp 到 9 (N-5)" "$FAV" "favorites.0.gid" "6001"
 # history/list 的 mode 断言已在同步域（tombstone 删除前）执行
 
 section "设置 (M-5)"
