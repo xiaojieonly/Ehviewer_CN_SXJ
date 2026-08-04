@@ -16,6 +16,8 @@
 
 package com.hippo.anotherviewer.webui;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.hippo.anotherviewer.client.data.GalleryInfo;
 import com.hippo.anotherviewer.dao.BookmarkInfo;
 import com.hippo.anotherviewer.dao.DownloadInfo;
@@ -25,7 +27,9 @@ import com.hippo.anotherviewer.dao.HistoryInfo;
 import com.hippo.anotherviewer.dao.LocalFavoriteInfo;
 import com.hippo.anotherviewer.dao.QuickSearch;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -191,6 +195,47 @@ public class SiteDbWebUiSyncStore implements WebUiSyncStore {
     @Override
     public void saveStringKeySet(String serverKey, String suffix, Set<String> keys) {
         WebUiKeySetStore.saveStringKeySet(serverKey + suffix, keys);
+    }
+
+    @Override
+    public Map<String, Long> loadPushLedger(String serverKey, String suffix) {
+        return decodeLedger(WebUiKeySetStore.prefs().getString(serverKey + suffix, ""));
+    }
+
+    @Override
+    public void savePushLedger(String serverKey, String suffix, Map<String, Long> ledger) {
+        WebUiKeySetStore.prefs().edit().putString(serverKey + suffix, encodeLedger(ledger)).apply();
+    }
+
+    private static final TypeReference<LinkedHashMap<String, Long>> LEDGER_TYPE =
+            new TypeReference<LinkedHashMap<String, Long>>() {};
+
+    /**
+     * B9: serializes a push ledger as a JSON object. JSON (not the
+     * comma-separated format used for key sets) because ledger keys are
+     * arbitrary strings and the values pair each key with a timestamp.
+     * Shared with the in-memory test store so both persist identically.
+     */
+    static String encodeLedger(Map<String, Long> ledger) {
+        return JSON.toJSONString(ledger);
+    }
+
+    /**
+     * B9: parses a persisted push ledger. Empty/absent value → empty map
+     * (first sync: every live record counts as new). Unreadable/corrupt
+     * value → {@code null}, which the engine answers with a full push for
+     * that entity (safe default) and then rewrites a clean ledger.
+     */
+    static Map<String, Long> decodeLedger(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        try {
+            Map<String, Long> ledger = JSON.parseObject(raw, LEDGER_TYPE);
+            return ledger != null ? ledger : null;
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     /** Static helpers for the comma-separated key-set persistence. */

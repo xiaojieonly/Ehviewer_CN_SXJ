@@ -43,8 +43,10 @@ import org.robolectric.annotation.Config;
 /**
  * Drives the full {@link WebUiSyncEngine} push → pull → apply cycle against an
  * in-memory store and fake server: initial round trip, tombstone propagation,
- * snapshot/pending bookkeeping, failed-push retry, and the B2 lastModified
- * wire value.
+ * snapshot/pending bookkeeping, failed-push retry, the B2 lastModified wire
+ * value, and the B9 incremental push (new/changed/tombstone selection,
+ * unchanged suppression, corrupt-ledger full-push fallback, re-add after
+ * delete, pull-apply ledger adoption and §3.8 resurrection).
  */
 @Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -233,7 +235,9 @@ public class WebUiSyncEngineTest {
         storeA.removeLocalFavorites(2);
         storeA.removeHistoryByKey(3);
         WebUiSyncEngine.Result del = engineA.syncInternal(config, "devA", first.serverTimestamp);
-        assertEquals(2, del.pushedFavorites); // live fav 1 + tombstone for fav 2
+        // B9 incremental: unchanged fav 1 stays home (its ledger entry
+        // matches); only the tombstone for fav 2 goes out.
+        assertEquals(1, del.pushedFavorites); // tombstone for fav 2 only
         assertEquals(1, del.pushedHistory);   // hard-delete tombstone
 
         // Server: union merge keeps the live favorite (a soft delete never
@@ -249,23 +253,35 @@ public class WebUiSyncEngineTest {
         assertEquals("", storeA.prefs.get(config.baseUrl() + ".snapshot.history"));
 
         // Device B syncs with its stale copies of both records:
-        // - history is hard-delete: the tombstone survives B's live push, so
-        //   the deletion propagates to B.
-        // - favorites are union merge: B's stale live record resurrects fav 2
-        //   on the server (the tombstone only applies when no live record
-        //   exists), so the deletion does not propagate to B.
+        // - history is hard-delete: the tombstone is pulled, so the deletion
+        //   propagates to B.
+        // - favorites are union merge: the tombstone never overwrites the
+        //   live server record (§3.1/§3.8-B), so the deletion does not
+        //   propagate to B. B9 incremental: B's ledger matches its unchanged
+        //   local copies, so B no longer re-pushes fav 1/fav 2 every cycle —
+        //   contract §6.1 sends only what changed. The union invariant still
+        //   holds server-side: the record stays alive because the tombstone
+        //   was discarded, not because B re-sent it.
         WebUiSyncEngine.Result delB = engineB.syncInternal(config, "devB", bWatermark);
+        assertEquals(0, delB.pushedFavorites); // B9: unchanged, ledgered
         assertEquals(1, delB.pulledHistory);
         assertEquals(0, storeB.history.size());
         assertEquals(2, storeB.favorites.size());
-        assertFalse(server.favorites.get(2L).deleted); // resurrected by B's push
+        assertFalse(server.favorites.get(2L).deleted); // union: live survives
         assertTrue(server.history.get(3L).deleted);    // hard tombstone intact
 
-        // A's next sync observes B's resurrection and pulls fav 2 back, so
-        // both devices converge on the union of their states.
+        // B9 convergence note: under full-push, B's unconditional re-push of
+        // fav 2 bumped its server timestamp and A re-adopted the favorite it
+        // had just deleted. Incrementally, B has no change to send and the
+        // server record is not re-stamped, so A's local deletion stands while
+        // the server keeps the union alive for B (and any other device). The
+        // §3.8 resurrection path — a retained live record forced back onto
+        // the wire via ledger invalidation — is covered by
+        // incrementalPush_priorityGuardInvalidatesLedgerForResurrection.
         WebUiSyncEngine.Result round = engineA.syncInternal(config, "devA", del.serverTimestamp);
-        assertEquals(1, round.pulledFavorites);
-        assertEquals(2, storeA.favorites.size());
+        assertEquals(0, round.pulledFavorites);
+        assertEquals(1, storeA.favorites.size());
+        assertFalse(server.favorites.get(2L).deleted); // union kept on server
     }
 
     @Test
@@ -289,7 +305,9 @@ public class WebUiSyncEngineTest {
 
         server.rejectPushes = false;
         WebUiSyncEngine.Result retry = engineA.syncInternal(config, "devA", 1);
-        assertEquals(2, retry.pushedFavorites); // live fav 1 + tombstone for fav 2
+        // B9 incremental: fav 1 is unchanged (ledger intact — the failed
+        // cycle saved nothing), so only the tombstone for fav 2 is retried.
+        assertEquals(1, retry.pushedFavorites); // tombstone for fav 2 only
         // Union merge: the server retains the live record (soft tombstone does
         // not overwrite live, contract §3.1); the pending bookkeeping above is
         // what guarantees the tombstone rides along on every retry.
@@ -329,5 +347,250 @@ public class WebUiSyncEngineTest {
         assertEquals(DownloadInfo.STATE_NONE, sixthHundred.state);
         assertEquals(10, sixthHundred.total);
         assertEquals(3, sixthHundred.finished);
+    }
+
+    // ==================== B9 incremental push ====================
+    // The push phase sends only new keys, keys whose effective lastModified
+    // differs from the per-serverKey push ledger, and pending tombstones.
+    // Filters/quick searches/download labels stay full-push (no trusted
+    // change timestamp); see buildPushRequests.
+
+    private static BookmarkInfo bookmark(long gid, long time, int page) {
+        BookmarkInfo info = new BookmarkInfo();
+        info.gid = gid;
+        info.token = "tok" + gid;
+        info.title = "bookmark " + gid;
+        info.page = page;
+        info.time = time;
+        return info;
+    }
+
+    private static WebUiSyncModels.SyncPolicy policy(String strategy) {
+        WebUiSyncModels.SyncPolicy p = new WebUiSyncModels.SyncPolicy();
+        p.conflictStrategy = strategy;
+        return p;
+    }
+
+    @Test
+    public void incrementalPush_onlyNewAndChangedSent() throws IOException {
+        // One record per ledgered entity.
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.applySyncedHistory(history(2, 2000));
+        storeA.putBookmark(bookmark(3, 3000, 1));
+        storeA.putDownloadInfo(download(4, 4000, 5000, DownloadInfo.STATE_WAIT));
+
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedFavorites);
+        assertEquals(1, first.pushedHistory);
+        assertEquals(1, first.pushedBookmarks);
+        assertEquals(1, first.pushedDownloads);
+
+        // Mutate: one new key per entity, plus a change on each existing one
+        // (favorite add, history re-view, bookmark page turn, download state
+        // transition stamped by DownloadManager).
+        storeA.putLocalFavorite(favorite(10, 1100, "fav 10"));
+        storeA.applySyncedHistory(history(2, 2500));
+        storeA.putBookmark(bookmark(3, 3500, 2));
+        storeA.putDownloadInfo(download(4, 4000, 5500, DownloadInfo.STATE_DOWNLOAD));
+        storeA.putDownloadInfo(download(40, 4100, 5600, DownloadInfo.STATE_NONE));
+
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        // New + changed only; nothing else crosses the wire.
+        assertEquals(1, second.pushedFavorites);   // new fav 10
+        assertEquals(1, second.pushedHistory);     // re-viewed hist 2
+        assertEquals(1, second.pushedBookmarks);   // page turn on bm 3
+        assertEquals(2, second.pushedDownloads);   // changed dl 4 + new dl 40
+
+        // The wire carries the bumped lastModified values.
+        assertEquals(2500, ((WebUiSyncModels.SyncHistory) server.history.get(2L).dto).lastModified);
+        assertEquals(3500, ((WebUiSyncModels.SyncBookmark) server.bookmarks.get(3L).dto).lastModified);
+        assertEquals(5500, ((WebUiSyncModels.SyncDownload) server.downloads.get(4L).dto).lastModified);
+    }
+
+    @Test
+    public void incrementalPush_unchangedNotSent_smallEntitiesStayFull() throws IOException {
+        // All seven entity types.
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.applySyncedHistory(history(2, 2000));
+        storeA.putBookmark(bookmark(3, 3000, 1));
+        storeA.putDownloadInfo(download(4, 4000, 5000, DownloadInfo.STATE_WAIT));
+        Filter filter = new Filter();
+        filter.mode = 1;
+        filter.text = "text";
+        filter.enable = true;
+        storeA.addFilter(filter);
+        QuickSearch qs = new QuickSearch();
+        qs.name = "search";
+        qs.keyword = "key";
+        storeA.insertQuickSearch(qs);
+        DownloadLabel label = new DownloadLabel();
+        label.setLabel("lbl");
+        label.setTime(6000);
+        storeA.addDownloadLabel(label);
+
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(7, server.totalPushedEntities);
+
+        // Nothing changes: the ledgered entities send zero records, while the
+        // three timestamp-less small entities keep riding full-push (their
+        // content edits do not bump a trusted timestamp, so a ledger could
+        // silently miss changes; the sets are small enough that this is free).
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(0, second.pushedFavorites);
+        assertEquals(0, second.pushedHistory);
+        assertEquals(0, second.pushedBookmarks);
+        assertEquals(0, second.pushedDownloads);
+        assertEquals(1, second.pushedFilters);
+        assertEquals(1, second.pushedQuickSearches);
+        assertEquals(1, second.pushedDownloadLabels);
+        assertEquals(3, server.totalPushedEntities - 7); // only the small full-push sets
+
+        // The empty-but-present push request still carries the device policy
+        // (D2): a push happened even though no ledgered entity changed.
+        assertTrue(server.pushRequestCount >= 2);
+        assertNotNull(server.lastPushPolicy);
+    }
+
+    @Test
+    public void incrementalPush_tombstonesStillSent_allEntities() throws IOException {
+        // device_priority: the android tombstones win over the live server
+        // records, so the deleted state is observable on the server.
+        server.policy = policy("device_priority");
+        String android = "android-00000000-0000-0000-0000-000000000001";
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.applySyncedHistory(history(2, 2000));
+        storeA.putBookmark(bookmark(3, 3000, 1));
+        storeA.putDownloadInfo(download(4, 4000, 5000, DownloadInfo.STATE_WAIT));
+
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, android, 0);
+
+        // Delete everything locally between cycles.
+        storeA.removeLocalFavorites(1);
+        storeA.removeHistoryByKey(2);
+        storeA.removeBookmarkByGid(3);
+        storeA.removeDownloadInfo(4);
+
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, android, first.serverTimestamp);
+        // Only the four tombstones go out — no live records remain to send.
+        assertEquals(1, second.pushedFavorites);
+        assertEquals(1, second.pushedHistory);
+        assertEquals(1, second.pushedBookmarks);
+        assertEquals(1, second.pushedDownloads);
+        assertEquals(4, server.totalPushedEntities - 4); // 4 live in cycle 1, 4 tombs here
+        assertTrue(server.favorites.get(1L).deleted);
+        assertTrue(server.history.get(2L).deleted);
+        assertTrue(server.bookmarks.get(3L).deleted);
+        assertTrue(server.downloads.get(4L).deleted);
+
+        // The tombstoned keys were dropped from the ledger: a later re-add
+        // pushes as new again (covered in detail by
+        // incrementalPush_reAddAfterDeleteUpdatesLedger).
+    }
+
+    @Test
+    public void incrementalPush_corruptLedgerFallsBackToFullPush() throws IOException {
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.putLocalFavorite(favorite(2, 2000, "fav 2"));
+        storeA.putDownloadInfo(download(3, 3000, 3500, DownloadInfo.STATE_NONE));
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(2, first.pushedFavorites);
+        assertEquals(1, first.pushedDownloads);
+
+        // Corrupt the persisted favorite ledger; leave the download ledger intact.
+        storeA.prefs.put(config.baseUrl() + ".ledger.favorites", "{{{ not json");
+
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        // Corrupt ledger -> safe default: every live favorite is re-sent...
+        assertEquals(2, second.pushedFavorites);
+        // ...while the intact download ledger still suppresses unchanged rows.
+        assertEquals(0, second.pushedDownloads);
+
+        // The cycle rewrote a clean ledger; the third cycle is incremental again.
+        WebUiSyncEngine.Result third = engineA.syncInternal(config, "devA", second.serverTimestamp);
+        assertEquals(0, third.pushedFavorites);
+        assertEquals(0, third.pushedDownloads);
+    }
+
+    @Test
+    public void incrementalPush_reAddAfterDeleteUpdatesLedger() throws IOException {
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedFavorites);
+
+        // Delete and re-add between syncs: the re-add cancels the pending
+        // tombstone and the live record is pushed at its new lastModified.
+        storeA.removeLocalFavorites(1);
+        storeA.putLocalFavorite(favorite(1, 9000, "fav 1 again"));
+
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(1, second.pushedFavorites); // live re-add, no tombstone
+        assertFalse(server.favorites.get(1L).deleted);
+        WebUiSyncModels.SyncFavorite wire = (WebUiSyncModels.SyncFavorite) server.favorites.get(1L).dto;
+        assertEquals("fav 1 again", wire.title);
+        assertEquals(9000, wire.lastModified);
+
+        // The ledger now tracks the re-added record; unchanged -> not sent.
+        WebUiSyncEngine.Result third = engineA.syncInternal(config, "devA", second.serverTimestamp);
+        assertEquals(0, third.pushedFavorites);
+    }
+
+    @Test
+    public void incrementalPush_pulledRecordsNotEchoed() throws IOException {
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.putDownloadInfo(download(2, 2000, 2500, DownloadInfo.STATE_NONE));
+        engineA.syncInternal(config, "devA", 0);
+
+        // B pulls both records; the apply phase ledgers them at their local
+        // effective values.
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, "devB", 0);
+        assertEquals(1, bFirst.pulledFavorites);
+        assertEquals(1, bFirst.pulledDownloads);
+        long pushedBefore = server.totalPushedEntities;
+
+        // B's next cycle sends nothing back — no echo of pulled state.
+        WebUiSyncEngine.Result bSecond = engineB.syncInternal(config, "devB", bFirst.serverTimestamp);
+        assertEquals(0, bSecond.pushedFavorites);
+        assertEquals(0, bSecond.pushedDownloads);
+        assertEquals(0, server.totalPushedEntities - pushedBefore);
+    }
+
+    @Test
+    public void incrementalPush_priorityGuardInvalidatesLedgerForResurrection() throws IOException {
+        // device_priority: a non-priority (web) tombstone must not remove the
+        // android live copy; the surviving copy is re-pushed next cycle and
+        // resurrects the record on the server (§3.8). Under full-push this
+        // happened implicitly; incrementally the ledger entry must be dropped
+        // explicitly when the tombstone is not honored.
+        server.policy = policy("device_priority");
+        String android = "android-00000000-0000-0000-0000-000000000001";
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, android, 0);
+        assertFalse(server.favorites.get(1L).deleted);
+
+        // Web deletes the favorite after our last sync; the tombstone lands
+        // above the watermark so it is pulled (same seeding pattern as the
+        // §3.8 matrix tests).
+        WebUiSyncModels.SyncFavorite tomb = new WebUiSyncModels.SyncFavorite();
+        tomb.gid = 1;
+        tomb.token = "tok1";
+        tomb.lastModified = 5000;
+        tomb.deviceId = "web-browser-1";
+        tomb.deleted = true;
+        server.favorites.put(1L, new InMemorySyncServer.Record(first.serverTimestamp + 1, true, tomb));
+
+        // Cycle 2: the tombstone is not honored (priority platform holds a
+        // live copy) — the local record survives, its ledger entry is dropped.
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, android, first.serverTimestamp);
+        assertEquals(0, second.pushedFavorites); // ledger still matched at push time
+        assertNotNull("priority live copy survives the web tombstone",
+                storeA.loadLocalFavorite(1));
+        assertTrue("server holds the web tombstone", server.favorites.get(1L).deleted);
+
+        // Cycle 3: the dropped ledger entry forces the live record back onto
+        // the wire; the android (priority) live record resurrects it.
+        engineA.syncInternal(config, android, second.serverTimestamp);
+        assertFalse("android live push resurrects the record (§3.8)",
+                server.favorites.get(1L).deleted);
+        assertNotNull(storeA.loadLocalFavorite(1));
     }
 }

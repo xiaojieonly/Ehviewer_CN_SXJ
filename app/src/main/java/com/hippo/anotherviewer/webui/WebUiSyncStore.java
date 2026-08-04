@@ -26,6 +26,7 @@ import com.hippo.anotherviewer.dao.LocalFavoriteInfo;
 import com.hippo.anotherviewer.dao.QuickSearch;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -125,4 +126,22 @@ public interface WebUiSyncStore {
     Set<String> loadStringKeySet(String serverKey, String suffix);
 
     void saveStringKeySet(String serverKey, String suffix, Set<String> keys);
+
+    // --- Push ledger persistence (B9 incremental push) ---
+    // Per-server-URL ledger of entity key (gid as string) -> lastModified the
+    // engine last delivered (or adopted from a pull) for the ledgered
+    // entities (favorites, history, bookmarks, downloads). The push phase
+    // sends only keys absent from the ledger or whose current effective
+    // lastModified differs from the ledger entry.
+
+    /**
+     * Loads the push ledger for {@code serverKey + suffix}. Returns an empty
+     * map when nothing is persisted yet (first sync: every live record is
+     * "new") and {@code null} when the persisted value is unreadable/corrupt
+     * — the engine then falls back to a full push for that entity (safe
+     * default).
+     */
+    Map<String, Long> loadPushLedger(String serverKey, String suffix);
+
+    void savePushLedger(String serverKey, String suffix, Map<String, Long> ledger);
 }

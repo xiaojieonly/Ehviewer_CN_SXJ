@@ -80,6 +80,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     public WebUiSyncModels.SyncPolicy policy = null;
     /** Records the policy carried by the most recent push (D2 assertions). */
     public WebUiSyncModels.SyncPolicy lastPushPolicy = null;
+    /** Number of accepted push requests (B9: observe push traffic). */
+    public int pushRequestCount = 0;
+    /** Total entity records (live + tombstone) accepted across all pushes. */
+    public long totalPushedEntities = 0;
 
     public final Map<Long, Record> favorites = new LinkedHashMap<>();
     public final Map<Long, Record> history = new LinkedHashMap<>();
@@ -104,6 +108,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         // watermark a device previously pulled with.
         serverTimestamp++;
         WebUiSyncModels.EntityCollection e = request.entities;
+        pushRequestCount++;
+        totalPushedEntities += e.favorites.size() + e.history.size() + e.downloads.size()
+                + e.bookmarks.size() + e.filters.size() + e.quickSearches.size()
+                + e.downloadLabels.size();
         for (WebUiSyncModels.SyncFavorite fav : e.favorites) {
             mergeUnion(favorites, fav.gid, fav, fav.deleted);
         }

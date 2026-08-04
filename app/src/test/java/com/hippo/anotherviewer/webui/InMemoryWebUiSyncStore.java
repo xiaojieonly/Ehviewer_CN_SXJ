@@ -270,4 +270,20 @@ public class InMemoryWebUiSyncStore implements WebUiSyncStore {
         }
         prefs.put(serverKey + suffix, sb.toString());
     }
+
+    /**
+     * B9 push ledger, persisted in {@link #prefs} with the exact same JSON
+     * codec as the production store — including its corrupt-value semantics:
+     * a garbage value under the key makes {@code loadPushLedger} return
+     * {@code null}, which the engine answers with a full-push fallback.
+     */
+    @Override
+    public Map<String, Long> loadPushLedger(String serverKey, String suffix) {
+        return SiteDbWebUiSyncStore.decodeLedger(prefs.get(serverKey + suffix));
+    }
+
+    @Override
+    public void savePushLedger(String serverKey, String suffix, Map<String, Long> ledger) {
+        prefs.put(serverKey + suffix, SiteDbWebUiSyncStore.encodeLedger(ledger));
+    }
 }

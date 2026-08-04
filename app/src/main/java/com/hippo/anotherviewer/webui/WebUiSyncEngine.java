@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,25 @@ import java.util.Set;
  * honored locally without re-adding. Re-adding a locally-deleted key drops it
  * from the pending deletions so it is pushed alive again instead of being
  * re-deleted.
+ *
+ * <p>B9 incremental push: the push phase no longer re-sends every live record
+ * each cycle (contract §6.1: "Client sends ALL entities modified since its
+ * last successful sync"). Per server URL a push ledger maps entity key →
+ * lastModified last delivered to (or adopted from) the server, persisted via
+ * {@link WebUiSyncStore}. Live records are pushed only when their key is
+ * missing from the ledger (new) or their effective lastModified differs from
+ * the ledger entry (changed); records applied from a pull enter the ledger at
+ * their local effective value so they are not echoed back. Favorites, history,
+ * bookmarks and downloads are ledgered on their wire lastModified (add/view
+ * time, DownloadManager stamp). Filters, quick searches and download labels
+ * stay full-push: those small sets carry no trusted change timestamp, so a
+ * ledger could silently miss content changes. A corrupt/unreadable ledger
+ * loads as "no ledger" and the cycle falls back to a full push for that
+ * entity (safe default), rewriting a clean ledger on success. When an incoming
+ * soft tombstone is not honored (§3.8 priority guard), the surviving local
+ * record's ledger entry is dropped so the next push re-sends it alive and
+ * resurrects the record on the server — what full-push used to do implicitly.
+ * The push schema is unchanged; only the sent set shrinks.
  *
  * <p>The push phase is chunked: downloads — the only realistically huge entity
  * — are split into batches of {@link #PUSH_BATCH_SIZE} records (live records
@@ -90,6 +110,13 @@ public final class WebUiSyncEngine {
     private static final String SUFFIX_PENDING_QUICK_SEARCHES = ".pending.quickSearches";
     private static final String SUFFIX_SNAPSHOT_DOWNLOAD_LABELS = ".snapshot.downloadLabels";
     private static final String SUFFIX_PENDING_DOWNLOAD_LABELS = ".pending.downloadLabels";
+    // B9 push ledgers (key -> lastModified last delivered/adopted), only for
+    // the entities with a trusted change timestamp; filters, quick searches
+    // and download labels stay full-push (see buildPushRequests).
+    private static final String SUFFIX_LEDGER_FAVORITES = ".ledger.favorites";
+    private static final String SUFFIX_LEDGER_HISTORY = ".ledger.history";
+    private static final String SUFFIX_LEDGER_BOOKMARKS = ".ledger.bookmarks";
+    private static final String SUFFIX_LEDGER_DOWNLOADS = ".ledger.downloads";
     private static final String KEY_SEPARATOR = "|";
     private static final int PUSH_BATCH_SIZE = 500;
 
@@ -276,11 +303,30 @@ public final class WebUiSyncEngine {
         pendingQuickSearches = detectDeletions(snapshotQuickSearches, pendingQuickSearches, currentQuickSearches);
         pendingDownloadLabels = detectDeletions(snapshotDownloadLabels, pendingDownloadLabels, currentDownloadLabels);
 
+        // B9: the push ledgers (key -> lastModified last delivered/adopted).
+        // A null (corrupt/unreadable) ledger normalizes to empty, which marks
+        // every live record as new — the full-push fallback (safe default).
+        Map<String, Long> ledgerFavorites = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_FAVORITES);
+        Map<String, Long> ledgerHistory = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_HISTORY);
+        Map<String, Long> ledgerBookmarks = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_BOOKMARKS);
+        Map<String, Long> ledgerDownloads = loadLedgerOrEmpty(serverKey, SUFFIX_LEDGER_DOWNLOADS);
+
         // 1. Push local state, including tombstones for pending deletions.
-        // Downloads are chunked so no request carries more than
-        // PUSH_BATCH_SIZE of them; the push succeeds only if every batch is
-        // accepted, otherwise the pending sets are left intact for a retry.
-        List<WebUiSyncModels.PushRequest> requests = buildPushRequests(deviceId,
+        // B9 incremental: only new/changed live records (per the ledgers) and
+        // tombstones are sent; the small timestamp-less entities (filters,
+        // quick searches, download labels) ride along in full. Downloads are
+        // chunked so no request carries more than PUSH_BATCH_SIZE of them;
+        // the push succeeds only if every batch is accepted, otherwise no
+        // bookkeeping (ledgers, snapshot, pending) is saved and the next
+        // cycle retries.
+        long now = System.currentTimeMillis();
+        List<GalleryInfo> favoritesToPush = selectChangedFavorites(ledgerFavorites, now);
+        List<HistoryInfo> historyToPush = selectChangedHistory(ledgerHistory);
+        List<BookmarkInfo> bookmarksToPush = selectChangedBookmarks(ledgerBookmarks);
+        List<DownloadInfo> downloadsToPush = selectChangedDownloads(ledgerDownloads);
+
+        List<WebUiSyncModels.PushRequest> requests = buildPushRequests(deviceId, now,
+                favoritesToPush, historyToPush, bookmarksToPush, downloadsToPush,
                 pendingFavorites, pendingHistory, pendingDownloads, pendingBookmarks,
                 pendingFilters, pendingQuickSearches, pendingDownloadLabels);
         for (WebUiSyncModels.PushRequest push : requests) {
@@ -299,6 +345,34 @@ public final class WebUiSyncEngine {
         }
 
         // The push is the new baseline; the pending deletions were delivered.
+        // Advance the ledgers to what the server now holds from this device:
+        // pushed live records at their effective lastModified, tombstoned
+        // keys dropped (a later re-add pushes as new again).
+        for (GalleryInfo gi : favoritesToPush) {
+            ledgerFavorites.put(Long.toString(gi.gid), favoriteLastModified(gi, now));
+        }
+        for (long gid : pendingFavorites) {
+            ledgerFavorites.remove(Long.toString(gid));
+        }
+        for (HistoryInfo hi : historyToPush) {
+            ledgerHistory.put(Long.toString(hi.gid), hi.time);
+        }
+        for (long gid : pendingHistory) {
+            ledgerHistory.remove(Long.toString(gid));
+        }
+        for (BookmarkInfo bi : bookmarksToPush) {
+            ledgerBookmarks.put(Long.toString(bi.gid), bi.time);
+        }
+        for (long gid : pendingBookmarks) {
+            ledgerBookmarks.remove(Long.toString(gid));
+        }
+        for (DownloadInfo info : downloadsToPush) {
+            ledgerDownloads.put(Long.toString(info.gid), downloadLastModified(info));
+        }
+        for (long gid : pendingDownloads) {
+            ledgerDownloads.remove(Long.toString(gid));
+        }
+
         // The snapshot is finalized after the pull so keys removed locally by
         // incoming server tombstones are not re-emitted next cycle.
         snapshotFavorites = currentFavorites;
@@ -318,11 +392,13 @@ public final class WebUiSyncEngine {
                 ? ConflictStrategy.parse(pull.policy.conflictStrategy)
                 : ConflictStrategy.LWW;
 
-        // 3. Apply pulled changes locally.
-        applyFavorites(pull.entities.favorites, result, snapshotFavorites, strategy, deviceId);
-        applyHistory(pull.entities.history, result, snapshotHistory);
-        applyDownloads(pull.entities.downloads, result, snapshotDownloads, strategy, deviceId);
-        applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks, strategy, deviceId);
+        // 3. Apply pulled changes locally. The ledgered entities also record
+        // the applied records' effective local lastModified so the next push
+        // does not echo them back to the server.
+        applyFavorites(pull.entities.favorites, result, snapshotFavorites, ledgerFavorites, strategy, deviceId);
+        applyHistory(pull.entities.history, result, snapshotHistory, ledgerHistory);
+        applyDownloads(pull.entities.downloads, result, snapshotDownloads, ledgerDownloads, strategy, deviceId);
+        applyBookmarks(pull.entities.bookmarks, result, snapshotBookmarks, ledgerBookmarks, strategy, deviceId);
         applyFilters(pull.entities.filters, result, snapshotFilters, strategy, deviceId);
         applyQuickSearches(pull.entities.quickSearches, result, snapshotQuickSearches, strategy, deviceId);
         applyDownloadLabels(pull.entities.downloadLabels, result, snapshotDownloadLabels, strategy, deviceId);
@@ -341,24 +417,129 @@ public final class WebUiSyncEngine {
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_FILTERS, Collections.emptySet());
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_QUICK_SEARCHES, Collections.emptySet());
         mStore.saveStringKeySet(serverKey, SUFFIX_PENDING_DOWNLOAD_LABELS, Collections.emptySet());
+        mStore.savePushLedger(serverKey, SUFFIX_LEDGER_FAVORITES, ledgerFavorites);
+        mStore.savePushLedger(serverKey, SUFFIX_LEDGER_HISTORY, ledgerHistory);
+        mStore.savePushLedger(serverKey, SUFFIX_LEDGER_BOOKMARKS, ledgerBookmarks);
+        mStore.savePushLedger(serverKey, SUFFIX_LEDGER_DOWNLOADS, ledgerDownloads);
 
         result.serverTimestamp = pull.serverTimestamp;
         return result;
     }
 
-    private List<WebUiSyncModels.PushRequest> buildPushRequests(String deviceId,
+    /**
+     * B9: loads a push ledger, normalizing {@code null} (corrupt/unreadable
+     * persisted value) to an empty map — with no known entries every live
+     * record counts as new, so the cycle degrades to a full push for that
+     * entity (safe default) and rewrites a clean ledger on success.
+     */
+    private Map<String, Long> loadLedgerOrEmpty(String serverKey, String suffix) {
+        Map<String, Long> ledger = mStore.loadPushLedger(serverKey, suffix);
+        return ledger != null ? ledger : new LinkedHashMap<>();
+    }
+
+    // --- B9 incremental push selection ---
+    // A live record is sent when its key is absent from the ledger (new) or
+    // its effective push lastModified differs from the ledger entry
+    // (changed). Everything else stays home. An empty ledger (first sync or
+    // corrupt-ledger fallback) therefore selects every live record.
+
+    private List<GalleryInfo> selectChangedFavorites(Map<String, Long> ledger, long now) {
+        List<GalleryInfo> selected = new ArrayList<>();
+        for (GalleryInfo gi : mStore.getAllLocalFavorites()) {
+            if (gi.gid <= 0L) {
+                continue;
+            }
+            if (isNewOrChanged(ledger, gi.gid, favoriteLastModified(gi, now))) {
+                selected.add(gi);
+            }
+        }
+        return selected;
+    }
+
+    private List<HistoryInfo> selectChangedHistory(Map<String, Long> ledger) {
+        List<HistoryInfo> selected = new ArrayList<>();
+        for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
+            if (hi.gid <= 0L) {
+                continue;
+            }
+            if (isNewOrChanged(ledger, hi.gid, hi.time)) {
+                selected.add(hi);
+            }
+        }
+        return selected;
+    }
+
+    private List<BookmarkInfo> selectChangedBookmarks(Map<String, Long> ledger) {
+        List<BookmarkInfo> selected = new ArrayList<>();
+        for (BookmarkInfo bi : mStore.getAllBookmark()) {
+            if (bi.gid <= 0L) {
+                continue;
+            }
+            if (isNewOrChanged(ledger, bi.gid, bi.time)) {
+                selected.add(bi);
+            }
+        }
+        return selected;
+    }
+
+    private List<DownloadInfo> selectChangedDownloads(Map<String, Long> ledger) {
+        List<DownloadInfo> selected = new ArrayList<>();
+        for (DownloadInfo info : mStore.getAllDownloadInfo()) {
+            if (info.gid <= 0L) {
+                continue;
+            }
+            if (isNewOrChanged(ledger, info.gid, downloadLastModified(info))) {
+                selected.add(info);
+            }
+        }
+        return selected;
+    }
+
+    private static boolean isNewOrChanged(Map<String, Long> ledger, long key, long effectiveLastModified) {
+        Long known = ledger.get(Long.toString(key));
+        return known == null || known.longValue() != effectiveLastModified;
+    }
+
+    /**
+     * Effective push lastModified of a favorite: its add time. Gallery rows
+     * that are not {@link LocalFavoriteInfo} (never returned by the
+     * production store) fall back to {@code now}, which also makes them
+     * re-pushable every cycle.
+     */
+    private static long favoriteLastModified(GalleryInfo gi, long now) {
+        return gi instanceof LocalFavoriteInfo ? ((LocalFavoriteInfo) gi).time : now;
+    }
+
+    /**
+     * Effective push lastModified of a download. B2: DownloadManager stamps
+     * {@code lastModified} on every local state change (and only there —
+     * pulled records are not stamped); pre-v8 rows with an empty column fall
+     * back to the record's {@code time}.
+     */
+    private static long downloadLastModified(DownloadInfo info) {
+        return info.lastModified > 0 ? info.lastModified : info.time;
+    }
+
+    private List<WebUiSyncModels.PushRequest> buildPushRequests(String deviceId, long now,
+            List<GalleryInfo> favoritesToPush, List<HistoryInfo> historyToPush,
+            List<BookmarkInfo> bookmarksToPush, List<DownloadInfo> downloadsToPush,
             Set<Long> pendingFavorites, Set<Long> pendingHistory,
             Set<Long> pendingDownloads, Set<Long> pendingBookmarks,
             Set<String> pendingFilters, Set<String> pendingQuickSearches,
             Set<String> pendingDownloadLabels) {
-        List<DownloadInfo> downloads = mStore.getAllDownloadInfo();
         List<Long> downloadTombstones = new ArrayList<>(pendingDownloads);
-        long now = System.currentTimeMillis();
 
         // Downloads are the only realistically huge entity; chunk both live
         // records and tombstones into batches of PUSH_BATCH_SIZE. All other
-        // entities are small and ride along on the first batch.
-        int liveBatches = (downloads.size() + PUSH_BATCH_SIZE - 1) / PUSH_BATCH_SIZE;
+        // entities are small and ride along on the first batch. B9: the
+        // ledgered live lists are already narrowed to new/changed records;
+        // filters, quick searches and download labels stay FULL-push — local
+        // Filter rows carry no timestamp at all and QuickSearch/DownloadLabel
+        // content edits do not bump their wire `time`, so a lastModified
+        // ledger could silently miss content changes there. Those sets are
+        // small (dozens of rows), so full-push costs negligible bandwidth
+        // next to the gallery-bearing entities.
+        int liveBatches = (downloadsToPush.size() + PUSH_BATCH_SIZE - 1) / PUSH_BATCH_SIZE;
         int tombBatches = (downloadTombstones.size() + PUSH_BATCH_SIZE - 1) / PUSH_BATCH_SIZE;
         int batchCount = Math.max(1, Math.max(liveBatches, tombBatches));
 
@@ -371,18 +552,18 @@ public final class WebUiSyncEngine {
             request.policy = sPolicySource.policy();
 
             if (i == 0) {
-                fillFavorites(request.entities, deviceId, now, pendingFavorites);
-                fillHistory(request.entities, deviceId, now, pendingHistory);
-                fillBookmarks(request.entities, deviceId, now, pendingBookmarks);
+                fillFavorites(request.entities, deviceId, now, favoritesToPush, pendingFavorites);
+                fillHistory(request.entities, deviceId, now, historyToPush, pendingHistory);
+                fillBookmarks(request.entities, deviceId, now, bookmarksToPush, pendingBookmarks);
                 fillFilters(request.entities, deviceId, now, pendingFilters);
                 fillQuickSearches(request.entities, deviceId, now, pendingQuickSearches);
                 fillDownloadLabels(request.entities, deviceId, now, pendingDownloadLabels);
             }
 
             int from = i * PUSH_BATCH_SIZE;
-            int to = Math.min(from + PUSH_BATCH_SIZE, downloads.size());
+            int to = Math.min(from + PUSH_BATCH_SIZE, downloadsToPush.size());
             for (int j = from; j < to; j++) {
-                fillDownload(request.entities, deviceId, now, downloads.get(j));
+                fillDownload(request.entities, deviceId, now, downloadsToPush.get(j));
             }
             int tFrom = i * PUSH_BATCH_SIZE;
             int tTo = Math.min(tFrom + PUSH_BATCH_SIZE, downloadTombstones.size());
@@ -402,14 +583,12 @@ public final class WebUiSyncEngine {
     }
 
     private void fillFavorites(WebUiSyncModels.EntityCollection entities,
-            String deviceId, long now, Set<Long> pendingFavorites) {
-        for (GalleryInfo gi : mStore.getAllLocalFavorites()) {
-            if (gi.gid <= 0L) {
-                continue;
-            }
+            String deviceId, long now, List<GalleryInfo> favoritesToPush,
+            Set<Long> pendingFavorites) {
+        for (GalleryInfo gi : favoritesToPush) {
             WebUiSyncModels.SyncFavorite fav = new WebUiSyncModels.SyncFavorite();
             copyGalleryToDto(gi, fav);
-            long time = gi instanceof LocalFavoriteInfo ? ((LocalFavoriteInfo) gi).time : now;
+            long time = favoriteLastModified(gi, now);
             fav.time = time;
             fav.lastModified = time;
             fav.deviceId = deviceId;
@@ -429,11 +608,9 @@ public final class WebUiSyncEngine {
     }
 
     private void fillHistory(WebUiSyncModels.EntityCollection entities,
-            String deviceId, long now, Set<Long> pendingHistory) {
-        for (HistoryInfo hi : mStore.getAllHistoryForSync()) {
-            if (hi.gid <= 0L) {
-                continue;
-            }
+            String deviceId, long now, List<HistoryInfo> historyToPush,
+            Set<Long> pendingHistory) {
+        for (HistoryInfo hi : historyToPush) {
             WebUiSyncModels.SyncHistory hist = new WebUiSyncModels.SyncHistory();
             copyGalleryToDto(hi, hist);
             hist.mode = hi.mode;
@@ -466,20 +643,16 @@ public final class WebUiSyncEngine {
         dto.total = info.total;
         dto.finished = info.finished;
         dto.downloaded = info.downloaded;
-        // B2: lastModified is stamped by DownloadManager on every state change;
-        // fall back to the record's time for pre-v8 data where the column is 0.
-        dto.lastModified = info.lastModified > 0 ? info.lastModified : info.time;
+        dto.lastModified = downloadLastModified(info);
         dto.deviceId = deviceId;
         dto.deleted = false;
         entities.downloads.add(dto);
     }
 
     private void fillBookmarks(WebUiSyncModels.EntityCollection entities,
-            String deviceId, long now, Set<Long> pendingBookmarks) {
-        for (BookmarkInfo bi : mStore.getAllBookmark()) {
-            if (bi.gid <= 0L) {
-                continue;
-            }
+            String deviceId, long now, List<BookmarkInfo> bookmarksToPush,
+            Set<Long> pendingBookmarks) {
+        for (BookmarkInfo bi : bookmarksToPush) {
             WebUiSyncModels.SyncBookmark dto = new WebUiSyncModels.SyncBookmark();
             copyGalleryToDto(bi, dto);
             dto.page = bi.page;
@@ -590,20 +763,26 @@ public final class WebUiSyncEngine {
      * (last-write-wins on lastModified, local add time is preserved).
      */
     private void applyFavorites(List<WebUiSyncModels.SyncFavorite> favorites,
-            Result result, Set<Long> snapshotFavorites,
+            Result result, Set<Long> snapshotFavorites, Map<String, Long> ledger,
             ConflictStrategy strategy, String localDeviceId) {
         for (WebUiSyncModels.SyncFavorite fav : favorites) {
+            String ledgerKey = Long.toString(fav.gid);
             if (fav.deleted) {
                 // §3.8: a non-priority deletion does not remove the priority
                 // platform's live copy — skip and let the next push resurrect.
                 if (!honorSoftTombstone(strategy, fav.deviceId, localDeviceId,
                         mStore.loadLocalFavorite(fav.gid) != null)) {
+                    // B9: drop the ledger entry so the surviving live record
+                    // is re-sent next cycle and resurrects the server record
+                    // (full-push used to do this implicitly every cycle).
+                    ledger.remove(ledgerKey);
                     continue;
                 }
                 // Tombstone: this device has deleted the favorite (or another
                 // device did) — honor it locally and never re-add it.
                 mStore.removeLocalFavorites(fav.gid);
                 snapshotFavorites.remove(fav.gid);
+                ledger.remove(ledgerKey);
                 result.pulledFavorites++;
                 continue;
             }
@@ -613,6 +792,9 @@ public final class WebUiSyncEngine {
                 copyDtoToGallery(fav, info);
                 info.time = fav.time;
                 mStore.putLocalFavorite(info);
+                // Adopted from the server: ledger it at its local effective
+                // value so the next push does not echo it back.
+                ledger.put(ledgerKey, info.time);
                 result.pulledFavorites++;
             } else if (aliveRecordWins(strategy, fav.deviceId, localDeviceId, fav.lastModified > local.time)) {
                 // §3.8 double-alive: the priority platform's record wins
@@ -621,6 +803,9 @@ public final class WebUiSyncEngine {
                 // is the LWW comparison).
                 copyDtoToGallery(fav, local);
                 mStore.updateLocalFavorite(local);
+                // updateLocalFavorite preserves the original add time, which
+                // is the effective push lastModified.
+                ledger.put(ledgerKey, local.time);
                 result.pulledFavorites++;
             }
         }
@@ -628,11 +813,12 @@ public final class WebUiSyncEngine {
 
     /** History uses last-write-wins with hard-delete. */
     private void applyHistory(List<WebUiSyncModels.SyncHistory> history,
-            Result result, Set<Long> snapshotHistory) {
+            Result result, Set<Long> snapshotHistory, Map<String, Long> ledger) {
         for (WebUiSyncModels.SyncHistory hist : history) {
             if (hist.deleted) {
                 mStore.removeHistoryByKey(hist.gid);
                 snapshotHistory.remove(hist.gid);
+                ledger.remove(Long.toString(hist.gid));
                 result.pulledHistory++;
                 continue;
             }
@@ -641,6 +827,11 @@ public final class WebUiSyncEngine {
             info.mode = hist.mode;
             info.time = hist.time;
             mStore.applySyncedHistory(info);
+            // Ledger the pulled view time. applySyncedHistory keeps a newer
+            // local row when one exists; the entry then reads slightly low
+            // and the next cycle pushes the newer local row once, converging
+            // the ledger to the value actually delivered.
+            ledger.put(Long.toString(hist.gid), info.time);
             result.pulledHistory++;
         }
     }
@@ -651,22 +842,27 @@ public final class WebUiSyncEngine {
      * {@code putDownloadInfo} (the server already resolved union/LWW conflicts).
      */
     private void applyDownloads(List<WebUiSyncModels.SyncDownload> downloads,
-            Result result, Set<Long> snapshotDownloads,
+            Result result, Set<Long> snapshotDownloads, Map<String, Long> ledger,
             ConflictStrategy strategy, String localDeviceId) {
         Map<Long, DownloadInfo> locals = new HashMap<>();
         for (DownloadInfo info : mStore.getAllDownloadInfo()) {
             locals.put(info.gid, info);
         }
         for (WebUiSyncModels.SyncDownload dto : downloads) {
+            String ledgerKey = Long.toString(dto.gid);
             if (dto.deleted) {
                 if (!honorSoftTombstone(strategy, dto.deviceId, localDeviceId,
                         locals.containsKey(dto.gid))) {
+                    // B9: drop the ledger entry so the surviving live record
+                    // is re-sent next cycle and resurrects the server record.
+                    ledger.remove(ledgerKey);
                     continue;
                 }
                 // Soft tombstone delivered: the server no longer tracks it.
                 mStore.removeDownloadInfo(dto.gid);
                 locals.remove(dto.gid);
                 snapshotDownloads.remove(dto.gid);
+                ledger.remove(ledgerKey);
                 result.pulledDownloads++;
                 continue;
             }
@@ -680,6 +876,11 @@ public final class WebUiSyncEngine {
             mStore.putDownloadInfo(info);
             locals.put(dto.gid, info);
             snapshotDownloads.add(dto.gid);
+            // The pulled row carries no DownloadManager stamp
+            // (copyDtoToDownload does not copy lastModified), so its
+            // effective push value is its time — ledger it as such so the
+            // next push does not echo the record back.
+            ledger.put(ledgerKey, info.time);
             result.pulledDownloads++;
         }
     }
@@ -690,17 +891,19 @@ public final class WebUiSyncEngine {
      * else last-write-wins on lastModified (local time).
      */
     private void applyBookmarks(List<WebUiSyncModels.SyncBookmark> bookmarks,
-            Result result, Set<Long> snapshotBookmarks,
+            Result result, Set<Long> snapshotBookmarks, Map<String, Long> ledger,
             ConflictStrategy strategy, String localDeviceId) {
         Map<Long, BookmarkInfo> locals = new HashMap<>();
         for (BookmarkInfo bi : mStore.getAllBookmark()) {
             locals.put(bi.gid, bi);
         }
         for (WebUiSyncModels.SyncBookmark dto : bookmarks) {
+            String ledgerKey = Long.toString(dto.gid);
             if (dto.deleted) {
                 // Hard-delete tombstone: clearing a reading position propagates.
                 mStore.removeBookmarkByGid(dto.gid);
                 snapshotBookmarks.remove(dto.gid);
+                ledger.remove(ledgerKey);
                 result.pulledBookmarks++;
                 continue;
             }
@@ -713,6 +916,7 @@ public final class WebUiSyncEngine {
                 mStore.putBookmark(info);
                 locals.put(dto.gid, info);
                 snapshotBookmarks.add(dto.gid);
+                ledger.put(ledgerKey, info.time);
                 result.pulledBookmarks++;
             } else if (aliveRecordWins(strategy, dto.deviceId, localDeviceId, dto.lastModified > local.time)) {
                 // §3.8 double-alive: priority platform wins unconditionally
@@ -722,8 +926,11 @@ public final class WebUiSyncEngine {
                 local.time = dto.time;
                 mStore.putBookmark(local);
                 snapshotBookmarks.add(dto.gid);
+                ledger.put(ledgerKey, local.time);
                 result.pulledBookmarks++;
             }
+            // Losing branch: the local row is untouched, so its existing
+            // ledger entry (if any) remains valid and needs no update.
         }
     }
 
