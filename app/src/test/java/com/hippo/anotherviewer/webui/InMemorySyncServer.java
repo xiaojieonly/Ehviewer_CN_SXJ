@@ -200,9 +200,12 @@ public class InMemorySyncServer implements WebUiSyncTransport {
      * B / same-platform → LWW fallback (§1.4 tie-break). The fake omits the
      * server's skew tolerance; tests use clearly distinct timestamps. On an
      * exact lastModified tie the incoming record REPLACES the existing one —
-     * that rewrite bumps serverModified, which is what makes v1 union
-     * resurrection observable to other devices through incremental pulls
-     * (contract §3.1 "删端下轮被复活" convergence).
+     * that rewrite bumps serverModified, which is what makes a re-pushed
+     * record observable to other devices through incremental pulls.
+     * F6 裁决（leader，2026-08-04）：B9 增量推送下 lww soft 删除粘性为预期语义；
+     * 旧 §3.1「删端下轮被复活」系全量推送时代的偶然收敛机制（保留端全量重推
+     * 回显），非设计承诺；复活须经保留端显式 re-add/重戳，作为新 lastModified
+     * delta 即时传播。
      */
     private boolean incomingLiveWinsOverLive(Object incomingDto, Record existing) {
         WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
