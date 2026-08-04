@@ -3,7 +3,17 @@ package com.hippo.anotherviewer.web.entity
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "bookmark_info")
+@Table(
+    name = "bookmark_info",
+    indexes = [
+        // H-3/W4: 同步 pull 派生查询的 (username, last_modified) 复合索引；ddl-auto: update 自动建索引
+        Index(name = "idx_bookmark_username_lm", columnList = "username, last_modified"),
+        // findByGid / deleteByGid
+        Index(name = "idx_bookmark_gid", columnList = "gid"),
+        // findByCategory（书签分类查询）
+        Index(name = "idx_bookmark_category", columnList = "category"),
+    ],
+)
 class BookmarkInfoEntity : GalleryInfoBase() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
