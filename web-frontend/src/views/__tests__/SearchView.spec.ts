@@ -228,9 +228,8 @@ describe('SearchView — Wave-1 1a search filter wiring (A5)', () => {
   })
 
   describe('W3 R4-10 — single filter surface convergence', () => {
-    it('retires the legacy SearchLayout panel (FilterPanel is the only surface)', async () => {
+    it('renders the FilterPanel as the only filter surface', async () => {
       await mountView()
-      expect(wrapper.find('.search-layout').exists()).toBe(false)
       expect(wrapper.findComponent(FilterPanel).exists()).toBe(true)
     })
 

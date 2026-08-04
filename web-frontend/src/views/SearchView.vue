@@ -10,8 +10,8 @@
     FilterPanel      — the SINGLE filter surface (W3 R4-10 convergence):
                        keyword mode + categories + sort + page bounds +
                        min rating + scope + advanced options; the legacy
-                       SearchLayout panel is retired (component retained in
-                       the repo as the frozen Android replica, unused here);
+                       search panel is retired and removed from the repo
+                       (W4 cleanup; only the Android widget remains);
     ContentLayout    — results with pull-to-refresh + infinite paging;
     GalleryCard      — gallery card in list/grid mode (auto-column grid per
                        contracts/responsive-strategy.md §4);
@@ -94,7 +94,7 @@
 
         <!-- PC filter popover — the SINGLE filter surface (W3 R4-10):
              keyword mode + categories + sort + pages + rating + scope +
-             advanced options. The legacy SearchLayout panel is retired. -->
+             advanced options. The legacy search panel is retired. -->
         <FilterPanel
           v-model:open="filterPanelOpen"
           v-model:keyword-mode="normalSearchMode"
@@ -352,7 +352,7 @@ const query = ref('')
 const activeQuery = ref('')
 
 // Canonical filter state (W3 R4-10: the FilterPanel is the single filter
-// surface; the legacy SearchLayout panel is retired).
+// surface; the legacy search panel is retired).
 const selectedCategories = ref<GalleryCategory[]>([...CATEGORY_ORDER])
 const normalSearchMode = ref<NormalSearchMode>('normal')
 const advanceOptions = ref<AdvanceSearchOptions>({
@@ -735,7 +735,7 @@ function modeLabel(mode: number): string {
 
 function onFabPrimary(): void {
   // W3 R4-10: the primary FAB opens the FilterPanel — the single filter
-  // surface (the legacy SearchLayout panel is retired).
+  // surface (the legacy search panel is retired).
   filterPanelOpen.value = true
   contentRef.value?.scrollToTop()
 }
