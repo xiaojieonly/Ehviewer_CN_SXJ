@@ -39,7 +39,7 @@ android {
         multiDexEnabled true
         ndk {
             moduleName "native-lib"
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            abiFilters "arm64-v8a" // x86/x86_64 need yasm (x86_64-only, requires Rosetta on Apple Silicon)
         }
         externalNativeBuild {
             cmake {
