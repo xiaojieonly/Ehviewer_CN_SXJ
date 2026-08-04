@@ -458,7 +458,7 @@
     "syncPushRequest": {
       "$id": "https://anotherviewer.local/schemas/sync/push-request.json",
       "title": "SyncPushRequest",
-      "description": "Client-to-server push request. Sent to POST /api/sync/push. Contains all locally-modified entities since last sync.",
+      "description": "Client-to-server push request. Sent to POST /api/v1/sync/push. Contains all locally-modified entities since last sync.",
       "type": "object",
       "properties": {
         "entities": {
@@ -487,7 +487,7 @@
     "syncPullResponse": {
       "$id": "https://anotherviewer.local/schemas/sync/pull-response.json",
       "title": "SyncPullResponse",
-      "description": "Server-to-client pull response. Returned by GET /api/sync/pull?since={timestamp}. Contains all server-side changes since the given timestamp.",
+      "description": "Server-to-client pull response. Returned by GET /api/v1/sync/pull?since={timestamp}. Contains all server-side changes since the given timestamp.",
       "type": "object",
       "properties": {
         "entities": {
@@ -556,7 +556,7 @@
     "syncStatusResponse": {
       "$id": "https://anotherviewer.local/schemas/sync/status-response.json",
       "title": "SyncStatusResponse",
-      "description": "Server sync status. Returned by GET /api/sync/status.",
+      "description": "Server sync status. Returned by GET /api/v1/sync/status.",
       "type": "object",
       "properties": {
         "lastSyncTimestamp": {

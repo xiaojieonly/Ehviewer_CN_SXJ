@@ -324,7 +324,7 @@ The server does NOT notify clients of conflicts. The merge is deterministic and 
 ### 6.1 Push (Client → Server)
 
 ```
-POST /api/sync/push
+POST /api/v1/sync/push
 Content-Type: application/json
 Authorization: Bearer {api-token}
 
@@ -339,7 +339,7 @@ Body: SyncPushRequest (see sync-schemas.json)
 ### 6.2 Pull (Server → Client)
 
 ```
-GET /api/sync/pull?since={lastSyncTimestamp}
+GET /api/v1/sync/pull?since={lastSyncTimestamp}
 Authorization: Bearer {api-token}
 
 Response: SyncPullResponse (see sync-schemas.json)
@@ -355,8 +355,8 @@ A full sync cycle is: **push → pull → apply**.
 
 ```
 function syncCycle():
-    pushResult = POST /api/sync/push { localChanges, deviceId, now(), policy? }
-    pullResult = GET /api/sync/pull?since={lastSyncTimestamp}
+    pushResult = POST /api/v1/sync/push { localChanges, deviceId, now(), policy? }
+    pullResult = GET /api/v1/sync/pull?since={lastSyncTimestamp}
     strategy = pullResult.policy?.conflictStrategy ?? localFallback
     for each entity in pullResult.entities:
         localStore.merge(entity, strategy)   // using per-entity merge strategy
