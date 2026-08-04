@@ -95,6 +95,9 @@ export function setupWebSocket(server) {
   });
 
   const connections = new Set();
+  // Broadcast timers — returned via stop() so test harnesses can clear the
+  // event loop after closing the server (the CLI entry never calls stop()).
+  const timers = [];
 
   sockjsServer.on('connection', (conn) => {
     if (!conn) return;
@@ -222,7 +225,7 @@ export function setupWebSocket(server) {
   sockjsServer.installHandlers(server, { prefix: '/ws' });
 
   // Periodic broadcast: download progress (every 2s)
-  setInterval(() => {
+  timers.push(setInterval(() => {
     for (const dl of activeDownloads) {
       if (dl.state !== STATE_DOWNLOADING) continue;
       dl.downloaded = Math.min(dl.downloaded + Math.floor(Math.random() * 3) + 1, dl.total);
@@ -257,10 +260,10 @@ export function setupWebSocket(server) {
         dl.speed = 1048576;
       }
     }
-  }, 2000);
+  }, 2000));
 
   // Periodic broadcast: process progress (every 2s)
-  setInterval(() => {
+  timers.push(setInterval(() => {
     activeProcess.processedPages = Math.min(activeProcess.processedPages + 1, activeProcess.totalPages);
     activeProcess.currentPage = activeProcess.processedPages + 1;
 
@@ -295,10 +298,10 @@ export function setupWebSocket(server) {
       });
       broadcast(connections, ['/topic/process/all', `/topic/process/${activeProcess.taskId}`], msg);
     }
-  }, 2000);
+  }, 2000));
 
   // Periodic broadcast: system health (every 30s)
-  setInterval(() => {
+  timers.push(setInterval(() => {
     const msg = envelope('system.health', {
       cacheUsage: 1073741824,
       cacheCapacity: 5368709120,
@@ -310,9 +313,17 @@ export function setupWebSocket(server) {
       processorAvailable: true,
     });
     broadcast(connections, ['/topic/system/health'], msg);
-  }, 30000);
+  }, 30000));
 
   console.log('[WS] STOMP over SockJS endpoint installed at /ws');
+
+  return {
+    /** Clear the broadcast timers so tests can drain the event loop. */
+    stop() {
+      for (const t of timers) clearInterval(t);
+      timers.length = 0;
+    },
+  };
 }
 
 function broadcast(connections, destinations, messageBody) {
