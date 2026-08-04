@@ -102,9 +102,9 @@ public class SiteEngine {
 
     private static final String KOKOMADE_URL = "https://gallery.test/img/kokomade.jpg";
 
-    public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-    public static final MediaType MEDIA_TYPE_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
-    private static final MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
+    public static final MediaType MEDIA_TYPE_JSON = MediaType.get("application/json; charset=utf-8");
+    public static final MediaType MEDIA_TYPE_URLENCODED = MediaType.get("application/x-www-form-urlencoded");
+    private static final MediaType MEDIA_TYPE_JPEG = MediaType.get("image/jpeg");
 
     private static final Pattern PATTERN_NEED_HATH_CLIENT = Pattern.compile("(You must have a H@H client assigned to your account to use this feature\\.)");
 
@@ -331,7 +331,7 @@ public class SiteEngine {
         String origin = SiteUrl.getOrigin();
         logger.debug( url);
         Request request = new SiteRequestBuilder(url, referer, origin)
-                .post(RequestBody.create(MEDIA_TYPE_JSON, json.toString()))
+                .post(RequestBody.create(json.toString(), MEDIA_TYPE_JSON))
                 .build();
         Call call = okHttpClient.newCall(request);
 
@@ -431,7 +431,7 @@ public class SiteEngine {
         json.put("gid", gid);
         json.put("token", token);
         json.put("rating", (int) Math.ceil(rating * 2));
-        final RequestBody requestBody = RequestBody.create(MEDIA_TYPE_JSON, json.toString());
+        final RequestBody requestBody = RequestBody.create(json.toString(), MEDIA_TYPE_JSON);
         String url = SiteUrl.getApiUrl();
         String referer = SiteUrl.getGalleryDetailUrl(gid, token);
         String origin = SiteUrl.getOrigin();
@@ -514,7 +514,7 @@ public class SiteEngine {
                 .put("method", "gtoken")
                 .put("pagelist", new JSONArray().put(
                         new JSONArray().put(gid).put(gtoken).put(page + 1)));
-        final RequestBody requestBody = RequestBody.create(MEDIA_TYPE_JSON, json.toString());
+        final RequestBody requestBody = RequestBody.create(json.toString(), MEDIA_TYPE_JSON);
         String url = SiteUrl.getApiUrl();
         String referer = SiteUrl.getReferer();
         String origin = SiteUrl.getOrigin();
@@ -1025,7 +1025,7 @@ public class SiteEngine {
         json.put("token", token);
         json.put("comment_id", commentId);
         json.put("comment_vote", commentVote);
-        final RequestBody requestBody = RequestBody.create(MEDIA_TYPE_JSON, json.toString());
+        final RequestBody requestBody = RequestBody.create(json.toString(), MEDIA_TYPE_JSON);
         String url = SiteUrl.getApiUrl();
         String referer = SiteUrl.getReferer();
         String origin = SiteUrl.getOrigin();
@@ -1077,31 +1077,34 @@ public class SiteEngine {
         }
         MultipartBody.Builder builder = new MultipartBody.Builder();
         builder.setType(MultipartBody.FORM);
+        // OkHttp 4.x: "file" / "submit" are not valid MIME types; MediaType.parse is
+        // the only null-safe Java factory (MediaType.get would throw) and yields the
+        // same null content-type the 3.x code sent for these pseudo form parts.
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"sfile\"; filename=\"" + fileName + "\"; size=\"40\""),
-                RequestBody.create(MediaType.parse("file"), imageFile)
+                RequestBody.create(imageFile, MediaType.parse("file"))
         );
         if (uss) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_similar\""),
-                    RequestBody.create(null, "on")
+                    RequestBody.create("on", null)
             );
         }
         if (osc) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_covers\""),
-                    RequestBody.create(null, "on")
+                    RequestBody.create("on", null)
             );
         }
         if (se) {
             builder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"fs_exp\""),
-                    RequestBody.create(null, "on")
+                    RequestBody.create("on", null)
             );
         }
         builder.addPart(
                 Headers.of("Content-Disposition", "form-data; name=\"f_sfile\""),
-                RequestBody.create(MediaType.parse("submit"), "File Search")
+                RequestBody.create("File Search", MediaType.parse("submit"))
         );
         String url = SiteUrl.getImageSearchUrl();
         String referer = SiteUrl.getReferer() + '/';
@@ -1195,7 +1198,7 @@ public class SiteEngine {
         json.put("page", index + 1);
         json.put("imgkey", pToken);
         json.put("showkey", showKey);
-        final RequestBody requestBody = RequestBody.create(MEDIA_TYPE_JSON, json.toString());
+        final RequestBody requestBody = RequestBody.create(json.toString(), MEDIA_TYPE_JSON);
         String url = SiteUrl.getApiUrl();
         String referer = null;
         if (index > 0 && previousPToken != null) {
@@ -1266,7 +1269,7 @@ public class SiteEngine {
         }
         logger.debug( url);
 
-        RequestBody requestBody = RequestBody.create(MEDIA_TYPE_URLENCODED, param.addTagParam());
+        RequestBody requestBody = RequestBody.create(param.addTagParam(), MEDIA_TYPE_URLENCODED);
 
         Request request = new SiteRequestBuilder(url).post(requestBody).build();
         Call call = okHttpClient.newCall(request);
@@ -1303,7 +1306,7 @@ public class SiteEngine {
         }
         logger.debug( url);
 
-        RequestBody requestBody = RequestBody.create(MEDIA_TYPE_URLENCODED, param.deleteParam());
+        RequestBody requestBody = RequestBody.create(param.deleteParam(), MEDIA_TYPE_URLENCODED);
 
         Request request = new SiteRequestBuilder(url).post(requestBody).build();
         Call call = okHttpClient.newCall(request);

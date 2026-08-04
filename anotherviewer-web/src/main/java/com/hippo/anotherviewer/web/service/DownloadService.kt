@@ -495,9 +495,9 @@ class DownloadService(
                 val call = okHttpClient.newCall(request)
                 call.timeout().timeout(config.download.downloadTimeout, TimeUnit.MILLISECONDS)
                 call.execute().use { response ->
-                    if (response.code() == 509) continue
-                    if (response.isSuccessful) return response.body()?.bytes()
-                    logger.warn("Image download HTTP {} from {}", response.code(), url)
+                    if (response.code == 509) continue
+                    if (response.isSuccessful) return response.body?.bytes()
+                    logger.warn("Image download HTTP {} from {}", response.code, url)
                     return null
                 }
             } catch (e: Exception) {

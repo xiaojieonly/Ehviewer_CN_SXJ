@@ -7,7 +7,7 @@ import com.hippo.anotherviewer.web.service.GalleryLookupService
 import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.network.StatusCodeException
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -75,8 +75,8 @@ class ImageProxyController(
         // Non-whitelisted hosts are never fetched (legacy 404 stands), and an
         // unreachable/erroring site surfaces the legacy 404 envelope (E2E-6:
         // errors are passed through, never papered over with fake content).
-        val target = HttpUrl.parse(url)
-        if (target == null || !SiteProxyController.isGallerySiteHost(target.host())) {
+        val target = url.toHttpUrlOrNull()
+        if (target == null || !SiteProxyController.isGallerySiteHost(target.host)) {
             return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "Image not found in cache")
         }
 
@@ -87,11 +87,11 @@ class ImageProxyController(
                     return errorEnvelope(
                         HttpStatus.NOT_FOUND,
                         "NOT_FOUND",
-                        "site did not serve the image (HTTP ${response.code()})"
+                        "site did not serve the image (HTTP ${response.code})"
                     )
                 }
                 val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: MediaType.IMAGE_JPEG_VALUE
-                val bytes = response.body()?.bytes()
+                val bytes = response.body?.bytes()
                 if (bytes == null || bytes.isEmpty()) {
                     return errorEnvelope(HttpStatus.NOT_FOUND, "NOT_FOUND", "site returned an empty image body")
                 }
@@ -194,7 +194,7 @@ class ImageProxyController(
                 builder.header(HttpHeaders.RANGE, range)
             }
             val response = okHttpClient.newCall(builder.build()).execute()
-            if (response.code() == 509) {
+            if (response.code == 509) {
                 response.close()
                 return rateLimited(galleryId, page)
             }
@@ -208,7 +208,7 @@ class ImageProxyController(
             // A Range request is streamed straight through (never buffered,
             // never cached) so the client receives a true 206 when EH honors it.
             if (range != null) {
-                val body = response.body()
+                val body = response.body
                 if (body == null) {
                     response.close()
                     return notFound(galleryId, page)
@@ -217,7 +217,7 @@ class ImageProxyController(
                     body.byteStream().use { input -> input.copyTo(output) }
                 }
                 return ResponseEntity
-                    .status(response.code())
+                    .status(response.code)
                     .header(HttpHeaders.CONTENT_TYPE, contentType)
                     .header(HttpHeaders.ACCEPT_RANGES, "bytes")
                     .header(HttpHeaders.CACHE_CONTROL, CACHE_MAX_AGE)
@@ -230,7 +230,7 @@ class ImageProxyController(
 
             // Full fetch: materialise once so the page is cached for later
             // (and future Range requests are served from the cache).
-            val bytes = response.body()?.bytes()
+            val bytes = response.body?.bytes()
             response.close()
             if (bytes == null || bytes.isEmpty()) {
                 return notFound(galleryId, page)

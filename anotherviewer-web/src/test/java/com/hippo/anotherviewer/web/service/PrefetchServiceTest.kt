@@ -2,11 +2,11 @@ package com.hippo.anotherviewer.web.service
 
 import com.hippo.anotherviewer.web.config.SiteCoreConfigProperties
 import okhttp3.Call
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -59,10 +59,13 @@ class PrefetchServiceTest {
         `when`(sessionManager.okHttpClient).thenReturn(client)
         `when`(client.newCall(any(Request::class.java))).thenReturn(call)
         `when`(call.execute()).thenReturn(response)
-        `when`(response.code()).thenReturn(200)
+        `when`(response.code).thenReturn(200)
         `when`(response.isSuccessful).thenReturn(true)
-        `when`(response.header(anyString())).thenReturn("image/jpeg")
-        `when`(response.body()).thenAnswer { ResponseBody.create(MediaType.parse("image/jpeg"), ByteArray(64)) }
+        // OkHttp 4.x: Response.header(name) is a Kotlin default-arg method that
+        // compiles to header(name, null); a single anyString() matcher no longer
+        // matches the 2-arg JVM signature, so stub the concrete header instead.
+        `when`(response.header("Content-Type")).thenReturn("image/jpeg")
+        `when`(response.body).thenAnswer { ByteArray(64).toResponseBody("image/jpeg".toMediaType()) }
 
         `when`(galleryLookup.findToken(gid)).thenReturn(token)
         `when`(galleryLookup.fetchPageCount(gid, token)).thenReturn(pageCount)
@@ -146,7 +149,7 @@ class PrefetchServiceTest {
 
     @Test
     fun `stops prefetch chain on 509 response`() {
-        `when`(response.code()).thenReturn(509)
+        `when`(response.code).thenReturn(509)
 
         service.prefetchAround(gid, 0)
 

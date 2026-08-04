@@ -3,7 +3,7 @@ package com.hippo.anotherviewer.web.service
 import com.hippo.anotherviewer.client.SiteEngine
 import com.hippo.anotherviewer.network.SiteCookieStore
 import okhttp3.Cookie
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
@@ -62,16 +62,16 @@ class SiteSessionManager(
 
     private fun mockRewriteInterceptor() = Interceptor { chain ->
         val original = chain.request()
-        val host = original.url().host()
+        val host = original.url.host
         val isMockHost = host == "gallery.test" || host.endsWith(".gallery.test")
         if (mockBaseUrl.isBlank() || !isMockHost) {
             chain.proceed(original)
         } else {
-            val base = HttpUrl.parse(mockBaseUrl) ?: return@Interceptor chain.proceed(original)
-            val rewritten = original.url().newBuilder()
-                .scheme(base.scheme())
-                .host(base.host())
-                .port(base.port())
+            val base = mockBaseUrl.toHttpUrlOrNull() ?: return@Interceptor chain.proceed(original)
+            val rewritten = original.url.newBuilder()
+                .scheme(base.scheme)
+                .host(base.host)
+                .port(base.port)
                 .build()
             chain.proceed(original.newBuilder().url(rewritten).build())
         }
@@ -116,11 +116,11 @@ class SiteSessionManager(
 
     /** All identity cookies (member id / pass hash) currently held, across hosts. */
     fun identityCookies(): List<Cookie> = cookieStore.getAll().values.flatten()
-        .filter { it.name() == KEY_IPB_MEMBER_ID || it.name() == KEY_IPB_PASS_HASH }
+        .filter { it.name == KEY_IPB_MEMBER_ID || it.name == KEY_IPB_PASS_HASH }
 
     /** True when both identity cookies are present (i.e. a login has happened). */
     fun hasSignedIn(): Boolean {
-        val names = identityCookies().map { it.name() }.toSet()
+        val names = identityCookies().map { it.name }.toSet()
         return KEY_IPB_MEMBER_ID in names && KEY_IPB_PASS_HASH in names
     }
 
@@ -131,7 +131,7 @@ class SiteSessionManager(
     fun isExpired(now: Long = System.currentTimeMillis()): Boolean {
         val identity = identityCookies()
         if (identity.isEmpty()) return false
-        return identity.any { it.persistent() && it.expiresAt() < now }
+        return identity.any { it.persistent && it.expiresAt < now }
     }
 
     /** Compute and cache the current [SessionStatus]. Cheap — no network I/O. */

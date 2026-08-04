@@ -9,12 +9,12 @@ import com.hippo.anotherviewer.web.service.ImageCacheService
 import com.hippo.anotherviewer.web.service.PrefetchService
 import com.hippo.anotherviewer.web.service.SiteSessionManager
 import okhttp3.Interceptor
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
@@ -53,7 +53,7 @@ class ImageProxyControllerTest {
             .code(code)
             .message("OK")
             .header("Content-Type", contentType)
-            .body(ResponseBody.create(MediaType.parse(contentType), body))
+            .body(body.toResponseBody(contentType.toMediaType()))
             .build()
 
     private lateinit var imageCacheService: ImageCacheService
@@ -114,7 +114,7 @@ class ImageProxyControllerTest {
             .andExpect(header().string("Content-Type", "image/png"))
             .andExpect(content().string("PNGBYTES"))
 
-        org.junit.jupiter.api.Assertions.assertEquals(url, site.lastRequest.get()!!.url().toString())
+        org.junit.jupiter.api.Assertions.assertEquals(url, site.lastRequest.get()!!.url.toString())
         verify(imageCacheService).cacheImage(
             eq(url),
             argThatK<ByteArray> { it.contentEquals("PNGBYTES".toByteArray()) }

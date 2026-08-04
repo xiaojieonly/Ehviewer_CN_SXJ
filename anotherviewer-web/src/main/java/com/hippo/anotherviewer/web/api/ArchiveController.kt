@@ -3,7 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.dto.*
 import com.hippo.anotherviewer.web.service.ArchiveService
 import jakarta.validation.Valid
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -38,8 +38,8 @@ class ArchiveController(private val archiveService: ArchiveService) {
      */
     @PostMapping("/download")
     fun downloadArchive(@Valid @RequestBody request: ArchiveDownloadRequest): ResponseEntity<*> {
-        val parsed = HttpUrl.parse(request.url)
-        if (parsed == null || !isAllowedArchiveHost(parsed.host())) {
+        val parsed = request.url.toHttpUrlOrNull()
+        if (parsed == null || !isAllowedArchiveHost(parsed.host)) {
             return errorEnvelope(HttpStatus.BAD_REQUEST, "INVALID_ARCHIVE_URL", "Archive URL host not allowed")
         }
         val ok = archiveService.downloadArchive(request.gid, request.url)

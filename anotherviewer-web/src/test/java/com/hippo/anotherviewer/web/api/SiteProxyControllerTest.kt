@@ -3,12 +3,12 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.web.config.GlobalExceptionHandler
 import com.hippo.anotherviewer.web.service.SiteSessionManager
 import okhttp3.Interceptor
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -42,7 +42,7 @@ class SiteProxyControllerTest {
             .code(code)
             .message("OK")
             .header("Content-Type", contentType)
-            .body(ResponseBody.create(MediaType.parse(contentType), body))
+            .body(body.toResponseBody(contentType.toMediaType()))
             .build()
 
     /** Records the upstream request and answers with a canned response or exception. */
@@ -150,7 +150,7 @@ class SiteProxyControllerTest {
 
         assertEquals(
             "https://gallery.test/?f_search=alpha&page=2",
-            site.lastRequest.get()!!.url().toString(),
+            site.lastRequest.get()!!.url.toString(),
             "the proxy must fetch exactly the url it was given"
         )
     }
@@ -164,7 +164,7 @@ class SiteProxyControllerTest {
             .andExpect(status().isOk)
             .andExpect(header().string("Content-Type", "image/png"))
 
-        assertEquals("https://lofi.gallery.test/index.php", site.lastRequest.get()!!.url().toString())
+        assertEquals("https://lofi.gallery.test/index.php", site.lastRequest.get()!!.url.toString())
     }
 
     @Test
@@ -177,7 +177,7 @@ class SiteProxyControllerTest {
                 .code(200)
                 .message("OK")
                 .header("Content-Type", "image/png")
-                .body(ResponseBody.create(MediaType.parse("image/png"), bytes))
+                .body(bytes.toResponseBody("image/png".toMediaType()))
                 .build()
         }
         setUpClient(site)

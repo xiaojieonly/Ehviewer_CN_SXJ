@@ -233,7 +233,11 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         val stopAllIntent = Intent(this, DownloadService::class.java)
         stopAllIntent.setAction(ACTION_STOP_ALL)
-        val piStopAll = PendingIntent.getService(this, 0, stopAllIntent, 0)
+        // targetSdk 31+ 强制 mutability 标志；intent 已完整指定，用 IMMUTABLE
+        val piStopAll = PendingIntent.getService(
+            this, 0, stopAllIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         mDownloadingBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID!!)
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -260,7 +264,11 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
 
         val clearIntent = Intent(this, DownloadService::class.java)
         clearIntent.setAction(ACTION_CLEAR)
-        val piClear = PendingIntent.getService(this, 0, clearIntent, 0)
+        // targetSdk 31+ 强制 mutability 标志；intent 已完整指定，用 IMMUTABLE
+        val piClear = PendingIntent.getService(
+            this, 0, clearIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val bundle = Bundle()
         bundle.putString(DownloadsScene.KEY_ACTION, DownloadsScene.ACTION_CLEAR_DOWNLOAD_SERVICE)
@@ -270,7 +278,9 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            activityIntent,
+            // targetSdk 31+ 强制 mutability 标志；extras 创建时已定，IMMUTABLE 即可
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         mDownloadedBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID!!)
@@ -333,7 +343,9 @@ class DownloadService : Service(), DownloadManager.DownloadListener {
         activityIntent.putExtra(StageActivity.KEY_SCENE_ARGS, bundle)
         val piActivity = PendingIntent.getActivity(
             this@DownloadService, 0,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            activityIntent,
+            // targetSdk 31+ 强制 mutability 标志；extras 创建时已定，IMMUTABLE 即可
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         mDownloadingBuilder!!.setContentTitle(SiteUtils.getSuitableTitle(info))

@@ -46,7 +46,7 @@ import okhttp3.ResponseBody;
  */
 public final class WebUiApiClient {
 
-    private static final MediaType JSON_MEDIA = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType JSON_MEDIA = MediaType.get("application/json; charset=utf-8");
 
     private static volatile OkHttpClient sClient;
 
@@ -227,7 +227,7 @@ public final class WebUiApiClient {
     private static String postJson(String url, String token, String json) throws IOException {
         Request.Builder builder = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(JSON_MEDIA, json));
+                .post(RequestBody.create(json, JSON_MEDIA));
         addAuth(builder, token);
         return execute(builder.build());
     }

@@ -3,7 +3,7 @@ package com.hippo.anotherviewer.web.api
 import com.hippo.anotherviewer.client.SiteRequestBuilder
 import com.hippo.anotherviewer.client.SiteUrl
 import com.hippo.anotherviewer.web.service.SiteSessionManager
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -36,8 +36,8 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
 
     @GetMapping("/proxy")
     fun proxy(@RequestParam url: String): ResponseEntity<*> {
-        val target = HttpUrl.parse(url)
-        if (target == null || !isGallerySiteHost(target.host())) {
+        val target = url.toHttpUrlOrNull()
+        if (target == null || !isGallerySiteHost(target.host)) {
             return errorEnvelope(
                 HttpStatus.BAD_REQUEST,
                 "VALIDATION_ERROR",
@@ -49,8 +49,8 @@ class SiteProxyController(private val sessionManager: SiteSessionManager) {
             val request = SiteRequestBuilder(target.toString(), SiteUrl.getReferer()).build()
             okHttpClient.newCall(request).execute().use { response ->
                 val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: DEFAULT_CONTENT_TYPE
-                val bytes = response.body()?.bytes() ?: ByteArray(0)
-                ResponseEntity.status(response.code())
+                val bytes = response.body?.bytes() ?: ByteArray(0)
+                ResponseEntity.status(response.code)
                     .header(HttpHeaders.CONTENT_TYPE, contentType)
                     .body(bytes)
             }

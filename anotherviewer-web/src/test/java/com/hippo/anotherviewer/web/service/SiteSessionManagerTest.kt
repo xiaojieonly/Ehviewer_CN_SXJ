@@ -54,7 +54,7 @@ class SiteSessionManagerTest {
 
     @Test
     fun `web client shares the same cookie store as core`() {
-        assertSame(manager.cookieStore, manager.okHttpClient.cookieJar())
+        assertSame(manager.cookieStore, manager.okHttpClient.cookieJar)
     }
 
     @Test

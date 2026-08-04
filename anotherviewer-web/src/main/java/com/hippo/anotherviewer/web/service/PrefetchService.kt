@@ -121,8 +121,8 @@ class PrefetchService(
         return try {
             val response = client.newCall(SiteRequestBuilder(url, SiteUrl.getReferer()).build()).execute()
             try {
-                if (response.code() == 509 || !response.isSuccessful) return null
-                val bytes = response.body()?.bytes()
+                if (response.code == 509 || !response.isSuccessful) return null
+                val bytes = response.body?.bytes()
                 if (bytes == null || bytes.isEmpty()) return null
                 val contentType = response.header(HttpHeaders.CONTENT_TYPE) ?: MediaType.IMAGE_JPEG_VALUE
                 FetchedImage(bytes, extensionFromMime(contentType))
