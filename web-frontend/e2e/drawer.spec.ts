@@ -154,6 +154,64 @@ test.describe('drawer @375x720 (modal, <720px)', () => {
 })
 
 /* -------------------------------------------------------------------------- */
+/* 断点边界（契约 contracts/responsive-strategy.md §7，2026-08-04 R4-F1 裁决   */
+/* 修定为 720px）：<720px 一律模态，≥720px 一律常显。640/719 压在模态侧边界，  */
+/* 720 压在常显侧边界——像素级断言 modal/persistent 的切换点。                  */
+/* -------------------------------------------------------------------------- */
+
+test.describe('drawer @640x720 (modal, <720px boundary)', () => {
+  test.use({ viewport: { width: 640, height: 720 } })
+
+  test('640px 仍是模态抽屉：汉堡可见、打开带遮罩、收起后无遮罩', async ({ page }) => {
+    await page.addInitScript(initScript, { theme: 'light', css: STABILIZE_CSS })
+    await page.goto('/')
+    await expect(page.locator(HAMBURGER)).toBeVisible()
+    await expectDrawerClosed(page)
+
+    await openDrawer(page)
+    await expect(page.locator(SCRIM)).toHaveCount(1)
+
+    await page.locator(SCRIM).click({ position: { x: 500, y: 400 } })
+    await expectDrawerClosed(page)
+  })
+})
+
+test.describe('drawer @719x720 (modal, <720px boundary)', () => {
+  test.use({ viewport: { width: 719, height: 720 } })
+
+  test('719px（断点-1px）仍是模态抽屉：汉堡可见、打开带遮罩', async ({ page }) => {
+    await page.addInitScript(initScript, { theme: 'light', css: STABILIZE_CSS })
+    await page.goto('/')
+    await expect(page.locator(HAMBURGER)).toBeVisible()
+    await expectDrawerClosed(page)
+
+    await openDrawer(page)
+    await expect(page.locator(SCRIM)).toHaveCount(1)
+
+    await page.locator(SCRIM).click({ position: { x: 600, y: 400 } })
+    await expectDrawerClosed(page)
+  })
+})
+
+test.describe('drawer @720x720 (persistent, >=720px boundary)', () => {
+  test.use({ viewport: { width: 720, height: 720 } })
+
+  test('720px（断点整）切换为常显侧栏：无汉堡、无遮罩、面板在流内', async ({ page }) => {
+    await page.addInitScript(initScript, { theme: 'light', css: STABILIZE_CSS })
+    await page.goto('/')
+
+    // 无汉堡（DOM 存在但 CSS display:none）
+    await expect(page.locator(HAMBURGER)).toBeHidden()
+
+    // 侧栏无需任何交互即常显（x≈0，宽 280），无模态遮罩
+    const box = await panelBox(page)
+    expect(Math.abs(box.x)).toBeLessThanOrEqual(1)
+    expect(box.width).toBe(DRAWER_WIDTH)
+    await expect(page.locator(SCRIM)).toHaveCount(0)
+  })
+})
+
+/* -------------------------------------------------------------------------- */
 /* ≥1280px：常显侧栏、无汉堡                                                    */
 /* -------------------------------------------------------------------------- */
 
