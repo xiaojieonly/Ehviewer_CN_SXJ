@@ -48,6 +48,9 @@ import java.util.Map;
  */
 public class InMemorySyncServer implements WebUiSyncTransport {
 
+    /** Clock skew tolerance (contract v2 §7 / §1.2), mirroring SyncService.kt. */
+    private static final long SKEW_TOLERANCE = 5000L;
+
     static final class Record {
         final long serverModified;
         final boolean deleted;
@@ -116,13 +119,13 @@ public class InMemorySyncServer implements WebUiSyncTransport {
             mergeUnion(favorites, fav.gid, fav, fav.deleted);
         }
         for (WebUiSyncModels.SyncHistory hist : e.history) {
-            mergeHard(history, hist.gid, hist, hist.lastModified, hist.deleted);
+            mergeHard(history, hist.gid, hist, hist.deleted);
         }
         for (WebUiSyncModels.SyncDownload dl : e.downloads) {
             mergeUnion(downloads, dl.gid, dl, dl.deleted);
         }
         for (WebUiSyncModels.SyncBookmark bm : e.bookmarks) {
-            mergeHard(bookmarks, bm.gid, bm, bm.lastModified, bm.deleted);
+            mergeHard(bookmarks, bm.gid, bm, bm.deleted);
         }
         for (WebUiSyncModels.SyncFilter f : e.filters) {
             mergeUnion(filters, filterKey(f.mode, f.text), f, f.deleted);
@@ -199,9 +202,10 @@ public class InMemorySyncServer implements WebUiSyncTransport {
      * cross-platform → the priority platform wins unconditionally (§1.4);
      * B / same-platform → LWW fallback (§1.4 tie-break). The fake omits the
      * server's skew tolerance; tests use clearly distinct timestamps. On an
-     * exact lastModified tie the incoming record REPLACES the existing one —
-     * that rewrite bumps serverModified, which is what makes a re-pushed
-     * record observable to other devices through incremental pulls.
+     * exact lastModified tie the incoming record LOSES: the server keeps the
+     * FIRST-RECEIVED record (contract §5.1③: under B the received order
+     * breaks the tie, first push received wins; §2.1: retrying the same push
+     * with identical payloads is a no-op — it must NOT bump serverModified).
      * F6 裁决（leader，2026-08-04）：B9 增量推送下 lww soft 删除粘性为预期语义；
      * 旧 §3.1「删端下轮被复活」系全量推送时代的偶然收敛机制（保留端全量重推
      * 回显），非设计承诺；复活须经保留端显式 re-add/重戳，作为新 lastModified
@@ -215,7 +219,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (priority != null && !incomingPlatform.equals(existingPlatform)) {
             return priority.equals(incomingPlatform);
         }
-        return lastModifiedOf(incomingDto) >= existing.dtoLastModified();
+        return lastModifiedOf(incomingDto) > existing.dtoLastModified();
     }
 
     /** TOMB vs TOMB (mirror of the same-state branch): A/C cross-platform → priority wins; else LWW (tie → incoming). */
@@ -283,13 +287,39 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     }
 
     /**
+     * Tombstone-entity resurrection (mirror of SyncService mergeHistory /
+     * mergeBookmark, §3.8 mirror + §3.2/§3.4 entity-LWW): an incoming live
+     * record revives the key only when it is clearly newer than the
+     * tombstone — newer by MORE than the ±5 s skew window.
+     *
+     * <p>Simplification boundary (R4-F2/F3, declared per the adjudication):
+     * the real server, when the two records fall INSIDE the skew window,
+     * applies an entity-specific tie-break (history: later view {@code time};
+     * bookmark: higher {@code page}). The fake deliberately omits that
+     * tie-break and keeps the deletion inside the window instead. Faithfully
+     * applying it would flip the matrix's deletion-propagation rows, whose
+     * fixtures seed tombstones directly with zeroed {@code time}/{@code page}
+     * — a state the real server never produces (a soft-deleted row preserves
+     * its view time/page, so a same-view live record could never win the
+     * tie-break against its own tombstone). All resurrection fixtures use
+     * timestamps clearly outside the skew window, where the fake and the real
+     * server agree. Resurrection bypasses the strategy order exactly like the
+     * real server (priority only arbitrates double-alive there).
+     */
+    private boolean liveResurrectsOverTombstone(Object liveDto, Record tombRecord) {
+        return lastModifiedOf(liveDto) > tombRecord.dtoLastModified() + SKEW_TOLERANCE;
+    }
+
+    /**
      * Hard-delete entities: deleted records are removed from the live state,
      * but a tombstone marker is kept (serverModified bumped) so the deletion
      * is observable through pull. Resurrection is entity-LWW like v1 (§3.8
-     * mirror): only a STRICTLY newer live record revives the key. Live-vs-live
-     * follows the same strategy arbitration as the union entities.
+     * mirror) with the server's skew window (see
+     * {@link #liveResurrectsOverTombstone} for the declared tie-break
+     * simplification). Live-vs-live follows the same strategy arbitration as
+     * the union entities.
      */
-    private void mergeHard(Map<Long, Record> map, long key, Object dto, long lastModified, boolean deleted) {
+    private void mergeHard(Map<Long, Record> map, long key, Object dto, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
             map.put(key, new Record(serverTimestamp, true, dto));
@@ -298,11 +328,9 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (existing == null) {
             map.put(key, new Record(serverTimestamp, false, dto));
         } else if (existing.deleted) {
-            if (existing.dtoLastModified() >= lastModified) {
-                // A newer (or equally new) tombstone than this live record: keep the deletion.
-                return;
+            if (liveResurrectsOverTombstone(dto, existing)) {
+                map.put(key, new Record(serverTimestamp, false, dto));
             }
-            map.put(key, new Record(serverTimestamp, false, dto));
         } else if (incomingLiveWinsOverLive(dto, existing)) {
             map.put(key, new Record(serverTimestamp, false, dto));
         }
