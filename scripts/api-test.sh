@@ -95,19 +95,59 @@ PUSH1=$(curl -s -m 15 -X POST "$BASE/api/v1/sync/push" -H 'content-type: applica
 }}')
 jcheck "push 7实体 success" "$PUSH1" "success" "True"
 PULL=$(curl -s -m 15 "$BASE/api/v1/sync/pull?since=0")
-jcheck "pull history mode=9 (M-13)" "$PULL" "entities.history.0.mode" "9"
+# （H-3 同族：契约不承诺 pull 顺序——@Index 后 SQLite 行序可变，下标断言作废；
+#  改集合断言：按 gid 定位记录再断言字段，原意保留。）
+echo "$PULL" | python3 -c "
+import json, sys
+try:
+    h = json.load(sys.stdin)['entities']['history']
+except Exception:
+    sys.exit(1)
+rec = [r for r in h if r.get('gid') == 2001]
+sys.exit(0 if rec and rec[0].get('mode') == 9 else 1)
+" && { PASS=$((PASS+1)); echo "  ✓ pull history mode=9 (M-13)"; } || { FAIL=$((FAIL+1)); FAILED_NAMES+=("pull history mode=9 (M-13)"); echo "  ✗ pull history mode=9 (M-13) 集合断言失败: $(echo "$PULL" | head -c 300)"; }
 jcheck "pull download label=SmokeLabel (M-14)" "$PULL" "entities.downloads.0.label" "SmokeLabel"
 jcheck "pull favorite category=512 (Int)" "$PULL" "entities.favorites.0.category" "512"
 jcheck "pull download state=2 透传 (B3 侧)" "$PULL" "entities.downloads.0.state" "2"
-jcheck "pull favorite rated=true 持久化 (B4)" "$PULL" "entities.favorites.0.rated" "True"
-jcheck "pull favorite simpleTags 持久化 (B4)" "$PULL" "entities.favorites.0.simpleTags" "a;b"
+echo "$PULL" | python3 -c "
+import json, sys
+try:
+    f = json.load(sys.stdin)['entities']['favorites']
+except Exception:
+    sys.exit(1)
+rec = [r for r in f if r.get('gid') == 1001]
+sys.exit(0 if rec and rec[0].get('rated') is True else 1)
+" && { PASS=$((PASS+1)); echo "  ✓ pull favorite rated=true 持久化 (B4)"; } || { FAIL=$((FAIL+1)); FAILED_NAMES+=("pull favorite rated=true 持久化 (B4)"); echo "  ✗ pull favorite rated=true (B4) 集合断言失败: $(echo "$PULL" | head -c 300)"; }
+echo "$PULL" | python3 -c "
+import json, sys
+try:
+    f = json.load(sys.stdin)['entities']['favorites']
+except Exception:
+    sys.exit(1)
+rec = [r for r in f if r.get('gid') == 1001]
+sys.exit(0 if rec and rec[0].get('simpleTags') == 'a;b' else 1)
+" && { PASS=$((PASS+1)); echo "  ✓ pull favorite simpleTags 持久化 (B4)"; } || { FAIL=$((FAIL+1)); FAILED_NAMES+=("pull favorite simpleTags 持久化 (B4)"); echo "  ✗ pull favorite simpleTags (B4) 集合断言失败: $(echo "$PULL" | head -c 300)"; }
 # N-1: 硬删 tombstone 增量传播
 # （注意顺序：history/list 的 mode 断言必须在 tombstone 删除 history 之前做）
 HL0=$(curl -s -m 15 "$BASE/api/v1/history/list")
-jcheck "history/list mode=9 回显 (M-13 REST)" "$HL0" "history.0.mode" "9"
+echo "$HL0" | python3 -c "
+import json, sys
+try:
+    h = json.load(sys.stdin)['history']
+except Exception:
+    sys.exit(1)
+rec = [r for r in h if r.get('gid') == 2001]
+sys.exit(0 if rec and rec[0].get('mode') == 9 else 1)
+" && { PASS=$((PASS+1)); echo "  ✓ history/list mode=9 回显 (M-13 REST)"; } || { FAIL=$((FAIL+1)); FAILED_NAMES+=("history/list mode=9 回显 (M-13 REST)"); echo "  ✗ history/list mode=9 (M-13 REST) 集合断言失败: $(echo "$HL0" | head -c 300)"; }
 curl -s -m 15 -X POST "$BASE/api/v1/sync/push" -H 'content-type: application/json' -d '{"deviceId":"api-test-1","timestamp":1755000000020,"entities":{"history":[{"gid":2001,"token":"t2","title":"","category":0,"mode":0,"time":0,"lastModified":1755000000021,"deviceId":"api-test-1","deleted":true}]}}' > /dev/null
 PULL2=$(curl -s -m 15 "$BASE/api/v1/sync/pull?since=1755000000019")
 jcheck "增量 pull 传播墓碑 deleted=true (N-1)" "$PULL2" "entities.history.0.deleted" "True"
+# 复跑稳健恢复（H-3 同族）：N-1 的墓碑会跨跑残留——软删行保留原 view time，
+# 下一跑同戳 live 重推与之平局，按 §5.1③ first-received 无法复活，M-13 REST
+# 断言将看不到活记录。以墙钟新戳重看一次（严格新于此前的 view time）恢复活态，
+# 保证同一 data dir 连跑 N 遍幂等。
+NOW_MS=$(python3 -c "import time; print(int(time.time()*1000))")
+curl -s -m 15 -X POST "$BASE/api/v1/sync/push" -H 'content-type: application/json' -d "{\"deviceId\":\"api-test-1\",\"timestamp\":$NOW_MS,\"entities\":{\"history\":[{\"gid\":2001,\"token\":\"t2\",\"title\":\"Hist One\",\"category\":2,\"rating\":0,\"rated\":false,\"mode\":9,\"time\":$NOW_MS,\"lastModified\":$NOW_MS,\"deviceId\":\"api-test-1\"}]}}" > /dev/null
 # H-3 since=0 边界: lastModified=0 记录
 # （leader 裁决：契约不承诺 pull 顺序——@Index 后 SQLite 行序可变，下标断言作废；
 #  改集合断言：history 集合包含 gid=5001 且其 lastModified=0/deleted=false，
@@ -136,7 +176,11 @@ jcheck "slot=99 clamp 到 9 (N-5)" "$SLOT" "favorites.0.gid" "6001"
 
 section "设置 (M-5)"
 S0=$(curl -s -m 15 "$BASE/api/v1/settings")
-jcheck "GET /settings 200" "$S0" "download.workerCount" "3"
+# 复跑稳健（H-3 同族）：workerCount 持久化在 data dir——干净库首跑是缺省 3，
+# 复跑看到上一跑持久化的 7；两者均为合法状态，断言保留读回校验。
+WC0=$(jq_get "$S0" "download.workerCount")
+if [ "$WC0" = "3" ] || [ "$WC0" = "7" ]; then PASS=$((PASS+1)); echo "  ✓ GET /settings 200 (download.workerCount=$WC0)";
+else FAIL=$((FAIL+1)); FAILED_NAMES+=("GET /settings 200"); echo "  ✗ GET /settings 200: download.workerCount expect 3 (干净) 或 7 (复跑持久化) got $WC0"; fi
 ck "PUT /settings 非法 workerCount -> 400" 400 -X PUT "$BASE/api/v1/settings" -H 'content-type: application/json' -d '{"download":{"workerCount":99999}}'
 ck "PUT /settings 合法 -> 200" 200 -X PUT "$BASE/api/v1/settings" -H 'content-type: application/json' -d '{"download":{"workerCount":7}}'
 S1=$(curl -s -m 15 "$BASE/api/v1/settings")
