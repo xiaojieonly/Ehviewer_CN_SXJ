@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import FilterPanel from '../FilterPanel.vue'
 import AppSelect from '@/components/form/AppSelect.vue'
 import AppSwitch from '@/components/form/AppSwitch.vue'
@@ -243,6 +243,68 @@ describe('FilterPanel', () => {
       const wrapper = mountPanel()
       await wrapper.find('.filter-panel__btn-primary').trigger('click')
       expect(wrapper.emitted('search')).toHaveLength(1)
+    })
+  })
+
+  describe('scroll cue (F-UX3)', () => {
+    /**
+     * happy-dom performs no layout (scrollHeight/clientHeight are 0), so the
+     * body geometry is stubbed per case; a `scroll` event re-runs the cue
+     * measurement exactly like user scrolling does.
+     */
+    function setBodyGeometry(
+      wrapper: VueWrapper,
+      dims: { scrollHeight: number; clientHeight: number; scrollTop?: number },
+    ): void {
+      const body = wrapper.find('.filter-panel__body').element
+      Object.defineProperty(body, 'scrollHeight', { configurable: true, value: dims.scrollHeight })
+      Object.defineProperty(body, 'clientHeight', { configurable: true, value: dims.clientHeight })
+      Object.defineProperty(body, 'scrollTop', { configurable: true, value: dims.scrollTop ?? 0 })
+    }
+
+    async function scrollBody(wrapper: VueWrapper): Promise<void> {
+      await wrapper.find('.filter-panel__body').trigger('scroll')
+    }
+
+    it('raises the footer shadow while overflowing content remains below the fold', async () => {
+      const wrapper = mountPanel()
+      await flushPromises()
+      // 700px of content in a 400px viewport, still at the top.
+      setBodyGeometry(wrapper, { scrollHeight: 700, clientHeight: 400, scrollTop: 0 })
+      await scrollBody(wrapper)
+      expect(wrapper.find('.filter-panel__footer').classes()).toContain(
+        'filter-panel__footer--raised',
+      )
+    })
+
+    it('keeps the cue while scrolled mid-content (scrollTop > 0)', async () => {
+      const wrapper = mountPanel()
+      await flushPromises()
+      setBodyGeometry(wrapper, { scrollHeight: 700, clientHeight: 400, scrollTop: 120 })
+      await scrollBody(wrapper)
+      expect(wrapper.find('.filter-panel__footer').classes()).toContain(
+        'filter-panel__footer--raised',
+      )
+    })
+
+    it('drops the cue once the bottom of the content is reached', async () => {
+      const wrapper = mountPanel()
+      await flushPromises()
+      setBodyGeometry(wrapper, { scrollHeight: 700, clientHeight: 400, scrollTop: 300 })
+      await scrollBody(wrapper)
+      expect(wrapper.find('.filter-panel__footer').classes()).not.toContain(
+        'filter-panel__footer--raised',
+      )
+    })
+
+    it('shows no cue when the content fits without overflow', async () => {
+      const wrapper = mountPanel()
+      await flushPromises()
+      setBodyGeometry(wrapper, { scrollHeight: 300, clientHeight: 400, scrollTop: 0 })
+      await scrollBody(wrapper)
+      expect(wrapper.find('.filter-panel__footer').classes()).not.toContain(
+        'filter-panel__footer--raised',
+      )
     })
   })
 
