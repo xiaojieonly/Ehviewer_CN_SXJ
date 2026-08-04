@@ -11,7 +11,8 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "vue-tsc --noEmit",
     "test:visual": "playwright test --config e2e/playwright.config.ts && node e2e/compare.mjs",
-    "test:visual:update": "VISUAL_MODE=update playwright test --config e2e/playwright.config.ts"
+    "test:visual:update": "VISUAL_MODE=update playwright test --config e2e/playwright.config.ts",
+    "e2e:drawer": "playwright test --config e2e/playwright.drawer.config.ts"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.0.0",

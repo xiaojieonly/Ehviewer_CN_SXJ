@@ -5,4 +5,6 @@ dist/
 e2e/actual/
 e2e/diff/
 e2e/test-results/
+# drawer e2e (W4) playwright outputDir
+e2e/test-results-drawer/
 /playwright-report/
