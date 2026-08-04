@@ -231,8 +231,7 @@ public class SiteDbWebUiSyncStore implements WebUiSyncStore {
             return new LinkedHashMap<>();
         }
         try {
-            Map<String, Long> ledger = JSON.parseObject(raw, LEDGER_TYPE);
-            return ledger != null ? ledger : null;
+            return JSON.parseObject(raw, LEDGER_TYPE);
         } catch (RuntimeException e) {
             return null;
         }

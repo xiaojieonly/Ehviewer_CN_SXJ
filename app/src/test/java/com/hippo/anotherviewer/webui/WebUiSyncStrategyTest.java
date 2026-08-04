@@ -148,7 +148,12 @@ public class WebUiSyncStrategyTest {
 
     @Test
     public void lww_webTombstone_localFavoriteResurrects() throws IOException {
-        // Matrix §4.2 B: union — the deleting side is resurrected next round.
+        // Matrix §4.2 B: union — the local live copy survives the pull (client
+        // honoring). F6 裁决（leader，2026-08-04）：B9 增量推送下 lww soft 删除
+        // 粘性为预期语义——「the deleting side is resurrected next round」系
+        // 全量推送时代的偶然收敛机制（保留端全量重推回显），非设计承诺；复活须
+        // 经保留端显式 re-add/重戳，作为新 lastModified delta 即时传播。本用例
+        // 走 since=0 全量首推，故保留端的 live 记录随推送复活服务端墓碑。
         server.policy = policy("lww");
         store.putLocalFavorite(favorite(9));
         seedWebFavoriteTombstone(9);

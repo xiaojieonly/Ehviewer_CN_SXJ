@@ -528,6 +528,11 @@ public class WebUiSyncEngineTest {
         WebUiSyncModels.SyncFavorite wire = (WebUiSyncModels.SyncFavorite) server.favorites.get(1L).dto;
         assertEquals("fav 1 again", wire.title);
         assertEquals(9000, wire.lastModified);
+        // F6 evidence row: the re-add carries a NEW add time (re-stamped by the
+        // retaining side), which is exactly what makes it a fresh lastModified
+        // delta that propagates incrementally — resurrection is explicit, not
+        // an implicit next-round echo.
+        assertEquals(9000, wire.time);
 
         // The ledger now tracks the re-added record; unchanged -> not sent.
         WebUiSyncEngine.Result third = engineA.syncInternal(config, "devA", second.serverTimestamp);
@@ -592,5 +597,141 @@ public class WebUiSyncEngineTest {
         assertFalse("android live push resurrects the record (§3.8)",
                 server.favorites.get(1L).deleted);
         assertNotNull(storeA.loadLocalFavorite(1));
+    }
+
+    // ==================== R1 P3: tombstone-entity edges ====================
+
+    /**
+     * Positive resurrection for the hard-delete (tombstone-class) entities
+     * (§3.8 mirror, §3.2/§3.4): after a deletion propagates, an explicit
+     * re-view / re-bookmark with a clearly-newer stamp (beyond the ±5 s skew
+     * window) revives the key on the server — both for history and bookmarks.
+     * (In-skew resurrection is a declared simplification boundary of the fake,
+     * see InMemorySyncServer.liveResurrectsOverTombstone.)
+     */
+    @Test
+    public void tombstoneEntity_positiveResurrection_afterDeletion() throws IOException {
+        storeA.applySyncedHistory(history(31, 1000));
+        storeA.putBookmark(bookmark(32, 1000, 3));
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertFalse(server.history.get(31L).deleted);
+        assertFalse(server.bookmarks.get(32L).deleted);
+
+        // Delete both between cycles; the tombstones land on the server and
+        // the pull phase clears the local rows.
+        storeA.removeHistoryByKey(31);
+        storeA.removeBookmarkByGid(32);
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertTrue(server.history.get(31L).deleted);
+        assertTrue(server.bookmarks.get(32L).deleted);
+        assertEquals(0, storeA.history.size());
+        assertEquals(0, storeA.bookmarks.size());
+
+        // Explicit re-add with clearly-newer stamps (beyond the skew window):
+        // both tombstones are revived by the live pushes (§3.2/§3.4 mirror).
+        long tombHistoryLm = server.history.get(31L).dtoLastModified();
+        long tombBookmarkLm = server.bookmarks.get(32L).dtoLastModified();
+        storeA.applySyncedHistory(history(31, tombHistoryLm + 10_000));
+        storeA.putBookmark(bookmark(32, tombBookmarkLm + 10_000, 7));
+
+        engineA.syncInternal(config, "devA", second.serverTimestamp);
+
+        assertFalse("clearly-newer live history resurrects the tombstone (§3.2)",
+                server.history.get(31L).deleted);
+        assertFalse("clearly-newer live bookmark resurrects the tombstone (§3.4)",
+                server.bookmarks.get(32L).deleted);
+        assertEquals(7, ((WebUiSyncModels.SyncBookmark) server.bookmarks.get(32L).dto).page);
+        assertNotNull(storeA.history.get(31L));
+        assertNotNull(storeA.bookmarks.get(32L));
+
+        // Within-skew live pushes do NOT resurrect (declared simplification
+        // boundary): the deletion stays until a clearly-newer stamp arrives.
+        storeA.removeHistoryByKey(31);
+        WebUiSyncEngine.Result third = engineA.syncInternal(config, "devA", second.serverTimestamp);
+        assertTrue(server.history.get(31L).deleted);
+        long tombLm2 = server.history.get(31L).dtoLastModified();
+        storeA.applySyncedHistory(history(31, tombLm2 + 100)); // inside the 5 s window
+        engineA.syncInternal(config, "devA", third.serverTimestamp);
+        assertTrue("in-skew live push keeps the deletion (fake simplification)",
+                server.history.get(31L).deleted);
+    }
+
+    /**
+     * Tomb-vs-tomb: both devices delete the same key (tombstone-class
+     * entity). The two tombstones collide on the server — the deletion must
+     * stay (a tombstone can never resurrect the key) and the later stamp
+     * wins the tomb-vs-tomb LWW.
+     */
+    @Test
+    public void tombstoneEntity_tombVsTomb_keepsDeletion() throws IOException {
+        storeA.applySyncedHistory(history(41, 1000));
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        WebUiSyncEngine.Result bFirst = engineB.syncInternal(config, "devB", 0);
+        assertEquals(1, storeB.history.size());
+
+        // A deletes first; the tombstone lands on the server.
+        storeA.removeHistoryByKey(41);
+        engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertTrue(server.history.get(41L).deleted);
+        long tombLmAfterA = server.history.get(41L).dtoLastModified();
+
+        // B deletes too before seeing A's tombstone and pushes its own.
+        storeB.removeHistoryByKey(41);
+        engineB.syncInternal(config, "devB", bFirst.serverTimestamp);
+
+        InMemorySyncServer.Record record = server.history.get(41L);
+        assertTrue("tomb-vs-tomb keeps the deletion", record.deleted);
+        assertTrue("the later tombstone stamp wins the tomb-vs-tomb LWW",
+                record.dtoLastModified() >= tombLmAfterA);
+        assertEquals("no resurrection: B's local row stays gone",
+                0, storeB.history.size());
+    }
+
+    /**
+     * R1 P3: per-serverKey isolation. The same local store syncs to two
+     * different servers (different ports → different {@code baseUrl()}
+     * serverKeys). Snapshots/pending/push ledgers are keyed by serverKey, so
+     * bookkeeping for one server must never leak into the other: each server
+     * independently receives the full state, suppresses unchanged records on
+     * its own ledger, and only sees a change when its own cycle pushes it.
+     */
+    @Test
+    public void dualServerKey_ledgerAndSnapshotIsolation() throws IOException {
+        WebUiConfig otherConfig = new WebUiConfig("http", "127.0.0.1", 8081, "user", "token");
+        InMemorySyncServer otherServer = new InMemorySyncServer();
+        WebUiSyncEngine otherEngine = new WebUiSyncEngine(storeA, otherServer);
+
+        storeA.putLocalFavorite(favorite(1, 1000, "fav 1"));
+        storeA.applySyncedHistory(history(2, 2000));
+
+        WebUiSyncEngine.Result first = engineA.syncInternal(config, "devA", 0);
+        assertEquals(1, first.pushedFavorites);
+        assertEquals(1, first.pushedHistory);
+
+        // Same store, other server: everything counts as new again under the
+        // other serverKey — the first server's ledger must not suppress it.
+        WebUiSyncEngine.Result otherFirst = otherEngine.syncInternal(otherConfig, "devA", 0);
+        assertEquals(1, otherFirst.pushedFavorites);
+        assertEquals(1, otherFirst.pushedHistory);
+        assertEquals(1, otherServer.favorites.size());
+        assertEquals(1, otherServer.history.size());
+
+        // Unchanged cycles are then suppressed independently per server.
+        WebUiSyncEngine.Result second = engineA.syncInternal(config, "devA", first.serverTimestamp);
+        assertEquals(0, second.pushedFavorites);
+        assertEquals(0, second.pushedHistory);
+        WebUiSyncEngine.Result otherSecond =
+                otherEngine.syncInternal(otherConfig, "devA", otherFirst.serverTimestamp);
+        assertEquals(0, otherSecond.pushedFavorites);
+        assertEquals(0, otherSecond.pushedHistory);
+
+        // A new key pushed to server 1 does not leak into server 2's state
+        // until that server's own cycle runs.
+        storeA.putLocalFavorite(favorite(9, 3000, "fav 9"));
+        engineA.syncInternal(config, "devA", second.serverTimestamp);
+        assertNotNull("server 1 received the new key", server.favorites.get(9L));
+        assertNull("server 2 untouched until its own cycle", otherServer.favorites.get(9L));
+        otherEngine.syncInternal(otherConfig, "devA", otherSecond.serverTimestamp);
+        assertNotNull("server 2 picks it up on its own cycle", otherServer.favorites.get(9L));
     }
 }
