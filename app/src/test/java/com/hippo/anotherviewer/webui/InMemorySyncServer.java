@@ -39,8 +39,14 @@ import java.util.Map;
  *   <li>hard-delete entities (history, bookmarks): deleted records are removed,
  *       but a tombstone marker is kept long enough for the pull side so other
  *       devices observe the deletion (the real server retains tombstones for
- *       the same reason). Resurrection is entity-LWW like v1 (§3.8 mirror):
- *       only a strictly newer live record revives the key.</li>
+ *       the same reason). A deletion push against an existing row keeps the
+ *       row's fields (a soft-deleted row preserves its view time/page) and
+ *       bumps {@code lastModified} to max(stored, incoming), exactly like
+ *       SyncService (§4.2). Resurrection / double-alive arbitration is the
+ *       full SyncService sequence (§3.8 mirror + §3.2/§3.4): A/C priority for
+ *       double-alive only, else LWW ± skew with the in-window tie-break
+ *       (history: later view {@code time}; bookmark: higher {@code page};
+ *       tie → the stored record wins, §5.1③).</li>
  * </ul>
  * Every write bumps {@code serverModified}, and pull returns everything with
  * {@code serverModified > since} — the "changes since the watermark" contract.
@@ -287,51 +293,81 @@ public class InMemorySyncServer implements WebUiSyncTransport {
     }
 
     /**
-     * Tombstone-entity resurrection (mirror of SyncService mergeHistory /
-     * mergeBookmark, §3.8 mirror + §3.2/§3.4 entity-LWW): an incoming live
-     * record revives the key only when it is clearly newer than the
-     * tombstone — newer by MORE than the ±5 s skew window.
-     *
-     * <p>Simplification boundary (R4-F2/F3, declared per the adjudication):
-     * the real server, when the two records fall INSIDE the skew window,
-     * applies an entity-specific tie-break (history: later view {@code time};
-     * bookmark: higher {@code page}). The fake deliberately omits that
-     * tie-break and keeps the deletion inside the window instead. Faithfully
-     * applying it would flip the matrix's deletion-propagation rows, whose
-     * fixtures seed tombstones directly with zeroed {@code time}/{@code page}
-     * — a state the real server never produces (a soft-deleted row preserves
-     * its view time/page, so a same-view live record could never win the
-     * tie-break against its own tombstone). All resurrection fixtures use
-     * timestamps clearly outside the skew window, where the fake and the real
-     * server agree. Resurrection bypasses the strategy order exactly like the
-     * real server (priority only arbitrates double-alive there).
+     * Hard-entity live arbitration — line-for-line mirror of the LWW block in
+     * SyncService mergeHistory / mergeBookmark (§3.2/§3.4): clearly newer
+     * (beyond the ±5 s skew window) wins; clearly older loses; INSIDE the
+     * window the entity-specific tie-break decides — history: later view
+     * {@code time}; bookmark: higher {@code page} — and a tie keeps the
+     * stored record (§5.1③ first-received baseline). A soft-deleted row
+     * preserves its view time/page, so a same-view live record can never win
+     * the tie-break against its own tombstone. Used for both tombstone
+     * resurrection (which bypasses the strategy order exactly like the real
+     * server — priority only arbitrates double-alive there) and the B /
+     * same-platform double-alive fallback.
      */
-    private boolean liveResurrectsOverTombstone(Object liveDto, Record tombRecord) {
-        return lastModifiedOf(liveDto) > tombRecord.dtoLastModified() + SKEW_TOLERANCE;
+    private static boolean hardLiveWins(Object incomingDto, Record existing) {
+        long incomingLm = lastModifiedOf(incomingDto);
+        long existingLm = existing.dtoLastModified();
+        if (incomingLm > existingLm + SKEW_TOLERANCE) return true;
+        if (existingLm > incomingLm + SKEW_TOLERANCE) return false;
+        if (incomingDto instanceof WebUiSyncModels.SyncHistory) {
+            // Within skew: prefer the later view time (mergeHistory).
+            return ((WebUiSyncModels.SyncHistory) incomingDto).time
+                    > ((WebUiSyncModels.SyncHistory) existing.dto).time;
+        }
+        // Within skew: prefer higher page, further progress (mergeBookmark).
+        return ((WebUiSyncModels.SyncBookmark) incomingDto).page
+                > ((WebUiSyncModels.SyncBookmark) existing.dto).page;
     }
 
     /**
      * Hard-delete entities: deleted records are removed from the live state,
      * but a tombstone marker is kept (serverModified bumped) so the deletion
-     * is observable through pull. Resurrection is entity-LWW like v1 (§3.8
-     * mirror) with the server's skew window (see
-     * {@link #liveResurrectsOverTombstone} for the declared tie-break
-     * simplification). Live-vs-live follows the same strategy arbitration as
-     * the union entities.
+     * is observable through pull. A {@code deleted: true} push against an
+     * existing row mirrors SyncService (§4.2): the stored row keeps its
+     * fields (a soft-deleted row preserves its view time/page), flips
+     * {@code deleted} and bumps {@code lastModified} to max(stored, incoming).
+     * Live arbitration runs the real server sequence: double-alive first
+     * passes the A/C cross-platform priority check (§1.4); the B /
+     * same-platform fallback and tombstone resurrection share the entity LWW
+     * with the in-window tie-break (see {@link #hardLiveWins}).
      */
     private void mergeHard(Map<Long, Record> map, long key, Object dto, boolean deleted) {
         Record existing = map.get(key);
         if (deleted) {
-            map.put(key, new Record(serverTimestamp, true, dto));
+            if (existing == null) {
+                map.put(key, new Record(serverTimestamp, true, dto));
+            } else {
+                // §4.2: keep the stored row's fields, flip deleted, bump
+                // lastModified to max(stored, incoming).
+                WebUiSyncModels.GalleryBase stored = (WebUiSyncModels.GalleryBase) existing.dto;
+                stored.deleted = true;
+                stored.lastModified = Math.max(stored.lastModified, lastModifiedOf(dto));
+                map.put(key, new Record(serverTimestamp, true, stored));
+            }
             return;
         }
         if (existing == null) {
             map.put(key, new Record(serverTimestamp, false, dto));
-        } else if (existing.deleted) {
-            if (liveResurrectsOverTombstone(dto, existing)) {
-                map.put(key, new Record(serverTimestamp, false, dto));
+            return;
+        }
+        if (!existing.deleted) {
+            // Double-alive: A/C cross-platform → the priority platform wins
+            // unconditionally (§1.4); timestamps never arbitrate there.
+            WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
+            String priority = strategy.priorityPlatform();
+            String incomingPlatform = platformOfDto(dto);
+            String existingPlatform = platformOfDto(existing.dto);
+            if (priority != null && !incomingPlatform.equals(existingPlatform)) {
+                if (priority.equals(incomingPlatform)) {
+                    map.put(key, new Record(serverTimestamp, false, dto));
+                }
+                return;
             }
-        } else if (incomingLiveWinsOverLive(dto, existing)) {
+        }
+        // B / same-platform double-alive and tombstone resurrection (§3.8
+        // mirror): entity LWW ± skew with the in-window tie-break.
+        if (hardLiveWins(dto, existing)) {
             map.put(key, new Record(serverTimestamp, false, dto));
         }
     }
