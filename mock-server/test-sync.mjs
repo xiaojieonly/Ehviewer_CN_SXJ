@@ -3,6 +3,15 @@
 // Run with:  node --test mock-server/test-sync.mjs
 // Exit code 0 = all pass, non-zero = at least one failure.
 //
+// M-0 note (how these tests reach the API simulation): since the M-0 split,
+// server.mjs is a gallery-SITE-only mock by default and the /api/v1/*
+// backend-API simulation is opt-in (MOCK_API_SIM=1, see api-sim.mjs). These
+// tests therefore do NOT boot server.mjs; they mount the sync route module
+// DIRECTLY on an in-process express app — i.e. they connect straight to the
+// API-sim's fixture store (fixtures/sync.mjs), which is the unit under test.
+// The server-level MOCK_API_SIM gating (api sim off by default, mounted when
+// enabled, site surface untouched either way) is covered by test-api-sim.mjs.
+//
 // The server under test is started in-process on a random port. The store is
 // seeded from the fixtures at module load, so assertions must key on pushed
 // entity keys rather than exact collection sizes.

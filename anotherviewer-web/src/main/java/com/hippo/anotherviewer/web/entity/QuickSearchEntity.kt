@@ -3,7 +3,15 @@ package com.hippo.anotherviewer.web.entity
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "quick_search")
+@Table(
+    name = "quick_search",
+    indexes = [
+        // H-3/W4: 同步 pull 派生查询的 (username, last_modified) 复合索引；ddl-auto: update 自动建索引
+        Index(name = "idx_quicksearch_username_lm", columnList = "username, last_modified"),
+        // findByName（快搜预设业务键查重）
+        Index(name = "idx_quicksearch_name", columnList = "name"),
+    ],
+)
 class QuickSearchEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

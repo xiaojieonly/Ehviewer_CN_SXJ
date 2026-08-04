@@ -3,7 +3,18 @@ package com.hippo.anotherviewer.web.entity
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "history_info")
+@Table(
+    name = "history_info",
+    indexes = [
+        // H-3/W4: 同步 pull 走 findByUsername / findByUsernameAndLastModifiedGreaterThan，
+        // (username, last_modified) 复合索引避免全表扫描；ddl-auto: update 自动建索引
+        Index(name = "idx_history_username_lm", columnList = "username, last_modified"),
+        // findByGid / deleteByGid
+        Index(name = "idx_history_gid", columnList = "gid"),
+        // findByCategoryOrderByTimeDesc（WebUI 本地历史分类分页）
+        Index(name = "idx_history_category_time", columnList = "category, time"),
+    ],
+)
 class HistoryInfoEntity : GalleryInfoBase() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

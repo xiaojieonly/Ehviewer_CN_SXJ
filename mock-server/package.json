@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "node --watch server.mjs"
+    "start:api-sim": "MOCK_API_SIM=1 node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test test-sync.mjs test-gallery.mjs test-favorites.mjs test-api-sim.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
