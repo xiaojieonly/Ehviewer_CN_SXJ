@@ -611,8 +611,10 @@ public class WebUiSyncEngineTest {
      * (§3.8 mirror, §3.2/§3.4): after a deletion propagates, an explicit
      * re-view / re-bookmark with a clearly-newer stamp (beyond the ±5 s skew
      * window) revives the key on the server — both for history and bookmarks.
-     * (In-skew resurrection is a declared simplification boundary of the fake,
-     * see InMemorySyncServer.liveResurrectsOverTombstone.)
+     * Within the window the full SyncService tie-break applies: a same-view
+     * live push ties and loses against the tombstone's preserved view time
+     * (a soft-deleted row keeps its fields, §4.2), so the deletion stands
+     * until a record that actually wins the tie-break arrives.
      */
     @Test
     public void tombstoneEntity_positiveResurrection_afterDeletion() throws IOException {
@@ -649,15 +651,18 @@ public class WebUiSyncEngineTest {
         assertNotNull(storeA.history.get(31L));
         assertNotNull(storeA.bookmarks.get(32L));
 
-        // Within-skew live pushes do NOT resurrect (declared simplification
-        // boundary): the deletion stays until a clearly-newer stamp arrives.
+        // Within-skew live pushes only resurrect when they win the entity
+        // tie-break (SyncService mergeHistory: later view time). The tombstone
+        // preserves the resurrected row's view time (§4.2), so a same-view
+        // re-push inside the 5 s window ties and loses (§5.1③ first-received
+        // baseline) — the deletion stays until a clearly-newer stamp arrives.
         storeA.removeHistoryByKey(31);
         WebUiSyncEngine.Result third = engineA.syncInternal(config, "devA", second.serverTimestamp);
         assertTrue(server.history.get(31L).deleted);
         long tombLm2 = server.history.get(31L).dtoLastModified();
-        storeA.applySyncedHistory(history(31, tombLm2 + 100)); // inside the 5 s window
+        storeA.applySyncedHistory(history(31, tombLm2)); // inside the 5 s window, same view
         engineA.syncInternal(config, "devA", third.serverTimestamp);
-        assertTrue("in-skew live push keeps the deletion (fake simplification)",
+        assertTrue("in-skew same-view live push loses the tie-break, deletion stays",
                 server.history.get(31L).deleted);
     }
 

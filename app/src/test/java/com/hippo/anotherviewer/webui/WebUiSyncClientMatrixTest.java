@@ -400,9 +400,15 @@ public class WebUiSyncClientMatrixTest {
                 break;
             }
             case HISTORY: {
+                // Realistic tombstone: a soft-deleted history row preserves its
+                // view time (SyncService mergeHistory keeps the stored fields),
+                // so the tombstone of the shared synced row carries the same
+                // time as the local copy. A same-view live push then ties the
+                // in-window tie-break and can never beat its own tombstone.
                 WebUiSyncModels.SyncHistory h = new WebUiSyncModels.SyncHistory();
                 h.gid = base;
                 h.token = "tok" + base;
+                h.time = 1000;
                 h.lastModified = lastModified;
                 h.deviceId = deviceId;
                 h.deleted = true;
@@ -410,9 +416,14 @@ public class WebUiSyncClientMatrixTest {
                 break;
             }
             case BOOKMARK: {
+                // Realistic tombstone: a soft-deleted bookmark row preserves its
+                // page and view time, so the tombstone of the shared synced row
+                // carries the same page/time as the local copy.
                 WebUiSyncModels.SyncBookmark b = new WebUiSyncModels.SyncBookmark();
                 b.gid = base;
                 b.token = "tok" + base;
+                b.page = 1;
+                b.time = 1000;
                 b.lastModified = lastModified;
                 b.deviceId = deviceId;
                 b.deleted = true;

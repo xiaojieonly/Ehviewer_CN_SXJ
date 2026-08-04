@@ -198,6 +198,11 @@ public class WebUiSyncStrategyTest {
         WebUiSyncModels.SyncHistory tomb = new WebUiSyncModels.SyncHistory();
         tomb.gid = 21;
         tomb.token = "tok21";
+        // Realistic tombstone: a soft-deleted history row preserves its view
+        // time, so the tombstone of the shared synced row carries the same
+        // time as the local copy — a same-view live push ties the in-window
+        // tie-break and can never beat its own tombstone.
+        tomb.time = 1000;
         tomb.lastModified = 5000;
         tomb.deviceId = WEB;
         tomb.deleted = true;
