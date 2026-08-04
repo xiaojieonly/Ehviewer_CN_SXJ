@@ -111,9 +111,37 @@ function rowHtml(g) {
   );
 }
 
+// Pager meta for the home/search list — the search-semantics oracle must be
+// HONEST. Wire shape is the modern EH list page (cf. the GalleryListParserNew3
+// capture in the app parser tests): a `.searchtext` "Found N results" row plus
+// the `.searchnav` first/prev/next/last markers, and NO `.ptt` page table.
+//
+// Why exactly this shape: GalleryListParser maps it to pages=-1 and
+// resultCount=N, and the backend (GalleryService.searchGallery) derives
+// `total` from the parsed items whenever pages <= 0. A `.ptt` bar would
+// instead trigger the backend's pages*25 estimate — with the mock's
+// single-page corpus that produced the constant 1x25 meta observed in the V2
+// regression (5 real cards, meta 25). `total` below is the FILTERED row
+// count, so every f_search/f_cats/f_order combination reports truthfully.
+// Page count is deliberately not asserted (the corpus is a single page and
+// the modern shape carries no page cells), so nothing can contradict total.
+// "results" stays plural for every count on purpose: the app matches
+// PATTERN_RESULT_COUNT_PAGE = /Found .* results/ (singular would not parse).
+function listPagerHtml(total) {
+  const nav =
+    `<div><span id="ufirst">&lt;&lt; First</span></div>` +
+    `<div><span id="uprev">&lt; Prev</span></div>` +
+    `<div id="ujumpbox" class="jumpbox"><a id="ujump" href="javascript:enable_jump_mode('u')">Jump/Seek</a></div>` +
+    `<div><span id="unext">Next &gt;</span></div>` +
+    `<div><span id="ulast">Last &gt;&gt;</span></div>`;
+  return `<div class="searchtext"><p>Found ${total} results.</p></div>` +
+    `<div class="searchnav"><div></div>${nav}</div>`;
+}
+
 function listHtml(galleries = GALLERIES) {
   const rows = galleries.map(rowHtml).join('');
   return `<!DOCTYPE html><html><head><title>Mock Gallery Site</title></head><body>` +
+    listPagerHtml(galleries.length) +
     `<table class="itg">${rows}</table></body></html>`;
 }
 
@@ -304,7 +332,9 @@ export default function galleryRoutes(app) {
   // Gallery home / search — shaped for GalleryListParser (table.itg/gtr/
   // glthumb/glname). Applies the site list query params (f_search scopes,
   // f_cats, f_order, f_spf/f_spt, f_sr/f_srdd, advsearch) via applyListQuery;
-  // with no params it returns the full fixture list in default order.
+  // with no params it returns the full fixture list in default order. The
+  // pager meta (listPagerHtml) reports the FILTERED row count — see its
+  // comment for why the shape keeps the backend `total` honest.
   router.get('/', (req, res) => {
     res.type('html').send(listHtml(applyListQuery(GALLERIES, req.query)));
   });
