@@ -130,6 +130,7 @@ public final class MainActivity extends StageActivity
         implements NavigationView.OnNavigationItemSelectedListener, ImageChangeCallBack, DrawerLayout.DrawerListener {
 
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
+    private static final int PERMISSION_REQUEST_POST_NOTIFICATIONS = 1;
 
     private static final int REQUEST_CODE_SETTINGS = 0;
 
@@ -547,6 +548,11 @@ public final class MainActivity extends StageActivity
             PermissionRequester.request(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     getString(R.string.write_rationale), PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
+        // targetSdk 34 后 Android 13+ 不再有安装时临时授予的通知豁免，需运行时请求（R3-P1）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionRequester.request(this, Manifest.permission.POST_NOTIFICATIONS,
+                    getString(R.string.notification_rationale), PERMISSION_REQUEST_POST_NOTIFICATIONS);
+        }
         SiteCookieStore store = SiteApplication.getSiteCookieStore(getApplicationContext());
         List<Cookie> eCookies = store.getCookies(HttpUrl.get(SiteUrl.HOST_E));
         List<Cookie> exCookies = store.getCookies(HttpUrl.get(SiteUrl.HOST_EX));
@@ -691,6 +697,10 @@ public final class MainActivity extends StageActivity
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE) {
+            if (grantResults.length == 1 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, R.string.you_rejected_me, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == PERMISSION_REQUEST_POST_NOTIFICATIONS) {
             if (grantResults.length == 1 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, R.string.you_rejected_me, Toast.LENGTH_SHORT).show();
             }

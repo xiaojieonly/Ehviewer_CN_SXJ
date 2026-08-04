@@ -54,8 +54,9 @@ import org.robolectric.annotation.Config;
  *   <li>same-key simultaneous edit — the client applies the server-arbitrated
  *       winner (A: android record; B/C: the newer web record);</li>
  *   <li>priority side deletes / non-priority keeps — a priority-platform
- *       tombstone deletes the local copy (A/C); B resurrects via the live
- *       push; tombstone-class entities propagate under every strategy;</li>
+ *       tombstone deletes the local copy (A/C); B resurrects via the retained
+ *       live copy's full re-push (full-push-era echo mechanism, see F6 note
+ *       below); tombstone-class entities propagate under every strategy;</li>
  *   <li>non-priority side deletes / priority keeps — the §3.8 guard retains
  *       the priority live copy and resurrects it server-side (A); B keeps via
  *       union; when neither side is priority the deletion propagates (C);</li>
@@ -65,6 +66,11 @@ import org.robolectric.annotation.Config;
  *       A/C, discarded for B (union); incoming tombstones honored;</li>
  *   <li>disjoint adds — union under every strategy.</li>
  * </ol>
+ *
+ * <p>F6 裁决（leader，2026-08-04）：B9 增量推送语义保持——lww 下 soft 删除粘性
+ * 为预期语义。下述行中 B/lww 的「复活」断言固化的是全量推送时代的偶然收敛
+ * 机制（保留端全量重推回显覆盖了 tombstone），非设计承诺；复活须经保留端
+ * 显式 re-add/重戳，作为新 lastModified delta 即时传播。断言本身保留不改。
  */
 @Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -513,6 +519,9 @@ public class WebUiSyncClientMatrixTest {
      * A/C: a priority-platform tombstone deletes the local soft copy
      * (§3.8 — the fake mirror keeps the tomb against the client's live push);
      * B: the client's live push resurrects the union record, local survives.
+     * F6（2026-08-04）：B 下此「复活」是全量推送时代保留端重推回显的偶然收敛
+     * 机制，非设计承诺；B9 增量下 lww soft 删除粘性为预期，复活须经保留端
+     * 显式 re-add/重戳。
      */
     @Test
     public void row2_prioritySideDeletes_softEntities() throws IOException {
@@ -559,6 +568,9 @@ public class WebUiSyncClientMatrixTest {
      * client's live push resurrects the record server-side; B: union keeps;
      * C: neither platform is priority and web does not hold the key, so the
      * deletion propagates (§3.8 refinement) — local copy removed.
+     * F6（2026-08-04）：B 下的保留/复活同样是全量推送时代的重推回显机制，
+     * 非设计承诺（增量下 lww soft 删除粘性为预期）；A 的 §3.8 优先端保留仍为
+     * 承诺路径（保留端显式重推）。
      */
     @Test
     public void row3_nonPrioritySideDeletes_softEntities() throws IOException {
@@ -773,7 +785,9 @@ public class WebUiSyncClientMatrixTest {
         // Priority-platform deletion always propagates...
         assertTrue(WebUiSyncEngine.honorSoftTombstone(
                 WebUiSyncEngine.ConflictStrategy.WEB_PRIORITY, WEB, ANDROID, true));
-        // ...and B honors everything (union resurrection happens via the push).
+        // ...and B honors everything (F6: any resurrection under B comes only
+        // from the retaining side's re-push — full-push-era echo, not promised;
+        // lww soft deletion is sticky under B9 incremental push).
         assertTrue(WebUiSyncEngine.honorSoftTombstone(
                 WebUiSyncEngine.ConflictStrategy.LWW, WEB, ANDROID, true));
     }
