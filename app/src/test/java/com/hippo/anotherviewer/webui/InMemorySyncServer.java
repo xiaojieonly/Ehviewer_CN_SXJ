@@ -228,7 +228,15 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         return lastModifiedOf(incomingDto) > existing.dtoLastModified();
     }
 
-    /** TOMB vs TOMB (mirror of the same-state branch): A/C cross-platform → priority wins; else LWW (tie → incoming). */
+    /**
+     * TOMB vs TOMB (mirror of the same-state branch): A/C cross-platform →
+     * priority wins; else LWW. On an exact lastModified tie the incoming
+     * tombstone does NOT win — the stored (first-received) record is kept
+     * (contract §5.1③: within skew the server's received order breaks the
+     * tie, first push received wins; SyncService same-state branch only
+     * applies the incoming record when it is strictly newer beyond the skew
+     * window).
+     */
     private boolean incomingTombWinsOverTomb(Object incomingDto, Record existing) {
         WebUiSyncEngine.ConflictStrategy strategy = serverStrategy();
         String priority = strategy.priorityPlatform();
@@ -237,7 +245,7 @@ public class InMemorySyncServer implements WebUiSyncTransport {
         if (priority != null && !incomingPlatform.equals(existingPlatform)) {
             return priority.equals(incomingPlatform);
         }
-        return lastModifiedOf(incomingDto) >= existing.dtoLastModified();
+        return lastModifiedOf(incomingDto) > existing.dtoLastModified();
     }
 
     private void mergeUnion(Map<Long, Record> map, long key, Object dto, boolean deleted) {
