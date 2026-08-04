@@ -31,12 +31,15 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -426,6 +429,87 @@ public class WebUiTier2ProxyInterceptorTest {
         Request routed = proceed(new Request.Builder().url("https://gallery.test/").build());
         assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
         assertEquals("https://gallery.test/", routed.url().queryParameter("url"));
+    }
+
+    // ------------------------------------------------------------------
+    // Real-client reactivity (R4-16): SiteApplication builds each client
+    // once and registers the interceptor at construction; a tier or pairing
+    // flip made in-process afterwards must change routing on that SAME
+    // client — no rebuild, no cold restart.
+    // ------------------------------------------------------------------
+
+    /** Requests as the terminal interceptor saw them, in call order. */
+    private final List<Request> terminalRequests = new ArrayList<>();
+
+    /**
+     * One client for the whole scenario: the tier interceptor under test plus
+     * a terminal interceptor that records the request instead of opening a
+     * socket, so the full OkHttp call path runs without any network.
+     */
+    private OkHttpClient prebuiltClient() {
+        return new OkHttpClient.Builder()
+                .addInterceptor(interceptor)
+                .addInterceptor(chain -> {
+                    terminalRequests.add(chain.request());
+                    return new Response.Builder()
+                            .request(chain.request())
+                            .protocol(Protocol.HTTP_1_1)
+                            .code(200)
+                            .message("OK")
+                            .body(ResponseBody.create(new byte[0], MediaType.get("text/html")))
+                            .build();
+                })
+                .build();
+    }
+
+    /** Runs one call through the prebuilt client; returns the terminal request. */
+    private Request proceedThroughClient(OkHttpClient client, String url) throws Exception {
+        int index = terminalRequests.size();
+        try (Response response = client.newCall(
+                new Request.Builder().url(url).build()).execute()) {
+            // Body is drained/closed by try-with-resources.
+        }
+        return terminalRequests.get(index);
+    }
+
+    @Test
+    public void testTierFlipTakesEffectOnPrebuiltClientWithoutRebuild() throws Exception {
+        settings.saveConfig(SERVER);
+        settings.setClientTier(1);
+        OkHttpClient client = prebuiltClient();
+
+        // Tier-1 passes the site request through untouched.
+        Request direct = proceedThroughClient(client, "https://gallery.test/?f_search=alpha");
+        assertEquals("https://gallery.test/?f_search=alpha", direct.url().toString());
+
+        // In-process flip to Tier-2: the SAME client instance rewrites
+        // immediately — no rebuild, no restart (R4-16).
+        settings.setClientTier(2);
+        Request routed = proceedThroughClient(client, "https://gallery.test/?f_search=alpha");
+        assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
+        assertEquals("https://gallery.test/?f_search=alpha", routed.url().queryParameter("url"));
+
+        // Flipping back down is just as immediate on the same client.
+        settings.setClientTier(1);
+        Request directAgain = proceedThroughClient(client, "https://gallery.test/?f_search=alpha");
+        assertEquals("https://gallery.test/?f_search=alpha", directAgain.url().toString());
+    }
+
+    @Test
+    public void testPairingAfterClientConstructionTakesEffectWithoutRebuild() throws Exception {
+        settings.setClientTier(2);
+        OkHttpClient client = prebuiltClient();
+
+        // Unpaired Tier-2 degrades to direct on this client ...
+        Request direct = proceedThroughClient(client, "https://gallery.test/g/1001/aaa/");
+        assertEquals("https://gallery.test/g/1001/aaa/", direct.url().toString());
+
+        // ... and pairing that happens AFTER the client was built still takes
+        // effect per request on that same client — no rebuild (R4-16).
+        settings.saveConfig(SERVER);
+        Request routed = proceedThroughClient(client, "https://gallery.test/g/1001/aaa/");
+        assertEquals("/api/v1/site/proxy", routed.url().encodedPath());
+        assertEquals("https://gallery.test/g/1001/aaa/", routed.url().queryParameter("url"));
     }
 
     @Test
