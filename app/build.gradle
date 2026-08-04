@@ -28,8 +28,10 @@ android {
     defaultConfig {
         applicationId project.findProperty("applicationId") ?: "com.pf.anotherviewer"
         minSdkVersion 23
-        //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 30
+        // H-4（W4）：30 → 34。适配项见提交说明——manifest exported/foregroundServiceType
+        // 已具备；本次新增 <queries>（包可见性）并修复 DownloadService 的 PendingIntent
+        // 可变性标志（targetSdk 31+ 运行时强制）。存储沿用 MANAGE_EXTERNAL_STORAGE 策略。
+        targetSdkVersion 34
         versionCode 111
         versionName "2.0.2.2"
         vectorDrawables.useSupportLibrary = true

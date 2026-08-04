@@ -30,6 +30,56 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <!-- H-4（W4）targetSdk 34：Android 11+（API 30+）包可见性。以下为本 app 主动发出的
+         隐式 intent 对应的目标声明；缺失时 resolveActivity/系统选择器将看不到目标应用。 -->
+    <queries>
+        <!-- 浏览器：ACTION_VIEW http/https（gallery 链接、GitHub Releases 更新页） -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <!-- 归档/文件查看器：ACTION_VIEW 下载产物 content:// uri（DownloadsScene） -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <!-- 分享目标：ACTION_SEND（文本分享 AppHelper.share / 图片分享 GalleryActivity） -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <!-- 邮件客户端：ACTION_SENDTO mailto（AppHelper.sendEmail 反馈邮件） -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <!-- 系统选择器：图片选择 GET_CONTENT（头像/图搜）、文档 OPEN_DOCUMENT、
+             下载目录 OPEN_DOCUMENT_TREE、另存为 CREATE_DOCUMENT -->
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.CREATE_DOCUMENT" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <!-- 相机：MediaStore.ACTION_IMAGE_CAPTURE（UserImageChange 头像拍照） -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".SiteApplication"
         android:allowBackup="true"
